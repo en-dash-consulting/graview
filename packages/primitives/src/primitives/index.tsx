@@ -23,9 +23,23 @@ export interface PanelProps {
 
 const TONES: Record<NonNullable<PanelProps["tone"]>, CSSProperties> = {
   default: { background: "var(--graview-panel, #ffffff)", color: "var(--graview-ink, #1a1a1a)" },
-  muted: { background: "var(--graview-panel-muted, #f7f5f1)", color: "var(--graview-ink-muted, #5b5750)" },
+  muted: { background: "var(--graview-panel-muted, #f7f5f1)", color: "var(--graview-ink-muted, #55514a)" },
   warning: { background: "var(--graview-panel-warning, #fdf3ec)", color: "var(--graview-ink, #1a1a1a)" },
 };
+
+/**
+ * Secondary text: a COLOUR, never an opacity.
+ *
+ * `opacity: 0.7` on small text reads as "quieter" and computes as whatever
+ * the background happens to be — which is how four elements here landed at
+ * 3.32:1 against a 4.5:1 requirement without anyone choosing an unreadable
+ * colour. A token composites against a known ground and can be checked.
+ * axe-core checks it on every run of `scripts/run-a11y.mjs`.
+ */
+export const MUTED_TEXT: CSSProperties = { color: "var(--graview-ink-muted, #55514a)" };
+
+/** Even quieter, still above 4.5:1 on both panel grounds. */
+export const FAINT_TEXT: CSSProperties = { color: "var(--graview-ink-faint, #625d55)" };
 
 /** The default container: a titled box. Most views are one of these. */
 export function Panel({
@@ -61,12 +75,12 @@ export function Panel({
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
           <strong style={{ fontSize: 16, lineHeight: 1.25 }}>{title}</strong>
           {meta === undefined ? null : (
-            <span style={{ marginLeft: "auto", opacity: 0.6, fontSize: 12 }}>{meta}</span>
+            <span style={{ marginLeft: "auto", fontSize: 12, ...FAINT_TEXT }}>{meta}</span>
           )}
         </div>
       )}
       {subtitle === undefined ? null : (
-        <div style={{ opacity: 0.7, fontSize: 13 }}>{subtitle}</div>
+        <div style={{ fontSize: 13, ...MUTED_TEXT }}>{subtitle}</div>
       )}
       {children}
     </div>
@@ -179,7 +193,7 @@ export function Axis({ ticks, orientation = "vertical", extent }: AxisProps) {
   return (
     <div
       data-graview-primitive="axis"
-      style={{ position: "relative", width: "100%", height: "100%", fontSize: 11, opacity: 0.65 }}
+      style={{ position: "relative", width: "100%", height: "100%", fontSize: 11, ...FAINT_TEXT }}
     >
       {ticks.map((tick) => (
         <div
@@ -218,7 +232,7 @@ export function Grid({ columns, gutter = 44, children }: GridProps) {
         {columns.map((column) => (
           <div
             key={column.id}
-            style={{ flex: 1, fontSize: 12, opacity: 0.7, textAlign: "center" }}
+            style={{ flex: 1, fontSize: 12, textAlign: "center", ...MUTED_TEXT }}
           >
             {column.label}
           </div>

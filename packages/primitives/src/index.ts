@@ -4,7 +4,9 @@ export {
   Axis,
   Chip,
   Connector,
+  FAINT_TEXT,
   Grid,
+  MUTED_TEXT,
   Panel,
   Roster,
 } from "./primitives/index.js";
