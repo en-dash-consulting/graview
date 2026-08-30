@@ -2,7 +2,7 @@
 id: "e0dd64de-6d75-466c-8093-39d411aa529e"
 level: "feature"
 title: "Spatial renderer — @graview/render"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "render"
@@ -12,6 +12,11 @@ tags:
 blockedBy:
   - "23d22798-65b2-4d59-80c7-8b82352aad16"
 source: "Session planning — architecture"
+startedAt: "2026-08-30T04:35:33.440Z"
+completedAt: "2026-08-30T04:35:33.440Z"
+endedAt: "2026-08-30T04:35:33.440Z"
+resolutionType: "code-change"
+resolutionDetail: "@graview/render: capture loop through one platform module, plane compositing with per-plane scale/blur/falloff/shadow (verified by screenshot in Chrome Canary), geometry sync for every drawn view every frame, fidelity-driven capture budget (only plane 0 is live), connector stroke derived per edge kind with a distinguishability assertion, and PointerRouter covering the platform's missing hit-test redirection. planFrame makes the whole policy layer pure data, so CI tests it with no GPU and no DOM — 26 tests. Caveat recorded honestly: receded text legibility depends on summary views, which is the primitives work, not the renderer's."
 acceptanceCriteria:
   - "Views composite at plane depth with per-plane scale, blur and shadow"
   - "Geometry sync runs for every drawn node, every frame it moves"
