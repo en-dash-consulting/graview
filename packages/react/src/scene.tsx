@@ -20,7 +20,7 @@ import {
 } from "@graview/render";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useAnimatedLayout, useTouched } from "./animation.js";
-import { useImplicated } from "./hooks.js";
+import { useFlagged, useImplicated } from "./hooks.js";
 import { useGraph, useGraview, type ViewMode } from "./context.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
@@ -753,6 +753,7 @@ export function ResolvedView<S extends AnySchema>({
 }: ResolvedViewProps<S>) {
   const { store, views } = useGraview<S>();
   const implicated = useImplicated();
+  const flagged = useFlagged();
   const cardinality = node.aggregate || isAggregateId(node.id) ? "many" : "one";
   const cell = {
     cardinality,
@@ -776,6 +777,7 @@ export function ResolvedView<S extends AnySchema>({
     mode,
     selected,
     implicated,
+    flagged,
   };
 
   if (!Component) return <MissingView node={node} props={props} />;

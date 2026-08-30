@@ -37,6 +37,34 @@ export function useSelection() {
 }
 
 /**
+ * Everything currently broken, recomputed whenever the graph changes.
+ *
+ * The invariant engine has always known this and the interface only ever
+ * showed it to someone who happened to select an implicated node. An
+ * agreement nobody can see the state of is not an agreement anyone is
+ * keeping — "is anything wrong?" is the first question a person asks of a
+ * week, and it should never require hunting for it.
+ */
+export function useViolations<S extends AnySchema>() {
+  const { store } = useGraview<S>();
+  const nodes = useGraph<S>();
+  return useMemo(
+    () => store.violations(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, nodes],
+  );
+}
+
+/** Ids implicated in some current violation, for marking them in place. */
+export function useFlagged(): readonly string[] {
+  const violations = useViolations();
+  return useMemo(
+    () => [...new Set(violations.flatMap((violation) => violation.nodeIds))],
+    [violations],
+  );
+}
+
+/**
  * Everything the selection reaches: the selected nodes, plus everything one
  * edge away from them.
  *

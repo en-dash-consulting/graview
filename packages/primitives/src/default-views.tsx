@@ -61,6 +61,10 @@ export function registerDefaultViews<S extends AnySchema>(
           title={labelOf(definition, node)}
           subtitle={definition?.description ?? String(kind)}
           selected={props.selected}
+          // Something broken is marked WHERE IT IS. A violation implicating
+          // two people has to show on those people, not only in a list
+          // somebody has to go and open.
+          {...(props.flagged?.includes(node.id) ? { tone: "warning" as const } : {})}
           fit
         >
           {/*
@@ -115,7 +119,12 @@ export function registerDefaultViews<S extends AnySchema>(
       if (!node) return null;
       const fields = salientFields(node, 3);
       return (
-        <Panel title={labelOf(definition, node)} selected={props.selected} tone="muted" fit>
+        <Panel
+          title={labelOf(definition, node)}
+          selected={props.selected}
+          tone={props.flagged?.includes(node.id) ? "warning" : "muted"}
+          fit
+        >
           <Roster
             items={fields.map((field) => ({
               id: field.key,
@@ -131,13 +140,24 @@ export function registerDefaultViews<S extends AnySchema>(
     const Glyph = (props: ViewProps<S>) => {
       const node = props.node as (Record<string, unknown> & { id: string; kind: string }) | undefined;
       if (!node) return null;
-      return <Chip label={labelOf(definition, node)} hue={hue} selected={props.selected} title={String(kind)} />;
+      const broken = props.flagged?.includes(node.id) ?? false;
+      return (
+        <Chip
+          label={broken ? `${labelOf(definition, node)} ⚠` : labelOf(definition, node)}
+          hue={hue}
+          selected={props.selected}
+          title={broken ? `${String(kind)} — implicated in a problem` : String(kind)}
+        />
+      );
     };
 
     const Group = (props: ViewProps<S>) => (
       <Aggregate
         label={props.label ?? plural}
         count={props.nodes?.length ?? 0}
+        // A receded group still has to report trouble inside it, or the only
+        // way to find a problem is to open every group in turn.
+        flagged={(props.nodes ?? []).some((member) => props.flagged?.includes(member.id))}
         items={(props.nodes ?? []).map((member) => ({
           id: member.id,
           label: labelOf(schema.tryDefinition(member.kind), member as never),
@@ -186,7 +206,16 @@ export function registerDefaultViews<S extends AnySchema>(
             >
               {props.label ?? plural}
             </span>
-            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--graview-ink-faint)" }}>
+            <span
+              style={{
+                marginLeft: "auto",
+                fontSize: 12,
+                color: members.some((member) => props.flagged?.includes(member.id))
+                  ? "var(--graview-warn)"
+                  : "var(--graview-ink-faint)",
+              }}
+            >
+              {members.some((member) => props.flagged?.includes(member.id)) ? "⚠ " : ""}
               {members.length}
             </span>
           </div>
