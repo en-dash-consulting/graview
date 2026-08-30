@@ -35,6 +35,12 @@ through the DOM path, which reproduces the plane geometry exactly because the
 plane model is affine by design. What it cannot do is per-plane blur in a
 shader.
 
+It opens in whichever scheme your system asks for, remembers what you pick,
+and `?theme=light` / `?theme=dark` forces one. The two are not inversions:
+dark is a lit control surface where depth loses luminance, light is daylight
+and paper where depth loses contrast and gains haze. Inverting one to get the
+other gives grey-on-grey mush, because glow does not exist in daylight.
+
 ```sh
 pnpm test          # 255 tests, no GPU, no browser
 pnpm typecheck

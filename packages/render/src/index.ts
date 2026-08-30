@@ -24,8 +24,15 @@ export type {
 } from "./platform/html-in-canvas.js";
 
 // The plane model: discrete depths and their atmospheric treatment.
-export { PLANES, PLANE_STYLES, mixStyles, styleFor, transformFor } from "./scene/plane.js";
-export type { PlaneIndex, PlaneStyle } from "./scene/plane.js";
+export {
+  LIGHT_PLANE_STYLES,
+  PLANES,
+  PLANE_STYLES,
+  mixStyles,
+  styleFor,
+  transformFor,
+} from "./scene/plane.js";
+export type { PlaneIndex, PlaneStyle, Scheme } from "./scene/plane.js";
 
 // The frame, as data: what captures, what draws, and where it lands.
 export { planFrame } from "./scene/frame-plan.js";

@@ -21,8 +21,8 @@ export type {
 } from "./primitives/index.js";
 
 // The visual system: tokens, and the stylesheet an app drops in.
-export { DARK, LIGHT, themeCss, themeVariables } from "./theme.js";
-export type { ThemeTokens } from "./theme.js";
+export { DARK, LIGHT, SCHEMES, themeCss, themeVariables } from "./theme.js";
+export type { Scheme, ThemeTokens } from "./theme.js";
 
 // Generic views for every cell, derived from the declaration.
 export { hueFor, registerDefaultViews } from "./default-views.js";

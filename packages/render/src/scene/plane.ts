@@ -38,6 +38,22 @@ export interface PlaneStyle {
   readonly fidelity: "full" | "summary" | "glyph";
 }
 
+export type Scheme = "light" | "dark";
+
+/**
+ * Daylight recession.
+ *
+ * Not the dark numbers inverted. In daylight a distant thing loses CONTRAST
+ * and gains haze; it does not lose light, and it does not blur much — the eye
+ * reads distance from washed-out colour and a softer cast shadow. Reusing the
+ * dark blur here made receded planes look out of focus rather than far away.
+ */
+export const LIGHT_PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
+  0: { scale: 1, blur: 0, falloff: 0, shadow: 0.16, fidelity: "full" },
+  1: { scale: 0.74, blur: 0.3, falloff: 0.3, shadow: 0.12, fidelity: "summary" },
+  2: { scale: 0.68, blur: 0.5, falloff: 0.46, shadow: 0.08, fidelity: "glyph" },
+};
+
 export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
   // The focus plane is unfiltered on purpose: everything else is judged
   // against it, so it has to be the one true reading of the data.
@@ -51,9 +67,9 @@ export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
   2: { scale: 0.68, blur: 0.6, falloff: 0.3, shadow: 0.16, fidelity: "glyph" },
 };
 
-export function styleFor(plane: number): PlaneStyle {
+export function styleFor(plane: number, scheme: Scheme = "dark"): PlaneStyle {
   const clamped = Math.max(0, Math.min(2, Math.round(plane))) as PlaneIndex;
-  return PLANE_STYLES[clamped];
+  return (scheme === "light" ? LIGHT_PLANE_STYLES : PLANE_STYLES)[clamped];
 }
 
 /**

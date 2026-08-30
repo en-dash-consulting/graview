@@ -22,8 +22,17 @@ import type { ViewComponent } from "./view-registry.js";
  */
 export type ViewMode = "scene" | "fullscreen";
 
+/** Which visual scheme the scene is drawn in. */
+export type Scheme = "light" | "dark";
+
 export interface GraviewContextValue<S extends AnySchema> {
   readonly store: Store<S>;
+  /**
+   * The scheme, so the RENDERER can match it. Depth is drawn differently in
+   * daylight and in the dark, and a plane that recedes by losing light looks
+   * wrong on paper.
+   */
+  readonly scheme: Scheme;
   readonly views: ViewRegistry<S, ViewComponent<S>>;
   readonly view: ViewState;
   setView(next: ViewState | ((current: ViewState) => ViewState)): void;
@@ -40,6 +49,7 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly store: Store<S>;
   readonly views: ViewRegistry<S, ViewComponent<S>>;
   readonly initialView?: ViewState;
+  readonly scheme?: Scheme;
   /** Start jacked into one view — the deep-link case. */
   readonly initialJackedIn?: string | null;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
@@ -60,6 +70,7 @@ export function GraviewProvider<S extends AnySchema>({
   store,
   views,
   initialView,
+  scheme = "dark",
   initialJackedIn,
   view,
   onViewChange,
@@ -90,6 +101,7 @@ export function GraviewProvider<S extends AnySchema>({
   const value = useMemo<GraviewContextValue<S>>(
     () => ({
       store,
+      scheme,
       views,
       view: current,
       setView,
@@ -98,7 +110,7 @@ export function GraviewProvider<S extends AnySchema>({
       jackedIn,
       setJackedIn,
     }),
-    [store, views, current, setView, selection, setSelection, jackedIn],
+    [store, scheme, views, current, setView, selection, setSelection, jackedIn],
   );
 
   return (

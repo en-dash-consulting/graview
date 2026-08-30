@@ -70,8 +70,8 @@ export function Panel({
           selected ? "var(--graview-accent, #2f6f5e)" : "var(--graview-edge, #e4e0d8)"
         }`,
         boxShadow: selected
-          ? "0 0 0 1px var(--graview-accent-dim), 0 18px 50px -22px #000, inset 0 1px 0 var(--graview-edge-bright)"
-          : "0 18px 50px -26px #000, inset 0 1px 0 var(--graview-edge)",
+          ? "0 0 0 1px var(--graview-accent-dim), var(--graview-lift-low)"
+          : "var(--graview-lift-low)",
         overflow: "hidden",
         ...TONES[tone],
         ...style,
@@ -140,17 +140,20 @@ export function Chip({ label, hue, selected, title }: ChipProps) {
         lineHeight: 1.5,
         whiteSpace: "nowrap",
         letterSpacing: "0.01em",
+        // Lightness and alpha come from the THEME: the same tint that reads
+        // as a lit outline in the dark reads as a wash on paper, and a fixed
+        // pair only ever works in one of them.
         border: `1px solid ${
           selected
-            ? "var(--graview-accent, #2f6f5e)"
+            ? "var(--graview-accent)"
             : tint === undefined
-              ? "var(--graview-edge, #e4e0d8)"
-              : `hsl(${tint} 60% 62% / 0.42)`
+              ? "var(--graview-edge)"
+              : `hsl(${tint} 55% var(--graview-tint-lightness) / 0.45)`
         }`,
         background:
           tint === undefined
-            ? "var(--graview-panel-muted, #f7f5f1)"
-            : `hsl(${tint} 60% 55% / 0.13)`,
+            ? "var(--graview-panel-muted)"
+            : `hsl(${tint} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 0.65))`,
         color: "var(--graview-ink, #1a1a1a)",
         boxShadow: selected ? "0 0 14px -4px var(--graview-accent)" : undefined,
       }}

@@ -384,8 +384,11 @@ function Column({
                 WebkitBoxOrient: "vertical",
                 border: selectedIds.includes(span.id)
                   ? "1px solid var(--graview-accent)"
-                  : `1px solid hsl(${Math.round(hue(span) * 360)} 55% 60% / 0.36)`,
-                background: `linear-gradient(hsl(${Math.round(hue(span) * 360)} 55% 52% / 0.20), hsl(${Math.round(hue(span) * 360)} 55% 52% / 0.20)), var(--graview-panel)`,
+                  : `1px solid hsl(${Math.round(hue(span) * 360)} 50% var(--graview-tint-lightness) / 0.42)`,
+                // Opaque, over a hue wash, with both drawn from the theme: a
+                // cascaded bar has to OCCLUDE the one behind it, and the same
+                // wash has to read on paper and in the dark.
+                background: `linear-gradient(hsl(${Math.round(hue(span) * 360)} 55% var(--graview-tint-lightness) / var(--graview-tint-alpha)), hsl(${Math.round(hue(span) * 360)} 55% var(--graview-tint-lightness) / var(--graview-tint-alpha))), var(--graview-panel)`,
                 color: "var(--graview-ink)",
                 boxShadow: selectedIds.includes(span.id)
                   ? "0 0 16px -4px var(--graview-accent)"
@@ -438,10 +441,10 @@ function Column({
               height: 7,
               borderRadius: 999,
               flex: "0 0 auto",
-              background: `hsl(${Math.round(hue(span) * 360)} 65% 62%)`,
+              background: `hsl(${Math.round(hue(span) * 360)} 60% var(--graview-tint-lightness))`,
               boxShadow: selectedIds.includes(span.id)
                 ? "0 0 0 3px var(--graview-accent-dim)"
-                : `0 0 8px hsl(${Math.round(hue(span) * 360)} 65% 62% / 0.5)`,
+                : `0 0 8px hsl(${Math.round(hue(span) * 360)} 60% var(--graview-tint-lightness) / 0.45)`,
             }}
           />
         </div>

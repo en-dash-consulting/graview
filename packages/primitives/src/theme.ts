@@ -1,25 +1,30 @@
 /**
  * The visual system.
  *
- * Deep ground, luminous edges, translucent glass, thin light strokes. The
- * reference is a control surface for something real — precise, quiet, and
- * lit from within — not a game and not a dashboard. Restraint is the whole
- * effect: one accent hue, one warm counter-hue, and everything else is light
- * on darkness.
+ * Two schemes, and they are not inversions of each other. Depth is the thing
+ * being drawn, and depth behaves differently in the two:
  *
- * Two rules hold it together:
+ * - **Dark** is a lit control surface. Things at depth lose luminance and
+ *   dissolve into the ground; the accent reads as light, and separation comes
+ *   from glow and a lit edge.
+ * - **Light** is daylight and paper. Things at depth lose CONTRAST and gain
+ *   haze — real atmospheric perspective — and separation comes from soft
+ *   cast shadow, the way objects on a desk separate. Inverting the dark
+ *   scheme would give grey-on-grey mush, because glow does not exist in
+ *   daylight.
  *
- * 1. **Depth is light, not decoration.** A plane recedes by losing luminance
- *    and gaining atmosphere, the way distance actually works. Nothing recedes
- *    by being made smaller alone.
- * 2. **Secondary text is a colour, never an opacity.** Opacity composites
- *    against whatever is behind and fails contrast silently; a token
- *    composites against a known ground and can be checked. axe-core checks it.
+ * One rule holds across both: **secondary text is a colour, never an
+ * opacity.** Opacity composites against whatever is behind and fails contrast
+ * silently. axe-core checks this on every run of `scripts/run-a11y.mjs`.
  */
+
+export type Scheme = "light" | "dark";
 
 export interface ThemeTokens {
   readonly ground: string;
   readonly groundDeep: string;
+  /** The wash behind the scene: two radial gradients over the ground. */
+  readonly wash: string;
   readonly panel: string;
   readonly panelMuted: string;
   readonly panelWarning: string;
@@ -30,58 +35,96 @@ export interface ThemeTokens {
   readonly inkFaint: string;
   readonly accent: string;
   readonly accentDim: string;
+  readonly accentInk: string;
   readonly warn: string;
   readonly glow: string;
+  /** The command bar's ground. Chrome, not scene. */
+  readonly bar: string;
+  /** A surface floating over the scene — the inspector. */
+  readonly float: string;
+  /** Elevation for a panel sitting in the scene. */
+  readonly liftLow: string;
+  /** Elevation for something floating over it — the inspector. */
+  readonly liftHigh: string;
+  /** How strongly a chip or span tint reads over the panel ground. */
+  readonly tintAlpha: number;
+  readonly tintLightness: number;
+  readonly gridAlpha: number;
 }
 
-/** The dark scheme. Light text on darkness, one cool accent, one warm. */
+/** A lit control surface. */
 export const DARK: ThemeTokens = {
   // Not black: a deep blue-green that lets the accent read as light rather
   // than as paint.
   ground: "#080d12",
   groundDeep: "#04070a",
-  // Nearly opaque, by necessity as much as taste.
-  //
-  // A captured subtree has NOTHING behind it: `backdrop-filter` is a no-op
-  // and a translucent fill composites against transparency, so a sparse panel
-  // came out invisible on the GPU path while looking fine in the DOM. Panels
-  // carry their own ground and earn their glass from the lit border instead.
+  wash:
+    "radial-gradient(120% 80% at 50% -10%, var(--graview-glow) 0%, transparent 60%), " +
+    "radial-gradient(90% 60% at 12% 108%, rgba(111,220,234,0.10) 0%, transparent 62%)",
+  // Nearly opaque, by necessity as much as taste: a captured subtree has
+  // nothing behind it, so `backdrop-filter` is a no-op and a translucent fill
+  // composites against transparency.
   panel: "rgba(20, 31, 39, 0.94)",
   panelMuted: "rgba(15, 23, 30, 0.92)",
   panelWarning: "rgba(44, 30, 17, 0.94)",
   edge: "rgba(126, 196, 214, 0.20)",
   edgeBright: "rgba(126, 220, 232, 0.55)",
   ink: "#e8f3f6",
-  // Both clear 4.5:1 against ground and both panel tones.
   inkMuted: "#9fb6bf",
   inkFaint: "#8aa3ad",
   accent: "#6fdcea",
   accentDim: "rgba(111, 220, 234, 0.35)",
+  accentInk: "#06232a",
   warn: "#f0a868",
   glow: "rgba(111, 220, 234, 0.28)",
+  bar: "linear-gradient(rgba(10,16,21,0.92), rgba(6,10,14,0.78))",
+  float: "linear-gradient(rgba(14,22,29,0.96), rgba(8,13,18,0.97))",
+  liftLow: "0 18px 50px -26px #000, inset 0 1px 0 rgba(126,196,214,0.20)",
+  liftHigh: "0 30px 70px -30px #000",
+  tintAlpha: 0.2,
+  tintLightness: 52,
+  gridAlpha: 0.35,
 };
 
-/** The light scheme, kept honest so the system is not dark-only by accident. */
+/** Daylight and paper. */
 export const LIGHT: ThemeTokens = {
-  ground: "#f4f2ee",
-  groundDeep: "#e9e6e0",
-  panel: "rgba(255, 255, 255, 0.92)",
-  panelMuted: "rgba(247, 245, 241, 0.92)",
-  panelWarning: "rgba(253, 243, 236, 0.95)",
-  edge: "rgba(26, 26, 26, 0.12)",
-  edgeBright: "rgba(26, 60, 70, 0.42)",
-  ink: "#14201f",
-  inkMuted: "#55514a",
-  inkFaint: "#625d55",
-  accent: "#0e6f7d",
-  accentDim: "rgba(14, 111, 125, 0.28)",
-  warn: "#8a4b12",
-  glow: "rgba(14, 111, 125, 0.16)",
+  // Warm off-white rather than pure white: pure white under a full-bleed
+  // scene glares, and paper is never #fff.
+  ground: "#f6f4f0",
+  groundDeep: "#efece6",
+  wash:
+    "radial-gradient(120% 80% at 50% -20%, rgba(255,255,255,0.9) 0%, transparent 58%), " +
+    "radial-gradient(80% 60% at 92% 104%, rgba(12,110,120,0.06) 0%, transparent 60%)",
+  panel: "#ffffff",
+  panelMuted: "#faf8f5",
+  panelWarning: "#fdf4ea",
+  edge: "rgba(24, 34, 38, 0.10)",
+  edgeBright: "rgba(12, 110, 120, 0.42)",
+  ink: "#15201f",
+  // Both clear 4.5:1 on white and on the muted panel.
+  inkMuted: "#54605f",
+  inkFaint: "#67716f",
+  accent: "#0c6e78",
+  accentDim: "rgba(12, 110, 120, 0.22)",
+  accentInk: "#ffffff",
+  warn: "#9a5312",
+  glow: "rgba(12, 110, 120, 0.10)",
+  bar: "linear-gradient(rgba(255,255,255,0.96), rgba(250,248,245,0.86))",
+  float: "linear-gradient(#ffffff, #fcfbf9)",
+  // Layered, short-then-long: how something actually casts on a desk.
+  liftLow: "0 1px 2px rgba(20,30,32,0.06), 0 8px 24px -12px rgba(20,30,32,0.18)",
+  liftHigh: "0 2px 6px rgba(20,30,32,0.08), 0 28px 60px -24px rgba(20,30,32,0.28)",
+  tintAlpha: 0.16,
+  tintLightness: 46,
+  gridAlpha: 0.5,
 };
+
+export const SCHEMES: Record<Scheme, ThemeTokens> = { dark: DARK, light: LIGHT };
 
 const VARIABLE: Record<keyof ThemeTokens, string> = {
   ground: "--graview-ground",
   groundDeep: "--graview-ground-deep",
+  wash: "--graview-wash",
   panel: "--graview-panel",
   panelMuted: "--graview-panel-muted",
   panelWarning: "--graview-panel-warning",
@@ -92,8 +135,16 @@ const VARIABLE: Record<keyof ThemeTokens, string> = {
   inkFaint: "--graview-ink-faint",
   accent: "--graview-accent",
   accentDim: "--graview-accent-dim",
+  accentInk: "--graview-accent-ink",
   warn: "--graview-warn",
   glow: "--graview-glow",
+  bar: "--graview-bar",
+  float: "--graview-float",
+  liftLow: "--graview-lift-low",
+  liftHigh: "--graview-lift-high",
+  tintAlpha: "--graview-tint-alpha",
+  tintLightness: "--graview-tint-lightness",
+  gridAlpha: "--graview-grid-alpha",
 };
 
 export function themeVariables(tokens: ThemeTokens): string {
@@ -103,20 +154,17 @@ export function themeVariables(tokens: ThemeTokens): string {
 }
 
 /**
- * The stylesheet an app drops in. Everything the primitives reference is a
- * custom property, so a host can override any single token without forking a
- * component.
+ * The stylesheet an app drops in.
  *
- * The scene's atmosphere lives here too: a slow radial wash behind everything
- * so the ground reads as space rather than as a flat backdrop, and a fine
- * grid that gives depth something to be measured against. Both are pure CSS
- * on the container, never on the captured views — the GPU is compositing
- * those, and painting under them is the container's job.
+ * Everything the primitives reference is a custom property, so a host can
+ * override a single token without forking a component — and switching scheme
+ * is one `replaceSync`, not a re-render.
  */
-export function themeCss(tokens: ThemeTokens = DARK): string {
+export function themeCss(scheme: Scheme = "dark"): string {
+  const tokens = SCHEMES[scheme];
   return `:root {
 ${themeVariables(tokens)}
-  color-scheme: ${tokens === LIGHT ? "light" : "dark"};
+  color-scheme: ${scheme};
 }
 
 html, body {
@@ -131,14 +179,12 @@ html, body {
 /* The ground: a slow wash, so depth has something to recede into. */
 .graview-ground {
   position: relative;
-  background:
-    radial-gradient(120% 80% at 50% -10%, var(--graview-glow) 0%, transparent 60%),
-    radial-gradient(90% 60% at 12% 108%, rgba(111, 220, 234, 0.10) 0%, transparent 62%),
-    var(--graview-ground);
+  background: var(--graview-wash), var(--graview-ground);
 }
 
 /* A fine measure under the scene. Faint enough to feel like calibration
-   rather than graph paper. */
+   rather than graph paper, and it fades out at the edges so the scene has no
+   hard boundary. */
 .graview-ground::before {
   content: "";
   position: absolute;
@@ -148,13 +194,13 @@ html, body {
     linear-gradient(var(--graview-edge) 1px, transparent 1px),
     linear-gradient(90deg, var(--graview-edge) 1px, transparent 1px);
   background-size: 64px 64px;
-  opacity: 0.35;
+  opacity: var(--graview-grid-alpha);
   mask-image: radial-gradient(120% 90% at 50% 40%, #000 30%, transparent 78%);
 }
 
 /* A view is a thing you can act on. It should look like one. */
 [data-graview-view] { cursor: pointer; }
-[data-graview-view]:hover { filter: brightness(1.12); }
+[data-graview-view]:hover { filter: brightness(${scheme === "light" ? 0.985 : 1.12}); }
 [data-graview-view]:focus-visible {
   outline: 2px solid var(--graview-accent);
   outline-offset: 3px;
@@ -168,12 +214,17 @@ button {
   border: 1px solid var(--graview-edge);
   border-radius: 8px;
   background: var(--graview-panel);
+  box-shadow: ${scheme === "light" ? "0 1px 2px rgba(20,30,32,0.05)" : "none"};
   cursor: pointer;
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 button:hover:not(:disabled) {
   border-color: var(--graview-edge-bright);
-  box-shadow: 0 0 0 1px var(--graview-accent-dim), 0 0 18px -6px var(--graview-accent);
+  box-shadow: ${
+    scheme === "light"
+      ? "0 1px 2px rgba(20,30,32,0.06), 0 6px 16px -8px rgba(20,30,32,0.22)"
+      : "0 0 0 1px var(--graview-accent-dim), 0 0 18px -6px var(--graview-accent)"
+  };
 }
 button:focus-visible {
   outline: 2px solid var(--graview-accent);
