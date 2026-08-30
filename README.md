@@ -42,7 +42,7 @@ and paper where depth loses contrast and gains haze. Inverting one to get the
 other gives grey-on-grey mush, because glow does not exist in daylight.
 
 ```sh
-pnpm test          # 270 tests, no GPU, no browser
+pnpm test          # 277 tests, no GPU, no browser
 pnpm typecheck
 pnpm check         # `graview check` against the household example's declarations
 ```
@@ -95,6 +95,13 @@ locked to one axis. Layout is a pure function of (focus, relation, graph)
 overlaid with user pins, so the same graph gives the same picture, every stop
 is a URL, and any two states interpolate.
 
+**An agent you can watch.** Its edits produce the same diffs yours do, so no
+bespoke observability is needed for the *result* — but a diff says what
+changed and never what was considered. The tool runtime emits every call as
+it happens, reads included, so a turn reads as "looked at the whole graph,
+looked at the Tuesday run, moved it to parent1" and every node named in it is
+one click away.
+
 **History is a fold, not a stack.** The graph is a fold over an append-only
 operation log. Every op carries author, batch, intent, its inverse, and the
 nodes it READ — which makes "drop the agent's turn, keep my edits" a checkable
@@ -113,6 +120,7 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | Agent and human edits produce identical diffs | `the household example/tests/integration/acceptance.test.tsx` |
 | A new node kind renders with zero view code | `packages/primitives/tests/unit/primitives.test.tsx` |
 | A focused node surfaces its whole neighbourhood, captioned | `packages/layout/tests/unit/layout.test.ts`, `the household example/tests/integration/acceptance.test.tsx` |
+| An unanswered argument says what sort of answer it wants | `packages/core/tests/unit/mutations.test.ts` |
 | Capture + composite works at three depths | `docs/spike-three-planes.png`, Chrome Canary 154 |
 | Clicks land on drawn pixels at every depth | `apps/spike/scripts/run-spike.mjs` |
 | The whole port meets its six criteria | `the household example/scripts/run-acceptance.mjs` |

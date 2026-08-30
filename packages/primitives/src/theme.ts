@@ -198,6 +198,23 @@ html, body {
   mask-image: radial-gradient(120% 90% at 50% 40%, #000 30%, transparent 78%);
 }
 
+/* A thing inside a view that is itself a thing: an event in a calendar, a
+   person in a list. It has to look reachable, and it has to SHOW focus —
+   these are the primary way anyone moves through the graph, so a keyboard
+   user who cannot see where they are is stuck. */
+[data-graview-pick] {
+  cursor: pointer;
+  transition: filter 140ms ease, box-shadow 140ms ease;
+}
+[data-graview-pick]:hover {
+  filter: brightness(${scheme === "light" ? 0.96 : 1.18});
+}
+[data-graview-pick]:focus-visible {
+  outline: 2px solid var(--graview-accent);
+  outline-offset: 2px;
+  border-radius: 7px;
+}
+
 /* A view is a thing you can act on. It should look like one. */
 [data-graview-view] { cursor: pointer; }
 [data-graview-view]:hover { filter: brightness(${scheme === "light" ? 0.985 : 1.12}); }

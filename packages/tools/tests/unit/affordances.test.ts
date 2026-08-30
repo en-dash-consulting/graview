@@ -133,8 +133,21 @@ describe("derived affordances", () => {
     // The open argument arrives with real candidates, so no picker is wired
     // up per mutation.
     expect(reassignAction.open).toEqual([
-      { name: "toPersonId", kinds: ["person"], candidates: ["ana", "bo"] },
+      {
+        name: "toPersonId",
+        kinds: ["person"],
+        candidates: ["ana", "bo"],
+        shape: { type: "text" },
+      },
     ]);
+  });
+
+  it("says what sort of answer each unanswered argument wants", () => {
+    // Without this an interface can only offer candidate ids, so every
+    // action needing a name or a date is a dead end that looks live.
+    const derived = deriveAffordances(store(), ["d1"]);
+    const reday = derived.affordances.find((a) => a.mutation === "reday")!;
+    expect(reday.open).toEqual([{ name: "day", shape: { type: "text" } }]);
   });
 
   it("offers nothing kind-inappropriate for a mixed selection", () => {

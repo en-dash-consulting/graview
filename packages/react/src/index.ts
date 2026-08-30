@@ -20,6 +20,7 @@ export type { ResolvedViewProps, SceneProps } from "./scene.js";
 export { JackedIn } from "./jack-in.js";
 export type { JackedInProps } from "./jack-in.js";
 
+export { useImplicated } from "./hooks.js";
 export {
   useAffordances,
   useApplyAffordance,

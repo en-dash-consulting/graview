@@ -20,6 +20,7 @@ import {
 } from "@graview/render";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useAnimatedLayout, useTouched } from "./animation.js";
+import { useImplicated } from "./hooks.js";
 import { useGraph, useGraview, type ViewMode } from "./context.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
@@ -442,6 +443,30 @@ interface HostProps {
  * One view's box. Absolutely positioned so the canvas can place it, and sized
  * so the capture texture matches the DOM exactly.
  */
+/**
+ * Makes every `data-graview-pick` element a real control.
+ *
+ * The host owns this for the same reason it owns click routing: marking an
+ * element is meant to be the WHOLE contract. Having made clicking an event
+ * the primary way to move through the graph, leaving those targets
+ * unreachable by keyboard would have made the primary interaction
+ * mouse-only — a worse accessibility regression than the one it fixed.
+ *
+ * Set as attributes rather than as props because the elements belong to
+ * whatever view drew them; React is not managing these, so there is nothing
+ * to fight over.
+ */
+function usePickTargets(ref: { current: HTMLElement | null }): void {
+  useEffect(() => {
+    const host = ref.current;
+    if (!host) return;
+    for (const target of host.querySelectorAll<HTMLElement>("[data-graview-pick]")) {
+      if (target.getAttribute("tabindex") === null) target.setAttribute("tabindex", "0");
+      if (target.getAttribute("role") === null) target.setAttribute("role", "button");
+    }
+  });
+}
+
 function SceneViewHost({
   node,
   useDom,
@@ -465,6 +490,14 @@ function SceneViewHost({
       ? styleFor(lower, scheme)
       : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), node.plane - lower);
   const transform = transformFor(style, node.x, node.y, canvasWidth, canvasHeight);
+  const ref = useRef<HTMLDivElement | null>(null);
+  usePickTargets(ref);
+
+  /** The node a pointer or key event is really about. */
+  const pickedFrom = (target: EventTarget | null): string | null =>
+    (target as HTMLElement | null)?.closest?.("[data-graview-pick]")?.getAttribute(
+      "data-graview-pick",
+    ) ?? null;
 
   const domOnly: CSSProperties = useDom
     ? {
@@ -496,6 +529,7 @@ function SceneViewHost({
 
   return (
     <div
+      ref={ref}
       data-graview-view={node.id}
       data-graview-plane={Math.round(node.plane)}
       data-graview-selected={selected || undefined}
@@ -518,15 +552,23 @@ function SceneViewHost({
          * Without this, clicking an event in the week could only ever mean
          * "the week", which is why clicking an event appeared to do nothing.
          */
-        const picked = (event.target as HTMLElement | null)
-          ?.closest?.("[data-graview-pick]")
-          ?.getAttribute("data-graview-pick");
+        const picked = pickedFrom(event.target);
         if (picked && picked !== node.id) {
           event.stopPropagation();
           onPick(picked, additive);
           return;
         }
         onSelect(additive);
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const picked = pickedFrom(event.target);
+        // Only when the key landed on an inner target; the host itself is
+        // reached by Tab and has its own meaning.
+        if (!picked || picked === node.id) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onPick(picked, event.metaKey || event.shiftKey);
       }}
       onDoubleClick={onJackIn}
       style={{
@@ -710,6 +752,7 @@ export function ResolvedView<S extends AnySchema>({
   fidelity,
 }: ResolvedViewProps<S>) {
   const { store, views } = useGraview<S>();
+  const implicated = useImplicated();
   const cardinality = node.aggregate || isAggregateId(node.id) ? "many" : "one";
   const cell = {
     cardinality,
@@ -732,6 +775,7 @@ export function ResolvedView<S extends AnySchema>({
     cardinality: cell.cardinality,
     mode,
     selected,
+    implicated,
   };
 
   if (!Component) return <MissingView node={node} props={props} />;

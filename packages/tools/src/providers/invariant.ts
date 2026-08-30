@@ -1,4 +1,4 @@
-import type { AnySchema } from "@graview/core";
+import { argShape, type AnySchema } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation } from "../types.js";
 
 const REPAIR_SCORE = 100;
@@ -15,7 +15,7 @@ const REPAIR_SCORE = 100;
 export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> {
   return {
     name: "invariant",
-    derive({ selection, violations }) {
+    derive({ store, selection, violations }) {
       const selected = new Set(selection);
       const touching = violations.filter(
         (violation) =>
@@ -39,7 +39,17 @@ export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> 
             provider: "invariant",
             mutation: repair.mutation,
             args: repair.args ?? {},
-            open: (repair.missing ?? []).map((name) => ({ name })),
+            // A repair names the mutation it would run, so the same schema
+            // introspection applies: an unanswered argument here describes
+            // itself exactly as one from the schema provider does.
+            open: (repair.missing ?? []).map((name) => {
+              const mutation = store
+                .allMutations()
+                .find((candidate: { name: string }) => candidate.name === repair.mutation);
+              return mutation
+                ? { name, shape: argShape(mutation.input, name) }
+                : { name };
+            }),
             // A repair that needs nothing more is the readiest thing here.
             score: REPAIR_SCORE - repairIndex - (repair.missing?.length ?? 0),
             why: violation.message,

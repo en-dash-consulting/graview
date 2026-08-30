@@ -1,6 +1,6 @@
 import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
 import type { ViewProps } from "@graview/react";
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster } from "../primitives/index.js";
 
@@ -183,6 +183,55 @@ export interface TimelineViewProps<S extends AnySchema> extends ViewProps<S> {
   readonly selectedIds?: readonly string[];
 }
 
+/**
+ * How a span relates to what is selected elsewhere in the scene.
+ *
+ * Three states rather than two: with nothing selected every span is `plain`
+ * and the week reads normally; once something is, the spans it reaches are
+ * `lit` and the rest are `dimmed`. Selecting a person and having the
+ * calendar sit there unchanged was the complaint — the graph knows which
+ * five of these eighteen events they are in.
+ */
+type Emphasis = "plain" | "lit" | "dimmed";
+
+/**
+ * A span's colour, given how it relates to the selection.
+ *
+ * Recession here is DESATURATION and a quieter edge, never text opacity: a
+ * dimmed span still has to be readable, and dropping opacity on small text
+ * composites it against whatever is behind and fails contrast silently. The
+ * label keeps its ink in all three states.
+ */
+function spanEmphasis(emphasis: Emphasis, hue: number): CSSProperties {
+  const tint = Math.round(hue * 360);
+  // Opaque, over a hue wash, with both drawn from the theme: a cascaded bar
+  // has to OCCLUDE the one behind it, and the same wash has to read on paper
+  // and in the dark.
+  const wash = (alpha: string) =>
+    `linear-gradient(hsl(${tint} 55% var(--graview-tint-lightness) / ${alpha}), hsl(${tint} 55% var(--graview-tint-lightness) / ${alpha})), var(--graview-panel)`;
+
+  if (emphasis === "lit") {
+    return {
+      border: "1px solid var(--graview-accent)",
+      background: wash("calc(var(--graview-tint-alpha) * 1.15)"),
+      color: "var(--graview-ink)",
+      boxShadow: "0 0 16px -4px var(--graview-accent)",
+    };
+  }
+  if (emphasis === "dimmed") {
+    return {
+      border: "1px solid var(--graview-edge)",
+      background: wash("calc(var(--graview-tint-alpha) * 0.25)"),
+      color: "var(--graview-ink-muted)",
+    };
+  }
+  return {
+    border: `1px solid hsl(${tint} 50% var(--graview-tint-lightness) / 0.42)`,
+    background: wash("var(--graview-tint-alpha)"),
+    color: "var(--graview-ink)",
+  };
+}
+
 /** Below this share of the window, a span is a moment rather than a duration. */
 const MOMENT_RATIO = 0.045;
 const GUTTER = 52;
@@ -202,7 +251,14 @@ export function TimelineView<S extends AnySchema>({
   options,
   schema,
   selectedIds = [],
+  implicated = [],
 }: TimelineViewProps<S>) {
+  // The selection reaches these; anything else in the week recedes while it
+  // stands. `selectedIds` stays supported for a host driving the lens
+  // directly, outside a scene.
+  const highlit = new Set([...implicated, ...selectedIds]);
+  const emphasisOf = (id: string): Emphasis =>
+    highlit.size === 0 ? "plain" : highlit.has(id) ? "lit" : "dimmed";
   const spans = (nodes ?? [])
     .map((node) => placeOnTimeline<S>(node, options.bindings, schema))
     .filter((span): span is PlacedSpan => span !== null);
@@ -304,7 +360,7 @@ export function TimelineView<S extends AnySchema>({
                 window={window}
                 format={format}
                 hue={hue}
-                selectedIds={selectedIds}
+                emphasisOf={emphasisOf}
               />
             ))}
           </div>
@@ -329,13 +385,13 @@ function Column({
   window,
   format,
   hue,
-  selectedIds,
+  emphasisOf,
 }: {
   spans: readonly PlacedSpan[];
   window: { start: number; end: number };
   format: (at: number) => string;
   hue: (span: PlacedSpan) => number;
-  selectedIds: readonly string[];
+  emphasisOf: (id: string) => Emphasis;
 }) {
   const range = window.end - window.start;
   const pct = (at: number) => ((at - window.start) / range) * 100;
@@ -386,17 +442,7 @@ function Column({
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
-                border: selectedIds.includes(span.id)
-                  ? "1px solid var(--graview-accent)"
-                  : `1px solid hsl(${Math.round(hue(span) * 360)} 50% var(--graview-tint-lightness) / 0.42)`,
-                // Opaque, over a hue wash, with both drawn from the theme: a
-                // cascaded bar has to OCCLUDE the one behind it, and the same
-                // wash has to read on paper and in the dark.
-                background: `linear-gradient(hsl(${Math.round(hue(span) * 360)} 55% var(--graview-tint-lightness) / var(--graview-tint-alpha)), hsl(${Math.round(hue(span) * 360)} 55% var(--graview-tint-lightness) / var(--graview-tint-alpha))), var(--graview-panel)`,
-                color: "var(--graview-ink)",
-                boxShadow: selectedIds.includes(span.id)
-                  ? "0 0 16px -4px var(--graview-accent)"
-                  : undefined,
+                ...spanEmphasis(emphasisOf(span.id), hue(span)),
               }}
             >
               {/* A bar too short to hold a line of text keeps its name in the
@@ -407,7 +453,9 @@ function Column({
         );
       })}
 
-      {moments.map((span) => (
+      {moments.map((span) => {
+        const emphasis = emphasisOf(span.id);
+        return (
         <div
           key={span.id}
           data-graview-span={span.id}
@@ -435,7 +483,8 @@ function Column({
               fontSize: 9.5,
               letterSpacing: "0.04em",
               whiteSpace: "nowrap",
-              color: "var(--graview-ink-faint)",
+              color:
+                emphasis === "lit" ? "var(--graview-accent)" : "var(--graview-ink-faint)",
             }}
           >
             {format(span.start)}
@@ -446,14 +495,21 @@ function Column({
               height: 7,
               borderRadius: 999,
               flex: "0 0 auto",
-              background: `hsl(${Math.round(hue(span) * 360)} 60% var(--graview-tint-lightness))`,
-              boxShadow: selectedIds.includes(span.id)
-                ? "0 0 0 3px var(--graview-accent-dim)"
-                : `0 0 8px hsl(${Math.round(hue(span) * 360)} 60% var(--graview-tint-lightness) / 0.45)`,
+              background:
+                emphasis === "dimmed"
+                  ? "var(--graview-edge)"
+                  : `hsl(${Math.round(hue(span) * 360)} 60% var(--graview-tint-lightness))`,
+              boxShadow:
+                emphasis === "lit"
+                  ? "0 0 0 3px var(--graview-accent-dim)"
+                  : emphasis === "dimmed"
+                    ? undefined
+                    : `0 0 8px hsl(${Math.round(hue(span) * 360)} 60% var(--graview-tint-lightness) / 0.45)`,
             }}
           />
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
