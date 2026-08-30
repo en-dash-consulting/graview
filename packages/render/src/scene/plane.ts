@@ -48,7 +48,7 @@ export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
   1: { scale: 0.74, blur: 0.7, falloff: 0.2, shadow: 0.24, fidelity: "summary" },
   // Plane 2 is context, not content. It should register as presence and
   // count, and reward a glance rather than a read.
-  2: { scale: 0.66, blur: 1.8, falloff: 0.44, shadow: 0.16, fidelity: "glyph" },
+  2: { scale: 0.68, blur: 0.6, falloff: 0.3, shadow: 0.16, fidelity: "glyph" },
 };
 
 export function styleFor(plane: number): PlaneStyle {

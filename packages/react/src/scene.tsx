@@ -172,7 +172,17 @@ export function Scene<S extends AnySchema>({
     <div
       ref={wrapperRef}
       className={`graview-ground${className ? ` ${className}` : ""}`}
-      style={{ position: "relative", width: "100%", height: "100%", ...style }}
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        // The stage is sized to the measurement, but a stale measurement
+        // during a resize can briefly exceed it. Clipping keeps the scene
+        // inside its own bounds instead of pushing the page taller and
+        // cutting off anything floating over it.
+        overflow: "hidden",
+        ...style,
+      }}
     >
       {useDom ? (
         /*
@@ -415,8 +425,21 @@ function Connectors({
   /** The GPU canvas is opaque, so connectors have to sit over it, not under. */
   above: boolean;
 }) {
-  if (result.connectors.length === 0) return null;
   const byId = new Map(result.nodes.map((node) => [node.id, node]));
+  /*
+   * Only relationships involving a RAISED node are drawn.
+   *
+   * With nothing on plane 1, every edge between the focus and a context
+   * group still had two endpoints on screen, so the scene filled with long
+   * curves nobody asked to see. A connector earns its ink by explaining the
+   * thing you just asked for.
+   */
+  const connectors = result.connectors.filter((connector) => {
+    const from = byId.get(connector.from);
+    const to = byId.get(connector.to);
+    return from && to && (Math.round(from.plane) === 1 || Math.round(to.plane) === 1);
+  });
+  if (connectors.length === 0) return null;
   return (
     <svg
       aria-hidden="true"
@@ -434,7 +457,7 @@ function Connectors({
         zIndex: above ? 2 : 0,
       }}
     >
-      {result.connectors.map((connector) => {
+      {connectors.map((connector) => {
         // Endpoints are recomputed against the DRAWN boxes, not layout's own
         // centres: a plane scales its box in place, so a receded node's centre
         // is not where layout's unscaled box says it is. Using layout's

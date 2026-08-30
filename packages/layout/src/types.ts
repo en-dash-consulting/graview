@@ -65,11 +65,16 @@ export interface LayoutOptions {
  * Sizes are in layout units; the plane's scale shrinks the drawn box in
  * place, so a band's height is its size times that scale.
  */
+/**
+ * Sizes here are CAPS, not fixed boxes: a band fits its contents across the
+ * canvas and never exceeds the cap. Heights come from the band proportions in
+ * `layout()`, which is what keeps the composition together at any size.
+ */
 export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals">> = {
   width: 1200,
   height: 760,
-  focusSize: { width: 700, height: 400 },
-  relationSize: { width: 200, height: 130 },
-  contextSize: { width: 210, height: 116 },
-  gap: 24,
+  focusSize: { width: 1040, height: 420 },
+  relationSize: { width: 240, height: 140 },
+  contextSize: { width: 230, height: 130 },
+  gap: 26,
 };

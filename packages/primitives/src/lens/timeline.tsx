@@ -2,19 +2,18 @@ import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
 import type { ViewProps } from "@graview/react";
 import type { ReactElement } from "react";
 import { hueFor } from "../default-views.js";
-import { Axis, Chip, Grid, Panel, Roster } from "../primitives/index.js";
+import { Chip, Panel, Roster } from "../primitives/index.js";
 
 /**
  * The timeline/calendar lens.
  *
- * Built from the same public primitives an app has — Grid, Axis, Panel, Chip,
- * Roster and nothing else — so it doubles as the worked example of the
- * authoring API. Fork it and edit it; nothing here is sealed.
+ * Built from the same public primitives an app has, so it doubles as the
+ * worked example of the authoring API. Fork it and edit it; nothing is
+ * sealed.
  *
  * Time is NOT a framework concern. This lens declares the field ROLES it
- * needs and an app maps its own fields onto them, which is what keeps
- * recurrence and calendar maths out of the core and inside the app that
- * already owns them.
+ * needs and an app maps its own fields onto them, which keeps recurrence and
+ * calendar maths inside the app that already owns them.
  */
 
 export interface TimelineRoles {
@@ -40,11 +39,19 @@ export interface TimelineColumn {
 export interface TimelineOptions {
   readonly bindings: TimelineBindings;
   readonly columns: readonly TimelineColumn[];
-  /** The cross axis extent — 1440 for minutes in a day. */
+  /** The full extent of the axis — 1440 for minutes in a day. */
   readonly extent: number;
-  readonly ticks?: readonly { at: number; label: string }[];
-  /** Formats a position on the cross axis. Defaults to the raw number. */
+  /** Formats a position on the axis. Defaults to the raw number. */
   readonly format?: (at: number) => string;
+  /** Spacing of axis rules, in axis units. Derived from the window if absent. */
+  readonly tick?: number;
+  /**
+   * Hue for a span, 0..1. Defaults to the node's KIND, which is right for a
+   * graph and wrong for a calendar: every block is the same kind, so a week
+   * of school, naps and shifts came out one shade of maroon. An app that has
+   * a category of its own — the household example has `blockType` — says so here.
+   */
+  readonly hueOf?: (span: PlacedSpan) => number;
 }
 
 export interface PlacedSpan {
@@ -63,14 +70,39 @@ export interface LanedSpan extends PlacedSpan {
 }
 
 /**
+ * The slice of the axis worth drawing.
+ *
+ * A day runs 24 hours; a household's day happens between about seven and
+ * eight. Drawing the full extent spends two thirds of the height on empty
+ * night and squeezes everything legible into the middle — which is exactly
+ * what it did. The window comes from the data, padded, and never narrower
+ * than `minimum` so a sparse day does not zoom absurdly.
+ */
+export function activeWindow(
+  spans: readonly PlacedSpan[],
+  extent: number,
+  { pad = 45, minimum = 480 }: { pad?: number; minimum?: number } = {},
+): { start: number; end: number } {
+  if (spans.length === 0) return { start: 0, end: extent };
+  const earliest = Math.min(...spans.map((span) => span.start));
+  const latest = Math.max(...spans.map((span) => span.end));
+  let start = Math.max(0, earliest - pad);
+  let end = Math.min(extent, latest + pad);
+  const short = minimum - (end - start);
+  if (short > 0) {
+    start = Math.max(0, start - short / 2);
+    end = Math.min(extent, start + minimum);
+  }
+  return { start, end };
+}
+
+/**
  * Assigns overlapping spans to side-by-side lanes.
  *
- * Without this every concurrent event draws on top of the others and the
- * column becomes an unreadable pile — which is exactly what a real week is
- * full of: a school run inside a school block inside a shift. Greedy by start
- * time, which is optimal for intervals and, more importantly, STABLE: the
- * same spans always land in the same lanes, so an edit somewhere else does
- * not reshuffle the column and destroy the picture you remember.
+ * Greedy by start time, which is optimal for intervals and — more
+ * importantly — STABLE: the same spans always land in the same lanes, so an
+ * edit elsewhere does not reshuffle the column and destroy the picture you
+ * remember.
  */
 export function assignLanes(spans: readonly PlacedSpan[]): LanedSpan[] {
   const ordered = [...spans].sort(
@@ -151,14 +183,17 @@ export interface TimelineViewProps<S extends AnySchema> extends ViewProps<S> {
   readonly selectedIds?: readonly string[];
 }
 
+/** Below this share of the window, a span is a moment rather than a duration. */
+const MOMENT_RATIO = 0.045;
+const GUTTER = 52;
+
 /**
- * The lens's aggregate view: a set of nodes laid over columns and a cross
- * axis.
+ * The lens's aggregate view.
  *
- * At `full` fidelity it draws the grid; at `summary` it collapses to one
- * chip per column, and at `glyph` to a single count. That is fidelity
- * switching rather than scaling, which is what keeps a receded calendar
- * legible instead of turning it into grey mush.
+ * At `full` fidelity it draws the grid; at `summary` one chip per column with
+ * its count; at `glyph` a single count. That is fidelity SWITCHING rather
+ * than scaling, which is what keeps a receded calendar legible instead of
+ * turning it into grey mush.
  */
 export function TimelineView<S extends AnySchema>({
   nodes,
@@ -171,19 +206,21 @@ export function TimelineView<S extends AnySchema>({
   const spans = (nodes ?? [])
     .map((node) => placeOnTimeline<S>(node, options.bindings, schema))
     .filter((span): span is PlacedSpan => span !== null);
+  const hue: (span: PlacedSpan) => number =
+    options.hueOf ?? ((span) => hueFor(span.kind));
 
   if (fidelity === "glyph") {
-    return <Chip label={`${label ?? "Timeline"} (${spans.length})`} hue={hueFor("timeline")} />;
+    return <Chip label={`${label ?? "Timeline"} · ${spans.length}`} hue={hueFor("timeline")} />;
   }
 
   if (fidelity === "summary") {
     return (
-      <Panel title={label ?? "Timeline"} meta={spans.length} tone="muted">
+      <Panel title={label ?? "Timeline"} meta={`${spans.length} items`} tone="muted">
         <Roster
           max={options.columns.length}
           items={options.columns.map((column) => ({
             id: column.id,
-            label: `${column.label} ${spans.filter((span) => span.columnIds.includes(column.id)).length}`,
+            label: `${column.label} ${spans.filter((s) => s.columnIds.includes(column.id)).length}`,
             hue: hueFor(column.id),
           }))}
         />
@@ -192,102 +229,224 @@ export function TimelineView<S extends AnySchema>({
   }
 
   const format = options.format ?? String;
-  const ticks =
-    options.ticks ??
-    Array.from({ length: 5 }, (_, index) => {
-      const at = (options.extent / 4) * index;
-      return { at, label: format(at) };
-    });
+  const window = activeWindow(spans, options.extent);
+  const range = window.end - window.start;
+  const pct = (at: number) => ((at - window.start) / range) * 100;
+
+  // Rules snapped to round numbers, so the labels read as times rather than
+  // as wherever the window happened to begin.
+  const tick = options.tick ?? Math.max(60, Math.round(range / 8 / 60) * 60);
+  const ticks: number[] = [];
+  for (let at = Math.ceil(window.start / tick) * tick; at <= window.end; at += tick) {
+    ticks.push(at);
+  }
 
   return (
-    <Panel title={label ?? "Timeline"} meta={spans.length}>
-      <Grid columns={options.columns} extent={options.extent}>
-        <div style={{ position: "absolute", inset: 0, left: -44, width: 44 }}>
-          <Axis ticks={ticks} extent={options.extent} orientation="vertical" />
+    <Panel
+      title={label ?? "Timeline"}
+      meta={`${format(window.start)} – ${format(window.end)}`}
+      style={{ gap: 12 }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+        <div style={{ display: "flex", paddingLeft: GUTTER, paddingBottom: 10 }}>
+          {options.columns.map((column) => (
+            <div
+              key={column.id}
+              style={{
+                flex: 1,
+                fontSize: 10.5,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                textAlign: "center",
+                color: "var(--graview-ink-muted)",
+              }}
+            >
+              {column.label}
+            </div>
+          ))}
         </div>
-        {options.columns.map((column, columnIndex) => {
-          // Lanes are assigned per column: two events overlapping on Monday
-          // say nothing about Tuesday.
-          const inColumn = assignLanes(
-            spans.filter((span) => span.columnIds.includes(column.id)),
-          );
-          const columnWidth = 100 / options.columns.length;
-          return inColumn.map((span) => {
-            const top = (span.start / options.extent) * 100;
-            const height = Math.max(
-              1.6,
-              ((span.end - span.start) / options.extent) * 100,
-            );
-            // Cascade rather than split. Dividing a column evenly between
-            // four concurrent events leaves each a quarter as wide and every
-            // label truncated to a letter. Offsetting each lane by a fraction
-            // and letting them overlap keeps the first one readable, which is
-            // how a calendar you would actually use behaves.
-            // Clamped. Unbounded, lane 5 is zero-width and lane 6 is
-            // NEGATIVE — the browser drops the invalid width and the span
-            // escapes into the next day. Six concurrent items in a column is
-            // exactly the case this cascade exists for.
-            const step = columnWidth * 0.2;
-            const offset = Math.min(span.lane * step, columnWidth * 0.6);
-            const laneWidth = Math.max(columnWidth * 0.4, columnWidth - offset);
-            return (
-              <div
-                key={`${column.id}:${span.id}`}
-                data-graview-span={span.id}
-                data-graview-lane={span.lane}
-                title={`${span.label} ${format(span.start)}–${format(span.end)}`}
+
+        <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+          {ticks.map((at) => (
+            <div
+              key={at}
+              style={{
+                position: "absolute",
+                left: GUTTER - 8,
+                right: 0,
+                top: `${pct(at)}%`,
+                height: 1,
+                background: "var(--graview-edge)",
+              }}
+            >
+              <span
                 style={{
                   position: "absolute",
-                  top: `${top}%`,
-                  height: `${height}%`,
-                  left: `${columnIndex * columnWidth + offset}%`,
-                  width: `${laneWidth}%`,
-                  padding: 1.5,
-                  boxSizing: "border-box",
-                  // Later lanes sit in front, so the cascade reads front-to-back.
-                  zIndex: span.lane + 1,
+                  left: -(GUTTER - 8),
+                  top: -7,
+                  width: GUTTER - 16,
+                  textAlign: "right",
+                  fontSize: 10,
+                  letterSpacing: "0.06em",
+                  color: "var(--graview-ink-faint)",
                 }}
               >
-                <div
-                  style={{
-                    height: "100%",
-                    minHeight: 15,
-                    borderRadius: 7,
-                    padding: "3px 7px",
-                    fontSize: 10.5,
-                    lineHeight: 1.25,
-                    overflow: "hidden",
-                    // A short span has no room for a label; clipping quietly
-                    // is better than spilling over its neighbours.
-                    textOverflow: "ellipsis",
-                    // Hue identifies the kind; the THEME supplies the text
-                    // colour and the fill is a translucent tint over whatever
-                    // is behind. A fixed light fill would glare on a dark
-                    // ground, which is exactly what it did.
-                    border: selectedIds.includes(span.id)
-                      ? "1px solid var(--graview-accent)"
-                      : `1px solid hsl(${Math.round(hueFor(span.kind) * 360)} 60% 62% / 0.42)`,
-                    // Opaque, over a hue wash. A cascaded bar has to OCCLUDE
-                    // the one behind it — a translucent fill lets the label
-                    // underneath show through and both become unreadable.
-                    background: `linear-gradient(hsl(${Math.round(hueFor(span.kind) * 360)} 60% 55% / 0.22), hsl(${Math.round(hueFor(span.kind) * 360)} 60% 55% / 0.22)), var(--graview-panel)`,
-                    color: "var(--graview-ink)",
-                    boxShadow: selectedIds.includes(span.id)
-                      ? "0 0 16px -4px var(--graview-accent)"
-                      : undefined,
-                  }}
-                >
-                  {/* A twenty-minute run is a few pixels tall. Printing its
-                      label there spills it across everything nearby, so short
-                      spans carry their name in the tooltip instead. */}
-                  {height >= 2.6 ? span.label : null}
-                </div>
-              </div>
-            );
-          });
-        })}
-      </Grid>
+                {format(at)}
+              </span>
+            </div>
+          ))}
+
+          <div style={{ position: "absolute", inset: 0, left: GUTTER, display: "flex", gap: 4 }}>
+            {options.columns.map((column) => (
+              <Column
+                key={column.id}
+                spans={spans.filter((s) => s.columnIds.includes(column.id))}
+                window={window}
+                format={format}
+                hue={hue}
+                selectedIds={selectedIds}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </Panel>
+  );
+}
+
+/**
+ * One column of the grid.
+ *
+ * Durations and moments are laid out differently, on purpose. A twenty-minute
+ * school run and an eight-hour shift are not the same kind of thing, and
+ * giving them the same treatment is why this was unreadable: the run got a
+ * two-pixel sliver with a truncated label, and stole width from the shift
+ * while it was at it. Durations get the column; moments get a strip of their
+ * own, as time-stamped markers.
+ */
+function Column({
+  spans,
+  window,
+  format,
+  hue,
+  selectedIds,
+}: {
+  spans: readonly PlacedSpan[];
+  window: { start: number; end: number };
+  format: (at: number) => string;
+  hue: (span: PlacedSpan) => number;
+  selectedIds: readonly string[];
+}) {
+  const range = window.end - window.start;
+  const pct = (at: number) => ((at - window.start) / range) * 100;
+  const isMoment = (span: PlacedSpan) => (span.end - span.start) / range < MOMENT_RATIO;
+
+  const durations = assignLanes(spans.filter((span) => !isMoment(span)));
+  const moments = [...spans.filter(isMoment)].sort((a, b) => a.start - b.start);
+  const laneCount = Math.max(1, ...durations.map((span) => span.lanes));
+
+  return (
+    <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+      {durations.map((span) => {
+        // Durations get the WHOLE column. Reserving a third of it for the
+        // moment strip left each of three concurrent lanes about forty pixels
+        // wide, which is why every label read "caregiv…". Moments are a dot
+        // and a time; they overlay at the right edge instead.
+        const width = 100 / laneCount;
+        const height = Math.max(1.6, pct(span.end) - pct(span.start));
+        return (
+          <div
+            key={span.id}
+            data-graview-span={span.id}
+            title={`${span.label} · ${format(span.start)}–${format(span.end)}`}
+            style={{
+              position: "absolute",
+              top: `${pct(span.start)}%`,
+              height: `${height}%`,
+              left: `${span.lane * width}%`,
+              width: `${width}%`,
+              padding: "0 2px 2px 0",
+              boxSizing: "border-box",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                minHeight: 15,
+                borderRadius: 6,
+                padding: "3px 6px",
+                fontSize: 10.5,
+                lineHeight: 1.25,
+                overflow: "hidden",
+                // Two lines beats one truncated one at these widths.
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                border: selectedIds.includes(span.id)
+                  ? "1px solid var(--graview-accent)"
+                  : `1px solid hsl(${Math.round(hue(span) * 360)} 55% 60% / 0.36)`,
+                background: `linear-gradient(hsl(${Math.round(hue(span) * 360)} 55% 52% / 0.20), hsl(${Math.round(hue(span) * 360)} 55% 52% / 0.20)), var(--graview-panel)`,
+                color: "var(--graview-ink)",
+                boxShadow: selectedIds.includes(span.id)
+                  ? "0 0 16px -4px var(--graview-accent)"
+                  : undefined,
+              }}
+            >
+              {/* A bar too short to hold a line of text keeps its name in the
+                  tooltip rather than spilling it across its neighbours. */}
+              {height >= 3.4 ? span.label : null}
+            </div>
+          </div>
+        );
+      })}
+
+      {moments.map((span) => (
+        <div
+          key={span.id}
+          data-graview-span={span.id}
+          data-graview-moment=""
+          title={`${span.label} · ${format(span.start)}`}
+          style={{
+            position: "absolute",
+            top: `${pct(span.start)}%`,
+            right: 0,
+            transform: "translateY(-50%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 5,
+            padding: "1px 3px 1px 6px",
+            borderRadius: 999,
+            // A small plate so the marker stays readable over whatever block
+            // it happens to sit on.
+            background: "linear-gradient(90deg, transparent, var(--graview-ground) 35%)",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 9.5,
+              letterSpacing: "0.04em",
+              whiteSpace: "nowrap",
+              color: "var(--graview-ink-faint)",
+            }}
+          >
+            {format(span.start)}
+          </span>
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: 999,
+              flex: "0 0 auto",
+              background: `hsl(${Math.round(hue(span) * 360)} 65% 62%)`,
+              boxShadow: selectedIds.includes(span.id)
+                ? "0 0 0 3px var(--graview-accent-dim)"
+                : `0 0 8px hsl(${Math.round(hue(span) * 360)} 65% 62% / 0.5)`,
+            }}
+          />
+        </div>
+      ))}
+    </div>
   );
 }
 

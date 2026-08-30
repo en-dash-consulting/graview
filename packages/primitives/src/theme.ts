@@ -152,6 +152,15 @@ html, body {
   mask-image: radial-gradient(120% 90% at 50% 40%, #000 30%, transparent 78%);
 }
 
+/* A view is a thing you can act on. It should look like one. */
+[data-graview-view] { cursor: pointer; }
+[data-graview-view]:hover { filter: brightness(1.12); }
+[data-graview-view]:focus-visible {
+  outline: 2px solid var(--graview-accent);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
 button {
   font: inherit;
   color: var(--graview-ink);
@@ -174,11 +183,11 @@ button:disabled { opacity: 0.45; cursor: default; }
 
 code { color: var(--graview-ink-muted); font-size: 12px; letter-spacing: 0.02em; }
 
-/* A view host, once the scene has placed it. The transition is on transform
-   and filter only — never on layout properties, which would make every
-   navigation reflow the page. */
+/* A view host, once the scene has placed it. The transition is on filter
+   only — never on layout properties, which would make every navigation
+   reflow the page. */
 [data-graview-view] {
-  transition: filter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: filter 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 [data-graview-view][data-graview-selected] {
   filter: drop-shadow(0 0 14px var(--graview-accent-dim));

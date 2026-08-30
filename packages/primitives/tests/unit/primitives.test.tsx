@@ -207,13 +207,24 @@ describe("the timeline lens", () => {
         schema={schema}
       />,
     );
-    expect(html).toContain('data-graview-primitive="grid"');
-    expect(html).toContain('data-graview-primitive="axis"');
-    expect(html).toContain('data-graview-span="morning"');
-    // Formatted through the app's own formatter.
-    expect(html).toContain("08:10");
+    // The axis is windowed to the data — everything here happens between
+    // 08:10 and 15:00, so the grid does not spend two thirds of its height
+    // on empty night.
+    expect(html).toContain("07:25 – 15:45");
+    expect(html).toContain("08:00");
+    expect(html).toContain("15:00");
+    expect(html).not.toContain("00:00");
+
+    // A long block is a duration and gets the column.
+    expect(html).toContain('data-graview-span="school"');
     // The block spans two columns, so it is placed twice.
     expect(html.match(/data-graview-span="school"/g)).toHaveLength(2);
+
+    // A twenty-minute run is a MOMENT: a time-stamped marker in its own
+    // strip, not a two-pixel sliver competing with the block for width.
+    expect(html).toContain('data-graview-span="morning"');
+    expect(html).toContain('data-graview-moment=""');
+    expect(html).toContain("08:10");
   });
 
   it("switches to a denser summary rather than scaling down", () => {
@@ -251,7 +262,7 @@ describe("the timeline lens", () => {
         schema={schema}
       />,
     );
-    expect(html).toContain("This week (3)");
+    expect(html).toContain("This week · 3");
     expect(html).not.toContain('data-graview-primitive="panel"');
   });
 
