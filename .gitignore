@@ -1,3 +1,9 @@
 .n-dx.local.json
 .rex/n-dx_workflow.md
 .rex/execution-log*.jsonl
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+.DS_Store
+apps/*/generated/

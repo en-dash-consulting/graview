@@ -1,0 +1,17 @@
+{
+  "name": "@graview/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": { "graview": "./dist/cli/index.js" },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./sqlite": { "types": "./dist/persistence/sqlite.d.ts", "default": "./dist/persistence/sqlite.js" }
+  },
+  "scripts": { "build": "tsc -b" },
+  "dependencies": { "zod": "^4.4.3" },
+  "peerDependencies": { "better-sqlite3": "*" },
+  "peerDependenciesMeta": { "better-sqlite3": { "optional": true } }
+}
