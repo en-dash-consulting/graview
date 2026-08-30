@@ -1,3 +1,5 @@
+export { Connections } from "./connections.js";
+export type { ConnectionsProps } from "./connections.js";
 // The primitive set: enough for a new kind to render before anyone writes a view.
 export {
   Aggregate,

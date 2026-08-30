@@ -3,6 +3,7 @@ import {
   isAggregateId,
   kindsOfAggregate,
   layout,
+  withFocus,
   withRelation,
   type InterpolatedLayout,
   type Layout,
@@ -186,6 +187,26 @@ export function Scene<S extends AnySchema>({
         }
         setSelection((current) => selectionFor(node, current, additive));
       }}
+      onPick={(id, additive) => {
+        /*
+         * Picking a thing FOCUSES it. That is the whole point: the graph is
+         * the interface, so touching a thing should bring its context with
+         * it — who is involved, what constrains it, why it exists — rather
+         * than tick a checkbox somewhere.
+         *
+         * Hold shift or meta to add it to the selection without travelling,
+         * which is what you want when you are building up a multi-selection
+         * to act on.
+         */
+        if (additive) {
+          setSelection((current) =>
+            current.includes(id) ? current.filter((other) => other !== id) : [...current, id],
+          );
+          return;
+        }
+        setView((current) => ({ ...withFocus(current, id), relation: null }));
+        setSelection([id]);
+      }}
       onJackIn={() => setJackedIn(node.id)}
     >
       <ResolvedView node={node} mode="scene" selected={selection.includes(node.id)} />
@@ -251,7 +272,79 @@ export function Scene<S extends AnySchema>({
         </canvas>
       )}
       <Connectors result={frame} above={!useDom} scheme={scheme} />
+      <RelationCaptions nodes={frame.nodes} scheme={scheme} />
       {children}
+    </div>
+  );
+}
+
+/**
+ * What plane 1 is, said in words, over the run of cards it applies to.
+ *
+ * The schema has always carried a description on every edge — "who does the
+ * run", "a nap that must not be interrupted" — and nothing ever showed them.
+ * A row of anonymous cards under the thing you clicked is a puzzle; the same
+ * row under "who does the run" is an answer. Layout groups the neighbourhood
+ * by edge kind, so each caption spans one contiguous run rather than
+ * repeating itself once per card.
+ */
+function RelationCaptions({
+  nodes,
+  scheme,
+}: {
+  readonly nodes: readonly SceneNode[];
+  readonly scheme: "light" | "dark";
+}) {
+  const runs: { key: string; text: string; left: number; right: number; top: number }[] = [];
+  for (const node of nodes) {
+    if (!node.via || Math.round(node.plane) !== 1) continue;
+    const { scale } = styleFor(1, scheme);
+    const left = node.x;
+    const right = node.x + node.width * scale;
+    const top = node.y;
+    const last = runs[runs.length - 1];
+    if (last && last.key === node.via.edgeKind) {
+      last.right = Math.max(last.right, right);
+      last.top = Math.min(last.top, top);
+      continue;
+    }
+    runs.push({
+      key: node.via.edgeKind,
+      text: node.via.description ?? node.via.edgeKind.replace(/-/g, " "),
+      left,
+      right,
+      top,
+    });
+  }
+  if (runs.length === 0) return null;
+
+  return (
+    <div
+      aria-hidden="true"
+      style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 3 }}
+    >
+      {runs.map((run) => (
+        <div
+          key={run.key}
+          data-graview-relation={run.key}
+          style={{
+            position: "absolute",
+            left: run.left,
+            width: Math.max(0, run.right - run.left),
+            // Sits in the gutter above the run, not on top of the cards.
+            top: Math.max(0, run.top - 17),
+            fontSize: 10,
+            letterSpacing: "0.09em",
+            textTransform: "uppercase",
+            color: "var(--graview-ink-faint)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {run.text}
+        </div>
+      ))}
     </div>
   );
 }
@@ -308,6 +401,23 @@ function useElementSize(
   return size;
 }
 
+/**
+ * A plane's elevation, in the idiom of its scheme.
+ *
+ * Dark separates by luminance, so one soft dark pool is right. Light
+ * separates the way objects on a desk do — a tight contact shadow plus a
+ * long diffuse one — so it gets both, and the further plane casts the
+ * longer, weaker one.
+ */
+function planeShadow(shadow: number, scheme: "light" | "dark"): string {
+  if (scheme === "dark") {
+    return `0 ${(10 * shadow).toFixed(1)}px ${(34 * shadow).toFixed(1)}px rgba(0,0,0,${(shadow + 0.12).toFixed(2)})`;
+  }
+  const contact = `0 ${(1 + 2 * shadow).toFixed(1)}px ${(2 + 5 * shadow).toFixed(1)}px rgba(20,30,32,${(0.03 + 0.06 * shadow).toFixed(3)})`;
+  const cast = `0 ${(6 + 26 * shadow).toFixed(1)}px ${(18 + 60 * shadow).toFixed(1)}px -${(10 + 10 * shadow).toFixed(1)}px rgba(20,30,32,${(0.1 + 0.3 * shadow).toFixed(3)})`;
+  return `${contact}, ${cast}`;
+}
+
 function cssTransform(transform: Matrix4): string {
   // Column-major 4x4 into CSS matrix3d, which is also column-major.
   return `matrix3d(${transform.join(",")})`;
@@ -322,6 +432,8 @@ interface HostProps {
   readonly canvasHeight: number;
   readonly selected: boolean;
   onSelect(additive: boolean): void;
+  /** A view marked an inner element with `data-graview-pick`. */
+  onPick(id: string, additive: boolean): void;
   onJackIn(): void;
   readonly children: ReactNode;
 }
@@ -339,6 +451,7 @@ function SceneViewHost({
   canvasHeight,
   selected,
   onSelect,
+  onPick,
   onJackIn,
   children,
 }: HostProps) {
@@ -361,7 +474,18 @@ function SceneViewHost({
         // Recession dims toward the ground; entering and leaving nodes carry
         // their own fade on top of it.
         opacity: (1 - style.falloff * 0.55) * (node.opacity ?? 1),
-        boxShadow: `0 ${10 * style.shadow}px ${34 * style.shadow}px rgba(0,0,0,${style.shadow + 0.12})`,
+        /*
+         * Depth is handed DOWN as the elevation token, not painted on the
+         * host.
+         *
+         * A host box-shadow outlines the box the layout allotted, which is
+         * only the same shape as the view when the view fills it. Once a
+         * detail panel sized to its own content, every focused node picked
+         * up a large ghost rectangle behind it. Setting the token means the
+         * panel casts the plane's shadow from its own edges — and any view
+         * built on `Panel` gets it without knowing planes exist.
+         */
+        ["--graview-lift-low" as string]: planeShadow(style.shadow, scheme),
       }
     : // The GPU path does NOT fade the host: the shader owns opacity there,
       // and applying it in both places made an entering view fade as
@@ -380,7 +504,30 @@ function SceneViewHost({
       role="group"
       aria-label={node.aggregate ? node.aggregate.label : node.id}
       tabIndex={0}
-      onClick={(event) => onSelect(event.metaKey || event.shiftKey)}
+      onClick={(event) => {
+        const additive = event.metaKey || event.shiftKey;
+        /*
+         * A view may nominate its own inner targets.
+         *
+         * Any element carrying `data-graview-pick="<node id>"` is a real
+         * thing in the graph, and clicking it means that thing — not the
+         * view that happens to be drawing it. One rule, in one place, and
+         * every view gets it: a span in the calendar, a row in a roster, a
+         * chip in a summary.
+         *
+         * Without this, clicking an event in the week could only ever mean
+         * "the week", which is why clicking an event appeared to do nothing.
+         */
+        const picked = (event.target as HTMLElement | null)
+          ?.closest?.("[data-graview-pick]")
+          ?.getAttribute("data-graview-pick");
+        if (picked && picked !== node.id) {
+          event.stopPropagation();
+          onPick(picked, additive);
+          return;
+        }
+        onSelect(additive);
+      }}
       onDoubleClick={onJackIn}
       style={{
         position: "absolute",
@@ -401,6 +548,12 @@ function SceneViewHost({
         width: Math.round(node.width),
         height: Math.round(node.height),
         boxSizing: "border-box",
+        // A view that sizes to its content is centred in the box the layout
+        // gave it, rather than pinned to the top with the remainder left as
+        // dead white space.
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
         ...domOnly,
       }}
     >
@@ -460,17 +613,22 @@ function Connectors({
   const byId = new Map(result.nodes.map((node) => [node.id, node]));
   const centre = (node: SceneNode | undefined) => drawnCentre(node, scheme);
   /*
-   * Only relationships involving a RAISED node are drawn.
+   * A connector must touch a RAISED node, and must not end on a receded
+   * GROUP.
    *
-   * With nothing on plane 1, every edge between the focus and a context
-   * group still had two endpoints on screen, so the scene filled with long
-   * curves nobody asked to see. A connector earns its ink by explaining the
-   * thing you just asked for.
+   * "Touches plane 1" alone was too loose: a person belongs to half the
+   * context groups, so raising one drew a fan of long curves down to Blocks,
+   * Runs and Agreements. A line into a group of nine says "some of these",
+   * which is not a relationship anyone can read — while a line to a real
+   * node on plane 2, like the run a person drives, says something exact.
    */
   const connectors = result.connectors.filter((connector) => {
     const from = byId.get(connector.from);
     const to = byId.get(connector.to);
-    return from && to && (Math.round(from.plane) === 1 || Math.round(to.plane) === 1);
+    if (!from || !to) return false;
+    const raised = Math.round(from.plane) === 1 || Math.round(to.plane) === 1;
+    const vagueEnd = (node: SceneNode) => node.aggregate && Math.round(node.plane) === 2;
+    return raised && !vagueEnd(from) && !vagueEnd(to);
   });
   if (connectors.length === 0) return null;
   return (

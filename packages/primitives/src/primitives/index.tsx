@@ -19,6 +19,16 @@ export interface PanelProps {
   readonly tone?: "default" | "muted" | "warning";
   readonly children?: ReactNode;
   readonly style?: CSSProperties;
+  /**
+   * Size to the content rather than filling the box the scene gave it.
+   *
+   * A focused single node was drawn as a 500-pixel white rectangle with four
+   * lines of text in the top corner — an empty page with a debug dump in it.
+   * A week's calendar genuinely wants the whole box; one nap does not. The
+   * scene centres a fitted panel in its band, so a short one reads as
+   * deliberate rather than as a rendering that failed halfway.
+   */
+  readonly fit?: boolean;
 }
 
 const TONES: Record<NonNullable<PanelProps["tone"]>, CSSProperties> = {
@@ -50,6 +60,7 @@ export function Panel({
   tone = "default",
   children,
   style,
+  fit = false,
 }: PanelProps) {
   return (
     <div
@@ -59,7 +70,8 @@ export function Panel({
         display: "flex",
         flexDirection: "column",
         gap: 7,
-        height: "100%",
+        height: fit ? "auto" : "100%",
+        maxHeight: "100%",
         padding: 15,
         boxSizing: "border-box",
         borderRadius: 12,
@@ -118,10 +130,16 @@ export interface ChipProps {
   readonly hue?: number;
   readonly selected?: boolean;
   readonly title?: string;
+  /**
+   * The node this chip stands for. Set it and the chip becomes a target:
+   * clicking it travels to that node. Opt-in on purpose — a chip showing a
+   * field value stands for nothing you can navigate to.
+   */
+  readonly pickId?: string;
 }
 
 /** One small labelled thing. The glyph-fidelity workhorse. */
-export function Chip({ label, hue, selected, title }: ChipProps) {
+export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
   // Hue identifies the kind; luminance carries the reading. A chip is an
   // outline with a trace of its hue behind it, so a dozen of them together
   // stay a list rather than becoming confetti.
@@ -130,10 +148,16 @@ export function Chip({ label, hue, selected, title }: ChipProps) {
     <span
       data-graview-primitive="chip"
       data-selected={selected || undefined}
+      data-graview-pick={pickId}
       title={title}
       style={{
+        cursor: pickId ? "pointer" : undefined,
         display: "inline-flex",
         alignItems: "center",
+        // A chip is a label, never a bar. As a direct child of a column flex
+        // container it would otherwise stretch edge to edge, which is how
+        // "dropoff" ended up as a 700-pixel-wide pill.
+        alignSelf: "flex-start",
         padding: "2px 9px",
         borderRadius: 999,
         fontSize: 12,
@@ -167,6 +191,8 @@ export interface RosterProps {
   readonly items: readonly { id: string; label: ReactNode; hue?: number }[];
   readonly max?: number;
   readonly selectedIds?: readonly string[];
+  /** True when the item ids are real node ids, so each chip can be a target. */
+  readonly pick?: boolean;
 }
 
 /**
@@ -174,7 +200,7 @@ export interface RosterProps {
  * rather than truncating silently, because "and 9 more" is information and a
  * clipped list is a lie.
  */
-export function Roster({ items, max = 8, selectedIds = [] }: RosterProps) {
+export function Roster({ items, max = 8, selectedIds = [], pick = false }: RosterProps) {
   const shown = items.slice(0, max);
   const hidden = items.length - shown.length;
   return (
@@ -187,6 +213,7 @@ export function Roster({ items, max = 8, selectedIds = [] }: RosterProps) {
           key={item.id}
           label={item.label}
           {...(item.hue === undefined ? {} : { hue: item.hue })}
+          {...(pick ? { pickId: item.id } : {})}
           selected={selectedIds.includes(item.id)}
         />
       ))}
@@ -216,7 +243,7 @@ export function Aggregate({ label, count, items, onExpand }: AggregateProps) {
       tone="muted"
       style={onExpand ? { cursor: "zoom-in" } : undefined}
     >
-      {items && items.length > 0 ? <Roster items={items} max={6} /> : null}
+      {items && items.length > 0 ? <Roster items={items} max={6} pick /> : null}
     </Panel>
   );
 }

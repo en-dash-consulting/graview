@@ -17,6 +17,7 @@ import {
 const person = defineNode("person", {
   fields: z.object({ label: z.string(), role: z.string() }),
   plural: "People",
+  edges: { "assigned-to": { to: ["duty"], description: "who does the run" } },
 });
 const duty = defineNode("duty", {
   fields: z.object({
@@ -55,7 +56,7 @@ function store() {
         { id: "pickup", kind: "duty", label: "Pickup", day: "tue", leaveAt: 880, at: 900 },
         { id: "estate", kind: "vehicle", label: "The estate", seats: 5, boosters: 2 },
       ],
-      edges: [],
+      edges: [{ kind: "assigned-to", from: "ana", to: "morning" }],
     },
   });
 }
@@ -280,5 +281,47 @@ describe("the timeline lens", () => {
       "@graview/react",
       "react",
     ]);
+  });
+});
+
+describe("a node is never an island", () => {
+  /*
+   * Every edge declaration carries a description — "who does the run" — and
+   * for a long time nothing read any of them. A detail view that lists
+   * fields and says nothing about what the thing is connected to is a record
+   * dump, not an interface onto a graph.
+   */
+  it("names each relationship with the schema's own description", () => {
+    const html = renderScene({ ...EMPTY_VIEW, focusId: "ana" });
+    expect(html).toContain("who does the run");
+  });
+
+  it("makes each neighbour a target, so reaching it is one click", () => {
+    const html = renderScene({ ...EMPTY_VIEW, focusId: "ana" });
+    expect(html).toContain('data-graview-pick="morning"');
+  });
+
+  it("says so plainly when a node really has no connections", () => {
+    const html = renderScene({ ...EMPTY_VIEW, focusId: "estate" });
+    expect(html).toContain("Nothing is connected to this vehicle yet.");
+  });
+});
+
+describe("the timeline's spans are things, not decoration", () => {
+  it("marks every span as the node it draws", () => {
+    const html = renderToStaticMarkup(
+      <TimelineView
+        nodes={store().graph.allNodes()}
+        label="This week"
+        fidelity="full"
+        cardinality="many"
+        mode="scene"
+        selected={false}
+        options={timeline.options}
+        schema={schema}
+      />,
+    );
+    expect(html).toContain('data-graview-pick="school"');
+    expect(html).toContain('data-graview-pick="morning"');
   });
 });

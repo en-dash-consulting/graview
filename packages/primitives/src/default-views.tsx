@@ -1,5 +1,6 @@
 import { labelOf, type AnySchema, type KindOfSchema } from "@graview/core";
 import { createViews, type ReactViewRegistry, type ViewProps } from "@graview/react";
+import { Connections } from "./connections.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
 
 /**
@@ -54,21 +55,52 @@ export function registerDefaultViews<S extends AnySchema>(
     const Full = (props: ViewProps<S>) => {
       const node = props.node as (Record<string, unknown> & { id: string; kind: string }) | undefined;
       if (!node) return null;
-      const fields = salientFields(node, 6);
+      const fields = salientFields(node, 8);
       return (
         <Panel
           title={labelOf(definition, node)}
-          subtitle={String(kind)}
+          subtitle={definition?.description ?? String(kind)}
           selected={props.selected}
+          fit
         >
-          <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "auto 1fr", gap: "2px 10px", fontSize: 13 }}>
-            {fields.map((field) => (
-              <div key={field.key} style={{ display: "contents" }}>
-                <dt style={{ opacity: 0.6 }}>{field.key}</dt>
-                <dd style={{ margin: 0 }}>{field.value}</dd>
-              </div>
-            ))}
-          </dl>
+          {/*
+            * Fields and relationships side by side, both filling the panel.
+            *
+            * A focused node used to be a short column of raw fields in the
+            * corner of a very large white box, which read as an empty page
+            * with a debug dump in it. What the panel is FOR is the answer to
+            * "what is this and what is it caught up in" — so the graph gets
+            * equal billing with the record.
+            */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(200px, 1fr) minmax(220px, 1.4fr)",
+              gap: "22px 34px",
+              alignItems: "start",
+            }}
+          >
+            <dl
+              style={{
+                margin: 0,
+                display: "grid",
+                gridTemplateColumns: "auto 1fr",
+                gap: "4px 14px",
+                fontSize: 13,
+              }}
+            >
+              {fields.map((field) => (
+                <div key={field.key} style={{ display: "contents" }}>
+                  <dt style={{ color: "var(--graview-ink-faint)" }}>{field.key}</dt>
+                  <dd style={{ margin: 0 }}>{field.value}</dd>
+                </div>
+              ))}
+            </dl>
+            <Connections
+              id={node.id}
+              empty={`Nothing is connected to this ${String(kind)} yet.`}
+            />
+          </div>
         </Panel>
       );
     };
@@ -83,7 +115,7 @@ export function registerDefaultViews<S extends AnySchema>(
       if (!node) return null;
       const fields = salientFields(node, 3);
       return (
-        <Panel title={labelOf(definition, node)} selected={props.selected} tone="muted">
+        <Panel title={labelOf(definition, node)} selected={props.selected} tone="muted" fit>
           <Roster
             items={fields.map((field) => ({
               id: field.key,

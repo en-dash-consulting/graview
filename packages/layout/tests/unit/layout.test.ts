@@ -21,7 +21,10 @@ import {
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),
   plural: "People",
-  edges: { "assigned-to": { to: ["duty"] } },
+  edges: {
+    "assigned-to": { to: ["duty"], description: "who does the run" },
+    "rides-in": { to: ["duty"], description: "who is along for it" },
+  },
 });
 const duty = defineNode("duty", { fields: z.object({ label: z.string() }), plural: "Runs" });
 const week = defineNode("week", { fields: z.object({ label: z.string() }) });
@@ -40,6 +43,7 @@ function graph() {
     edges: [
       { kind: "assigned-to", from: "ana", to: "morning" },
       { kind: "assigned-to", from: "bo", to: "evening" },
+      { kind: "rides-in", from: "cass", to: "morning" },
     ],
   });
 }
@@ -103,6 +107,7 @@ describe("layout as a pure function", () => {
     expect(result.connectors.map((c) => `${c.from}->${c.to}`)).toEqual([
       "ana->aggregate:duty",
       "bo->aggregate:duty",
+      "cass->aggregate:duty",
     ]);
 
     const expanded = layout(
@@ -113,9 +118,14 @@ describe("layout as a pure function", () => {
     expect(expanded.connectors.map((c) => c.id)).toEqual([
       "assigned-to:ana:morning",
       "assigned-to:bo:evening",
+      "rides-in:cass:morning",
     ]);
     // Edge kind travels with the connector so stroke treatment can mean something.
-    expect(expanded.connectors.every((c) => c.kind === "assigned-to")).toBe(true);
+    expect(expanded.connectors.map((c) => c.kind)).toEqual([
+      "assigned-to",
+      "assigned-to",
+      "rides-in",
+    ]);
   });
 });
 
@@ -269,5 +279,69 @@ describe("interpolation", () => {
       expect(easeInOut(t)).toBeGreaterThanOrEqual(0);
       expect(easeInOut(t)).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe("a focused node surfaces its neighbourhood", () => {
+  /*
+   * The behaviour this file exists to pin down: clicking a thing shows what
+   * it is caught up in. Plane 1 used to stay EMPTY until the reader guessed
+   * an edge kind, which is why selecting an event read as "nothing
+   * happened".
+   */
+  it("raises everything one edge away, with no relation named", () => {
+    const result = layout(graph(), schema, view({ focusId: "morning" }));
+    const raised = result.nodes.filter((node) => node.plane === 1);
+    expect(raised.map((node) => node.id).sort()).toEqual(["ana", "cass"]);
+  });
+
+  it("says WHY each one is there, in the schema's own words", () => {
+    const result = layout(graph(), schema, view({ focusId: "morning" }));
+    const byId = new Map(result.nodes.map((node) => [node.id, node]));
+    expect(byId.get("ana")?.via).toEqual({
+      edgeKind: "assigned-to",
+      direction: "in",
+      description: "who does the run",
+    });
+    expect(byId.get("cass")?.via?.description).toBe("who is along for it");
+  });
+
+  it("groups the neighbourhood by edge kind, so a caption spans a run", () => {
+    const result = layout(graph(), schema, view({ focusId: "morning" }));
+    const kinds = result.nodes
+      .filter((node) => node.plane === 1)
+      .map((node) => node.via?.edgeKind);
+    // Contiguous: no kind appears, disappears and returns.
+    expect(kinds).toEqual([...kinds].sort());
+  });
+
+  it("narrows to one edge kind when a relation names one", () => {
+    const result = layout(
+      graph(),
+      schema,
+      view({ focusId: "morning", relation: "assigned-to" }),
+    );
+    expect(result.nodes.filter((node) => node.plane === 1).map((node) => node.id)).toEqual([
+      "ana",
+    ]);
+  });
+
+  it("still raises a whole KIND when the relation is not an edge from here", () => {
+    const result = layout(graph(), schema, view({ focusId: "week-1", relation: "person" }));
+    expect(result.nodes.filter((node) => node.plane === 1).map((node) => node.id)).toEqual([
+      "ana",
+      "bo",
+      "cass",
+    ]);
+  });
+
+  it("gives the focus the relation band as well when nothing is raised", () => {
+    // A calendar with nothing beside it should fill the screen, not leave a
+    // third of it empty above the context row.
+    const alone = layout(graph(), schema, view({ focusId: "week-1" }));
+    const beside = layout(graph(), schema, view({ focusId: "week-1", relation: "person" }));
+    const heightOf = (result: ReturnType<typeof layout>) =>
+      result.nodes.find((node) => node.plane === 0)!.height;
+    expect(heightOf(alone)).toBeGreaterThan(heightOf(beside));
   });
 });

@@ -99,6 +99,24 @@ export function useNavigation() {
 export function useUrlSync(): void {
   const { view, setView } = useGraview();
 
+  /*
+   * Adopt the fragment on FIRST load, not only on navigation.
+   *
+   * "Every stop is a URL" was only half true: the view was written to the
+   * fragment and the back button honoured it, but opening a shared link
+   * landed on the default view and silently overwrote the address bar. A
+   * pasted link that does not go where it says is worse than no link.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const initial = fromUrl(window.location.hash);
+    if (initial.focusId || initial.relation || initial.expanded.length > 0) {
+      setView(initial);
+    }
+    // Once, on mount: later changes are this hook's own writes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onPop = () => setView(fromUrl(window.location.hash));

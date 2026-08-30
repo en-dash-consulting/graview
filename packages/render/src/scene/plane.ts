@@ -61,10 +61,14 @@ export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
   // Plane 1 recedes but stays READABLE — its job is to be looked at next,
   // not to be atmosphere. Enough separation to read as further away, little
   // enough that a summary view can still be read.
-  1: { scale: 0.74, blur: 0.7, falloff: 0.2, shadow: 0.24, fidelity: "summary" },
+  1: { scale: 0.74, blur: 0.45, falloff: 0.2, shadow: 0.24, fidelity: "summary" },
   // Plane 2 is context, not content. It should register as presence and
   // count, and reward a glance rather than a read.
-  2: { scale: 0.68, blur: 0.6, falloff: 0.3, shadow: 0.16, fidelity: "glyph" },
+  //
+  // Blurrier than plane 1, necessarily: recession has to be monotonic or the
+  // depth cue inverts and the furthest plane reads as the nearest. This was
+  // briefly 0.6 against plane 1's 0.7, which `frame-plan.test.ts` caught.
+  2: { scale: 0.68, blur: 0.9, falloff: 0.3, shadow: 0.16, fidelity: "glyph" },
 };
 
 export function styleFor(plane: number, scheme: Scheme = "dark"): PlaneStyle {

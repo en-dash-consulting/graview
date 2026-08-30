@@ -1,0 +1,140 @@
+import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
+import { useGraph, useGraview } from "@graview/react";
+import { Chip } from "./primitives/index.js";
+import { hueFor } from "./default-views.js";
+
+/**
+ * Everything one edge away from a node, in the schema's own words.
+ *
+ * This is the answer to "I clicked a thing and nothing happened". A node in a
+ * typed graph is never an island: an event has people at it, an agreement
+ * that judges it, a reason it exists. All of that is already declared — every
+ * edge carries a description like "who does the run" or "a nap that must not
+ * be interrupted" — and until now no surface read any of it.
+ *
+ * Derived entirely from the schema and the graph, so a kind nobody wrote a
+ * view for still shows its relationships, and a new edge kind appears here
+ * the moment it is declared. Each neighbour is a `data-graview-pick` target,
+ * so the scene routes a click on it to that node.
+ */
+export interface ConnectionsProps {
+  readonly id: string;
+  /** Chips per group before it says "+N more" rather than truncating. */
+  readonly max?: number;
+  /** Shown when the node has no edges at all. Omit for silence. */
+  readonly empty?: string;
+}
+
+interface Group {
+  readonly key: string;
+  readonly label: string;
+  readonly ids: string[];
+}
+
+export function Connections({ id, max = 8, empty }: ConnectionsProps) {
+  const { store } = useGraview<AnySchema>();
+  // Subscribing to the graph keeps this current when an edge is added.
+  useGraph();
+  const groups = groupsFor(store, id);
+
+  if (groups.length === 0) {
+    return empty ? (
+      <p style={{ margin: 0, fontSize: 12.5, color: "var(--graview-ink-faint)" }}>{empty}</p>
+    ) : null;
+  }
+
+  return (
+    <div
+      data-graview-primitive="connections"
+      style={{ display: "flex", flexDirection: "column", gap: 12 }}
+    >
+      {groups.map((group) => {
+        const shown = group.ids.slice(0, max);
+        const hidden = group.ids.length - shown.length;
+        return (
+          <section key={group.key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <h4
+              style={{
+                margin: 0,
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: "0.09em",
+                textTransform: "uppercase",
+                color: "var(--graview-ink-faint)",
+              }}
+            >
+              {group.label}
+            </h4>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {shown.map((neighbourId) => {
+                const node = store.graph.getNode(neighbourId);
+                if (!node) return null;
+                return (
+                  <Chip
+                    key={neighbourId}
+                    pickId={neighbourId}
+                    hue={hueFor(node.kind)}
+                    title={`Go to ${node.kind}`}
+                    label={labelOf(store.schema.tryDefinition(node.kind), node)}
+                  />
+                );
+              })}
+              {hidden > 0 ? <Chip label={`+${hidden} more`} /> : null}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Neighbours grouped by the edge that reaches them.
+ *
+ * An outbound edge is described by the focus's own declaration; an inbound
+ * one by the declaration of whatever points at it. Both are the schema
+ * author's words about that relationship, which is what makes this readable
+ * without anyone writing UI copy.
+ */
+function groupsFor(
+  store: { graph: GraphReader<AnyGraphNode>; schema: AnySchema },
+  id: string,
+): Group[] {
+  const focus = store.graph.getNode(id);
+  if (!focus) return [];
+  const byKey = new Map<string, Group>();
+
+  for (const edge of store.graph.allEdges()) {
+    const otherId = edge.from === id ? edge.to : edge.to === id ? edge.from : null;
+    if (otherId === null || otherId === id) continue;
+    const other = store.graph.getNode(otherId);
+    if (!other) continue;
+    const direction = edge.from === id ? "out" : "in";
+    const owner = direction === "out" ? focus.kind : other.kind;
+    const key = `${edge.kind}:${direction}`;
+    const group =
+      byKey.get(key) ??
+      ({
+        key,
+        label:
+          describeEdge(store.schema, owner, edge.kind) ?? edge.kind.replace(/-/g, " "),
+        ids: [],
+      } satisfies Group);
+    if (!group.ids.includes(otherId)) group.ids.push(otherId);
+    byKey.set(key, group);
+  }
+
+  for (const group of byKey.values()) group.ids.sort();
+  return [...byKey.values()].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+}
+
+function describeEdge(
+  schema: AnySchema,
+  ownerKind: string,
+  edgeKind: string,
+): string | undefined {
+  const edges = schema.tryDefinition(ownerKind)?.edges as
+    | Record<string, { description?: string }>
+    | undefined;
+  return edges?.[edgeKind]?.description;
+}
