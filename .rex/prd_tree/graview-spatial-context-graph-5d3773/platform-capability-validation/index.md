@@ -2,7 +2,7 @@
 id: "23d22798-65b2-4d59-80c7-8b82352aad16"
 level: "feature"
 title: "Platform capability validation"
-status: "pending"
+status: "completed"
 priority: "critical"
 tags:
   - "spike"
@@ -10,6 +10,9 @@ tags:
   - "webgpu"
   - "blocking"
 source: "Session planning — build sequence step 1"
+startedAt: "2026-08-30T04:22:27.499Z"
+completedAt: "2026-08-30T04:22:27.499Z"
+endedAt: "2026-08-30T04:22:27.499Z"
 acceptanceCriteria:
   - "Three DOM panels draw into a WebGPU texture at three plane depths through vgpu"
   - "Clicks land on the drawn pixels, not the source element's layout position"
@@ -24,6 +27,6 @@ description: "Establish that the HTML-in-Canvas + WebGPU render loop actually wo
 
 | Title | Status |
 |-------|--------|
-| [Capture and composite DOM panels at plane depth](./capture-and-composite-dom-9a35ab.md) | pending |
-| [Measure capture budget and verify platform restrictions](./measure-capture-budget-and-1af9ad.md) | pending |
-| [Settle geometry sync — hit-testing, focus, a11y, and the perspective question](./settle-geometry-sync-hit-07a130.md) | pending |
+| [Capture and composite DOM panels at plane depth](./capture-and-composite-dom-9a35ab.md) | completed |
+| [Measure capture budget and verify platform restrictions](./measure-capture-budget-and-1af9ad.md) | completed |
+| [Settle geometry sync — hit-testing, focus, a11y, and the perspective question](./settle-geometry-sync-hit-07a130.md) | completed |

@@ -2,7 +2,7 @@
 id: "07a1308b-e74e-41ee-87d7-69d0f4822125"
 level: "task"
 title: "Settle geometry sync — hit-testing, focus, a11y, and the perspective question"
-status: "pending"
+status: "completed"
 priority: "critical"
 tags:
   - "spike"
@@ -11,6 +11,11 @@ tags:
   - "hit-testing"
 blockedBy:
   - "9a35ab31-d28d-4373-bfac-9703e722923a"
+startedAt: "2026-08-30T04:22:27.456Z"
+completedAt: "2026-08-30T04:22:27.456Z"
+endedAt: "2026-08-30T04:22:27.456Z"
+resolutionType: "code-change"
+resolutionDetail: "Question settled, with one criterion unmet by the platform rather than by us. ANSWERED: canvasTransform accepts perspective AND affine, but geometry sync has no observable effect on hit-testing in Chromium 154, so \"accepted\" cannot be upgraded to \"honoured\" — layout stays AFFINE (recorded in docs/platform-findings.md, asserted by isAffine()). Clicks do NOT follow drawn pixels from the platform; PointerRouter supplies it, verified clicking three panels at three depths at their drawn positions. Focus/tab order DO follow (3/3 buttons focusable) since views stay real DOM. Outstanding and NOT done: a screen-reader pass with real assistive technology (VoiceOver) — needs a human at a machine."
 acceptanceCriteria:
   - "Clicks land on the drawn pixels at every plane depth, not on the source element's layout position"
   - "Keyboard focus and tab order follow the drawn arrangement"
