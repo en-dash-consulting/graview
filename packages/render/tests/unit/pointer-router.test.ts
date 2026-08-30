@@ -50,9 +50,11 @@ describe("plane transforms", () => {
   });
 
   it("interpolates any two plane styles, so transitions animate", () => {
+    // Read both ends from the source of truth, so tuning a plane's look does
+    // not break a test about interpolation.
     const mid = mixStyles(PLANE_STYLES[0], PLANE_STYLES[2], 0.5);
-    expect(mid.scale).toBeCloseTo((1 + 0.52) / 2);
-    expect(mid.blur).toBeCloseTo(3.2 / 2);
+    expect(mid.scale).toBeCloseTo((PLANE_STYLES[0].scale + PLANE_STYLES[2].scale) / 2);
+    expect(mid.blur).toBeCloseTo((PLANE_STYLES[0].blur + PLANE_STYLES[2].blur) / 2);
     expect(mixStyles(PLANE_STYLES[0], PLANE_STYLES[2], 0)).toEqual(PLANE_STYLES[0]);
     expect(mixStyles(PLANE_STYLES[0], PLANE_STYLES[2], 1)).toEqual(PLANE_STYLES[2]);
     // Fidelity is a choice, not a blend: a half-captured view is not a thing.

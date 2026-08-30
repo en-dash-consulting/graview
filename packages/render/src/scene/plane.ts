@@ -39,12 +39,16 @@ export interface PlaneStyle {
 }
 
 export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
-  0: { scale: 1, blur: 0, falloff: 0, shadow: 0.28, fidelity: "full" },
-  // Plane 1 recedes but stays READABLE: its job is to be looked at next, not
-  // to be atmosphere. Blur and falloff heavy enough to separate it from the
-  // focus, light enough that a summary view can still be read.
-  1: { scale: 0.72, blur: 0.8, falloff: 0.18, shadow: 0.2, fidelity: "summary" },
-  2: { scale: 0.52, blur: 3.2, falloff: 0.58, shadow: 0.12, fidelity: "glyph" },
+  // The focus plane is unfiltered on purpose: everything else is judged
+  // against it, so it has to be the one true reading of the data.
+  0: { scale: 1, blur: 0, falloff: 0, shadow: 0.34, fidelity: "full" },
+  // Plane 1 recedes but stays READABLE — its job is to be looked at next,
+  // not to be atmosphere. Enough separation to read as further away, little
+  // enough that a summary view can still be read.
+  1: { scale: 0.74, blur: 0.7, falloff: 0.2, shadow: 0.24, fidelity: "summary" },
+  // Plane 2 is context, not content. It should register as presence and
+  // count, and reward a glance rather than a read.
+  2: { scale: 0.66, blur: 1.8, falloff: 0.44, shadow: 0.16, fidelity: "glyph" },
 };
 
 export function styleFor(plane: number): PlaneStyle {

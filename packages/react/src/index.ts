@@ -12,6 +12,9 @@ export type {
 } from "./view-registry.js";
 
 export { ResolvedView, Scene, selectionFor } from "./scene.js";
+export type { SceneNode } from "./scene.js";
+export { useAnimatedLayout, useTouched } from "./animation.js";
+export type { TransitionOptions } from "./animation.js";
 export type { ResolvedViewProps, SceneProps } from "./scene.js";
 
 export { JackedIn } from "./jack-in.js";

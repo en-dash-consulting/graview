@@ -114,8 +114,32 @@ export function registerDefaultViews<S extends AnySchema>(
       />
     );
 
+    /**
+     * A group at glyph fidelity. Still a name and a count, at a size that
+     * survives the plane's scale — "context" means glanceable, not unreadable.
+     */
     const GroupGlyph = (props: ViewProps<S>) => (
-      <Chip label={`${props.label ?? plural} (${props.nodes?.length ?? 0})`} hue={hue} />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: 2,
+          height: "100%",
+          padding: "8px 12px",
+          boxSizing: "border-box",
+          borderRadius: 10,
+          border: `1px solid hsl(${Math.round(hue * 360)} 60% 62% / 0.34)`,
+          background: `hsl(${Math.round(hue * 360)} 60% 55% / 0.10)`,
+        }}
+      >
+        <strong style={{ fontSize: 17, letterSpacing: "0.01em" }}>
+          {props.nodes?.length ?? 0}
+        </strong>
+        <span style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+          {props.label ?? plural}
+        </span>
+      </div>
     );
 
     registry

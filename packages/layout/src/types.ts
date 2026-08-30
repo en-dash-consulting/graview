@@ -70,6 +70,6 @@ export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals">> = {
   height: 760,
   focusSize: { width: 700, height: 400 },
   relationSize: { width: 200, height: 130 },
-  contextSize: { width: 190, height: 120 },
+  contextSize: { width: 210, height: 116 },
   gap: 24,
 };

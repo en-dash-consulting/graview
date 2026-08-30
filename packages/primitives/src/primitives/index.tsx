@@ -23,7 +23,7 @@ export interface PanelProps {
 
 const TONES: Record<NonNullable<PanelProps["tone"]>, CSSProperties> = {
   default: { background: "var(--graview-panel, #ffffff)", color: "var(--graview-ink, #1a1a1a)" },
-  muted: { background: "var(--graview-panel-muted, #f7f5f1)", color: "var(--graview-ink-muted, #55514a)" },
+  muted: { background: "var(--graview-panel-muted, #f7f5f1)", color: "var(--graview-ink, #1a1a1a)" },
   warning: { background: "var(--graview-panel-warning, #fdf3ec)", color: "var(--graview-ink, #1a1a1a)" },
 };
 
@@ -58,14 +58,20 @@ export function Panel({
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: 6,
+        gap: 7,
         height: "100%",
-        padding: 14,
+        padding: 15,
         boxSizing: "border-box",
-        borderRadius: 10,
-        border: selected
-          ? "2px solid var(--graview-accent, #2f6f5e)"
-          : "1px solid var(--graview-edge, #e4e0d8)",
+        borderRadius: 12,
+        // A lit edge over the panel's own ground. Not `backdrop-filter`: a
+        // captured subtree has nothing behind it, so the effect is a no-op on
+        // the GPU path and the panel would differ between renderers.
+        border: `1px solid ${
+          selected ? "var(--graview-accent, #2f6f5e)" : "var(--graview-edge, #e4e0d8)"
+        }`,
+        boxShadow: selected
+          ? "0 0 0 1px var(--graview-accent-dim), 0 18px 50px -22px #000, inset 0 1px 0 var(--graview-edge-bright)"
+          : "0 18px 50px -26px #000, inset 0 1px 0 var(--graview-edge)",
         overflow: "hidden",
         ...TONES[tone],
         ...style,
@@ -73,9 +79,28 @@ export function Panel({
     >
       {title === undefined ? null : (
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <strong style={{ fontSize: 16, lineHeight: 1.25 }}>{title}</strong>
+          <strong
+            style={{
+              fontSize: 15,
+              lineHeight: 1.25,
+              fontWeight: 560,
+              letterSpacing: "0.005em",
+            }}
+          >
+            {title}
+          </strong>
           {meta === undefined ? null : (
-            <span style={{ marginLeft: "auto", fontSize: 12, ...FAINT_TEXT }}>{meta}</span>
+            <span
+              style={{
+                marginLeft: "auto",
+                fontSize: 11,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                ...FAINT_TEXT,
+              }}
+            >
+              {meta}
+            </span>
           )}
         </div>
       )}
@@ -97,8 +122,10 @@ export interface ChipProps {
 
 /** One small labelled thing. The glyph-fidelity workhorse. */
 export function Chip({ label, hue, selected, title }: ChipProps) {
-  const color = hue === undefined ? undefined : `hsl(${Math.round(hue * 360)} 45% 32%)`;
-  const background = hue === undefined ? undefined : `hsl(${Math.round(hue * 360)} 55% 94%)`;
+  // Hue identifies the kind; luminance carries the reading. A chip is an
+  // outline with a trace of its hue behind it, so a dozen of them together
+  // stay a list rather than becoming confetti.
+  const tint = hue === undefined ? undefined : Math.round(hue * 360);
   return (
     <span
       data-graview-primitive="chip"
@@ -107,14 +134,25 @@ export function Chip({ label, hue, selected, title }: ChipProps) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        padding: "2px 8px",
+        padding: "2px 9px",
         borderRadius: 999,
         fontSize: 12,
         lineHeight: 1.5,
         whiteSpace: "nowrap",
-        border: `1px solid ${selected ? "var(--graview-accent, #2f6f5e)" : "var(--graview-edge, #e4e0d8)"}`,
-        background: background ?? "var(--graview-panel-muted, #f7f5f1)",
-        color: color ?? "inherit",
+        letterSpacing: "0.01em",
+        border: `1px solid ${
+          selected
+            ? "var(--graview-accent, #2f6f5e)"
+            : tint === undefined
+              ? "var(--graview-edge, #e4e0d8)"
+              : `hsl(${tint} 60% 62% / 0.42)`
+        }`,
+        background:
+          tint === undefined
+            ? "var(--graview-panel-muted, #f7f5f1)"
+            : `hsl(${tint} 60% 55% / 0.13)`,
+        color: "var(--graview-ink, #1a1a1a)",
+        boxShadow: selected ? "0 0 14px -4px var(--graview-accent)" : undefined,
       }}
     >
       {label}
@@ -222,23 +260,50 @@ export interface GridProps {
 }
 
 /** Named columns over a continuous cross axis. A week over hours. */
-export function Grid({ columns, gutter = 44, children }: GridProps) {
+export function Grid({ columns, extent, gutter = 46, children }: GridProps) {
   return (
     <div
       data-graview-primitive="grid"
       style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}
     >
-      <div style={{ display: "flex", paddingLeft: gutter }}>
+      <div
+        style={{
+          display: "flex",
+          paddingLeft: gutter,
+          paddingBottom: 6,
+          borderBottom: "1px solid var(--graview-edge, #e4e0d8)",
+        }}
+      >
         {columns.map((column) => (
           <div
             key={column.id}
-            style={{ flex: 1, fontSize: 12, textAlign: "center", ...MUTED_TEXT }}
+            style={{
+              flex: 1,
+              fontSize: 11,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              textAlign: "center",
+              ...MUTED_TEXT,
+            }}
           >
             {column.label}
           </div>
         ))}
       </div>
-      <div style={{ position: "relative", flex: 1, minHeight: 0, paddingLeft: gutter }}>
+      <div
+        style={{
+          position: "relative",
+          flex: 1,
+          minHeight: 0,
+          marginLeft: gutter,
+          // Column rules and hour rules, drawn as a background rather than as
+          // elements: a measured surface costs nothing and adds no nodes for
+          // the capture pass to rasterise.
+          backgroundImage: `repeating-linear-gradient(to right, var(--graview-edge) 0 1px, transparent 1px calc(100% / ${columns.length})), repeating-linear-gradient(to bottom, var(--graview-edge) 0 1px, transparent 1px 12.5%)`,
+          backgroundSize: `100% 100%, 100% 100%`,
+        }}
+        data-graview-extent={extent}
+      >
         {children}
       </div>
     </div>

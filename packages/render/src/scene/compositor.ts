@@ -113,6 +113,40 @@ export class Compositor {
     this.detachRouter = null;
   }
 
+  /**
+   * Brings the scene in line with a new set of views, keeping the GPU
+   * resources of everything that survived.
+   *
+   * Removing and re-adding every view on each edit destroys and reallocates
+   * every texture, which is both wasteful and — at this scene's size — enough
+   * to bring the GPU process down. Reconciling touches only what changed.
+   */
+  reconcile(views: readonly SceneView[]): void {
+    const next = new Map(views.map((view) => [view.id, view]));
+    for (const id of [...this.views.keys()]) {
+      if (!next.has(id)) this.remove(id);
+    }
+    for (const view of views) {
+      const existing = this.views.get(view.id);
+      if (!existing) {
+        this.add(view);
+        continue;
+      }
+      // Same element and same box: keep the texture, just move it.
+      const moved = existing.x !== view.x || existing.y !== view.y || existing.plane !== view.plane;
+      const resized = existing.width !== view.width || existing.height !== view.height;
+      const replaced = existing.element !== view.element;
+      this.views.set(view.id, {
+        ...view,
+        dirty: existing.dirty || resized || replaced || moved,
+      });
+      if (replaced) {
+        // A different element means the pixels are different, whatever the box says.
+        delete this.capturedAt[view.id];
+      }
+    }
+  }
+
   add(view: SceneView): void {
     if (view.element.parentElement !== this.canvas) {
       // The platform's own message for this arrives from deep inside a
@@ -296,13 +330,19 @@ export class Compositor {
   }
 
   private ensureResources(device: GPUDevice, view: SceneView): ViewResources {
+    // CEIL, not round. The browser rasterises an element of height 399.4 into
+    // 400 rows, and a 399-row texture makes the copy fail validation — which
+    // it does silently, leaving the view with whatever was in the texture
+    // before, or nothing at all. Allocate at least what can arrive.
+    const width = Math.max(1, Math.ceil(view.width));
+    const height = Math.max(1, Math.ceil(view.height));
     const existing = this.resources.get(view.id);
-    if (existing && existing.width === view.width && existing.height === view.height) {
+    if (existing && existing.width === width && existing.height === height) {
       return existing;
     }
     existing?.texture.destroy();
     const texture = device.createTexture({
-      size: [Math.max(1, Math.round(view.width)), Math.max(1, Math.round(view.height))],
+      size: [width, height],
       format: "rgba8unorm",
       usage:
         GPUTextureUsage.COPY_DST |
@@ -312,8 +352,8 @@ export class Compositor {
     });
     const resource: ViewResources = {
       texture,
-      width: view.width,
-      height: view.height,
+      width,
+      height,
       bindGroup: null,
       uniform:
         existing?.uniform ??
