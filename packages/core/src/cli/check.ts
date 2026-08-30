@@ -179,8 +179,69 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
   }
 
+  /** Every edge kind any node declares, for validating an entity lens. */
+  const edgeKinds = new Set<string>();
+  for (const kind of kinds) {
+    const edges = app.schema.tryDefinition(kind)?.edges as Record<string, unknown> | undefined;
+    for (const edge of Object.keys(edges ?? {})) edgeKinds.add(edge);
+  }
+
   for (const lens of app.lenses ?? []) {
-    for (const [kind, bindings] of Object.entries(lens.bindings ?? {})) {
+    /*
+     * An `entities` lens binds roles to whole kinds and edges rather than a
+     * kind's fields to roles. Checking it against the field-binding shape
+     * reported every role as an undeclared node kind, which is a confident
+     * and completely wrong diagnosis — the sort a checker earns distrust for.
+     */
+    if (lens.binds === "entities") {
+      const bindings = (lens.bindings ?? {}) as Record<string, Record<string, string>>;
+      for (const role of lens.requiredRoles) {
+        if (!(role in bindings)) {
+          add({
+            severity: "error",
+            code: "lens-role-unbound",
+            where: `lens "${lens.name}" bindings`,
+            message: `Lens "${lens.name}" requires role "${role}", which nothing binds.`,
+            fix: `Add ${role}: { kind: "<node kind>" } or { edge: "<edge kind>" }.`,
+          });
+        }
+      }
+      for (const [role, binding] of Object.entries(bindings)) {
+        const kind = binding["kind"];
+        const edge = binding["edge"];
+        if (kind !== undefined && !kinds.has(kind)) {
+          add({
+            severity: "error",
+            code: "lens-binding-undeclared-kind",
+            where: `lens "${lens.name}" bindings.${role}`,
+            message: `Role "${role}" names kind "${kind}", which no defineNode declares.`,
+            fix: `Use one of: ${[...kinds].join(", ")}.`,
+          });
+        }
+        if (edge !== undefined && !edgeKinds.has(edge)) {
+          add({
+            severity: "error",
+            code: "lens-binding-undeclared-edge",
+            where: `lens "${lens.name}" bindings.${role}`,
+            message: `Role "${role}" names edge "${edge}", which no defineNode declares.`,
+            fix: `Use one of: ${[...edgeKinds].join(", ")}.`,
+          });
+        }
+        if (kind === undefined && edge === undefined) {
+          add({
+            severity: "error",
+            code: "lens-binding-empty",
+            where: `lens "${lens.name}" bindings.${role}`,
+            message: `Role "${role}" binds neither a kind nor an edge.`,
+            fix: `Give it { kind: "<node kind>" } or { edge: "<edge kind>" }.`,
+          });
+        }
+      }
+      continue;
+    }
+
+    for (const [kind, rawBindings] of Object.entries(lens.bindings ?? {})) {
+      const bindings = rawBindings as Record<string, string>;
       if (!kinds.has(kind)) {
         add({
           severity: "error",

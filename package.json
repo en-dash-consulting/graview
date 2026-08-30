@@ -13,7 +13,9 @@
     "spike": "node apps/spike/scripts/run-spike.mjs",
     "acceptance": "node the household example/scripts/run-acceptance.mjs",
     "dev": "pnpm --filter the household example dev",
-    "a11y": "node the household example/scripts/run-a11y.mjs"
+    "a11y": "node the household example/scripts/run-a11y.mjs",
+    "dev:proposal": "pnpm --filter the bid-desk example dev",
+    "a11y:proposal": "node the bid-desk example/scripts/run-a11y.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

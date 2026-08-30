@@ -1,4 +1,4 @@
-import { argShape, type AnySchema } from "@graview/core";
+import { argShape, nodeRefArgs, type AnySchema } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation } from "../types.js";
 
 const REPAIR_SCORE = 100;
@@ -39,16 +39,38 @@ export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> 
             provider: "invariant",
             mutation: repair.mutation,
             args: repair.args ?? {},
-            // A repair names the mutation it would run, so the same schema
-            // introspection applies: an unanswered argument here describes
-            // itself exactly as one from the schema provider does.
+            /*
+             * A repair names the mutation it would run, so everything the
+             * schema provider derives applies here too: what sort of answer
+             * the argument wants, and — when it names a node — which nodes
+             * would actually fit.
+             *
+             * The candidates were missing, and the omission only showed up
+             * in a second app: a repair saying "cover this in a section"
+             * with `sectionId` unanswered rendered as a free text box asking
+             * for a node id. Every repair that needed a node was unusable,
+             * and the household example never noticed because its repairs happened to
+             * carry their node arguments pre-filled.
+             */
             open: (repair.missing ?? []).map((name) => {
               const mutation = store
                 .allMutations()
                 .find((candidate: { name: string }) => candidate.name === repair.mutation);
-              return mutation
-                ? { name, shape: argShape(mutation.input, name) }
-                : { name };
+              if (!mutation) return { name };
+              const ref = nodeRefArgs(mutation.input).find((arg) => arg.name === name);
+              const candidates = ref
+                ? ref.kinds.includes("*")
+                  ? store.graph.allNodes().map((node) => node.id)
+                  : ref.kinds.flatMap((kind: string) =>
+                      store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                    )
+                : undefined;
+              return {
+                name,
+                shape: argShape(mutation.input, name),
+                ...(ref ? { kinds: ref.kinds } : {}),
+                ...(candidates ? { candidates } : {}),
+              };
             }),
             // A repair that needs nothing more is the readiest thing here.
             score: REPAIR_SCORE - repairIndex - (repair.missing?.length ?? 0),
