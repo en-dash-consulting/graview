@@ -11,6 +11,7 @@ tags:
   - "acceptance"
 blockedBy:
   - "aa5d62c9-4d32-4157-aa3d-61aa93642dde"
+  - "2f983070-fccb-4b73-9ea0-0f2afb4cfe37"
 acceptanceCriteria:
   - "Memory and Drizzle/SQLite adapters both satisfy one adapter interface"
   - "The household example's real graph_nodes and graph_edges load into a typed graph"
