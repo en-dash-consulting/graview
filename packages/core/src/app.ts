@@ -8,10 +8,20 @@ import type { ViewRegistry } from "./views/types.js";
  * the docs generator both read exactly this — an app that can be checked is
  * an app whose whole surface is declared rather than assembled at runtime.
  */
-/** A role bound to a node kind, or to an edge kind. */
+/**
+ * A role bound to a node kind, an edge kind, or a field of one of the kinds
+ * another role already named.
+ *
+ * The third form arrived with the third lens. A board binds `slots` to a kind
+ * and `fill` to an edge, but `x` and `y` are FIELDS of whatever `slots` turned
+ * out to be — so the binding says which role supplies the kind, and the check
+ * can then verify the field actually exists on it. That is a stronger check
+ * than either of the first two shapes had.
+ */
 export type EntityBinding =
-  | { readonly kind: string; readonly [role: string]: string }
-  | { readonly edge: string; readonly [role: string]: string };
+  | { readonly kind: string }
+  | { readonly edge: string }
+  | { readonly field: string; readonly on: string };
 
 export interface LensDeclaration {
   readonly name: string;

@@ -14,10 +14,12 @@ packages/
   tools/       @graview/tools       derived affordances, one agent tool surface
   render/      @graview/render      capture, composite at depth, pointer routing
   react/       @graview/react       the only UI binding, deliberately thin
-  primitives/  @graview/primitives  view primitives, lenses, and the workbench
+  primitives/  @graview/primitives  view primitives, three lenses, the workbench
 apps/
-  the household example/    the first acceptance test — a scheduling domain, on a calendar
-  proposal/    the second — a bid desk, on a coverage matrix
+  the household example/    a household week    — a calendar
+  proposal/    a tender response   — a coverage matrix
+  the coaching example/       a coaching week     — a board, a matrix and a calendar
+  launcher/    a way between them, built from their own declarations
   spike/       platform capability validation, run against a real browser
 ```
 
@@ -28,8 +30,17 @@ headlessly in CI with no browser flag.
 
 ```sh
 pnpm install
+pnpm apps           # all of them → http://localhost:5199
+```
+
+The launcher mounts each app in place rather than linking to a port, so
+switching between them needs one server and keeps the theme. Each still runs
+alone if you want it to:
+
+```sh
 pnpm dev            # the household example  → http://localhost:5190
 pnpm dev:proposal   # bid desk  → http://localhost:5191
+pnpm dev:the coaching example      # the coaching example → http://localhost:5192
 ```
 
 That is the whole setup. No flags, no Canary, no GPU: the scene renders
@@ -44,7 +55,7 @@ and paper where depth loses contrast and gains haze. Inverting one to get the
 other gives grey-on-grey mush, because glow does not exist in daylight.
 
 ```sh
-pnpm test          # 305 tests, no GPU, no browser
+pnpm test          # 328 tests, no GPU, no browser
 pnpm typecheck
 pnpm check         # `graview check` against the household example's declarations
 ```
@@ -74,7 +85,7 @@ pnpm spike         # capture, composite, pointer routing, capture budget
 pnpm a11y          # the real accessibility tree, keyboard order, axe-core
 ```
 
-## Two apps, on purpose
+## Three apps, on purpose
 
 **the household example** is a household week: people, time, capacity. Its primary view is
 a calendar and it proved the timeline lens.
@@ -97,8 +108,35 @@ It also has a second projection. The written response is assembled from the
 graph, and every section carries the requirement references it answers because
 the `covers` edges say so — nobody types them and nobody keeps them current.
 
-Building it changed the framework in four places, which is what a second app
-is for:
+**the coaching example** is a coaching week, and it had to justify itself hardest — a the coaching example
+planner is *also* scheduling if you build it lazily. What earns its place is
+the chain it turns on:
+
+```
+formation → position → skill ← drill ← session
+```
+
+The team you intend to put out decides which skills matter; the skills that
+matter decide what training is for. That chain spans **three different
+pictures** — a board, a matrix, a week — and the rule that walks it end to
+end ("we are not training something the formation needs") is not expressible
+in any one of them. Two of its three lenses were written for the other apps
+and are reused unchanged.
+
+Its new picture is the **board**: things arranged where the *domain* says they
+go, and the first lens whose geometry the framework does not own. A left back
+is at the left back's place because the position node says so, so moving one
+is an ordinary mutation rather than a change to the layout engine. An empty
+slot is a hole in the team; on a seating plan it is the empty chair.
+
+The **launcher** is a fourth app whose graph is the other three. It reads
+their `defineApp` declarations — the same objects `graview check` consumes —
+so the index cannot drift, and the coverage lens pointed at it answers a
+question about the *framework*: an empty row would be a capability nothing
+uses, which is dead weight worth arguing about.
+
+Building the second app changed the framework in four places, and the third
+in three more, which is what more than one app is for:
 
 | What the second app forced | Where |
 |---|---|
@@ -106,11 +144,17 @@ is for:
 | Invariant repairs offer candidate NODES, not a text box asking for an id | `packages/tools/src/providers/invariant.ts` |
 | `graview check` understands a lens that binds kinds and edges, not only fields | `packages/core/src/cli/check.ts` |
 | An action needing several answers asks for them in turn | `AnswerArgs` |
+| A lens role may bind a FIELD of the kind another role named, and the check verifies it exists there | `packages/core/src/cli/check.ts` |
+| Coverage can let the GRAPH decide which rows are required, not only a field | `requiredVia` |
+| The timeline's minimum window is the app's call — a household wants eight hours, two training sessions want two | `minWindow` |
 
-Two framework bugs surfaced too: jacking in rendered *underneath* the scene
-(the household example had it as well, on every double-click), and a coverage cell that
-duplicated a target already reachable put seventy-two extra tab stops between
-a keyboard user and the rest of the page.
+Framework bugs surfaced too, each invisible until an app needed the thing:
+jacking in rendered *underneath* the scene (the household example had it as well, on every
+double-click); a coverage cell duplicated a target already reachable, putting
+seventy-two extra tab stops between a keyboard user and the rest of the page;
+the timeline's window could be centred onto half a minute and hand the app's
+own formatter `14:7.5`; and a board read its occupants out of the aggregate,
+which never contains them, so every slot reported itself empty.
 
 ## The four ideas
 
@@ -177,6 +221,10 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | The coverage lens works in a domain neither app is about | `packages/primitives/tests/unit/coverage.test.tsx` — controls against risks |
 | A repair nobody wrote appears from ranking, and matches another rule's finding independently | `the bid-desk example/tests/integration/acceptance.test.tsx` |
 | The bid's matrix reaches assistive technology in both schemes | `the bid-desk example/scripts/run-a11y.mjs` — 484 AX nodes, keyboard reaches all three planes, zero axe violations |
+| A third domain uses three lenses, two written for other apps | `the coaching example/tests/integration/acceptance.test.tsx` |
+| A rule can walk a chain no single view holds | `the coaching example/tests/integration/acceptance.test.tsx` — formation → skill → drill → session |
+| The board lens works in a domain nothing here is about | `packages/primitives/tests/unit/board.test.tsx` — a seating plan |
+| An arrangement reaches assistive technology, where position is the first thing discarded | `the coaching example/scripts/run-a11y.mjs` |
 | Capture + composite works at three depths | `docs/spike-three-planes.png`, Chrome Canary 154 |
 | Clicks land on drawn pixels at every depth | `apps/spike/scripts/run-spike.mjs` |
 | The whole port meets its six criteria | `the household example/scripts/run-acceptance.mjs` |
