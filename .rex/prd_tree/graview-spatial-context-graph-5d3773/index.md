@@ -1,0 +1,35 @@
+---
+id: "5d3773c0-3751-4007-839b-e07e9b9b4faa"
+level: "epic"
+title: "Graview — spatial context-graph framework"
+status: "pending"
+priority: "high"
+tags:
+  - "framework"
+  - "architecture"
+  - "webgpu"
+  - "html-in-canvas"
+  - "context-graph"
+source: "Session planning — architecture agreed 2026-08-29"
+acceptanceCriteria:
+  - "The household example's week calendar and People relation render as one spatial scene, editable at plane 0"
+  - "Clicks, focus and screen-reader access resolve correctly against nodes drawn at depth"
+  - "A repair suggestion surfaces from a node selection that nobody wrote a rule to produce"
+  - "An agent edit via MCP renders the same diff a human edit would, with nodes highlighted across planes"
+  - "A second node kind can be added without touching framework code"
+  - "Core, layout and tools packages run headlessly in CI with no browser flag and no GPU"
+description: "A framework for building applications where a typed context graph is the interface rather than the backing store. Node kinds declare their own fields, edges, views, mutations and invariants in a single declaration; the framework derives spatial layout, legal actions, agent tool schemas and accessibility labels from it.\n\nRendering: ordinary DOM views live as descendants of a `layoutsubtree` canvas, are captured into WebGPU textures via the HTML-in-Canvas API, and are composited as textured quads at discrete depth planes through vgpu. `updateElementGeometry` reports each drawn position back to the browser so hit-testing, focus, screen readers and find-in-page resolve against the drawn pixels — the zoomed-out scene stays fully interactive and accessible.\n\nNavigation: discrete z-planes with the camera locked to one axis (focus / relations / context). Every stop is a URL, so the back button returns exactly. Layout is a pure function of (focus, relation, graph) overlaid with user pins, making every transition interpolable.\n\nEditing: mutations are typed graph operations, not UI gestures. One declaration generates the AI tool surface, the direct-manipulation affordances, and the invariant checks. Actions are DERIVED from the graph — selecting nodes surfaces legal mutations, invariant repairs and structural observations without anyone specifying them in advance. An LLM is one optional affordance provider, not the mechanism.\n\nHistory: the graph is a fold over an append-only operation log. Every op carries author, batch, intent, its inverse, and the set of nodes it read — which makes selective undo (\"drop the agent's turn, keep my edits\") a checkable dependency condition rather than a stack pop.\n\nArchitecture: framework-agnostic core in plain TypeScript (@graview/core, /layout, /tools) with a React binding (@graview/react); only @graview/render depends on the browser and GPU. Reference app is the household example (a household-calendar product), ported onto the framework as the acceptance test.\n\nFull architecture plan: https://claude.ai/code/artifact/768d0685-5880-4509-bc1a-ff1b7d908c55"
+---
+
+## Children
+
+| Title | Status |
+|-------|--------|
+| [Graph core — @graview/core](./graph-core-graview-core/index.md) | pending |
+| [Platform capability validation](./platform-capability-validation/index.md) | pending |
+| [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | pending |
+| [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | pending |
+| [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | pending |
+| [React binding — @graview/react](./react-binding-graview-react.md) | pending |
+| [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | pending |
+| [View primitives and the timeline lens](./view-primitives-and-the-timeline-lens.md) | pending |
