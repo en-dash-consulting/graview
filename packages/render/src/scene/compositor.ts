@@ -39,7 +39,6 @@ export interface VgpuLike {
 
 export interface SurfaceLike {
   readonly context: GPUCanvasContext;
-  readonly size: readonly [number, number];
 }
 
 export interface CompositorDeps {
@@ -132,19 +131,26 @@ export class Compositor {
         this.add(view);
         continue;
       }
-      // Same element and same box: keep the texture, just move it.
-      const moved = existing.x !== view.x || existing.y !== view.y || existing.plane !== view.plane;
+      // What actually changes the PIXELS: a different element, a different
+      // box, or a different opacity. Moving a view does not — and marking a
+      // move dirty put every plane-1 view back into the per-frame capture
+      // budget for the whole of every transition.
       const resized = existing.width !== view.width || existing.height !== view.height;
       const replaced = existing.element !== view.element;
-      this.views.set(view.id, {
-        ...view,
-        dirty: existing.dirty || resized || replaced || moved,
-      });
-      if (replaced) {
-        // A different element means the pixels are different, whatever the box says.
+      const faded = (existing.opacity ?? 1) !== (view.opacity ?? 1);
+      const dirty = existing.dirty || resized || replaced || faded;
+      this.views.set(view.id, { ...view, dirty });
+      if (replaced || (dirty && !this.capturedAtIsFresh(view.id))) {
+        // Force a first-class recapture rather than relying on the fidelity
+        // rule, which for `glyph` never recaptures at all.
         delete this.capturedAt[view.id];
       }
     }
+  }
+
+  /** Whether this view's cached texture still reflects what it looks like. */
+  private capturedAtIsFresh(id: string): boolean {
+    return this.capturedAt[id] !== undefined && this.views.get(id)?.dirty !== true;
   }
 
   add(view: SceneView): void {
@@ -216,7 +222,16 @@ export class Compositor {
     const queue = device.queue;
     this.frame += 1;
 
-    const [canvasWidth, canvasHeight] = this.deps.surface.size;
+    // Read the canvas's CURRENT backing size every frame.
+    //
+    // This used to be a tuple captured when the compositor was built. Once
+    // the scene became responsive the canvas resized underneath it, the
+    // shader kept mapping canvas pixels to NDC with the old dimensions, and
+    // every quad landed somewhere it should not — barely at the origin,
+    // badly further down. The canvas is the surface; there is no second
+    // source of truth to go stale.
+    const canvasWidth = this.canvas.width;
+    const canvasHeight = this.canvas.height;
     const plan = planFrame([...this.views.values()], this.connectors, {
       canvasWidth,
       canvasHeight,

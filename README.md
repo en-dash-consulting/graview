@@ -44,13 +44,19 @@ pnpm check         # `graview check` against the household example's declaration
 ### The capture path
 
 `?renderer=gpu` opts into compositing through WebGPU. It needs Chromium 147+
-launched with `--enable-blink-features=CanvasDrawElement`, and it currently
-has a **known defect**: views on plane 1 composite blank. The browser has a
-valid paint record for each, the compositor holds a texture and a bind group
-for each, and the frame plan draws them in the right place at full opacity —
-and nothing appears. Ruled out: texture sizing, the fidelity cache, reconcile
-versus remove-and-add, host stacking under `layoutsubtree`, and the shader's
-opacity term. The DOM path is the default until that is understood.
+launched with `--enable-blink-features=CanvasDrawElement`.
+
+It renders correctly — all three planes, connectors and all — and passes
+every acceptance criterion. It is not the default for one reason: **a pointer
+click on it brings the renderer process down.** Clicking is the primary way
+anyone uses this, so the path that survives it wins.
+
+Two earlier defects here are fixed and worth knowing about, because both
+failed silently: the compositor captured the canvas size once and kept using
+it after the scene became responsive, so every quad was mapped to the wrong
+place; and opacity was applied both to the DOM host and again in the shader,
+so a view captured mid-fade baked its own transparency into the texture and
+never recovered.
 
 ### The harnesses
 
@@ -123,8 +129,9 @@ seams, honest boundaries — but it breaks freely while nobody depends on it.
 
 **Outstanding:**
 
-- Plane 1 composites blank on the GPU path (see above). The DOM path is
-  correct, so this is a renderer defect rather than a design one.
+- A click crashes the renderer process on the GPU path (see above). The DOM
+  path is unaffected, so this is a compositing defect rather than a design
+  one.
 - A screen-reader pass with real assistive technology. The accessibility tree
   is populated, every view is exposed by name, the keyboard reaches all three
   planes and axe-core reports nothing — but a populated tree is not proof that

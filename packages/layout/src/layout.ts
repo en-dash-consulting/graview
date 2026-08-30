@@ -84,13 +84,22 @@ export function layout<S extends AnySchema>(
     width: Math.min(opts.focusSize.width, opts.width - opts.gap * 8),
     height: Math.min(opts.focusSize.height, opts.height * 0.56),
   };
-  const relationY = opts.gap * 2 + focusSize.height;
+  // With nothing focused, plane 0 is empty and the bands must not leave the
+  // top half of the scene blank waiting for it.
+  const hasFocus = Boolean(state.focusId);
+  const relationY = hasFocus ? opts.gap * 2 + focusSize.height : opts.gap;
   // Where the context band sits depends on whether plane 1 is occupied. With
   // nothing raised, leaving a gap for an empty band just puts a stripe of
   // dead ground through the middle of the scene.
-  const contextYWithRelations = Math.min(
-    opts.height - opts.contextSize.height * 0.7 - opts.gap,
-    relationY + opts.relationSize.height + opts.gap * 2,
+  // MAX, not min: context sits BELOW the relation row. Taking whichever is
+  // higher let the two bands overlap on a short container, which the scene
+  // can now be, since it is sized to whatever space it is given.
+  const contextYWithRelations = Math.max(
+    relationY + opts.relationSize.height * 0.8 + opts.gap,
+    Math.min(
+      opts.height - opts.contextSize.height * 0.7 - opts.gap,
+      relationY + opts.relationSize.height + opts.gap * 2,
+    ),
   );
   const contextYAlone = relationY + opts.gap;
   const nodes: LayoutNode[] = [];
