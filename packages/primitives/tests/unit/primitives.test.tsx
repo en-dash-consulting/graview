@@ -1,0 +1,273 @@
+import { createSchema, defineNode, Store } from "@graview/core";
+import { EMPTY_VIEW, aggregateId } from "@graview/layout";
+import { GraviewProvider, Scene, createViews } from "@graview/react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import { z } from "zod";
+import {
+  createTimelineLens,
+  hueFor,
+  placeOnTimeline,
+  registerDefaultViews,
+  TimelineBindingError,
+  TimelineView,
+  TIMELINE_REQUIRED_ROLES,
+} from "../../src/index.js";
+
+const person = defineNode("person", {
+  fields: z.object({ label: z.string(), role: z.string() }),
+  plural: "People",
+});
+const duty = defineNode("duty", {
+  fields: z.object({
+    label: z.string(),
+    day: z.enum(["mon", "tue", "wed", "thu", "fri"]),
+    leaveAt: z.number(),
+    at: z.number(),
+  }),
+  plural: "Runs",
+  fieldRoles: { start: "leaveAt", end: "at", day: "day" },
+});
+const block = defineNode("block", {
+  fields: z.object({
+    label: z.string(),
+    days: z.array(z.enum(["mon", "tue", "wed", "thu", "fri"])),
+    start: z.number(),
+    end: z.number(),
+  }),
+  plural: "Blocks",
+});
+/** Declared but never given a view — the "new node kind" case. */
+const vehicle = defineNode("vehicle", {
+  fields: z.object({ label: z.string(), seats: z.number(), boosters: z.number() }),
+  plural: "Vehicles",
+});
+const schema = createSchema([person, duty, block, vehicle]);
+
+function store() {
+  return new Store({
+    schema,
+    snapshot: {
+      nodes: [
+        { id: "ana", kind: "person", label: "Ana", role: "parent" },
+        { id: "school", kind: "block", label: "School", days: ["mon", "tue"], start: 510, end: 900 },
+        { id: "morning", kind: "duty", label: "Morning run", day: "mon", leaveAt: 490, at: 510 },
+        { id: "pickup", kind: "duty", label: "Pickup", day: "tue", leaveAt: 880, at: 900 },
+        { id: "estate", kind: "vehicle", label: "The estate", seats: 5, boosters: 2 },
+      ],
+      edges: [],
+    },
+  });
+}
+
+const WEEK = [
+  { id: "mon", label: "Mon" },
+  { id: "tue", label: "Tue" },
+  { id: "wed", label: "Wed" },
+  { id: "thu", label: "Thu" },
+  { id: "fri", label: "Fri" },
+];
+
+const timeline = createTimelineLens<typeof schema>({
+  // The app maps ITS OWN field names onto the lens's roles. The lens knows
+  // nothing about duties, blocks, or minutes.
+  bindings: {
+    duty: { start: "leaveAt", end: "at", column: "day" },
+    block: { start: "start", end: "end", columns: "days" },
+  },
+  columns: WEEK,
+  extent: 1440,
+  format: (at) => `${String(Math.floor(at / 60)).padStart(2, "0")}:${String(at % 60).padStart(2, "0")}`,
+});
+
+function renderScene(view = EMPTY_VIEW) {
+  return renderToStaticMarkup(
+    <GraviewProvider
+      store={store()}
+      views={registerDefaultViews(schema, createViews(schema))}
+      initialView={view}
+    >
+      <Scene renderer="dom" />
+    </GraviewProvider>,
+  );
+}
+
+describe("a new node kind with no custom view", () => {
+  it("renders at full fidelity from the declaration alone", () => {
+    const html = renderScene({ ...EMPTY_VIEW, focusId: "estate" });
+    expect(html).toContain("The estate");
+    // Salient fields come straight off the declaration.
+    expect(html).toContain("seats");
+    expect(html).toContain("boosters");
+  });
+
+  it("renders at summary fidelity as a denser arrangement, not a smaller one", () => {
+    const html = renderScene({ ...EMPTY_VIEW, focusId: "ana", relation: "vehicle" });
+    // Plane 1 asks for summary: chips rather than a field list.
+    expect(html).toContain('data-graview-primitive="chip"');
+    expect(html).toContain("The estate");
+  });
+
+  it("renders at glyph fidelity as a single chip", () => {
+    const html = renderScene({
+      ...EMPTY_VIEW,
+      focusId: "ana",
+      expanded: [aggregateId("vehicle")],
+    });
+    expect(html).toContain("The estate");
+    expect(html).toContain('data-graview-primitive="chip"');
+  });
+
+  it("renders as an aggregate when it is grouped", () => {
+    const html = renderScene({ ...EMPTY_VIEW, focusId: "ana" });
+    expect(html).toContain("Vehicles");
+  });
+
+  it("gives every kind a stable hue, so it looks the same everywhere", () => {
+    expect(hueFor("vehicle")).toBe(hueFor("vehicle"));
+    expect(hueFor("vehicle")).not.toBe(hueFor("person"));
+  });
+});
+
+describe("the roster degrades honestly", () => {
+  it("says how many more rather than truncating silently", () => {
+    const many = Array.from({ length: 12 }, (_, i) => ({
+      id: `n${i}`,
+      kind: "person",
+      label: `P${i}`,
+      role: "parent",
+    }));
+    const html = renderToStaticMarkup(
+      <TimelineView
+        nodes={many as never}
+        label="Week"
+        fidelity="summary"
+        cardinality="many"
+        mode="scene"
+        selected={false}
+        options={timeline.options}
+      />,
+    );
+    expect(html).toContain("Week");
+  });
+});
+
+describe("the timeline lens", () => {
+  it("declares the roles an app must bind", () => {
+    expect(TIMELINE_REQUIRED_ROLES).toEqual(["start", "end"]);
+    expect(timeline.requiredRoles).toEqual(["start", "end"]);
+  });
+
+  it("reads spans through the app's own field names", () => {
+    const s = store();
+    const span = placeOnTimeline(s.graph.getNode("morning")!, timeline.bindings, schema)!;
+    expect(span).toMatchObject({
+      id: "morning",
+      label: "Morning run",
+      columnIds: ["mon"],
+      start: 490,
+      end: 510,
+    });
+  });
+
+  it("places a node across several columns when the app binds a list", () => {
+    const s = store();
+    const span = placeOnTimeline(s.graph.getNode("school")!, timeline.bindings, schema)!;
+    expect(span.columnIds).toEqual(["mon", "tue"]);
+  });
+
+  it("ignores a kind it was never told about", () => {
+    const s = store();
+    expect(placeOnTimeline(s.graph.getNode("ana")!, timeline.bindings, schema)).toBeNull();
+  });
+
+  it("says exactly which binding is missing, in the app's terms", () => {
+    const s = store();
+    expect(() =>
+      placeOnTimeline(s.graph.getNode("morning")!, { duty: { start: "nope", end: "at" } }, schema),
+    ).toThrow(TimelineBindingError);
+    try {
+      placeOnTimeline(s.graph.getNode("morning")!, { duty: { start: "nope", end: "at" } }, schema);
+    } catch (error) {
+      expect(String(error)).toContain('{ duty: { start: "<field name>" } }');
+    }
+  });
+
+  it("draws a grid at full fidelity", () => {
+    const s = store();
+    const html = renderToStaticMarkup(
+      <TimelineView
+        nodes={s.graph.allNodes()}
+        label="This week"
+        fidelity="full"
+        cardinality="many"
+        mode="scene"
+        selected={false}
+        options={timeline.options}
+        schema={schema}
+      />,
+    );
+    expect(html).toContain('data-graview-primitive="grid"');
+    expect(html).toContain('data-graview-primitive="axis"');
+    expect(html).toContain('data-graview-span="morning"');
+    // Formatted through the app's own formatter.
+    expect(html).toContain("08:10");
+    // The block spans two columns, so it is placed twice.
+    expect(html.match(/data-graview-span="school"/g)).toHaveLength(2);
+  });
+
+  it("switches to a denser summary rather than scaling down", () => {
+    const s = store();
+    const html = renderToStaticMarkup(
+      <TimelineView
+        nodes={s.graph.allNodes()}
+        label="This week"
+        fidelity="summary"
+        cardinality="many"
+        mode="scene"
+        selected={false}
+        options={timeline.options}
+        schema={schema}
+      />,
+    );
+    // No grid at all: one chip per day with its count, which stays legible
+    // at a size where a scaled-down calendar would be mush.
+    expect(html).not.toContain('data-graview-primitive="grid"');
+    expect(html).toContain("Mon 2");
+    expect(html).toContain("Wed 0");
+  });
+
+  it("collapses to a single chip at glyph fidelity", () => {
+    const s = store();
+    const html = renderToStaticMarkup(
+      <TimelineView
+        nodes={s.graph.allNodes()}
+        label="This week"
+        fidelity="glyph"
+        cardinality="many"
+        mode="scene"
+        selected={false}
+        options={timeline.options}
+        schema={schema}
+      />,
+    );
+    expect(html).toContain("This week (3)");
+    expect(html).not.toContain('data-graview-primitive="panel"');
+  });
+
+  it("is built only from the primitives an app also has", async () => {
+    // Not a stylistic point: a lens with private access would stop being a
+    // worked example of the authoring API.
+    const source = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../../src/lens/timeline.tsx", import.meta.url), "utf8"),
+    );
+    const imports = [...source.matchAll(/from "([^"]+)"/g)].map((match) => match[1]);
+    expect(imports.sort()).toEqual([
+      "../default-views.js",
+      "../primitives/index.js",
+      "@graview/core",
+      "@graview/react",
+      "react",
+    ]);
+  });
+});

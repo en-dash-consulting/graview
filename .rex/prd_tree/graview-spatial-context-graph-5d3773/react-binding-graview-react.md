@@ -2,7 +2,7 @@
 id: "a06aa246-782b-4f85-a65c-cfff749e9f35"
 level: "feature"
 title: "React binding — @graview/react"
-status: "pending"
+status: "completed"
 priority: "medium"
 tags:
   - "react"
@@ -11,6 +11,11 @@ tags:
 blockedBy:
   - "e0dd64de-6d75-466c-8093-39d411aa529e"
 source: "Session planning — architecture"
+startedAt: "2026-08-30T04:39:25.521Z"
+completedAt: "2026-08-30T04:39:25.521Z"
+endedAt: "2026-08-30T04:39:25.521Z"
+resolutionType: "code-change"
+resolutionDetail: "@graview/react: views are ordinary React components with no scene-specific API; <Scene> renders them as immediate children of the layoutsubtree canvas (asserted, since the platform rejects deeper descendants); selection lives in the provider so scene and affordance surface share it; jack-in renders the SAME component with mode=\"fullscreen\" and full fidelity, and the two-mode contract is tested by rendering both. Core, layout and tools stay framework-agnostic. Bonus: a DOM renderer path using affine CSS matrix3d, so the scene works without WebGPU. 12 tests."
 acceptanceCriteria:
   - "Views are ordinary React components with no scene-specific API"
   - "The same view renders correctly both captured in-scene and jacked-in fullscreen"
