@@ -1,0 +1,20 @@
+{"ts":"2026-08-30T01:54:02.956Z","vendor":"claude","binary":"claude","args":["-p","Reply with exactly: ok","--output-format","json"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:54:05.485Z","vendor":"claude","binary":"claude","args":["--version"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:54:05.496Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","local","rex"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:54:05.913Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","project","rex"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:54:06.329Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","user","rex"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:54:06.758Z","vendor":"claude","binary":"claude","args":["mcp","add","rex","--","node","/Users/nick/Library/pnpm/global/5/.pnpm/@n-dx+rex@0.5.0/node_modules/@n-dx/rex/dist/cli/index.js","mcp","/Users/nick/development/endash/visual-system-design"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:54:07.259Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","local","sourcevision"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:54:07.706Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","project","sourcevision"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:54:08.218Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","user","sourcevision"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:54:08.678Z","vendor":"claude","binary":"claude","args":["mcp","add","sourcevision","--","node","/Users/nick/Library/pnpm/global/5/.pnpm/@n-dx+sourcevision@0.5.0/node_modules/@n-dx/sourcevision/dist/cli/index.js","mcp","/Users/nick/development/endash/visual-system-design"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:43.355Z","vendor":"claude","binary":"claude","args":["-p","Reply with exactly: ok","--output-format","json"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:45.980Z","vendor":"claude","binary":"claude","args":["--version"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:45.990Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","local","rex"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:46.410Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","project","rex"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:46.833Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","user","rex"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:47.282Z","vendor":"claude","binary":"claude","args":["mcp","add","rex","--","node","/Users/nick/Library/pnpm/global/5/.pnpm/@n-dx+rex@0.5.0/node_modules/@n-dx/rex/dist/cli/index.js","mcp","/Users/nick/development/endash/visual-system-design"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:47.704Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","local","sourcevision"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:48.142Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","project","sourcevision"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:48.571Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","user","sourcevision"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-08-30T01:55:48.998Z","vendor":"claude","binary":"claude","args":["mcp","add","sourcevision","--","node","/Users/nick/Library/pnpm/global/5/.pnpm/@n-dx+sourcevision@0.5.0/node_modules/@n-dx/sourcevision/dist/cli/index.js","mcp","/Users/nick/development/endash/visual-system-design"],"platform":"darwin","via":"execFileSyncCli"}

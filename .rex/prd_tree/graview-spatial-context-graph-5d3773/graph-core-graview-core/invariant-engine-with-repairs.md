@@ -1,0 +1,19 @@
+---
+id: "2f983070-fccb-4b73-9ea0-0f2afb4cfe37"
+level: "task"
+title: "Invariant engine with repairs"
+status: "pending"
+priority: "high"
+tags:
+  - "core"
+  - "invariants"
+  - "headless"
+blockedBy:
+  - "aa5d62c9-4d32-4157-aa3d-61aa93642dde"
+acceptanceCriteria:
+  - "The household example's four invariants produce output identical to its hand-rolled engine"
+  - "Evaluation is pure — same graph and context always yield the same violations"
+  - "Violations carry both offending node ids and repair mutation names"
+  - "An unregistered constraint type skips or throws per configuration, matching existing behaviour"
+description: "Pure evaluation: same graph in, same violations out. The household example's `domain/invariants/engine.ts` is already the right shape — registry-driven, pure, returning violations that carry the offending node ids — so this generalises it rather than inventing it.\n\nThe one genuine addition is `repairs`: a violation names the mutations that would resolve it, not just the problem. That field is the seam between the invariant engine and derived affordances, and it is why selecting an out-of-balance set of duties can surface \"rebalance\" without anyone writing a rule to produce that suggestion.\n\nViolations carry node ids so the spatial renderer can highlight exactly what is implicated, across planes.\n\nAcceptance is exact parity with the household example's hand-rolled engine on its four rules: weekly-hour-cap, protected-block, handoff-collision, duty-split-balance."
+---

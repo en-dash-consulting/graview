@@ -1,0 +1,16 @@
+{
+  "zones": [],
+  "crossings": [],
+  "unzoned": [],
+  "structureHash": "e3b0c44298fc1c14",
+  "inputFingerprint": "42e4c246de9384a3",
+  "zoneContentHashes": {},
+  "stability": {
+    "fileRetention": 1,
+    "persistedZones": 0,
+    "newZones": 0,
+    "removedZones": 0,
+    "reassignedFiles": []
+  },
+  "insights": []
+}

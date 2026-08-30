@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "toolVersion": "0.1.0",
+  "analyzedAt": "2026-08-30T01:55:43.118Z",
+  "targetPath": "/Users/nick/development/endash/visual-system-design",
+  "modules": {
+    "inventory": {
+      "status": "complete",
+      "startedAt": "2026-08-30T01:55:42.997Z",
+      "completedAt": "2026-08-30T01:55:43.020Z"
+    },
+    "imports": {
+      "status": "complete",
+      "startedAt": "2026-08-30T01:55:43.021Z",
+      "completedAt": "2026-08-30T01:55:43.039Z"
+    },
+    "classifications": {
+      "status": "complete",
+      "startedAt": "2026-08-30T01:55:43.039Z",
+      "completedAt": "2026-08-30T01:55:43.057Z"
+    },
+    "zones": {
+      "status": "complete",
+      "startedAt": "2026-08-30T01:55:43.057Z",
+      "completedAt": "2026-08-30T01:55:43.078Z"
+    },
+    "components": {
+      "status": "complete",
+      "startedAt": "2026-08-30T01:55:43.080Z",
+      "completedAt": "2026-08-30T01:55:43.100Z"
+    },
+    "callgraph": {
+      "status": "complete",
+      "startedAt": "2026-08-30T01:55:43.100Z",
+      "completedAt": "2026-08-30T01:55:43.118Z"
+    }
+  },
+  "language": "typescript",
+  "languages": [
+    "typescript"
+  ]
+}
