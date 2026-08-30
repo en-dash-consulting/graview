@@ -36,15 +36,17 @@ describe("plane transforms", () => {
     expect(isAffine(IDENTITY)).toBe(true);
   });
 
-  it("recedes toward the canvas centre, not the origin", () => {
+  it("leaves position to layout and contributes only treatment", () => {
     const near = transformFor(PLANE_STYLES[0], 100, 100, 1000, 600);
     const far = transformFor(PLANE_STYLES[2], 100, 100, 1000, 600);
-    // Plane 0 is unscaled, so it lands where layout put it.
+    // Both land exactly where layout put them...
     expect([near[12], near[13]]).toEqual([100, 100]);
-    // A receded plane pulls inward on both axes.
-    expect(far[12]).toBeGreaterThan(100);
-    expect(far[13]).toBeGreaterThan(100);
-    expect(far[12]).toBeLessThan(500);
+    expect([far[12], far[13]]).toEqual([100, 100]);
+    // ...and recession is carried by scale, not by moving things about. If
+    // the plane moved them too, layout would no longer know where anything
+    // ended up and connectors would miss the views they connect.
+    expect(near[0]).toBe(1);
+    expect(far[0]).toBe(PLANE_STYLES[2].scale);
   });
 
   it("interpolates any two plane styles, so transitions animate", () => {

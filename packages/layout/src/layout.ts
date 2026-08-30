@@ -12,12 +12,26 @@ import type { ViewState } from "./view-state.js";
 
 export const AGGREGATE_PREFIX = "aggregate:";
 
-export function aggregateId(kind: string): string {
-  return `${AGGREGATE_PREFIX}${kind}`;
+/**
+ * The id of a group standing in for one or more kinds.
+ *
+ * Several kinds because a group is a view of a SET of kinds, not a synonym
+ * for one: the household example's week is its blocks and its runs together, and no node
+ * kind called "week" exists or should. Kinds are sorted so the same group is
+ * always the same id, which keeps it stable in a URL.
+ */
+export function aggregateId(...kinds: readonly string[]): string {
+  return `${AGGREGATE_PREFIX}${[...kinds].sort().join("+")}`;
 }
 
 export function isAggregateId(id: string): boolean {
   return id.startsWith(AGGREGATE_PREFIX);
+}
+
+/** The kinds a group id names, or an empty list if it is not a group id. */
+export function kindsOfAggregate(id: string): string[] {
+  if (!isAggregateId(id)) return [];
+  return id.slice(AGGREGATE_PREFIX.length).split("+").filter(Boolean);
 }
 
 /**
@@ -66,8 +80,19 @@ export function layout<S extends AnySchema>(
   const nodes: LayoutNode[] = [];
   const placed = new Map<string, LayoutNode>();
 
-  const focus = state.focusId ? graph.getNode(state.focusId) : undefined;
   const expanded = new Set(state.expanded);
+
+  // A group may be focused as readily as a node: "show me the week" and
+  // "show me this run" are the same gesture at different granularities.
+  const focusKinds = state.focusId ? kindsOfAggregate(state.focusId) : [];
+  const focusGroup =
+    focusKinds.length > 0
+      ? [...graph.allNodes()]
+          .filter((node) => focusKinds.includes(node.kind))
+          .sort(byStableKey)
+      : [];
+  const focus =
+    state.focusId && focusKinds.length === 0 ? graph.getNode(state.focusId) : undefined;
 
   // ------------------------------------------------------- plane 0: focus
   if (focus) {
@@ -80,11 +105,31 @@ export function layout<S extends AnySchema>(
       width: opts.focusSize.width,
       height: opts.focusSize.height,
     });
+  } else if (focusGroup.length > 0 && state.focusId) {
+    push({
+      id: state.focusId,
+      kind: focusKinds[0]!,
+      plane: 0,
+      x: (opts.width - opts.focusSize.width) / 2,
+      y: opts.gap,
+      width: opts.focusSize.width,
+      height: opts.focusSize.height,
+      aggregate: {
+        kind: focusKinds.join("+"),
+        memberIds: focusGroup.map((node) => node.id),
+        label:
+          options.plurals?.[state.focusId] ??
+          focusKinds.map((kind) => pluralOf(schema, kind)).join(" and "),
+      },
+    });
   }
 
   // --------------------------------------------------- plane 1: relations
   const related = relatedNodes(graph, focus, state.relation);
-  const relationY = opts.gap + (focus ? opts.focusSize.height + opts.gap * 2 : opts.gap);
+  // Bands are measured in DRAWN height, since a plane scales its box in
+  // place: a 130-unit box on plane 1 occupies 130 * 0.72 pixels.
+  const focusBottom = focus || focusGroup.length > 0 ? opts.gap + opts.focusSize.height : opts.gap;
+  const relationY = focusBottom + opts.gap * 2;
   const relationPositions = row(
     related.length,
     opts.relationSize,
@@ -107,6 +152,8 @@ export function layout<S extends AnySchema>(
 
   // ----------------------------------------------------- plane 2: context
   const shown = new Set(placed.keys());
+  // Members of the focused group are already on screen, inside it.
+  for (const member of focusGroup) shown.add(member.id);
   const groups = new Map<string, NodeOfSchema<S>[]>();
   for (const node of graph.allNodes()) {
     if (shown.has(node.id)) continue;
@@ -115,7 +162,10 @@ export function layout<S extends AnySchema>(
     else groups.set(node.kind, [node]);
   }
 
-  const contextY = opts.height - opts.contextSize.height - opts.gap;
+  const contextY = Math.max(
+    relationY + opts.relationSize.height + opts.gap,
+    opts.height - opts.contextSize.height - opts.gap,
+  );
   const entries: { id: string; kind: string; members: NodeOfSchema<S>[] }[] = [];
   for (const [kind, members] of groups) {
     entries.push({ id: aggregateId(kind), kind, members: [...members].sort(byStableKey) });
@@ -214,30 +264,48 @@ function relatedNodes<S extends AnySchema>(
 }
 
 /**
- * Edges between two laid-out nodes. Both endpoints must be placed: a
- * connector to something off-scene is a line into nowhere.
+ * Edges between two laid-out nodes.
+ *
+ * An endpoint inside a group resolves to the GROUP: an edge into the week
+ * points at the week, because that is where the thing it names actually is on
+ * screen. Without this a focused group would sever every relationship the
+ * scene is meant to show. Several edges collapsing onto the same pair become
+ * one connector, so a person with four runs draws one line to the week
+ * rather than four identical ones.
  */
 function connectorsFor<N extends { id: string; kind: string }>(
   graph: GraphReader<N>,
   placed: Map<string, LayoutNode>,
 ): Connector[] {
-  const connectors: Connector[] = [];
+  const containing = new Map<string, string>();
+  for (const node of placed.values()) {
+    for (const memberId of node.aggregate?.memberIds ?? []) {
+      if (!placed.has(memberId)) containing.set(memberId, node.id);
+    }
+  }
+  const resolve = (id: string): LayoutNode | undefined =>
+    placed.get(id) ?? placed.get(containing.get(id) ?? "");
+
+  const connectors = new Map<string, Connector>();
   for (const edge of graph.allEdges()) {
-    const from = placed.get(edge.from);
-    const to = placed.get(edge.to);
-    if (!from || !to) continue;
-    connectors.push({
-      id: `${edge.kind}:${edge.from}:${edge.to}`,
+    const from = resolve(edge.from);
+    const to = resolve(edge.to);
+    // A connector to something off-scene is a line into nowhere.
+    if (!from || !to || from.id === to.id) continue;
+    const id = `${edge.kind}:${from.id}:${to.id}`;
+    if (connectors.has(id)) continue;
+    connectors.set(id, {
+      id,
       kind: edge.kind,
-      from: edge.from,
-      to: edge.to,
+      from: from.id,
+      to: to.id,
       x1: from.x + from.width / 2,
       y1: from.y + from.height / 2,
       x2: to.x + to.width / 2,
       y2: to.y + to.height / 2,
     });
   }
-  return connectors.sort(byStableKey);
+  return [...connectors.values()].sort(byStableKey);
 }
 
 /** Which plane a node ended up on, or null if it is not in the layout. */

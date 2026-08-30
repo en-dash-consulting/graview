@@ -96,11 +96,14 @@ describe("layout as a pure function", () => {
     expect(layout(graph(), schema, toggleExpanded(open, aggregateId("person")))).toEqual(before);
   });
 
-  it("draws connectors only between nodes that are both on screen", () => {
+  it("points an edge at the group its other end is inside", () => {
     const result = layout(graph(), schema, view({ focusId: "week-1", relation: "person" }));
-    // Ana and Bo are placed; their runs are inside an aggregate, so the
-    // assigned-to edges have nowhere to land.
-    expect(result.connectors).toEqual([]);
+    // Ana's run is inside the Runs group, so her edge points at the group —
+    // severing it would hide the relationship the scene exists to show.
+    expect(result.connectors.map((c) => `${c.from}->${c.to}`)).toEqual([
+      "ana->aggregate:duty",
+      "bo->aggregate:duty",
+    ]);
 
     const expanded = layout(
       graph(),
@@ -117,6 +120,16 @@ describe("layout as a pure function", () => {
 });
 
 describe("stability", () => {
+  it("collapses several edges onto one connector when they resolve to the same pair", () => {
+    const mutated = graph();
+    mutated.applyPrimitives([
+      { op: "add-edge", edge: { kind: "assigned-to", from: "ana", to: "evening" } },
+    ]);
+    const result = layout(mutated, schema, view({ focusId: "week-1", relation: "person" }));
+    // Ana now owns both runs, but both are in the same group: one line, not two.
+    expect(result.connectors.filter((c) => c.from === "ana")).toHaveLength(1);
+  });
+
   it("keeps positions when an unrelated part of the graph changes", () => {
     const state = view({ focusId: "week-1", relation: "person" });
     const before = layout(graph(), schema, state);

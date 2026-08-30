@@ -2,7 +2,7 @@
 id: "c7fbbe07-5883-4383-b60c-1f8f64ebc916"
 level: "feature"
 title: "View primitives and the timeline lens"
-status: "pending"
+status: "completed"
 priority: "medium"
 tags:
   - "views"
@@ -12,6 +12,11 @@ tags:
 blockedBy:
   - "a06aa246-782b-4f85-a65c-cfff749e9f35"
 source: "Session planning — architecture"
+startedAt: "2026-08-30T04:42:28.527Z"
+completedAt: "2026-08-30T04:42:28.527Z"
+endedAt: "2026-08-30T04:42:28.527Z"
+resolutionType: "code-change"
+resolutionDetail: "@graview/primitives: Panel, Roster, Chip, Connector, Axis, Grid, Aggregate, plus registerDefaultViews filling all six matrix cells from the declaration — a new kind (Vehicles) renders at all three fidelities and as an aggregate with zero custom view code. The timeline lens is built only from public primitives (asserted by a test that reads its own imports) and declares field roles the app binds its own fields onto, keeping calendar maths out of core. Summary fidelity is a denser arrangement rather than a scaled one, which is what keeps receded text legible. 15 tests."
 acceptanceCriteria:
   - "A new node kind renders acceptably at all three fidelities with zero custom view code"
   - "The timeline lens is built only from public primitives, with no private API access"

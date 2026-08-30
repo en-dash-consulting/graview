@@ -40,7 +40,10 @@ export interface PlaneStyle {
 
 export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
   0: { scale: 1, blur: 0, falloff: 0, shadow: 0.28, fidelity: "full" },
-  1: { scale: 0.72, blur: 1.4, falloff: 0.3, shadow: 0.2, fidelity: "summary" },
+  // Plane 1 recedes but stays READABLE: its job is to be looked at next, not
+  // to be atmosphere. Blur and falloff heavy enough to separate it from the
+  // focus, light enough that a summary view can still be read.
+  1: { scale: 0.72, blur: 0.8, falloff: 0.18, shadow: 0.2, fidelity: "summary" },
   2: { scale: 0.52, blur: 3.2, falloff: 0.58, shadow: 0.12, fidelity: "glyph" },
 };
 
@@ -67,22 +70,24 @@ export function mixStyles(a: PlaneStyle, b: PlaneStyle, t: number): PlaneStyle {
 }
 
 /**
- * The transform a view at `plane` gets, given where layout put it. Scale is
- * about the canvas centre so receding planes pull inward rather than toward
- * the origin.
+ * The transform a view at `plane` gets, given where layout put it.
+ *
+ * Position is layout's, untouched. The plane contributes only treatment —
+ * scale, and through the shader blur, falloff and shadow.
+ *
+ * An earlier version scaled positions about the canvas centre as well, so a
+ * receded plane pulled inward. It looked plausible and was wrong: layout no
+ * longer knew where anything would end up, so connectors drawn from layout
+ * coordinates missed the views they connected. One owner per concern —
+ * layout owns position, the plane owns treatment — is what keeps the two
+ * halves of the picture agreeing.
  */
 export function transformFor(
   style: PlaneStyle,
   x: number,
   y: number,
-  canvasWidth: number,
-  canvasHeight: number,
+  _canvasWidth?: number,
+  _canvasHeight?: number,
 ): Matrix4 {
-  const cx = canvasWidth / 2;
-  const cy = canvasHeight / 2;
-  return planeTransform(
-    style.scale,
-    cx + (x - cx) * style.scale,
-    cy + (y - cy) * style.scale,
-  );
+  return planeTransform(style.scale, x, y);
 }

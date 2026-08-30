@@ -82,6 +82,7 @@ export class Store<S extends AnySchema> {
   private readonly nextId: () => string;
   private readonly now: () => string;
   private counter = 0;
+  private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
     this.schema = options.schema;
@@ -234,11 +235,13 @@ export class Store<S extends AnySchema> {
     const after = this.violations();
     const beforeKeys = new Set(before.map(violationKey));
     const afterKeys = new Set(after.map(violationKey));
+    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    this.notify(diff, ops);
 
     return {
       batch,
       ops,
-      diff: diffSnapshots(rollback, this.graph.snapshot()),
+      diff,
       primitives: allPrimitives,
       reads: [...reads],
       writes: [...writes],
@@ -326,11 +329,13 @@ export class Store<S extends AnySchema> {
     const after = this.violations();
     const beforeKeys = new Set(before.map(violationKey));
     const afterKeys = new Set(after.map(violationKey));
+    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    this.notify(diff, ops);
 
     return {
       batch,
       ops,
-      diff: diffSnapshots(rollback, this.graph.snapshot()),
+      diff,
       primitives: ops.flatMap((op) => [...op.primitives]),
       reads: [...new Set(ops.flatMap((op) => [...op.reads]))],
       writes: [...new Set(ops.flatMap((op) => [...op.writes]))],
@@ -346,8 +351,24 @@ export class Store<S extends AnySchema> {
     return this.undo(undoBatchId, options);
   }
 
-  subscribe(listener: (diff: GraphDiff<NodeOfSchema<S>>) => void): () => void {
-    return this.graph.subscribe(listener);
+  /**
+   * Every applied change, with the operations that caused it.
+   *
+   * Notified AFTER the log is appended, not during the graph write: a
+   * subscriber that reads the log to find out who made a change must not see
+   * a log that has not caught up yet. Subscribing to the graph directly
+   * gives the diff without that guarantee.
+   */
+  subscribe(
+    listener: (diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void,
+  ): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notify(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]): void {
+    if (ops.length === 0) return;
+    for (const listener of this.listeners) listener(diff, ops);
   }
 
   snapshot(): GraphSnapshot<NodeOfSchema<S>> {
