@@ -1,0 +1,24 @@
+{
+  "id": "b2fe0b13-b378-4eba-9534-b003cb8ec500",
+  "taskId": "5d3773c0-3751-4007-839b-e07e9b9b4faa",
+  "taskTitle": "Graview — spatial context-graph framework",
+  "startedAt": "2026-08-30T04:56:39.601Z",
+  "finishedAt": "2026-08-30T04:56:39.601Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "Six packages, the household example ported as the acceptance test, platform questions answered in Chrome Canary; 254 tests",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}
