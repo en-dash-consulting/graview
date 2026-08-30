@@ -3,7 +3,7 @@ id: "aa5d62c9-4d32-4157-aa3d-61aa93642dde"
 level: "task"
 title: "Schema registry — defineNode with build-time type safety"
 status: "pending"
-priority: "critical"
+priority: "high"
 tags:
   - "core"
   - "schema"

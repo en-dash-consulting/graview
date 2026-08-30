@@ -3,7 +3,7 @@ id: "f62721da-3c9a-4e93-930c-971c2ede56e4"
 level: "task"
 title: "Operation log with reads-tracking and selective undo"
 status: "pending"
-priority: "critical"
+priority: "high"
 tags:
   - "core"
   - "undo"
