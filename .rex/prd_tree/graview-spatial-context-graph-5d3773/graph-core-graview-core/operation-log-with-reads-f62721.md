@@ -2,7 +2,7 @@
 id: "f62721da-3c9a-4e93-930c-971c2ede56e4"
 level: "task"
 title: "Operation log with reads-tracking and selective undo"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "core"
@@ -11,6 +11,11 @@ tags:
   - "attribution"
 blockedBy:
   - "aa5d62c9-4d32-4157-aa3d-61aa93642dde"
+startedAt: "2026-08-30T04:03:20.205Z"
+completedAt: "2026-08-30T04:03:20.205Z"
+endedAt: "2026-08-30T04:03:20.205Z"
+resolutionType: "code-change"
+resolutionDetail: "Append-only op log with author/batch/intent/inverse/reads/writes on every op. Reads tracked from op 0 via TrackedReader. Selective undo is a dependency check that names blocking ops and offers their batches; undo appends inverses; redo is the undo of an undo; graph reconstructs by folding the log."
 acceptanceCriteria:
   - "Every mutation records author, batch, intent, inverse, reads and writes"
   - "The graph is reconstructible by folding the log from empty"

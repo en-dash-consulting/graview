@@ -2,7 +2,7 @@
 id: "16267bfa-7850-4eb8-ad67-d5b6dd5fb27e"
 level: "task"
 title: "Persistence adapter and the household example graph load"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "core"
@@ -12,6 +12,11 @@ tags:
 blockedBy:
   - "aa5d62c9-4d32-4157-aa3d-61aa93642dde"
   - "2f983070-fccb-4b73-9ea0-0f2afb4cfe37"
+startedAt: "2026-08-30T04:03:23.037Z"
+completedAt: "2026-08-30T04:03:23.037Z"
+endedAt: "2026-08-30T04:03:23.037Z"
+resolutionType: "code-change"
+resolutionDetail: "Memory and SQLite adapters behind one PersistenceAdapter interface, tested with the same suite. SQLite adapter reads the household example's exact graph_nodes/graph_edges shape (Drizzle-compatible; takes db.$client). The household example's real seeded graphs load and evaluate identically. Whole tier runs headlessly in CI."
 acceptanceCriteria:
   - "Memory and Drizzle/SQLite adapters both satisfy one adapter interface"
   - "The household example's real graph_nodes and graph_edges load into a typed graph"

@@ -2,7 +2,7 @@
 id: "e1153e9b-ba4b-4160-a640-d3954bb1b8f8"
 level: "feature"
 title: "Graph core — @graview/core"
-status: "pending"
+status: "completed"
 priority: "critical"
 tags:
   - "core"
@@ -10,6 +10,9 @@ tags:
   - "schema"
   - "invariants"
 source: "Session planning — build sequence step 2"
+startedAt: "2026-08-30T04:03:23.071Z"
+completedAt: "2026-08-30T04:03:23.071Z"
+endedAt: "2026-08-30T04:03:23.071Z"
 acceptanceCriteria:
   - "The household example's seven node kinds and six edge kinds express as defineNode declarations"
   - "The household example's four invariants produce output identical to its hand-rolled engine"
@@ -23,7 +26,7 @@ description: "The headless heart of the framework: schema registry, invariant en
 
 | Title | Status |
 |-------|--------|
-| [Invariant engine with repairs](./invariant-engine-with-repairs.md) | pending |
-| [Operation log with reads-tracking and selective undo](./operation-log-with-reads-f62721.md) | pending |
-| [Persistence adapter and the household example graph load](./persistence-adapter-and-16267b.md) | pending |
-| [Schema registry — defineNode with build-time type safety](./schema-registry-definenode-with-aa5d62.md) | pending |
+| [Invariant engine with repairs](./invariant-engine-with-repairs.md) | completed |
+| [Operation log with reads-tracking and selective undo](./operation-log-with-reads-f62721.md) | completed |
+| [Persistence adapter and the household example graph load](./persistence-adapter-and-16267b.md) | completed |
+| [Schema registry — defineNode with build-time type safety](./schema-registry-definenode-with-aa5d62.md) | completed |
