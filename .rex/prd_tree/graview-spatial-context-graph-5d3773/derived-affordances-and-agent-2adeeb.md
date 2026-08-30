@@ -2,7 +2,7 @@
 id: "2adeebc0-df1c-4ec3-9404-08d3ac1ef04f"
 level: "feature"
 title: "Derived affordances and agent tools — @graview/tools"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "affordances"
@@ -12,6 +12,11 @@ tags:
 blockedBy:
   - "e1153e9b-ba4b-4160-a640-d3954bb1b8f8"
 source: "Session planning — the differentiating idea"
+startedAt: "2026-08-30T04:31:19.324Z"
+completedAt: "2026-08-30T04:31:19.324Z"
+endedAt: "2026-08-30T04:31:19.324Z"
+resolutionType: "code-change"
+resolutionDetail: "@graview/tools: five providers (invariant/structure/schema/lens/llm) merging into one ranked set, with no per-selection code. The structure provider produces genuinely unauthored suggestions — odd-one-out field alignment and missing-connection joins — by pairing an observation with whatever declared mutation can write that field. Tool definitions generate once from the schema; MCP and in-app adapters are transports over one runtime. Verified on the household example's real graph that agent and human edits produce byte-identical diffs. Derivation over a whole real graph runs in under one frame. 31 tests."
 acceptanceCriteria:
   - "Selecting nodes surfaces legal mutations with no per-selection code written"
   - "A violation surfaces its repair mutations, ranked above non-repair actions"
