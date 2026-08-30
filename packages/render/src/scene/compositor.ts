@@ -6,31 +6,31 @@ import {
   setLayoutSubtree,
   toDOMMatrix,
   updateElementGeometry,
-  type Matrix4,
   type PlatformCapabilities,
 } from "../platform/html-in-canvas.js";
 import { COMPOSITOR_WGSL } from "./compositor.wgsl.js";
-import { styleFor, transformFor, type PlaneStyle } from "./plane.js";
+import type { ConnectorStyle } from "./connectors.js";
+import {
+  planFrame,
+  type FramePlan,
+  type PlannedConnector,
+  type PlannedView,
+  type ViewDraw,
+} from "./frame-plan.js";
 
-/** One view drawn into the scene: a DOM subtree, and where it belongs. */
-export interface SceneView {
-  readonly id: string;
+/** A view in the scene: its DOM subtree, plus everything the plan needs. */
+export interface SceneView extends PlannedView {
+  /**
+   * The element captured for this view. It MUST be an immediate child of the
+   * scene canvas — the platform rejects anything deeper. Its own descendants
+   * are captured with it.
+   */
   readonly element: HTMLElement;
-  /** 0 focus, 1 relations, 2 context. */
-  plane: number;
-  /** Layout position in canvas pixels, before the plane transform. */
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  /** Set when the view's DOM changed and its texture is stale. */
-  dirty?: boolean;
 }
 
 /**
  * The minimum of vgpu this module uses, named so the compositor can be driven
- * by `vgpu`, `vgpu/node` or `vgpu/mock` without importing any of them —
- * which is what lets the snapshot tests run in CI with no GPU present.
+ * by `vgpu`, `vgpu/node` or `vgpu/mock` without importing any of them.
  */
 export interface VgpuLike {
   readonly device: { readonly gpu: GPUDevice };
@@ -52,14 +52,13 @@ export interface CompositorOptions {
   readonly ground?: readonly [number, number, number];
   /** Stand the pointer router down once a browser redirects hit-testing itself. */
   readonly platformHandlesHitTesting?: boolean;
+  readonly connectorOverrides?: Readonly<Record<string, Partial<ConnectorStyle>>>;
 }
 
 interface ViewResources {
   texture: GPUTexture;
   width: number;
   height: number;
-  /** Frame index of the last capture, so summary fidelity can cache. */
-  capturedAt: number;
   bindGroup: GPUBindGroup | null;
   uniform: GPUBuffer;
 }
@@ -70,21 +69,22 @@ const UNIFORM_BYTES = 64; // 4 x vec4f
  * Captures views into GPU textures and composites them as quads at plane
  * depth, then reports each drawn position back to the browser.
  *
- * Capture budget follows the fidelity axis, not the view count. That split is
- * load-bearing rather than an optimisation: capture costs ~0.016 ms per node
- * up to ~128 live captures a frame and then falls off a cliff — 33 ms at 160,
- * a crashed GPU process at 256. Without the split, a scene would hit that
- * cliff at around 130 visible nodes. Measurements: `docs/platform-findings.md`.
+ * The frame is decided by `planFrame` — which fidelity captures, what order
+ * things draw in, where each view lands — and this class only submits it.
+ * Keeping the decisions out of here is what lets them be tested in CI with
+ * no GPU and no DOM.
  */
 export class Compositor {
   private readonly views = new Map<string, SceneView>();
   private readonly resources = new Map<string, ViewResources>();
+  private readonly capturedAt: Record<string, number> = {};
   private readonly router: PointerRouter;
   private pipeline: GPURenderPipeline | null = null;
   private sampler: GPUSampler | null = null;
   private frame = 0;
   private detachRouter: (() => void) | null = null;
-  private lastPlacements: readonly Placement[] = [];
+  private connectors: readonly PlannedConnector[] = [];
+  private lastPlan: FramePlan | null = null;
 
   readonly capabilities: PlatformCapabilities;
 
@@ -102,7 +102,6 @@ export class Compositor {
     });
   }
 
-  /** Starts routing pointers against drawn geometry. */
   attach(): () => void {
     this.detachRouter = this.router.attach();
     return () => this.detach();
@@ -114,6 +113,15 @@ export class Compositor {
   }
 
   add(view: SceneView): void {
+    if (view.element.parentElement !== this.canvas) {
+      // The platform's own message for this arrives from deep inside a
+      // capture call, a frame later, naming neither the view nor the fix.
+      throw new Error(
+        `View "${view.id}" must be an immediate child of the scene canvas — ` +
+          "the capture API rejects deeper descendants. Nest inside a view, " +
+          "never between views.",
+      );
+    }
     this.views.set(view.id, { ...view, dirty: true });
   }
 
@@ -123,54 +131,37 @@ export class Compositor {
     resource?.uniform.destroy();
     this.resources.delete(id);
     this.views.delete(id);
+    delete this.capturedAt[id];
+  }
+
+  /** Replaces the connector set, e.g. after a layout change. */
+  setConnectors(connectors: readonly PlannedConnector[]): void {
+    this.connectors = connectors;
   }
 
   /** Marks a view's texture stale, so the next frame recaptures it. */
   invalidate(id: string): void {
     const view = this.views.get(id);
-    if (view) view.dirty = true;
+    if (view) this.views.set(id, { ...view, dirty: true });
   }
 
   all(): SceneView[] {
     return [...this.views.values()];
   }
 
-  /** Asks the browser for a `paint` event — the only moment capture is legal. */
-  scheduleFrame(): void {
-    requestPaint(this.canvas);
-  }
-
-  /**
-   * Whether a view needs recapturing this frame. Fidelity, not plane index,
-   * decides, and the split is what keeps a large scene in frame budget:
-   *
-   * - `full`    live: captured every frame, because it is being edited
-   * - `summary` cached: captured only when its DOM actually changed
-   * - `glyph`   captured once and never again; at glyph scale the pixels
-   *             stop carrying detail, so a cached texture is indistinguishable
-   *             from a live one and costs nothing per frame
-   */
-  private shouldCapture(view: SceneView, style: PlaneStyle): boolean {
-    const resource = this.resources.get(view.id);
-    if (!resource || resource.capturedAt === 0) return true;
-    switch (style.fidelity) {
-      case "full":
-        return true;
-      case "summary":
-        return view.dirty === true;
-      case "glyph":
-        return false;
-    }
-  }
-
-  /** Last frame's drawn placements. Measurement harnesses only. */
-  placements(): readonly Placement[] {
-    return this.lastPlacements;
+  /** Last frame's plan. Measurement harnesses and tests only. */
+  plan(): FramePlan | null {
+    return this.lastPlan;
   }
 
   /** Raw device handle. Measurement harnesses only. */
   deviceForProbe(): GPUDevice {
     return this.deps.gpu.device.gpu;
+  }
+
+  /** Asks the browser for a `paint` event — the only moment capture is legal. */
+  scheduleFrame(): void {
+    requestPaint(this.canvas);
   }
 
   /**
@@ -180,12 +171,31 @@ export class Compositor {
    * Call this from a `paint` listener. Outside one the browser has no paint
    * record and capture throws.
    */
-  render(): void {
+  render(): FramePlan {
     const device = this.deps.gpu.device.gpu;
     const queue = device.queue;
     this.frame += 1;
 
-    const ordered = [...this.views.values()].sort((a, b) => b.plane - a.plane);
+    const [canvasWidth, canvasHeight] = this.deps.surface.size;
+    const plan = planFrame([...this.views.values()], this.connectors, {
+      canvasWidth,
+      canvasHeight,
+      capturedAt: this.capturedAt,
+      ...(this.options.connectorOverrides
+        ? { connectorOverrides: this.options.connectorOverrides }
+        : {}),
+    });
+    this.lastPlan = plan;
+
+    for (const capture of plan.captures) {
+      const view = this.views.get(capture.viewId);
+      if (!view) continue;
+      const resource = this.ensureResources(device, view);
+      captureElement(queue, view.element, resource.texture);
+      this.capturedAt[view.id] = this.frame;
+      this.views.set(view.id, { ...view, dirty: false });
+    }
+
     const encoder = device.createCommandEncoder({ label: "graview-compositor" });
     const pass = encoder.beginRenderPass({
       colorAttachments: [
@@ -200,43 +210,50 @@ export class Compositor {
     pass.setPipeline(this.ensurePipeline(device));
 
     const placements: Placement[] = [];
-    const [canvasWidth, canvasHeight] = this.deps.surface.size;
+    for (const draw of plan.draws) {
+      const view = this.views.get(draw.viewId);
+      const resource = this.resources.get(draw.viewId);
+      if (!view || !resource) continue;
 
-    for (const view of ordered) {
-      const style = styleFor(view.plane);
-      const resource = this.ensureResources(device, view);
-
-      if (this.shouldCapture(view, style)) {
-        captureElement(queue, view.element, resource.texture);
-        resource.capturedAt = this.frame;
-        view.dirty = false;
-      }
-      const transform = transformFor(style, view.x, view.y, canvasWidth, canvasHeight);
-      this.writeUniform(queue, resource, view, style, transform, canvasWidth, canvasHeight);
+      queue.writeBuffer(
+        resource.uniform,
+        0,
+        packUniform(
+          draw,
+          canvasWidth,
+          canvasHeight,
+          this.options.ground ?? [0.957, 0.949, 0.933],
+        ),
+      );
       pass.setBindGroup(0, this.ensureBindGroup(device, resource));
       pass.draw(6);
 
       placements.push({
         element: view.element,
-        transform,
+        transform: draw.transform,
         width: view.width,
         height: view.height,
         depth: view.plane,
       });
-
-      // Report the drawn position even on builds that ignore it: the call is
-      // free, and it is what makes the scene correct the day it lands.
-      if (this.capabilities.geometrySync) {
-        updateElementGeometry(this.canvas, view.element, {
-          canvasTransform: toDOMMatrix(transform),
-        });
-      }
     }
 
     pass.end();
     queue.submit([encoder.finish()]);
-    this.lastPlacements = placements;
+
+    // Report the drawn positions even on builds that ignore them: the call is
+    // free, and it is what makes the scene correct the day it lands.
+    if (this.capabilities.geometrySync) {
+      for (const report of plan.geometry) {
+        const view = this.views.get(report.viewId);
+        if (!view) continue;
+        updateElementGeometry(this.canvas, view.element, {
+          canvasTransform: toDOMMatrix(report.transform),
+        });
+      }
+    }
+
     this.router.setPlacements(placements);
+    return plan;
   }
 
   private groundColor(): GPUColor {
@@ -290,7 +307,6 @@ export class Compositor {
       texture,
       width: view.width,
       height: view.height,
-      capturedAt: 0,
       bindGroup: null,
       uniform:
         existing?.uniform ??
@@ -323,27 +339,26 @@ export class Compositor {
     return resource.bindGroup;
   }
 
-  private writeUniform(
-    queue: GPUQueue,
-    resource: ViewResources,
-    view: SceneView,
-    style: PlaneStyle,
-    transform: Matrix4,
-    canvasWidth: number,
-    canvasHeight: number,
-  ): void {
-    const [r, g, b] = this.options.ground ?? [0.957, 0.949, 0.933];
-    const data = new Float32Array([
-      transform[12], transform[13], view.width * style.scale, view.height * style.scale,
-      style.blur, style.falloff, style.shadow, 0,
-      canvasWidth, canvasHeight, 0, 0,
-      r, g, b, 1,
-    ]);
-    queue.writeBuffer(resource.uniform, 0, data);
-  }
-
   dispose(): void {
     this.detach();
     for (const id of [...this.resources.keys()]) this.remove(id);
   }
+}
+
+/**
+ * The uniform layout the compositing shader reads, packed as data so a test
+ * can assert on it with no GPU present.
+ */
+export function packUniform(
+  draw: ViewDraw,
+  canvasWidth: number,
+  canvasHeight: number,
+  ground: readonly [number, number, number],
+): Float32Array<ArrayBuffer> {
+  return new Float32Array([
+    draw.transform[12], draw.transform[13], draw.width, draw.height,
+    draw.style.blur, draw.style.falloff, draw.style.shadow, draw.opacity,
+    canvasWidth, canvasHeight, 0, 0,
+    ground[0], ground[1], ground[2], 1,
+  ]);
 }

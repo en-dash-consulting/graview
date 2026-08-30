@@ -27,8 +27,26 @@ export type {
 export { PLANES, PLANE_STYLES, mixStyles, styleFor, transformFor } from "./scene/plane.js";
 export type { PlaneIndex, PlaneStyle } from "./scene/plane.js";
 
+// The frame, as data: what captures, what draws, and where it lands.
+export { planFrame } from "./scene/frame-plan.js";
+export type {
+  CaptureCommand,
+  ConnectorDraw,
+  FramePlan,
+  GeometryReport,
+  PlanOptions,
+  PlannedConnector,
+  PlannedView,
+  ViewDraw,
+} from "./scene/frame-plan.js";
+export { fromLayout } from "./scene/from-layout.js";
+
+// Connector treatment, derived per edge kind.
+export { connectorStyle, distinguishable } from "./scene/connectors.js";
+export type { ConnectorStyle, EndCap, StrokePattern } from "./scene/connectors.js";
+
 // Capture and composite.
-export { Compositor } from "./scene/compositor.js";
+export { Compositor, packUniform } from "./scene/compositor.js";
 export type {
   CompositorDeps,
   CompositorOptions,

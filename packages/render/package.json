@@ -15,7 +15,8 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@graview/core": "workspace:*"
+    "@graview/core": "workspace:*",
+    "@graview/layout": "workspace:*"
   },
   "peerDependencies": {
     "vgpu": "^0.3.1"
@@ -24,5 +25,8 @@
     "vgpu": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "zod": "^4.4.3"
   }
 }
