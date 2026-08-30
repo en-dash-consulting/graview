@@ -139,8 +139,8 @@ export function registerDefaultViews<S extends AnySchema>(
             boxSizing: "border-box",
             borderRadius: 10,
             overflow: "hidden",
-            border: `1px solid hsl(${Math.round(hue * 360)} 60% 62% / 0.34)`,
-            background: `hsl(${Math.round(hue * 360)} 60% 55% / 0.10)`,
+            border: `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
+            background: `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 0.5))`,
           }}
         >
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>

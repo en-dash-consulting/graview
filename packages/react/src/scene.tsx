@@ -93,7 +93,8 @@ export function Scene<S extends AnySchema>({
   animate = true,
   children,
 }: SceneProps<S>) {
-  const { store, views, view, setView, selection, setSelection, setJackedIn } = useGraview<S>();
+  const { store, scheme, views, view, setView, selection, setSelection, setJackedIn } =
+    useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -160,6 +161,7 @@ export function Scene<S extends AnySchema>({
       node={node}
       useDom={useDom}
       touched={touched.has(node.id)}
+      scheme={scheme}
       canvasWidth={result.width}
       canvasHeight={result.height}
       selected={selection.includes(node.id)}
@@ -248,7 +250,7 @@ export function Scene<S extends AnySchema>({
           {hosts}
         </canvas>
       )}
-      <Connectors result={frame} above={!useDom} />
+      <Connectors result={frame} above={!useDom} scheme={scheme} />
       {children}
     </div>
   );
@@ -315,6 +317,7 @@ interface HostProps {
   readonly node: SceneNode;
   readonly useDom: boolean;
   readonly touched: boolean;
+  readonly scheme: "light" | "dark";
   readonly canvasWidth: number;
   readonly canvasHeight: number;
   readonly selected: boolean;
@@ -331,6 +334,7 @@ function SceneViewHost({
   node,
   useDom,
   touched,
+  scheme,
   canvasWidth,
   canvasHeight,
   selected,
@@ -345,8 +349,8 @@ function SceneViewHost({
   const upper = Math.max(0, Math.min(2, Math.ceil(node.plane))) as 0 | 1 | 2;
   const style =
     lower === upper
-      ? styleFor(lower)
-      : mixStyles(styleFor(lower), styleFor(upper), node.plane - lower);
+      ? styleFor(lower, scheme)
+      : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), node.plane - lower);
   const transform = transformFor(style, node.x, node.y, canvasWidth, canvasHeight);
 
   const domOnly: CSSProperties = useDom
@@ -357,7 +361,7 @@ function SceneViewHost({
         // Recession dims toward the ground; entering and leaving nodes carry
         // their own fade on top of it.
         opacity: (1 - style.falloff * 0.55) * (node.opacity ?? 1),
-        boxShadow: `0 ${10 * style.shadow}px ${34 * style.shadow}px rgba(0,0,0,${style.shadow + 0.2})`,
+        boxShadow: `0 ${10 * style.shadow}px ${34 * style.shadow}px rgba(0,0,0,${style.shadow + 0.12})`,
       }
     : // The GPU path does NOT fade the host: the shader owns opacity there,
       // and applying it in both places made an entering view fade as
@@ -406,14 +410,17 @@ function SceneViewHost({
 }
 
 /** The centre of a node's box as DRAWN, after its plane's scale. */
-function drawnCentre(node: SceneNode | undefined): { x: number; y: number } | null {
+function drawnCentre(
+  node: SceneNode | undefined,
+  scheme: "light" | "dark",
+): { x: number; y: number } | null {
   if (!node) return null;
   const lower = Math.max(0, Math.min(2, Math.floor(node.plane))) as 0 | 1 | 2;
   const upper = Math.max(0, Math.min(2, Math.ceil(node.plane))) as 0 | 1 | 2;
   const { scale } =
     lower === upper
-      ? styleFor(lower)
-      : mixStyles(styleFor(lower), styleFor(upper), node.plane - lower);
+      ? styleFor(lower, scheme)
+      : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), node.plane - lower);
   return { x: node.x + (node.width * scale) / 2, y: node.y + (node.height * scale) / 2 };
 }
 
@@ -438,6 +445,7 @@ const DASH: Record<string, string | undefined> = {
 function Connectors({
   result,
   above,
+  scheme,
 }: {
   result: {
     nodes: readonly SceneNode[];
@@ -447,8 +455,10 @@ function Connectors({
   };
   /** The GPU canvas is opaque, so connectors have to sit over it, not under. */
   above: boolean;
+  scheme: "light" | "dark";
 }) {
   const byId = new Map(result.nodes.map((node) => [node.id, node]));
+  const centre = (node: SceneNode | undefined) => drawnCentre(node, scheme);
   /*
    * Only relationships involving a RAISED node are drawn.
    *
@@ -485,8 +495,8 @@ function Connectors({
         // centres: a plane scales its box in place, so a receded node's centre
         // is not where layout's unscaled box says it is. Using layout's
         // coordinates here sent every connector to a point off the canvas.
-        const from = drawnCentre(byId.get(connector.from));
-        const to = drawnCentre(byId.get(connector.to));
+        const from = centre(byId.get(connector.from));
+        const to = centre(byId.get(connector.to));
         if (!from || !to) return null;
         // Stroke treatment is derived from the edge kind, so `protects` can
         // never be mistaken for `assigned-to`.
