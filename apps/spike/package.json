@@ -1,0 +1,19 @@
+{
+  "name": "@graview/spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "probe": "node scripts/run-probe.mjs"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*",
+    "@graview/render": "workspace:*",
+    "vgpu": "^0.3.1"
+  },
+  "devDependencies": {
+    "vite": "^5.4.11"
+  }
+}

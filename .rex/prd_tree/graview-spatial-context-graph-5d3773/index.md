@@ -25,7 +25,7 @@ description: "A framework for building applications where a typed context graph 
 
 | Title | Status |
 |-------|--------|
-| [Graph core — @graview/core](./graph-core-graview-core/index.md) | pending |
+| [Graph core — @graview/core](./graph-core-graview-core/index.md) | completed |
 | [Platform capability validation](./platform-capability-validation/index.md) | pending |
 | [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | pending |
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | pending |

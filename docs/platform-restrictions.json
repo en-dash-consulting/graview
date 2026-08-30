@@ -1,0 +1,17 @@
+{
+  "browser": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+  "flags": [
+    "--enable-blink-features=CanvasDrawElement",
+    "--enable-unsafe-webgpu",
+    "--use-angle=metal"
+  ],
+  "at": "2026-08-30T04:20:07.343Z",
+  "results": {
+    "plain-div": "captured with content (96 distinct colours, 100% opaque)",
+    "styled-text": "captured with content (116 distinct colours, 9% opaque)",
+    "inline-svg": "captured with content (14 distinct colours, 46% opaque)",
+    "img-data-uri": "captured, but a single flat colour - a fill, or a solid image",
+    "nested-canvas": "captured but fully transparent - nothing was drawn",
+    "cross-origin-iframe": "captured with content (2 distinct colours, 6% opaque)"
+  }
+}

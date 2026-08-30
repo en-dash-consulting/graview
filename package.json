@@ -16,7 +16,9 @@
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",
     "better-sqlite3": "^13.0.3",
-    "@types/better-sqlite3": "^9.6.0"
+    "@types/better-sqlite3": "^9.6.0",
+    "@webgpu/types": "^0.1.60",
+    "playwright": "^1.49.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

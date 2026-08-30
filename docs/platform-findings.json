@@ -1,0 +1,119 @@
+{
+  "at": "2026-08-30T04:20:13.865Z",
+  "browser": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+  "flags": [
+    "--enable-blink-features=CanvasDrawElement",
+    "--enable-unsafe-webgpu",
+    "--use-angle=metal"
+  ],
+  "ready": {
+    "capabilities": {
+      "available": true,
+      "captureMethod": "drawElementImageToTexture",
+      "geometrySync": true,
+      "hitTestFollowsGeometry": "unknown",
+      "layoutSubtree": true,
+      "paintEvents": true,
+      "webgpu": true,
+      "usable": true,
+      "notes": []
+    },
+    "views": [
+      {
+        "id": "panel-0",
+        "plane": 0,
+        "x": 30,
+        "y": 30
+      },
+      {
+        "id": "panel-1",
+        "plane": 1,
+        "x": 472.22222222222223,
+        "y": 296.1111111111111
+      },
+      {
+        "id": "panel-2",
+        "plane": 2,
+        "x": 942.3076923076924,
+        "y": 598.4615384615385
+      }
+    ]
+  },
+  "click": [
+    {
+      "clicked": "panel-0",
+      "at": [
+        138.3,
+        191.8
+      ],
+      "received": [
+        {
+          "tag": "OUTPUT",
+          "panel": "panel-0"
+        },
+        {
+          "tag": "BUTTON",
+          "panel": "panel-0"
+        }
+      ],
+      "activated": [
+        "panel-0"
+      ]
+    },
+    {
+      "clicked": "panel-1",
+      "at": [
+        563.8,
+        407
+      ],
+      "received": [
+        {
+          "tag": "CANVAS",
+          "panel": null
+        },
+        {
+          "tag": "BUTTON",
+          "panel": "panel-1"
+        }
+      ],
+      "activated": [
+        "panel-1"
+      ]
+    },
+    {
+      "clicked": "panel-2",
+      "at": [
+        797.7,
+        543.9
+      ],
+      "received": [
+        {
+          "tag": "CANVAS",
+          "panel": null
+        },
+        {
+          "tag": "BUTTON",
+          "panel": "panel-2"
+        }
+      ],
+      "activated": [
+        "panel-2"
+      ]
+    }
+  ],
+  "budget": {
+    "samples": [],
+    "crashed": true,
+    "error": "Error: page.reload: Page crashed\nCall log:\n\u001b[2m  - waiting for navigation until \"load\"\u001b[22m\n"
+  },
+  "restrictions": {
+    "error": "Error: page.evaluate: Target crashed "
+  },
+  "console": [
+    "debug: [vite] connecting...",
+    "debug: [vite] connected.",
+    "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "debug: [vite] connecting...",
+    "debug: [vite] connected."
+  ]
+}
