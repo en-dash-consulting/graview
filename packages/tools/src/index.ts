@@ -1,0 +1,37 @@
+// Derived affordances: actions found in the graph, not authored per selection.
+export {
+  applyAffordance,
+  defaultProviders,
+  deriveAffordances,
+  previewAffordance,
+} from "./derive.js";
+export type { DeriveOptions } from "./derive.js";
+export type {
+  Affordance,
+  AffordanceProvider,
+  AffordanceSet,
+  DeriveContext,
+  Observation,
+  OpenParameter,
+  ProviderName,
+} from "./types.js";
+
+// The providers, individually, so an app can replace or reorder them.
+export { invariantProvider } from "./providers/invariant.js";
+export { schemaProvider } from "./providers/schema.js";
+export { structureProvider } from "./providers/structure.js";
+export { lensProvider } from "./providers/lens.js";
+export type { LensAction } from "./providers/lens.js";
+export { deriveWithLlm } from "./providers/llm.js";
+export type { LlmProposal, LlmProvider } from "./providers/llm.js";
+
+// One tool surface, two transports.
+export { createToolRuntime } from "./agent/tools.js";
+export type {
+  ToolDefinition,
+  ToolResult,
+  ToolRuntime,
+  ToolRuntimeOptions,
+} from "./agent/tools.js";
+export { createInAppAdapter, createMcpAdapter } from "./agent/adapters.js";
+export type { InAppAgent, McpContent, McpTool, McpToolResult } from "./agent/adapters.js";
