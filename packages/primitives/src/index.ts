@@ -1,3 +1,30 @@
+export {
+  ActivityRail,
+  AnswerArgs,
+  BackOut,
+  Inspector,
+  nameOf,
+  Standing,
+  Trail,
+  UndoTurn,
+  useRecentChanges,
+} from "./workbench/index.js";
+export type { Change } from "./workbench/index.js";
+export {
+  buildCoverage,
+  CoverageBindingError,
+  COVERAGE_REQUIRED_ROLES,
+  CoverageView,
+  createCoverageLens,
+} from "./lens/coverage.js";
+export type {
+  CoverageCell,
+  CoverageGrid,
+  CoverageLens,
+  CoverageOptions,
+  CoverageRoles,
+  CoverageViewProps,
+} from "./lens/coverage.js";
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
 // The primitive set: enough for a new kind to render before anyone writes a view.

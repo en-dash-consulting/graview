@@ -37,6 +37,15 @@ export function JackedIn<S extends AnySchema>({ className, style, children }: Ja
       style={{
         position: "fixed",
         inset: 0,
+        /*
+         * Above the scene, which carries `z-index: 1` on its stage.
+         *
+         * A fixed element at `auto` loses to it, so jacking in rendered the
+         * page UNDERNEATH the scene it was lifted out of — visible around the
+         * edges, unreadable, and unclickable. It went unnoticed until a
+         * second app made jack-in a primary control rather than a curiosity.
+         */
+        zIndex: 50,
         background: "var(--graview-ground, #f6f4f0)",
         overflow: "auto",
         ...style,

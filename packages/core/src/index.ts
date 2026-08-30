@@ -117,7 +117,7 @@ export type { SchemaBinding } from "./bind.js";
 
 // App bundle, checks and generated agent docs.
 export { defineApp } from "./app.js";
-export type { GraviewApp } from "./app.js";
+export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export { checkApp, formatFindings } from "./cli/check.js";
 export type { CheckResult, Finding, Severity } from "./cli/check.js";
 export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
