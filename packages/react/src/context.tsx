@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -119,20 +120,43 @@ export function useGraview<S extends AnySchema>(): GraviewContextValue<S> {
  * Subscribes to the graph. Re-renders on every applied diff, whoever caused
  * it — so an agent's edit updates the interface through exactly the path a
  * human edit does.
+ *
+ * The snapshot is CACHED between diffs. `allNodes()` builds a fresh array
+ * every call, and `useSyncExternalStore` compares snapshots by identity: a
+ * new array each read is an infinite render loop, which is exactly what this
+ * hook did before the cache existed.
  */
 export function useGraph<S extends AnySchema>(): readonly NodeOfSchema<S>[] {
   const { store } = useGraview<S>();
-  return useSyncExternalStore(
-    useCallback((listener) => store.subscribe(listener), [store]),
-    useCallback(() => store.graph.allNodes(), [store]),
-    useCallback(() => store.graph.allNodes(), [store]),
+  const cache = useRef<readonly NodeOfSchema<S>[] | null>(null);
+  const owner = useRef<Store<S> | null>(null);
+
+  const read = useCallback(() => {
+    if (owner.current !== store) {
+      owner.current = store;
+      cache.current = null;
+    }
+    cache.current ??= store.graph.allNodes();
+    return cache.current;
+  }, [store]);
+
+  const subscribe = useCallback(
+    (listener: () => void) =>
+      store.subscribe(() => {
+        cache.current = null;
+        listener();
+      }),
+    [store],
   );
+
+  return useSyncExternalStore(subscribe, read, read);
 }
 
 /** One node, kept current as the graph changes underneath it. */
 export function useNode<S extends AnySchema>(id: string | null): NodeOfSchema<S> | undefined {
   const { store } = useGraview<S>();
   const subscribe = useCallback((listener: () => void) => store.subscribe(listener), [store]);
+  // A node is a stable object reference between edits, so this needs no cache.
   const read = useCallback(
     () => (id === null ? undefined : store.graph.getNode(id)),
     [store, id],

@@ -1,4 +1,11 @@
-export { aggregateId, isAggregateId, layout, planeOf, AGGREGATE_PREFIX } from "./layout.js";
+export {
+  aggregateId,
+  isAggregateId,
+  kindsOfAggregate,
+  layout,
+  planeOf,
+  AGGREGATE_PREFIX,
+} from "./layout.js";
 export { easeInOut, interpolate } from "./interpolate.js";
 export type { InterpolatedLayout, InterpolatedNode } from "./interpolate.js";
 export { DEFAULT_OPTIONS } from "./types.js";

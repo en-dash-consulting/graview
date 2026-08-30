@@ -85,6 +85,7 @@ export class Compositor {
   private detachRouter: (() => void) | null = null;
   private connectors: readonly PlannedConnector[] = [];
   private lastPlan: FramePlan | null = null;
+  private lastPlacements: readonly Placement[] = [];
 
   readonly capabilities: PlatformCapabilities;
 
@@ -152,6 +153,11 @@ export class Compositor {
   /** Last frame's plan. Measurement harnesses and tests only. */
   plan(): FramePlan | null {
     return this.lastPlan;
+  }
+
+  /** Where each view was drawn last frame, with the element it came from. */
+  placements(): readonly Placement[] {
+    return this.lastPlacements;
   }
 
   /** Raw device handle. Measurement harnesses only. */
@@ -252,6 +258,7 @@ export class Compositor {
       }
     }
 
+    this.lastPlacements = placements;
     this.router.setPlacements(placements);
     return plan;
   }

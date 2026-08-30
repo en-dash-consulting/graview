@@ -101,6 +101,9 @@ export type {
 export { createMemoryAdapter } from "./persistence/memory.js";
 export type { PersistenceAdapter } from "./persistence/types.js";
 
+// Extending a schema without rewriting what was written against the base.
+export { extendInvariants, extendMutations } from "./extend.js";
+
 // Schema binding — infers mutation and invariant types from one schema.
 export { bindSchema } from "./bind.js";
 export type { SchemaBinding } from "./bind.js";

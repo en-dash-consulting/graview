@@ -11,7 +11,7 @@ export type {
   ViewProps,
 } from "./view-registry.js";
 
-export { ResolvedView, Scene } from "./scene.js";
+export { ResolvedView, Scene, selectionFor } from "./scene.js";
 export type { ResolvedViewProps, SceneProps } from "./scene.js";
 
 export { JackedIn } from "./jack-in.js";

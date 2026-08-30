@@ -59,11 +59,17 @@ export interface LayoutOptions {
   readonly plurals?: Readonly<Record<string, string>>;
 }
 
+/**
+ * Three bands, chosen so the planes never overlap at their own scales.
+ *
+ * Sizes are in layout units; the plane's scale shrinks the drawn box in
+ * place, so a band's height is its size times that scale.
+ */
 export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals">> = {
   width: 1200,
   height: 760,
-  focusSize: { width: 640, height: 400 },
-  relationSize: { width: 180, height: 110 },
-  contextSize: { width: 150, height: 90 },
+  focusSize: { width: 700, height: 400 },
+  relationSize: { width: 200, height: 130 },
+  contextSize: { width: 190, height: 120 },
   gap: 24,
 };

@@ -94,8 +94,19 @@ describe("plane treatment", () => {
   it("recedes with scale, blur, falloff and shadow — and nothing else", () => {
     const plan = planFrame([view("a", 0), view("b", 1), view("c", 2)], [], CANVAS);
     const styles = plan.draws.map((d) => d.style);
-    expect(styles.map((s) => s.scale)).toEqual([0.52, 0.72, 1]);
-    expect(styles.map((s) => s.blur)).toEqual([3.2, 1.4, 0]);
+    expect(styles.map((s) => s.scale)).toEqual([
+      PLANE_STYLES[2].scale,
+      PLANE_STYLES[1].scale,
+      PLANE_STYLES[0].scale,
+    ]);
+    expect(styles.map((s) => s.blur)).toEqual([
+      PLANE_STYLES[2].blur,
+      PLANE_STYLES[1].blur,
+      PLANE_STYLES[0].blur,
+    ]);
+    // Recession is monotonic: each plane back is blurrier than the one in front.
+    expect(PLANE_STYLES[2].blur).toBeGreaterThan(PLANE_STYLES[1].blur);
+    expect(PLANE_STYLES[1].blur).toBeGreaterThan(PLANE_STYLES[0].blur);
     expect(styles[0]!.falloff).toBeGreaterThan(styles[2]!.falloff);
     // Every transform layout may hand the platform must be affine.
     for (const draw of plan.draws) expect(isAffine(draw.transform)).toBe(true);
@@ -129,10 +140,12 @@ describe("plane treatment", () => {
       plan.draws[0]!.transform[12],
       plan.draws[0]!.transform[13],
     ]);
-    // Float32 rounding: compare with tolerance, not for equality.
-    expect(packed[4]).toBeCloseTo(1.4, 5);
-    expect(packed[5]).toBeCloseTo(0.3, 5);
-    expect(packed[6]).toBeCloseTo(0.2, 5);
+    // Read the expected treatment off the plane rather than restating it, so
+    // tuning a plane does not silently break a packing test. Float32 rounding
+    // means tolerance, not equality.
+    expect(packed[4]).toBeCloseTo(PLANE_STYLES[1].blur, 5);
+    expect(packed[5]).toBeCloseTo(PLANE_STYLES[1].falloff, 5);
+    expect(packed[6]).toBeCloseTo(PLANE_STYLES[1].shadow, 5);
     expect(packed[7]).toBeCloseTo(0.5, 5);
     expect([packed[8], packed[9]]).toEqual([1000, 600]);
   });

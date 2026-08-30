@@ -1,8 +1,14 @@
 import type { AnySchema, Fidelity, NodeOfSchema } from "@graview/core";
 import { isAggregateId, layout, type Layout, type LayoutNode, type LayoutOptions } from "@graview/layout";
-import { PLANE_STYLES, styleFor, transformFor, type Matrix4 } from "@graview/render";
+import {
+  connectorStyle,
+  PLANE_STYLES,
+  styleFor,
+  transformFor,
+  type Matrix4,
+} from "@graview/render";
 import { useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
-import { useGraview, type ViewMode } from "./context.js";
+import { useGraph, useGraview, type ViewMode } from "./context.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
 export interface SceneProps<S extends AnySchema> {
@@ -17,8 +23,19 @@ export interface SceneProps<S extends AnySchema> {
    * pipeline, and precisely what is safe to lose when it is unavailable.
    */
   readonly renderer?: "gpu" | "dom" | "auto";
-  /** Wires the compositor up. Omit to run the DOM path. */
-  readonly attachRenderer?: (canvas: HTMLCanvasElement) => (() => void) | void;
+  /**
+   * Wires a renderer to the canvas. Called whenever the layout changes, with
+   * the canvas and the current picture; return a cleanup.
+   *
+   * The binding stays out of the renderer's business deliberately: it hands
+   * over the canvas and what layout decided, and the renderer decides pixels.
+   */
+  readonly attachRenderer?: (scene: {
+    canvas: HTMLCanvasElement;
+    layout: Layout;
+    /** The DOM host for a view id — what the capture API is given. */
+    hostOf(id: string): HTMLElement | null;
+  }) => (() => void) | void;
   readonly className?: string;
   readonly style?: CSSProperties;
   /** Rendered over the scene — an affordance surface, a header, a legend. */
@@ -44,24 +61,29 @@ export function Scene<S extends AnySchema>({
   const { store, views, view, selection, setSelection, setJackedIn } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const nodes = store.graph.allNodes();
+  // `nodes` is a cached snapshot that only changes when the graph does, so
+  // the layout is recomputed exactly when the picture could have changed.
+  const nodes = useGraph<S>();
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, options),
-    // The graph is read through the store on every render; `nodes.length` and
-    // the view are what actually change the picture.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, view, options, nodes.length],
+    [store, view, options, nodes],
   );
 
   useEffect(() => {
     if (renderer === "dom") return;
     const canvas = canvasRef.current;
     if (!canvas || !attachRenderer) return;
-    const detach = attachRenderer(canvas);
+    const detach = attachRenderer({
+      canvas,
+      layout: result,
+      hostOf: (id) =>
+        canvas.querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"]`),
+    });
     return () => {
       detach?.();
     };
-  }, [renderer, attachRenderer]);
+  }, [renderer, attachRenderer, result]);
 
   const useDom = renderer === "dom" || (renderer === "auto" && !attachRenderer);
 
@@ -84,13 +106,7 @@ export function Scene<S extends AnySchema>({
             canvasHeight={result.height}
             selected={selection.includes(node.id)}
             onSelect={(additive) =>
-              setSelection((current) =>
-                additive
-                  ? current.includes(node.id)
-                    ? current.filter((id) => id !== node.id)
-                    : [...current, node.id]
-                  : [node.id],
-              )
+              setSelection((current) => selectionFor(node, current, additive))
             }
             onJackIn={() => setJackedIn(node.id)}
           >
@@ -98,10 +114,31 @@ export function Scene<S extends AnySchema>({
           </SceneViewHost>
         ))}
       </canvas>
-      {useDom ? <Connectors result={result} /> : null}
+      <Connectors result={result} />
       {children}
     </div>
   );
+}
+
+/**
+ * What a click on a view selects.
+ *
+ * Selecting a GROUP selects its members, because a group is a view of a set
+ * of nodes rather than a node itself — "select the People block" means the
+ * people. Everything downstream then works unchanged: the affordance layer
+ * sees a selection of real nodes and can say what is true about them.
+ */
+export function selectionFor(
+  node: LayoutNode,
+  current: readonly string[],
+  additive: boolean,
+): string[] {
+  const ids = node.aggregate ? [...node.aggregate.memberIds] : [node.id];
+  if (!additive) return ids;
+  const alreadyIn = ids.every((id) => current.includes(id));
+  return alreadyIn
+    ? current.filter((id) => !ids.includes(id))
+    : [...current, ...ids.filter((id) => !current.includes(id))];
 }
 
 function cssTransform(transform: Matrix4): string {
@@ -172,9 +209,34 @@ function SceneViewHost({
   );
 }
 
-/** Connectors, drawn in SVG on the DOM path. The GPU path draws its own. */
+/** The centre of a node's box as DRAWN, after its plane's scale. */
+function drawnCentre(node: LayoutNode | undefined): { x: number; y: number } | null {
+  if (!node) return null;
+  const { scale } = styleFor(node.plane);
+  return { x: node.x + (node.width * scale) / 2, y: node.y + (node.height * scale) / 2 };
+}
+
+const DASH: Record<string, string | undefined> = {
+  solid: undefined,
+  dashed: "7 5",
+  dotted: "1 5",
+  double: "12 3",
+  tapered: "10 3 3 3",
+};
+
+/**
+ * Connectors, drawn in SVG over the scene on BOTH renderer paths.
+ *
+ * A deliberate choice, not an omission: the GPU pipeline earns its cost on
+ * per-plane blur of captured pixels, and lines are the one thing it would be
+ * worse at. SVG strokes stay crisp at any scale, carry their edge kind into
+ * the DOM where a test or a screen reader can find it, and cost nothing to
+ * restyle. The capture inside a `layoutsubtree` canvas is not disturbed,
+ * because this sits outside it.
+ */
 function Connectors({ result }: { result: Layout }) {
   if (result.connectors.length === 0) return null;
+  const byId = new Map(result.nodes.map((node) => [node.id, node]));
   return (
     <svg
       aria-hidden="true"
@@ -182,19 +244,33 @@ function Connectors({ result }: { result: Layout }) {
       height={result.height}
       style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}
     >
-      {result.connectors.map((connector) => (
-        <line
-          key={connector.id}
-          data-graview-connector={connector.kind}
-          x1={connector.x1}
-          y1={connector.y1}
-          x2={connector.x2}
-          y2={connector.y2}
-          stroke="currentColor"
-          strokeWidth={1.5}
-          opacity={0.5}
-        />
-      ))}
+      {result.connectors.map((connector) => {
+        // Endpoints are recomputed against the DRAWN boxes, not layout's own
+        // centres: a plane scales its box in place, so a receded node's centre
+        // is not where layout's unscaled box says it is. Using layout's
+        // coordinates here sent every connector to a point off the canvas.
+        const from = drawnCentre(byId.get(connector.from));
+        const to = drawnCentre(byId.get(connector.to));
+        if (!from || !to) return null;
+        // Stroke treatment is derived from the edge kind, so `protects` can
+        // never be mistaken for `assigned-to`.
+        const style = connectorStyle(connector.kind);
+        return (
+          <line
+            key={connector.id}
+            data-graview-connector={connector.kind}
+            x1={from.x}
+            y1={from.y}
+            x2={to.x}
+            y2={to.y}
+            stroke={`hsl(${Math.round(style.hue * 360)} 40% 40%)`}
+            strokeWidth={style.width}
+            strokeDasharray={DASH[style.pattern]}
+            strokeLinecap="round"
+            opacity={style.opacity * 0.75}
+          />
+        );
+      })}
     </svg>
   );
 }
