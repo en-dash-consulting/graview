@@ -115,32 +115,76 @@ export function registerDefaultViews<S extends AnySchema>(
     );
 
     /**
-     * A group at glyph fidelity. Still a name and a count, at a size that
-     * survives the plane's scale — "context" means glanceable, not unreadable.
+     * A group at glyph fidelity.
+     *
+     * It names its MEMBERS, not just how many there are. "4 AGREEMENTS" tells
+     * you a number and nothing you wanted to know; the whole point of a
+     * context plane is to be glanceable, and a count is not a glance at
+     * anything. What fits, fits; the rest is "+n".
      */
-    const GroupGlyph = (props: ViewProps<S>) => (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          gap: 2,
-          height: "100%",
-          padding: "8px 12px",
-          boxSizing: "border-box",
-          borderRadius: 10,
-          border: `1px solid hsl(${Math.round(hue * 360)} 60% 62% / 0.34)`,
-          background: `hsl(${Math.round(hue * 360)} 60% 55% / 0.10)`,
-        }}
-      >
-        <strong style={{ fontSize: 17, letterSpacing: "0.01em" }}>
-          {props.nodes?.length ?? 0}
-        </strong>
-        <span style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          {props.label ?? plural}
-        </span>
-      </div>
-    );
+    const GroupGlyph = (props: ViewProps<S>) => {
+      const members = props.nodes ?? [];
+      const names = members
+        .slice(0, 3)
+        .map((member) => labelOf(schema.tryDefinition(member.kind), member as never));
+      const rest = members.length - names.length;
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 5,
+            height: "100%",
+            padding: "10px 12px",
+            boxSizing: "border-box",
+            borderRadius: 10,
+            overflow: "hidden",
+            border: `1px solid hsl(${Math.round(hue * 360)} 60% 62% / 0.34)`,
+            background: `hsl(${Math.round(hue * 360)} 60% 55% / 0.10)`,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span
+              style={{
+                fontSize: 11,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "var(--graview-ink-muted)",
+              }}
+            >
+              {props.label ?? plural}
+            </span>
+            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--graview-ink-faint)" }}>
+              {members.length}
+            </span>
+          </div>
+          <ul
+            style={{
+              margin: 0,
+              padding: 0,
+              listStyle: "none",
+              display: "grid",
+              gap: 2,
+              fontSize: 12,
+              lineHeight: 1.3,
+              minWidth: 0,
+            }}
+          >
+            {names.map((name, index) => (
+              <li
+                key={index}
+                style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              >
+                {name}
+              </li>
+            ))}
+            {rest > 0 ? (
+              <li style={{ color: "var(--graview-ink-faint)" }}>+{rest} more</li>
+            ) : null}
+          </ul>
+        </div>
+      );
+    };
 
     registry
       .register(kind, { cardinality: "one", fidelity: "full" }, Full)
