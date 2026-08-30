@@ -227,6 +227,8 @@ export interface AggregateProps {
   readonly count: number;
   readonly items?: readonly { id: string; label: ReactNode; hue?: number }[];
   readonly onExpand?: () => void;
+  /** Something inside is implicated in a current problem. */
+  readonly flagged?: boolean;
 }
 
 /**
@@ -235,12 +237,12 @@ export interface AggregateProps {
  * First-class, not a scale fallback: "People" is a legitimate view of a kind,
  * which is why expanding it is the same mechanism as collapsing back.
  */
-export function Aggregate({ label, count, items, onExpand }: AggregateProps) {
+export function Aggregate({ label, count, items, onExpand, flagged }: AggregateProps) {
   return (
     <Panel
       title={label}
-      meta={count}
-      tone="muted"
+      meta={flagged ? `⚠ ${count}` : count}
+      tone={flagged ? "warning" : "muted"}
       style={onExpand ? { cursor: "zoom-in" } : undefined}
     >
       {items && items.length > 0 ? <Roster items={items} max={6} pick /> : null}

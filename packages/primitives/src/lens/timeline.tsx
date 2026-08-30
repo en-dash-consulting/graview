@@ -252,6 +252,7 @@ export function TimelineView<S extends AnySchema>({
   schema,
   selectedIds = [],
   implicated = [],
+  flagged = [],
 }: TimelineViewProps<S>) {
   // The selection reaches these; anything else in the week recedes while it
   // stands. `selectedIds` stays supported for a host driving the lens
@@ -259,6 +260,9 @@ export function TimelineView<S extends AnySchema>({
   const highlit = new Set([...implicated, ...selectedIds]);
   const emphasisOf = (id: string): Emphasis =>
     highlit.size === 0 ? "plain" : highlit.has(id) ? "lit" : "dimmed";
+  // Something broken is marked where it IS. A problem you can only find
+  // through a list is a problem you have to go looking for.
+  const broken = new Set(flagged);
   const spans = (nodes ?? [])
     .map((node) => placeOnTimeline<S>(node, options.bindings, schema))
     .filter((span): span is PlacedSpan => span !== null);
@@ -361,6 +365,7 @@ export function TimelineView<S extends AnySchema>({
                 format={format}
                 hue={hue}
                 emphasisOf={emphasisOf}
+                brokenIds={broken}
               />
             ))}
           </div>
@@ -386,12 +391,14 @@ function Column({
   format,
   hue,
   emphasisOf,
+  brokenIds,
 }: {
   spans: readonly PlacedSpan[];
   window: { start: number; end: number };
   format: (at: number) => string;
   hue: (span: PlacedSpan) => number;
   emphasisOf: (id: string) => Emphasis;
+  brokenIds: ReadonlySet<string>;
 }) {
   const range = window.end - window.start;
   const pct = (at: number) => ((at - window.start) / range) * 100;
@@ -443,6 +450,15 @@ function Column({
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
                 ...spanEmphasis(emphasisOf(span.id), hue(span)),
+                ...(brokenIds.has(span.id)
+                  ? {
+                      // A warn-coloured spine down the leading edge: visible
+                      // at a glance across a whole week, and it does not
+                      // touch the label's contrast.
+                      borderLeft: "3px solid var(--graview-warn)",
+                      paddingLeft: 4,
+                    }
+                  : {}),
               }}
             >
               {/* A bar too short to hold a line of text keeps its name in the
@@ -495,12 +511,14 @@ function Column({
               height: 7,
               borderRadius: 999,
               flex: "0 0 auto",
-              background:
-                emphasis === "dimmed"
+              background: brokenIds.has(span.id)
+                ? "var(--graview-warn)"
+                : emphasis === "dimmed"
                   ? "var(--graview-edge)"
                   : `hsl(${Math.round(hue(span) * 360)} 60% var(--graview-tint-lightness))`,
-              boxShadow:
-                emphasis === "lit"
+              boxShadow: brokenIds.has(span.id)
+                ? "0 0 0 3px var(--graview-warn)"
+                : emphasis === "lit"
                   ? "0 0 0 3px var(--graview-accent-dim)"
                   : emphasis === "dimmed"
                     ? undefined

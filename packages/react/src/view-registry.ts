@@ -42,6 +42,12 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
    * as "no emphasis" rather than "nothing is related".
    */
   readonly implicated?: readonly string[];
+  /**
+   * Ids implicated in a current invariant violation, so a view can mark them
+   * where they actually are. A problem you can only find through a list is a
+   * problem you have to go looking for.
+   */
+  readonly flagged?: readonly string[];
 }
 
 export type ViewComponent<
