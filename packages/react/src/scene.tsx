@@ -1,13 +1,22 @@
 import type { AnySchema, Fidelity, NodeOfSchema } from "@graview/core";
-import { isAggregateId, layout, type Layout, type LayoutNode, type LayoutOptions } from "@graview/layout";
+import {
+  isAggregateId,
+  layout,
+  type InterpolatedLayout,
+  type Layout,
+  type LayoutNode,
+  type LayoutOptions,
+} from "@graview/layout";
 import {
   connectorStyle,
+  mixStyles,
   PLANE_STYLES,
   styleFor,
   transformFor,
   type Matrix4,
 } from "@graview/render";
-import { useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useAnimatedLayout, useTouched } from "./animation.js";
 import { useGraph, useGraview, type ViewMode } from "./context.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
@@ -32,15 +41,30 @@ export interface SceneProps<S extends AnySchema> {
    */
   readonly attachRenderer?: (scene: {
     canvas: HTMLCanvasElement;
-    layout: Layout;
+    /**
+     * The picture as it is RIGHT NOW, which mid-transition is between two
+     * view states. Planes may be fractional and nodes may be part-faded.
+     */
+    layout: InterpolatedLayout;
     /** The DOM host for a view id — what the capture API is given. */
     hostOf(id: string): HTMLElement | null;
   }) => (() => void) | void;
   readonly className?: string;
   readonly style?: CSSProperties;
+  /** Animate between view states. Off in tests and SSR. */
+  readonly animate?: boolean;
   /** Rendered over the scene — an affordance surface, a header, a legend. */
   readonly children?: ReactNode;
 }
+
+/**
+ * A node as the scene draws it: a laid-out node, possibly mid-transition, so
+ * its plane is fractional and it may be fading in or out.
+ */
+export type SceneNode = Omit<LayoutNode, "plane"> & {
+  readonly plane: number;
+  readonly opacity?: number;
+};
 
 /**
  * The spatial scene: one `<canvas layoutsubtree>` with the views as its
@@ -56,65 +80,126 @@ export function Scene<S extends AnySchema>({
   attachRenderer,
   className,
   style,
+  animate = true,
   children,
 }: SceneProps<S>) {
   const { store, views, view, selection, setSelection, setJackedIn } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const size = useElementSize(wrapperRef);
 
   // `nodes` is a cached snapshot that only changes when the graph does, so
   // the layout is recomputed exactly when the picture could have changed.
   const nodes = useGraph<S>();
-  const result = useMemo<Layout>(
-    () => layout(store.graph, store.schema, view, options),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, view, options, nodes],
+  // The scene is laid out to the space it actually has. A fixed canvas leaves
+  // dead ground on a wide screen and clips on a narrow one, and the plane
+  // bands are proportions rather than pixels, so they follow.
+  const sized = useMemo<LayoutOptions>(
+    () => ({
+      ...options,
+      ...(size ? { width: size.width, height: size.height } : {}),
+    }),
+    [options, size],
   );
+  const result = useMemo<Layout>(
+    () => layout(store.graph, store.schema, view, sized),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, view, sized, nodes],
+  );
+
+  // The picture as it is right now, part-way between the last view and this
+  // one. Everything downstream draws the tween, not the destination.
+  const frame = useAnimatedLayout(result, { enabled: animate });
+  const touched = useTouched<S>();
 
   useEffect(() => {
     if (renderer === "dom") return;
     const canvas = canvasRef.current;
     if (!canvas || !attachRenderer) return;
+    // The renderer is handed the FRAME, not the target.
+    //
+    // Two reasons, both of which were bugs before: the DOM holds the tween,
+    // so a host for a node that has not entered yet does not exist to be
+    // captured; and drawing the target during a transition would snap every
+    // view to its final position while the DOM animated underneath it.
     const detach = attachRenderer({
       canvas,
-      layout: result,
+      layout: frame,
       hostOf: (id) =>
         canvas.querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"]`),
     });
     return () => {
       detach?.();
     };
-  }, [renderer, attachRenderer, result]);
+  }, [renderer, attachRenderer, frame]);
 
   const useDom = renderer === "dom" || (renderer === "auto" && !attachRenderer);
 
+  const hosts = frame.nodes.map((node) => (
+    <SceneViewHost
+      key={node.id}
+      node={node}
+      useDom={useDom}
+      touched={touched.has(node.id)}
+      canvasWidth={result.width}
+      canvasHeight={result.height}
+      selected={selection.includes(node.id)}
+      onSelect={(additive) => setSelection((current) => selectionFor(node, current, additive))}
+      onJackIn={() => setJackedIn(node.id)}
+    >
+      <ResolvedView node={node} mode="scene" selected={selection.includes(node.id)} />
+    </SceneViewHost>
+  ));
+
   return (
-    <div className={className} style={{ position: "relative", ...style }}>
-      <canvas
-        ref={canvasRef}
-        // The attribute form works before the property is available.
-        {...{ layoutsubtree: "" }}
-        width={result.width}
-        height={result.height}
-        style={{ display: "block", width: result.width, height: result.height }}
-      >
-        {result.nodes.map((node) => (
-          <SceneViewHost
-            key={node.id}
-            node={node}
-            useDom={useDom}
-            canvasWidth={result.width}
-            canvasHeight={result.height}
-            selected={selection.includes(node.id)}
-            onSelect={(additive) =>
-              setSelection((current) => selectionFor(node, current, additive))
-            }
-            onJackIn={() => setJackedIn(node.id)}
-          >
-            <ResolvedView node={node} mode="scene" selected={selection.includes(node.id)} />
-          </SceneViewHost>
-        ))}
-      </canvas>
-      <Connectors result={result} />
+    <div
+      ref={wrapperRef}
+      className={`graview-ground${className ? ` ${className}` : ""}`}
+      style={{ position: "relative", width: "100%", height: "100%", ...style }}
+    >
+      {useDom ? (
+        /*
+         * The DOM path uses an ORDINARY container, not a capture canvas.
+         *
+         * `layoutsubtree` exists so the GPU can capture these elements, and
+         * it changes how the browser lays them out. Combining it with the CSS
+         * transforms and filters this path applies crashes the renderer
+         * process in Chromium 154 — silently, on first paint. Since the DOM
+         * path never captures anything, the canvas has no job here, and not
+         * creating one removes the whole interaction.
+         */
+        <div
+          data-graview-stage="dom"
+          style={{
+            position: "relative",
+            zIndex: 1,
+            width: result.width,
+            height: result.height,
+            overflow: "hidden",
+          }}
+        >
+          {hosts}
+        </div>
+      ) : (
+        <canvas
+          ref={canvasRef}
+          data-graview-stage="gpu"
+          // The attribute form works before the property is available.
+          {...{ layoutsubtree: "" }}
+          width={result.width}
+          height={result.height}
+          style={{
+            display: "block",
+            position: "relative",
+            zIndex: 1,
+            width: result.width,
+            height: result.height,
+          }}
+        >
+          {hosts}
+        </canvas>
+      )}
+      <Connectors result={frame} />
       {children}
     </div>
   );
@@ -129,7 +214,7 @@ export function Scene<S extends AnySchema>({
  * sees a selection of real nodes and can say what is true about them.
  */
 export function selectionFor(
-  node: LayoutNode,
+  node: SceneNode,
   current: readonly string[],
   additive: boolean,
 ): string[] {
@@ -141,14 +226,46 @@ export function selectionFor(
     : [...current, ...ids.filter((id) => !current.includes(id))];
 }
 
+/**
+ * The element's size, tracked. Returns null until it has been measured, so a
+ * first render never lays out against a guess.
+ */
+function useElementSize(
+  ref: { current: HTMLElement | null },
+): { width: number; height: number } | null {
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => {
+      const box = entries[0]?.contentRect;
+      if (!box || box.width === 0 || box.height === 0) return;
+      // Round to whole pixels: a fractional width would recompute the layout
+      // on every sub-pixel wobble and never settle.
+      setSize((current) => {
+        const next = { width: Math.round(box.width), height: Math.round(box.height) };
+        return current && current.width === next.width && current.height === next.height
+          ? current
+          : next;
+      });
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return size;
+}
+
 function cssTransform(transform: Matrix4): string {
   // Column-major 4x4 into CSS matrix3d, which is also column-major.
   return `matrix3d(${transform.join(",")})`;
 }
 
 interface HostProps {
-  readonly node: LayoutNode;
+  readonly node: SceneNode;
   readonly useDom: boolean;
+  readonly touched: boolean;
   readonly canvasWidth: number;
   readonly canvasHeight: number;
   readonly selected: boolean;
@@ -164,6 +281,7 @@ interface HostProps {
 function SceneViewHost({
   node,
   useDom,
+  touched,
   canvasWidth,
   canvasHeight,
   selected,
@@ -171,7 +289,15 @@ function SceneViewHost({
   onJackIn,
   children,
 }: HostProps) {
-  const style = styleFor(node.plane);
+  // Mid-transition a node's plane is fractional, so its treatment is mixed
+  // from the two planes it is between rather than snapping at the halfway
+  // point. That is what makes a plane change read as travel.
+  const lower = Math.max(0, Math.min(2, Math.floor(node.plane))) as 0 | 1 | 2;
+  const upper = Math.max(0, Math.min(2, Math.ceil(node.plane))) as 0 | 1 | 2;
+  const style =
+    lower === upper
+      ? styleFor(lower)
+      : mixStyles(styleFor(lower), styleFor(upper), node.plane - lower);
   const transform = transformFor(style, node.x, node.y, canvasWidth, canvasHeight);
 
   const domOnly: CSSProperties = useDom
@@ -179,16 +305,19 @@ function SceneViewHost({
         transform: cssTransform(transform),
         transformOrigin: "0 0",
         filter: style.blur > 0 ? `blur(${style.blur}px)` : undefined,
-        opacity: 1 - style.falloff * 0.5,
-        boxShadow: `0 ${8 * style.shadow}px ${28 * style.shadow}px rgba(0,0,0,${style.shadow})`,
+        // Recession dims toward the ground; entering and leaving nodes carry
+        // their own fade on top of it.
+        opacity: (1 - style.falloff * 0.55) * (node.opacity ?? 1),
+        boxShadow: `0 ${10 * style.shadow}px ${34 * style.shadow}px rgba(0,0,0,${style.shadow + 0.2})`,
       }
-    : {};
+    : { opacity: node.opacity ?? 1 };
 
   return (
     <div
       data-graview-view={node.id}
-      data-graview-plane={node.plane}
+      data-graview-plane={Math.round(node.plane)}
       data-graview-selected={selected || undefined}
+      data-graview-touched={touched || undefined}
       role="group"
       aria-label={node.aggregate ? node.aggregate.label : node.id}
       tabIndex={0}
@@ -196,10 +325,22 @@ function SceneViewHost({
       onDoubleClick={onJackIn}
       style={{
         position: "absolute",
-        left: 0,
-        top: 0,
-        width: node.width,
-        height: node.height,
+        // Each host sits at its own layout position, on BOTH paths.
+        //
+        // Under `layoutsubtree` every child is laid out at the canvas origin,
+        // so hosts pinned to 0,0 pile up on each other and only some of them
+        // end up with usable paint records — five views captured completely
+        // blank because of it. Giving each its own box keeps them distinct
+        // for the capture. The GPU still draws each wherever its plane
+        // transform says; this only decides what gets rasterised.
+        left: useDom ? 0 : Math.round(node.x),
+        top: useDom ? 0 : Math.round(node.y),
+        // Whole pixels, matching what the renderer allocates a texture for.
+        // A host of height 399.4 rasterises into 400 rows; a texture sized
+        // from the rounded 399 rejects the copy, and the view keeps whatever
+        // was in the texture before — silently.
+        width: Math.round(node.width),
+        height: Math.round(node.height),
         boxSizing: "border-box",
         ...domOnly,
       }}
@@ -210,9 +351,14 @@ function SceneViewHost({
 }
 
 /** The centre of a node's box as DRAWN, after its plane's scale. */
-function drawnCentre(node: LayoutNode | undefined): { x: number; y: number } | null {
+function drawnCentre(node: SceneNode | undefined): { x: number; y: number } | null {
   if (!node) return null;
-  const { scale } = styleFor(node.plane);
+  const lower = Math.max(0, Math.min(2, Math.floor(node.plane))) as 0 | 1 | 2;
+  const upper = Math.max(0, Math.min(2, Math.ceil(node.plane))) as 0 | 1 | 2;
+  const { scale } =
+    lower === upper
+      ? styleFor(lower)
+      : mixStyles(styleFor(lower), styleFor(upper), node.plane - lower);
   return { x: node.x + (node.width * scale) / 2, y: node.y + (node.height * scale) / 2 };
 }
 
@@ -234,7 +380,7 @@ const DASH: Record<string, string | undefined> = {
  * restyle. The capture inside a `layoutsubtree` canvas is not disturbed,
  * because this sits outside it.
  */
-function Connectors({ result }: { result: Layout }) {
+function Connectors({ result }: { result: { nodes: readonly SceneNode[]; connectors: Layout["connectors"] | InterpolatedLayout["connectors"]; width: number; height: number } }) {
   if (result.connectors.length === 0) return null;
   const byId = new Map(result.nodes.map((node) => [node.id, node]));
   return (
@@ -242,7 +388,15 @@ function Connectors({ result }: { result: Layout }) {
       aria-hidden="true"
       width={result.width}
       height={result.height}
-      style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        pointerEvents: "none",
+        // Behind the views. A relationship is context for what it connects,
+        // and drawing it over the top makes it compete with the content.
+        zIndex: 0,
+      }}
     >
       {result.connectors.map((connector) => {
         // Endpoints are recomputed against the DRAWN boxes, not layout's own
@@ -255,19 +409,27 @@ function Connectors({ result }: { result: Layout }) {
         // Stroke treatment is derived from the edge kind, so `protects` can
         // never be mistaken for `assigned-to`.
         const style = connectorStyle(connector.kind);
+        // A gentle curve, bowed along the dominant axis. Straight lines
+        // between distant planes read as lasers crossing the scene; a curve
+        // reads as a relationship and lets several of them stay apart.
+        const midX = (from.x + to.x) / 2;
+        const midY = (from.y + to.y) / 2;
+        const bow = Math.min(90, Math.hypot(to.x - from.x, to.y - from.y) * 0.16);
+        const control =
+          Math.abs(to.y - from.y) > Math.abs(to.x - from.x)
+            ? `${midX + bow} ${midY}`
+            : `${midX} ${midY - bow}`;
         return (
-          <line
+          <path
             key={connector.id}
             data-graview-connector={connector.kind}
-            x1={from.x}
-            y1={from.y}
-            x2={to.x}
-            y2={to.y}
-            stroke={`hsl(${Math.round(style.hue * 360)} 40% 40%)`}
-            strokeWidth={style.width}
+            d={`M ${from.x} ${from.y} Q ${control} ${to.x} ${to.y}`}
+            fill="none"
+            stroke={`hsl(${Math.round(style.hue * 360)} 55% 62%)`}
+            strokeWidth={Math.min(1.4, style.width)}
             strokeDasharray={DASH[style.pattern]}
             strokeLinecap="round"
-            opacity={style.opacity * 0.75}
+            opacity={style.opacity * 0.34 * ((connector as { opacity?: number }).opacity ?? 1)}
           />
         );
       })}
@@ -276,7 +438,7 @@ function Connectors({ result }: { result: Layout }) {
 }
 
 export interface ResolvedViewProps<S extends AnySchema> {
-  readonly node: LayoutNode;
+  readonly node: SceneNode;
   readonly mode: ViewMode;
   readonly selected: boolean;
   /** Overrides the fidelity the plane would ask for. Jack-in uses this. */
@@ -339,7 +501,7 @@ function MissingView<S extends AnySchema>({
   node,
   props,
 }: {
-  node: LayoutNode;
+  node: SceneNode;
   props: ViewProps<S>;
 }) {
   return (

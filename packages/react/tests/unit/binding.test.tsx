@@ -98,7 +98,9 @@ function render(ui: React.ReactElement, view = EMPTY_VIEW) {
 
 describe("the scene", () => {
   it("renders views as immediate children of a layoutsubtree canvas", () => {
-    const html = render(<Scene renderer="dom" />, {
+    // The capture path only. `renderer="gpu"` selects it without needing a
+    // real GPU: the canvas is a rendering decision, not a device one.
+    const html = render(<Scene renderer="gpu" />, {
       ...EMPTY_VIEW,
       focusId: "week-1",
       relation: "person",
@@ -111,6 +113,27 @@ describe("the scene", () => {
     // Nothing may sit between the canvas and a view host — not a wrapper, not
     // a fragment's stray text node.
     expect(afterCanvasTag.startsWith("<div data-graview-view=")).toBe(true);
+  });
+
+  it("uses an ordinary container on the DOM path, with no capture canvas", () => {
+    const html = render(<Scene renderer="dom" />, {
+      ...EMPTY_VIEW,
+      focusId: "week-1",
+      relation: "person",
+    });
+    // `layoutsubtree` changes how the browser lays these elements out, and
+    // combining it with this path's CSS transforms crashes the renderer
+    // process in Chromium 154 — silently, on first paint. The DOM path
+    // captures nothing, so it needs no canvas at all.
+    expect(html).not.toContain("layoutsubtree");
+    expect(html).not.toContain("<canvas");
+    expect(html).toContain('data-graview-stage="dom"');
+    // Views are still direct children of the stage, so both paths agree about
+    // structure and a test written against one holds for the other.
+    const stage = html.indexOf('data-graview-stage="dom"');
+    expect(
+      html.slice(html.indexOf(">", stage) + 1).startsWith("<div data-graview-view="),
+    ).toBe(true);
   });
 
   it("puts the focus on plane 0 and the relation on plane 1", () => {

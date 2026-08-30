@@ -100,8 +100,16 @@ export function interpolate(from: Layout, to: Layout, t: number): InterpolatedLa
   }
 
   return {
-    nodes: nodes.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
-    connectors: connectors.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
+    // A node that has finished fading out is gone. Leaving it in the list at
+    // opacity 0 means the renderer keeps a texture, a placement and a draw
+    // call for something nobody can see — and it never leaves, because no
+    // further frames are emitted once the tween settles.
+    nodes: nodes
+      .filter((node) => node.opacity > 0)
+      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
+    connectors: connectors
+      .filter((connector) => connector.opacity > 0)
+      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
     width: lerp(from.width, to.width, clamped),
     height: lerp(from.height, to.height, clamped),
     t: clamped,

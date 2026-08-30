@@ -77,6 +77,22 @@ export function layout<S extends AnySchema>(
   options: LayoutOptions = {},
 ): Layout {
   const opts = { ...DEFAULT_OPTIONS, ...options };
+  // Bands are PROPORTIONS of the canvas, not fixed pixels. A scene sized to
+  // its container would otherwise leave the context plane below the fold on a
+  // tall screen and overlap the focus on a short one.
+  const focusSize = {
+    width: Math.min(opts.focusSize.width, opts.width - opts.gap * 8),
+    height: Math.min(opts.focusSize.height, opts.height * 0.56),
+  };
+  const relationY = opts.gap * 2 + focusSize.height;
+  // Where the context band sits depends on whether plane 1 is occupied. With
+  // nothing raised, leaving a gap for an empty band just puts a stripe of
+  // dead ground through the middle of the scene.
+  const contextYWithRelations = Math.min(
+    opts.height - opts.contextSize.height * 0.7 - opts.gap,
+    relationY + opts.relationSize.height + opts.gap * 2,
+  );
+  const contextYAlone = relationY + opts.gap;
   const nodes: LayoutNode[] = [];
   const placed = new Map<string, LayoutNode>();
 
@@ -100,20 +116,20 @@ export function layout<S extends AnySchema>(
       id: focus.id,
       kind: focus.kind,
       plane: 0,
-      x: (opts.width - opts.focusSize.width) / 2,
+      x: (opts.width - focusSize.width) / 2,
       y: opts.gap,
-      width: opts.focusSize.width,
-      height: opts.focusSize.height,
+      width: focusSize.width,
+      height: focusSize.height,
     });
   } else if (focusGroup.length > 0 && state.focusId) {
     push({
       id: state.focusId,
       kind: focusKinds[0]!,
       plane: 0,
-      x: (opts.width - opts.focusSize.width) / 2,
+      x: (opts.width - focusSize.width) / 2,
       y: opts.gap,
-      width: opts.focusSize.width,
-      height: opts.focusSize.height,
+      width: focusSize.width,
+      height: focusSize.height,
       aggregate: {
         kind: focusKinds.join("+"),
         memberIds: focusGroup.map((node) => node.id),
@@ -126,10 +142,6 @@ export function layout<S extends AnySchema>(
 
   // --------------------------------------------------- plane 1: relations
   const related = relatedNodes(graph, focus, state.relation);
-  // Bands are measured in DRAWN height, since a plane scales its box in
-  // place: a 130-unit box on plane 1 occupies 130 * 0.72 pixels.
-  const focusBottom = focus || focusGroup.length > 0 ? opts.gap + opts.focusSize.height : opts.gap;
-  const relationY = focusBottom + opts.gap * 2;
   const relationPositions = row(
     related.length,
     opts.relationSize,
@@ -162,10 +174,6 @@ export function layout<S extends AnySchema>(
     else groups.set(node.kind, [node]);
   }
 
-  const contextY = Math.max(
-    relationY + opts.relationSize.height + opts.gap,
-    opts.height - opts.contextSize.height - opts.gap,
-  );
   const entries: { id: string; kind: string; members: NodeOfSchema<S>[] }[] = [];
   for (const [kind, members] of groups) {
     entries.push({ id: aggregateId(kind), kind, members: [...members].sort(byStableKey) });
@@ -198,7 +206,7 @@ export function layout<S extends AnySchema>(
     opts.contextSize,
     opts.gap,
     opts.width,
-    contextY,
+    related.length > 0 ? contextYWithRelations : contextYAlone,
   );
   contextItems.forEach((item, index) => {
     const position = contextPositions[index]!;

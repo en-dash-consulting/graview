@@ -23,25 +23,41 @@ apps/
 Only `@graview/render` touches the browser or the GPU. Everything else runs
 headlessly in CI with no browser flag.
 
-## Quick start
+## Run it
 
 ```sh
 pnpm install
-pnpm test          # 254 tests, no GPU, no browser
+pnpm dev           # http://localhost:5190 — works in any modern browser
+```
+
+That is the whole setup. No flags, no Canary, no GPU: the scene renders
+through the DOM path, which reproduces the plane geometry exactly because the
+plane model is affine by design. What it cannot do is per-plane blur in a
+shader.
+
+```sh
+pnpm test          # 255 tests, no GPU, no browser
 pnpm typecheck
+pnpm check         # `graview check` against the household example's declarations
 ```
 
-Run the household example on the DOM renderer, which works in any browser:
+### The capture path
+
+`?renderer=gpu` opts into compositing through WebGPU. It needs Chromium 147+
+launched with `--enable-blink-features=CanvasDrawElement`, and it currently
+has a **known defect**: views on plane 1 composite blank. The browser has a
+valid paint record for each, the compositor holds a texture and a bind group
+for each, and the frame plan draws them in the right place at full opacity —
+and nothing appears. Ruled out: texture sizing, the fidelity cache, reconcile
+versus remove-and-add, host stacking under `layoutsubtree`, and the shader's
+opacity term. The DOM path is the default until that is understood.
+
+### The harnesses
 
 ```sh
-pnpm --filter the household example dev    # then open /?renderer=dom
-```
-
-Run it on the GPU renderer, which needs Chromium 147+ with the HTML-in-Canvas
-flag:
-
-```sh
-node the household example/scripts/run-acceptance.mjs --headed
+pnpm acceptance    # walks the six acceptance criteria in Chrome Canary
+pnpm spike         # capture, composite, pointer routing, capture budget
+pnpm a11y          # the real accessibility tree, keyboard order, axe-core
 ```
 
 ## The four ideas
@@ -82,6 +98,7 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | Capture + composite works at three depths | `docs/spike-three-planes.png`, Chrome Canary 154 |
 | Clicks land on drawn pixels at every depth | `apps/spike/scripts/run-spike.mjs` |
 | The whole port meets its six criteria | `the household example/scripts/run-acceptance.mjs` |
+| Content at depth reaches assistive technology | `the household example/scripts/run-a11y.mjs` — 185 AX nodes, keyboard reaches all three planes, zero axe violations |
 
 ## The platform, honestly
 
@@ -104,6 +121,11 @@ anything about HTML-in-Canvas. The short version, measured in Chrome Canary
 Private. The public API is designed as though it will be published — clean
 seams, honest boundaries — but it breaks freely while nobody depends on it.
 
-**Outstanding:** a screen-reader pass with real assistive technology. The
-accessibility tree is populated and focus order follows the drawn arrangement,
-but a populated tree is not proof that VoiceOver reads it.
+**Outstanding:**
+
+- Plane 1 composites blank on the GPU path (see above). The DOM path is
+  correct, so this is a renderer defect rather than a design one.
+- A screen-reader pass with real assistive technology. The accessibility tree
+  is populated, every view is exposed by name, the keyboard reaches all three
+  planes and axe-core reports nothing — but a populated tree is not proof that
+  VoiceOver reads it well.

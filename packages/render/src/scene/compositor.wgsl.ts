@@ -15,7 +15,9 @@ export const COMPOSITOR_WGSL = /* wgsl */ `
 struct Plane {
   // x, y, width, height in canvas pixels, after the plane transform.
   rect: vec4f,
-  // blur radius in texels, contrast falloff 0..1, shadow opacity, unused.
+  // blur radius in texels, contrast falloff 0..1, shadow strength, and the
+  // view's own opacity — which is how a node entering or leaving the scene
+  // fades rather than popping.
   style: vec4f,
   // canvas size in pixels, and the ground colour's rgb packed as xyz.
   canvas: vec4f,
@@ -78,19 +80,26 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
   let radius = plane.style.x;
   let falloff = plane.style.y;
   let shadow = plane.style.z;
+  let opacity = plane.style.w;
 
   var color = blurred(in.uv, radius);
 
-  // Recede toward the ground colour rather than toward grey: a receded plane
-  // should read as further away, not as washed out.
+  // Recede toward the GROUND colour, not toward grey. On a dark ground that
+  // reads as dimming and on a light one as haze — which is what distance
+  // actually does to a surface, rather than a fixed "faded" look that only
+  // works in one scheme.
   color = vec4f(mix(color.rgb, plane.ground.rgb, falloff), color.a);
 
-  // Soft directional shadow along the top-left, drawn into the quad's own
-  // alpha so no second pass is needed.
+  // Contact shadow around the quad's own border, drawn into its alpha so no
+  // second pass is needed. It is what separates one plane from the one
+  // behind it when both are dark.
   let edge = min(min(in.uv.x, in.uv.y), min(1.0 - in.uv.x, 1.0 - in.uv.y));
-  let lift = 1.0 - smoothstep(0.0, 0.06, edge);
+  let lift = 1.0 - smoothstep(0.0, 0.055, edge);
   color = vec4f(color.rgb * (1.0 - lift * shadow), color.a);
 
-  return color;
+  // Premultiplied: the target blends with one-minus-src-alpha, so scaling
+  // colour and alpha together is what keeps a half-faded view from darkening
+  // instead of dissolving.
+  return vec4f(color.rgb * opacity, color.a * opacity);
 }
 `;

@@ -11,7 +11,9 @@
     "check": "node packages/core/dist/cli/index.js check the household example/dist/domain/app.js",
     "lint": "tsc -b --dry",
     "spike": "node apps/spike/scripts/run-spike.mjs",
-    "acceptance": "node the household example/scripts/run-acceptance.mjs"
+    "acceptance": "node the household example/scripts/run-acceptance.mjs",
+    "dev": "pnpm --filter the household example dev",
+    "a11y": "node the household example/scripts/run-a11y.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

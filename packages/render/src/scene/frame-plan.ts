@@ -1,7 +1,7 @@
 import type { Placement } from "../interaction/pointer-router.js";
 import type { Matrix4 } from "../platform/html-in-canvas.js";
 import { connectorStyle, type ConnectorStyle } from "./connectors.js";
-import { styleFor, transformFor, type PlaneStyle } from "./plane.js";
+import { mixStyles, styleFor, transformFor, type PlaneStyle } from "./plane.js";
 
 /** One view drawn into the scene: a DOM subtree, and where it belongs. */
 export interface PlannedView {
@@ -106,7 +106,7 @@ export function planFrame(
   const ordered = [...views].sort((a, b) => b.plane - a.plane);
 
   for (const view of ordered) {
-    const style = styleFor(view.plane);
+    const style = styleAt(view.plane);
     const reason = captureReason(view, style, capturedAt[view.id]);
     if (reason) captures.push({ viewId: view.id, reason });
 
@@ -170,6 +170,18 @@ export function planFrame(
 }
 
 /**
+ * The treatment for a possibly-fractional plane. Mid-transition a view is
+ * between two planes, and mixing their treatments is what makes the move read
+ * as travel rather than a cut.
+ */
+function styleAt(plane: number): PlaneStyle {
+  const lower = Math.floor(plane);
+  const upper = Math.ceil(plane);
+  if (lower === upper) return styleFor(plane);
+  return mixStyles(styleFor(lower), styleFor(upper), plane - lower);
+}
+
+/**
  * Whether a view needs recapturing, and why. Fidelity decides, not plane
  * index — and the split is load-bearing rather than an optimisation:
  * capture costs ~0.016 ms per node up to about 128 live captures a frame and
@@ -186,6 +198,11 @@ function captureReason(
   lastCapture: number | undefined,
 ): CaptureCommand["reason"] | null {
   if (lastCapture === undefined) return "first";
+  // Mid-transition a view's own DOM is still fading, so whatever was captured
+  // is not what it looks like. Caching that leaves an entering node stuck as
+  // the transparent frame it was first seen in — which is precisely what
+  // happened to every person raised onto plane 1.
+  if (view.opacity !== undefined && view.opacity < 1) return "changed";
   switch (style.fidelity) {
     case "full":
       return "live";

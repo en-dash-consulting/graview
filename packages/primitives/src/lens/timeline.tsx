@@ -56,6 +56,41 @@ export interface PlacedSpan {
   readonly end: number;
 }
 
+/** A span placed in a column, with the lane it must occupy to avoid overlap. */
+export interface LanedSpan extends PlacedSpan {
+  readonly lane: number;
+  readonly lanes: number;
+}
+
+/**
+ * Assigns overlapping spans to side-by-side lanes.
+ *
+ * Without this every concurrent event draws on top of the others and the
+ * column becomes an unreadable pile — which is exactly what a real week is
+ * full of: a school run inside a school block inside a shift. Greedy by start
+ * time, which is optimal for intervals and, more importantly, STABLE: the
+ * same spans always land in the same lanes, so an edit somewhere else does
+ * not reshuffle the column and destroy the picture you remember.
+ */
+export function assignLanes(spans: readonly PlacedSpan[]): LanedSpan[] {
+  const ordered = [...spans].sort(
+    (a, b) => a.start - b.start || a.end - b.end || a.id.localeCompare(b.id),
+  );
+  const laneEnds: number[] = [];
+  const placed = ordered.map((span) => {
+    let lane = laneEnds.findIndex((end) => end <= span.start);
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(span.end);
+    } else {
+      laneEnds[lane] = span.end;
+    }
+    return { ...span, lane, lanes: 1 };
+  });
+  const lanes = Math.max(1, laneEnds.length);
+  return placed.map((span) => ({ ...span, lanes }));
+}
+
 export class TimelineBindingError extends Error {
   constructor(kind: string, missing: readonly string[]) {
     super(
@@ -171,45 +206,77 @@ export function TimelineView<S extends AnySchema>({
           <Axis ticks={ticks} extent={options.extent} orientation="vertical" />
         </div>
         {options.columns.map((column, columnIndex) => {
-          const inColumn = spans.filter((span) => span.columnIds.includes(column.id));
+          // Lanes are assigned per column: two events overlapping on Monday
+          // say nothing about Tuesday.
+          const inColumn = assignLanes(
+            spans.filter((span) => span.columnIds.includes(column.id)),
+          );
+          const columnWidth = 100 / options.columns.length;
           return inColumn.map((span) => {
             const top = (span.start / options.extent) * 100;
             const height = Math.max(
-              2,
+              1.6,
               ((span.end - span.start) / options.extent) * 100,
             );
+            // Cascade rather than split. Dividing a column evenly between
+            // four concurrent events leaves each a quarter as wide and every
+            // label truncated to a letter. Offsetting each lane by a fraction
+            // and letting them overlap keeps the first one readable, which is
+            // how a calendar you would actually use behaves.
+            const step = columnWidth * 0.2;
+            const offset = span.lane * step;
+            const laneWidth = columnWidth - offset;
             return (
               <div
                 key={`${column.id}:${span.id}`}
                 data-graview-span={span.id}
+                data-graview-lane={span.lane}
                 title={`${span.label} ${format(span.start)}–${format(span.end)}`}
                 style={{
                   position: "absolute",
                   top: `${top}%`,
                   height: `${height}%`,
-                  left: `${(columnIndex / options.columns.length) * 100}%`,
-                  width: `${(1 / options.columns.length) * 100}%`,
-                  padding: 2,
+                  left: `${columnIndex * columnWidth + offset}%`,
+                  width: `${laneWidth}%`,
+                  padding: 1.5,
                   boxSizing: "border-box",
+                  // Later lanes sit in front, so the cascade reads front-to-back.
+                  zIndex: span.lane + 1,
                 }}
               >
                 <div
                   style={{
                     height: "100%",
-                    minHeight: 14,
-                    borderRadius: 6,
-                    padding: "2px 6px",
-                    fontSize: 11,
-                    lineHeight: 1.3,
+                    minHeight: 15,
+                    borderRadius: 7,
+                    padding: "3px 7px",
+                    fontSize: 10.5,
+                    lineHeight: 1.25,
                     overflow: "hidden",
+                    // A short span has no room for a label; clipping quietly
+                    // is better than spilling over its neighbours.
+                    textOverflow: "ellipsis",
+                    // Hue identifies the kind; the THEME supplies the text
+                    // colour and the fill is a translucent tint over whatever
+                    // is behind. A fixed light fill would glare on a dark
+                    // ground, which is exactly what it did.
                     border: selectedIds.includes(span.id)
-                      ? "2px solid var(--graview-accent, #2f6f5e)"
-                      : "1px solid var(--graview-edge, #e4e0d8)",
-                    background: `hsl(${Math.round(hueFor(span.kind) * 360)} 55% 95%)`,
-                    color: `hsl(${Math.round(hueFor(span.kind) * 360)} 45% 28%)`,
+                      ? "1px solid var(--graview-accent)"
+                      : `1px solid hsl(${Math.round(hueFor(span.kind) * 360)} 60% 62% / 0.42)`,
+                    // Opaque, over a hue wash. A cascaded bar has to OCCLUDE
+                    // the one behind it — a translucent fill lets the label
+                    // underneath show through and both become unreadable.
+                    background: `linear-gradient(hsl(${Math.round(hueFor(span.kind) * 360)} 60% 55% / 0.22), hsl(${Math.round(hueFor(span.kind) * 360)} 60% 55% / 0.22)), var(--graview-panel)`,
+                    color: "var(--graview-ink)",
+                    boxShadow: selectedIds.includes(span.id)
+                      ? "0 0 16px -4px var(--graview-accent)"
+                      : undefined,
                   }}
                 >
-                  {span.label}
+                  {/* A twenty-minute run is a few pixels tall. Printing its
+                      label there spills it across everything nearby, so short
+                      spans carry their name in the tooltip instead. */}
+                  {height >= 2.6 ? span.label : null}
                 </div>
               </div>
             );
