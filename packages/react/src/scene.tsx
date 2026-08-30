@@ -1,7 +1,9 @@
 import type { AnySchema, Fidelity, NodeOfSchema } from "@graview/core";
 import {
   isAggregateId,
+  kindsOfAggregate,
   layout,
+  withRelation,
   type InterpolatedLayout,
   type Layout,
   type LayoutNode,
@@ -91,7 +93,7 @@ export function Scene<S extends AnySchema>({
   animate = true,
   children,
 }: SceneProps<S>) {
-  const { store, views, view, selection, setSelection, setJackedIn } = useGraview<S>();
+  const { store, views, view, setView, selection, setSelection, setJackedIn } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -161,7 +163,27 @@ export function Scene<S extends AnySchema>({
       canvasWidth={result.width}
       canvasHeight={result.height}
       selected={selection.includes(node.id)}
-      onSelect={(additive) => setSelection((current) => selectionFor(node, current, additive))}
+      onSelect={(additive) => {
+        /*
+         * A group is a PLACE; a node is a THING.
+         *
+         * Clicking a group raises its members onto plane 1 — which is what
+         * "open the People block" obviously means, and what the whole
+         * aggregate model is for. Before this, clicking a group silently
+         * selected members that were not on screen and looked like nothing
+         * had happened, and the only way to raise anything was a button in
+         * the far corner of the command bar.
+         *
+         * Hold shift or meta to select the members instead.
+         */
+        const kinds = node.aggregate ? kindsOfAggregate(node.id) : [];
+        if (kinds.length === 1 && !additive && Math.round(node.plane) !== 0) {
+          const kind = kinds[0]!;
+          setView((current) => withRelation(current, current.relation === kind ? null : kind));
+          return;
+        }
+        setSelection((current) => selectionFor(node, current, additive));
+      }}
       onJackIn={() => setJackedIn(node.id)}
     >
       <ResolvedView node={node} mode="scene" selected={selection.includes(node.id)} />
@@ -350,6 +372,7 @@ function SceneViewHost({
       data-graview-plane={Math.round(node.plane)}
       data-graview-selected={selected || undefined}
       data-graview-touched={touched || undefined}
+      title={node.aggregate ? `Open ${node.aggregate.label}` : undefined}
       role="group"
       aria-label={node.aggregate ? node.aggregate.label : node.id}
       tabIndex={0}
