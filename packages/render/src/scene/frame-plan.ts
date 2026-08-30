@@ -189,8 +189,9 @@ function styleAt(plane: number): PlaneStyle {
  *
  * - `full`    live: captured every frame, because it is being edited
  * - `summary` cached: captured only when its DOM actually changed
- * - `glyph`   captured once; at glyph scale a cached texture is
- *             indistinguishable from a live one and costs nothing per frame
+ * - `glyph`   captured once, then only when its content actually changed —
+ *             at glyph scale a cached texture is indistinguishable from a
+ *             live one, but a stale one shows last week's number for ever
  */
 function captureReason(
   view: PlannedView,
@@ -209,6 +210,6 @@ function captureReason(
     case "summary":
       return view.dirty ? "changed" : null;
     case "glyph":
-      return null;
+      return view.dirty ? "changed" : null;
   }
 }

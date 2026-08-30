@@ -223,9 +223,13 @@ export function TimelineView<S extends AnySchema>({
             // label truncated to a letter. Offsetting each lane by a fraction
             // and letting them overlap keeps the first one readable, which is
             // how a calendar you would actually use behaves.
+            // Clamped. Unbounded, lane 5 is zero-width and lane 6 is
+            // NEGATIVE — the browser drops the invalid width and the span
+            // escapes into the next day. Six concurrent items in a column is
+            // exactly the case this cascade exists for.
             const step = columnWidth * 0.2;
-            const offset = span.lane * step;
-            const laneWidth = columnWidth - offset;
+            const offset = Math.min(span.lane * step, columnWidth * 0.6);
+            const laneWidth = Math.max(columnWidth * 0.4, columnWidth - offset);
             return (
               <div
                 key={`${column.id}:${span.id}`}

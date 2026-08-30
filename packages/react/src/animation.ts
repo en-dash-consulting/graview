@@ -47,12 +47,22 @@ export function useAnimatedLayout(
   const [current, setCurrent] = useState<InterpolatedLayout>(() =>
     interpolate(target, target, 1),
   );
+  // The LIVE frame, kept in a ref.
+  //
+  // The effect below is not re-created on the frames it itself causes, so a
+  // cleanup closing over `current` sees the frame from when the effect
+  // started — which made an interrupted transition resume from where the
+  // previous one began, and made every navigation after the first jump back
+  // two states before animating forward.
+  const latest = useRef<InterpolatedLayout>(current);
   const frame = useRef<number | null>(null);
 
   useEffect(() => {
     if (!enabled || typeof requestAnimationFrame === "undefined") {
       from.current = target;
-      setCurrent(interpolate(target, target, 1));
+      const settled = interpolate(target, target, 1);
+      latest.current = settled;
+      setCurrent(settled);
       return;
     }
 
@@ -64,7 +74,9 @@ export function useAnimatedLayout(
     const step = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
       const eased = easeInOut(t);
-      setCurrent(interpolate(origin, target, eased));
+      const next = interpolate(origin, target, eased);
+      latest.current = next;
+      setCurrent(next);
       if (t < 1) {
         frame.current = requestAnimationFrame(step);
       } else {
@@ -76,19 +88,18 @@ export function useAnimatedLayout(
     frame.current = requestAnimationFrame(step);
     return () => {
       if (frame.current !== null) cancelAnimationFrame(frame.current);
-      // Freeze where the interruption caught it, so the next tween starts here.
+      // Freeze where the interruption caught it, so the next tween starts
+      // here — from the live frame, not the one this effect began with.
+      const live = latest.current;
       from.current = {
         ...target,
-        nodes: current.nodes.map((node) => ({
+        nodes: live.nodes.map((node) => ({
           ...node,
           plane: Math.round(node.plane) as 0 | 1 | 2,
         })),
-        connectors: current.connectors,
+        connectors: live.connectors,
       };
     };
-    // `current` is deliberately not a dependency: reading it in cleanup is the
-    // point, and depending on it would restart the tween on every frame.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, duration, enabled]);
 
   return current;

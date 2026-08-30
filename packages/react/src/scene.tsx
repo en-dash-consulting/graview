@@ -46,6 +46,14 @@ export interface SceneProps<S extends AnySchema> {
      * view states. Planes may be fractional and nodes may be part-faded.
      */
     layout: InterpolatedLayout;
+    /**
+     * Views whose CONTENT changed, so a cached texture must be retaken.
+     *
+     * Position and size changes the renderer can see for itself; a count
+     * inside an aggregate changing is invisible to it, and `glyph` fidelity
+     * would otherwise show the old number for ever.
+     */
+    dirty: ReadonlySet<string>;
     /** The DOM host for a view id — what the capture API is given. */
     hostOf(id: string): HTMLElement | null;
   }) => (() => void) | void;
@@ -122,16 +130,25 @@ export function Scene<S extends AnySchema>({
     // so a host for a node that has not entered yet does not exist to be
     // captured; and drawing the target during a transition would snap every
     // view to its final position while the DOM animated underneath it.
+    // A group is stale when any of its members changed, since its own view
+    // is a summary of them.
+    const dirty = new Set<string>();
+    for (const node of frame.nodes) {
+      if (touched.has(node.id)) dirty.add(node.id);
+      else if (node.aggregate?.memberIds.some((id) => touched.has(id))) dirty.add(node.id);
+    }
+
     const detach = attachRenderer({
       canvas,
       layout: frame,
+      dirty,
       hostOf: (id) =>
         canvas.querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"]`),
     });
     return () => {
       detach?.();
     };
-  }, [renderer, attachRenderer, frame]);
+  }, [renderer, attachRenderer, frame, touched]);
 
   const useDom = renderer === "dom" || (renderer === "auto" && !attachRenderer);
 
@@ -199,7 +216,7 @@ export function Scene<S extends AnySchema>({
           {hosts}
         </canvas>
       )}
-      <Connectors result={frame} />
+      <Connectors result={frame} above={!useDom} />
       {children}
     </div>
   );
@@ -310,7 +327,12 @@ function SceneViewHost({
         opacity: (1 - style.falloff * 0.55) * (node.opacity ?? 1),
         boxShadow: `0 ${10 * style.shadow}px ${34 * style.shadow}px rgba(0,0,0,${style.shadow + 0.2})`,
       }
-    : { opacity: node.opacity ?? 1 };
+    : // The GPU path does NOT fade the host: the shader owns opacity there,
+      // and applying it in both places made an entering view fade as
+      // opacity² — visibly faster and dimmer than the DOM path, so the two
+      // renderers disagreed about the same transition. It also meant a view
+      // captured mid-fade baked its own transparency into the texture.
+      {};
 
   return (
     <div
@@ -380,7 +402,19 @@ const DASH: Record<string, string | undefined> = {
  * restyle. The capture inside a `layoutsubtree` canvas is not disturbed,
  * because this sits outside it.
  */
-function Connectors({ result }: { result: { nodes: readonly SceneNode[]; connectors: Layout["connectors"] | InterpolatedLayout["connectors"]; width: number; height: number } }) {
+function Connectors({
+  result,
+  above,
+}: {
+  result: {
+    nodes: readonly SceneNode[];
+    connectors: Layout["connectors"] | InterpolatedLayout["connectors"];
+    width: number;
+    height: number;
+  };
+  /** The GPU canvas is opaque, so connectors have to sit over it, not under. */
+  above: boolean;
+}) {
   if (result.connectors.length === 0) return null;
   const byId = new Map(result.nodes.map((node) => [node.id, node]));
   return (
@@ -393,9 +427,11 @@ function Connectors({ result }: { result: { nodes: readonly SceneNode[]; connect
         left: 0,
         top: 0,
         pointerEvents: "none",
-        // Behind the views. A relationship is context for what it connects,
-        // and drawing it over the top makes it compete with the content.
-        zIndex: 0,
+        // Behind the views on the DOM path, where the stage is transparent
+        // and a relationship should not compete with what it connects. Above
+        // on the GPU path, where the canvas clears to the ground colour and
+        // anything beneath it is simply painted over.
+        zIndex: above ? 2 : 0,
       }}
     >
       {result.connectors.map((connector) => {

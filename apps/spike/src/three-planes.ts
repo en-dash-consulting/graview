@@ -86,7 +86,7 @@ export async function mountThreePlanes(root: HTMLElement): Promise<ThreePlaneSce
 
   const compositor = new Compositor(canvas, {
     gpu: gpu as never,
-    surface: { context: canvasSurface.context, size: [canvas.width, canvas.height] },
+    surface: { context: canvasSurface.context },
   });
 
   // Layout positions are chosen by inverting the plane transform from where

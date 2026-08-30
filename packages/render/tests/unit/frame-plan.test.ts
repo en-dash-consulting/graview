@@ -64,11 +64,16 @@ describe("capture budget policy", () => {
     ).toEqual([{ viewId: "b", reason: "changed" }]);
   });
 
-  it("never recaptures a glyph view, even when it is marked dirty", () => {
+  it("leaves a glyph view alone until its content actually changes", () => {
     const capturedAt = { c: 1 };
+    // Moving, scaling and fading cost it nothing: at glyph scale a cached
+    // texture is indistinguishable from a live one.
+    expect(planFrame([view("c", 2)], [], { ...CANVAS, capturedAt }).captures).toEqual([]);
+    // But a stale one shows last week's number for ever, so a real content
+    // change still has to be honoured.
     expect(
       planFrame([view("c", 2, { dirty: true })], [], { ...CANVAS, capturedAt }).captures,
-    ).toEqual([]);
+    ).toEqual([{ viewId: "c", reason: "changed" }]);
   });
 
   it("keeps a big scene inside the measured ceiling", () => {
