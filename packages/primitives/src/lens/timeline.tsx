@@ -358,6 +358,10 @@ function Column({
           <div
             key={span.id}
             data-graview-span={span.id}
+            // Every span is a real node, so it is a real target: the scene
+            // routes a click on it to that node rather than to the calendar
+            // drawing it.
+            data-graview-pick={span.id}
             title={`${span.label} · ${format(span.start)}–${format(span.end)}`}
             style={{
               position: "absolute",
@@ -407,6 +411,7 @@ function Column({
         <div
           key={span.id}
           data-graview-span={span.id}
+          data-graview-pick={span.id}
           data-graview-moment=""
           title={`${span.label} · ${format(span.start)}`}
           style={{

@@ -7,6 +7,7 @@ import {
   type LayoutNode,
   type LayoutOptions,
   type Plane,
+  type Via,
 } from "./types.js";
 import type { ViewState } from "./view-state.js";
 
@@ -80,39 +81,6 @@ export function layout<S extends AnySchema>(
   const nodes: LayoutNode[] = [];
   const placed = new Map<string, LayoutNode>();
 
-  /*
-   * Bands are PROPORTIONS of the canvas, and they tile it.
-   *
-   * Fixed pixel bands in a scene that is now sized to its container left
-   * more than half the height empty — the focus panel floating in the top
-   * third with a void beneath it. Every band is a share of the height, so
-   * the composition holds at any size, and the three planes read as one
-   * arrangement rather than three rows that happen to be stacked.
-   */
-  const band = {
-    focusY: opts.height * 0.035,
-    focusH: opts.height * 0.56,
-    relationY: opts.height * 0.65,
-    relationH: opts.height * 0.19,
-    contextY: opts.height * 0.87,
-    contextH: opts.height * 0.16,
-  };
-
-  const focusSize = {
-    width: Math.min(opts.focusSize.width, opts.width - opts.gap * 6),
-    height: band.focusH,
-  };
-
-  /** Fits `count` boxes across the canvas, never wider than the cap. */
-  const fit = (count: number, cap: number, height: number) => ({
-    width:
-      count === 0
-        ? cap
-        : Math.min(cap, (opts.width - opts.gap * (count + 1)) / count),
-    height,
-  });
-  const expanded = new Set(state.expanded);
-
   // A group may be focused as readily as a node: "show me the week" and
   // "show me this run" are the same gesture at different granularities.
   const focusKinds = state.focusId ? kindsOfAggregate(state.focusId) : [];
@@ -125,26 +93,97 @@ export function layout<S extends AnySchema>(
   const focus =
     state.focusId && focusKinds.length === 0 ? graph.getNode(state.focusId) : undefined;
 
+  /*
+   * Bands are PROPORTIONS of the canvas, and they tile it.
+   *
+   * Fixed pixel bands in a scene that is now sized to its container left
+   * more than half the height empty — the focus panel floating in the top
+   * third with a void beneath it. Every band is a share of the height, so
+   * the composition holds at any size, and the three planes read as one
+   * arrangement rather than three rows that happen to be stacked.
+   *
+   * A DETAIL gets a tighter set than a group. The week's calendar fills 56%
+   * of the height honestly; one nap does not, and holding the same band open
+   * for it puts a small card alone in the top half with several hundred
+   * pixels of nothing under it before its relations begin.
+   */
+  const band =
+    focus === undefined
+      ? {
+          focusY: opts.height * 0.035,
+          focusH: opts.height * 0.56,
+          relationY: opts.height * 0.65,
+          relationH: opts.height * 0.19,
+          contextY: opts.height * 0.87,
+          contextH: opts.height * 0.16,
+        }
+      : {
+          focusY: opts.height * 0.04,
+          focusH: opts.height * 0.36,
+          relationY: opts.height * 0.46,
+          relationH: opts.height * 0.24,
+          contextY: opts.height * 0.79,
+          contextH: opts.height * 0.17,
+        };
+
+  /*
+   * A group gets the whole width; a single node does not.
+   *
+   * The week's calendar has five columns to fill and earns 1040 pixels. One
+   * nap, with a name, a time and one person at it, drawn across the same
+   * width is a letterbox with four words in it. Narrowing the detail box is
+   * the difference between a card and an empty page.
+   */
+  const detailWidth = Math.min(700, opts.width - opts.gap * 6);
+  const groupWidth = Math.min(opts.focusSize.width, opts.width - opts.gap * 6);
+
+  /** Fits `count` boxes across the canvas, never wider than the cap. */
+  const fit = (count: number, cap: number, height: number) => ({
+    width:
+      count === 0
+        ? cap
+        : Math.min(cap, (opts.width - opts.gap * (count + 1)) / count),
+    height,
+  });
+  const expanded = new Set(state.expanded);
+
+  const related = relatedNodes(graph, schema, focus, state.relation);
+
+  /*
+   * With plane 1 empty, the focus takes the relation band too.
+   *
+   * The alternative is a void: context used to slide up under the focus
+   * whenever nothing was raised, which avoided a dead stripe through the
+   * middle but left a bigger one along the bottom, and the week's calendar
+   * stayed squeezed into 56% of a screen it could have filled. Growing the
+   * focus keeps the context row anchored where it always is, so raising
+   * something moves one band rather than re-composing the whole scene.
+   */
+  const focusHeight =
+    related.length > 0
+      ? band.focusH
+      : band.contextY - band.focusY - opts.gap * 2;
+
   // ------------------------------------------------------- plane 0: focus
   if (focus) {
     push({
       id: focus.id,
       kind: focus.kind,
       plane: 0,
-      x: (opts.width - focusSize.width) / 2,
+      x: (opts.width - detailWidth) / 2,
       y: band.focusY,
-      width: focusSize.width,
-      height: focusSize.height,
+      width: detailWidth,
+      height: focusHeight,
     });
   } else if (focusGroup.length > 0 && state.focusId) {
     push({
       id: state.focusId,
       kind: focusKinds[0]!,
       plane: 0,
-      x: (opts.width - focusSize.width) / 2,
+      x: (opts.width - groupWidth) / 2,
       y: band.focusY,
-      width: focusSize.width,
-      height: focusSize.height,
+      width: groupWidth,
+      height: focusHeight,
       aggregate: {
         kind: focusKinds.join("+"),
         memberIds: focusGroup.map((node) => node.id),
@@ -156,7 +195,6 @@ export function layout<S extends AnySchema>(
   }
 
   // --------------------------------------------------- plane 1: relations
-  const related = relatedNodes(graph, focus, state.relation);
   const relationSize = fit(related.length, opts.relationSize.width, band.relationH);
   const relationPositions = row(
     related.length,
@@ -165,16 +203,17 @@ export function layout<S extends AnySchema>(
     opts.width,
     band.relationY,
   );
-  related.forEach((node, index) => {
+  related.forEach((entry, index) => {
     const position = relationPositions[index]!;
     push({
-      id: node.id,
-      kind: node.kind,
+      id: entry.node.id,
+      kind: entry.node.kind,
       plane: 1,
       x: position.x,
       y: position.y,
       width: relationSize.width,
       height: relationSize.height,
+      ...(entry.via ? { via: entry.via } : {}),
     });
   });
 
@@ -223,10 +262,7 @@ export function layout<S extends AnySchema>(
     contextSize,
     opts.gap,
     opts.width,
-    // With nothing raised on plane 1, context sits directly under the focus.
-    // Holding its band open for a plane that is empty leaves a stripe of dead
-    // ground through the middle of the scene.
-    related.length > 0 ? band.contextY : band.focusY + band.focusH + opts.gap * 2,
+    band.contextY,
   );
   contextItems.forEach((item, index) => {
     const position = contextPositions[index]!;
@@ -266,29 +302,89 @@ function pluralOf(schema: AnySchema, kind: string): string {
   return definition?.plural ?? `${kind}s`;
 }
 
+/** A node on plane 1, and the edge that put it there. */
+interface Related<N> {
+  readonly node: N;
+  readonly via?: Via;
+}
+
 /**
- * What plane 1 shows. `relation` names either an edge kind to follow from the
- * focus, or a node kind to raise wholesale — "show me People" and "show me
- * what this is assigned to" are the same gesture.
+ * What plane 1 shows.
+ *
+ * With a single node focused and no relation named, plane 1 is that node's
+ * whole NEIGHBOURHOOD — everything one edge away, in either direction,
+ * grouped by edge kind. This is the default because the alternative is an
+ * empty plane, and an empty plane is exactly what makes selecting a thing
+ * feel like it did nothing: the graph knows who does this run, which
+ * agreement protects it and why it exists, and refusing to show any of that
+ * until the reader guesses the right edge kind is hiding the product behind
+ * a menu.
+ *
+ * A named `relation` then acts as a FILTER on that neighbourhood — or, when
+ * it names no edge from the focus, as a kind to raise wholesale. "Show me
+ * People" and "show me what this is assigned to" stay the same gesture.
  */
 function relatedNodes<S extends AnySchema>(
   graph: GraphReader<NodeOfSchema<S>>,
+  schema: S,
   focus: NodeOfSchema<S> | undefined,
   relation: string | null,
-): NodeOfSchema<S>[] {
-  if (!relation) return [];
-
+): Related<NodeOfSchema<S>>[] {
   if (focus) {
-    const outgoing = graph.out(focus.id, relation);
-    const incoming = graph.in(focus.id, relation);
-    const byId = new Map<string, NodeOfSchema<S>>();
-    for (const node of [...outgoing, ...incoming]) byId.set(node.id, node);
-    if (byId.size > 0) return [...byId.values()].sort(byStableKey);
+    const found = new Map<string, Related<NodeOfSchema<S>>>();
+    for (const edge of graph.allEdges()) {
+      if (relation && edge.kind !== relation) continue;
+      const otherId =
+        edge.from === focus.id ? edge.to : edge.to === focus.id ? edge.from : null;
+      if (otherId === null || otherId === focus.id) continue;
+      const node = graph.getNode(otherId);
+      if (!node) continue;
+      // The first edge to reach a node names the relationship. Two edges to
+      // the same neighbour is a rarity; picking the first by the sorted walk
+      // keeps the caption stable rather than flickering between them.
+      if (found.has(otherId)) continue;
+      const direction = edge.from === focus.id ? "out" : "in";
+      const owner = direction === "out" ? focus.kind : node.kind;
+      const description = edgeDescription(schema, owner, edge.kind);
+      found.set(otherId, {
+        node,
+        via: { edgeKind: edge.kind, direction, ...(description ? { description } : {}) },
+      });
+    }
+    if (found.size > 0) {
+      // Grouped by edge kind, so a relationship reads as a run of cards
+      // under one caption rather than as scattered singletons.
+      return [...found.values()].sort(
+        (a, b) =>
+          (a.via!.edgeKind < b.via!.edgeKind ? -1 : a.via!.edgeKind > b.via!.edgeKind ? 1 : 0) ||
+          byStableKey(a.node, b.node),
+      );
+    }
   }
 
+  if (!relation) return [];
+
   // Not an edge kind from the focus (or nothing there): treat it as a kind.
-  const ofKind = graph.allNodes().filter((node) => node.kind === relation);
-  return ofKind.sort(byStableKey);
+  return graph
+    .allNodes()
+    .filter((node) => node.kind === relation)
+    .sort(byStableKey)
+    .map((node) => ({ node }));
+}
+
+/**
+ * An edge declaration's own description. The schema has been carrying these
+ * since the first commit; this is the first thing that reads them.
+ */
+function edgeDescription(
+  schema: AnySchema,
+  ownerKind: string,
+  edgeKind: string,
+): string | undefined {
+  const edges = schema.tryDefinition(ownerKind)?.edges as
+    | Record<string, { description?: string }>
+    | undefined;
+  return edges?.[edgeKind]?.description;
 }
 
 /**

@@ -12,6 +12,23 @@ export interface Aggregate {
   readonly label: string;
 }
 
+/**
+ * Why a node is on plane 1 at all: the edge that reached it, in the schema's
+ * own words.
+ *
+ * Every edge declaration already carries a description — "who does the run",
+ * "a nap that must not be interrupted" — and until now nothing in the
+ * interface ever showed it. Carrying it through the layout means a raised
+ * node can say what its relationship to the focus IS, rather than merely
+ * sitting near it and leaving the reader to guess.
+ */
+export interface Via {
+  readonly edgeKind: string;
+  readonly direction: "out" | "in";
+  /** The edge declaration's own description, when it has one. */
+  readonly description?: string;
+}
+
 export interface LayoutNode {
   /** A real node id, or `aggregate:<kind>` for a group. */
   readonly id: string;
@@ -23,6 +40,8 @@ export interface LayoutNode {
   readonly height: number;
   /** Set when this node stands in for a group rather than one graph node. */
   readonly aggregate?: Aggregate;
+  /** Set on plane 1 when this node was reached by following an edge. */
+  readonly via?: Via;
   /** True when the user pinned this position rather than the layout choosing it. */
   readonly pinned: boolean;
 }

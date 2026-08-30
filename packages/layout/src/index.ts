@@ -16,6 +16,7 @@ export type {
   LayoutNode,
   LayoutOptions,
   Plane,
+  Via,
 } from "./types.js";
 export {
   EMPTY_VIEW,

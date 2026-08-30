@@ -128,6 +128,7 @@ function mix(a: LayoutNode, b: LayoutNode, t: number, opacity: number): Interpol
     pinned: b.pinned,
     opacity,
     ...(b.aggregate ? { aggregate: b.aggregate } : {}),
+    ...(b.via ? { via: b.via } : {}),
   };
 }
 

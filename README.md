@@ -42,7 +42,7 @@ and paper where depth loses contrast and gains haze. Inverting one to get the
 other gives grey-on-grey mush, because glow does not exist in daylight.
 
 ```sh
-pnpm test          # 255 tests, no GPU, no browser
+pnpm test          # 270 tests, no GPU, no browser
 pnpm typecheck
 pnpm check         # `graview check` against the household example's declarations
 ```
@@ -76,7 +76,12 @@ pnpm a11y          # the real accessibility tree, keyboard order, axe-core
 
 **The graph is the interface.** One `defineNode()` is the source of truth. AI
 tool schemas, drag legality, aggregate contents and a11y labels all derive from
-it, and every derived value stays inspectable and overridable.
+it, and every derived value stays inspectable and overridable. Click anything
+the interface draws — an event in a calendar, a chip in a list — and you travel
+to that node: its neighbours rise onto the plane behind it, each captioned with
+the description its edge was declared with ("who does the run", "a nap that
+must not be interrupted"). Nobody writes that copy, and a new edge kind shows
+up there the moment it is declared.
 
 **Actions are derived, not authored.** Given a selection, providers contribute
 candidates: which mutations are legal across it, which invariants it breaks and
@@ -107,6 +112,7 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | A suggestion appears nobody wrote a rule for | `packages/tools/tests/unit/affordances.test.ts` |
 | Agent and human edits produce identical diffs | `the household example/tests/integration/acceptance.test.tsx` |
 | A new node kind renders with zero view code | `packages/primitives/tests/unit/primitives.test.tsx` |
+| A focused node surfaces its whole neighbourhood, captioned | `packages/layout/tests/unit/layout.test.ts`, `the household example/tests/integration/acceptance.test.tsx` |
 | Capture + composite works at three depths | `docs/spike-three-planes.png`, Chrome Canary 154 |
 | Clicks land on drawn pixels at every depth | `apps/spike/scripts/run-spike.mjs` |
 | The whole port meets its six criteria | `the household example/scripts/run-acceptance.mjs` |
