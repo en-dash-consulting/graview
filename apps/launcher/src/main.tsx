@@ -1,141 +1,50 @@
 import { aggregateId, EMPTY_VIEW, type ViewState } from "@graview/layout";
 import {
-  Chip,
-  Connections,
-  FAINT_TEXT,
+  ActivityRail,
+  BackOut,
   Inspector,
-  MUTED_TEXT,
-  Panel,
-  Roster,
+  Standing,
   Trail,
-  createCoverageLens,
-  hueFor,
-  registerDefaultViews,
   themeCss,
   type Scheme,
 } from "@graview/primitives";
-import {
-  GraviewProvider,
-  Scene,
-  createViews,
-  useGraview,
-  type ViewComponent,
-  type ViewProps,
-} from "@graview/react";
+import { GraviewProvider, Scene, useGraph, useGraview, useUrlSync } from "@graview/react";
+import { createInAppAdapter, createToolRuntime, type ToolCall } from "@graview/tools";
 import { HouseholdApp } from "the household example/ui";
 import { BidDeskApp } from "the bid-desk example/ui";
 import { CoachingApp } from "the coaching example/ui";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import { createRoot } from "react-dom/client";
-import { APPS } from "./apps.js";
-import { launcherSchema, type LauncherSchema } from "./graph.js";
-import { createLauncherStore } from "./graph.js";
+import { createLauncherStore, type LauncherStore } from "./domain/app.js";
+import { APPS } from "./domain/survey.js";
+import type { LauncherSchema } from "./domain/schema.js";
+import { LivenessProvider, useLiveness } from "./ui/liveness.js";
+import { launcherViews } from "./ui/views.js";
 
 type S = LauncherSchema;
 
 /**
- * A way between the Graview apps on this machine — and, because it is built
- * out of their own declarations, a view OF them rather than a list of links.
+ * The desk, and it is a Graview app now rather than a Graview scene.
  *
- * Each app is mounted in place rather than linked to a port. One server, one
- * theme, instant switching, and no arguing with three terminals about which
- * of them is running. The port and command are still on the card, because
- * sometimes you do want the app on its own.
+ * Which changes one thing that matters: WHICH APP IS IN FRONT OF YOU LIVES IN
+ * THE GRAPH. It was React state and a query string, so the single most
+ * interesting thing this surface does was invisible to the op log, could not
+ * be undone, and sat outside the model. It is a `showing` edge now, so
+ * opening an app appears in the activity rail with an author, undo closes it,
+ * and the agent seat can do it — through exactly the same mutation a person
+ * uses.
  */
 
 const MATRIX = aggregateId("app", "capability");
 const HOME: ViewState = { ...EMPTY_VIEW, focusId: MATRIX };
 
-/**
- * Apps against framework capabilities.
- *
- * The coverage lens for the fourth time, and the first time pointed at the
- * framework itself. An empty ROW is a capability nothing uses — dead weight
- * worth arguing about. An empty COLUMN would be an app exercising nothing.
- */
-const capabilityLens = createCoverageLens<S>({
-  rows: "capability",
-  columns: "app",
-  link: "uses",
-  rowGroup: "area",
-  groupOrder: ["lens", "declaration", "behaviour"],
-});
+const MOUNTS: Record<string, (props: Record<string, unknown>) => ReactElement> = {
+  the household example: HouseholdApp,
+  proposal: BidDeskApp,
+  the coaching example: CoachingApp,
+};
 
-const MatrixView = ((props: ViewProps<S>) => (
-  <capabilityLens.View {...props} label="What each app exercises" />
-)) as ViewComponent<S>;
-
-function AppView({ node, fidelity, selected }: ViewProps<S, "app">) {
-  const [, setOpen] = useOpenApp();
-  if (!node) return null;
-  if (fidelity === "glyph") {
-    return <Chip label={node.label} hue={hueFor("app")} selected={selected} />;
-  }
-  return (
-    <Panel title={node.label} meta={`:${node.port}`} selected={selected} fit>
-      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, ...MUTED_TEXT }}>{node.tagline}</p>
-      <Roster
-        max={5}
-        items={[
-          { id: "kinds", label: `${node.kinds} kinds` },
-          { id: "edges", label: `${node.edges} edge kinds` },
-          { id: "mutations", label: `${node.mutations} mutations` },
-          { id: "invariants", label: `${node.invariants} rules` },
-          { id: "lenses", label: `${node.lenses} lenses` },
-        ]}
-      />
-      {fidelity === "full" ? (
-        <>
-          <button
-            type="button"
-            data-testid={`open-${node.id}`}
-            onClick={() => setOpen(node.id)}
-            style={{ alignSelf: "flex-start", fontSize: 13 }}
-          >
-            Open {node.label}
-          </button>
-          <p style={{ margin: 0, fontSize: 11.5, ...FAINT_TEXT }}>
-            On its own: <code>{node.command}</code>
-          </p>
-          <Connections id={node.id} empty="It exercises nothing the launcher tracks." />
-        </>
-      ) : null}
-    </Panel>
-  );
-}
-
-/** Which app is mounted, if any. Kept in the URL so a reload lands back. */
-function useOpenApp(): [string | null, (id: string | null) => void] {
-  const [open, setOpen] = useState<string | null>(() =>
-    new URLSearchParams(window.location.search).get("app"),
-  );
-  return [
-    open,
-    (id) => {
-      const url = new URL(window.location.href);
-      if (id) url.searchParams.set("app", id);
-      else url.searchParams.delete("app");
-      url.hash = "";
-      window.history.replaceState(null, "", url);
-      setOpen(id);
-    },
-  ];
-}
-
-function launcherViews() {
-  const registry = registerDefaultViews(launcherSchema, createViews(launcherSchema));
-  registry
-    .register("app", { cardinality: "one", fidelity: "full" }, AppView as never)
-    .register("app", { cardinality: "one", fidelity: "summary" }, AppView as never)
-    .register("app", { cardinality: "one", fidelity: "glyph" }, AppView as never)
-    .register("app", { cardinality: "many", fidelity: "full" }, MatrixView)
-    .register("app", { cardinality: "many", fidelity: "summary" }, MatrixView)
-    .register("capability", { cardinality: "many", fidelity: "full" }, MatrixView)
-    .register("capability", { cardinality: "many", fidelity: "summary" }, MatrixView);
-  return registry;
-}
-
-/* --------------------------------------------------------------- the shell */
+/* ------------------------------------------------------------------- theme */
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [...(document.adoptedStyleSheets ?? []), sheet];
@@ -163,122 +72,255 @@ function applyScheme(scheme: Scheme): void {
   }
 }
 
-function Launcher() {
-  const [open, setOpen] = useOpenApp();
-  const [scheme, setScheme] = useState<Scheme>(initialScheme);
-  const store = useMemo(() => createLauncherStore(), []);
-  const views = useMemo(() => launcherViews(), []);
+/* -------------------------------------------------------------------- desk */
 
-  const changeScheme = (next: Scheme) => {
-    setScheme(next);
-    applyScheme(next);
-  };
+/** What the graph says is in front of you. */
+function useShowing(): string | null {
+  const { store } = useGraview<S>();
+  const nodes = useGraph<S>();
+  return useMemo(() => {
+    const desk = store.graph.nodesOfKind("desk")[0];
+    return desk ? (store.graph.out(desk.id, "showing")[0]?.id ?? null) : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, nodes]);
+}
 
-  if (open) {
-    const entry = APPS.find((candidate) => candidate.id === open);
-    const Mounted =
-      entry === undefined
-        ? null
-        : entry.id === "the household example"
-          ? HouseholdApp
-          : entry.id === "proposal"
-            ? BidDeskApp
-            : entry.id === "the coaching example"
-              ? CoachingApp
-              : null;
+/** Runs a launcher mutation as a person would: through the store, into the log. */
+function useDesk() {
+  const { store } = useGraview<S>();
+  return useMemo(
+    () => ({
+      show: (appId: string) =>
+        store.apply({ name: "show-app", args: { appId } }, { author: { kind: "human" } }),
+      close: () => {
+        const desk = store.graph.nodesOfKind("desk")[0];
+        if (desk) {
+          store.apply({ name: "close-app", args: { deskId: desk.id } }, { author: { kind: "human" } });
+        }
+      },
+    }),
+    [store],
+  );
+}
+
+function Desk({
+  scheme,
+  onScheme,
+}: {
+  scheme: Scheme;
+  onScheme: (scheme: Scheme) => void;
+}) {
+  const showing = useShowing();
+  const desk = useDesk();
+  const [calls, setCalls] = useState<readonly ToolCall[]>([]);
+  const onCall = useCallback((call: ToolCall) => {
+    setCalls((current) => {
+      const settling =
+        call.phase !== "running" && current[0]?.name === call.name && current[0]?.at === call.at;
+      return [call, ...(settling ? current.slice(1) : current)].slice(0, 12);
+    });
+  }, []);
+
+  /*
+   * The graph decides; the URL follows, so a link still lands where it says.
+   *
+   * The hash is cleared on the way in and out because it belongs to whoever
+   * is on screen: the desk's own `#focus=aggregate:app+capability` names a
+   * node that does not exist in the household example, and the mounted app adopts the
+   * fragment on load — so leaving it there pointed a freshly opened app at
+   * nothing.
+   */
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (showing) url.searchParams.set("app", showing);
+    else url.searchParams.delete("app");
+    url.hash = "";
+    window.history.replaceState(null, "", url);
+  }, [showing]);
+
+  if (showing) {
+    const Mounted = MOUNTS[showing];
+    const entry = APPS.find((candidate) => candidate.id === showing);
     if (Mounted && entry) {
       return (
         <>
-          {/*
-            * Mounted in place, not linked to.
-            *
-            * Each app is an ordinary component with its own provider, so the
-            * launcher does not need three dev servers running to move between
-            * them — and the theme, which lives on one stylesheet, follows you
-            * across without a flash.
-            */}
           <Mounted
             key={entry.id}
             syncUrl
             renderer="dom"
             initialScheme={scheme}
-            onSchemeChange={changeScheme}
+            onSchemeChange={onScheme}
           />
-          <Switcher current={entry.id} onChoose={setOpen} />
+          <Switcher current={entry.id} onShow={desk.show} onClose={desk.close} />
         </>
       );
     }
   }
 
   return (
-    <GraviewProvider store={store} views={views} initialView={HOME} scheme={scheme}>
-      <div
-        style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+      <CommandBar scheme={scheme} onScheme={onScheme} onCall={onCall} />
+      <BackOut home={MATRIX} />
+      <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+        <Scene renderer="dom" />
+        <ActivityRail calls={calls} />
+        <Inspector />
+      </div>
+    </div>
+  );
+}
+
+function CommandBar({
+  scheme,
+  onScheme,
+  onCall,
+}: {
+  scheme: Scheme;
+  onScheme: (scheme: Scheme) => void;
+  onCall: (call: ToolCall) => void;
+}) {
+  const desk = useDesk();
+  const live = useLiveness();
+  useUrlSync();
+  return (
+    <header
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 18,
+        padding: "0 22px",
+        height: 56,
+        flex: "0 0 auto",
+        borderBottom: "1px solid var(--graview-edge)",
+        background: "var(--graview-bar)",
+        backdropFilter: "blur(14px)",
+        position: "relative",
+        zIndex: 20,
+      }}
+    >
+      <span
+        style={{
+          fontSize: 11,
+          letterSpacing: "0.3em",
+          textTransform: "uppercase",
+          color: "var(--graview-ink-muted)",
+          whiteSpace: "nowrap",
+        }}
       >
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 18,
-            padding: "0 22px",
-            height: 56,
-            flex: "0 0 auto",
-            borderBottom: "1px solid var(--graview-edge)",
-            background: "var(--graview-bar)",
-            position: "relative",
-            zIndex: 20,
-          }}
-        >
-          <span
+        graview
+      </span>
+      <Trail home={MATRIX} homeLabel="What each app exercises" />
+
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+        <Standing clean="Every capability is earned" />
+        <AuditButton onCall={onCall} />
+        {APPS.map((entry) => (
+          <button
+            key={entry.id}
+            type="button"
+            data-testid={`launch-${entry.id}`}
+            onClick={() => desk.show(entry.id)}
+            title={
+              live[entry.id]
+                ? `Open here — also serving on :${entry.port}`
+                : `Open here. ${entry.command} runs it on :${entry.port}.`
+            }
             style={{
-              fontSize: 11,
-              letterSpacing: "0.3em",
-              textTransform: "uppercase",
-              color: "var(--graview-ink-muted)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 12.5,
+              whiteSpace: "nowrap",
             }}
           >
-            graview
-          </span>
-          <Trail home={MATRIX} homeLabel="What each app exercises" />
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-            {APPS.map((entry) => (
-              <button
-                key={entry.id}
-                type="button"
-                data-testid={`launch-${entry.id}`}
-                onClick={() => setOpen(entry.id)}
-                style={{ fontSize: 12.5, whiteSpace: "nowrap" }}
-              >
-                {entry.label}
-              </button>
-            ))}
-            <button
-              type="button"
-              data-testid="scheme"
-              aria-label={`Switch to ${scheme === "dark" ? "light" : "dark"} mode`}
-              onClick={() => changeScheme(scheme === "dark" ? "light" : "dark")}
-              style={{ padding: "6px 9px", lineHeight: 1 }}
-            >
-              {scheme === "dark" ? "☀" : "☾"}
-            </button>
-          </div>
-        </header>
-        <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-          <Scene renderer="dom" />
-          <Inspector />
-        </div>
+            <span
+              aria-hidden="true"
+              title={live[entry.id] ? "serving" : "not serving"}
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 999,
+                background: live[entry.id] ? "var(--graview-accent)" : "var(--graview-edge)",
+              }}
+            />
+            {entry.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          data-testid="scheme"
+          aria-label={`Switch to ${scheme === "dark" ? "light" : "dark"} mode`}
+          onClick={() => onScheme(scheme === "dark" ? "light" : "dark")}
+          style={{ padding: "6px 9px", lineHeight: 1 }}
+        >
+          {scheme === "dark" ? "☀" : "☾"}
+        </button>
       </div>
-    </GraviewProvider>
+    </header>
+  );
+}
+
+/**
+ * An agent seat for the desk, and the least comfortable one here.
+ *
+ * It reads the survey and opens the app with the most unexercised
+ * capabilities — the app most likely to be worth working on next. Its edits
+ * are `show-app` calls, so they arrive in the activity rail exactly like a
+ * person's and undo takes them back.
+ */
+function AuditButton({ onCall }: { onCall: (call: ToolCall) => void }) {
+  const { store } = useGraview<S>();
+  const runtime = useMemo(
+    () => createToolRuntime(store, { author: { kind: "agent", id: "claude", session: "desk" } }),
+    [store],
+  );
+  const agent = useMemo(() => createInAppAdapter(runtime), [runtime]);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => runtime.onCall(onCall), [runtime, onCall]);
+
+  return (
+    <button
+      type="button"
+      data-testid="agent-audit"
+      disabled={busy}
+      title="Open whichever app exercises the least of the framework"
+      onClick={() => {
+        setBusy(true);
+        void (async () => {
+          try {
+            const graph = (await agent.run("get_graph", {})) as {
+              nodes: ({ id: string; kind: string } & Record<string, unknown>)[];
+              edges: { kind: string; from: string; to: string }[];
+            };
+            const uses = graph.edges.filter((edge) => edge.kind === "uses");
+            const ranked = graph.nodes
+              .filter((node) => node.kind === "app")
+              .map((node) => ({ node, used: uses.filter((edge) => edge.from === node.id).length }))
+              .sort((a, b) => a.used - b.used);
+            const thinnest = ranked[0];
+            if (!thinnest) return;
+            await agent.run("get_node", { id: thinnest.node.id });
+            await agent.run("show-app", { appId: thinnest.node.id });
+          } finally {
+            setBusy(false);
+          }
+        })();
+      }}
+    >
+      {busy ? "Looking…" : "Show me the thinnest"}
+    </button>
   );
 }
 
 /** A way back, and a way sideways, from inside a mounted app. */
 function Switcher({
   current,
-  onChoose,
+  onShow,
+  onClose,
 }: {
   current: string;
-  onChoose: (id: string | null) => void;
+  onShow: (id: string) => void;
+  onClose: () => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -335,7 +377,7 @@ function Switcher({
               data-testid={`switch-${entry.id}`}
               onClick={() => {
                 setOpen(false);
-                onChoose(entry.id);
+                onShow(entry.id);
               }}
               style={{ fontSize: 12.5, textAlign: "left", whiteSpace: "nowrap" }}
             >
@@ -347,7 +389,7 @@ function Switcher({
             data-testid="switch-home"
             onClick={() => {
               setOpen(false);
-              onChoose(null);
+              onClose();
             }}
             style={{ fontSize: 12.5, textAlign: "left" }}
           >
@@ -356,6 +398,27 @@ function Switcher({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function Launcher() {
+  const [scheme, setScheme] = useState<Scheme>(initialScheme);
+  const store: LauncherStore = useMemo(
+    () => createLauncherStore(new URLSearchParams(window.location.search).get("app") ?? undefined),
+    [],
+  );
+  const views = useMemo(() => launcherViews(), []);
+  const changeScheme = (next: Scheme) => {
+    setScheme(next);
+    applyScheme(next);
+  };
+
+  return (
+    <GraviewProvider store={store} views={views} initialView={HOME} scheme={scheme}>
+      <LivenessProvider>
+        <Desk scheme={scheme} onScheme={changeScheme} />
+      </LivenessProvider>
+    </GraviewProvider>
   );
 }
 

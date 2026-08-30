@@ -4,11 +4,11 @@
  * typechecks without widening what an app package means.
  */
 declare module "the household example/ui" {
-  export const HouseholdApp: (props: Record<string, unknown>) => JSX.Element;
+  export const HouseholdApp: (props: Record<string, unknown>) => import("react").ReactElement;
 }
 declare module "the bid-desk example/ui" {
-  export const BidDeskApp: (props: Record<string, unknown>) => JSX.Element;
+  export const BidDeskApp: (props: Record<string, unknown>) => import("react").ReactElement;
 }
 declare module "the coaching example/ui" {
-  export const CoachingApp: (props: Record<string, unknown>) => JSX.Element;
+  export const CoachingApp: (props: Record<string, unknown>) => import("react").ReactElement;
 }

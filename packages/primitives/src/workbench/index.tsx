@@ -411,35 +411,36 @@ export interface Change {
 }
 
 /**
- * The last few changes, with who made them.
+ * The last few changes, with who made them — READ FROM THE LOG, not
+ * accumulated from a subscription.
  *
- * A human edit and an agent edit arrive through the same subscription and
- * render the same way, because the log cannot tell them apart.
+ * The difference showed up the moment the desk started recording its own
+ * navigation: opening an app unmounts the rail, so the subscription version
+ * lost exactly the change it had just made, and anything that happened before
+ * the rail first mounted had never been there at all. The op log is the
+ * state; deriving from it means nothing is lost by a component coming and
+ * going, which is the whole reason history is a fold rather than a stack.
+ *
+ * A human edit and an agent edit render the same way, because the log cannot
+ * tell them apart.
  */
 export function useRecentChanges(limit = 4): readonly Change[] {
   const { store } = useGraview<AnySchema>();
-  const [entries, setEntries] = useState<Change[]>([]);
-
-  useEffect(() => {
-    // The store notifies after the log is appended and hands over the ops, so
-    // attribution is never a frame behind the change it describes.
-    return store.subscribe((diff, ops) => {
-      const op = ops.at(-1);
-      setEntries((current) =>
-        [
-          {
-            intent: op?.intent ?? "change",
-            author: op?.author.kind ?? "human",
-            touched: diff.touched,
-            batch: op?.batch ?? "",
-          },
-          ...current,
-        ].slice(0, limit),
-      );
-    });
-  }, [store, limit]);
-
-  return entries;
+  const nodes = useGraph();
+  return useMemo(
+    () =>
+      [...store.batches()]
+        .reverse()
+        .slice(0, limit)
+        .map((batch) => ({
+          intent: batch.intent,
+          author: batch.author.kind,
+          touched: [...new Set(batch.ops.flatMap((op) => op.writes))],
+          batch: batch.id,
+        })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, nodes, limit],
+  );
 }
 
 /**
