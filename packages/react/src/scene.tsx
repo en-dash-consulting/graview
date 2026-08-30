@@ -534,7 +534,17 @@ function SceneViewHost({
       data-graview-plane={Math.round(node.plane)}
       data-graview-selected={selected || undefined}
       data-graview-touched={touched || undefined}
-      title={node.aggregate ? `Open ${node.aggregate.label}` : undefined}
+      /*
+        * "Open X" only where clicking raises X. On plane 0 the group IS what
+        * you are looking at, so the tooltip promised something clicking does
+        * not do — and it shadowed the more specific titles a view puts on its
+        * own contents.
+        */
+      title={
+        node.aggregate && Math.round(node.plane) !== 0
+          ? `Open ${node.aggregate.label}`
+          : undefined
+      }
       role="group"
       aria-label={node.aggregate ? node.aggregate.label : node.id}
       tabIndex={0}

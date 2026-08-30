@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 /**
  * A rich primitive set, not a visualization library.
@@ -51,6 +51,32 @@ export const MUTED_TEXT: CSSProperties = { color: "var(--graview-ink-muted, #555
 /** Even quieter, still above 4.5:1 on both panel grounds. */
 export const FAINT_TEXT: CSSProperties = { color: "var(--graview-ink-faint, #625d55)" };
 
+/**
+ * Whether an element has more content than it is showing.
+ *
+ * Measured rather than assumed, because the answer decides whether the
+ * element becomes a tab stop. A scroll region with nothing focusable inside
+ * it is unreachable by keyboard — but making every panel focusable would put
+ * a stop in front of every card whether or not there is anything to scroll
+ * to, which is the same mistake as the matrix's empty cells.
+ */
+function useOverflowing(ref: { current: HTMLElement | null }): boolean {
+  const [overflowing, setOverflowing] = useState(false);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const check = () => setOverflowing(element.scrollHeight > element.clientHeight + 1);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(element);
+    for (const child of element.children) observer.observe(child);
+    return () => observer.disconnect();
+    // No dependency list: children change shape as the graph does, and this
+    // has to stay true across those without every caller remembering to say so.
+  });
+  return overflowing;
+}
+
 /** The default container: a titled box. Most views are one of these. */
 export function Panel({
   title,
@@ -62,6 +88,8 @@ export function Panel({
   style,
   fit = false,
 }: PanelProps) {
+  const scroller = useRef<HTMLDivElement | null>(null);
+  const overflowing = useOverflowing(scroller);
   return (
     <div
       data-graview-primitive="panel"
@@ -86,6 +114,9 @@ export function Panel({
           : "var(--graview-lift-low)",
         overflow: "hidden",
         ...TONES[tone],
+        // The panel's own ground, handed to the scroll shadow so its cover
+        // gradients match whatever tone this panel is.
+        ["--graview-panel-bg" as string]: TONES[tone].background,
         ...style,
       }}
     >
@@ -119,7 +150,31 @@ export function Panel({
       {subtitle === undefined ? null : (
         <div style={{ fontSize: 13, ...MUTED_TEXT }}>{subtitle}</div>
       )}
-      {children}
+      {/*
+        * Content that outgrows the panel SCROLLS rather than disappearing.
+        *
+        * A scene is sized to its container and nothing else scrolls, so a
+        * view taller than its plane's band was simply truncated — silently,
+        * with no edge to tell you there was more. That is the same class of
+        * failure as a span you could not click: the interface looked
+        * finished and was not.
+        */}
+      <div
+        ref={scroller}
+        className="graview-scroll"
+        // A tab stop ONLY where there is something to scroll to, and named by
+        // the panel so it is not an anonymous stop in the order.
+        {...(overflowing
+          ? {
+              tabIndex: 0,
+              role: "region",
+              ...(typeof title === "string" ? { "aria-label": title } : {}),
+            }
+          : {})}
+        style={{ display: "flex", flexDirection: "column", gap: 7, flex: "1 1 auto" }}
+      >
+        {children}
+      </div>
     </div>
   );
 }

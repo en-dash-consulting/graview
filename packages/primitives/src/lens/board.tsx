@@ -209,28 +209,37 @@ export function BoardView<S extends AnySchema>({
     <Panel
       title={label ?? "Board"}
       meta={board.empty.length === 0 ? "complete" : `${board.empty.length} unfilled`}
-      fit
     >
       {/* Centred: the focus band is as wide as the widest view an app has,
           and an arrangement hugging the left edge of it reads as unfinished
           rather than as a board with a bench beside it. */}
+      {/*
+        * An arrangement SCALES to the box it is given.
+        *
+        * A fixed pitch is the one thing a board must not have: on a short
+        * screen it ran past its band and the defence disappeared, which for
+        * a view whose entire content is "where things are" is the worst
+        * possible failure. Height drives it and the aspect ratio follows, so
+        * the formation stays a formation at any size.
+        */}
       <div
         style={{
           display: "flex",
           gap: 28,
-          alignItems: "flex-start",
+          alignItems: "stretch",
           justifyContent: "center",
-          flexWrap: "wrap",
+          flex: "1 1 auto",
+          minHeight: 0,
         }}
       >
         <div
           data-graview-primitive="board"
           style={{
             position: "relative",
-            width: 430,
-            maxWidth: "100%",
+            height: "100%",
             aspectRatio: `${aspect}`,
-            flex: "0 0 auto",
+            maxWidth: "100%",
+            flex: "0 1 auto",
             borderRadius: 12,
             border: "1px solid var(--graview-edge)",
             // A ground of its own, so the arrangement reads as a place rather
