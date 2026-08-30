@@ -19,7 +19,7 @@ apps/
   the household example/    a household week    — a calendar
   proposal/    a tender response   — a coverage matrix
   the coaching example/       a coaching week     — a board, a matrix and a calendar
-  launcher/    a way between them, built from their own declarations
+  launcher/    the desk — a Graview app whose subject is the other three
   spike/       platform capability validation, run against a real browser
 ```
 
@@ -30,12 +30,14 @@ headlessly in CI with no browser flag.
 
 ```sh
 pnpm install
-pnpm apps           # all of them → http://localhost:5199
+pnpm apps           # the desk → http://localhost:5199
+pnpm apps:all       # the desk and all three apps on their own ports
 ```
 
-The launcher mounts each app in place rather than linking to a port, so
-switching between them needs one server and keeps the theme. Each still runs
-alone if you want it to:
+The desk opens any app in place, so one server is enough. It also probes each
+app's own port and says which are actually serving — a live dot where one is,
+and the command to start it where one is not, because a launcher that offers
+dead links is worse than one that offers none.
 
 ```sh
 pnpm dev            # the household example  → http://localhost:5190
@@ -55,7 +57,7 @@ and paper where depth loses contrast and gains haze. Inverting one to get the
 other gives grey-on-grey mush, because glow does not exist in daylight.
 
 ```sh
-pnpm test          # 328 tests, no GPU, no browser
+pnpm test          # 341 tests, no GPU, no browser
 pnpm typecheck
 pnpm check         # `graview check` against the household example's declarations
 ```
@@ -129,11 +131,29 @@ is at the left back's place because the position node says so, so moving one
 is an ordinary mutation rather than a change to the layout engine. An empty
 slot is a hole in the team; on a seating plan it is the empty chair.
 
-The **launcher** is a fourth app whose graph is the other three. It reads
-their `defineApp` declarations — the same objects `graview check` consumes —
-so the index cannot drift, and the coverage lens pointed at it answers a
-question about the *framework*: an empty row would be a capability nothing
-uses, which is dead weight worth arguing about.
+The **desk** is a fourth app whose subject is the other three. It reads their
+`defineApp` declarations — the same objects `graview check` consumes — so the
+index cannot drift, and the coverage lens pointed at it answers a question
+about the *framework* rather than about a domain.
+
+It is a Graview app in full, which matters because the alternative was
+cheating: it declares itself (so `graview check` checks it), it has mutations
+(so **which app is in front of you is a `showing` edge**, not React state — it
+lands in the op log with an author, and undo closes it), and it has rules it
+can fail. Two fire today:
+
+> No app uses **A persistence adapter** — it is being maintained for nobody
+> Only **the coaching example** uses **Board lens** — one user does not prove a lens
+
+The second is the argument this whole exercise has been making out loud, now
+enforced rather than asserted, about the lens written most recently. The rule
+accepts an argument — record why and it stops firing — but it insists there
+is one.
+
+Whether a dev server is up is *not* in the graph, deliberately: the graph
+holds what you decided and the log holds why, and "port 5192 answered" every
+four seconds is an observation about the world rather than a choice anyone
+made.
 
 Building the second app changed the framework in four places, and the third
 in three more, which is what more than one app is for:
@@ -225,6 +245,8 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | A rule can walk a chain no single view holds | `the coaching example/tests/integration/acceptance.test.tsx` — formation → skill → drill → session |
 | The board lens works in a domain nothing here is about | `packages/primitives/tests/unit/board.test.tsx` — a seating plan |
 | An arrangement reaches assistive technology, where position is the first thing discarded | `the coaching example/scripts/run-a11y.mjs` |
+| The framework's own tooling passes the test it sets everyone else | `apps/launcher/tests/integration/acceptance.test.ts` — the desk declares itself, records its navigation in the log, and can fail its own rules |
+| Nothing the scene places is unreachable, at any viewport | `packages/layout/tests/unit/layout.test.ts` |
 | Capture + composite works at three depths | `docs/spike-three-planes.png`, Chrome Canary 154 |
 | Clicks land on drawn pixels at every depth | `apps/spike/scripts/run-spike.mjs` |
 | The whole port meets its six criteria | `the household example/scripts/run-acceptance.mjs` |

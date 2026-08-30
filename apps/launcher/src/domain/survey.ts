@@ -58,7 +58,7 @@ export const APPS: readonly AppEntry[] = [
 export interface Capability {
   readonly id: string;
   readonly label: string;
-  readonly area: string;
+  readonly area: "lens" | "declaration" | "behaviour";
   /** Answered from the declaration alone — never from a hand-kept list. */
   readonly holds: (app: GraviewApp) => boolean;
 }
@@ -137,24 +137,100 @@ export const CAPABILITIES: readonly Capability[] = [
     // claim the primitives layer rests on, so it is worth watching.
     holds: () => true,
   },
+  {
+    id: "cap-remote-adapter",
+    label: "A persistence adapter",
+    area: "behaviour",
+    // Declared and tested, used by none of these three. The desk's first
+    // rule fires on it, which is the point of having the rule.
+    holds: () => false,
+  },
 ];
 
 /** Counts an app's declared surface, for the card. */
 export function surfaceOf(app: GraviewApp): {
   kinds: number;
-  edges: number;
+  edgeKinds: number;
   mutations: number;
-  invariants: number;
-  lenses: number;
+  rules: number;
 } {
   const edges = new Set(
     definitions(app).flatMap((definition) => Object.keys((definition.edges ?? {}) as object)),
   );
   return {
     kinds: kinds(app).length,
-    edges: edges.size,
+    edgeKinds: edges.size,
     mutations: (app.mutations ?? []).length,
-    invariants: (app.invariants ?? []).length,
-    lenses: (app.lenses ?? []).length,
+    rules: (app.invariants ?? []).length,
   };
 }
+
+/**
+ * The desk's own graph, read out of the other apps' declarations.
+ *
+ * Nothing is written down twice: an app that gains a lens or loses a rule
+ * shows it here without anyone updating a list, because the list IS the
+ * declaration.
+ */
+export function surveySnapshot(showing?: string): {
+  nodes: readonly Record<string, unknown>[];
+  edges: readonly { kind: string; from: string; to: string }[];
+} {
+  const nodes: Record<string, unknown>[] = [
+    { id: "desk", kind: "desk", label: "This machine" },
+    ...APPS.map((entry) => ({
+      id: entry.id,
+      kind: "app",
+      label: entry.label,
+      tagline: entry.tagline,
+      port: entry.port,
+      command: entry.command,
+      ...surfaceOf(entry.app),
+    })),
+    ...CAPABILITIES.map((item) => ({
+      id: item.id,
+      kind: "capability",
+      label: item.label,
+      area: item.area,
+    })),
+    ...RULES,
+  ];
+  const edges = [
+    ...APPS.flatMap((entry) =>
+      CAPABILITIES.filter((item) => item.holds(entry.app)).map((item) => ({
+        kind: "uses",
+        from: entry.id,
+        to: item.id,
+      })),
+    ),
+    ...(showing && APPS.some((entry) => entry.id === showing)
+      ? [{ kind: "showing", from: "desk", to: showing }]
+      : []),
+  ];
+  return { nodes, edges };
+}
+
+/** The desk's standards, as nodes — the same pattern the other three use. */
+const RULES: readonly Record<string, unknown>[] = [
+  {
+    id: "rule-earned",
+    kind: "rule",
+    label: "Every capability is earned",
+    spec: { type: "every-capability-is-earned" },
+    rationale: "A feature nothing uses is still maintained, documented and paid for by every future change.",
+  },
+  {
+    id: "rule-two-users",
+    kind: "rule",
+    label: "A lens needs two users",
+    spec: { type: "a-lens-needs-two-users" },
+    rationale: "A lens with one user is a component that happens to live in the framework. The only way to find out is to point it at a second domain.",
+  },
+  {
+    id: "rule-lens",
+    kind: "rule",
+    label: "Every app uses a lens",
+    spec: { type: "every-app-uses-a-lens" },
+    rationale: "An app drawing its primary view by hand is an app the framework is not helping.",
+  },
+];
