@@ -345,3 +345,42 @@ describe("a focused node surfaces its neighbourhood", () => {
     expect(heightOf(alone)).toBeGreaterThan(heightOf(beside));
   });
 });
+
+describe("everything the layout places is reachable", () => {
+  /*
+   * A scene is sized to its container and nothing scrolls, so a band that
+   * runs past the bottom is not content below the fold — it is content
+   * nobody can ever see. The group set ran to 1.03 of the height for months,
+   * quietly clipping the bottom of every context card in every app.
+   */
+  const states = [
+    view({ focusId: "week-1" }),
+    view({ focusId: "week-1", relation: "person" }),
+    view({ focusId: "morning" }),
+    view({ focusId: "morning", relation: "assigned-to" }),
+    view({ focusId: "week-1", relation: "person", expanded: [aggregateId("duty")] }),
+  ];
+
+  it("keeps every node inside the canvas, in every arrangement", () => {
+    for (const state of states) {
+      const result = layout(graph(), schema, state, { width: 1200, height: 760 });
+      for (const node of result.nodes) {
+        expect(node.y).toBeGreaterThanOrEqual(0);
+        // The drawn box is the node's box times its plane's scale, so the
+        // untransformed bottom is the honest upper bound.
+        expect(node.y + node.height).toBeLessThanOrEqual(760);
+        expect(node.x).toBeGreaterThanOrEqual(0);
+        expect(node.x + node.width).toBeLessThanOrEqual(1200);
+      }
+    }
+  });
+
+  it("holds at a short viewport, where the overflow actually bit", () => {
+    for (const state of states) {
+      const result = layout(graph(), schema, state, { width: 1440, height: 600 });
+      for (const node of result.nodes) {
+        expect(node.y + node.height).toBeLessThanOrEqual(600);
+      }
+    }
+  });
+});

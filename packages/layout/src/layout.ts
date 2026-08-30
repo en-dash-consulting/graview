@@ -107,15 +107,23 @@ export function layout<S extends AnySchema>(
    * for it puts a small card alone in the top half with several hundred
    * pixels of nothing under it before its relations begin.
    */
+  /*
+   * Every band ends inside the canvas. This is checked, because it was not
+   * true: the group set ran to 1.03 of the height, so the bottom 3% of every
+   * context card was cut off on every screen, in every app, from the day the
+   * bands became proportional. Nothing scrolls — a scene is sized to its
+   * container on purpose — so an overflowing band is content nobody can
+   * reach rather than content below the fold.
+   */
   const band =
     focus === undefined
       ? {
           focusY: opts.height * 0.035,
-          focusH: opts.height * 0.56,
-          relationY: opts.height * 0.65,
+          focusH: opts.height * 0.55,
+          relationY: opts.height * 0.625,
           relationH: opts.height * 0.19,
-          contextY: opts.height * 0.87,
-          contextH: opts.height * 0.16,
+          contextY: opts.height * 0.84,
+          contextH: opts.height * 0.145,
         }
       : {
           focusY: opts.height * 0.04,

@@ -308,6 +308,7 @@ export function CoverageView<S extends AnySchema>({
         style={{
           display: "flex",
           flexDirection: "column",
+          flex: "1 1 auto",
           minHeight: 0,
           paddingRight: HEADER_OVERHANG,
         }}

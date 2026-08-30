@@ -198,6 +198,28 @@ html, body {
   mask-image: radial-gradient(120% 90% at 50% 40%, #000 30%, transparent 78%);
 }
 
+/* Content that scrolls inside a panel, and SAYS SO.
+ *
+ * A pure-CSS scroll shadow: two cover gradients painted in the panel's own
+ * ground scroll with the content, two shadows stay put, and so a shadow
+ * only shows at an edge there is more content past. No
+ * JavaScript, no measurement, and nothing to go stale — which matters
+ * because the failure it prevents is silent. macOS hides overlay scrollbars
+ * until you scroll, so without this a clipped list looks like a finished
+ * one. */
+.graview-scroll {
+  overflow: auto;
+  min-height: 0;
+  background:
+    linear-gradient(var(--graview-panel-bg, var(--graview-panel)) 30%, transparent) center top,
+    linear-gradient(transparent, var(--graview-panel-bg, var(--graview-panel)) 70%) center bottom,
+    radial-gradient(farthest-side at 50% 0, ${scheme === "light" ? "rgba(20,30,32,0.30)" : "rgba(0,0,0,0.7)"}, transparent) center top,
+    radial-gradient(farthest-side at 50% 100%, ${scheme === "light" ? "rgba(20,30,32,0.30)" : "rgba(0,0,0,0.7)"}, transparent) center bottom;
+  background-repeat: no-repeat;
+  background-size: 100% 24px, 100% 24px, 100% 10px, 100% 10px;
+  background-attachment: local, local, scroll, scroll;
+}
+
 /* A thing inside a view that is itself a thing: an event in a calendar, a
    person in a list. It has to look reachable, and it has to SHOW focus —
    these are the primary way anyone moves through the graph, so a keyboard
