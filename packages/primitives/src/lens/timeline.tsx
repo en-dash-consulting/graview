@@ -52,6 +52,15 @@ export interface TimelineOptions {
    * a category of its own — the household example has `blockType` — says so here.
    */
   readonly hueOf?: (span: PlacedSpan) => number;
+  /**
+   * The narrowest axis the lens will draw, in the app's own units.
+   *
+   * A household week wants eight hours whatever happens, or a single
+   * afternoon fills the screen and reads as more than it is. Two hour-long
+   * training sessions want about two and a half, or they shrink to slivers in
+   * a wall of empty evening. The right answer is the app's, not the lens's.
+   */
+  readonly minWindow?: number;
 }
 
 export interface PlacedSpan {
@@ -93,7 +102,15 @@ export function activeWindow(
     start = Math.max(0, start - short / 2);
     end = Math.min(extent, start + minimum);
   }
-  return { start, end };
+  /*
+   * Whole units, always.
+   *
+   * Centring a short window halves an odd number and hands the app's own
+   * formatter a fraction, which then renders "14:7.5". The household example never saw it
+   * because its formatter happened to floor; a third app's did not, and the
+   * fix belongs here rather than in every formatter that will ever exist.
+   */
+  return { start: Math.floor(start), end: Math.ceil(end) };
 }
 
 /**
@@ -289,7 +306,9 @@ export function TimelineView<S extends AnySchema>({
   }
 
   const format = options.format ?? String;
-  const window = activeWindow(spans, options.extent);
+  const window = activeWindow(spans, options.extent, {
+    ...(options.minWindow === undefined ? {} : { minimum: options.minWindow }),
+  });
   const range = window.end - window.start;
   const pct = (at: number) => ((at - window.start) / range) * 100;
 

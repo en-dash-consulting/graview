@@ -206,9 +206,13 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
           });
         }
       }
+      /** The kind a role names, so a field binding can be checked against it. */
+      const kindOfRole = (role: string): string | undefined => bindings[role]?.["kind"];
+
       for (const [role, binding] of Object.entries(bindings)) {
         const kind = binding["kind"];
         const edge = binding["edge"];
+        const field = binding["field"];
         if (kind !== undefined && !kinds.has(kind)) {
           add({
             severity: "error",
@@ -227,13 +231,39 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
             fix: `Use one of: ${[...edgeKinds].join(", ")}.`,
           });
         }
-        if (kind === undefined && edge === undefined) {
+        if (field !== undefined) {
+          const owner = binding["on"];
+          const ownerKind = owner === undefined ? undefined : kindOfRole(owner);
+          if (owner === undefined || ownerKind === undefined) {
+            add({
+              severity: "error",
+              code: "lens-binding-fieldless-owner",
+              where: `lens "${lens.name}" bindings.${role}`,
+              message: `Role "${role}" binds field "${field}" but does not say which role's kind it belongs to.`,
+              fix: `Add on: "<role that binds a kind>".`,
+            });
+          } else {
+            const shape = app.schema.tryDefinition(ownerKind)?.fields.shape as
+              | Record<string, unknown>
+              | undefined;
+            if (shape && !(field in shape)) {
+              add({
+                severity: "error",
+                code: "lens-binding-missing-field",
+                where: `lens "${lens.name}" bindings.${role}`,
+                message: `Role "${role}" maps to field "${field}", which "${ownerKind}" does not declare.`,
+                fix: `Point it at one of: ${Object.keys(shape).join(", ")}.`,
+              });
+            }
+          }
+        }
+        if (kind === undefined && edge === undefined && field === undefined) {
           add({
             severity: "error",
             code: "lens-binding-empty",
             where: `lens "${lens.name}" bindings.${role}`,
-            message: `Role "${role}" binds neither a kind nor an edge.`,
-            fix: `Give it { kind: "<node kind>" } or { edge: "<edge kind>" }.`,
+            message: `Role "${role}" binds nothing.`,
+            fix: `Give it { kind: "<node kind>" }, { edge: "<edge kind>" } or { field: "<field>", on: "<role>" }.`,
           });
         }
       }

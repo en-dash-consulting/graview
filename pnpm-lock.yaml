@@ -79,6 +79,49 @@ importers:
         specifier: ^5.4.11
         version: 5.4.21(@types/node@22.20.1)
 
+  apps/launcher:
+    dependencies:
+      '@graview/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      'the household example':
+        specifier: workspace:*
+        version: link:../the household example
+      '@graview/layout':
+        specifier: workspace:*
+        version: link:../../packages/layout
+      '@graview/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
+      'the bid-desk example':
+        specifier: workspace:*
+        version: link:../proposal
+      '@graview/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@graview/render':
+        specifier: workspace:*
+        version: link:../../packages/render
+      'the coaching example':
+        specifier: workspace:*
+        version: link:../the coaching example
+      '@graview/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
+      react:
+        specifier: ^19.2.0
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.8(react@19.2.8)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      vite:
+        specifier: ^5.4.11
+        version: 5.4.21(@types/node@22.20.1)
+
   the bid-desk example:
     dependencies:
       '@graview/core':
@@ -124,6 +167,40 @@ importers:
       vgpu:
         specifier: ^0.3.1
         version: 0.3.1
+    devDependencies:
+      vite:
+        specifier: ^5.4.11
+        version: 5.4.21(@types/node@22.20.1)
+
+  the coaching example:
+    dependencies:
+      '@graview/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@graview/layout':
+        specifier: workspace:*
+        version: link:../../packages/layout
+      '@graview/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
+      '@graview/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@graview/render':
+        specifier: workspace:*
+        version: link:../../packages/render
+      '@graview/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
+      react:
+        specifier: ^19.2.0
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.8(react@19.2.8)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       vite:
         specifier: ^5.4.11

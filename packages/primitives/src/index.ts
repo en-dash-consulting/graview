@@ -1,4 +1,12 @@
 export {
+  BOARD_REQUIRED_ROLES,
+  BoardBindingError,
+  BoardView,
+  buildBoard,
+  createBoardLens,
+} from "./lens/board.js";
+export type { BoardLens, BoardOptions, BoardSlot, BoardState, BoardViewProps } from "./lens/board.js";
+export {
   ActivityRail,
   AnswerArgs,
   BackOut,

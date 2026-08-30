@@ -54,6 +54,16 @@ export interface CoverageOptions extends CoverageRoles {
    */
   readonly requiredGroups?: readonly string[];
   /**
+   * A row is required when something points at it along this edge.
+   *
+   * Grouping by a field only works when "must be covered" is a property the
+   * row carries. Often it is a property of the GRAPH: a skill matters
+   * because some position in the formation requires it, not because someone
+   * labelled it important. A third app needed exactly that, and adding it
+   * left the other two untouched because they never set it.
+   */
+  readonly requiredVia?: { readonly edge: string };
+  /**
    * A second relation, shown as a per-row badge rather than a second grid.
    *
    * Two coverage relations rarely share a column set — a requirement is
@@ -154,6 +164,13 @@ export function buildCoverage<S extends AnySchema>(
   }
 
   const required = new Set(options.requiredGroups ?? []);
+  const demanded = options.requiredVia
+    ? new Set(
+        edges
+          .filter((edge) => edge.kind === options.requiredVia!.edge)
+          .map((edge) => edge.to),
+      )
+    : null;
   const rows = rowNodes
     .map((node) => {
       const record = asRecord(node);
@@ -163,7 +180,9 @@ export function buildCoverage<S extends AnySchema>(
         ref: text(record, options.rowRef),
         label: String(record["label"] ?? label(node)),
         group,
-        required: required.size === 0 || required.has(group),
+        required: demanded
+          ? demanded.has(node.id)
+          : required.size === 0 || required.has(group),
         covered: cells.some((cell) => cell.rowId === node.id),
         badged: badgeEdges.some((edge) => edge.to === node.id),
       };
