@@ -4,12 +4,14 @@
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "build": "pnpm -r --filter \"./packages/*\" build",
-    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives",
+    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives",
+    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives the household example",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "node packages/core/dist/cli/index.js check",
-    "lint": "tsc -b --dry"
+    "check": "node packages/core/dist/cli/index.js check the household example/dist/domain/app.js",
+    "lint": "tsc -b --dry",
+    "spike": "node apps/spike/scripts/run-spike.mjs",
+    "acceptance": "node the household example/scripts/run-acceptance.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
