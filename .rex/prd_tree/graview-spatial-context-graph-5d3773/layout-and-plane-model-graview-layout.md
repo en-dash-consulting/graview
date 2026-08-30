@@ -2,7 +2,7 @@
 id: "c7aedc30-0fe8-45e2-aad3-33bd0c2e6dc7"
 level: "feature"
 title: "Layout and plane model — @graview/layout"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "layout"
@@ -11,6 +11,11 @@ tags:
 blockedBy:
   - "23d22798-65b2-4d59-80c7-8b82352aad16"
 source: "Session planning — architecture"
+startedAt: "2026-08-30T04:25:28.277Z"
+completedAt: "2026-08-30T04:25:28.277Z"
+endedAt: "2026-08-30T04:25:28.277Z"
+resolutionType: "code-change"
+resolutionDetail: "@graview/layout: pure function of (focus, relation, graph) + pins; stable-key ranking; aggregates expand/collapse through one code path; every stop round-trips through a URL; any two layouts interpolate with members growing out of the aggregate that stood in for them. Affine-only, per the settled platform answer. 17 tests."
 acceptanceCriteria:
   - "The same graph and focus always produce identical positions"
   - "Any two view states interpolate, producing an animatable transition"

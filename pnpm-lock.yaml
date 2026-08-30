@@ -35,6 +35,9 @@ importers:
       '@graview/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@graview/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -82,6 +85,16 @@ importers:
       vgpu:
         specifier: ^0.3.1
         version: 0.3.1
+
+  packages/tools:
+    dependencies:
+      '@graview/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
 packages:
 
