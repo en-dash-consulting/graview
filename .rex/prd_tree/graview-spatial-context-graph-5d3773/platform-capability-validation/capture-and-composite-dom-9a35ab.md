@@ -2,12 +2,17 @@
 id: "9a35ab31-d28d-4373-bfac-9703e722923a"
 level: "task"
 title: "Capture and composite DOM panels at plane depth"
-status: "pending"
+status: "completed"
 priority: "critical"
 tags:
   - "spike"
   - "vgpu"
   - "html-in-canvas"
+startedAt: "2026-08-30T04:22:17.234Z"
+completedAt: "2026-08-30T04:22:17.234Z"
+endedAt: "2026-08-30T04:22:17.234Z"
+resolutionType: "code-change"
+resolutionDetail: "Three DOM panels capture into WebGPU textures and composite at three visibly distinct plane depths with per-plane scale, blur, falloff and shadow — verified by screenshot in Chrome Canary 154 (docs/spike-three-planes.png). All platform calls behind packages/render/src/platform/html-in-canvas.ts. Real call shape differs from the WICG README: drawElementImageToTexture({source}, {destination:{texture}}), the canvas must own a configured WebGPU context, and only immediate children may be captured."
 acceptanceCriteria:
   - "Three panels render at three visibly distinct depths with per-plane scale and blur"
   - "The captured texture is wrapped as an external-ownership vgpu Texture with no copy"

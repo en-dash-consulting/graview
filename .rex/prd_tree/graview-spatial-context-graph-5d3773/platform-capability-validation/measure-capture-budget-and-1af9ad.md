@@ -2,7 +2,7 @@
 id: "1af9ad10-7fb0-4682-b4b6-0be1a3d27ac3"
 level: "task"
 title: "Measure capture budget and verify platform restrictions"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "spike"
@@ -10,6 +10,11 @@ tags:
   - "platform-limits"
 blockedBy:
   - "9a35ab31-d28d-4373-bfac-9703e722923a"
+startedAt: "2026-08-30T04:22:20.226Z"
+completedAt: "2026-08-30T04:22:20.226Z"
+endedAt: "2026-08-30T04:22:20.226Z"
+resolutionType: "code-change"
+resolutionDetail: "Budget measured: ~0.016 ms/node linear to ~128 live captures per frame (2 ms, 12% of a 60Hz frame), then a cliff to 33 ms at 160 and a GPU-process crash at 256. Restrictions verified with pixel readback: inline SVG captures fine (no iconography constraint); nested canvas and cross-origin iframes capture SILENTLY BLANK rather than throwing. Paint-event frame lag was not reproduced in Chromium 154. All in docs/platform-findings.md."
 acceptanceCriteria:
   - "Per-frame capture cost is measured across a range of node counts and written down"
   - "The live-capture node count that holds target frame rate is known"
