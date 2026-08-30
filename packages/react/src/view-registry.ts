@@ -36,6 +36,12 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
    */
   readonly mode: ViewMode;
   readonly selected: boolean;
+  /**
+   * Ids the current selection reaches — itself plus everything one edge
+   * away. Absent or empty means nothing is selected, which a view must read
+   * as "no emphasis" rather than "nothing is related".
+   */
+  readonly implicated?: readonly string[];
 }
 
 export type ViewComponent<

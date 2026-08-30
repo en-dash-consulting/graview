@@ -4,12 +4,23 @@ import type { AnySchema, NodeOfSchema, Store, Violation } from "@graview/core";
 export type ProviderName = "invariant" | "structure" | "schema" | "lens" | "llm";
 
 /** An argument the action still needs, and what would satisfy it. */
+import type { ArgShape } from "@graview/core";
+
 export interface OpenParameter {
   readonly name: string;
   /** Node kinds this argument accepts, when it names a node. */
   readonly kinds?: readonly string[];
   /** Ids the framework already knows would fit, so the UI can offer them. */
   readonly candidates?: readonly string[];
+  /**
+   * What sort of answer it wants, read off the mutation's own schema.
+   *
+   * Without this an interface can only offer candidate ids, so every action
+   * needing a name, a date or a time was a dead end that looked live —
+   * "Rename · needs label" opened a list of nothing. The declaration always
+   * knew `label` was a non-empty string; nobody had asked it.
+   */
+  readonly shape?: ArgShape;
 }
 
 /**

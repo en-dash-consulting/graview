@@ -1,4 +1,4 @@
-import { nodeRefArgs, type AnySchema } from "@graview/core";
+import { argShape, nodeRefArgs, type AnySchema } from "@graview/core";
 import type { Affordance, AffordanceProvider, OpenParameter } from "../types.js";
 
 const BASE_SCORE = 40;
@@ -42,11 +42,12 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             // Offering real ids is what turns "reassign" into "reassign to
             // whom" without anyone wiring up a picker per mutation.
             candidates: candidates.filter((id) => !selection.includes(id)),
+            shape: argShape(mutation.input, ref.name),
           });
         }
         for (const name of otherRequiredArgs(mutation.input, subject.arg)) {
           if (open.some((parameter) => parameter.name === name)) continue;
-          open.push({ name });
+          open.push({ name, shape: argShape(mutation.input, name) });
         }
 
         const batch = nodes.map((node) => ({ [subject.arg]: node.id }));

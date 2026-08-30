@@ -37,6 +37,35 @@ export function useSelection() {
 }
 
 /**
+ * Everything the selection reaches: the selected nodes, plus everything one
+ * edge away from them.
+ *
+ * Selecting a person and having the week sit there unchanged is the same
+ * failure as clicking an event and getting an empty plane — the graph knows
+ * which five events that person is in, and the calendar is right there
+ * drawing all eighteen of them. A view that receives this can say so in its
+ * own idiom: a calendar lights up the spans, a roster rings the chips.
+ *
+ * Empty when nothing is selected, which every view must read as "no
+ * emphasis" rather than "nothing is related".
+ */
+export function useImplicated(): readonly string[] {
+  const { store, selection } = useGraview();
+  const nodes = useGraph();
+  return useMemo(() => {
+    if (selection.length === 0) return [];
+    const chosen = new Set(selection);
+    const reached = new Set(chosen);
+    for (const edge of store.graph.allEdges()) {
+      if (chosen.has(edge.from)) reached.add(edge.to);
+      if (chosen.has(edge.to)) reached.add(edge.from);
+    }
+    return [...reached];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, selection, nodes]);
+}
+
+/**
  * What can be done with the current selection, recomputed whenever the
  * selection or the graph changes.
  *

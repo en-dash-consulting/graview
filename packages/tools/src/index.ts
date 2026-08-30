@@ -32,6 +32,7 @@ export type {
   ToolResult,
   ToolRuntime,
   ToolRuntimeOptions,
+  ToolCall,
 } from "./agent/tools.js";
 export { createInAppAdapter, createMcpAdapter } from "./agent/adapters.js";
 export type { InAppAgent, McpContent, McpTool, McpToolResult } from "./agent/adapters.js";

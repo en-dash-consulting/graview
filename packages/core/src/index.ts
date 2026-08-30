@@ -62,7 +62,14 @@ export type {
 // Mutations — the only writes.
 export { compileMutation, defineMutation } from "./mutations/define-mutation.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
-export { nodeRef, nodeRefArgs, nodeRefKinds } from "./mutations/node-ref.js";
+export {
+  argShape,
+  describeArg,
+  nodeRef,
+  nodeRefArgs,
+  nodeRefKinds,
+} from "./mutations/node-ref.js";
+export type { ArgShape } from "./mutations/node-ref.js";
 export type {
   AnyMutationDefinition,
   MutationCall,
