@@ -31,5 +31,5 @@ description: "A framework for building applications where a typed context graph 
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | pending |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
 | [React binding — @graview/react](./react-binding-graview-react.md) | pending |
-| [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | pending |
+| [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | completed |
 | [View primitives and the timeline lens](./view-primitives-and-the-timeline-lens.md) | pending |
