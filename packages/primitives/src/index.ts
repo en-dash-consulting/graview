@@ -29,6 +29,7 @@ export { hueFor, registerDefaultViews } from "./default-views.js";
 
 // The worked example: one fully-built lens, from public primitives only.
 export {
+  activeWindow,
   assignLanes,
   createTimelineLens,
   placeOnTimeline,
