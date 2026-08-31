@@ -74,6 +74,21 @@ export interface LayoutNode {
    */
   readonly raised?: boolean;
   /**
+   * How near this kind is to the one in focus: one declared edge away, or
+   * further.
+   *
+   * Nine kinds as nine identical thumbnails says nothing about which of them
+   * matter. The rank comes from the SCHEMA rather than the graph, so an
+   * unrelated edit can never promote a kind and shuffle the strip.
+   */
+  readonly rank?: "primary" | "secondary";
+  /**
+   * The kind card this one hangs off, when it is reachable only THROUGH that
+   * one. A nested relationship should read as nested rather than being
+   * flattened into a sibling.
+   */
+  readonly nestedUnder?: string;
+  /**
    * A group standing for the kind currently in focus.
    *
    * It stays on the kinds plane rather than being removed, so the strip is a

@@ -525,3 +525,153 @@ describe("the kinds arc away from the viewer", () => {
     expect(focus.y + focus.height).toBeGreaterThan(nearest.y);
   });
 });
+
+/**
+ * Nine kinds as nine identical thumbnails says nothing about which of them
+ * matter. What is directly related to what you are looking at is the first
+ * thing the plane should say, and it is derivable — the schema already
+ * declares which kinds touch which.
+ */
+describe("the kinds plane ranks relations rather than listing them flat", () => {
+  const household = defineNode("household", {
+    fields: z.object({ label: z.string() }),
+    edges: { holds: { to: ["member"], description: "who lives here" } },
+  });
+  const member = defineNode("member", {
+    fields: z.object({ label: z.string() }),
+    edges: { does: { to: ["chore"], description: "what they are on" } },
+  });
+  const chore = defineNode("chore", {
+    fields: z.object({ label: z.string() }),
+    edges: { needs: { to: ["tool"], description: "what it takes" } },
+  });
+  const tool = defineNode("tool", { fields: z.object({ label: z.string() }) });
+  const weather = defineNode("weather", { fields: z.object({ label: z.string() }) });
+  const nested = createSchema([household, member, chore, tool, weather]);
+
+  const nestedGraph = () =>
+    Graph.from(nested, {
+      nodes: [
+        { id: "home", kind: "household", label: "Home" },
+        { id: "ana", kind: "member", label: "Ana" },
+        { id: "dishes", kind: "chore", label: "Dishes" },
+        { id: "brush", kind: "tool", label: "Brush" },
+        { id: "tue", kind: "weather", label: "Tuesday" },
+      ],
+      edges: [
+        { kind: "holds", from: "home", to: "ana" },
+        { kind: "does", from: "ana", to: "dishes" },
+        { kind: "needs", from: "dishes", to: "brush" },
+      ],
+    });
+
+  const cards = (state: ViewState) => {
+    const placed = layout(nestedGraph(), nested, state, { width: 1400, height: 900 });
+    return new Map(
+      placed.nodes.filter((node) => node.id.startsWith("kind:")).map((node) => [node.id, node]),
+    );
+  };
+
+  it("marks what the focus actually touches as primary, and the rest as secondary", () => {
+    const placed = cards(view({ focusId: "ana" }));
+    // The kind you are IN is neither: it is the thing itself.
+    expect(placed.get(kindCardId("member"))?.rank).toBeUndefined();
+    expect(placed.get(kindCardId("member"))?.focused).toBe(true);
+    // One declared edge away, in either direction.
+    expect(placed.get(kindCardId("household"))?.rank).toBe("primary");
+    expect(placed.get(kindCardId("chore"))?.rank).toBe("primary");
+    // Further away, or not connected at all.
+    expect(placed.get(kindCardId("tool"))?.rank).toBe("secondary");
+    expect(placed.get(kindCardId("weather"))?.rank).toBe("secondary");
+  });
+
+  it("draws a secondary kind smaller than a primary one", () => {
+    const placed = cards(view({ focusId: "ana" }));
+    expect(placed.get(kindCardId("tool"))!.width).toBeLessThan(
+      placed.get(kindCardId("chore"))!.width,
+    );
+  });
+
+  it("nests a kind reached THROUGH another rather than beside it", () => {
+    const placed = cards(view({ focusId: "ana" }));
+    const brush = placed.get(kindCardId("tool"))!;
+    // A tool is only reachable via a chore, so it hangs off the chore.
+    expect(brush.nestedUnder).toBe(kindCardId("chore"));
+    // Nothing reaches weather, so it hangs off nothing and keeps its own slot.
+    expect(placed.get(kindCardId("weather"))!.nestedUnder).toBeUndefined();
+  });
+
+  it("puts a nested card against the one it hangs off, not in the row", () => {
+    const placed = cards(view({ focusId: "ana" }));
+    const brush = placed.get(kindCardId("tool"))!;
+    const chores = placed.get(kindCardId("chore"))!;
+    // Half under its parent's bottom edge: overlapping on both axes is what
+    // makes it read as belonging to that card rather than as the next
+    // sibling along.
+    expect(brush.x).toBeGreaterThan(chores.x);
+    expect(brush.x).toBeLessThan(chores.x + chores.width);
+    expect(brush.y).toBeLessThan(chores.y + chores.height);
+    expect(brush.y + brush.height).toBeGreaterThan(chores.y + chores.height);
+    // Smaller, and further back within the plane.
+    expect(brush.width).toBeLessThan(chores.width);
+    expect(brush.depth!).toBeGreaterThan(chores.depth!);
+  });
+
+  it("ranks from the SCHEMA, so an unrelated edit never reshuffles the plane", () => {
+    /*
+     * Spatial memory is the whole claim of a constant strip. If ranking came
+     * from the instances, adding one node could promote a kind and move
+     * every card after it — the picture you remember would stop being the
+     * picture you get.
+     */
+    const before = cards(view({ focusId: "ana" }));
+    const busier = Graph.from(nested, {
+      nodes: [
+        { id: "home", kind: "household", label: "Home" },
+        { id: "ana", kind: "member", label: "Ana" },
+        { id: "bo", kind: "member", label: "Bo" },
+        { id: "dishes", kind: "chore", label: "Dishes" },
+        { id: "bins", kind: "chore", label: "Bins" },
+        { id: "brush", kind: "tool", label: "Brush" },
+        { id: "tue", kind: "weather", label: "Tuesday" },
+      ],
+      edges: [
+        { kind: "holds", from: "home", to: "ana" },
+        { kind: "does", from: "ana", to: "dishes" },
+        { kind: "does", from: "bo", to: "bins" },
+        { kind: "needs", from: "dishes", to: "brush" },
+      ],
+    });
+    const after = new Map(
+      layout(busier, nested, view({ focusId: "ana" }), { width: 1400, height: 900 })
+        .nodes.filter((node) => node.id.startsWith("kind:"))
+        .map((node) => [node.id, node]),
+    );
+    for (const [id, card] of before) {
+      expect([id, after.get(id)!.rank, after.get(id)!.x, after.get(id)!.y]).toEqual([
+        id,
+        card.rank,
+        card.x,
+        card.y,
+      ]);
+    }
+  });
+
+  it("ranks nothing when nothing is focused, because there is no 'related to'", () => {
+    const placed = cards(view({}));
+    for (const card of placed.values()) expect(card.rank).toBeUndefined();
+  });
+
+  it("keeps every card inside the canvas, nested ones included", () => {
+    const placed = layout(nestedGraph(), nested, view({ focusId: "ana" }), {
+      width: 1400,
+      height: 900,
+    });
+    for (const node of placed.nodes) {
+      expect(node.x).toBeGreaterThanOrEqual(0);
+      expect(node.y).toBeGreaterThanOrEqual(0);
+      expect(node.x + node.width).toBeLessThanOrEqual(1400);
+      expect(node.y + node.height).toBeLessThanOrEqual(900);
+    }
+  });
+});

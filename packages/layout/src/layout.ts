@@ -9,6 +9,7 @@ import {
   type Plane,
   type Via,
 } from "./types.js";
+import { rankKinds } from "./rank.js";
 import type { ViewState } from "./view-state.js";
 
 export const AGGREGATE_PREFIX = "aggregate:";
@@ -436,6 +437,27 @@ export function layout<S extends AnySchema>(
   }
   entries.sort(byStableKey);
 
+  /*
+   * RANKED, not merely listed.
+   *
+   * A strip of nine identical thumbnails says which kinds exist and nothing
+   * about which of them matter. What the focus actually touches is drawn full
+   * size; what it reaches only through something else is drawn smaller and
+   * tucked behind whatever it hangs off, so a nested relationship reads as
+   * nested. The ranking comes from the schema, which is what makes it stable:
+   * adding a node can never promote a kind and shuffle the row.
+   */
+  const ranking = rankKinds(schema, focusedKinds);
+  /*
+   * Ranking only says something when something is actually near. A focus
+   * whose kind declares no edges makes EVERY other kind secondary, and a
+   * strip where all nine cards shrank together carries no more information
+   * than one where none did — only less legibility.
+   */
+  const ranked = (schema.kinds as readonly string[]).some(
+    (kind) => ranking.rankOf(kind) === "primary",
+  );
+
   // Expanding an aggregate and collapsing it run through this one loop:
   // an open group contributes its members, a closed one contributes itself.
   const contextItems: {
@@ -444,6 +466,8 @@ export function layout<S extends AnySchema>(
     aggregate?: Aggregate;
     raised?: boolean;
     focused?: boolean;
+    rank?: "primary" | "secondary";
+    nestedUnder?: string;
   }[] = [];
   for (const entry of entries) {
     if (expanded.has(entry.id) && entry.members.length > 0) {
@@ -451,11 +475,19 @@ export function layout<S extends AnySchema>(
         contextItems.push({ id: member.id, kind: member.kind });
       }
     } else {
+      const rank = ranked ? ranking.rankOf(entry.kind) : undefined;
+      const parent = rank === "secondary" ? ranking.parentOf(entry.kind) : undefined;
       contextItems.push({
         id: entry.id,
         kind: entry.kind,
         ...(entry.raised ? { raised: true } : {}),
         ...(entry.focused ? { focused: true } : {}),
+        ...(rank ? { rank } : {}),
+        // Only nest under a card that is actually on the plane: an expanded
+        // parent has dissolved into its members and has nothing to hang off.
+        ...(parent && !expanded.has(kindCardId(parent))
+          ? { nestedUnder: kindCardId(parent) }
+          : {}),
         aggregate: {
           kind: entry.kind,
           memberIds: entry.members.map((m) => m.id),
@@ -464,6 +496,16 @@ export function layout<S extends AnySchema>(
       });
     }
   }
+
+  /*
+   * A nested card takes no slot of its own: it hangs off its parent's.
+   *
+   * Drawn first so the card it belongs to paints over it — same plane, same
+   * z-index, so the order here IS the stacking, and "behind" is the whole
+   * reading.
+   */
+  const tucked = contextItems.filter((item) => item.nestedUnder !== undefined);
+  const slotted = contextItems.filter((item) => item.nestedUnder === undefined);
 
   /*
    * The overview is the SAME CARDS, on a ring instead of a row.
@@ -479,22 +521,121 @@ export function layout<S extends AnySchema>(
    */
   const contextSize = state.overview
     ? { width: Math.min(200, opts.width / 7), height: Math.min(120, opts.height * 0.17) }
-    : fit(contextItems.length, opts.contextSize.width, band.contextH);
+    : fit(slotted.length, opts.contextSize.width, band.contextH);
   const contextPositions = state.overview
-    ? ring(contextItems.length, contextSize, opts.width, opts.height).map((position) => ({
+    ? ring(slotted.length, contextSize, opts.width, opts.height).map((position) => ({
         ...position,
         depth: 1,
       }))
     : arc(
-        contextItems.length,
+        slotted.length,
         contextSize,
         opts.gap,
         opts.width,
         band.contextY,
         opts.height * 0.045,
       );
-  contextItems.forEach((item, index) => {
+
+  /*
+   * A secondary kind is drawn SMALLER and further back inside its own slot,
+   * sitting on the same baseline as its neighbours. Same row, same order,
+   * different weight — the eye reads the primaries first without anything
+   * having moved.
+   */
+  const SECONDARY = 0.74;
+  const NESTED = 0.5;
+  /** Further back within the plane. 1 is the plane's own depth. */
+  const recede = (depth: number, by: number) => Math.min(1, depth + (1 - depth) * by);
+
+  interface Slot {
+    x: number;
+    y: number;
+    depth: number;
+    width: number;
+    height: number;
+  }
+  const slotOf = new Map<string, Slot>();
+  slotted.forEach((item, index) => {
     const position = contextPositions[index]!;
+    const shrink = item.rank === "secondary" ? SECONDARY : 1;
+    const width = contextSize.width * shrink;
+    const height = contextSize.height * shrink;
+    slotOf.set(item.id, {
+      // Centred across the slot it was allotted, sitting on its baseline.
+      x: position.x + (contextSize.width - width) / 2,
+      y: position.y + (contextSize.height - height),
+      depth:
+        item.rank === "secondary"
+          ? recede(position.depth ?? 1, 0.5)
+          : (position.depth ?? 1),
+      width,
+      height,
+    });
+  });
+
+  type PlacedCard = (typeof contextItems)[number] & Slot;
+  const placedContext: PlacedCard[] = [];
+  const lastSlot = contextPositions[contextPositions.length - 1];
+
+  /*
+   * Several kinds can hang off the same one, and stacking them at one point
+   * would draw a single card with two others hidden underneath it. They climb
+   * off their parent's top-right corner instead — a small pile, each one
+   * still a target, each one further back than the last.
+   */
+  const siblings = new Map<string, number>();
+  for (const item of tucked) {
+    siblings.set(item.nestedUnder!, (siblings.get(item.nestedUnder!) ?? 0) + 1);
+  }
+  const seen = new Map<string, number>();
+
+  for (const item of tucked) {
+    const parent = slotOf.get(item.nestedUnder!);
+    const width = contextSize.width * NESTED;
+    const height = contextSize.height * NESTED;
+    if (parent) {
+      const count = siblings.get(item.nestedUnder!) ?? 1;
+      const index = seen.get(item.nestedUnder!) ?? 0;
+      seen.set(item.nestedUnder!, index + 1);
+      /*
+       * Along the parent's BOTTOM edge, half under it, fanning right.
+       *
+       * Above it was the obvious place and it is the one place there is no
+       * room: the focus reaches down over the arc, so anything tucked above
+       * a kind card is drawn behind the panel and only its bottom third is
+       * ever visible. Under the edge it stays inside the kinds band and
+       * stays legible, and half-covered by its parent still reads as
+       * belonging to it.
+       */
+      const spread = count > 1 ? Math.min(width * 0.34, (parent.width * 0.62) / (count - 1)) : 0;
+      placedContext.push({
+        ...item,
+        x: parent.x + parent.width * 0.28 + index * spread,
+        // Half under the edge, or as far under as the canvas allows. A card
+        // hanging off the bottom of the screen is not tucked, it is gone.
+        y: Math.min(parent.y + parent.height - height * 0.5, opts.height - height),
+        width,
+        height,
+        depth: recede(parent.depth, 0.8),
+      });
+    } else if (lastSlot) {
+      // A parent that never got a slot leaves nothing to hang off. The card
+      // is still drawn, at the end of the row, rather than silently dropped.
+      placedContext.push({
+        ...item,
+        x: lastSlot.x,
+        y: lastSlot.y,
+        width,
+        height,
+        depth: recede(lastSlot.depth ?? 1, 0.8),
+      });
+    }
+  }
+  for (const item of slotted) {
+    placedContext.push({ ...item, ...slotOf.get(item.id)! });
+  }
+
+  placedContext.forEach((item) => {
     push({
       id: item.id,
       kind: item.kind,
@@ -508,14 +649,16 @@ export function layout<S extends AnySchema>(
        * described lenses and half described kinds.
        */
       plane: 2,
-      x: position.x,
-      y: position.y,
-      width: contextSize.width,
-      height: contextSize.height,
+      x: item.x,
+      y: item.y,
+      width: item.width,
+      height: item.height,
       ...(item.aggregate ? { aggregate: item.aggregate } : {}),
       ...(item.raised ? { raised: true } : {}),
       ...(item.focused ? { focused: true } : {}),
-      depth: position.depth,
+      ...(item.rank ? { rank: item.rank } : {}),
+      ...(item.nestedUnder ? { nestedUnder: item.nestedUnder } : {}),
+      depth: item.depth,
     });
   });
 

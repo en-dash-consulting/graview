@@ -53,6 +53,18 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
   /** This group is the kind currently in focus. */
   readonly focused?: boolean;
   /**
+   * How near this kind is to the one in focus: `primary` is one declared edge
+   * away, `secondary` is further. Absent when nothing is focused, and when
+   * the focus touches nothing — a strip where every card is secondary says
+   * no more than one where none is.
+   *
+   * A view is expected to read it as EMPHASIS, not as a filter: a secondary
+   * card is still the same card, quieter.
+   */
+  readonly rank?: "primary" | "secondary";
+  /** Drawn tucked behind another kind's card, because it is reachable only through it. */
+  readonly nestedUnder?: string;
+  /**
    * The app registered a view of its own for this kind, rather than leaving
    * it on the framework's generic one — so there is a picture to go into.
    *
