@@ -1,3 +1,11 @@
+export { buildConstellation, Constellation, placeOf } from "./constellation/index.js";
+export type {
+  ConstellationKind,
+  ConstellationLink,
+  ConstellationOptions,
+  ConstellationProps,
+  ConstellationShape,
+} from "./constellation/index.js";
 export {
   BOARD_REQUIRED_ROLES,
   BoardBindingError,
@@ -12,6 +20,7 @@ export {
   BackOut,
   Inspector,
   nameOf,
+  OverviewButton,
   Standing,
   Trail,
   UndoTurn,

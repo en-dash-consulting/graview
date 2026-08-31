@@ -95,7 +95,7 @@ export function Scene<S extends AnySchema>({
   animate = true,
   children,
 }: SceneProps<S>) {
-  const { store, scheme, views, view, setView, selection, setSelection, setJackedIn, setMenuAt } =
+  const { store, scheme, views, view, setView, selection, setSelection, setJackedIn, setMenuAt, overview } =
     useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -231,6 +231,24 @@ export function Scene<S extends AnySchema>({
         position: "relative",
         width: "100%",
         height: "100%",
+        /*
+         * Rising to the overview does not REPLACE the scene, it lays it down.
+         *
+         * Cutting to a different picture loses the one thing an overview is
+         * for: knowing where you were. So the scene stays on screen and
+         * recedes — scaled back and squashed onto the floor the constellation
+         * draws — and you watch your own view become part of the landscape.
+         *
+         * Affine, like everything else here: a scale and a vertical squash,
+         * no perspective, so this is the same class of transform the plane
+         * model already uses.
+         */
+        transform: overview ? "translateY(-6%) scale(0.62, 0.34)" : undefined,
+        transformOrigin: "50% 46%",
+        opacity: overview ? 0.3 : 1,
+        pointerEvents: overview ? "none" : undefined,
+        transition:
+          "transform 620ms cubic-bezier(0.22, 1, 0.36, 1), opacity 480ms ease",
         // The stage is sized to the measurement, but a stale measurement
         // during a resize can briefly exceed it. Clipping keeps the scene
         // inside its own bounds instead of pushing the page taller and

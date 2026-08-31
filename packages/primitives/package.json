@@ -17,7 +17,8 @@
   "dependencies": {
     "@graview/core": "workspace:*",
     "@graview/react": "workspace:*",
-    "@graview/tools": "workspace:*"
+    "@graview/tools": "workspace:*",
+    "@graview/layout": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18"

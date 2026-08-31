@@ -2,7 +2,9 @@ import { aggregateId, EMPTY_VIEW, type ViewState } from "@graview/layout";
 import {
   ActivityRail,
   BackOut,
+  Constellation,
   Inspector,
+  OverviewButton,
   Standing,
   Trail,
   themeCss,
@@ -112,6 +114,7 @@ function Desk({
 }) {
   const showing = useShowing();
   const desk = useDesk();
+  const { overview } = useGraview<S>();
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);
   const onCall = useCallback((call: ToolCall) => {
     setCalls((current) => {
@@ -162,7 +165,10 @@ function Desk({
       <CommandBar scheme={scheme} onScheme={onScheme} onCall={onCall} />
       <BackOut home={MATRIX} />
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+        {/* Both, always: the overview lays the scene down rather than
+            replacing it, so you can see where you were. */}
         <Scene renderer="dom" />
+        {overview ? <Constellation /> : null}
         <ActivityRail calls={calls} />
         <Inspector />
       </div>
@@ -213,6 +219,7 @@ function CommandBar({
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
         <Standing clean="Every capability is earned" />
+        <OverviewButton />
         <AuditButton onCall={onCall} />
         {APPS.map((entry) => (
           <button
