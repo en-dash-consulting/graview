@@ -281,8 +281,18 @@ export function layout<S extends AnySchema>(
    * own namespace — `aggregate:position` and `kind:position` are different
    * things, which they always were.
    */
-  const overviewW = opts.width * 0.34;
-  const overviewH = opts.height * 0.34;
+  /*
+   * The slot keeps the proportions of the thing it is showing, so the scale
+   * is uniform and the picture is not stretched.
+   */
+  const naturalW = groupWidth;
+  // Generous on purpose: the view lays itself out here, so a short box means
+  // a scrollbar in the middle of the Graview showing one row of nine.
+  // Complete and small beats partial and larger.
+  const naturalH = opts.height * 0.92;
+  const overviewScale = Math.min((opts.width * 0.4) / naturalW, (opts.height * 0.42) / naturalH);
+  const overviewW = naturalW * overviewScale;
+  const overviewH = naturalH * overviewScale;
 
   // ------------------------------------------------------- plane 0: focus
   if (state.overview && (focus || focusGroup.length > 0) && state.focusId) {
@@ -294,6 +304,9 @@ export function layout<S extends AnySchema>(
       y: opts.height * 0.53 - overviewH / 2,
       width: overviewW,
       height: overviewH,
+      // Lay out as if it had the whole scene, then draw it small. The view
+      // is the view; only the picture is scaled.
+      natural: { width: naturalW, height: naturalH },
       ...(focus
         ? {}
         : {
