@@ -239,6 +239,9 @@ importers:
       '@graview/react':
         specifier: workspace:*
         version: link:../react
+      '@graview/render':
+        specifier: workspace:*
+        version: link:../render
       '@graview/tools':
         specifier: workspace:*
         version: link:../tools
@@ -290,6 +293,8 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+
+  packages/skills: {}
 
   packages/tools:
     dependencies:

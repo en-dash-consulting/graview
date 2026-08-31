@@ -326,6 +326,7 @@ export function Scene<S extends AnySchema>({
         above={!useDom}
         scheme={scheme}
         overview={view.overview ?? false}
+        selection={selection}
         liveOf={(connector) => {
           /*
            * A relation PULSES where it was just made or broken.
@@ -836,9 +837,12 @@ function Connectors({
   above,
   scheme,
   overview,
+  selection,
   liveOf,
 }: {
   readonly overview: boolean;
+  /** So a chosen kind's relations can stand out from the rest. */
+  readonly selection: readonly string[];
   /** What just happened to this relation, if anything. */
   liveOf?: (connector: { from: string; to: string }) => ActivityMark | undefined;
   result: {
@@ -853,6 +857,21 @@ function Connectors({
 }) {
   const byId = new Map(result.nodes.map((node) => [node.id, node]));
   const centre = (node: SceneNode | undefined) => drawnCentre(node, scheme);
+  /*
+   * Selecting a kind DRAWS ITS RELATIONS and recedes the rest.
+   *
+   * With every line at full strength the constellation says what the domain
+   * looks like and nothing about what you just asked. Picking one card should
+   * answer "what does this touch" — which is the whole reason to select
+   * something up here, since there is nothing else selecting can mean when
+   * the cards are kinds rather than things.
+   *
+   * Empty selection means no emphasis, not no relations: the same rule every
+   * view follows.
+   */
+  const chosen = new Set(selection);
+  const touches = (connector: { from: string; to: string }) =>
+    chosen.size === 0 || chosen.has(connector.from) || chosen.has(connector.to);
   /*
    * A connector must touch a RAISED node, and must not end on a receded
    * GROUP.
@@ -924,10 +943,23 @@ function Connectors({
             d={`M ${from.x} ${from.y} Q ${control} ${to.x} ${to.y}`}
             fill="none"
             stroke={`hsl(${Math.round(style.hue * 360)} 55% 62%)`}
-            strokeWidth={Math.min(1.4, style.width)}
+            /*
+             * Above the stack the LINES ARE THE CONTENT.
+             *
+             * Inside the scene a connector is an aside — it says how the thing
+             * you are looking at is caught up in something else, and drawing
+             * it loudly would compete with the thing itself. From the Graview
+             * the shape of the domain IS the subject, and at a third of an
+             * already-receded plane's opacity it was a set of cards floating
+             * in nothing, which answers none of the question you rose to ask.
+             */
+            strokeWidth={overview ? Math.max(1.6, style.width) : Math.min(1.4, style.width)}
             strokeDasharray={DASH[style.pattern]}
             strokeLinecap="round"
-            opacity={style.opacity * 0.34 * ((connector as { opacity?: number }).opacity ?? 1)}
+            opacity={
+              (overview ? (touches(connector) ? 0.9 : 0.12) : style.opacity * 0.34) *
+              ((connector as { opacity?: number }).opacity ?? 1)
+            }
           />
         );
       })}
