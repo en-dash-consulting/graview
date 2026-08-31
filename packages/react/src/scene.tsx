@@ -95,7 +95,7 @@ export function Scene<S extends AnySchema>({
   animate = true,
   children,
 }: SceneProps<S>) {
-  const { store, scheme, views, view, setView, selection, setSelection, setJackedIn } =
+  const { store, scheme, views, view, setView, selection, setSelection, setJackedIn, setMenuAt } =
     useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -188,26 +188,35 @@ export function Scene<S extends AnySchema>({
         }
         setSelection((current) => selectionFor(node, current, additive));
       }}
-      onPick={(id, additive) => {
-        /*
-         * Picking a thing FOCUSES it. That is the whole point: the graph is
-         * the interface, so touching a thing should bring its context with
-         * it — who is involved, what constrains it, why it exists — rather
-         * than tick a checkbox somewhere.
-         *
-         * Hold shift or meta to add it to the selection without travelling,
-         * which is what you want when you are building up a multi-selection
-         * to act on.
-         */
-        if (additive) {
-          setSelection((current) =>
-            current.includes(id) ? current.filter((other) => other !== id) : [...current, id],
-          );
-          return;
-        }
+      /*
+       * Picking a thing SELECTS it, and leaves the picture where it is.
+       *
+       * It used to travel, which is the wrong default: most of the time you
+       * want to act on the thing where it is — substitute a player without
+       * leaving the formation, move an event without leaving the week — and
+       * being thrown into a detail view to do it costs you the context that
+       * made the decision obvious. Travel is the deliberate second gesture.
+       */
+      onPick={(id, additive) =>
+        setSelection((current) =>
+          additive
+            ? current.includes(id)
+              ? current.filter((other) => other !== id)
+              : [...current, id]
+            : [id],
+        )
+      }
+      /*
+       * Double click means GO DEEPER, whatever it lands on: into the node a
+       * view nominated, or — where a view nominated nothing — into the view
+       * itself as a full page. One gesture, one meaning.
+       */
+      onTravel={(id) => {
         setView((current) => ({ ...withFocus(current, id), relation: null }));
         setSelection([id]);
       }}
+      onMenu={setMenuAt}
+      selection={selection}
       onJackIn={() => setJackedIn(node.id)}
     >
       <ResolvedView node={node} mode="scene" selected={selection.includes(node.id)} />
@@ -435,6 +444,12 @@ interface HostProps {
   onSelect(additive: boolean): void;
   /** A view marked an inner element with `data-graview-pick`. */
   onPick(id: string, additive: boolean): void;
+  /** The deliberate second gesture: go into the thing that was picked. */
+  onTravel(id: string): void;
+  /** Ask for the actions at a point, in viewport coordinates. */
+  onMenu(at: { x: number; y: number }): void;
+  /** The whole selection, so the keyboard can tell a first press from a second. */
+  readonly selection: readonly string[];
   onJackIn(): void;
   readonly children: ReactNode;
 }
@@ -477,6 +492,9 @@ function SceneViewHost({
   selected,
   onSelect,
   onPick,
+  onTravel,
+  onMenu,
+  selection,
   onJackIn,
   children,
 }: HostProps) {
@@ -578,9 +596,32 @@ function SceneViewHost({
         if (!picked || picked === node.id) return;
         event.preventDefault();
         event.stopPropagation();
-        onPick(picked, event.metaKey || event.shiftKey);
+        /*
+         * Enter selects; Enter again on something already selected alone
+         * travels. The keyboard needs the same two-step the pointer has, and
+         * a modifier would have been a worse answer than repeating yourself.
+         */
+        const already = selection.length === 1 && selection[0] === picked;
+        if (already && !event.metaKey && !event.shiftKey) onTravel(picked);
+        else onPick(picked, event.metaKey || event.shiftKey);
       }}
-      onDoubleClick={onJackIn}
+      onContextMenu={(event) => {
+        const picked = pickedFrom(event.target);
+        event.preventDefault();
+        event.stopPropagation();
+        if (picked && picked !== node.id) onPick(picked, false);
+        else onSelect(false);
+        onMenu({ x: event.clientX, y: event.clientY });
+      }}
+      onDoubleClick={(event) => {
+        const picked = pickedFrom(event.target);
+        if (picked && picked !== node.id) {
+          event.stopPropagation();
+          onTravel(picked);
+          return;
+        }
+        onJackIn();
+      }}
       style={{
         position: "absolute",
         // Each host sits at its own layout position, on BOTH paths.

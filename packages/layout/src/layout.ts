@@ -237,17 +237,33 @@ export function layout<S extends AnySchema>(
     else groups.set(node.kind, [node]);
   }
 
-  const entries: { id: string; kind: string; members: NodeOfSchema<S>[] }[] = [];
+  const entries: { id: string; kind: string; members: NodeOfSchema<S>[]; raised?: boolean }[] = [];
   for (const [kind, members] of groups) {
     entries.push({ id: aggregateId(kind), kind, members: [...members].sort(byStableKey) });
+  }
+  /*
+   * A raised kind keeps its place, emptied.
+   *
+   * Raising a kind moves every member to plane 1, which used to delete the
+   * group from the context plane entirely — so the only sign of what was
+   * raised was the breadcrumb. The id is unchanged, so it sorts into exactly
+   * the position it held before: the picture you remember is the picture you
+   * get, and clicking it again drops the relation.
+   */
+  if (
+    state.relation &&
+    !entries.some((entry) => entry.kind === state.relation) &&
+    graph.allNodes().some((node) => node.kind === state.relation)
+  ) {
+    entries.push({ id: aggregateId(state.relation), kind: state.relation, members: [], raised: true });
   }
   entries.sort(byStableKey);
 
   // Expanding an aggregate and collapsing it run through this one loop:
   // an open group contributes its members, a closed one contributes itself.
-  const contextItems: { id: string; kind: string; aggregate?: Aggregate }[] = [];
+  const contextItems: { id: string; kind: string; aggregate?: Aggregate; raised?: boolean }[] = [];
   for (const entry of entries) {
-    if (expanded.has(entry.id)) {
+    if (expanded.has(entry.id) && entry.members.length > 0) {
       for (const member of entry.members) {
         contextItems.push({ id: member.id, kind: member.kind });
       }
@@ -255,6 +271,7 @@ export function layout<S extends AnySchema>(
       contextItems.push({
         id: entry.id,
         kind: entry.kind,
+        ...(entry.raised ? { raised: true } : {}),
         aggregate: {
           kind: entry.kind,
           memberIds: entry.members.map((m) => m.id),
@@ -283,6 +300,7 @@ export function layout<S extends AnySchema>(
       width: contextSize.width,
       height: contextSize.height,
       ...(item.aggregate ? { aggregate: item.aggregate } : {}),
+      ...(item.raised ? { raised: true } : {}),
     });
   });
 

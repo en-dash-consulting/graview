@@ -88,6 +88,19 @@ export function useImplicated(): readonly string[] {
       if (chosen.has(edge.from)) reached.add(edge.to);
       if (chosen.has(edge.to)) reached.add(edge.from);
     }
+    /*
+     * What a selected thing JUDGES, as well as what it touches.
+     *
+     * A rule has no edges, so selecting one reached nothing and the screen
+     * did not change — it read as broken. What a rule is about is derivable
+     * from its violations, which name the nodes they implicate, so selecting
+     * one now lights those wherever they are drawn.
+     */
+    for (const violation of store.violations()) {
+      if (violation.subjectId !== undefined && chosen.has(violation.subjectId)) {
+        for (const id of violation.nodeIds) reached.add(id);
+      }
+    }
     return [...reached];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, selection, nodes]);

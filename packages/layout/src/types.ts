@@ -42,6 +42,15 @@ export interface LayoutNode {
   readonly aggregate?: Aggregate;
   /** Set on plane 1 when this node was reached by following an edge. */
   readonly via?: Via;
+  /**
+   * A group whose members are currently raised onto plane 1.
+   *
+   * It stays where it was, emptied, so the eye can tie the relation plane
+   * back to where it came from. Without it the only evidence of what is
+   * raised is the breadcrumb, and a spatial interface should not need to be
+   * read.
+   */
+  readonly raised?: boolean;
   /** True when the user pinned this position rather than the layout choosing it. */
   readonly pinned: boolean;
 }
