@@ -116,9 +116,21 @@ describe("plane treatment", () => {
       PLANE_STYLES[1].blur,
       PLANE_STYLES[0].blur,
     ]);
-    // Recession is monotonic: each plane back is blurrier than the one in front.
-    expect(PLANE_STYLES[2].blur).toBeGreaterThan(PLANE_STYLES[1].blur);
-    expect(PLANE_STYLES[1].blur).toBeGreaterThan(PLANE_STYLES[0].blur);
+    /*
+     * Recession is monotonic — but blur is not the only thing that carries
+     * it, and for a while it was carrying too much: 1.1px of blur over
+     * 10.5px type turned the kinds plane into "P…" and "REA…". A map you
+     * cannot read is not a map, so the far plane leans on scale and falloff
+     * and blur merely does not decrease.
+     */
+    for (const [near, far] of [
+      [0, 1],
+      [1, 2],
+    ] as const) {
+      expect(PLANE_STYLES[far].scale).toBeLessThan(PLANE_STYLES[near].scale);
+      expect(PLANE_STYLES[far].falloff).toBeGreaterThan(PLANE_STYLES[near].falloff);
+      expect(PLANE_STYLES[far].blur).toBeGreaterThanOrEqual(PLANE_STYLES[near].blur);
+    }
     expect(styles[0]!.falloff).toBeGreaterThan(styles[2]!.falloff);
     // Every transform layout may hand the platform must be affine.
     for (const draw of plan.draws) expect(isAffine(draw.transform)).toBe(true);

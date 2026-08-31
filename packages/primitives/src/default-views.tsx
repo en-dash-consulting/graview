@@ -194,8 +194,8 @@ export function registerDefaultViews<S extends AnySchema>(
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 3,
-            padding: "8px 9px",
+            gap: 4,
+            padding: "10px 11px",
             boxSizing: "border-box",
             borderRadius: 10,
             border: accent
@@ -215,9 +215,9 @@ export function registerDefaultViews<S extends AnySchema>(
               count did at ninety pixels wide. */}
           <span
             style={{
-              fontSize: 10.5,
-              lineHeight: 1.2,
-              letterSpacing: "0.06em",
+              fontSize: 13,
+              lineHeight: 1.25,
+              letterSpacing: "0.05em",
               textTransform: "uppercase",
               overflowWrap: "anywhere",
               color: accent ? "var(--graview-accent)" : "var(--graview-ink-muted)",
@@ -226,7 +226,7 @@ export function registerDefaultViews<S extends AnySchema>(
             {props.label ?? plural}
           </span>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5 }}>
             <span
               style={{
                 fontVariantNumeric: "tabular-nums",
@@ -245,7 +245,7 @@ export function registerDefaultViews<S extends AnySchema>(
               <span
                 title={`${plural} has a view of its own`}
                 aria-label="has its own view"
-                style={{ fontSize: 8, color: "var(--graview-accent)" }}
+                style={{ fontSize: 9.5, color: "var(--graview-accent)" }}
               >
                 ◆
               </span>
@@ -255,7 +255,7 @@ export function registerDefaultViews<S extends AnySchema>(
           {definition?.description ? (
             <span
               className="graview-kind-note"
-              style={{ fontSize: 11, lineHeight: 1.4, color: "var(--graview-ink-muted)" }}
+              style={{ fontSize: 11.5, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
             >
               {definition.description}
             </span>

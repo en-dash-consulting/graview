@@ -655,192 +655,173 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
 export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] }) {
   const changes = useRecentChanges();
   const { store } = useGraview<AnySchema>();
-  /*
-   * Quiet by default.
-   *
-   * What happened matters when you go looking for it, not continuously, and
-   * an always-open rail sits over the top-left of the scene forever to tell
-   * you about three things that already finished. Collapsed it is a pill that
-   * still says how much has happened and whether an agent is mid-turn, which
-   * is the part that must not be invisible.
-   */
-  const choice = useRef<string | null>(
-    (() => {
-      try {
-        return localStorage.getItem("graview:activity");
-      } catch {
-        return null;
-      }
-    })(),
-  );
-  const [open, setOpen] = useState(choice.current === "open");
+  const [open, setOpen] = useState(false);
+  const anchor = useRef<HTMLDivElement | null>(null);
+  const running = calls.some((call) => call.phase === "running");
 
   /*
-   * Quiet, but not secret.
+   * A POPOVER FROM THE BAR, not a rail pinned over the scene.
    *
-   * Collapsed-by-default hid the diff log so completely that an agent turn
-   * became invisible — the acceptance harness noticed before I did, which is
-   * exactly what it is for. So it opens itself the first time anything
-   * happens, and stays closed only if you have closed it yourself. Quiet
-   * when nothing is going on; present when something is.
+   * It was in the way because it was always there, and moving it around the
+   * corners did not change that. What happened is chrome — it belongs with
+   * the other chrome, opening on demand, in the same language as the problems
+   * list. The one thing that must stay visible without opening anything is
+   * that an agent is mid-turn, and that is a dot on the button.
    */
   useEffect(() => {
-    if (choice.current === "closed") return;
-    if (calls.length > 0 || changes.length > 0) setOpen(true);
-  }, [calls.length, changes.length]);
+    if (!open) return;
+    const away = (event: MouseEvent) => {
+      if (!anchor.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
 
-  const toggle = () => {
-    setOpen((current) => {
-      choice.current = current ? "closed" : "open";
-      try {
-        localStorage.setItem("graview:activity", choice.current);
-      } catch {
-        // A preference that cannot be remembered still applies for this visit.
-      }
-      return !current;
-    });
-  };
-  const running = calls.some((call) => call.phase === "running");
   if (calls.length === 0 && changes.length === 0) return null;
 
   return (
-    <aside
-      aria-label="Activity"
-      data-testid="activity"
-      style={{
-        // Top left: the upper left of a scene is genuinely empty, because the
-        // focus panel is centred and never reaches it.
-        position: "fixed",
-        left: 20,
-        top: 76,
-        width: open ? 250 : "auto",
-        boxSizing: "border-box",
-        zIndex: 10,
-        maxHeight: "calc(100vh - 140px)",
-        overflow: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 9,
-        padding: open ? 14 : "6px 12px",
-        borderRadius: open ? 14 : 999,
-        border: "1px solid var(--graview-edge)",
-        background: "var(--graview-float)",
-        boxShadow: "var(--graview-lift-high)",
-      }}
-    >
+    <div ref={anchor} style={{ position: "relative" }}>
       <button
         type="button"
+        data-testid="activity-button"
         aria-expanded={open}
-        onClick={toggle}
-        title={open ? "Hide what has happened" : "Show what has happened"}
+        onClick={() => setOpen((value) => !value)}
+        title={running ? "An agent is working" : "What has happened"}
         style={{
-          display: "flex",
+          display: "inline-flex",
           alignItems: "center",
-          gap: 7,
-          border: "none",
-          background: "none",
-          padding: 0,
-          fontSize: 10,
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
+          gap: 6,
+          padding: "4px 11px",
+          borderRadius: 999,
+          fontSize: 12.5,
           whiteSpace: "nowrap",
-          color: running ? "var(--graview-accent)" : "var(--graview-ink-faint)",
+          ...(running ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" } : {}),
         }}
       >
-        {running ? (
-          <span
-            aria-hidden="true"
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: 999,
-              background: "var(--graview-accent)",
-            }}
-          />
-        ) : null}
-        Activity
-        {!open && changes.length > 0 ? (
-          <span style={{ color: "var(--graview-ink-muted)" }}>· {changes.length}</span>
-        ) : null}
-        <span aria-hidden="true" style={{ marginLeft: open ? "auto" : 2 }}>
-          {open ? "–" : "+"}
-        </span>
+        <span
+          aria-hidden="true"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: 999,
+            background: running ? "var(--graview-accent)" : "var(--graview-edge-bright)",
+          }}
+        />
+        {changes.length > 0 ? changes.length : ""} Activity
       </button>
 
-      {open && calls.length > 0 ? (
-        <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 7 }}>
-          {calls.slice(0, 6).map((call, index) => (
-            <li
-              key={`${call.at}:${index}`}
-              style={{ display: "grid", gap: 2, fontSize: 12, lineHeight: 1.45 }}
-            >
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 999,
-                    flex: "0 0 auto",
-                    background:
-                      call.phase === "running"
-                        ? "var(--graview-accent)"
-                        : call.phase === "failed"
-                          ? "var(--graview-warn)"
-                          : "var(--graview-edge-bright)",
-                  }}
-                />
-                <span style={{ color: "var(--graview-ink)" }}>
-                  {call.mutating ? "changed" : "read"} · {call.name}
-                </span>
-              </div>
-              {Object.values(call.args).some((value) => typeof value === "string") ? (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
-                  {Object.values(call.args)
-                    .filter((value): value is string => typeof value === "string")
-                    .slice(0, 3)
-                    .map((value) => (
-                      <Chip key={value} label={nameOf(store, value)} pickId={value} />
-                    ))}
-                </div>
-              ) : null}
-              {call.error ? (
-                <div style={{ paddingLeft: 12, color: "var(--graview-warn)" }}>{call.error}</div>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      ) : null}
-
-      {open && changes.length > 0 ? (
-        <ol
-          data-testid="diff-log"
-          style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6, fontSize: 12 }}
+      {open ? (
+        <aside
+          aria-label="Activity"
+          data-testid="activity"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 6px)",
+            right: 0,
+            zIndex: 20,
+            width: 300,
+            maxHeight: "min(52vh, 460px)",
+            overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 9,
+            padding: 12,
+            borderRadius: 10,
+            border: "1px solid var(--graview-edge)",
+            background: "var(--graview-float)",
+            boxShadow: "var(--graview-lift-high)",
+          }}
         >
-          {changes.map((change, index) => (
-            <li key={`change:${index}`} style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span style={{ minWidth: 0 }}>
-                  <strong style={{ fontWeight: 600 }}>
-                    {change.author === "agent" ? "claude" : "you"}
-                  </strong>{" "}
-                  <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
-                </span>
-                {change.batch ? <UndoTurn batch={change.batch} /> : null}
-              </div>
-              <div
-                data-touched={change.touched.join(" ")}
-                style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
-              >
-                {change.touched.slice(0, 4).map((id) => (
-                  <Chip key={id} label={nameOf(store, id)} pickId={id} />
-                ))}
-              </div>
-            </li>
-          ))}
-        </ol>
+          {calls.length > 0 ? (
+            <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 7 }}>
+              {calls.slice(0, 6).map((call, index) => (
+                <li
+                  key={`${call.at}:${index}`}
+                  style={{ display: "grid", gap: 2, fontSize: 12, lineHeight: 1.45 }}
+                >
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: 999,
+                        flex: "0 0 auto",
+                        background:
+                          call.phase === "running"
+                            ? "var(--graview-accent)"
+                            : call.phase === "failed"
+                              ? "var(--graview-warn)"
+                              : "var(--graview-edge-bright)",
+                      }}
+                    />
+                    <span style={{ color: "var(--graview-ink)" }}>
+                      {call.mutating ? "changed" : "read"} · {call.name}
+                    </span>
+                  </div>
+                  {Object.values(call.args).some((value) => typeof value === "string") ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
+                      {Object.values(call.args)
+                        .filter((value): value is string => typeof value === "string")
+                        .slice(0, 3)
+                        .map((value) => (
+                          <Chip key={value} label={nameOf(store, value)} pickId={value} />
+                        ))}
+                    </div>
+                  ) : null}
+                  {call.error ? (
+                    <div style={{ paddingLeft: 12, color: "var(--graview-warn)" }}>{call.error}</div>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          ) : null}
+
+          {changes.length > 0 ? (
+            <ol
+              data-testid="diff-log"
+              style={{
+                margin: 0,
+                padding: 0,
+                listStyle: "none",
+                display: "grid",
+                gap: 6,
+                fontSize: 12,
+              }}
+            >
+              {changes.map((change, index) => (
+                <li key={`change:${index}`} style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                    <span style={{ minWidth: 0 }}>
+                      <strong style={{ fontWeight: 600 }}>
+                        {change.author === "agent" ? "claude" : "you"}
+                      </strong>{" "}
+                      <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
+                    </span>
+                    {change.batch ? <UndoTurn batch={change.batch} /> : null}
+                  </div>
+                  <div
+                    data-touched={change.touched.join(" ")}
+                    style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
+                  >
+                    {change.touched.slice(0, 4).map((id) => (
+                      <Chip key={id} label={nameOf(store, id)} pickId={id} />
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+        </aside>
       ) : null}
-    </aside>
+    </div>
   );
 }
 
@@ -898,39 +879,31 @@ export function OverviewButton() {
       // A view state, so it is a URL, the back button works, and the cards
       // already on screen fly out into the ring rather than being replaced.
       onClick={() => go(withOverview(view, !overview))}
+      /*
+       * A CONTROL IN THE BAR, not a pill floating over the scene.
+       *
+       * Twice now it has been "awkwardly slammed on top", and both times the
+       * fix I reached for was a different set of coordinates. The problem was
+       * never where it floated — it was that it floated at all while every
+       * other view control lives in the bar. The Graview is a place you go,
+       * like the others, so it goes where they are.
+       */
       style={{
-        /*
-         * Beside the kinds strip, not on top of it.
-         *
-         * It was centred at the very bottom and landed squarely across the
-         * cards. It belongs TO that plane — it is the control for the same
-         * question the strip answers, "what is all of this" — so it sits at
-         * the head of the row, aligned with it.
-         */
-        position: "fixed",
-        left: 18,
-        // Just above the strip rather than across its first card: the band
-        // between the relation plane and the kinds plane is empty by design.
-        bottom: "16.5%",
-        zIndex: 12,
         display: "inline-flex",
         alignItems: "center",
-        gap: 7,
-        padding: "5px 12px",
+        gap: 6,
+        padding: "4px 11px",
         borderRadius: 999,
-        fontSize: 11,
-        letterSpacing: "0.18em",
-        textTransform: "uppercase",
-        background: "var(--graview-float)",
-        boxShadow: "var(--graview-lift-low)",
+        fontSize: 12.5,
+        whiteSpace: "nowrap",
         ...(overview
           ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
-          : { color: "var(--graview-ink-faint)" }),
+          : {}),
       }}
     >
       {/* The mark: three kinds and the relations between them, which is what
           the view itself is. */}
-      <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true">
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
         <ellipse
           cx="6"
           cy="6.6"

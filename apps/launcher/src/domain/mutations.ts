@@ -82,8 +82,8 @@ const slug = (text: string) =>
 export const justify = defineMutation(
   "justify",
   {
-    title: "Record a reason",
-    description: "Note why this is worth keeping, so the argument outlives the person making it.",
+    title: "Note why this is here",
+    description: "Attach a reason to this, so the argument for keeping it outlives whoever made it.",
     subject: { kinds: "*", arg: "id" },
     input: z.object({ id: nodeRef("*"), text: z.string().min(1) }),
     describe: (args, graph) => `Explain ${labelOf(graph as Reader, args.id)}`,
