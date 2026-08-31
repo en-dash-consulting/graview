@@ -1,5 +1,5 @@
 import { createSchema, defineNode, Store } from "@graview/core";
-import { EMPTY_VIEW, aggregateId } from "@graview/layout";
+import { EMPTY_VIEW, aggregateId, kindCardId } from "@graview/layout";
 import { GraviewProvider, Scene, createViews } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -113,7 +113,7 @@ describe("a new node kind with no custom view", () => {
     const html = renderScene({
       ...EMPTY_VIEW,
       focusId: "ana",
-      expanded: [aggregateId("vehicle")],
+      expanded: [kindCardId("vehicle")],
     });
     expect(html).toContain("The estate");
     expect(html).toContain('data-graview-primitive="chip"');

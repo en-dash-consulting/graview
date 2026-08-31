@@ -220,6 +220,38 @@ html, body {
   background-attachment: local, local, scroll, scroll;
 }
 
+/* A card on the kinds plane.
+ *
+ * Title and count only at rest — a strip of ten cards each showing three
+ * truncated member names is ten unreadable things, and the members are not
+ * what you are asking the strip. Hovering lifts one and reveals the kind's
+ * own description, which the declaration has always carried and nothing has
+ * ever shown. */
+.graview-kind-card {
+  height: 100%;
+  transition: transform 170ms cubic-bezier(0.22, 1, 0.36, 1), height 170ms ease,
+    box-shadow 170ms ease;
+}
+.graview-kind-card:hover,
+.graview-kind-card:focus-within {
+  height: auto;
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: var(--graview-lift-high);
+  position: relative;
+  z-index: 3;
+}
+.graview-kind-note {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 190ms ease, opacity 190ms ease;
+}
+.graview-kind-card:hover .graview-kind-note,
+.graview-kind-card:focus-within .graview-kind-note {
+  max-height: 5.4em;
+  opacity: 1;
+}
+
 /* A thing inside a view that is itself a thing: an event in a calendar, a
    person in a list. It has to look reachable, and it has to SHOW focus —
    these are the primary way anyone moves through the graph, so a keyboard

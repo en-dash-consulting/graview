@@ -52,6 +52,20 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
   readonly raised?: boolean;
   /** This group is the kind currently in focus. */
   readonly focused?: boolean;
+  /**
+   * The app registered a view of its own for this kind, rather than leaving
+   * it on the framework's generic one — so there is a picture to go into.
+   *
+   * Derived rather than declared: `registerDefaultViews` marks what it
+   * registers, and an app's own registration replaces it. True the moment
+   * someone writes a lens, false the moment they remove it.
+   */
+  readonly hasOwnView?: boolean;
+}
+
+/** A view the framework supplied because the app said nothing. */
+export interface GenericView {
+  generic?: boolean;
 }
 
 export type ViewComponent<
