@@ -201,45 +201,34 @@ export function registerDefaultViews<S extends AnySchema>(
             border: accent
               ? "1px solid var(--graview-accent)"
               : `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
-            background: `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 0.5))`,
+            // The kind you are looking at is brighter and lit, not labelled:
+            // a ninety-pixel card has no room for a word that says so.
+            background: accent
+              ? `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 1.1)), var(--graview-panel)`
+              : `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 0.5))`,
+            boxShadow: accent ? "0 0 0 1px var(--graview-accent-dim)" : undefined,
           }}
         >
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
-            {/* Wraps rather than truncating: "UNAVAILABILITY" on two lines
-                is readable and "U…" is not, and at ten kinds across a screen
-                there is no width at which every plural fits on one. */}
+          {/* Title on its own line, marks on the next. Nothing shares a line
+              with anything that could grow, so nothing can ever collide —
+              which is what a single flex row of title, badge, warning and
+              count did at ninety pixels wide. */}
+          <span
+            style={{
+              fontSize: 10.5,
+              lineHeight: 1.2,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              overflowWrap: "anywhere",
+              color: accent ? "var(--graview-accent)" : "var(--graview-ink-muted)",
+            }}
+          >
+            {props.label ?? plural}
+          </span>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11 }}>
             <span
               style={{
-                fontSize: 10.5,
-                lineHeight: 1.25,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                minWidth: 0,
-                color: accent ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-              }}
-            >
-              {props.label ?? plural}
-            </span>
-            {/*
-              * Whether this kind has a picture of its own to go into.
-              * Derived: a view the app registered rather than the generic one
-              * the framework fell back to — so it is true the moment an app
-              * writes a lens and false the moment it stops.
-              */}
-            {props.hasOwnView ? (
-              <span
-                title={`${plural} has a view of its own — double click to go there`}
-                aria-hidden="true"
-                style={{ fontSize: 9, color: "var(--graview-accent)", flex: "0 0 auto" }}
-              >
-                ◆
-              </span>
-            ) : null}
-            <span
-              style={{
-                marginLeft: "auto",
-                flex: "0 0 auto",
-                fontSize: 12,
                 fontVariantNumeric: "tabular-nums",
                 color: trouble ? "var(--graview-warn)" : "var(--graview-ink-faint)",
               }}
@@ -247,20 +236,21 @@ export function registerDefaultViews<S extends AnySchema>(
               {trouble ? "⚠ " : ""}
               {members.length}
             </span>
+            {/*
+              * Whether this kind has a picture of its own to go into.
+              * Derived: a view the app registered rather than the generic one
+              * the framework fell back to.
+              */}
+            {props.hasOwnView ? (
+              <span
+                title={`${plural} has a view of its own`}
+                aria-label="has its own view"
+                style={{ fontSize: 8, color: "var(--graview-accent)" }}
+              >
+                ◆
+              </span>
+            ) : null}
           </div>
-
-          {props.focused || props.raised ? (
-            <span
-              style={{
-                fontSize: 9,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "var(--graview-accent)",
-              }}
-            >
-              {props.focused ? "in view" : "raised"}
-            </span>
-          ) : null}
 
           {definition?.description ? (
             <span
