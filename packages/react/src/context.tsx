@@ -41,6 +41,16 @@ export interface GraviewContextValue<S extends AnySchema> {
   /** The view lifted out into a full page, if any. */
   readonly jackedIn: string | null;
   setJackedIn(id: string | null): void;
+  /**
+   * Where a context menu was asked for, in viewport coordinates.
+   *
+   * Selection stopped moving the view, so the actions want to be near the
+   * thing rather than only in a strip at the bottom. This is the anchor; the
+   * workbench draws the same derived affordances there that it draws in the
+   * strip, because there must not be two renderings of an action.
+   */
+  readonly menuAt: { readonly x: number; readonly y: number } | null;
+  setMenuAt(at: { x: number; y: number } | null): void;
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
@@ -79,6 +89,7 @@ export function GraviewProvider<S extends AnySchema>({
   const [internalView, setInternalView] = useState<ViewState>(initialView ?? EMPTY_VIEW);
   const [selection, setSelectionState] = useState<readonly string[]>([]);
   const [jackedIn, setJackedIn] = useState<string | null>(initialJackedIn ?? null);
+  const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
 
   const current = view ?? internalView;
 
@@ -109,8 +120,10 @@ export function GraviewProvider<S extends AnySchema>({
       setSelection,
       jackedIn,
       setJackedIn,
+      menuAt,
+      setMenuAt,
     }),
-    [store, scheme, views, current, setView, selection, setSelection, jackedIn],
+    [store, scheme, views, current, setView, selection, setSelection, jackedIn, menuAt],
   );
 
   return (

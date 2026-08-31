@@ -1,6 +1,6 @@
 import type { AnySchema, Store } from "@graview/core";
 import { layout, type LayoutNode, type ViewState } from "@graview/layout";
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useGraview } from "./context.js";
 import { useJackIn } from "./hooks.js";
 import { ResolvedView } from "./scene.js";
@@ -21,8 +21,21 @@ export interface JackedInProps {
  * two-mode contract, and that is the one thing view authors must not do.
  */
 export function JackedIn<S extends AnySchema>({ className, style, children }: JackedInProps) {
-  const { store, view } = useGraview<S>();
+  const { store, view, setSelection } = useGraview<S>();
   const { jackedIn, exit } = useJackIn();
+
+  /*
+   * Jacking in SELECTS what you jacked into.
+   *
+   * Otherwise the page is read-only by accident: the actions are derived
+   * from the selection, and lifting a view out of the scene without
+   * selecting it left a full page with nothing you could do to it. Reading
+   * something closely is when you are most likely to want to change it.
+   */
+  useEffect(() => {
+    if (jackedIn) setSelection([jackedIn]);
+  }, [jackedIn, setSelection]);
+
   if (!jackedIn) return null;
 
   const node = findNode(store, view, jackedIn);

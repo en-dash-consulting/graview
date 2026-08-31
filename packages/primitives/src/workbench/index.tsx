@@ -166,7 +166,7 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
  * built around a centred focus has to spare.
  */
 export function Inspector() {
-  const { store } = useGraview<AnySchema>();
+  const { store, menuAt, setMenuAt } = useGraview<AnySchema>();
   const { selection, clear } = useSelection();
   const { affordances, observations } = useAffordances();
   const { apply, preview } = useApplyAffordance();
@@ -187,23 +187,52 @@ export function Inspector() {
     setExpanded(false);
   }, [selection]);
 
+  /*
+   * A menu at the pointer closes the way a menu does. The strip does not —
+   * it is not covering anything and clearing the selection is what the × is
+   * for.
+   */
+  useEffect(() => {
+    if (!menuAt) return;
+    const away = () => setMenuAt(null);
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuAt(null);
+    };
+    // A frame later, or the click that opened it closes it again.
+    const timer = setTimeout(() => document.addEventListener("mousedown", away), 0);
+    document.addEventListener("keydown", key);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", key);
+    };
+  }, [menuAt, setMenuAt]);
+
   if (selection.length === 0) return null;
 
   const INLINE = 4;
-  const shown = expanded ? affordances : affordances.slice(0, INLINE);
+  // At the pointer there is room for the lot; in the strip there is not.
+  const atPointer = menuAt !== null;
+  const shown = expanded || atPointer ? affordances : affordances.slice(0, INLINE);
   const hidden = affordances.length - shown.length;
   const open = affordances.find((affordance) => affordance.id === pending);
 
   return (
     <aside
       aria-label="Inspector"
+      data-testid={atPointer ? "context-menu" : "inspector-strip"}
+      onMouseDown={(event) => event.stopPropagation()}
       style={{
         position: "fixed",
-        bottom: 18,
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 10,
-        maxWidth: "min(860px, calc(100vw - 40px))",
+        /*
+         * Above the jacked-in page, not only above the scene.
+         *
+         * Lifting a view out to read it left you with no way to act on it —
+         * the strip was behind the full page, so a jacked-in node was
+         * read-only by accident. The actions are the same derived ones; only
+         * the backdrop changed.
+         */
+        zIndex: 60,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -214,7 +243,23 @@ export function Inspector() {
         background: "var(--graview-float)",
         // Lighter than the rails: this appears and disappears constantly, and
         // a heavy shadow made every selection feel like opening a dialog.
-        boxShadow: "var(--graview-lift-low)",
+        boxShadow: atPointer ? "var(--graview-lift-high)" : "var(--graview-lift-low)",
+        ...(atPointer
+          ? {
+              // Clamped so a right click near an edge does not open a menu
+              // half off the screen.
+              left: Math.min(menuAt.x, Math.max(8, window.innerWidth - 320)),
+              top: Math.min(menuAt.y, Math.max(8, window.innerHeight - 260)),
+              width: 300,
+              maxHeight: "min(52vh, 420px)",
+              overflow: "auto",
+            }
+          : {
+              bottom: 18,
+              left: "50%",
+              transform: "translateX(-50%)",
+              maxWidth: "min(860px, calc(100vw - 40px))",
+            }),
       }}
     >
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
@@ -257,7 +302,10 @@ export function Inspector() {
 
         <button
           type="button"
-          onClick={clear}
+          onClick={() => {
+            setMenuAt(null);
+            clear();
+          }}
           aria-label="Clear selection"
           style={{ padding: "1px 7px", fontSize: 11, flex: "0 0 auto" }}
         >
@@ -286,8 +334,11 @@ export function Inspector() {
             padding: 0,
             listStyle: "none",
             display: "flex",
-            flexWrap: "wrap",
-            gap: 5,
+            // At the pointer a menu reads as a column; in a strip the same
+            // actions read as a row. Same list, same components.
+            flexDirection: atPointer ? "column" : "row",
+            flexWrap: atPointer ? "nowrap" : "wrap",
+            gap: atPointer ? 2 : 5,
           }}
         >
           {shown.map((affordance) => (
@@ -301,7 +352,15 @@ export function Inspector() {
                   padding: "4px 10px",
                   fontSize: 12.5,
                   borderRadius: 8,
-                  whiteSpace: "nowrap",
+                  ...(atPointer
+                    ? {
+                        width: "100%",
+                        textAlign: "left",
+                        border: "1px solid transparent",
+                        background: "none",
+                        boxShadow: "none",
+                      }
+                    : { whiteSpace: "nowrap" }),
                   ...(pending === affordance.id
                     ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
                     : {}),
@@ -313,6 +372,7 @@ export function Inspector() {
                   }
                   preview(affordance);
                   apply(affordance);
+                  setMenuAt(null);
                 }}
               >
                 {affordance.label}
@@ -344,6 +404,7 @@ export function Inspector() {
           onApply={(args) => {
             apply(open, args);
             setPending(null);
+            setMenuAt(null);
           }}
           onCancel={() => setPending(null)}
         />
@@ -593,7 +654,52 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
 export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] }) {
   const changes = useRecentChanges();
   const { store } = useGraview<AnySchema>();
-  const [open, setOpen] = useState(true);
+  /*
+   * Quiet by default.
+   *
+   * What happened matters when you go looking for it, not continuously, and
+   * an always-open rail sits over the top-left of the scene forever to tell
+   * you about three things that already finished. Collapsed it is a pill that
+   * still says how much has happened and whether an agent is mid-turn, which
+   * is the part that must not be invisible.
+   */
+  const choice = useRef<string | null>(
+    (() => {
+      try {
+        return localStorage.getItem("graview:activity");
+      } catch {
+        return null;
+      }
+    })(),
+  );
+  const [open, setOpen] = useState(choice.current === "open");
+
+  /*
+   * Quiet, but not secret.
+   *
+   * Collapsed-by-default hid the diff log so completely that an agent turn
+   * became invisible — the acceptance harness noticed before I did, which is
+   * exactly what it is for. So it opens itself the first time anything
+   * happens, and stays closed only if you have closed it yourself. Quiet
+   * when nothing is going on; present when something is.
+   */
+  useEffect(() => {
+    if (choice.current === "closed") return;
+    if (calls.length > 0 || changes.length > 0) setOpen(true);
+  }, [calls.length, changes.length]);
+
+  const toggle = () => {
+    setOpen((current) => {
+      choice.current = current ? "closed" : "open";
+      try {
+        localStorage.setItem("graview:activity", choice.current);
+      } catch {
+        // A preference that cannot be remembered still applies for this visit.
+      }
+      return !current;
+    });
+  };
+  const running = calls.some((call) => call.phase === "running");
   if (calls.length === 0 && changes.length === 0) return null;
 
   return (
@@ -606,7 +712,7 @@ export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] })
         position: "fixed",
         left: 20,
         top: 76,
-        width: 250,
+        width: open ? 250 : "auto",
         boxSizing: "border-box",
         zIndex: 10,
         maxHeight: "calc(100vh - 140px)",
@@ -614,8 +720,8 @@ export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] })
         display: "flex",
         flexDirection: "column",
         gap: 9,
-        padding: open ? 14 : "8px 14px",
-        borderRadius: 14,
+        padding: open ? 14 : "6px 12px",
+        borderRadius: open ? 14 : 999,
         border: "1px solid var(--graview-edge)",
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-high)",
@@ -623,22 +729,39 @@ export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] })
     >
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        onClick={toggle}
+        title={open ? "Hide what has happened" : "Show what has happened"}
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          gap: 7,
           border: "none",
           background: "none",
           padding: 0,
           fontSize: 10,
           letterSpacing: "0.16em",
           textTransform: "uppercase",
-          color: "var(--graview-ink-faint)",
+          whiteSpace: "nowrap",
+          color: running ? "var(--graview-accent)" : "var(--graview-ink-faint)",
         }}
       >
+        {running ? (
+          <span
+            aria-hidden="true"
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 999,
+              background: "var(--graview-accent)",
+            }}
+          />
+        ) : null}
         Activity
-        <span aria-hidden="true" style={{ marginLeft: "auto" }}>
+        {!open && changes.length > 0 ? (
+          <span style={{ color: "var(--graview-ink-muted)" }}>· {changes.length}</span>
+        ) : null}
+        <span aria-hidden="true" style={{ marginLeft: open ? "auto" : 2 }}>
           {open ? "–" : "+"}
         </span>
       </button>
