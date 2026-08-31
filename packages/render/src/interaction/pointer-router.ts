@@ -1,4 +1,4 @@
-import type { Matrix4 } from "../platform/html-in-canvas.js";
+import type { Matrix4 } from "../platform/matrix.js";
 
 /**
  * Routes pointer events against where views were DRAWN, not where their

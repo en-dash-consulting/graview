@@ -1,5 +1,5 @@
 import type { Placement } from "../interaction/pointer-router.js";
-import type { Matrix4 } from "../platform/html-in-canvas.js";
+import type { Matrix4 } from "../platform/matrix.js";
 import { connectorStyle, type ConnectorStyle } from "./connectors.js";
 import { mixStyles, styleFor, transformFor, type PlaneStyle } from "./plane.js";
 

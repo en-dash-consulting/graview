@@ -1,3 +1,17 @@
+/// <reference types="@webgpu/types" />
+//
+// The WebGPU globals are part of this file's PUBLIC declarations, so the
+// reference has to live HERE rather than on the package entry: TypeScript
+// drops a type reference from a `.d.ts` that does not itself name one of its
+// types, so a reference on `index.ts` was emitted nowhere and an installed
+// consumer got "cannot find name GPUDevice" from a file they cannot change.
+// Found by typechecking a scratch project against the packed tarballs.
+//
+// It also has to be the ONLY route in: listing `@webgpu/types` under
+// `compilerOptions.types` makes the globals ambient for this build, at which
+// point TypeScript considers the reference satisfied and drops it from the
+// emit. The build sees no difference; a stranger does.
+
 import { PointerRouter, type Placement } from "../interaction/pointer-router.js";
 import {
   captureElement,

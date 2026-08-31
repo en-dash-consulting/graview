@@ -23,20 +23,24 @@
     "a11y:proposal": "node the bid-desk example/scripts/run-a11y.mjs",
     "dev:the coaching example": "pnpm --filter the coaching example dev",
     "apps": "pnpm --filter @graview/launcher dev",
-    "apps:all": "pnpm --parallel --filter @graview/launcher --filter the household example --filter the bid-desk example --filter the coaching example dev"
+    "apps:all": "pnpm --parallel --filter @graview/launcher --filter the household example --filter the bid-desk example --filter the coaching example dev",
+    "changeset": "changeset",
+    "pack:inspect": "node scripts/inspect-pack.mjs",
+    "smoke": "node scripts/smoke-install.mjs"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8",
-    "better-sqlite3": "^13.0.3",
+    "@changesets/cli": "^3.0.1",
     "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "@webgpu/types": "^0.1.60",
+    "better-sqlite3": "^13.0.3",
     "playwright": "^1.49.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

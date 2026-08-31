@@ -1,0 +1,47 @@
+{
+  "at": "2026-08-31T03:34:56.183Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-bWFMRr",
+  "steps": {
+    "packed": [
+      "@graview/core",
+      "@graview/layout",
+      "@graview/primitives",
+      "@graview/react",
+      "@graview/render",
+      "@graview/tools"
+    ],
+    "installing": true,
+    "installed": true,
+    "typechecked": true,
+    "ran": true
+  },
+  "result": {
+    "checkOk": true,
+    "checkFindings": 0,
+    "violations": 1,
+    "placed": 3,
+    "affordances": 2,
+    "tools": 7,
+    "draws": 3,
+    "cssBytes": 10517,
+    "palettes": [
+      "#6fdcea",
+      "#0c6e78"
+    ],
+    "renderedViews": 3
+  },
+  "verdict": {
+    "installedFromTarballs": true,
+    "typesResolveWithoutPathMapping": true,
+    "runsAtRuntime": true,
+    "theCheckerPasses": true,
+    "theInvariantFired": true,
+    "theLayoutPlacedNodes": true,
+    "affordancesWereDerived": true,
+    "anAgentSeatWasGenerated": true,
+    "theRendererPlannedAFrame": true,
+    "theSceneRendered": true,
+    "theThemeEmitted": true
+  },
+  "passed": true
+}

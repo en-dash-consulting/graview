@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./gpu": {
+      "types": "./dist/gpu.d.ts",
+      "default": "./dist/gpu.js"
     }
   },
   "scripts": {
@@ -19,14 +23,32 @@
     "@graview/layout": "workspace:*"
   },
   "peerDependencies": {
-    "vgpu": "^0.3.1"
+    "vgpu": "^0.3.1",
+    "@webgpu/types": "^0.1.60"
   },
   "peerDependenciesMeta": {
     "vgpu": {
+      "optional": true
+    },
+    "@webgpu/types": {
       "optional": true
     }
   },
   "devDependencies": {
     "zod": "^4.4.3"
+  },
+  "description": "The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL \u2014 see README.",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/endash/graview.git",
+    "directory": "packages/render"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

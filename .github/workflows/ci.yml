@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Changesets needs the history to tell what has changed since main.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # The declaration is the contract. An app that typechecks can still
+      # declare an edge to a kind nobody wrote, a rule with no invariant, or a
+      # palette nobody can read.
+      - name: graview check
+        run: pnpm check
+
+      # What would actually go in a tarball. A `files` allowlist is a claim,
+      # and the way it fails is silent.
+      - name: Inspect the packed tarballs
+        run: node scripts/inspect-pack.mjs
+
+      # And whether a stranger can install them. Inside the workspace every
+      # import resolves through a symlink and a path mapping, so an exports
+      # map can be wrong for a year and nothing else notices.
+      - name: Build a scratch app from the tarballs
+        run: node scripts/smoke-install.mjs
+
+  changeset:
+    # A version bump is a decision, and one nobody made is one nobody can
+    # explain later. This asks for it while the change is still in front of
+    # the person who made it.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: A package change needs a changeset
+        run: node scripts/require-changeset.mjs

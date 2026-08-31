@@ -25,5 +25,19 @@
   },
   "devDependencies": {
     "zod": "^4.4.3"
+  },
+  "description": "The primitive set, the three lenses, the workbench and the visual system.",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/endash/graview.git",
+    "directory": "packages/primitives"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

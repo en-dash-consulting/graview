@@ -1,5 +1,4 @@
-import type { Matrix4 } from "../platform/html-in-canvas.js";
-import { planeTransform } from "../platform/html-in-canvas.js";
+import { planeTransform, type Matrix4 } from "../platform/matrix.js";
 
 /**
  * Discrete z-planes with the camera locked to one axis. No free orbit: every
