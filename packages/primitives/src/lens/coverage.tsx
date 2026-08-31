@@ -395,6 +395,9 @@ export function CoverageView<S extends AnySchema>({
                 >
                   <div
                     data-graview-pick={row.id}
+                    // Emphasis in the DOM as well as in the paint, so what a
+                    // selection lights is a fact rather than a colour.
+                    data-graview-emphasis={lit.size === 0 ? "plain" : dim ? "dimmed" : "lit"}
                     title={row.label}
                     style={{
                       width: ROW_LABEL_WIDTH,

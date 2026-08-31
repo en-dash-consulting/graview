@@ -16,6 +16,7 @@
     "a11y": "node the household example/scripts/run-a11y.mjs",
     "shrunk": "node scripts/verify-shrunk.mjs",
     "watching": "node scripts/verify-watching.mjs",
+    "direct": "node scripts/verify-direct-manipulation.mjs",
     "dev:proposal": "pnpm --filter the bid-desk example dev",
     "a11y:proposal": "node the bid-desk example/scripts/run-a11y.mjs",
     "dev:the coaching example": "pnpm --filter the coaching example dev",

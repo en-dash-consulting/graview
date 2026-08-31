@@ -27,7 +27,7 @@ description: "A framework for building applications where a typed context graph 
 
 | Title | Status |
 |-------|--------|
-| [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | pending |
+| [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | completed |
 | [Graph core — @graview/core](./graph-core-graview-core/index.md) | completed |
 | [Platform capability validation](./platform-capability-validation/index.md) | completed |
 | [The constellation: the graph seen from outside, and jacking in from it](./the-constellation-the-graph-cb0397/index.md) | completed |

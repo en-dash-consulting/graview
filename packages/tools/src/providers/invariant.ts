@@ -15,7 +15,7 @@ const REPAIR_SCORE = 100;
 export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> {
   return {
     name: "invariant",
-    derive({ store, selection, violations }) {
+    derive({ store, selection, nodes, violations }) {
       const selected = new Set(selection);
       const touching = violations.filter(
         (violation) =>
@@ -80,7 +80,50 @@ export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> 
         });
       });
 
+      /*
+       * A rule that is HOLDING says so, rather than showing nothing.
+       *
+       * A rule node has no edges, so selecting one used to change nothing on
+       * screen and read as broken. Lighting what it judges fixed half of
+       * that; the other half is the case where it judges everything
+       * correctly — silence there is indistinguishable from a rule that does
+       * not work, and "nothing is wrong" is an answer.
+       *
+       * Which nodes are rules is derivable: an invariant declares the kind it
+       * is scoped to, and a kind may declare the invariant it requires.
+       * Nothing is authored per app.
+       */
+      for (const node of nodes) {
+        const judged = store
+          .allInvariants()
+          .filter((invariant) => {
+            if (invariant.scope === "graph") return false;
+            const scope = invariant.scope as {
+              kind: string;
+              match?: (candidate: never) => boolean;
+            };
+            if (scope.kind !== node.kind) return false;
+            return scope.match ? scope.match(node as never) : true;
+          });
+        if (judged.length === 0) continue;
+        if (touching.some((violation) => violation.subjectId === node.id)) continue;
+        observations.push({
+          id: `holds:${node.id}`,
+          text: `${labelOf(node)} holds — nothing currently breaks ${
+            judged.length === 1 ? "it" : `any of its ${judged.length} rules`
+          }`,
+          nodeIds: [node.id],
+        });
+      }
+
       return { affordances, observations };
     },
   };
+}
+
+/** A node's own label, falling back to its id. */
+function labelOf(node: { id: string } & Record<string, unknown>): string {
+  return typeof node["label"] === "string" && node["label"].length > 0
+    ? node["label"]
+    : node.id;
 }

@@ -1,6 +1,7 @@
 import { labelOf, type AnySchema, type KindOfSchema } from "@graview/core";
 import { createViews, type ReactViewRegistry, type ViewProps } from "@graview/react";
 import { Connections } from "./connections.js";
+import { Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
 
 /**
@@ -84,22 +85,14 @@ export function registerDefaultViews<S extends AnySchema>(
               alignItems: "start",
             }}
           >
-            <dl
-              style={{
-                margin: 0,
-                display: "grid",
-                gridTemplateColumns: "auto 1fr",
-                gap: "4px 14px",
-                fontSize: 13,
-              }}
-            >
-              {fields.map((field) => (
-                <div key={field.key} style={{ display: "contents" }}>
-                  <dt style={{ color: "var(--graview-ink-faint)" }}>{field.key}</dt>
-                  <dd style={{ margin: 0 }}>{field.value}</dd>
-                </div>
-              ))}
-            </dl>
+            {/*
+              * Every value is editable where a mutation writes it, and
+              * visibly read-only where none does. Reading a node closely is
+              * when you most want to change it, and the alternative was
+              * finding a named mutation in the strip and answering its
+              * arguments in a form.
+              */}
+            <Fields<S> id={node.id} hide={["label"]} />
             <Connections
               id={node.id}
               empty={`Nothing is connected to this ${String(kind)} yet.`}

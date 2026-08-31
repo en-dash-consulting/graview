@@ -17,6 +17,8 @@ export type {
 } from "./types.js";
 
 // The providers, individually, so an app can replace or reorder them.
+export { editableFields } from "./edit.js";
+export type { EditableField } from "./edit.js";
 export { invariantProvider } from "./providers/invariant.js";
 export { schemaProvider } from "./providers/schema.js";
 export { structureProvider } from "./providers/structure.js";

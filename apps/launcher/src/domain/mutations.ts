@@ -100,8 +100,9 @@ export const justify = defineMutation(
 export const noteCapability = defineMutation(
   "note-capability",
   {
-    title: "Annotate",
-    description: "Leave a short note on a capability.",
+    title: "Leave a note on it",
+    description:
+      "Attach a short working note to a capability — what you tried, what is odd about it, what to check next.",
     subject: { kinds: ["capability"], arg: "id" },
     input: z.object({ id: nodeRef(["capability"]), note: z.string().min(1) }),
     describe: (args, graph) => `Note on ${labelOf(graph as Reader, args.id)}`,

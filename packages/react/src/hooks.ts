@@ -10,10 +10,12 @@ import {
 import {
   applyAffordance,
   deriveAffordances,
+  editableFields,
   previewAffordance,
   type Affordance,
   type AffordanceSet,
   type DeriveOptions,
+  type EditableField,
 } from "@graview/tools";
 import { useCallback, useEffect, useMemo } from "react";
 import { useGraph, useGraview } from "./context.js";
@@ -224,4 +226,39 @@ export function useJackIn() {
     () => ({ jackedIn, enter, exit, isJackedIn: jackedIn !== null }),
     [jackedIn, enter, exit],
   );
+}
+
+/**
+ * The fields of a node that can be changed where they are shown, and the way
+ * to change one.
+ *
+ * `commit` runs the mutation the framework found, with the author set to a
+ * person — so an in-place edit lands in the op log, can be undone, and is
+ * judged by the invariants exactly like an edit made from the actions strip.
+ * There is no second write path.
+ */
+export function useEditableFields<S extends AnySchema>(
+  id: string | null,
+): {
+  readonly fields: readonly EditableField[];
+  commit: (field: EditableField, value: unknown, rest?: Record<string, unknown>) => void;
+} {
+  const { store } = useGraview<S>();
+  const nodes = useGraph<S>();
+  const fields = useMemo(
+    () => (id === null ? [] : editableFields(store, id)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, id, nodes],
+  );
+  const commit = useCallback(
+    (field: EditableField, value: unknown, rest: Record<string, unknown> = {}) => {
+      const call = field.call(value);
+      store.apply(
+        { name: call.name, args: { ...call.args, ...rest } },
+        { author: { kind: "human" } },
+      );
+    },
+    [store],
+  );
+  return { fields, commit };
 }
