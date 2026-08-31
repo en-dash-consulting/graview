@@ -218,7 +218,25 @@ export interface CoverageViewProps<S extends AnySchema> extends ViewProps<S> {
 }
 
 const ROW_LABEL_WIDTH = 250;
-const HEADER_HEIGHT = 116;
+
+/**
+ * The header's geometry, DERIVED from the angle rather than guessed alongside
+ * it.
+ *
+ * A rotated label is a right triangle: a 138-pixel label at 58° rises 117 and
+ * runs 73. The height was 116 and the rise is 117, so every column header was
+ * clipped by exactly one pixel at the top — enough to shave the ascenders off
+ * a row of headings and make the whole strip look cut off, and invisible in
+ * any test that was not looking at it.
+ *
+ * Three constants that have to agree, written as one that cannot disagree.
+ */
+const HEADER_ANGLE = 58;
+const HEADER_MAX = 138;
+const RISE = Math.sin((HEADER_ANGLE * Math.PI) / 180);
+const RUN = Math.cos((HEADER_ANGLE * Math.PI) / 180);
+/** Plus a little, so a descender is not shaved either. */
+const HEADER_HEIGHT = Math.ceil(HEADER_MAX * RISE) + 8;
 /**
  * Room for the last column's header to ascend into.
  *
@@ -227,8 +245,7 @@ const HEADER_HEIGHT = 116;
  * it on the shared container keeps the header strip and the rows aligned;
  * padding one and not the other is how a matrix ends up one column out.
  */
-const HEADER_OVERHANG = 52;
-const HEADER_MAX = 138;
+const HEADER_OVERHANG = Math.ceil(HEADER_MAX * RUN);
 
 /**
  * The lens's aggregate view.
@@ -342,7 +359,7 @@ export function CoverageView<S extends AnySchema>({
                     bottom: 6,
                     left: "50%",
                     transformOrigin: "left bottom",
-                    transform: "rotate(-58deg)",
+                    transform: `rotate(-${HEADER_ANGLE}deg)`,
                     whiteSpace: "nowrap",
                     maxWidth: HEADER_MAX,
                     overflow: "hidden",

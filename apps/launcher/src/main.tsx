@@ -442,3 +442,12 @@ applyScheme(initialScheme());
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
 createRoot(root).render(<Launcher />);
+
+/*
+ * A flag a harness can wait for.
+ *
+ * The other three apps have one and this did not, so every harness pointed at
+ * the desk had to wait on a timer and hope — which is how a screenshot of a
+ * half-painted page gets taken and believed.
+ */
+(window as unknown as Record<string, unknown>)["__launcherReady"] = { renderer: "dom" };

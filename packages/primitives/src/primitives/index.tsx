@@ -29,6 +29,20 @@ export interface PanelProps {
    * deliberate rather than as a rendering that failed halfway.
    */
   readonly fit?: boolean;
+  /**
+   * A card in the scene; a DOCUMENT on a page.
+   *
+   * The same component renders in both places — that is the two-mode contract
+   * — but a card is a thing with edges sitting on a ground, and a full page is
+   * not. Lifting a short record out of the scene drew a bordered box 250
+   * pixels tall floating in six hundred pixels of nothing, which reads as a
+   * rendering that stopped rather than as a document that is short.
+   *
+   * `page` drops the border, the shadow, the fill and the fixed height, and
+   * lets the title be a heading rather than a card's label. Nothing else
+   * changes, so a view does not fork.
+   */
+  readonly variant?: "card" | "page";
 }
 
 const TONES: Record<NonNullable<PanelProps["tone"]>, CSSProperties> = {
@@ -87,33 +101,41 @@ export function Panel({
   children,
   style,
   fit = false,
+  variant = "card",
 }: PanelProps) {
   const scroller = useRef<HTMLDivElement | null>(null);
   const overflowing = useOverflowing(scroller);
+  const page = variant === "page";
   return (
     <div
       data-graview-primitive="panel"
+      data-graview-variant={variant}
       data-selected={selected || undefined}
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: 7,
-        height: fit ? "auto" : "100%",
-        maxHeight: "100%",
-        padding: 15,
+        gap: page ? 12 : 7,
+        height: page || fit ? "auto" : "100%",
+        maxHeight: page ? "none" : "100%",
+        padding: page ? 0 : 15,
         boxSizing: "border-box",
-        borderRadius: 12,
+        borderRadius: page ? 0 : 12,
         // A lit edge over the panel's own ground. Not `backdrop-filter`: a
         // captured subtree has nothing behind it, so the effect is a no-op on
         // the GPU path and the panel would differ between renderers.
-        border: `1px solid ${
-          selected ? "var(--graview-accent, #2f6f5e)" : "var(--graview-edge, #e4e0d8)"
-        }`,
-        boxShadow: selected
-          ? "0 0 0 1px var(--graview-accent-dim), var(--graview-lift-low)"
-          : "var(--graview-lift-low)",
-        overflow: "hidden",
+        border: page
+          ? "none"
+          : `1px solid ${
+              selected ? "var(--graview-accent, #2f6f5e)" : "var(--graview-edge, #e4e0d8)"
+            }`,
+        boxShadow: page
+          ? "none"
+          : selected
+            ? "0 0 0 1px var(--graview-accent-dim), var(--graview-lift-low)"
+            : "var(--graview-lift-low)",
+        overflow: page ? "visible" : "hidden",
         ...TONES[tone],
+        ...(page ? { background: "transparent" } : {}),
         // The panel's own ground, handed to the scroll shadow so its cover
         // gradients match whatever tone this panel is.
         ["--graview-panel-bg" as string]: TONES[tone].background,
@@ -124,10 +146,11 @@ export function Panel({
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
           <strong
             style={{
-              fontSize: 15,
-              lineHeight: 1.25,
-              fontWeight: 560,
-              letterSpacing: "0.005em",
+              // A document's heading, not a card's label.
+              fontSize: page ? 25 : 15,
+              lineHeight: page ? 1.15 : 1.25,
+              fontWeight: page ? 600 : 560,
+              letterSpacing: page ? "-0.012em" : "0.005em",
             }}
           >
             {title}
@@ -148,7 +171,9 @@ export function Panel({
         </div>
       )}
       {subtitle === undefined ? null : (
-        <div style={{ fontSize: 13, ...MUTED_TEXT }}>{subtitle}</div>
+        <div style={{ fontSize: page ? 14.5 : 13, lineHeight: 1.5, ...MUTED_TEXT }}>
+          {subtitle}
+        </div>
       )}
       {/*
         * Content that outgrows the panel SCROLLS rather than disappearing.
@@ -161,17 +186,28 @@ export function Panel({
         */}
       <div
         ref={scroller}
-        className="graview-scroll"
+        // A page does not scroll inside itself — the page scrolls — so it must
+        // not carry the scroll region's cover gradients either. They paint the
+        // panel's own ground, which on a page is a white band across a
+        // document that has no card behind it.
+        className={page ? undefined : "graview-scroll"}
         // A tab stop ONLY where there is something to scroll to, and named by
         // the panel so it is not an anonymous stop in the order.
-        {...(overflowing
+        {...(overflowing && !page
           ? {
               tabIndex: 0,
               role: "region",
               ...(typeof title === "string" ? { "aria-label": title } : {}),
             }
           : {})}
-        style={{ display: "flex", flexDirection: "column", gap: 7, flex: "1 1 auto" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: page ? 22 : 7,
+          flex: "1 1 auto",
+          // A page never scrolls inside itself: the page scrolls.
+          ...(page ? { overflow: "visible" } : {}),
+        }}
       >
         {children}
       </div>
@@ -195,6 +231,9 @@ export interface ChipProps {
 
 /** One small labelled thing. The glyph-fidelity workhorse. */
 export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
+  // A capped chip must be able to say the rest somewhere, or capping it loses
+  // information rather than tidying it.
+  const full = typeof label === "string" && label.length > 28 ? label : undefined;
   // Hue identifies the kind; luminance carries the reading. A chip is an
   // outline with a trace of its hue behind it, so a dozen of them together
   // stay a list rather than becoming confetti.
@@ -204,7 +243,7 @@ export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
       data-graview-primitive="chip"
       data-selected={selected || undefined}
       data-graview-pick={pickId}
-      title={title}
+      title={title ?? full}
       style={{
         cursor: pickId ? "pointer" : undefined,
         display: "inline-flex",
@@ -218,6 +257,18 @@ export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
         fontSize: 12,
         lineHeight: 1.5,
         whiteSpace: "nowrap",
+        /*
+         * A chip is a SMALL labelled thing. One that is a thousand pixels wide
+         * is not a chip, it is a sentence with a border — which is what a
+         * rationale rendered at glyph fidelity became, overflowing its card by
+         * 938 pixels and out into the scene.
+         *
+         * Capped and ellipsised, with the whole text in the tooltip. Thirty
+         * characters is about where a label stops being glanceable anyway.
+         */
+        maxWidth: "28ch",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
         letterSpacing: "0.01em",
         // Lightness and alpha come from the THEME: the same tint that reads
         // as a lit outline in the dark reads as a wash on paper, and a fixed

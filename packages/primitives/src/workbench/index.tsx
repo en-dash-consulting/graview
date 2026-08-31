@@ -168,7 +168,7 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
  * built around a centred focus has to spare.
  */
 export function Inspector() {
-  const { store, menuAt, setMenuAt } = useGraview<AnySchema>();
+  const { store, menuAt, setMenuAt, jackedIn } = useGraview<AnySchema>();
   const { selection, clear } = useSelection();
   const { affordances, withheld, observations } = useAffordances();
   const { apply, preview } = useApplyAffordance();
@@ -211,6 +211,15 @@ export function Inspector() {
   }, [menuAt, setMenuAt]);
 
   if (selection.length === 0) return null;
+
+  /*
+   * Whether the strip should say what is selected.
+   *
+   * It should not when the page you are looking at IS that thing: the document
+   * has a heading, and the same string twice on one screen reads as a mistake
+   * even when both are correct.
+   */
+  const named = !(jackedIn !== null && selection.length === 1 && selection[0] === jackedIn);
 
   const INLINE = 4;
   // At the pointer there is room for the lot; in the strip there is not.
@@ -264,15 +273,43 @@ export function Inspector() {
             }),
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-        <strong style={{ fontSize: 13.5, whiteSpace: "nowrap" }}>
-          {selection.length === 1 ? nameOf(store, selection[0]!) : `${selection.length} selected`}
-        </strong>
-        {kinds.length > 0 ? (
-          <span style={{ fontSize: 11, color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}>
-            {kinds.join(" · ")}
-          </span>
-        ) : null}
+      {/*
+        * The heading row disappears entirely when it would hold nothing but
+        * the dismiss control. An empty bar with one × in it reads as a
+        * rendering that lost its contents.
+        */}
+      <div
+        style={{
+          display: named || observations.length > 0 ? "flex" : "none",
+          alignItems: "baseline",
+          gap: 8,
+          minWidth: 0,
+        }}
+      >
+        {/*
+          * The name, unless the page you are on is already that name.
+          *
+          * Jacked into one thing, the header says what it is and the strip
+          * said it again three inches below — and the same string twice on one
+          * screen reads as a mistake even when both are correct. What the
+          * strip is FOR here is the actions.
+          */}
+        {!named ? null : (
+          <>
+            <strong style={{ fontSize: 13.5, whiteSpace: "nowrap" }}>
+              {selection.length === 1
+                ? nameOf(store, selection[0]!)
+                : `${selection.length} selected`}
+            </strong>
+            {kinds.length > 0 ? (
+              <span
+                style={{ fontSize: 11, color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
+              >
+                {kinds.join(" · ")}
+              </span>
+            ) : null}
+          </>
+        )}
 
         {/* What is true about it, in one line. The rest is a count, not a
             list — a strip that grows to five bullet points is a panel again. */}

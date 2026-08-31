@@ -1,7 +1,7 @@
-import { labelOf, type AnySchema, type KindOfSchema } from "@graview/core";
+import { describeNode, labelOf, type AnySchema, type KindOfSchema } from "@graview/core";
 import { createViews, type ReactViewRegistry, type ViewProps } from "@graview/react";
 import { Connections } from "./connections.js";
-import { Fields } from "./editable.js";
+import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
 
 /**
@@ -25,6 +25,28 @@ export function hueFor(kind: string): number {
 }
 
 const HIDDEN_FIELDS = new Set(["id", "kind", "label"]);
+
+/**
+ * The field a shortened label was shortened FROM, when there is one.
+ *
+ * Matched by stem rather than by name, because which field a label came from
+ * is the app's business — `label: (node) => summarise(node.text)` names no
+ * field the framework can see, and asking every app to declare it would be
+ * asking them to repeat themselves.
+ */
+function longFormOf(
+  node: Record<string, unknown>,
+  short: string,
+): string | undefined {
+  if (!short.endsWith("…") && !short.endsWith("...")) return undefined;
+  const stem = short.replace(/[…]|\.\.\.$/g, "").trim();
+  if (stem.length < 12) return undefined;
+  for (const value of Object.values(node)) {
+    if (typeof value !== "string") continue;
+    if (value.length > stem.length && value.startsWith(stem)) return value;
+  }
+  return undefined;
+}
 
 /** The fields worth showing, in declaration order, scalars only. */
 function salientFields(
@@ -56,16 +78,52 @@ export function registerDefaultViews<S extends AnySchema>(
     const Full = (props: ViewProps<S>) => {
       const node = props.node as (Record<string, unknown> & { id: string; kind: string }) | undefined;
       if (!node) return null;
-      const fields = salientFields(node, 8);
+      /*
+       * On a page, the heading is the WHOLE thing.
+       *
+       * A kind whose label is its own prose shortened — a rationale, a note, a
+       * reason — gets a heading cut at sixty characters, which is right on a
+       * card in the scene and wrong on a page that has room for all of it.
+       * Shortening then ALSO listing the full text below is worse again: the
+       * same sentence twice, one of them mutilated.
+       *
+       * So the page looks for the long form of its own heading and uses that,
+       * and `Fields` then drops it as already said. The abbreviation was for
+       * the card.
+       */
+      const short = labelOf(definition, node);
+      const heading =
+        props.mode === "fullscreen" ? (longFormOf(node, short) ?? short) : short;
       return (
         <Panel
-          title={labelOf(definition, node)}
-          subtitle={definition?.description ?? String(kind)}
+          // The name is the rename control. Nothing else on the page repeats
+          // it, so the thing you click to change it is the thing itself.
+          title={<EditableTitle<S> nodeId={node.id}>{heading}</EditableTitle>}
+          /*
+           * What THIS node is, when the declaration can say — and only the
+           * kind's own description as a fallback.
+           *
+           * A subtitle that is the kind's description is identical on every
+           * node of that kind, which makes it furniture rather than
+           * information: it tells you what a rationale is, on a page you
+           * reached by choosing one particular rationale.
+           */
+          subtitle={
+            // `describeNode` falls back to "<kind> <label>", which would put
+            // the heading back under the heading — so only take it when the
+            // declaration actually supplied one.
+            definition?.describe
+              ? describeNode(definition, node)
+              : (definition?.description ?? String(kind))
+          }
           selected={props.selected}
           // Something broken is marked WHERE IT IS. A violation implicating
           // two people has to show on those people, not only in a list
           // somebody has to go and open.
           {...(props.flagged?.includes(node.id) ? { tone: "warning" as const } : {})}
+          // A card in the scene; a document on a page. Same component, and the
+          // only difference is which of those two things it is sitting on.
+          variant={props.mode === "fullscreen" ? "page" : "card"}
           fit
         >
           {/*
@@ -92,7 +150,13 @@ export function registerDefaultViews<S extends AnySchema>(
               * finding a named mutation in the strip and answering its
               * arguments in a form.
               */}
-            <Fields<S> id={node.id} hide={["label"]} />
+            <Fields<S>
+              id={node.id}
+              // What the panel already said: its title and its subtitle. A
+              // record repeating its own heading is what made this read as a
+              // debug dump rather than as a page about something.
+              shown={[heading, short, definition?.description]}
+            />
             <Connections
               id={node.id}
               empty={`Nothing is connected to this ${String(kind)} yet.`}
@@ -269,7 +333,25 @@ export function registerDefaultViews<S extends AnySchema>(
           {definition?.description && !nested ? (
             <span
               className="graview-kind-note"
-              style={{ fontSize: 11.5, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
+              title={definition.description}
+              style={{
+                fontSize: 11.5,
+                lineHeight: 1.45,
+                color: "var(--graview-ink-muted)",
+                /*
+                 * Clamped to the card rather than overflowing it.
+                 *
+                 * A kind's description is a sentence and a kind card is
+                 * ninety pixels tall, so a long one spilled five pixels past
+                 * the card's edge — small, and the sort of thing that reads
+                 * as a rendering error rather than as a long sentence. The
+                 * whole of it stays in the tooltip.
+                 */
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: 3,
+                overflow: "hidden",
+              }}
             >
               {definition.description}
             </span>

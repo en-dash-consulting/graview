@@ -1,4 +1,8 @@
-import { createSchema, defineNode } from "@graview/core";
+import {
+  createSchema,
+  defineNode,
+  summarise,
+} from "@graview/core";
 import { z } from "zod";
 
 /**
@@ -94,7 +98,7 @@ export const rationale = defineNode("rationale", {
   fields: z.object({ text: z.string().min(1) }),
   edges: { justifies: { to: "*", description: "the decision this explains" } },
   plural: "Reasons",
-  label: (node) => node.text.slice(0, 60),
+  label: (node) => summarise(node.text),
 });
 
 export const launcherSchema = createSchema([desk, app, capability, rule, rationale]);

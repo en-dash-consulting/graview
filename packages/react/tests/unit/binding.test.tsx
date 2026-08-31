@@ -246,7 +246,16 @@ describe("the two-mode contract", () => {
     );
     expect(html).toContain('role="dialog"');
     expect(html).toContain('aria-modal="true"');
-    expect(html).toContain("Back to the scene");
+    // A way out, and — the part that was missing — a header saying WHERE YOU
+    // ARE. A full page raises exactly one question the scene did not already
+    // answer, and a lone button in an empty bar does not answer it.
+    expect(html).toContain("← Back");
+    // The KIND in the chrome; the NAME is the document's own heading. Chrome
+    // that repeats the h1 reads as a mistake even when both are correct.
+    expect(html).toContain("person");
+    expect(html).toContain("Ana");
+    // Named for assistive technology by the thing itself, not by its id.
+    expect(html).toContain('aria-label="Ana in full view"');
   });
 
   it("renders nothing when nothing is jacked in", () => {
