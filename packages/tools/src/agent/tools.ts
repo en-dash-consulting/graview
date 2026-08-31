@@ -4,6 +4,7 @@ import {
   type GraphDiff,
   type JsonSchema,
   type NodeOfSchema,
+  type Principal,
   type Store,
 } from "@graview/core";
 import {
@@ -40,11 +41,12 @@ export type ToolResult<S extends AnySchema> =
   | { readonly ok: false; readonly error: string };
 
 export interface ToolRuntimeOptions<S extends AnySchema> {
-  readonly author?: {
-    kind: "human" | "agent" | "rule";
-    id?: string;
-    session?: string;
-  };
+  /**
+   * Who this seat acts as. A principal is an author with roles, so the seat's
+   * attribution and its authorisation are the same fact — there is no way to
+   * write as one participant and be permitted as another.
+   */
+  readonly author?: Principal;
   readonly derive?: DeriveOptions<S>;
   /** Refuse every mutating tool. Useful for a read-only agent seat. */
   readonly readOnly?: boolean;
@@ -197,8 +199,17 @@ export function createToolRuntime<S extends AnySchema>(
   store: Store<S>,
   options: ToolRuntimeOptions<S> = {},
 ): ToolRuntime<S> {
+  /*
+   * Only what this seat MAY do.
+   *
+   * The narrowing is the store's, not the runtime's: a seat holding a
+   * principal gets tools for what that principal can run, and there is no
+   * second list to keep in step with the policy. A seat that then calls a
+   * mutation it was not given still hits the store's refusal, because the
+   * schema is a convenience and the enforcement is elsewhere.
+   */
   const mutationTools: ToolDefinition[] = store
-    .allMutations()
+    .permittedMutations(options.author ?? { kind: "agent" })
     .map((mutation) => {
       const tool = mutationToolSchema(mutation);
       return {
@@ -225,6 +236,21 @@ export function createToolRuntime<S extends AnySchema>(
     try {
       const definition = definitions.find((tool) => tool.name === name);
       if (!definition) {
+        /*
+         * A tool this seat may not use EXISTS, and saying "unknown" would be
+         * a lie an agent then reasons from — it would conclude the capability
+         * is missing and go looking for a workaround. The same honesty the
+         * interface owes a person: it is there, you may not use it, here is
+         * who can.
+         */
+        const withheld = store.allMutations().find((mutation) => mutation.name === name);
+        if (withheld) {
+          const verdict = store.permits(
+            { name, args },
+            options.author ?? { kind: "agent" },
+          );
+          if (!verdict.ok) return { ok: false, error: verdict.refusal.message };
+        }
         return {
           ok: false,
           error: `Unknown tool "${name}". Available: ${definitions.map((t) => t.name).join(", ")}`,
@@ -285,6 +311,10 @@ export function createToolRuntime<S extends AnySchema>(
           const selection = (args["selection"] as string[]) ?? [];
           const derived = deriveAffordances(store, selection, {
             ...options.derive,
+            // The seat asks as ITSELF, so what it is offered is what it may
+            // do — and what it may not is stated rather than hidden, which
+            // is how an agent learns a capability exists that it lacks.
+            ...(options.author ? { principal: options.author } : {}),
             ...(args["context"]
               ? { context: args["context"] as Record<string, unknown> }
               : {}),

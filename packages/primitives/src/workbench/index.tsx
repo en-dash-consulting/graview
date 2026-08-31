@@ -170,7 +170,7 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
 export function Inspector() {
   const { store, menuAt, setMenuAt } = useGraview<AnySchema>();
   const { selection, clear } = useSelection();
-  const { affordances, observations } = useAffordances();
+  const { affordances, withheld, observations } = useAffordances();
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -325,8 +325,15 @@ export function Inspector() {
           data-testid="no-affordances"
           style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
         >
-          Nothing can be done with {kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"} yet
-          — no mutation declares {kinds.length === 1 ? "it" : "them"} as a subject.
+          {withheld.length > 0
+            ? // "Nothing can be done" would be a lie here: things can be
+              // done, by somebody else. Which is a different sentence.
+              `Nothing you may do with ${
+                kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"
+              } — ${withheld.length} action${withheld.length === 1 ? "" : "s"} withheld.`
+            : `Nothing can be done with ${
+                kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"
+              } yet — no mutation declares ${kinds.length === 1 ? "it" : "them"} as a subject.`}
         </p>
       ) : (
         <ol
@@ -397,6 +404,51 @@ export function Inspector() {
           ) : null}
         </ol>
       )}
+
+      {/*
+        * Actions you may not take are SHOWN, disabled, with the reason.
+        *
+        * Hiding them teaches people the software is broken — they saw a
+        * colleague do this yesterday and now the button is gone, so the
+        * software is unreliable rather than the permission being deliberate.
+        * The framework already treats an empty action list as a result and
+        * explains it; this is the same honesty pointed at a different cause.
+        */}
+      {withheld.length > 0 ? (
+        <ul
+          data-testid="withheld"
+          style={{
+            margin: 0,
+            padding: 0,
+            listStyle: "none",
+            display: "flex",
+            flexDirection: atPointer ? "column" : "row",
+            flexWrap: "wrap",
+            gap: atPointer ? 2 : 5,
+          }}
+        >
+          {withheld.slice(0, atPointer ? withheld.length : INLINE).map((action) => (
+            <li key={action.id}>
+              <button
+                type="button"
+                disabled
+                data-affordance={action.id}
+                data-withheld={action.refusal.wouldNeed.join(",") || "nobody"}
+                title={action.refusal.message}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: 12.5,
+                  borderRadius: 8,
+                  borderStyle: "dashed",
+                  ...(atPointer ? { width: "100%", textAlign: "left", background: "none" } : {}),
+                }}
+              >
+                {action.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       {/* The arguments appear in place, under the action that asked for them,
           rather than turning the strip into a form. */}

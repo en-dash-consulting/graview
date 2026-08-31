@@ -1,4 +1,4 @@
-import type { AnySchema, NodeOfSchema, Store, Violation } from "@graview/core";
+import type { AnySchema, NodeOfSchema, Refusal, Store, Violation } from "@graview/core";
 
 /** Which provider contributed an action. Ranking reads this. */
 export type ProviderName = "invariant" | "structure" | "schema" | "lens" | "llm";
@@ -75,8 +75,19 @@ export interface AffordanceProvider<S extends AnySchema> {
   };
 }
 
+/** An action that exists, that this principal may not take, and why. */
+export interface WithheldAffordance extends Affordance {
+  readonly refusal: Refusal;
+}
+
 export interface AffordanceSet {
   readonly affordances: readonly Affordance[];
+  /**
+   * Actions withheld by permission. Stated rather than hidden: an interface
+   * shows them disabled with the reason, and an agent is told a capability
+   * exists that it may not use, which is not the same as it not existing.
+   */
+  readonly withheld: readonly WithheldAffordance[];
   readonly observations: readonly Observation[];
   /** Milliseconds spent deriving, so a caller can see it stays cheap. */
   readonly ms: number;

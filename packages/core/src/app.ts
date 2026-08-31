@@ -1,5 +1,6 @@
 import type { InvariantDefinition } from "./invariants/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
+import type { Policy } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { ViewRegistry } from "./views/types.js";
 
@@ -52,6 +53,13 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * existed, which is the usual way that assumption gets found.
    */
   readonly lenses?: readonly LensDeclaration[];
+  /**
+   * Who may run what. Declared on the app so `graview check` can read it —
+   * a mutation no role can ever run and a role that may do nothing are both
+   * mistakes in the declaration, findable before anyone meets a button they
+   * cannot press.
+   */
+  readonly policy?: Policy;
 }
 
 export function defineApp<S extends AnySchema>(app: GraviewApp<S>): GraviewApp<S> {

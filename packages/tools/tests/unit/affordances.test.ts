@@ -376,6 +376,78 @@ describe("lens and LLM providers", () => {
   });
 });
 
+/**
+ * Permission is another input to the derivation, so a narrowed interface and
+ * a narrowed agent seat come from one policy rather than two lists.
+ */
+describe("what a principal may do", () => {
+  const guarded = () => {
+    const live = store();
+    // A store carrying a policy, built from the same pieces as everywhere
+    // else in this file so the difference is only the policy.
+    return new Store({
+      schema,
+      mutations: [reassign, reday, rename],
+      invariants: [dutyCap],
+      policy: {
+        roles: ["coach", "player"],
+        grants: [
+          { roles: ["coach"], mutations: "*" },
+          { roles: ["player"], mutations: ["reday"] },
+        ],
+      },
+      snapshot: live.graph.snapshot(),
+    });
+  };
+  const player = { kind: "human" as const, roles: ["player"] };
+  const coach = { kind: "human" as const, roles: ["coach"] };
+
+  it("offers only what the principal may run, with no per-app filtering", () => {
+    const derived = deriveAffordances(guarded(), ["d1"], { principal: player });
+    expect([...new Set(derived.affordances.map((a) => a.mutation))]).toEqual(["reday"]);
+  });
+
+  it("states what it withheld, and who could do it", () => {
+    /*
+     * Hidden, an action that a colleague used yesterday teaches you the
+     * software is broken. Stated, it teaches you the permission is
+     * deliberate — and names the role that has it.
+     */
+    const derived = deriveAffordances(guarded(), ["d1"], { principal: player });
+    const rejected = derived.withheld.find((a) => a.mutation === "rename")!;
+    expect(rejected.refusal.wouldNeed).toEqual(["coach"]);
+    expect(rejected.refusal.message).toContain("coach can");
+  });
+
+  it("withholds nothing from a principal who may do everything", () => {
+    expect(deriveAffordances(guarded(), ["d1"], { principal: coach }).withheld).toEqual([]);
+  });
+
+  it("gives an agent seat tools for what its own principal may run", () => {
+    const seat = createToolRuntime(guarded(), { author: { kind: "agent", roles: ["player"] } });
+    const mutating = seat.definitions.filter((tool) => tool.mutating).map((tool) => tool.name);
+    // `undo_batch` stays — taking back your own work is legitimate — but the
+    // store refuses undoing a batch whose mutation this principal may not run,
+    // or undo would be the way around the policy.
+    expect(mutating.filter((name) => name !== "undo_batch")).toEqual(["reday"]);
+  });
+
+  it("refuses a seat that calls a mutation it was not given a tool for", () => {
+    /*
+     * The narrowed schema is a convenience; the enforcement is the store's.
+     * A seat that composes the call by hand hits exactly the same wall.
+     */
+    const seat = createToolRuntime(guarded(), { author: { kind: "agent", roles: ["player"] } });
+    return seat
+      .call("rename", { id: "d1", label: "Nope" })
+      .then((result) => {
+        expect(result.ok).toBe(false);
+        if (result.ok) return;
+        expect(result.error).toContain("Not permitted");
+      });
+  });
+});
+
 describe("applying an affordance", () => {
   it("previews as a diff before it applies", () => {
     const s = store();

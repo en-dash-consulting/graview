@@ -13,6 +13,8 @@ import { compileMutation } from "./mutations/define-mutation.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog } from "./ops/log.js";
 import type { Author, Batch, Operation } from "./ops/types.js";
+import { permits, permittedMutations } from "./permissions/policy.js";
+import { PermissionDeniedError, type Policy, type Principal } from "./permissions/types.js";
 import { checkUndo, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 
@@ -27,10 +29,22 @@ export interface StoreOptions<S extends AnySchema> {
   readonly now?: () => string;
   readonly validate?: boolean;
   readonly invariantOptions?: EvaluateOptions<S>;
+  /**
+   * Who may run what. Absent means permission is not a concern here.
+   *
+   * It lives on the STORE and nowhere else. The tool runtime calls the same
+   * mutations a person does, so a check in a React component is not a
+   * permission system — it is a suggestion, and the agent seat is the bypass.
+   */
+  readonly policy?: Policy;
 }
 
 export interface ApplyOptions {
-  readonly author?: Author;
+  /**
+   * Who is acting. A principal is an author with roles, so the thing the log
+   * blames is the thing the policy judged.
+   */
+  readonly author?: Author | Principal;
   /** Groups several mutations under one gesture or one agent turn. */
   readonly batch?: string;
   readonly intent?: string;
@@ -79,6 +93,7 @@ export class Store<S extends AnySchema> {
   private readonly mutations = new Map<string, AnyMutationDefinition<S>>();
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
+  readonly policy: Policy | undefined;
   private readonly nextId: () => string;
   private readonly now: () => string;
   private counter = 0;
@@ -88,6 +103,7 @@ export class Store<S extends AnySchema> {
     this.schema = options.schema;
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
+    this.policy = options.policy;
     let n = 0;
     this.nextId = options.ids ?? (() => `op${++n}`);
     this.now = options.now ?? (() => new Date(0).toISOString());
@@ -127,6 +143,48 @@ export class Store<S extends AnySchema> {
 
   allInvariants(): readonly InvariantDefinition<S>[] {
     return this.invariants;
+  }
+
+  /**
+   * Whether a principal may run a call, and — when not — who could.
+   *
+   * Public because an interface has to be able to ASK rather than guess: an
+   * action withheld by permission is stated rather than hidden, and stating
+   * it needs the same answer the enforcement uses. One source, two readings.
+   */
+  permits(
+    call: MutationCall,
+    principal: Principal = HUMAN,
+  ): ReturnType<typeof permits> {
+    return permits(this.policy, principal, call.name, this.subjectKindOf(call));
+  }
+
+  /**
+   * The mutations a principal may run at all.
+   *
+   * This is what narrows an agent seat's generated tool schema. The seat
+   * holds a principal; its tools are what that principal can do; there is no
+   * second list to keep in step.
+   */
+  permittedMutations(principal: Principal = HUMAN): readonly AnyMutationDefinition<S>[] {
+    return permittedMutations(this.policy, principal, this.allMutations());
+  }
+
+  /**
+   * The kind a call acts on, read off the mutation's own subject binding.
+   *
+   * Undefined when the mutation declares no subject, or when the argument
+   * names a node that is not there — an add, say. A grant restricted by kind
+   * refuses that case rather than allowing it: the safe reading of "I could
+   * not tell what this acts on" is no.
+   */
+  private subjectKindOf(call: MutationCall): string | undefined {
+    const definition = this.mutations.get(call.name);
+    const subject = definition?.subject;
+    if (!subject) return undefined;
+    const id = call.args[subject.arg];
+    if (typeof id !== "string") return undefined;
+    return this.graph.getNode(id)?.kind as string | undefined;
   }
 
   /** Current violations, evaluated fresh — nothing is cached or stale. */
@@ -201,6 +259,22 @@ export class Store<S extends AnySchema> {
 
     const before = this.violations();
     const rollback = this.graph.snapshot();
+
+    /*
+     * Permission is checked for the WHOLE gesture before any of it runs.
+     *
+     * A batch that applied three of five mutations and then refused the
+     * fourth would leave the graph in a state nobody asked for, and the
+     * rollback below is for errors rather than for policy. Refusing first is
+     * also the honest answer to "may I do this": the answer must not depend
+     * on how far through the list you got.
+     */
+    if (this.policy) {
+      for (const call of calls) {
+        const verdict = this.permits(call, author as Principal);
+        if (!verdict.ok) throw new PermissionDeniedError(verdict.refusal);
+      }
+    }
 
     try {
       for (const call of calls) {
@@ -302,6 +376,29 @@ export class Store<S extends AnySchema> {
 
     const batch = options.batch ?? `undo:${++this.counter}`;
     const author = options.author ?? HUMAN;
+
+    /*
+     * Undo is a CHANGE, and it is judged like one.
+     *
+     * Without this, undo is the way around the policy: a principal who may
+     * not reassign a run could take back somebody else's reassignment and
+     * arrive at exactly the state they were refused. What you may undo is
+     * what you may have done — the mutation each operation ran, judged
+     * again now.
+     */
+    if (this.policy) {
+      for (const target of check.ops) {
+        if (!target.mutation) continue;
+        const verdict = this.permits(target.mutation, author as Principal);
+        if (!verdict.ok) {
+          throw new PermissionDeniedError({
+            ...verdict.refusal,
+            message: `Not permitted to undo "${target.intent}": ${verdict.refusal.message}`,
+          });
+        }
+      }
+    }
+
     const rollback = this.graph.snapshot();
     const before = this.violations();
     const ops: Operation[] = [];

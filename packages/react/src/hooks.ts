@@ -119,28 +119,33 @@ export function useImplicated(): readonly string[] {
 export function useAffordances<S extends AnySchema>(
   options: DeriveOptions<S> = {},
 ): AffordanceSet {
-  const { store, selection } = useGraview<S>();
+  const { store, selection, principal } = useGraview<S>();
   const nodes = useGraph<S>();
   return useMemo(
-    () => deriveAffordances(store, selection, options),
+    // Asked as WHOEVER IS HERE, so what the strip offers is what the store
+    // would accept — and what it withholds is stated with a reason rather
+    // than quietly missing.
+    () => deriveAffordances(store, selection, { principal, ...options }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, selection, options, nodes],
+    [store, selection, options, nodes, principal],
   );
 }
 
 /** Runs an affordance, or shows what it would do first. */
 export function useApplyAffordance<S extends AnySchema>() {
-  const { store } = useGraview<S>();
+  const { store, principal } = useGraview<S>();
   return useMemo(
     () => ({
       preview: (affordance: Affordance, args?: Record<string, unknown>) =>
         previewAffordance(store, affordance, args ?? {}),
       apply: (affordance: Affordance, args?: Record<string, unknown>) =>
         applyAffordance(store, affordance, args ?? {}, {
-          author: { kind: "human" },
+          // The principal, not a bare "human": the store enforces against
+          // this and the log attributes to it, and they must be one object.
+          author: principal,
         }),
     }),
-    [store],
+    [store, principal],
   );
 }
 
@@ -243,7 +248,7 @@ export function useEditableFields<S extends AnySchema>(
   readonly fields: readonly EditableField[];
   commit: (field: EditableField, value: unknown, rest?: Record<string, unknown>) => void;
 } {
-  const { store } = useGraview<S>();
+  const { store, principal } = useGraview<S>();
   const nodes = useGraph<S>();
   const fields = useMemo(
     () => (id === null ? [] : editableFields(store, id)),
@@ -255,10 +260,10 @@ export function useEditableFields<S extends AnySchema>(
       const call = field.call(value);
       store.apply(
         { name: call.name, args: { ...call.args, ...rest } },
-        { author: { kind: "human" } },
+        { author: principal },
       );
     },
-    [store],
+    [store, principal],
   );
   return { fields, commit };
 }

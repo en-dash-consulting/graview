@@ -1,4 +1,4 @@
-import type { AnySchema, NodeOfSchema, Store } from "@graview/core";
+import type { AnySchema, NodeOfSchema, Principal, Store } from "@graview/core";
 import { invariantProvider } from "./providers/invariant.js";
 import { schemaProvider } from "./providers/schema.js";
 import { structureProvider } from "./providers/structure.js";
@@ -8,6 +8,7 @@ import type {
   AffordanceSet,
   DeriveContext,
   Observation,
+  WithheldAffordance,
 } from "./types.js";
 
 export interface DeriveOptions<S extends AnySchema> {
@@ -16,6 +17,16 @@ export interface DeriveOptions<S extends AnySchema> {
   readonly context?: Readonly<Record<string, unknown>>;
   /** Caps the returned list; observations are never capped. */
   readonly limit?: number;
+  /**
+   * Who is asking. Actions this principal may not run move to `withheld`
+   * rather than being dropped.
+   *
+   * The narrowing happens HERE, once, rather than in each provider — a
+   * provider's job is to notice what could be done, and whether you in
+   * particular may do it is a different question asked of the same answer.
+   * No app writes filtering code, and a provider written tomorrow inherits it.
+   */
+  readonly principal?: Principal;
 }
 
 /**
@@ -68,8 +79,30 @@ export function deriveAffordances<S extends AnySchema>(
     (a, b) => b.score - a.score || a.id.localeCompare(b.id),
   );
 
+  /*
+   * An action you may not take SAYS SO rather than vanishing.
+   *
+   * The framework already treats an empty action list as a result and
+   * explains it; "you cannot do this, and here is who can" is the same
+   * honesty. Silently hiding it teaches people the software is broken, and
+   * teaches an agent that a capability does not exist when it does.
+   */
+  const allowed: Affordance[] = [];
+  const withheld: WithheldAffordance[] = [];
+  for (const affordance of ranked) {
+    const verdict = options.principal
+      ? store.permits(
+          { name: affordance.mutation, args: { ...affordance.args, ...(affordance.batch?.[0] ?? {}) } },
+          options.principal,
+        )
+      : ({ ok: true } as const);
+    if (verdict.ok) allowed.push(affordance);
+    else withheld.push({ ...affordance, refusal: verdict.refusal });
+  }
+
   return {
-    affordances: options.limit === undefined ? ranked : ranked.slice(0, options.limit),
+    affordances: options.limit === undefined ? allowed : allowed.slice(0, options.limit),
+    withheld,
     observations: dedupeObservations(observations),
     ms: now() - started,
   };

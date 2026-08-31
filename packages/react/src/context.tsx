@@ -1,4 +1,4 @@
-import type { AnySchema, NodeOfSchema, Store, ViewRegistry } from "@graview/core";
+import type { AnySchema, NodeOfSchema, Principal, Store, ViewRegistry } from "@graview/core";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
 import { EMPTY_VIEW } from "@graview/layout";
@@ -62,9 +62,25 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly activity: ReadonlyMap<string, ActivityMark>;
   /** Report something looked at. A read leaves no diff, so it has to be told. */
   noteAttention(note: Attention): void;
+  /**
+   * Who is using this installation.
+   *
+   * Not a UI concern with a UI copy of the rules: this is the principal the
+   * store enforces against and the log attributes to. The interface reads it
+   * to decide what to OFFER; the store decides what to allow, and the two
+   * cannot drift because they are the same object.
+   */
+  readonly principal: Principal;
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
+
+/**
+ * Nobody in particular. A store with no policy permits this principal
+ * everything, which is what makes permission opt-in rather than a tax every
+ * app pays before it has decided it has users.
+ */
+const ANONYMOUS: Principal = { kind: "human" };
 
 export interface GraviewProviderProps<S extends AnySchema> {
   readonly store: Store<S>;
@@ -73,6 +89,8 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly scheme?: Scheme;
   /** Start jacked into one view — the deep-link case. */
   readonly initialJackedIn?: string | null;
+  /** Defaults to an unroled human, which a store with no policy permits everything. */
+  readonly principal?: Principal;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -93,6 +111,7 @@ export function GraviewProvider<S extends AnySchema>({
   initialView,
   scheme = "dark",
   initialJackedIn,
+  principal = ANONYMOUS,
   view,
   onViewChange,
   children,
@@ -136,6 +155,7 @@ export function GraviewProvider<S extends AnySchema>({
       setMenuAt,
       activity,
       noteAttention,
+      principal,
     }),
     [
       store,
@@ -149,6 +169,7 @@ export function GraviewProvider<S extends AnySchema>({
       menuAt,
       activity,
       noteAttention,
+      principal,
     ],
   );
 
