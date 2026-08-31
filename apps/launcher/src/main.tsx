@@ -4,9 +4,10 @@ import {
   BackOut,
   Inspector,
   OverviewButton,
+  RelationKey,
   Standing,
-  Trail,
   themeCss,
+  Trail,
   type Scheme,
 } from "@graview/primitives";
 import {
@@ -173,6 +174,8 @@ function Desk({
         {/* Both, always: the overview lays the scene down rather than
             replacing it, so you can see where you were. */}
         <Scene renderer="dom" />
+        {/* What the lines mean, up where the lines are the content. */}
+        <RelationKey<S> />
         <Inspector />
       </div>
     </div>

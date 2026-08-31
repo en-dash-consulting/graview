@@ -87,8 +87,17 @@ function ring(
 ): { x: number; y: number }[] {
   const cx = canvasWidth / 2;
   const cy = canvasHeight * 0.53;
-  const rx = canvasWidth * 0.33;
-  const ry = canvasHeight * 0.31;
+  /*
+   * A wider, taller ring.
+   *
+   * At 0.33 by 0.31 the cards clustered around the middle and left two hundred
+   * pixels of ground above and a hundred and fifty below, which is a picture
+   * of the whole domain that uses two thirds of the space it was given. The
+   * ellipse is still a circle under a vertical squash, so this is still
+   * affine.
+   */
+  const rx = canvasWidth * 0.37;
+  const ry = canvasHeight * 0.355;
   return Array.from({ length: count }, (_, index) => {
     // Starting at the bottom, going clockwise, so the first card of the strip
     // ends up nearest the viewer rather than hidden at the back.
