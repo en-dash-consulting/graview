@@ -2,7 +2,7 @@
 id: "5d3773c0-3751-4007-839b-e07e9b9b4faa"
 level: "epic"
 title: "Graview — spatial context-graph framework"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "framework"
@@ -12,7 +12,8 @@ tags:
   - "context-graph"
 source: "Session planning — architecture agreed 2026-08-29"
 startedAt: "2026-08-30T04:55:36.895Z"
-endedAt: "2026-08-30T04:55:36.895Z"
+completedAt: "2026-08-31T03:56:24.353Z"
+endedAt: "2026-08-31T03:56:24.353Z"
 acceptanceCriteria:
   - "The household example's week calendar and People relation render as one spatial scene, editable at plane 0"
   - "Clicks, focus and screen-reader access resolve correctly against nodes drawn at depth"
@@ -36,5 +37,5 @@ description: "A framework for building applications where a typed context graph 
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
 | [React binding — @graview/react](./react-binding-graview-react.md) | completed |
 | [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | completed |
-| [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | pending |
+| [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
 | [View primitives and the timeline lens](./view-primitives-and-the-timeline-lens.md) | completed |
