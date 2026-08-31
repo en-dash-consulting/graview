@@ -174,105 +174,110 @@ export function registerDefaultViews<S extends AnySchema>(
      * context plane is to be glanceable, and a count is not a glance at
      * anything. What fits, fits; the rest is "+n".
      */
+    /**
+     * A group at glyph fidelity — the card the kinds plane is made of.
+     *
+     * Its name, how many there are, and what it is FOR on hover. The members
+     * used to be listed and it was the wrong answer: ten cards each showing
+     * three truncated names is ten unreadable things, and "which kinds exist
+     * and how big are they" is the question a map of kinds is asked. The
+     * description has been on every declaration since the first commit and
+     * nothing has ever shown it.
+     */
     const GroupGlyph = (props: ViewProps<S>) => {
       const members = props.nodes ?? [];
-      const names = members
-        .slice(0, 3)
-        .map((member) => labelOf(schema.tryDefinition(member.kind), member as never));
-      const rest = members.length - names.length;
+      const trouble = members.some((member) => props.flagged?.includes(member.id));
+      const accent = props.focused || props.raised;
       return (
         <div
+          className="graview-kind-card"
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 5,
-            height: "100%",
-            padding: "10px 12px",
+            gap: 3,
+            padding: "8px 9px",
             boxSizing: "border-box",
             borderRadius: 10,
-            overflow: "hidden",
-            border: props.focused
+            border: accent
               ? "1px solid var(--graview-accent)"
               : `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
             background: `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 0.5))`,
           }}
         >
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+            {/* Wraps rather than truncating: "UNAVAILABILITY" on two lines
+                is readable and "U…" is not, and at ten kinds across a screen
+                there is no width at which every plural fits on one. */}
             <span
               style={{
-                fontSize: 11,
-                letterSpacing: "0.14em",
+                fontSize: 10.5,
+                lineHeight: 1.25,
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: props.focused
-                  ? "var(--graview-accent)"
-                  : "var(--graview-ink-muted)",
+                minWidth: 0,
+                color: accent ? "var(--graview-accent)" : "var(--graview-ink-muted)",
               }}
             >
               {props.label ?? plural}
             </span>
             {/*
-              * What this card is standing for right now.
-              *
-              * The strip is a constant map of every kind, so a card has to say
-              * whether it is the one you are looking at, the one you have
-              * raised, or neither — otherwise a stable strip is just a strip
-              * you cannot read.
+              * Whether this kind has a picture of its own to go into.
+              * Derived: a view the app registered rather than the generic one
+              * the framework fell back to — so it is true the moment an app
+              * writes a lens and false the moment it stops.
               */}
-            {props.focused ? (
+            {props.hasOwnView ? (
               <span
-                title="The picture above is this kind"
-                style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "var(--graview-accent)" }}
+                title={`${plural} has a view of its own — double click to go there`}
+                aria-hidden="true"
+                style={{ fontSize: 9, color: "var(--graview-accent)", flex: "0 0 auto" }}
               >
-                IN VIEW
-              </span>
-            ) : props.raised ? (
-              <span
-                title="These are raised onto the relation plane"
-                style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "var(--graview-accent)" }}
-              >
-                RAISED
+                ◆
               </span>
             ) : null}
             <span
               style={{
                 marginLeft: "auto",
+                flex: "0 0 auto",
                 fontSize: 12,
-                color: members.some((member) => props.flagged?.includes(member.id))
-                  ? "var(--graview-warn)"
-                  : "var(--graview-ink-faint)",
+                fontVariantNumeric: "tabular-nums",
+                color: trouble ? "var(--graview-warn)" : "var(--graview-ink-faint)",
               }}
             >
-              {members.some((member) => props.flagged?.includes(member.id)) ? "⚠ " : ""}
+              {trouble ? "⚠ " : ""}
               {members.length}
             </span>
           </div>
-          <ul
-            style={{
-              margin: 0,
-              padding: 0,
-              listStyle: "none",
-              display: "grid",
-              gap: 2,
-              fontSize: 12,
-              lineHeight: 1.3,
-              minWidth: 0,
-            }}
-          >
-            {names.map((name, index) => (
-              <li
-                key={index}
-                style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-              >
-                {name}
-              </li>
-            ))}
-            {rest > 0 ? (
-              <li style={{ color: "var(--graview-ink-faint)" }}>+{rest} more</li>
-            ) : null}
-          </ul>
+
+          {props.focused || props.raised ? (
+            <span
+              style={{
+                fontSize: 9,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--graview-accent)",
+              }}
+            >
+              {props.focused ? "in view" : "raised"}
+            </span>
+          ) : null}
+
+          {definition?.description ? (
+            <span
+              className="graview-kind-note"
+              style={{ fontSize: 11, lineHeight: 1.4, color: "var(--graview-ink-muted)" }}
+            >
+              {definition.description}
+            </span>
+          ) : null}
         </div>
       );
     };
+
+    // Marked so the interface can tell a view the app chose from one the
+    // framework fell back to.
+    (Group as unknown as { generic?: boolean }).generic = true;
+    (GroupGlyph as unknown as { generic?: boolean }).generic = true;
 
     registry
       .register(kind, { cardinality: "one", fidelity: "full" }, Full)

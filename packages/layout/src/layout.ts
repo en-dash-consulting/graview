@@ -170,12 +170,14 @@ export function layout<S extends AnySchema>(
   const band =
     focus === undefined
       ? {
-          focusY: opts.height * 0.035,
-          focusH: opts.height * 0.55,
-          relationY: opts.height * 0.625,
+          // A little smaller than it was, and a little further from the
+          // strip: the gap is what puts one in front of the other.
+          focusY: opts.height * 0.05,
+          focusH: opts.height * 0.52,
+          relationY: opts.height * 0.61,
           relationH: opts.height * 0.19,
-          contextY: opts.height * 0.84,
-          contextH: opts.height * 0.145,
+          contextY: opts.height * 0.845,
+          contextH: opts.height * 0.14,
         }
       : {
           focusY: opts.height * 0.04,

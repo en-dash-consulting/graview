@@ -899,10 +899,19 @@ export function OverviewButton() {
       // already on screen fly out into the ring rather than being replaced.
       onClick={() => go(withOverview(view, !overview))}
       style={{
+        /*
+         * Beside the kinds strip, not on top of it.
+         *
+         * It was centred at the very bottom and landed squarely across the
+         * cards. It belongs TO that plane — it is the control for the same
+         * question the strip answers, "what is all of this" — so it sits at
+         * the head of the row, aligned with it.
+         */
         position: "fixed",
-        left: "50%",
-        bottom: 14,
-        transform: "translateX(-50%)",
+        left: 18,
+        // Just above the strip rather than across its first card: the band
+        // between the relation plane and the kinds plane is empty by design.
+        bottom: "16.5%",
         zIndex: 12,
         display: "inline-flex",
         alignItems: "center",

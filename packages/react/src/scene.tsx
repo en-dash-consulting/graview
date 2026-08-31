@@ -824,6 +824,11 @@ export function ResolvedView<S extends AnySchema>({
 
   const registration = views.resolve(node.kind, cell);
   const Component = registration?.view as ViewComponent<S> | undefined;
+  // Whether this kind has a picture of its own to travel into.
+  const own = views.resolve(node.kind, { cardinality: "many", fidelity: "full" })?.view as
+    | (ViewComponent<S> & { generic?: boolean })
+    | undefined;
+  const hasOwnView = own !== undefined && own.generic !== true;
 
   const props: ViewProps<S> = {
     ...(node.aggregate
@@ -842,6 +847,7 @@ export function ResolvedView<S extends AnySchema>({
     flagged,
     ...(node.raised ? { raised: true } : {}),
     ...(node.focused ? { focused: true } : {}),
+    ...(hasOwnView ? { hasOwnView: true } : {}),
   };
 
   if (!Component) return <MissingView node={node} props={props} />;
