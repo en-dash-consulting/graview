@@ -1,5 +1,12 @@
 import { createSchema, defineNode, Graph } from "@graview/core";
-import { EMPTY_VIEW, layout, interpolate, toggleExpanded, aggregateId } from "@graview/layout";
+import {
+  EMPTY_VIEW,
+  aggregateId,
+  interpolate,
+  kindCardId,
+  layout,
+  toggleExpanded,
+} from "@graview/layout";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -252,7 +259,7 @@ describe("driven from a real layout", () => {
     const open = layout(
       graph,
       schema,
-      toggleExpanded({ ...EMPTY_VIEW, focusId: "week-1" }, aggregateId("person")),
+      toggleExpanded({ ...EMPTY_VIEW, focusId: "week-1" }, kindCardId("person")),
     );
     const mid = interpolate(closed, open, 0.5);
     const { views } = fromLayout(mid);

@@ -191,7 +191,9 @@ export function registerDefaultViews<S extends AnySchema>(
             boxSizing: "border-box",
             borderRadius: 10,
             overflow: "hidden",
-            border: `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
+            border: props.focused
+              ? "1px solid var(--graview-accent)"
+              : `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
             background: `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 0.5))`,
           }}
         >
@@ -201,11 +203,36 @@ export function registerDefaultViews<S extends AnySchema>(
                 fontSize: 11,
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
-                color: "var(--graview-ink-muted)",
+                color: props.focused
+                  ? "var(--graview-accent)"
+                  : "var(--graview-ink-muted)",
               }}
             >
               {props.label ?? plural}
             </span>
+            {/*
+              * What this card is standing for right now.
+              *
+              * The strip is a constant map of every kind, so a card has to say
+              * whether it is the one you are looking at, the one you have
+              * raised, or neither — otherwise a stable strip is just a strip
+              * you cannot read.
+              */}
+            {props.focused ? (
+              <span
+                title="The picture above is this kind"
+                style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "var(--graview-accent)" }}
+              >
+                IN VIEW
+              </span>
+            ) : props.raised ? (
+              <span
+                title="These are raised onto the relation plane"
+                style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "var(--graview-accent)" }}
+              >
+                RAISED
+              </span>
+            ) : null}
             <span
               style={{
                 marginLeft: "auto",

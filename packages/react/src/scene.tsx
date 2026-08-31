@@ -1,7 +1,8 @@
 import type { AnySchema, Fidelity, NodeOfSchema } from "@graview/core";
 import {
   isAggregateId,
-  kindsOfAggregate,
+  kindOfCard,
+  kindsOf,
   layout,
   withFocus,
   withRelation,
@@ -95,7 +96,7 @@ export function Scene<S extends AnySchema>({
   animate = true,
   children,
 }: SceneProps<S>) {
-  const { store, scheme, views, view, setView, selection, setSelection, setJackedIn, setMenuAt, overview } =
+  const { store, scheme, views, view, setView, selection, setSelection, setJackedIn, setMenuAt } =
     useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -180,7 +181,7 @@ export function Scene<S extends AnySchema>({
          *
          * Hold shift or meta to select the members instead.
          */
-        const kinds = node.aggregate ? kindsOfAggregate(node.id) : [];
+        const kinds = node.aggregate ? kindsOf(node.id) : [];
         if (kinds.length === 1 && !additive && Math.round(node.plane) !== 0) {
           const kind = kinds[0]!;
           setView((current) => withRelation(current, current.relation === kind ? null : kind));
@@ -231,24 +232,7 @@ export function Scene<S extends AnySchema>({
         position: "relative",
         width: "100%",
         height: "100%",
-        /*
-         * Rising to the overview does not REPLACE the scene, it lays it down.
-         *
-         * Cutting to a different picture loses the one thing an overview is
-         * for: knowing where you were. So the scene stays on screen and
-         * recedes — scaled back and squashed onto the floor the constellation
-         * draws — and you watch your own view become part of the landscape.
-         *
-         * Affine, like everything else here: a scale and a vertical squash,
-         * no perspective, so this is the same class of transform the plane
-         * model already uses.
-         */
-        transform: overview ? "translateY(-6%) scale(0.62, 0.34)" : undefined,
-        transformOrigin: "50% 46%",
-        opacity: overview ? 0.3 : 1,
-        pointerEvents: overview ? "none" : undefined,
-        transition:
-          "transform 620ms cubic-bezier(0.22, 1, 0.36, 1), opacity 480ms ease",
+
         // The stage is sized to the measurement, but a stale measurement
         // during a resize can briefly exceed it. Clipping keeps the scene
         // inside its own bounds instead of pushing the page taller and
@@ -299,7 +283,7 @@ export function Scene<S extends AnySchema>({
           {hosts}
         </canvas>
       )}
-      <Connectors result={frame} above={!useDom} scheme={scheme} />
+      <Connectors result={frame} above={!useDom} scheme={scheme} overview={view.overview ?? false} />
       <RelationCaptions nodes={frame.nodes} scheme={scheme} />
       {children}
     </div>
@@ -710,7 +694,9 @@ function Connectors({
   result,
   above,
   scheme,
+  overview,
 }: {
+  readonly overview: boolean;
   result: {
     nodes: readonly SceneNode[];
     connectors: Layout["connectors"] | InterpolatedLayout["connectors"];
@@ -737,6 +723,12 @@ function Connectors({
     const from = byId.get(connector.from);
     const to = byId.get(connector.to);
     if (!from || !to) return false;
+    /*
+     * Above the stack, every relation earns its ink: the shape of the domain
+     * IS the content, and a line into a group is no longer vague because a
+     * group is what the ring is made of.
+     */
+    if (overview) return true;
     const raised = Math.round(from.plane) === 1 || Math.round(to.plane) === 1;
     const vagueEnd = (node: SceneNode) => node.aggregate && Math.round(node.plane) === 2;
     return raised && !vagueEnd(from) && !vagueEnd(to);
@@ -823,7 +815,8 @@ export function ResolvedView<S extends AnySchema>({
   const { store, views } = useGraview<S>();
   const implicated = useImplicated();
   const flagged = useFlagged();
-  const cardinality = node.aggregate || isAggregateId(node.id) ? "many" : "one";
+  const cardinality =
+    node.aggregate || isAggregateId(node.id) || kindOfCard(node.id) !== null ? "many" : "one";
   const cell = {
     cardinality,
     fidelity: fidelity ?? PLANE_STYLES[clampPlane(node.plane)].fidelity,
@@ -847,6 +840,8 @@ export function ResolvedView<S extends AnySchema>({
     selected,
     implicated,
     flagged,
+    ...(node.raised ? { raised: true } : {}),
+    ...(node.focused ? { focused: true } : {}),
   };
 
   if (!Component) return <MissingView node={node} props={props} />;
