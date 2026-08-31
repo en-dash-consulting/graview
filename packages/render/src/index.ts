@@ -1,27 +1,32 @@
-// The platform seam. Every HTML-in-Canvas call in the framework goes here.
+/*
+ * The MAIN entry carries no WebGPU types.
+ *
+ * The plane model, the frame planner, the connector treatment and the pointer
+ * router are what every app uses, and they are pure geometry. The capture path
+ * is a different thing: it names `GPUDevice`, `GPUQueue` and `GPUTexture` in
+ * its declarations, and those are ambient globals from `@webgpu/types` rather
+ * than importable ones — so a `.d.ts` mentioning them makes every consumer
+ * install that package to typecheck an import they may never reach.
+ *
+ * Splitting it out is not a workaround. It matches what this package already
+ * says about itself: the DOM path is what ships and the capture path is
+ * experimental, and now the type surface says so too. Reach it explicitly:
+ *
+ *   import { Compositor } from "@graview/render/gpu";
+ *
+ * Found by typechecking a scratch project against the packed tarballs, which
+ * is the only place a public surface's ambient requirements show up.
+ */
+
+// Affine geometry: pure, and free of any ambient global.
 export {
-  captureElement,
-  captureElementImage,
-  clearElementGeometry,
-  detectCapabilities,
   IDENTITY,
   isAffine,
   perspectiveProbeMatrix,
   planeTransform,
-  PlatformUnavailableError,
-  requestPaint,
-  setLayoutSubtree,
   toDOMMatrix,
-  updateElementGeometry,
-} from "./platform/html-in-canvas.js";
-export type {
-  CaptureMethodName,
-  CaptureSource,
-  ElementImage,
-  GeometryUpdate,
-  Matrix4,
-  PlatformCapabilities,
-} from "./platform/html-in-canvas.js";
+} from "./platform/matrix.js";
+export type { Matrix4 } from "./platform/matrix.js";
 
 // The plane model: discrete depths and their atmospheric treatment.
 export {
@@ -51,17 +56,6 @@ export { fromLayout } from "./scene/from-layout.js";
 // Connector treatment, derived per edge kind.
 export { connectorStyle, distinguishable } from "./scene/connectors.js";
 export type { ConnectorStyle, EndCap, StrokePattern } from "./scene/connectors.js";
-
-// Capture and composite.
-export { Compositor, packUniform } from "./scene/compositor.js";
-export type {
-  CompositorDeps,
-  CompositorOptions,
-  SceneView,
-  SurfaceLike,
-  VgpuLike,
-} from "./scene/compositor.js";
-export { COMPOSITOR_WGSL } from "./scene/compositor.wgsl.js";
 
 // Pointer routing, until the platform redirects hit-testing itself.
 export { PointerRouter, hitTest, invertPlaneTransform, toLocal } from "./interaction/pointer-router.js";

@@ -10,6 +10,10 @@ export default defineConfig({
       "@graview/core": src("core"),
       "@graview/layout": src("layout"),
       "@graview/tools": src("tools"),
+      // The subpath first, or the bare-name alias swallows it.
+      "@graview/render/gpu": fileURLToPath(
+        new URL("./packages/render/src/gpu.ts", import.meta.url),
+      ),
       "@graview/render": src("render"),
       "@graview/react": src("react"),
       "@graview/primitives": src("primitives"),

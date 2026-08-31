@@ -23,6 +23,12 @@ export default defineConfig({
       "@graview/core": pkg("core"),
       "@graview/layout": pkg("layout"),
       "@graview/tools": pkg("tools"),
+      // The subpath first: an alias for the bare name would otherwise swallow
+      // "@graview/render/gpu" and resolve it to the main entry, which has no
+      // Compositor on it.
+      "@graview/render/gpu": fileURLToPath(
+        new URL("../../packages/render/src/gpu.ts", import.meta.url),
+      ),
       "@graview/render": pkg("render"),
       "@graview/react": pkg("react"),
       "@graview/primitives": pkg("primitives"),

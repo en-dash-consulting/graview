@@ -19,5 +19,19 @@
   },
   "devDependencies": {
     "zod": "^4.4.3"
+  },
+  "description": "Where every node goes: three planes, one pure function of the graph and the view state.",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/endash/graview.git",
+    "directory": "packages/layout"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -5,13 +5,45 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": { "graview": "./dist/cli/index.js" },
-  "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-    "./sqlite": { "types": "./dist/persistence/sqlite.d.ts", "default": "./dist/persistence/sqlite.js" }
+  "bin": {
+    "graview": "./dist/cli/index.js"
   },
-  "scripts": { "build": "tsc -b" },
-  "dependencies": { "zod": "^4.4.3" },
-  "peerDependencies": { "better-sqlite3": "*" },
-  "peerDependenciesMeta": { "better-sqlite3": { "optional": true } }
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./sqlite": {
+      "types": "./dist/persistence/sqlite.d.ts",
+      "default": "./dist/persistence/sqlite.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "better-sqlite3": "*"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    }
+  },
+  "description": "The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/endash/graview.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

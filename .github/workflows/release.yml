@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: release-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Collects the pending changesets into one pull request: the version
+      # bumps and the changelog entries, reviewable before anything is
+      # released rather than after.
+      - uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          commit: "Version packages"
+          title: "Version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # PUBLISHING IS DELIBERATELY ABSENT.
+      #
+      # Every package is `private: true` and carries no licence, which is a
+      # decision rather than an oversight: publishing without one leaves
+      # whoever installs it with no permission to use it, and picking a licence
+      # on someone else's behalf is not a thing to do quietly.
+      #
+      # When there is one, this becomes:
+      #
+      #   publish: pnpm changeset publish
+      #
+      # with NPM_TOKEN in the environment, `private` dropped from each
+      # package.json, and a LICENSE file added to every `files` allowlist. CI
+      # already proves the rest — that the tarballs contain what they should
+      # and that a stranger can install and build from them.

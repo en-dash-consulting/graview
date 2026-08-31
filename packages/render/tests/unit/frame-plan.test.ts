@@ -14,12 +14,14 @@ import {
   distinguishable,
   fromLayout,
   isAffine,
-  packUniform,
   planFrame,
   PLANE_STYLES,
   type PlannedConnector,
   type PlannedView,
 } from "../../src/index.js";
+// The capture path is a separate entry: its declarations name WebGPU
+// globals, and the main one should not make every consumer install those.
+import { packUniform } from "../../src/gpu.js";
 
 /**
  * The renderer's decisions, snapshot-tested with no GPU and no DOM.

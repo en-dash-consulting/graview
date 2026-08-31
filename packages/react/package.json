@@ -5,14 +5,39 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
-  "scripts": { "build": "tsc -b" },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
   "dependencies": {
     "@graview/core": "workspace:*",
     "@graview/layout": "workspace:*",
     "@graview/render": "workspace:*",
     "@graview/tools": "workspace:*"
   },
-  "peerDependencies": { "react": ">=18" },
-  "devDependencies": { "zod": "^4.4.3" }
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "zod": "^4.4.3"
+  },
+  "description": "The React binding: a provider, a scene, and the hooks an app builds on.",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/endash/graview.git",
+    "directory": "packages/react"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

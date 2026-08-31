@@ -1,3 +1,17 @@
+/// <reference types="@webgpu/types" />
+//
+// The WebGPU globals are part of this file's PUBLIC declarations, so the
+// reference has to live HERE rather than on the package entry: TypeScript
+// drops a type reference from a `.d.ts` that does not itself name one of its
+// types, so a reference on `index.ts` was emitted nowhere and an installed
+// consumer got "cannot find name GPUDevice" from a file they cannot change.
+// Found by typechecking a scratch project against the packed tarballs.
+//
+// It also has to be the ONLY route in: listing `@webgpu/types` under
+// `compilerOptions.types` makes the globals ambient for this build, at which
+// point TypeScript considers the reference satisfied and drops it from the
+// emit. The build sees no difference; a stranger does.
+
 /**
  * THE platform seam. Every call into the HTML-in-Canvas API passes through
  * this module and nowhere else.
@@ -15,6 +29,18 @@
  * the README suggests.
  */
 
+import {
+  IDENTITY,
+  isAffine,
+  perspectiveProbeMatrix,
+  planeTransform,
+  toDOMMatrix,
+  type Matrix4,
+} from "./matrix.js";
+
+export { IDENTITY, isAffine, perspectiveProbeMatrix, planeTransform, toDOMMatrix };
+export type { Matrix4 };
+
 export type CaptureMethodName =
   | "drawElementImageToTexture"
   | "copyElementImageToTexture";
@@ -25,14 +51,6 @@ const CAPTURE_METHOD_NAMES: readonly CaptureMethodName[] = [
 ];
 
 /** A 4x4 column-major matrix, the shape `canvasTransform` expects. */
-export type Matrix4 = readonly [
-  number, number, number, number,
-  number, number, number, number,
-  number, number, number, number,
-  number, number, number, number,
-];
-
-/** An opaque cached paint record for one element, from `captureElementImage`. */
 export interface ElementImage {
   readonly width: number;
   readonly height: number;
@@ -249,56 +267,3 @@ export function setLayoutSubtree(canvas: HTMLCanvasElement, on = true): void {
   else target.removeAttribute("layoutsubtree");
 }
 
-/**
- * Whether a matrix is affine — no perspective row.
- *
- * The plane model is designed so that everything it emits passes this test:
- * depth is per-plane uniform scale, blur and shadow, never per-element
- * foreshortening. That keeps the model correct whichever way the platform
- * settles the perspective question.
- */
-export function isAffine(matrix: Matrix4): boolean {
-  return matrix[3] === 0 && matrix[7] === 0 && matrix[11] === 0 && matrix[15] === 1;
-}
-
-/** Column-major 4x4 identity. */
-export const IDENTITY: Matrix4 = [
-  1, 0, 0, 0,
-  0, 1, 0, 0,
-  0, 0, 1, 0,
-  0, 0, 0, 1,
-];
-
-/**
- * The affine transform a plane contributes: uniform scale about the canvas
- * origin plus a translation. Deliberately nothing else.
- */
-export function planeTransform(
-  scale: number,
-  translateX: number,
-  translateY: number,
-): Matrix4 {
-  return [
-    scale, 0, 0, 0,
-    0, scale, 0, 0,
-    0, 0, 1, 0,
-    translateX, translateY, 0, 1,
-  ];
-}
-
-/** A perspective matrix, used only to ask the browser whether it takes one. */
-export function perspectiveProbeMatrix(depth = 800): Matrix4 {
-  return [
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, -1 / depth,
-    0, 0, 0, 1,
-  ];
-}
-
-export function toDOMMatrix(matrix: Matrix4 | DOMMatrix): DOMMatrix {
-  if (typeof DOMMatrix === "undefined") {
-    throw new Error("DOMMatrix is unavailable outside a browser");
-  }
-  return matrix instanceof DOMMatrix ? matrix : new DOMMatrix([...matrix]);
-}

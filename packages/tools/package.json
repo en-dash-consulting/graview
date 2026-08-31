@@ -5,8 +5,33 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
-  "scripts": { "build": "tsc -b" },
-  "dependencies": { "@graview/core": "workspace:*" },
-  "devDependencies": { "zod": "^4.4.3" }
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*"
+  },
+  "devDependencies": {
+    "zod": "^4.4.3"
+  },
+  "description": "Derived affordances and the agent tool surface, generated from the same declarations.",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/endash/graview.git",
+    "directory": "packages/tools"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

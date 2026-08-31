@@ -17,14 +17,28 @@ packages/
   primitives/  @graview/primitives  view primitives, three lenses, the workbench
 apps/
   the household example/    a household week    — a calendar
-  proposal/    a tender response   — a coverage matrix
-  the coaching example/       a coaching week     — a board, a matrix and a calendar
+  proposal/    a tender response   — a coverage matrix, branded as "the bid-desk example"
+  the coaching example/       a coaching week     — a board, a matrix and a calendar, and roles
   launcher/    the desk — a Graview app whose subject is the other three
   spike/       platform capability validation, run against a real browser
 ```
 
-Only `@graview/render` touches the browser or the GPU. Everything else runs
-headlessly in CI with no browser flag.
+**The six packages are what ships. The apps are examples.**
+
+Each was built to prove a different claim — that a lens written for one domain
+is reused unchanged by another, that a second app's shell is eighty lines, that
+a permission model narrows the interface and an agent seat from one
+declaration — and together they are what the browser harnesses drive. None of
+them is a product, and none is published. A real product built on Graview lives
+in its own repository and depends on these packages the way any other consumer
+does; `scripts/smoke-install.mjs` rehearses exactly that on every CI run, by
+packing the tarballs and building a scratch app from them with no workspace and
+no path mapping in sight.
+
+Only `@graview/render` touches the browser or the GPU, and only through its
+`@graview/render/gpu` entry — the main one is pure geometry, so nothing that
+imports it inherits a WebGPU type dependency. Everything else runs headlessly
+in CI with no browser flag.
 
 ## Run it
 
@@ -57,9 +71,9 @@ and paper where depth loses contrast and gains haze. Inverting one to get the
 other gives grey-on-grey mush, because glow does not exist in daylight.
 
 ```sh
-pnpm test          # 341 tests, no GPU, no browser
+pnpm test          # 426 tests, no GPU, no browser
 pnpm typecheck
-pnpm check         # `graview check` against the household example's declarations
+pnpm check         # `graview check` against all four declarations
 ```
 
 ### The capture path
@@ -82,10 +96,22 @@ never recovered.
 ### The harnesses
 
 ```sh
-pnpm acceptance    # walks the six acceptance criteria in Chrome Canary
+pnpm acceptance    # walks the household example's criteria in Chrome Canary
 pnpm spike         # capture, composite, pointer routing, capture budget
 pnpm a11y          # the real accessibility tree, keyboard order, axe-core
+
+pnpm direct        # act in place, travel deliberately — 19 criteria
+pnpm shrunk        # the shrunk interface is the interface, scaled
+pnpm watching      # an agent turn seen from outside the plane stack
+pnpm permissions   # one policy narrows the strip and the agent seat alike
+pnpm brand         # somebody else's product, without a fork
+
+pnpm pack:inspect  # what would actually go in each tarball
+pnpm smoke         # install the tarballs into a scratch project and build
 ```
+
+Each writes its verdict to `docs/`, as criteria rather than as a pass count:
+when one fails it names the claim that stopped being true.
 
 ## Three apps, on purpose
 
@@ -251,6 +277,13 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | Clicks land on drawn pixels at every depth | `apps/spike/scripts/run-spike.mjs` |
 | The whole port meets its six criteria | `the household example/scripts/run-acceptance.mjs` |
 | Content at depth reaches assistive technology | `the household example/scripts/run-a11y.mjs` — 185 AX nodes, keyboard reaches all three planes, zero axe violations |
+| The shrunk interface is the interface, scaled | `scripts/verify-shrunk.mjs` — 8 criteria across five places in both schemes |
+| A click selects in place; travel is deliberate | `scripts/verify-direct-manipulation.mjs` — 19 criteria in a live browser |
+| An agent turn is watchable from outside the stack, and quiet costs nothing | `scripts/verify-watching.mjs` — 10 criteria, animation frames counted on a settled graph |
+| One policy narrows the interface and the agent seat alike | `scripts/verify-permissions.mjs` — 9 criteria across the the coaching example's three seats |
+| A brand reaches the pixels without forking a package | `scripts/verify-brand.mjs`, and `checkContrast` measures every text pair against WCAG AA |
+| A stranger can install the tarballs and build a real app | `scripts/smoke-install.mjs` — packs, installs into a scratch project with no workspace or path mapping, typechecks and runs |
+| A tarball contains what it should and nothing else | `scripts/inspect-pack.mjs` — no `src`, no tests, no tsbuildinfo, and every `exports` path present |
 
 ## The platform, honestly
 
@@ -267,6 +300,21 @@ anything about HTML-in-Canvas. The short version, measured in Chrome Canary
   off a cliff. The fidelity split is load-bearing, not an optimisation.
 - Inline SVG captures fine. Nested canvas and cross-origin frames capture
   **silently blank**, which is worse than throwing.
+
+## Shipping it
+
+The six packages are the deliverable: an SDK someone builds a product on, in
+their own repository. Everything needed for that exists and runs on every push
+— `pnpm changeset` for versioning, `pnpm pack:inspect` for what goes in the
+tarball, `pnpm smoke` for whether a stranger can install and build from it —
+with one deliberate gap.
+
+**Publishing is deliberately absent.** Every package is `private: true` and
+carries no licence, because publishing without one leaves whoever installs it
+with no permission to use it. `.github/workflows/release.yml` collects
+changesets into a version pull request today and says exactly what turning
+publishing on requires. That is a decision waiting to be made rather than work
+waiting to be done.
 
 ## Status
 

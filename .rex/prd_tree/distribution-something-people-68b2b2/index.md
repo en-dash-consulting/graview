@@ -21,4 +21,4 @@ description: "Six packages, every one `private: true`, no licence, no `files`, n
 | Title | Status |
 |-------|--------|
 | [A skills package for building with Graview](./a-skills-package-for-building-3e30b3.md) | pending |
-| [Releases: changesets, CI, npm](./releases-changesets-ci-npm.md) | pending |
+| [Releases: changesets, CI, npm](./releases-changesets-ci-npm.md) | completed |
