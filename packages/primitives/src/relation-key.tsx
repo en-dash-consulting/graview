@@ -1,6 +1,12 @@
 import type { AnySchema } from "@graview/core";
 import { useGraph, useGraview, useNavigation, useSelection } from "@graview/react";
-import { connectorStyle } from "@graview/render";
+import {
+  CONNECTOR_DASH,
+  connectorStroke,
+  connectorStyle,
+  connectorWidth,
+} from "@graview/render";
+import { useMemo } from "react";
 
 /**
  * What the lines mean.
@@ -26,40 +32,52 @@ export function RelationKey<S extends AnySchema>() {
   // Recomputed when the graph changes, so a relation nobody uses yet does not
   // sit in the key claiming to exist.
   const nodes = useGraph<S>();
-  void nodes;
 
-  if (!view.overview) return null;
-
-  const used = new Map<string, number>();
-  for (const edge of store.graph.allEdges()) {
-    used.set(edge.kind, (used.get(edge.kind) ?? 0) + 1);
-  }
-  const kinds = (store.schema.edgeKinds as readonly string[])
-    .filter((kind) => (used.get(kind) ?? 0) > 0)
-    .sort();
-  if (kinds.length === 0) return null;
-
-  /** An edge declaration's own words, from whichever kind declares it. */
-  const describe = (edgeKind: string): string | undefined => {
-    for (const definition of store.schema.definitions) {
-      const declared = (definition.edges as Record<string, { description?: string }>)[edgeKind];
-      if (declared?.description) return declared.description;
-    }
-    return undefined;
-  };
-
-  const chosen = new Set(selection);
-  const kindsOfEdge = (edgeKind: string): string[] => {
-    const ends = new Set<string>();
+  /*
+   * One pass over the edges, not one per relation.
+   *
+   * `allEdges()` materialises a fresh array every call, and this component
+   * re-renders on every diff — so scanning once per edge kind, plus again for
+   * the counts, rebuilt the whole edge list six times per mutation while the
+   * Graview was open.
+   */
+  const relations = useMemo(() => {
+    const found = new Map<string, { count: number; ends: Set<string> }>();
     for (const edge of store.graph.allEdges()) {
-      if (edge.kind !== edgeKind) continue;
+      const entry = found.get(edge.kind) ?? { count: 0, ends: new Set<string>() };
+      entry.count += 1;
       for (const id of [edge.from, edge.to]) {
         const node = store.graph.getNode(id);
-        if (node) ends.add(`kind:${node.kind}`);
+        if (node) entry.ends.add(`kind:${node.kind}`);
       }
+      found.set(edge.kind, entry);
     }
-    return [...ends];
-  };
+    return [...found.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([kind, entry]) => ({ kind, count: entry.count, ends: [...entry.ends] }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, nodes]);
+
+  if (!view.overview || relations.length === 0) return null;
+
+  /*
+   * A relation is LIT when the selection reaches one of the kinds it joins.
+   *
+   * Resolved the same way the scene resolves a connector endpoint: the
+   * selection holds real node ids, and up here what is drawn is a kind card.
+   * Comparing them directly dimmed every row at once whenever an ordinary
+   * selection was carried into the Graview — a legend reading "nothing
+   * matches" when nothing was asked.
+   */
+  const chosen = new Set<string>();
+  for (const id of selection) {
+    if (id.startsWith("kind:")) {
+      chosen.add(id);
+      continue;
+    }
+    const node = store.graph.getNode(id);
+    if (node) chosen.add(`kind:${node.kind}`);
+  }
 
   return (
     <aside
@@ -68,7 +86,13 @@ export function RelationKey<S extends AnySchema>() {
       style={{
         position: "absolute",
         left: 20,
-        bottom: 20,
+        /*
+         * Clear of the actions strip, which is fixed at the bottom CENTRE and
+         * grows to 860 pixels. On a narrow viewport its left edge reached over
+         * this, so the act of clicking a relation hid the legend you clicked
+         * it in.
+         */
+        bottom: 96,
         zIndex: 5,
         display: "grid",
         gap: 3,
@@ -89,17 +113,19 @@ export function RelationKey<S extends AnySchema>() {
           paddingBottom: 2,
         }}
       >
-        {kinds.length} relations
+        {relations.length === 1 ? "1 relation" : `${relations.length} relations`}
       </span>
-      {kinds.map((edgeKind) => {
+      {relations.map(({ kind: edgeKind, count, ends }) => {
         const style = connectorStyle(edgeKind);
-        const ends = kindsOfEdge(edgeKind);
         const lit = chosen.size === 0 || ends.some((id) => chosen.has(id));
         return (
           <button
             key={edgeKind}
             type="button"
-            title={describe(edgeKind) ?? `${used.get(edgeKind)} of these`}
+            // The schema's own accessor, which resolves first-declaration-wins
+            // exactly like the hand-rolled scan did, without a cast that would
+            // stop catching a shape change.
+            title={store.schema.edge(edgeKind)?.description ?? `${count} of these`}
             onClick={() => {
               // Same gesture as clicking a card: show me what this touches.
               set(ends);
@@ -107,6 +133,10 @@ export function RelationKey<S extends AnySchema>() {
             }}
             style={{
               all: "unset",
+              // `all: unset` resets `outline` too, and an inline declaration
+              // beats the stylesheet — so the theme's focus ring disappears
+              // from the only controls in here unless it is restored.
+              outline: "revert-layer",
               cursor: "pointer",
               display: "grid",
               gridTemplateColumns: "34px 1fr auto",
@@ -117,15 +147,15 @@ export function RelationKey<S extends AnySchema>() {
               opacity: lit ? 1 : 0.4,
             }}
           >
-            {/* The same stroke the scene draws, at the same hue — a key whose
-                swatch is an approximation is a key you cannot trust. */}
+            {/* The same stroke the scene draws, from the same helpers — a key
+                whose swatch is an approximation is a key you cannot trust. */}
             <svg width="34" height="8" aria-hidden="true" style={{ display: "block" }}>
               <path
                 d="M 1 4 L 33 4"
                 fill="none"
-                stroke={`hsl(${Math.round(style.hue * 360)} 55% 62%)`}
-                strokeWidth={Math.max(1.6, style.width)}
-                strokeDasharray={DASH[style.pattern]}
+                stroke={connectorStroke(style)}
+                strokeWidth={connectorWidth(style, true)}
+                strokeDasharray={CONNECTOR_DASH[style.pattern]}
                 strokeLinecap="round"
               />
             </svg>
@@ -137,7 +167,7 @@ export function RelationKey<S extends AnySchema>() {
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {used.get(edgeKind)}
+              {count}
             </span>
           </button>
         );
@@ -145,12 +175,3 @@ export function RelationKey<S extends AnySchema>() {
     </aside>
   );
 }
-
-/** The same patterns the scene uses. Duplicated here would be a key that lies. */
-const DASH: Record<string, string | undefined> = {
-  solid: undefined,
-  dashed: "7 5",
-  dotted: "1 5",
-  double: "12 3",
-  tapered: "10 3 3 3",
-};

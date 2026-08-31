@@ -1,0 +1,241 @@
+{
+  "nodes": [
+    {
+      "id": "today",
+      "kind": "list",
+      "label": "Today",
+      "order": 0
+    },
+    {
+      "id": "week",
+      "kind": "list",
+      "label": "This week",
+      "order": 1
+    },
+    {
+      "id": "someday",
+      "kind": "list",
+      "label": "Someday",
+      "order": 2
+    },
+    {
+      "id": "t-deposit",
+      "kind": "task",
+      "label": "Pay the deposit",
+      "done": false,
+      "due": "2026-08-28",
+      "day": "mon",
+      "plannedAt": 540,
+      "plannedUntil": 555
+    },
+    {
+      "id": "t-quote",
+      "kind": "task",
+      "label": "Get the second quote",
+      "done": true,
+      "due": "2026-08-26",
+      "day": "mon",
+      "plannedAt": 600,
+      "plannedUntil": 630
+    },
+    {
+      "id": "t-book",
+      "kind": "task",
+      "label": "Book the van",
+      "done": false,
+      "due": "2026-09-01",
+      "day": "tue",
+      "plannedAt": 570,
+      "plannedUntil": 590
+    },
+    {
+      "id": "t-boxes",
+      "kind": "task",
+      "label": "Order boxes",
+      "done": true,
+      "due": "2026-08-27",
+      "day": "tue",
+      "plannedAt": 630,
+      "plannedUntil": 640
+    },
+    {
+      "id": "t-notice",
+      "kind": "task",
+      "label": "Give notice on the flat",
+      "done": false,
+      "due": "2026-09-02",
+      "day": "wed",
+      "plannedAt": 540,
+      "plannedUntil": 585
+    },
+    {
+      "id": "t-meter",
+      "kind": "task",
+      "label": "Read the meters",
+      "done": false,
+      "due": "2026-09-03",
+      "day": "thu",
+      "plannedAt": 480,
+      "plannedUntil": 490
+    },
+    {
+      "id": "t-post",
+      "kind": "task",
+      "label": "Redirect the post",
+      "done": false,
+      "due": "2026-09-03",
+      "day": "thu",
+      "plannedAt": 510,
+      "plannedUntil": 525
+    },
+    {
+      "id": "t-broadband",
+      "kind": "task",
+      "label": "Move the broadband",
+      "done": false,
+      "due": "2026-09-04",
+      "day": "thu",
+      "plannedAt": 600,
+      "plannedUntil": 625
+    },
+    {
+      "id": "t-keys",
+      "kind": "task",
+      "label": "Hand back the keys",
+      "done": false,
+      "due": "2026-09-05",
+      "day": "fri",
+      "plannedAt": 900,
+      "plannedUntil": 920
+    },
+    {
+      "id": "t-shelves",
+      "kind": "task",
+      "label": "Take down the shelves",
+      "done": false
+    },
+    {
+      "id": "t-paint",
+      "kind": "task",
+      "label": "Touch up the paint",
+      "done": false
+    },
+    {
+      "id": "t-piano",
+      "kind": "task",
+      "label": "Find someone who moves pianos",
+      "done": false
+    },
+    {
+      "id": "rule-order",
+      "kind": "rule",
+      "label": "Nothing done before what it waits for",
+      "spec": {
+        "type": "nothing-done-before-what-it-waits-for"
+      }
+    },
+    {
+      "id": "rule-overdue",
+      "kind": "rule",
+      "label": "Nothing overdue",
+      "spec": {
+        "type": "nothing-overdue"
+      }
+    },
+    {
+      "id": "rule-heap",
+      "kind": "rule",
+      "label": "A list is not a heap",
+      "spec": {
+        "type": "a-list-is-not-a-heap"
+      }
+    },
+    {
+      "id": "reason-deposit",
+      "kind": "reason",
+      "text": "The landlord holds the date for 48 hours once the deposit clears, so this one is not really about the money."
+    }
+  ],
+  "edges": [
+    {
+      "kind": "holds",
+      "from": "today",
+      "to": "t-deposit"
+    },
+    {
+      "kind": "holds",
+      "from": "today",
+      "to": "t-quote"
+    },
+    {
+      "kind": "holds",
+      "from": "today",
+      "to": "t-book"
+    },
+    {
+      "kind": "holds",
+      "from": "week",
+      "to": "t-boxes"
+    },
+    {
+      "kind": "holds",
+      "from": "week",
+      "to": "t-notice"
+    },
+    {
+      "kind": "holds",
+      "from": "week",
+      "to": "t-meter"
+    },
+    {
+      "kind": "holds",
+      "from": "week",
+      "to": "t-post"
+    },
+    {
+      "kind": "holds",
+      "from": "week",
+      "to": "t-broadband"
+    },
+    {
+      "kind": "holds",
+      "from": "week",
+      "to": "t-keys"
+    },
+    {
+      "kind": "holds",
+      "from": "someday",
+      "to": "t-shelves"
+    },
+    {
+      "kind": "holds",
+      "from": "someday",
+      "to": "t-paint"
+    },
+    {
+      "kind": "holds",
+      "from": "someday",
+      "to": "t-piano"
+    },
+    {
+      "kind": "waits-for",
+      "from": "t-book",
+      "to": "t-quote"
+    },
+    {
+      "kind": "waits-for",
+      "from": "t-keys",
+      "to": "t-shelves"
+    },
+    {
+      "kind": "waits-for",
+      "from": "t-boxes",
+      "to": "t-piano"
+    },
+    {
+      "kind": "explains",
+      "from": "reason-deposit",
+      "to": "t-deposit"
+    }
+  ]
+}

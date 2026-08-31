@@ -104,6 +104,14 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly scheme?: Scheme;
   /** Start jacked into one view — the deep-link case. */
   readonly initialJackedIn?: string | null;
+  /**
+   * Start with something already selected.
+   *
+   * The deep-link case again: "here is the thing I am talking about" is a
+   * legitimate way to arrive, and the interface should open with its actions
+   * already on screen rather than making the arrival a second gesture.
+   */
+  readonly initialSelection?: readonly string[];
   /** Defaults to an unroled human, which a store with no policy permits everything. */
   readonly principal?: Principal;
   readonly brand?: Brand;
@@ -127,6 +135,7 @@ export function GraviewProvider<S extends AnySchema>({
   initialView,
   scheme = "dark",
   initialJackedIn,
+  initialSelection,
   principal = ANONYMOUS,
   brand,
   view,
@@ -134,7 +143,7 @@ export function GraviewProvider<S extends AnySchema>({
   children,
 }: GraviewProviderProps<S>) {
   const [internalView, setInternalView] = useState<ViewState>(initialView ?? EMPTY_VIEW);
-  const [selection, setSelectionState] = useState<readonly string[]>([]);
+  const [selection, setSelectionState] = useState<readonly string[]>(initialSelection ?? []);
   const [jackedIn, setJackedIn] = useState<string | null>(initialJackedIn ?? null);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
   const { activity, noteAttention } = useActivityState(store);

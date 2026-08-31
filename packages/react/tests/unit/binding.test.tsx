@@ -1,5 +1,5 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
-import { EMPTY_VIEW, aggregateId, kindCardId, toUrl } from "@graview/layout";
+import { EMPTY_VIEW, aggregateId, kindCardId, layout, toUrl } from "@graview/layout";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -7,6 +7,7 @@ import {
   createViews,
   GraviewProvider,
   JackedIn,
+  onScreen,
   Scene,
   type ViewProps,
 } from "../../src/index.js";
@@ -348,5 +349,78 @@ describe("a node with a natural size is drawn scaled, not re-laid-out", () => {
     // The GPU path rasterises the host subtree; the scale is part of the paint
     // rather than something the shader has to know about.
     expect(graview("gpu")).toContain("data-graview-natural");
+  });
+});
+
+/**
+ * The constellation, when something is already selected.
+ *
+ * A connector in the overview names whatever is DRAWN, which up there is
+ * always a kind card; a selection names real nodes. Comparing them directly
+ * matched nothing, so carrying an ordinary selection into the Graview — or
+ * clicking a target inside the shrunk picture, which the shrunk-interface
+ * harness explicitly exercises — receded every line at once and blanked the
+ * thing you rose to look at.
+ */
+describe("a selection, mapped onto what is drawn", () => {
+  const above = () =>
+    layout(store().graph, schema, { ...EMPTY_VIEW, focusId: "week-1", overview: true }).nodes.map(
+      (node) => ({ ...node, plane: node.plane }),
+    );
+
+  it("keeps an id that is drawn as itself", () => {
+    const nodes = above();
+    const card = nodes.find((node) => node.id === kindCardId("person"))!;
+    expect([...onScreen(nodes, [card.id])]).toEqual([card.id]);
+  });
+
+  it("MAPS a real node id onto the card that stands for it", () => {
+    // The regression. `ana` is a person, and up there a person is drawn as
+    // part of the People card — which is also what every connector to her
+    // actually points at.
+    const nodes = above();
+    expect([...onScreen(nodes, ["ana"])]).toEqual([kindCardId("person")]);
+  });
+
+  it("still means NO EMPHASIS when nothing selected resolves to anything drawn", () => {
+    // Not "none of the above". A selection the picture cannot show is the same
+    // as no selection, which is the rule every view here follows.
+    expect(onScreen(above(), ["nobody-at-all"]).size).toBe(0);
+  });
+
+  const graview = (selection?: readonly string[]) =>
+    renderToStaticMarkup(
+      <GraviewProvider
+        store={store()}
+        views={views()}
+        initialView={{ ...EMPTY_VIEW, focusId: "week-1", overview: true }}
+        {...(selection ? { initialSelection: selection } : {})}
+      >
+        <Scene renderer="dom" />
+      </GraviewProvider>,
+    );
+  const opacities = (html: string) =>
+    [...html.matchAll(/data-graview-connector="[^"]*"[^>]*opacity="([\d.]+)"/g)].map((match) =>
+      Number(match[1]),
+    );
+
+  it("does not blank the picture for a selection the scene has to resolve", () => {
+    /*
+     * The regression, through the wiring rather than the function. Arriving in
+     * the Graview with a real node already chosen used to recede every line at
+     * once, and the picture you rose to look at went dark.
+     */
+    const drawn = opacities(graview(["ana"]));
+    expect(drawn.length).toBeGreaterThan(0);
+    expect(drawn.some((value) => value > 0.5)).toBe(true);
+  });
+
+  it("draws the relations at full strength from up there", () => {
+    const html = graview();
+    const drawn = opacities(html);
+    expect(drawn.length).toBeGreaterThan(0);
+    // Inside the scene a connector is an aside; up here the lines ARE the
+    // content, and at a third of a receded plane's opacity they were not.
+    expect(drawn.every((value) => value > 0.5)).toBe(true);
   });
 });

@@ -12,7 +12,10 @@ import {
   type LayoutOptions,
 } from "@graview/layout";
 import {
+  CONNECTOR_DASH,
+  connectorStroke,
   connectorStyle,
+  connectorWidth,
   mixStyles,
   PLANE_STYLES,
   styleFor,
@@ -219,7 +222,20 @@ export function Scene<S extends AnySchema>({
          *
          * Hold shift or meta to select the members instead.
          */
+        /*
+         * Above the stack, raising a relation means nothing.
+         *
+         * `withRelation` moves a kind's members onto plane 1, and the overview
+         * has no plane 1 — `relatedNodes` is hard-coded empty up there. So the
+         * gesture did nothing at all, and the emphasis this comment promised
+         * had no way to be triggered except through the legend. Selecting the
+         * card is what "what does this touch" means when the cards are kinds.
+         */
         const kinds = node.aggregate ? kindsOf(node.id) : [];
+        if (view.overview) {
+          setSelection((current) => (additive ? [...new Set([...current, node.id])] : [node.id]));
+          return;
+        }
         if (kinds.length === 1 && !additive && Math.round(node.plane) !== 0) {
           const kind = kinds[0]!;
           setView((current) => withRelation(current, current.relation === kind ? null : kind));
@@ -799,6 +815,38 @@ const WHO: Record<Manner, string> = {
   rule: "A rule",
 };
 
+/**
+ * A selection, mapped onto what is actually DRAWN.
+ *
+ * The selection holds real node ids. A connector holds the ids of whatever is
+ * on screen — which above the stack is always a kind card, because
+ * `connectorsFor` resolves every endpoint through the nearest group that
+ * contains it. Comparing the two directly matched nothing, so any ordinary
+ * selection carried into the Graview receded every line at once and blanked
+ * the picture you rose to look at.
+ *
+ * Exported because it is the whole of that bug, and a pure function is the
+ * only way to hold it still.
+ */
+export function onScreen(
+  nodes: readonly SceneNode[],
+  selection: readonly string[],
+): ReadonlySet<string> {
+  const drawn = new Set(nodes.map((node) => node.id));
+  const chosen = new Set<string>();
+  for (const id of selection) {
+    if (drawn.has(id)) {
+      chosen.add(id);
+      continue;
+    }
+    // Not drawn as itself: the card standing for it is what the eye can see,
+    // and what a connector to it actually points at.
+    const container = nodes.find((node) => node.aggregate?.memberIds.includes(id));
+    if (container) chosen.add(container.id);
+  }
+  return chosen;
+}
+
 /** The centre of a node's box as DRAWN, after its plane's scale. */
 function drawnCentre(
   node: SceneNode | undefined,
@@ -813,14 +861,6 @@ function drawnCentre(
       : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), node.plane - lower);
   return { x: node.x + (node.width * scale) / 2, y: node.y + (node.height * scale) / 2 };
 }
-
-const DASH: Record<string, string | undefined> = {
-  solid: undefined,
-  dashed: "7 5",
-  dotted: "1 5",
-  double: "12 3",
-  tapered: "10 3 3 3",
-};
 
 /**
  * Connectors, drawn in SVG over the scene on BOTH renderer paths.
@@ -858,18 +898,21 @@ function Connectors({
   const byId = new Map(result.nodes.map((node) => [node.id, node]));
   const centre = (node: SceneNode | undefined) => drawnCentre(node, scheme);
   /*
-   * Selecting a kind DRAWS ITS RELATIONS and recedes the rest.
+   * Selecting DRAWS ITS RELATIONS and recedes the rest.
    *
-   * With every line at full strength the constellation says what the domain
-   * looks like and nothing about what you just asked. Picking one card should
-   * answer "what does this touch" — which is the whole reason to select
-   * something up here, since there is nothing else selecting can mean when
-   * the cards are kinds rather than things.
+   * The selection holds real node ids; a connector in the overview holds the
+   * ids of whatever is DRAWN, which up there is always a kind card. Comparing
+   * them directly matched nothing — so carrying an ordinary selection into the
+   * Graview, or clicking a target inside the shrunk picture, receded every
+   * line at once and blanked the thing you rose to look at.
    *
-   * Empty selection means no emphasis, not no relations: the same rule every
-   * view follows.
+   * So the selection is resolved the same way `connectorsFor` resolves an
+   * endpoint: a node that is not drawn is represented by the card that stands
+   * for it. And a selection that resolves to nothing on screen means NO
+   * emphasis rather than none-of-the-above, which is the rule every view here
+   * follows.
    */
-  const chosen = new Set(selection);
+  const chosen = onScreen(result.nodes, selection);
   const touches = (connector: { from: string; to: string }) =>
     chosen.size === 0 || chosen.has(connector.from) || chosen.has(connector.to);
   /*
@@ -942,7 +985,7 @@ function Connectors({
             data-graview-activity={liveOf?.(connector)?.manner}
             d={`M ${from.x} ${from.y} Q ${control} ${to.x} ${to.y}`}
             fill="none"
-            stroke={`hsl(${Math.round(style.hue * 360)} 55% 62%)`}
+            stroke={connectorStroke(style)}
             /*
              * Above the stack the LINES ARE THE CONTENT.
              *
@@ -953,8 +996,8 @@ function Connectors({
              * already-receded plane's opacity it was a set of cards floating
              * in nothing, which answers none of the question you rose to ask.
              */
-            strokeWidth={overview ? Math.max(1.6, style.width) : Math.min(1.4, style.width)}
-            strokeDasharray={DASH[style.pattern]}
+            strokeWidth={connectorWidth(style, overview)}
+            strokeDasharray={CONNECTOR_DASH[style.pattern]}
             strokeLinecap="round"
             opacity={
               (overview ? (touches(connector) ? 0.9 : 0.12) : style.opacity * 0.34) *

@@ -1,5 +1,5 @@
 import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
-import type { ViewProps } from "@graview/react";
+import { useGraview, type ViewProps } from "@graview/react";
 import type { CSSProperties, ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster } from "../primitives/index.js";
@@ -166,8 +166,42 @@ export function placeOnTimeline<S extends AnySchema>(
   const roles = bindings[node.kind];
   if (!roles) return null;
 
+  /*
+   * A BINDING error and a MISSING VALUE are different things.
+   *
+   * Checking `roles[role] in record` conflated them: an app that never bound
+   * `start` and a node that simply has no start both looked the same, so one
+   * unplanned task threw for the whole view and took the week with it. A field
+   * that is optional in the schema is absent on ordinary nodes all the time,
+   * and that is data rather than a mistake.
+   *
+   * So the binding is checked against the BINDING — did the app name a field
+   * for each required role — and a node with no value for a bound field is
+   * simply not placeable, which is what `null` already means here.
+   */
   const record = node as unknown as Record<string, unknown>;
-  const missing = TIMELINE_REQUIRED_ROLES.filter((role) => !(roles[role] in record));
+  /*
+   * Three cases, and the old check collapsed two of them.
+   *
+   *   1. The role was never bound          — a mistake in the declaration.
+   *   2. It was bound to a field the kind does not declare — also a mistake,
+   *      and the one `graview check` reports as `lens-binding-missing-field`.
+   *   3. It was bound to a field this NODE happens not to have — ordinary
+   *      data, because optional fields are absent all the time.
+   *
+   * Only the first two are errors. Treating the third as one meant a single
+   * unplanned task threw and took the whole week down with it. The schema is
+   * what separates 2 from 3; without one, the presence of the key is the best
+   * available guess and the old behaviour stands.
+   */
+  const declared = schema?.tryDefinition(node.kind)?.fields.shape as
+    | Record<string, unknown>
+    | undefined;
+  const missing = TIMELINE_REQUIRED_ROLES.filter((role) => {
+    const field = roles[role];
+    if (!field) return true;
+    return declared ? !(field in declared) : !(field in record);
+  });
   if (missing.length > 0) throw new TimelineBindingError(node.kind, missing);
 
   const start = Number(record[roles.start] ?? Number.NaN);
@@ -595,8 +629,20 @@ export function createTimelineLens<S extends AnySchema>(
     requiredRoles: [...TIMELINE_REQUIRED_ROLES],
     bindings: options.bindings,
     options,
+    /*
+     * The SCHEMA comes from the provider, not from the caller.
+     *
+     * `ViewProps` carries no schema — the registry never passes one — so a
+     * lens rendered through the registry ran without it and every
+     * schema-aware decision inside quietly took its fallback path. In the
+     * timeline that meant an optional field absent on one node looked exactly
+     * like a role nobody bound, and a single unplanned task threw for the
+     * whole view.
+     */
     View(props) {
-      return <TimelineView<S> {...props} options={options} />;
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { store } = useGraview<S>();
+      return <TimelineView<S> schema={store.schema} {...props} options={options} />;
     },
     place(nodes, schema) {
       return nodes
