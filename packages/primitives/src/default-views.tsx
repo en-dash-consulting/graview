@@ -27,6 +27,15 @@ export function hueFor(kind: string): number {
 const HIDDEN_FIELDS = new Set(["id", "kind", "label"]);
 
 /**
+ * How many marks a tally draws before it starts counting instead.
+ *
+ * Chosen so a card at the smallest size the layout allots still fits two rows
+ * of them: past that the marks stop being countable at a glance, which is the
+ * only thing they are for.
+ */
+const TALLY_MAX = 24;
+
+/**
  * The field a shortened label was shortened FROM, when there is one.
  *
  * Matched by stem rather than by name, because which field a label came from
@@ -307,8 +316,13 @@ export function registerDefaultViews<S extends AnySchema>(
                 color: trouble ? "var(--graview-warn)" : "var(--graview-ink-faint)",
               }}
             >
-              {trouble ? "⚠ " : ""}
-              {members.length}
+              {/*
+                * "0" and an empty rectangle reads as a card that failed to
+                * load. "none yet" is the same fact and says which of the two
+                * it is — the same honesty the actions strip gives when a kind
+                * has no verbs.
+                */}
+              {members.length === 0 ? "none yet" : `${trouble ? "⚠ " : ""}${members.length}`}
             </span>
             {/*
               * Whether this kind has a picture of its own to go into.
@@ -339,22 +353,86 @@ export function registerDefaultViews<S extends AnySchema>(
                 lineHeight: 1.45,
                 color: "var(--graview-ink-muted)",
                 /*
-                 * Clamped to the card rather than overflowing it.
-                 *
-                 * A kind's description is a sentence and a kind card is
-                 * ninety pixels tall, so a long one spilled five pixels past
-                 * the card's edge — small, and the sort of thing that reads
-                 * as a rendering error rather than as a long sentence. The
-                 * whole of it stays in the tooltip.
+                 * Clamped to the card rather than overflowing it. A kind's
+                 * description is a sentence and a kind card is ninety pixels
+                 * tall; the whole of it stays in the tooltip.
                  */
                 display: "-webkit-box",
                 WebkitBoxOrient: "vertical",
-                WebkitLineClamp: 3,
+                WebkitLineClamp: 2,
                 overflow: "hidden",
               }}
             >
               {definition.description}
             </span>
+          ) : null}
+
+          {/*
+            * A TALLY: one mark per member, lit where something is wrong.
+            *
+            * The card was a name, a number and a great deal of empty
+            * rectangle, and the empty rectangle was most of it. Listing the
+            * members' names was tried and is worse — ten cards each showing
+            * three truncated names is ten unreadable things — but a count
+            * answers "how many" and never "how much of this is in trouble",
+            * which is the question a map of kinds is actually asked.
+            *
+            * So: marks. Nine quiet and one warn reads instantly and at any
+            * size, needs no reading, and is the same information the count
+            * carried plus the one it did not.
+            */}
+          {!nested && members.length > 0 ? (
+            <div
+              data-graview-tally={members.length}
+              aria-hidden="true"
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                // Directly under the count, filling what is left. Pushed to
+                // the bottom instead, the card read as a name at the top and a
+                // smear at the bottom with a hole between them.
+                alignContent: "flex-start",
+                gap: 4,
+                flex: "1 1 auto",
+                minHeight: 0,
+                paddingTop: 2,
+                overflow: "hidden",
+              }}
+            >
+              {members.slice(0, TALLY_MAX).map((member) => {
+                const bad = props.flagged?.includes(member.id) ?? false;
+                return (
+                  <span
+                    key={member.id}
+                    title={labelOf(schema.tryDefinition(member.kind), member as never)}
+                    style={{
+                      // Big enough to count without leaning in. At six pixels
+                      // they read as noise on the card rather than as things.
+                      width: 8,
+                      height: 8,
+                      borderRadius: 2,
+                      flex: "0 0 auto",
+                      background: bad
+                        ? "var(--graview-warn)"
+                        : `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.62)`,
+                      ...(bad ? { boxShadow: "0 0 0 1px var(--graview-warn)" } : {}),
+                    }}
+                  />
+                );
+              })}
+              {members.length > TALLY_MAX ? (
+                <span
+                  style={{
+                    fontSize: 10,
+                    lineHeight: "8px",
+                    color: "var(--graview-ink-faint)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  +{members.length - TALLY_MAX}
+                </span>
+              ) : null}
+            </div>
           ) : null}
         </div>
       );
