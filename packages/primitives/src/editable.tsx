@@ -151,34 +151,93 @@ function coerce(field: EditableField, draft: string): unknown {
 }
 
 /**
+ * A field name, in words.
+ *
+ * `effectiveFrom` shown to a person as "effectiveFrom" is a schema leaking
+ * through a surface. The interface's whole claim is that a declaration is
+ * enough to render something readable, and a camelCase identifier in a
+ * definition list is where that claim visibly stops being true.
+ *
+ * A kind that wants something else says so with `fieldLabels`; this is only
+ * the default, and the default should not be an identifier.
+ */
+export function humanise(field: string): string {
+  const spaced = field
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .toLowerCase();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/**
  * A node's own fields, shown as a definition list and editable in place.
  *
- * One component per view rather than per field: an app says "show this
- * node's fields here" and every value that some mutation writes becomes
- * changeable, without the app knowing which mutation or naming a single
- * field. A kind that gains a mutation gains editable fields the same day.
+ * One component per view rather than per field: an app says "show this node's
+ * fields here" and every value that some mutation writes becomes changeable,
+ * without the app knowing which mutation or naming a single field. A kind that
+ * gains a mutation gains editable fields the same day.
+ *
+ * It will not repeat something the view has already said. A record whose
+ * heading is "caregiver1" and whose first row is `label: caregiver1` reads as
+ * a debug dump, and it was the commonest thing wrong with the generic detail
+ * view — the title comes from a field, and then the field was listed too.
+ * Rather than asking every caller to remember `hide`, this compares: a field
+ * whose value IS the title, or the subtitle, has already been shown.
  */
 export function Fields<S extends AnySchema>({
   id,
   hide = [],
-  limit = 8,
+  limit = 10,
+  labels = {},
+  /**
+   * What the surrounding view has already put on screen. Values matching any
+   * of these are dropped, so a caller says what it drew rather than which
+   * fields to suppress.
+   */
+  shown = [],
 }: {
   readonly id: string;
-  /** Fields already shown elsewhere in the view — a title, a subtitle. */
+  /** Fields to drop by NAME, where a value comparison would not catch it. */
   readonly hide?: readonly string[];
   readonly limit?: number;
+  /** Overrides for the humanised default, by field name. */
+  readonly labels?: Readonly<Record<string, string>>;
+  readonly shown?: readonly (string | undefined)[];
 }) {
   const node = useNode<S>(id) as (Record<string, unknown> & { id: string }) | undefined;
   if (!node) return null;
   const skip = new Set(["id", "kind", ...hide]);
-  const shown: { key: string; value: string }[] = [];
+  const already = shown.filter((text): text is string => Boolean(text));
+  /*
+   * A heading is often a SUMMARY of a field rather than the field itself.
+   *
+   * A rationale's label is its text shortened to sixty characters, so an exact
+   * comparison never matches and the page showed the same sentence twice —
+   * once cut short in the largest type on the screen, once in full immediately
+   * below. Comparing against the summary's stem catches it, and catches
+   * nothing else: a value that begins with the whole heading IS the heading,
+   * at greater length.
+   */
+  const stems = already
+    .filter((text) => text.endsWith("…") || text.endsWith("..."))
+    .map((text) => text.replace(/[…]|\.\.\.$/g, "").trim())
+    .filter((stem) => stem.length > 12);
+  const saidAlready = (text: string) =>
+    already.includes(text) || stems.some((stem) => text.startsWith(stem));
+
+  const rows: { key: string; value: string }[] = [];
   for (const [key, value] of Object.entries(node)) {
     if (skip.has(key) || value === undefined || value === null) continue;
     if (typeof value === "object" && !Array.isArray(value)) continue;
-    shown.push({ key, value: Array.isArray(value) ? value.join(", ") : String(value) });
-    if (shown.length >= limit) break;
+    const text = Array.isArray(value) ? value.join(", ") : String(value);
+    // Said once is enough. This is the comparison that stops a record being a
+    // list of things the heading already told you.
+    if (saidAlready(text)) continue;
+    rows.push({ key, value: text });
+    if (rows.length >= limit) break;
   }
-  if (shown.length === 0) return null;
+  if (rows.length === 0) return null;
 
   return (
     <dl
@@ -187,14 +246,24 @@ export function Fields<S extends AnySchema>({
         margin: 0,
         display: "grid",
         gridTemplateColumns: "auto 1fr",
-        gap: "4px 14px",
+        gap: "5px 16px",
         fontSize: 13,
         alignContent: "start",
       }}
     >
-      {shown.map((field) => (
+      {rows.map((field) => (
         <div key={field.key} style={{ display: "contents" }}>
-          <dt style={{ color: "var(--graview-ink-faint)" }}>{field.key}</dt>
+          <dt
+            style={{
+              color: "var(--graview-ink-faint)",
+              whiteSpace: "nowrap",
+              // A field name is a label, not a heading: it should read as
+              // quieter than its value rather than competing with it.
+              fontSize: 12,
+            }}
+          >
+            {labels[field.key] ?? humanise(field.key)}
+          </dt>
           <dd style={{ margin: 0, minWidth: 0 }}>
             <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} />
           </dd>
@@ -202,4 +271,37 @@ export function Fields<S extends AnySchema>({
       ))}
     </dl>
   );
+}
+
+/**
+ * A heading you can change by clicking it.
+ *
+ * Dropping a field because the heading already said it is right — a record
+ * that lists its own title reads as a debug dump — but it took the rename
+ * control with it, because the field the heading came from was usually the
+ * only editable one. Two things wanted the same row.
+ *
+ * So the HEADING becomes the control. That is better than either: the thing
+ * you click to rename something is its name, and there is no second copy of
+ * it anywhere on the page. Falls back to plain text when nothing writes the
+ * field, which is the same honesty `EditableValue` gives a read-only value.
+ */
+export function EditableTitle<S extends AnySchema>({
+  nodeId,
+  children,
+}: {
+  readonly nodeId: string;
+  /** What the view decided the heading is. Matched against the node's fields. */
+  readonly children: string;
+}) {
+  const { fields } = useEditableFields<S>(nodeId);
+  const node = useNode<S>(nodeId) as (Record<string, unknown> & { id: string }) | undefined;
+  if (!node) return <>{children}</>;
+
+  const writable = fields.find((field) => {
+    const value = node[field.field];
+    return typeof value === "string" && value === children;
+  });
+  if (!writable) return <>{children}</>;
+  return <EditableValue<S> nodeId={nodeId} field={writable.field} value={children} />;
 }

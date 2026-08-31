@@ -1,4 +1,4 @@
-import type { AnySchema, Store } from "@graview/core";
+import { labelOf, type AnySchema, type Store } from "@graview/core";
 import { layout, type LayoutNode, type ViewState } from "@graview/layout";
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useGraview } from "./context.js";
@@ -41,12 +41,17 @@ export function JackedIn<S extends AnySchema>({ className, style, children }: Ja
   const node = findNode(store, view, jackedIn);
   if (!node) return null;
 
+  const definition = store.schema.tryDefinition(node.kind);
+  const name = node.aggregate
+    ? node.aggregate.label
+    : labelOf(definition, store.graph.getNode(node.id) as never);
+
   return (
     <div
       className={className}
       role="dialog"
       aria-modal="true"
-      aria-label={`${node.kind} in full view`}
+      aria-label={`${name} in full view`}
       style={{
         position: "fixed",
         inset: 0,
@@ -59,26 +64,89 @@ export function JackedIn<S extends AnySchema>({ className, style, children }: Ja
          * second app made jack-in a primary control rather than a curiosity.
          */
         zIndex: 50,
-        background: "var(--graview-ground, #f6f4f0)",
+        background: "var(--graview-ground)",
         overflow: "auto",
+        display: "flex",
+        flexDirection: "column",
         ...style,
       }}
     >
+      {/*
+        * A REAL header, not a button floating in an empty bar.
+        *
+        * It used to be one control and eleven hundred pixels of nothing, which
+        * is a page that has not told you where you are — and "where you are"
+        * is the only question a full page raises that the scene did not
+        * already answer. The name and the kind belong here; everything below
+        * is about the thing rather than about being here.
+        */}
       <header
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          padding: "12px 20px",
-          borderBottom: "1px solid rgba(0,0,0,0.08)",
+          gap: 14,
+          padding: "0 22px",
+          height: 56,
+          flex: "0 0 auto",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          borderBottom: "1px solid var(--graview-edge)",
+          background: "var(--graview-bar)",
+          backdropFilter: "blur(14px)",
         }}
       >
-        <button type="button" onClick={exit} autoFocus>
-          Back to the scene
+        <button type="button" onClick={exit} autoFocus style={{ flex: "0 0 auto" }}>
+          ← Back
         </button>
+        {/*
+          * The KIND, not the name.
+          *
+          * The document below owns its own title, and chrome that repeats the
+          * heading three inches above it reads as a mistake even when both are
+          * correct — a browser does not print the h1 in the toolbar. What the
+          * bar is for is what KIND of thing you are looking at, which the
+          * document does not say and which is the orientation a full page
+          * actually costs you.
+          */}
+        <span
+          style={{
+            fontSize: 11,
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            color: "var(--graview-ink-faint)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {node.aggregate ? node.aggregate.label : node.kind}
+        </span>
         {children}
       </header>
-      <main style={{ padding: 20 }}>
+
+      {/*
+        * A DOCUMENT: a centred column, capped, with room under it.
+        *
+        * A short record used to be pinned to the top-left of a full viewport
+        * with eight hundred pixels of nothing below it, and full-bleed width
+        * for two lines of text. Neither is a rendering that failed — both are
+        * a rendering that was never given a page to sit on. The cap is
+        * generous enough for a matrix and narrow enough that prose does not
+        * run to 1500 pixels a line.
+        *
+        * The bottom padding is for the actions strip, which is fixed over
+        * everything: without it the last line of a long record sits underneath
+        * the controls that act on it.
+        */}
+      <main
+        style={{
+          flex: "1 1 auto",
+          width: "100%",
+          maxWidth: 1120,
+          margin: "0 auto",
+          padding: "34px 22px 128px",
+          boxSizing: "border-box",
+        }}
+      >
         <ResolvedView node={node} mode="fullscreen" selected={false} fidelity="full" />
       </main>
     </div>

@@ -36,7 +36,7 @@ export type {
 } from "./lens/coverage.js";
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
-export { EditableValue, Fields } from "./editable.js";
+export { EditableTitle, EditableValue, Fields, humanise } from "./editable.js";
 export { Wordmark } from "./wordmark.js";
 // The primitive set: enough for a new kind to render before anyone writes a view.
 export {
