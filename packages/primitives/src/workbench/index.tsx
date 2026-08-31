@@ -853,6 +853,7 @@ export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] })
 export function BackOut({ home }: { readonly home: string | null }) {
   const { view, focus, show } = useNavigation();
   const { selection, clear } = useSelection();
+  const { overview, setOverview } = useGraview<AnySchema>();
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -860,15 +861,46 @@ export function BackOut({ home }: { readonly home: string | null }) {
       // Never steal Escape from a field someone is typing in.
       const active = document.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
-      if (selection.length > 0) clear();
+      // Outermost first: leaving the overview is the biggest thing Escape can
+      // undo, and it should not also drop a selection on the way past.
+      if (overview) setOverview(false);
+      else if (selection.length > 0) clear();
       else if (view.relation) show(null);
       else if (view.focusId !== home) focus(home);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, focus, show, selection, clear, home]);
+  }, [view, focus, show, selection, clear, home, overview, setOverview]);
 
   return null;
+}
+
+/**
+ * The way out to the overview, and back.
+ *
+ * One control rather than two, because it is one axis: you are either inside
+ * the plane stack or above it.
+ */
+export function OverviewButton() {
+  const { overview, setOverview } = useGraview<AnySchema>();
+  return (
+    <button
+      type="button"
+      data-testid="overview"
+      aria-pressed={overview}
+      title={overview ? "Back into the scene" : "See the whole graph from outside"}
+      onClick={() => setOverview(!overview)}
+      style={{
+        fontSize: 12.5,
+        whiteSpace: "nowrap",
+        ...(overview
+          ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
+          : {}),
+      }}
+    >
+      {overview ? "Back in" : "Whole graph"}
+    </button>
+  );
 }
 
 /* --------------------------------------------------------------------- trail */

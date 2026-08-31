@@ -7,5 +7,5 @@
     "jsx": "react-jsx"
   },
   "include": ["src/**/*"],
-  "references": [{ "path": "../core" }, { "path": "../react" }, { "path": "../tools" }]
+  "references": [{ "path": "../core" }, { "path": "../react" }, { "path": "../tools" }, { "path": "../layout" }]
 }

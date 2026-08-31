@@ -230,6 +230,9 @@ importers:
       '@graview/core':
         specifier: workspace:*
         version: link:../core
+      '@graview/layout':
+        specifier: workspace:*
+        version: link:../layout
       '@graview/react':
         specifier: workspace:*
         version: link:../react
