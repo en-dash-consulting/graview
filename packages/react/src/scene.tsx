@@ -902,6 +902,8 @@ export function ResolvedView<S extends AnySchema>({
     flagged,
     ...(node.raised ? { raised: true } : {}),
     ...(node.focused ? { focused: true } : {}),
+    ...(node.rank ? { rank: node.rank } : {}),
+    ...(node.nestedUnder ? { nestedUnder: node.nestedUnder } : {}),
     ...(hasOwnView ? { hasOwnView: true } : {}),
   };
 

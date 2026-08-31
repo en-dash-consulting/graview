@@ -325,3 +325,32 @@ describe("the timeline's spans are things, not decoration", () => {
     expect(html).toContain('data-graview-pick="morning"');
   });
 });
+
+/**
+ * The other half of ranking: the layout draws a secondary kind smaller and
+ * further back, and the CARD has to look like a quieter card rather than a
+ * full-size one that shrank.
+ */
+describe("a kind card carries its rank", () => {
+  const focusedOnAna = renderScene({ ...EMPTY_VIEW, focusId: "ana" });
+
+  it("marks what the focus touches as primary and the rest as secondary", () => {
+    // A person declares an edge to a duty; nothing declares one to a vehicle.
+    expect(focusedOnAna).toContain('data-graview-rank="primary"');
+    expect(focusedOnAna).toContain('data-graview-rank="secondary"');
+  });
+
+  it("says nothing about rank when nothing is focused", () => {
+    expect(renderScene()).not.toContain("data-graview-rank");
+  });
+
+  it("still names a secondary kind, because it is somewhere you can go", () => {
+    // Quieter, not hidden: the card keeps its name and its count.
+    const card = focusedOnAna.slice(focusedOnAna.indexOf('data-graview-rank="secondary"'));
+    expect(card.slice(0, 800)).toContain("Blocks");
+    // And every kind is still on the plane, whatever its rank.
+    for (const plural of ["People", "Runs", "Blocks", "Vehicles"]) {
+      expect(focusedOnAna).toContain(plural);
+    }
+  });
+});

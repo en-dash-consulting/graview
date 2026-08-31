@@ -11,6 +11,8 @@ export {
   AGGREGATE_PREFIX,
 } from "./layout.js";
 export { easeInOut, interpolate } from "./interpolate.js";
+export { rankKinds } from "./rank.js";
+export type { KindRank, KindRanking } from "./rank.js";
 export type { InterpolatedLayout, InterpolatedNode } from "./interpolate.js";
 export { DEFAULT_OPTIONS } from "./types.js";
 export type {

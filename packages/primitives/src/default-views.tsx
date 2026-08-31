@@ -188,14 +188,29 @@ export function registerDefaultViews<S extends AnySchema>(
       const members = props.nodes ?? [];
       const trouble = members.some((member) => props.flagged?.includes(member.id));
       const accent = props.focused || props.raised;
+      /*
+       * A kind the focus does not touch is QUIETER, not hidden.
+       *
+       * The layout already draws it smaller and further back; this is the
+       * other half of the same reading, so the card does not look like a
+       * full-size one that merely shrank. It stays a real card with a real
+       * name — a secondary relation is still somewhere you can go.
+       */
+      const secondary = props.rank === "secondary" && !accent;
+      const nested = props.nestedUnder !== undefined;
       return (
         <div
           className="graview-kind-card"
+          data-graview-rank={props.rank}
+          data-graview-nested={nested || undefined}
+          // Tucked behind its parent there is no room for the description, so
+          // it moves to the tooltip rather than being lost.
+          {...(nested && definition?.description ? { title: definition.description } : {})}
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 4,
-            padding: "10px 11px",
+            gap: nested ? 1 : 4,
+            padding: nested ? "6px 7px" : "10px 11px",
             boxSizing: "border-box",
             borderRadius: 10,
             border: accent
@@ -205,7 +220,9 @@ export function registerDefaultViews<S extends AnySchema>(
             // a ninety-pixel card has no room for a word that says so.
             background: accent
               ? `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 1.1)), var(--graview-panel)`
-              : `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 0.5))`,
+              : `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * ${
+                  secondary ? 0.28 : 0.5
+                }))`,
             boxShadow: accent ? "0 0 0 1px var(--graview-accent-dim)" : undefined,
           }}
         >
@@ -215,7 +232,7 @@ export function registerDefaultViews<S extends AnySchema>(
               count did at ninety pixels wide. */}
           <span
             style={{
-              fontSize: 13,
+              fontSize: nested ? 10.5 : 13,
               lineHeight: 1.25,
               letterSpacing: "0.05em",
               textTransform: "uppercase",
@@ -252,7 +269,11 @@ export function registerDefaultViews<S extends AnySchema>(
             ) : null}
           </div>
 
-          {definition?.description ? (
+          {/* The description is what a full-size card has room for. A nested
+              one is a corner peeking out from behind its parent; its name and
+              its count are the whole of what fits, and the title attribute
+              still carries the rest. */}
+          {definition?.description && !nested ? (
             <span
               className="graview-kind-note"
               style={{ fontSize: 11.5, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
