@@ -92,7 +92,66 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
   }
 
+  const titles = new Map<string, string>();
   for (const mutation of app.mutations ?? []) {
+    /*
+     * A TITLE is the whole label a person gets, and a DESCRIPTION is the whole
+     * instruction an agent gets. Neither is a slug.
+     *
+     * `mutationToolSchema` falls back from description to title to name, so a
+     * mutation that says nothing hands an agent a label where an instruction
+     * belongs — and the same opaque string is what a person reads in the
+     * actions strip. An unreadable one costs twice, which is why this is
+     * checked at build time rather than noticed in use.
+     */
+    if (!mutation.title || mutation.title.trim().length === 0) {
+      add({
+        severity: "error",
+        code: "mutation-untitled",
+        where: `defineMutation("${mutation.name}").title`,
+        message: "No title, so the interface will show the mutation's slug as its label.",
+        fix: `Add title: "<what this does, in the app's own words>".`,
+      });
+    } else {
+      const said = titles.get(mutation.title);
+      if (said) {
+        add({
+          severity: "warning",
+          code: "mutation-title-ambiguous",
+          where: `defineMutation("${mutation.name}").title`,
+          message: `"${mutation.title}" is also the title of "${said}", so the two are indistinguishable wherever both are offered.`,
+          fix: "Give one of them a title that says which it is.",
+        });
+      }
+      titles.set(mutation.title, mutation.name);
+      /*
+       * A title that is an IDENTIFIER names the code rather than the act.
+       *
+       * Deliberately narrow: "Add person" matches its slug and is a perfectly
+       * good label, so slug-similarity is not the signal. A hyphen, an
+       * underscore or interior capitals in a single word is.
+       */
+      if (/[-_]/.test(mutation.title) || /^[a-z]+[A-Z]/.test(mutation.title)) {
+        add({
+          severity: "warning",
+          code: "mutation-title-is-an-identifier",
+          where: `defineMutation("${mutation.name}").title`,
+          message: `"${mutation.title}" reads as a name in the source rather than as a label on a button.`,
+          fix: "Say what it does to the thing it is offered on, in the app's own words.",
+        });
+      }
+    }
+    if (!mutation.description || mutation.description.trim().length === 0) {
+      add({
+        severity: "warning",
+        code: "mutation-undescribed",
+        where: `defineMutation("${mutation.name}").description`,
+        message:
+          "No description, so an agent's tool schema falls back to the title — a label where an instruction belongs.",
+        fix: "Add a sentence saying what it is for and when to reach for it.",
+      });
+    }
+
     const subject = mutation.subject;
     if (subject && subject.kinds !== "*") {
       for (const kind of subject.kinds) {

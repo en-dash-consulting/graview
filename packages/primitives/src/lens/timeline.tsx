@@ -458,6 +458,16 @@ function Column({
             // routes a click on it to that node rather than to the calendar
             // drawing it.
             data-graview-pick={span.id}
+            /*
+             * Emphasis in the DOM as well as in the paint.
+             *
+             * "Selecting a rule lights what it judges" is a claim about the
+             * picture, and a claim about a picture that exists only as a
+             * colour cannot be checked by anything — not a test, not a person
+             * reading the tree. The attribute costs nothing and makes it a
+             * fact.
+             */
+            data-graview-emphasis={emphasisOf(span.id)}
             title={`${span.label} · ${format(span.start)}–${format(span.end)}`}
             style={{
               position: "absolute",
@@ -509,6 +519,7 @@ function Column({
           key={span.id}
           data-graview-span={span.id}
           data-graview-pick={span.id}
+          data-graview-emphasis={emphasis}
           data-graview-moment=""
           title={`${span.label} · ${format(span.start)}`}
           style={{

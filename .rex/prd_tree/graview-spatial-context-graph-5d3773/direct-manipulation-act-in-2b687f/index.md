@@ -2,12 +2,15 @@
 id: "2b687f3c-6253-4b93-86cf-0e592ae9fcdf"
 level: "feature"
 title: "Direct manipulation: act in place, travel deliberately"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "interaction"
   - "ux"
 source: "Session feedback while using the board, calendar and desk"
+startedAt: "2026-08-31T02:50:25.657Z"
+completedAt: "2026-08-31T02:50:25.657Z"
+endedAt: "2026-08-31T02:50:25.657Z"
 acceptanceCriteria:
   - "Single click on any data-graview-pick target selects it and leaves the view where it is"
   - "Double click on a pick target travels to it (focus); double click on a view with no pick target still jacks in"
@@ -24,10 +27,10 @@ description: "Clicking a thing currently TRAVELS to it, which is the wrong defau
 
 | Title | Status |
 |-------|--------|
-| [A raised relation keeps its origin visible](./a-raised-relation-keeps-its-0e68e9.md) | pending |
-| [Editing a value in place](./editing-a-value-in-place.md) | pending |
-| [Every action title says what it does](./every-action-title-says-what-it-does.md) | pending |
-| [Right click opens the actions at the pointer](./right-click-opens-the-actions-f89ca8.md) | pending |
-| [Selecting a rule shows what it judges](./selecting-a-rule-shows-what-it-judges.md) | pending |
-| [Single click selects, double click travels](./single-click-selects-double-18cd93.md) | pending |
-| [The activity rail gets out of the way](./the-activity-rail-gets-out-of-the-way.md) | pending |
+| [A raised relation keeps its origin visible](./a-raised-relation-keeps-its-0e68e9.md) | completed |
+| [Editing a value in place](./editing-a-value-in-place.md) | completed |
+| [Every action title says what it does](./every-action-title-says-what-it-does.md) | completed |
+| [Right click opens the actions at the pointer](./right-click-opens-the-actions-f89ca8.md) | completed |
+| [Selecting a rule shows what it judges](./selecting-a-rule-shows-what-it-judges.md) | completed |
+| [Single click selects, double click travels](./single-click-selects-double-18cd93.md) | completed |
+| [The activity rail gets out of the way](./the-activity-rail-gets-out-of-the-way.md) | completed |

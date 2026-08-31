@@ -293,6 +293,12 @@ export function BoardView<S extends AnySchema>({
                 key={slot.id}
                 data-graview-pick={slot.occupantId ?? slot.id}
                 data-graview-slot={slot.id}
+                /*
+                 * Emphasis in the DOM as well as in the paint. A claim about
+                 * a picture that exists only as a colour cannot be checked by
+                 * anything — not a test, not a person reading the tree.
+                 */
+                data-graview-emphasis={lit.size === 0 ? "plain" : dim ? "dimmed" : "lit"}
                 title={
                   hole
                     ? `${slot.label} — nobody in it`

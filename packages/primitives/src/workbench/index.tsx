@@ -5,6 +5,7 @@ import {
   useApplyAffordance,
   useGraph,
   useGraview,
+  useJackIn,
   useNavigation,
   useSelection,
   useViolations,
@@ -828,13 +829,15 @@ export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] })
 /* ------------------------------------------------------------------ backing out */
 
 /**
- * Escape backs out one level: drop the selection, then the raised relation,
- * then the focus. A spatial interface has to have a way out that does not
- * require finding the right small × in a trail.
+ * Escape backs out one level: leave the full page, then the Graview, then
+ * drop the selection, then the raised relation, then the focus. A spatial
+ * interface has to have a way out that does not require finding the right
+ * small × in a trail.
  */
 export function BackOut({ home }: { readonly home: string | null }) {
   const { view, focus, show, go } = useNavigation();
   const { selection, clear } = useSelection();
+  const { isJackedIn, exit } = useJackIn();
   const overview = view.overview ?? false;
 
   useEffect(() => {
@@ -843,16 +846,26 @@ export function BackOut({ home }: { readonly home: string | null }) {
       // Never steal Escape from a field someone is typing in.
       const active = document.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
-      // Outermost first: leaving the overview is the biggest thing Escape can
+      /*
+       * Outermost first, and the full page is the outermost thing there is.
+       *
+       * It is a modal dialog covering everything, and Escape did not close it
+       * — the first press dropped the selection underneath it instead, which
+       * from inside the page looked like Escape doing nothing at all. A modal
+       * that cannot be dismissed from the keyboard is a trap; the only way
+       * out was the button.
+       */
+      if (isJackedIn) exit();
+      // Then the Graview: rising is the biggest change of place Escape can
       // undo, and it should not also drop a selection on the way past.
-      if (overview) go(withOverview(view, false));
+      else if (overview) go(withOverview(view, false));
       else if (selection.length > 0) clear();
       else if (view.relation) show(null);
       else if (view.focusId !== home) focus(home);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, focus, show, go, selection, clear, home, overview]);
+  }, [view, focus, show, go, selection, clear, home, overview, isJackedIn, exit]);
 
   return null;
 }

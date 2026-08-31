@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
   applyAffordance,
+  editableFields,
   createInAppAdapter,
   createMcpAdapter,
   createToolRuntime,
@@ -218,6 +219,109 @@ describe("suggestions nobody wrote a rule to produce", () => {
     const derived = deriveAffordances(s, ["d1", "d2", "d3", "ana"]);
     // One frame is 16.7ms and a selection change must not cost a frame.
     expect(derived.ms).toBeLessThan(16);
+  });
+});
+
+/**
+ * A rule node has no edges, so selecting one changed nothing on screen and
+ * read as broken. What a rule is ABOUT is derivable from its violations; what
+ * it says when it is holding has to be derivable too, or silence is
+ * indistinguishable from a rule that does not work.
+ */
+describe("selecting a rule says what it judges", () => {
+  it("states its violations as observations, with the nodes they implicate", () => {
+    const derived = deriveAffordances(store(), ["cap"]);
+    const said = derived.observations.map((observation) => observation.text);
+    expect(said).toContain("Ana runs 3, over the cap of 2");
+    const violation = derived.observations.find((observation) =>
+      observation.text.includes("over the cap"),
+    )!;
+    // The nodes it implicates, so a view can light them wherever they are —
+    // which is the only reason selecting a rule changes the picture at all.
+    expect(violation.nodeIds).toEqual(expect.arrayContaining(["ana", "d1", "d2", "d3"]));
+  });
+
+  it("says a rule is HOLDING rather than showing nothing", () => {
+    const quiet = store();
+    // Give one run away and the cap is met.
+    quiet.apply({ name: "reassign", args: { dutyId: "d3", toPersonId: "bo" } });
+    const derived = deriveAffordances(quiet, ["cap"]);
+    expect(derived.observations.map((observation) => observation.text)).toContain(
+      "Two runs each holds — nothing currently breaks it",
+    );
+  });
+
+  it("says nothing of the sort about a node no rule judges", () => {
+    const derived = deriveAffordances(store(), ["d1"]);
+    expect(derived.observations.some((observation) => observation.text.includes("holds"))).toBe(
+      false,
+    );
+  });
+});
+
+/**
+ * Reading a node closely is when you most want to change it.
+ *
+ * The only route used to be a named mutation and a form. A field the schema
+ * declares, and some mutation writes, should be editable where it is shown —
+ * and the framework has to find that mutation itself, or every app pays for
+ * the same wiring.
+ */
+describe("editing a value in place", () => {
+  it("finds the mutation that writes a field, from the declaration alone", () => {
+    const editable = editableFields(store(), "ana");
+    expect(editable.map((field) => field.field)).toEqual(["label"]);
+    expect(editable[0]!.mutation).toBe("rename");
+    expect(editable[0]!.title).toBe("Rename");
+    // What sort of answer it wants, read off the mutation's own input.
+    expect(editable[0]!.shape).toEqual({ type: "text" });
+    // Nothing left to answer, so the edit is one gesture.
+    expect(editable[0]!.open).toEqual([]);
+  });
+
+  it("edits through the mutation, so the change is logged and undoable", () => {
+    const live = store();
+    const edit = editableFields(live, "ana")[0]!;
+    const call = edit.call("Ana B.");
+    expect(call).toEqual({ name: "rename", args: { id: "ana", label: "Ana B." } });
+
+    const result = live.apply(call);
+    expect((live.graph.getNode("ana") as { label: string }).label).toBe("Ana B.");
+    // In the log, with an author, and takeable back — which is the whole
+    // reason an in-place edit still runs a mutation rather than writing.
+    expect(live.batches().at(-1)?.author.kind).toBe("human");
+    live.undo(result.batch);
+    expect((live.graph.getNode("ana") as { label: string }).label).toBe("Ana");
+  });
+
+  it("offers a field on every kind the writing mutation accepts", () => {
+    // `rename` takes person | duty, so a duty's label is editable too, with
+    // nobody having said so per kind.
+    expect(editableFields(store(), "d1").map((field) => field.field)).toContain("label");
+  });
+
+  it("says nothing about a field no mutation writes", () => {
+    /*
+     * A duty's `at` is declared and shown, and nothing in this app writes it
+     * by that name — so it is read-only, and an interface can say so rather
+     * than offering a control that does nothing.
+     */
+    const editable = editableFields(store(), "d1").map((field) => field.field);
+    expect(editable).not.toContain("at");
+    // `reday` writes the day, and it is called `day` on both sides.
+    expect(editable).toContain("day");
+  });
+
+  it("never mistakes an argument naming another node for a field", () => {
+    // `reassign` takes `toPersonId`, which is a node reference and not a
+    // field of anything.
+    for (const field of editableFields(store(), "d1")) {
+      expect(field.field).not.toBe("toPersonId");
+    }
+  });
+
+  it("says nothing at all about a node that is not there", () => {
+    expect(editableFields(store(), "nobody")).toEqual([]);
   });
 });
 

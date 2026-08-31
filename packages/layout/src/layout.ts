@@ -591,14 +591,13 @@ export function layout<S extends AnySchema>(
 
   for (const item of tucked) {
     const parent = slotOf.get(item.nestedUnder!);
-    const width = contextSize.width * NESTED;
-    const height = contextSize.height * NESTED;
     if (parent) {
       const count = siblings.get(item.nestedUnder!) ?? 1;
       const index = seen.get(item.nestedUnder!) ?? 0;
       seen.set(item.nestedUnder!, index + 1);
       /*
-       * Along the parent's BOTTOM edge, half under it, fanning right.
+       * Along the parent's BOTTOM edge, half under it, fanning right and
+       * centred on the card they belong to.
        *
        * Above it was the obvious place and it is the one place there is no
        * room: the focus reaches down over the arc, so anything tucked above
@@ -606,11 +605,22 @@ export function layout<S extends AnySchema>(
        * ever visible. Under the edge it stays inside the kinds band and
        * stays legible, and half-covered by its parent still reads as
        * belonging to it.
+       *
+       * Overlap is capped at just under half a card, because a card whose
+       * MIDDLE is covered cannot be clicked — the point at the centre belongs
+       * to whatever is drawn over it. Four kinds behind one card left only
+       * the last of them reachable, which is a fan nobody can use. Where
+       * several share a parent they shrink to fit rather than piling up.
        */
-      const spread = count > 1 ? Math.min(width * 0.34, (parent.width * 0.62) / (count - 1)) : 0;
+      const step = 0.55;
+      const roomy = contextSize.width * NESTED;
+      const width = Math.min(roomy, (parent.width * 1.02) / (step * (count - 1) + 1));
+      const height = contextSize.height * NESTED * (width / roomy);
+      const spread = width * step;
+      const fan = (count - 1) * spread + width;
       placedContext.push({
         ...item,
-        x: parent.x + parent.width * 0.28 + index * spread,
+        x: parent.x + (parent.width - fan) / 2 + index * spread,
         // Half under the edge, or as far under as the canvas allows. A card
         // hanging off the bottom of the screen is not tucked, it is gone.
         y: Math.min(parent.y + parent.height - height * 0.5, opts.height - height),
@@ -619,6 +629,8 @@ export function layout<S extends AnySchema>(
         depth: recede(parent.depth, 0.8),
       });
     } else if (lastSlot) {
+      const width = contextSize.width * NESTED;
+      const height = contextSize.height * NESTED;
       // A parent that never got a slot leaves nothing to hang off. The card
       // is still drawn, at the end of the row, rather than silently dropped.
       placedContext.push({

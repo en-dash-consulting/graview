@@ -53,7 +53,8 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
 const READ_TOOLS: readonly ToolDefinition[] = [
   {
     name: "get_graph",
-    description: "The whole graph: every node with its fields, and every edge.",
+    description:
+      "Read the whole graph: every node with its fields, and every edge. Start here when you need the shape of the domain rather than one thing in it.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -63,7 +64,8 @@ const READ_TOOLS: readonly ToolDefinition[] = [
   },
   {
     name: "get_node",
-    description: "One node, its edges, and the violations that implicate it.",
+    description:
+      "Read one node, its edges, and the violations that implicate it. Use this to check a thing before you change it.",
     inputSchema: {
       type: "object",
       properties: { id: { type: "string", description: "Node id." } },
@@ -75,7 +77,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
   {
     name: "get_violations",
     description:
-      "Every invariant violation the graph currently has, with its repairs.",
+      "List every invariant violation the graph currently has, with the repairs that would resolve each one. Read this before proposing work: a rule that is already broken is more urgent than anything you could add.",
     inputSchema: {
       type: "object",
       properties: {
@@ -91,7 +93,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
   {
     name: "get_affordances",
     description:
-      "What can legally be done with a selection, ranked. Prefer these over composing a mutation by hand: they are derived from the schema, the invariants and the shape of the graph.",
+      "Ask what can legally be done with a selection, ranked. Prefer these over composing a mutation by hand: they are derived from the schema, the invariants and the shape of the graph, so they cannot name an action that does not exist.",
     inputSchema: {
       type: "object",
       properties: {
@@ -110,7 +112,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
   {
     name: "preview_mutation",
     description:
-      "What a mutation would change, as a diff, plus any invariant it would break. Nothing is applied.",
+      "Try a mutation without applying it: get back the diff it would produce and any invariant it would break. Do this when you are unsure, rather than applying and undoing.",
     inputSchema: {
       type: "object",
       properties: {

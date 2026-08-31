@@ -155,3 +155,84 @@ describe("generated agent docs", () => {
     expect(text).toContain("graview check");
   });
 });
+
+/**
+ * A title is the whole label a person gets; a description is the whole
+ * instruction an agent gets.
+ *
+ * `mutationToolSchema` falls back from description to title to name, so a
+ * mutation that says nothing hands an agent a label where an instruction
+ * belongs — and the same opaque string is what a person reads in the actions
+ * strip. An unreadable one costs twice, which is why it is a build-time
+ * question rather than something noticed in use.
+ */
+describe("what a mutation calls itself", () => {
+  const app = (mutation: Parameters<typeof defineApp>[0]["mutations"][number]) =>
+    defineApp({
+      name: "test",
+      schema,
+      mutations: [mutation],
+      invariants: [],
+    });
+
+  it("refuses a mutation with no title, because the interface would show its slug", () => {
+    const untitled = bound.defineMutation("reword-thing", {
+      description: "Change the wording.",
+      subject: { kinds: ["duty"], arg: "dutyId" },
+      input: z.object({ dutyId: nodeRef(["duty"]) }),
+      apply: () => {},
+    });
+    expect(findings(app(untitled))).toContain("error:mutation-untitled");
+  });
+
+  it("warns when a title reads as a name in the source rather than a label", () => {
+    const sluggish = bound.defineMutation("reword-thing", {
+      title: "reword-thing",
+      description: "Change the wording.",
+      subject: { kinds: ["duty"], arg: "dutyId" },
+      input: z.object({ dutyId: nodeRef(["duty"]) }),
+      apply: () => {},
+    });
+    expect(findings(app(sluggish))).toContain("warning:mutation-title-is-an-identifier");
+  });
+
+  it("leaves an ordinary title alone even when it matches its slug", () => {
+    // "Add person" is a perfectly good label. Slug-similarity is not the
+    // signal; looking like an identifier is.
+    const plain = bound.defineMutation("add-person", {
+      title: "Add person",
+      description: "Put a new person in the household.",
+      subject: { kinds: ["duty"], arg: "dutyId" },
+      input: z.object({ dutyId: nodeRef(["duty"]) }),
+      apply: () => {},
+    });
+    expect(findings(app(plain))).toEqual([]);
+  });
+
+  it("warns when a description is missing, since an agent then reads a label", () => {
+    const bare = bound.defineMutation("reword-thing", {
+      title: "Reword it",
+      subject: { kinds: ["duty"], arg: "dutyId" },
+      input: z.object({ dutyId: nodeRef(["duty"]) }),
+      apply: () => {},
+    });
+    expect(findings(app(bare))).toContain("warning:mutation-undescribed");
+  });
+
+  it("warns when two mutations answer to the same title", () => {
+    const twin = bound.defineMutation("reword-thing", {
+      title: "Reassign run",
+      description: "Something else entirely.",
+      subject: { kinds: ["duty"], arg: "dutyId" },
+      input: z.object({ dutyId: nodeRef(["duty"]) }),
+      apply: () => {},
+    });
+    const both = defineApp({
+      name: "test",
+      schema,
+      mutations: [reassign, twin],
+      invariants: [],
+    });
+    expect(findings(both)).toContain("warning:mutation-title-ambiguous");
+  });
+});
