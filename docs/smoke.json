@@ -1,6 +1,6 @@
 {
-  "at": "2026-08-31T03:34:56.183Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-bWFMRr",
+  "at": "2026-08-31T03:41:49.873Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-XvZR4p",
   "steps": {
     "packed": [
       "@graview/core",
@@ -8,6 +8,7 @@
       "@graview/primitives",
       "@graview/react",
       "@graview/render",
+      "@graview/skills",
       "@graview/tools"
     ],
     "installing": true,

@@ -15,6 +15,7 @@ packages/
   render/      @graview/render      capture, composite at depth, pointer routing
   react/       @graview/react       the only UI binding, deliberately thin
   primitives/  @graview/primitives  view primitives, three lenses, the workbench
+  skills/      @graview/skills      the authoring moves, each ending in a check
 apps/
   the household example/    a household week    — a calendar
   proposal/    a tender response   — a coverage matrix, branded as "the bid-desk example"
@@ -23,7 +24,7 @@ apps/
   spike/       platform capability validation, run against a real browser
 ```
 
-**The six packages are what ships. The apps are examples.**
+**The packages are what ships. The apps are examples.**
 
 Each was built to prove a different claim — that a lens written for one domain
 is reused unchanged by another, that a second app's shell is eighty lines, that
@@ -108,6 +109,7 @@ pnpm brand         # somebody else's product, without a fork
 
 pnpm pack:inspect  # what would actually go in each tarball
 pnpm smoke         # install the tarballs into a scratch project and build
+pnpm skills        # install the authoring skills for Claude Code and Codex
 ```
 
 Each writes its verdict to `docs/`, as criteria rather than as a pass count:
@@ -284,6 +286,7 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | A brand reaches the pixels without forking a package | `scripts/verify-brand.mjs`, and `checkContrast` measures every text pair against WCAG AA |
 | A stranger can install the tarballs and build a real app | `scripts/smoke-install.mjs` — packs, installs into a scratch project with no workspace or path mapping, typechecks and runs |
 | A tarball contains what it should and nothing else | `scripts/inspect-pack.mjs` — no `src`, no tests, no tsbuildinfo, and every `exports` path present |
+| Every skill ends in a check, and names only findings the checker can produce | `packages/skills/tests/unit/skills.test.ts` — cross-checked against `check.ts` itself |
 
 ## The platform, honestly
 
