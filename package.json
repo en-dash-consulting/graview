@@ -14,6 +14,7 @@
     "acceptance": "node the household example/scripts/run-acceptance.mjs",
     "dev": "pnpm --filter the household example dev",
     "a11y": "node the household example/scripts/run-a11y.mjs",
+    "shrunk": "node scripts/verify-shrunk.mjs",
     "dev:proposal": "pnpm --filter the bid-desk example dev",
     "a11y:proposal": "node the bid-desk example/scripts/run-a11y.mjs",
     "dev:the coaching example": "pnpm --filter the coaching example dev",

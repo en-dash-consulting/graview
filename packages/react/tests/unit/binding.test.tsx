@@ -281,3 +281,63 @@ describe("navigation", () => {
     expect(html).toContain('data-graview-view="ana" data-graview-plane="0"');
   });
 });
+
+/**
+ * A view drawn smaller than it was designed for.
+ *
+ * "Shrunk down" has to mean the picture SCALED, not the view re-solving its
+ * layout in a third of the width. A matrix asked to lay itself out at 340
+ * pixels piles its rotated column headers into a corner and clips its rows —
+ * it looks broken because it is. Rendering at the natural size and scaling
+ * the result is literally the same image, smaller, and it stays live.
+ */
+describe("a node with a natural size is drawn scaled, not re-laid-out", () => {
+  const graview = (renderer: "dom" | "gpu") =>
+    render(<Scene renderer={renderer} />, {
+      ...EMPTY_VIEW,
+      focusId: "week-1",
+      overview: true,
+    });
+
+  it("lays the focus out at its natural size inside the smaller slot", () => {
+    const html = graview("dom");
+    const scaled = /data-graview-natural="([\d.]+)x([\d.]+)"/.exec(html);
+    expect(scaled).not.toBeNull();
+    const [naturalWidth, naturalHeight] = [Number(scaled![1]), Number(scaled![2])];
+
+    // The box the view lays itself out in is the FULL one, not the slot.
+    const host = html.slice(html.indexOf('data-graview-view="week-1"'));
+    const drawnWidth = Number(/width:([\d.]+)px/.exec(host)![1]);
+    expect(naturalWidth).toBeGreaterThan(drawnWidth);
+  });
+
+  it("scales uniformly, so nothing is stretched", () => {
+    const html = graview("dom");
+    const scaled = /data-graview-natural="([\d.]+)x([\d.]+)"/.exec(html)!;
+    const [naturalWidth, naturalHeight] = [Number(scaled[1]), Number(scaled[2])];
+    const inner = html.slice(scaled.index);
+    const factor = Number(/scale\(([\d.]+)\)/.exec(inner)![1]);
+
+    const host = html.slice(html.indexOf('data-graview-view="week-1"'));
+    const drawnWidth = Number(/width:([\d.]+)px/.exec(host)![1]);
+    const drawnHeight = Number(/height:([\d.]+)px/.exec(host)![1]);
+
+    // One factor for both axes, and the result fits the slot it was given.
+    expect(naturalWidth * factor).toBeLessThanOrEqual(drawnWidth + 1);
+    expect(naturalHeight * factor).toBeLessThanOrEqual(drawnHeight + 1);
+    expect(factor).toBeLessThan(1);
+  });
+
+  it("does not wrap a view that is drawn at the size it laid out at", () => {
+    // Inside the stack nothing is shrunk, so there is nothing to scale and no
+    // extra element between the host and the view.
+    const html = render(<Scene renderer="dom" />, { ...EMPTY_VIEW, focusId: "week-1" });
+    expect(html).not.toContain("data-graview-natural");
+  });
+
+  it("scales on the capture path too, so both renderers draw the same picture", () => {
+    // The GPU path rasterises the host subtree; the scale is part of the paint
+    // rather than something the shader has to know about.
+    expect(graview("gpu")).toContain("data-graview-natural");
+  });
+});

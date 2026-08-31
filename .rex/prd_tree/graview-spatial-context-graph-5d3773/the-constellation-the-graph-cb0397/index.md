@@ -26,4 +26,4 @@ description: "A third ALTITUDE, above the three planes rather than inside them.\
 |-------|--------|
 | [Relations are grouped, not listed flat](./relations-are-grouped-not-listed-flat.md) | pending |
 | [The constellation is where you watch the system work](./the-constellation-is-where-you-88355b.md) | pending |
-| [The shrunk interface must be the interface, scaled — not re-laid-out small](./the-shrunk-interface-must-be-240e7d.md) | pending |
+| [The shrunk interface must be the interface, scaled — not re-laid-out small](./the-shrunk-interface-must-be-240e7d.md) | completed |
