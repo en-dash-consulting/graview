@@ -1,6 +1,7 @@
 import type { InvariantDefinition } from "./invariants/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import type { Policy } from "./permissions/types.js";
+import type { Brand } from "./theme/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { ViewRegistry } from "./views/types.js";
 
@@ -60,6 +61,15 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * cannot press.
    */
   readonly policy?: Policy;
+  /**
+   * The name, the palette and the typography this installation wears.
+   *
+   * Declared so `graview check` can verify it: a custom palette can be wrong
+   * in ways nobody notices — a secondary colour that clears 4.5:1 on a dark
+   * ground and fails badly on paper — and contrast is a property the
+   * framework can measure rather than trust.
+   */
+  readonly brand?: Brand;
 }
 
 export function defineApp<S extends AnySchema>(app: GraviewApp<S>): GraviewApp<S> {
