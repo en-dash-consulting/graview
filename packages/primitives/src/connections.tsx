@@ -110,14 +110,28 @@ function groupsFor(
     const other = store.graph.getNode(otherId);
     if (!other) continue;
     const direction = edge.from === id ? "out" : "in";
+    // The edge is declared by whichever kind it leaves, wherever you are
+    // reading it from.
     const owner = direction === "out" ? focus.kind : other.kind;
     const key = `${edge.kind}:${direction}`;
     const group =
       byKey.get(key) ??
       ({
         key,
+        /*
+         * READ FROM THE END YOU ARE STANDING ON.
+         *
+         * An edge has one direction and two readings. Using the declaring
+         * side's words for both captioned a task's page "the tasks in this
+         * list", as though the task contained tasks. Incoming edges take the
+         * declaration's `inverse` when it has one, and the edge kind in plain
+         * words when it does not — which says less and is at least not wrong.
+         */
         label:
-          describeEdge(store.schema, owner, edge.kind) ?? edge.kind.replace(/-/g, " "),
+          (direction === "out"
+            ? describeEdge(store.schema, owner, edge.kind)?.description
+            : describeEdge(store.schema, owner, edge.kind)?.inverse) ??
+          edge.kind.replace(/-/g, " "),
         ids: [],
       } satisfies Group);
     if (!group.ids.includes(otherId)) group.ids.push(otherId);
@@ -132,9 +146,9 @@ function describeEdge(
   schema: AnySchema,
   ownerKind: string,
   edgeKind: string,
-): string | undefined {
+): { description?: string; inverse?: string } | undefined {
   const edges = schema.tryDefinition(ownerKind)?.edges as
-    | Record<string, { description?: string }>
+    | Record<string, { description?: string; inverse?: string }>
     | undefined;
-  return edges?.[edgeKind]?.description;
+  return edges?.[edgeKind];
 }

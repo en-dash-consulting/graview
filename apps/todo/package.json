@@ -7,7 +7,8 @@
   "main": "./dist/index.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@graview/core": "workspace:*",
@@ -16,6 +17,12 @@
     "@graview/react": "workspace:*",
     "@graview/render": "workspace:*",
     "@graview/tools": "workspace:*",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.11",
+    "@vitejs/plugin-react": "^4.3.4"
   }
 }

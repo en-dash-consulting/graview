@@ -13,6 +13,7 @@ import {
 import {
   ActivityRail,
   BackOut,
+  Backtrack,
   Inspector,
   OverviewButton,
   RelationKey,
@@ -198,6 +199,9 @@ function CommandBar({
       }}
     >
       <Wordmark<S> />
+      {/* Every stop is a URL, so back and forward are the browser's. This
+          only makes them visible, because nobody should have to know that. */}
+      <Backtrack />
       <Places />
       <Trail home={place.id} homeLabel={place.label} />
 

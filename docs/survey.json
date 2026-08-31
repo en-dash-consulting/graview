@@ -1,6 +1,288 @@
 {
-  "at": "2026-08-31T04:36:59.320Z",
+  "at": "2026-08-31T05:00:18.413Z",
   "shots": [
+    {
+      "app": "todo",
+      "state": "lists",
+      "scheme": "light",
+      "file": "todo-lists-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "week",
+      "scheme": "light",
+      "file": "todo-week-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "selected",
+      "scheme": "light",
+      "file": "todo-selected-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "travelled",
+      "scheme": "light",
+      "file": "todo-travelled-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": [
+        {
+          "text": "Pay the deposit",
+          "n": 2
+        }
+      ]
+    },
+    {
+      "app": "todo",
+      "state": "jackedIn",
+      "scheme": "light",
+      "file": "todo-jackedIn-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "graview",
+      "scheme": "light",
+      "file": "todo-graview-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "tidied",
+      "scheme": "light",
+      "file": "todo-tidied-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "lists",
+      "scheme": "dark",
+      "file": "todo-lists-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "week",
+      "scheme": "dark",
+      "file": "todo-week-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "selected",
+      "scheme": "dark",
+      "file": "todo-selected-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "travelled",
+      "scheme": "dark",
+      "file": "todo-travelled-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": [
+        {
+          "text": "Pay the deposit",
+          "n": 2
+        }
+      ]
+    },
+    {
+      "app": "todo",
+      "state": "jackedIn",
+      "scheme": "dark",
+      "file": "todo-jackedIn-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "graview",
+      "scheme": "dark",
+      "file": "todo-graview-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "tidied",
+      "scheme": "dark",
+      "file": "todo-tidied-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "launcher",
+      "state": "home",
+      "scheme": "light",
+      "file": "launcher-home-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "launcher",
+      "state": "home",
+      "scheme": "dark",
+      "file": "launcher-home-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
     {
       "app": "the household example",
       "state": "home",
@@ -68,6 +350,28 @@
       "overflowing": [],
       "unnamed": [],
       "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "travelled",
+      "scheme": "light",
+      "file": "the household example-travelled-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": [
+        {
+          "text": "child1 school",
+          "n": 2
+        }
+      ]
     },
     {
       "app": "the household example",
@@ -207,6 +511,28 @@
     },
     {
       "app": "the household example",
+      "state": "travelled",
+      "scheme": "dark",
+      "file": "the household example-travelled-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": [
+        {
+          "text": "child1 school",
+          "n": 2
+        }
+      ]
+    },
+    {
+      "app": "the household example",
       "state": "jackedIn",
       "scheme": "dark",
       "file": "the household example-jackedIn-dark.png",
@@ -261,6 +587,414 @@
       "state": "activity",
       "scheme": "dark",
       "file": "the household example-activity-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "home",
+      "scheme": "light",
+      "file": "proposal-home-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "selected",
+      "scheme": "light",
+      "file": "proposal-selected-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "jackedIn",
+      "scheme": "light",
+      "file": "proposal-jackedIn-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "graview",
+      "scheme": "light",
+      "file": "proposal-graview-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "home",
+      "scheme": "dark",
+      "file": "proposal-home-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "selected",
+      "scheme": "dark",
+      "file": "proposal-selected-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "jackedIn",
+      "scheme": "dark",
+      "file": "proposal-jackedIn-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "graview",
+      "scheme": "dark",
+      "file": "proposal-graview-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "team",
+      "scheme": "light",
+      "file": "the coaching example-team-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "training",
+      "scheme": "light",
+      "file": "the coaching example-training-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "week",
+      "scheme": "light",
+      "file": "the coaching example-week-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "selected",
+      "scheme": "light",
+      "file": "the coaching example-selected-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "travelled",
+      "scheme": "light",
+      "file": "the coaching example-travelled-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "withheld",
+      "scheme": "light",
+      "file": "the coaching example-withheld-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "jackedIn",
+      "scheme": "light",
+      "file": "the coaching example-jackedIn-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "graview",
+      "scheme": "light",
+      "file": "the coaching example-graview-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "team",
+      "scheme": "dark",
+      "file": "the coaching example-team-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "training",
+      "scheme": "dark",
+      "file": "the coaching example-training-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "week",
+      "scheme": "dark",
+      "file": "the coaching example-week-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "selected",
+      "scheme": "dark",
+      "file": "the coaching example-selected-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "travelled",
+      "scheme": "dark",
+      "file": "the coaching example-travelled-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "withheld",
+      "scheme": "dark",
+      "file": "the coaching example-withheld-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "jackedIn",
+      "scheme": "dark",
+      "file": "the coaching example-jackedIn-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "graview",
+      "scheme": "dark",
+      "file": "the coaching example-graview-dark.png",
       "viewport": [
         1560,
         940

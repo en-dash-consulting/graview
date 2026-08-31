@@ -17,6 +17,7 @@ packages/
   primitives/  @graview/primitives  view primitives, three lenses, the workbench
   skills/      @graview/skills      the authoring moves, each ending in a check
 apps/
+  todo/        THE EXAMPLE — a todo list, because nobody has to be taught one
   the household example/    a household week    — a calendar
   proposal/    a tender response   — a coverage matrix, branded as "the bid-desk example"
   the coaching example/       a coaching week     — a board, a matrix and a calendar, and roles
@@ -26,15 +27,21 @@ apps/
 
 **The packages are what ships. The apps are examples.**
 
-Each was built to prove a different claim — that a lens written for one domain
-is reused unchanged by another, that a second app's shell is eighty lines, that
-a permission model narrows the interface and an agent seat from one
-declaration — and together they are what the browser harnesses drive. None of
-them is a product, and none is published. A real product built on Graview lives
-in its own repository and depends on these packages the way any other consumer
-does; `scripts/smoke-install.mjs` rehearses exactly that on every CI run, by
-packing the tarballs and building a scratch app from them with no workspace and
-no path mapping in sight.
+**Start with `apps/todo`.** Four kinds, ten named mutations, three rules that
+name their own repairs, a lens borrowed from the household example's calendar, a declared
+brand and an agent seat — small enough to read in one sitting, and the only one
+that asks you to learn nothing before you can learn the framework. It found two
+framework bugs while it was being written, which is what an example is for.
+
+The other four are FIXTURES. Each was built to prove a specific claim — that a
+lens written for one domain is reused unchanged by another, that a second app's
+shell is eighty lines, that a permission model narrows the interface and an
+agent seat from one declaration — and together they are what the browser
+harnesses drive. None is a product and none is published. A real product built
+on Graview lives in its own repository and depends on these packages the way
+any other consumer does; `scripts/smoke-install.mjs` rehearses exactly that on
+every CI run, by packing the tarballs and building a scratch app from them with
+no workspace and no path mapping in sight.
 
 Only `@graview/render` touches the browser or the GPU, and only through its
 `@graview/render/gpu` entry — the main one is pure geometry, so nothing that
@@ -55,6 +62,7 @@ and the command to start it where one is not, because a launcher that offers
 dead links is worse than one that offers none.
 
 ```sh
+pnpm dev:todo       # THE EXAMPLE → http://localhost:5193
 pnpm dev            # the household example  → http://localhost:5190
 pnpm dev:proposal   # bid desk  → http://localhost:5191
 pnpm dev:the coaching example      # the coaching example → http://localhost:5192
@@ -72,7 +80,7 @@ and paper where depth loses contrast and gains haze. Inverting one to get the
 other gives grey-on-grey mush, because glow does not exist in daylight.
 
 ```sh
-pnpm test          # 426 tests, no GPU, no browser
+pnpm test          # 483 tests, no GPU, no browser
 pnpm typecheck
 pnpm check         # `graview check` against all four declarations
 ```
@@ -106,6 +114,8 @@ pnpm shrunk        # the shrunk interface is the interface, scaled
 pnpm watching      # an agent turn seen from outside the plane stack
 pnpm permissions   # one policy narrows the strip and the agent seat alike
 pnpm brand         # somebody else's product, without a fork
+pnpm navigation    # travelling, and getting back
+pnpm survey        # every place a person can land, photographed
 
 pnpm pack:inspect  # what would actually go in each tarball
 pnpm smoke         # install the tarballs into a scratch project and build
@@ -288,6 +298,7 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | An echo of our own write is recognised and not re-applied | `packages/core/tests/integration/sync.test.ts` — the loop that breaks naive two-way sync |
 | A conflict is surfaced as a violation with a repair, not resolved silently | `packages/core/tests/integration/sync.test.ts` |
 | Offline degrades to local-only and reconciles on reconnect | `packages/core/tests/integration/sync.test.ts` |
+| Travelling changes the address, and back and forward both work | `scripts/verify-navigation.mjs` — 12 criteria, driven through the controls rather than the keyboard |
 | A stranger can install the tarballs and build a real app | `scripts/smoke-install.mjs` — packs, installs into a scratch project with no workspace or path mapping, typechecks and runs |
 | A tarball contains what it should and nothing else | `scripts/inspect-pack.mjs` — no `src`, no tests, no tsbuildinfo, and every `exports` path present |
 | Every skill ends in a check, and names only findings the checker can produce | `packages/skills/tests/unit/skills.test.ts` — cross-checked against `check.ts` itself |

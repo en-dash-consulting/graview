@@ -1,6 +1,6 @@
 {
-  "at": "2026-08-31T03:56:10.331Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-Fju4Dl",
+  "at": "2026-08-31T05:09:42.536Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-Kr62HK",
   "steps": {
     "packed": [
       "@graview/core",

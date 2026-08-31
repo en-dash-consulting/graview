@@ -11,7 +11,23 @@ export type EdgeCardinality = "one" | "many";
 export interface EdgeDeclaration<TargetKind extends string = string> {
   readonly to: readonly TargetKind[] | "*";
   readonly cardinality?: EdgeCardinality;
+  /**
+   * How the edge reads FROM THE KIND THAT DECLARES IT — "who does the run",
+   * "the tasks in this list".
+   */
   readonly description?: string;
+  /**
+   * How it reads from the OTHER END.
+   *
+   * An edge has one direction and two readings, and using the declaring side's
+   * words for both is how a task's page ended up captioned "the tasks in this
+   * list" — as though the task contained tasks. The list holds the task; the
+   * task is on a list. Same edge, and neither sentence works in both places.
+   *
+   * Without one, an incoming edge is captioned with the edge kind in plain
+   * words, which says less and is at least not wrong.
+   */
+  readonly inverse?: string;
 }
 
 export type EdgeMap = Readonly<Record<string, EdgeDeclaration>>;
@@ -52,6 +68,26 @@ export interface NodeDefinitionSpec<
    * rather than field names (`{ start: "at", end: "endsAt" }`).
    */
   readonly fieldRoles?: FieldRoleMap;
+  /**
+   * How this kind's fields READ to a person.
+   *
+   * The framework renders a record from the declaration alone, which is most
+   * of what makes a new kind usable before anyone writes a view — and it can
+   * only get so far on its own. `540` is a truthful rendering of a number of
+   * minutes and a useless one; `order: 0` is a truthful rendering of an
+   * implementation detail nobody should ever be shown.
+   *
+   * Both are decisions only the declaration can make, so this is where they
+   * are made — once, rather than in every view that renders the kind.
+   */
+  readonly display?: {
+    /** Field names never shown to a person. Ordering keys, internal ids. */
+    readonly hide?: readonly string[];
+    /** Overrides the humanised default for a field's label. */
+    readonly labels?: Readonly<Record<string, string>>;
+    /** Turns a stored value into the words for it. */
+    readonly format?: Readonly<Record<string, (value: unknown) => string>>;
+  };
 }
 
 export interface NodeDefinition<

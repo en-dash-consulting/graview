@@ -10,6 +10,7 @@ export {
   ActivityRail,
   AnswerArgs,
   BackOut,
+  Backtrack,
   Inspector,
   nameOf,
   OverviewButton,

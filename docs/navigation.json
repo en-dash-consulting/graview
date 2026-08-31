@@ -1,0 +1,70 @@
+{
+  "at": "2026-08-31T05:07:50.216Z",
+  "steps": [
+    {
+      "step": "landed",
+      "url": "#focus=aggregate%3Alist",
+      "back": false,
+      "forward": false,
+      "trail": "The lists"
+    },
+    {
+      "step": "travelled",
+      "url": "#focus=t-deposit",
+      "back": true,
+      "forward": false,
+      "trail": "The lists›Pay the deposit×"
+    },
+    {
+      "step": "travelled again",
+      "url": "#focus=reason-deposit",
+      "back": true,
+      "forward": false,
+      "trail": "The lists›The landlord holds the date for 48 hours once the deposit…×"
+    },
+    {
+      "step": "back once",
+      "url": "#focus=t-deposit",
+      "back": true,
+      "forward": true,
+      "trail": "The lists›Pay the deposit×"
+    },
+    {
+      "step": "back twice",
+      "url": "#focus=aggregate%3Alist",
+      "back": false,
+      "forward": true,
+      "trail": "The lists"
+    },
+    {
+      "step": "forward once",
+      "url": "#focus=t-deposit",
+      "back": true,
+      "forward": true,
+      "trail": "The lists›Pay the deposit×"
+    },
+    {
+      "step": "home by breadcrumb",
+      "url": "#focus=aggregate%3Alist",
+      "back": true,
+      "forward": false,
+      "trail": "The lists"
+    }
+  ],
+  "wentDeeper": true,
+  "verdict": {
+    "nothingToGoBackToAtFirst": true,
+    "travellingChangesTheAddress": true,
+    "backBecomesAvailable": true,
+    "nothingAheadUntilYouGoBack": true,
+    "backActuallyGoesBack": true,
+    "wentDeeperThanOnce": true,
+    "eachTravelIsItsOwnStop": true,
+    "backAgainReachesTheStart": true,
+    "forwardIsOfferedOnceThereIsSomewhere": true,
+    "forwardActuallyGoesForward": true,
+    "theTrailNamesWhereYouAre": true,
+    "theTrailGetsYouHome": true
+  },
+  "passed": true
+}

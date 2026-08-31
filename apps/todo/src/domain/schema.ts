@@ -30,7 +30,17 @@ export const list = defineNode("list", {
   plural: "Lists",
   label: (node) => node.label,
   edges: {
-    holds: { to: ["task"], description: "the tasks in this list" },
+    holds: {
+      to: ["task"],
+      description: "the tasks on this list",
+      // How it reads from the task's end. Same edge, and neither sentence
+      // works in both places.
+      inverse: "the list it is on",
+    },
+  },
+  display: {
+    // An ordering key is a fact about the storage, not about the list.
+    hide: ["order"],
   },
 });
 
@@ -66,9 +76,31 @@ export const task = defineNode("task", {
     "waits-for": {
       to: ["task"],
       description: "what has to happen first",
+      inverse: "what is waiting on this",
+    },
+  },
+  /*
+   * How a task READS.
+   *
+   * The framework renders a record from the declaration alone and can only get
+   * so far on its own: `540` is a truthful rendering of a number of minutes
+   * and a useless one, and `false` is not a word anybody says about a task.
+   * These are decisions only this kind can make.
+   */
+  display: {
+    labels: { due: "Due", plannedAt: "Blocked", plannedUntil: "Until", done: "Finished" },
+    format: {
+      plannedAt: (value) => clock(Number(value)),
+      plannedUntil: (value) => clock(Number(value)),
+      day: (value) => String(value).toUpperCase(),
     },
   },
 });
+
+/** Minutes from midnight, as a time somebody would say. */
+function clock(minutes: number): string {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
 
 /**
  * A rule, as a node.
@@ -107,7 +139,11 @@ export const reason = defineNode("reason", {
   // Shortened at a word boundary, and the full text is the heading on a page.
   label: (node) => summarise(node.text),
   edges: {
-    explains: { to: ["task", "list"], description: "what this is about" },
+    explains: {
+      to: ["task", "list"],
+      description: "what this is about",
+      inverse: "why this is here",
+    },
   },
 });
 
