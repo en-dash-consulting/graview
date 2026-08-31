@@ -29,6 +29,10 @@ const APPS = {
   todo: {
     port: 5193,
     ready: "__todoReady",
+    // The example is written around a day, so the screenshots pin it — a
+    // survey whose pictures change every morning is a survey nobody can
+    // compare.
+    query: "&today=2026-09-01",
     states: {
       lists: async () => {},
       week: async (page) => {
@@ -295,7 +299,7 @@ try {
         for (const [state, go] of Object.entries(app.states)) {
           const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
           try {
-            await page.goto(`http://localhost:${app.port}/?theme=${scheme}`, {
+            await page.goto(`http://localhost:${app.port}/?theme=${scheme}${app.query ?? ""}`, {
               waitUntil: "load",
             });
             await page.waitForFunction((flag) => flag in window, app.ready, { timeout: 120_000 });

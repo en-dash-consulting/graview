@@ -78,7 +78,7 @@ try {
     args: ["--enable-blink-features=CanvasDrawElement"],
   });
   const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-  await page.goto("http://localhost:5193/", { waitUntil: "load" });
+  await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(900);
   await note(page, "landed");

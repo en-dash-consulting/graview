@@ -1,24 +1,24 @@
 {
-  "at": "2026-08-31T05:09:41.296Z",
+  "at": "2026-08-31T05:24:31.366Z",
   "packages": {
     "@graview/core": {
       "files": 162,
-      "tarballBytes": 107115,
+      "tarballBytes": 109144,
       "ok": true
     },
     "@graview/layout": {
       "files": 26,
-      "tarballBytes": 28072,
+      "tarballBytes": 28524,
       "ok": true
     },
     "@graview/primitives": {
       "files": 54,
-      "tarballBytes": 88778,
+      "tarballBytes": 87250,
       "ok": true
     },
     "@graview/react": {
       "files": 34,
-      "tarballBytes": 45789,
+      "tarballBytes": 46382,
       "ok": true
     },
     "@graview/render": {

@@ -1,4 +1,4 @@
-import type { AnySchema } from "@graview/core";
+import { readableFields, type AnySchema } from "@graview/core";
 import { useEditableFields, useGraview, useNode } from "@graview/react";
 import type { EditableField } from "@graview/tools";
 import { useEffect, useRef, useState } from "react";
@@ -151,24 +151,10 @@ function coerce(field: EditableField, draft: string): unknown {
 }
 
 /**
- * A field name, in words.
- *
- * `effectiveFrom` shown to a person as "effectiveFrom" is a schema leaking
- * through a surface. The interface's whole claim is that a declaration is
- * enough to render something readable, and a camelCase identifier in a
- * definition list is where that claim visibly stops being true.
- *
- * A kind that wants something else says so with `fieldLabels`; this is only
- * the default, and the default should not be an identifier.
+ * A field name, in words. Re-exported from the framework so a view that wants
+ * only this does not have to reach past the primitive that uses it.
  */
-export function humanise(field: string): string {
-  const spaced = field
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/[_-]+/g, " ")
-    .trim()
-    .toLowerCase();
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
+export { humaniseField as humanise } from "@graview/core";
 
 /**
  * A node's own fields, shown as a definition list and editable in place.
@@ -178,12 +164,9 @@ export function humanise(field: string): string {
  * without the app knowing which mutation or naming a single field. A kind that
  * gains a mutation gains editable fields the same day.
  *
- * It will not repeat something the view has already said. A record whose
- * heading is "caregiver1" and whose first row is `label: caregiver1` reads as
- * a debug dump, and it was the commonest thing wrong with the generic detail
- * view — the title comes from a field, and then the field was listed too.
- * Rather than asking every caller to remember `hide`, this compares: a field
- * whose value IS the title, or the subtitle, has already been shown.
+ * WHICH fields and HOW they read is `readableFields`, in the framework —
+ * because the summary card asks exactly the same question, and the two used to
+ * answer it separately and diverge.
  */
 export function Fields<S extends AnySchema>({
   id,
@@ -208,57 +191,10 @@ export function Fields<S extends AnySchema>({
   const { store } = useGraview<S>();
   const node = useNode<S>(id) as (Record<string, unknown> & { id: string }) | undefined;
   if (!node) return null;
-  /*
-   * How this kind's fields read is the DECLARATION's business.
-   *
-   * The framework can render a record from a schema alone and can only get so
-   * far: `540` is a truthful rendering of a number of minutes and a useless
-   * one, and `order: 0` is a truthful rendering of an ordering key nobody
-   * should be shown. Both are decisions only the kind can make, so it makes
-   * them once here rather than in every view that draws it.
-   */
-  const display = store.schema.tryDefinition(node["kind"] as string)?.display;
-  const skip = new Set(["id", "kind", ...(display?.hide ?? []), ...hide]);
-  const already = shown.filter((text): text is string => Boolean(text));
-  /*
-   * A heading is often a SUMMARY of a field rather than the field itself.
-   *
-   * A rationale's label is its text shortened to sixty characters, so an exact
-   * comparison never matches and the page showed the same sentence twice —
-   * once cut short in the largest type on the screen, once in full immediately
-   * below. Comparing against the summary's stem catches it, and catches
-   * nothing else: a value that begins with the whole heading IS the heading,
-   * at greater length.
-   */
-  const stems = already
-    .filter((text) => text.endsWith("…") || text.endsWith("..."))
-    .map((text) => text.replace(/[…]|\.\.\.$/g, "").trim())
-    .filter((stem) => stem.length > 12);
-  const saidAlready = (text: string) =>
-    already.includes(text) || stems.some((stem) => text.startsWith(stem));
-
-  const rows: { key: string; value: string }[] = [];
-  for (const [key, value] of Object.entries(node)) {
-    if (skip.has(key) || value === undefined || value === null) continue;
-    if (typeof value === "object" && !Array.isArray(value)) continue;
-    const format = display?.format?.[key];
-    const text = format
-      ? format(value)
-      : Array.isArray(value)
-        ? value.join(", ")
-        : typeof value === "boolean"
-          ? // Nobody says "false". A boolean is a state, and the words for it
-            // are the words for a state.
-            value
-            ? "Yes"
-            : "No"
-          : String(value);
-    // Said once is enough. This is the comparison that stops a record being a
-    // list of things the heading already told you.
-    if (saidAlready(text)) continue;
-    rows.push({ key, value: text });
-    if (rows.length >= limit) break;
-  }
+  const definition = store.schema.tryDefinition(node["kind"] as string);
+  const rows = readableFields(node, definition, { limit, said: shown }).filter(
+    (field) => !hide.includes(field.key),
+  );
   if (rows.length === 0) return null;
 
   return (
@@ -284,7 +220,7 @@ export function Fields<S extends AnySchema>({
               fontSize: 12,
             }}
           >
-            {labels[field.key] ?? display?.labels?.[field.key] ?? humanise(field.key)}
+            {labels[field.key] ?? field.label}
           </dt>
           <dd style={{ margin: 0, minWidth: 0 }}>
             <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} />

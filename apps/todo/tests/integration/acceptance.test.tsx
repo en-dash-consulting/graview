@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { todoApp } from "../../src/domain/app.js";
 import { todoSchema } from "../../src/domain/schema.js";
-import { HOME, INITIAL_VIEW, PLACES, TODAY, createTodoUiStore } from "../../src/ui/app.js";
+import { EXAMPLE_TODAY, HOME, INITIAL_VIEW, PLACES, createTodoUiStore } from "../../src/ui/app.js";
 import { todoViews, weekLens } from "../../src/ui/views.js";
 
 /**
@@ -17,7 +17,14 @@ import { todoViews, weekLens } from "../../src/ui/views.js";
  * lens borrowed from another domain must actually work.
  */
 
-const context = { today: TODAY };
+/*
+ * The day the shipped example is written around.
+ *
+ * Named rather than "today" because that is the point: the rules are judged
+ * against a date the caller supplies, so a test can ask what would be overdue
+ * on a particular morning without moving anybody's system clock.
+ */
+const context = { today: EXAMPLE_TODAY };
 const HUMAN = { kind: "human" as const, id: "you" };
 
 describe("a todo list is enough to show the whole shape", () => {
@@ -34,7 +41,7 @@ describe("a todo list is enough to show the whole shape", () => {
      * never heard of a task; this app said which of its fields are `start`,
      * `end` and the column, and got a week.
      */
-    const store = createTodoUiStore();
+    const store = createTodoUiStore(EXAMPLE_TODAY);
     const placed = weekLens.place(store.graph.nodesOfKind("task") as never, todoSchema);
     expect(placed.length).toBeGreaterThan(5);
     expect(placed.every((span) => span.columnIds.length > 0)).toBe(true);
@@ -46,7 +53,7 @@ describe("a todo list is enough to show the whole shape", () => {
      * do it. Only the second can be drawn, and the someday pile has neither —
      * so it is simply absent, which is the honest answer.
      */
-    const store = createTodoUiStore();
+    const store = createTodoUiStore(EXAMPLE_TODAY);
     const placed = weekLens.place(store.graph.nodesOfKind("task") as never, todoSchema);
     const drawn = new Set(placed.map((span) => span.id));
     expect(drawn.has("t-shelves")).toBe(false);
@@ -56,7 +63,7 @@ describe("a todo list is enough to show the whole shape", () => {
 
 describe("the rules fire on the data it ships with", () => {
   it("catches a task finished before the thing it waits for", () => {
-    const store = createTodoUiStore();
+    const store = createTodoUiStore(EXAMPLE_TODAY);
     const violation = store
       .violations(context)
       .find((v) => v.invariant === "nothing-done-before-what-it-waits-for")!;
@@ -67,7 +74,7 @@ describe("the rules fire on the data it ships with", () => {
   });
 
   it("resolves it through the repair it named, and undoes", () => {
-    const store = createTodoUiStore();
+    const store = createTodoUiStore(EXAMPLE_TODAY);
     const before = store.violations(context).length;
     const violation = store
       .violations(context)
@@ -88,7 +95,7 @@ describe("the rules fire on the data it ships with", () => {
      * morning and could not be tested at all — and `preview` could not say
      * what a change would break.
      */
-    const store = createTodoUiStore();
+    const store = createTodoUiStore(EXAMPLE_TODAY);
     expect(store.violations({ today: "2026-08-27" }).some((v) => v.invariant === "nothing-overdue")).toBe(
       false,
     );
@@ -101,7 +108,7 @@ describe("the rules fire on the data it ships with", () => {
 
   it("says nothing about overdue when nobody supplied a today", () => {
     // Absent is not "everything is fine": the rule declines to guess.
-    expect(createTodoUiStore().violations({}).some((v) => v.invariant === "nothing-overdue")).toBe(
+    expect(createTodoUiStore(EXAMPLE_TODAY).violations({}).some((v) => v.invariant === "nothing-overdue")).toBe(
       false,
     );
   });
@@ -109,7 +116,7 @@ describe("the rules fire on the data it ships with", () => {
 
 describe("what can be done, derived", () => {
   it("offers a task's verbs without anyone writing a menu", () => {
-    const store = createTodoUiStore();
+    const store = createTodoUiStore(EXAMPLE_TODAY);
     const derived = deriveAffordances(store, ["t-deposit"], { context });
     const names = derived.affordances.map((a) => a.mutation);
     expect(names).toContain("finish");
@@ -121,13 +128,13 @@ describe("what can be done, derived", () => {
   });
 
   it("says what is true about a selection, not only what can be done", () => {
-    const store = createTodoUiStore();
+    const store = createTodoUiStore(EXAMPLE_TODAY);
     const derived = deriveAffordances(store, ["t-deposit", "t-book"], { context });
     expect(derived.observations.length).toBeGreaterThan(0);
   });
 
   it("gives an agent the same actions, from the same declarations", async () => {
-    const store = createTodoUiStore();
+    const store = createTodoUiStore(EXAMPLE_TODAY);
     const seat = createToolRuntime(store, { author: { kind: "agent", id: "claude" } });
     const before = (store.graph.getNode("t-book") as unknown as { done: boolean }).done;
     const result = await seat.call("finish", { taskId: "t-book" });
@@ -142,7 +149,7 @@ describe("what can be done, derived", () => {
 describe("the picture", () => {
   const render = (view = INITIAL_VIEW) =>
     renderToStaticMarkup(
-      <GraviewProvider store={createTodoUiStore()} views={todoViews()} initialView={view}>
+      <GraviewProvider store={createTodoUiStore(EXAMPLE_TODAY)} views={todoViews()} initialView={view}>
         <Scene renderer="dom" />
       </GraviewProvider>,
     );
@@ -166,7 +173,7 @@ describe("the picture", () => {
   });
 
   it("keeps everything it places inside the canvas", () => {
-    const placed = layout(createTodoUiStore().graph, todoSchema, INITIAL_VIEW, {
+    const placed = layout(createTodoUiStore(EXAMPLE_TODAY).graph, todoSchema, INITIAL_VIEW, {
       width: 1400,
       height: 900,
     });

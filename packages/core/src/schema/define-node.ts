@@ -67,3 +67,81 @@ export function describeNode(
   }
   return `${node.kind} ${labelOf(definition, node)}`;
 }
+
+/** One field, as a person sees it. */
+export interface ReadableField {
+  readonly key: string;
+  /** The field name in words, after `display.labels` and humanising. */
+  readonly label: string;
+  /** The value in words, after `display.format` and the built-in defaults. */
+  readonly value: string;
+}
+
+/** Never shown: identity and the name, which the heading already is. */
+const NOT_A_FIELD = new Set(["id", "kind", "label"]);
+
+/** `effectiveFrom` shown to a person is a schema leaking through a surface. */
+export function humaniseField(field: string): string {
+  const spaced = field
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .toLowerCase();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/**
+ * WHICH of a node's fields a person sees, and HOW each one reads.
+ *
+ * One implementation, because there were two: the record on a page and the
+ * summary on a card each decided this for themselves, and every rule — hide an
+ * ordering key, format minutes as a time, render a boolean as a word, drop a
+ * value the heading already said — had to be written into both and kept in
+ * step by hand. They diverged the day the second one was written, which is how
+ * a summary card ended up showing a list's ordering key as a chip reading "0"
+ * while the page beside it did not.
+ *
+ * `said` is what the surrounding view has already put on screen. A value the
+ * heading already carries is not information twice, it is the same sentence
+ * twice — and where the heading is a SHORTENED form of a field, an exact
+ * comparison never catches it, so the summary's stem is compared too.
+ */
+export function readableFields(
+  node: Record<string, unknown>,
+  definition: AnyNodeDefinition | undefined,
+  options: { readonly limit?: number; readonly said?: readonly (string | undefined)[] } = {},
+): readonly ReadableField[] {
+  const display = definition?.display;
+  const skip = new Set([...NOT_A_FIELD, ...(display?.hide ?? [])]);
+  const said = (options.said ?? []).filter((text): text is string => Boolean(text));
+  const stems = said
+    .filter((text) => text.endsWith("…"))
+    .map((text) => text.replace(/…$/, "").trim())
+    .filter((stem) => stem.length > 12);
+
+  const fields: ReadableField[] = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (skip.has(key) || value === undefined || value === null) continue;
+    // A nested object has no one-line rendering, and inventing one is worse
+    // than leaving it to a view that knows what it is.
+    if (typeof value === "object" && !Array.isArray(value)) continue;
+
+    const format = display?.format?.[key];
+    const text = format
+      ? format(value)
+      : Array.isArray(value)
+        ? value.join(", ")
+        : typeof value === "boolean"
+          ? // Nobody says "false". A boolean is a state, and the words for a
+            // state are words.
+            value
+            ? "Yes"
+            : "No"
+          : String(value);
+
+    if (said.includes(text) || stems.some((stem) => text.startsWith(stem))) continue;
+    fields.push({ key, label: display?.labels?.[key] ?? humaniseField(key), value: text });
+    if (fields.length >= (options.limit ?? 10)) break;
+  }
+  return fields;
+}
