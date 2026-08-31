@@ -5,6 +5,7 @@ export {
   deriveAffordances,
   previewAffordance,
 } from "./derive.js";
+export type { WithheldAffordance } from "./types.js";
 export type { DeriveOptions } from "./derive.js";
 export type {
   Affordance,

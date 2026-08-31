@@ -83,6 +83,14 @@ export { OperationLog } from "./ops/log.js";
 export { checkUndo, undoPrimitives } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck } from "./ops/undo.js";
 export type { Author, Batch, Operation } from "./ops/types.js";
+export {
+  permits,
+  permittedMutations,
+  rolesOf,
+  rolesWhoCould,
+} from "./permissions/policy.js";
+export { PermissionDeniedError } from "./permissions/types.js";
+export type { Grant, Policy, Principal, Refusal } from "./permissions/types.js";
 
 // Store — graph + log + mutations + invariants, one object.
 export { Store } from "./store.js";
