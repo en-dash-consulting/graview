@@ -461,3 +461,51 @@ describe("the overview is the same cards, on a ring", () => {
     }
   });
 });
+
+describe("the kinds arc away from the viewer", () => {
+  /*
+   * A row of ten cards all at exactly plane 2 reads as a strip pinned to the
+   * bottom of the window. Giving each its own depth is what turns it into a
+   * set of things the focus is standing in front of.
+   */
+  const cards = (state: ViewState) =>
+    layout(graph(), schema, state)
+      .nodes.filter((node) => node.plane === 2 && node.aggregate)
+      .sort((a, b) => a.x - b.x);
+
+  it("puts the far side of the arc in the middle", () => {
+    const placed = cards(view({ focusId: "week-1" }));
+    const middle = placed[Math.floor(placed.length / 2)]!;
+    const end = placed[0]!;
+    // Further back sits higher on screen and deeper in the plane.
+    expect(middle.y).toBeLessThan(end.y);
+    expect(middle.depth!).toBeGreaterThan(end.depth!);
+  });
+
+  it("keeps every depth inside its plane", () => {
+    for (const card of cards(view({ focusId: "week-1" }))) {
+      expect(card.depth!).toBeGreaterThan(0);
+      expect(card.depth!).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("lays the ring flat again, because there is no front up there", () => {
+    const ringed = layout(graph(), schema, view({ focusId: "week-1", overview: true }))
+      .nodes.filter((node) => node.aggregate);
+    expect(ringed.every((node) => node.depth === 1)).toBe(true);
+  });
+
+  it("lets the focus reach down over the arc", () => {
+    const result = layout(graph(), schema, view({ focusId: "week-1" }), {
+      width: 1200,
+      height: 760,
+    });
+    const focus = result.nodes.find((node) => node.plane === 0)!;
+    const nearest = result.nodes
+      .filter((node) => node.plane === 2)
+      .reduce((a, b) => (a.y < b.y ? a : b));
+    // Overlapping is the point: a panel that stops short is stacked above,
+    // one that overlaps is in front. Z-order puts the focus on top.
+    expect(focus.y + focus.height).toBeGreaterThan(nearest.y);
+  });
+});

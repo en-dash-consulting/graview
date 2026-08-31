@@ -40,6 +40,17 @@ export interface LayoutNode {
   readonly height: number;
   /** Set when this node stands in for a group rather than one graph node. */
   readonly aggregate?: Aggregate;
+  /**
+   * How far back this node sits WITHIN its plane. 1 is fully at the plane's
+   * depth, 0 is pulled forward toward the one in front of it.
+   *
+   * The planes are discrete because the model is discrete, but a row of ten
+   * cards all at exactly plane 2 reads as a flat strip pinned to the bottom
+   * of the screen. Giving each a depth of its own turns the row into an arc
+   * curving away, and turns the thing in focus into something you are
+   * standing in front of.
+   */
+  readonly depth?: number;
   /** Set on plane 1 when this node was reached by following an edge. */
   readonly via?: Via;
   /**

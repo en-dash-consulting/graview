@@ -500,15 +500,22 @@ function SceneViewHost({
   onJackIn,
   children,
 }: HostProps) {
-  // Mid-transition a node's plane is fractional, so its treatment is mixed
-  // from the two planes it is between rather than snapping at the halfway
-  // point. That is what makes a plane change read as travel.
-  const lower = Math.max(0, Math.min(2, Math.floor(node.plane))) as 0 | 1 | 2;
-  const upper = Math.max(0, Math.min(2, Math.ceil(node.plane))) as 0 | 1 | 2;
+  /*
+   * A node's depth is its plane, pulled forward by however near it sits
+   * within that plane.
+   *
+   * Mid-transition a plane is already fractional so the treatment is mixed
+   * rather than snapping, and `depth` uses the same machinery: a card at the
+   * near end of the arc is treated as 1.6 planes back rather than 2, which is
+   * what makes the arc curve away instead of lying flat.
+   */
+  const at = node.plane - (1 - (node.depth ?? 1)) * 0.55;
+  const lower = Math.max(0, Math.min(2, Math.floor(at))) as 0 | 1 | 2;
+  const upper = Math.max(0, Math.min(2, Math.ceil(at))) as 0 | 1 | 2;
   const style =
     lower === upper
       ? styleFor(lower, scheme)
-      : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), node.plane - lower);
+      : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), at - lower);
   const transform = transformFor(style, node.x, node.y, canvasWidth, canvasHeight);
   const ref = useRef<HTMLDivElement | null>(null);
   usePickTargets(ref);
@@ -634,6 +641,9 @@ function SceneViewHost({
         // blank because of it. Giving each its own box keeps them distinct
         // for the capture. The GPU still draws each wherever its plane
         // transform says; this only decides what gets rasterised.
+        // Nearer planes paint over further ones, so the focus reaching down
+        // over the arc reads as in front of it rather than as a collision.
+        zIndex: 10 - Math.round(node.plane),
         left: useDom ? 0 : Math.round(node.x),
         top: useDom ? 0 : Math.round(node.y),
         // Whole pixels, matching what the renderer allocates a texture for.

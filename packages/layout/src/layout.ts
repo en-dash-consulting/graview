@@ -99,6 +99,37 @@ function ring(
   });
 }
 
+/**
+ * Lays boxes on a shallow arc curving away from the viewer.
+ *
+ * The middle of the arc is the far side: it sits higher on screen and further
+ * back in depth, and the ends come round toward you. That is the difference
+ * between a strip pinned to the bottom of the window and a set of things you
+ * are standing in front of — and it costs one number per card, because the
+ * renderer already mixes plane treatments continuously.
+ */
+function arc(
+  count: number,
+  size: { width: number; height: number },
+  gap: number,
+  canvasWidth: number,
+  baseY: number,
+  lift: number,
+): { x: number; y: number; depth: number }[] {
+  const total = count * size.width + Math.max(0, count - 1) * gap;
+  const startX = Math.max(gap, (canvasWidth - total) / 2);
+  return Array.from({ length: count }, (_, index) => {
+    // -1 at the near left, 0 at the far middle, 1 at the near right.
+    const across = count <= 1 ? 0 : (index / (count - 1)) * 2 - 1;
+    const away = 1 - across * across;
+    return {
+      x: startX + index * (size.width + gap),
+      y: baseY - away * lift,
+      depth: 0.62 + away * 0.38,
+    };
+  });
+}
+
 /** Lays a row of equal boxes out, centred on the canvas. */
 function row(
   count: number,
@@ -172,10 +203,18 @@ export function layout<S extends AnySchema>(
       ? {
           // A little smaller than it was, and a little further from the
           // strip: the gap is what puts one in front of the other.
-          focusY: opts.height * 0.05,
-          focusH: opts.height * 0.52,
-          relationY: opts.height * 0.61,
-          relationH: opts.height * 0.19,
+          /*
+           * The focus REACHES DOWN over the arc.
+           *
+           * A panel that stops short of the strip is stacked above it; one
+           * that overlaps it is in front of it. The kinds are drawn behind
+           * by z-order, so the overlap reads as depth rather than as a
+           * collision.
+           */
+          focusY: opts.height * 0.045,
+          focusH: opts.height * 0.6,
+          relationY: opts.height * 0.66,
+          relationH: opts.height * 0.16,
           contextY: opts.height * 0.845,
           contextH: opts.height * 0.14,
         }
@@ -393,8 +432,18 @@ export function layout<S extends AnySchema>(
     ? { width: Math.min(200, opts.width / 7), height: Math.min(120, opts.height * 0.17) }
     : fit(contextItems.length, opts.contextSize.width, band.contextH);
   const contextPositions = state.overview
-    ? ring(contextItems.length, contextSize, opts.width, opts.height)
-    : row(contextItems.length, contextSize, opts.gap, opts.width, band.contextY);
+    ? ring(contextItems.length, contextSize, opts.width, opts.height).map((position) => ({
+        ...position,
+        depth: 1,
+      }))
+    : arc(
+        contextItems.length,
+        contextSize,
+        opts.gap,
+        opts.width,
+        band.contextY,
+        opts.height * 0.045,
+      );
   contextItems.forEach((item, index) => {
     const position = contextPositions[index]!;
     push({
@@ -417,6 +466,7 @@ export function layout<S extends AnySchema>(
       ...(item.aggregate ? { aggregate: item.aggregate } : {}),
       ...(item.raised ? { raised: true } : {}),
       ...(item.focused ? { focused: true } : {}),
+      depth: position.depth,
     });
   });
 

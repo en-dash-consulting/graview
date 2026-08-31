@@ -58,7 +58,7 @@ export const LIGHT_PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
    * illegible — ten cards reading "P…", "REA…", "S…". A map you cannot read
    * is not a map. The recession is carried by the atmosphere instead.
    */
-  2: { scale: 0.7, blur: 0.6, falloff: 0.56, shadow: 0.07, fidelity: "glyph" },
+  2: { scale: 0.72, blur: 0.35, falloff: 0.4, shadow: 0.07, fidelity: "glyph" },
 };
 
 export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
@@ -75,7 +75,7 @@ export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
   // Blurrier than plane 1, necessarily: recession has to be monotonic or the
   // depth cue inverts and the furthest plane reads as the nearest. This was
   // briefly 0.6 against plane 1's 0.7, which `frame-plan.test.ts` caught.
-  2: { scale: 0.7, blur: 1.1, falloff: 0.42, shadow: 0.14, fidelity: "glyph" },
+  2: { scale: 0.72, blur: 0.55, falloff: 0.3, shadow: 0.14, fidelity: "glyph" },
 };
 
 export function styleFor(plane: number, scheme: Scheme = "dark"): PlaneStyle {
