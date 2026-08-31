@@ -132,6 +132,7 @@ function mix(a: LayoutNode, b: LayoutNode, t: number, opacity: number): Interpol
     ...(b.raised ? { raised: true } : {}),
     ...(b.focused ? { focused: true } : {}),
     ...(b.depth === undefined ? {} : { depth: lerp(a.depth ?? 1, b.depth, t) }),
+    ...(b.natural ? { natural: b.natural } : {}),
   };
 }
 

@@ -1,0 +1,15 @@
+---
+id: "240e7df0-aa52-42c8-b4fd-397c231291b0"
+level: "task"
+title: "The shrunk interface must be the interface, scaled — not re-laid-out small"
+status: "pending"
+priority: "critical"
+acceptanceCriteria:
+  - "The focused view in the Graview is the same picture as in the scene, scaled — not re-laid-out at a smaller width"
+  - "The coverage matrix, the board and the timeline all survive it without clipping, overlap or piled-up headers"
+  - "It stays live: clicking something inside the shrunk view still works"
+  - "A node can declare a natural size distinct from its drawn size, and the renderer scales between them"
+  - "Nothing about the plane model or the capture pipeline changes — the transform is affine"
+  - "Verified in all three the coaching example places and in the bid desk, in both schemes"
+description: "The view in the middle of the Graview is currently rendered INTO a box a third the normal size, at full fidelity, and it falls apart: the coverage matrix's rotated column headers pile into a corner on top of each other, the rows are cut off, the group heading is clipped. It looks broken because it is — a view asked to lay itself out at a third of its intended width has no reason to work, and none of the three lenses was written to.\n\nWhat \"shrunk down\" should mean is the picture SCALED: render the view at the size it was designed for and then transform it, so it is literally the same image, smaller. That is what the GPU path would do with a captured texture, and on the DOM path a scale transform on a natural-size container gets the same result — including staying live and interactive, which is the point.\n\nThe framework needs a notion of a node's NATURAL size distinct from its drawn size for this. Fidelity switching is the right answer when a view has genuinely less room; it is the wrong answer here, because the whole reason to keep the interface visible is that it is still the interface."
+---

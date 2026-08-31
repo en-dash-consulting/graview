@@ -41,6 +41,17 @@ export interface LayoutNode {
   /** Set when this node stands in for a group rather than one graph node. */
   readonly aggregate?: Aggregate;
   /**
+   * The size this view should LAY ITSELF OUT at, when that differs from the
+   * size it is drawn at.
+   *
+   * A view asked to lay out at a third of its intended width has no reason
+   * to work, and none of the lenses was written to: the coverage matrix
+   * piles its rotated headers into a corner and clips its rows. Shrinking
+   * should mean the same picture, smaller — render at the natural size and
+   * scale the result, which is what a captured texture would do anyway.
+   */
+  readonly natural?: { readonly width: number; readonly height: number };
+  /**
    * How far back this node sits WITHIN its plane. 1 is fully at the plane's
    * depth, 0 is pulled forward toward the one in front of it.
    *
