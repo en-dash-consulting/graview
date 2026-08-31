@@ -121,6 +121,16 @@ export type {
   SyncMapping,
   SyncState,
 } from "./sync/types.js";
+export {
+  checkpoint,
+  checkpointOn,
+  checkpointsBetween,
+  effectivity,
+  isEffectiveBetween,
+  isEffectiveOn,
+  isoDate,
+} from "./temporal/effectivity.js";
+export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal } from "./permissions/types.js";
