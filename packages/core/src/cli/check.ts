@@ -1,6 +1,7 @@
 import type { GraviewApp } from "../app.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { permits, rolesOf } from "../permissions/policy.js";
+import { checkBrandContrast } from "../theme/derive.js";
 import type { AnySchema } from "../schema/schema.js";
 
 export type Severity = "error" | "warning";
@@ -274,6 +275,47 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
           fix: `Use one of: ${[...kinds].join(", ")}.`,
         });
       }
+    }
+  }
+
+  /*
+   * A palette that cannot be read.
+   *
+   * The two shipped schemes are not inversions of each other, and a brand
+   * that supplies one colour and lets the rest be derived can end up with
+   * text that clears AA in the dark and fails badly on paper. Contrast is
+   * measurable, so it is checked rather than trusted — and the failure names
+   * the exact token PAIR and where it is drawn, because "your theme has a
+   * contrast problem" is not something anyone can act on.
+   */
+  if (app.brand) {
+    for (const finding of checkBrandContrast(app.brand.schemes)) {
+      if (finding.unreadable !== undefined) {
+        add({
+          severity: "warning",
+          code: "theme-token-unreadable",
+          where: `brand.schemes.${finding.scheme}.${finding.on === finding.ink ? finding.ink : finding.on}`,
+          message: `Could not read "${finding.unreadable}" as a colour, so the pair ${finding.ink} on ${finding.on} was not checked.`,
+          fix: "Use a hex, rgb() or hsl() value, or a gradient built from them.",
+        });
+        continue;
+      }
+      add({
+        severity: "error",
+        code: "theme-contrast-below-aa",
+        where: `brand.schemes.${finding.scheme}: ${finding.ink} on ${finding.on}`,
+        message: `${finding.ratio}:1 where ${finding.requires}:1 is required — ${finding.where}.`,
+        fix: `Darken or lighten "${finding.ink}", or change the ground it sits on.`,
+      });
+    }
+    if (app.brand.name.trim().length === 0) {
+      add({
+        severity: "warning",
+        code: "brand-unnamed",
+        where: "brand.name",
+        message: "An installation with no name shows the framework's wordmark instead of yours.",
+        fix: "Set brand.name to the product name.",
+      });
     }
   }
 

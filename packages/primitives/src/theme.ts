@@ -18,108 +18,47 @@
  * silently. axe-core checks this on every run of `scripts/run-a11y.mjs`.
  */
 
-export type Scheme = "light" | "dark";
+/*
+ * The token CONTRACT lives in `@graview/core`, not here.
+ *
+ * A theme is a declaration, and `graview check` reads declarations — so a
+ * brand's palette can be verified before it ships rather than after somebody
+ * files a bug about grey-on-grey. What lives here is the two the framework
+ * ships with, and they are ordinary declared themes: there is no special case
+ * for the built-ins, which is the only way to know a third party's theme goes
+ * through the same path.
+ */
+export type { Brand, Scheme, ThemeTokens } from "@graview/core";
+import type { Brand, Scheme, ThemeTokens } from "@graview/core";
 
-export interface ThemeTokens {
-  readonly ground: string;
-  readonly groundDeep: string;
-  /** The wash behind the scene: two radial gradients over the ground. */
-  readonly wash: string;
-  readonly panel: string;
-  readonly panelMuted: string;
-  readonly panelWarning: string;
-  readonly edge: string;
-  readonly edgeBright: string;
-  readonly ink: string;
-  readonly inkMuted: string;
-  readonly inkFaint: string;
-  readonly accent: string;
-  readonly accentDim: string;
-  readonly accentInk: string;
-  readonly warn: string;
-  readonly glow: string;
-  /** The command bar's ground. Chrome, not scene. */
-  readonly bar: string;
-  /** A surface floating over the scene — the inspector. */
-  readonly float: string;
-  /** Elevation for a panel sitting in the scene. */
-  readonly liftLow: string;
-  /** Elevation for something floating over it — the inspector. */
-  readonly liftHigh: string;
-  /** How strongly a chip or span tint reads over the panel ground. */
-  readonly tintAlpha: number;
-  readonly tintLightness: number;
-  readonly gridAlpha: number;
-}
+/*
+ * The palettes moved to `@graview/core`.
+ *
+ * They are data, not components, and two things needed them where React is
+ * not: `graview check` verifies a palette and must not import React to do it,
+ * and an app declaring its own brand in its domain layer needs a neutral base
+ * without reaching into the UI package.
+ */
+export { DARK, LIGHT, SCHEMES } from "@graview/core";
+import { SCHEMES } from "@graview/core";
 
-/** A lit control surface. */
-export const DARK: ThemeTokens = {
-  // Not black: a deep blue-green that lets the accent read as light rather
-  // than as paint.
-  ground: "#080d12",
-  groundDeep: "#04070a",
-  wash:
-    "radial-gradient(120% 80% at 50% -10%, var(--graview-glow) 0%, transparent 60%), " +
-    "radial-gradient(90% 60% at 12% 108%, rgba(111,220,234,0.10) 0%, transparent 62%)",
-  // Nearly opaque, by necessity as much as taste: a captured subtree has
-  // nothing behind it, so `backdrop-filter` is a no-op and a translucent fill
-  // composites against transparency.
-  panel: "rgba(20, 31, 39, 0.94)",
-  panelMuted: "rgba(15, 23, 30, 0.92)",
-  panelWarning: "rgba(44, 30, 17, 0.94)",
-  edge: "rgba(126, 196, 214, 0.20)",
-  edgeBright: "rgba(126, 220, 232, 0.55)",
-  ink: "#e8f3f6",
-  inkMuted: "#9fb6bf",
-  inkFaint: "#8aa3ad",
-  accent: "#6fdcea",
-  accentDim: "rgba(111, 220, 234, 0.35)",
-  accentInk: "#06232a",
-  warn: "#f0a868",
-  glow: "rgba(111, 220, 234, 0.28)",
-  bar: "linear-gradient(rgba(10,16,21,0.92), rgba(6,10,14,0.78))",
-  float: "linear-gradient(rgba(14,22,29,0.96), rgba(8,13,18,0.97))",
-  liftLow: "0 18px 50px -26px #000, inset 0 1px 0 rgba(126,196,214,0.20)",
-  liftHigh: "0 30px 70px -30px #000",
-  tintAlpha: 0.2,
-  tintLightness: 52,
-  gridAlpha: 0.35,
+
+/**
+ * The framework's own brand, expressed as an ordinary declared one.
+ *
+ * No special case for the built-ins: `themeCss` takes a brand and this is
+ * simply the default value. That is the only way to know a third party's
+ * theme goes through the same path — if the shipped one took a shortcut, the
+ * shortcut is where a stranger's theme would break.
+ */
+export const GRAVIEW_BRAND: Brand = {
+  name: "Graview",
+  typography: {
+    body: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
+    mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+  },
+  schemes: SCHEMES,
 };
-
-/** Daylight and paper. */
-export const LIGHT: ThemeTokens = {
-  // Warm off-white rather than pure white: pure white under a full-bleed
-  // scene glares, and paper is never #fff.
-  ground: "#f6f4f0",
-  groundDeep: "#efece6",
-  wash:
-    "radial-gradient(120% 80% at 50% -20%, rgba(255,255,255,0.9) 0%, transparent 58%), " +
-    "radial-gradient(80% 60% at 92% 104%, rgba(12,110,120,0.06) 0%, transparent 60%)",
-  panel: "#ffffff",
-  panelMuted: "#faf8f5",
-  panelWarning: "#fdf4ea",
-  edge: "rgba(24, 34, 38, 0.10)",
-  edgeBright: "rgba(12, 110, 120, 0.42)",
-  ink: "#15201f",
-  // Both clear 4.5:1 on white and on the muted panel.
-  inkMuted: "#54605f",
-  inkFaint: "#67716f",
-  accent: "#0c6e78",
-  accentDim: "rgba(12, 110, 120, 0.22)",
-  accentInk: "#ffffff",
-  warn: "#9a5312",
-  glow: "rgba(12, 110, 120, 0.10)",
-  bar: "linear-gradient(rgba(255,255,255,0.96), rgba(250,248,245,0.86))",
-  float: "linear-gradient(#ffffff, #fcfbf9)",
-  // Layered, short-then-long: how something actually casts on a desk.
-  liftLow: "0 1px 2px rgba(20,30,32,0.06), 0 8px 24px -12px rgba(20,30,32,0.18)",
-  liftHigh: "0 2px 6px rgba(20,30,32,0.08), 0 28px 60px -24px rgba(20,30,32,0.28)",
-  tintAlpha: 0.16,
-  tintLightness: 46,
-  gridAlpha: 0.5,
-};
-
-export const SCHEMES: Record<Scheme, ThemeTokens> = { dark: DARK, light: LIGHT };
 
 const VARIABLE: Record<keyof ThemeTokens, string> = {
   ground: "--graview-ground",
@@ -160,10 +99,16 @@ export function themeVariables(tokens: ThemeTokens): string {
  * override a single token without forking a component — and switching scheme
  * is one `replaceSync`, not a re-render.
  */
-export function themeCss(scheme: Scheme = "dark"): string {
-  const tokens = SCHEMES[scheme];
+export function themeCss(scheme: Scheme = "dark", brand: Brand = GRAVIEW_BRAND): string {
+  const tokens = brand.schemes[scheme];
+  const body =
+    brand.typography?.body ??
+    'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
   return `:root {
 ${themeVariables(tokens)}
+  --graview-font-body: ${body};
+  --graview-font-display: ${brand.typography?.display ?? body};
+  --graview-font-mono: ${brand.typography?.mono ?? 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace'};
   color-scheme: ${scheme};
 }
 
@@ -171,10 +116,16 @@ html, body {
   margin: 0;
   background: var(--graview-ground-deep);
   color: var(--graview-ink);
-  font: 14px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 14px/1.55 var(--graview-font-body);
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Headings and the wordmark take the display face when a brand supplies one,
+   and the body face when it does not — so a brand with one font is not asked
+   to name it twice. */
+h1, h2, h3, h4, .graview-wordmark { font-family: var(--graview-font-display); }
+code, kbd, samp { font-family: var(--graview-font-mono); }
 
 /* The ground: a slow wash, so depth has something to recede into. */
 .graview-ground {

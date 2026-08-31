@@ -90,6 +90,22 @@ export {
   rolesWhoCould,
 } from "./permissions/policy.js";
 export { PermissionDeniedError } from "./permissions/types.js";
+export {
+  brandFromAccent,
+  checkBrandContrast,
+} from "./theme/derive.js";
+export type { AccentBrandOptions, DerivedBrand, RefusedBrand } from "./theme/derive.js";
+export {
+  checkContrast,
+  coloursIn,
+  composite,
+  contrast,
+  luminance,
+} from "./theme/contrast.js";
+export type { ContrastFinding, Rgba } from "./theme/contrast.js";
+export { DARK, LIGHT, SCHEMES } from "./theme/palettes.js";
+export { TEXT_PAIRS } from "./theme/types.js";
+export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal } from "./permissions/types.js";
 
 // Store — graph + log + mutations + invariants, one object.

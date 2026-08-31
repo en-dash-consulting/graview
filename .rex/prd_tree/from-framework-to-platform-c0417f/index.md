@@ -21,6 +21,6 @@ description: "The four apps here are demonstrations. A real installation is some
 
 | Title | Status |
 |-------|--------|
-| [Branding an installation without forking it](./branding-an-installation-aab02b.md) | pending |
+| [Branding an installation without forking it](./branding-an-installation-aab02b.md) | completed |
 | [Systems of record: two-way sync with the world](./systems-of-record-two-way-sync-92cf17.md) | pending |
 | [Who may do what, derived and enforced](./who-may-do-what-derived-and-enforced.md) | completed |

@@ -1,0 +1,226 @@
+import {
+  checkContrast,
+  coloursIn,
+  composite,
+  contrast,
+  hsl,
+  rgbToHsl,
+  type Rgba,
+} from "./contrast.js";
+import type { Scheme, ThemeTokens } from "./types.js";
+
+/**
+ * A brand hands over one accent colour. What can be made of it, and what
+ * cannot.
+ *
+ * The two schemes here are not inversions of each other — dark loses
+ * luminance, light loses contrast and gains haze — so "derive the other one"
+ * is not a colour operation. What an accent CAN determine is everything
+ * keyed to it: its dim companion, its glow, the lit edge, the wash. What it
+ * cannot determine is the ground family (warm paper or cool slate is a
+ * decision, not a consequence), the ink that has to clear AA against that
+ * ground, and the warning colour, which must stay distinguishable from the
+ * accent rather than derived from it.
+ *
+ * So this derives what it can from a neutral base and REFUSES, naming what
+ * else is needed, when the accent cannot carry a role it is being asked to.
+ * A brand that gets a coherent pair of schemes and one that gets a clear
+ * refusal are both better served than one that gets a quietly unreadable
+ * interface.
+ */
+export interface AccentBrandOptions {
+  /** The one colour a brand always has. Hex, rgb() or hsl(). */
+  readonly accent: string;
+  /**
+   * Text drawn ON the accent — a filled button. Derived as black or white
+   * when absent, which works for most accents and is checked either way.
+   */
+  readonly accentInk?: { readonly dark?: string; readonly light?: string };
+  /** The neutral pair to build on. Supply the framework's own when absent. */
+  readonly base: Readonly<Record<Scheme, ThemeTokens>>;
+  /** Kept away from the accent on purpose; derived only if it stays distinct. */
+  readonly warn?: { readonly dark?: string; readonly light?: string };
+}
+
+export interface DerivedBrand {
+  readonly ok: true;
+  readonly schemes: Readonly<Record<Scheme, ThemeTokens>>;
+}
+
+export interface RefusedBrand {
+  readonly ok: false;
+  /** What the brand has to supply, in the words of the thing that needs it. */
+  readonly missing: readonly string[];
+  readonly why: string;
+}
+
+const rgba = (colour: Rgba, alpha: number) =>
+  `rgba(${Math.round(colour.r)}, ${Math.round(colour.g)}, ${Math.round(colour.b)}, ${alpha})`;
+
+const BLACK: Rgba = { r: 0, g: 0, b: 0, a: 1 };
+const WHITE: Rgba = { r: 255, g: 255, b: 255, a: 1 };
+
+/**
+ * Builds a coherent pair of schemes around one accent, or says what is
+ * missing.
+ */
+export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | RefusedBrand {
+  const accent = coloursIn(options.accent)[0];
+  if (!accent) {
+    return {
+      ok: false,
+      missing: ["accent"],
+      why: `"${options.accent}" is not a colour this can read. Use a hex, rgb() or hsl() value.`,
+    };
+  }
+
+  const schemes = {} as Record<Scheme, ThemeTokens>;
+  const missing = new Set<string>();
+  const reasons: string[] = [];
+  const base = rgbToHsl(accent);
+
+  for (const scheme of ["dark", "light"] as const) {
+    const neutral = options.base[scheme];
+    const ground = coloursIn(neutral.ground)[0] ?? (scheme === "dark" ? BLACK : WHITE);
+    const panel = composite(coloursIn(neutral.panel)[0] ?? WHITE, ground);
+
+    /*
+     * The accent is used as TEXT, and no single colour can be text in both
+     * schemes.
+     *
+     * 4.5:1 on white needs a lightness under about 0.18; 4.5:1 on a dark
+     * panel needs one over about 0.24. Those do not overlap, which is why
+     * "the brand's accent" is one hue with two lightnesses rather than one
+     * colour — and why a framework that simply took the hex would have
+     * shipped an unreadable label in one scheme or the other.
+     *
+     * So the hue and the saturation are the brand's; the lightness is moved
+     * as little as it takes. If it has to move further than this, the colour
+     * has stopped being recognisably theirs and the honest answer is to ask.
+     */
+    const readable = nearestReadable(base, panel, scheme, 4.5);
+    if (!readable) {
+      missing.add(`accent (${scheme})`);
+      reasons.push(
+        `no lightness of this hue clears 4.5:1 as text on the ${scheme} panel, so ${scheme} needs an accent of its own`,
+      );
+    } else if (Math.abs(readable.l - base.l) > MAX_SHIFT) {
+      missing.add(`accent (${scheme})`);
+      reasons.push(
+        `reaching 4.5:1 on the ${scheme} panel would move the accent's lightness by ${Math.round(
+          Math.abs(readable.l - base.l) * 100,
+        )} points, which is far enough that it stops being the same colour — supply one for ${scheme}`,
+      );
+    }
+    const tone = readable ?? base;
+    const shown = hsl(tone.h, tone.s, tone.l);
+
+    const chosenInk =
+      options.accentInk?.[scheme] ??
+      (contrast(WHITE, shown) >= contrast(BLACK, shown) ? "#ffffff" : "#000000");
+    const inkOnAccent = contrast(coloursIn(chosenInk)[0] ?? WHITE, shown);
+    if (inkOnAccent + 0.005 < 4.5) {
+      missing.add(`accentInk (${scheme})`);
+      reasons.push(
+        `neither black nor white clears 4.5:1 on the accent (best ${inkOnAccent.toFixed(2)}:1), so text on a filled button has to be given`,
+      );
+    }
+
+    schemes[scheme] = {
+      ...neutral,
+      accent: rgba(shown, 1),
+      accentDim: rgba(shown, scheme === "dark" ? 0.35 : 0.22),
+      accentInk: chosenInk,
+      glow: rgba(shown, scheme === "dark" ? 0.28 : 0.1),
+      /*
+       * A lit edge is not text, and it still owes 3:1: a panel outline nobody
+       * can see is a panel with no edge. The aesthetic alpha is a preference,
+       * so it gives way to the alpha that can actually be seen.
+       */
+      edgeBright: rgba(shown, visibleAlpha(shown, panel, scheme === "dark" ? 0.55 : 0.42, 3)),
+      wash:
+        scheme === "dark"
+          ? `radial-gradient(120% 80% at 50% -10%, var(--graview-glow) 0%, transparent 60%), radial-gradient(90% 60% at 12% 108%, ${rgba(shown, 0.1)} 0%, transparent 62%)`
+          : `radial-gradient(120% 80% at 50% -20%, rgba(255,255,255,0.9) 0%, transparent 58%), radial-gradient(80% 60% at 92% 104%, ${rgba(shown, 0.06)} 0%, transparent 60%)`,
+      ...(options.warn?.[scheme] ? { warn: options.warn[scheme]! } : {}),
+    };
+
+    /*
+     * A warning colour must not be mistakable for the accent. Two roles that
+     * look alike is a worse failure than an ugly pair, because one of them
+     * means "something is broken".
+     */
+    const warn = coloursIn(schemes[scheme].warn)[0];
+    if (warn && hueGap(rgbToHsl(warn).h, tone.h) < 25) {
+      missing.add(`warn (${scheme})`);
+      reasons.push(
+        `the warning colour shares the accent's hue in ${scheme}, so "something is broken" looks like "this is selected"`,
+      );
+    }
+  }
+
+  if (missing.size > 0) {
+    return { ok: false, missing: [...missing].sort(), why: reasons.join("; ") };
+  }
+  return { ok: true, schemes };
+}
+
+/**
+ * The smallest alpha at which a colour laid on a ground clears a ratio, or
+ * the preferred one if that is already enough.
+ *
+ * Searched rather than solved because compositing then luminance is not
+ * invertible in closed form, and a hundred steps is cheap for something that
+ * runs once per theme.
+ */
+function visibleAlpha(colour: Rgba, ground: Rgba, preferred: number, ratio: number): number {
+  for (let step = Math.round(preferred * 100); step <= 100; step++) {
+    const alpha = step / 100;
+    if (contrast(composite({ ...colour, a: alpha }, ground), ground) >= ratio) return alpha;
+  }
+  return 1;
+}
+
+/** How far apart two hues are on the wheel, 0–180. */
+function hueGap(a: number, b: number): number {
+  const gap = Math.abs(a - b) % 360;
+  return gap > 180 ? 360 - gap : gap;
+}
+
+/** As much lightness as a brand's colour may be moved and still be theirs. */
+const MAX_SHIFT = 0.3;
+
+/**
+ * The lightness nearest the brand's own that clears the ratio on this ground.
+ *
+ * Searched from the original outwards rather than from an end, so a colour
+ * that already works is left exactly alone and one that does not is moved the
+ * smallest distance that helps. Dark schemes are searched upward first and
+ * light ones downward, since that is the direction that will win.
+ */
+function nearestReadable(
+  base: { h: number; s: number; l: number },
+  ground: Rgba,
+  scheme: Scheme,
+  ratio: number,
+): { h: number; s: number; l: number } | null {
+  const up = scheme === "dark";
+  for (let step = 0; step <= 100; step++) {
+    const first = up ? base.l + step / 100 : base.l - step / 100;
+    const second = up ? base.l - step / 100 : base.l + step / 100;
+    for (const l of [first, second]) {
+      if (l < 0 || l > 1) continue;
+      if (contrast(hsl(base.h, base.s, l), ground) >= ratio) return { ...base, l };
+    }
+  }
+  return null;
+}
+
+/** Every contrast failure in a pair of schemes, named by scheme. */
+export function checkBrandContrast(
+  schemes: Readonly<Record<Scheme, ThemeTokens>>,
+): readonly (ReturnType<typeof checkContrast>[number] & { scheme: Scheme })[] {
+  return (["dark", "light"] as const).flatMap((scheme) =>
+    checkContrast(schemes[scheme]).map((finding) => ({ ...finding, scheme })),
+  );
+}

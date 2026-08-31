@@ -1,4 +1,11 @@
-import type { AnySchema, NodeOfSchema, Principal, Store, ViewRegistry } from "@graview/core";
+import type {
+  AnySchema,
+  Brand,
+  NodeOfSchema,
+  Principal,
+  Store,
+  ViewRegistry,
+} from "@graview/core";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
 import { EMPTY_VIEW } from "@graview/layout";
@@ -71,6 +78,14 @@ export interface GraviewContextValue<S extends AnySchema> {
    * cannot drift because they are the same object.
    */
   readonly principal: Principal;
+  /**
+   * Whose product this is: name, wordmark, typography, palette.
+   *
+   * Absent means the framework's own, which is what makes branding an
+   * installation a matter of passing one object rather than forking the
+   * components that read it.
+   */
+  readonly brand?: Brand;
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
@@ -91,6 +106,7 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly initialJackedIn?: string | null;
   /** Defaults to an unroled human, which a store with no policy permits everything. */
   readonly principal?: Principal;
+  readonly brand?: Brand;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -112,6 +128,7 @@ export function GraviewProvider<S extends AnySchema>({
   scheme = "dark",
   initialJackedIn,
   principal = ANONYMOUS,
+  brand,
   view,
   onViewChange,
   children,
@@ -156,6 +173,7 @@ export function GraviewProvider<S extends AnySchema>({
       activity,
       noteAttention,
       principal,
+      ...(brand ? { brand } : {}),
     }),
     [
       store,
@@ -170,6 +188,7 @@ export function GraviewProvider<S extends AnySchema>({
       activity,
       noteAttention,
       principal,
+      brand,
     ],
   );
 

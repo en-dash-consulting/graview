@@ -37,6 +37,7 @@ export type {
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
 export { EditableValue, Fields } from "./editable.js";
+export { Wordmark } from "./wordmark.js";
 // The primitive set: enough for a new kind to render before anyone writes a view.
 export {
   Aggregate,
@@ -60,8 +61,8 @@ export type {
 } from "./primitives/index.js";
 
 // The visual system: tokens, and the stylesheet an app drops in.
-export { DARK, LIGHT, SCHEMES, themeCss, themeVariables } from "./theme.js";
-export type { Scheme, ThemeTokens } from "./theme.js";
+export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeCss, themeVariables } from "./theme.js";
+export type { Brand, Scheme, ThemeTokens } from "./theme.js";
 
 // Generic views for every cell, derived from the declaration.
 export { hueFor, registerDefaultViews } from "./default-views.js";
