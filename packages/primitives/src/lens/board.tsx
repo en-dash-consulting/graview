@@ -388,6 +388,23 @@ export interface BoardLens<S extends AnySchema> {
 }
 
 export function createBoardLens<S extends AnySchema>(options: BoardOptions): BoardLens<S> {
+  /*
+   * A real COMPONENT, not a method that happens to call hooks.
+   *
+   * `View` is rendered as `<lens.View />`, so it is a component — but written
+   * as a method on an object literal it looked like one to the hooks lint rule
+   * and needed a disable in three files. A disable repeated three times is a
+   * rule telling you something, and what it was telling us is that this wanted
+   * to be a component.
+   */
+  function Bound(props: ViewProps<S>) {
+    // The SCHEMA comes from the provider: `ViewProps` carries none, so a lens
+    // rendered through the registry ran without it and every schema-aware
+    // decision inside quietly took its fallback path.
+    const { store } = useGraview<S>();
+    return <BoardView<S> schema={store.schema} {...props} options={options} />;
+  }
+
   return {
     name: "board",
     requiredRoles: [...BOARD_REQUIRED_ROLES],
@@ -402,11 +419,7 @@ export function createBoardLens<S extends AnySchema>(options: BoardOptions): Boa
      * like a role nobody bound, and a single unplanned task threw for the
      * whole view.
      */
-    View(props) {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      const { store } = useGraview<S>();
-      return <BoardView<S> schema={store.schema} {...props} options={options} />;
-    },
+    View: Bound,
     build(nodes, edges, schema) {
       return buildBoard<S>(nodes, edges, options, schema);
     },

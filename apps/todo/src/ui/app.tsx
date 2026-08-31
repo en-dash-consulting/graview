@@ -53,16 +53,32 @@ export const INITIAL_VIEW: ViewState = { ...EMPTY_VIEW, focusId: HOME };
 /**
  * The day the rules are judged against.
  *
- * Threaded through the invariant context rather than read from the clock
- * inside a rule, so evaluation stays pure and a test can ask "what would be
- * overdue on the fourth" without moving anybody's system time.
+ * Read HERE, at the edge, and threaded through the invariant context — never
+ * inside a rule. An invariant that read the clock would give a different
+ * answer every morning, could not be tested, and would stop `preview` being
+ * able to say what a change would break before it happened. Purity is not
+ * fussiness; it is what makes the whole tier answerable.
+ *
+ * The example data is dated, so a fixed day is what makes its rules fire for
+ * a reader who opens it — but freezing the app in September is the sort of
+ * thing somebody notices and mistrusts. So the real clock is the default, and
+ * `?today=` overrides it for the tests and for the screenshots.
  */
-export const TODAY = "2026-09-01";
+export function today(): string {
+  if (typeof window !== "undefined") {
+    const asked = new URLSearchParams(window.location.search).get("today");
+    if (asked && /^\d{4}-\d{2}-\d{2}$/.test(asked)) return asked;
+  }
+  return new Date().toISOString().slice(0, 10);
+}
 
-export function createTodoUiStore(): TodoStore {
+/** The day the shipped example is written around, for tests and harnesses. */
+export const EXAMPLE_TODAY = "2026-09-01";
+
+export function createTodoUiStore(when: string = today()): TodoStore {
   return createTodoStore({
     snapshot: example as never,
-    invariantOptions: { context: { today: TODAY } },
+    invariantOptions: { context: { today: when } },
   });
 }
 
@@ -303,7 +319,7 @@ function TidyButton({ onCall }: { onCall: (call: ToolCall) => void }) {
             // Ask the framework what is wrong, then apply the repairs it
             // names — rather than deciding what "tidy" means out here.
             const violations = (await agent.run("get_violations", {
-              context: { today: TODAY },
+              context: { today: today() },
             })) as {
               invariant: string;
               repairs: { mutation: string; args?: Record<string, unknown> }[];
@@ -314,7 +330,7 @@ function TidyButton({ onCall }: { onCall: (call: ToolCall) => void }) {
                 (candidate) => candidate.mutation === "reschedule",
               );
               if (!repair) continue;
-              await agent.run("reschedule", { ...repair.args, due: TODAY });
+              await agent.run("reschedule", { ...repair.args, due: today() });
             }
           } finally {
             setBusy(false);

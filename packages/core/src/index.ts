@@ -131,7 +131,8 @@ export {
   isoDate,
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
-export { summarise } from "./schema/define-node.js";
+export { humaniseField, readableFields, summarise } from "./schema/define-node.js";
+export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal } from "./permissions/types.js";

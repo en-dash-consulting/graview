@@ -587,6 +587,23 @@ export interface CoverageLens<S extends AnySchema> {
 export function createCoverageLens<S extends AnySchema>(
   options: CoverageOptions,
 ): CoverageLens<S> {
+  /*
+   * A real COMPONENT, not a method that happens to call hooks.
+   *
+   * `View` is rendered as `<lens.View />`, so it is a component — but written
+   * as a method on an object literal it looked like one to the hooks lint rule
+   * and needed a disable in three files. A disable repeated three times is a
+   * rule telling you something, and what it was telling us is that this wanted
+   * to be a component.
+   */
+  function Bound(props: ViewProps<S>) {
+    // The SCHEMA comes from the provider: `ViewProps` carries none, so a lens
+    // rendered through the registry ran without it and every schema-aware
+    // decision inside quietly took its fallback path.
+    const { store } = useGraview<S>();
+    return <CoverageView<S> schema={store.schema} {...props} options={options} />;
+  }
+
   return {
     name: "coverage",
     requiredRoles: [...COVERAGE_REQUIRED_ROLES],
@@ -601,11 +618,7 @@ export function createCoverageLens<S extends AnySchema>(
      * like a role nobody bound, and a single unplanned task threw for the
      * whole view.
      */
-    View(props) {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      const { store } = useGraview<S>();
-      return <CoverageView<S> schema={store.schema} {...props} options={options} />;
-    },
+    View: Bound,
     build(nodes, edges, schema) {
       return buildCoverage<S>(nodes, edges, options, schema);
     },

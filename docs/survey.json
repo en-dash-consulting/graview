@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-31T05:15:12.842Z",
+  "at": "2026-08-31T05:20:35.122Z",
   "shots": [
     {
       "app": "todo",
@@ -237,6 +237,764 @@
       "state": "tidied",
       "scheme": "dark",
       "file": "todo-tidied-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "launcher",
+      "state": "home",
+      "scheme": "light",
+      "file": "launcher-home-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "launcher",
+      "state": "home",
+      "scheme": "dark",
+      "file": "launcher-home-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "home",
+      "scheme": "light",
+      "file": "the household example-home-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "selected",
+      "scheme": "light",
+      "file": "the household example-selected-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "raised",
+      "scheme": "light",
+      "file": "the household example-raised-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "focused",
+      "scheme": "light",
+      "file": "the household example-focused-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "travelled",
+      "scheme": "light",
+      "file": "the household example-travelled-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": [
+        {
+          "text": "child1 school",
+          "n": 2
+        }
+      ]
+    },
+    {
+      "app": "the household example",
+      "state": "jackedIn",
+      "scheme": "light",
+      "file": "the household example-jackedIn-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "graview",
+      "scheme": "light",
+      "file": "the household product-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "menu",
+      "scheme": "light",
+      "file": "the household example-menu-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "activity",
+      "scheme": "light",
+      "file": "the household example-activity-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "home",
+      "scheme": "dark",
+      "file": "the household example-home-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "selected",
+      "scheme": "dark",
+      "file": "the household example-selected-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "raised",
+      "scheme": "dark",
+      "file": "the household example-raised-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "focused",
+      "scheme": "dark",
+      "file": "the household example-focused-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "travelled",
+      "scheme": "dark",
+      "file": "the household example-travelled-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": [
+        {
+          "text": "child1 school",
+          "n": 2
+        }
+      ]
+    },
+    {
+      "app": "the household example",
+      "state": "jackedIn",
+      "scheme": "dark",
+      "file": "the household example-jackedIn-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "graview",
+      "scheme": "dark",
+      "file": "the household product-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "menu",
+      "scheme": "dark",
+      "file": "the household example-menu-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the household example",
+      "state": "activity",
+      "scheme": "dark",
+      "file": "the household example-activity-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "home",
+      "scheme": "light",
+      "file": "proposal-home-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "selected",
+      "scheme": "light",
+      "file": "proposal-selected-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "jackedIn",
+      "scheme": "light",
+      "file": "proposal-jackedIn-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "graview",
+      "scheme": "light",
+      "file": "proposal-graview-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "home",
+      "scheme": "dark",
+      "file": "proposal-home-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "selected",
+      "scheme": "dark",
+      "file": "proposal-selected-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "jackedIn",
+      "scheme": "dark",
+      "file": "proposal-jackedIn-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "proposal",
+      "state": "graview",
+      "scheme": "dark",
+      "file": "proposal-graview-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "team",
+      "scheme": "light",
+      "file": "the coaching example-team-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "training",
+      "scheme": "light",
+      "file": "the coaching example-training-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "week",
+      "scheme": "light",
+      "file": "the coaching example-week-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "selected",
+      "scheme": "light",
+      "file": "the coaching example-selected-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "travelled",
+      "scheme": "light",
+      "file": "the coaching example-travelled-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "withheld",
+      "scheme": "light",
+      "file": "the coaching example-withheld-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "jackedIn",
+      "scheme": "light",
+      "file": "the coaching example-jackedIn-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "graview",
+      "scheme": "light",
+      "file": "the coaching example-graview-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "team",
+      "scheme": "dark",
+      "file": "the coaching example-team-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "training",
+      "scheme": "dark",
+      "file": "the coaching example-training-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "week",
+      "scheme": "dark",
+      "file": "the coaching example-week-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "selected",
+      "scheme": "dark",
+      "file": "the coaching example-selected-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "travelled",
+      "scheme": "dark",
+      "file": "the coaching example-travelled-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "withheld",
+      "scheme": "dark",
+      "file": "the coaching example-withheld-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "jackedIn",
+      "scheme": "dark",
+      "file": "the coaching example-jackedIn-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "graview",
+      "scheme": "dark",
+      "file": "the coaching example-graview-dark.png",
       "viewport": [
         1560,
         940

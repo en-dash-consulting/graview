@@ -1,4 +1,3 @@
-import { labelOf } from "@graview/core";
 import { createViews, useGraview, type ViewComponent, type ViewProps } from "@graview/react";
 import {
   Chip,
@@ -331,4 +330,3 @@ export function todoViews() {
     .register("task", { cardinality: "many", fidelity: "summary" }, WeekView);
 }
 
-export { labelOf };
