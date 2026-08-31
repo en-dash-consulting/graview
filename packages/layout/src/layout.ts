@@ -685,7 +685,7 @@ export function layout<S extends AnySchema>(
 
   return {
     nodes,
-    connectors: connectorsFor(graph, placed),
+    connectors: connectorsFor(graph, placed, state),
     width: opts.width,
     height: opts.height,
   };
@@ -805,6 +805,7 @@ function edgeDescription(
 function connectorsFor<N extends { id: string; kind: string }>(
   graph: GraphReader<N>,
   placed: Map<string, LayoutNode>,
+  state: ViewState,
 ): Connector[] {
   /*
    * A member belongs to the NEAREST group that contains it.
@@ -829,7 +830,20 @@ function connectorsFor<N extends { id: string; kind: string }>(
     const from = resolve(edge.from);
     const to = resolve(edge.to);
     // A connector to something off-scene is a line into nowhere.
-    if (!from || !to || from.id === to.id) continue;
+    if (!from || !to) continue;
+    /*
+     * A relation between two members of the SAME group is not nothing.
+     *
+     * "A task waits for a task" collapses to one card up on the ring, and
+     * dropping it made the legend advertise a relation the picture never drew.
+     * Kept, and marked, so the renderer can draw it as a loop leaving and
+     * returning to the card — which is what it is.
+     *
+     * Inside the stack it is still dropped: a line from a card to itself over
+     * a scene full of other lines is noise, and the relation is visible there
+     * as an ordinary edge between the two real nodes.
+     */
+    if (from.id === to.id && !(state.overview && from.aggregate)) continue;
     const id = `${edge.kind}:${from.id}:${to.id}`;
     if (connectors.has(id)) continue;
     connectors.set(id, {
@@ -837,6 +851,7 @@ function connectorsFor<N extends { id: string; kind: string }>(
       kind: edge.kind,
       from: from.id,
       to: to.id,
+      ...(from.id === to.id ? { loop: true } : {}),
       x1: from.x + from.width / 2,
       y1: from.y + from.height / 2,
       x2: to.x + to.width / 2,

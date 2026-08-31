@@ -103,6 +103,14 @@ export interface Connector {
   readonly id: string;
   /** The edge kind, so stroke treatment can carry meaning. */
   readonly kind: string;
+  /**
+   * Both ends resolve to the same drawn thing — "a task waits for a task".
+   *
+   * Real and worth drawing: it is a fact about the domain, and the one place
+   * you would look for it is the picture of the whole domain. Drawn as a loop
+   * rather than as a line of zero length.
+   */
+  readonly loop?: boolean;
   readonly from: string;
   readonly to: string;
   /** Endpoints in layout space, centre to centre. */
