@@ -9,7 +9,7 @@ import {
   useViolations,
 } from "@graview/react";
 import type { Affordance, OpenParameter, ToolCall } from "@graview/tools";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chip } from "../primitives/index.js";
 
 /**
@@ -151,9 +151,19 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
 /* ---------------------------------------------------------------- inspector */
 
 /**
- * What is selected, what is true about it, and what can legally be done.
+ * What is selected, what is true about it, and what can legally be done —
+ * as a STRIP, not a panel.
  *
- * Everything in it is DERIVED. No menu is authored anywhere, in either app.
+ * It was a 340-pixel column parked over the bottom-right of the scene at up
+ * to 56% of the height, which is a lot of furniture to put in front of the
+ * thing you just clicked in order to tell you about it. A contextual surface
+ * should be the smallest thing that carries the answer: one line of what this
+ * is, one line of what is true about it, and the actions as inline controls
+ * rather than a stack of full-width rows.
+ *
+ * Bottom-centre rather than bottom-right, because the right is where the
+ * context plane's last cards sit and the middle is the one place a scene
+ * built around a centred focus has to spare.
  */
 export function Inspector() {
   const { store } = useGraview<AnySchema>();
@@ -161,6 +171,7 @@ export function Inspector() {
   const { affordances, observations } = useAffordances();
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const kinds = [
     ...new Set(
@@ -171,66 +182,88 @@ export function Inspector() {
     ),
   ];
 
+  useEffect(() => {
+    setPending(null);
+    setExpanded(false);
+  }, [selection]);
+
   if (selection.length === 0) return null;
+
+  const INLINE = 4;
+  const shown = expanded ? affordances : affordances.slice(0, INLINE);
+  const hidden = affordances.length - shown.length;
+  const open = affordances.find((affordance) => affordance.id === pending);
 
   return (
     <aside
       aria-label="Inspector"
       style={{
         position: "fixed",
-        right: 20,
-        bottom: 20,
-        width: 340,
-        boxSizing: "border-box",
+        bottom: 18,
+        left: "50%",
+        transform: "translateX(-50%)",
         zIndex: 10,
-        maxHeight: "min(56vh, calc(100% - 40px))",
-        overflow: "auto",
+        maxWidth: "min(860px, calc(100vw - 40px))",
+        boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
-        gap: 12,
-        padding: 16,
-        borderRadius: 14,
+        gap: 7,
+        padding: "9px 12px",
+        borderRadius: 12,
         border: "1px solid var(--graview-edge)",
         background: "var(--graview-float)",
-        boxShadow: "var(--graview-lift-high)",
+        // Lighter than the rails: this appears and disappears constantly, and
+        // a heavy shadow made every selection feel like opening a dialog.
+        boxShadow: "var(--graview-lift-low)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-        <strong style={{ fontSize: 15 }}>
-          {selection.length === 1
-            ? nameOf(store, selection[0]!)
-            : `${selection.length} selected`}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
+        <strong style={{ fontSize: 13.5, whiteSpace: "nowrap" }}>
+          {selection.length === 1 ? nameOf(store, selection[0]!) : `${selection.length} selected`}
         </strong>
         {kinds.length > 0 ? (
-          <span style={{ fontSize: 11.5, color: "var(--graview-ink-faint)" }}>
+          <span style={{ fontSize: 11, color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}>
             {kinds.join(" · ")}
           </span>
         ) : null}
+
+        {/* What is true about it, in one line. The rest is a count, not a
+            list — a strip that grows to five bullet points is a panel again. */}
+        {observations.length > 0 ? (
+          <span
+            data-testid="observations"
+            title={observations.map((observation) => observation.text).join("\n")}
+            style={{
+              minWidth: 0,
+              flex: "1 1 auto",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              fontSize: 12,
+              color: "var(--graview-ink-muted)",
+            }}
+          >
+            {observations[0]!.text}
+            {observations.length > 1 ? (
+              <span style={{ color: "var(--graview-ink-faint)" }}>
+                {" "}
+                +{observations.length - 1}
+              </span>
+            ) : null}
+          </span>
+        ) : (
+          <span style={{ flex: "1 1 auto" }} />
+        )}
+
         <button
           type="button"
           onClick={clear}
-          style={{ marginLeft: "auto", padding: "2px 8px", fontSize: 11 }}
+          aria-label="Clear selection"
+          style={{ padding: "1px 7px", fontSize: 11, flex: "0 0 auto" }}
         >
-          clear
+          ×
         </button>
       </div>
-
-      {observations.length > 0 ? (
-        <ul
-          data-testid="observations"
-          style={{
-            margin: 0,
-            paddingLeft: 16,
-            fontSize: 12,
-            lineHeight: 1.5,
-            color: "var(--graview-ink-muted)",
-          }}
-        >
-          {observations.slice(0, 3).map((observation) => (
-            <li key={observation.id}>{observation.text}</li>
-          ))}
-        </ul>
-      ) : null}
 
       {affordances.length === 0 ? (
         /*
@@ -240,54 +273,81 @@ export function Inspector() {
          */
         <p
           data-testid="no-affordances"
-          style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5, color: "var(--graview-ink-muted)" }}
+          style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
         >
           Nothing can be done with {kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"} yet
           — no mutation declares {kinds.length === 1 ? "it" : "them"} as a subject.
         </p>
-      ) : null}
-
-      <ol
-        data-testid="affordances"
-        style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 5 }}
-      >
-        {affordances.slice(0, 6).map((affordance) => (
-          <li key={affordance.id}>
-            <button
-              type="button"
-              data-affordance={affordance.id}
-              title={affordance.why}
-              style={{ width: "100%", textAlign: "left", padding: "7px 10px", fontSize: 13 }}
-              onClick={() => {
-                if (affordance.open.length > 0) {
-                  setPending(pending === affordance.id ? null : affordance.id);
-                  return;
-                }
-                preview(affordance);
-                apply(affordance);
-              }}
-            >
-              {affordance.label}
-              {affordance.open.length > 0 ? (
-                <span style={{ color: "var(--graview-ink-faint)" }}>
-                  {" "}
-                  · needs {affordance.open.map((parameter) => parameter.name).join(", ")}
-                </span>
-              ) : null}
-            </button>
-            {pending === affordance.id ? (
-              <AnswerArgs
-                affordance={affordance}
-                onApply={(args) => {
-                  apply(affordance, args);
-                  setPending(null);
+      ) : (
+        <ol
+          data-testid="affordances"
+          style={{
+            margin: 0,
+            padding: 0,
+            listStyle: "none",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 5,
+          }}
+        >
+          {shown.map((affordance) => (
+            <li key={affordance.id}>
+              <button
+                type="button"
+                data-affordance={affordance.id}
+                aria-pressed={pending === affordance.id}
+                title={affordance.why}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: 12.5,
+                  borderRadius: 8,
+                  whiteSpace: "nowrap",
+                  ...(pending === affordance.id
+                    ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
+                    : {}),
                 }}
-                onCancel={() => setPending(null)}
-              />
-            ) : null}
-          </li>
-        ))}
-      </ol>
+                onClick={() => {
+                  if (affordance.open.length > 0) {
+                    setPending(pending === affordance.id ? null : affordance.id);
+                    return;
+                  }
+                  preview(affordance);
+                  apply(affordance);
+                }}
+              >
+                {affordance.label}
+                {affordance.open.length > 0 ? (
+                  <span style={{ color: "var(--graview-ink-faint)" }}> …</span>
+                ) : null}
+              </button>
+            </li>
+          ))}
+          {hidden > 0 ? (
+            <li>
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                style={{ padding: "4px 10px", fontSize: 12.5, borderRadius: 8 }}
+              >
+                +{hidden} more
+              </button>
+            </li>
+          ) : null}
+        </ol>
+      )}
+
+      {/* The arguments appear in place, under the action that asked for them,
+          rather than turning the strip into a form. */}
+      {open ? (
+        <AnswerArgs
+          affordance={open}
+          onApply={(args) => {
+            apply(open, args);
+            setPending(null);
+          }}
+          onCancel={() => setPending(null)}
+        />
+      ) : null}
     </aside>
   );
 }
@@ -312,10 +372,34 @@ export function Standing({
   const violations = useViolations<AnySchema>();
   const { set } = useSelection();
   const [open, setOpen] = useState(false);
+  const anchor = useRef<HTMLDivElement | null>(null);
   const count = violations.length;
 
+  /*
+   * Click away or press Escape to close.
+   *
+   * A popover that only closes by pressing the thing that opened it is a
+   * popover you end up dragging around the screen, and this one sits over
+   * the scene.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: MouseEvent) => {
+      if (!anchor.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
+
   return (
-    <div style={{ position: "relative" }}>
+    <div ref={anchor} style={{ position: "relative" }}>
       <button
         type="button"
         data-testid="standing"
@@ -352,23 +436,32 @@ export function Standing({
           data-testid="problems"
           style={{
             position: "absolute",
-            top: "calc(100% + 8px)",
+            top: "calc(100% + 6px)",
             right: 0,
             zIndex: 20,
-            width: 360,
+            width: 300,
+            maxHeight: "min(48vh, 420px)",
+            overflow: "auto",
             margin: 0,
-            padding: 8,
+            padding: 4,
             listStyle: "none",
             display: "grid",
-            gap: 4,
-            borderRadius: 12,
+            borderRadius: 10,
             border: "1px solid var(--graview-edge)",
             background: "var(--graview-float)",
             boxShadow: "var(--graview-lift-high)",
           }}
         >
           {violations.map((violation, index) => (
-            <li key={`${violation.invariant}:${index}`}>
+            <li
+              key={`${violation.invariant}:${index}`}
+              style={{
+                // A hairline between rows, not a card around each. Bordered
+                // buttons inside a bordered panel is two boxes doing one job,
+                // and it made a two-item list look like a dialog.
+                borderTop: index === 0 ? "none" : "1px solid var(--graview-edge)",
+              }}
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -378,15 +471,19 @@ export function Standing({
                 style={{
                   width: "100%",
                   textAlign: "left",
-                  fontSize: 12.5,
-                  lineHeight: 1.45,
-                  padding: "7px 10px",
+                  fontSize: 12,
+                  lineHeight: 1.4,
+                  padding: "7px 8px",
+                  border: "1px solid transparent",
+                  background: "none",
+                  boxShadow: "none",
+                  borderRadius: 7,
                 }}
               >
                 <span style={{ display: "block", color: "var(--graview-ink)" }}>
                   {violation.message}
                 </span>
-                <span style={{ color: "var(--graview-ink-faint)", fontSize: 11.5 }}>
+                <span style={{ color: "var(--graview-ink-faint)", fontSize: 11 }}>
                   {violation.label}
                   {violation.repairs.length > 0
                     ? ` · ${violation.repairs.length} ${violation.repairs.length === 1 ? "way" : "ways"} to fix`
