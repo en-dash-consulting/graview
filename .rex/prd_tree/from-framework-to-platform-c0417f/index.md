@@ -2,13 +2,16 @@
 id: "c0417f17-1b2d-4c98-b4f5-22c82dd310ff"
 level: "epic"
 title: "From framework to platform: installations you can brand, permission and connect"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "platform"
 blockedBy:
   - "cb0397c2-9baa-4e06-8f61-2f0c22b94c97"
 source: "Session: building independent products on the Graview platform"
+startedAt: "2026-08-31T03:50:03.839Z"
+completedAt: "2026-08-31T03:50:03.839Z"
+endedAt: "2026-08-31T03:50:03.839Z"
 acceptanceCriteria:
   - "A third party can brand and theme an installation without forking a package"
   - "Who may do what is enforced where it cannot be bypassed, and derived everywhere it is shown"
@@ -22,5 +25,5 @@ description: "The four apps here are demonstrations. A real installation is some
 | Title | Status |
 |-------|--------|
 | [Branding an installation without forking it](./branding-an-installation-aab02b.md) | completed |
-| [Systems of record: two-way sync with the world](./systems-of-record-two-way-sync-92cf17.md) | pending |
+| [Systems of record: two-way sync with the world](./systems-of-record-two-way-sync-92cf17.md) | completed |
 | [Who may do what, derived and enforced](./who-may-do-what-derived-and-enforced.md) | completed |

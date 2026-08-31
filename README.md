@@ -284,6 +284,10 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | An agent turn is watchable from outside the stack, and quiet costs nothing | `scripts/verify-watching.mjs` — 10 criteria, animation frames counted on a settled graph |
 | One policy narrows the interface and the agent seat alike | `scripts/verify-permissions.mjs` — 9 criteria across the the coaching example's three seats |
 | A brand reaches the pixels without forking a package | `scripts/verify-brand.mjs`, and `checkContrast` measures every text pair against WCAG AA |
+| An inbound change is an ordinary op, undoable, authored by the system | `packages/core/tests/integration/sync.test.ts` |
+| An echo of our own write is recognised and not re-applied | `packages/core/tests/integration/sync.test.ts` — the loop that breaks naive two-way sync |
+| A conflict is surfaced as a violation with a repair, not resolved silently | `packages/core/tests/integration/sync.test.ts` |
+| Offline degrades to local-only and reconciles on reconnect | `packages/core/tests/integration/sync.test.ts` |
 | A stranger can install the tarballs and build a real app | `scripts/smoke-install.mjs` — packs, installs into a scratch project with no workspace or path mapping, typechecks and runs |
 | A tarball contains what it should and nothing else | `scripts/inspect-pack.mjs` — no `src`, no tests, no tsbuildinfo, and every `exports` path present |
 | Every skill ends in a check, and names only findings the checker can produce | `packages/skills/tests/unit/skills.test.ts` — cross-checked against `check.ts` itself |
@@ -325,6 +329,15 @@ Private. The public API is designed as though it will be published — clean
 seams, honest boundaries — but it breaks freely while nobody depends on it.
 
 **Outstanding:**
+
+- **Google Calendar has never run against Google.** The sync layer is covered
+  by tests against a scripted remote — echo suppression, conflict detection,
+  offline reconciliation, and the exact request and response shapes — and
+  the household example declares its mapping. What no test covers is Google itself: a token
+  that expires mid-run, a sync token rejected after a week, a timezone
+  normalised on save and handed back as somebody else's change.
+  `the household example/scripts/sync-google.mjs` is runnable and read-only by default;
+  until somebody runs it, "works end to end" is a claim rather than a fact.
 
 - A click crashes the renderer process on the GPU path (see above). The DOM
   path is unaffected, so this is a compositing defect rather than a design

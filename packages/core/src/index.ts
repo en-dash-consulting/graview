@@ -104,6 +104,23 @@ export {
 } from "./theme/contrast.js";
 export type { ContrastFinding, Rgba } from "./theme/contrast.js";
 export { DARK, LIGHT, SCHEMES } from "./theme/palettes.js";
+export { googleCalendar, googleCalendarMapping } from "./sync/google-calendar.js";
+export type { Fetcher, GoogleCalendarOptions } from "./sync/google-calendar.js";
+export { syncConflictInvariant, SYNC_CONFLICTS } from "./sync/conflict.js";
+export type { SyncConflictOptions } from "./sync/conflict.js";
+export { SyncEngine } from "./sync/engine.js";
+export type { SyncConflict, SyncOptions, SyncReport } from "./sync/engine.js";
+export { EMPTY_SYNC_STATE, systemAuthor } from "./sync/types.js";
+export type {
+  RemoteAck,
+  RemoteChange,
+  RemoteLink,
+  RemoteSystem,
+  RemoteWrite,
+  ResourceMapping,
+  SyncMapping,
+  SyncState,
+} from "./sync/types.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal } from "./permissions/types.js";
