@@ -2,13 +2,16 @@
 id: "cb0397c2-9baa-4e06-8f61-2f0c22b94c97"
 level: "feature"
 title: "The constellation: the graph seen from outside, and jacking in from it"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "lens"
   - "navigation"
   - "spatial"
 source: "Session: \"zoom out and down, iso style, seeing the graph as it's connected, just to the relation types\""
+startedAt: "2026-08-31T02:32:11.463Z"
+completedAt: "2026-08-31T02:32:11.463Z"
+endedAt: "2026-08-31T02:32:11.463Z"
 acceptanceCriteria:
   - "An isometric or tilted overview draws every declared kind and every edge kind between them, from the schema alone"
   - "Every transform stays affine — the capture pipeline and the plane model are unchanged"
@@ -25,5 +28,5 @@ description: "A third ALTITUDE, above the three planes rather than inside them.\
 | Title | Status |
 |-------|--------|
 | [Relations are grouped, not listed flat](./relations-are-grouped-not-listed-flat.md) | completed |
-| [The constellation is where you watch the system work](./the-constellation-is-where-you-88355b.md) | pending |
+| [The constellation is where you watch the system work](./the-constellation-is-where-you-88355b.md) | completed |
 | [The shrunk interface must be the interface, scaled — not re-laid-out small](./the-shrunk-interface-must-be-240e7d.md) | completed |

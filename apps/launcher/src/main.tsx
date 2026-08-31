@@ -9,7 +9,14 @@ import {
   themeCss,
   type Scheme,
 } from "@graview/primitives";
-import { GraviewProvider, Scene, useGraph, useGraview, useUrlSync } from "@graview/react";
+import {
+  GraviewProvider,
+  Scene,
+  useAttention,
+  useGraph,
+  useGraview,
+  useUrlSync,
+} from "@graview/react";
 import { createInAppAdapter, createToolRuntime, type ToolCall } from "@graview/tools";
 import { HouseholdApp } from "the household example/ui";
 import { BidDeskApp } from "the bid-desk example/ui";
@@ -283,6 +290,9 @@ function AuditButton({ onCall }: { onCall: (call: ToolCall) => void }) {
   const agent = useMemo(() => createInAppAdapter(runtime), [runtime]);
   const [busy, setBusy] = useState(false);
   useEffect(() => runtime.onCall(onCall), [runtime, onCall]);
+  // What it LOOKED AT, into the picture. A read produces no diff, so the
+  // runtime is the only thing that can say it happened.
+  useAttention(runtime);
 
   return (
     <button

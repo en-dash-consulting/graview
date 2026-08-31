@@ -26,6 +26,16 @@ export type ToolResult<S extends AnySchema> =
       readonly ok: true;
       readonly data: unknown;
       readonly diff?: GraphDiff<NodeOfSchema<S>>;
+      /**
+       * The nodes this call LOOKED AT.
+       *
+       * A diff can only ever show what changed, and an agent that reassigns
+       * one run after reading the whole week is doing something different
+       * from one that reassigns it after reading nothing. The runtime is the
+       * only place that knows, so it says so — and an interface can then draw
+       * attention as well as change.
+       */
+      readonly reads?: readonly string[];
     }
   | { readonly ok: false; readonly error: string };
 
@@ -148,10 +158,24 @@ export interface ToolCall {
   readonly phase: "running" | "ok" | "failed";
   readonly error?: string;
   readonly at: string;
+  /**
+   * The nodes a settled read-only call looked at. Absent while running, and
+   * absent for a mutating call — a change already reports its own reads
+   * through the op log, and reporting them twice would double-count.
+   */
+  readonly reads?: readonly string[];
 }
 
 export interface ToolRuntime<S extends AnySchema> {
   readonly definitions: readonly ToolDefinition[];
+  /**
+   * Who this seat writes as.
+   *
+   * Exposed because a read has to be attributed to the SAME participant the
+   * writes are, or one agent looking at the graph and then changing it reads
+   * as two people editing at once.
+   */
+  readonly author?: ToolRuntimeOptions<S>["author"];
   call(name: string, args: Record<string, unknown>): Promise<ToolResult<S>>;
   /** Every applied change, whoever caused it. */
   onDiff(listener: (diff: GraphDiff<NodeOfSchema<S>>) => void): () => void;
@@ -212,33 +236,48 @@ export function createToolRuntime<S extends AnySchema>(
       }
 
       switch (name) {
-        case "get_graph":
-          return { ok: true, data: store.graph.snapshot() };
+        case "get_graph": {
+          const snapshot = store.graph.snapshot();
+          return {
+            ok: true,
+            data: snapshot,
+            reads: snapshot.nodes.map((node) => node.id),
+          };
+        }
 
         case "get_node": {
           const id = String(args["id"] ?? "");
           const node = store.graph.getNode(id);
           if (!node) return { ok: false, error: `No node "${id}".` };
+          const out = store.graph.outEdges(id);
+          const inbound = store.graph.inEdges(id);
           return {
             ok: true,
             data: {
               node,
-              out: store.graph.outEdges(id),
-              in: store.graph.inEdges(id),
+              out,
+              in: inbound,
               violations: store
                 .violations()
                 .filter((violation) => violation.nodeIds.includes(id)),
             },
+            // Asking about a node is asking about its neighbourhood: the
+            // answer names them, so looking at it looked at them.
+            reads: [id, ...out.map((edge) => edge.to), ...inbound.map((edge) => edge.from)],
           };
         }
 
         case "get_violations":
-          return {
-            ok: true,
-            data: store.violations(
+          {
+            const violations = store.violations(
               args["context"] as Record<string, unknown> | undefined,
-            ),
-          };
+            );
+            return {
+              ok: true,
+              data: violations,
+              reads: [...new Set(violations.flatMap((violation) => violation.nodeIds))],
+            };
+          }
 
         case "get_affordances": {
           const selection = (args["selection"] as string[]) ?? [];
@@ -248,7 +287,7 @@ export function createToolRuntime<S extends AnySchema>(
               ? { context: args["context"] as Record<string, unknown> }
               : {}),
           });
-          return { ok: true, data: derived };
+          return { ok: true, data: derived, reads: selection };
         }
 
         case "preview_mutation": {
@@ -302,6 +341,7 @@ export function createToolRuntime<S extends AnySchema>(
 
   return {
     definitions,
+    ...(options.author ? { author: options.author } : {}),
 
     onDiff(listener) {
       return store.subscribe(listener);
@@ -320,7 +360,11 @@ export function createToolRuntime<S extends AnySchema>(
       const settle = <T extends ToolResult<S>>(result: T): T => {
         announce(
           result.ok
-            ? { ...started, phase: "ok" }
+            ? {
+                ...started,
+                phase: "ok",
+                ...(!mutating && result.reads ? { reads: result.reads } : {}),
+              }
             : { ...started, phase: "failed", error: result.error },
         );
         return result;

@@ -20,6 +20,7 @@ import {
   type Matrix4,
 } from "@graview/render";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useActivity, type ActivityMark, type Manner } from "./activity.js";
 import { useAnimatedLayout, useTouched } from "./animation.js";
 import { useFlagged, useImplicated } from "./hooks.js";
 import { useGraph, useGraview, type ViewMode } from "./context.js";
@@ -158,12 +159,49 @@ export function Scene<S extends AnySchema>({
 
   const useDom = renderer === "dom" || (renderer === "auto" && !attachRenderer);
 
+  /*
+   * What just happened, resolved onto whatever is DRAWN.
+   *
+   * The op log names node ids, and a node is not always on screen as itself:
+   * above the stack a duty is inside the Runs card, and inside the stack it
+   * may be its own panel. An edit should land on whichever of those the eye
+   * can actually see, which is the same rule the connectors follow — the
+   * node if it is placed, otherwise the group standing in for it.
+   */
+  const activity = useActivity<S>();
+  const activityOf = (node: SceneNode | undefined): ActivityMark | undefined => {
+    const own = node ? activity.get(node.id) : undefined;
+    const members = node?.aggregate?.memberIds ?? [];
+    if (!own && members.length === 0) return undefined;
+
+    let best: ActivityMark | undefined = own;
+    let wrote = own?.wrote ?? false;
+    let read = own?.read ?? false;
+    let broke = own?.broke ?? false;
+    for (const memberId of members) {
+      const mark = activity.get(memberId);
+      if (!mark) continue;
+      // A card standing for forty nodes reports the strongest thing that
+      // happened inside it, not the last one alphabetically — and a rule
+      // that broke in there is reported whichever member it landed on,
+      // because that is the news.
+      wrote ||= mark.wrote;
+      read ||= mark.read;
+      broke ||= mark.broke;
+      if (!best || mark.at > best.at || (mark.at === best.at && mark.wrote && !best.wrote)) {
+        best = mark;
+      }
+    }
+    return best ? { ...best, wrote, read, broke } : undefined;
+  };
+
   const hosts = frame.nodes.map((node) => (
     <SceneViewHost
       key={node.id}
       node={node}
       useDom={useDom}
       touched={touched.has(node.id)}
+      {...(activityOf(node) ? { activity: activityOf(node) } : {})}
       scheme={scheme}
       canvasWidth={result.width}
       canvasHeight={result.height}
@@ -283,7 +321,25 @@ export function Scene<S extends AnySchema>({
           {hosts}
         </canvas>
       )}
-      <Connectors result={frame} above={!useDom} scheme={scheme} overview={view.overview ?? false} />
+      <Connectors
+        result={frame}
+        above={!useDom}
+        scheme={scheme}
+        overview={view.overview ?? false}
+        liveOf={(connector) => {
+          /*
+           * A relation PULSES where it was just made or broken.
+           *
+           * An edge write touches both of its ends, so a connector is live
+           * exactly when both of the things it joins were written in the same
+           * window — which is what making or breaking a relation looks like in
+           * the log, and is not what changing one node's field looks like.
+           */
+          const from = activityOf(frame.nodes.find((node) => node.id === connector.from));
+          const to = activityOf(frame.nodes.find((node) => node.id === connector.to));
+          return from?.wrote && to?.wrote ? (from.at > to.at ? from : to) : undefined;
+        }}
+      />
       <RelationCaptions nodes={frame.nodes} scheme={scheme} />
       {children}
     </div>
@@ -439,6 +495,8 @@ interface HostProps {
   readonly node: SceneNode;
   readonly useDom: boolean;
   readonly touched: boolean;
+  /** What just happened here, if anything. Absent on a quiet graph. */
+  readonly activity?: ActivityMark;
   readonly scheme: "light" | "dark";
   readonly canvasWidth: number;
   readonly canvasHeight: number;
@@ -488,6 +546,7 @@ function SceneViewHost({
   node,
   useDom,
   touched,
+  activity,
   scheme,
   canvasWidth,
   canvasHeight,
@@ -581,15 +640,34 @@ function SceneViewHost({
       data-graview-selected={selected || undefined}
       data-graview-touched={touched || undefined}
       /*
+       * Activity, stated as attributes rather than as inline styles.
+       *
+       * It is the theme's job to decide what "an agent read this" looks like,
+       * and a stylesheet animation runs once and stops — which is how
+       * watching costs nothing on a quiet graph. There is no frame loop here
+       * and nothing to tick.
+       */
+      data-graview-activity={activity ? activity.manner : undefined}
+      data-graview-wrote={activity?.wrote || undefined}
+      data-graview-read={activity && !activity.wrote ? true : undefined}
+      data-graview-broke={activity?.broke || undefined}
+      /*
         * "Open X" only where clicking raises X. On plane 0 the group IS what
         * you are looking at, so the tooltip promised something clicking does
         * not do — and it shadowed the more specific titles a view puts on its
         * own contents.
         */
+      /*
+       * While something is happening here, the tooltip says WHAT — the
+       * intent the op recorded, in the app's own words. Watching should not
+       * require opening the activity list to find out what the light meant.
+       */
       title={
-        node.aggregate && Math.round(node.plane) !== 0
-          ? `Open ${node.aggregate.label}`
-          : undefined
+        activity
+          ? `${WHO[activity.manner]} ${activity.wrote ? "changed this" : "read this"}: ${activity.intent}`
+          : node.aggregate && Math.round(node.plane) !== 0
+            ? `Open ${node.aggregate.label}`
+            : undefined
       }
       role="group"
       aria-label={node.aggregate ? node.aggregate.label : node.id}
@@ -712,6 +790,14 @@ function SceneViewHost({
   );
 }
 
+/** How each manner reads in words, for the tooltip and for assistive tech. */
+const WHO: Record<Manner, string> = {
+  directed: "You",
+  autonomous: "An agent",
+  "co-edited": "You and an agent",
+  rule: "A rule",
+};
+
 /** The centre of a node's box as DRAWN, after its plane's scale. */
 function drawnCentre(
   node: SceneNode | undefined,
@@ -750,8 +836,11 @@ function Connectors({
   above,
   scheme,
   overview,
+  liveOf,
 }: {
   readonly overview: boolean;
+  /** What just happened to this relation, if anything. */
+  liveOf?: (connector: { from: string; to: string }) => ActivityMark | undefined;
   result: {
     nodes: readonly SceneNode[];
     connectors: Layout["connectors"] | InterpolatedLayout["connectors"];
@@ -831,6 +920,7 @@ function Connectors({
           <path
             key={connector.id}
             data-graview-connector={connector.kind}
+            data-graview-activity={liveOf?.(connector)?.manner}
             d={`M ${from.x} ${from.y} Q ${control} ${to.x} ${to.y}`}
             fill="none"
             stroke={`hsl(${Math.round(style.hue * 360)} 55% 62%)`}

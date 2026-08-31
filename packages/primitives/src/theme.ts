@@ -327,9 +327,91 @@ code { color: var(--graview-ink-muted); font-size: 12px; letter-spacing: 0.02em;
   border-radius: 10px;
 }
 
+/* ------------------------------------------------------------ watching
+ *
+ * From outside the plane stack, activity has somewhere to HAPPEN: a kind
+ * lights where an edit landed, an edge pulses where a relation was made or
+ * broken, and a flag appears where a rule started failing. All of it is
+ * derived from the op log — author, intent, reads and writes — and all of it
+ * is drawn by these rules rather than by a frame loop, which is why watching
+ * costs nothing while nothing is happening.
+ *
+ * Who moved is carried in HUE, not in a badge. A person is the accent the
+ * whole interface already uses for "you did this"; an agent is a colder cast,
+ * so a turn it took on its own is distinguishable at a glance from one you
+ * directed; both at once takes both.
+ */
+[data-graview-activity] {
+  --graview-activity: var(--graview-accent);
+}
+[data-graview-activity="autonomous"] {
+  --graview-activity: hsl(212 72% 62%);
+}
+[data-graview-activity="co-edited"] {
+  --graview-activity: hsl(280 60% 66%);
+}
+[data-graview-activity="rule"] {
+  --graview-activity: var(--graview-warn);
+}
+
+@keyframes graview-landed {
+  0%   { box-shadow: 0 0 0 0 var(--graview-activity); opacity: 0.55; }
+  30%  { box-shadow: 0 0 30px 4px var(--graview-activity); opacity: 1; }
+  100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
+}
+[data-graview-view][data-graview-wrote] > * {
+  animation: graview-landed 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 10px;
+}
+
+/* What an agent READ is the half a diff cannot show, and the half that says
+   whether to trust what it then did. Quieter than a write on purpose: it is
+   evidence of attention, not of a change. */
+@keyframes graview-considered {
+  0%   { outline-color: transparent; }
+  25%  { outline-color: var(--graview-activity); }
+  100% { outline-color: transparent; }
+}
+[data-graview-view][data-graview-read] > * {
+  outline: 1px dashed transparent;
+  outline-offset: 3px;
+  border-radius: 10px;
+  animation: graview-considered 1800ms ease-out;
+}
+
+/* A rule that has just begun to fail. It outlives the edit that caused it,
+   because the problem does. */
+[data-graview-view][data-graview-broke] > * {
+  box-shadow: 0 0 0 1px var(--graview-warn), 0 0 22px -6px var(--graview-warn);
+  border-radius: 10px;
+}
+
+/* A relation made or broken: both ends were written, so the line between
+   them is the thing that changed. */
+@keyframes graview-relation {
+  0%   { stroke-opacity: 0.28; stroke-width: 1.4; }
+  30%  { stroke-opacity: 1; stroke-width: 3; }
+  100% { stroke-opacity: 0.28; stroke-width: 1.4; }
+}
+[data-graview-connector][data-graview-activity] {
+  animation: graview-relation 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-graview-view] { transition: none; }
   [data-graview-touched] > * { animation: none; }
+  /*
+   * Motion is removed; the INFORMATION is not. A steady ring in the mover's
+   * colour says the same thing the pulse did, and someone who cannot take
+   * the animation still gets to watch the system work.
+   */
+  [data-graview-view][data-graview-wrote] > *,
+  [data-graview-view][data-graview-read] > * {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--graview-activity);
+  }
+  [data-graview-view][data-graview-read] > * { box-shadow: 0 0 0 1px var(--graview-activity); }
+  [data-graview-connector][data-graview-activity] { animation: none; stroke-opacity: 1; }
 }
 `;
 }
