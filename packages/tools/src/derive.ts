@@ -151,7 +151,7 @@ export function applyAffordance<S extends AnySchema>(
   store: Store<S>,
   affordance: Affordance,
   extraArgs: Readonly<Record<string, unknown>> = {},
-  options: { author?: { kind: "human" | "agent" | "rule"; id?: string; session?: string } } = {},
+  options: { author?: Principal } = {},
 ) {
   const calls = (affordance.batch ?? [affordance.args]).map((args) => ({
     name: affordance.mutation,

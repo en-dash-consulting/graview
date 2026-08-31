@@ -2,8 +2,17 @@ import type { Primitive } from "../graph/primitives.js";
 import type { MutationCall } from "../mutations/types.js";
 
 export interface Author {
-  /** Who moved: a person, an agent acting on their behalf, or a rule. */
-  readonly kind: "human" | "agent" | "rule";
+  /**
+   * Who moved: a person, an agent acting on their behalf, a rule repairing
+   * something, or an external system of record whose change arrived here.
+   *
+   * `system` earns its place for the same reason the others do: an inbound
+   * calendar change is an ordinary op, appears in the activity list beside a
+   * person's edits, and is undone like anything else. A sync layer that wrote
+   * the graph outside the log would be the one kind of change nobody could
+   * see or take back.
+   */
+  readonly kind: "human" | "agent" | "rule" | "system";
   readonly id?: string;
   readonly session?: string;
 }
