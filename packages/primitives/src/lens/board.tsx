@@ -392,8 +392,20 @@ export function createBoardLens<S extends AnySchema>(options: BoardOptions): Boa
     name: "board",
     requiredRoles: [...BOARD_REQUIRED_ROLES],
     options,
+    /*
+     * The SCHEMA comes from the provider, not from the caller.
+     *
+     * `ViewProps` carries no schema — the registry never passes one — so a
+     * lens rendered through the registry ran without it and every
+     * schema-aware decision inside quietly took its fallback path. In the
+     * timeline that meant an optional field absent on one node looked exactly
+     * like a role nobody bound, and a single unplanned task threw for the
+     * whole view.
+     */
     View(props) {
-      return <BoardView<S> {...props} options={options} />;
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { store } = useGraview<S>();
+      return <BoardView<S> schema={store.schema} {...props} options={options} />;
     },
     build(nodes, edges, schema) {
       return buildBoard<S>(nodes, edges, options, schema);

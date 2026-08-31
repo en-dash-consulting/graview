@@ -54,7 +54,13 @@ export type {
 export { fromLayout } from "./scene/from-layout.js";
 
 // Connector treatment, derived per edge kind.
-export { connectorStyle, distinguishable } from "./scene/connectors.js";
+export {
+  CONNECTOR_DASH,
+  connectorStroke,
+  connectorStyle,
+  connectorWidth,
+  distinguishable,
+} from "./scene/connectors.js";
 export type { ConnectorStyle, EndCap, StrokePattern } from "./scene/connectors.js";
 
 // Pointer routing, until the platform redirects hit-testing itself.

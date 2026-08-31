@@ -1,0 +1,21 @@
+{
+  "name": "@graview/todo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The example. A todo list, because nobody has to be taught what one is.",
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*",
+    "@graview/layout": "workspace:*",
+    "@graview/primitives": "workspace:*",
+    "@graview/react": "workspace:*",
+    "@graview/render": "workspace:*",
+    "@graview/tools": "workspace:*",
+    "zod": "^4.4.3"
+  }
+}

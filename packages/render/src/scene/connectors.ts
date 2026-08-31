@@ -79,3 +79,34 @@ export function distinguishable(
   }
   return { ok: collisions.length === 0, collisions };
 }
+
+/**
+ * The dash array for a stroke pattern, in one place.
+ *
+ * Exported because the scene is not the only thing that draws a connector: a
+ * legend has to draw the SAME line, and a legend whose swatch is an
+ * approximation is a legend you cannot trust. Copying this map was the exact
+ * failure the legend's own docstring promised against.
+ */
+export const CONNECTOR_DASH: Readonly<Record<StrokePattern, string | undefined>> = {
+  solid: undefined,
+  dashed: "7 5",
+  dotted: "1 5",
+  double: "12 3",
+  tapered: "10 3 3 3",
+};
+
+/** The colour a connector of this kind is stroked in, on either surface. */
+export function connectorStroke(style: ConnectorStyle): string {
+  return `hsl(${Math.round(style.hue * 360)} 55% 62%)`;
+}
+
+/**
+ * How thick, given where it is drawn.
+ *
+ * Inside the scene a connector is an aside and stays thin; above the stack the
+ * lines are the content and earn their weight.
+ */
+export function connectorWidth(style: ConnectorStyle, overview: boolean): number {
+  return overview ? Math.max(1.6, style.width) : Math.min(1.4, style.width);
+}

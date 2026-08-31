@@ -5,10 +5,10 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/skills",
-    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/skills the household example the bid-desk example the coaching example apps/launcher",
+    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/skills apps/todo the household example the bid-desk example the coaching example apps/launcher",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "node packages/core/dist/cli/index.js check the household example/dist/domain/app.js && node packages/core/dist/cli/index.js check the bid-desk example/dist/domain/app.js && node packages/core/dist/cli/index.js check the coaching example/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/launcher/dist/domain/app.js",
+    "check": "node packages/core/dist/cli/index.js check apps/todo/dist/domain/app.js && node packages/core/dist/cli/index.js check the household example/dist/domain/app.js && node packages/core/dist/cli/index.js check the bid-desk example/dist/domain/app.js && node packages/core/dist/cli/index.js check the coaching example/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/launcher/dist/domain/app.js",
     "lint": "tsc -b --dry",
     "spike": "node apps/spike/scripts/run-spike.mjs",
     "acceptance": "node the household example/scripts/run-acceptance.mjs",
@@ -28,7 +28,8 @@
     "changeset": "changeset",
     "pack:inspect": "node scripts/inspect-pack.mjs",
     "smoke": "node scripts/smoke-install.mjs",
-    "skills": "node packages/skills/dist/cli.js install ."
+    "skills": "node packages/skills/dist/cli.js install .",
+    "dev:todo": "pnpm --filter @graview/todo dev"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
