@@ -1,4 +1,4 @@
-import { aggregateId, isAggregateId } from "./layout.js";
+import { aggregateId, isAggregateId, kindCardId, kindOfCard } from "./layout.js";
 import type { Connector, Layout, LayoutNode } from "./types.js";
 
 export interface InterpolatedNode extends Omit<LayoutNode, "plane"> {
@@ -31,7 +31,7 @@ function centre(node: LayoutNode): { x: number; y: number } {
  * members are the same interpolation run in opposite directions.
  */
 function standIn(node: LayoutNode, other: Layout): LayoutNode | null {
-  if (isAggregateId(node.id)) {
+  if (isAggregateId(node.id) || kindOfCard(node.id) !== null) {
     // A group vanishing: its members are the thing it becomes. Collapse to
     // the centroid of wherever they went.
     const members = (node.aggregate?.memberIds ?? [])
@@ -46,7 +46,7 @@ function standIn(node: LayoutNode, other: Layout): LayoutNode | null {
 
   const group = other.nodes.find(
     (candidate) =>
-      candidate.id === aggregateId(node.kind) &&
+      (candidate.id === kindCardId(node.kind) || candidate.id === aggregateId(node.kind)) &&
       candidate.aggregate?.memberIds.includes(node.id),
   );
   if (!group) return null;
@@ -130,6 +130,7 @@ function mix(a: LayoutNode, b: LayoutNode, t: number, opacity: number): Interpol
     ...(b.aggregate ? { aggregate: b.aggregate } : {}),
     ...(b.via ? { via: b.via } : {}),
     ...(b.raised ? { raised: true } : {}),
+    ...(b.focused ? { focused: true } : {}),
   };
 }
 

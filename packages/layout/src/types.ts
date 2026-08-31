@@ -51,6 +51,13 @@ export interface LayoutNode {
    * read.
    */
   readonly raised?: boolean;
+  /**
+   * A group standing for the kind currently in focus.
+   *
+   * It stays on the kinds plane rather than being removed, so the strip is a
+   * constant map and you can see that the picture above IS this kind.
+   */
+  readonly focused?: boolean;
   /** True when the user pinned this position rather than the layout choosing it. */
   readonly pinned: boolean;
 }

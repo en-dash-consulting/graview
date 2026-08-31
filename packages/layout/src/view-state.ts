@@ -19,6 +19,16 @@ export interface ViewState {
   readonly expanded: readonly string[];
   /** User positions that override the computed ones. */
   readonly pins: Readonly<Record<string, Pin>>;
+  /**
+   * Looking at the whole graph from outside the plane stack.
+   *
+   * A view state rather than a mode, because it has to INTERPOLATE from
+   * wherever you were: the kinds already on screen fly from their row into a
+   * ring, and the thing you were looking at recedes into the middle. A
+   * separate surface could only cut, and cutting loses the one thing an
+   * overview is for.
+   */
+  readonly overview?: boolean;
 }
 
 export const EMPTY_VIEW: ViewState = {
@@ -42,6 +52,7 @@ export function toUrl(state: ViewState): string {
   const params = new URLSearchParams();
   if (state.focusId) params.set("focus", state.focusId);
   if (state.relation) params.set("relation", state.relation);
+  if (state.overview) params.set("overview", "1");
   if (state.expanded.length > 0) {
     params.set("expand", [...state.expanded].sort().join(","));
   }
@@ -67,6 +78,7 @@ export function fromUrl(url: string): ViewState {
     pins[key.slice(4)] = { x, y };
   }
   return {
+    ...(params.get("overview") === "1" ? { overview: true } : {}),
     focusId: params.get("focus"),
     relation: params.get("relation"),
     expanded: (params.get("expand") ?? "")
@@ -92,6 +104,10 @@ export function withFocus(state: ViewState, focusId: string | null): ViewState {
 
 export function withRelation(state: ViewState, relation: string | null): ViewState {
   return { ...state, relation };
+}
+
+export function withOverview(state: ViewState, overview: boolean): ViewState {
+  return { ...state, overview };
 }
 
 /**

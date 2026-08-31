@@ -51,16 +51,6 @@ export interface GraviewContextValue<S extends AnySchema> {
    */
   readonly menuAt: { readonly x: number; readonly y: number } | null;
   setMenuAt(at: { x: number; y: number } | null): void;
-  /**
-   * Whether the graph is being looked at from outside the plane stack.
-   *
-   * An ALTITUDE, not a view: the scene shows instances through a lens, a page
-   * shows one view close up, and this shows the shape of the whole thing.
-   * Kept beside `jackedIn` because they are the same kind of state — where
-   * the camera is, rather than what the graph says.
-   */
-  readonly overview: boolean;
-  setOverview(overview: boolean): void;
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
@@ -100,7 +90,6 @@ export function GraviewProvider<S extends AnySchema>({
   const [selection, setSelectionState] = useState<readonly string[]>([]);
   const [jackedIn, setJackedIn] = useState<string | null>(initialJackedIn ?? null);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
-  const [overview, setOverview] = useState(false);
 
   const current = view ?? internalView;
 
@@ -133,10 +122,8 @@ export function GraviewProvider<S extends AnySchema>({
       setJackedIn,
       menuAt,
       setMenuAt,
-      overview,
-      setOverview,
     }),
-    [store, scheme, views, current, setView, selection, setSelection, jackedIn, menuAt, overview],
+    [store, scheme, views, current, setView, selection, setSelection, jackedIn, menuAt],
   );
 
   return (

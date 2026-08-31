@@ -14,6 +14,31 @@ import type { ViewState } from "./view-state.js";
 export const AGGREGATE_PREFIX = "aggregate:";
 
 /**
+ * The kinds plane's cards have ids of their own.
+ *
+ * They cannot share `aggregate:<kind>` with a focusable group, because an app
+ * whose primary view IS one kind — the coaching example' formation is
+ * `aggregate:position` — would then place the same id twice: once as the
+ * focus and once as its own card in the strip. The strip is a MAP of kinds,
+ * not a set of groups you focus, so it gets its own namespace.
+ */
+export const KIND_PREFIX = "kind:";
+
+export function kindCardId(kind: string): string {
+  return `${KIND_PREFIX}${kind}`;
+}
+
+export function kindOfCard(id: string): string | null {
+  return id.startsWith(KIND_PREFIX) ? id.slice(KIND_PREFIX.length) : null;
+}
+
+/** The kinds an id stands for, whichever namespace it is in. */
+export function kindsOf(id: string): string[] {
+  const card = kindOfCard(id);
+  return card ? [card] : kindsOfAggregate(id);
+}
+
+/**
  * The id of a group standing in for one or more kinds.
  *
  * Several kinds because a group is a view of a SET of kinds, not a synonym
@@ -45,6 +70,33 @@ export function kindsOfAggregate(id: string): string[] {
  */
 function byStableKey(a: { id: string }, b: { id: string }): number {
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+/**
+ * Lays boxes on an ellipse — a circle seen from above and in front.
+ *
+ * Ordered the way the row is ordered, so a card keeps its neighbours when the
+ * strip becomes a ring and the eye can follow it round.
+ */
+function ring(
+  count: number,
+  size: { width: number; height: number },
+  canvasWidth: number,
+  canvasHeight: number,
+): { x: number; y: number }[] {
+  const cx = canvasWidth / 2;
+  const cy = canvasHeight * 0.53;
+  const rx = canvasWidth * 0.33;
+  const ry = canvasHeight * 0.31;
+  return Array.from({ length: count }, (_, index) => {
+    // Starting at the bottom, going clockwise, so the first card of the strip
+    // ends up nearest the viewer rather than hidden at the back.
+    const angle = Math.PI / 2 + (index / Math.max(1, count)) * Math.PI * 2;
+    return {
+      x: cx + Math.cos(angle) * rx - size.width / 2,
+      y: cy + Math.sin(angle) * ry - size.height / 2,
+    };
+  });
 }
 
 /** Lays a row of equal boxes out, centred on the canvas. */
@@ -155,7 +207,9 @@ export function layout<S extends AnySchema>(
   });
   const expanded = new Set(state.expanded);
 
-  const related = relatedNodes(graph, schema, focus, state.relation);
+  // Nothing is raised while you are above the stack: the ring IS the
+  // relation plane up here.
+  const related = state.overview ? [] : relatedNodes(graph, schema, focus, state.relation);
 
   /*
    * With plane 1 empty, the focus takes the relation band too.
@@ -172,8 +226,20 @@ export function layout<S extends AnySchema>(
       ? band.focusH
       : band.contextY - band.focusY - opts.gap * 2;
 
+  /*
+   * Above the stack there is no focus PANEL — the ring card for the kind you
+   * were in is marked instead.
+   *
+   * Placing both would have put the same aggregate on screen twice under one
+   * id, and it would have answered the wrong question: what you want to know
+   * up here is not what the board said, it is WHICH KIND the board was. The
+   * transition shows the panel shrinking into that card, which says it
+   * better than a shrunken copy of itself in the middle.
+   */
   // ------------------------------------------------------- plane 0: focus
-  if (focus) {
+  if (state.overview) {
+    // nothing: the ring carries it
+  } else if (focus) {
     push({
       id: focus.id,
       kind: focus.kind,
@@ -225,21 +291,46 @@ export function layout<S extends AnySchema>(
     });
   });
 
-  // ----------------------------------------------------- plane 2: context
+  /* ----------------------------------------------------- plane 2: the kinds
+   *
+   * EVERY declared kind, always, in the same place.
+   *
+   * This used to be "whatever is not on screen", which meant the row's
+   * membership changed as you navigated: the kind you were looking at
+   * vanished from it, and reappeared somewhere else the moment you looked
+   * at something else. That is unreadable as a map — you could not tell that
+   * the board WAS Positions, and Positions turning up at the bottom when you
+   * switched to training looked like a bug rather than the same card.
+   *
+   * A constant strip is what makes the plane a map: the kind in focus is
+   * marked as focused rather than removed, a raised kind is marked as
+   * raised, and nothing ever moves.
+   */
   const shown = new Set(placed.keys());
-  // Members of the focused group are already on screen, inside it.
   for (const member of focusGroup) shown.add(member.id);
   const groups = new Map<string, NodeOfSchema<S>[]>();
   for (const node of graph.allNodes()) {
-    if (shown.has(node.id)) continue;
     const list = groups.get(node.kind);
     if (list) list.push(node);
     else groups.set(node.kind, [node]);
   }
 
-  const entries: { id: string; kind: string; members: NodeOfSchema<S>[]; raised?: boolean }[] = [];
-  for (const [kind, members] of groups) {
-    entries.push({ id: aggregateId(kind), kind, members: [...members].sort(byStableKey) });
+  const focusedKinds = new Set(focusKinds.length > 0 ? focusKinds : focus ? [focus.kind] : []);
+  const entries: {
+    id: string;
+    kind: string;
+    members: NodeOfSchema<S>[];
+    raised?: boolean;
+    focused?: boolean;
+  }[] = [];
+  for (const kind of schema.kinds as readonly string[]) {
+    const members = groups.get(kind) ?? [];
+    entries.push({
+      id: kindCardId(kind),
+      kind,
+      members: [...members].sort(byStableKey),
+      ...(focusedKinds.has(kind) ? { focused: true } : {}),
+    });
   }
   /*
    * A raised kind keeps its place, emptied.
@@ -250,18 +341,20 @@ export function layout<S extends AnySchema>(
    * the position it held before: the picture you remember is the picture you
    * get, and clicking it again drops the relation.
    */
-  if (
-    state.relation &&
-    !entries.some((entry) => entry.kind === state.relation) &&
-    graph.allNodes().some((node) => node.kind === state.relation)
-  ) {
-    entries.push({ id: aggregateId(state.relation), kind: state.relation, members: [], raised: true });
+  for (const entry of entries) {
+    if (entry.kind === state.relation) entry.raised = true;
   }
   entries.sort(byStableKey);
 
   // Expanding an aggregate and collapsing it run through this one loop:
   // an open group contributes its members, a closed one contributes itself.
-  const contextItems: { id: string; kind: string; aggregate?: Aggregate; raised?: boolean }[] = [];
+  const contextItems: {
+    id: string;
+    kind: string;
+    aggregate?: Aggregate;
+    raised?: boolean;
+    focused?: boolean;
+  }[] = [];
   for (const entry of entries) {
     if (expanded.has(entry.id) && entry.members.length > 0) {
       for (const member of entry.members) {
@@ -272,6 +365,7 @@ export function layout<S extends AnySchema>(
         id: entry.id,
         kind: entry.kind,
         ...(entry.raised ? { raised: true } : {}),
+        ...(entry.focused ? { focused: true } : {}),
         aggregate: {
           kind: entry.kind,
           memberIds: entry.members.map((m) => m.id),
@@ -281,19 +375,38 @@ export function layout<S extends AnySchema>(
     }
   }
 
-  const contextSize = fit(contextItems.length, opts.contextSize.width, band.contextH);
-  const contextPositions = row(
-    contextItems.length,
-    contextSize,
-    opts.gap,
-    opts.width,
-    band.contextY,
-  );
+  /*
+   * The overview is the SAME CARDS, on a ring instead of a row.
+   *
+   * Not a different surface. The kinds plane is already a constant map of
+   * every kind, so rising to the overview only has to move those cards —
+   * which means `interpolate` tweens them from the strip out into the ellipse
+   * for free, and what you were looking at recedes into the middle rather
+   * than being replaced by a picture of something else.
+   *
+   * The ellipse is a circle under a vertical squash, which is affine, so this
+   * is the same class of transform the plane model already uses.
+   */
+  const contextSize = state.overview
+    ? { width: Math.min(200, opts.width / 7), height: Math.min(120, opts.height * 0.17) }
+    : fit(contextItems.length, opts.contextSize.width, band.contextH);
+  const contextPositions = state.overview
+    ? ring(contextItems.length, contextSize, opts.width, opts.height)
+    : row(contextItems.length, contextSize, opts.gap, opts.width, band.contextY);
   contextItems.forEach((item, index) => {
     const position = contextPositions[index]!;
     push({
       id: item.id,
       kind: item.kind,
+      /*
+       * Plane 2 on the ring as well as in the strip.
+       *
+       * Not because they are peripheral — up here they are the whole subject —
+       * but because plane 2 asks for GLYPH fidelity, which is the view that
+       * says what a kind IS and how many there are. On plane 1 the position
+       * aggregate rendered as the board lens's summary, so half the ring
+       * described lenses and half described kinds.
+       */
       plane: 2,
       x: position.x,
       y: position.y,
@@ -301,6 +414,7 @@ export function layout<S extends AnySchema>(
       height: contextSize.height,
       ...(item.aggregate ? { aggregate: item.aggregate } : {}),
       ...(item.raised ? { raised: true } : {}),
+      ...(item.focused ? { focused: true } : {}),
     });
   });
 
@@ -427,10 +541,19 @@ function connectorsFor<N extends { id: string; kind: string }>(
   graph: GraphReader<N>,
   placed: Map<string, LayoutNode>,
 ): Connector[] {
+  /*
+   * A member belongs to the NEAREST group that contains it.
+   *
+   * The kinds plane is a constant map, so a duty is inside both the week on
+   * plane 0 and the Runs card on plane 2. An edge into it should point at
+   * where the thing actually is on screen, which is the nearer of the two —
+   * otherwise every connector to the week suddenly aimed at the strip.
+   */
   const containing = new Map<string, string>();
-  for (const node of placed.values()) {
+  const byDepth = [...placed.values()].sort((a, b) => a.plane - b.plane);
+  for (const node of byDepth) {
     for (const memberId of node.aggregate?.memberIds ?? []) {
-      if (!placed.has(memberId)) containing.set(memberId, node.id);
+      if (!placed.has(memberId) && !containing.has(memberId)) containing.set(memberId, node.id);
     }
   }
   const resolve = (id: string): LayoutNode | undefined =>

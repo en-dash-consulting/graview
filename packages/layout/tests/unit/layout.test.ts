@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   aggregateId,
+  kindCardId,
   easeInOut,
   EMPTY_VIEW,
   fromUrl,
@@ -63,7 +64,7 @@ describe("layout as a pure function", () => {
     expect(planeOf(result, "week-1")).toBe(0);
     expect(planeOf(result, "ana")).toBe(1);
     expect(planeOf(result, "bo")).toBe(1);
-    expect(planeOf(result, aggregateId("duty"))).toBe(2);
+    expect(planeOf(result, kindCardId("duty"))).toBe(2);
   });
 
   it("follows an edge kind from the focus when there is one", () => {
@@ -71,12 +72,12 @@ describe("layout as a pure function", () => {
     expect(planeOf(result, "morning")).toBe(1);
     // Bo's run is not Ana's, so it stays in context.
     expect(planeOf(result, "evening")).toBeNull();
-    expect(planeOf(result, aggregateId("duty"))).toBe(2);
+    expect(planeOf(result, kindCardId("duty"))).toBe(2);
   });
 
   it("groups everything else into aggregates that name their members", () => {
     const result = layout(graph(), schema, view({ focusId: "week-1", relation: "person" }));
-    const duties = result.nodes.find((n) => n.id === aggregateId("duty"));
+    const duties = result.nodes.find((n) => n.id === kindCardId("duty"));
     expect(duties?.aggregate).toEqual({
       kind: "duty",
       memberIds: ["evening", "morning"],
@@ -86,18 +87,18 @@ describe("layout as a pure function", () => {
 
   it("expands an aggregate into its members and collapses back", () => {
     const closed = view({ focusId: "week-1" });
-    const open = toggleExpanded(closed, aggregateId("person"));
+    const open = toggleExpanded(closed, kindCardId("person"));
 
     const before = layout(graph(), schema, closed);
-    expect(before.nodes.map((n) => n.id)).toContain(aggregateId("person"));
+    expect(before.nodes.map((n) => n.id)).toContain(kindCardId("person"));
     expect(before.nodes.map((n) => n.id)).not.toContain("ana");
 
     const after = layout(graph(), schema, open);
-    expect(after.nodes.map((n) => n.id)).not.toContain(aggregateId("person"));
+    expect(after.nodes.map((n) => n.id)).not.toContain(kindCardId("person"));
     expect(after.nodes.map((n) => n.id)).toEqual(expect.arrayContaining(["ana", "bo", "cass"]));
 
     // Collapsing is the same operation the other way, not a second path.
-    expect(layout(graph(), schema, toggleExpanded(open, aggregateId("person")))).toEqual(before);
+    expect(layout(graph(), schema, toggleExpanded(open, kindCardId("person")))).toEqual(before);
   });
 
   it("points an edge at the group its other end is inside", () => {
@@ -105,15 +106,15 @@ describe("layout as a pure function", () => {
     // Ana's run is inside the Runs group, so her edge points at the group —
     // severing it would hide the relationship the scene exists to show.
     expect(result.connectors.map((c) => `${c.from}->${c.to}`)).toEqual([
-      "ana->aggregate:duty",
-      "bo->aggregate:duty",
-      "cass->aggregate:duty",
+      "ana->kind:duty",
+      "bo->kind:duty",
+      "cass->kind:duty",
     ]);
 
     const expanded = layout(
       graph(),
       schema,
-      toggleExpanded(view({ focusId: "week-1", relation: "person" }), aggregateId("duty")),
+      toggleExpanded(view({ focusId: "week-1", relation: "person" }), kindCardId("duty")),
     );
     expect(expanded.connectors.map((c) => c.id)).toEqual([
       "assigned-to:ana:morning",
@@ -229,7 +230,7 @@ describe("every stop is a URL", () => {
 describe("interpolation", () => {
   const focused = view({ focusId: "week-1", relation: "person" });
   const collapsed = layout(graph(), schema, focused);
-  const expanded = layout(graph(), schema, toggleExpanded(focused, aggregateId("duty")));
+  const expanded = layout(graph(), schema, toggleExpanded(focused, kindCardId("duty")));
 
   it("returns each end exactly at t=0 and t=1", () => {
     const start = interpolate(collapsed, expanded, 0);
@@ -245,7 +246,7 @@ describe("interpolation", () => {
   });
 
   it("grows members out of the aggregate they were inside", () => {
-    const group = collapsed.nodes.find((n) => n.id === aggregateId("duty"))!;
+    const group = collapsed.nodes.find((n) => n.id === kindCardId("duty"))!;
     const mid = interpolate(collapsed, expanded, 0.001);
     const morning = mid.nodes.find((n) => n.id === "morning")!;
     // At the very start of the transition a member sits on its old group.
@@ -358,7 +359,7 @@ describe("everything the layout places is reachable", () => {
     view({ focusId: "week-1", relation: "person" }),
     view({ focusId: "morning" }),
     view({ focusId: "morning", relation: "assigned-to" }),
-    view({ focusId: "week-1", relation: "person", expanded: [aggregateId("duty")] }),
+    view({ focusId: "week-1", relation: "person", expanded: [kindCardId("duty")] }),
   ];
 
   it("keeps every node inside the canvas, in every arrangement", () => {
@@ -381,6 +382,82 @@ describe("everything the layout places is reachable", () => {
       for (const node of result.nodes) {
         expect(node.y + node.height).toBeLessThanOrEqual(600);
       }
+    }
+  });
+});
+
+describe("the kinds plane is a constant map", () => {
+  /*
+   * It used to be "whatever is not on screen", so its membership changed as
+   * you navigated: the kind you were looking at vanished from it and turned
+   * up again when you looked elsewhere, which reads as a bug rather than as
+   * the same card.
+   */
+  it("shows every declared kind, in every arrangement", () => {
+    for (const state of [
+      view({ focusId: "week-1" }),
+      view({ focusId: "week-1", relation: "person" }),
+      view({ focusId: "morning" }),
+    ]) {
+      const result = layout(graph(), schema, state);
+      const kinds = result.nodes
+        .filter((node) => node.plane === 2 && node.aggregate)
+        .map((node) => node.kind)
+        .sort();
+      expect(kinds).toEqual(["duty", "person", "week"]);
+    }
+  });
+
+  it("marks the kind in focus rather than removing it", () => {
+    const result = layout(graph(), schema, view({ focusId: "week-1" }));
+    const card = result.nodes.find((node) => node.id === kindCardId("week"))!;
+    expect(card.focused).toBe(true);
+    expect(card.plane).toBe(2);
+  });
+
+  it("marks a raised kind, and keeps it where it was", () => {
+    const resting = layout(graph(), schema, view({ focusId: "week-1" }));
+    const raised = layout(graph(), schema, view({ focusId: "week-1", relation: "person" }));
+    const before = resting.nodes.find((node) => node.id === kindCardId("person"))!;
+    const after = raised.nodes.find((node) => node.id === kindCardId("person"))!;
+    expect(after.raised).toBe(true);
+    // Spatial memory: raising does not move the card.
+    expect([after.x, after.y]).toEqual([before.x, before.y]);
+  });
+});
+
+describe("the overview is the same cards, on a ring", () => {
+  it("keeps every kind, and drops the focus panel", () => {
+    const result = layout(graph(), schema, view({ focusId: "week-1", overview: true }));
+    // No plane 0: up here the ring card for the focused kind carries it.
+    expect(result.nodes.some((node) => node.plane === 0)).toBe(false);
+    expect(result.nodes.filter((node) => node.aggregate)).toHaveLength(3);
+    expect(result.nodes.find((node) => node.id === kindCardId("week"))?.focused).toBe(true);
+  });
+
+  it("places them on an ellipse rather than a row", () => {
+    const result = layout(graph(), schema, view({ focusId: "week-1", overview: true }));
+    const ys = result.nodes.filter((node) => node.aggregate).map((node) => Math.round(node.y));
+    // A row shares one y; a ring does not.
+    expect(new Set(ys).size).toBeGreaterThan(1);
+  });
+
+  it("is a stop, so the back button returns to it exactly", () => {
+    const above = view({ focusId: "week-1", overview: true });
+    expect(fromUrl(toUrl(above))).toMatchObject({ focusId: "week-1", overview: true });
+    expect(sameView(fromUrl(toUrl(above)), above)).toBe(true);
+  });
+
+  it("still fits inside the canvas", () => {
+    const result = layout(graph(), schema, view({ focusId: "week-1", overview: true }), {
+      width: 1200,
+      height: 700,
+    });
+    for (const node of result.nodes) {
+      expect(node.y).toBeGreaterThanOrEqual(0);
+      expect(node.y + node.height).toBeLessThanOrEqual(700);
+      expect(node.x).toBeGreaterThanOrEqual(0);
+      expect(node.x + node.width).toBeLessThanOrEqual(1200);
     }
   });
 });

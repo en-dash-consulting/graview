@@ -1,7 +1,11 @@
 export {
   aggregateId,
   isAggregateId,
+  kindCardId,
+  kindOfCard,
+  kindsOf,
   kindsOfAggregate,
+  KIND_PREFIX,
   layout,
   planeOf,
   AGGREGATE_PREFIX,
@@ -25,6 +29,7 @@ export {
   toggleExpanded,
   toUrl,
   withFocus,
+  withOverview,
   withPin,
   withRelation,
 } from "./view-state.js";

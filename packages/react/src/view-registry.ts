@@ -48,6 +48,10 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
    * problem you have to go looking for.
    */
   readonly flagged?: readonly string[];
+  /** This group's members are currently raised onto the relation plane. */
+  readonly raised?: boolean;
+  /** This group is the kind currently in focus. */
+  readonly focused?: boolean;
 }
 
 export type ViewComponent<

@@ -1,4 +1,5 @@
 import { labelOf, type AnySchema, type Store } from "@graview/core";
+import { withOverview } from "@graview/layout";
 import {
   useAffordances,
   useApplyAffordance,
@@ -851,9 +852,9 @@ export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] })
  * require finding the right small × in a trail.
  */
 export function BackOut({ home }: { readonly home: string | null }) {
-  const { view, focus, show } = useNavigation();
+  const { view, focus, show, go } = useNavigation();
   const { selection, clear } = useSelection();
-  const { overview, setOverview } = useGraview<AnySchema>();
+  const overview = view.overview ?? false;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -863,42 +864,79 @@ export function BackOut({ home }: { readonly home: string | null }) {
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
       // Outermost first: leaving the overview is the biggest thing Escape can
       // undo, and it should not also drop a selection on the way past.
-      if (overview) setOverview(false);
+      if (overview) go(withOverview(view, false));
       else if (selection.length > 0) clear();
       else if (view.relation) show(null);
       else if (view.focusId !== home) focus(home);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, focus, show, selection, clear, home, overview, setOverview]);
+  }, [view, focus, show, go, selection, clear, home, overview]);
 
   return null;
 }
 
 /**
- * The way out to the overview, and back.
+ * The way out to the Graview, and back.
  *
- * One control rather than two, because it is one axis: you are either inside
- * the plane stack or above it.
+ * The framework's own name for the view of the whole thing, which is the
+ * right name: everything else here is a lens over part of the graph, and this
+ * is the graph. A small mark at the foot of the scene rather than a labelled
+ * control in the bar — it is a change of altitude, not a command, and the bar
+ * is for what you are doing rather than where you are standing.
  */
 export function OverviewButton() {
-  const { overview, setOverview } = useGraview<AnySchema>();
+  const { view, go } = useNavigation();
+  const overview = view.overview ?? false;
   return (
     <button
       type="button"
       data-testid="overview"
       aria-pressed={overview}
-      title={overview ? "Back into the scene" : "See the whole graph from outside"}
-      onClick={() => setOverview(!overview)}
+      aria-label={overview ? "Back into the view" : "See the Graview"}
+      title={overview ? "Back into the view" : "The Graview — the whole thing, from outside"}
+      // A view state, so it is a URL, the back button works, and the cards
+      // already on screen fly out into the ring rather than being replaced.
+      onClick={() => go(withOverview(view, !overview))}
       style={{
-        fontSize: 12.5,
-        whiteSpace: "nowrap",
+        position: "fixed",
+        left: "50%",
+        bottom: 14,
+        transform: "translateX(-50%)",
+        zIndex: 12,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 7,
+        padding: "5px 12px",
+        borderRadius: 999,
+        fontSize: 11,
+        letterSpacing: "0.18em",
+        textTransform: "uppercase",
+        background: "var(--graview-float)",
+        boxShadow: "var(--graview-lift-low)",
         ...(overview
           ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
-          : {}),
+          : { color: "var(--graview-ink-faint)" }),
       }}
     >
-      {overview ? "Back in" : "Whole graph"}
+      {/* The mark: three kinds and the relations between them, which is what
+          the view itself is. */}
+      <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true">
+        <ellipse
+          cx="6"
+          cy="6.6"
+          rx="5"
+          ry="2.6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="0.9"
+          opacity="0.55"
+        />
+        <circle cx="6" cy="4" r="1.5" fill="currentColor" />
+        <circle cx="1.6" cy="7.4" r="1.2" fill="currentColor" opacity="0.75" />
+        <circle cx="10.4" cy="7.4" r="1.2" fill="currentColor" opacity="0.75" />
+      </svg>
+      Graview
     </button>
   );
 }

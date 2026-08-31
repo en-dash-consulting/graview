@@ -1,5 +1,5 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
-import { EMPTY_VIEW, aggregateId, toUrl } from "@graview/layout";
+import { EMPTY_VIEW, aggregateId, kindCardId, toUrl } from "@graview/layout";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -155,7 +155,7 @@ describe("the scene", () => {
     const expanded = render(<Scene renderer="dom" />, {
       ...EMPTY_VIEW,
       focusId: "week-1",
-      expanded: [aggregateId("person")],
+      expanded: [kindCardId("person")],
     });
     // Expanded, each person gets the `one` view at glyph fidelity.
     expect(expanded).not.toContain("2 people");
@@ -191,7 +191,7 @@ describe("the scene", () => {
       ...EMPTY_VIEW,
       focusId: "week-1",
       relation: "person",
-      expanded: [aggregateId("duty")],
+      expanded: [kindCardId("duty")],
     });
     expect(html).toContain('data-graview-connector="assigned-to"');
   });
