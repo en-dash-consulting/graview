@@ -346,14 +346,17 @@ export function TimelineView<S extends AnySchema>({
         </div>
 
         <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-          {ticks.map((at) => (
+          {ticks.map((at, index) => (
             <div
               key={at}
               style={{
                 position: "absolute",
                 left: GUTTER - 8,
                 right: 0,
-                top: `${pct(at)}%`,
+                // The closing rule is drawn just INSIDE the grid: at a flat
+                // 100% its own single pixel sits below the box, which is
+                // still content the panel cannot show.
+                top: index === ticks.length - 1 ? "calc(100% - 1px)" : `${pct(at)}%`,
                 height: 1,
                 background: "var(--graview-edge)",
               }}
@@ -362,7 +365,18 @@ export function TimelineView<S extends AnySchema>({
                 style={{
                   position: "absolute",
                   left: -(GUTTER - 8),
-                  top: -7,
+                  /*
+                   * Every label is centred on its rule except the last, which
+                   * SITS ON TOP of it.
+                   *
+                   * The final rule is at 100%, so a centred label hangs eight
+                   * pixels below the grid — enough to make the panel's
+                   * scroller report content it cannot show, which puts a
+                   * scroll region on a calendar that fits. It also reads
+                   * better: the last label is the end of the axis rather than
+                   * something below it.
+                   */
+                  ...(index === ticks.length - 1 ? { bottom: 2 } : { top: -7 }),
                   width: GUTTER - 16,
                   textAlign: "right",
                   fontSize: 10,

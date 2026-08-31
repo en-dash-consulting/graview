@@ -240,6 +240,11 @@ export function BoardView<S extends AnySchema>({
             aspectRatio: `${aspect}`,
             maxWidth: "100%",
             flex: "0 1 auto",
+            // Its own border counts INSIDE the hundred percent. Without this
+            // the pitch is two pixels taller than the box it was told to
+            // fill, which is enough to put a scroll region on a board that
+            // fits — visible as a sliver of the bench cut off at the bottom.
+            boxSizing: "border-box",
             borderRadius: 12,
             border: "1px solid var(--graview-edge)",
             // A ground of its own, so the arrangement reads as a place rather

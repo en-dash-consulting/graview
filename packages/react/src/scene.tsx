@@ -520,6 +520,25 @@ function SceneViewHost({
   const ref = useRef<HTMLDivElement | null>(null);
   usePickTargets(ref);
 
+  /*
+   * A view drawn smaller than it was designed for is SCALED, not re-solved.
+   *
+   * When the layout gives a node a natural size, the view lays itself out at
+   * that size and the whole result is transformed down into the slot. That is
+   * the same picture, smaller — which is what a captured texture would do on
+   * the GPU path anyway, and what keeps the shrunk interface an interface:
+   * every pick target inside it is still a real target, because nothing here
+   * is an image.
+   *
+   * Rendering into the slot instead is what broke it: a coverage matrix asked
+   * to lay itself out in a third of its width piled its rotated column
+   * headers into a corner and clipped its rows.
+   */
+  const natural = node.natural;
+  const shrink = natural
+    ? Math.min(node.width / natural.width, node.height / natural.height)
+    : 1;
+
   /** The node a pointer or key event is really about. */
   const pickedFrom = (target: EventTarget | null): string | null =>
     (target as HTMLElement | null)?.closest?.("[data-graview-pick]")?.getAttribute(
@@ -662,7 +681,33 @@ function SceneViewHost({
         ...domOnly,
       }}
     >
-      {children}
+      {natural ? (
+        /*
+         * Centred on the slot and scaled about its own middle, so the
+         * proportions the view chose survive a slot that does not share them.
+         * `position: absolute` keeps the natural box out of the host's flow —
+         * it must not be able to push the host's own geometry around, since
+         * the capture allocates a texture from that.
+         */
+        <div
+          data-graview-natural={`${Math.round(natural.width)}x${Math.round(natural.height)}`}
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            width: natural.width,
+            height: natural.height,
+            transform: `translate(-50%, -50%) scale(${shrink})`,
+            transformOrigin: "50% 50%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {children}
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 }

@@ -286,10 +286,18 @@ export function layout<S extends AnySchema>(
    * is uniform and the picture is not stretched.
    */
   const naturalW = groupWidth;
-  // Generous on purpose: the view lays itself out here, so a short box means
-  // a scrollbar in the middle of the Graview showing one row of nine.
-  // Complete and small beats partial and larger.
-  const naturalH = opts.height * 0.92;
+  /*
+   * Generous on purpose: the view lays itself out here, so a short box means
+   * a scrollbar in the middle of the Graview showing one row of nine.
+   * Complete and small beats partial and larger.
+   *
+   * The whole canvas height rather than most of it, because the slot's own
+   * size does not depend on this — the scale is what absorbs it. At 0.92 the
+   * week and the board each came up a handful of pixels short and put a
+   * scroll region inside a picture drawn at 46%, which is a scrollbar nobody
+   * can use. Measured in `scripts/verify-shrunk.mjs`.
+   */
+  const naturalH = opts.height;
   const overviewScale = Math.min((opts.width * 0.4) / naturalW, (opts.height * 0.42) / naturalH);
   const overviewW = naturalW * overviewScale;
   const overviewH = naturalH * overviewScale;
