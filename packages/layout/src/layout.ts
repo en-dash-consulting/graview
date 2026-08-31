@@ -215,8 +215,8 @@ export function layout<S extends AnySchema>(
           focusH: opts.height * 0.6,
           relationY: opts.height * 0.66,
           relationH: opts.height * 0.16,
-          contextY: opts.height * 0.845,
-          contextH: opts.height * 0.14,
+          contextY: opts.height * 0.83,
+          contextH: opts.height * 0.155,
         }
       : {
           focusY: opts.height * 0.04,
@@ -268,18 +268,46 @@ export function layout<S extends AnySchema>(
       : band.contextY - band.focusY - opts.gap * 2;
 
   /*
-   * Above the stack there is no focus PANEL — the ring card for the kind you
-   * were in is marked instead.
+   * Above the stack your interface STAYS, shrunk, in the middle of the ring.
    *
-   * Placing both would have put the same aggregate on screen twice under one
-   * id, and it would have answered the wrong question: what you want to know
-   * up here is not what the board said, it is WHICH KIND the board was. The
-   * transition shows the panel shrinking into that card, which says it
-   * better than a shrunken copy of itself in the middle.
+   * Not a picture of it and not a card standing in for it: the same view, at
+   * plane 0, at full fidelity, still live — the board is still a board, the
+   * calendar is still a calendar, and anything the platform lets you do to it
+   * you can still do. That is the whole point of rising: seeing what you are
+   * working on IN RELATION to everything else, rather than swapping it for a
+   * diagram of the schema.
+   *
+   * It can coexist with its own kind card now because the kinds plane has its
+   * own namespace — `aggregate:position` and `kind:position` are different
+   * things, which they always were.
    */
+  const overviewW = opts.width * 0.34;
+  const overviewH = opts.height * 0.34;
+
   // ------------------------------------------------------- plane 0: focus
-  if (state.overview) {
-    // nothing: the ring carries it
+  if (state.overview && (focus || focusGroup.length > 0) && state.focusId) {
+    push({
+      id: state.focusId,
+      kind: focus ? focus.kind : focusKinds[0]!,
+      plane: 0,
+      x: (opts.width - overviewW) / 2,
+      y: opts.height * 0.53 - overviewH / 2,
+      width: overviewW,
+      height: overviewH,
+      ...(focus
+        ? {}
+        : {
+            aggregate: {
+              kind: focusKinds.join("+"),
+              memberIds: focusGroup.map((node) => node.id),
+              label:
+                options.plurals?.[state.focusId] ??
+                focusKinds.map((kind) => pluralOf(schema, kind)).join(" and "),
+            },
+          }),
+    });
+  } else if (state.overview) {
+    // nothing focused: the ring is the whole picture
   } else if (focus) {
     push({
       id: focus.id,

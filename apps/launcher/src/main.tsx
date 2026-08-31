@@ -160,14 +160,12 @@ function Desk({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-      <CommandBar scheme={scheme} onScheme={onScheme} onCall={onCall} />
+      <CommandBar scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
       <BackOut home={MATRIX} />
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
         {/* Both, always: the overview lays the scene down rather than
             replacing it, so you can see where you were. */}
         <Scene renderer="dom" />
-        <ActivityRail calls={calls} />
-        <OverviewButton />
         <Inspector />
       </div>
     </div>
@@ -178,10 +176,12 @@ function CommandBar({
   scheme,
   onScheme,
   onCall,
+  calls,
 }: {
   scheme: Scheme;
   onScheme: (scheme: Scheme) => void;
   onCall: (call: ToolCall) => void;
+  calls: readonly ToolCall[];
 }) {
   const desk = useDesk();
   const live = useLiveness();
@@ -217,6 +217,8 @@ function CommandBar({
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
         <Standing clean="Every capability is earned" />
+        <ActivityRail calls={calls} />
+        <OverviewButton />
         <AuditButton onCall={onCall} />
         {APPS.map((entry) => (
           <button

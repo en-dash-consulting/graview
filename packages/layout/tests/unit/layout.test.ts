@@ -427,12 +427,28 @@ describe("the kinds plane is a constant map", () => {
 });
 
 describe("the overview is the same cards, on a ring", () => {
-  it("keeps every kind, and drops the focus panel", () => {
-    const result = layout(graph(), schema, view({ focusId: "week-1", overview: true }));
-    // No plane 0: up here the ring card for the focused kind carries it.
-    expect(result.nodes.some((node) => node.plane === 0)).toBe(false);
-    expect(result.nodes.filter((node) => node.aggregate)).toHaveLength(3);
-    expect(result.nodes.find((node) => node.id === kindCardId("week"))?.focused).toBe(true);
+  it("keeps your interface, live and shrunk, in the middle of the ring", () => {
+    /*
+     * Not a card standing in for it: the same view, at plane 0, at full
+     * fidelity. Rising is for seeing what you are working on IN RELATION to
+     * everything else, and a diagram of the schema with your work removed
+     * answers a different question.
+     */
+    const above = layout(graph(), schema, view({ focusId: "week-1", overview: true }), {
+      width: 1200,
+      height: 760,
+    });
+    const inside = layout(graph(), schema, view({ focusId: "week-1" }), {
+      width: 1200,
+      height: 760,
+    });
+    const shrunk = above.nodes.find((node) => node.id === "week-1")!;
+    const full = inside.nodes.find((node) => node.id === "week-1")!;
+    expect(shrunk.plane).toBe(0);
+    expect(shrunk.width).toBeLessThan(full.width);
+    // And every kind is still there, with its own card.
+    expect(above.nodes.filter((node) => node.aggregate)).toHaveLength(3);
+    expect(above.nodes.find((node) => node.id === kindCardId("week"))?.focused).toBe(true);
   });
 
   it("places them on an ellipse rather than a row", () => {
