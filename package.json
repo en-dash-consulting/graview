@@ -29,7 +29,8 @@
     "pack:inspect": "node scripts/inspect-pack.mjs",
     "smoke": "node scripts/smoke-install.mjs",
     "skills": "node packages/skills/dist/cli.js install .",
-    "dev:todo": "pnpm --filter @graview/todo dev"
+    "dev:todo": "pnpm --filter @graview/todo dev",
+    "navigation": "node scripts/verify-navigation.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",

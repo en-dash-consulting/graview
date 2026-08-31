@@ -17,7 +17,7 @@ import {
   type DeriveOptions,
   type EditableField,
 } from "@graview/tools";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useGraph, useGraview } from "./context.js";
 
 /** The current selection, and the ways an interface changes it. */
@@ -205,14 +205,106 @@ export function useUrlSync(): void {
     };
   }, [setView]);
 
+  const landed = useRef(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const next = toUrl(view);
-    // Only push when the view actually changed, or the back stack fills with
+    // Only write when the view actually changed, or the back stack fills with
     // duplicates and the back button stops meaning anything.
     if (window.location.hash === next) return;
-    window.history.pushState(null, "", next);
+    /*
+     * ARRIVING is not a navigation.
+     *
+     * The first write is the app adopting its own default view, and pushing it
+     * put a stop in the history that nobody went to — so the back control was
+     * offered the moment the page loaded, and pressing it went to the blank
+     * URL the app had just left. Replacing is what a page does when it tidies
+     * its own address.
+     */
+    if (!landed.current) {
+      landed.current = true;
+      window.history.replaceState({ graview: trail.at }, "", next);
+      return;
+    }
+    window.history.pushState({ graview: ++trail.at }, "", next);
+    // A new stop discards anything that was ahead of it, exactly as the
+    // browser does.
+    trail.depth = trail.at;
+    trail.tell();
   }, [view]);
+}
+
+/**
+ * Where you are in your own history.
+ *
+ * The History API says nothing about whether there is anywhere to go forward
+ * to, and an interface cannot offer a control it does not know the state of —
+ * a forward arrow that is always enabled and usually does nothing is worse
+ * than none. So the position is tracked here, from the pushes this hook makes
+ * and the pops the browser reports.
+ *
+ * Module-level because there is one history per document, and because a hook
+ * that re-created it per component would count each navigation once per
+ * mounted consumer.
+ */
+const trail = {
+  at: 0,
+  depth: 0,
+  listeners: new Set<() => void>(),
+  tell() {
+    for (const listener of this.listeners) listener();
+  },
+};
+
+if (typeof window !== "undefined") {
+  window.addEventListener("popstate", (event) => {
+    const state = event.state as { graview?: number } | null;
+    // A stop this app pushed knows its own position. Anything else — a link
+    // out and back, another app's entry — resets to the start rather than
+    // guessing, since a wrong answer here offers a control that does nothing.
+    trail.at = typeof state?.graview === "number" ? state.graview : 0;
+    if (trail.at > trail.depth) trail.depth = trail.at;
+    trail.tell();
+  });
+}
+
+/**
+ * Whether there is anywhere to go, and the way to go there.
+ *
+ * Every stop in a Graview app is a URL — that was the point of view state
+ * being serialisable — so back and forward are the BROWSER's, and this only
+ * makes them visible. An interface whose navigation is the browser's should
+ * not require the person using it to know that.
+ */
+export function useBacktrack(): {
+  readonly canGoBack: boolean;
+  readonly canGoForward: boolean;
+  back: () => void;
+  forward: () => void;
+} {
+  const subscribe = useCallback((listener: () => void) => {
+    trail.listeners.add(listener);
+    return () => trail.listeners.delete(listener);
+  }, []);
+  const at = useSyncExternalStore(
+    subscribe,
+    () => trail.at,
+    () => 0,
+  );
+  const depth = useSyncExternalStore(
+    subscribe,
+    () => trail.depth,
+    () => 0,
+  );
+  return useMemo(
+    () => ({
+      canGoBack: at > 0,
+      canGoForward: at < depth,
+      back: () => window.history.back(),
+      forward: () => window.history.forward(),
+    }),
+    [at, depth],
+  );
 }
 
 /**

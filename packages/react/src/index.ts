@@ -32,6 +32,7 @@ export { useFlagged, useImplicated, useViolations } from "./hooks.js";
 export {
   useAffordances,
   useApplyAffordance,
+  useBacktrack,
   useEditableFields,
   useJackIn,
   useNavigation,

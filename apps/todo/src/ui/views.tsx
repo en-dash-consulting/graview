@@ -71,7 +71,8 @@ function TaskView({ node, fidelity, selected, mode, flagged }: ViewProps<S, "tas
           node.label
         )
       }
-      meta={done ? "done" : node.due}
+      // A bare date in the corner is a mystery number. Say what it is.
+      meta={done ? "done" : node.due ? `due ${node.due}` : undefined}
       selected={selected}
       tone={broken ? "warning" : done ? "muted" : "default"}
       variant={mode === "fullscreen" ? "page" : "card"}
@@ -116,6 +117,9 @@ const ListsView = ((props: ViewProps<S>) => {
       meta={`${lists.length} lists`}
       selected={props.selected}
       variant={props.mode === "fullscreen" ? "page" : "card"}
+      // Hugging its content: three short columns in a panel that fills the
+      // whole focus band leaves four hundred pixels of nothing under them.
+      fit
     >
       <div
         style={{

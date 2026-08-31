@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useEditableFields, useNode } from "@graview/react";
+import { useEditableFields, useGraview, useNode } from "@graview/react";
 import type { EditableField } from "@graview/tools";
 import { useEffect, useRef, useState } from "react";
 
@@ -205,9 +205,20 @@ export function Fields<S extends AnySchema>({
   readonly labels?: Readonly<Record<string, string>>;
   readonly shown?: readonly (string | undefined)[];
 }) {
+  const { store } = useGraview<S>();
   const node = useNode<S>(id) as (Record<string, unknown> & { id: string }) | undefined;
   if (!node) return null;
-  const skip = new Set(["id", "kind", ...hide]);
+  /*
+   * How this kind's fields read is the DECLARATION's business.
+   *
+   * The framework can render a record from a schema alone and can only get so
+   * far: `540` is a truthful rendering of a number of minutes and a useless
+   * one, and `order: 0` is a truthful rendering of an ordering key nobody
+   * should be shown. Both are decisions only the kind can make, so it makes
+   * them once here rather than in every view that draws it.
+   */
+  const display = store.schema.tryDefinition(node["kind"] as string)?.display;
+  const skip = new Set(["id", "kind", ...(display?.hide ?? []), ...hide]);
   const already = shown.filter((text): text is string => Boolean(text));
   /*
    * A heading is often a SUMMARY of a field rather than the field itself.
@@ -230,7 +241,18 @@ export function Fields<S extends AnySchema>({
   for (const [key, value] of Object.entries(node)) {
     if (skip.has(key) || value === undefined || value === null) continue;
     if (typeof value === "object" && !Array.isArray(value)) continue;
-    const text = Array.isArray(value) ? value.join(", ") : String(value);
+    const format = display?.format?.[key];
+    const text = format
+      ? format(value)
+      : Array.isArray(value)
+        ? value.join(", ")
+        : typeof value === "boolean"
+          ? // Nobody says "false". A boolean is a state, and the words for it
+            // are the words for a state.
+            value
+            ? "Yes"
+            : "No"
+          : String(value);
     // Said once is enough. This is the comparison that stops a record being a
     // list of things the heading already told you.
     if (saidAlready(text)) continue;
@@ -262,7 +284,7 @@ export function Fields<S extends AnySchema>({
               fontSize: 12,
             }}
           >
-            {labels[field.key] ?? humanise(field.key)}
+            {labels[field.key] ?? display?.labels?.[field.key] ?? humanise(field.key)}
           </dt>
           <dd style={{ margin: 0, minWidth: 0 }}>
             <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} />

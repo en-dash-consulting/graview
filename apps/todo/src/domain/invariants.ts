@@ -61,7 +61,7 @@ export const orderHolds: I = defineInvariant("nothing-done-before-what-it-waits-
               label: `Finish "${name(other)}" too`,
             }),
           ),
-          { mutation: "reopen", args: { taskId: task.id }, label: `Put "${name(task)}" back` },
+          { mutation: "reopen", args: { taskId: task.id }, label: "Put it back" },
         ],
       });
     }
@@ -108,9 +108,15 @@ export const nothingOverdue: I = defineInvariant("nothing-overdue", {
             mutation: "reschedule",
             args: { taskId: task.id },
             missing: ["due"],
-            label: `Give "${name(task)}" a new date`,
+            // The strip already names what is selected. Repeating it inside
+            // every action turns four buttons into four sentences.
+            label: late.length === 1 ? "Give it a new date" : `A new date for "${name(task)}"`,
           },
-          { mutation: "finish", args: { taskId: task.id }, label: `Finish "${name(task)}"` },
+          {
+            mutation: "finish",
+            args: { taskId: task.id },
+            label: late.length === 1 ? "Finish it" : `Finish "${name(task)}"`,
+          },
         ]),
       },
     ];

@@ -1,4 +1,10 @@
-import { describeNode, labelOf, type AnySchema, type KindOfSchema } from "@graview/core";
+import {
+  describeNode,
+  labelOf,
+  type AnyNodeDefinition,
+  type AnySchema,
+  type KindOfSchema,
+} from "@graview/core";
 import { createViews, type ReactViewRegistry, type ViewProps } from "@graview/react";
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
@@ -57,19 +63,48 @@ function longFormOf(
   return undefined;
 }
 
-/** The fields worth showing, in declaration order, scalars only. */
+/**
+ * The fields worth showing, in declaration order, scalars only.
+ *
+ * "Worth showing" is the declaration's call, not this function's: a kind can
+ * hide a field, rename it and say how it reads. Without that, a summary card
+ * showed a list's ordering key as a chip reading "0" — a truthful rendering of
+ * an implementation detail nobody should ever be shown.
+ *
+ * `said` is what the surrounding view has already put on screen. A card whose
+ * heading is a shortened form of a field, and which then shows that field in
+ * full underneath, is the same sentence twice with one of them mutilated.
+ */
 function salientFields(
   node: Record<string, unknown>,
   limit: number,
+  definition?: AnyNodeDefinition,
+  said: readonly (string | undefined)[] = [],
 ): { key: string; value: string }[] {
+  const display = definition?.display;
+  const skip = new Set([...HIDDEN_FIELDS, ...(display?.hide ?? [])]);
+  const already = said.filter((text): text is string => Boolean(text));
+  const stems = already
+    .filter((text) => text.endsWith("…"))
+    .map((text) => text.replace(/…$/, "").trim())
+    .filter((stem) => stem.length > 12);
+
   const fields: { key: string; value: string }[] = [];
   for (const [key, value] of Object.entries(node)) {
-    if (HIDDEN_FIELDS.has(key) || value === undefined || value === null) continue;
+    if (skip.has(key) || value === undefined || value === null) continue;
     if (typeof value === "object" && !Array.isArray(value)) continue;
-    fields.push({
-      key,
-      value: Array.isArray(value) ? value.join(", ") : String(value),
-    });
+    const format = display?.format?.[key];
+    const text = format
+      ? format(value)
+      : Array.isArray(value)
+        ? value.join(", ")
+        : typeof value === "boolean"
+          ? value
+            ? "Yes"
+            : "No"
+          : String(value);
+    if (already.includes(text) || stems.some((stem) => text.startsWith(stem))) continue;
+    fields.push({ key, value: text });
     if (fields.length >= limit) break;
   }
   return fields;
@@ -183,7 +218,7 @@ export function registerDefaultViews<S extends AnySchema>(
     const Summary = (props: ViewProps<S>) => {
       const node = props.node as (Record<string, unknown> & { id: string; kind: string }) | undefined;
       if (!node) return null;
-      const fields = salientFields(node, 3);
+      const fields = salientFields(node, 3, definition, [labelOf(definition, node)]);
       return (
         <Panel
           title={labelOf(definition, node)}

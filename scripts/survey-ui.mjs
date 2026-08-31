@@ -26,6 +26,37 @@ const out = resolve(repoRoot, "docs/survey");
 
 /** Every landing place, and how to get to it from a fresh load. */
 const APPS = {
+  todo: {
+    port: 5193,
+    ready: "__todoReady",
+    states: {
+      lists: async () => {},
+      week: async (page) => {
+        await page.locator('[data-testid="places"] button', { hasText: "The week" }).click();
+      },
+      selected: async (page) => {
+        await page.click('[data-graview-pick="t-deposit"]');
+      },
+      // The screen you land on by DOUBLE CLICKING, which is the one nobody
+      // designs and everybody meets.
+      travelled: async (page) => {
+        await page.dblclick('[data-graview-pick="t-deposit"]');
+      },
+      jackedIn: async (page) => {
+        await page.dblclick('[data-graview-pick="t-deposit"]');
+        await page.waitForTimeout(800);
+        const id = await page.getAttribute('[data-graview-plane="0"]', "data-graview-view");
+        await page.dblclick(`[data-graview-view="${id}"]`);
+      },
+      graview: async (page) => {
+        await page.click('[data-testid="overview"]');
+      },
+      tidied: async (page) => {
+        await page.click('[data-testid="agent-tidy"]');
+        await page.waitForTimeout(1400);
+      },
+    },
+  },
   launcher: {
     port: 5199,
     ready: "__launcherReady",
@@ -50,6 +81,11 @@ const APPS = {
         await page.waitForTimeout(700);
         const id = await page.getAttribute('[data-graview-plane="1"]', "data-graview-view");
         await page.dblclick(`[data-graview-view="${id}"]`);
+      },
+      // Double-clicking a span in the calendar: the screen you TRAVEL to.
+      travelled: async (page) => {
+        const span = await page.getAttribute("[data-graview-span]", "data-graview-span");
+        await page.dblclick(`[data-graview-pick="${span}"]`);
       },
       jackedIn: async (page) => {
         await page.click('[data-graview-view="kind:rationale"]');
@@ -106,6 +142,9 @@ const APPS = {
       },
       selected: async (page) => {
         await page.click('[data-graview-pick="p-amara"]');
+      },
+      travelled: async (page) => {
+        await page.dblclick('[data-graview-pick="p-amara"]');
       },
       withheld: async (page) => {
         await page.selectOption('[data-testid="seat"] select', "player");

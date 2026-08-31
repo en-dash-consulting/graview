@@ -263,12 +263,14 @@ export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
          * rationale rendered at glyph fidelity became, overflowing its card by
          * 938 pixels and out into the scene.
          *
-         * Capped and ellipsised, with the whole text in the tooltip. Thirty
-         * characters is about where a label stops being glanceable anyway.
+         * The cap lives here; the ELLIPSIS lives on the inner span, because
+         * `text-overflow` does not apply to a flex container. Set here it did
+         * nothing and the text was cut mid-word with no mark at all — which is
+         * worse than not capping it, since a hard edge reads as a bug and an
+         * ellipsis reads as a decision.
          */
         maxWidth: "28ch",
         overflow: "hidden",
-        textOverflow: "ellipsis",
         letterSpacing: "0.01em",
         // Lightness and alpha come from the THEME: the same tint that reads
         // as a lit outline in the dark reads as a wash on paper, and a fixed
@@ -288,7 +290,16 @@ export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
         boxShadow: selected ? "0 0 14px -4px var(--graview-accent)" : undefined,
       }}
     >
-      {label}
+      <span
+        style={{
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
+      </span>
     </span>
   );
 }
