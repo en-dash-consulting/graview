@@ -965,9 +965,28 @@ function Connectors({
         const from = centre(byId.get(connector.from));
         const to = centre(byId.get(connector.to));
         if (!from || !to) return null;
+        /*
+         * A LOOP, where both ends are the same card.
+         *
+         * "A task waits for a task" is a real fact about the domain and the
+         * constellation is exactly where you would look for it — but as a line
+         * it has zero length. Drawn as an arc leaving the card's top and
+         * returning to its right, which is how every graph drawing has shown a
+         * self-relation for fifty years.
+         */
+        const self = (connector as { loop?: boolean }).loop === true;
         // Stroke treatment is derived from the edge kind, so `protects` can
         // never be mistaken for `assigned-to`.
         const style = connectorStyle(connector.kind);
+        const box = byId.get(connector.from);
+        const radius = self && box ? Math.max(22, Math.min(box.width, box.height) * 0.3) : 0;
+        /*
+         * The loop hangs off the card's top-right rather than sitting on top
+         * of it. Centred, it drew a ring straight through the card's own name.
+         */
+        const anchor = self
+          ? { x: from.x + (box ? box.width * 0.3 : 0), y: from.y - (box ? box.height * 0.4 : 0) }
+          : from;
         // A gentle curve, bowed along the dominant axis. Straight lines
         // between distant planes read as lasers crossing the scene; a curve
         // reads as a relationship and lets several of them stay apart.
@@ -983,7 +1002,14 @@ function Connectors({
             key={connector.id}
             data-graview-connector={connector.kind}
             data-graview-activity={liveOf?.(connector)?.manner}
-            d={`M ${from.x} ${from.y} Q ${control} ${to.x} ${to.y}`}
+            d={
+              self
+                ? // An arc that leaves and returns: two arcs of the same
+                  // circle, so it closes cleanly at any size.
+                  `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
+                  ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`
+                : `M ${from.x} ${from.y} Q ${control} ${to.x} ${to.y}`
+            }
             fill="none"
             stroke={connectorStroke(style)}
             /*

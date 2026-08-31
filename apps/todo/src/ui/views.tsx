@@ -93,6 +93,60 @@ function TaskView({ node, fidelity, selected, mode, flagged }: ViewProps<S, "tas
 }
 
 /**
+ * One list, on its own.
+ *
+ * Reached by travelling to a list, or drawn beside a task as the list it is
+ * on. The generic card would show its fields — and a list's only field besides
+ * its name is an ordering key, which the declaration hides, so the generic
+ * answer is an empty box with a title. What a list IS, from outside, is how
+ * much is left on it.
+ */
+const OneListView = ((props: ViewProps<S>) => {
+  const { store } = useGraview<S>();
+  const node = props.node as unknown as ListNode | undefined;
+  if (!node) return null;
+  const tasks = store.graph.out(node.id, "holds") as unknown as TaskNode[];
+  const open = tasks.filter((task) => !task.done);
+
+  if (props.fidelity === "glyph") {
+    return (
+      <Chip
+        label={`${node.label} · ${open.length}`}
+        hue={hueFor("list")}
+        selected={props.selected}
+      />
+    );
+  }
+  return (
+    <Panel
+      title={
+        props.fidelity === "full" ? (
+          <EditableTitle<S> nodeId={node.id}>{node.label}</EditableTitle>
+        ) : (
+          node.label
+        )
+      }
+      meta={open.length === 0 ? "clear" : `${open.length} left`}
+      selected={props.selected}
+      variant={props.mode === "fullscreen" ? "page" : "card"}
+      fit
+    >
+      {open.length === 0 ? (
+        <span style={{ fontSize: 12.5, color: "var(--graview-ink-faint)" }}>
+          Nothing left on this one.
+        </span>
+      ) : (
+        <Roster
+          pick
+          max={props.fidelity === "full" ? 12 : 5}
+          items={open.map((task) => ({ id: task.id, label: task.label, hue: hueFor("task") }))}
+        />
+      )}
+    </Panel>
+  );
+}) as ViewComponent<S>;
+
+/**
  * The lists, side by side, each with what is left on it.
  *
  * The home screen of every todo app ever made, and the shape is not an
@@ -267,6 +321,9 @@ export function todoViews() {
     .register("task", { cardinality: "one", fidelity: "full" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "summary" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "glyph" }, TaskView)
+    .register("list", { cardinality: "one", fidelity: "full" }, OneListView)
+    .register("list", { cardinality: "one", fidelity: "summary" }, OneListView)
+    .register("list", { cardinality: "one", fidelity: "glyph" }, OneListView)
     .register("list", { cardinality: "many", fidelity: "full" }, ListsView)
     .register("list", { cardinality: "many", fidelity: "summary" }, ListsView)
     // The week, for a group of tasks. The lens supplies the picture.
