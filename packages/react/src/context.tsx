@@ -1,4 +1,5 @@
 import type { AnySchema, NodeOfSchema, Store, ViewRegistry } from "@graview/core";
+import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
 import { EMPTY_VIEW } from "@graview/layout";
 import {
@@ -51,6 +52,16 @@ export interface GraviewContextValue<S extends AnySchema> {
    */
   readonly menuAt: { readonly x: number; readonly y: number } | null;
   setMenuAt(at: { x: number; y: number } | null): void;
+  /**
+   * What has just happened, per node, for a few seconds.
+   *
+   * Here for the same reason selection is: the scene, the chrome and an agent
+   * seat must be looking at the same activity, or the picture and the list
+   * disagree about what just happened.
+   */
+  readonly activity: ReadonlyMap<string, ActivityMark>;
+  /** Report something looked at. A read leaves no diff, so it has to be told. */
+  noteAttention(note: Attention): void;
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
@@ -90,6 +101,7 @@ export function GraviewProvider<S extends AnySchema>({
   const [selection, setSelectionState] = useState<readonly string[]>([]);
   const [jackedIn, setJackedIn] = useState<string | null>(initialJackedIn ?? null);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
+  const { activity, noteAttention } = useActivityState(store);
 
   const current = view ?? internalView;
 
@@ -122,8 +134,22 @@ export function GraviewProvider<S extends AnySchema>({
       setJackedIn,
       menuAt,
       setMenuAt,
+      activity,
+      noteAttention,
     }),
-    [store, scheme, views, current, setView, selection, setSelection, jackedIn, menuAt],
+    [
+      store,
+      scheme,
+      views,
+      current,
+      setView,
+      selection,
+      setSelection,
+      jackedIn,
+      menuAt,
+      activity,
+      noteAttention,
+    ],
   );
 
   return (
