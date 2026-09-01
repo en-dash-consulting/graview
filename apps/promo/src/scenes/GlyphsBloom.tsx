@@ -15,7 +15,7 @@ import { beats } from "../theme";
 export const GlyphsBloom: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const opacity = beatOpacity(frame, 0, 12, beats.glyphs.duration - 28, 26);
+  const opacity = beatOpacity(frame, 0, 16, beats.glyphs.duration - 36, 34);
   const shatter = springProgress(frame, fps, 70, "settle");
   const glyphFade = interpolate(frame, [85, 140], [1, 0], {
     ...clamp,

@@ -25,16 +25,15 @@ const EDGE_LABELS = [
 
 /**
  * One idea: the graph is the interface.
- * 3-act micro-sequence inside one beat:
- * 1) Jack-in + planes assemble
- * 2) Brief title, then derived affordances + survey candy
- * 3) Exit into city still hot
+ * Interfaces bloom around the graph in different corners —
+ * not a slideshow replacing one top-right slot.
  */
 export const GraphInterface: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const localDur = beats.graph.duration;
-  const opacity = beatOpacity(frame, 0, 14, localDur - 22, 20);
+  // Softer overlap into/out of neighbouring beats
+  const opacity = beatOpacity(frame, 0, 22, localDur - 34, 32);
 
   // Act 1 — jack-in
   const jack = springProgress(frame, fps, 4, "premium");
@@ -45,23 +44,23 @@ export const GraphInterface: React.FC = () => {
   });
 
   // Act 2 candy windows
-  const chipsIn = fadeIn(frame, 55, 12);
-  const chipsOut = fadeOut(frame, localDur - 34, 18);
+  const chipsIn = fadeIn(frame, 50, 14);
+  const chipsOut = fadeOut(frame, localDur - 40, 22);
   const chipsOp = chipsIn * chipsOut;
-  const captionsIn = fadeIn(frame, 72, 14);
-  const captionsOut = fadeOut(frame, localDur - 30, 16);
+  const captionsIn = fadeIn(frame, 68, 16);
+  const captionsOut = fadeOut(frame, localDur - 36, 20);
   const captionsOp = captionsIn * captionsOut;
-  const edgesIn = fadeIn(frame, 88, 14);
-  const edgesOut = fadeOut(frame, localDur - 26, 14);
+  const edgesIn = fadeIn(frame, 84, 16);
+  const edgesOut = fadeOut(frame, localDur - 32, 18);
   const edgesOp = edgesIn * edgesOut;
-  const neighbourRise = springProgress(frame, fps, 78, "snap");
+  const neighbourRise = springProgress(frame, fps, 74, "snap");
 
   const planes = [0, 1, 2];
   const nodeX = interpolate(jack, [0, 1], [-420, -20]);
   const nodeY = interpolate(jack, [0, 1], [-180, -20]);
 
   // Exit energy — slight plane push toward city
-  const exitPush = interpolate(frame, [localDur - 36, localDur - 4], [0, 1], {
+  const exitPush = interpolate(frame, [localDur - 42, localDur - 4], [0, 1], {
     ...clamp,
     easing: easings.softIn,
   });
@@ -120,7 +119,6 @@ export const GraphInterface: React.FC = () => {
                   overflow: "hidden",
                 }}
               >
-                {/* Action chips — derived affordances on mid plane */}
                 {p === 1 ? (
                   <div
                     style={{
@@ -137,7 +135,7 @@ export const GraphInterface: React.FC = () => {
                       const chip = springProgress(
                         frame,
                         fps,
-                        58 + stagger(i, 3),
+                        54 + stagger(i, 3),
                         "snap",
                       );
                       return (
@@ -171,7 +169,6 @@ export const GraphInterface: React.FC = () => {
                   </div>
                 ) : null}
 
-                {/* Field captions from schema */}
                 {p === 1 ? (
                   <div
                     style={{
@@ -189,7 +186,7 @@ export const GraphInterface: React.FC = () => {
                       const cin = springProgress(
                         frame,
                         fps,
-                        76 + stagger(i, 4),
+                        72 + stagger(i, 4),
                         "enter",
                       );
                       return (
@@ -234,7 +231,6 @@ export const GraphInterface: React.FC = () => {
                   </div>
                 ) : null}
 
-                {/* Soft “actions derived” plate label on front plane */}
                 {p === 2 ? (
                   <div
                     style={{
@@ -257,9 +253,8 @@ export const GraphInterface: React.FC = () => {
             );
           })}
 
-          {/* Edge labels floating in the stack */}
           {EDGE_LABELS.map((e, i) => {
-            const ein = springProgress(frame, fps, 90 + stagger(i, 5), "enter");
+            const ein = springProgress(frame, fps, 86 + stagger(i, 5), "enter");
             return (
               <div
                 key={e.text}
@@ -302,53 +297,86 @@ export const GraphInterface: React.FC = () => {
         />
       </AbsoluteFill>
 
-      {/* Act 2 — title hits ~1.6s alone, then docks while candy continues */}
+      {/* Title docks lower so blooming plates keep the mid/upper stage clear */}
       <BigTitle
         line="The graph is the interface."
-        appearAt={36}
-        dockAt={82}
-        disappearAt={localDur - 22}
+        appearAt={32}
+        dockAt={78}
+        disappearAt={localDur - 28}
         size={60}
         voice="display"
         place="lower"
       />
 
-      {/* Bigger, staged survey inserts — selected → raised → travelled */}
+      {/*
+        Interfaces bloom around the graph — staggered corners/edges,
+        diverse todo lenses, overlapping lifetimes (not one TR slot).
+      */}
       <SurveyInsert
-        src="survey/the household example-selected-dark.png"
-        appearAt={58}
-        disappearAt={100}
-        corner="tr"
-        width={560}
-        tilt={-9}
+        src="survey/todo-selected-dark.png"
+        appearAt={46}
+        disappearAt={localDur - 18}
+        corner="tl"
+        width={440}
+        tilt={10}
         tiltX={5}
-        parallax={12}
-        depth={0.4}
+        parallax={10}
+        depth={0.38}
+        offsetY={8}
         label="selected"
       />
       <SurveyInsert
-        src="survey/the household example-raised-dark.png"
-        appearAt={92}
-        disappearAt={130}
+        src="survey/todo-week-dark.png"
+        appearAt={58}
+        disappearAt={localDur - 14}
         corner="tr"
-        width={580}
-        tilt={-7}
+        width={460}
+        tilt={-11}
         tiltX={6}
-        parallax={14}
-        depth={0.42}
-        label="raised"
+        parallax={12}
+        depth={0.4}
+        offsetY={-4}
+        label="week"
       />
       <SurveyInsert
-        src="survey/the household example-travelled-dark.png"
-        appearAt={124}
-        disappearAt={localDur - 8}
-        corner="tr"
-        width={600}
-        tilt={-6}
+        src="survey/todo-lists-dark.png"
+        appearAt={72}
+        disappearAt={localDur - 12}
+        corner="ml"
+        width={400}
+        tilt={12}
+        tiltX={4}
+        parallax={8}
+        depth={0.34}
+        offsetY={36}
+        label="lists"
+      />
+      <SurveyInsert
+        src="survey/todo-travelled-dark.png"
+        appearAt={86}
+        disappearAt={localDur - 10}
+        corner="mr"
+        width={420}
+        tilt={-10}
         tiltX={5}
-        parallax={16}
-        depth={0.45}
+        parallax={11}
+        depth={0.36}
+        offsetY={-20}
         label="travelled"
+      />
+      <SurveyInsert
+        src="survey/todo-zoomed-dark.png"
+        appearAt={98}
+        disappearAt={localDur - 8}
+        corner="br"
+        width={480}
+        tilt={-7}
+        tiltX={4}
+        parallax={14}
+        depth={0.42}
+        offsetX={-24}
+        offsetY={-8}
+        label="zoomed"
       />
     </AbsoluteFill>
   );

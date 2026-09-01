@@ -28,7 +28,7 @@ export const CoverageAgents: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const dur = beats.coverage.duration;
-  const opacity = beatOpacity(frame, 0, 16, dur - 28, 26);
+  const opacity = beatOpacity(frame, 0, 22, dur - 36, 34);
   const cols = 12;
   const rows = 6;
 
@@ -368,24 +368,37 @@ export const CoverageAgents: React.FC = () => {
       />
 
       <SurveyInsert
-        src="survey/the household example-activity-dark.png"
-        label="activity"
+        src="survey/todo-week-dark.png"
+        label="week"
         appearAt={70}
-        disappearAt={185}
+        disappearAt={175}
         corner="tr"
-        width={620}
+        width={520}
         tilt={-9}
         tiltX={5}
         parallax={14}
         depth={0.45}
       />
       <SurveyInsert
-        src="survey/proposal-graview-dark.png"
-        label="domain proof"
+        src="survey/todo-lists-dark.png"
+        label="lists"
+        appearAt={120}
+        disappearAt={210}
+        corner="tl"
+        width={460}
+        tilt={10}
+        tiltX={4}
+        parallax={10}
+        depth={0.38}
+        offsetY={24}
+      />
+      <SurveyInsert
+        src="survey/the household example-activity-dark.png"
+        label="activity · undo"
         appearAt={175}
         disappearAt={dur - 24}
         corner="br"
-        width={580}
+        width={560}
         tilt={8}
         tiltX={-4}
         parallax={10}

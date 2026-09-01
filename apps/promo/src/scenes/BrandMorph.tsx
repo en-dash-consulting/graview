@@ -13,26 +13,26 @@ import { clamp, easings, springProgress } from "../motion";
 import { beats, colors, fonts } from "../theme";
 
 /**
- * One idea: the bid-desk example → En Dash.
- * Mark already contains “en” — wordmark is “Dash” only (never “en En Dash”).
- * Strong crossfade morph over ~5s.
+ * One idea: ToDo sample → En Dash house brand.
+ * Morph from todo UI chrome into the En Dash mark + “Dash” wordmark.
+ * Mark already contains “en” — wordmark is “Dash” only.
  */
 export const BrandMorph: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const dur = beats.brand.duration;
-  const opacity = beatOpacity(frame, 0, 12, dur - 22, 20);
+  const opacity = beatOpacity(frame, 0, 18, dur - 28, 26);
 
-  // Morph compressed into the 5s window
+  // Morph compressed into the ~5s window
   const t = interpolate(frame, [10, 110], [0, 1], {
     ...clamp,
     easing: easings.cinematic,
   });
-  const northOpacity = interpolate(t, [0, 0.42], [1, 0], {
+  const sampleOpacity = interpolate(t, [0, 0.42], [1, 0], {
     ...clamp,
     easing: easings.softIn,
   });
-  const northScale = interpolate(t, [0, 0.42], [1, 0.78], {
+  const sampleScale = interpolate(t, [0, 0.42], [1, 0.78], {
     ...clamp,
     easing: easings.softIn,
   });
@@ -40,8 +40,7 @@ export const BrandMorph: React.FC = () => {
     ...clamp,
     easing: easings.softOut,
   });
-  const enScale =
-    0.82 + springProgress(frame, fps, 48, "settle") * 0.18;
+  const enScale = 0.82 + springProgress(frame, fps, 48, "settle") * 0.18;
   // Wordmark “Dash” only — mark carries the “en”
   const wordReveal = interpolate(t, [0.55, 0.88], [0, 1], {
     ...clamp,
@@ -49,8 +48,7 @@ export const BrandMorph: React.FC = () => {
   });
   const flash = interpolate(t, [0.38, 0.46, 0.54], [0, 1, 0], clamp);
 
-  // the bid-desk example tile rotates slightly as it dissolves
-  const northRot = interpolate(t, [0, 0.42], [0, -8], clamp);
+  const sampleRot = interpolate(t, [0, 0.42], [0, -8], clamp);
 
   return (
     <AbsoluteFill style={{ opacity }}>
@@ -63,63 +61,44 @@ export const BrandMorph: React.FC = () => {
       />
 
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-        {/* the bid-desk example sample domain */}
+        {/* ToDo sample app chrome */}
         <div
           style={{
             position: "absolute",
-            opacity: northOpacity,
-            transform: `scale(${northScale}) rotate(${northRot}deg)`,
+            opacity: sampleOpacity,
+            transform: `scale(${sampleScale}) rotate(${sampleRot}deg)`,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 22,
+            gap: 18,
           }}
         >
           <div
             style={{
-              width: 180,
-              height: 180,
-              borderRadius: 24,
-              background: `linear-gradient(145deg, #1494E8, ${colors.the bid-desk example})`,
-              boxShadow: "0 28px 80px rgba(0,120,212,0.45)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              width: 420,
+              borderRadius: 18,
+              overflow: "hidden",
+              border: "1px solid rgba(0,229,185,0.35)",
+              boxShadow:
+                "0 28px 80px rgba(0,0,0,0.45), 0 0 40px rgba(0,229,185,0.12)",
+              background: colors.fieldElevated,
             }}
           >
-            <svg width={108} height={108} viewBox="0 0 120 120">
-              <circle
-                cx="60"
-                cy="60"
-                r="48"
-                fill="none"
-                stroke="white"
-                strokeOpacity="0.35"
-                strokeWidth="2"
-              />
-              <path
-                d="M60 18 L70 60 L60 102 L50 60 Z"
-                fill="white"
-                fillOpacity="0.95"
-              />
-              <path
-                d="M18 60 L60 50 L102 60 L60 70 Z"
-                fill="white"
-                fillOpacity="0.55"
-              />
-              <circle cx="60" cy="60" r="6" fill="white" />
-            </svg>
+            <Img
+              src={staticFile("survey/todo-selected-dark.png")}
+              style={{ width: "100%", display: "block" }}
+            />
           </div>
           <div
             style={{
               fontFamily: fonts.display,
-              fontSize: 40,
+              fontSize: 36,
               fontWeight: 700,
-              letterSpacing: 4,
+              letterSpacing: 3,
               color: colors.white,
             }}
           >
-            the bid-desk example
+            ToDo
           </div>
           <div
             style={{
@@ -130,7 +109,7 @@ export const BrandMorph: React.FC = () => {
               textTransform: "uppercase",
             }}
           >
-            sample domain
+            sample app
           </div>
         </div>
 
@@ -188,7 +167,7 @@ export const BrandMorph: React.FC = () => {
       </AbsoluteFill>
 
       <BigTitle
-        line="Sample domain → house brand."
+        line="Sample app → house brand."
         appearAt={2}
         disappearAt={36}
         size={34}
