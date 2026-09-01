@@ -1,0 +1,59 @@
+{
+  "at": "2026-09-01T23:57:36.802Z",
+  "engine": "chromium",
+  "checks": {
+    "closedByDefault": {
+      "ok": true
+    },
+    "opensAndCloses": {
+      "opened": true,
+      "escaped": true,
+      "clickedAway": true,
+      "ok": true
+    },
+    "headerSaysGraphNative": {
+      "source": "graph-native",
+      "ok": true
+    },
+    "groundedOverview": {
+      "reply": "This graph holds 3 Lists, 12 Tasks, 3 Rules, 1 Reasons. Ask about anything by name, ask what's wrong, or say a change in",
+      "ok": true
+    },
+    "problemsProposeRepairs": {
+      "reply": "2 problems: \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\"; \"Pay the deposit\" was due 2026-08-2",
+      "applies": 2,
+      "ok": true
+    },
+    "sayAChangeProposesOne": {
+      "reply": "I can do that. Review it below — it applies like any other change, and undo works.Mark it done — Book the van",
+      "applies": 1,
+      "ok": true
+    },
+    "applyIsRealAndUndoWorks": {
+      "outcome": "Done — Mark it done — Book the van. Undo works.",
+      "appliedInTheGraph": true,
+      "attributed": true,
+      "undone": true,
+      "ok": true
+    },
+    "brokenModelDegradesToTheFloor": {
+      "header": "m-test",
+      "grounded": " Find someone who moves pianosMark it done — Pay the deposit",
+      "floored": "ay a change in its own words — like \"Add a task\". (m-test did not answer — Failed to fetch. The graph answered instead.)",
+      "ok": true
+    },
+    "keySurvivesRungSwitch": {
+      "source": "graph",
+      "key": "k-test",
+      "ok": true
+    },
+    "refusalIsAResult": {
+      "proposed": true,
+      "verdict": "Refused: Not permitted: select-player on a position — coach can.",
+      "untouched": true,
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

@@ -149,7 +149,18 @@ export function ChatPanel<S extends AnySchema>({
 
   const apply = async (proposal: ProposedCall) => {
     try {
-      await runtime.call(proposal.mutation, { ...proposal.args });
+      /*
+       * The runtime RESOLVES refusals rather than throwing them — a
+       * policy denial, a validation failure — so the flag must be read.
+       * Skipping it had the chat saying "Done — … Undo works." over a
+       * change the store had refused, which is the one lie a seat must
+       * never tell.
+       */
+      const result = await runtime.call(proposal.mutation, { ...proposal.args });
+      if (!result.ok) {
+        setTurns((current) => [...current, { role: "seat", text: `Refused: ${result.error}` }]);
+        return;
+      }
       setTurns((current) => [
         ...current,
         { role: "seat", text: `Done — ${describeProposal(store, proposal)}. Undo works.` },
