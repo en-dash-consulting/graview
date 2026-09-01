@@ -75,7 +75,33 @@ describe("quick-view relations", () => {
     expect(html).toBe("");
   });
 
-  it("reflects the selection as pressed", () => {
+  it("shows one kind only — the busiest — dressed as a placed panel", () => {
+    // Tags (three members, one touch each) lose to People on reach.
+    const html = render(store(3));
+    expect(html).toContain("People");
+    expect(html).not.toContain("Tags");
+  });
+
+  it("cuts a sentence-length name to a handle, keeping the whole on hover", () => {
+    const wordy = new Store({
+      schema,
+      mutations: [],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "r1", kind: "person", label: "Both parents get 11:00–13:30 free on their solo day" },
+          { id: "morning", kind: "duty", label: "Morning run" },
+        ] as never,
+        edges: [{ kind: "assigned-to", from: "r1", to: "morning" }],
+      },
+    });
+    const html = render(wordy);
+    expect(html).toContain("Both parents get…");
+    expect(html).toContain("Both parents get 11:00–13:30 free on their solo day — 1 of");
+    expect(html).not.toContain(">Both parents get 11:00");
+  });
+
+  it("stands aside while anything is selected — the rail has one tenant", () => {
     const html = renderToStaticMarkup(
       <GraviewProvider
         store={store()}
@@ -86,6 +112,7 @@ describe("quick-view relations", () => {
         <QuickRelations />
       </GraviewProvider>,
     );
-    expect(html).toMatch(/aria-pressed="true"[^>]*>[^<]*<[^>]*><\/span>Ana/);
+    // The inspector owns the rail now; the chips return on deselect.
+    expect(html).toBe("");
   });
 });

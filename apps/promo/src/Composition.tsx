@@ -13,7 +13,7 @@ import { Field } from "./components/Field";
 import { LightCharacter } from "./components/LightCharacter";
 import { BrandMorph } from "./scenes/BrandMorph";
 import { CityAltitude } from "./scenes/CityAltitude";
-import { CoverageAgents } from "./scenes/CoverageAgents";
+import { RelationsDemo } from "./scenes/RelationsDemo";
 import { GlyphsBloom } from "./scenes/GlyphsBloom";
 import { GraphInterface } from "./scenes/GraphInterface";
 import { OpenBrand } from "./scenes/OpenBrand";
@@ -106,18 +106,18 @@ export const GraviewIntro: React.FC = () => {
             </Sequence>
 
             <Sequence
-              from={beats.coverage.from}
-              durationInFrames={beats.coverage.duration}
-              name="4 Coverage agents"
+              from={beats.relations.from}
+              durationInFrames={beats.relations.duration}
+              name="4 Relations demo"
               layout="none"
             >
-              <CoverageAgents />
+              <RelationsDemo />
             </Sequence>
 
             <Sequence
               from={beats.brand.from}
               durationInFrames={beats.brand.duration}
-              name="5 Brand morph"
+              name="5 En Dash bridge"
               layout="none"
             >
               <BrandMorph />
