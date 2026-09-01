@@ -376,6 +376,16 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   outline-offset: 2px;
   border-radius: 7px;
 }
+/* On a board the keyboard ring hugs the DISC, not the disc-plus-label
+   group: a rectangle drawn around a circle read as a mystery box on the
+   pitch ("why does Left Midfield have this box?"), when all it ever said
+   was "the keyboard is here". */
+[data-graview-slot]:focus-visible {
+  outline: none;
+}
+[data-graview-slot]:focus-visible > span:first-of-type {
+  box-shadow: 0 0 0 2px var(--graview-ground), 0 0 0 4px var(--graview-accent);
+}
 
 /* A view is a thing you can act on. It should look like one. */
 [data-graview-view] { cursor: pointer; }

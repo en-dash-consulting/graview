@@ -163,29 +163,16 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
 /* ---------------------------------------------------------------- inspector */
 
 /**
- * The gap between the strip and the bottom of the window, and the same gap
- * again between the strip and whatever the scene draws above it.
- *
- * One constant because the two must agree: the scene reserves the strip's
- * height plus twice this, so the strip is not touching the window edge and
- * the cards are not touching the strip.
- */
-const STRIP_GAP = 18;
-
-/**
  * What is selected, what is true about it, and what can legally be done —
- * as a STRIP, not a panel.
+ * as a LEFT PANE beside the focus.
  *
- * It was a 340-pixel column parked over the bottom-right of the scene at up
- * to 56% of the height, which is a lot of furniture to put in front of the
- * thing you just clicked in order to tell you about it. A contextual surface
- * should be the smallest thing that carries the answer: one line of what this
- * is, one line of what is true about it, and the actions as inline controls
- * rather than a stack of full-width rows.
- *
- * Bottom-centre rather than bottom-right, because the right is where the
- * context plane's last cards sit and the middle is the one place a scene
- * built around a centred focus has to spare.
+ * It has lived bottom-right (a 340px column over the scene), bottom-centre
+ * (a strip that sat on the kinds shelf), and now where the room actually
+ * is: the left gutter beside a centred focus, which every state leaves
+ * open, which a widened or zoomed view only makes wider, and which covers
+ * neither the shelf below nor the picture you are acting on. In the
+ * Graview the relation key holds the top of the same rail and this pane
+ * takes the run of it below.
  */
 export function Inspector() {
   const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
@@ -280,42 +267,12 @@ export function Inspector() {
   const atPointer = menuAt !== null;
 
   /*
-   * As many actions as the strip can actually FIT, not a fixed four.
-   *
-   * Four was a guess, and it was wrong in both directions: with fifteen
-   * legal actions across a multi-selection the strip showed four and put
-   * ELEVEN behind "+11 more", which is a control surface hiding three
-   * quarters of itself; with five it hid one, for no reason at all, in a
-   * strip half of which was empty. The strip is up to 860 pixels wide and a
-   * label averages about eight characters plus its padding, so estimating
-   * from the labels themselves fills the row instead of guessing at it.
-   *
-   * Estimated rather than measured on purpose: measuring means a first paint
-   * with the wrong number and a reflow, and the cost of being one out here is
-   * a row that wraps — which the strip does anyway, and which now has a
-   * second row to wrap into.
+   * Nine rows before "Show N more", and the ranking has already put what
+   * answers the current question first — which is what makes hiding the
+   * tail honest. Everything past nine scrolls inside the pane's own box
+   * once shown.
    */
-  /*
-   * Two rows, full stop. The strip floats over the scene now, so height is
-   * bought with covered picture — and the ranking already puts what answers
-   * the current question first, which is what makes hiding the tail honest.
-   * "Show N more" opens the rest, scrolling inside the strip's own box.
-   */
-  const ROWS = 2;
-  const CHAR = 7.1;
-  const PADDING = 30;
-  const WIDTH = Math.min(860, (typeof window === "undefined" ? 900 : window.innerWidth) - 40);
-  const budget = WIDTH * ROWS - 96; // room for "+N more" at the end
-  const fits = (() => {
-    let used = 0;
-    let count = 0;
-    for (const affordance of affordances) {
-      used += affordance.label.length * CHAR + PADDING;
-      if (used > budget) break;
-      count += 1;
-    }
-    return Math.max(1, count);
-  })();
+  const fits = Math.max(1, Math.min(9, affordances.length));
 
   const shown = expanded || atPointer ? affordances : affordances.slice(0, fits);
   const hidden = affordances.length - shown.length;
@@ -378,13 +335,18 @@ export function Inspector() {
               overflow: "auto",
             }
           : {
-              bottom: STRIP_GAP,
-              left: "50%",
-              transform: "translateX(-50%)",
-              maxWidth: "min(860px, calc(100vw - 40px))",
-              // Expanded actions scroll inside the strip rather than growing
-              // it over half the scene.
-              maxHeight: "min(40vh, 340px)",
+              /*
+               * The left rail. Under the bar; in the Graview the relation
+               * key holds the top of the rail, so the pane starts below it.
+               * Everything past the viewport scrolls inside the pane.
+               */
+              left: 14,
+              top: view.overview ? 352 : 100,
+              // Inside the gutter beside a 1040-wide centred focus at the
+              // surveyed width, so the pane sits NEXT to the picture rather
+              // than on its title.
+              width: 236,
+              maxHeight: view.overview ? "calc(100vh - 372px)" : "calc(100vh - 104px)",
               overflow: "auto",
             }),
       }}
@@ -396,10 +358,13 @@ export function Inspector() {
         */}
       <div
         style={{
-          display: named || said.length > 0 ? "flex" : "none",
+          display: named || !atPointer ? "flex" : "none",
           alignItems: "baseline",
-          gap: 8,
+          flexWrap: "wrap",
+          gap: "2px 8px",
           minWidth: 0,
+          // Room for the dismiss control pinned to the pane's corner.
+          paddingRight: atPointer ? 0 : 24,
         }}
       >
         {/*
@@ -438,65 +403,70 @@ export function Inspector() {
           </>
         )}
 
-        {/* What is true about it, in one line. The rest is a count, not a
-            list — a strip that grows to five bullet points is a panel again. */}
-        {said.length > 0 ? (
-          <span
-            data-testid="observations"
-            title={said.map((observation) => observation.text).join("\n")}
-            style={{
-              minWidth: 0,
-              flex: "1 1 auto",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              fontSize: 12,
-              color: "var(--graview-ink-muted)",
-            }}
-          >
-            {said[0]!.text}
-            {said.length > 1 ? (
-              <span style={{ color: "var(--graview-ink-faint)" }}>
-                {" "}
-                +{said.length - 1}
-              </span>
-            ) : null}
-          </span>
-        ) : (
-          <span style={{ flex: "1 1 auto" }} />
-        )}
+        <span style={{ flex: "1 1 auto" }} />
 
         {/* A menu needs no close control — Escape, click-away and choosing an
             action all close it, and a × in a context menu reads as a dialog
             that lost its way. The docked strip keeps it: clearing the
             selection is a real act there. */}
-        {atPointer ? null : (
-          <button
-            type="button"
-            onClick={() => {
-              setMenuAt(null);
-              clear();
-            }}
-            aria-label="Clear selection"
-            title="Clear selection"
-            // A real target. At 1px of padding it was a 16-pixel control, which
-            // is under every guideline there is and felt like it on a trackpad.
-            style={{
-              flex: "0 0 auto",
-              width: 24,
-              height: 24,
-              display: "grid",
-              placeItems: "center",
-              padding: 0,
-              fontSize: 13,
-              lineHeight: 1,
-              borderRadius: 7,
-            }}
-          >
-            ×
-          </button>
-        )}
       </div>
+      {atPointer ? null : (
+        <button
+          type="button"
+          onClick={() => {
+            setMenuAt(null);
+            clear();
+          }}
+          aria-label="Clear selection"
+          title="Clear selection"
+          // Pinned to the pane's corner: a real 24px target that a narrow
+          // header cannot push off the edge.
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            flex: "0 0 auto",
+            width: 24,
+            height: 24,
+            display: "grid",
+            placeItems: "center",
+            padding: 0,
+            fontSize: 13,
+            lineHeight: 1,
+            borderRadius: 7,
+          }}
+        >
+          ×
+        </button>
+      )}
+
+      {/* What is true about it. The pane has the room to say the whole
+          sentence; anything beyond the first two stays a count with the
+          full list in the tooltip. */}
+      {said.length > 0 ? (
+        <div
+          data-testid="observations"
+          title={said.map((observation) => observation.text).join("\n")}
+          style={{ display: "grid", gap: 3 }}
+        >
+          {said.slice(0, 2).map((observation) => (
+            <p
+              key={observation.id}
+              style={{
+                margin: 0,
+                fontSize: 12,
+                lineHeight: 1.45,
+                color: "var(--graview-ink-muted)",
+              }}
+            >
+              {observation.text}
+              {observation === said[1] && said.length > 2 ? (
+                <span style={{ color: "var(--graview-ink-faint)" }}> +{said.length - 2}</span>
+              ) : null}
+            </p>
+          ))}
+        </div>
+      ) : null}
 
       {failed ? (
         <p
@@ -535,11 +505,11 @@ export function Inspector() {
             padding: 0,
             listStyle: "none",
             display: "flex",
-            // At the pointer a menu reads as a column; in a strip the same
-            // actions read as a row. Same list, same components.
-            flexDirection: atPointer ? "column" : "row",
-            flexWrap: atPointer ? "nowrap" : "wrap",
-            gap: atPointer ? 2 : 5,
+            // A pane and a menu both read as a column. Same list, same
+            // components, same order.
+            flexDirection: "column",
+            flexWrap: "nowrap",
+            gap: 2,
           }}
         >
           {shown.map((affordance) => (
@@ -554,15 +524,11 @@ export function Inspector() {
                   padding: "4px 10px",
                   fontSize: 12.5,
                   borderRadius: 8,
-                  ...(atPointer
-                    ? {
-                        width: "100%",
-                        textAlign: "left",
-                        border: "1px solid transparent",
-                        background: "none",
-                        boxShadow: "none",
-                      }
-                    : { whiteSpace: "nowrap" }),
+                  width: "100%",
+                  textAlign: "left",
+                  border: "1px solid transparent",
+                  background: "none",
+                  boxShadow: "none",
                   // What cannot be taken back says so before it is pressed —
                   // and the ranking has already put it last.
                   ...(affordance.destructive ? { color: "var(--graview-warn)" } : {}),
@@ -620,12 +586,12 @@ export function Inspector() {
             padding: 0,
             listStyle: "none",
             display: "flex",
-            flexDirection: atPointer ? "column" : "row",
-            flexWrap: "wrap",
-            gap: atPointer ? 2 : 5,
+            flexDirection: "column",
+            flexWrap: "nowrap",
+            gap: 2,
           }}
         >
-          {withheld.slice(0, atPointer ? withheld.length : 4).map((action) => (
+          {withheld.slice(0, atPointer ? withheld.length : 3).map((action) => (
             <li key={action.id}>
               <button
                 type="button"
@@ -638,7 +604,9 @@ export function Inspector() {
                   fontSize: 12.5,
                   borderRadius: 8,
                   borderStyle: "dashed",
-                  ...(atPointer ? { width: "100%", textAlign: "left", background: "none" } : {}),
+                  width: "100%",
+                  textAlign: "left",
+                  background: "none",
                 }}
               >
                 {action.label}
