@@ -44,6 +44,12 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly views: ViewRegistry<S, ViewComponent<S>>;
   readonly view: ViewState;
   setView(next: ViewState | ((current: ViewState) => ViewState)): void;
+  /**
+   * The view the app OPENED ON — the landing stop. The wordmark returns
+   * here, the way a site's logo returns to its front page; remembered at
+   * mount so navigation cannot redefine what "home" means.
+   */
+  readonly homeView: ViewState;
   readonly selection: readonly string[];
   setSelection(next: readonly string[] | ((current: readonly string[]) => readonly string[])): void;
   /**
@@ -179,6 +185,7 @@ export function GraviewProvider<S extends AnySchema>({
   children,
 }: GraviewProviderProps<S>) {
   const [internalView, setInternalView] = useState<ViewState>(initialView ?? EMPTY_VIEW);
+  const homeView = useRef<ViewState>(initialView ?? EMPTY_VIEW).current;
   const [selection, setSelectionState] = useState<readonly string[]>(initialSelection ?? []);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
   const [emphasis, setEmphasis] = useState<string | null>(null);
@@ -209,6 +216,7 @@ export function GraviewProvider<S extends AnySchema>({
       views,
       view: current,
       setView,
+      homeView,
       selection,
       setSelection,
       menuAt,

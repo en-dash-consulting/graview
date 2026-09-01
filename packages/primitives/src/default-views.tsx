@@ -5,7 +5,7 @@ import {
   type AnySchema,
   type KindOfSchema,
 } from "@graview/core";
-import { createViews, type ReactViewRegistry, type ViewProps } from "@graview/react";
+import { createViews, useSelection, type ReactViewRegistry, type ViewProps } from "@graview/react";
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -234,6 +234,7 @@ export function registerDefaultViews<S extends AnySchema>(
      */
     const GroupGlyph = (props: ViewProps<S>) => {
       const members = props.nodes ?? [];
+      const { selection } = useSelection();
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
       const accent = props.focused || props.raised;
@@ -247,11 +248,33 @@ export function registerDefaultViews<S extends AnySchema>(
        */
       const secondary = props.rank === "secondary" && !accent;
       const nested = props.nestedUnder !== undefined;
+      /*
+       * How many of this kind's members the SELECTION reaches, one edge away.
+       *
+       * "What is this thing actually tied to" was unanswerable from the
+       * shelf: you selected a span in the calendar and every kind card sat
+       * unchanged. The implicated set has always known; the card just never
+       * read it. Selected members themselves do not count — a card does not
+       * announce a tie to the thing that IS the selection.
+       */
+      const chosen = new Set(selection);
+      const tied = accent
+        ? 0
+        : members.filter(
+            (member) => props.implicated?.includes(member.id) && !chosen.has(member.id),
+          ).length;
+      /*
+       * The block's height from altitude, in viewBox units: population under
+       * a square root, so one giant kind is a tall building rather than a
+       * tower the scene scrolls for.
+       */
+      const rise = nested ? 8 : Math.min(46, 10 + Math.round(Math.sqrt(members.length) * 8));
       return (
         <div
           className="graview-kind-card"
           data-graview-rank={props.rank}
           data-graview-nested={nested || undefined}
+          data-graview-tied={tied || undefined}
           /*
            * The description lives in the TOOLTIP, on every card.
            *
@@ -270,20 +293,35 @@ export function registerDefaultViews<S extends AnySchema>(
               }
             : {})}
           style={{
+            position: "relative",
+            height: "100%",
+            ["--graview-hue" as string]: Math.round(hue * 360),
+          }}
+        >
+          {/*
+            * The DISTRICT, drawn only from altitude (the stylesheet keeps it
+            * hidden inside the stack): an isometric block — a roof and two
+            * shaded walls — whose height is the kind's population. This is
+            * the city: the ground is an iso lattice, and each kind stands on
+            * it as a building rather than lying on it as a card.
+            */}
+          <svg
+            className="graview-kind-block"
+            viewBox={`0 0 100 ${45 + rise}`}
+            aria-hidden="true"
+          >
+            <polygon className="graview-iso-left" points={`1,22 50,43 50,${43 + rise} 1,${22 + rise}`} />
+            <polygon className="graview-iso-right" points={`99,22 50,43 50,${43 + rise} 99,${22 + rise}`} />
+            <polygon className="graview-iso-roof" points="50,1 99,22 50,43 1,22" />
+          </svg>
+          <div
+          className="graview-kind-face"
+          style={{
             display: "flex",
             flexDirection: "column",
             gap: nested ? 1 : 3,
             padding: nested ? "5px 7px" : "7px 10px",
             borderRadius: "var(--graview-radius-sm, 9px)",
-            /*
-             * What the theme needs to draw this kind's ELEVATION from
-             * altitude: its hue, and a rise that grows with population —
-             * logarithmic-ish, so one giant kind does not cast a tower.
-             */
-            ["--graview-hue" as string]: Math.round(hue * 360),
-            ["--graview-rise" as string]: nested
-              ? 4
-              : Math.min(24, 5 + Math.round(Math.sqrt(members.length) * 3.4)),
             /*
              * PLANE 2 IS A GLYPH. Its own fidelity says so.
              *
@@ -293,11 +331,14 @@ export function registerDefaultViews<S extends AnySchema>(
              */
             justifyContent: "center",
             position: "relative",
+            height: "100%",
             overflow: "hidden",
             boxSizing: "border-box",
             border: accent
               ? "1px solid var(--graview-accent)"
-              : `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
+              : tied > 0
+                ? "1px solid var(--graview-accent-dim)"
+                : `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
             // The kind you are looking at is brighter and lit, not labelled:
             // a ninety-pixel card has no room for a word that says so.
             /*
@@ -398,6 +439,12 @@ export function registerDefaultViews<S extends AnySchema>(
                 */}
               {members.length === 0 ? "none yet" : `${trouble ? "⚠ " : ""}${members.length}`}
             </span>
+            {/* The selection's reach into this kind, said in place. */}
+            {tied > 0 ? (
+              <span style={{ fontSize: 11.5, color: "var(--graview-accent)" }}>
+                {tied} tied
+              </span>
+            ) : null}
             {/*
               * Whether this kind has a picture of its own to go into.
               * Derived: a view the app registered rather than the generic one
@@ -412,6 +459,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 ◆
               </span>
             ) : null}
+          </div>
           </div>
         </div>
       );

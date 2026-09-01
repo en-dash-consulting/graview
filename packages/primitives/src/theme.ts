@@ -211,13 +211,17 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   opacity: 1;
 }
 
-/* FROM ALTITUDE the ground recedes: the near grid fades toward the horizon
-   and a finer, farther one takes over above it — distance drawn with cell
-   size and fade, which needs no transform the capture pipeline would have
-   to renegotiate. */
+/* FROM ALTITUDE the ground is an ISOMETRIC LATTICE — diamond cells at the
+   classic 2:1 pitch, the near rows fading in and the far ones dissolving
+   toward the horizon. Drawn as background, so no transform the capture
+   pipeline would have to renegotiate. */
 .graview-ground[data-graview-altitude]::before {
-  mask-image: linear-gradient(to top, #000 40%, transparent 88%);
-  -webkit-mask-image: linear-gradient(to top, #000 40%, transparent 88%);
+  background-image:
+    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px 46px);
+  background-size: auto;
+  mask-image: linear-gradient(to top, #000 42%, transparent 90%);
+  -webkit-mask-image: linear-gradient(to top, #000 42%, transparent 90%);
 }
 .graview-ground[data-graview-altitude]::after {
   content: "";
@@ -225,28 +229,62 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(var(--graview-edge) 1px, transparent 1px),
-    linear-gradient(90deg, var(--graview-edge) 1px, transparent 1px);
-  background-size: 28px 28px;
-  opacity: calc(var(--graview-grid-alpha) * 0.6);
-  mask-image: linear-gradient(to bottom, transparent 5%, #000 32%, transparent 60%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 5%, #000 32%, transparent 60%);
+    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px 23px),
+    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px 23px);
+  opacity: calc(var(--graview-grid-alpha) * 0.55);
+  mask-image: linear-gradient(to bottom, transparent 5%, #000 30%, transparent 58%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 5%, #000 30%, transparent 58%);
 }
 
-/* A district STANDS. Its face is the card; its height is its population —
-   the extrusion rises with how many members the kind holds, so a district
-   of twenty-nine is visibly taller than a district of one, and nothing
-   moves to say so: spatial memory holds while elevation talks. */
-.graview-ground[data-graview-altitude] .graview-kind-card {
-  box-shadow:
-    0 calc(var(--graview-rise, 8) * 1px) 0 -1px ${
-      scheme === "light"
-        ? "hsl(var(--graview-hue, 200) 22% 70% / 0.55)"
-        : "hsl(var(--graview-hue, 200) 45% 15% / 0.92)"
-    },
-    0 calc(var(--graview-rise, 8) * 1px + 16px) 30px -10px ${
-      scheme === "light" ? "rgba(20,30,32,0.22)" : "rgba(0,0,0,0.55)"
-    };
+/* A district STANDS: an isometric block — roof, two shaded walls — whose
+   height is its population. The block exists only from altitude; inside the
+   stack the face IS the card and the block never renders. */
+.graview-kind-block {
+  display: none;
+}
+[data-graview-altitude] .graview-kind-block {
+  display: block;
+  position: absolute;
+  left: 8%;
+  bottom: 2px;
+  width: 84%;
+  height: auto;
+  filter: drop-shadow(${
+    scheme === "light" ? "10px 7px 14px rgba(20,30,32,0.28)" : "12px 8px 18px rgba(0,0,0,0.6)"
+  });
+}
+[data-graview-altitude] .graview-iso-roof {
+  fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "48% 82%" : "42% 32%"});
+  stroke: ${scheme === "light" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.14)"};
+  stroke-width: 1;
+}
+[data-graview-altitude] .graview-iso-right {
+  fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "40% 66%" : "40% 21%"});
+}
+[data-graview-altitude] .graview-iso-left {
+  fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "34% 55%" : "38% 13%"});
+}
+
+/* From altitude the card's face becomes the district's NAMEPLATE: an
+   upright pill standing on the roof, the way a label floats over a building
+   in any city view — the block carries the architecture, the pill carries
+   the words. Inline styles drew the in-stack card, so the pill overrides
+   must outrank them. */
+[data-graview-altitude] .graview-kind-face {
+  position: absolute !important;
+  left: 50% !important;
+  top: 2% !important;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 98%;
+  height: auto !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  gap: 7px !important;
+  padding: 3px 11px !important;
+  border-radius: 999px !important;
+  box-shadow: var(--graview-lift-low) !important;
+  z-index: 2;
 }
 
 /* A thing inside a view that is itself a thing: an event in a calendar, a

@@ -15,11 +15,25 @@ import { GRAVIEW_BRAND } from "./theme.js";
  * works in both schemes.
  */
 export function Wordmark<S extends AnySchema>() {
-  const brand = useGraview<S>().brand ?? GRAVIEW_BRAND;
+  const { brand: declared, homeView, setView, setSelection, setMenuAt } = useGraview<S>();
+  const brand = declared ?? GRAVIEW_BRAND;
   return (
-    <span
+    <button
+      type="button"
       className="graview-wordmark"
       data-testid="wordmark"
+      /*
+       * The logo is the way HOME, the way it is on every site. It returns to
+       * the view the app opened on — focus, relation, zoom and camera reset,
+       * selection cleared. The cards someone deliberately pinned stay
+       * pinned: going home is not tidying their desk.
+       */
+      title={`${brand.name} — back to the start`}
+      onClick={() => {
+        setView((current) => ({ ...homeView, pins: current.pins }));
+        setSelection([]);
+        setMenuAt(null);
+      }}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -29,6 +43,15 @@ export function Wordmark<S extends AnySchema>() {
         textTransform: "uppercase",
         color: "var(--graview-ink-muted)",
         whiteSpace: "nowrap",
+        // A control now, so it is at least a fingertip tall — the letters
+        // stay exactly where they were.
+        minHeight: 24,
+        border: "none",
+        background: "none",
+        padding: 0,
+        boxShadow: "none",
+        cursor: "pointer",
+        font: "inherit",
       }}
     >
       {brand.logo ? (
@@ -42,6 +65,6 @@ export function Wordmark<S extends AnySchema>() {
         />
       ) : null}
       {brand.name}
-    </span>
+    </button>
   );
 }

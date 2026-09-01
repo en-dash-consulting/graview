@@ -1,4 +1,4 @@
-import type { AnySchema, Fidelity, NodeOfSchema } from "@graview/core";
+import type { AnySchema, Fidelity, GraphReader, NodeOfSchema } from "@graview/core";
 import {
   isAggregateId,
   kindOfCard,
@@ -541,9 +541,155 @@ export function Scene<S extends AnySchema>({
           return from?.wrote && to?.wrote ? (from.at > to.at ? from : to) : undefined;
         }}
       />
+      <SelectionTies
+        stageRef={wrapperRef}
+        nodes={frame.nodes}
+        scheme={scheme}
+        selection={selection}
+        store={store}
+        graphNodes={nodes}
+        width={result.width}
+        height={result.height}
+      />
       <RelationCaptions nodes={frame.nodes} scheme={scheme} width={result.width} />
       {children}
     </div>
+  );
+}
+
+/**
+ * The SELECTION'S OWN EDGES, drawn from where the thing actually is.
+ *
+ * Selecting a span in the calendar used to change nothing outside the
+ * calendar: the graph knew the span's agreement, its person and its reasons,
+ * and the picture kept that to itself. These lines start at the selected
+ * element's real drawn box — the pick target inside the view, measured from
+ * the DOM — and run to whatever stands for each neighbour on screen: another
+ * pick target in the same view, a raised card, or the kind card holding it
+ * on the shelf. Item-level, not kind-level; and the kind cards say "N tied"
+ * at the same moment, so the lines have destinations that answer back.
+ *
+ * Only for a DELIBERATE selection: a handful of things someone picked.
+ * Selecting a whole place selects its population, and forty fans of edges is
+ * a hairball, not an answer.
+ */
+function SelectionTies<S extends AnySchema>({
+  stageRef,
+  nodes,
+  scheme,
+  selection,
+  store,
+  graphNodes,
+  width,
+  height,
+}: {
+  readonly stageRef: { current: HTMLElement | null };
+  readonly nodes: readonly SceneNode[];
+  readonly scheme: "light" | "dark";
+  readonly selection: readonly string[];
+  readonly store: { graph: GraphReader<NodeOfSchema<S>> };
+  readonly graphNodes: unknown;
+  readonly width: number;
+  readonly height: number;
+}) {
+  const ties = useMemo(() => {
+    if (selection.length === 0 || selection.length > 4) return [];
+    const chosen = new Set(selection);
+    const found: { kind: string; self: string; other: string }[] = [];
+    for (const edge of store.graph.allEdges()) {
+      const self = chosen.has(edge.from) ? edge.from : chosen.has(edge.to) ? edge.to : null;
+      if (!self) continue;
+      const other = self === edge.from ? edge.to : edge.from;
+      if (chosen.has(other)) continue;
+      found.push({ kind: edge.kind, self, other });
+    }
+    return found.length > 14 ? [] : found;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, selection, graphNodes]);
+
+  if (ties.length === 0 || typeof document === "undefined") return null;
+  const stage = stageRef.current?.getBoundingClientRect();
+  if (!stage) return null;
+
+  /** A drawn box for an id: its own pick target first, then what contains it. */
+  const boxFor = (id: string): { x: number; y: number; width: number; height: number } | null => {
+    const picked = stageRef.current?.querySelector(`[data-graview-pick="${CSS.escape(id)}"]`);
+    if (picked) {
+      const rect = picked.getBoundingClientRect();
+      if (rect.width > 2)
+        return { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height };
+    }
+    const drawn =
+      nodes.find((node) => node.id === id) ??
+      nodes.find((node) => node.aggregate?.memberIds.includes(id));
+    return drawn ? drawnBox(drawn, scheme) : null;
+  };
+
+  const seen = new Set<string>();
+  const lines: { key: string; kind: string; d: string; endX: number; endY: number }[] = [];
+  for (const tie of ties) {
+    const fromBox = boxFor(tie.self);
+    const toBox = boxFor(tie.other);
+    if (!fromBox || !toBox) continue;
+    // Several members of one shelf card collapse to one line per relation.
+    const key = `${tie.kind}:${Math.round(fromBox.x)}:${Math.round(toBox.x)},${Math.round(toBox.y)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const toCentre = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
+    const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
+    const from = edgePoint(fromBox, toCentre);
+    const to = edgePoint(toBox, fromCentre);
+    const dist = Math.hypot(to.x - from.x, to.y - from.y);
+    if (dist < 8) continue;
+    const bow = Math.min(36, dist * 0.12);
+    const nx = -(to.y - from.y) / dist;
+    const ny = (to.x - from.x) / dist;
+    lines.push({
+      key: `${tie.kind}:${tie.self}:${tie.other}`,
+      kind: tie.kind,
+      d: `M ${from.x} ${from.y} Q ${(from.x + to.x) / 2 + nx * bow} ${(from.y + to.y) / 2 + ny * bow} ${to.x} ${to.y}`,
+      endX: to.x,
+      endY: to.y,
+    });
+  }
+  if (lines.length === 0) return null;
+
+  return (
+    <svg
+      aria-hidden="true"
+      data-graview-ties={lines.length}
+      width={width}
+      height={height}
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        pointerEvents: "none",
+        // Over the views: these lines START on an element inside one, and a
+        // line into the shelf that dives behind the focus card en route says
+        // nothing.
+        zIndex: 3,
+      }}
+    >
+      {lines.map((line) => {
+        const style = connectorStyle(line.kind);
+        return (
+          <g key={line.key} opacity={0.72}>
+            <path
+              data-graview-tie={line.kind}
+              d={line.d}
+              fill="none"
+              stroke={connectorStroke(style)}
+              strokeWidth={1.6}
+              strokeDasharray={CONNECTOR_DASH[style.pattern]}
+              strokeLinecap="round"
+            />
+            {/* A destination, marked: the far end lands somewhere specific. */}
+            <circle cx={line.endX} cy={line.endY} r={2.6} fill={connectorStroke(style)} />
+          </g>
+        );
+      })}
+    </svg>
   );
 }
 
