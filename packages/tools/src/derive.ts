@@ -35,6 +35,8 @@ export interface DeriveOptions<S extends AnySchema> {
    * the first one get here".
    */
   readonly kindSelection?: readonly string[];
+  /** Edges the selection names — supplied by the binding, like kinds. */
+  readonly edgeSelection?: readonly { kind: string; from: string; to: string }[];
 }
 
 /**
@@ -70,6 +72,7 @@ export function deriveAffordances<S extends AnySchema>(
     selection,
     nodes,
     kindSelection: options.kindSelection ?? [],
+    edgeSelection: options.edgeSelection ?? [],
     // Evaluated once and shared: every provider that cares about violations
     // sees the same ones, and a selection change costs one evaluation.
     violations: store.violations(options.context),

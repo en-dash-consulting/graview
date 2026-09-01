@@ -1,0 +1,28 @@
+{
+  "id": "356f32d6-08e0-4323-a251-1c232f5eb4df",
+  "taskId": "49216104-1961-405d-99b9-4eaf53796027",
+  "taskTitle": "The lines are editable",
+  "startedAt": "2026-09-01T11:26:52.442Z",
+  "finishedAt": "2026-09-01T11:26:52.442Z",
+  "status": "completed",
+  "turns": 103,
+  "summary": "Edges join the selection model; clipped hit layer makes visible line runs pickable; connects/severs seam derives edge actions; the household example riders editable inline",
+  "tokenUsage": {
+    "input": 204,
+    "output": 105130,
+    "cacheCreationInput": 2770729,
+    "cacheReadInput": 56452698
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 204,
+    "output": 105130,
+    "cached": 59223427,
+    "total": 59328761
+  }
+}

@@ -13,6 +13,7 @@ import {
   type Layout,
   type LayoutNode,
   type LayoutOptions,
+  edgeSelectionId,
 } from "@graview/layout";
 import {
   CONNECTOR_DASH,
@@ -567,6 +568,17 @@ export function Scene<S extends AnySchema>({
         selection={selection}
         emphasis={emphasis}
         stageRef={wrapperRef}
+        /*
+         * A LINE IS A THING. Clicking one that stands for exactly one edge
+         * selects the relation itself — the inspector then says what it is
+         * and what may lawfully be done to it; right-click opens the same
+         * actions at the pointer. Bundled lines stay scenery: "some of
+         * these" is not an honest thing to act on.
+         */
+        onPickEdge={(edgeId, at) => {
+          setSelection([edgeId]);
+          setMenuAt(at ?? null);
+        }}
         liveOf={(connector) => {
           /*
            * A relation PULSES where it was just made or broken.
@@ -1481,6 +1493,7 @@ function Connectors({
   emphasis,
   stageRef,
   liveOf,
+  onPickEdge,
 }: {
   readonly overview: boolean;
   /** For measuring the boxes a person can actually see. */
@@ -1489,6 +1502,8 @@ function Connectors({
   readonly selection: readonly string[];
   /** A relation the legend is asking about: its lines come forward. */
   readonly emphasis: string | null;
+  /** Select the ONE edge a line stands for; `at` set means "and menu here". */
+  readonly onPickEdge?: (edgeId: string, at?: { x: number; y: number }) => void;
   /** What just happened to this relation, if anything. */
   liveOf?: (connector: { from: string; to: string }) => ActivityMark | undefined;
   result: {
@@ -1556,24 +1571,7 @@ function Connectors({
     return raised && !vagueEnd(from) && !vagueEnd(to);
   });
   if (connectors.length === 0) return null;
-  return (
-    <svg
-      aria-hidden="true"
-      width={result.width}
-      height={result.height}
-      style={{
-        position: "absolute",
-        left: 0,
-        top: 0,
-        pointerEvents: "none",
-        // Behind the views on the DOM path, where the stage is transparent
-        // and a relationship should not compete with what it connects. Above
-        // on the GPU path, where the canvas clears to the ground colour and
-        // anything beneath it is simply painted over.
-        zIndex: above ? 2 : 0,
-      }}
-    >
-      {connectors.map((connector) => {
+  const drawn = connectors.map((connector) => {
         // Endpoints are the boxes a person can SEE — measured from the DOM,
         // with layout's scaled box only as the headless fallback. Host
         // borders sat in open air wherever a view is smaller than its band.
@@ -1669,7 +1667,10 @@ function Connectors({
           }
         }
         const control = `${midX + nx * bow} ${midY + ny * bow}`;
-        const stressed = emphasis !== null && connector.kind === emphasis;
+        const single = (connector as { single?: { from: string; to: string } }).single;
+        const edgeId = single ? edgeSelectionId(connector.kind, single.from, single.to) : null;
+        const edgeChosen = edgeId !== null && selection.includes(edgeId);
+        const stressed = (emphasis !== null && connector.kind === emphasis) || edgeChosen;
         const opacity = overview
           ? emphasis !== null
             ? stressed
@@ -1678,8 +1679,8 @@ function Connectors({
             : touches(connector)
               ? 0.9
               : 0.12
-          : style.opacity * 0.34;
-        return (
+          : style.opacity * (edgeChosen ? 0.9 : 0.34);
+        const line = (
           <g key={connector.id}>
             <path
               data-graview-connector={connector.kind}
@@ -1707,6 +1708,7 @@ function Connectors({
               strokeDasharray={CONNECTOR_DASH[style.pattern]}
               strokeLinecap="round"
             />
+
             {/*
               * A loop says WHICH relation it is, in place. A dashed circle
               * hanging off a card was the one unlabelled mark in the whole
@@ -1731,8 +1733,101 @@ function Connectors({
             ) : null}
           </g>
         );
-      })}
-    </svg>
+
+        /*
+         * The HIT PATH for a line that stands for one edge: the VISIBLE run
+         * only — the curve sampled between the borders of its two endpoint
+         * boxes — hosted on a layer above the panels. Clipping is what lets
+         * the layer sit on top without stealing clicks where the line
+         * passes invisibly behind a panel; the pickable region is exactly
+         * what a person can see.
+         */
+        let hit: React.ReactNode = null;
+        if (edgeId && onPickEdge && !self) {
+          const inside = (box: { x: number; y: number; width: number; height: number }, p: { x: number; y: number }) =>
+            p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
+          const q = (t: number) => {
+            const mx = midX + nx * bow;
+            const my = midY + ny * bow;
+            const a = (1 - t) * (1 - t);
+            const b = 2 * (1 - t) * t;
+            const c = t * t;
+            return { x: a * from.x + b * mx + c * to.x, y: a * from.y + b * my + c * to.y };
+          };
+          const points: { x: number; y: number }[] = [];
+          for (let i = 0; i <= 48; i++) {
+            const point = q(i / 48);
+            if (inside(fromBox, point) || inside(toBox, point)) continue;
+            points.push(point);
+          }
+          if (points.length >= 2) {
+            hit = (
+              <path
+                key={`hit:${connector.id}`}
+                data-graview-edge={edgeId}
+                d={`M ${points[0]!.x} ${points[0]!.y} ${points
+                  .slice(1)
+                  .map((point) => `L ${point.x} ${point.y}`)
+                  .join(" ")}`}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={14}
+                style={{ pointerEvents: "stroke", cursor: "pointer" }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onPickEdge(edgeId);
+                }}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onPickEdge(edgeId, { x: event.clientX, y: event.clientY });
+                }}
+              />
+            );
+          }
+        }
+        return { key: connector.id, line, hit };
+      });
+
+  return (
+    <>
+      <svg
+        aria-hidden="true"
+        width={result.width}
+        height={result.height}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          pointerEvents: "none",
+          // Behind the views on the DOM path, where the stage is transparent
+          // and a relationship should not compete with what it connects. Above
+          // on the GPU path, where the canvas clears to the ground colour and
+          // anything beneath it is simply painted over.
+          zIndex: above ? 2 : 0,
+        }}
+      >
+        {drawn.map((piece) => piece?.line)}
+      </svg>
+      {drawn.some((piece) => piece?.hit) ? (
+        <svg
+          width={result.width}
+          height={result.height}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            pointerEvents: "none",
+            // Above the hosts, so the visible run of a line takes the press;
+            // the paths inside are clipped to open ground, so nothing that
+            // looks like a panel behaves like a line.
+            zIndex: 8,
+          }}
+        >
+          {drawn.map((piece) => piece?.hit)}
+        </svg>
+      ) : null}
+    </>
   );
 }
 

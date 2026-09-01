@@ -1,5 +1,5 @@
-import { labelOf, type AnySchema, type Store } from "@graview/core";
-import { kindsOf, withoutMoves, withOverview, withPast, withZoom } from "@graview/layout";
+import { humaniseField, labelOf, type AnySchema, type Store } from "@graview/core";
+import { edgeOfSelection, kindsOf, withoutMoves, withOverview, withPast, withZoom } from "@graview/layout";
 import {
   useAffordances,
   useApplyAffordance,
@@ -161,6 +161,8 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
    * the kind card is the first thing anyone selects, so the raw id here was
    * the first string the interface ever showed them.
    */
+  const edge = edgeOfSelection(id);
+  if (edge) return humaniseField(edge.kind);
   const kinds = kindsOf(id);
   if (kinds.length > 0) {
     return kinds
@@ -191,7 +193,7 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
  */
 export function Inspector() {
   const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
-  const { selection, clear } = useSelection();
+  const { selection, set, clear } = useSelection();
   const { affordances, withheld, observations } = useAffordances();
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
@@ -227,6 +229,28 @@ export function Inspector() {
       }),
     ),
   ];
+
+  /*
+   * A selected LINE. The pane's job flips from "what is this thing" to
+   * "what is this relation": the declaration's own sentence for the edge,
+   * both ends as pressable names, and the derived actions below — which
+   * the schema provider has already pointed at this exact edge.
+   */
+  const edge = selection.length === 1 ? edgeOfSelection(selection[0]!) : null;
+  const edgeEnds = edge
+    ? { from: store.graph.getNode(edge.from), to: store.graph.getNode(edge.to) }
+    : null;
+  const edgeSaid = edge
+    ? (() => {
+        for (const definition of store.schema.definitions) {
+          const declared = (definition.edges as Record<string, { description?: string }>)[
+            edge.kind
+          ];
+          if (declared?.description) return declared.description;
+        }
+        return null;
+      })()
+    : null;
 
   useEffect(() => {
     setPending(null);
@@ -417,18 +441,18 @@ export function Inspector() {
                 ? nameOf(store, selection[0]!)
                 : `${selection.length} selected`}
             </strong>
-            {kinds.length > 0 ? (
+            {kinds.length > 0 || edge ? (
               <span
                 style={{ fontSize: 11, color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
-                {kinds.join(" · ")}
+                {edge ? "relation" : kinds.join(" · ")}
               </span>
             ) : null}
             {/* The onward gesture, said at the moment it applies — picking a
                 thing is exactly when "how do I go into it" arises, and the
                 jacked-in header was the one place that answered, which is
                 after you had already found out. */}
-            {selection.length === 1 ? (
+            {selection.length === 1 && !edge ? (
               <span
                 style={{ fontSize: 11, color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
@@ -474,6 +498,50 @@ export function Inspector() {
           ×
         </button>
       )}
+
+      {/*
+        * A selected relation says WHAT IT MEANS — the declaration's own
+        * sentence — and offers both of its ends as the next place to stand.
+        */}
+      {edge && edgeEnds ? (
+        <div style={{ display: "grid", gap: 6 }}>
+          {edgeSaid ? (
+            <p
+              data-testid="edge-said"
+              style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
+            >
+              {edgeSaid}
+            </p>
+          ) : null}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            {([
+              ["from", edgeEnds.from],
+              ["to", edgeEnds.to],
+            ] as const).map(([which, end], index) => (
+              <Fragment key={which}>
+                {index === 1 ? (
+                  <span aria-hidden="true" style={{ color: "var(--graview-ink-faint)" }}>
+                    →
+                  </span>
+                ) : null}
+                {end ? (
+                  <button
+                    type="button"
+                    data-testid={`edge-${which}`}
+                    onClick={() => set([end.id])}
+                    title={`Select ${nameOf(store, end.id)}`}
+                    style={{ fontSize: 12, padding: "3px 9px", borderRadius: 999 }}
+                  >
+                    {nameOf(store, end.id)}
+                  </button>
+                ) : (
+                  <span style={{ fontSize: 12, color: "var(--graview-ink-faint)" }}>gone</span>
+                )}
+              </Fragment>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {/* What is true about it. The pane has the room to say the whole
           sentence; anything beyond the first two stays a count with the
@@ -526,11 +594,13 @@ export function Inspector() {
             ? // "Nothing can be done" would be a lie here: things can be
               // done, by somebody else. Which is a different sentence.
               `Nothing you may do with ${
-                kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"
+                edge ? "this relation" : kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"
               } — ${withheld.length} action${withheld.length === 1 ? "" : "s"} withheld.`
-            : `Nothing can be done with ${
-                kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"
-              } yet — no mutation declares ${kinds.length === 1 ? "it" : "them"} as a subject.`}
+            : edge
+              ? `Nothing can be done with this line yet — no mutation declares that it makes or breaks "${edge.kind}".`
+              : `Nothing can be done with ${
+                  kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"
+                } yet — no mutation declares ${kinds.length === 1 ? "it" : "them"} as a subject.`}
         </p>
       ) : (
         <ol

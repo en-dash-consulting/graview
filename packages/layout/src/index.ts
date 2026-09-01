@@ -25,6 +25,9 @@ export type {
   Via,
 } from "./types.js";
 export {
+  EDGE_SELECTION_PREFIX,
+  edgeOfSelection,
+  edgeSelectionId,
   EMPTY_VIEW,
   fromUrl,
   sameView,
@@ -40,4 +43,4 @@ export {
   withSelection,
   withZoom,
 } from "./view-state.js";
-export type { Pin, ViewState } from "./view-state.js";
+export type { EdgeRef, Pin, ViewState } from "./view-state.js";

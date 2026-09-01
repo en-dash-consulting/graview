@@ -110,6 +110,7 @@ export const waitFor = defineMutation("wait-for", {
   title: "This has to happen first",
   description: "Record that one task cannot start until another is done.",
   subject: { kinds: ["task"], arg: "taskId" },
+  connects: ["waits-for"],
   input: z.object({ taskId: nodeRef(["task"]), blockerId: nodeRef(["task"]) }),
   describe: (args, graph) =>
     `"${nameOf(graph as Reader, args.taskId)}" waits for "${nameOf(graph as Reader, args.blockerId)}"`,
@@ -125,6 +126,8 @@ export const moveToList = defineMutation("move-to-list", {
   title: "Move it to another list",
   description: "Take a task off one list and put it on another.",
   subject: { kinds: ["task"], arg: "taskId" },
+  connects: ["holds"],
+  severs: ["holds"],
   input: z.object({ taskId: nodeRef(["task"]), listId: nodeRef(["list"]) }),
   describe: (args, graph) =>
     `Move "${nameOf(graph as Reader, args.taskId)}" to ${nameOf(graph as Reader, args.listId)}`,

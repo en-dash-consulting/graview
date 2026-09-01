@@ -57,6 +57,16 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    * empty state is exactly where a wrong guess would strand someone.
    */
   readonly creates?: readonly KindOfSchema<S>[];
+  /**
+   * Edge kinds this mutation makes, and edge kinds it breaks.
+   *
+   * The seam that lets a LINE offer its own actions: select the drawn edge
+   * and every mutation that declares its kind derives an offer, endpoints
+   * prefilled by matching argument kinds. Declared, like `creates`, because
+   * what `apply` does to edges is not statically knowable.
+   */
+  readonly connects?: readonly string[];
+  readonly severs?: readonly string[];
   /** One-line description of a concrete application, for previews and logs. */
   readonly describe?: (args: z.infer<I>, graph: GraphReader<NodeOfSchema<S>>) => string;
   readonly apply: (context: MutationContext<S>, args: z.infer<I>) => void;
