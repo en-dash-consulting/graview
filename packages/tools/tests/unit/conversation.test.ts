@@ -204,6 +204,33 @@ describe("the graph answers for itself", () => {
     expect(reply.say).toContain("who is along for it: child1");
   });
 
+  it("answers WHO whichever side declared the edge", async () => {
+    // The who-relation declared on the TIMED kind, pointing at people —
+    // the direction that used to fall through to the generic summary.
+    const flipped = createSchema([
+      defineNode("person", { fields: z.object({ label: z.string() }), plural: "People" }),
+      defineNode("run", {
+        fields: z.object({ label: z.string() }),
+        plural: "Runs",
+        edges: { "driven-by": { to: ["person"], description: "who does the run" } },
+      }),
+    ]);
+    const store2 = new Store({
+      schema: flipped,
+      mutations: [],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "p1", kind: "person", label: "Edna" },
+          { id: "r1", kind: "run", label: "school run" },
+        ],
+        edges: [{ kind: "driven-by", from: "r1", to: "p1" }],
+      },
+    });
+    const reply = await graphResponder()(store2, "who drives the school run?");
+    expect(reply.say).toContain("who does the run: Edna");
+  });
+
   it("falls back to the shape of the graph, and how to ask", async () => {
     const reply = await graphResponder()(store(), "hello");
     expect(reply.say).toContain("2 People");

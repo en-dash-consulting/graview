@@ -66,7 +66,7 @@ const XAI_DEFAULT_MODEL = "grok-4-fast";
 
 type FetchLike = (
   input: string,
-  init: { method: string; headers: Record<string, string>; body: string },
+  init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal },
 ) => Promise<{ ok: boolean; status: number; json(): Promise<unknown>; text(): Promise<string> }>;
 
 /**
@@ -93,6 +93,10 @@ export function openAiCompatibleCompletion(options: {
         model: options.model,
         messages: [{ role: "user", content: prompt }],
       }),
+      // A hung provider must not hang the conversation: the floor answers.
+      ...(typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+        ? { signal: AbortSignal.timeout(45_000) }
+        : {}),
     });
     if (!response.ok) {
       throw new Error(`${options.model} answered ${response.status}: ${(await response.text()).slice(0, 160)}`);
@@ -152,6 +156,14 @@ const WEBLLM_DEFAULT_MODEL = "Llama-3.2-3B-Instruct-q4f16_1-MLC";
  * will. Chrome's built-in Prompt API is used first where it exists: no
  * download at all.
  */
+/*
+ * ONE ENGINE PER MODEL, module-wide. Rebuilding the responder (a settings
+ * save, a re-render) must not drop a two-gigabyte engine and warm a new
+ * one — and a bring-up that failed stays failed rather than re-downloading
+ * on every turn; a page reload is the retry.
+ */
+const ENGINES = new Map<string, { engine: EngineLike | null; failed: string | null }>();
+
 export function localCompletion(
   options: {
     readonly model?: string;
@@ -160,7 +172,11 @@ export function localCompletion(
     readonly load?: () => Promise<EngineLike>;
   } = {},
 ): { complete: Completion; ready: () => boolean; warm: () => void } {
-  let engine: EngineLike | null = null;
+  const cacheKey = options.load ? null : (options.model ?? WEBLLM_DEFAULT_MODEL);
+  const held = cacheKey
+    ? (ENGINES.get(cacheKey) ?? ENGINES.set(cacheKey, { engine: null, failed: null }).get(cacheKey)!)
+    : { engine: null as EngineLike | null, failed: null as string | null };
+  let engine: EngineLike | null = held.engine;
   let warming = false;
   const say = (status: LocalStatus) => options.onStatus?.(status);
 
@@ -196,16 +212,23 @@ export function localCompletion(
   };
 
   const warm = () => {
+    engine = held.engine ?? engine;
     if (engine || warming) return;
+    if (held.failed !== null) {
+      say({ state: "failed", detail: held.failed });
+      return;
+    }
     warming = true;
     say({ state: "warming" });
     void bringUp()
       .then((ready) => {
         engine = ready;
+        held.engine = ready;
         say({ state: "ready" });
       })
       .catch((error) => {
-        say({ state: "failed", detail: error instanceof Error ? error.message : String(error) });
+        held.failed = error instanceof Error ? error.message : String(error);
+        say({ state: "failed", detail: held.failed });
       })
       .finally(() => {
         warming = false;
@@ -213,6 +236,7 @@ export function localCompletion(
   };
 
   const complete: Completion = async (prompt) => {
+    engine = held.engine ?? engine;
     if (!engine) throw new Error("The local model is not warm yet");
     const answer = await engine.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
@@ -222,7 +246,7 @@ export function localCompletion(
     return content;
   };
 
-  return { complete, ready: () => engine !== null, warm };
+  return { complete, ready: () => (held.engine ?? engine) !== null, warm };
 }
 
 /* ------------------------------------------------------ the whole ladder */

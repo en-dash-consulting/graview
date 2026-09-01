@@ -8,6 +8,8 @@ import type { ArgShape } from "@graview/core";
 
 export interface OpenParameter {
   readonly name: string;
+  /** May be omitted — an empty picker must not suppress the whole offer. */
+  readonly optional?: boolean;
   /** Node kinds this argument accepts, when it names a node. */
   readonly kinds?: readonly string[];
   /** Ids the framework already knows would fit, so the UI can offer them. */

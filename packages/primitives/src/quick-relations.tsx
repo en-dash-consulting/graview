@@ -12,8 +12,8 @@ import { hueFor } from "./default-views.js";
  * answer machinery has always existed (selecting a node lights everything
  * it implicates); this is the fast way in: the graph already knows which
  * few nodes touch the focused group most, so they stand as chips beside
- * the scene. One click selects (the emphasis path does the rest), a second
- * click clears, shift adds.
+ * the scene. One click selects and the emphasis path does the rest; the
+ * pane then owns the rail, and Escape (or its ×) brings the chips back.
  *
  * Everything is derived and capped: kinds one edge from the focus whose
  * membership is SMALL — a household's five people, not a season's forty

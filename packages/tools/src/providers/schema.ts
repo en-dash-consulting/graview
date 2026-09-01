@@ -48,12 +48,15 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
               else if (takesTo && !takesFrom) args[ref.name] = edge.to;
               else if (takesFrom && takesTo && fromOnly) args[ref.name] = edge.from;
               else {
-                const candidates = ref.kinds.includes("*")
-                  ? store.graph.allNodes().map((node) => node.id)
-                  : ref.kinds.flatMap((kind) =>
-                      store.graph.nodesOfKind(kind as never).map((node) => node.id),
-                    );
-                open.push({ name: ref.name, kinds: ref.kinds, candidates, shape: argShape(mutation.input, ref.name) });
+                // Ambiguity on a LINE resolves to the line: the only honest
+                // candidates for "break this" are this line's own two ends —
+                // a graph-wide picker here could sever an unrelated pair.
+                open.push({
+                  name: ref.name,
+                  kinds: ref.kinds,
+                  candidates: [edge.from, edge.to],
+                  shape: argShape(mutation.input, ref.name),
+                });
               }
             }
             for (const name of otherRequiredArgs(mutation.input, "")) {
@@ -61,10 +64,12 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
               open.push({ name, shape: argShape(mutation.input, name) });
             }
             const askable = open.every((parameter) =>
-              parameter.kinds !== undefined
-                ? (parameter.candidates?.length ?? 0) > 0
-                : (parameter.candidates?.length ?? 0) > 0 ||
-                  (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
+              parameter.optional === true
+                ? true
+                : parameter.kinds !== undefined
+                  ? (parameter.candidates?.length ?? 0) > 0
+                  : (parameter.candidates?.length ?? 0) > 0 ||
+                    (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
             );
             if (!askable) continue;
             affordances.push({
@@ -109,6 +114,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
               kinds: ref.kinds,
               candidates,
               shape: argShape(mutation.input, ref.name),
+              ...(ref.optional ? { optional: true } : {}),
             });
           }
           for (const name of otherRequiredArgs(mutation.input, "")) {
@@ -116,7 +122,9 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             open.push({ name, shape: argShape(mutation.input, name) });
           }
           const askable = open.every((parameter) =>
-            parameter.kinds !== undefined
+            parameter.optional === true
+              ? true
+              : parameter.kinds !== undefined
               ? // A node reference is only askable when real nodes exist to
                 // pick — "sow into which plot?" has no honest answer at zero
                 // plots, so the button waits for the first plot instead.
@@ -181,10 +189,19 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
         const subjectId = nodes.length === 1 ? nodes[0]!.id : null;
         const severs = mutation.severs ?? [];
         const connects = mutation.connects ?? [];
-        // A severing act with nothing attached to sever is not an offer —
-        // "Restore one occurrence" with nothing skipped was a button that
-        // could only fail.
-        if (subjectId && severs.length > 0 && across(subjectId, severs, ["*"]).length === 0) {
+        /*
+         * A PURE severing act with nothing attached is not an offer —
+         * "Restore one occurrence" with nothing skipped was a button that
+         * could only fail. A mutation that BOTH makes and breaks is a
+         * move/handover: it is exactly what an unattached subject needs,
+         * so it is never gated on attachment.
+         */
+        if (
+          subjectId &&
+          severs.length > 0 &&
+          connects.length === 0 &&
+          across(subjectId, severs, ["*"]).length === 0
+        ) {
           continue;
         }
         const open: OpenParameter[] = [];
@@ -195,13 +212,18 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             : ref.kinds.flatMap((kind) =>
                 store.graph.nodesOfKind(kind as never).map((node) => node.id),
               );
-          if (subjectId && severs.length > 0) {
-            // Severing reaches only what is actually attached.
-            candidates = across(subjectId, severs, ref.kinds);
-          } else if (subjectId && connects.length > 0) {
-            // Connecting offers only who is not already on.
+          if (subjectId && connects.length > 0) {
+            /*
+             * Anything that CONNECTS offers only who is not already on —
+             * including a move (connects + severs), whose whole point is
+             * someone NEW. Reading severs first here offered "Reassign
+             * run" a list containing exactly the current assignee.
+             */
             const already = new Set(across(subjectId, connects, ref.kinds));
             candidates = candidates.filter((id) => !already.has(id));
+          } else if (subjectId && severs.length > 0) {
+            // A pure severing act reaches only what is actually attached.
+            candidates = across(subjectId, severs, ref.kinds);
           }
           open.push({
             name: ref.name,
@@ -210,6 +232,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             // whom" without anyone wiring up a picker per mutation.
             candidates: candidates.filter((id) => !selection.includes(id)),
             shape: argShape(mutation.input, ref.name),
+            ...(ref.optional ? { optional: true } : {}),
           });
         }
         for (const name of otherRequiredArgs(mutation.input, subject.arg)) {
@@ -229,7 +252,9 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
          * already decided it is offerable.
          */
         const askable = open.every((parameter) =>
-          parameter.kinds !== undefined
+          parameter.optional === true
+            ? true
+            : parameter.kinds !== undefined
             ? (parameter.candidates?.length ?? 0) > 0
             : (parameter.candidates?.length ?? 0) > 0 ||
               (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
@@ -293,15 +318,20 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           if (!mine) continue;
           // Narrowed by the continue above: the subject names concrete kinds.
           const subjectKinds = subjectAccepts;
+          const pool = subjectKinds.includes("*")
+            ? store.graph.allNodes().map((node) => node.id)
+            : subjectKinds.flatMap((kind) =>
+                store.graph.nodesOfKind(kind as never).map((node) => node.id),
+              );
+          // Same rule as the forward direction: a move offers the NEW
+          // (everything not already tied), a pure sever offers the tied.
+          const attached = new Set(
+            across(chosen.id, connects.length > 0 ? connects : severs, subjectKinds),
+          );
           const subjectCandidates =
-            severs.length > 0
-              ? across(chosen.id, severs, subjectKinds)
-              : (subjectKinds.includes("*")
-                  ? store.graph.allNodes().map((node) => node.id)
-                  : subjectKinds.flatMap((kind) =>
-                      store.graph.nodesOfKind(kind as never).map((node) => node.id),
-                    )
-                ).filter((id) => !across(chosen.id, connects, subjectKinds).includes(id));
+            connects.length > 0
+              ? pool.filter((id) => !attached.has(id))
+              : pool.filter((id) => attached.has(id));
           if (subjectCandidates.length === 0) continue;
           const open: OpenParameter[] = [
             {
@@ -311,15 +341,32 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
               shape: argShape(mutation.input, subject.arg),
             },
           ];
+          for (const ref of refs) {
+            if (ref.name === mine.name || ref.name === subject.arg) continue;
+            const pool = ref.kinds.includes("*")
+              ? store.graph.allNodes().map((node) => node.id)
+              : ref.kinds.flatMap((kind) =>
+                  store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                );
+            open.push({
+              name: ref.name,
+              kinds: ref.kinds,
+              candidates: pool,
+              shape: argShape(mutation.input, ref.name),
+              ...(ref.optional ? { optional: true } : {}),
+            });
+          }
           for (const name of otherRequiredArgs(mutation.input, mine.name)) {
             if (name === subject.arg || open.some((parameter) => parameter.name === name)) continue;
             open.push({ name, shape: argShape(mutation.input, name) });
           }
           const askable = open.every((parameter) =>
-            parameter.kinds !== undefined
-              ? (parameter.candidates?.length ?? 0) > 0
-              : (parameter.candidates?.length ?? 0) > 0 ||
-                (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
+            parameter.optional === true
+              ? true
+              : parameter.kinds !== undefined
+                ? (parameter.candidates?.length ?? 0) > 0
+                : (parameter.candidates?.length ?? 0) > 0 ||
+                  (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
           );
           if (!askable) continue;
           affordances.push({

@@ -41,6 +41,11 @@ export function assertBundle<S extends AnySchema>(app: GraviewApp<S>, bundle: Ap
   if (bundle.format !== "graview-bundle") {
     throw new Error(`Not a graview bundle (format "${(bundle as { format?: string }).format}")`);
   }
+  if (bundle.bundleVersion > 1) {
+    throw new Error(
+      `Bundle format ${bundle.bundleVersion} is newer than this ship understands (1). Upgrade @graview/ship, then import.`,
+    );
+  }
   if (bundle.app !== app.name) {
     throw new Error(`This bundle is for "${bundle.app}", not "${app.name}"`);
   }

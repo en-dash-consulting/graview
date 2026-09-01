@@ -32,6 +32,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useLayoutEffect,
   useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
@@ -595,6 +596,8 @@ export function Scene<S extends AnySchema>({
          * these" is not an honest thing to act on.
          */
         onPickEdge={(edgeId, at) => {
+          // A pan that happened to start on a line is a pan, not a pick.
+          if (swallow.current) return;
           setSelection([edgeId]);
           setMenuAt(at ?? null);
         }}
@@ -623,6 +626,7 @@ export function Scene<S extends AnySchema>({
         width={result.width}
         height={result.height}
         onPickEdge={(edgeId, at) => {
+          if (swallow.current) return;
           setSelection([edgeId]);
           setMenuAt(at ?? null);
         }}
@@ -819,6 +823,19 @@ function SelectionTies<S extends AnySchema>({
       }
     }
     if (!fromBox || !toBox) continue;
+    /*
+     * ONE LINE PER RELATION. The connector layer draws (and takes clicks
+     * for) any relation whose both ends are placed cards; a tie repeating
+     * it produced the double line where one answered the pointer and its
+     * twin did not. The tie yields BEFORE claiming a dedupe slot, or a
+     * later tie sharing its coordinates dies for a line never drawn.
+     */
+    if (
+      alreadyDrawn?.has(`${tie.kind}|${tie.self}|${tie.other}`) ||
+      alreadyDrawn?.has(`${tie.kind}|${tie.other}|${tie.self}`)
+    ) {
+      continue;
+    }
     // Several members of one shelf card collapse to one line per relation.
     const key = `${tie.kind}:${Math.round(fromBox.x)}:${Math.round(toBox.x)},${Math.round(toBox.y)}`;
     if (seen.has(key)) continue;
@@ -829,19 +846,6 @@ function SelectionTies<S extends AnySchema>({
     const to = edgePoint(toBox, fromCentre);
     const dist = Math.hypot(to.x - from.x, to.y - from.y);
     if (dist < 8) continue;
-    /*
-     * ONE LINE PER RELATION. The connector layer draws (and takes clicks
-     * for) any relation whose both ends are placed cards; a tie repeating
-     * it produced the double line where one answered the pointer and its
-     * twin did not. The tie yields; the ties that remain are the ones only
-     * measurement can draw — into a chip, out of a roster.
-     */
-    if (
-      alreadyDrawn?.has(`${tie.kind}|${tie.self}|${tie.other}`) ||
-      alreadyDrawn?.has(`${tie.kind}|${tie.other}|${tie.self}`)
-    ) {
-      continue;
-    }
     const bow = Math.min(36, dist * 0.12);
     const nx = -(to.y - from.y) / dist;
     const ny = (to.x - from.x) / dist;
@@ -874,7 +878,9 @@ function SelectionTies<S extends AnySchema>({
 
   return (
     <svg
-      aria-hidden="true"
+      // Decorative only while nothing inside takes the pointer; a pickable
+      // relation must exist for assistive tech too.
+      aria-hidden={lines.some((line) => line.edgeId) ? undefined : true}
       data-graview-ties={lines.length}
       width={width}
       height={height}
@@ -1212,6 +1218,30 @@ function SceneViewHost({
   swallowClick,
   children,
 }: HostProps) {
+  // The tag's dot must agree with every other dot in a branded app.
+  const { brand: hostBrand } = useGraview();
+  /*
+   * The tag hugs the PANEL, not the band slot. A host flex-centres a
+   * panel shorter than its slot, so a fixed top offset hung the tag in
+   * open ground above the card it names — measured against the drawn
+   * child instead, the same lesson every measured surface here learned.
+   */
+  const [tagAt, setTagAt] = useState<{ top: number; right: number } | null>(null);
+  useLayoutEffect(() => {
+    if (Math.round(node.plane) !== 0 || node.aggregate) return;
+    const host = ref.current;
+    const child = host?.firstElementChild as HTMLElement | null;
+    if (!host || !child) return;
+    const hostBox = host.getBoundingClientRect();
+    const childBox = child.getBoundingClientRect();
+    const next = {
+      top: Math.round(childBox.top - hostBox.top) - 9,
+      right: Math.round(hostBox.right - childBox.right) + 14,
+    };
+    setTagAt((current) =>
+      current && current.top === next.top && current.right === next.right ? current : next,
+    );
+  });
   /*
    * A node's depth is its plane, pulled forward by however near it sits
    * within that plane.
@@ -1387,8 +1417,13 @@ function SceneViewHost({
         const picked = pickedFrom(event.target);
         event.preventDefault();
         event.stopPropagation();
-        if (picked && picked !== node.id) onPick(picked, false);
-        else onSelect(false);
+        /*
+         * Right-click SELECTS, always — through onPick, never onSelect,
+         * because onSelect's kind-card branch toggles the raised relation
+         * and returns without selecting, which opened a menu about nothing
+         * (and quietly raised People on the way).
+         */
+        onPick(picked && picked !== node.id ? picked : node.id, false);
         onMenu({ x: event.clientX, y: event.clientY });
       }}
       onDoubleClick={(event) => {
@@ -1492,14 +1527,19 @@ function SceneViewHost({
         * chrome rather than view content, so no view has to remember it.
         */}
       {Math.round(node.plane) === 0 && !node.aggregate ? (
-        <span data-graview-kindtag="" className="graview-kind-tag" aria-hidden="true">
+        <span
+          data-graview-kindtag=""
+          className="graview-kind-tag"
+          aria-hidden="true"
+          style={tagAt ?? undefined}
+        >
           <span
             style={{
               width: 6,
               height: 6,
               borderRadius: 999,
               flex: "0 0 auto",
-              background: `hsl(${Math.round(hueFor(node.kind) * 360)} 55% var(--graview-tint-lightness) / 0.9)`,
+              background: `hsl(${Math.round(hueFor(node.kind, hostBrand?.accents) * 360)} 55% var(--graview-tint-lightness) / 0.9)`,
             }}
           />
           {node.kind}
@@ -1911,7 +1951,9 @@ function Connectors({
          * what a person can see.
          */
         let hit: React.ReactNode = null;
-        if (edgeId && onPickEdge && !self) {
+        // A line the picture has faded to a ghost must not keep a click
+        // band: pickability follows visibility.
+        if (edgeId && onPickEdge && !self && opacity >= 0.2) {
           const inside = (box: { x: number; y: number; width: number; height: number }, p: { x: number; y: number }) =>
             p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
           const q = (t: number) => {
@@ -1994,10 +2036,11 @@ function Connectors({
             left: 0,
             top: 0,
             pointerEvents: "none",
-            // Above the hosts, so the visible run of a line takes the press;
+            // Above the hosts (auto) but BELOW the scene chrome at 5 —
+            // the legend and the quick-select must win their own corners;
             // the paths inside are clipped to open ground, so nothing that
             // looks like a panel behaves like a line.
-            zIndex: 8,
+            zIndex: 4,
           }}
         >
           {drawn.map((piece) => piece?.hit)}

@@ -35,5 +35,6 @@ export {
   useJackIn,
   useNavigation,
   useSelection,
+  UrlSync,
   useUrlSync,
 } from "./hooks.js";

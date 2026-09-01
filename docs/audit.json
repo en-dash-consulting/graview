@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T16:31:14.932Z",
+  "at": "2026-09-01T16:56:33.002Z",
   "screens": [
     {
       "app": "todo",
@@ -38,7 +38,7 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x476",
+        "size": "236x475",
         "text": "Pay the deposittask· double-click opens×Was due 2026-08-28⚠ \"Pay the deposit\" was due 2026"
       }
     },
@@ -67,7 +67,7 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x436",
+        "size": "236x435",
         "text": "×Was due 2026-08-28⚠ \"Pay the deposit\" was due 2026-08-28Give it a new date …Finish itPut "
       }
     },
@@ -108,8 +108,8 @@
       "inspector": {
         "shown": 8,
         "hidden": 0,
-        "size": "236x304",
-        "text": "Angie schoolblock· double-click opens×Rename …Retime block …⚠ its tiesSkip one occurrence "
+        "size": "236x302",
+        "text": "Angie schoolblock· double-click opens×Rename …Retime block …its tiesSkip one occurrence …A"
       }
     },
     {
@@ -137,8 +137,8 @@
       "inspector": {
         "shown": 8,
         "hidden": 0,
-        "size": "236x264",
-        "text": "×Rename …Retime block …⚠ its tiesSkip one occurrence …Add someone to it …Take someone off "
+        "size": "236x262",
+        "text": "×Rename …Retime block …its tiesSkip one occurrence …Add someone to it …Take someone off it"
       }
     },
     {
@@ -255,8 +255,8 @@
       "inspector": {
         "shown": 5,
         "hidden": 0,
-        "size": "236x208",
-        "text": "Amaraplayer· double-click opens×Note why this is here …Rename …They can play here …⚠ its t"
+        "size": "236x206",
+        "text": "Amaraplayer· double-click opens×Note why this is here …Rename …They can play here …its tie"
       }
     },
     {
@@ -289,8 +289,8 @@
       "inspector": {
         "shown": 5,
         "hidden": 0,
-        "size": "236x185",
-        "text": "×Note why this is here …Rename …They can play here …⚠ its tiesPlay them here …"
+        "size": "236x184",
+        "text": "×Note why this is here …Rename …They can play here …its tiesPlay them here …"
       }
     },
     {
