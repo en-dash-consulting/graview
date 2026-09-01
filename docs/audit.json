@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T02:04:42.972Z",
+  "at": "2026-09-01T02:42:12.962Z",
   "screens": [
     {
       "app": "todo",
@@ -80,7 +80,7 @@
       "repeats": [],
       "covered": [],
       "board": [],
-      "fill": 22,
+      "fill": 20,
       "inspector": null
     },
     {
@@ -150,7 +150,7 @@
       "repeats": [],
       "covered": [],
       "board": [],
-      "fill": 28,
+      "fill": 24,
       "inspector": null
     },
     {
@@ -203,7 +203,7 @@
       "repeats": [],
       "covered": [],
       "board": [],
-      "fill": 31,
+      "fill": 26,
       "inspector": null
     },
     {
@@ -319,7 +319,7 @@
       "repeats": [],
       "covered": [],
       "board": [],
-      "fill": 31,
+      "fill": 26,
       "inspector": null
     }
   ]

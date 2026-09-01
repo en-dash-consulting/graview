@@ -241,11 +241,11 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   box-shadow:
     0 calc(var(--graview-rise, 8) * 1px) 0 -1px ${
       scheme === "light"
-        ? "hsl(var(--graview-hue, 200) 30% 74% / 0.9)"
+        ? "hsl(var(--graview-hue, 200) 22% 70% / 0.55)"
         : "hsl(var(--graview-hue, 200) 45% 15% / 0.92)"
     },
     0 calc(var(--graview-rise, 8) * 1px + 16px) 30px -10px ${
-      scheme === "light" ? "rgba(20,30,32,0.30)" : "rgba(0,0,0,0.55)"
+      scheme === "light" ? "rgba(20,30,32,0.22)" : "rgba(0,0,0,0.55)"
     };
 }
 

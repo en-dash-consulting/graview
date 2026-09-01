@@ -626,7 +626,10 @@ export function layout<S extends AnySchema>(
    * is the same class of transform the plane model already uses.
    */
   const contextSize = state.overview
-    ? { width: Math.min(220, opts.width / 6.5), height: Math.min(132, opts.height * 0.18) }
+    ? // Squat cards: a kind card holds a name, a count and a bar, and a tall
+      // one from altitude was mostly empty tint — a sticky note, not a
+      // building face.
+      { width: Math.min(220, opts.width / 6.5), height: Math.min(92, opts.height * 0.125) }
     : fit(slotted.length, zoomed ? 240 : opts.contextSize.width, band.contextH);
   const contextPositions: {
     x: number;
@@ -1021,7 +1024,13 @@ function connectorsFor<N extends { id: string; kind: string }>(
      * a scene full of other lines is noise, and the relation is visible there
      * as an ordinary edge between the two real nodes.
      */
-    if (from.id === to.id && !(state.overview && from.aggregate)) continue;
+    /*
+     * A loop is drawn only on a KIND CARD. On the focus it said nothing: the
+     * live view already shows that relation as its own content — the matrix
+     * IS develops — and the ring it drew around the stamp read as a stray
+     * mark the size of the scene.
+     */
+    if (from.id === to.id && !(state.overview && from.aggregate && from.plane === 2)) continue;
     const id = `${edge.kind}:${from.id}:${to.id}`;
     if (connectors.has(id)) continue;
     connectors.set(id, {

@@ -9,8 +9,8 @@ tags:
   - "ux"
 source: "Session feedback while using the board, calendar and desk"
 startedAt: "2026-08-31T02:50:25.657Z"
-completedAt: "2026-09-01T02:08:56.152Z"
-endedAt: "2026-09-01T02:08:56.152Z"
+completedAt: "2026-09-01T02:49:04.705Z"
+endedAt: "2026-09-01T02:49:04.705Z"
 acceptanceCriteria:
   - "Single click on any data-graview-pick target selects it and leaves the view where it is"
   - "Double click on a pick target travels to it (focus); double click on a view with no pick target still jacks in"
@@ -28,6 +28,7 @@ description: "Clicking a thing currently TRAVELS to it, which is the wrong defau
 | Title | Status |
 |-------|--------|
 | [A raised relation keeps its origin visible](./a-raised-relation-keeps-its-0e68e9.md) | completed |
+| [An action that cannot succeed is not offered, and one that refuses says so](./an-action-that-cannot-succeed-ea8c2c.md) | completed |
 | [Decide where the agent seat lives, or whether it lives in the bar at all](./decide-where-the-agent-seat-be16d0.md) | completed |
 | [Editing a value in place](./editing-a-value-in-place.md) | completed |
 | [Every action title says what it does](./every-action-title-says-what-it-does.md) | completed |

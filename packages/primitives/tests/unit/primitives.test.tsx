@@ -347,7 +347,9 @@ describe("a kind card carries its rank", () => {
   it("still names a secondary kind, because it is somewhere you can go", () => {
     // Quieter, not hidden: the card keeps its name and its count.
     const card = focusedOnAna.slice(focusedOnAna.indexOf('data-graview-rank="secondary"'));
-    expect(card.slice(0, 800)).toContain("Blocks");
+    // The style string grew when the card gained an opaque face; the label
+    // still follows immediately after it.
+    expect(card.slice(0, 1400)).toContain("Blocks");
     // And every kind is still on the plane, whatever its rank.
     for (const plural of ["People", "Runs", "Blocks", "Vehicles"]) {
       expect(focusedOnAna).toContain(plural);
