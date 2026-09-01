@@ -142,6 +142,10 @@ Every harness takes `--engine=chromium|webkit|firefox` (or `GRAVIEW_ENGINE`),
 and none hardcodes a browser binary: the engine choice lives in
 `scripts/lib/engine.mjs`, and Chrome Canary is required only where the GPU
 capture flag genuinely is (`pnpm capture`, `pnpm shrunk`, the spikes).
+Run `npx playwright install chromium webkit firefox` once — the default
+engines are Playwright's bundled builds. `GRAVIEW_BROWSER` keeps its old
+meaning: it names the Chromium-family binary for the chromium and canary
+engines.
 
 ### Supported browsers
 

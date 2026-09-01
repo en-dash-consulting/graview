@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T19:57:56.875Z",
+  "at": "2026-09-01T23:16:35.039Z",
   "engines": {
     "chromium": {
       "audit": {
@@ -13,7 +13,8 @@
         "ok": true
       },
       "survey": {
-        "ok": true
+        "ok": true,
+        "shots": 18
       }
     },
     "webkit": {
@@ -28,7 +29,8 @@
         "ok": true
       },
       "survey": {
-        "ok": true
+        "ok": true,
+        "shots": 18
       }
     },
     "firefox": {
@@ -43,7 +45,8 @@
         "ok": true
       },
       "survey": {
-        "ok": true
+        "ok": true,
+        "shots": 18
       }
     }
   },

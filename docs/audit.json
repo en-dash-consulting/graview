@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T21:15:51.697Z",
+  "at": "2026-09-01T23:24:31.615Z",
   "engine": "chromium",
   "screens": [
     {
@@ -82,6 +82,286 @@
       "covered": [],
       "board": [],
       "fill": 20,
+      "inspector": null
+    },
+    {
+      "app": "the household example",
+      "state": "home",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 61,
+      "inspector": null
+    },
+    {
+      "app": "the household example",
+      "state": "selected",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 61,
+      "inspector": {
+        "shown": 8,
+        "hidden": 0,
+        "size": "236x302",
+        "text": "Angie schoolblock· double-click opens×Rename …☆Retime block …☆its tiesSkip one occurrence "
+      }
+    },
+    {
+      "app": "the household example",
+      "state": "raised",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 57,
+      "inspector": null
+    },
+    {
+      "app": "the household example",
+      "state": "travelled",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 30,
+      "inspector": {
+        "shown": 8,
+        "hidden": 0,
+        "size": "236x262",
+        "text": "×Rename …☆Retime block …☆its tiesSkip one occurrence …☆Add someone to it …☆Take someone of"
+      }
+    },
+    {
+      "app": "the household example",
+      "state": "graview",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 24,
+      "inspector": null
+    },
+    {
+      "app": "proposal",
+      "state": "home",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 61,
+      "inspector": null
+    },
+    {
+      "app": "proposal",
+      "state": "selected",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 61,
+      "inspector": {
+        "shown": 13,
+        "hidden": 0,
+        "size": "236x545",
+        "text": "Booking flow remediationdeliverable· double-click opens×\"Legacy booking component is untes"
+      }
+    },
+    {
+      "app": "proposal",
+      "state": "raised",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 59,
+      "inspector": null
+    },
+    {
+      "app": "proposal",
+      "state": "graview",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 26,
+      "inspector": null
+    },
+    {
+      "app": "the coaching example",
+      "state": "team",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 62,
+      "inspector": null
+    },
+    {
+      "app": "the coaching example",
+      "state": "training",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 61,
+      "inspector": null
+    },
+    {
+      "app": "the coaching example",
+      "state": "week",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 60,
+      "inspector": null
+    },
+    {
+      "app": "the coaching example",
+      "state": "selected",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 62,
+      "inspector": {
+        "shown": 6,
+        "hidden": 0,
+        "size": "236x240",
+        "text": "Amaraplayer· double-click opens×Rename …☆its tiesPlay them here …☆Note why this is here …☆"
+      }
+    },
+    {
+      "app": "the coaching example",
+      "state": "raised",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 58,
+      "inspector": {
+        "shown": 13,
+        "hidden": 0,
+        "size": "236x545",
+        "text": "Crossing and finishingdrill· double-click opens×Thursday session plans 65 minutes into 60 "
+      }
+    },
+    {
+      "app": "the coaching example",
+      "state": "travelled",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 29,
+      "inspector": {
+        "shown": 6,
+        "hidden": 0,
+        "size": "236x217",
+        "text": "×Rename …☆its tiesPlay them here …☆Note why this is here …☆They no longer play here …☆They"
+      }
+    },
+    {
+      "app": "the coaching example",
+      "state": "problem",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 62,
+      "inspector": {
+        "shown": 14,
+        "hidden": 0,
+        "size": "236x545",
+        "text": "3 selectedskill · position×Elif is picked at Right midfield but is out — Elif — ankle, and"
+      }
+    },
+    {
+      "app": "the coaching example",
+      "state": "graview",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 26,
+      "inspector": null
+    },
+    {
+      "app": "seedbed",
+      "state": "empty",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 4,
+      "inspector": null
+    },
+    {
+      "app": "seedbed",
+      "state": "invited",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 4,
+      "inspector": {
+        "shown": 1,
+        "hidden": 0,
+        "size": "236x121",
+        "text": "Gardeners· double-click opens×Nothing here yet, though Plots expect to connect to theseWel"
+      }
+    },
+    {
+      "app": "seedbed",
+      "state": "planted",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 4,
       "inspector": null
     }
   ]

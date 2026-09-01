@@ -653,16 +653,20 @@ export function Inspector() {
           aria-label="Filter actions"
           onKeyDown={(event) => {
             if (event.key === "Escape") {
-              if (query.length > 0) {
-                // Clearing the filter must not also clear the selection —
-                // the document-level Escape stays out of it.
-                event.stopPropagation();
-                setQuery("");
-              }
+              // Clearing the filter must not also clear the selection —
+              // the document-level Escape stays out of it either way.
+              event.stopPropagation();
+              if (query.length > 0) setQuery("");
+              // An empty field releases the key: blurred, the NEXT Escape
+              // reaches the product-wide back-out instead of dying here.
+              else event.currentTarget.blur();
               return;
             }
             if (event.key === "Enter" && matched?.length === 1) {
               const sole = matched[0]!;
+              // What cannot be taken back is never one generic keystroke:
+              // the destructive tail keeps requiring the aimed click.
+              if (sole.destructive) return;
               if (sole.open.length > 0) setPending(sole.id);
               else if (act(sole)) setQuery("");
             }
@@ -804,7 +808,9 @@ export function Inspector() {
                     {affordance.open.length > 0 ? (
                       <span style={{ color: "var(--graview-ink-faint)" }}> …</span>
                     ) : null}
-                    {matched?.length === 1 && matched[0]?.id === affordance.id ? (
+                    {matched?.length === 1 &&
+                    matched[0]?.id === affordance.id &&
+                    !affordance.destructive ? (
                       // The searcher's promise, made visible exactly when
                       // it holds: Enter runs the one act left standing.
                       <span
@@ -1465,6 +1471,10 @@ export function AgentSeat<S extends AnySchema>({
           session: "ui",
           ...(principal.roles ? { roles: principal.roles } : {}),
         },
+        // Read per call: a pin toggled in the menu after this runtime was
+        // built must still reach the seat's tool list — the strip, the
+        // pointer menu and the agent must never disagree about the acts.
+        derive: () => ({ pins: loadPins() }),
       }),
     [store, principal],
   );

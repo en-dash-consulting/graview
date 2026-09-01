@@ -121,6 +121,31 @@ try {
     ok: survivors === 1 && soleLabel.includes("Mark it done") && dueBefore,
   };
 
+  /* ------------------------------ Enter never runs the destructive tail */
+  // Narrow to the one destructive act and press Enter: nothing may happen.
+  // What cannot be taken back keeps requiring the aimed click, and the row
+  // carries no ↵ promise.
+  await page.fill('[data-testid="action-filter"]', "Drop");
+  await page.waitForTimeout(150);
+  const dropSurvivors = await visibleActionCount(page);
+  const dropHint = await page.evaluate(
+    () =>
+      document.querySelector('[data-testid="inspector-strip"] [data-affordance]')?.textContent ??
+      "",
+  );
+  await page.press('[data-testid="action-filter"]', "Enter");
+  await page.waitForTimeout(400);
+  const stillThere = await page.evaluate(
+    () => document.querySelector('[data-graview-pick="t-book"]') !== null,
+  );
+  report.checks.destructiveNeedsTheClick = {
+    dropSurvivors,
+    hintShown: dropHint.includes("↵"),
+    stillThere,
+    ok: dropSurvivors === 1 && !dropHint.includes("↵") && stillThere,
+  };
+  await page.fill('[data-testid="action-filter"]', "");
+
   /* --------------------------------------------------- pin, then reorder */
   // Clear t-book first: its drawn ties otherwise lie over the next card.
   await page.click('[aria-label="Clear selection"]');

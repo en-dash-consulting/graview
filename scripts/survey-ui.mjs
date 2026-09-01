@@ -453,3 +453,8 @@ for (const shot of report.shots) {
     `${flags.length ? "??" : "ok"} ${`${shot.app}/${shot.state}/${shot.scheme}`.padEnd(34)} ${flags.join("; ")}\n`,
   );
 }
+
+// A pass that could not take its pictures is a FAILED pass, and the engine
+// matrix reads this exit code — exiting 0 over broken shots made the
+// matrix's survey verdict vacuous.
+process.exit(report.error || report.shots.some((shot) => shot.error) ? 1 : 0);

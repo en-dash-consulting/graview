@@ -6,6 +6,7 @@ import {
   describeIntelligence,
   describeProposal,
   loadIntelligenceConfig,
+  loadPins,
   saveIntelligenceConfig,
   type ChatReply,
   type IntelligenceConfig,
@@ -74,6 +75,10 @@ export function ChatPanel<S extends AnySchema>({
           session: "ui",
           ...(principal.roles ? { roles: principal.roles } : {}),
         },
+        // The person's pins reach this seat too — read per call, so a pin
+        // toggled in the menu reorders the chat's tool list without a
+        // rebuild. No surface may disagree with another about the acts.
+        derive: () => ({ pins: loadPins() }),
       }),
     [store, principal],
   );
