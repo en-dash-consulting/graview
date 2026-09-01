@@ -546,11 +546,18 @@ export function layout<S extends AnySchema>(
     aggregate?: Aggregate;
     raised?: boolean;
     focused?: boolean;
+    opened?: boolean;
     rank?: "primary" | "secondary";
     nestedUnder?: string;
   }[] = [];
   for (const entry of entries) {
-    if (expanded.has(entry.id) && entry.members.length > 0) {
+    /*
+     * In the stack an expanded aggregate DISSOLVES into its members. From
+     * altitude it OPENS instead: the card keeps its ring stop and shows its
+     * members in place, because dissolving up there would hand every member
+     * its own stop and re-flow the whole map.
+     */
+    if (!state.overview && expanded.has(entry.id) && entry.members.length > 0) {
       for (const member of entry.members) {
         contextItems.push({ id: member.id, kind: member.kind });
       }
@@ -562,6 +569,7 @@ export function layout<S extends AnySchema>(
         kind: entry.kind,
         ...(entry.raised ? { raised: true } : {}),
         ...(entry.focused ? { focused: true } : {}),
+        ...(state.overview && expanded.has(entry.id) ? { opened: true } : {}),
         ...(rank ? { rank } : {}),
         // Only nest under a card that is actually on the plane: an expanded
         // parent has dissolved into its members and has nothing to hang off.
@@ -845,6 +853,7 @@ export function layout<S extends AnySchema>(
       ...(item.aggregate ? { aggregate: item.aggregate } : {}),
       ...(item.raised ? { raised: true } : {}),
       ...(item.focused ? { focused: true } : {}),
+      ...(item.opened ? { opened: true } : {}),
       ...(item.rank ? { rank: item.rank } : {}),
       ...(item.nestedUnder ? { nestedUnder: item.nestedUnder } : {}),
       depth: item.depth,

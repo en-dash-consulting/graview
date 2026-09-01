@@ -95,6 +95,13 @@ export interface LayoutNode {
    * constant map and you can see that the picture above IS this kind.
    */
   readonly focused?: boolean;
+  /**
+   * An aggregate card OPENED IN PLACE — from altitude, a district showing
+   * its members without dissolving into them. Inside the stack an expanded
+   * aggregate dissolves instead; up on the ring dissolving would re-flow
+   * every stop and break the map.
+   */
+  readonly opened?: boolean;
   /** True when the user pinned this position rather than the layout choosing it. */
   readonly pinned: boolean;
 }

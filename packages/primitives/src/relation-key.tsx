@@ -106,6 +106,9 @@ export function RelationKey<S extends AnySchema>() {
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-low)",
         maxWidth: 250,
+        // Arrives after the cards have mostly flown, rather than popping at
+        // the cut.
+        animation: "graview-settle 380ms 280ms ease backwards",
       }}
     >
       <span

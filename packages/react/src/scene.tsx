@@ -456,7 +456,10 @@ export function Scene<S extends AnySchema>({
     <div
       ref={wrapperRef}
       className={`graview-ground${className ? ` ${className}` : ""}`}
-      // From altitude the ground itself recedes; the theme reads this.
+      // From altitude the ground itself recedes; the theme reads this. The
+      // attribute flips the non-animatable modes; the NUMBER is what the
+      // grids, blocks and shadows actually ride, and it transitions — so
+      // rising is a morph, not a cut.
       data-graview-altitude={view.overview ? "" : undefined}
       onPointerDown={onGroundDown}
       onPointerMove={onDragMove}
@@ -468,6 +471,7 @@ export function Scene<S extends AnySchema>({
         height: "100%",
         cursor: dragging ? "grabbing" : "grab",
         touchAction: "none",
+        ["--graview-altitude" as string]: view.overview ? 1 : 0,
         ...(dragging ? { userSelect: "none" as const } : {}),
 
         // The stage is sized to the measurement, but a stale measurement
@@ -527,6 +531,7 @@ export function Scene<S extends AnySchema>({
         overview={view.overview ?? false}
         selection={selection}
         emphasis={emphasis}
+        stageRef={wrapperRef}
         liveOf={(connector) => {
           /*
            * A relation PULSES where it was just made or broken.
@@ -611,25 +616,49 @@ function SelectionTies<S extends AnySchema>({
   const stage = stageRef.current?.getBoundingClientRect();
   if (!stage) return null;
 
-  /** A drawn box for an id: its own pick target first, then what contains it. */
-  const boxFor = (id: string): { x: number; y: number; width: number; height: number } | null => {
-    const picked = stageRef.current?.querySelector(`[data-graview-pick="${CSS.escape(id)}"]`);
-    if (picked) {
-      const rect = picked.getBoundingClientRect();
-      if (rect.width > 2)
-        return { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height };
-    }
-    const drawn =
-      nodes.find((node) => node.id === id) ??
-      nodes.find((node) => node.aggregate?.memberIds.includes(id));
-    return drawn ? drawnBox(drawn, scheme) : null;
+  /*
+   * The ELEMENT standing for an id, when the view drew one: a pick target,
+   * or a board slot (an occupied slot's pick is its occupant, but the slot
+   * itself is still a place a tie can land on).
+   */
+  const elementBox = (id: string): { x: number; y: number; width: number; height: number } | null => {
+    const el = stageRef.current?.querySelector(
+      `[data-graview-pick="${CSS.escape(id)}"], [data-graview-slot="${CSS.escape(id)}"]`,
+    );
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 2) return null;
+    return { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height };
   };
+  /** The laid-out node that IS this id, or stands for it. */
+  const hostOf = (id: string): SceneNode | undefined =>
+    nodes.find((node) => node.id === id) ??
+    nodes.find((node) => node.aggregate?.memberIds.includes(id));
 
   const seen = new Set<string>();
   const lines: { key: string; kind: string; d: string; endX: number; endY: number }[] = [];
   for (const tie of ties) {
-    const fromBox = boxFor(tie.self);
-    const toBox = boxFor(tie.other);
+    const selfHost = hostOf(tie.self);
+    const otherEl = elementBox(tie.other);
+    const otherHost = hostOf(tie.other);
+    /*
+     * A tie INTERNAL to the view you are looking at draws no line. With no
+     * element of its own, the neighbour would resolve to the same container
+     * the selection sits in — a line from a thing to the border of its own
+     * room, which is the broken-looking stub this replaces. The view's own
+     * emphasis already shows in-view relationships.
+     */
+    if (!otherEl && otherHost && selfHost && otherHost.id === selfHost.id) continue;
+    const fromBox =
+      elementBox(tie.self) ??
+      (selfHost
+        ? (measureVisible(stageRef.current, selfHost.id, false) ?? drawnBox(selfHost, scheme))
+        : null);
+    const toBox =
+      otherEl ??
+      (otherHost
+        ? (measureVisible(stageRef.current, otherHost.id, true) ?? drawnBox(otherHost, scheme))
+        : null);
     if (!fromBox || !toBox) continue;
     // Several members of one shelf card collapse to one line per relation.
     const key = `${tie.kind}:${Math.round(fromBox.x)}:${Math.round(toBox.x)},${Math.round(toBox.y)}`;
@@ -1255,6 +1284,35 @@ function drawnBox(
   return { x: node.x, y: node.y, width: node.width * scale, height: node.height * scale };
 }
 
+/**
+ * The box a person can SEE for a laid-out node, measured from the DOM.
+ *
+ * A host is a band slot with the view somewhere inside it — the focus band
+ * pokes above its panel, a shrunk view centres in a taller natural box, and
+ * from altitude the visible thing is the iso block at the bottom of the
+ * card. Lines anchored to host borders ended in open air on every one of
+ * those; lines anchored to the measured inner box end on the thing itself.
+ * Null when there is no DOM to measure (tests, SSR) — callers fall back to
+ * the layout box.
+ */
+function measureVisible(
+  stageEl: HTMLElement | null,
+  id: string,
+  preferBlock: boolean,
+): { x: number; y: number; width: number; height: number } | null {
+  if (!stageEl || typeof document === "undefined") return null;
+  const host = stageEl.querySelector(`[data-graview-view="${CSS.escape(id)}"]`);
+  if (!host) return null;
+  const inner =
+    (preferBlock ? host.querySelector(".graview-kind-block") : null) ??
+    host.querySelector('[data-graview-primitive="panel"], .graview-kind-face, .graview-kind-card') ??
+    host;
+  const rect = inner.getBoundingClientRect();
+  if (rect.width <= 2 || rect.height <= 2) return null;
+  const stage = stageEl.getBoundingClientRect();
+  return { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height };
+}
+
 /** The centre of a node's box as DRAWN, after its plane's scale. */
 function drawnCentre(
   node: SceneNode | undefined,
@@ -1311,9 +1369,12 @@ function Connectors({
   overview,
   selection,
   emphasis,
+  stageRef,
   liveOf,
 }: {
   readonly overview: boolean;
+  /** For measuring the boxes a person can actually see. */
+  readonly stageRef: { current: HTMLElement | null };
   /** So a chosen kind's relations can stand out from the rest. */
   readonly selection: readonly string[];
   /** A relation the legend is asking about: its lines come forward. */
@@ -1354,11 +1415,11 @@ function Connectors({
    * The live view standing in the middle of the ring, whose box is the one
    * thing a road between districts must not run beneath.
    */
-  const stamp = overview
-    ? drawnBox(
-        result.nodes.find((node) => Math.round(node.plane) === 0),
-        scheme,
-      )
+  const stampNode = overview
+    ? result.nodes.find((node) => Math.round(node.plane) === 0)
+    : undefined;
+  const stamp = stampNode
+    ? (measureVisible(stageRef.current, stampNode.id, false) ?? drawnBox(stampNode, scheme))
     : null;
   /*
    * A connector must touch a RAISED node, and must not end on a receded
@@ -1403,15 +1464,18 @@ function Connectors({
       }}
     >
       {connectors.map((connector) => {
-        // Endpoints are recomputed against the DRAWN boxes, not layout's own
-        // centres: a plane scales its box in place, so a receded node's centre
-        // is not where layout's unscaled box says it is. Using layout's
-        // coordinates here sent every connector to a point off the canvas.
-        const fromBox = drawnBox(byId.get(connector.from), scheme);
-        const toBox = drawnBox(byId.get(connector.to), scheme);
-        const fromCentre = centre(byId.get(connector.from));
-        const toCentre = centre(byId.get(connector.to));
-        if (!fromBox || !toBox || !fromCentre || !toCentre) return null;
+        // Endpoints are the boxes a person can SEE — measured from the DOM,
+        // with layout's scaled box only as the headless fallback. Host
+        // borders sat in open air wherever a view is smaller than its band.
+        const fromBox =
+          measureVisible(stageRef.current, connector.from, overview) ??
+          drawnBox(byId.get(connector.from), scheme);
+        const toBox =
+          measureVisible(stageRef.current, connector.to, overview) ??
+          drawnBox(byId.get(connector.to), scheme);
+        if (!fromBox || !toBox) return null;
+        const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
+        const toCentre = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
         /*
          * In the overview a line meets a card at its border, facing the
          * other end — the border is honest up there, because a kind card
@@ -1422,6 +1486,7 @@ function Connectors({
          */
         const from = overview ? edgePoint(fromBox, toCentre) : fromCentre;
         const to = overview ? edgePoint(toBox, fromCentre) : toCentre;
+        if (!from || !to) return null;
         /*
          * A LOOP, where both ends are the same card.
          *
@@ -1618,6 +1683,7 @@ export function ResolvedView<S extends AnySchema>({
     flagged,
     ...(node.raised ? { raised: true } : {}),
     ...(node.focused ? { focused: true } : {}),
+    ...(node.opened ? { opened: true } : {}),
     ...(node.rank ? { rank: node.rank } : {}),
     ...(node.nestedUnder ? { nestedUnder: node.nestedUnder } : {}),
     ...(hasOwnView ? { hasOwnView: true } : {}),
