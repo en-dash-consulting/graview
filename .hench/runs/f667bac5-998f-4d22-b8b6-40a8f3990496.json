@@ -1,0 +1,28 @@
+{
+  "id": "f667bac5-998f-4d22-b8b6-40a8f3990496",
+  "taskId": "5a35ebdf-b435-4b0e-ae6e-4cc219ebef25",
+  "taskTitle": "An empty app is an onboarding: seedbed",
+  "startedAt": "2026-09-01T06:43:49.284Z",
+  "finishedAt": "2026-09-01T06:43:49.284Z",
+  "status": "completed",
+  "turns": 95,
+  "summary": "Sixth example app ships empty; creates-seam derives each kind's beginnings; seat plants a reviewable starter garden; harness-covered at zero",
+  "tokenUsage": {
+    "input": 190,
+    "output": 76164,
+    "cacheCreationInput": 130069,
+    "cacheReadInput": 30672849
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 190,
+    "output": 76164,
+    "cached": 30802918,
+    "total": 30879272
+  }
+}

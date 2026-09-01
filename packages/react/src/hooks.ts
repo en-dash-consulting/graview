@@ -1,6 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import {
   fromUrl,
+  kindsOf,
   toggleExpanded,
   toUrl,
   withFocus,
@@ -122,14 +123,16 @@ export function useAffordances<S extends AnySchema>(
 ): AffordanceSet {
   const { store, selection, principal } = useGraview<S>();
   const nodes = useGraph<S>();
-  return useMemo(
+  return useMemo(() => {
+    // A selected kind card or district denotes KINDS; the binding owns those
+    // ids, so it translates here and providers only ever see the kinds.
+    const kindSelection = [...new Set(selection.flatMap((id) => kindsOf(id)))];
     // Asked as WHOEVER IS HERE, so what the strip offers is what the store
     // would accept — and what it withholds is stated with a reason rather
     // than quietly missing.
-    () => deriveAffordances(store, selection, { principal, ...options }),
+    return deriveAffordances(store, selection, { principal, kindSelection, ...options });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, selection, options, nodes, principal],
-  );
+  }, [store, selection, options, nodes, principal]);
 }
 
 /** Runs an affordance, or shows what it would do first. */

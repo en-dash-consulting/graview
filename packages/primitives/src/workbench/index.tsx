@@ -1,5 +1,5 @@
 import { labelOf, type AnySchema, type Store } from "@graview/core";
-import { withoutMoves, withOverview, withPast, withZoom } from "@graview/layout";
+import { kindsOf, withoutMoves, withOverview, withPast, withZoom } from "@graview/layout";
 import {
   useAffordances,
   useApplyAffordance,
@@ -155,6 +155,21 @@ function choicesFor(
 
 /** A node's own label where there is one, so a picker never offers raw ids. */
 export function nameOf(store: Store<AnySchema>, id: string): string {
+  /*
+   * A selected KIND CARD names its kind, in the plural the declaration
+   * already carries — "Gardeners", never "kind:gardener". In an empty app
+   * the kind card is the first thing anyone selects, so the raw id here was
+   * the first string the interface ever showed them.
+   */
+  const kinds = kindsOf(id);
+  if (kinds.length > 0) {
+    return kinds
+      .map((kind) => {
+        const definition = store.schema.tryDefinition(kind);
+        return definition?.plural ?? `${kind}s`;
+      })
+      .join(" + ");
+  }
   const node = store.graph.getNode(id);
   if (!node) return id;
   return labelOf(store.schema.tryDefinition(node.kind), node as never);

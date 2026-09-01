@@ -229,8 +229,16 @@ export function GraviewProvider<S extends AnySchema>({
                 : false;
           if (gone) resolved = { ...resolved, focusId: null };
         }
-        if (!resolved.overview && resolved.focusId === null && homeView.focusId !== null) {
-          resolved = { ...resolved, focusId: homeView.focusId };
+        if (!resolved.overview && resolved.focusId === null) {
+          if (homeView.focusId !== null) {
+            resolved = { ...resolved, focusId: homeView.focusId };
+          } else if (homeView.overview === true) {
+            // An app that OPENS from altitude has no in-stack default:
+            // falling out of the overview with nothing to focus lands back
+            // on the overview, so Escape at the outermost place is a no-op
+            // rather than a void.
+            resolved = { ...resolved, overview: true };
+          }
         }
         return resolved;
       };

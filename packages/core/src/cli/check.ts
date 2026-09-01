@@ -245,6 +245,17 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
      * actions strip. An unreadable one costs twice, which is why this is
      * checked at build time rather than noticed in use.
      */
+    for (const created of mutation.creates ?? []) {
+      if (!kinds.has(created as string)) {
+        add({
+          severity: "error",
+          code: "creates-unknown-kind",
+          where: `defineMutation("${mutation.name}").creates`,
+          message: `Claims to create "${String(created)}", which no defineNode declares.`,
+          fix: `Declare the kind, or correct the creates list.`,
+        });
+      }
+    }
     if (!mutation.title || mutation.title.trim().length === 0) {
       add({
         severity: "error",

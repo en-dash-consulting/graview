@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T06:23:50.317Z",
+  "at": "2026-09-01T06:38:44.389Z",
   "screens": [
     {
       "app": "todo",
@@ -320,6 +320,47 @@
       "covered": [],
       "board": [],
       "fill": 26,
+      "inspector": null
+    },
+    {
+      "app": "seedbed",
+      "state": "empty",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 4,
+      "inspector": null
+    },
+    {
+      "app": "seedbed",
+      "state": "invited",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 4,
+      "inspector": {
+        "shown": 1,
+        "hidden": 0,
+        "size": "236x79",
+        "text": "Gardeners· double-click opens×Welcome a gardener …"
+      }
+    },
+    {
+      "app": "seedbed",
+      "state": "planted",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 4,
       "inspector": null
     }
   ]
