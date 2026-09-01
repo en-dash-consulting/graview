@@ -2,7 +2,7 @@
 id: "5d3773c0-3751-4007-839b-e07e9b9b4faa"
 level: "epic"
 title: "Graview — spatial context-graph framework"
-status: "completed"
+status: "pending"
 priority: "high"
 tags:
   - "framework"
@@ -12,7 +12,6 @@ tags:
   - "context-graph"
 source: "Session planning — architecture agreed 2026-08-29"
 startedAt: "2026-08-30T04:55:36.895Z"
-completedAt: "2026-09-01T16:33:19.919Z"
 endedAt: "2026-09-01T16:33:19.919Z"
 acceptanceCriteria:
   - "The household example's week calendar and People relation render as one spatial scene, editable at plane 0"
@@ -46,6 +45,7 @@ description: "A framework for building applications where a typed context graph 
 | [Selection is part of the stop: URL-addressable, restored by back/forward](./selection-is-part-of-the-stop-88cfdf.md) | completed |
 | [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | completed |
 | [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
+| [The DOM path is a citizen of every browser](./the-dom-path-is-a-citizen-of-976f8a.md) | pending |
 | [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |
 | [The graph also wears a traditional face: a routed webapp derived from the same declaration](./the-graph-also-wears-a-dd174e.md) | completed |
 | [The lines are editable: relations as first-class selectable, modifiable things](./the-lines-are-editable-492161.md) | completed |
