@@ -48,6 +48,39 @@ somebody with a bright office files a bug — so the framework measures it.
 
 4. **Declare it on the app too:** `defineApp({ ..., brand })`.
 
+5. **Colour the kinds themselves.** Every surface that colours by kind —
+   chips, districts, calendar spans, rosters — reads `brand.accents`, a hue
+   in degrees per kind, before falling back to the stable hash:
+
+   ```ts
+   accents: { gardener: 28, plot: 42, planting: 122, rule: 210 },
+   ```
+
+   `graview check` refuses an accent naming a kind nobody declared (a typo
+   would otherwise silently hash) and a value that is not a number.
+
+## Styling by conversation
+
+This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more
+editorial", "our green is #1B4332", "make people amber and money green" —
+because the whole look is one serialisable declaration:
+
+- **palette** → change `accent` (or supply explicit scheme tokens) and let
+  `brandFromAccent` move lightness the minimum distance that clears AA;
+- **feel** → `shape.radius` (square = formal) and `shape.density` (tight =
+  dense) — one number each;
+- **voice** → `typography.body/display/mono` with real fallback stacks;
+- **kind colours** → `accents` hues per kind;
+- **per-kind layout** → register a view over the registry cell, the same
+  authoring move as everything else (see graview-node-kind).
+
+The loop for each request: edit ONLY the declaration file, run `pnpm check`
+(the framework measures contrast rather than trusting either of you), then
+`pnpm survey` and show the before/after screenshots from `docs/survey/`
+side by side. Never edit a component to achieve a look a token can carry —
+if a look genuinely needs one, that is a missing token to raise, not a fork
+to make.
+
 ## Worked example
 
 - `the bid-desk example/src/domain/brand.ts` — the bid desk shipping as "the bid-desk example"

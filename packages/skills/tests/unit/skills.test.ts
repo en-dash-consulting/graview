@@ -38,6 +38,7 @@ describe("the skills package", () => {
       "graview-node-kind",
       "graview-permissions",
       "graview-port-app",
+      "graview-ship",
     ]);
   });
 
