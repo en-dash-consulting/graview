@@ -10,14 +10,15 @@ import { beatOpacity } from "../camera";
 import { fadeIn, springProgress } from "../motion";
 import { beats, colors, fonts, tagline } from "../theme";
 
-/** Lockup hold — then composition dips to white into En Dash outro. */
+/** Short punch lockup (~4s) — then composition dips to white into En Dash outro. */
 export const SettleLockup: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   // Soft out into the composition white dip (last ~DIP_WHITE frames)
-  const opacity = beatOpacity(frame, 0, 12, beats.settle.duration - 28, 22);
-  const lock = springProgress(frame, fps, 16, "settle");
-  const tag = fadeIn(frame, 55, 18);
+  const opacity = beatOpacity(frame, 0, 10, beats.settle.duration - 22, 18);
+  const lock = springProgress(frame, fps, 6, "settle");
+  // Tagline sooner — settle is only ~4s now
+  const tag = fadeIn(frame, 28, 14);
 
   return (
     <AbsoluteFill style={{ opacity }}>
