@@ -1,0 +1,84 @@
+---
+name: graview-ship
+description: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+---
+
+# Ship a Graview app
+
+`@graview/ship` holds what every deployment needs. One `defineApp`
+declaration plus one persistence adapter is a running deployment; nothing
+here requires a service.
+
+## Do this
+
+1. **Open the store through ship**, not by hand:
+
+   ```ts
+   import { createFileAdapter, openStore } from "@graview/ship";
+
+   const opened = await openStore({ app, adapter: createFileAdapter("./data") });
+   // opened.store is an ordinary Store; every applied diff is appended to
+   // the log and the snapshot rewritten, serialised in order. Hand off with
+   // `await opened.flush()` before close/exit — writes are async.
+   // One writer per scope: opening it twice interleaves and clobbers.
+   ```
+
+   The file adapter is deliberately readable: `snapshot.json`, append-only
+   `log.jsonl`, `meta.json` with the stored schema version. The core's
+   sqlite adapter is the scale answer.
+
+2. **Version the declaration, and migrate in primitives.** When the schema
+   changes shape:
+
+   ```ts
+   defineApp({
+     ...,
+     version: 2,
+     migrations: [{
+       from: 1, to: 2,
+       title: "size words become bed counts",
+       apply: (snapshot) => snapshot.nodes
+         .filter((node) => node.kind === "plot")
+         .map((node) => ({ op: "patch-node", id: node.id,
+           before: { size: node.size, beds: undefined },
+           after:  { size: undefined, beds: node.size === "large" ? 6 : 2 } })),
+     }],
+   })
+   ```
+
+   A migration answers in the op log's own five words, so running one appends
+   ordinary operations — authored `system · ship:migration`, stating intent,
+   carrying their inverse. `openStore` runs the pending chain on load.
+   `graview check` refuses a chain with a hole or a multi-version jump
+   (`migration-gap`, `migration-not-single-step`) before deploy time finds it.
+
+3. **Export is the exit.** `exportBundle(app, store)` — graph, attributed
+   history and version in one JSON shape; `assertBundle` refuses someone
+   else's app or a newer version, plainly. A tenant who cannot leave was
+   never a customer.
+
+4. **Health is coherence, not liveness.** `health(store)` reports sizes,
+   standing and dangling edges — poll it per deployment, curl it self-hosted.
+
+## Then find out whether it worked
+
+Write, close, reopen, and read: the graph must survive the round trip and
+the persisted log must carry your ops with their authors. The framework's
+own rehearsal (`pnpm smoke`) does exactly this from packed tarballs —
+`theDeploymentShipped` is the verdict to mimic.
+
+## What the check cannot see
+
+- Whether your migration is the RIGHT transform — the chain being unbroken
+  says nothing about the data arriving meaningful. Migrate a copy of real
+  data and read it before shipping the step.
+- Whether the adapter's storage location survives your deployment story
+  (containers with ephemeral disks lose a file adapter's whole point).
+- Whether the export actually round-trips: rehearse import into a fresh
+  deployment, the way the framework's smoke run does — do not assume it.
+
+## The boundary
+
+Anything ONE deployment needs belongs in ship. Tenancy, provisioning,
+deploy-to-URL, billing and fleet upgrades belong to the operator of many —
+a separate service consuming ship like any customer.

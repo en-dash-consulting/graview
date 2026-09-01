@@ -238,6 +238,17 @@ export function BoardView<S extends AnySchema>({
    */
   const room = useRef<HTMLDivElement | null>(null);
   const [turned, setTurned] = useState(false);
+  /*
+   * The room's measured height, because `height: 100%` + `aspect-ratio`
+   * cannot be trusted to produce a width here. The board sits in a flex row
+   * inside a stretched flex row inside a flexed panel, and in that chain
+   * Firefox and WebKit treat the percentage height as indefinite when
+   * transferring it through the aspect ratio — the pitch collapsed to its
+   * two border pixels, taking every slot's hit target with it. Chromium was
+   * lenient, which is how it shipped. The observer below already watches
+   * the room, so the width is set from the same measurement.
+   */
+  const [tall, setTall] = useState<number | null>(null);
   useEffect(() => {
     const element = room.current;
     if (!element || typeof ResizeObserver === "undefined") return;
@@ -245,6 +256,7 @@ export function BoardView<S extends AnySchema>({
       const box = entries[0]?.contentRect;
       if (!box || box.height === 0) return;
       setTurned(aspect < 1 && box.width / box.height > 1.3);
+      setTall(box.height);
     });
     observer.observe(element);
     return () => observer.disconnect();
@@ -507,6 +519,9 @@ export function BoardView<S extends AnySchema>({
             height: "100%",
             flex: "0 1 auto",
             aspectRatio: `${turned ? 1 / aspect : aspect}`,
+            // The measured width, once the room has spoken — see `tall`.
+            // The aspect ratio above stays as the first-paint estimate.
+            ...(tall !== null ? { width: Math.round(tall * (turned ? 1 / aspect : aspect)) } : {}),
             maxWidth: "100%",
             // Its own border counts INSIDE the hundred percent. Without this
             // the pitch is two pixels taller than the box it was told to

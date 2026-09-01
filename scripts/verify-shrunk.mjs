@@ -22,18 +22,14 @@ import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { launchCanaryGpu } from "./lib/engine.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
-const BROWSER =
-  process.env["GRAVIEW_BROWSER"] ??
-  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
-const FLAGS = [
-  "--enable-blink-features=CanvasDrawElement",
-  "--enable-unsafe-webgpu",
-  "--use-angle=metal",
-];
+
+// The GPU capture path: Chromium-only by nature, so Canary is genuinely
+// required here — the one launch shape the engine matrix does not cover.
+const GPU_ARGS = ["--enable-unsafe-webgpu", "--use-angle=metal"];
 
 /**
  * Every place worth checking, named the way the app names it.
@@ -157,15 +153,11 @@ const measure = () => {
   };
 };
 
-const report = { at: new Date().toISOString(), browser: BROWSER, flags: FLAGS, places: [] };
+const report = { at: new Date().toISOString(), engine: "canary-gpu", flags: GPU_ARGS, places: [] };
 let browser;
 
 try {
-  browser = await chromium.launch({
-    executablePath: BROWSER,
-    headless: !process.argv.includes("--headed"),
-    args: FLAGS,
-  });
+  browser = await launchCanaryGpu({ headless: !process.argv.includes("--headed"), extraArgs: GPU_ARGS });
 
   for (const app of APPS) {
     const vite = await startVite(app);

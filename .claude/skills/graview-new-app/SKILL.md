@@ -112,6 +112,23 @@ that walks your own acceptance criteria and writes a JSON verdict (the
 framework has five, and each names the claim that stopped being true rather
 than a pass count), and a persistence adapter test if you are not using memory.
 
+## Supported browsers
+
+Build for the DOM path: it runs in Chromium, WebKit and Firefox, and the
+framework verifies all three (`pnpm engines` in the framework repo). What to
+tell your users:
+
+- The hard floor is `document.adoptedStyleSheets`: Safari 16.4+,
+  Firefox 101+, Chromium 99+.
+- The altitude morph rides `@property` (Firefox 128+, Safari 16.4+); where
+  that is missing it degrades to a clean cut on its own — do not write a
+  fallback for it.
+- The chat's local-model rung needs WebGPU or Chrome's Prompt API. Without
+  either, the graph answers and the header says why. Nothing to do, but do
+  not promise on-device AI to Safari users without checking.
+- The GPU capture path (`?renderer=gpu`) is Chromium-only, experimental and
+  opt-in. Never make it a requirement of your product.
+
 ## Then find out whether it worked
 
 ```sh

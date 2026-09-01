@@ -20,21 +20,19 @@ import { writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { engineName, launchEngine } from "./lib/engine.mjs";
 
 const require = createRequire(import.meta.url);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const AXE = require.resolve("axe-core/axe.min.js");
 const PAGE = `file://${resolve(repoRoot, "docs/site/index.html")}`;
-const BROWSER =
-  process.env["GRAVIEW_BROWSER"] ??
-  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+const ENGINE = engineName();
 
 /* 320 is the reflow floor WCAG asks for; 1920 is where a wide layout gives up. */
 const WIDTHS = [320, 360, 414, 600, 768, 900, 1024, 1280, 1440, 1920];
 
-const report = { at: new Date().toISOString(), viewports: [], criteria: {} };
-const browser = await chromium.launch({ executablePath: BROWSER, headless: true });
+const report = { at: new Date().toISOString(), engine: ENGINE, viewports: [], criteria: {} };
+const browser = await launchEngine(ENGINE, { headless: true });
 
 try {
   for (const scheme of ["light", "dark"]) {

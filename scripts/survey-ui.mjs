@@ -16,12 +16,10 @@ import { spawn } from "node:child_process";
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { engineName, launchEngine } from "./lib/engine.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const BROWSER =
-  process.env["GRAVIEW_BROWSER"] ??
-  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+const ENGINE = engineName();
 const out = resolve(repoRoot, "docs/survey");
 
 /** Every landing place, and how to get to it from a fresh load. */
@@ -375,7 +373,7 @@ const measure = () => {
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
-const report = { at: new Date().toISOString(), shots: [] };
+const report = { at: new Date().toISOString(), engine: ENGINE, shots: [] };
 let browser;
 
 /*
@@ -397,11 +395,7 @@ if (only) {
 }
 
 try {
-  browser = await chromium.launch({
-    executablePath: BROWSER,
-    headless: !process.argv.includes("--headed"),
-    args: ["--enable-blink-features=CanvasDrawElement"],
-  });
+  browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
 
   for (const [name, app] of Object.entries(APPS)) {
     if (only && only !== name) continue;

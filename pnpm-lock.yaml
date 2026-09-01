@@ -36,8 +36,8 @@ importers:
         specifier: ^13.0.3
         version: 13.0.3
       playwright:
-        specifier: ^1.49.0
-        version: 1.62.1
+        specifier: 1.49.1
+        version: 1.49.1
       react:
         specifier: ^19.2.0
         version: 19.2.8
@@ -1834,14 +1834,14 @@ packages:
     resolution: {integrity: sha512-xhcb4yHu9sM/G7foGzoLtXYcC0zHEaOXXjRKhGup0fw78Nf2Tkiapv4EQyMzrbcmQPsllAI7DbFY2UT7PlI9Pg==}
     hasBin: true
 
-  playwright-core@1.62.1:
-    resolution: {integrity: sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==}
-    engines: {node: '>=20'}
+  playwright-core@1.49.1:
+    resolution: {integrity: sha512-BzmpVcs4kE2CH15rWfzpjzVGhWERJfmnXmniSyKeRZUs9Ws65m+RGIi7mjJK/euCegfn3i7jvqWeWyHe9y3Vgg==}
+    engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.62.1:
-    resolution: {integrity: sha512-0M+L3LAD8/nm554LOla9Ayx0j0tmFZ0FBcoQ7F1VuVHpM/XpiC8RcDzBQB8W5+hA8L22THxELzeF+2WcUzvcLg==}
-    engines: {node: '>=20'}
+  playwright@1.49.1:
+    resolution: {integrity: sha512-VYL8zLoNTBxVOrJBbDuRgDWa3i+mfQgDTrL8Ah9QXZ7ax4Dsj0MSq5bYgytRnDVVe+njoKnfsYkH3HzqVj5UZA==}
+    engines: {node: '>=18'}
     hasBin: true
 
   pngjs@7.0.0:
@@ -3631,11 +3631,11 @@ snapshots:
     dependencies:
       pngjs: 7.0.0
 
-  playwright-core@1.62.1: {}
+  playwright-core@1.49.1: {}
 
-  playwright@1.62.1:
+  playwright@1.49.1:
     dependencies:
-      playwright-core: 1.62.1
+      playwright-core: 1.49.1
     optionalDependencies:
       fsevents: 2.3.2
 

@@ -201,6 +201,16 @@ export function localCompletion(
       };
     }
 
+    /*
+     * CAPABILITY GATING, STATED. WebLLM needs WebGPU; without it the
+     * engine would download megabytes of loader only to fail obscurely.
+     * Failing here, first, is what lets the chat header say WHY the rung
+     * is unavailable in this browser rather than shrugging — and the
+     * graph floor answers either way.
+     */
+    if (!(globalThis.navigator as { gpu?: unknown } | undefined)?.gpu) {
+      throw new Error("this browser has no WebGPU, which the local model needs");
+    }
     const url = "https://esm.run/@mlc-ai/web-llm";
     const webllm = (await import(/* @vite-ignore */ url)) as {
       CreateMLCEngine(model: string, options: { initProgressCallback?: (p: { progress: number; text: string }) => void }): Promise<EngineLike>;
