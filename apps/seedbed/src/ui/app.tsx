@@ -19,6 +19,7 @@ import {
   Standing,
   Trail,
   Wordmark,
+  QuickRelations,
 } from "@graview/primitives";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
 import { useCallback, useMemo, useState } from "react";
@@ -118,6 +119,7 @@ function Shell({
       <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0 }}>
         <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
         <RelationKey<S> />
+        <QuickRelations<S> />
         <OverviewButton />
         <Inspector />
       </div>
