@@ -47,6 +47,16 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    * safe one is merely over-cautious.
    */
   readonly destructive?: boolean;
+  /**
+   * Node kinds this mutation brings into existence.
+   *
+   * The other half of the affordance seam. `subject` answers "what can I do
+   * WITH this thing"; `creates` answers the question an empty kind card
+   * poses — "how does the first one get here". Declared rather than
+   * inferred, because what `apply` adds is not statically knowable, and the
+   * empty state is exactly where a wrong guess would strand someone.
+   */
+  readonly creates?: readonly KindOfSchema<S>[];
   /** One-line description of a concrete application, for previews and logs. */
   readonly describe?: (args: z.infer<I>, graph: GraphReader<NodeOfSchema<S>>) => string;
   readonly apply: (context: MutationContext<S>, args: z.infer<I>) => void;

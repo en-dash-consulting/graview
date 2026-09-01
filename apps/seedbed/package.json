@@ -1,0 +1,28 @@
+{
+  "name": "@graview/seedbed",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The example that starts empty. A community garden with a declared graph and no data \u2014 onboarding is filling it in.",
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*",
+    "@graview/layout": "workspace:*",
+    "@graview/primitives": "workspace:*",
+    "@graview/react": "workspace:*",
+    "@graview/render": "workspace:*",
+    "@graview/tools": "workspace:*",
+    "zod": "^4.4.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.11",
+    "@vitejs/plugin-react": "^4.3.4"
+  }
+}

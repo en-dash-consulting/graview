@@ -162,6 +162,43 @@ importers:
         specifier: ^5.4.11
         version: 5.4.21(@types/node@22.20.1)
 
+  apps/seedbed:
+    dependencies:
+      '@graview/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@graview/layout':
+        specifier: workspace:*
+        version: link:../../packages/layout
+      '@graview/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
+      '@graview/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@graview/render':
+        specifier: workspace:*
+        version: link:../../packages/render
+      '@graview/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
+      react:
+        specifier: ^19.2.0
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.8(react@19.2.8)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@vitejs/plugin-react':
+        specifier: ^4.3.4
+        version: 4.7.0(vite@5.4.21(@types/node@22.20.1))
+      vite:
+        specifier: ^5.4.11
+        version: 5.4.21(@types/node@22.20.1)
+
   apps/spike:
     dependencies:
       '@graview/core':

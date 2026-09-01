@@ -27,6 +27,13 @@ export interface DeriveOptions<S extends AnySchema> {
    * No app writes filtering code, and a provider written tomorrow inherits it.
    */
   readonly principal?: Principal;
+  /**
+   * Kinds the selection DENOTES when it is not nodes — a selected kind card
+   * or district. Supplied by the binding, which owns those ids; providers
+   * only see the kinds. This is how an empty kind can still answer "how does
+   * the first one get here".
+   */
+  readonly kindSelection?: readonly string[];
 }
 
 /**
@@ -61,6 +68,7 @@ export function deriveAffordances<S extends AnySchema>(
     store,
     selection,
     nodes,
+    kindSelection: options.kindSelection ?? [],
     // Evaluated once and shared: every provider that cares about violations
     // sees the same ones, and a selection change costs one evaluation.
     violations: store.violations(options.context),

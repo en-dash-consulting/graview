@@ -64,6 +64,8 @@ export interface DeriveContext<S extends AnySchema> {
   readonly store: Store<S>;
   readonly selection: readonly string[];
   readonly nodes: readonly NodeOfSchema<S>[];
+  /** Kinds the selection denotes when it is kind cards rather than nodes. */
+  readonly kindSelection: readonly string[];
   /** Current violations, evaluated once and shared by every provider. */
   readonly violations: readonly Violation[];
   readonly context: Readonly<Record<string, unknown>>;

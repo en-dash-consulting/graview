@@ -14,10 +14,65 @@ const BASE_SCORE = 40;
 export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
   return {
     name: "schema",
-    derive({ store, selection, nodes }) {
+    derive({ store, selection, nodes, kindSelection }) {
+      const affordances: Affordance[] = [];
+
+      /*
+       * A selected KIND — a card, a district — asks a different question
+       * from a selected node: not "what can I do with this" but "how does
+       * the first one get here". Mutations declare what they create, so an
+       * empty kind card offers its own beginnings — which is the whole
+       * onboarding path of a blank graph, one derived affordance at a time.
+       */
+      if (nodes.length === 0 && kindSelection.length > 0) {
+        const wanted = new Set(kindSelection);
+        for (const mutation of store.allMutations()) {
+          if (!(mutation.creates ?? []).some((kind) => wanted.has(kind as string))) continue;
+          const open: OpenParameter[] = [];
+          for (const ref of nodeRefArgs(mutation.input)) {
+            const candidates = ref.kinds.includes("*")
+              ? store.graph.allNodes().map((node) => node.id)
+              : ref.kinds.flatMap((kind) =>
+                  store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                );
+            open.push({
+              name: ref.name,
+              kinds: ref.kinds,
+              candidates,
+              shape: argShape(mutation.input, ref.name),
+            });
+          }
+          for (const name of otherRequiredArgs(mutation.input, "")) {
+            if (open.some((parameter) => parameter.name === name)) continue;
+            open.push({ name, shape: argShape(mutation.input, name) });
+          }
+          const askable = open.every((parameter) =>
+            parameter.kinds !== undefined
+              ? // A node reference is only askable when real nodes exist to
+                // pick — "sow into which plot?" has no honest answer at zero
+                // plots, so the button waits for the first plot instead.
+                (parameter.candidates?.length ?? 0) > 0
+              : (parameter.candidates?.length ?? 0) > 0 ||
+                (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
+          );
+          if (!askable) continue;
+          affordances.push({
+            id: `schema:add:${mutation.name}`,
+            label: mutation.title ?? mutation.name,
+            provider: "schema",
+            mutation: mutation.name,
+            args: {},
+            open,
+            score: BASE_SCORE - open.length,
+            why: `this makes a ${(mutation.creates ?? []).filter((kind) => wanted.has(kind as string)).join(", ")}`,
+            nodeIds: [],
+          });
+        }
+        return { affordances };
+      }
+
       if (nodes.length === 0) return {};
       const kinds = new Set(nodes.map((node) => node.kind));
-      const affordances: Affordance[] = [];
 
       for (const mutation of store.allMutations()) {
         const subject = mutation.subject;

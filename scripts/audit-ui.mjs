@@ -57,6 +57,19 @@ const APPS = {
     problem: async (p) => { await p.click('[data-testid="standing"]'); await p.waitForTimeout(400); await p.click('[data-testid="problems"] li:nth-child(4) button'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
   } },
+  seedbed: { port: 5194, ready: "__seedbedReady", states: {
+    // The empty app's own first screen: a city of districts saying "none yet".
+    empty: async () => {},
+    invited: async (p) => { await p.click('[data-graview-view="kind:gardener"]'); },
+    planted: async (p) => {
+      await p.click('[data-testid="activity-button"]');
+      await p.waitForTimeout(300);
+      await p.click('[data-testid="agent-starter"]');
+      await p.waitForTimeout(1600);
+      await p.keyboard.press("Escape");
+      await p.waitForTimeout(400);
+    },
+  } },
 };
 
 function startVite(name, port) {
