@@ -96,7 +96,10 @@ export const rule = defineNode("rule", {
 export const rationale = defineNode("rationale", {
   description: "Why something is kept.",
   fields: z.object({ text: z.string().min(1) }),
-  edges: { justifies: { to: "*", description: "the decision this explains" } },
+  edges: {
+    // A reason, once given, is part of the record; nothing unmakes it.
+    justifies: { to: "*", description: "the decision this explains", appendOnly: true },
+  },
   plural: "Reasons",
   label: (node) => summarise(node.text),
 });

@@ -31,6 +31,8 @@ export const showApp = defineMutation(
     title: "Open it",
     description: "Put an app in front of you.",
     subject: { kinds: ["app"], arg: "appId" },
+    connects: ["showing"],
+    severs: ["showing"],
     input: z.object({ appId: nodeRef(["app"]) }),
     describe: (args, graph) => `Open ${labelOf(graph as Reader, args.appId)}`,
     apply(ctx, args) {
@@ -52,6 +54,7 @@ export const closeApp = defineMutation(
     title: "Back to the desk",
     description: "Put away whatever is in front of you.",
     subject: { kinds: ["desk"], arg: "deskId" },
+    severs: ["showing"],
     input: z.object({ deskId: nodeRef(["desk"]) }),
     describe: () => "Back to the desk",
     apply(ctx, args) {
@@ -86,6 +89,7 @@ export const justify = defineMutation(
     title: "Note why this is here",
     description: "Attach a reason to this, so the argument for keeping it outlives whoever made it.",
     subject: { kinds: "*", arg: "id" },
+    connects: ["justifies"],
     input: z.object({ id: nodeRef("*"), text: z.string().min(1) }),
     describe: (args, graph) => `Explain ${labelOf(graph as Reader, args.id)}`,
     apply(ctx, args) {

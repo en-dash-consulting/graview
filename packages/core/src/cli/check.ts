@@ -339,6 +339,47 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
   }
 
+  /*
+   * A RELATION YOU CAN MAKE BUT NEVER UNMAKE.
+   *
+   * An edge kind with a connecting act and no severing one is an asymmetry
+   * the declaration exposes: whoever draws the line can never erase it, and
+   * nobody notices until the first person needs to. Some edges are like that
+   * on purpose — history, rationale, a record — and the way to say so is
+   * `appendOnly: true` on the edge declaration, which suppresses this and
+   * documents the intent in the same stroke.
+   */
+  {
+    const connectors = new Map<string, string[]>();
+    const severers = new Set<string>();
+    for (const mutation of app.mutations ?? []) {
+      for (const edgeKind of mutation.connects ?? []) {
+        connectors.set(edgeKind, [...(connectors.get(edgeKind) ?? []), mutation.name]);
+      }
+      for (const edgeKind of mutation.severs ?? []) severers.add(edgeKind);
+    }
+    for (const [edgeKind, makers] of connectors) {
+      if (severers.has(edgeKind)) continue;
+      const declaredOn = app.schema.definitions.filter(
+        (definition) => edgeKind in definition.edges,
+      );
+      // An unknown edge kind is already `edge-claim-unknown-kind` above.
+      if (declaredOn.length === 0) continue;
+      if (declaredOn.some((definition) => definition.edges[edgeKind]?.appendOnly)) continue;
+      add({
+        severity: "warning",
+        code: "edge-without-severer",
+        where: `defineMutation("${makers[0]}").connects`,
+        message: `"${edgeKind}" is a relation you can make (${makers.join(", ")}) but never unmake — no mutation declares it in severs.`,
+        fix:
+          `Declare severs: ["${edgeKind}"] on the act that removes it, or mark the edge ` +
+          `appendOnly: true on ${declaredOn
+            .map((definition) => `defineNode("${definition.kind}").edges["${edgeKind}"]`)
+            .join(" / ")} if it is genuinely never unmade.`,
+      });
+    }
+  }
+
   const titles = new Map<string, string>();
   for (const mutation of app.mutations ?? []) {
     /*

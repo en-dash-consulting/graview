@@ -122,6 +122,25 @@ export const waitFor = defineMutation("wait-for", {
   },
 }) as M;
 
+/**
+ * The way back out. `wait-for` could make a dependency and, for a while,
+ * nothing could unmake one — a blocker that turned out not to matter blocked
+ * for ever. `graview check` now refuses that shape (`edge-without-severer`),
+ * and this is the severing act that answers it.
+ */
+export const stopWaiting = defineMutation("stop-waiting", {
+  title: "It no longer has to wait",
+  description: "Remove the dependency between a task and something it was waiting on.",
+  subject: { kinds: ["task"], arg: "taskId" },
+  severs: ["waits-for"],
+  input: z.object({ taskId: nodeRef(["task"]), blockerId: nodeRef(["task"]) }),
+  describe: (args, graph) =>
+    `"${nameOf(graph as Reader, args.taskId)}" no longer waits for "${nameOf(graph as Reader, args.blockerId)}"`,
+  apply(ctx, args) {
+    ctx.removeEdge({ kind: "waits-for", from: args.taskId, to: args.blockerId });
+  },
+}) as M;
+
 export const moveToList = defineMutation("move-to-list", {
   title: "Move it to another list",
   description: "Take a task off one list and put it on another.",
@@ -154,6 +173,7 @@ export const explain = defineMutation("explain", {
   description:
     "Attach a reason to a task or a list, so the argument for it outlives whoever made it.",
   subject: { kinds: ["task", "list"], arg: "aboutId" },
+  connects: ["explains"],
   input: z.object({ aboutId: nodeRef(["task", "list"]), text: z.string().min(1) }),
   describe: (args, graph) => `Why ${nameOf(graph as Reader, args.aboutId)} is here`,
   apply(ctx, args) {
@@ -184,6 +204,7 @@ export const todoMutations: M[] = [
   reschedule,
   planIt,
   waitFor,
+  stopWaiting,
   moveToList,
   rename,
   explain,
