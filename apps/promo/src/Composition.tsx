@@ -32,7 +32,7 @@ import {
  * Graview intro + En Dash outro bumper.
  *
  * Body: continuous camera spine in one dark field (no TransitionSeries).
- * Stitch: dip-to-white over last DIP_WHITE_FRAMES of story.
+ * Stitch: field brightens, then dip-to-white over last DIP_WHITE_FRAMES.
  * Outro: OffthreadVideo of endash-outro.mp4 (white field) — white → white.
  */
 export const GraviewIntro: React.FC = () => {
@@ -42,6 +42,12 @@ export const GraviewIntro: React.FC = () => {
   const c = cam.constellation;
 
   const dipStart = STORY_FRAMES - DIP_WHITE_FRAMES;
+  // Lift field toward white *before* the pure white overlay so we never
+  // crush into a black void then flash white.
+  const liftStart = dipStart - 42;
+  const fieldLift = inStory
+    ? interpolate(frame, [liftStart, dipStart], [0, 0.55], clamp)
+    : 0;
   const whiteDip = inStory
     ? interpolate(frame, [dipStart, STORY_FRAMES - 1], [0, 1], clamp)
     : 0;
@@ -130,6 +136,16 @@ export const GraviewIntro: React.FC = () => {
           <LightCharacter />
           <BrandPresence hideFrom={beats.settle.from + 20} />
         </Field>
+      ) : null}
+
+      {/* Soft off-white lift — raises field brightness into the dip */}
+      {inStory && fieldLift > 0.01 ? (
+        <AbsoluteFill
+          style={{
+            backgroundColor: colors.white,
+            opacity: fieldLift * 0.35,
+          }}
+        />
       ) : null}
 
       {/* Dip-to-white — intentional break into bumper aesthetic */}

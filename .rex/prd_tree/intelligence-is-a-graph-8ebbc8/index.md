@@ -30,4 +30,5 @@ description: "The framework already contains the skeleton of this epic and has b
 | Title | Status |
 |-------|--------|
 | [Chat is a seat you can talk to: a conversational surface over the intelligence seam](./chat-is-a-seat-you-can-talk-to-a98bca.md) | completed |
-| [Local intelligence: the free tier runs in the browser](./local-intelligence-the-free-c1d797.md) | pending |
+| [ELM evaluation: intent routing and op-log-learned ranking, measured](./elm-evaluation-intent-routing-ba7345.md) | pending |
+| [Local intelligence: the free tier runs in the browser](./local-intelligence-the-free-c1d797.md) | completed |

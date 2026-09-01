@@ -9,13 +9,13 @@ import {
 } from "remotion";
 import { beatOpacity } from "../camera";
 import { clamp, easings, springProgress } from "../motion";
-import { colors, fonts } from "../theme";
+import { beats, colors, fonts } from "../theme";
 
 /** Cold open: En Dash mark + wordmark — brand present before Graview story. */
 export const OpenBrand: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
-  const opacity = beatOpacity(frame, 0, 10, durationInFrames - 24, 22);
+  const { fps } = useVideoConfig();
+  const opacity = beatOpacity(frame, 0, 10, beats.open.duration - 24, 22);
   const mark = springProgress(frame, fps, 4, "premium");
   const word = springProgress(frame, fps, 16, "enter");
   const glow = interpolate(frame, [0, 40], [0.15, 0.45], {

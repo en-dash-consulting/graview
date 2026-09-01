@@ -51,3 +51,14 @@ export {
 export type { Completion, Intelligence, ProposedCall } from "./intelligence.js";
 export { graphResponder, llmResponder } from "./conversation.js";
 export type { ChatContext, ChatReply, Responder } from "./conversation.js";
+export {
+  configuredResponder,
+  DEFAULT_INTELLIGENCE,
+  describeIntelligence,
+  loadIntelligenceConfig,
+  localCompletion,
+  openAiCompatibleCompletion,
+  saveIntelligenceConfig,
+  xaiCompletion,
+} from "./local.js";
+export type { IntelligenceConfig, LocalStatus } from "./local.js";

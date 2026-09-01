@@ -10,87 +10,131 @@ import {
 import { beatOpacity } from "../camera";
 import { BigTitle } from "../components/BigTitle";
 import { clamp, easings, springProgress } from "../motion";
-import { colors, fonts } from "../theme";
+import { beats, colors, fonts } from "../theme";
 
 /**
  * One idea: the bid-desk example → En Dash.
- * Mark contains “en” — wordmark beside mark, never stacked under it.
+ * Mark already contains “en” — wordmark is “Dash” only (never “en En Dash”).
+ * Strong crossfade morph over ~5s.
  */
 export const BrandMorph: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
-  const opacity = beatOpacity(frame, 0, 14, durationInFrames - 26, 24);
-  const t = interpolate(frame, [24, 150], [0, 1], {
+  const { fps } = useVideoConfig();
+  const dur = beats.brand.duration;
+  const opacity = beatOpacity(frame, 0, 12, dur - 22, 20);
+
+  // Morph compressed into the 5s window
+  const t = interpolate(frame, [10, 110], [0, 1], {
     ...clamp,
     easing: easings.cinematic,
   });
-  const northOpacity = interpolate(t, [0, 0.45], [1, 0], {
+  const northOpacity = interpolate(t, [0, 0.42], [1, 0], {
     ...clamp,
     easing: easings.softIn,
   });
-  const enOpacity = interpolate(t, [0.38, 0.8], [0, 1], {
+  const northScale = interpolate(t, [0, 0.42], [1, 0.78], {
+    ...clamp,
+    easing: easings.softIn,
+  });
+  const enOpacity = interpolate(t, [0.32, 0.72], [0, 1], {
     ...clamp,
     easing: easings.softOut,
   });
-  const enScale = 0.9 + springProgress(frame, fps, 85, "settle") * 0.1;
-  const wordReveal = interpolate(t, [0.58, 0.85], [0, 1], {
+  const enScale =
+    0.82 + springProgress(frame, fps, 48, "settle") * 0.18;
+  // Wordmark “Dash” only — mark carries the “en”
+  const wordReveal = interpolate(t, [0.55, 0.88], [0, 1], {
     ...clamp,
     easing: easings.softOut,
   });
-  const flash = interpolate(t, [0.45, 0.5, 0.56], [0, 1, 0], clamp);
+  const flash = interpolate(t, [0.38, 0.46, 0.54], [0, 1, 0], clamp);
+
+  // the bid-desk example tile rotates slightly as it dissolves
+  const northRot = interpolate(t, [0, 0.42], [0, -8], clamp);
 
   return (
     <AbsoluteFill style={{ opacity }}>
       <AbsoluteFill
         style={{
-          background: `radial-gradient(circle at 50% 45%, rgba(0,229,185,${flash * 0.22}) 0%, transparent 42%)`,
+          background: `radial-gradient(circle at 50% 45%, rgba(0,229,185,${
+            flash * 0.28
+          }) 0%, transparent 42%)`,
         }}
       />
 
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+        {/* the bid-desk example sample domain */}
         <div
           style={{
             position: "absolute",
             opacity: northOpacity,
-            transform: `scale(${interpolate(t, [0, 0.45], [1, 0.85], clamp)})`,
+            transform: `scale(${northScale}) rotate(${northRot}deg)`,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 20,
+            gap: 22,
           }}
         >
           <div
             style={{
-              width: 168,
-              height: 168,
-              borderRadius: 22,
+              width: 180,
+              height: 180,
+              borderRadius: 24,
               background: `linear-gradient(145deg, #1494E8, ${colors.the bid-desk example})`,
-              boxShadow: "0 28px 80px rgba(0,120,212,0.4)",
+              boxShadow: "0 28px 80px rgba(0,120,212,0.45)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <svg width={100} height={100} viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="48" fill="none" stroke="white" strokeOpacity="0.35" strokeWidth="2" />
-              <path d="M60 18 L70 60 L60 102 L50 60 Z" fill="white" fillOpacity="0.95" />
-              <path d="M18 60 L60 50 L102 60 L60 70 Z" fill="white" fillOpacity="0.55" />
+            <svg width={108} height={108} viewBox="0 0 120 120">
+              <circle
+                cx="60"
+                cy="60"
+                r="48"
+                fill="none"
+                stroke="white"
+                strokeOpacity="0.35"
+                strokeWidth="2"
+              />
+              <path
+                d="M60 18 L70 60 L60 102 L50 60 Z"
+                fill="white"
+                fillOpacity="0.95"
+              />
+              <path
+                d="M18 60 L60 50 L102 60 L60 70 Z"
+                fill="white"
+                fillOpacity="0.55"
+              />
               <circle cx="60" cy="60" r="6" fill="white" />
             </svg>
           </div>
           <div
             style={{
               fontFamily: fonts.display,
-              fontSize: 36,
+              fontSize: 40,
               fontWeight: 700,
-              letterSpacing: 3,
+              letterSpacing: 4,
               color: colors.white,
             }}
           >
             the bid-desk example
           </div>
+          <div
+            style={{
+              fontFamily: fonts.mono,
+              fontSize: 13,
+              letterSpacing: 2.5,
+              color: colors.muted,
+              textTransform: "uppercase",
+            }}
+          >
+            sample domain
+          </div>
         </div>
 
+        {/* En Dash — mark (“en”) + wordmark “Dash” beside it */}
         <div
           style={{
             position: "absolute",
@@ -99,35 +143,55 @@ export const BrandMorph: React.FC = () => {
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
-            gap: 32,
-            filter: "drop-shadow(0 24px 60px rgba(0,229,185,0.3))",
+            gap: 28,
+            filter: "drop-shadow(0 24px 60px rgba(0,229,185,0.32))",
           }}
         >
           <Img
             src={staticFile("endash-mark.svg")}
-            style={{ width: 152, height: 152 }}
+            style={{ width: 168, height: 168 }}
           />
           <div
             style={{
               opacity: wordReveal,
-              transform: `translateX(${(1 - wordReveal) * 16}px)`,
-              fontFamily: fonts.display,
-              fontSize: 52,
-              fontWeight: 700,
-              letterSpacing: 2,
-              color: colors.white,
+              transform: `translateX(${(1 - wordReveal) * 20}px)`,
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
             }}
           >
-            En Dash
+            <div
+              style={{
+                fontFamily: fonts.display,
+                fontSize: 56,
+                fontWeight: 700,
+                letterSpacing: 3,
+                color: colors.white,
+              }}
+            >
+              Dash
+            </div>
+            <div
+              style={{
+                fontFamily: fonts.mono,
+                fontSize: 13,
+                letterSpacing: 2.5,
+                color: colors.mint,
+                textTransform: "uppercase",
+                opacity: 0.85,
+              }}
+            >
+              house brand
+            </div>
           </div>
         </div>
       </AbsoluteFill>
 
       <BigTitle
         line="Sample domain → house brand."
-        appearAt={4}
-        disappearAt={40}
-        size={36}
+        appearAt={2}
+        disappearAt={36}
+        size={34}
         voice="literary"
         place="lower"
       />

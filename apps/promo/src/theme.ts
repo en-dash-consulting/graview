@@ -49,22 +49,28 @@ export const HEIGHT = 1080;
 /**
  * Timing (probed): endash-outro.mp4 = 16.000s @ 25fps / 400 source frames.
  * At composition 30fps → 16s = 480 frames.
+ *
+ * Story rebalanced: dense mid (coverage + brand) through ~32s, short settle
+ * punch (~4s), then dip-to-white → outro. Total ≈ 52s.
  */
-export const STORY_FRAMES = 1260; // 42s Graview body
+export const STORY_FRAMES = 1080; // 36s Graview body
 export const DIP_WHITE_FRAMES = 18; // last frames of story → pure white
 export const OUTRO_FRAMES = 480; // 16.0s bumper @ 30fps
-export const DURATION_IN_FRAMES = STORY_FRAMES + OUTRO_FRAMES; // 1740 ≈ 58s
+export const DURATION_IN_FRAMES = STORY_FRAMES + OUTRO_FRAMES; // 1560 ≈ 52s
 
 /** Soft-morph beat windows inside the continuous camera spine (story only). */
 export const beats = {
-  open: { from: 0, duration: 90 },
-  glyphs: { from: 40, duration: 185 },
-  /** Denser ~5.5s — jack-in, brief title, affordance candy, exit */
-  graph: { from: 200, duration: 165 },
-  city: { from: 345, duration: 215 },
-  coverage: { from: 530, duration: 250 },
-  brand: { from: 750, duration: 220 },
-  settle: { from: 940, duration: 320 },
+  open: { from: 0, duration: 80 },
+  glyphs: { from: 30, duration: 165 },
+  /** Jack-in, brief title, affordance candy, exit */
+  graph: { from: 165, duration: 155 },
+  city: { from: 290, duration: 260 },
+  /** Richer mid-story: empty cells, agent write, selective undo */
+  coverage: { from: 520, duration: 300 },
+  /** Clear the bid-desk example → En Dash mark morph (~5s) */
+  brand: { from: 790, duration: 150 },
+  /** Short punch lockup — ≤120 frames (~4s), not an end pad */
+  settle: { from: 960, duration: 120 },
 } as const;
 
 export const tagline = "Declare the domain. The application follows.";

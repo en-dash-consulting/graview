@@ -10,14 +10,14 @@ import {
 import { beatOpacity, dofBlur } from "../camera";
 import { SurveyInsert } from "../components/SurveyInsert";
 import { clamp, easings, fadeIn, springProgress, stagger } from "../motion";
-import { colors, fonts } from "../theme";
+import { beats, colors, fonts } from "../theme";
 
 /** One idea: GRAVIEW — the city from altitude. */
 export const CityAltitude: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
-  const opacity = beatOpacity(frame, 0, 18, durationInFrames - 32, 30);
-  const plateOp = fadeIn(frame, 0, 28) * 0.42;
+  const { fps } = useVideoConfig();
+  const opacity = beatOpacity(frame, 0, 12, beats.city.duration - 32, 30);
+  const plateOp = fadeIn(frame, 0, 20) * 0.5;
   const plateBlur = dofBlur(
     0.7,
     interpolate(frame, [0, 100], [0.4, 0.75], clamp),
@@ -61,7 +61,7 @@ export const CityAltitude: React.FC = () => {
       >
         <div style={{ display: "flex" }}>
           {letters.map((ch, i) => {
-            const s = springProgress(frame, fps, stagger(i, 2, 18), "snap");
+            const s = springProgress(frame, fps, stagger(i, 2, 4), "snap");
             return (
               <span
                 key={i}
@@ -87,9 +87,10 @@ export const CityAltitude: React.FC = () => {
 
       <SurveyInsert
         src="survey/the coaching example-graview-dark.png"
-        appearAt={90}
+        appearAt={80}
+        disappearAt={beats.city.duration - 20}
         corner="br"
-        width={440}
+        width={560}
         tilt={9}
         tiltX={5}
         parallax={12}
