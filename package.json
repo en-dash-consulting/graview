@@ -35,6 +35,7 @@
     "skills": "node packages/skills/dist/cli.js install .",
     "dev:todo": "pnpm --filter @graview/todo dev",
     "engines": "node scripts/verify-engines.mjs",
+    "menu": "node scripts/verify-menu.mjs",
     "navigation": "node scripts/verify-navigation.mjs",
     "moving": "node scripts/verify-moving.mjs",
     "pages": "node scripts/verify-pages.mjs",

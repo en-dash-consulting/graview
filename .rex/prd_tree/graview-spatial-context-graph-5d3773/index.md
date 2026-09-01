@@ -46,10 +46,10 @@ description: "A framework for building applications where a typed context graph 
 | [Selection is part of the stop: URL-addressable, restored by back/forward](./selection-is-part-of-the-stop-88cfdf.md) | completed |
 | [Spatial renderer — @graview/render](./spatial-renderer-graview-render-e0dd64.md) | completed |
 | [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
-| [The DOM path is a citizen of every browser](./the-dom-path-is-a-citizen-of-976f8a.md) | in_progress |
+| [The DOM path is a citizen of every browser](./the-dom-path-is-a-citizen-of-976f8a.md) | completed |
 | [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |
 | [The graph also wears a traditional face: a routed webapp derived from the same declaration](./the-graph-also-wears-a-dd174e.md) | completed |
 | [The lines are editable: relations as first-class selectable, modifiable things](./the-lines-are-editable-492161.md) | completed |
-| [The menu scales: search, pins, and what you actually use](./the-menu-scales-search-pins-and-db5b1b.md) | pending |
+| [The menu scales: search, pins, and what you actually use](./the-menu-scales-search-pins-and-db5b1b.md) | in_progress |
 | [Theming and look-and-feel: a declarative customization API a skill can drive](./theming-and-look-and-feel-a-305f2b.md) | completed |
 | [View primitives and the timeline lens](./view-primitives-and-the-c7fbbe.md) | completed |

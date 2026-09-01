@@ -51,6 +51,12 @@ export interface Affordance {
   readonly score: number;
   /** Loses something a person made. Listed last, and marked, everywhere. */
   readonly destructive?: boolean;
+  /**
+   * Held to the top of its band: by the person at this browser ("user") or
+   * by the app's declaration ("declared"). User pins outrank declared ones;
+   * neither outranks a repair or escapes the destructive tail.
+   */
+  readonly pinned?: "user" | "declared";
   /** The observation that produced it, in the interface's own words. */
   readonly why: string;
   /** Nodes this acts on, for highlighting across planes. */

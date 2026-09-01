@@ -67,6 +67,14 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   readonly connects?: readonly string[];
   readonly severs?: readonly string[];
+  /**
+   * The app saying "this is the act of this product". A pinned mutation
+   * ranks above its unpinned peers wherever actions are offered — never
+   * above a rule's repairs, never out of the destructive tail — and sits
+   * in the menu's head section. A person's own pins, made from the menu,
+   * outrank the app's.
+   */
+  readonly pinned?: boolean;
   /** One-line description of a concrete application, for previews and logs. */
   readonly describe?: (args: z.infer<I>, graph: GraphReader<NodeOfSchema<S>>) => string;
   readonly apply: (context: MutationContext<S>, args: z.infer<I>) => void;

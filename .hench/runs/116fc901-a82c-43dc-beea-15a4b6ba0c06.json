@@ -1,0 +1,28 @@
+{
+  "id": "116fc901-a82c-43dc-beea-15a4b6ba0c06",
+  "taskId": "976f8afb-00c4-4a4e-856f-59f9720443ab",
+  "taskTitle": "The DOM path is a citizen of every browser",
+  "startedAt": "2026-09-01T18:39:00Z",
+  "finishedAt": "2026-09-01T20:09:43.314Z",
+  "status": "completed",
+  "turns": 244,
+  "summary": "engine-parameterized harnesses + three-engine matrix (all green), verified @property degradation and WebGPU-less fallback, board aspect-ratio collapse fixed, Playwright pinned 1.49.1",
+  "tokenUsage": {
+    "input": 488,
+    "output": 196762,
+    "cacheCreationInput": 285210,
+    "cacheReadInput": 66228980
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 488,
+    "output": 196762,
+    "cached": 66514190,
+    "total": 66711440
+  }
+}

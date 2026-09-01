@@ -40,6 +40,8 @@ export type {
 export { createInAppAdapter, createMcpAdapter } from "./agent/adapters.js";
 export type { InAppAgent, McpContent, McpTool, McpToolResult } from "./agent/adapters.js";
 export { insightProvider } from "./providers/insight.js";
+export { usageBoost, usageWeights } from "./usage.js";
+export { loadPins, savePins, togglePin } from "./pins.js";
 export {
   describeProposal,
   intelligenceProvider,

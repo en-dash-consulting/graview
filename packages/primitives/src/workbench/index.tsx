@@ -15,6 +15,8 @@ import {
 import {
   createInAppAdapter,
   createToolRuntime,
+  loadPins,
+  togglePin,
   type Affordance,
   type InAppAgent,
   type OpenParameter,
@@ -194,10 +196,22 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
 export function Inspector() {
   const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
   const { selection, set, clear } = useSelection();
-  const { affordances, withheld, observations } = useAffordances();
+  /*
+   * THE PERSON'S OWN PINS, loaded once per mount and passed into the same
+   * derivation every surface reads — so a pin made here reorders the strip,
+   * the pointer menu and nothing else invents a second action system.
+   */
+  const [pins, setPins] = useState<readonly string[]>(() => loadPins());
+  const deriveOptions = useMemo(() => ({ pins }), [pins]);
+  const { affordances, withheld, observations } = useAffordances(deriveOptions);
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  /*
+   * The searcher's text. Chrome that is mostly not there must not be
+   * there: the field only renders once the list outgrows the fold.
+   */
+  const [query, setQuery] = useState("");
   /*
    * A REFUSAL IS A RESULT, said where the button was pressed.
    *
@@ -256,6 +270,7 @@ export function Inspector() {
     setPending(null);
     setExpanded(false);
     setFailed(null);
+    setQuery("");
   }, [selection]);
 
   /*
@@ -314,18 +329,42 @@ export function Inspector() {
   const fits = Math.max(1, Math.min(9, affordances.length));
 
   /*
-   * ORDERED FOR READING, not only for ranking: what you can do to the
-   * THING, then what you can do to its TIES (the connects/severs acts,
-   * gathered under one heading instead of shuffled among the rest), then —
-   * always last — what cannot be taken back.
+   * ORDERED FOR READING, not only for ranking: what a broken rule demands,
+   * then the acts somebody PINNED (the person's own before the app's — a
+   * small fixed head-section), then what you can do to the THING, then its
+   * TIES (the connects/severs acts, gathered under one heading instead of
+   * shuffled among the rest), then — always last — what cannot be taken
+   * back. Repairs first and destructive last are inviolate; pins and usage
+   * only ever shuffle inside those walls.
    */
   const arranged = [
-    ...affordances.filter((entry) => !entry.ties && !entry.destructive),
-    ...affordances.filter((entry) => entry.ties && !entry.destructive),
+    ...affordances.filter((entry) => entry.provider === "invariant" && !entry.destructive),
+    ...affordances.filter(
+      (entry) => entry.pinned && entry.provider !== "invariant" && !entry.destructive,
+    ),
+    ...affordances.filter(
+      (entry) => !entry.ties && !entry.destructive && !entry.pinned && entry.provider !== "invariant",
+    ),
+    ...affordances.filter(
+      (entry) => entry.ties && !entry.destructive && !entry.pinned && entry.provider !== "invariant",
+    ),
     ...affordances.filter((entry) => entry.destructive),
   ];
-  const shown = expanded || atPointer ? arranged : arranged.slice(0, fits);
-  const hidden = arranged.length - shown.length;
+  /*
+   * THE SEARCHER filters the same derived list — by label and by why, the
+   * two sentences a person actually reads — and appears only when the list
+   * outgrows the fold. Enter runs a sole survivor; Escape clears.
+   */
+  const searchable = arranged.length > fits && !atPointer;
+  const trimmedQuery = query.trim().toLowerCase();
+  const matched =
+    searchable && trimmedQuery.length > 0
+      ? arranged.filter((entry) =>
+          `${entry.label} ${entry.why}`.toLowerCase().includes(trimmedQuery),
+        )
+      : null;
+  const shown = matched ?? (expanded || atPointer ? arranged : arranged.slice(0, fits));
+  const hidden = matched ? 0 : arranged.length - shown.length;
   /*
    * GROUPED BY WHAT THEY ANSWER. A repair arrives carrying the violation
    * that produced it, and without that sentence over it, "Cut X from
@@ -340,9 +379,10 @@ export function Inspector() {
   }[] = [];
   for (const affordance of shown) {
     const violation = !atPointer && affordance.provider === "invariant";
-    const tie = !atPointer && !violation && affordance.ties === true && !affordance.destructive;
-    const heading = violation ? affordance.why : tie ? "its ties" : null;
-    const tone = violation ? ("violation" as const) : tie ? ("ties" as const) : null;
+    const held = !atPointer && !violation && affordance.pinned !== undefined && !affordance.destructive;
+    const tie = !atPointer && !violation && !held && affordance.ties === true && !affordance.destructive;
+    const heading = violation ? affordance.why : held ? "pinned" : tie ? "its ties" : null;
+    const tone = violation ? ("violation" as const) : held || tie ? ("ties" as const) : null;
     const last = sections[sections.length - 1];
     if (last && last.heading === heading) (last.items as Affordance[]).push(affordance);
     else sections.push({ heading, tone, items: [affordance] });
@@ -597,6 +637,48 @@ export function Inspector() {
         </p>
       ) : null}
 
+      {searchable ? (
+        <input
+          data-testid="action-filter"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={`Filter ${arranged.length} actions…`}
+          aria-label="Filter actions"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              if (query.length > 0) {
+                // Clearing the filter must not also clear the selection —
+                // the document-level Escape stays out of it.
+                event.stopPropagation();
+                setQuery("");
+              }
+              return;
+            }
+            if (event.key === "Enter" && matched?.length === 1) {
+              const sole = matched[0]!;
+              if (sole.open.length > 0) setPending(sole.id);
+              else if (act(sole)) setQuery("");
+            }
+          }}
+          style={{
+            font: "inherit",
+            fontSize: 12.5,
+            padding: "5px 9px",
+            borderRadius: 8,
+            border: "1px solid var(--graview-edge)",
+            background: "var(--graview-panel)",
+            color: "var(--graview-ink)",
+          }}
+        />
+      ) : null}
+      {matched !== null && matched.length === 0 ? (
+        <p
+          data-testid="no-matches"
+          style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
+        >
+          Nothing offered here matches “{query.trim()}”.
+        </p>
+      ) : null}
       {affordances.length === 0 ? (
         /*
          * An empty action list is a RESULT, not a blank space. Saying which
@@ -665,7 +747,7 @@ export function Inspector() {
                 />
               ) : null}
               {section.items.map((affordance) => (
-                <li key={affordance.id}>
+                <li key={affordance.id} style={{ display: "flex", gap: 2, alignItems: "stretch" }}>
                   <button
                     type="button"
                     data-affordance={affordance.id}
@@ -715,6 +797,44 @@ export function Inspector() {
                     {affordance.open.length > 0 ? (
                       <span style={{ color: "var(--graview-ink-faint)" }}> …</span>
                     ) : null}
+                  </button>
+                  {/*
+                    * The other hand on the pin. The dev pinned an act by
+                    * declaring it; this is the person's side of the same
+                    * fact, kept in their browser, outranking the dev's.
+                    * Unpinning is the same gesture.
+                    */}
+                  <button
+                    type="button"
+                    data-testid="pin-toggle"
+                    data-pin-for={affordance.mutation}
+                    aria-pressed={affordance.pinned === "user"}
+                    aria-label={
+                      affordance.pinned === "user"
+                        ? `Unpin ${affordance.label}`
+                        : `Pin ${affordance.label}`
+                    }
+                    title={affordance.pinned === "user" ? "Unpin" : "Pin to the top"}
+                    onClick={() => setPins(togglePin(pins, affordance.mutation))}
+                    style={{
+                      flex: "0 0 auto",
+                      width: 24,
+                      minHeight: 24,
+                      display: "grid",
+                      placeItems: "center",
+                      padding: 0,
+                      fontSize: 11,
+                      border: "1px solid transparent",
+                      background: "none",
+                      boxShadow: "none",
+                      borderRadius: 7,
+                      color:
+                        affordance.pinned !== undefined
+                          ? "var(--graview-accent)"
+                          : "var(--graview-ink-faint)",
+                    }}
+                  >
+                    {affordance.pinned !== undefined ? "★" : "☆"}
                   </button>
                 </li>
               ))}

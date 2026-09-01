@@ -1,5 +1,6 @@
 import type { AnySchema, NodeOfSchema, Principal, Store } from "@graview/core";
 import { insightProvider } from "./providers/insight.js";
+import { usageBoost, usageWeights } from "./usage.js";
 import { invariantProvider } from "./providers/invariant.js";
 import { schemaProvider } from "./providers/schema.js";
 import { structureProvider } from "./providers/structure.js";
@@ -37,6 +38,12 @@ export interface DeriveOptions<S extends AnySchema> {
   readonly kindSelection?: readonly string[];
   /** Edges the selection names — supplied by the binding, like kinds. */
   readonly edgeSelection?: readonly { kind: string; from: string; to: string }[];
+  /**
+   * Mutation names the person at this browser has pinned. Supplied by the
+   * binding (which owns the browser's storage — see `loadPins`); the
+   * dev's pins come from the declarations and need no option.
+   */
+  readonly pins?: readonly string[];
 }
 
 /**
@@ -88,21 +95,47 @@ export function deriveAffordances<S extends AnySchema>(
   }
 
   /*
-   * Destructive actions come LAST, whatever their score.
+   * THE BANDS ARE INVIOLATE; everything else shuffles inside them.
    *
-   * "Remove" sorting first on an ordinary selection is an interface leading
-   * with the one thing that cannot be taken back. The order within each
-   * group is still the score — a destructive repair still beats a
-   * destructive anything-else — and the same order reaches the strip, the
+   * Destructive actions come LAST, whatever their score — "Remove" sorting
+   * first on an ordinary selection is an interface leading with the one
+   * thing that cannot be taken back. Repairs come FIRST within their half:
+   * a broken rule outranks any preference. Between those walls, pins rank
+   * before the rest (a person's own pin before the app's declared one),
+   * and a deterministic usage boost — decayed recency and frequency read
+   * off the op log, no model — lets what this workspace actually does rank
+   * ahead of what it never touches. The same order reaches the strip, the
    * pointer menu and an agent's tool list, so no surface contradicts
    * another.
    */
-  const ranked = dedupe(affordances).sort(
-    (a, b) =>
-      Number(a.destructive ?? false) - Number(b.destructive ?? false) ||
-      b.score - a.score ||
-      a.id.localeCompare(b.id),
+  const declaredPins = new Set(
+    store
+      .allMutations()
+      .filter((mutation) => mutation.pinned)
+      .map((mutation) => mutation.name),
   );
+  const userPins = new Set(options.pins ?? []);
+  const pinRank = (affordance: Affordance): number =>
+    userPins.has(affordance.mutation) ? 0 : declaredPins.has(affordance.mutation) ? 1 : 2;
+  const weights = usageWeights(store.log.all());
+  const boosted = (affordance: Affordance): number =>
+    affordance.score + usageBoost(weights.get(affordance.mutation) ?? 0);
+  const pinnedAs = (affordance: Affordance): Affordance =>
+    userPins.has(affordance.mutation)
+      ? { ...affordance, pinned: "user" }
+      : declaredPins.has(affordance.mutation)
+        ? { ...affordance, pinned: "declared" }
+        : affordance;
+  const ranked = dedupe(affordances)
+    .map(pinnedAs)
+    .sort(
+      (a, b) =>
+        Number(a.destructive ?? false) - Number(b.destructive ?? false) ||
+        Number(b.provider === "invariant") - Number(a.provider === "invariant") ||
+        pinRank(a) - pinRank(b) ||
+        boosted(b) - boosted(a) ||
+        a.id.localeCompare(b.id),
+    );
 
   /*
    * An action you may not take SAYS SO rather than vanishing.
