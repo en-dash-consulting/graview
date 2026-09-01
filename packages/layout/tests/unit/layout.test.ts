@@ -865,6 +865,15 @@ describe("a line that stands for one edge says so", () => {
 });
 
 describe("open districts stay at altitude", () => {
+  it("an in-stack address cannot carry a district expansion", () => {
+    // History and bookmarks recorded before the fix keep offering these.
+    const carried = fromUrl("#focus=week-1&expand=kind:duty,aggregate:person");
+    expect(carried.expanded).toEqual(["aggregate:person"]);
+    const upstairs = fromUrl("#overview=1&expand=kind:duty");
+    expect(upstairs.expanded).toEqual(["kind:duty"]);
+  });
+
+
   it("descending drops kind-card expansions and keeps the rest", () => {
     const up = toggleExpanded(
       toggleExpanded(view({ focusId: "week-1", overview: true }), kindCardId("duty")),

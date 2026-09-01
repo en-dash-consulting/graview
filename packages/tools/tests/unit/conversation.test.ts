@@ -137,6 +137,73 @@ describe("the graph answers for itself", () => {
     expect(noFalse.say).toContain("This graph holds");
   });
 
+  it("answers WHEN from the declared field roles, spoken by display.format", async () => {
+    const clock = (v) => `${String(Math.floor(v / 60)).padStart(2, "0")}:${String(v % 60).padStart(2, "0")}`;
+    const block = defineNode("block", {
+      fields: z.object({ label: z.string(), start: z.number(), end: z.number(), days: z.array(z.string()) }),
+      plural: "Blocks",
+      display: { format: { start: clock, end: clock } },
+      fieldRoles: { start: "start", end: "end", days: "days" },
+    });
+    const soloPerson = defineNode("person", { fields: z.object({ label: z.string() }), plural: "People" });
+    const timedSchema = createSchema([soloPerson, block]);
+    const timed = new Store({
+      schema: timedSchema,
+      mutations: [],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "c1", kind: "person", label: "child1" },
+          { id: "sch", kind: "block", label: "child1 school", start: 510, end: 780, days: ["mon", "tue"] },
+        ],
+        edges: [],
+      },
+    });
+    const reply = await graphResponder()(timed, "when does child 1 school start?");
+    expect(reply.say).toBe("child1 school runs 08:30–13:00 on mon, tue.");
+  });
+
+  it("answers WHO by following the edges whose own descriptions say who", async () => {
+    const dutySchema = createSchema([
+      defineNode("person", {
+        fields: z.object({ label: z.string() }),
+        plural: "People",
+        edges: {
+          "assigned-to": { to: ["run"], description: "who does the run" },
+          "rides-in": { to: ["run"], description: "who is along for it" },
+        },
+      }),
+      defineNode("run", {
+        fields: z.object({ label: z.string(), day: z.string() }),
+        plural: "Runs",
+        fieldRoles: { start: "day", day: "day" },
+      }),
+    ]);
+    const week = new Store({
+      schema: dutySchema,
+      mutations: [],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "c1", kind: "person", label: "child1" },
+          { id: "p2", kind: "person", label: "parent2" },
+          { id: "tue-run", kind: "run", label: "tue school drop-off", day: "tue" },
+          { id: "wed-run", kind: "run", label: "wed school drop-off", day: "wed" },
+        ],
+        edges: [
+          { kind: "rides-in", from: "c1", to: "tue-run" },
+          { kind: "rides-in", from: "c1", to: "wed-run" },
+          { kind: "assigned-to", from: "p2", to: "tue-run" },
+        ],
+      },
+    });
+    const reply = await graphResponder()(week, "who drives child1 to school on tuesday?");
+    // The day named picked the right run; the edge's own sentence answers.
+    expect(reply.say).toContain("tue school drop-off");
+    expect(reply.say).toContain("who does the run: parent2");
+    expect(reply.say).toContain("who is along for it: child1");
+  });
+
   it("falls back to the shape of the graph, and how to ask", async () => {
     const reply = await graphResponder()(store(), "hello");
     expect(reply.say).toContain("2 People");

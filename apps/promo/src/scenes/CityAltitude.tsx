@@ -16,8 +16,8 @@ import { beats, colors, fonts } from "../theme";
 export const CityAltitude: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const opacity = beatOpacity(frame, 0, 12, beats.city.duration - 32, 30);
-  const plateOp = fadeIn(frame, 0, 20) * 0.5;
+  const opacity = beatOpacity(frame, 0, 20, beats.city.duration - 40, 38);
+  const plateOp = fadeIn(frame, 0, 24) * 0.5;
   const plateBlur = dofBlur(
     0.7,
     interpolate(frame, [0, 100], [0.4, 0.75], clamp),
@@ -40,7 +40,7 @@ export const CityAltitude: React.FC = () => {
         }}
       >
         <Img
-          src={staticFile("survey/proposal-graview-dark.png")}
+          src={staticFile("survey/todo-graview-dark.png")}
           style={{
             width: "100%",
             height: "100%",
@@ -86,15 +86,16 @@ export const CityAltitude: React.FC = () => {
       </AbsoluteFill>
 
       <SurveyInsert
-        src="survey/the coaching example-graview-dark.png"
+        src="survey/todo-graview-dark.png"
         appearAt={80}
-        disappearAt={beats.city.duration - 20}
+        disappearAt={beats.city.duration - 24}
         corner="br"
         width={560}
         tilt={9}
         tiltX={5}
         parallax={12}
         depth={0.4}
+        label="graview"
       />
     </AbsoluteFill>
   );

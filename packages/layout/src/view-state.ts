@@ -131,9 +131,19 @@ export function fromUrl(url: string): ViewState {
     .filter((id) => id.length > 0)
     .sort();
 
+  /*
+   * A district stays a district. `expand=kind:*` written from altitude
+   * means "this district is open on the ring"; the same key inside the
+   * stack dissolves the shelf card into loose members — a reading no
+   * control offers, which history and bookmarks kept re-importing as a
+   * chip soup across the bottom band. An in-stack address simply cannot
+   * say it; carried back up to the ring, the overview stop still can.
+   */
+  const overview = params.get("overview") === "1";
+
   return {
     ...(sel.length > 0 ? { selection: sel } : {}),
-    ...(params.get("overview") === "1" ? { overview: true } : {}),
+    ...(overview ? { overview: true } : {}),
     ...(params.get("zoom") === "1" ? { zoom: true } : {}),
     ...(params.get("past") === "1" ? { past: true } : {}),
     ...(panX !== null && panY !== null ? { pan: { x: panX, y: panY } } : {}),
@@ -141,7 +151,7 @@ export function fromUrl(url: string): ViewState {
     relation: params.get("relation"),
     expanded: (params.get("expand") ?? "")
       .split(",")
-      .filter((id) => id.length > 0)
+      .filter((id) => id.length > 0 && (overview || !id.startsWith("kind:")))
       .sort(),
     pins,
   };

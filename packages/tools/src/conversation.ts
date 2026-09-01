@@ -148,6 +148,149 @@ export function graphResponder<S extends AnySchema>(
       };
     }
 
+    /*
+     * ------------------------------------------- when / who, from the graph
+     *
+     * The declarations already answer these. WHEN: field roles name which
+     * fields are a thing's start, end and day, and display.format says how
+     * to speak them. WHO: an edge whose own description says "who…" IS the
+     * who-relation — "who does the run", "who is there" — so following it
+     * from the right node answers without knowing what a run is. The right
+     * node is chosen honestly: the referent itself when it is timed, else
+     * the referent's neighbour that best matches the question's remaining
+     * words and any day named.
+     */
+    const DAY_WORDS: Record<string, string> = {
+      mon: "mon", monday: "mon", tue: "tue", tues: "tue", tuesday: "tue",
+      wed: "wed", wednesday: "wed", thu: "thu", thur: "thu", thurs: "thu", thursday: "thu",
+      fri: "fri", friday: "fri", sat: "sat", saturday: "sat", sun: "sun", sunday: "sun",
+    };
+    const askedDay = tokens.map((token) => DAY_WORDS[token]).find(Boolean);
+    const formatOf = (kind: string, field: string, value: unknown): string => {
+      const format = store.schema.tryDefinition(kind)?.display?.format?.[field];
+      return format ? format(value) : String(value);
+    };
+    const timing = (node: { id: string; kind: string } & Record<string, unknown>): string | null => {
+      const roles = store.schema.tryDefinition(node.kind)?.fieldRoles as
+        | Record<string, string>
+        | undefined;
+      if (!roles?.["start"]) return null;
+      const start = node[roles["start"]];
+      const end = roles["end"] ? node[roles["end"]] : undefined;
+      const day = roles["day"] ? node[roles["day"]] : roles["days"] ? node[roles["days"]] : undefined;
+      if (start === undefined && end === undefined) return null;
+      const said = [
+        start !== undefined ? formatOf(node.kind, roles["start"], start) : null,
+        end !== undefined && roles["end"] ? `–${formatOf(node.kind, roles["end"], end)}` : null,
+        Array.isArray(day) ? ` on ${day.join(", ")}` : day !== undefined ? ` on ${String(day)}` : null,
+      ]
+        .filter(Boolean)
+        .join("");
+      return said || null;
+    };
+    const neighboursOf = (id: string) => {
+      const out: ({ id: string; kind: string } & Record<string, unknown>)[] = [];
+      for (const edge of store.graph.allEdges()) {
+        const other = edge.from === id ? edge.to : edge.to === id ? edge.from : null;
+        if (!other) continue;
+        const found = store.graph.getNode(other);
+        if (found && !out.some((held) => held.id === found.id)) out.push(found as never);
+      }
+      return out;
+    };
+    /**
+     * The question's subjects, best first: the referent's neighbours ranked
+     * by how many of the question's words their name shares and — when a
+     * day is named — how exactly they sit on that day. An exact day FIELD
+     * outranks a days array that merely contains it: "tuesday" means the
+     * Tuesday one, not everything that also happens on Tuesdays.
+     */
+    const subjectsFor = (
+      wantTimed: boolean,
+    ): ({ id: string; kind: string } & Record<string, unknown>)[] => {
+      const first = referents[0];
+      if (!first) return [];
+      const scored: { node: (typeof referents)[number]; score: number }[] = [];
+      for (const candidate of neighboursOf(first.id)) {
+        let score = 0;
+        const squeezed = squeeze(name(candidate));
+        for (const token of tokens) {
+          if (token.length > 2 && squeezed.includes(token)) score += 1;
+        }
+        if (askedDay) {
+          const roles = store.schema.tryDefinition(candidate.kind)?.fieldRoles as
+            | Record<string, string>
+            | undefined;
+          const day = roles?.["day"] ? candidate[roles["day"]] : undefined;
+          const days = roles?.["days"] ? candidate[roles["days"]] : undefined;
+          if (day === askedDay) score += 4;
+          else if (Array.isArray(days) && days.includes(askedDay)) score += 1;
+        }
+        if (wantTimed && !timing(candidate)) continue;
+        if (score > 0) scored.push({ node: candidate, score });
+      }
+      const ranked = scored.sort((a, b) => b.score - a.score).map((held) => held.node);
+      if (wantTimed && timing(first)) ranked.unshift(first);
+      else if (!wantTimed) ranked.push(first);
+      return ranked;
+    };
+
+    if (referents.length > 0 && /\bwhen\b/.test(asked)) {
+      const subject = subjectsFor(true)[0] ?? null;
+      const said = subject ? timing(subject) : null;
+      if (subject && said) {
+        return {
+          say: `${name(subject)} runs ${said}.`,
+          proposals: validateProposals(
+            store,
+            readyRepairs(violationsTouching(violations, [subject.id])).slice(0, 3),
+          ),
+        };
+      }
+    }
+
+    if (referents.length > 0 && /\bwho(m|se)?\b/.test(asked)) {
+      /*
+       * A subject that cannot answer "who" is the wrong subject: walk the
+       * ranked candidates until one actually has who-edges. The edge's own
+       * description is the sentence — and its declared `inverse` ("who is
+       * there") counts as a who-sentence read from the other end.
+       */
+      for (const subject of subjectsFor(false)) {
+        const parts: string[] = [];
+        for (const definition of store.schema.definitions) {
+          for (const [edgeKind, spec] of Object.entries(
+            definition.edges as Record<string, { description?: string; inverse?: string }>,
+          )) {
+            const forward = /\bwho\b/i.test(spec.description ?? "");
+            const backward = /\bwho\b/i.test(spec.inverse ?? "");
+            if (!forward && !backward) continue;
+            const sources = store.graph.in(subject.id, edgeKind);
+            const targets = store.graph.out(subject.id, edgeKind);
+            if (forward && sources.length > 0) {
+              parts.push(
+                `${spec.description}: ${sources.map((other) => name(other as never)).join(", ")}`,
+              );
+            }
+            if (backward && targets.length === 0 && sources.length > 0 && !forward) {
+              parts.push(
+                `${spec.inverse}: ${sources.map((other) => name(other as never)).join(", ")}`,
+              );
+            }
+          }
+        }
+        if (parts.length > 0) {
+          return {
+            say: `${name(subject)} — ${parts.join("; ")}.`,
+            proposals: validateProposals(
+              store,
+              readyRepairs(violationsTouching(violations, [subject.id])).slice(0, 3),
+            ),
+          };
+        }
+      }
+    }
+
     // ------------------------------------------------------ a named thing
     if (referents.length > 0) {
       const node = referents[0]!;

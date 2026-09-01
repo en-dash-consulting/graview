@@ -30,7 +30,6 @@ export const colors = {
   plane: "#0E1A36",
   muted: "#7A8BB0",
   danger: "#FF5C7A",
-  the bid-desk example: "#0078D4",
   glass: "rgba(14, 26, 54, 0.55)",
   glassBorder: "rgba(0, 229, 185, 0.28)",
 } as const;
@@ -67,7 +66,7 @@ export const beats = {
   city: { from: 290, duration: 260 },
   /** Richer mid-story: empty cells, agent write, selective undo */
   coverage: { from: 520, duration: 300 },
-  /** Clear the bid-desk example → En Dash mark morph (~5s) */
+  /** Clear ToDo sample → En Dash mark morph (~5s) */
   brand: { from: 790, duration: 150 },
   /** Short punch lockup — ≤120 frames (~4s), not an end pad */
   settle: { from: 960, duration: 120 },
