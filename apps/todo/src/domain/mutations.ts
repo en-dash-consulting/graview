@@ -49,6 +49,9 @@ export const addTask = defineMutation("add-task", {
 export const finish = defineMutation("finish", {
   title: "Mark it done",
   description: "Say a task is finished. Reversible, like everything here.",
+  // The act of a todo app, said so: pinned above its unpinned peers in
+  // every menu. A person's own pins, made in the menu, outrank this.
+  pinned: true,
   subject: { kinds: ["task"], arg: "taskId" },
   input: z.object({ taskId: nodeRef(["task"]) }),
   describe: (args, graph) => `Finish "${nameOf(graph as Reader, args.taskId)}"`,

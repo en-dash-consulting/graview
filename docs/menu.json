@@ -1,0 +1,48 @@
+{
+  "at": "2026-09-01T20:24:49.361Z",
+  "engine": "chromium",
+  "checks": {
+    "filterOnlyPastTheFold": {
+      "quietTaskActions": 9,
+      "filterShown": false,
+      "ok": true
+    },
+    "searchThenApply": {
+      "survivors": 1,
+      "soleLabel": "Mark it done",
+      "dueShownBeforehand": true,
+      "applied": true,
+      "ok": true
+    },
+    "pinThenReorder": {
+      "before": [
+        "finish",
+        "reschedule",
+        "reopen",
+        "rename",
+        "plan-it"
+      ],
+      "after": [
+        "finish",
+        "reschedule",
+        "rename",
+        "reopen",
+        "plan-it"
+      ],
+      "headings": [
+        "⚠ \"Pay the deposit\" was due 2026-08-28",
+        "pinned",
+        "its ties"
+      ],
+      "ok": true
+    },
+    "pinSurvivesReloadAndUnpins": {
+      "survived": true,
+      "pressed": true,
+      "unpinnedAgain": true,
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}
