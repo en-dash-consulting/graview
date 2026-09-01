@@ -1,10 +1,15 @@
 import type { AnySchema } from "@graview/core";
 import { useAttention, useGraview, useSelection } from "@graview/react";
 import {
+  configuredResponder,
   createToolRuntime,
+  describeIntelligence,
   describeProposal,
-  graphResponder,
+  loadIntelligenceConfig,
+  saveIntelligenceConfig,
   type ChatReply,
+  type IntelligenceConfig,
+  type LocalStatus,
   type ProposedCall,
   type Responder,
   type ToolCall,
@@ -48,6 +53,15 @@ export function ChatPanel<S extends AnySchema>({
   const [turns, setTurns] = useState<readonly Turn[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  /*
+   * THE LADDER IS A SETTING. Which rung answers — the graph, a model in
+   * this browser, or a frontier model with the person's own key — lives in
+   * the person's own storage, never in the repo or the bundle. The gear
+   * changes it in place; a host that passes `respond` has decided for them.
+   */
+  const [config, setConfig] = useState<IntelligenceConfig>(() => loadIntelligenceConfig());
+  const [settings, setSettings] = useState(false);
+  const [warmth, setWarmth] = useState<LocalStatus | null>(null);
   const anchor = useRef<HTMLDivElement | null>(null);
   const log = useRef<HTMLOListElement | null>(null);
 
@@ -63,7 +77,14 @@ export function ChatPanel<S extends AnySchema>({
       }),
     [store, principal],
   );
-  const answer = useMemo<Responder<S>>(() => respond ?? graphResponder<S>(), [respond]);
+  const answer = useMemo<Responder<S>>(
+    () =>
+      respond ??
+      configuredResponder<S>(config, {
+        onStatus: (status) => setWarmth(status),
+      }),
+    [respond, config],
+  );
 
   useEffect(() => (onCall ? runtime.onCall(onCall) : undefined), [runtime, onCall]);
   // What the conversation looked at reaches the picture, like any seat's reads.
@@ -158,7 +179,7 @@ export function ChatPanel<S extends AnySchema>({
             zIndex: 30,
             width: 320,
             display: "grid",
-            gridTemplateRows: "1fr auto",
+            gridTemplateRows: "auto 1fr auto",
             borderRadius: 10,
             border: "1px solid var(--graview-edge)",
             background: "var(--graview-float)",
@@ -166,6 +187,52 @@ export function ChatPanel<S extends AnySchema>({
             overflow: "hidden",
           }}
         >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 8px 6px 12px",
+              borderBottom: "1px solid var(--graview-edge)",
+            }}
+          >
+            <span style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
+              Seat
+            </span>
+            <span data-testid="chat-source" style={{ fontSize: 11, color: "var(--graview-ink-muted)" }}>
+              {respond
+                ? "app-provided"
+                : warmth?.state === "warming"
+                  ? `warming${warmth.progress !== undefined ? ` ${Math.round(warmth.progress * 100)}%` : "…"}`
+                  : warmth?.state === "failed"
+                    ? "local model failed — graph answering"
+                    : describeIntelligence(config)}
+            </span>
+            <span style={{ flex: "1 1 auto" }} />
+            {respond ? null : (
+              <button
+                type="button"
+                data-testid="chat-settings"
+                aria-expanded={settings}
+                onClick={() => setSettings((current) => !current)}
+                title="Choose what answers: the graph, a model in this browser, or your own key"
+                style={{ fontSize: 12, padding: "2px 8px", minHeight: 24 }}
+              >
+                ⚙
+              </button>
+            )}
+          </div>
+          {settings ? (
+            <ChatSettings
+              config={config}
+              onDone={(next) => {
+                saveIntelligenceConfig(next);
+                setConfig(next);
+                setWarmth(null);
+                setSettings(false);
+              }}
+            />
+          ) : (
           <ol
             ref={log}
             style={{
@@ -221,6 +288,7 @@ export function ChatPanel<S extends AnySchema>({
               <li style={{ fontSize: 12, color: "var(--graview-ink-faint)" }}>thinking…</li>
             ) : null}
           </ol>
+          )}
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -251,5 +319,123 @@ export function ChatPanel<S extends AnySchema>({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * The rung picker. Three honest choices, stated costs, one Save — and the
+ * key field says exactly where the key lives: this browser's storage, sent
+ * only to the provider chosen, never to a server of ours, never in a repo.
+ */
+function ChatSettings({
+  config,
+  onDone,
+}: {
+  readonly config: IntelligenceConfig;
+  readonly onDone: (next: IntelligenceConfig) => void;
+}) {
+  const [source, setSource] = useState<IntelligenceConfig["source"]>(config.source);
+  const [preset, setPreset] = useState<"xai" | "custom">(config.remote?.preset ?? "xai");
+  const [apiKey, setApiKey] = useState(config.remote?.apiKey ?? "");
+  const [model, setModel] = useState(config.remote?.model ?? "");
+  const [baseUrl, setBaseUrl] = useState(config.remote?.baseUrl ?? "");
+
+  const label: React.CSSProperties = { fontSize: 11, color: "var(--graview-ink-muted)" };
+  const field: React.CSSProperties = {
+    font: "inherit",
+    fontSize: 12.5,
+    padding: "6px 9px",
+    borderRadius: 8,
+    border: "1px solid var(--graview-edge)",
+    background: "var(--graview-panel)",
+    color: "var(--graview-ink)",
+    width: "100%",
+    boxSizing: "border-box",
+  };
+
+  return (
+    <form
+      data-testid="chat-settings-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onDone({
+          source,
+          ...(source === "remote" && apiKey
+            ? {
+                remote: {
+                  preset,
+                  apiKey,
+                  ...(model ? { model } : {}),
+                  ...(preset === "custom" && baseUrl ? { baseUrl } : {}),
+                },
+              }
+            : {}),
+        });
+      }}
+      style={{ display: "grid", gap: 10, padding: 12, maxHeight: "min(46vh, 400px)", overflowY: "auto" }}
+    >
+      {(
+        [
+          ["graph", "Graph-native", "Keyless and instant. The graph answers from its own structure."],
+          ["local", "In this browser", "A small model runs on this machine. First use downloads ~1–2GB, then it is free and private."],
+          ["remote", "Advanced (your key)", "A frontier model answers. Calls go straight from this browser to the provider."],
+        ] as const
+      ).map(([value, title, detail]) => (
+        <label key={value} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 8, alignItems: "start", cursor: "pointer" }}>
+          <input
+            type="radio"
+            name="intelligence-source"
+            value={value}
+            checked={source === value}
+            onChange={() => setSource(value)}
+          />
+          <span style={{ display: "grid", gap: 2 }}>
+            <span style={{ fontSize: 12.5 }}>{title}</span>
+            <span style={{ ...label, lineHeight: 1.4 }}>{detail}</span>
+          </span>
+        </label>
+      ))}
+
+      {source === "remote" ? (
+        <div style={{ display: "grid", gap: 8, paddingLeft: 22 }}>
+          <label style={{ display: "grid", gap: 3 }}>
+            <span style={label}>Provider</span>
+            <select value={preset} onChange={(event) => setPreset(event.target.value as "xai" | "custom")} style={field}>
+              <option value="xai">xAI (Grok)</option>
+              <option value="custom">Custom OpenAI-compatible endpoint</option>
+            </select>
+          </label>
+          {preset === "custom" ? (
+            <label style={{ display: "grid", gap: 3 }}>
+              <span style={label}>Base URL</span>
+              <input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://…/v1" style={field} />
+            </label>
+          ) : null}
+          <label style={{ display: "grid", gap: 3 }}>
+            <span style={label}>API key</span>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(event) => setApiKey(event.target.value)}
+              placeholder={preset === "xai" ? "xai-…" : "sk-…"}
+              autoComplete="off"
+              style={field}
+            />
+          </label>
+          <label style={{ display: "grid", gap: 3 }}>
+            <span style={label}>Model</span>
+            <input value={model} onChange={(event) => setModel(event.target.value)} placeholder={preset === "xai" ? "grok-4-fast" : "model id"} style={field} />
+          </label>
+          <p style={{ ...label, margin: 0, lineHeight: 1.4 }}>
+            The key is stored in this browser only and sent only to the provider above — never to
+            any server of this app's, never into the project.
+          </p>
+        </div>
+      ) : null}
+
+      <button type="submit" style={{ justifySelf: "start", fontSize: 12.5 }}>
+        Use this
+      </button>
+    </form>
   );
 }

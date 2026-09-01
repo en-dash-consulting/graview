@@ -1,0 +1,28 @@
+{
+  "id": "d3b760ca-ded0-458c-a94d-1c16297e0a82",
+  "taskId": "c1d797e0-d59a-4a34-baf8-4bd3505c2e56",
+  "taskTitle": "Local intelligence: the free tier runs in the browser",
+  "startedAt": "2026-09-01T13:23:44.993Z",
+  "finishedAt": "2026-09-01T13:23:44.993Z",
+  "status": "completed",
+  "turns": 30,
+  "summary": "Intelligence ladder as config: graph floor, in-browser model rung (Prompt API/WebLLM), keyed remote rung with xAI preset; chat gains the rung picker; keys live in the browser only",
+  "tokenUsage": {
+    "input": 60,
+    "output": 52361,
+    "cacheCreationInput": 41939,
+    "cacheReadInput": 21004203
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 60,
+    "output": 52361,
+    "cached": 21046142,
+    "total": 21098563
+  }
+}

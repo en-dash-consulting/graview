@@ -36,7 +36,7 @@ type Key = {
   cEdge: number;
 };
 
-/** Sparse camera voyage across the 42s story. */
+/** Sparse camera voyage across the 36s story (rebalanced mid / short settle). */
 const KEYS: Key[] = [
   {
     at: 0,
@@ -54,7 +54,7 @@ const KEYS: Key[] = [
     cEdge: 0,
   },
   {
-    at: 90,
+    at: 70,
     x: 0,
     y: 0,
     scale: 1.0,
@@ -69,7 +69,7 @@ const KEYS: Key[] = [
     cEdge: 0.85,
   },
   {
-    at: 220,
+    at: 185,
     x: 36,
     y: -10,
     scale: 1.1,
@@ -84,7 +84,7 @@ const KEYS: Key[] = [
     cEdge: 1,
   },
   {
-    at: 360,
+    at: 320,
     x: 0,
     y: 36,
     scale: 0.93,
@@ -114,7 +114,23 @@ const KEYS: Key[] = [
     cEdge: 0.9,
   },
   {
-    at: 780,
+    // Mid coverage — hold for product teaching
+    at: 700,
+    x: -20,
+    y: 4,
+    scale: 1.04,
+    rotate: -0.2,
+    tiltX: 2,
+    focus: 0.42,
+    bloom: 0.48,
+    cBloom: 0.5,
+    cPulse: 0.22,
+    cDrift: 0.4,
+    cSettle: 0,
+    cEdge: 0.85,
+  },
+  {
+    at: 820,
     x: 0,
     y: 0,
     scale: 1.05,
@@ -129,7 +145,7 @@ const KEYS: Key[] = [
     cEdge: 0.7,
   },
   {
-    at: 1000,
+    at: 980,
     x: 0,
     y: 0,
     scale: 1.0,
