@@ -18,6 +18,7 @@ export default defineConfig({
       "@graview/render": pkg("render"),
       "@graview/react": pkg("react"),
       "@graview/primitives": pkg("primitives"),
+      "@graview/pages": pkg("pages"),
     },
   },
   server: { port: 5193, strictPort: true },

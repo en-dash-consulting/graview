@@ -24,6 +24,9 @@ export const addTask = defineMutation("add-task", {
   title: "Add a task",
   description: "Put something new on a list.",
   subject: { kinds: ["list"], arg: "listId" },
+  // The other half of the seam: acts ON a list, brings a task INTO being —
+  // which is what lets the Tasks page (and an empty Tasks card) offer it.
+  creates: ["task"],
   input: z.object({
     listId: nodeRef(["list"]),
     label: z.string().min(1),

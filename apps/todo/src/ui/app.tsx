@@ -225,6 +225,23 @@ function CommandBar({
       <Trail home={place.id} />
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+        {/* The scene offering the page face: two faces, one application. */}
+        <a
+          href="/pages"
+          data-testid="pages-link"
+          title="The same app, as ordinary pages"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            minHeight: 24,
+            padding: "2px 8px",
+            fontSize: 12.5,
+            color: "var(--graview-ink-muted)",
+            textDecoration: "none",
+          }}
+        >
+          Pages
+        </a>
         <Standing clean="Nothing is out of order" />
         <ActivityRail calls={calls} seat={<TidyButton onCall={onCall} />} />
         <button

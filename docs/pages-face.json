@@ -1,0 +1,35 @@
+{
+  "at": "2026-09-01T06:56:17.506Z",
+  "checks": {
+    "phoneHome": {
+      "noSideScroll": true,
+      "hasH1": true,
+      "namedLinks": true,
+      "labelledInputs": true
+    },
+    "homeIndexesKinds": true,
+    "phoneList": {
+      "noSideScroll": true,
+      "hasH1": true,
+      "namedLinks": true,
+      "labelledInputs": true
+    },
+    "listLinksRecords": true,
+    "phoneRecord": {
+      "noSideScroll": true,
+      "hasH1": true,
+      "namedLinks": true,
+      "labelledInputs": true
+    },
+    "recordSaysItsFacts": {
+      "fields": true,
+      "linksToList": true,
+      "actions": true,
+      "spatialLink": true
+    },
+    "derivedFormApplies": true,
+    "sceneOffersThePages": true,
+    "recordLinksItsStop": true
+  },
+  "passed": true
+}

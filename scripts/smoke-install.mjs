@@ -139,6 +139,7 @@ import { deriveAffordances, createToolRuntime } from "@graview/tools";
 import { planFrame } from "@graview/render";
 import { createViews, GraviewProvider, Scene, type ViewProps } from "@graview/react";
 import { Panel, registerDefaultViews, themeCss } from "@graview/primitives";
+import { PagesApp, recordFacts, pluralSlug } from "@graview/pages";
 import { z } from "zod";
 
 const task = defineNode("task", {
@@ -229,6 +230,11 @@ export function build() {
     css: themeCss("dark").length,
     palettes: [DARK.accent, LIGHT.accent],
     scene: <GraviewProvider store={store} views={views} initialView={view}><Scene renderer="dom" /></GraviewProvider>,
+    // The other face, from the same store: routes off the plural, facts off
+    // the shared derivations.
+    slug: pluralSlug(schema, "task"),
+    record: recordFacts(store, "a")?.fields.length ?? -1,
+    pages: <PagesApp context={{ store }} initialPath="/tasks" />,
   };
 }
 `,

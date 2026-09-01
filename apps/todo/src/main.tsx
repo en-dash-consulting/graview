@@ -1,7 +1,8 @@
 import { themeCss, type Scheme } from "@graview/primitives";
 import { createRoot } from "react-dom/client";
+import { PagesApp } from "@graview/pages";
 import { thingsBrand } from "./domain/brand.js";
-import { TodoApp } from "./ui/app.js";
+import { createTodoUiStore, today, TodoApp } from "./ui/app.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -36,9 +37,30 @@ applyScheme(scheme);
 
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
-createRoot(root).render(
-  <TodoApp syncUrl renderer="dom" initialScheme={scheme} onSchemeChange={applyScheme} />,
-);
+/*
+ * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
+ * its view state); the routed face lives under "/pages" on ordinary paths.
+ * Same store machinery, same ids — a record page links to its spatial stop
+ * and the scene's header offers the pages, because they are one app.
+ */
+if (window.location.pathname.startsWith("/pages")) {
+  const store = createTodoUiStore();
+  createRoot(root).render(
+    <PagesApp
+      basename="/pages"
+      context={{
+        store,
+        brand: thingsBrand,
+        sceneHref: "/",
+        invariantContext: { today: today() },
+      }}
+    />,
+  );
+} else {
+  createRoot(root).render(
+    <TodoApp syncUrl renderer="dom" initialScheme={scheme} onSchemeChange={applyScheme} />,
+  );
+}
 
 // A flag a harness can wait for, rather than a timer and a hope.
 (window as unknown as Record<string, unknown>)["__todoReady"] = { renderer: "dom", scheme };

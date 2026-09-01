@@ -2,7 +2,7 @@
 id: "dd174e35-ab9e-4e6a-9c20-83d7ab6c77a3"
 level: "feature"
 title: "The graph also wears a traditional face: a routed webapp derived from the same declaration"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "sdk"
@@ -11,6 +11,11 @@ tags:
   - "mobile"
   - "distribution"
 source: "Nick, 2026-08-31: \"the framework also producing a more traditional set of interfaces, or allowing users to do that with custom definitions... an sdk/api to interface with, and we ship with a couple defaults... necessary for backwards compatibility and mobile/responsiveness... spin up an entire application almost only by specifying config about a context graph (its node types) and probably some starter data\""
+startedAt: "2026-09-01T07:01:15.278Z"
+completedAt: "2026-09-01T07:01:15.278Z"
+endedAt: "2026-09-01T07:01:15.278Z"
+resolutionType: "code-change"
+resolutionDetail: "@graview/pages ships the routed face: page registry mirroring the view registry, default home/list/record/problems/shell, recordFacts parity with the spatial derivations, DerivedForm over new core formFields (objects, discriminated unions, arrays, node pickers), todo mounts both faces from one declaration with cross-links, plural-slug-collision check, phone-width harness (pnpm pages), survey photographs the page face, smoke-install exercises the package. 541 tests + 26/26 audit + full sweep green."
 acceptanceCriteria:
   - "From one defineApp declaration plus starter data, the framework can serve BOTH the spatial Graview workbench AND a traditional react-router webapp — index pages per kind, a record page per node with its relationships as links, cross-linked navigation — with no per-app page code required"
   - "The traditional face is derived from the same sources the spatial one is: schema (fields, edges, plurals, descriptions), mutations (forms and actions), invariants (validation and problem lists), permissions (auth-scoped visibility and actions), and the op log (history on a record)"

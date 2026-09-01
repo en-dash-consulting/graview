@@ -170,6 +170,8 @@ export { bindSchema } from "./bind.js";
 export type { SchemaBinding } from "./bind.js";
 
 // App bundle, checks and generated agent docs.
+export { formField, formFields, formComplete } from "./mutations/form.js";
+export type { FormField, ScalarField } from "./mutations/form.js";
 export { resolveModules } from "./modules.js";
 export type { ModuleDeclaration, ModuleMap, ModuleProjection } from "./modules.js";
 export { defineApp } from "./app.js";

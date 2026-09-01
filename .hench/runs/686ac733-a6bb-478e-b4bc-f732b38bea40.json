@@ -1,0 +1,28 @@
+{
+  "id": "686ac733-a6bb-478e-b4bc-f732b38bea40",
+  "taskId": "dd174e35-ab9e-4e6a-9c20-83d7ab6c77a3",
+  "taskTitle": "The graph also wears a traditional face",
+  "startedAt": "2026-09-01T07:01:37.997Z",
+  "finishedAt": "2026-09-01T07:01:37.997Z",
+  "status": "completed",
+  "turns": 78,
+  "summary": "@graview/pages: routed lists/records/forms/problems derived from the declaration; core form derivation incl. discriminated unions; parity with the spatial face; phone-width harness green",
+  "tokenUsage": {
+    "input": 156,
+    "output": 85303,
+    "cacheCreationInput": 131149,
+    "cacheReadInput": 30816976
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 156,
+    "output": 85303,
+    "cached": 30948125,
+    "total": 31033584
+  }
+}
