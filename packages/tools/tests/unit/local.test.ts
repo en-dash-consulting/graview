@@ -141,6 +141,30 @@ describe("the local rung warms off the critical path", () => {
   });
 });
 
+describe("grounded facts outrank any model", () => {
+  it("answers a graph-answerable question from the graph, whatever the rung", async () => {
+    let modelAsked = 0;
+    const responder = configuredResponder(
+      { source: "remote", remote: { preset: "custom", baseUrl: "https://x.invalid/v1", apiKey: "k", model: "m" } },
+    );
+    // "tell me about Widget" is grounded: the model must not even be tried.
+    const reply = await responder(store(), "tell me about Widget");
+    expect(reply.say).toContain("Widget — a thing");
+    expect(reply.say).toContain("(from the graph)");
+    expect(modelAsked).toBe(0);
+  });
+
+  it("hands the model only what the graph cannot answer specifically", async () => {
+    const responder = configuredResponder({
+      source: "remote",
+      remote: { preset: "custom", baseUrl: "https://nowhere.invalid/v1", apiKey: "k", model: "m" },
+    });
+    // Ungrounded chit-chat reaches the model; its failure falls to the floor.
+    const reply = await responder(store(), "write me a poem");
+    expect(reply.say).toContain("m did not answer");
+  });
+});
+
 describe("configuredResponder: the graph is always the floor", () => {
   it("answers from the graph by default", async () => {
     const reply = await configuredResponder(DEFAULT_INTELLIGENCE)(store(), "hello");

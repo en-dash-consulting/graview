@@ -263,6 +263,29 @@ export function configuredResponder<S extends AnySchema>(
 ): Responder<S> {
   const floor = graphResponder<S>();
 
+  /*
+   * GROUNDED FACTS OUTRANK ANY MODEL. Whatever rung is chosen, a question
+   * the graph can answer from its own structure — a standing, a named
+   * thing, a who or a when — is answered by the graph: a small local model
+   * asked "who can play left back" will fluently invent a goalkeeper, and
+   * no rung is allowed to replace a fact with a guess about the same fact.
+   * The model earns the questions the graph cannot answer specifically.
+   */
+  const groundedFirst =
+    (modelled: Responder<S>, name: string): Responder<S> =>
+    async (store, text, context) => {
+      const known = await floor(store, text, context);
+      if (known.grounded) return note(known, "(from the graph)");
+      try {
+        return await modelled(store, text, context);
+      } catch (error) {
+        return note(
+          known,
+          `(${name} did not answer — ${error instanceof Error ? error.message : String(error)}. The graph answered instead.)`,
+        );
+      }
+    };
+
   if (config.source === "remote" && config.remote?.apiKey) {
     const model =
       config.remote.model ?? (config.remote.preset === "custom" ? "a model" : XAI_DEFAULT_MODEL);
@@ -274,18 +297,7 @@ export function configuredResponder<S extends AnySchema>(
             model,
           })
         : xaiCompletion({ apiKey: config.remote.apiKey, ...(config.remote.model ? { model: config.remote.model } : {}) });
-    const modelled = llmResponder<S>({ complete });
-    return async (store, text, context) => {
-      try {
-        return await modelled(store, text, context);
-      } catch (error) {
-        const answered = await floor(store, text, context);
-        return note(
-          answered,
-          `(${model} did not answer — ${error instanceof Error ? error.message : String(error)}. The graph answered instead.)`,
-        );
-      }
-    };
+    return groundedFirst(llmResponder<S>({ complete }), model);
   }
 
   if (config.source === "local") {
@@ -293,22 +305,16 @@ export function configuredResponder<S extends AnySchema>(
       ...(config.local?.model ? { model: config.local.model } : {}),
       ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}),
     });
-    const modelled = llmResponder<S>({ complete: local.complete });
+    const modelled = groundedFirst(llmResponder<S>({ complete: local.complete }), "the local model");
     return async (store, text, context) => {
       if (!local.ready()) {
         local.warm();
         const answered = await floor(store, text, context);
-        return note(answered, "(the local model is warming — the graph answered meanwhile)");
+        return answered.grounded
+          ? note(answered, "(from the graph)")
+          : note(answered, "(the local model is warming — the graph answered meanwhile)");
       }
-      try {
-        return await modelled(store, text, context);
-      } catch (error) {
-        const answered = await floor(store, text, context);
-        return note(
-          answered,
-          `(the local model failed — ${error instanceof Error ? error.message : String(error)}. The graph answered instead.)`,
-        );
-      }
+      return modelled(store, text, context);
     };
   }
 
