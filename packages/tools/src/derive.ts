@@ -39,11 +39,15 @@ export interface DeriveOptions<S extends AnySchema> {
   /** Edges the selection names — supplied by the binding, like kinds. */
   readonly edgeSelection?: readonly { kind: string; from: string; to: string }[];
   /**
-   * Mutation names the person at this browser has pinned. Supplied by the
-   * binding (which owns the browser's storage — see `loadPins`); the
-   * dev's pins come from the declarations and need no option.
+   * The person's pin overrides. Supplied by the binding (which owns the
+   * browser's storage — see `loadPins`); the dev's pins come from the
+   * declarations and need no option. `pinned` outranks a declared pin,
+   * `unpinned` demotes one.
    */
-  readonly pins?: readonly string[];
+  readonly pins?: {
+    readonly pinned?: readonly string[];
+    readonly unpinned?: readonly string[];
+  };
 }
 
 /**
@@ -114,18 +118,24 @@ export function deriveAffordances<S extends AnySchema>(
       .filter((mutation) => mutation.pinned)
       .map((mutation) => mutation.name),
   );
-  const userPins = new Set(options.pins ?? []);
+  const userPins = new Set(options.pins?.pinned ?? []);
+  // A declared pin the person turned off ranks like anything else.
+  const demoted = new Set(options.pins?.unpinned ?? []);
+  const holds = (affordance: Affordance): "user" | "declared" | undefined =>
+    userPins.has(affordance.mutation)
+      ? "user"
+      : declaredPins.has(affordance.mutation) && !demoted.has(affordance.mutation)
+        ? "declared"
+        : undefined;
   const pinRank = (affordance: Affordance): number =>
-    userPins.has(affordance.mutation) ? 0 : declaredPins.has(affordance.mutation) ? 1 : 2;
+    holds(affordance) === "user" ? 0 : holds(affordance) === "declared" ? 1 : 2;
   const weights = usageWeights(store.log.all());
   const boosted = (affordance: Affordance): number =>
     affordance.score + usageBoost(weights.get(affordance.mutation) ?? 0);
-  const pinnedAs = (affordance: Affordance): Affordance =>
-    userPins.has(affordance.mutation)
-      ? { ...affordance, pinned: "user" }
-      : declaredPins.has(affordance.mutation)
-        ? { ...affordance, pinned: "declared" }
-        : affordance;
+  const pinnedAs = (affordance: Affordance): Affordance => {
+    const held = holds(affordance);
+    return held ? { ...affordance, pinned: held } : affordance;
+  };
   const ranked = dedupe(affordances)
     .map(pinnedAs)
     .sort(

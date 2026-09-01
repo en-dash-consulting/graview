@@ -180,6 +180,35 @@ try {
       unpinned.indexOf("rename") > unpinned.indexOf("reopen"),
   };
 
+  /* ------------------------------------- the dev's pin is overridable too */
+  // finish is pinned by the app's own declaration. The same star demotes
+  // it for this person — and brings it back. Without this, the star on a
+  // declared pin was a control that visibly did nothing.
+  await page.click('[aria-label="Clear selection"]');
+  await page.waitForTimeout(200);
+  await page.click('[data-graview-pick="t-book"]');
+  await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for="finish"]');
+  const headed = (list) => list.includes("pinned");
+  const headingsNow = () =>
+    page.evaluate(() =>
+      [
+        ...document.querySelectorAll('[data-testid="inspector-strip"] ol li[role="presentation"]'),
+      ].map((heading) => heading.textContent?.trim() ?? ""),
+    );
+  const declaredShown = headed(await headingsNow());
+  await page.click('[data-pin-for="finish"]');
+  await page.waitForTimeout(150);
+  const demotedNow = !headed(await headingsNow());
+  await page.click('[data-pin-for="finish"]');
+  await page.waitForTimeout(150);
+  const restoredNow = headed(await headingsNow());
+  report.checks.devPinOverride = {
+    declaredShown,
+    demotedNow,
+    restoredNow,
+    ok: declaredShown && demotedNow && restoredNow,
+  };
+
   report.pageErrors = errors;
   report.passed =
     Object.values(report.checks).every((check) => check.ok) && errors.length === 0;

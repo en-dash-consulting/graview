@@ -41,7 +41,8 @@ export { createInAppAdapter, createMcpAdapter } from "./agent/adapters.js";
 export type { InAppAgent, McpContent, McpTool, McpToolResult } from "./agent/adapters.js";
 export { insightProvider } from "./providers/insight.js";
 export { usageBoost, usageWeights } from "./usage.js";
-export { loadPins, savePins, togglePin } from "./pins.js";
+export { loadPins, savePins, togglePin, NO_PINS } from "./pins.js";
+export type { PinOverrides } from "./pins.js";
 export {
   describeProposal,
   intelligenceProvider,

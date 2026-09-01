@@ -126,15 +126,24 @@ describe("pins and bands", () => {
   });
 
   it("lets a person's pin outrank the dev's, without crossing a band", () => {
-    const order = select(withThing(), { pins: ["beta"] });
+    const order = select(withThing(), { pins: { pinned: ["beta"] } });
     expect(order[0]).toBe("alpha"); // repairs still first
     expect(order[order.length - 1]).toBe("drop"); // destructive still last
     // User pin (beta) above dev pin (gamma), both above nothing pinned.
     expect(order.indexOf("beta")).toBeLessThan(order.indexOf("gamma"));
   });
 
+  it("lets a person demote the dev's declared pin", () => {
+    const order = select(withThing(), { pins: { unpinned: ["gamma"] } });
+    // Turned off, the declared pin ranks like anything else — by id among
+    // score ties — instead of holding the head of the band.
+    const derived = deriveAffordances(withThing(), ["t1"], { pins: { unpinned: ["gamma"] } });
+    expect(derived.affordances.find((a) => a.mutation === "gamma")?.pinned).toBeUndefined();
+    expect(order.indexOf("beta")).toBeLessThan(order.indexOf("gamma"));
+  });
+
   it("marks pinned affordances so the interface can hold them in a head-section", () => {
-    const derived = deriveAffordances(withThing(), ["t1"], { pins: ["beta"] });
+    const derived = deriveAffordances(withThing(), ["t1"], { pins: { pinned: ["beta"] } });
     const byName = new Map(derived.affordances.map((a) => [a.mutation, a.pinned]));
     expect(byName.get("beta")).toBe("user");
     expect(byName.get("gamma")).toBe("declared");
