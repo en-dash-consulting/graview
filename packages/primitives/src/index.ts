@@ -8,6 +8,7 @@ export {
 export type { BoardLens, BoardOptions, BoardSlot, BoardState, BoardViewProps } from "./lens/board.js";
 export {
   ActivityRail,
+  AgentSeat,
   AnswerArgs,
   BackOut,
   Backtrack,
@@ -19,7 +20,7 @@ export {
   UndoTurn,
   useRecentChanges,
 } from "./workbench/index.js";
-export type { Change } from "./workbench/index.js";
+export type { AgentSeatProps, Change } from "./workbench/index.js";
 export {
   buildCoverage,
   CoverageBindingError,

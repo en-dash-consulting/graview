@@ -3,7 +3,7 @@ import {
   GraviewProvider,
   JackedIn,
   Scene,
-  useAttention,
+  useGraph,
   useGraview,
   useNavigation,
   useUrlSync,
@@ -13,6 +13,7 @@ import {
 import {
   ActivityRail,
   BackOut,
+  AgentSeat,
   Backtrack,
   Inspector,
   OverviewButton,
@@ -21,7 +22,7 @@ import {
   Trail,
   Wordmark,
 } from "@graview/primitives";
-import { createInAppAdapter, createToolRuntime, type ToolCall } from "@graview/tools";
+import type { ToolCall } from "@graview/tools";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import example from "../data/example.json";
 import { createTodoStore, type TodoStore } from "../domain/app.js";
@@ -219,12 +220,19 @@ function CommandBar({
           only makes them visible, because nobody should have to know that. */}
       <Backtrack />
       <Places />
-      <Trail home={place.id} homeLabel={place.label} />
+      {/* No home crumb: the pressed pill in <Places /> already names the
+          place and already goes there. */}
+      <Trail home={place.id} />
+      {/* WHERE YOU ARE STANDING, all in one group.
+          Rising to the Graview is a change of place like the others, and it
+          sat at the far right among the buttons that DO things — so the two
+          halves of navigation were at opposite ends of the bar with eight
+          hundred pixels between them. */}
+      <OverviewButton />
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
         <Standing clean="Nothing is out of order" />
         <ActivityRail calls={calls} />
-        <OverviewButton />
         <TidyButton onCall={onCall} />
         <button
           type="button"
@@ -287,59 +295,51 @@ function Places() {
 }
 
 /**
- * An agent seat, in about thirty lines.
+ * The agent seat: hand the list over and watch what it does.
  *
- * It reads through the same tools an external MCP client would, and its edits
- * produce the same diffs a person's do — which is why the activity list shows
- * its reasoning and its changes without anything here being built for it.
+ * It asks the framework what is wrong rather than deciding out here what
+ * "tidy" means, then applies the repairs the rule itself named.
  */
 function TidyButton({ onCall }: { onCall: (call: ToolCall) => void }) {
   const { store } = useGraview<S>();
-  const runtime = useMemo(
-    () => createToolRuntime(store, { author: { kind: "agent", id: "claude", session: "ui" } }),
-    [store],
+  const nodes = useGraph();
+  const late = useMemo(
+    () =>
+      store.graph
+        .allNodes()
+        .filter((node) => {
+          const task = node as unknown as { kind: string; done?: boolean; due?: string };
+          return task.kind === "task" && !task.done && task.due !== undefined && task.due < today();
+        }).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, nodes],
   );
-  const agent = useMemo(() => createInAppAdapter(runtime), [runtime]);
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => runtime.onCall(onCall), [runtime, onCall]);
-  // What it LOOKED AT, into the picture. A read produces no diff.
-  useAttention(runtime);
 
   return (
-    <button
-      type="button"
-      data-testid="agent-tidy"
-      disabled={busy}
-      title={`Hand the list to the agent seat. ${runtime.definitions.length} tools, generated from the schema.`}
-      onClick={() => {
-        setBusy(true);
-        void (async () => {
-          try {
-            // Ask the framework what is wrong, then apply the repairs it
-            // names — rather than deciding what "tidy" means out here.
-            const violations = (await agent.run("get_violations", {
-              context: { today: today() },
-            })) as {
-              invariant: string;
-              repairs: { mutation: string; args?: Record<string, unknown> }[];
-            }[];
-            for (const violation of violations) {
-              if (violation.invariant !== "nothing-overdue") continue;
-              const repair = violation.repairs.find(
-                (candidate) => candidate.mutation === "reschedule",
-              );
-              if (!repair) continue;
-              await agent.run("reschedule", { ...repair.args, due: today() });
-            }
-          } finally {
-            setBusy(false);
-          }
-        })();
+    <AgentSeat<S>
+      testId="agent-tidy"
+      count={late}
+      gate="reschedule"
+      label={(n) => `Move ${n} overdue`}
+      busyLabel="Tidying…"
+      idle="Nothing is overdue"
+      onCall={onCall}
+      run={async (agent) => {
+        const violations = (await agent.run("get_violations", {
+          context: { today: today() },
+        })) as {
+          invariant: string;
+          repairs: { mutation: string; args?: Record<string, unknown> }[];
+        }[];
+        for (const violation of violations) {
+          if (violation.invariant !== "nothing-overdue") continue;
+          const repair = violation.repairs.find(
+            (candidate) => candidate.mutation === "reschedule",
+          );
+          if (!repair) continue;
+          await agent.run("reschedule", { ...repair.args, due: today() });
+        }
       }}
-      style={{ padding: "6px 12px", whiteSpace: "nowrap" }}
-    >
-      {busy ? "Tidying…" : "Tidy up"}
-    </button>
+    />
   );
 }

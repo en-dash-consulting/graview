@@ -1,0 +1,265 @@
+{
+  "at": "2026-08-31T17:25:59.998Z",
+  "screens": [
+    {
+      "app": "todo",
+      "state": "lists",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 59,
+      "inspector": null
+    },
+    {
+      "app": "todo",
+      "state": "week",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 59,
+      "inspector": null
+    },
+    {
+      "app": "todo",
+      "state": "selected",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 59,
+      "inspector": {
+        "shown": 9,
+        "hidden": 0,
+        "size": "780x115",
+        "text": "Pay the deposittaskWas due 2026-08-28×Give it a new date …Finish itDrop itPut it backNote "
+      }
+    },
+    {
+      "app": "todo",
+      "state": "travelled",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 29,
+      "inspector": {
+        "shown": 9,
+        "hidden": 0,
+        "size": "780x115",
+        "text": "Pay the deposittaskWas due 2026-08-28×Give it a new date …Finish itDrop itPut it backNote "
+      }
+    },
+    {
+      "app": "todo",
+      "state": "graview",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 16,
+      "inspector": null
+    },
+    {
+      "app": "the household example",
+      "state": "home",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 60,
+      "inspector": null
+    },
+    {
+      "app": "the household example",
+      "state": "selected",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 60,
+      "inspector": {
+        "shown": 5,
+        "hidden": 0,
+        "size": "609x80",
+        "text": "child1 schoolblock×RemoveSkip one occurrence …Rename …Restore one occurrence …Retime block"
+      }
+    },
+    {
+      "app": "the household example",
+      "state": "raised",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 60,
+      "inspector": null
+    },
+    {
+      "app": "the household example",
+      "state": "travelled",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 29,
+      "inspector": {
+        "shown": 5,
+        "hidden": 0,
+        "size": "609x80",
+        "text": "child1 schoolblock×RemoveSkip one occurrence …Rename …Restore one occurrence …Retime block"
+      }
+    },
+    {
+      "app": "the household example",
+      "state": "graview",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 21,
+      "inspector": null
+    },
+    {
+      "app": "proposal",
+      "state": "home",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 60,
+      "inspector": null
+    },
+    {
+      "app": "proposal",
+      "state": "selected",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 60,
+      "inspector": {
+        "shown": 7,
+        "hidden": 0,
+        "size": "860x115",
+        "text": "Booking flow remediationdeliverable\"Legacy booking component is untested\" is likely and da"
+      }
+    },
+    {
+      "app": "proposal",
+      "state": "graview",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 24,
+      "inspector": null
+    },
+    {
+      "app": "the coaching example",
+      "state": "team",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 62,
+      "inspector": null
+    },
+    {
+      "app": "the coaching example",
+      "state": "training",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 61,
+      "inspector": null
+    },
+    {
+      "app": "the coaching example",
+      "state": "week",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 60,
+      "inspector": null
+    },
+    {
+      "app": "the coaching example",
+      "state": "selected",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 62,
+      "inspector": {
+        "shown": 3,
+        "hidden": 0,
+        "size": "406x80",
+        "text": "Amaraplayer×Note why this is here …Rename …They can play here …"
+      }
+    },
+    {
+      "app": "the coaching example",
+      "state": "travelled",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 28,
+      "inspector": {
+        "shown": 3,
+        "hidden": 0,
+        "size": "406x80",
+        "text": "Amaraplayer×Note why this is here …Rename …They can play here …"
+      }
+    },
+    {
+      "app": "the coaching example",
+      "state": "problem",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 61,
+      "inspector": {
+        "shown": 7,
+        "hidden": 0,
+        "size": "780x149",
+        "text": "3 selectedskill · positionElif is picked at Right midfield but is out — Elif — ankle, and "
+      }
+    },
+    {
+      "app": "the coaching example",
+      "state": "graview",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "fill": 21,
+      "inspector": null
+    }
+  ]
+}

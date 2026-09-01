@@ -5,6 +5,8 @@ import {
   kindsOf,
   layout,
   withFocus,
+  withPan,
+  withPin,
   withRelation,
   type InterpolatedLayout,
   type Layout,
@@ -22,11 +24,20 @@ import {
   transformFor,
   type Matrix4,
 } from "@graview/render";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import { useActivity, type ActivityMark, type Manner } from "./activity.js";
 import { useAnimatedLayout, useTouched } from "./animation.js";
 import { useFlagged, useImplicated } from "./hooks.js";
-import { useGraph, useGraview, type ViewMode } from "./context.js";
+import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
+import { pickedFrom, usePickTargets } from "./picking.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
 export interface SceneProps<S extends AnySchema> {
@@ -91,6 +102,12 @@ export type SceneNode = Omit<LayoutNode, "plane"> & {
  * anything deeper than a direct child of the canvas. Nesting happens inside a
  * view, never between views.
  */
+/**
+ * How far a pointer must travel before it is a drag rather than a click.
+ * Below this nothing has moved and the gesture is an ordinary selection.
+ */
+const DRAG_THRESHOLD = 4;
+
 export function Scene<S extends AnySchema>({
   options,
   renderer = "auto",
@@ -100,8 +117,18 @@ export function Scene<S extends AnySchema>({
   animate = true,
   children,
 }: SceneProps<S>) {
-  const { store, scheme, views, view, setView, selection, setSelection, setJackedIn, setMenuAt } =
-    useGraview<S>();
+  const {
+    store,
+    scheme,
+    views,
+    view,
+    setView,
+    selection,
+    setSelection,
+    setJackedIn,
+    setMenuAt,
+    bottomInset,
+  } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -115,9 +142,27 @@ export function Scene<S extends AnySchema>({
   const sized = useMemo<LayoutOptions>(
     () => ({
       ...options,
-      ...(size ? { width: size.width, height: size.height } : {}),
+      ...(size
+        ? {
+            width: size.width,
+            /*
+             * The height the scene actually HAS, not the height of its box.
+             *
+             * Chrome that floats over the bottom — the actions strip — takes
+             * real estate the layout was still handing out, and the context
+             * plane's cards land at 98.5% of the height. So selecting
+             * anything put the strip on top of the row of kinds. Laying out
+             * into the remaining height moves the cards up instead, and the
+             * transition already tweens, so they slide rather than jump.
+             *
+             * Floored well above zero: a badly-measured or enormous piece of
+             * chrome must not be able to collapse the scene to nothing.
+             */
+            height: Math.max(size.height * 0.55, size.height - bottomInset),
+          }
+        : {}),
     }),
-    [options, size],
+    [options, size, bottomInset],
   );
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, sized),
@@ -198,6 +243,110 @@ export function Scene<S extends AnySchema>({
     return best ? { ...best, wrote, read, broke } : undefined;
   };
 
+  /*
+   * DRAGGING.
+   *
+   * Two gestures, one mechanism. Drag the ground and the camera moves; drag a
+   * card and it stays where you put it. Both are ordinary view state — a pan
+   * and a pin — so both go in the URL, both interpolate, and both come back
+   * when someone opens the link. Neither is a mode: there is nothing to turn
+   * on and nothing to turn off.
+   *
+   * The threshold is what keeps a click a click. Below it nothing has
+   * happened and the pointer-up is an ordinary selection; above it the
+   * gesture owns the pointer and the click that follows is swallowed.
+   */
+  const swallow = useRef(false);
+  const gesture = useRef<{
+    kind: "pan" | "card";
+    id?: string;
+    fromX: number;
+    fromY: number;
+    baseX: number;
+    baseY: number;
+    moved: boolean;
+  } | null>(null);
+  const [dragging, setDragging] = useState(false);
+
+  const onGroundDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    // Only the ground itself. A card, a chip or anything a view drew keeps
+    // whatever meaning it already had.
+    if ((event.target as HTMLElement).closest("[data-graview-view]")) return;
+    const pan = view.pan ?? { x: 0, y: 0 };
+    gesture.current = {
+      kind: "pan",
+      fromX: event.clientX,
+      fromY: event.clientY,
+      baseX: pan.x,
+      baseY: pan.y,
+      moved: false,
+    };
+  };
+
+  const onCardDown = (node: SceneNode, event: ReactPointerEvent<HTMLElement>) => {
+    if (event.button !== 0) return;
+    gesture.current = {
+      kind: "card",
+      id: node.id,
+      fromX: event.clientX,
+      fromY: event.clientY,
+      // Unpanned, because that is the space a pin is stored in.
+      baseX: node.x - (view.pan?.x ?? 0),
+      baseY: node.y - (view.pan?.y ?? 0),
+      moved: false,
+    };
+  };
+
+  const onDragMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const drag = gesture.current;
+    if (!drag) return;
+    const dx = event.clientX - drag.fromX;
+    const dy = event.clientY - drag.fromY;
+    if (!drag.moved) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      drag.moved = true;
+      setDragging(true);
+      /*
+       * Capture only once it IS a drag.
+       *
+       * Taken on pointer-down it broke every click on an inner target:
+       * pointer capture redirects the compatibility mouse events too, so the
+       * click and double-click that followed were reported against the host
+       * rather than the chip, `data-graview-pick` stopped resolving, and
+       * double-clicking a task opened the card instead of travelling into the
+       * task. Nothing had moved and the gesture had already changed meaning.
+       */
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    }
+    if (drag.kind === "pan") {
+      // A LITTLE way, not anywhere. Losing the scene off the edge of its own
+      // window is not panning, it is dropping it.
+      const limit = { x: result.width * 0.45, y: result.height * 0.45 };
+      setView((current) =>
+        withPan(current, {
+          x: Math.max(-limit.x, Math.min(limit.x, drag.baseX + dx)),
+          y: Math.max(-limit.y, Math.min(limit.y, drag.baseY + dy)),
+        }),
+      );
+    } else if (drag.id) {
+      setView((current) =>
+        withPin(current, drag.id!, { x: drag.baseX + dx, y: drag.baseY + dy }),
+      );
+    }
+  };
+
+  const onDragUp = () => {
+    if (gesture.current?.moved) {
+      // Swallow the click this pointer-up is about to produce, so a drag that
+      // ends on a card does not also select it.
+      swallow.current = true;
+      setTimeout(() => (swallow.current = false), 0);
+    }
+    gesture.current = null;
+    setDragging(false);
+  };
+
   const hosts = frame.nodes.map((node) => (
     <SceneViewHost
       key={node.id}
@@ -273,6 +422,10 @@ export function Scene<S extends AnySchema>({
       onMenu={setMenuAt}
       selection={selection}
       onJackIn={() => setJackedIn(node.id)}
+      onDragStart={(event) => onCardDown(node, event)}
+      onDragMove={onDragMove}
+      onDragEnd={onDragUp}
+      swallowClick={swallow}
     >
       <ResolvedView node={node} mode="scene" selected={selection.includes(node.id)} />
     </SceneViewHost>
@@ -282,10 +435,17 @@ export function Scene<S extends AnySchema>({
     <div
       ref={wrapperRef}
       className={`graview-ground${className ? ` ${className}` : ""}`}
+      onPointerDown={onGroundDown}
+      onPointerMove={onDragMove}
+      onPointerUp={onDragUp}
+      onPointerCancel={onDragUp}
       style={{
         position: "relative",
         width: "100%",
         height: "100%",
+        cursor: dragging ? "grabbing" : "grab",
+        touchAction: "none",
+        ...(dragging ? { userSelect: "none" as const } : {}),
 
         // The stage is sized to the measurement, but a stale measurement
         // during a resize can briefly exceed it. Clipping keeps the scene
@@ -357,7 +517,7 @@ export function Scene<S extends AnySchema>({
           return from?.wrote && to?.wrote ? (from.at > to.at ? from : to) : undefined;
         }}
       />
-      <RelationCaptions nodes={frame.nodes} scheme={scheme} />
+      <RelationCaptions nodes={frame.nodes} scheme={scheme} width={result.width} />
       {children}
     </div>
   );
@@ -373,12 +533,17 @@ export function Scene<S extends AnySchema>({
  * by edge kind, so each caption spans one contiguous run rather than
  * repeating itself once per card.
  */
+/** Wide enough for a full edge description before anything is cut. */
+const MIN_CAPTION = 300;
+
 function RelationCaptions({
   nodes,
   scheme,
+  width: stageWidth,
 }: {
   readonly nodes: readonly SceneNode[];
   readonly scheme: "light" | "dark";
+  readonly width: number;
 }) {
   const runs: { key: string; text: string; left: number; right: number; top: number }[] = [];
   for (const node of nodes) {
@@ -408,28 +573,59 @@ function RelationCaptions({
       aria-hidden="true"
       style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 3 }}
     >
-      {runs.map((run) => (
-        <div
-          key={run.key}
-          data-graview-relation={run.key}
-          style={{
-            position: "absolute",
-            left: run.left,
-            width: Math.max(0, run.right - run.left),
-            // Sits in the gutter above the run, not on top of the cards.
-            top: Math.max(0, run.top - 17),
-            fontSize: 10,
-            letterSpacing: "0.09em",
-            textTransform: "uppercase",
-            color: "var(--graview-ink-faint)",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {run.text}
-        </div>
-      ))}
+      {runs.map((run) => {
+        /*
+         * The caption may be WIDER than the cards it captions.
+         *
+         * Constrained to the run, a single neighbour gave it about 240
+         * pixels and "attends a block, or rides along on a run" was cut to
+         * "attends a block, or rides alo…" — the schema's own words, the one
+         * thing this element exists to show, truncated mid-word with empty
+         * ground on both sides of it. It is centred over the run and clamped
+         * to the stage instead, so it borrows the gutter when it needs it.
+         */
+        const mid = (run.left + run.right) / 2;
+        const span = Math.max(run.right - run.left, MIN_CAPTION);
+        const left = Math.max(4, Math.min(mid - span / 2, stageWidth - span - 4));
+        return (
+          <div
+            key={run.key}
+            data-graview-relation={run.key}
+            title={run.text}
+            style={{
+              position: "absolute",
+              left,
+              width: span,
+              textAlign: "center",
+              // Sits in the gutter above the run, not on top of the cards.
+              top: Math.max(0, run.top - 19),
+              fontSize: 10,
+              letterSpacing: "0.09em",
+              textTransform: "uppercase",
+              color: "var(--graview-ink-faint)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {/*
+              * On its own ground, because the connector it labels runs
+              * straight through it: a hairline crossing 10-pixel uppercase
+              * text at the x-height is the difference between a caption and
+              * a smudge.
+              */}
+            <span
+              style={{
+                background: "var(--graview-ground)",
+                padding: "1px 7px",
+                borderRadius: 4,
+              }}
+            >
+              {run.text}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -528,6 +724,12 @@ interface HostProps {
   /** The whole selection, so the keyboard can tell a first press from a second. */
   readonly selection: readonly string[];
   onJackIn(): void;
+  /** Dragging a card pins it. The scene owns the gesture; the host reports it. */
+  onDragStart(event: ReactPointerEvent<HTMLElement>): void;
+  onDragMove(event: ReactPointerEvent<HTMLElement>): void;
+  onDragEnd(): void;
+  /** True for the instant after a drag, so the click it produces is ignored. */
+  readonly swallowClick: { current: boolean };
   readonly children: ReactNode;
 }
 
@@ -535,30 +737,6 @@ interface HostProps {
  * One view's box. Absolutely positioned so the canvas can place it, and sized
  * so the capture texture matches the DOM exactly.
  */
-/**
- * Makes every `data-graview-pick` element a real control.
- *
- * The host owns this for the same reason it owns click routing: marking an
- * element is meant to be the WHOLE contract. Having made clicking an event
- * the primary way to move through the graph, leaving those targets
- * unreachable by keyboard would have made the primary interaction
- * mouse-only — a worse accessibility regression than the one it fixed.
- *
- * Set as attributes rather than as props because the elements belong to
- * whatever view drew them; React is not managing these, so there is nothing
- * to fight over.
- */
-function usePickTargets(ref: { current: HTMLElement | null }): void {
-  useEffect(() => {
-    const host = ref.current;
-    if (!host) return;
-    for (const target of host.querySelectorAll<HTMLElement>("[data-graview-pick]")) {
-      if (target.getAttribute("tabindex") === null) target.setAttribute("tabindex", "0");
-      if (target.getAttribute("role") === null) target.setAttribute("role", "button");
-    }
-  });
-}
-
 function SceneViewHost({
   node,
   useDom,
@@ -574,6 +752,10 @@ function SceneViewHost({
   onMenu,
   selection,
   onJackIn,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+  swallowClick,
   children,
 }: HostProps) {
   /*
@@ -615,12 +797,6 @@ function SceneViewHost({
     ? Math.min(node.width / natural.width, node.height / natural.height)
     : 1;
 
-  /** The node a pointer or key event is really about. */
-  const pickedFrom = (target: EventTarget | null): string | null =>
-    (target as HTMLElement | null)?.closest?.("[data-graview-pick]")?.getAttribute(
-      "data-graview-pick",
-    ) ?? null;
-
   const domOnly: CSSProperties = useDom
     ? {
         transform: cssTransform(transform),
@@ -657,6 +833,24 @@ function SceneViewHost({
       data-graview-selected={selected || undefined}
       data-graview-touched={touched || undefined}
       /*
+       * A card drawn deliberately BEHIND another says so in the tree.
+       *
+       * Two boxes overlapping is either a tuck or a collision, and from the
+       * outside those look identical — which is how a fan of six illegible
+       * slivers went unnoticed while every automated check reported the
+       * screen clean. Stating the intent is what lets a checker tell them
+       * apart, and lets a person reading the tree know which it is.
+       */
+      data-graview-nested={node.nestedUnder ?? undefined}
+      /*
+       * A card YOU put there says so. The layout already knows — a pin wins
+       * over the computed position — and without the mark there is no way to
+       * tell a card that was dragged from one the layout happened to put in
+       * the same place, which is the difference between a scene you arranged
+       * and a scene that looks slightly wrong.
+       */
+      data-graview-pinned={node.pinned || undefined}
+      /*
        * Activity, stated as attributes rather than as inline styles.
        *
        * It is the theme's job to decide what "an agent read this" looks like,
@@ -689,7 +883,13 @@ function SceneViewHost({
       role="group"
       aria-label={node.aggregate ? node.aggregate.label : node.id}
       tabIndex={0}
+      onPointerDown={onDragStart}
+      onPointerMove={onDragMove}
+      onPointerUp={onDragEnd}
+      onPointerCancel={onDragEnd}
       onClick={(event) => {
+        // A drag that ends on a card must not also select it.
+        if (swallowClick.current) return;
         const additive = event.metaKey || event.shiftKey;
         /*
          * A view may nominate its own inner targets.
@@ -747,6 +947,29 @@ function SceneViewHost({
       }}
       style={{
         position: "absolute",
+        /*
+         * On the capture path the host is OUT of hit-testing entirely.
+         *
+         * This is the fix for the defect that kept the GPU path off by
+         * default. It was recorded as "a click crashes the renderer process",
+         * and that was a symptom rather than the cause: bisected in Chromium
+         * 154, a plain HOVER over a captured view brings the process down just
+         * as reliably, while selecting the same node from the keyboard does
+         * not. What is fatal is the browser's own hit-test descending into a
+         * `layoutsubtree` canvas child.
+         *
+         * Nothing is lost by removing it. `updateElementGeometry` does not
+         * redirect hit-testing in this build, so a DOM hit-test on a captured
+         * view was already returning the wrong answer — it reported the box
+         * where the element was LAID OUT rather than where it was DRAWN, which
+         * is why `PointerRouter` exists at all. The compositor already runs one
+         * on the canvas; this stops the platform racing it into a crash.
+         *
+         * Keyboard reach and the accessibility tree are untouched:
+         * `pointer-events` says nothing about focus, and the views stay real,
+         * focusable DOM.
+         */
+        ...(useDom ? {} : { pointerEvents: "none" as const }),
         // Each host sits at its own layout position, on BOTH paths.
         //
         // Under `layoutsubtree` every child is laid out at the canvas origin,
@@ -981,12 +1204,18 @@ function Connectors({
         const box = byId.get(connector.from);
         const radius = self && box ? Math.max(22, Math.min(box.width, box.height) * 0.3) : 0;
         /*
-         * The loop hangs off the card's top-right rather than sitting on top
-         * of it. Centred, it drew a ring straight through the card's own name.
+         * The loop SITS ON the card's top edge, off to the right.
+         *
+         * Centred it drew a ring straight through the card's own name; pushed
+         * clear of the corner it became a circle floating in the ground next
+         * to a card, which from the Graview read as a stray mark rather than
+         * as a relation belonging to anything. Overlapping the edge by a few
+         * pixels is what makes it hang off the card instead of near it.
          */
-        const anchor = self
-          ? { x: from.x + (box ? box.width * 0.3 : 0), y: from.y - (box ? box.height * 0.4 : 0) }
-          : from;
+        const anchor =
+          self && box
+            ? { x: from.x + box.width * 0.22, y: from.y - box.height / 2 - radius + 7 }
+            : from;
         // A gentle curve, bowed along the dominant axis. Straight lines
         // between distant planes read as lasers crossing the scene; a curve
         // reads as a relationship and lets several of them stay apart.
@@ -1099,7 +1328,11 @@ export function ResolvedView<S extends AnySchema>({
   };
 
   if (!Component) return <MissingView node={node} props={props} />;
-  return <Component {...props} />;
+  return (
+    <ViewModeProvider mode={mode}>
+      <Component {...props} />
+    </ViewModeProvider>
+  );
 }
 
 function clampPlane(plane: number): 0 | 1 | 2 {

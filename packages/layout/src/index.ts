@@ -32,7 +32,9 @@ export {
   toUrl,
   withFocus,
   withOverview,
+  withPan,
   withPin,
+  withoutMoves,
   withRelation,
 } from "./view-state.js";
 export type { Pin, ViewState } from "./view-state.js";

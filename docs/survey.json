@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-31T05:20:35.122Z",
+  "at": "2026-08-31T17:23:09.776Z",
   "shots": [
     {
       "app": "todo",
@@ -10,6 +10,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -27,6 +28,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -44,6 +46,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -61,18 +64,14 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
-      "repeatedText": [
-        {
-          "text": "Pay the deposit",
-          "n": 2
-        }
-      ]
+      "repeatedText": []
     },
     {
       "app": "todo",
@@ -83,6 +82,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -100,6 +100,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -117,6 +118,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -134,6 +136,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -151,6 +154,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -168,6 +172,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -185,18 +190,14 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
-      "repeatedText": [
-        {
-          "text": "Pay the deposit",
-          "n": 2
-        }
-      ]
+      "repeatedText": []
     },
     {
       "app": "todo",
@@ -207,6 +208,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -224,6 +226,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -241,6 +244,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -258,6 +262,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -275,6 +280,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -292,6 +298,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -309,6 +316,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -326,6 +334,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -343,6 +352,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -360,18 +370,14 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
-      "repeatedText": [
-        {
-          "text": "child1 school",
-          "n": 2
-        }
-      ]
+      "repeatedText": []
     },
     {
       "app": "the household example",
@@ -382,6 +388,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -399,6 +406,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -416,6 +424,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -433,6 +442,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -450,6 +460,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -467,6 +478,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -484,6 +496,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -501,6 +514,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -518,18 +532,14 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
-      "repeatedText": [
-        {
-          "text": "child1 school",
-          "n": 2
-        }
-      ]
+      "repeatedText": []
     },
     {
       "app": "the household example",
@@ -540,6 +550,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -557,6 +568,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -574,6 +586,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -591,6 +604,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -608,6 +622,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -625,6 +640,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -642,6 +658,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -659,6 +676,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -676,6 +694,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -693,6 +712,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -710,6 +730,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -727,6 +748,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -744,6 +766,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -761,6 +784,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -778,6 +802,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -795,6 +820,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -812,6 +838,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -829,6 +856,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -846,6 +874,43 @@
         1560,
         940
       ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "placeFull",
+      "scheme": "light",
+      "file": "the coaching example-placeFull-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "problem",
+      "scheme": "light",
+      "file": "the coaching example-problem-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -863,6 +928,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -880,6 +946,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -897,6 +964,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -914,6 +982,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -931,6 +1000,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -948,6 +1018,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -965,6 +1036,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -982,6 +1054,43 @@
         1560,
         940
       ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "placeFull",
+      "scheme": "dark",
+      "file": "the coaching example-placeFull-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "the coaching example",
+      "state": "problem",
+      "scheme": "dark",
+      "file": "the coaching example-problem-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
@@ -999,6 +1108,7 @@
         1560,
         940
       ],
+      "covered": [],
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,

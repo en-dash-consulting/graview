@@ -64,6 +64,16 @@ export function EditableValue<S extends AnySchema>({
         style={{
           all: "unset",
           cursor: "text",
+          /*
+           * Editing in place means the VALUE is the control, so the value has
+           * to be one. A dashed underline under a line of 13px text is a
+           * 21-pixel target — under every guideline there is, and the sort of
+           * thing you notice by missing it twice.
+           */
+          display: "inline-flex",
+          alignItems: "flex-end",
+          minHeight: 24,
+          paddingBottom: 1,
           borderBottom: "1px dashed var(--graview-edge-bright)",
           color: "var(--graview-ink)",
         }}
@@ -127,7 +137,12 @@ export function EditableValue<S extends AnySchema>({
             font: "inherit",
             fontSize: "inherit",
             width: `${Math.max(6, draft.length + 1)}ch`,
-            padding: "0 2px",
+            // Editing in place means the value IS the control, so it has to
+            // be one: a 21-pixel target is not.
+            minHeight: 24,
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "0 3px",
           }}
         />
       )}

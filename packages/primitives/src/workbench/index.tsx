@@ -1,8 +1,9 @@
 import { labelOf, type AnySchema, type Store } from "@graview/core";
-import { withOverview } from "@graview/layout";
+import { withoutMoves, withOverview } from "@graview/layout";
 import {
   useAffordances,
   useApplyAffordance,
+  useAttention,
   useGraph,
   useBacktrack,
   useGraview,
@@ -11,7 +12,15 @@ import {
   useSelection,
   useViolations,
 } from "@graview/react";
-import type { Affordance, OpenParameter, ToolCall } from "@graview/tools";
+import {
+  createInAppAdapter,
+  createToolRuntime,
+  type Affordance,
+  type InAppAgent,
+  type OpenParameter,
+  type ToolCall,
+  type ToolRuntime,
+} from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chip } from "../primitives/index.js";
 
@@ -154,6 +163,33 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
 /* ---------------------------------------------------------------- inspector */
 
 /**
+ * The gap between the strip and the bottom of the window, and the same gap
+ * again between the strip and whatever the scene draws above it.
+ *
+ * One constant because the two must agree: the scene reserves the strip's
+ * height plus twice this, so the strip is not touching the window edge and
+ * the cards are not touching the strip.
+ */
+const STRIP_GAP = 18;
+
+/**
+ * The room the strip is kept, whether or not it is showing.
+ *
+ * Insetting the scene only while something is selected fixed the collision and
+ * bought a worse fault: every click reflowed the whole picture, so the thing
+ * you clicked moved out from under the pointer as its actions appeared. A
+ * contextual surface that rearranges the scene to make room for itself is
+ * worse than one that covers it.
+ *
+ * So the space is reserved permanently and the strip appears inside it.
+ * Nothing moves for a one- or two-row strip, which is nearly every selection;
+ * an unusually tall one — several rules failing at once, or an argument being
+ * answered — still pushes rather than covers, because being tall is rare and
+ * being covered is never right.
+ */
+const STRIP_RESERVE = 128;
+
+/**
  * What is selected, what is true about it, and what can legally be done —
  * as a STRIP, not a panel.
  *
@@ -169,12 +205,13 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
  * built around a centred focus has to spare.
  */
 export function Inspector() {
-  const { store, menuAt, setMenuAt, jackedIn } = useGraview<AnySchema>();
+  const { store, menuAt, setMenuAt, jackedIn, setBottomInset } = useGraview<AnySchema>();
   const { selection, clear } = useSelection();
   const { affordances, withheld, observations } = useAffordances();
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const strip = useRef<HTMLElement | null>(null);
 
   const kinds = [
     ...new Set(
@@ -189,6 +226,39 @@ export function Inspector() {
     setPending(null);
     setExpanded(false);
   }, [selection]);
+
+  /*
+   * The strip TELLS the scene how much of the bottom it has taken.
+   *
+   * It floats, so it was covering the row of kind cards the moment anything
+   * was selected — and it grows as it goes, since expanding the actions or
+   * answering an argument makes it taller. Reporting a measured height rather
+   * than a guessed constant is the only version that stays true through that.
+   *
+   * At the pointer it is a menu over the thing you clicked, which is what a
+   * menu is for, so it reserves nothing.
+   */
+  const docked = selection.length > 0 && menuAt === null && jackedIn === null;
+  useEffect(() => {
+    if (!docked) {
+      // Kept, not released: the picture must not move when the strip goes.
+      setBottomInset(STRIP_RESERVE);
+      return;
+    }
+    const element = strip.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const measure = () =>
+      setBottomInset(
+        Math.max(STRIP_RESERVE, element.getBoundingClientRect().height + STRIP_GAP * 2),
+      );
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      setBottomInset(STRIP_RESERVE);
+    };
+  }, [docked, setBottomInset]);
 
   /*
    * A menu at the pointer closes the way a menu does. The strip does not —
@@ -222,15 +292,74 @@ export function Inspector() {
    */
   const named = !(jackedIn !== null && selection.length === 1 && selection[0] === jackedIn);
 
-  const INLINE = 4;
-  // At the pointer there is room for the lot; in the strip there is not.
   const atPointer = menuAt !== null;
-  const shown = expanded || atPointer ? affordances : affordances.slice(0, INLINE);
+
+  /*
+   * As many actions as the strip can actually FIT, not a fixed four.
+   *
+   * Four was a guess, and it was wrong in both directions: with fifteen
+   * legal actions across a multi-selection the strip showed four and put
+   * ELEVEN behind "+11 more", which is a control surface hiding three
+   * quarters of itself; with five it hid one, for no reason at all, in a
+   * strip half of which was empty. The strip is up to 860 pixels wide and a
+   * label averages about eight characters plus its padding, so estimating
+   * from the labels themselves fills the row instead of guessing at it.
+   *
+   * Estimated rather than measured on purpose: measuring means a first paint
+   * with the wrong number and a reflow, and the cost of being one out here is
+   * a row that wraps — which the strip does anyway, and which now has a
+   * second row to wrap into.
+   */
+  /*
+   * Two rows normally; three when there is genuinely a lot to offer.
+   *
+   * Fifteen legal actions across a multi-selection is a real state — several
+   * rules failing at once merges their repairs — and two rows of long repair
+   * labels still buried ten of them. The strip grows for the case that needs
+   * it and stays two rows for the case that does not, and the scene reserves
+   * whatever it ends up being.
+   */
+  const ROWS = affordances.length > 8 ? 3 : 2;
+  const CHAR = 7.1;
+  const PADDING = 30;
+  const WIDTH = Math.min(860, (typeof window === "undefined" ? 900 : window.innerWidth) - 40);
+  const budget = WIDTH * ROWS - 96; // room for "+N more" at the end
+  const fits = (() => {
+    let used = 0;
+    let count = 0;
+    for (const affordance of affordances) {
+      used += affordance.label.length * CHAR + PADDING;
+      if (used > budget) break;
+      count += 1;
+    }
+    return Math.max(1, count);
+  })();
+
+  const shown = expanded || atPointer ? affordances : affordances.slice(0, fits);
   const hidden = affordances.length - shown.length;
   const open = affordances.find((affordance) => affordance.id === pending);
 
+  /*
+   * An observation that OPENS by restating the name is trimmed, not dropped.
+   *
+   * The strip read "Pay the deposit · task · \"Pay the deposit\" was due
+   * 2026-08-28" — the same four words twice in one line, three inches apart,
+   * which reads as a rendering fault rather than as two facts. The fact in it
+   * is the date, and that is worth keeping; only the restatement goes. A name
+   * appearing mid-sentence is left alone, because there it is doing work.
+   */
+  const title = selection.length === 1 ? nameOf(store, selection[0]!) : null;
+  const trim = (text: string): string => {
+    const quoted = `"${title}"`;
+    if (!title || !text.startsWith(quoted)) return text;
+    const rest = text.slice(quoted.length).trimStart();
+    return rest.length === 0 ? text : rest[0]!.toUpperCase() + rest.slice(1);
+  };
+  const said = observations.map((observation) => ({ ...observation, text: trim(observation.text) }));
+
   return (
     <aside
+      ref={strip}
       aria-label="Inspector"
       data-testid={atPointer ? "context-menu" : "inspector-strip"}
       onMouseDown={(event) => event.stopPropagation()}
@@ -250,7 +379,7 @@ export function Inspector() {
         flexDirection: "column",
         gap: 7,
         padding: "9px 12px",
-        borderRadius: 12,
+        borderRadius: "var(--graview-radius, 12px)",
         border: "1px solid var(--graview-edge)",
         background: "var(--graview-float)",
         // Lighter than the rails: this appears and disappears constantly, and
@@ -267,7 +396,7 @@ export function Inspector() {
               overflow: "auto",
             }
           : {
-              bottom: 18,
+              bottom: STRIP_GAP,
               left: "50%",
               transform: "translateX(-50%)",
               maxWidth: "min(860px, calc(100vw - 40px))",
@@ -281,7 +410,7 @@ export function Inspector() {
         */}
       <div
         style={{
-          display: named || observations.length > 0 ? "flex" : "none",
+          display: named || said.length > 0 ? "flex" : "none",
           alignItems: "baseline",
           gap: 8,
           minWidth: 0,
@@ -314,10 +443,10 @@ export function Inspector() {
 
         {/* What is true about it, in one line. The rest is a count, not a
             list — a strip that grows to five bullet points is a panel again. */}
-        {observations.length > 0 ? (
+        {said.length > 0 ? (
           <span
             data-testid="observations"
-            title={observations.map((observation) => observation.text).join("\n")}
+            title={said.map((observation) => observation.text).join("\n")}
             style={{
               minWidth: 0,
               flex: "1 1 auto",
@@ -328,11 +457,11 @@ export function Inspector() {
               color: "var(--graview-ink-muted)",
             }}
           >
-            {observations[0]!.text}
-            {observations.length > 1 ? (
+            {said[0]!.text}
+            {said.length > 1 ? (
               <span style={{ color: "var(--graview-ink-faint)" }}>
                 {" "}
-                +{observations.length - 1}
+                +{said.length - 1}
               </span>
             ) : null}
           </span>
@@ -347,7 +476,20 @@ export function Inspector() {
             clear();
           }}
           aria-label="Clear selection"
-          style={{ padding: "1px 7px", fontSize: 11, flex: "0 0 auto" }}
+          title="Clear selection"
+          // A real target. At 1px of padding it was a 16-pixel control, which
+          // is under every guideline there is and felt like it on a trackpad.
+          style={{
+            flex: "0 0 auto",
+            width: 24,
+            height: 24,
+            display: "grid",
+            placeItems: "center",
+            padding: 0,
+            fontSize: 13,
+            lineHeight: 1,
+            borderRadius: 7,
+          }}
         >
           ×
         </button>
@@ -434,9 +576,13 @@ export function Inspector() {
               <button
                 type="button"
                 onClick={() => setExpanded(true)}
+                // What it DOES, not what is behind it. "+9 more" is a label
+                // on a quantity; this is a control, and a control says what
+                // pressing it will do.
+                title={`Show all ${affordances.length} actions`}
                 style={{ padding: "4px 10px", fontSize: 12.5, borderRadius: 8 }}
               >
-                +{hidden} more
+                Show {hidden} more
               </button>
             </li>
           ) : null}
@@ -465,7 +611,7 @@ export function Inspector() {
             gap: atPointer ? 2 : 5,
           }}
         >
-          {withheld.slice(0, atPointer ? withheld.length : INLINE).map((action) => (
+          {withheld.slice(0, atPointer ? withheld.length : 4).map((action) => (
             <li key={action.id}>
               <button
                 type="button"
@@ -916,6 +1062,121 @@ export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] })
   );
 }
 
+/* ------------------------------------------------------------------- agent */
+
+export interface AgentSeatProps<S extends AnySchema> {
+  /** What the seat would do right now, given how much there is to do. */
+  label(count: number): string;
+  /** Shown while the turn is running. */
+  readonly busyLabel: string;
+  /** How many things it would touch. Zero means there is nothing to do. */
+  readonly count: number;
+  /** Said in the tooltip when there is nothing to do. */
+  readonly idle: string;
+  /**
+   * The mutation this seat is really asking for.
+   *
+   * Named so the seat can be refused BEFORE it is pressed rather than after:
+   * the store already knows what this principal may run, and a button that
+   * looks live and throws is the worst of both.
+   */
+  readonly gate?: string;
+  readonly testId: string;
+  onCall(call: ToolCall): void;
+  /** The turn itself. Everything the app knows and the framework does not. */
+  run(agent: InAppAgent<S>, runtime: ToolRuntime<S>): Promise<void>;
+}
+
+/**
+ * A seat an agent sits in, with the chrome that is not about the domain.
+ *
+ * Four apps had the same forty lines around four different scripts, and the
+ * same three faults in all of them: the button never said how much there was
+ * to do, it stayed live and silently did nothing when there was none, and a
+ * refusal from the store surfaced as an unhandled rejection in the console.
+ * The turn is the app's; the rest of this is not.
+ *
+ * The seat runs as an AGENT ACTING FOR the person sitting in it — same roles,
+ * different author. That is what makes "one policy narrows the interface and
+ * the agent seat alike" a thing you can watch happen: change seat, and the
+ * button is refused in the same breath the actions strip is.
+ */
+export function AgentSeat<S extends AnySchema>({
+  label,
+  busyLabel,
+  count,
+  idle,
+  gate,
+  testId,
+  onCall,
+  run,
+}: AgentSeatProps<S>) {
+  const { store, principal } = useGraview<S>();
+  const runtime = useMemo(
+    () =>
+      createToolRuntime(store, {
+        author: {
+          kind: "agent",
+          id: "claude",
+          session: "ui",
+          ...(principal.roles ? { roles: principal.roles } : {}),
+        },
+      }),
+    [store, principal],
+  );
+  const agent = useMemo(() => createInAppAdapter(runtime), [runtime]);
+  const [busy, setBusy] = useState(false);
+  const [refused, setRefused] = useState<string | null>(null);
+
+  useEffect(() => runtime.onCall(onCall), [runtime, onCall]);
+  // What it LOOKED AT, into the picture. A read leaves no diff, so the
+  // runtime is the only thing that can say it happened.
+  useAttention(runtime);
+  useEffect(() => setRefused(null), [principal]);
+
+  const permitted =
+    gate === undefined || runtime.definitions.some((tool) => tool.name === gate);
+  const nothing = count === 0;
+  const off = busy || nothing || !permitted;
+
+  const why = !permitted
+    ? `Not yours to do from this seat. The store refuses ${gate}, and the actions strip refuses it too.`
+    : nothing
+      ? idle
+      : `${runtime.definitions.length} tools, generated from the schema. Its edits produce the diffs yours do, and Activity can take the turn back.`;
+
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      data-agent-permitted={permitted || undefined}
+      disabled={off}
+      title={refused ?? why}
+      onClick={() => {
+        setBusy(true);
+        setRefused(null);
+        void (async () => {
+          try {
+            await run(agent, runtime);
+          } catch (error) {
+            /*
+             * A refusal is a RESULT, said on the control that asked for it.
+             * Unhandled, it was a console error nobody sees and a button that
+             * appeared to do nothing at all.
+             */
+            setRefused(error instanceof Error ? error.message : String(error));
+          } finally {
+            setBusy(false);
+          }
+        })();
+      }}
+      style={{ whiteSpace: "nowrap" }}
+    >
+      {busy ? busyLabel : nothing ? idle : label(count)}
+    </button>
+  );
+}
+
 /* ------------------------------------------------------------------ backing out */
 
 /**
@@ -950,7 +1211,11 @@ export function BackOut({ home }: { readonly home: string | null }) {
       // undo, and it should not also drop a selection on the way past.
       else if (overview) go(withOverview(view, false));
       else if (selection.length > 0) clear();
-      else if (view.relation) show(null);
+      // A move is an adjustment of where you are, so it comes off before the
+      // things that decide where you are.
+      else if (view.pan !== undefined || Object.keys(view.pins).length > 0) {
+        go(withoutMoves(view));
+      } else if (view.relation) show(null);
       else if (view.focusId !== home) focus(home);
     };
     window.addEventListener("keydown", onKey);
@@ -1048,7 +1313,11 @@ export function OverviewButton() {
 export function Backtrack() {
   const { canGoBack, canGoForward, back, forward } = useBacktrack();
   const style = {
-    padding: "3px 9px",
+    minWidth: 30,
+    height: 26,
+    display: "inline-grid",
+    placeItems: "center",
+    padding: "0 9px",
     fontSize: 13,
     lineHeight: 1,
     borderRadius: 999,
@@ -1085,11 +1354,22 @@ export function Trail({
   children,
 }: {
   readonly home: string | null;
-  readonly homeLabel: string;
+  /**
+   * The name of the place you are in — omit it when something else on screen
+   * already says it.
+   *
+   * An app with more than one place draws a switcher whose current pill IS
+   * the home crumb: it names the place and clicking it goes there. Printing
+   * the same words again an inch to the right is the "same string twice on
+   * one screen" fault this codebase keeps finding, and it was on every screen
+   * of two of the four apps.
+   */
+  readonly homeLabel?: string;
   readonly children?: ReactNode;
 }) {
-  const { view, focus, show } = useNavigation();
+  const { view, focus, show, go } = useNavigation();
   const { store } = useGraview<AnySchema>();
+  const moved = view.pan !== undefined || Object.keys(view.pins).length > 0;
   const focused =
     view.focusId && view.focusId !== home ? store.graph.getNode(view.focusId) : undefined;
   const plural = (kind: string) => store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
@@ -1098,7 +1378,9 @@ export function Trail({
     display: "inline-flex",
     alignItems: "center",
     gap: 6,
-    padding: "2px 8px",
+    // A crumb is a control, and a control is at least a fingertip tall.
+    minHeight: 24,
+    padding: "3px 9px",
     fontSize: 13,
     borderRadius: 999,
     borderColor: "var(--graview-accent)",
@@ -1110,25 +1392,65 @@ export function Trail({
       aria-label="View"
       style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, minWidth: 0 }}
     >
-      <button
-        type="button"
-        onClick={() => focus(home)}
-        style={{
-          border: "none",
-          background: "none",
-          padding: 0,
-          whiteSpace: "nowrap",
-          color:
-            focused || view.relation ? "var(--graview-ink-muted)" : "var(--graview-ink)",
-        }}
-      >
-        {homeLabel}
-      </button>
+      {/*
+        * The home crumb appears only once you have LEFT home.
+        *
+        * Standing on it, it was a control that did nothing — clicking "This
+        * week" while looking at This week goes nowhere — printed an inch
+        * above a panel whose own heading said the same three words. Two
+        * faults from one element: a dead control and a duplicated string, on
+        * every screen of three of the four apps. Away from home it is the way
+        * back, which is the entire reason it exists.
+        */}
+      {homeLabel === undefined || !(focused || view.relation) ? null : (
+        <button
+          type="button"
+          onClick={() => focus(home)}
+          style={{
+            border: "none",
+            background: "none",
+            padding: "3px 0",
+            minHeight: 24,
+            whiteSpace: "nowrap",
+            color: "var(--graview-ink-muted)",
+          }}
+        >
+          {homeLabel}
+        </button>
+      )}
       {focused ? (
         <>
+          {/* The separator still comes first without a home crumb: it says
+              "further in from what is to my left", which is the switcher. */}
           <span style={{ color: "var(--graview-ink-faint)" }}>›</span>
           <button type="button" data-testid="focused" onClick={() => focus(home)} style={chip}>
             {nameOf(store, focused.id)}
+            <span aria-hidden="true" style={{ opacity: 0.7 }}>
+              ×
+            </span>
+          </button>
+        </>
+      ) : null}
+      {/*
+        * WHAT YOU MOVED, and the way to put it back.
+        *
+        * Panning and dragging are ordinary view state, so they are in the URL
+        * and they survive a reload — which means without a way to undo them
+        * a scene someone nudged stays nudged for ever. It sits in the trail
+        * with the other things you can back out of, because that is what it
+        * is.
+        */}
+      {moved ? (
+        <>
+          <span style={{ color: "var(--graview-ink-faint)" }}>›</span>
+          <button
+            type="button"
+            data-testid="moved"
+            onClick={() => go(withoutMoves(view))}
+            title="Put the camera and everything you dragged back where the layout wanted them"
+            style={chip}
+          >
+            moved
             <span aria-hidden="true" style={{ opacity: 0.7 }}>
               ×
             </span>

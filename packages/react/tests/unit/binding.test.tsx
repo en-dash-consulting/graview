@@ -269,6 +269,50 @@ describe("the two-mode contract", () => {
   });
 });
 
+/**
+ * A full page is a PLACE you can act and move from, not a screenshot of one.
+ *
+ * Three complaints arrived as one sentence — it is not really full screen, it
+ * is not interactive, and there is no way onward — and they were one mistake:
+ * the surface drew a view and left every affordance behind in the scene.
+ */
+describe("the full page as a place", () => {
+  const jacked = (id: string) =>
+    renderToStaticMarkup(
+      <GraviewProvider
+        store={store()}
+        views={views()}
+        initialView={{ ...EMPTY_VIEW, focusId: aggregateId("person") }}
+        initialJackedIn={id}
+      >
+        <JackedIn />
+      </GraviewProvider>,
+    );
+
+  it("gives a place the whole page, and a record a reading column", () => {
+    // A picture whose content is WHERE THINGS ARE, capped at 1120 pixels in
+    // the middle of a wide screen, is how "full screen" came to mean a card
+    // with dead ground either side.
+    expect(jacked(aggregateId("person"))).toContain("max-width:none");
+    // Prose still gets a column: a two-line record set 1500 pixels wide is
+    // unreadable, and that is the same mistake in the other direction.
+    expect(jacked("ana")).toContain("max-width:1120px");
+  });
+
+  it("says what the place touches, and where that goes", () => {
+    const html = jacked(aggregateId("person"));
+    expect(html).toContain('data-testid="neighbours"');
+    // Derived from the edges, so a relation appears here the day it is
+    // declared and nobody writes a link.
+    expect(html).toContain('data-graview-neighbour="duty"');
+    expect(html).toContain("Runs");
+  });
+
+  it("says nothing about relations a record's own view already draws", () => {
+    expect(jacked("ana")).not.toContain('data-testid="neighbours"');
+  });
+});
+
 describe("navigation", () => {
   it("makes every stop a URL", () => {
     const view = { ...EMPTY_VIEW, focusId: "week-1", relation: "person" };

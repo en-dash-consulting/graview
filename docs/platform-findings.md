@@ -83,6 +83,31 @@ bet holds today. (A screen-reader pass with real assistive technology is still
 outstanding — a populated accessibility tree is not proof that VoiceOver reads
 it.)
 
+**Hit-testing into a captured subtree is FATAL, and that was the real defect.**
+For months this was recorded as "a click crashes the renderer process on the
+capture path". Bisected against Chromium 154 (`scripts/verify-capture.mjs`):
+
+| Case | Result |
+|---|---|
+| Load the scene, no interaction | survives |
+| Click the ground beside a captured view | survives |
+| Select a node from the keyboard (Tab, Enter) | survives |
+| **Hover** a captured view, no click at all | **renderer process dies** |
+| Click a captured view | renderer process dies |
+
+So it is not the click, not the capture, and not the DOM mutation a selection
+causes — a hover is enough, and the same selection made from the keyboard is
+not. What is fatal is the browser's own hit-test descending into a
+`layoutsubtree` canvas child.
+
+The fix costs nothing: the hosts carry `pointer-events: none` on the capture
+path. A DOM hit-test on a captured view was already the wrong answer, because
+`updateElementGeometry` does not redirect hit-testing in this build — it
+reported where the element was laid out rather than where it was drawn, which
+is the whole reason `PointerRouter` exists. Removing it from hit-testing stops
+the platform racing the router into a crash. Keyboard reach and the
+accessibility tree are untouched; `pointer-events` says nothing about focus.
+
 **Pointers need a fallback, and now have one.** `PointerRouter`
 (`packages/render/src/interaction/pointer-router.ts`) inverts each plane's
 affine transform, finds which drawn quad is under the cursor, and replays the
@@ -202,6 +227,7 @@ remains the right shape regardless.
 | Does capture + composite work? | **Yes** | The spatial premise stands. |
 | Perspective or affine? | Accepts both; honours neither observably | **Layout stays affine.** No cost — the plane model already assumed it. |
 | Do clicks follow the drawn pixels? | **Not from the platform** | `PointerRouter` supplies it, verified at three depths. Revisit each Chromium release. |
+| Is the capture path safe to point at? | **Only outside hit-testing** | A hover into a captured subtree kills the renderer. Hosts carry `pointer-events: none`; `scripts/verify-capture.mjs` holds it. |
 | Does accessibility follow? | **Yes, for focus** | Real DOM, real focus order. Screen-reader pass still outstanding. |
 | What is the capture ceiling? | ~128 live/frame, cliff then crash | Fidelity split is load-bearing, not an optimisation. |
 | Can SVG be captured? | **Yes** | No constraint on iconography. |

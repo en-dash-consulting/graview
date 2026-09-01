@@ -299,6 +299,7 @@ export function TimelineView<S extends AnySchema>({
   nodes,
   label,
   fidelity,
+  mode,
   options,
   schema,
   selectedIds = [],
@@ -354,11 +355,14 @@ export function TimelineView<S extends AnySchema>({
     ticks.push(at);
   }
 
+  // Lifted out, the week is the PAGE, not a card sitting on one.
+  const page = mode === "fullscreen";
+
   return (
     <Panel
       title={label ?? "Timeline"}
       meta={`${format(window.start)} – ${format(window.end)}`}
-      style={{ gap: 12 }}
+      style={{ gap: 12, ...(page ? { flex: "1 1 auto", minHeight: 0, height: "100%" } : {}) }}
     >
       <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
         <div style={{ display: "flex", paddingLeft: GUTTER, paddingBottom: 10 }}>
@@ -565,7 +569,11 @@ function Column({
             alignItems: "center",
             justifyContent: "flex-end",
             gap: 5,
-            padding: "1px 3px 1px 6px",
+            // A real target: this is a node, and clicking it is the primary
+            // way to reach one. At 17 pixels tall it was under every
+            // guideline there is, and felt like it.
+            minHeight: 24,
+            padding: "0 4px 0 8px",
             borderRadius: 999,
             // A small plate so the marker stays readable over whatever block
             // it happens to sit on.

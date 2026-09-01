@@ -206,6 +206,7 @@ export function useUrlSync(): void {
   }, [setView]);
 
   const landed = useRef(false);
+  const written = useRef<ViewState | null>(null);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const next = toUrl(view);
@@ -223,9 +224,26 @@ export function useUrlSync(): void {
      */
     if (!landed.current) {
       landed.current = true;
+      written.current = view;
       window.history.replaceState({ graview: trail.at }, "", next);
       return;
     }
+    /*
+     * MOVING THE FURNITURE IS NOT TRAVELLING.
+     *
+     * A drag writes the view state on every pointer move, because that is what
+     * makes the connectors follow the card. Pushed, one drag would be sixty
+     * history entries and Back would mean "one pixel ago". A change that
+     * touches only the camera or where things were dragged is an adjustment of
+     * the stop you are on, so it replaces: the address stays shareable and
+     * Back still means the place you were before you started fiddling.
+     */
+    if (adjustment(written.current, view)) {
+      window.history.replaceState({ graview: trail.at }, "", next);
+      written.current = view;
+      return;
+    }
+    written.current = view;
     window.history.pushState({ graview: ++trail.at }, "", next);
     // A new stop discards anything that was ahead of it, exactly as the
     // browser does.
@@ -247,6 +265,23 @@ export function useUrlSync(): void {
  * that re-created it per component would count each navigation once per
  * mounted consumer.
  */
+/**
+ * Whether one view differs from another only in what the user MOVED.
+ *
+ * Where you are is the focus, the relation, what is expanded and whether you
+ * have risen above the stack. Where you dragged things to is not a different
+ * place; it is the same place, rearranged.
+ */
+function adjustment(before: ViewState | null, after: ViewState): boolean {
+  if (!before) return false;
+  return (
+    before.focusId === after.focusId &&
+    before.relation === after.relation &&
+    (before.overview ?? false) === (after.overview ?? false) &&
+    before.expanded.join(",") === after.expanded.join(",")
+  );
+}
+
 const trail = {
   at: 0,
   depth: 0,

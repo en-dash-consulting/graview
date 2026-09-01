@@ -20,6 +20,15 @@ export interface ViewState {
   /** User positions that override the computed ones. */
   readonly pins: Readonly<Record<string, Pin>>;
   /**
+   * Where the camera has been dragged, in canvas pixels.
+   *
+   * A stop, like everything else here: it goes in the URL, it interpolates,
+   * and the same address gives the same picture. A pan held outside the view
+   * state would be the one thing about the scene you could not share, link to
+   * or go back to.
+   */
+  readonly pan?: Pin;
+  /**
    * Looking at the whole graph from outside the plane stack.
    *
    * A view state rather than a mode, because it has to INTERPOLATE from
@@ -60,6 +69,9 @@ export function toUrl(state: ViewState): string {
     const pin = state.pins[id]!;
     params.set(`pin.${id}`, `${round(pin.x)},${round(pin.y)}`);
   }
+  if (state.pan && (state.pan.x !== 0 || state.pan.y !== 0)) {
+    params.set("pan", `${round(state.pan.x)},${round(state.pan.y)}`);
+  }
   const query = params.toString();
   return query ? `#${query}` : "#";
 }
@@ -77,8 +89,13 @@ export function fromUrl(url: string): ViewState {
     if (x === null || y === null) continue;
     pins[key.slice(4)] = { x, y };
   }
+  const rawPan = params.get("pan")?.split(",") ?? [];
+  const panX = rawPan[0] === undefined ? null : num(rawPan[0]);
+  const panY = rawPan[1] === undefined ? null : num(rawPan[1]);
+
   return {
     ...(params.get("overview") === "1" ? { overview: true } : {}),
+    ...(panX !== null && panY !== null ? { pan: { x: panX, y: panY } } : {}),
     focusId: params.get("focus"),
     relation: params.get("relation"),
     expanded: (params.get("expand") ?? "")
@@ -120,6 +137,28 @@ export function toggleExpanded(state: ViewState, aggregateId: string): ViewState
   if (open.has(aggregateId)) open.delete(aggregateId);
   else open.add(aggregateId);
   return { ...state, expanded: [...open].sort() };
+}
+
+/**
+ * Move the camera. `null` puts it back.
+ *
+ * Panning is an ADJUSTMENT of the stop you are on rather than a new stop —
+ * the same reason a pin is. `useUrlSync` replaces rather than pushes for both,
+ * so one drag is one history entry rather than sixty, and Back still means
+ * "the place I was before", not "one pixel ago".
+ */
+export function withPan(state: ViewState, pan: Pin | null): ViewState {
+  if (pan === null || (pan.x === 0 && pan.y === 0)) {
+    const { pan: _drop, ...rest } = state;
+    return rest;
+  }
+  return { ...state, pan };
+}
+
+/** Put everything the user moved back where the layout wanted it. */
+export function withoutMoves(state: ViewState): ViewState {
+  const { pan: _drop, ...rest } = state;
+  return { ...rest, pins: {} };
 }
 
 export function withPin(state: ViewState, id: string, pin: Pin | null): ViewState {

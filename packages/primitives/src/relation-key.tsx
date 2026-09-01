@@ -142,7 +142,8 @@ export function RelationKey<S extends AnySchema>() {
               gridTemplateColumns: "34px 1fr auto",
               alignItems: "center",
               gap: 9,
-              padding: "2px 3px",
+              minHeight: 24,
+              padding: "3px 4px",
               borderRadius: 6,
               opacity: lit ? 1 : 0.4,
             }}

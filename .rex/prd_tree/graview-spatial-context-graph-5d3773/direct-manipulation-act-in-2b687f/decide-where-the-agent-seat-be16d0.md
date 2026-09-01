@@ -1,0 +1,18 @@
+---
+id: "be16d013-e82b-4468-8418-91b0c86f04c2"
+level: "task"
+title: "Decide where the agent seat lives, or whether it lives in the bar at all"
+status: "pending"
+priority: "medium"
+tags:
+  - "decision"
+  - "agent"
+  - "workbench"
+source: "Open question raised in session 2026-08-31: 'i think it's kinda dumb to have that button at all tbh'. A decision was drafted and not taken."
+acceptanceCriteria:
+  - "A decision is recorded — in the PRD, or as a rationale node in the launcher, which is the app whose subject is the other apps"
+  - "If the seat moves or goes, scripts/verify-watching.mjs and the household example/scripts/run-acceptance.mjs still fire an agent turn and still pass"
+  - "If the seat goes, scripts/verify-seat.mjs is removed rather than left asserting something that no longer exists"
+  - "The command bar carries no control that is disabled and inert in the app's normal resting state"
+description: "OPEN DECISION, not a bug. The agent seat button was fixed this session and its presence in the command bar was never settled.\n\nWHAT IT IS NOW\nEvery app has one — \"Move 1 overdue\", \"Even out 2 runs\", \"Close 1 gap\", \"Fill 1 hole\". It states its count, disables with its own sentence when there is nothing to do, and refuses visibly when the seat may not act. `AgentSeat` in packages/primitives/src/workbench, 17 criteria in scripts/verify-seat.mjs.\n\nTHE OBJECTION, WHICH IS LARGELY RIGHT\n- It duplicates a repair that is already better. The problems list says \"Nobody is playing Left back\" and offers \"Play Bo at Left back\" in context, with the reason attached. The button does the same thing less transparently from the corner of the bar.\n- It is not an agent. It is `able[0]` — a hardcoded greedy script wearing the chrome of one.\n- It is a demo affordance in product chrome. These fixtures are meant to look like the kind of software they are, and a real coaching app does not have \"Fill the holes\" in its top bar.\n- A real agent seat is a conversation, not a button.\n- Disabled, it is a 161px ghost occupying prime bar real estate. See the sibling ticket on the raised-relation composition, fault 4.\n\nWHAT WOULD BE LOST BY DELETING IT\nLess than expected. The load-bearing claim — agent and human edits produce identical diffs with the author recorded — is proved headlessly in the household example/tests/integration/acceptance.test.tsx, no browser and no button. Same for the generated tool surface in scripts/smoke-install.mjs.\n\nOne thing genuinely depends on it: it is the only way to SEE an agent turn happen in the live interface. scripts/verify-watching.mjs (\"an agent turn seen from outside the plane stack\" — activity marks landing on the right cards, frames counted on a settled graph), one of the household example's six acceptance criteria in run-acceptance.mjs, and the `tidied` and `activity` survey states all need a turn to fire in a browser.\n\nTHE OPTIONS, WITH A RECOMMENDATION\nA. RECOMMENDED — move it into the Activity popover as a \"Run a turn\" row. Activity is already \"what has happened, and what is happening\", which is the agent's own surface and where you would be looking to watch a turn anyway. The bar loses a button, the demonstration survives, and the four harnesses keep working with a changed selector.\nB. Delete it outright. Rewrite verify-watching.mjs and the household example's acceptance criterion to drive the tool runtime directly from the page; drop the `tidied` survey state and scripts/verify-seat.mjs. Cost: you can no longer watch an agent turn in the running app.\nC. Gate it behind `?agent` in the URL. Honest about it being a demonstration, but leaves a hidden thing only someone reading the source would find.\nD. Leave it. It behaves correctly now."
+---

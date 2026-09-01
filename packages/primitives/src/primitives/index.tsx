@@ -1,3 +1,4 @@
+import { useViewMode } from "@graview/react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 /**
@@ -101,25 +102,37 @@ export function Panel({
   children,
   style,
   fit = false,
-  variant = "card",
+  variant,
 }: PanelProps) {
   const scroller = useRef<HTMLDivElement | null>(null);
   const overflowing = useOverflowing(scroller);
-  const page = variant === "page";
+  /*
+   * A page unless the panel says otherwise, when it is ON a page.
+   *
+   * The two-mode contract asked every view author to thread `mode` into every
+   * primitive, and three apps in, the app-written views were still drawing a
+   * card — border, shadow, card-sized heading — in the middle of a full
+   * screen. A contract only the framework's own views keep is not a contract.
+   * An explicit `variant` still wins; this is what happens when a view says
+   * nothing, which is most of the time.
+   */
+  const mode = useViewMode();
+  const page = (variant ?? (mode === "fullscreen" ? "page" : "card")) === "page";
   return (
     <div
       data-graview-primitive="panel"
-      data-graview-variant={variant}
+      data-graview-variant={page ? "page" : "card"}
       data-selected={selected || undefined}
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: page ? 12 : 7,
+        gap: page ? 12 : "var(--graview-gap, 7px)",
         height: page || fit ? "auto" : "100%",
         maxHeight: page ? "none" : "100%",
-        padding: page ? 0 : 15,
+        padding: page ? 0 : "var(--graview-pad, 15px)",
         boxSizing: "border-box",
-        borderRadius: page ? 0 : 12,
+        // The brand's own shape. A bid desk is square; a household is round.
+        borderRadius: page ? 0 : "var(--graview-radius, 12px)",
         // A lit edge over the panel's own ground. Not `backdrop-filter`: a
         // captured subtree has nothing behind it, so the effect is a no-op on
         // the GPU path and the panel would differ between renderers.
@@ -146,6 +159,16 @@ export function Panel({
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
           <strong
             style={{
+              /*
+               * A panel's title is the HEADING of this product.
+               *
+               * The display face was reaching the wordmark and nothing else,
+               * because the stylesheet gives it to `h1`–`h4` and a panel title
+               * is a `strong`. So a brand could name a serif and see it once,
+               * in eleven-pixel letterspaced caps at the top left. This is the
+               * largest text most screens have.
+               */
+              fontFamily: "var(--graview-font-display, inherit)",
               // A document's heading, not a card's label.
               fontSize: page ? 25 : 15,
               lineHeight: page ? 1.15 : 1.25,
@@ -203,7 +226,7 @@ export function Panel({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: page ? 22 : 7,
+          gap: page ? 22 : "var(--graview-gap, 7px)",
           flex: "1 1 auto",
           // A page never scrolls inside itself: the page scrolls.
           ...(page ? { overflow: "visible" } : {}),
@@ -252,7 +275,12 @@ export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
         // container it would otherwise stretch edge to edge, which is how
         // "dropoff" ended up as a 700-pixel-wide pill.
         alignSelf: "flex-start",
-        padding: "2px 9px",
+        // A chip that stands for a node is a target, and a target is at least
+        // a fingertip tall. The extra pixel either side costs nothing and
+        // takes every navigable chip over the line.
+        minHeight: 24,
+        boxSizing: "border-box",
+        padding: "3px 9px",
         borderRadius: 999,
         fontSize: 12,
         lineHeight: 1.5,

@@ -90,10 +90,17 @@ pnpm check         # `graview check` against all four declarations
 `?renderer=gpu` opts into compositing through WebGPU. It needs Chromium 147+
 launched with `--enable-blink-features=CanvasDrawElement`.
 
-It renders correctly — all three planes, connectors and all — and passes
-every acceptance criterion. It is not the default for one reason: **a pointer
-click on it brings the renderer process down.** Clicking is the primary way
-anyone uses this, so the path that survives it wins.
+It renders correctly — all three planes, connectors and all — and passes every
+acceptance criterion. It used to bring the renderer process down on a pointer
+click; that is fixed, and `pnpm capture` holds the claim. The cause was not the
+click. A plain hover killed it just as reliably and a keyboard selection did
+not: what is fatal is the browser's own hit-test descending into a
+`layoutsubtree` canvas child. The hosts are out of hit-testing on that path now,
+which costs nothing, because `updateElementGeometry` does not redirect
+hit-testing in this build and `PointerRouter` was already answering.
+
+It is still not the default. Capture falls off a cliff past ~128 live captures
+a frame, and every other claim here is measured against the DOM path.
 
 Two earlier defects here are fixed and worth knowing about, because both
 failed silently: the compositor captured the canvas size once and kept using
@@ -107,15 +114,19 @@ never recovered.
 ```sh
 pnpm acceptance    # walks the household example's criteria in Chrome Canary
 pnpm spike         # capture, composite, pointer routing, capture budget
+pnpm capture       # the capture path survives a pointer, and clicks still route
 pnpm a11y          # the real accessibility tree, keyboard order, axe-core
 
 pnpm direct        # act in place, travel deliberately — 19 criteria
 pnpm shrunk        # the shrunk interface is the interface, scaled
 pnpm watching      # an agent turn seen from outside the plane stack
 pnpm permissions   # one policy narrows the strip and the agent seat alike
+pnpm seat          # an agent seat does what it says, and says when there is nothing to do
 pnpm brand         # somebody else's product, without a fork
 pnpm navigation    # travelling, and getting back
+pnpm moving        # panning the scene and dragging cards, both as ordinary stops
 pnpm survey        # every place a person can land, photographed
+pnpm audit         # and what is WRONG on each: collisions, cut text, tiny targets
 
 pnpm pack:inspect  # what would actually go in each tarball
 pnpm smoke         # install the tarballs into a scratch project and build
@@ -301,7 +312,11 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | Travelling changes the address, and back and forward both work | `scripts/verify-navigation.mjs` — 12 criteria, driven through the controls rather than the keyboard |
 | A stranger can install the tarballs and build a real app | `scripts/smoke-install.mjs` — packs, installs into a scratch project with no workspace or path mapping, typechecks and runs |
 | A tarball contains what it should and nothing else | `scripts/inspect-pack.mjs` — no `src`, no tests, no tsbuildinfo, and every `exports` path present |
+| The scene can be panned and its cards dragged, and both survive a reload | `scripts/verify-moving.mjs` — 10 criteria, including that a drag is not a click |
+| An agent seat states what it would do, and goes quiet when there is nothing to do | `scripts/verify-seat.mjs` — 17 criteria across all four seats |
+| The capture path survives a pointer, and a click still reaches the node that was drawn | `scripts/verify-capture.mjs` — hover, click routing and keyboard reach, in Chrome Canary |
 | Every skill ends in a check, and names only findings the checker can produce | `packages/skills/tests/unit/skills.test.ts` — cross-checked against `check.ts` itself |
+| No card is drawn on top of another, no caption is cut, no control is under a fingertip | `scripts/audit-ui.mjs` — 20 screens across four apps, measuring what a photograph makes you squint at |
 
 ## The platform, honestly
 
@@ -350,9 +365,6 @@ seams, honest boundaries — but it breaks freely while nobody depends on it.
   `the household example/scripts/sync-google.mjs` is runnable and read-only by default;
   until somebody runs it, "works end to end" is a claim rather than a fact.
 
-- A click crashes the renderer process on the GPU path (see above). The DOM
-  path is unaffected, so this is a compositing defect rather than a design
-  one.
 - A screen-reader pass with real assistive technology. The accessibility tree
   is populated, every view is exposed by name, the keyboard reaches all three
   planes and axe-core reports nothing — but a populated tree is not proof that

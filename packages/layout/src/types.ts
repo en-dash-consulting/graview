@@ -155,6 +155,12 @@ export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals">> = {
   height: 760,
   focusSize: { width: 1040, height: 420 },
   relationSize: { width: 240, height: 140 },
-  contextSize: { width: 300, height: 150 },
+  /*
+   * A kind card is a GLYPH: a name, a count, and how much of it is in
+   * trouble. At 150 it was sized for two clamped lines of prose that have
+   * since moved to the tooltip, and the band it sits in took a fifth of the
+   * window to hold cards covering a tenth of it.
+   */
+  contextSize: { width: 300, height: 96 },
   gap: 16,
 };

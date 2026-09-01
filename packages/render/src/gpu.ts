@@ -6,8 +6,13 @@
  * ambient rather than importable — a consumer reaching this needs
  * `@webgpu/types` in their own compilation, and a consumer who never touches
  * it should not. It is also the experimental half of this package: it needs
- * Chrome Canary with `--enable-blink-features=CanvasDrawElement`, and clicking
- * inside a captured view still crashes the renderer process.
+ * Chrome Canary with `--enable-blink-features=CanvasDrawElement`, and capture
+ * falls off a cliff past ~128 live captures a frame.
+ *
+ * The renderer-process crash on pointer input is fixed — the hosts are out of
+ * hit-testing on this path, because the browser's hit-test descending into a
+ * `layoutsubtree` child is what was fatal, not the click. See
+ * `scripts/verify-capture.mjs`.
  */
 
 // The platform seam. Every HTML-in-Canvas call in the framework goes here.
