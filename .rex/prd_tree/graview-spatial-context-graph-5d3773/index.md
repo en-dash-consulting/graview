@@ -2,7 +2,7 @@
 id: "5d3773c0-3751-4007-839b-e07e9b9b4faa"
 level: "epic"
 title: "Graview — spatial context-graph framework"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "framework"
@@ -12,7 +12,8 @@ tags:
   - "context-graph"
 source: "Session planning — architecture agreed 2026-08-29"
 startedAt: "2026-08-30T04:55:36.895Z"
-endedAt: "2026-09-01T07:33:16.401Z"
+completedAt: "2026-09-01T11:34:29.333Z"
+endedAt: "2026-09-01T11:34:29.333Z"
 acceptanceCriteria:
   - "The household example's week calendar and People relation render as one spatial scene, editable at plane 0"
   - "Clicks, focus and screen-reader access resolve correctly against nodes drawn at depth"
@@ -37,7 +38,7 @@ description: "A framework for building applications where a typed context graph 
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | completed |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
 | [Modules: named parts of a declaration a workspace can turn on and off](./modules-named-parts-of-a-aa8097.md) | completed |
-| [Quick-view relations: one-click emphasis chips for the people behind a view](./quick-view-relations-one-click-5234d8.md) | pending |
+| [Quick-view relations: one-click emphasis chips for the people behind a view](./quick-view-relations-one-click-5234d8.md) | completed |
 | [React binding — @graview/react](./react-binding-graview-react.md) | completed |
 | [Relevance is a horizon, not a delete: lifecycle, archival, and the sync flood](./relevance-is-a-horizon-not-a-728589.md) | completed |
 | [Selection is part of the stop: URL-addressable, restored by back/forward](./selection-is-part-of-the-stop-88cfdf.md) | completed |

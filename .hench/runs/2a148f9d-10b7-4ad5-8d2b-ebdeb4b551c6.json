@@ -1,0 +1,28 @@
+{
+  "id": "2a148f9d-10b7-4ad5-8d2b-ebdeb4b551c6",
+  "taskId": "5234d8ae-c0ac-49b3-a7b7-9d9e68e5d66d",
+  "taskTitle": "Quick-view relations",
+  "startedAt": "2026-09-01T11:34:45.648Z",
+  "finishedAt": "2026-09-01T11:34:45.648Z",
+  "status": "completed",
+  "turns": 19,
+  "summary": "Derived one-press chips for the small kinds behind a view; select/clear/shift-add through the URL-carried selection; four apps, zero app code",
+  "tokenUsage": {
+    "input": 38,
+    "output": 22762,
+    "cacheCreationInput": 27889,
+    "cacheReadInput": 11699700
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 38,
+    "output": 22762,
+    "cached": 11727589,
+    "total": 11750389
+  }
+}
