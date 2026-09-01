@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T06:40:02.419Z",
+  "at": "2026-09-01T06:52:51.546Z",
   "shots": [
     {
       "app": "todo",
@@ -104,6 +104,42 @@
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "pages",
+      "scheme": "light",
+      "file": "todo-pages-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "pagesRecord",
+      "scheme": "light",
+      "file": "todo-pagesRecord-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 1312,
+      "contentRight": 1560,
+      "verticalFill": 140,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -230,6 +266,42 @@
       "contentBottom": 940,
       "contentRight": 1560,
       "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "pages",
+      "scheme": "dark",
+      "file": "todo-pages-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "todo",
+      "state": "pagesRecord",
+      "scheme": "dark",
+      "file": "todo-pagesRecord-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 1312,
+      "contentRight": 1560,
+      "verticalFill": 140,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],

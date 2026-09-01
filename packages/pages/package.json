@@ -1,0 +1,43 @@
+{
+  "name": "@graview/pages",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*",
+    "@graview/layout": "workspace:*",
+    "@graview/tools": "workspace:*",
+    "react-router-dom": "^7.1.1"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "zod": "^4.4.3"
+  },
+  "description": "The traditional face: a routed webapp derived from the same declaration that drives the scene.",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/endash/graview.git",
+    "directory": "packages/pages"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

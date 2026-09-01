@@ -19,7 +19,9 @@
     "@graview/tools": "workspace:*",
     "zod": "^4.4.3",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "@graview/pages": "workspace:*",
+    "react-router-dom": "^7.1.1"
   },
   "devDependencies": {
     "vite": "^5.4.11",

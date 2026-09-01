@@ -57,6 +57,20 @@ const APPS = {
       graview: async (page) => {
         await page.click('[data-testid="overview"]');
       },
+      /*
+       * THE OTHER FACE, photographed like any state: the routed pages from
+       * the same declaration, at the same two schemes.
+       */
+      pages: async (page) => {
+        const scheme = new URL(page.url()).searchParams.get("theme");
+        await page.goto(`http://localhost:5193/pages?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
+        await page.waitForTimeout(400);
+      },
+      pagesRecord: async (page) => {
+        const scheme = new URL(page.url()).searchParams.get("theme");
+        await page.goto(`http://localhost:5193/pages/tasks/t-deposit?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
+        await page.waitForTimeout(400);
+      },
       tidied: async (page) => {
         await page.click('[data-testid="activity-button"]');
         await page.click('[data-testid="agent-tidy"]');

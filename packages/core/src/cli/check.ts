@@ -49,6 +49,29 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
    * edge reaches into a module. Ownership by kind, so the reasoning is
    * checkable per edge.
    */
+  /*
+   * The routed face derives `/:plural` from each kind's plural. Two kinds
+   * whose plurals slug identically would leave one of them unreachable by
+   * registration order — a route nobody can link to.
+   */
+  const slugs = new Map<string, string>();
+  for (const definition of app.schema.definitions) {
+    const plural = definition.plural ?? `${definition.kind}s`;
+    const slug = plural.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const taken = slugs.get(slug);
+    if (taken) {
+      add({
+        severity: "error",
+        code: "plural-slug-collision",
+        where: `defineNode("${definition.kind}").plural`,
+        message: `"${plural}" slugs to "/${slug}", already taken by kind "${taken}".`,
+        fix: `Give one of them a distinct plural.`,
+      });
+    } else {
+      slugs.set(slug, definition.kind);
+    }
+  }
+
   const moduleEntries = Object.entries(app.modules ?? {});
   const owners = new Map<string, Set<string>>();
   for (const [name, module] of moduleEntries) {
