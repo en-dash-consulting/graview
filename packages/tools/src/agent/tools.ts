@@ -47,7 +47,14 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    * write as one participant and be permitted as another.
    */
   readonly author?: Principal;
-  readonly derive?: DeriveOptions<S>;
+  /**
+   * Options for the seat's own deriveAffordances calls. A FUNCTION is read
+   * fresh on every call — which is how a person's pins, toggled in the
+   * menu after this runtime was built, still reach the agent's tool list.
+   * The strip, the pointer menu and the seat must never disagree about
+   * the same acts.
+   */
+  readonly derive?: DeriveOptions<S> | (() => DeriveOptions<S>);
   /** Refuse every mutating tool. Useful for a read-only agent seat. */
   readonly readOnly?: boolean;
 }
@@ -310,7 +317,7 @@ export function createToolRuntime<S extends AnySchema>(
         case "get_affordances": {
           const selection = (args["selection"] as string[]) ?? [];
           const derived = deriveAffordances(store, selection, {
-            ...options.derive,
+            ...(typeof options.derive === "function" ? options.derive() : options.derive),
             // The seat asks as ITSELF, so what it is offered is what it may
             // do — and what it may not is stated rather than hidden, which
             // is how an agent learns a capability exists that it lacks.

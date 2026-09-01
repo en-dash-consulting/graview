@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T21:13:34.706Z",
+  "at": "2026-09-01T23:13:06.953Z",
   "engine": "chromium",
   "checks": {
     "filterOnlyPastTheFold": {
@@ -12,6 +12,12 @@
       "soleLabel": "Mark it done↵",
       "dueShownBeforehand": true,
       "applied": true,
+      "ok": true
+    },
+    "destructiveNeedsTheClick": {
+      "dropSurvivors": 1,
+      "hintShown": false,
+      "stillThere": true,
       "ok": true
     },
     "pinThenReorder": {

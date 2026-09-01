@@ -127,15 +127,17 @@ export function deriveAffordances<S extends AnySchema>(
       : declaredPins.has(affordance.mutation) && !demoted.has(affordance.mutation)
         ? "declared"
         : undefined;
-  const pinRank = (affordance: Affordance): number =>
-    holds(affordance) === "user" ? 0 : holds(affordance) === "declared" ? 1 : 2;
-  const weights = usageWeights(store.log.all());
-  const boosted = (affordance: Affordance): number =>
-    affordance.score + usageBoost(weights.get(affordance.mutation) ?? 0);
   const pinnedAs = (affordance: Affordance): Affordance => {
     const held = holds(affordance);
     return held ? { ...affordance, pinned: held } : affordance;
   };
+  // Stamped and summed once; the comparator reads plain fields.
+  const boost = new Map<string, number>();
+  for (const [name, weight] of usageWeights(store.log.all())) boost.set(name, usageBoost(weight));
+  const pinRank = (affordance: Affordance): number =>
+    affordance.pinned === "user" ? 0 : affordance.pinned === "declared" ? 1 : 2;
+  const boosted = (affordance: Affordance): number =>
+    affordance.score + (boost.get(affordance.mutation) ?? 0);
   const ranked = dedupe(affordances)
     .map(pinnedAs)
     .sort(

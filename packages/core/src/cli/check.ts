@@ -365,7 +365,13 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
       );
       // An unknown edge kind is already `edge-claim-unknown-kind` above.
       if (declaredOn.length === 0) continue;
-      if (declaredOn.some((definition) => definition.edges[edgeKind]?.appendOnly)) continue;
+      /*
+       * EVERY declaration of the edge kind must say appendOnly, not just
+       * one. Two kinds can share an edge-kind name, and a suppression on
+       * one must not hide the other's makeable-but-never-unmakeable
+       * relation — that is the exact asymmetry this check exists to catch.
+       */
+      if (declaredOn.every((definition) => definition.edges[edgeKind]?.appendOnly)) continue;
       add({
         severity: "warning",
         code: "edge-without-severer",

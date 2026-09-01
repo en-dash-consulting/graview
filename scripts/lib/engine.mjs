@@ -2,14 +2,21 @@
  * Which browser a harness runs in, decided in exactly one place.
  *
  * Every green verdict used to be a one-browser verdict: all the harnesses
- * hardcoded the Chrome Canary binary, and GRAVIEW_BROWSER sat unused. The DOM
- * path is what ships and iOS Safari is the mobile browser, so the engine is a
- * PARAMETER now — `--engine=webkit`, `--engine=firefox`, or GRAVIEW_ENGINE —
- * and Canary is required only where the GPU capture flag genuinely is
- * (HTML-in-Canvas is Chromium-only by nature, experimental and opt-in).
+ * hardcoded the Chrome Canary binary, with GRAVIEW_BROWSER as the only way
+ * to point them elsewhere. The DOM path is what ships and iOS Safari is the
+ * mobile browser, so the engine is a PARAMETER now — `--engine=webkit`,
+ * `--engine=firefox`, or GRAVIEW_ENGINE — and Canary is required only where
+ * the GPU capture flag genuinely is (HTML-in-Canvas is Chromium-only by
+ * nature, experimental and opt-in).
+ *
+ * GRAVIEW_BROWSER keeps its old meaning: it names the Chromium-family
+ * binary for the chromium and canary engines (Playwright's bundled build
+ * otherwise — `npx playwright install chromium webkit firefox` is the
+ * prerequisite). It has no say over webkit or firefox.
  *
  *   node scripts/<harness>.mjs --engine=webkit
  *   GRAVIEW_ENGINE=firefox pnpm audit
+ *   GRAVIEW_BROWSER=/path/to/chrome pnpm audit
  */
 import { chromium, firefox, webkit } from "playwright";
 
@@ -39,8 +46,12 @@ export function engineName(argv = process.argv) {
  */
 export async function launchEngine(name, { headless = true, firefoxUserPrefs } = {}) {
   switch (name) {
-    case "chromium":
-      return chromium.launch({ headless });
+    case "chromium": {
+      // The operator's Chromium, when named — same override the harnesses
+      // always honored — else Playwright's bundled build.
+      const executablePath = process.env["GRAVIEW_BROWSER"];
+      return chromium.launch({ ...(executablePath ? { executablePath } : {}), headless });
+    }
     case "canary":
       // The plain Canary binary without the capture flag — for a harness
       // that wants the shipping Chrome rather than the bundled build.

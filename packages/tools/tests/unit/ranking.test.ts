@@ -171,4 +171,18 @@ describe("pins and bands", () => {
     const after = select(store);
     expect(after[after.length - 1]).toBe("drop");
   });
+
+  it("does not count an act the person took back", () => {
+    const store = withThing();
+    // Apply delta five times, then undo all five: a retracted act is not
+    // a use, so delta must NOT outrank its untouched peer afterwards.
+    const batches: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      const result = store.apply({ name: "delta", args: { id: "t1" } }, { intent: "use it" });
+      batches.push(result.ops[0]!.batch);
+    }
+    store.undo(batches);
+    const order = select(store);
+    expect(order.indexOf("beta")).toBeLessThan(order.indexOf("delta"));
+  });
 });

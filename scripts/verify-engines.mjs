@@ -23,7 +23,7 @@
  *   node scripts/verify-engines.mjs [--engines=chromium,webkit,firefox]
  */
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { firefox } from "playwright";
@@ -53,7 +53,17 @@ function run(args) {
   });
 }
 
-const json = (file) => JSON.parse(readFileSync(resolve(repoRoot, file), "utf8"));
+/*
+ * A child's report file is deleted BEFORE the child runs and required
+ * AFTER: a harness that crashed before its write must fail this engine's
+ * cell rather than crash the matrix or, worse, hand the previous engine's
+ * report over as this one's.
+ */
+const clearReport = (file) => rmSync(resolve(repoRoot, file), { force: true });
+const readReport = (file) =>
+  existsSync(resolve(repoRoot, file))
+    ? JSON.parse(readFileSync(resolve(repoRoot, file), "utf8"))
+    : null;
 
 function startVite(name, port) {
   const child = spawn("npx", ["vite"], {
@@ -111,44 +121,66 @@ for (const engine of chosen) {
   const results = {};
 
   say(`  audit-ui …`);
+  clearReport("docs/audit.json");
   const audit = await run(["scripts/audit-ui.mjs", `--engine=${engine}`]);
-  const auditReport = json("docs/audit.json");
-  const auditErrors = auditReport.screens
+  const auditReport = readReport("docs/audit.json");
+  const auditErrors = (auditReport?.screens ?? [])
     .filter((s) => s.error)
     .map((s) => `${s.app}/${s.state}: ${s.error}`);
-  results.audit = {
-    ok: audit.code === 0 && auditErrors.length === 0,
-    screens: auditReport.screens.length,
-    ...(auditErrors.length > 0 ? { errors: auditErrors } : {}),
-  };
-  say(`  audit: ${results.audit.ok ? "ok" : "FAIL"} (${results.audit.screens} screens)`);
+  results.audit = auditReport
+    ? {
+        ok: audit.code === 0 && auditErrors.length === 0,
+        screens: auditReport.screens.length,
+        ...(auditErrors.length > 0 ? { errors: auditErrors } : {}),
+      }
+    : { ok: false, error: `audit wrote no report — ${audit.tail.slice(-300)}` };
+  say(`  audit: ${results.audit.ok ? "ok" : "FAIL"} (${results.audit.screens ?? "no"} screens)`);
 
   say(`  verify-direct-manipulation …`);
+  clearReport("docs/direct-manipulation.json");
   const direct = await run(["scripts/verify-direct-manipulation.mjs", `--engine=${engine}`]);
-  const directReport = json("docs/direct-manipulation.json");
-  const directFailed = Object.entries(directReport.verdict ?? {})
+  const directReport = readReport("docs/direct-manipulation.json");
+  const directFailed = Object.entries(directReport?.verdict ?? {})
     .filter(([, ok]) => !ok)
     .map(([name]) => name);
-  results.direct = {
-    ok: direct.code === 0 && directReport.passed === true,
-    ...(directFailed.length > 0 ? { failed: directFailed } : {}),
-    ...(directReport.error ? { error: directReport.error } : {}),
-  };
+  results.direct = directReport
+    ? {
+        ok: direct.code === 0 && directReport.passed === true,
+        ...(directFailed.length > 0 ? { failed: directFailed } : {}),
+        ...(directReport.error ? { error: directReport.error } : {}),
+      }
+    : { ok: false, error: `direct wrote no report — ${direct.tail.slice(-300)}` };
   say(`  direct: ${results.direct.ok ? "ok" : `FAIL ${directFailed.join(", ")}`}`);
 
   say(`  verify-pages (390×844 first) …`);
+  clearReport("docs/pages-face.json");
   const pages = await run(["scripts/verify-pages.mjs", `--engine=${engine}`]);
-  const pagesReport = json("docs/pages-face.json");
-  const flatChecks = JSON.stringify(pagesReport.checks ?? {});
-  results.pages = {
-    ok: pages.code === 0 && !flatChecks.includes("false"),
-    ...(pagesReport.error ? { error: pagesReport.error } : {}),
-  };
+  const pagesReport = readReport("docs/pages-face.json");
+  const flatChecks = JSON.stringify(pagesReport?.checks ?? {});
+  results.pages = pagesReport
+    ? {
+        ok: pages.code === 0 && !flatChecks.includes("false"),
+        ...(pagesReport.error ? { error: pagesReport.error } : {}),
+      }
+    : { ok: false, error: `pages wrote no report — ${pages.tail.slice(-300)}` };
   say(`  pages: ${results.pages.ok ? "ok" : "FAIL"}`);
 
   say(`  survey-ui (one pass, todo) …`);
+  clearReport("docs/survey.json");
   const survey = await run(["scripts/survey-ui.mjs", "todo", `--engine=${engine}`]);
-  results.survey = { ok: survey.code === 0 };
+  const surveyReport = readReport("docs/survey.json");
+  // The exit code AND the shots: a survey that photographed nothing, or
+  // errored per shot, must not read as an engine holding.
+  const shotErrors = (surveyReport?.shots ?? [])
+    .filter((shot) => shot.error)
+    .map((shot) => `${shot.app}/${shot.state}/${shot.scheme}: ${shot.error}`);
+  results.survey = surveyReport
+    ? {
+        ok: survey.code === 0 && shotErrors.length === 0 && surveyReport.shots.length > 0,
+        shots: surveyReport.shots.length,
+        ...(shotErrors.length > 0 ? { errors: shotErrors.slice(0, 5) } : {}),
+      }
+    : { ok: false, error: `survey wrote no report — ${survey.tail.slice(-300)}` };
   say(`  survey: ${results.survey.ok ? "ok" : "FAIL"}`);
 
   matrix.engines[engine] = results;

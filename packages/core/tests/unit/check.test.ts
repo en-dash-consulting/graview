@@ -293,4 +293,29 @@ describe("a relation you can make but never unmake", () => {
     const app = defineApp({ name: "test", schema: appendOnlySchema, mutations: [historian] });
     expect(findings(app)).not.toContain("warning:edge-without-severer");
   });
+
+  it("keeps warning when only ONE of two kinds sharing the edge name is appendOnly", () => {
+    // Two kinds can declare the same edge-kind name. A suppression on one
+    // must not hide the other's makeable-but-never-unmakeable relation.
+    const diarist = defineNode("person", {
+      fields: z.object({ label: z.string() }),
+      edges: { "assigned-to": { to: ["duty"], appendOnly: true } },
+    });
+    const roster = defineNode("duty", {
+      fields: z.object({ label: z.string(), at: z.number(), until: z.number() }),
+      edges: { "assigned-to": { to: ["person"] } },
+    });
+    const sharedSchema = createSchema([diarist, roster]);
+    const sharedBound = bindSchema(sharedSchema);
+    const maker = sharedBound.defineMutation("assign", {
+      title: "Assign run",
+      description: "Tie a person to a run.",
+      subject: { kinds: ["duty"], arg: "dutyId" },
+      connects: ["assigned-to"],
+      input: z.object({ dutyId: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
+      apply: () => {},
+    });
+    const app = defineApp({ name: "test", schema: sharedSchema, mutations: [maker] });
+    expect(findings(app)).toContain("warning:edge-without-severer");
+  });
 });

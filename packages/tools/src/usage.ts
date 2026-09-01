@@ -28,12 +28,20 @@ const CEILING = 8;
 export function usageWeights(ops: readonly Operation[]): ReadonlyMap<string, number> {
   const weights = new Map<string, number>();
   if (ops.length === 0) return weights;
+  const tail = ops.slice(-WINDOW);
+  /*
+   * A RETRACTED ACT IS NOT A USE. Undo ops themselves carry no mutation,
+   * so they never counted — but the ORIGINAL op they undo did, which
+   * taught the menu to promote exactly the acts people keep taking back.
+   * An undo always lands after its target, so a target inside the window
+   * has its undo inside it too.
+   */
+  const retracted = new Set<string>();
+  for (const op of tail) if (op.undoes) retracted.add(op.undoes);
   const last = ops[ops.length - 1]!.seq;
-  for (const op of ops.slice(-WINDOW)) {
+  for (const op of tail) {
     if (!op.mutation) continue;
-    // An undo is a retraction, not a use — counting it would teach the
-    // menu to promote the acts people keep taking back.
-    if (op.undoes) continue;
+    if (retracted.has(op.id)) continue;
     const weight = Math.pow(0.5, (last - op.seq) / HALF_LIFE);
     weights.set(op.mutation.name, (weights.get(op.mutation.name) ?? 0) + weight);
   }
