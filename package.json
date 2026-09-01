@@ -36,7 +36,9 @@
     "dev:todo": "pnpm --filter @graview/todo dev",
     "navigation": "node scripts/verify-navigation.mjs",
     "moving": "node scripts/verify-moving.mjs",
-    "pages": "node scripts/verify-pages.mjs"
+    "pages": "node scripts/verify-pages.mjs",
+    "promo": "pnpm --filter @graview/promo dev",
+    "dev:promo": "pnpm --filter @graview/promo dev"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",

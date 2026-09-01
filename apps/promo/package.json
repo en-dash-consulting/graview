@@ -1,0 +1,28 @@
+{
+  "name": "@graview/promo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Graview 45s intro — motion-graphics-led promo cut",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render GraviewIntro out/graview-intro.mp4",
+    "upgrade": "remotion upgrade",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.340",
+    "@remotion/google-fonts": "4.0.340",
+    "@remotion/renderer": "4.0.340",
+    "@remotion/transitions": "4.0.340",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "remotion": "4.0.340"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "typescript": "^5.7.2"
+  }
+}
