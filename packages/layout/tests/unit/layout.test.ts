@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   aggregateId,
+  edgeOfSelection,
+  edgeSelectionId,
   kindCardId,
   withSelection,
   easeInOut,
@@ -812,5 +814,34 @@ describe("hidden kinds leave the picture entirely", () => {
     const hiddenFocus = layout(graph(), schema, view({ focusId: "morning" }), opts);
     const plain = layout(graph(), schema, view({}), opts);
     expect(hiddenFocus.nodes.map((n) => n.id).sort()).toEqual(plain.nodes.map((n) => n.id).sort());
+  });
+});
+
+/**
+ * A LINE IS A THING — when it stands for exactly one edge. A connector
+ * whose drawn endpoints are the real nodes carries the edge it stands for;
+ * a line into a group bundles many and stays scenery.
+ */
+describe("a line that stands for one edge says so", () => {
+  it("marks single-edge connectors and leaves bundled ones alone", () => {
+    const expanded = layout(
+      graph(),
+      schema,
+      toggleExpanded(view({ focusId: "week-1", relation: "person" }), kindCardId("duty")),
+    );
+    const single = expanded.connectors.find((c) => c.id === "assigned-to:ana:morning");
+    expect(single?.single).toEqual({ from: "ana", to: "morning" });
+
+    const bundled = layout(graph(), schema, view({ focusId: "week-1", relation: "person" }));
+    const toGroup = bundled.connectors.find((c) => c.to === kindCardId("duty"));
+    expect(toGroup?.single).toBeUndefined();
+  });
+
+  it("round-trips an edge selection through the URL like everything else", () => {
+    const id = edgeSelectionId("assigned-to", "ana", "morning");
+    expect(edgeOfSelection(id)).toEqual({ kind: "assigned-to", from: "ana", to: "morning" });
+    expect(edgeOfSelection("ana")).toBeNull();
+    const state = withSelection(withFocus(EMPTY_VIEW, "week-1"), [id]);
+    expect(fromUrl(toUrl(state)).selection).toEqual([id]);
   });
 });

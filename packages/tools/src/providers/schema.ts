@@ -14,8 +14,77 @@ const BASE_SCORE = 40;
 export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
   return {
     name: "schema",
-    derive({ store, selection, nodes, kindSelection }) {
+    derive({ store, selection, nodes, kindSelection, edgeSelection }) {
       const affordances: Affordance[] = [];
+
+      /*
+       * A selected LINE asks "what may be done to this relation". Mutations
+       * declare the edge kinds they make and break; endpoints prefill by
+       * matching each node-reference argument's accepted kinds against the
+       * edge's real ends — derived, never wired, and ambiguous matches stay
+       * open questions rather than guesses.
+       */
+      if (nodes.length === 0 && edgeSelection.length > 0) {
+        for (const edge of edgeSelection) {
+          const fromNode = store.graph.getNode(edge.from);
+          const toNode = store.graph.getNode(edge.to);
+          if (!fromNode || !toNode) continue;
+          for (const mutation of store.allMutations()) {
+            const makes = (mutation.connects ?? []).includes(edge.kind);
+            const breaks = (mutation.severs ?? []).includes(edge.kind);
+            if (!makes && !breaks) continue;
+            const args: Record<string, unknown> = {};
+            const open: OpenParameter[] = [];
+            const refs = nodeRefArgs(mutation.input);
+            for (const ref of refs) {
+              const takesFrom = ref.kinds.includes("*") || ref.kinds.includes(fromNode.kind as string);
+              const takesTo = ref.kinds.includes("*") || ref.kinds.includes(toNode.kind as string);
+              const fromOnly = takesFrom && !refs.some(
+                (other) => other !== ref && (other.kinds.includes(fromNode.kind as string) || other.kinds.includes("*")),
+              );
+              // Prefill only the unambiguous end; two arguments accepting
+              // the same kind stay open with candidates.
+              if (takesFrom && !takesTo) args[ref.name] = edge.from;
+              else if (takesTo && !takesFrom) args[ref.name] = edge.to;
+              else if (takesFrom && takesTo && fromOnly) args[ref.name] = edge.from;
+              else {
+                const candidates = ref.kinds.includes("*")
+                  ? store.graph.allNodes().map((node) => node.id)
+                  : ref.kinds.flatMap((kind) =>
+                      store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                    );
+                open.push({ name: ref.name, kinds: ref.kinds, candidates, shape: argShape(mutation.input, ref.name) });
+              }
+            }
+            for (const name of otherRequiredArgs(mutation.input, "")) {
+              if (name in args || open.some((parameter) => parameter.name === name)) continue;
+              open.push({ name, shape: argShape(mutation.input, name) });
+            }
+            const askable = open.every((parameter) =>
+              parameter.kinds !== undefined
+                ? (parameter.candidates?.length ?? 0) > 0
+                : (parameter.candidates?.length ?? 0) > 0 ||
+                  (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
+            );
+            if (!askable) continue;
+            affordances.push({
+              id: `schema:edge:${mutation.name}:${edge.kind}:${edge.from}:${edge.to}`,
+              label: mutation.title ?? mutation.name,
+              provider: "schema",
+              mutation: mutation.name,
+              args,
+              open,
+              ...(mutation.destructive ? { destructive: true } : {}),
+              // A break offered on the line itself outranks a make; both sit
+              // between plain schema actions and repairs.
+              score: (breaks ? 62 : 58) - open.length,
+              why: `this line is "${edge.kind}"`,
+              nodeIds: [edge.from, edge.to],
+            });
+          }
+        }
+        return { affordances };
+      }
 
       /*
        * A selected KIND — a card, a district — asks a different question

@@ -1094,6 +1094,9 @@ function connectorsFor<N extends { id: string; kind: string }>(
       kind: edge.kind,
       from: from.id,
       to: to.id,
+      ...(from.id === edge.from && to.id === edge.to
+        ? { single: { from: edge.from, to: edge.to } }
+        : {}),
       ...(from.id === to.id ? { loop: true } : {}),
       x1: from.x + from.width / 2,
       y1: from.y + from.height / 2,

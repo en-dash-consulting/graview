@@ -66,6 +66,8 @@ export interface DeriveContext<S extends AnySchema> {
   readonly nodes: readonly NodeOfSchema<S>[];
   /** Kinds the selection denotes when it is kind cards rather than nodes. */
   readonly kindSelection: readonly string[];
+  /** Concrete edges the selection names, when lines are selected. */
+  readonly edgeSelection: readonly { kind: string; from: string; to: string }[];
   /** Current violations, evaluated once and shared by every provider. */
   readonly violations: readonly Violation[];
   readonly context: Readonly<Record<string, unknown>>;

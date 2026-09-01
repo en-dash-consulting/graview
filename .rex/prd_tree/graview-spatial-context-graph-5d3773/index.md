@@ -45,6 +45,6 @@ description: "A framework for building applications where a typed context graph 
 | [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
 | [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |
 | [The graph also wears a traditional face: a routed webapp derived from the same declaration](./the-graph-also-wears-a-dd174e.md) | completed |
-| [The lines are editable: relations as first-class selectable, modifiable things](./the-lines-are-editable-492161.md) | pending |
+| [The lines are editable: relations as first-class selectable, modifiable things](./the-lines-are-editable-492161.md) | completed |
 | [Theming and look-and-feel: a declarative customization API a skill can drive](./theming-and-look-and-feel-a-305f2b.md) | completed |
 | [View primitives and the timeline lens](./view-primitives-and-the-timeline-lens.md) | completed |

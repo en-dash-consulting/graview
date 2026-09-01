@@ -166,6 +166,22 @@ describe("a store with a module off", () => {
   });
 });
 
+describe("graview check verifies edge claims", () => {
+  it("errors when a mutation claims an edge kind no declaration mentions", () => {
+    const claimy = bound.defineMutation("sever-something", {
+      title: "Sever",
+      description: "Break a line.",
+      severs: ["rides-in"],
+      connects: ["driven-by"],
+      input: z.object({ id: z.string() }),
+      apply() {},
+    });
+    const app = defineApp({ name: "test", schema, mutations: [claimy], invariants: [] });
+    const codes = checkApp(app).findings.map((f) => `${f.severity}:${f.code}`);
+    expect(codes.filter((c) => c === "error:edge-claim-unknown-kind")).toHaveLength(1);
+  });
+});
+
 describe("graview check verifies the intelligence declaration", () => {
   it("errors when a provider is allowed a mutation nobody registered", () => {
     const app = defineApp({

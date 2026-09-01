@@ -1,0 +1,16 @@
+---
+id: "a98bcacf-6cf6-45c4-a11e-fb8d83f29b57"
+level: "feature"
+title: "Chat is a seat you can talk to: a conversational surface over the intelligence seam"
+status: "pending"
+priority: "high"
+source: "Nick, 2026-09-01: \"now where does the AI interaction live. and y chatting anywhere? let's do that\""
+acceptanceCriteria:
+  - "A ChatPanel primitive mounts in an app bar in one line; the household example, todo, the coaching example and seedbed carry it"
+  - "A Conversation contract in tools: turn(text, context) → { say, proposals }; proposals are validated ProposedCalls applied through the ordinary runtime with a chat-seat author"
+  - "Graph-native responder works with no key: answers about named nodes, standings/violations, and proposes template-filled mutations from words"
+  - "An LLM plugs in via the existing Completion function with history; same validateProposals gate and may-allowlists"
+  - "Selection-aware: the current selection is the conversation's referent for 'this'"
+  - "Unit tests cover the responder and the LLM path with a fake completer; audit/survey stay clean with the panel closed"
+description: "AI interaction currently lives in three non-conversational places: the agent seat (a button that runs a derived turn), intelligence providers (suggestions in the inspector), and the external tool surface. Nothing lets a person ASK in words — \"what's broken this week?\", \"take Cass off Thursday\" — from inside the app.\n\nThe shape: a chat panel in the workbench (command bar, beside the Activity rail), backed by the same one-seam intelligence contract. A Conversation in @graview/tools takes turns: each user message plus the current selection and graph context produces a reply to read and zero or more ProposedCalls to apply — rendered as ordinary apply buttons, previewable, attributed to the chat seat in the log, undoable. Graph-native first: with no key, a built-in responder answers from the graph itself (labels resolve to facts and standings, mutation titles resolve to proposals with template-filled arguments, \"what's wrong\" lists violations with repairs). An LLM upgrades it through the existing one-function Completion seam with conversation history in the prompt — same validation gate, same allowlists, nothing new to trust.\n\nChatting ANYWHERE means it ships as a primitive every app's bar can mount in one line, selection-aware (\"this\" means what is selected), and its proposals travel the only path that exists — no privileged chat backdoor to the store."
+---

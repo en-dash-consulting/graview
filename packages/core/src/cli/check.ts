@@ -351,6 +351,22 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
      * actions strip. An unreadable one costs twice, which is why this is
      * checked at build time rather than noticed in use.
      */
+    for (const [field, listed] of [
+      ["connects", mutation.connects ?? []],
+      ["severs", mutation.severs ?? []],
+    ] as const) {
+      for (const edgeKind of listed) {
+        if (!(app.schema.edgeKinds as readonly string[]).includes(edgeKind)) {
+          add({
+            severity: "error",
+            code: "edge-claim-unknown-kind",
+            where: `defineMutation("${mutation.name}").${field}`,
+            message: `Claims to ${field === "connects" ? "make" : "break"} "${edgeKind}" edges, which no declaration mentions.`,
+            fix: `Use one of: ${(app.schema.edgeKinds as readonly string[]).join(", ")}.`,
+          });
+        }
+      }
+    }
     for (const created of mutation.creates ?? []) {
       if (!kinds.has(created as string)) {
         add({

@@ -1,5 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import {
+  edgeOfSelection,
   fromUrl,
   kindsOf,
   toggleExpanded,
@@ -127,6 +128,9 @@ export function useAffordances<S extends AnySchema>(
     // A selected kind card or district denotes KINDS; the binding owns those
     // ids, so it translates here and providers only ever see the kinds.
     const kindSelection = [...new Set(selection.flatMap((id) => kindsOf(id)))];
+    const edgeSelection = selection
+      .map((id) => edgeOfSelection(id))
+      .filter((edge): edge is NonNullable<typeof edge> => edge !== null);
     // Asked as WHOEVER IS HERE, so what the strip offers is what the store
     // would accept — and what it withholds is stated with a reason rather
     // than quietly missing. The installation's declared providers apply to
@@ -134,6 +138,7 @@ export function useAffordances<S extends AnySchema>(
     return deriveAffordances(store, selection, {
       principal,
       kindSelection,
+      edgeSelection,
       ...(providers ? { providers } : {}),
       ...options,
     });

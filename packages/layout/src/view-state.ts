@@ -156,6 +156,36 @@ export function sameView(a: ViewState, b: ViewState): boolean {
   return toUrl(a) === toUrl(b);
 }
 
+/**
+ * A RELATION in the selection: `edge:<kind>:<from>:<to>`.
+ *
+ * Lines joined the selection model after nodes did, and for the same
+ * reason the selection is in the URL at all — an inspector about a thing
+ * you cannot name is an inspector you cannot share or return to. Node and
+ * edge ids must not contain ":"; the framework's own ids never do.
+ */
+export const EDGE_SELECTION_PREFIX = "edge:";
+
+export function edgeSelectionId(kind: string, from: string, to: string): string {
+  return `${EDGE_SELECTION_PREFIX}${kind}:${from}:${to}`;
+}
+
+export interface EdgeRef {
+  readonly kind: string;
+  readonly from: string;
+  readonly to: string;
+}
+
+/** The edge a selection entry names, or null when it names a node. */
+export function edgeOfSelection(id: string): EdgeRef | null {
+  if (!id.startsWith(EDGE_SELECTION_PREFIX)) return null;
+  const parts = id.slice(EDGE_SELECTION_PREFIX.length).split(":");
+  if (parts.length !== 3) return null;
+  const [kind, from, to] = parts;
+  if (!kind || !from || !to) return null;
+  return { kind, from, to };
+}
+
 export function withFocus(state: ViewState, focusId: string | null): ViewState {
   return { ...state, focusId };
 }

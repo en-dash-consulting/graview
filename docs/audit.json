@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T07:31:55.157Z",
+  "at": "2026-09-01T11:25:10.021Z",
   "screens": [
     {
       "app": "todo",
@@ -106,10 +106,10 @@
       "board": [],
       "fill": 61,
       "inspector": {
-        "shown": 5,
+        "shown": 7,
         "hidden": 0,
-        "size": "236x232",
-        "text": "child1 schoolblock· double-click opens×Skip one occurrence …Rename …Restore one occurrence"
+        "size": "236x299",
+        "text": "child1 schoolblock· double-click opens×Skip one occurrence …Add them to it …Rename …Restor"
       }
     },
     {
@@ -135,10 +135,10 @@
       "board": [],
       "fill": 30,
       "inspector": {
-        "shown": 5,
+        "shown": 7,
         "hidden": 0,
-        "size": "236x192",
-        "text": "×Skip one occurrence …Rename …Restore one occurrence …Retime block …Remove"
+        "size": "236x259",
+        "text": "×Skip one occurrence …Add them to it …Rename …Restore one occurrence …Take them off it …Re"
       }
     },
     {

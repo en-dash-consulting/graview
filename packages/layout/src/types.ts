@@ -125,6 +125,13 @@ export interface Connector {
    * rather than as a line of zero length.
    */
   readonly loop?: boolean;
+  /**
+   * The ONE graph edge this line stands for, when it stands for exactly
+   * one — both drawn endpoints are the real nodes. A line into a group
+   * bundles many edges and says "some of these"; only a single line is an
+   * honest thing to select and act on.
+   */
+  readonly single?: { readonly from: string; readonly to: string };
   readonly from: string;
   readonly to: string;
   /** Endpoints in layout space, centre to centre. */
