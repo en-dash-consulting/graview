@@ -18,6 +18,7 @@ import {
   toUrl,
   withFocus,
   withPin,
+  withOverview,
   withRelation,
   type ViewState,
 } from "../../src/index.js";
@@ -823,18 +824,35 @@ describe("hidden kinds leave the picture entirely", () => {
  * a line into a group bundles many and stays scenery.
  */
 describe("a line that stands for one edge says so", () => {
-  it("marks single-edge connectors and leaves bundled ones alone", () => {
+  it("marks any line that stands for one edge — even one drawn to a group", () => {
     const expanded = layout(
       graph(),
       schema,
       toggleExpanded(view({ focusId: "week-1", relation: "person" }), kindCardId("duty")),
     );
-    const single = expanded.connectors.find((c) => c.id === "assigned-to:ana:morning");
-    expect(single?.single).toEqual({ from: "ana", to: "morning" });
+    const direct = expanded.connectors.find((c) => c.id === "assigned-to:ana:morning");
+    expect(direct?.single).toEqual({ from: "ana", to: "morning" });
 
+    // Ana's line into the Runs group carries her ONE run: that line IS that
+    // edge, and it takes a click even though the drawn end is a card.
     const bundled = layout(graph(), schema, view({ focusId: "week-1", relation: "person" }));
-    const toGroup = bundled.connectors.find((c) => c.to === kindCardId("duty"));
-    expect(toGroup?.single).toBeUndefined();
+    const ofOne = bundled.connectors.find(
+      (c) => c.from === "ana" && c.to === kindCardId("duty"),
+    );
+    expect(ofOne?.single).toEqual({ from: "ana", to: "morning" });
+
+    // A second real edge arriving on the same line withdraws the claim —
+    // "some of these" is not an honest thing to act on.
+    const mutated = graph();
+    mutated.applyPrimitives([
+      { op: "add-edge", edge: { kind: "assigned-to", from: "ana", to: "evening" } },
+    ]);
+    const many = layout(mutated, schema, view({ focusId: "week-1", relation: "person" }));
+    const withdrawn = many.connectors.find(
+      (c) => c.from === "ana" && c.to === kindCardId("duty") && c.kind === "assigned-to",
+    );
+    expect(withdrawn).toBeDefined();
+    expect(withdrawn?.single).toBeUndefined();
   });
 
   it("round-trips an edge selection through the URL like everything else", () => {
@@ -843,5 +861,18 @@ describe("a line that stands for one edge says so", () => {
     expect(edgeOfSelection("ana")).toBeNull();
     const state = withSelection(withFocus(EMPTY_VIEW, "week-1"), [id]);
     expect(fromUrl(toUrl(state)).selection).toEqual([id]);
+  });
+});
+
+describe("open districts stay at altitude", () => {
+  it("descending drops kind-card expansions and keeps the rest", () => {
+    const up = toggleExpanded(
+      toggleExpanded(view({ focusId: "week-1", overview: true }), kindCardId("duty")),
+      "aggregate:person",
+    );
+    const down = withOverview(up, false);
+    expect(down.expanded).toEqual(["aggregate:person"]);
+    // The overview stop itself is untouched: back up, the district reopens.
+    expect(up.expanded).toContain(kindCardId("duty"));
   });
 });

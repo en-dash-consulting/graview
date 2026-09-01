@@ -1088,15 +1088,27 @@ function connectorsFor<N extends { id: string; kind: string }>(
      */
     if (from.id === to.id && !(state.overview && from.aggregate && from.plane === 2)) continue;
     const id = `${edge.kind}:${from.id}:${to.id}`;
-    if (connectors.has(id)) continue;
+    /*
+     * A drawn line may STAND FOR several edges — into a group, between two
+     * districts. It is honestly selectable exactly when it stands for ONE,
+     * whoever it is drawn to: a person's line into the week that carries
+     * their single ride is that ride, even though the drawn end is a stamp.
+     * A second real edge arriving on the same line withdraws the claim.
+     */
+    const held = connectors.get(id);
+    if (held) {
+      if (held.single && (held.single.from !== edge.from || held.single.to !== edge.to)) {
+        const { single: _dropped, ...rest } = held;
+        connectors.set(id, rest);
+      }
+      continue;
+    }
     connectors.set(id, {
       id,
       kind: edge.kind,
       from: from.id,
       to: to.id,
-      ...(from.id === edge.from && to.id === edge.to
-        ? { single: { from: edge.from, to: edge.to } }
-        : {}),
+      single: { from: edge.from, to: edge.to },
       ...(from.id === to.id ? { loop: true } : {}),
       x1: from.x + from.width / 2,
       y1: from.y + from.height / 2,

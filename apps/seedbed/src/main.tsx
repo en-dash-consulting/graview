@@ -1,7 +1,8 @@
 import { themeCss, type Scheme } from "@graview/primitives";
 import { createRoot } from "react-dom/client";
 import { seedbedBrand } from "./domain/brand.js";
-import { SeedbedApp } from "./ui/app.js";
+import { PagesApp } from "@graview/pages";
+import { createSeedbedUiStore, SeedbedApp } from "./ui/app.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -35,8 +36,15 @@ applyScheme(scheme);
 
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
-createRoot(root).render(
-  <SeedbedApp syncUrl renderer="dom" initialScheme={scheme} onSchemeChange={applyScheme} />,
-);
+if (window.location.pathname.startsWith("/pages")) {
+  // The routed, responsive face: same store, same ids, one app.
+  createRoot(root).render(
+    <PagesApp basename="/pages" context={{ store: createSeedbedUiStore(), brand: seedbedBrand, sceneHref: "/" }} />,
+  );
+} else {
+  createRoot(root).render(
+    <SeedbedApp syncUrl renderer="dom" initialScheme={scheme} onSchemeChange={applyScheme} />,
+  );
+}
 
 (window as unknown as Record<string, unknown>)["__seedbedReady"] = { renderer: "dom", scheme };
