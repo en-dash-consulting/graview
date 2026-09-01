@@ -30,14 +30,6 @@ export function hueFor(kind: string): number {
   return ((h >>> 0) % 360) / 360;
 }
 
-/**
- * How many marks a tally draws before it starts counting instead.
- *
- * Chosen so a card at the smallest size the layout allots still fits two rows
- * of them: past that the marks stop being countable at a glance, which is the
- * only thing they are for.
- */
-const TALLY_MAX = 24;
 
 /**
  * The field a shortened label was shortened FROM, when there is one.
@@ -118,7 +110,6 @@ export function registerDefaultViews<S extends AnySchema>(
           {...(props.flagged?.includes(node.id) ? { tone: "warning" as const } : {})}
           // A card in the scene; a document on a page. Same component, and the
           // only difference is which of those two things it is sitting on.
-          variant={props.mode === "fullscreen" ? "page" : "card"}
           fit
         >
           {/*
@@ -243,7 +234,8 @@ export function registerDefaultViews<S extends AnySchema>(
      */
     const GroupGlyph = (props: ViewProps<S>) => {
       const members = props.nodes ?? [];
-      const trouble = members.some((member) => props.flagged?.includes(member.id));
+      const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
+      const trouble = broken > 0;
       const accent = props.focused || props.raised;
       /*
        * A kind the focus does not touch is QUIETER, not hidden.
@@ -260,16 +252,40 @@ export function registerDefaultViews<S extends AnySchema>(
           className="graview-kind-card"
           data-graview-rank={props.rank}
           data-graview-nested={nested || undefined}
-          // Tucked behind its parent there is no room for the description, so
-          // it moves to the tooltip rather than being lost.
-          {...(nested && definition?.description ? { title: definition.description } : {})}
+          /*
+           * The description lives in the TOOLTIP, on every card.
+           *
+           * It used to be two clamped lines of prose in the body, which is
+           * how a map of ten kinds spent a fifth of the window telling you
+           * what a fixture is — a sentence you read once and then look past
+           * for ever, cut mid-word ("A match: who, when, what it c…") because
+           * it never fit. The card's job is name, count, trouble. The sentence
+           * is still one hover away.
+           */
+          {...(definition?.description || nested
+            ? {
+                title: nested
+                  ? [props.label ?? plural, definition?.description].filter(Boolean).join(" — ")
+                  : definition!.description!,
+              }
+            : {})}
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: nested ? 1 : 4,
-            padding: nested ? "6px 7px" : "10px 11px",
+            gap: nested ? 1 : 3,
+            padding: nested ? "5px 7px" : "7px 10px",
+            borderRadius: "var(--graview-radius-sm, 9px)",
+            /*
+             * PLANE 2 IS A GLYPH. Its own fidelity says so.
+             *
+             * These were 190 by 107 holding a name, a number and a mark, and
+             * the band they sit in took a fifth of the window. A card sized
+             * for content it does not have is not a map, it is a margin.
+             */
+            justifyContent: "center",
+            position: "relative",
+            overflow: "hidden",
             boxSizing: "border-box",
-            borderRadius: 10,
             border: accent
               ? "1px solid var(--graview-accent)"
               : `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
@@ -283,6 +299,48 @@ export function registerDefaultViews<S extends AnySchema>(
             boxShadow: accent ? "0 0 0 1px var(--graview-accent-dim)" : undefined,
           }}
         >
+          {/*
+            * How much of this is in TROUBLE, as a bar rather than as dots.
+            *
+            * The count answers "how many" and never "how many of them are
+            * broken", which is the question a map of kinds is actually asked.
+            * One mark per member answered it and cost forty pixels of card;
+            * the same reading fits in three, and a proportion is quicker to
+            * take in than a row of squares you have to count.
+            *
+            * Along the TOP edge, because a card that has something tucked
+            * behind it is bitten at the bottom — and a bar drawn there was
+            * covered by exactly the card it sits next to. Nothing ever
+            * overlaps the top.
+            */}
+          {!nested && members.length > 0 ? (
+            <div
+              data-graview-tally={members.length}
+              data-graview-broken={broken || undefined}
+              aria-hidden="true"
+              style={{
+                // On the card's own edge, out of the flow: a glyph this size
+                // has no spare rows, and taking one made the content overflow.
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: 0,
+                display: "flex",
+                height: 3,
+                background: `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.4)`,
+              }}
+            >
+              {broken > 0 ? (
+                <span
+                  style={{
+                    width: `${Math.max(6, Math.round((broken / members.length) * 100))}%`,
+                    background: "var(--graview-warn)",
+                  }}
+                />
+              ) : null}
+            </div>
+          ) : null}
+
           {/* Title on its own line, marks on the next. Nothing shares a line
               with anything that could grow, so nothing can ever collide —
               which is what a single flex row of title, badge, warning and
@@ -293,8 +351,17 @@ export function registerDefaultViews<S extends AnySchema>(
               lineHeight: 1.25,
               letterSpacing: "0.05em",
               textTransform: "uppercase",
-              overflowWrap: "anywhere",
               color: accent ? "var(--graview-accent)" : "var(--graview-ink-muted)",
+              /*
+               * A tucked card is a corner peeking out from behind its parent,
+               * so its name gets one line. "Unavailability" wrapped to two and
+               * pushed the count out of a card that has no spare rows — and
+               * the alternative, growing the tuck until it fits, makes it the
+               * same size as the thing it is meant to be behind.
+               */
+              ...(nested
+                ? { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+                : { overflowWrap: "anywhere" }),
             }}
           >
             {props.label ?? plural}
@@ -330,101 +397,6 @@ export function registerDefaultViews<S extends AnySchema>(
               </span>
             ) : null}
           </div>
-
-          {/* The description is what a full-size card has room for. A nested
-              one is a corner peeking out from behind its parent; its name and
-              its count are the whole of what fits, and the title attribute
-              still carries the rest. */}
-          {definition?.description && !nested ? (
-            <span
-              className="graview-kind-note"
-              title={definition.description}
-              style={{
-                fontSize: 11.5,
-                lineHeight: 1.45,
-                color: "var(--graview-ink-muted)",
-                /*
-                 * Clamped to the card rather than overflowing it. A kind's
-                 * description is a sentence and a kind card is ninety pixels
-                 * tall; the whole of it stays in the tooltip.
-                 */
-                display: "-webkit-box",
-                WebkitBoxOrient: "vertical",
-                WebkitLineClamp: 2,
-                overflow: "hidden",
-              }}
-            >
-              {definition.description}
-            </span>
-          ) : null}
-
-          {/*
-            * A TALLY: one mark per member, lit where something is wrong.
-            *
-            * The card was a name, a number and a great deal of empty
-            * rectangle, and the empty rectangle was most of it. Listing the
-            * members' names was tried and is worse — ten cards each showing
-            * three truncated names is ten unreadable things — but a count
-            * answers "how many" and never "how much of this is in trouble",
-            * which is the question a map of kinds is actually asked.
-            *
-            * So: marks. Nine quiet and one warn reads instantly and at any
-            * size, needs no reading, and is the same information the count
-            * carried plus the one it did not.
-            */}
-          {!nested && members.length > 0 ? (
-            <div
-              data-graview-tally={members.length}
-              aria-hidden="true"
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                // Directly under the count, filling what is left. Pushed to
-                // the bottom instead, the card read as a name at the top and a
-                // smear at the bottom with a hole between them.
-                alignContent: "flex-start",
-                gap: 4,
-                flex: "1 1 auto",
-                minHeight: 0,
-                paddingTop: 2,
-                overflow: "hidden",
-              }}
-            >
-              {members.slice(0, TALLY_MAX).map((member) => {
-                const bad = props.flagged?.includes(member.id) ?? false;
-                return (
-                  <span
-                    key={member.id}
-                    title={labelOf(schema.tryDefinition(member.kind), member as never)}
-                    style={{
-                      // Big enough to count without leaning in. At six pixels
-                      // they read as noise on the card rather than as things.
-                      width: 8,
-                      height: 8,
-                      borderRadius: 2,
-                      flex: "0 0 auto",
-                      background: bad
-                        ? "var(--graview-warn)"
-                        : `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.62)`,
-                      ...(bad ? { boxShadow: "0 0 0 1px var(--graview-warn)" } : {}),
-                    }}
-                  />
-                );
-              })}
-              {members.length > TALLY_MAX ? (
-                <span
-                  style={{
-                    fontSize: 10,
-                    lineHeight: "8px",
-                    color: "var(--graview-ink-faint)",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  +{members.length - TALLY_MAX}
-                </span>
-              ) : null}
-            </div>
-          ) : null}
         </div>
       );
     };

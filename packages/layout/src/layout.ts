@@ -222,19 +222,19 @@ export function layout<S extends AnySchema>(
            * collision.
            */
           focusY: opts.height * 0.045,
-          focusH: opts.height * 0.6,
-          relationY: opts.height * 0.66,
-          relationH: opts.height * 0.16,
-          contextY: opts.height * 0.83,
-          contextH: opts.height * 0.155,
+          focusH: opts.height * 0.68,
+          relationY: opts.height * 0.74,
+          relationH: opts.height * 0.175,
+          contextY: opts.height * 0.918,
+          contextH: opts.height * 0.082,
         }
       : {
           focusY: opts.height * 0.04,
-          focusH: opts.height * 0.36,
-          relationY: opts.height * 0.46,
-          relationH: opts.height * 0.24,
-          contextY: opts.height * 0.79,
-          contextH: opts.height * 0.17,
+          focusH: opts.height * 0.42,
+          relationY: opts.height * 0.52,
+          relationH: opts.height * 0.29,
+          contextY: opts.height * 0.878,
+          contextH: opts.height * 0.092,
         };
 
   /*
@@ -513,6 +513,32 @@ export function layout<S extends AnySchema>(
    * z-index, so the order here IS the stacking, and "behind" is the whole
    * reading.
    */
+
+  /*
+   * TWO of them, at most, and the rest take ordinary slots.
+   *
+   * Nesting is an emphasis device: "these hang off that". Six kinds sharing a
+   * parent turned it into the opposite — the fan divides the parent's width
+   * between them, so the coaching week drew FIXTURES, PLAYERS, POSITIONS,
+   * RULES, SQUADS and UNAVAILABILITY as six seventy-pixel slivers whose
+   * labels ran into each other and whose longest wrapped mid-word. An
+   * emphasis that costs legibility is not emphasis, it is damage.
+   *
+   * The overflow is not demoted — it keeps `rank: "secondary"`, so it is
+   * still drawn smaller and further back in its own slot. The ranking
+   * survives; only the pile does not. Which two nest is decided by the same
+   * stable sort everything else here uses, so this stays a pure function of
+   * the view.
+   */
+  const FANNED_PER_PARENT = 2;
+  const fannedSoFar = new Map<string, number>();
+  for (const item of contextItems) {
+    if (item.nestedUnder === undefined) continue;
+    const already = fannedSoFar.get(item.nestedUnder) ?? 0;
+    if (already >= FANNED_PER_PARENT) delete (item as { nestedUnder?: string }).nestedUnder;
+    else fannedSoFar.set(item.nestedUnder, already + 1);
+  }
+
   const tucked = contextItems.filter((item) => item.nestedUnder !== undefined);
   const slotted = contextItems.filter((item) => item.nestedUnder === undefined);
 
@@ -552,7 +578,24 @@ export function layout<S extends AnySchema>(
    * having moved.
    */
   const SECONDARY = 0.74;
-  const NESTED = 0.5;
+  /*
+   * A tucked card still has to hold a name and a count. Half was sized
+   * against a context card twice as tall and clipped the moment the band
+   * became a strip of glyphs. It does not go much beyond this: at nearly the
+   * parent's size the two cards coincide, which reads as a rendering fault
+   * and puts the tucked one out of reach of a click.
+   */
+  const NESTED = 0.8;
+  /*
+   * A kind card holds a name and a count, and that is a fixed number of
+   * pixels. Every shrink here is proportional — secondary at 0.74, tucked at
+   * 0.8 of that, and tucked again by how many share a parent — so at a
+   * glyph-sized band the multiplications land under the content and the card
+   * clips. Proportion is right until it crosses the floor.
+   */
+  const CARD_MIN_HEIGHT = 56;
+  const TUCK_MIN_HEIGHT = 52;
+  const TUCK_MIN_WIDTH = 86;
   /** Further back within the plane. 1 is the plane's own depth. */
   const recede = (depth: number, by: number) => Math.min(1, depth + (1 - depth) * by);
 
@@ -568,7 +611,7 @@ export function layout<S extends AnySchema>(
     const position = contextPositions[index]!;
     const shrink = item.rank === "secondary" ? SECONDARY : 1;
     const width = contextSize.width * shrink;
-    const height = contextSize.height * shrink;
+    const height = Math.max(CARD_MIN_HEIGHT, contextSize.height * shrink);
     slotOf.set(item.id, {
       // Centred across the slot it was allotted, sitting on its baseline.
       x: position.x + (contextSize.width - width) / 2,
@@ -621,18 +664,55 @@ export function layout<S extends AnySchema>(
        * the last of them reachable, which is a fan nobody can use. Where
        * several share a parent they shrink to fit rather than piling up.
        */
-      const step = 0.55;
+      /*
+       * Offset enough to read as a pile, not enough to hide a label.
+       *
+       * At 0.55 each card covered forty-five per cent of the one to its left
+       * — and a kind card's label sits along its top edge, so the left card
+       * of every pair read as half a word running into the next: "FIXTURES"
+       * and "PLAYERS" drawn as "FIXTURESPLAYERS". The offset is a depth cue;
+       * it does not have to cost the thing it is a cue about.
+       */
+      const step = 0.86;
       const roomy = contextSize.width * NESTED;
-      const width = Math.min(roomy, (parent.width * 1.02) / (step * (count - 1) + 1));
-      const height = contextSize.height * NESTED * (width / roomy);
+      /*
+       * Never smaller than the card's own content.
+       *
+       * The height followed the width so a fan of two shrank both, and at a
+       * glyph-sized band that landed exactly on the height of a name plus a
+       * count — so every tucked card in a pair clipped by four or five
+       * pixels. A proportional rule is right until it crosses the floor;
+       * below that the card is not smaller, it is broken.
+       */
+      const width = Math.max(
+        TUCK_MIN_WIDTH,
+        Math.min(roomy, (parent.width * 1.02) / (step * (count - 1) + 1)),
+      );
+      const height = Math.max(
+        TUCK_MIN_HEIGHT,
+        contextSize.height * NESTED * (width / roomy),
+      );
       const spread = width * step;
       const fan = (count - 1) * spread + width;
       placedContext.push({
         ...item,
         x: parent.x + (parent.width - fan) / 2 + index * spread,
-        // Half under the edge, or as far under as the canvas allows. A card
-        // hanging off the bottom of the screen is not tucked, it is gone.
-        y: Math.min(parent.y + parent.height - height * 0.5, opts.height - height),
+        /*
+         * A FIXED bite out of the parent, not half the tuck.
+         *
+         * Half was proportional to the tucked card, so when the kinds band
+         * became a strip of glyphs the tuck ate forty per cent of a
+         * sixty-pixel parent and covered the bar that says how much of it is
+         * broken. Sixteen pixels reads as "behind that one" at any card size,
+         * and is the same overlap the taller cards had.
+         *
+         * Never below the canvas: a card hanging off the bottom of the screen
+         * is not tucked, it is gone.
+         */
+        y: Math.min(
+          parent.y + parent.height - Math.min(height * 0.5, 16),
+          opts.height - height,
+        ),
         width,
         height,
         depth: recede(parent.depth, 0.8),
@@ -694,9 +774,22 @@ export function layout<S extends AnySchema>(
     // A user pin overrides the computed position and survives graph changes
     // underneath: the layout keeps recomputing, the pin keeps winning.
     const pin = state.pins[node.id];
-    const final: LayoutNode = pin
+    const placedNode: LayoutNode = pin
       ? { ...node, x: pin.x, y: pin.y, pinned: true }
       : { ...node, pinned: false };
+    /*
+     * The camera moves LAST, and moves everything.
+     *
+     * Applied here rather than as a transform on the stage, so it is part of
+     * the one function that decides where things are: connectors are drawn
+     * from these coordinates, the frame planner reads them, and both
+     * renderers get panning without either of them learning about it. A pin
+     * is stored unpanned for the same reason — pan the camera back and the
+     * card is where you left it, relative to everything else.
+     */
+    const final: LayoutNode = state.pan
+      ? { ...placedNode, x: placedNode.x + state.pan.x, y: placedNode.y + state.pan.y }
+      : placedNode;
     nodes.push(final);
     placed.set(final.id, final);
   }

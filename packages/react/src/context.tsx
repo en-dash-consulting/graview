@@ -60,6 +60,24 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly menuAt: { readonly x: number; readonly y: number } | null;
   setMenuAt(at: { x: number; y: number } | null): void;
   /**
+   * How much of the bottom of the scene is spoken for by chrome floating
+   * over it, in pixels.
+   *
+   * The alternative was for the strip to keep floating and for the scene to
+   * keep laying out underneath it, which is exactly what it did: the context
+   * plane's cards sit at 98.5% of the height and the actions strip sits 18
+   * pixels off the bottom, so selecting anything covered the row of kinds.
+   * Moving the strip somewhere else only moves the collision. The scene is
+   * laid out to the space it HAS, so the honest fix is to tell it the truth
+   * about how much space that is.
+   *
+   * Published here rather than measured by the scene because the strip is a
+   * primitive and the scene must not know which chrome an app mounted — it
+   * only needs the number.
+   */
+  readonly bottomInset: number;
+  setBottomInset(pixels: number): void;
+  /**
    * What has just happened, per node, for a few seconds.
    *
    * Here for the same reason selection is: the scene, the chrome and an agent
@@ -89,6 +107,36 @@ export interface GraviewContextValue<S extends AnySchema> {
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
+
+/**
+ * Which mode the view being rendered right now is in.
+ *
+ * `mode` already arrives as a prop, and every view author was expected to
+ * thread it into whatever primitive needed it — which is the kind of contract
+ * that holds for the framework's own views and quietly does not for anyone
+ * else's. Three apps in, the app-written views were still drawing card
+ * furniture on a full page because nobody remembers a prop they only need on
+ * one screen.
+ *
+ * So the primitives read it themselves. A view can still say `variant`
+ * explicitly and win; the context is only what happens when it says nothing.
+ */
+const ViewModeContext = createContext<ViewMode>("scene");
+
+export function ViewModeProvider({
+  mode,
+  children,
+}: {
+  readonly mode: ViewMode;
+  readonly children: ReactNode;
+}) {
+  return <ViewModeContext.Provider value={mode}>{children}</ViewModeContext.Provider>;
+}
+
+/** How the surrounding view is being drawn. `scene` outside any view. */
+export function useViewMode(): ViewMode {
+  return useContext(ViewModeContext);
+}
 
 /**
  * Nobody in particular. A store with no policy permits this principal
@@ -146,6 +194,7 @@ export function GraviewProvider<S extends AnySchema>({
   const [selection, setSelectionState] = useState<readonly string[]>(initialSelection ?? []);
   const [jackedIn, setJackedIn] = useState<string | null>(initialJackedIn ?? null);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
+  const [bottomInset, setBottomInset] = useState(0);
   const { activity, noteAttention } = useActivityState(store);
 
   const current = view ?? internalView;
@@ -179,6 +228,8 @@ export function GraviewProvider<S extends AnySchema>({
       setJackedIn,
       menuAt,
       setMenuAt,
+      bottomInset,
+      setBottomInset,
       activity,
       noteAttention,
       principal,
@@ -194,6 +245,7 @@ export function GraviewProvider<S extends AnySchema>({
       setSelection,
       jackedIn,
       menuAt,
+      bottomInset,
       activity,
       noteAttention,
       principal,

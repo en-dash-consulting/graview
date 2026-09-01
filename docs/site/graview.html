@@ -1,0 +1,1279 @@
+<title>Graview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+:root {
+  color-scheme: light;
+
+  --paper:     #F5F6F8;
+  --panel:     #FFFFFF;
+  --sunk:      #ECEEF3;
+  --ink:       #0C1226;
+  --ink-2:     #3A4257;
+  --ink-3:     #5C6479;
+  --rule:      #D9DCE5;
+  --rule-2:    #E6E8EE;
+
+  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+     brilliant #00E5B9 that only reads on the navy, so it carries the dark
+     theme and the navy carries the light one. */
+  --navy:      #001769;
+  --mint:      #00E5B9;
+  --pine:      #14307F;
+  --pine-2:    #001769;
+  --pine-wash: #E6EAF5;
+  --amber:     #8A5A12;
+  --amber-wash:#F4EBDC;
+
+  --sans:  "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Merriweather", Georgia, "Times New Roman", serif;
+  --mono:  "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --rail: 234px;
+  --pad: clamp(22px, 4vw, 56px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper:     #070E22;
+    --panel:     #0D1730;
+    --sunk:      #101B37;
+    --ink:       #E7EAF3;
+    --ink-2:     #AFB7CC;
+    --ink-3:     #7E88A2;
+    --rule:      #1E2A4A;
+    --rule-2:    #16203A;
+    --navy:      #001769;
+    --mint:      #00E5B9;
+    --pine:      #00E5B9;
+    --pine-2:    #6BF3D6;
+    --pine-wash: #0B2A3F;
+    --amber:     #D4A162;
+    --amber-wash:#2A2115;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper:     #070E22;
+  --panel:     #0D1730;
+  --sunk:      #101B37;
+  --ink:       #E7EAF3;
+  --ink-2:     #AFB7CC;
+  --ink-3:     #7E88A2;
+  --rule:      #1E2A4A;
+  --rule-2:    #16203A;
+  --navy:      #001769;
+  --mint:      #00E5B9;
+  --pine:      #00E5B9;
+  --pine-2:    #6BF3D6;
+  --pine-wash: #0B2A3F;
+  --amber:     #D4A162;
+  --amber-wash:#2A2115;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible { outline: 3px solid var(--pine); outline-offset: 2px; border-radius: 2px; }
+
+/* Text for assistive technology only. Not `display: none`, which removes it
+   from the accessibility tree along with everything else. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The first thing the keyboard reaches is the way past the navigation. */
+.skip {
+  position: absolute;
+  left: 8px; top: -60px;
+  z-index: 20;
+  padding: 10px 16px;
+  background: var(--panel);
+  border: 1px solid var(--pine);
+  color: var(--pine);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 120ms ease;
+}
+.skip:focus { top: 8px; }
+
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Someone who has asked for more contrast gets firmer edges, not a different
+   design. */
+@media (prefers-contrast: more) {
+  :root { --rule: #6B7285; --rule-2: #8A90A0; --ink-2: #1A2033; --ink-3: #3A4257; }
+  :root:not([data-theme="light"]) { --rule: #7C8AA8; --rule-2: #5E6C88; --ink-2: #DCE2EF; --ink-3: #B9C2D6; }
+}
+
+/* Windows High Contrast throws the palette away, so anything carrying meaning
+   in a border or a fill has to say so in system colours too. */
+@media (forced-colors: active) {
+  .demo, .code, .term, .endash, .node, .lens figure { border-color: CanvasText; }
+  .caveat { border-left-color: LinkText; }
+  section > .head .tick, .plane .no i { background: CanvasText; forced-color-adjust: none; }
+  .node[data-plane="0"] { outline: 2px solid Highlight; }
+  .wire { stroke: CanvasText; }
+}
+
+a { color: var(--pine); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--pine-2); }
+
+/* ── shell ─────────────────────────────────────────────────────────── */
+
+.wrap {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  align-items: start;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 30px var(--pad) 30px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  border-right: 1px solid var(--rule);
+  margin-left: var(--pad);
+}
+
+.col {
+  padding: 30px var(--pad) 90px;
+  min-width: 0;
+}
+
+/* ── rail contents ─────────────────────────────────────────────────── */
+
+.brand { display: grid; gap: 3px; }
+.brand .who { display: inline-flex; align-items: center; gap: 8px; min-height: 26px; }
+.brand .who svg { width: 20px; height: 20px; flex: 0 0 auto; display: block; }
+.brand .who {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-decoration: none;
+}
+.brand .who:hover { color: var(--pine); }
+.brand .it {
+  font-family: var(--sans);
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.brand .sub {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.jump { display: grid; gap: 0; font-family: var(--sans); font-size: 12.5px; }
+.jump a {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 0;
+  color: var(--ink-2);
+  text-decoration: none;
+  font-weight: 500;
+  border-left: 2px solid transparent;
+  padding-left: 10px;
+  margin-left: -12px;
+}
+.jump a:hover { color: var(--pine); border-left-color: var(--pine); }
+
+.railfoot {
+  margin-top: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+@media (max-width: 900px) { .railfoot { display: none; } }
+
+/* ── type ──────────────────────────────────────────────────────────── */
+
+h1, h2, h3 { font-family: var(--sans); margin: 0; text-wrap: balance; }
+
+h1 {
+  font-size: clamp(34px, 4.6vw, 58px);
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -0.04em;
+  max-width: 15ch;
+}
+
+h2 {
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -0.012em; line-height: 1.4; }
+
+p { margin: 0; max-width: 66ch; }
+.lede { font-size: 18.5px; line-height: 1.62; color: var(--ink-2); max-width: 54ch; }
+.sm { font-size: 14px; line-height: 1.7; color: var(--ink-2); }
+.dim { color: var(--ink-3); }
+strong { font-weight: 700; color: var(--ink); }
+code { font-family: var(--mono); font-size: 0.86em; }
+em { font-style: italic; }
+
+section { padding-top: 54px; scroll-margin-top: 24px; }
+section > .head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+section > .head .tick {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 1px;
+  background: var(--pine);
+  transform: translateY(-6px);
+}
+.stack { display: grid; gap: 16px; align-items: start; }
+
+/* ── demo ──────────────────────────────────────────────────────────── */
+
+.demo {
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--rule-2);
+  background: var(--sunk);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+}
+.demo-bar .g { flex: 1 1 auto; }
+.demo-bar b { color: var(--pine); font-weight: 500; }
+
+#scene {
+  position: relative;
+  /* Tall enough for the fan at any width: narrow viewports arrange the
+     neighbours in two rows rather than squeezing them into one. */
+  height: clamp(300px, 46vw + 130px, 372px);
+  touch-action: manipulation;
+}
+@media (max-width: 560px) { #scene { height: 360px; } }
+#wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+.node {
+  position: absolute;
+  left: 0; top: 0;
+  display: grid;
+  gap: 1px;
+  padding: 8px 11px;
+  min-width: 76px;
+  max-width: 46%;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  border-radius: 2px;
+  font-family: var(--sans);
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+  transform-origin: 50% 50%;
+  transition: transform 380ms cubic-bezier(.22,.61,.36,1), opacity 380ms ease,
+              border-color 160ms ease, box-shadow 260ms ease;
+  will-change: transform;
+}
+.node:hover { border-color: var(--pine); }
+.node .kind {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.node .name {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  /* A long label wraps inside the card rather than pushing it off the frame. */
+  overflow-wrap: anywhere;
+}
+@media (max-width: 560px) {
+  .node { padding: 6px 8px; min-width: 64px; }
+  .node .name { font-size: 12px; }
+  .node[data-plane="0"] .name { font-size: 15px; }
+}
+.node[data-plane="0"] {
+  border-color: var(--pine);
+  box-shadow: 0 14px 30px -20px rgba(0, 23, 105, 0.75);
+  z-index: 3;
+}
+.node[data-plane="0"] .name { font-size: 18px; }
+.node[data-plane="0"] .kind { color: var(--pine); }
+.node[data-plane="1"] { z-index: 2; }
+.node[data-plane="2"] { z-index: 1; color: var(--ink-3); }
+.node[data-plane="2"] .name { font-size: 11.5px; font-weight: 500; }
+
+.wire { stroke: var(--rule); stroke-width: 1; fill: none; }
+.wire.on { stroke: var(--pine); stroke-opacity: 0.5; }
+.wire-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  fill: var(--ink-3);
+  text-anchor: middle;
+}
+
+.demo-foot {
+  border-top: 1px solid var(--rule-2);
+  padding: 10px 13px;
+  background: var(--sunk);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+}
+
+/* ── code ──────────────────────────────────────────────────────────── */
+
+.code {
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--pine);
+  background: var(--panel);
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  padding: 15px 17px;
+  color: var(--ink-2);
+}
+.code pre { margin: 0; }
+.k { color: var(--pine); }
+.s { color: var(--amber); }
+.c { color: var(--ink-3); }
+.n { color: var(--ink); font-weight: 500; }
+
+.two {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 26px;
+  align-items: start;
+}
+@media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── plain lists ───────────────────────────────────────────────────── */
+
+ul.plain { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
+ul.plain li {
+  padding: 9px 0;
+  border-top: 1px solid var(--rule-2);
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: var(--ink-2);
+}
+ul.plain li:first-child { border-top: none; padding-top: 0; }
+ul.plain b { color: var(--ink); font-weight: 700; }
+
+/* ── tables ────────────────────────────────────────────────────────── */
+
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th {
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0 16px 8px 0;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+td {
+  padding: 9px 16px 9px 0;
+  border-bottom: 1px solid var(--rule-2);
+  vertical-align: top;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+td:last-child, th:last-child { padding-right: 0; }
+td.pkg { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+td.where { font-family: var(--mono); font-size: 11.5px; }
+
+/* ── planes ────────────────────────────────────────────────────────── */
+
+.planes { display: grid; gap: 0; }
+.plane {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 20px;
+  padding: 14px 0;
+  border-top: 1px solid var(--rule-2);
+  align-items: start;
+}
+.plane:first-child { border-top: none; }
+.plane .no {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--pine);
+  padding-top: 3px;
+}
+.plane .no i { display: block; height: 2px; background: var(--pine); margin-top: 7px; font-style: normal; }
+.plane:nth-child(2) .no i { opacity: 0.5; }
+.plane:nth-child(3) .no i { opacity: 0.22; }
+.plane p { font-size: 14px; color: var(--ink-2); margin-top: 2px; }
+
+/* ── lenses ────────────────────────────────────────────────────────── */
+
+.lenses { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
+.lens { display: grid; gap: 10px; align-content: start; }
+.lens figure { margin: 0; border: 1px solid var(--rule); background: var(--panel); padding: 11px; }
+.lens svg { display: block; width: 100%; height: auto; }
+.lens p { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+
+/* ── terminal ──────────────────────────────────────────────────────── */
+
+.term {
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  overflow-x: auto;
+}
+.term .l {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 11px;
+  padding: 8px 15px;
+  border-top: 1px solid var(--rule-2);
+  white-space: nowrap;
+  align-items: baseline;
+}
+.term .l:first-child { border-top: none; }
+.term .p { color: var(--pine); }
+.term .c2 { color: var(--ink); }
+.term .n2 { color: var(--ink-3); font-size: 11px; }
+
+/* ── en dash block ─────────────────────────────────────────────────── */
+
+.endash {
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  padding: 24px 26px;
+  display: grid;
+  gap: 18px;
+}
+.endash .lockup {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.endash .dashmark { width: 62px; }
+.endash .dashmark svg { width: 100%; height: auto; display: block; }
+@media (max-width: 620px) {
+  .endash .lockup { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+.sibs { display: grid; gap: 0; }
+.sib {
+  display: grid;
+  grid-template-columns: minmax(0, 168px) minmax(0, 1fr);
+  gap: 18px;
+  padding: 11px 0;
+  border-top: 1px solid var(--rule-2);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.sib:first-child { border-top: none; }
+.sib a {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+.sib a:hover { text-decoration: underline; }
+@media (max-width: 620px) { .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* ── caveats ───────────────────────────────────────────────────────── */
+
+.caveat {
+  border-left: 2px solid var(--amber);
+  background: var(--amber-wash);
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.62;
+  color: var(--ink-2);
+}
+.caveat b { color: var(--amber); }
+
+footer a { display: inline-flex; align-items: center; min-height: 24px; }
+footer {
+  margin-top: 60px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+
+/* ── responsive ──────────────────────────────────────────────────────
+   Last on purpose. These override base rules of equal specificity, and an
+   override that comes first is not an override — it is a rule the cascade
+   throws away. The mobile navigation lost exactly that fight and stacked
+   eleven full-width pills down the first screen of a phone.
+   ─────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); }
+  .rail {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: auto;
+    gap: 14px;
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    margin: 0;
+    padding: 18px var(--pad) 12px;
+    background: var(--paper);
+  }
+  .col { padding: 22px var(--pad) 64px; }
+  /* The header is sticky here, so an anchor that scrolls to the top of a
+     section would put its heading underneath it. */
+  section { scroll-margin-top: 132px; }
+  /* Eleven links stacked is a page of navigation before the page. A row that
+     scrolls is one line, and every link is still a link. */
+  .jump {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
+    margin: 0 calc(var(--pad) * -1);
+    padding-left: var(--pad);
+    padding-right: var(--pad);
+  }
+  .jump a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border: 1px solid var(--rule);
+    border-left-width: 1px;
+    border-radius: 999px;
+    margin-left: 0;
+    padding: 5px 12px;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .jump a:hover { border-color: var(--pine); }
+  .brand .sub { max-width: 46ch; }
+}
+
+@media (max-width: 560px) {
+  .plane { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .plane .no { padding-top: 0; }
+  .plane .no i { max-width: 92px; }
+  .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .two { gap: 20px; }
+  section { padding-top: 42px; }
+}
+@media (prefers-reduced-motion: reduce) { .node { transition-duration: 1ms; } }
+</style>
+
+<a class="skip" href="#what">Skip to content</a>
+
+<div class="wrap" lang="en">
+
+  <nav class="rail" aria-label="Sections">
+    <div class="brand">
+      <a class="who" href="https://endash.us"><svg viewBox="0 0 330 330" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+<rect x="7.5" y="7.5" width="315" height="315" stroke="#00E5B9" stroke-width="15"/>
+<path d="M315 15H15V315H315V15Z" fill="#001769"/>
+<path d="M315 232.119H47.0074V247.705H315V232.119Z" fill="#00E5B9"/>
+<path d="M139.795 164.997L145.324 169.838C140.942 178.372 126.191 192.894 100.589 192.894C71.774 192.894 45.0248 174.678 45.0248 139.625C45.0248 103.424 73.6102 85.438 102.425 85.438C127.088 85.438 146.471 98.8126 146.471 119.323C146.471 137.538 131.261 140.084 106.807 141.002L81.4555 141.92C77.3033 142.15 76.3853 145.613 77.7624 150.913C83.5212 167.522 96.8958 176.974 113.964 176.974C122.727 176.995 131.72 174.679 139.795 164.997ZM74.5491 124.185C74.3196 131.112 76.6148 133.866 82.624 133.866H94.851C114.673 133.866 120.682 127.648 120.682 117.028C120.682 105.26 112.837 94.2014 99.0031 94.2014C83.3125 94.2222 75.6967 106.658 74.5491 124.185Z" fill="white"/>
+<path d="M244.225 173.531V131.571C244.225 114.503 237.068 102.986 223.005 102.986C208.253 102.986 199.261 114.524 199.261 131.571V169.608C199.261 179.519 203.183 182.754 213.783 183.672V191.517H156.842V183.672C167.671 182.754 171.593 179.519 171.593 169.608V112.187C171.593 101.588 167.212 98.8128 156.842 99.7308V91.8855L189.12 85.8972C195.797 84.7496 199.261 87.7333 199.261 93.054C199.261 101.358 202.954 103.424 205.937 99.9812C211.008 94.4519 220.23 85 238.445 85C255.284 85 271.871 93.3044 271.871 125.583V171.006C271.871 178.622 275.794 181.376 283.639 179.77V187.615C279.487 190.849 270.953 192.685 264.277 192.685C251.611 192.664 244.225 185.988 244.225 173.531Z" fill="white"/>
+</svg><span>En&nbsp;Dash</span></a>
+      <span class="it">Graview</span>
+      <span class="sub">A development framework built on a typed context graph.</span>
+    </div>
+
+    <div class="jump">
+      <a href="#what">What it is</a>
+      <a href="#try">Try it</a>
+      <a href="#declare">The declaration</a>
+      <a href="#packages">The packages</a>
+      <a href="#depth">Depth</a>
+      <a href="#lenses">Lenses</a>
+      <a href="#rules">Rules &amp; agents</a>
+      <a href="#checked">What is checked</a>
+      <a href="#install">Install</a>
+      <a href="#endash">En&nbsp;Dash</a>
+      <a href="#status">Status</a>
+    </div>
+
+    <div class="railfoot">
+      7 packages<br>
+      490 tests<br>
+      no browser, no GPU
+    </div>
+  </nav>
+
+  <main class="col">
+
+    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
+      <h1 id="h-what">Declare the domain. The application follows.</h1>
+      <p class="lede" style="margin-top: 22px;">
+        Most frameworks give you a way to draw things. Graview asks you to
+        describe your domain once, then derives the interface from it.
+      </p>
+      <p style="margin-top: 18px;">
+        A node kind carries its own fields, its edges, its views, its mutations
+        and the rules it must not break. From that one declaration the framework
+        works out where things sit on screen, what a user is allowed to do to a
+        selection, what tools to hand an agent, and how to name everything for a
+        screen reader. Change the declaration and all four move together. There
+        is no second file to keep in step.
+      </p>
+      <p style="margin-top: 14px;">
+        It is not a UI layer bolted onto a store. The graph, the rules, the
+        operation log, the tool surface and the pictures are one system, and
+        they ship as seven packages you install.
+      </p>
+    </section>
+
+    <section id="try" aria-labelledby="h-try">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-try">Try it</h2></div>
+      <p class="sm" style="margin-bottom: 14px; max-width: 62ch;">
+        Click any node. It moves to the front and everything one edge away
+        rises behind it. The words on the connectors are read out of the
+        schema. Nobody wrote them for this page.
+      </p>
+
+      <div class="demo">
+        <div class="demo-bar">
+          <b>● plane 0</b>
+          <span class="g"></span>
+          <span>graview/react · dom path</span>
+        </div>
+        <div id="scene" role="group" aria-labelledby="h-try" aria-describedby="scene-help">
+          <svg id="wires" aria-hidden="true"></svg>
+        </div>
+        <p id="scene-help" class="sr-only">
+          A graph of seven nodes. Activate any node to bring it to the front;
+          the list below it names everything one edge away and the relation
+          that reaches it.
+        </p>
+        <div class="demo-foot">
+          <span id="foot" role="status" aria-live="polite"></span>
+        </div>
+        <ul id="scene-edges" class="sr-only"></ul>
+      </div>
+    </section>
+
+    <section id="declare" aria-labelledby="h-declare">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-declare">The declaration</h2></div>
+      <div class="two">
+        <div class="stack">
+          <div class="code" data-scroller aria-label="The task declaration, as code">
+<pre><span class="k">export const</span> <span class="n">task</span> = <span class="n">defineNode</span>(<span class="s">"task"</span>, {
+  description: <span class="s">"One thing to do."</span>,
+  fields: z.<span class="n">object</span>({
+    label: z.<span class="n">string</span>().min(<span class="n">1</span>),
+    done:  z.<span class="n">boolean</span>(),
+    due:   isoDate.optional(),
+    day:   dayOfWeek.optional(),
+    plannedAt: minutes.optional(),
+  }),
+  plural: <span class="s">"Tasks"</span>,
+  <span class="c">// A lens asks for roles, not field names.</span>
+  fieldRoles: { start: <span class="s">"plannedAt"</span>, day: <span class="s">"day"</span> },
+  edges: {
+    <span class="s">"waits-for"</span>: {
+      to: [<span class="s">"task"</span>],
+      description: <span class="s">"what has to happen first"</span>,
+      inverse:     <span class="s">"what is waiting on this"</span>,
+    },
+  },
+});</pre>
+          </div>
+          <p class="sm dim">
+            An edge pointing at a kind the schema never declared fails
+            <code>tsc</code>. Not at runtime. At build.
+          </p>
+        </div>
+
+        <div class="stack">
+          <p class="sm">Everything below comes out of that block. None of it is written twice.</p>
+          <ul class="plain">
+            <li><b>The picture.</b> Layout is a pure function of focus, relation and graph. Same graph, same picture. Every stop is a URL. Any two states interpolate.</li>
+            <li><b>The actions.</b> Which mutations are legal across the current selection, ranked, with their unanswered arguments typed and their pickers populated.</li>
+            <li><b>The agent's tools.</b> One surface, shared with the interface. An agent edit and a human edit produce the same diff and the same log entry.</li>
+            <li><b>The words.</b> Connector captions, group headings, accessible names. Read from <code>description</code> and <code>inverse</code>.</li>
+            <li><b>A view, before you write one.</b> A new kind renders sensibly on day one. Replace it with a real view when you have something better to say.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="packages" aria-labelledby="h-packages">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-packages">The packages</h2></div>
+      <p class="sm" style="margin-bottom: 16px; max-width: 62ch;">
+        Seven packages, layered. Take the whole stack or take the parts that
+        earn their place. <code>layout</code> is pure geometry with no React in
+        it; <code>core</code> runs headless in a worker or a test.
+      </p>
+      <div class="scroll" data-scroller aria-label="The packages, as a table">
+        <table>
+          <caption class="sr-only">The seven packages and what each contains</caption>
+            <thead><tr><th scope="col">Package</th><th scope="col">What is in it</th></tr></thead>
+          <tbody>
+            <tr><td class="pkg">@graview/core</td><td>Schema, graph, invariants, mutations, the operation log, persistence and sync adapters, and the <code>graview check</code> CLI.</td></tr>
+            <tr><td class="pkg">@graview/layout</td><td>Where everything sits. Headless and pure. No DOM, no framework.</td></tr>
+            <tr><td class="pkg">@graview/tools</td><td>Derived affordances, and one tool surface an agent and an interface both use.</td></tr>
+            <tr><td class="pkg">@graview/render</td><td>Capture, depth compositing, pointer routing. Only this package touches the GPU, and only through its <code>/gpu</code> entry.</td></tr>
+            <tr><td class="pkg">@graview/react</td><td>The binding. Deliberately thin.</td></tr>
+            <tr><td class="pkg">@graview/primitives</td><td>View primitives, three lenses, and the workbench: inspector, standing, activity, undo, trail.</td></tr>
+            <tr><td class="pkg">@graview/skills</td><td>Authoring moves for Claude Code and Codex. Each one ends in a check rather than a claim.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sm dim" style="margin-top: 14px;">
+        The repository also carries example apps. They are fixtures for the
+        harnesses and are not published.
+      </p>
+    </section>
+
+    <section id="depth" aria-labelledby="h-depth">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-depth">Depth</h2></div>
+      <p class="sm" style="margin-bottom: 16px; max-width: 62ch;">
+        A view further away is not drawn smaller. It is asked for less. That
+        split carries real weight: capture runs about 0.016&nbsp;ms per node up
+        to roughly 128 live captures a frame, then falls off a cliff.
+      </p>
+      <div class="planes">
+        <div class="plane">
+          <div class="no">plane 0<i></i></div>
+          <div><h3>Focus, full fidelity</h3><p>Live DOM, captured every frame it moves. Whatever you are working on, at whatever size it wants.</p></div>
+        </div>
+        <div class="plane">
+          <div class="no">plane 1<i></i></div>
+          <div><h3>Relations, summary</h3><p>Whatever the focus touches, captured on change into a cached texture. Still real elements. Still clickable and focusable.</p></div>
+        </div>
+        <div class="plane">
+          <div class="no">plane 2<i></i></div>
+          <div><h3>Context, glyph</h3><p>Every declared kind, always, in the same place. Painted in the shader and never captured, so a graph that is not changing costs nothing per frame.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="lenses" aria-labelledby="h-lenses">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-lenses">Lenses</h2></div>
+      <p class="sm" style="margin-bottom: 18px; max-width: 62ch;">
+        A lens binds <em>roles</em>, not field names. Point the timeline at
+        <code>plannedAt</code> in one app and at <code>leaveAt</code> in
+        another; it never learns what either one means. That is the line
+        between a lens and a component you copied.
+      </p>
+      <div class="lenses">
+        <div class="lens">
+          <figure>
+            <svg viewBox="0 0 200 92" role="img" aria-label="A board: five slots arranged in bands, one empty">
+              <rect x="0.5" y="0.5" width="199" height="91" fill="none" stroke="var(--rule)"></rect>
+              <line x1="0" y1="31" x2="200" y2="31" stroke="var(--rule)" stroke-dasharray="3 3"></line>
+              <line x1="0" y1="61" x2="200" y2="61" stroke="var(--rule)" stroke-dasharray="3 3"></line>
+              <circle cx="100" cy="16" r="7.5" fill="none" stroke="var(--pine)"></circle>
+              <circle cx="58" cy="46" r="7.5" fill="none" stroke="var(--amber)" stroke-dasharray="3 2"></circle>
+              <circle cx="142" cy="46" r="7.5" fill="none" stroke="var(--pine)"></circle>
+              <circle cx="79" cy="76" r="7.5" fill="none" stroke="var(--pine)"></circle>
+              <circle cx="121" cy="76" r="7.5" fill="none" stroke="var(--pine)"></circle>
+            </svg>
+          </figure>
+          <div><h3>Board</h3><p>Things sit where the domain says they sit, not where a layout engine decided. The empty slot is the whole point.</p></div>
+        </div>
+        <div class="lens">
+          <figure>
+            <svg viewBox="0 0 200 92" role="img" aria-label="A coverage matrix with one empty row">
+              <rect x="0.5" y="0.5" width="199" height="91" fill="none" stroke="var(--rule)"></rect>
+              <g fill="var(--pine)">
+                <rect x="24" y="15" width="8" height="8"></rect>
+                <rect x="86" y="15" width="8" height="8"></rect>
+                <rect x="55" y="36" width="8" height="8"></rect>
+                <rect x="148" y="36" width="8" height="8"></rect>
+                <rect x="117" y="78" width="8" height="8"></rect>
+                <rect x="24" y="78" width="8" height="8"></rect>
+              </g>
+              <line x1="14" y1="62" x2="186" y2="62" stroke="var(--amber)" stroke-width="1.5"></line>
+              <g fill="var(--ink-3)" opacity="0.3">
+                <circle cx="59" cy="19" r="1.3"></circle><circle cx="121" cy="19" r="1.3"></circle>
+                <circle cx="28" cy="40" r="1.3"></circle><circle cx="90" cy="40" r="1.3"></circle>
+                <circle cx="59" cy="82" r="1.3"></circle><circle cx="152" cy="82" r="1.3"></circle>
+              </g>
+            </svg>
+          </figure>
+          <div><h3>Coverage</h3><p>An empty row is a requirement nobody answered. An empty column is work nobody asked for. Reading a document never finds the paragraph that was never written.</p></div>
+        </div>
+        <div class="lens">
+          <figure>
+            <svg viewBox="0 0 200 92" role="img" aria-label="A timeline with spans across columns">
+              <rect x="0.5" y="0.5" width="199" height="91" fill="none" stroke="var(--rule)"></rect>
+              <g stroke="var(--rule)">
+                <line x1="40" y1="0" x2="40" y2="92"></line>
+                <line x1="79" y1="0" x2="79" y2="92"></line>
+                <line x1="118" y1="0" x2="118" y2="92"></line>
+                <line x1="157" y1="0" x2="157" y2="92"></line>
+              </g>
+              <g fill="var(--pine)" opacity="0.85">
+                <rect x="6" y="20" width="28" height="19"></rect>
+                <rect x="45" y="38" width="28" height="29"></rect>
+                <rect x="123" y="15" width="28" height="25"></rect>
+                <rect x="162" y="50" width="28" height="21"></rect>
+              </g>
+              <rect x="84" y="32" width="28" height="33" fill="var(--amber)" opacity="0.9"></rect>
+            </svg>
+          </figure>
+          <div><h3>Timeline</h3><p>Intervals against columns. The minimum window is the app's call, because an eight-hour default is right for a school day and wrong for a Tuesday evening.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="rules" aria-labelledby="h-rules">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-rules">Rules &amp; agents</h2></div>
+      <div class="two">
+        <div class="stack">
+          <h3>A rule names its own repairs</h3>
+          <p class="sm">
+            Invariants run on every change. The bar states the result, and zero
+            is an answer too. Open a problem and it selects what it names, marks
+            those nodes wherever they happen to be drawn, and offers the
+            mutations that would fix it. You never go hunting.
+          </p>
+          <p class="sm">
+            Suggestions fall out of the same machinery. Select three tasks where
+            two share a day and <em>align the third</em> appears, because the
+            schema already said which mutation writes that field. Nobody wrote a
+            rule about days.
+          </p>
+        </div>
+        <div class="stack">
+          <h3>History is a fold, not a stack</h3>
+          <p class="sm">
+            The graph is a fold over an append-only log. Every operation carries
+            its author, its batch, its intent, its inverse, and the nodes it
+            <em>read</em>.
+          </p>
+          <p class="sm">
+            That last one turns "drop the agent's turn, keep my edits" into a
+            dependency check rather than a stack pop. When it will not work, the
+            check names the operation in the way and offers to bring it along.
+          </p>
+          <p class="sm">
+            The tool runtime emits every call as it happens, reads included, so
+            a turn reads back as <em>looked at the whole graph, looked at the
+            Tuesday task, moved it</em>. Every node it names is one click away.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="checked" aria-labelledby="h-checked">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-checked">What is checked</h2></div>
+      <p class="sm" style="margin-bottom: 16px; max-width: 62ch;">
+        Not "the tests pass". These are the claims that would be easy to write
+        down and hard to keep true, so each one is a test or a measurement, and
+        a failure names the claim rather than lowering a count.
+      </p>
+      <div class="scroll" data-scroller aria-label="Claims and their checks, as a table">
+        <table>
+          <caption class="sr-only">Claims this project makes, and the test or measurement behind each</caption>
+            <thead><tr><th scope="col">Claim</th><th scope="col">Where</th></tr></thead>
+          <tbody>
+            <tr><td>A suggestion appears that nobody wrote a rule for</td><td class="where">tools/tests/unit/affordances</td></tr>
+            <tr><td>A new node kind renders with zero view code</td><td class="where">primitives/tests/unit/primitives</td></tr>
+            <tr><td>Selective undo names the operation that blocks it</td><td class="where">core/tests/unit/op-log</td></tr>
+            <tr><td>An edge to an undeclared kind fails <code>tsc</code></td><td class="where">createSchema · ValidateEdgeTargets</td></tr>
+            <tr><td>Nothing the layout places is unreachable, at any viewport</td><td class="where">layout/tests/unit/layout</td></tr>
+            <tr><td>A lens works in a domain the framework has never seen</td><td class="where">primitives/tests/unit/board, /coverage</td></tr>
+            <tr><td>An echo of our own write is not re-applied</td><td class="where">core/tests/integration/sync</td></tr>
+            <tr><td>A conflict surfaces as a violation with a repair, not a silent merge</td><td class="where">core/tests/integration/sync</td></tr>
+            <tr><td>Content at depth reaches assistive technology</td><td class="where">run-a11y · zero axe violations</td></tr>
+            <tr><td>One policy narrows the interface and the agent seat alike</td><td class="where">scripts/verify-permissions · 9 criteria</td></tr>
+            <tr><td>A brand reaches the pixels without forking a package</td><td class="where">scripts/verify-brand · WCAG AA measured</td></tr>
+            <tr><td>A stranger can install the tarballs and build from them</td><td class="where">scripts/smoke-install</td></tr>
+            <tr><td>No card covers another, no caption is cut, no control is under a fingertip</td><td class="where">scripts/audit-ui · 20 screens</td></tr>
+            <tr><td>Every authoring skill ends in a check the checker can actually produce</td><td class="where">skills/tests/unit/skills</td></tr>
+            <tr><td>The capture path survives a pointer, and a click still reaches the node it drew</td><td class="where">scripts/verify-capture</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="install" aria-labelledby="h-install">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-install">Install</h2></div>
+      <div class="two">
+        <div class="stack">
+          <div class="term" data-scroller aria-label="Commands to install the packages">
+            <div class="l"><span class="p">$</span><span class="c2">pnpm add @graview/core @graview/react</span><span class="n2"></span></div>
+            <div class="l"><span class="p">$</span><span class="c2">pnpm add @graview/primitives</span><span class="n2">views + workbench</span></div>
+            <div class="l"><span class="p">$</span><span class="c2">npx graview check src/app.ts</span><span class="n2">against the declaration</span></div>
+          </div>
+          <div class="term" data-scroller aria-label="Commands to run inside the repository">
+            <div class="l"><span class="p">$</span><span class="c2">pnpm install</span><span class="n2"></span></div>
+            <div class="l"><span class="p">$</span><span class="c2">pnpm dev:todo</span><span class="n2">the worked example</span></div>
+            <div class="l"><span class="p">$</span><span class="c2">pnpm test</span><span class="n2">490, no browser</span></div>
+          </div>
+        </div>
+        <div class="stack">
+          <p class="sm">
+            <strong>Start with the todo example.</strong> Four kinds, ten named
+            mutations, three rules that name their own repairs, a lens borrowed
+            from a calendar, a declared brand and an agent seat. Small enough to
+            read in one sitting, and it asks you to learn nothing about a domain
+            before you can learn the framework. It found two framework bugs
+            while it was being written, which is what an example is for.
+          </p>
+          <p class="sm">
+            The scene renders through the DOM by default. The plane model is
+            affine, so a CSS transform reproduces the geometry exactly; what it
+            cannot do is per-plane blur in a shader.
+            <code>?renderer=gpu</code> composites through WebGPU instead.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="endash" aria-labelledby="h-endash">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-endash">Who builds it</h2></div>
+      <div class="endash">
+        <div class="lockup">
+          <div class="dashmark"><svg viewBox="0 0 330 330" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+<rect x="7.5" y="7.5" width="315" height="315" stroke="#00E5B9" stroke-width="15"/>
+<path d="M315 15H15V315H315V15Z" fill="#001769"/>
+<path d="M315 232.119H47.0074V247.705H315V232.119Z" fill="#00E5B9"/>
+<path d="M139.795 164.997L145.324 169.838C140.942 178.372 126.191 192.894 100.589 192.894C71.774 192.894 45.0248 174.678 45.0248 139.625C45.0248 103.424 73.6102 85.438 102.425 85.438C127.088 85.438 146.471 98.8126 146.471 119.323C146.471 137.538 131.261 140.084 106.807 141.002L81.4555 141.92C77.3033 142.15 76.3853 145.613 77.7624 150.913C83.5212 167.522 96.8958 176.974 113.964 176.974C122.727 176.995 131.72 174.679 139.795 164.997ZM74.5491 124.185C74.3196 131.112 76.6148 133.866 82.624 133.866H94.851C114.673 133.866 120.682 127.648 120.682 117.028C120.682 105.26 112.837 94.2014 99.0031 94.2014C83.3125 94.2222 75.6967 106.658 74.5491 124.185Z" fill="white"/>
+<path d="M244.225 173.531V131.571C244.225 114.503 237.068 102.986 223.005 102.986C208.253 102.986 199.261 114.524 199.261 131.571V169.608C199.261 179.519 203.183 182.754 213.783 183.672V191.517H156.842V183.672C167.671 182.754 171.593 179.519 171.593 169.608V112.187C171.593 101.588 167.212 98.8128 156.842 99.7308V91.8855L189.12 85.8972C195.797 84.7496 199.261 87.7333 199.261 93.054C199.261 101.358 202.954 103.424 205.937 99.9812C211.008 94.4519 220.23 85 238.445 85C255.284 85 271.871 93.3044 271.871 125.583V171.006C271.871 178.622 275.794 181.376 283.639 179.77V187.615C279.487 190.849 270.953 192.685 264.277 192.685C251.611 192.664 244.225 185.988 244.225 173.531Z" fill="white"/>
+</svg></div>
+          <p style="max-width: 56ch;">
+            <strong>En&nbsp;Dash</strong> is a consultancy headquartered in
+            Richmond, Virginia, with practitioners across the United States. We
+            work alongside teams to remove delivery friction and leave them
+            stronger. We build the tools we wanted while doing it.
+          </p>
+        </div>
+        <div class="sibs">
+          <div class="sib">
+            <a href="https://endash.us">n-dx</a>
+            <span>An AI development toolkit. Static analysis of a codebase, a hierarchical PRD that stays in step with it, and an agent that picks up the next task and does it.</span>
+          </div>
+          <div class="sib">
+            <a href="https://html-in-canvas.dev">html-in-canvas.dev</a>
+            <span>Eighteen working examples of the WICG HTML-in-Canvas proposal across 2D, WebGL and WebGPU. Graview's capture path composites through the same API, so the two were written next to each other.</span>
+          </div>
+          <div class="sib">
+            <a href="https://endash.us/toolkit">The En&nbsp;Dash Toolkit</a>
+            <span>Workshops, field guides, handouts and small apps for teams: meeting cadence, team norms, AI governance, refinement and retrospectives.</span>
+          </div>
+        </div>
+        <p class="sm dim" style="margin-top: 2px;">Built for people everywhere, by people at En&nbsp;Dash.</p>
+      </div>
+    </section>
+
+    <section id="status" aria-labelledby="h-status">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-status">Status</h2></div>
+      <div class="stack">
+        <div class="caveat">
+          <b>Private, and unpublishable on purpose.</b> Every package is
+          <code>private: true</code> and carries no licence. Publishing without
+          one would leave whoever installs it with no permission to use it. That
+          is a decision waiting to be made, not work waiting to be done.
+        </div>
+        <ul class="plain">
+          <li><b>The capture path is experimental.</b> Capture falls off a cliff past about 128 live captures a frame, and every claim above is measured against the DOM path. Use it for the per-plane blur, not because it is faster.</li>
+          <li><b>The calendar sync has never run against Google.</b> Echo suppression, conflict detection and offline reconciliation are covered against a scripted remote. A token that expires mid-run is not.</li>
+          <li><b>No screen-reader pass with real assistive technology.</b> The tree is populated and axe-core reports nothing. A populated tree is not proof that VoiceOver reads it well.</li>
+          <li><b>The public API is pre-1.0.</b> Every package exposes a single <code>src/public.ts</code> and nothing else is supported, but the surface still moves while nobody depends on it.</li>
+        </ul>
+      </div>
+    </section>
+
+
+  </main>
+</div>
+
+<footer>
+    <span>Graview</span>
+    <span>core · layout · tools · render · react · primitives · skills</span>
+    <span style="flex: 1 1 auto;"></span>
+    <span><a href="https://endash.us" style="text-decoration: none;">En&nbsp;Dash</a> · Richmond, VA, and across the US</span>
+  </footer>
+
+
+<script>
+/* The demo. Four kinds from the worked example, and the edge descriptions the
+   schema actually carries. */
+
+const NODES = [
+  { id: "deposit", kind: "task",   name: "Pay the deposit" },
+  { id: "today",   kind: "list",   name: "Today" },
+  { id: "why",     kind: "reason", name: "Landlord holds it 48h" },
+  { id: "van",     kind: "task",   name: "Book the van" },
+  { id: "past",    kind: "rule",   name: "Nothing due in the past" },
+  { id: "week",    kind: "list",   name: "This week" },
+  { id: "meters",  kind: "task",   name: "Read the meters" },
+];
+
+const EDGES = [
+  { from: "today",  to: "deposit", out: "the tasks on this list",  in: "the list it is on" },
+  { from: "today",  to: "van",     out: "the tasks on this list",  in: "the list it is on" },
+  { from: "week",   to: "meters",  out: "the tasks on this list",  in: "the list it is on" },
+  { from: "why",    to: "deposit", out: "what this is about",      in: "why this is here" },
+  { from: "van",    to: "deposit", out: "what has to happen first", in: "what is waiting on this" },
+  { from: "past",   to: "deposit", out: "what it judges",          in: "the rule that judges it" },
+  { from: "past",   to: "meters",  out: "what it judges",          in: "the rule that judges it" },
+];
+
+const scene = document.getElementById("scene");
+const wires = document.getElementById("wires");
+const foot  = document.getElementById("foot");
+const edges = document.getElementById("scene-edges");
+
+const cards = new Map();
+for (const node of NODES) {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.className = "node";
+  el.innerHTML = '<span class="kind"></span><span class="name"></span>';
+  el.querySelector(".kind").textContent = node.kind;
+  el.querySelector(".name").textContent = node.name;
+  el.setAttribute("aria-label", node.name + ", " + node.kind);
+  el.addEventListener("click", () => focus(node.id));
+  scene.appendChild(el);
+  cards.set(node.id, el);
+}
+
+let focused = "deposit";
+
+function neighbours(id) {
+  const out = [];
+  for (const edge of EDGES) {
+    if (edge.from === id) out.push({ id: edge.to, label: edge.out });
+    else if (edge.to === id) out.push({ id: edge.from, label: edge.in });
+  }
+  return out;
+}
+
+function place() {
+  const box = scene.getBoundingClientRect();
+  const W = box.width, H = box.height;
+  const near = neighbours(focused);
+  const nearIds = new Set(near.map((n) => n.id));
+  const rest = NODES.filter((n) => n.id !== focused && !nearIds.has(n.id));
+  const seats = new Map();
+
+  /*
+   * Two rows when one will not fit.
+   *
+   * The fan divides the width between the neighbours, so on a phone four of
+   * them came out as four overlapping cards. Measuring against the widest card
+   * actually rendered means the break happens when it is needed rather than at
+   * a width somebody guessed.
+   */
+  const widest = Math.max(96, ...[...cards.values()].map((el) => el.offsetWidth));
+  const perRow = Math.max(1, Math.min(near.length, Math.floor(W / (widest + 10))));
+  const rows = Math.ceil(near.length / perRow);
+  const tight = rows > 1;
+
+  seats.set(focused, { x: W * 0.5, y: H * (tight ? 0.14 : 0.24), scale: 1, plane: 0, opacity: 1 });
+
+  near.forEach((n, i) => {
+    const row = Math.floor(i / perRow);
+    const inRow = i % perRow;
+    const count = Math.min(perRow, near.length - row * perRow);
+    const spread = Math.min(0.82, 0.23 * count);
+    const t = count === 1 ? 0.5 : inRow / (count - 1);
+    const x = W * (0.5 - spread / 2 + spread * t);
+    const baseY = tight ? 0.42 + row * 0.23 : 0.62;
+    const lift = tight ? 0 : Math.sin(t * Math.PI) * H * 0.05;
+    seats.set(n.id, { x, y: H * baseY - lift, scale: tight ? 0.84 : 0.9, plane: 1, opacity: 1 });
+  });
+
+  rest.forEach((n, i) => {
+    const step = W / (rest.length + 1);
+    seats.set(n.id, { x: step * (i + 1), y: H * 0.92, scale: 0.62, plane: 2, opacity: 0.62 });
+  });
+
+  for (const [id, el] of cards) {
+    const seat = seats.get(id);
+    const w = el.offsetWidth, h = el.offsetHeight;
+    // Keep the card inside the frame. The arc spreads from the middle, so the
+    // outer two run off the edge as soon as their labels are long.
+    const half = (w * seat.scale) / 2;
+    seat.x = Math.max(half + 12, Math.min(W - half - 12, seat.x));
+    el.style.transform =
+      "translate(" + (seat.x - w / 2) + "px," + (seat.y - h / 2) + "px) scale(" + seat.scale + ")";
+    el.style.opacity = seat.opacity;
+    el.dataset.plane = seat.plane;
+    // `aria-current` is present or absent. "false" is legal and says nothing.
+    if (id === focused) el.setAttribute("aria-current", "true");
+    else el.removeAttribute("aria-current");
+  }
+
+  wires.setAttribute("viewBox", "0 0 " + W + " " + H);
+  wires.innerHTML = "";
+  const hub = seats.get(focused);
+  for (const n of near) {
+    const seat = seats.get(n.id);
+    const midY = (hub.y + seat.y) / 2;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    line.setAttribute(
+      "d",
+      "M " + hub.x + " " + (hub.y + 20) + " C " + hub.x + " " + midY +
+      ", " + seat.x + " " + midY + ", " + seat.x + " " + (seat.y - 19),
+    );
+    line.setAttribute("class", "wire on");
+    wires.appendChild(line);
+
+    /*
+     * The caption is trimmed to its own slot.
+     *
+     * Two rows on a phone put "what is waiting on this" and "the rule that
+     * judges it" side by side in 150 pixels each, and they ran into one
+     * another and read as one sentence. The full wording is still in the
+     * caption under the frame and in the list the screen reader gets, so
+     * nothing is lost by clipping the drawn one.
+     */
+    const slot = W / Math.max(1, perRow) - 14;
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("class", "wire-label");
+    text.setAttribute("x", Math.max(56, Math.min(W - 56, seat.x)));
+    text.setAttribute("y", seat.y - 27);
+    text.textContent = n.label;
+    wires.appendChild(text);
+    // MEASURED, not estimated. Guessing the advance width of the mono face
+    // left both second-row captions one pixel inside their slots and touching
+    // each other on a 320-pixel screen, which reads as one sentence made of
+    // two. The browser knows the answer; ask it.
+    let label = n.label;
+    while (label.length > 4 && text.getComputedTextLength() > slot) {
+      label = label.slice(0, -1).trimEnd();
+      text.textContent = label + "…";
+    }
+  }
+}
+
+function focus(id) {
+  focused = id;
+  const node = NODES.find((n) => n.id === id);
+  const near = neighbours(id);
+  foot.textContent =
+    node.name + " is a " + node.kind + ". " +
+    (near.length === 1 ? "One thing touches it." : near.length + " things touch it.") +
+    " Each connector is captioned by the edge that reaches it.";
+
+  /*
+   * The connectors, in text.
+   *
+   * Their captions are the point of the demo and they exist only as words
+   * drawn on an SVG that is hidden from assistive technology — which would
+   * make the one thing this is meant to show the one thing a screen reader
+   * cannot get at. The same data, as a list.
+   */
+  edges.innerHTML = "";
+  for (const n of near) {
+    const other = NODES.find((x) => x.id === n.id);
+    const li = document.createElement("li");
+    li.textContent = n.label + ": " + other.name + ", " + other.kind;
+    edges.appendChild(li);
+  }
+  place();
+}
+
+focus(focused);
+window.addEventListener("resize", place);
+
+/*
+ * A scroll region is a tab stop only when there is something to scroll to.
+ *
+ * Anything that scrolls and holds no focusable content is unreachable by
+ * keyboard, which axe reports and which is simply true — at 320 pixels the
+ * claims table scrolls sideways and nothing inside it takes focus. Making
+ * every one of them a stop unconditionally is the other mistake: on a wide
+ * screen they do not scroll, and a tab stop in front of a table that fits is
+ * furniture in the way.
+ */
+const scrollers = [...document.querySelectorAll("[data-scroller]")];
+function markScrollers() {
+  for (const el of scrollers) {
+    const scrolls = el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
+    if (scrolls) {
+      el.setAttribute("tabindex", "0");
+      el.setAttribute("role", "region");
+    } else {
+      el.removeAttribute("tabindex");
+      el.removeAttribute("role");
+    }
+  }
+}
+markScrollers();
+window.addEventListener("resize", markScrollers);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScrollers);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+</script>

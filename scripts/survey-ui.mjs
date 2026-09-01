@@ -13,7 +13,7 @@
  * Writes docs/survey/<app>-<state>-<scheme>.png and docs/survey.json.
  */
 import { spawn } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -161,6 +161,20 @@ const APPS = {
         const id = await page.getAttribute('[data-graview-plane="0"]', "data-graview-view");
         await page.dblclick(`[data-graview-view="${id}"]`);
       },
+      // A PLACE lifted out, which is the shape jack-in was worst at: a board
+      // is a picture whose whole content is where things are, and it used to
+      // come out as a card in the middle of a lot of nothing.
+      placeFull: async (page) => {
+        const id = await page.getAttribute('[data-graview-plane="0"]', "data-graview-view");
+        await page.dblclick(`[data-graview-view="${id}"]`);
+      },
+      // The state that put the actions strip on top of the row of kinds:
+      // several things selected at once, so the strip is at its tallest.
+      problem: async (page) => {
+        await page.click('[data-testid="standing"]');
+        await page.waitForTimeout(400);
+        await page.click('[data-testid="problems"] li:nth-child(4) button');
+      },
       graview: async (page) => {
         await page.click('[data-testid="overview"]');
       },
@@ -255,9 +269,45 @@ const measure = () => {
     .slice(0, 8)
     .map((el) => el.tagName.toLowerCase());
 
+  /*
+   * Chrome sitting ON TOP of the scene.
+   *
+   * The floating surfaces — the actions strip, a menu at the pointer — are
+   * fixed over a scene that was laying itself out into the whole window, so
+   * selecting anything covered the row of kind cards at the bottom. It is
+   * invisible to every other measurement here, because both halves are
+   * rendering perfectly; they are just in the same place.
+   *
+   * A menu at the pointer is EXCLUDED: covering the thing you right-clicked
+   * is what a menu is for.
+   */
+  const covered = (() => {
+    // A full page covers the scene on purpose; what is underneath it is not
+    // something anyone can see, let alone something the strip is hiding.
+    if (document.querySelector('[role="dialog"]')) return [];
+    const strip = document.querySelector('[data-testid="inspector-strip"]');
+    if (!strip) return [];
+    const over = strip.getBoundingClientRect();
+    return [...document.querySelectorAll("[data-graview-view]")]
+      .map((el) => ({ id: el.getAttribute("data-graview-view"), box: el.getBoundingClientRect() }))
+      .filter(
+        ({ box }) =>
+          box.width > 4 &&
+          box.bottom > over.top &&
+          box.top < over.bottom &&
+          box.right > over.left &&
+          box.left < over.right,
+      )
+      .map(({ id, box }) => ({
+        id,
+        by: Math.round(Math.min(box.bottom, over.bottom) - Math.max(box.top, over.top)),
+      }));
+  })();
+
   // A page whose content stops a long way up is a page with nothing on it.
   return {
     viewport: [vw, vh],
+    covered,
     contentBottom: Math.round(lowest),
     contentRight: Math.round(rightmost),
     verticalFill: Math.round((lowest / vh) * 100),
@@ -272,7 +322,18 @@ const measure = () => {
         if (text.length < 8) continue;
         seen.set(text, (seen.get(text) ?? 0) + 1);
       }
-      return [...seen.entries()].filter(([, n]) => n > 1).map(([text, n]) => ({ text, n }));
+      /*
+       * A crumb naming the thing you travelled to is not a duplicate — that
+       * is a breadcrumb beside a heading, which is how every document works.
+       * What is a duplicate is chrome naming a PLACE the picture under it
+       * also names, and that is what this is looking for.
+       */
+      const crumb = (document.querySelector("[data-testid=focused]")?.textContent ?? "")
+        .replace(/\s*×\s*$/, "")
+        .trim();
+      return [...seen.entries()]
+        .filter(([text, n]) => n > 1 && text !== crumb)
+        .map(([text, n]) => ({ text, n }));
     })(),
   };
 };
@@ -281,8 +342,23 @@ const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv
 const report = { at: new Date().toISOString(), shots: [] };
 let browser;
 
-rmSync(out, { recursive: true, force: true });
-mkdirSync(out, { recursive: true });
+/*
+ * A filtered run replaces ITS OWN pictures, not everybody's.
+ *
+ * `node scripts/survey-ui.mjs the coaching example` used to wipe the whole directory and put
+ * back ten files, silently deleting the other forty — so a quick look at one
+ * app left the survey a fifth of a survey, and the next person to open
+ * docs/survey found most of it missing with nothing to say why.
+ */
+if (only) {
+  mkdirSync(out, { recursive: true });
+  for (const file of readdirSync(out)) {
+    if (file.startsWith(`${only}-`)) rmSync(resolve(out, file), { force: true });
+  }
+} else {
+  rmSync(out, { recursive: true, force: true });
+  mkdirSync(out, { recursive: true });
+}
 
 try {
   browser = await chromium.launch({
@@ -340,6 +416,7 @@ for (const shot of report.shots) {
     shot.verticalFill < 55 ? `only ${shot.verticalFill}% tall` : "",
     shot.overflowing.length ? `${shot.overflowing.length} overflowing` : "",
     shot.unnamed.length ? `${shot.unnamed.length} unnamed controls` : "",
+    shot.covered?.length ? `chrome covers ${shot.covered.length} views` : "",
     shot.repeatedText.length ? `repeats: ${shot.repeatedText.map((r) => r.text.slice(0, 24)).join(" / ")}` : "",
   ].filter(Boolean);
   process.stdout.write(

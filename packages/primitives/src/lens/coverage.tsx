@@ -217,7 +217,15 @@ export interface CoverageViewProps<S extends AnySchema> extends ViewProps<S> {
   readonly schema?: S;
 }
 
-const ROW_LABEL_WIDTH = 250;
+/*
+ * Wide enough for a requirement's own wording.
+ *
+ * At 250 the bid desk's rows read "Booking flow conforms to WCAG 2…" and
+ * "Testing with assistive technology u…" — six of eight rows cut, in a panel
+ * with three hundred spare pixels to its right. A matrix you cannot read the
+ * rows of is a matrix that answers nothing.
+ */
+const ROW_LABEL_WIDTH = 316;
 
 /**
  * The header's geometry, DERIVED from the angle rather than guessed alongside
@@ -232,11 +240,31 @@ const ROW_LABEL_WIDTH = 250;
  * Three constants that have to agree, written as one that cannot disagree.
  */
 const HEADER_ANGLE = 58;
-const HEADER_MAX = 138;
+/*
+ * And long enough for a column's own wording, for the same reason: "Design
+ * system contributions" and "Prescription journey remediation" were both
+ * ellipsised, which turns the header strip into a row of guesses.
+ */
+const HEADER_MAX = 176;
 const RISE = Math.sin((HEADER_ANGLE * Math.PI) / 180);
 const RUN = Math.cos((HEADER_ANGLE * Math.PI) / 180);
-/** Plus a little, so a descender is not shaved either. */
-const HEADER_HEIGHT = Math.ceil(HEADER_MAX * RISE) + 8;
+/**
+ * The band is as tall as THIS matrix's longest column name needs, never
+ * taller.
+ *
+ * A cap sized for the longest label anyone might write is dead space for
+ * everyone who did not write it: the desk's columns are "the household example", "bid
+ * desk" and "the coaching example", and a band cut for "Prescription journey
+ * remediation" left a hundred empty pixels above them. Same geometry, asked
+ * of the labels that are actually there.
+ */
+const headerHeightFor = (labels: readonly string[]): number => {
+  const longest = labels.reduce((most, label) => Math.max(most, label.length), 0);
+  // 5.4px per character at 10.5px, and never below a two-line-ish minimum so
+  // a matrix of one-word columns still has a header strip rather than a seam.
+  const run = Math.min(HEADER_MAX, Math.max(46, longest * 5.4 + 12));
+  return Math.ceil(run * RISE) + 8;
+};
 /**
  * Room for the last column's header to ascend into.
  *
@@ -259,6 +287,7 @@ export function CoverageView<S extends AnySchema>({
   nodes,
   label,
   fidelity,
+  mode,
   options,
   schema,
   implicated = [],
@@ -304,10 +333,16 @@ export function CoverageView<S extends AnySchema>({
 
   const lit = new Set(implicated);
   const broken = new Set(flagged);
+  // Lifted out, the matrix is the PAGE — the same argument the board makes:
+  // a picture whose content is a two-dimensional arrangement is exactly the
+  // thing a card-sized box was cramping.
+  const page = mode === "fullscreen";
+  const headerHeight = headerHeightFor(grid.columns.map((column) => column.label));
 
   return (
     <Panel
       title={label ?? "Coverage"}
+      {...(page ? { style: { flex: "1 1 auto", minHeight: 0, height: "100%" } } : {})}
       meta={
         grid.gaps.length === 0 && grid.unasked.length === 0
           ? "complete"
@@ -332,7 +367,7 @@ export function CoverageView<S extends AnySchema>({
       >
         <div style={{ display: "flex", alignItems: "flex-end", flex: "0 0 auto" }}>
           <div style={{ width: ROW_LABEL_WIDTH, flex: "0 0 auto" }} />
-          <div style={{ display: "flex", flex: 1, minWidth: 0, height: HEADER_HEIGHT }}>
+          <div style={{ display: "flex", flex: 1, minWidth: 0, height: headerHeight }}>
             {grid.columns.map((column) => (
               <div
                 key={column.id}
@@ -364,8 +399,8 @@ export function CoverageView<S extends AnySchema>({
                     maxWidth: HEADER_MAX,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    fontSize: 11,
-                    letterSpacing: "0.01em",
+                    fontSize: 10.5,
+                    letterSpacing: "0.005em",
                     color: column.used
                       ? lit.size > 0 && !lit.has(column.id)
                         ? "var(--graview-ink-faint)"

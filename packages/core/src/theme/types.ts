@@ -68,6 +68,21 @@ export interface Brand {
     /** Code, ids, anything that must align in columns. */
     readonly mono?: string;
   };
+  /**
+   * How square and how tight this product is.
+   *
+   * The third axis of an identity, and the one that was missing: with only a
+   * palette and a wordmark, four apps built on this looked like the same
+   * application four times in different colours. A bid desk is square and
+   * dense; a household planner is round and roomy. Neither is a component
+   * change — both are one number.
+   */
+  readonly shape?: {
+    /** Corner radius for a panel, in pixels. Smaller reads as more formal. */
+    readonly radius?: number;
+    /** Padding multiplier. 1 is the framework's own spacing. */
+    readonly density?: number;
+  };
   readonly schemes: Readonly<Record<Scheme, ThemeTokens>>;
 }
 

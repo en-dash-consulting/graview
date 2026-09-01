@@ -101,6 +101,8 @@ export function themeVariables(tokens: ThemeTokens): string {
  */
 export function themeCss(scheme: Scheme = "dark", brand: Brand = GRAVIEW_BRAND): string {
   const tokens = brand.schemes[scheme];
+  const radius = brand.shape?.radius ?? 12;
+  const density = brand.shape?.density ?? 1;
   const body =
     brand.typography?.body ??
     'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
@@ -109,6 +111,12 @@ ${themeVariables(tokens)}
   --graview-font-body: ${body};
   --graview-font-display: ${brand.typography?.display ?? body};
   --graview-font-mono: ${brand.typography?.mono ?? 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace'};
+  /* Shape, as tokens, so a component never has to know whose product it is. */
+  --graview-radius: ${radius}px;
+  --graview-radius-sm: ${Math.max(2, Math.round(radius * 0.72))}px;
+  --graview-pad: ${Math.round(15 * density)}px;
+  --graview-pad-sm: ${Math.round(10 * density)}px;
+  --graview-gap: ${Math.round(7 * density)}px;
   color-scheme: ${scheme};
 }
 
@@ -207,6 +215,14 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
    person in a list. It has to look reachable, and it has to SHOW focus —
    these are the primary way anyone moves through the graph, so a keyboard
    user who cannot see where they are is stuck. */
+/* A card someone dragged into place. Marked, not decorated: a dotted tie to
+   say this position is held rather than computed. */
+[data-graview-pinned] {
+  outline: 1px dashed var(--graview-edge-bright);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
 [data-graview-pick] {
   cursor: pointer;
   transition: filter 140ms ease, box-shadow 140ms ease;
@@ -234,7 +250,7 @@ button {
   color: var(--graview-ink);
   padding: 7px 13px;
   border: 1px solid var(--graview-edge);
-  border-radius: 8px;
+  border-radius: var(--graview-radius-sm, 8px);
   background: var(--graview-panel);
   box-shadow: ${scheme === "light" ? "0 1px 2px rgba(20,30,32,0.05)" : "none"};
   cursor: pointer;

@@ -11,6 +11,7 @@
     "check": "node packages/core/dist/cli/index.js check apps/todo/dist/domain/app.js && node packages/core/dist/cli/index.js check the household example/dist/domain/app.js && node packages/core/dist/cli/index.js check the bid-desk example/dist/domain/app.js && node packages/core/dist/cli/index.js check the coaching example/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/launcher/dist/domain/app.js",
     "lint": "tsc -b --dry",
     "spike": "node apps/spike/scripts/run-spike.mjs",
+    "capture": "node scripts/verify-capture.mjs",
     "acceptance": "node the household example/scripts/run-acceptance.mjs",
     "dev": "pnpm --filter the household example dev",
     "a11y": "node the household example/scripts/run-a11y.mjs",
@@ -18,8 +19,10 @@
     "watching": "node scripts/verify-watching.mjs",
     "direct": "node scripts/verify-direct-manipulation.mjs",
     "permissions": "node scripts/verify-permissions.mjs",
+    "seat": "node scripts/verify-seat.mjs",
     "brand": "node scripts/verify-brand.mjs",
     "survey": "node scripts/survey-ui.mjs",
+    "audit": "node scripts/audit-ui.mjs",
     "dev:proposal": "pnpm --filter the bid-desk example dev",
     "a11y:proposal": "node the bid-desk example/scripts/run-a11y.mjs",
     "dev:the coaching example": "pnpm --filter the coaching example dev",
@@ -30,7 +33,8 @@
     "smoke": "node scripts/smoke-install.mjs",
     "skills": "node packages/skills/dist/cli.js install .",
     "dev:todo": "pnpm --filter @graview/todo dev",
-    "navigation": "node scripts/verify-navigation.mjs"
+    "navigation": "node scripts/verify-navigation.mjs",
+    "moving": "node scripts/verify-moving.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",

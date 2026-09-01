@@ -1,5 +1,5 @@
 import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
-import { useGraview, type ViewProps } from "@graview/react";
+import { useGraview, useViolations, type ViewProps } from "@graview/react";
 import type { ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster } from "../primitives/index.js";
@@ -144,6 +144,7 @@ export function BoardView<S extends AnySchema>({
   nodes,
   label,
   fidelity,
+  mode,
   options,
   schema,
   implicated = [],
@@ -169,6 +170,24 @@ export function BoardView<S extends AnySchema>({
   void nodes;
   const lit = new Set(implicated);
   const broken = new Set(flagged);
+  /*
+   * WHY a thing is marked, not only that it is.
+   *
+   * A slot drawn in the warning tone with nothing to explain it is the worst
+   * kind of mark: "why is Hana a different colour?" is the question it
+   * provokes, and the honest answer — the LEFT MIDFIELD position demands a
+   * skill the week does not train — is nothing to do with Hana at all. The
+   * violation messages are already computed; the picture just never read
+   * them.
+   */
+  const violations = useViolations<AnySchema>();
+  const why = new Map<string, string[]>();
+  for (const violation of violations) {
+    for (const id of violation.nodeIds) {
+      why.set(id, [...(why.get(id) ?? []), violation.message]);
+    }
+  }
+  const reasons = (id: string | null): string[] => (id ? (why.get(id) ?? []) : []);
 
   if (fidelity === "glyph") {
     return (
@@ -205,10 +224,127 @@ export function BoardView<S extends AnySchema>({
 
   const aspect = options.aspect ?? 0.68;
 
+  /**
+   * Every slot carrying a mark, with the sentence that put it there — the
+   * slot's own trouble first, then its occupant's, since that is the order a
+   * reader's eye meets them on the board.
+   */
+  const marked = board.slots
+    .flatMap((slot) => {
+      const own = reasons(slot.id).map((text) => ({ id: slot.id, code: slot.code, text }));
+      const theirs = reasons(slot.occupantId).map((text) => ({
+        id: slot.occupantId!,
+        code: slot.occupantLabel ?? slot.code,
+        text,
+      }));
+      return [...own, ...theirs];
+    })
+    // The same rule failing about two slots is two marks, but the same
+    // sentence about the same slot twice is noise.
+    .filter(
+      (entry, index, all) =>
+        all.findIndex((other) => other.id === entry.id && other.text === entry.text) === index,
+    );
+
+  /*
+   * On a full page the board is the PAGE, not a card sitting on one.
+   *
+   * Lifted out, it kept its border, its shadow and its content-sized height,
+   * so "full screen" meant a 477-pixel card marooned in the middle of a
+   * 1560-pixel window. `page` is the same view with the card furniture
+   * dropped and permission to use the height it was given — which for a view
+   * whose entire content is WHERE THINGS ARE is the only version worth
+   * lifting out.
+   */
+  const page = mode === "fullscreen";
+
+  /**
+   * The KEY to the marks, in the app's own words.
+   *
+   * Every other mark on this board explains itself — a dashed outline is
+   * visibly a hole, a name is visibly a name — and the warning tint was the
+   * one that did not. Naming the flagged slots and the reason turns "why is
+   * that one orange" into a sentence, and it is free: these are the same
+   * violation messages the problems list already shows.
+   */
+  const keyList =
+    marked.length === 0 ? null : (
+
+        <ul
+          data-graview-primitive="board-key"
+          style={{
+            margin: "2px 0 0",
+            padding: 0,
+            listStyle: "none",
+            display: "grid",
+            gap: 3,
+            flex: "0 0 auto",
+          }}
+        >
+          {marked.slice(0, page ? 6 : 2).map((entry) => (
+            <li
+              key={entry.id}
+              data-graview-pick={entry.id}
+              title={entry.text}
+              style={{
+                display: page ? "grid" : "flex",
+                gap: page ? 1 : 7,
+                alignItems: page ? "start" : "baseline",
+                fontSize: 11.5,
+                lineHeight: 1.45,
+                color: "var(--graview-ink-muted)",
+                /*
+                 * A pick target is a CONTROL, and a control seventeen pixels
+                 * tall and a thousand wide is neither hittable nor readable as
+                 * one. Marking an element `data-graview-pick` makes the
+                 * surface turn it into a button, so it has to be shaped like
+                 * one — width to its content, height to a fingertip.
+                 */
+                minHeight: 24,
+                width: "fit-content",
+                maxWidth: "100%",
+                padding: page ? "2px 0" : "3px 6px",
+                marginLeft: page ? 0 : -6,
+                borderRadius: 7,
+                cursor: "pointer",
+              }}
+            >
+              <span
+                style={{
+                  flex: "0 0 auto",
+                  fontWeight: 600,
+                  color: "var(--graview-warn)",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                ⚠ {entry.code}
+              </span>
+              <span
+                style={{
+                  minWidth: 0,
+                  // A column has room to wrap; a line under a card does not.
+                  ...(page
+                    ? {}
+                    : { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }),
+                }}
+              >
+                {entry.text}
+              </span>
+            </li>
+          ))}
+          {marked.length > (page ? 6 : 2) ? (
+            <li style={{ fontSize: 11.5, color: "var(--graview-ink-faint)" }}>
+              +{marked.length - (page ? 6 : 2)} more
+            </li>
+          ) : null}
+        </ul>
+    );
+
   return (
     <Panel
       title={label ?? "Board"}
       meta={board.empty.length === 0 ? "complete" : `${board.empty.length} unfilled`}
+      {...(page ? { style: { flex: "1 1 auto", minHeight: 0, height: "100%" } } : {})}
     >
       {/* Centred: the focus band is as wide as the widest view an app has,
           and an arrangement hugging the left edge of it reads as unfinished
@@ -232,6 +368,90 @@ export function BoardView<S extends AnySchema>({
           minHeight: 0,
         }}
       >
+        {/*
+          * On a page the key goes BESIDE the picture, in the room a tall
+          * arrangement leaves on a wide screen.
+          *
+          * A pitch is 0.72 as wide as it is high, so a full page gives it
+          * about a quarter of the width and four hundred empty pixels either
+          * side — and the answer to "why is that one marked" was underneath
+          * the fold in the middle of all that nothing. Same list, put where
+          * the eye already is.
+          */}
+        {page && keyList ? (
+          <div
+            style={{
+              width: 260,
+              flex: "0 0 auto",
+              alignSelf: "center",
+              display: "grid",
+              gap: 8,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 10,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "var(--graview-ink-faint)",
+              }}
+            >
+              What is marked
+            </span>
+            {keyList}
+          </div>
+        ) : null}
+        {/*
+          * The zone names live OUTSIDE the field.
+          *
+          * Inside, they were absolutely positioned at the top-left of each
+          * band — which is exactly where a left back stands. "DEFENCE" and
+          * the LB slot were drawn on top of each other and read "DEFENCELB",
+          * and no arrangement of insets fixes that, because where the slots
+          * go is the DOMAIN's decision and the label has no claim on it. A
+          * rail beside the field can never collide with anything, and the
+          * field stays purely what the graph says.
+          */}
+        {/* The rail belongs TO the field, so it travels with it rather than
+            sitting a gap away looking like a separate column. */}
+        <div style={{ display: "flex", gap: 5, alignItems: "stretch", minWidth: 0 }}>
+        {(options.zones ?? []).length > 0 ? (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "relative",
+              width: 15,
+              flex: "0 0 auto",
+              alignSelf: "stretch",
+            }}
+          >
+            {(options.zones ?? []).map((zone) => (
+              <span
+                key={zone.label}
+                style={{
+                  position: "absolute",
+                  top: `${zone.from * 100}%`,
+                  height: `${(zone.to - zone.from) * 100}%`,
+                  right: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  writingMode: "vertical-rl",
+                  transform: "rotate(180deg)",
+                  fontSize: 9,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  color: "var(--graview-ink-faint)",
+                }}
+              >
+                {zone.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
         <div
           data-graview-primitive="board"
           style={{
@@ -266,44 +486,53 @@ export function BoardView<S extends AnySchema>({
                 height: `${(zone.to - zone.from) * 100}%`,
                 borderBottom: "1px dashed var(--graview-edge)",
               }}
-            >
-              <span
-                style={{
-                  position: "absolute",
-                  left: 7,
-                  top: 5,
-                  fontSize: 9,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--graview-ink-faint)",
-                }}
-              >
-                {zone.label}
-              </span>
-            </div>
+            />
           ))}
 
           {board.slots.map((slot) => {
             const hole = slot.occupantId === null;
             const dim =
               lit.size > 0 && !lit.has(slot.id) && !(slot.occupantId && lit.has(slot.occupantId));
-            const bad = broken.has(slot.id) || (slot.occupantId ? broken.has(slot.occupantId) : false);
+            /*
+             * TWO different marks, because they are two different facts.
+             *
+             * The disc is the SLOT and the name under it is the PERSON, so a
+             * rule that fails about the position must not paint the person's
+             * badge — that is what made a midfielder look injured when what
+             * was actually wrong was that nothing in the week trained the
+             * skill her position demands. Marking both the same way was a
+             * picture stating something untrue.
+             */
+            const slotBad = broken.has(slot.id);
+            const occupantBad = slot.occupantId !== null && broken.has(slot.occupantId);
+            const bad = slotBad;
+            const said = [...reasons(slot.id), ...reasons(slot.occupantId)];
             return (
               <div
                 key={slot.id}
                 data-graview-pick={slot.occupantId ?? slot.id}
                 data-graview-slot={slot.id}
+                data-graview-flagged={
+                  slotBad && occupantBad
+                    ? "both"
+                    : slotBad
+                      ? "slot"
+                      : occupantBad
+                        ? "occupant"
+                        : undefined
+                }
                 /*
                  * Emphasis in the DOM as well as in the paint. A claim about
                  * a picture that exists only as a colour cannot be checked by
                  * anything — not a test, not a person reading the tree.
                  */
                 data-graview-emphasis={lit.size === 0 ? "plain" : dim ? "dimmed" : "lit"}
-                title={
+                title={[
                   hole
                     ? `${slot.label} — nobody in it`
-                    : `${slot.occupantLabel} at ${slot.label}`
-                }
+                    : `${slot.occupantLabel} at ${slot.label}`,
+                  ...said,
+                ].join("\n")}
                 style={{
                   position: "absolute",
                   left: `${slot.x * 100}%`,
@@ -318,6 +547,7 @@ export function BoardView<S extends AnySchema>({
               >
                 <span
                   style={{
+                    position: "relative",
                     width: 34,
                     height: 34,
                     borderRadius: 999,
@@ -340,19 +570,51 @@ export function BoardView<S extends AnySchema>({
                   }}
                 >
                   {slot.code}
+                  {/*
+                    * A MARK, not only a tint.
+                    *
+                    * Colour alone says "this one is different" and leaves the
+                    * reader to guess at what and at whom; it is also the one
+                    * channel a person with a colour deficiency does not have.
+                    * The badge sits on the disc because the disc is the slot.
+                    */}
+                  {/* Never on a hole: a dashed ring over the word "nobody"
+                      has already said it, and a badge on top is the same
+                      fact drawn twice. */}
+                  {slotBad && !hole ? (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        top: -3,
+                        right: -3,
+                        fontSize: 9,
+                        lineHeight: 1,
+                        color: "var(--graview-warn)",
+                      }}
+                    >
+                      ⚠
+                    </span>
+                  ) : null}
                 </span>
                 <span
                   style={{
                     fontSize: 10.5,
                     whiteSpace: "nowrap",
-                    color: hole ? "var(--graview-warn)" : "var(--graview-ink-muted)",
+                    // The NAME carries the person's own trouble — an injury, a
+                    // suspension — and nothing else. A rule about the position
+                    // has no business marking the person standing in it.
+                    color:
+                      hole || occupantBad ? "var(--graview-warn)" : "var(--graview-ink-muted)",
                   }}
                 >
                   {slot.occupantLabel ?? (options.emptyLabel ?? "empty")}
+                  {occupantBad ? " ⚠" : ""}
                 </span>
               </div>
             );
           })}
+        </div>
         </div>
 
         {board.spare.length > 0 ? (
@@ -371,6 +633,10 @@ export function BoardView<S extends AnySchema>({
           </div>
         ) : null}
       </div>
+
+      {/* A page has room beside the picture; a card does not, so on a card
+          the key sits underneath it. */}
+      {page ? null : keyList}
     </Panel>
   );
 }

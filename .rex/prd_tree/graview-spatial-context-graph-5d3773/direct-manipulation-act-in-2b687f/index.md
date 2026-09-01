@@ -27,6 +27,7 @@ description: "Clicking a thing currently TRAVELS to it, which is the wrong defau
 | Title | Status |
 |-------|--------|
 | [A raised relation keeps its origin visible](./a-raised-relation-keeps-its-0e68e9.md) | completed |
+| [Decide where the agent seat lives, or whether it lives in the bar at all](./decide-where-the-agent-seat-be16d0.md) | pending |
 | [Editing a value in place](./editing-a-value-in-place.md) | completed |
 | [Every action title says what it does](./every-action-title-says-what-it-does.md) | completed |
 | [Raising a relation breaks the composition: the planes touch and the board collapses to a stamp](./raising-a-relation-breaks-the-5f233f.md) | pending |
