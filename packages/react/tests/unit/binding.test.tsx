@@ -8,6 +8,8 @@ import {
   GraviewProvider,
   onScreen,
   Scene,
+  useNavigation,
+  useSelection,
   type ViewProps,
 } from "../../src/index.js";
 
@@ -372,6 +374,40 @@ describe("a node with a natural size is drawn scaled, not re-laid-out", () => {
  * harness explicitly exercises — receded every line at once and blanked the
  * thing you rose to look at.
  */
+describe("selection is part of the stop", () => {
+  /*
+   * The regression this pins: selection lived beside the view instead of in
+   * it, so back/forward restored the place but stranded the pane — an
+   * inspector talking about a thing from a stop already left.
+   */
+  const Probe = () => {
+    const { selection } = useSelection();
+    const { url } = useNavigation();
+    return <output data-sel={selection.join("+")} data-url={url} />;
+  };
+
+  it("arrives through the URL like everything else", () => {
+    const html = render(<Probe />, fromUrl("#focus=week-1&sel=bo,ana"));
+    expect(html).toContain('data-sel="ana+bo"');
+    expect(html).toContain("sel=ana%2Cbo");
+  });
+
+  it("still honours initialSelection, folding it into the view", () => {
+    const html = renderToStaticMarkup(
+      <GraviewProvider
+        store={store()}
+        views={views()}
+        initialView={{ ...EMPTY_VIEW, focusId: "week-1" }}
+        initialSelection={["bo"]}
+      >
+        <Probe />
+      </GraviewProvider>,
+    );
+    expect(html).toContain('data-sel="bo"');
+    expect(html).toContain("sel=bo");
+  });
+});
+
 describe("a selection, mapped onto what is drawn", () => {
   const above = () =>
     layout(store().graph, schema, { ...EMPTY_VIEW, focusId: "week-1", overview: true }).nodes.map(

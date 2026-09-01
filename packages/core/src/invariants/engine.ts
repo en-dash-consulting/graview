@@ -121,7 +121,21 @@ export function evaluate<S extends AnySchema>(
     }
   }
 
-  return violations;
+  /*
+   * IDENTICAL claims collapse to one. Two rule nodes carrying the same spec
+   * each evaluate honestly, and every surface downstream — the standing
+   * count, the board, the inspector — would repeat the same sentence twice
+   * for what a reader rightly regards as one problem. Distinct facts always
+   * differ in message or in the nodes they implicate, so this only removes
+   * true twins.
+   */
+  const seen = new Set<string>();
+  return violations.filter((violation) => {
+    const key = `${violation.message}|${[...violation.nodeIds].sort().join(",")}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /** Violations that implicate any of the given node ids. */

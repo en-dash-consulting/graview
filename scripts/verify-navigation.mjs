@@ -140,6 +140,17 @@ try {
 }
 
 const step = (name) => report.steps.find((entry) => entry.step === name);
+/*
+ * The stop without its selection. A stop's address carries what was selected
+ * at it — deliberately, so returning restores the pane — and the click that
+ * precedes a double-click's travel updates the departing stop's selection.
+ * Claims about GOING BACK are claims about places.
+ */
+const placeOf = (hash) => {
+  const params = new URLSearchParams((hash ?? "").replace(/^#/, ""));
+  params.delete("sel");
+  return params.toString();
+};
 report.verdict = {
   // Nowhere to go back to on arrival, and the control says so rather than
   // being offered and doing nothing.
@@ -148,17 +159,19 @@ report.verdict = {
   backBecomesAvailable: step("travelled")?.back === true,
   // Nothing ahead until you have actually gone back.
   nothingAheadUntilYouGoBack: step("travelled")?.forward === false,
-  backActuallyGoesBack: step("back once")?.url === step("travelled")?.url,
+  backActuallyGoesBack: placeOf(step("back once")?.url) === placeOf(step("travelled")?.url),
+  // The pane you had open at that stop comes back with it.
+  backRestoresTheSelection: (step("back once")?.url ?? "").includes("sel="),
   wentDeeperThanOnce: report.wentDeeper === true,
   eachTravelIsItsOwnStop: step("travelled again")?.url !== step("travelled")?.url,
   // Two stops back from two stops in is where you started.
-  backAgainReachesTheStart: step("back twice")?.url === step("landed")?.url,
+  backAgainReachesTheStart: placeOf(step("back twice")?.url) === placeOf(step("landed")?.url),
   forwardIsOfferedOnceThereIsSomewhere: step("back twice")?.forward === true,
   // Forward is ONE step, not all the way back to where you had got to.
-  forwardActuallyGoesForward: step("forward once")?.url === step("travelled")?.url,
+  forwardActuallyGoesForward: placeOf(step("forward once")?.url) === placeOf(step("travelled")?.url),
   // And the breadcrumb still names where you are, and gets you out in one.
   theTrailNamesWhereYouAre: (step("travelled")?.trail ?? "").includes("deposit"),
-  theTrailGetsYouHome: step("home by breadcrumb")?.url === step("landed")?.url,
+  theTrailGetsYouHome: placeOf(step("home by breadcrumb")?.url) === placeOf(step("landed")?.url),
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
 
