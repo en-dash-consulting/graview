@@ -80,6 +80,25 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * a line that would dangle the moment someone turns that module off.
    */
   readonly modules?: ModuleMap;
+  /**
+   * The intelligence this installation runs on, declared.
+   *
+   * Three kinds share one seam: `graph` (structural derivations, no model),
+   * `llm` (a model behind one completion function), `external` (someone
+   * else's agent over the derived tool surface). `may` narrows a provider
+   * to named mutations — the allowlist `graview check` can verify and a
+   * hosted deployment can meter. "Add AI" is an entry here, never a second
+   * path to the store.
+   */
+  readonly intelligence?: readonly IntelligenceProviderDeclaration[];
+}
+
+export interface IntelligenceProviderDeclaration {
+  readonly name: string;
+  readonly kind: "graph" | "llm" | "external";
+  readonly description?: string;
+  /** Mutation names this provider may propose or call. Absent means all. */
+  readonly may?: readonly string[];
 }
 
 export function defineApp<S extends AnySchema>(app: GraviewApp<S>): GraviewApp<S> {

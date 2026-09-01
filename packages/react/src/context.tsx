@@ -6,6 +6,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
+import type { AffordanceProvider } from "@graview/tools";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
 import { EMPTY_VIEW, kindsOfAggregate, withSelection } from "@graview/layout";
@@ -94,6 +95,14 @@ export interface GraviewContextValue<S extends AnySchema> {
    */
   readonly principal: Principal;
   /**
+   * The intelligence this installation runs, as affordance providers.
+   *
+   * Held here so every suggestion surface derives from the same set — the
+   * inspector, the pointer menu and a seat must not disagree about which
+   * providers exist. Absent means the defaults.
+   */
+  readonly providers?: readonly AffordanceProvider<S>[];
+  /**
    * Whose product this is: name, wordmark, typography, palette.
    *
    * Absent means the framework's own, which is what makes branding an
@@ -161,6 +170,8 @@ export interface GraviewProviderProps<S extends AnySchema> {
   /** Defaults to an unroled human, which a store with no policy permits everything. */
   readonly principal?: Principal;
   readonly brand?: Brand;
+  /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
+  readonly providers?: readonly AffordanceProvider<S>[];
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -183,6 +194,7 @@ export function GraviewProvider<S extends AnySchema>({
   initialSelection,
   principal = ANONYMOUS,
   brand,
+  providers,
   view,
   onViewChange,
   children,
@@ -298,6 +310,7 @@ export function GraviewProvider<S extends AnySchema>({
       activity,
       noteAttention,
       principal,
+      ...(providers ? { providers } : {}),
       ...(brand ? { brand } : {}),
     }),
     [
@@ -313,6 +326,7 @@ export function GraviewProvider<S extends AnySchema>({
       activity,
       noteAttention,
       principal,
+      providers,
       brand,
     ],
   );

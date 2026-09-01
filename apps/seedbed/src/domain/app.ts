@@ -15,6 +15,26 @@ export const seedbedApp = defineApp({
   mutations: seedbedMutations,
   invariants: seedbedInvariants,
   brand: seedbedBrand,
+  /*
+   * The intelligence, declared. The starter provider proposes from the
+   * schema alone (no key, no model); a real model plugs the same seam with
+   * one completion function. Both may only call what is listed — the
+   * allowlist graview check verifies and a host can meter.
+   */
+  intelligence: [
+    {
+      name: "starter",
+      kind: "graph",
+      description: "Proposes first data and open repairs from the declaration alone.",
+      may: ["add-gardener", "add-plot", "sow", "tend", "adopt-rule"],
+    },
+    {
+      name: "model",
+      kind: "llm",
+      description: "A vendor model behind one completion function, when a key exists.",
+      may: ["add-gardener", "add-plot", "sow", "tend", "adopt-rule"],
+    },
+  ],
 });
 
 export type SeedbedStore = Store<SeedbedSchema>;

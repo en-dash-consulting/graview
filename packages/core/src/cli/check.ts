@@ -72,6 +72,24 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
   }
 
+  /*
+   * A declared provider's allowlist must name real mutations — a metering
+   * or narrowing rule pointing at nothing enforces nothing.
+   */
+  for (const provider of app.intelligence ?? []) {
+    for (const may of provider.may ?? []) {
+      if (!mutations.has(may)) {
+        add({
+          severity: "error",
+          code: "intelligence-unknown-mutation",
+          where: `intelligence["${provider.name}"].may`,
+          message: `Provider "${provider.name}" is allowed "${may}", which is not registered.`,
+          fix: `Register the mutation, or remove it from the allowlist.`,
+        });
+      }
+    }
+  }
+
   const moduleEntries = Object.entries(app.modules ?? {});
   const owners = new Map<string, Set<string>>();
   for (const [name, module] of moduleEntries) {

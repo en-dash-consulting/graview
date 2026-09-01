@@ -166,6 +166,21 @@ describe("a store with a module off", () => {
   });
 });
 
+describe("graview check verifies the intelligence declaration", () => {
+  it("errors when a provider is allowed a mutation nobody registered", () => {
+    const app = defineApp({
+      name: "test",
+      schema,
+      mutations: [addVehicle, rename],
+      invariants: [],
+      intelligence: [{ name: "model", kind: "llm", may: ["add-vehicle", "warp-ten"] }],
+    });
+    const codes = checkApp(app).findings.map((f) => `${f.severity}:${f.code}`);
+    expect(codes).toContain("error:intelligence-unknown-mutation");
+    expect(codes.filter((c) => c.includes("intelligence"))).toHaveLength(1);
+  });
+});
+
 describe("graview check holds the module boundaries", () => {
   const findings = (moduleMap: Record<string, unknown>) =>
     checkApp(

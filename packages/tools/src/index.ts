@@ -39,3 +39,13 @@ export type {
 } from "./agent/tools.js";
 export { createInAppAdapter, createMcpAdapter } from "./agent/adapters.js";
 export type { InAppAgent, McpContent, McpTool, McpToolResult } from "./agent/adapters.js";
+export { insightProvider } from "./providers/insight.js";
+export {
+  describeProposal,
+  intelligenceProvider,
+  llmIntelligence,
+  toCall,
+  templateIntelligence,
+  validateProposals,
+} from "./intelligence.js";
+export type { Completion, Intelligence, ProposedCall } from "./intelligence.js";

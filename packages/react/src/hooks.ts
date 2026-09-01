@@ -121,7 +121,7 @@ export function useImplicated(): readonly string[] {
 export function useAffordances<S extends AnySchema>(
   options: DeriveOptions<S> = {},
 ): AffordanceSet {
-  const { store, selection, principal } = useGraview<S>();
+  const { store, selection, principal, providers } = useGraview<S>();
   const nodes = useGraph<S>();
   return useMemo(() => {
     // A selected kind card or district denotes KINDS; the binding owns those
@@ -129,10 +129,16 @@ export function useAffordances<S extends AnySchema>(
     const kindSelection = [...new Set(selection.flatMap((id) => kindsOf(id)))];
     // Asked as WHOEVER IS HERE, so what the strip offers is what the store
     // would accept — and what it withholds is stated with a reason rather
-    // than quietly missing.
-    return deriveAffordances(store, selection, { principal, kindSelection, ...options });
+    // than quietly missing. The installation's declared providers apply to
+    // every surface that asks, unless a caller deliberately overrides.
+    return deriveAffordances(store, selection, {
+      principal,
+      kindSelection,
+      ...(providers ? { providers } : {}),
+      ...options,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, selection, options, nodes, principal]);
+  }, [store, selection, options, nodes, principal, providers]);
 }
 
 /** Runs an affordance, or shows what it would do first. */
