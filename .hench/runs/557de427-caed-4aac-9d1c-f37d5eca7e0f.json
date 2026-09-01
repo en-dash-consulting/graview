@@ -1,0 +1,28 @@
+{
+  "id": "557de427-caed-4aac-9d1c-f37d5eca7e0f",
+  "taskId": "ba7345a2-a4fc-4a91-8487-8f03b738f84c",
+  "taskTitle": "ELM evaluation: measured, no lift, dropped",
+  "startedAt": "2026-09-01T13:29:58.974Z",
+  "finishedAt": "2026-09-01T13:29:58.974Z",
+  "status": "completed",
+  "turns": 30,
+  "summary": "Reproducible intent-routing benchmark across four apps: derived matching 0.644 vs ELM 0.324 tuned; NO-LIFT by pre-registered rule; partial-phrase hybrid noted for post-launch",
+  "tokenUsage": {
+    "input": 58,
+    "output": 35769,
+    "cacheCreationInput": 34288,
+    "cacheReadInput": 21737476
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 58,
+    "output": 35769,
+    "cached": 21771764,
+    "total": 21807591
+  }
+}

@@ -41,6 +41,7 @@
     "dev:promo": "pnpm --filter @graview/promo dev"
   },
   "devDependencies": {
+    "@astermind/astermind-elm": "^2.1.1",
     "@changesets/cli": "^3.0.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.10.0",

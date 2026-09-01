@@ -134,7 +134,7 @@ export const GraviewIntro: React.FC = () => {
           </CameraRig>
 
           <LightCharacter />
-          <BrandPresence hideFrom={beats.settle.from + 20} />
+          <BrandPresence hideFrom={beats.brand.from} />
         </Field>
       ) : null}
 
