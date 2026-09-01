@@ -1,0 +1,28 @@
+{
+  "id": "d8c58987-b503-4b9f-9910-ea46280c5cc0",
+  "taskId": "305f2b21-0dc3-426f-b927-6a139ebb8762",
+  "taskTitle": "Theming: a declaration a skill can drive",
+  "startedAt": "2026-09-01T07:33:35.243Z",
+  "finishedAt": "2026-09-01T07:33:35.243Z",
+  "status": "completed",
+  "turns": 46,
+  "summary": "Per-kind accents on Brand with checked hues; graview-brand skill grows the natural-language styling loop over the serialisable declaration",
+  "tokenUsage": {
+    "input": 92,
+    "output": 26688,
+    "cacheCreationInput": 36277,
+    "cacheReadInput": 23871317
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 92,
+    "output": 26688,
+    "cached": 23907594,
+    "total": 23934374
+  }
+}

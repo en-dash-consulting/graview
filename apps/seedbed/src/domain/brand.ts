@@ -28,5 +28,12 @@ export const seedbedBrand: Brand = {
     mono: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
   },
   shape: { radius: 12, density: 1 },
+  /*
+   * Colour-by-kind, declared instead of hashed: gardeners warm, plots
+   * earthen, plantings green, rules slate — the map reads like a garden
+   * rather than like a hash function. One entry per kind; every chip,
+   * district and roster follows.
+   */
+  accents: { gardener: 28, plot: 42, planting: 122, rule: 210 },
   schemes: derived.schemes,
 };

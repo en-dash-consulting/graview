@@ -8,6 +8,7 @@ import {
 import { kindCardId, withPast } from "@graview/layout";
 import {
   createViews,
+  useGraview,
   useNavigation,
   useSelection,
   type ReactViewRegistry,
@@ -27,8 +28,21 @@ import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
  * only the cells they actually care about.
  */
 
-/** Stable hue per kind, so a kind looks the same everywhere it appears. */
-export function hueFor(kind: string): number {
+/**
+ * Stable hue per kind, so a kind looks the same everywhere it appears.
+ * A brand that DECLARES a kind's hue wins over the hash — that is the whole
+ * customization story for colour-by-kind: one entry in `brand.accents`,
+ * every chip, district and calendar span follows.
+ */
+/** The declared accent when the installation named one, else the hash. */
+export function useHue(kind: string): number {
+  const { brand } = useGraview();
+  return hueFor(kind, brand?.accents);
+}
+
+export function hueFor(kind: string, accents?: Readonly<Record<string, number>>): number {
+  const declared = accents?.[kind];
+  if (declared !== undefined) return (((declared % 360) + 360) % 360) / 360;
   let h = 2166136261;
   for (let i = 0; i < kind.length; i++) {
     h ^= kind.charCodeAt(i);
@@ -66,7 +80,6 @@ export function registerDefaultViews<S extends AnySchema>(
 ): ReactViewRegistry<S> {
   for (const kind of schema.kinds as readonly KindOfSchema<S>[]) {
     const definition = schema.tryDefinition(kind as string);
-    const hue = hueFor(kind as string);
     const plural = definition?.plural ?? `${String(kind)}s`;
 
     const Full = (props: ViewProps<S>) => {
@@ -173,6 +186,7 @@ export function registerDefaultViews<S extends AnySchema>(
         limit: 3,
         said: [labelOf(definition, node)],
       });
+      const hue = useHue(kind as string);
       return (
         <Panel
           title={labelOf(definition, node)}
@@ -194,6 +208,7 @@ export function registerDefaultViews<S extends AnySchema>(
 
     const Glyph = (props: ViewProps<S>) => {
       const node = props.node as (Record<string, unknown> & { id: string; kind: string }) | undefined;
+      const hue = useHue(kind as string);
       if (!node) return null;
       const broken = props.flagged?.includes(node.id) ?? false;
       return (
@@ -206,20 +221,23 @@ export function registerDefaultViews<S extends AnySchema>(
       );
     };
 
-    const Group = (props: ViewProps<S>) => (
-      <Aggregate
-        label={props.label ?? plural}
-        count={props.nodes?.length ?? 0}
-        // A receded group still has to report trouble inside it, or the only
-        // way to find a problem is to open every group in turn.
-        flagged={(props.nodes ?? []).some((member) => props.flagged?.includes(member.id))}
-        items={(props.nodes ?? []).map((member) => ({
-          id: member.id,
-          label: labelOf(schema.tryDefinition(member.kind), member as never),
-          hue: hueFor(member.kind),
-        }))}
-      />
-    );
+    const Group = (props: ViewProps<S>) => {
+      const { brand } = useGraview();
+      return (
+        <Aggregate
+          label={props.label ?? plural}
+          count={props.nodes?.length ?? 0}
+          // A receded group still has to report trouble inside it, or the only
+          // way to find a problem is to open every group in turn.
+          flagged={(props.nodes ?? []).some((member) => props.flagged?.includes(member.id))}
+          items={(props.nodes ?? []).map((member) => ({
+            id: member.id,
+            label: labelOf(schema.tryDefinition(member.kind), member as never),
+            hue: hueFor(member.kind, brand?.accents),
+          }))}
+        />
+      );
+    };
 
     /**
      * A group at glyph fidelity.
@@ -241,6 +259,7 @@ export function registerDefaultViews<S extends AnySchema>(
      */
     const GroupGlyph = (props: ViewProps<S>) => {
       const members = props.nodes ?? [];
+      const hue = useHue(kind as string);
       const { selection } = useSelection();
       const { toggle, view, go } = useNavigation();
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
