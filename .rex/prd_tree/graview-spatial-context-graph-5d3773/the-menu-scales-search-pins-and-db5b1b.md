@@ -2,10 +2,12 @@
 id: "db5b1b45-27a5-499e-b3ac-ce16f68a4ce3"
 level: "feature"
 title: "The menu scales: search, pins, and what you actually use"
-status: "in_progress"
+status: "completed"
 priority: "medium"
 source: "Nick, 2026-09-01: \"maybe the context menu needs a searcher, a pinning ability (by dev or user, dunno), and a most-commonly/recently used or something\""
 startedAt: "2026-09-01T20:11:03.976Z"
+completedAt: "2026-09-01T20:27:28.256Z"
+endedAt: "2026-09-01T20:27:28.256Z"
 acceptanceCriteria:
   - "A filter field appears only when the action list exceeds the fold; typing filters the derived list by label and why; Enter applies a sole survivor; Escape clears"
   - "defineMutation accepts pinned: true — ranked above provider peers within its band, visible in both pane and pointer menu"
@@ -13,6 +15,6 @@ acceptanceCriteria:
   - "Recency/frequency from the op log boosts ranking deterministically with decay, within bands — repairs still first, destructive still last, ties still grouped"
   - "Audit/direct harnesses stay clean; a scenario covers search-then-apply and pin-then-reorder"
 description: "The inspector and pointer menu were designed for a handful of derived actions; real apps are growing past a handful, and a long ranked list stops being a menu. Three additions, all riding the existing derivation rather than adding a second action system:\n\n(1) A SEARCHER — when the action count exceeds what fits (the pane already caps at nine and hides the tail), a filter-as-you-type field appears at the top; it filters the same derived list by label/why, and Enter runs a sole survivor. Below the threshold it stays out of the way — chrome that is mostly not there must not be there.\n\n(2) PINS, both hands — a mutation may declare `pinned: true` (the dev saying \"this is the act of this app\"; ranked above its provider peers, checked like every declaration), and a person may pin any offered action from the menu itself (per-browser, localStorage beside the intelligence config; their pins outrank the dev's). Pinned acts render in a small fixed head-section; unpinning is the same gesture.\n\n(3) WHAT YOU ACTUALLY USE — a deterministic recency/frequency boost derived from the op log: mutations this workspace applied recently and often rank ahead of ones it never touches, decaying so the menu tracks the season rather than the archive. This is the simple, derived version of the deferred ELM ranking evaluation (ba7345a2) — same score field, no model, and if that evaluation ever revisits with real data, it replaces this heuristic behind the same seam.\n\nOrdering rules stay inviolate whatever ranks: repairs first, destructive last, ties grouped — pins and usage shuffle within those bands, never across them."
-lastModified: "2026-09-01T20:11:03.986Z"
+lastModified: "2026-09-01T20:27:28.266Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
