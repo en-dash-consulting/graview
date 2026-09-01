@@ -115,6 +115,28 @@ describe("the graph answers for itself", () => {
     expect(reply.say).toContain("needs");
   });
 
+  it("finds a name across spacing and punctuation — 'child 2' is child2", async () => {
+    const spaced = new Store({
+      schema,
+      mutations: [reassign, shorten],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "c2", kind: "person", label: "child2" },
+          { id: "nap", kind: "duty", label: "child2 nap", minutes: 30 },
+        ] as never,
+        edges: [],
+      },
+    });
+    const reply = await graphResponder()(spaced, "when does child 2 nap?");
+    // The longest matching name wins: the nap block, not just the child.
+    expect(reply.say).toContain("child2 nap — a duty");
+    expect(reply.say).toContain("minutes 30");
+    // Token alignment still keeps "Bo" out of "elbow".
+    const noFalse = await graphResponder()(store(), "my elbow hurts");
+    expect(noFalse.say).toContain("This graph holds");
+  });
+
   it("falls back to the shape of the graph, and how to ask", async () => {
     const reply = await graphResponder()(store(), "hello");
     expect(reply.say).toContain("2 People");

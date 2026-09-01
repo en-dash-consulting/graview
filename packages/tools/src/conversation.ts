@@ -67,15 +67,27 @@ export function graphResponder<S extends AnySchema>(
       const node = store.graph.getNode(id);
       if (node) referents.push(node as never);
     }
+    /*
+     * Matching is TOKEN-ALIGNED and punctuation-blind, or names fail for
+     * the dumbest reasons: a child stored as "child2" must be found by
+     * "child 2", and "child2's nap" by "child 2 nap". Both sides tokenize
+     * on non-alphanumerics; a label matches when its squeezed form equals
+     * some run of adjacent message tokens joined — token alignment is what
+     * keeps "Bo" out of "elbow".
+     */
+    const tokens = asked.split(/[^a-z0-9]+/).filter(Boolean);
+    const runs = new Set<string>();
+    for (let start = 0; start < tokens.length; start++) {
+      let joined = "";
+      for (let end = start; end < Math.min(tokens.length, start + 6); end++) {
+        joined += tokens[end];
+        runs.add(joined);
+      }
+    }
+    const squeeze = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, "");
     const byLabel = [...store.graph.allNodes()]
-      .map((node) => ({ node, label: name(node).toLowerCase() }))
-      .filter(({ label }) => {
-        // Whole words only: "Bo" must match "give it to Bo" and must not
-        // match "elbow". Short names are real names.
-        if (label.length < 2) return false;
-        const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        return new RegExp(`(^|\\W)${escaped}(\\W|$)`).test(asked);
-      })
+      .map((node) => ({ node, label: squeeze(name(node)) }))
+      .filter(({ label }) => label.length >= 2 && runs.has(label))
       .sort((a, b) => b.label.length - a.label.length);
     for (const { node } of byLabel) {
       if (!referents.some((held) => held.id === node.id)) referents.push(node as never);
