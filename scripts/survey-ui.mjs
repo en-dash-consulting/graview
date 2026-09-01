@@ -270,13 +270,15 @@ const measure = () => {
     .map((el) => el.tagName.toLowerCase());
 
   /*
-   * Chrome sitting ON TOP of the scene.
+   * Chrome sitting ON TOP of the CONTENT.
    *
-   * The floating surfaces — the actions strip, a menu at the pointer — are
-   * fixed over a scene that was laying itself out into the whole window, so
-   * selecting anything covered the row of kind cards at the bottom. It is
-   * invisible to every other measurement here, because both halves are
-   * rendering perfectly; they are just in the same place.
+   * The strip is an elevated transient surface: it floats in front of the
+   * scene rather than reserving a band of it, and hovering over the
+   * constant plane-2 shelf while a selection is open is the design — the
+   * shelf is a map, the strip is dismissible, and the elevation shadow says
+   * which is nearer. What would still be wrong is the strip sitting on a
+   * real share of the focus or a raised card, so that is what this counts —
+   * against the panel someone can see, not the band slot the layout allots.
    *
    * A menu at the pointer is EXCLUDED: covering the thing you right-clicked
    * is what a menu is for.
@@ -289,15 +291,18 @@ const measure = () => {
     if (!strip) return [];
     const over = strip.getBoundingClientRect();
     return [...document.querySelectorAll("[data-graview-view]")]
-      .map((el) => ({ id: el.getAttribute("data-graview-view"), box: el.getBoundingClientRect() }))
-      .filter(
-        ({ box }) =>
-          box.width > 4 &&
-          box.bottom > over.top &&
-          box.top < over.bottom &&
-          box.right > over.left &&
-          box.left < over.right,
-      )
+      .filter((el) => Number(el.getAttribute("data-graview-plane")) < 2)
+      .map((el) => ({
+        id: el.getAttribute("data-graview-view"),
+        box: (
+          el.querySelector('[data-graview-primitive="panel"], .graview-kind-card') ?? el
+        ).getBoundingClientRect(),
+      }))
+      .filter(({ box }) => {
+        const w = Math.min(box.right, over.right) - Math.max(box.left, over.left);
+        const h = Math.min(box.bottom, over.bottom) - Math.max(box.top, over.top);
+        return w > 0 && h > 0 && w * h > Math.max(200, box.width * box.height * 0.06);
+      })
       .map(({ id, box }) => ({
         id,
         by: Math.round(Math.min(box.bottom, over.bottom) - Math.max(box.top, over.top)),

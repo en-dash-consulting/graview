@@ -38,6 +38,15 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
     readonly kinds: readonly KindOfSchema<S>[] | "*";
     readonly arg: string;
   };
+  /**
+   * True when applying this loses something a person made — a node removed,
+   * work dropped, an edge severed for good. The interface lists these after
+   * everything else and marks them; an agent seat inherits the same order.
+   * Absent means safe, which is the common case and the safe default to get
+   * wrong: an unmarked destructive mutation is merely unranked, a marked
+   * safe one is merely over-cautious.
+   */
+  readonly destructive?: boolean;
   /** One-line description of a concrete application, for previews and logs. */
   readonly describe?: (args: z.infer<I>, graph: GraphReader<NodeOfSchema<S>>) => string;
   readonly apply: (context: MutationContext<S>, args: z.infer<I>) => void;

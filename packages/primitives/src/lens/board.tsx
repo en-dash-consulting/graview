@@ -1,6 +1,6 @@
 import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, useViolations, type ViewProps } from "@graview/react";
-import type { ReactElement } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster } from "../primitives/index.js";
 
@@ -224,27 +224,69 @@ export function BoardView<S extends AnySchema>({
 
   const aspect = options.aspect ?? 0.68;
 
+  /*
+   * The arrangement TURNS to fit the room it is given.
+   *
+   * A portrait pitch in a landscape band shrinks in both directions at once:
+   * height drives it, the aspect follows, and a 1040-pixel card ends up with
+   * a 200-pixel pitch and four hundred empty pixels either side — thirteen
+   * per cent of the card doing all of the card's work. A pitch has no
+   * intrinsic reading direction; drawn side-on with attack to the right it
+   * is the same arrangement, television's way round, using the width it was
+   * actually given. Measured rather than guessed, because the same lens is
+   * drawn in a band, on a page, and in a shrunk copy of either.
+   */
+  const room = useRef<HTMLDivElement | null>(null);
+  const [turned, setTurned] = useState(false);
+  useEffect(() => {
+    const element = room.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => {
+      const box = entries[0]?.contentRect;
+      if (!box || box.height === 0) return;
+      setTurned(aspect < 1 && box.width / box.height > 1.3);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [aspect]);
+
+  /** A slot's place on the DRAWN board: turned, attack ends up on the right. */
+  const at = (x: number, y: number) => (turned ? { x: 1 - y, y: x } : { x, y });
+
   /**
    * Every slot carrying a mark, with the sentence that put it there — the
    * slot's own trouble first, then its occupant's, since that is the order a
    * reader's eye meets them on the board.
    */
-  const marked = board.slots
-    .flatMap((slot) => {
-      const own = reasons(slot.id).map((text) => ({ id: slot.id, code: slot.code, text }));
-      const theirs = reasons(slot.occupantId).map((text) => ({
-        id: slot.occupantId!,
-        code: slot.occupantLabel ?? slot.code,
-        text,
-      }));
-      return [...own, ...theirs];
-    })
-    // The same rule failing about two slots is two marks, but the same
-    // sentence about the same slot twice is noise.
-    .filter(
-      (entry, index, all) =>
-        all.findIndex((other) => other.id === entry.id && other.text === entry.text) === index,
-    );
+  /*
+   * ONE LINE PER SENTENCE, naming everyone it implicates.
+   *
+   * A violation about two positions used to print the same sentence twice,
+   * once per code — "LM … Recovery runs …" directly above "RM … Recovery
+   * runs …" — which reads as a stutter, not as two facts. The sentence is
+   * the fact; the codes are who it touches.
+   */
+  const marked = (() => {
+    const byText = new Map<string, { ids: string[]; codes: string[] }>();
+    const note = (id: string, code: string, text: string) => {
+      const entry = byText.get(text) ?? { ids: [], codes: [] };
+      if (!entry.ids.includes(id)) {
+        entry.ids.push(id);
+        if (!entry.codes.includes(code)) entry.codes.push(code);
+      }
+      byText.set(text, entry);
+    };
+    for (const slot of board.slots) {
+      for (const text of reasons(slot.id)) note(slot.id, slot.code, text);
+      for (const text of reasons(slot.occupantId))
+        note(slot.occupantId!, slot.occupantLabel ?? slot.code, text);
+    }
+    return [...byText.entries()].map(([text, entry]) => ({
+      id: entry.ids[0]!,
+      code: entry.codes.join(", "),
+      text,
+    }));
+  })();
 
   /*
    * On a full page the board is the PAGE, not a card sitting on one.
@@ -343,7 +385,16 @@ export function BoardView<S extends AnySchema>({
   return (
     <Panel
       title={label ?? "Board"}
-      meta={board.empty.length === 0 ? "complete" : `${board.empty.length} unfilled`}
+      /*
+       * Occupancy, stated as occupancy. "Complete" beside a key listing two
+       * warnings read as a contradiction — both were true, because
+       * "complete" was quietly about slots being filled and never said so.
+       */
+      meta={
+        board.empty.length === 0
+          ? `all ${board.slots.length} filled`
+          : `${board.empty.length} unfilled`
+      }
       {...(page ? { style: { flex: "1 1 auto", minHeight: 0, height: "100%" } } : {})}
     >
       {/* Centred: the focus band is as wide as the widest view an app has,
@@ -359,6 +410,7 @@ export function BoardView<S extends AnySchema>({
         * the formation stays a formation at any size.
         */}
       <div
+        ref={room}
         style={{
           display: "flex",
           gap: 28,
@@ -413,17 +465,13 @@ export function BoardView<S extends AnySchema>({
           * field stays purely what the graph says.
           */}
         {/* The rail belongs TO the field, so it travels with it rather than
-            sitting a gap away looking like a separate column. */}
+            sitting a gap away looking like a separate column. Turned, it
+            lies along the bottom edge instead of standing beside the left. */}
         <div style={{ display: "flex", gap: 5, alignItems: "stretch", minWidth: 0 }}>
-        {(options.zones ?? []).length > 0 ? (
+        {!turned && (options.zones ?? []).length > 0 ? (
           <div
             aria-hidden="true"
-            style={{
-              position: "relative",
-              width: 15,
-              flex: "0 0 auto",
-              alignSelf: "stretch",
-            }}
+            style={{ position: "relative", width: 15, flex: "0 0 auto", alignSelf: "stretch" }}
           >
             {(options.zones ?? []).map((zone) => (
               <span
@@ -433,11 +481,11 @@ export function BoardView<S extends AnySchema>({
                   top: `${zone.from * 100}%`,
                   height: `${(zone.to - zone.from) * 100}%`,
                   right: 0,
+                  writingMode: "vertical-rl",
+                  transform: "rotate(180deg)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  writingMode: "vertical-rl",
-                  transform: "rotate(180deg)",
                   fontSize: 9,
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
@@ -457,9 +505,9 @@ export function BoardView<S extends AnySchema>({
           style={{
             position: "relative",
             height: "100%",
-            aspectRatio: `${aspect}`,
-            maxWidth: "100%",
             flex: "0 1 auto",
+            aspectRatio: `${turned ? 1 / aspect : aspect}`,
+            maxWidth: "100%",
             // Its own border counts INSIDE the hundred percent. Without this
             // the pitch is two pixels taller than the box it was told to
             // fill, which is enough to put a scroll region on a board that
@@ -480,14 +528,49 @@ export function BoardView<S extends AnySchema>({
               aria-hidden="true"
               style={{
                 position: "absolute",
-                left: 0,
-                right: 0,
-                top: `${zone.from * 100}%`,
-                height: `${(zone.to - zone.from) * 100}%`,
-                borderBottom: "1px dashed var(--graview-edge)",
+                ...(turned
+                  ? {
+                      top: 0,
+                      bottom: 0,
+                      left: `${(1 - zone.to) * 100}%`,
+                      width: `${(zone.to - zone.from) * 100}%`,
+                      borderLeft: "1px dashed var(--graview-edge)",
+                    }
+                  : {
+                      left: 0,
+                      right: 0,
+                      top: `${zone.from * 100}%`,
+                      height: `${(zone.to - zone.from) * 100}%`,
+                      borderBottom: "1px dashed var(--graview-edge)",
+                    }),
               }}
             />
           ))}
+          {/* Turned, the zone names lie along the field's own bottom edge —
+              a rail beside a landscape pitch would push it off its height. */}
+          {turned
+            ? (options.zones ?? []).map((zone) => (
+                <span
+                  key={`label-${zone.label}`}
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    bottom: 3,
+                    left: `${(1 - zone.to) * 100}%`,
+                    width: `${(zone.to - zone.from) * 100}%`,
+                    textAlign: "center",
+                    fontSize: 9,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    color: "var(--graview-ink-faint)",
+                  }}
+                >
+                  {zone.label}
+                </span>
+              ))
+            : null}
 
           {board.slots.map((slot) => {
             const hole = slot.occupantId === null;
@@ -535,8 +618,8 @@ export function BoardView<S extends AnySchema>({
                 ].join("\n")}
                 style={{
                   position: "absolute",
-                  left: `${slot.x * 100}%`,
-                  top: `${slot.y * 100}%`,
+                  left: `${at(slot.x, slot.y).x * 100}%`,
+                  top: `${at(slot.x, slot.y).y * 100}%`,
                   transform: "translate(-50%, -50%)",
                   display: "grid",
                   justifyItems: "center",

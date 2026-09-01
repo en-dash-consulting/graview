@@ -61,6 +61,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           mutation: mutation.name,
           args: batch[0] ?? {},
           open,
+          ...(mutation.destructive ? { destructive: true } : {}),
           ...(nodes.length > 1 ? { batch } : {}),
           // A mutation needing nothing more is readier than one needing three
           // more answers, so it should surface above it.

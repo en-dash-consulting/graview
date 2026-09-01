@@ -75,8 +75,21 @@ export function deriveAffordances<S extends AnySchema>(
     observations.push(...(result.observations ?? []));
   }
 
+  /*
+   * Destructive actions come LAST, whatever their score.
+   *
+   * "Remove" sorting first on an ordinary selection is an interface leading
+   * with the one thing that cannot be taken back. The order within each
+   * group is still the score — a destructive repair still beats a
+   * destructive anything-else — and the same order reaches the strip, the
+   * pointer menu and an agent's tool list, so no surface contradicts
+   * another.
+   */
   const ranked = dedupe(affordances).sort(
-    (a, b) => b.score - a.score || a.id.localeCompare(b.id),
+    (a, b) =>
+      Number(a.destructive ?? false) - Number(b.destructive ?? false) ||
+      b.score - a.score ||
+      a.id.localeCompare(b.id),
   );
 
   /*

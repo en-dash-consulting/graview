@@ -160,6 +160,7 @@ export const explain = defineMutation("explain", {
 export const drop = defineMutation("drop", {
   title: "Drop it",
   description: "Remove a task entirely, along with anything waiting on it.",
+  destructive: true,
   subject: { kinds: ["task"], arg: "taskId" },
   input: z.object({ taskId: nodeRef(["task"]) }),
   describe: (args, graph) => `Drop "${nameOf(graph as Reader, args.taskId)}"`,

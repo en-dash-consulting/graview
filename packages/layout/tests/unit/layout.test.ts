@@ -478,24 +478,23 @@ describe("the overview is the same cards, on a ring", () => {
   });
 });
 
-describe("the kinds arc away from the viewer", () => {
+describe("the kinds sit on a flat shelf, and rise into a city on the ring", () => {
   /*
-   * A row of ten cards all at exactly plane 2 reads as a strip pinned to the
-   * bottom of the window. Giving each its own depth is what turns it into a
-   * set of things the focus is standing in front of.
+   * The shelf is a map, and a map lies flat: one baseline, one depth. The
+   * arc it used to bow into carried no meaning — the curvature existed to
+   * negotiate room with chrome, which is not a reason a reader can see.
    */
   const cards = (state: ViewState) =>
     layout(graph(), schema, state)
       .nodes.filter((node) => node.plane === 2 && node.aggregate)
       .sort((a, b) => a.x - b.x);
 
-  it("puts the far side of the arc in the middle", () => {
+  it("lays the shelf flat: one baseline, one depth", () => {
     const placed = cards(view({ focusId: "week-1" }));
-    const middle = placed[Math.floor(placed.length / 2)]!;
-    const end = placed[0]!;
-    // Further back sits higher on screen and deeper in the plane.
-    expect(middle.y).toBeLessThan(end.y);
-    expect(middle.depth!).toBeGreaterThan(end.depth!);
+    const primaries = placed.filter((card) => card.rank !== "secondary" && !card.nestedUnder);
+    const bottoms = new Set(primaries.map((card) => card.y + card.height));
+    expect(bottoms.size).toBe(1);
+    expect(new Set(primaries.map((card) => card.depth)).size).toBe(1);
   });
 
   it("keeps every depth inside its plane", () => {
@@ -505,24 +504,37 @@ describe("the kinds arc away from the viewer", () => {
     }
   });
 
-  it("lays the ring flat again, because there is no front up there", () => {
+  it("brings the near side of the ring toward the viewer", () => {
+    /*
+     * From altitude the ring is a city: what is nearest the viewer — the
+     * bottom of the ellipse — is drawn larger and pulled forward; the far
+     * side sits smaller and further back. Same affine vocabulary as the
+     * planes themselves.
+     */
     const ringed = layout(graph(), schema, view({ focusId: "week-1", overview: true }))
-      .nodes.filter((node) => node.aggregate);
-    expect(ringed.every((node) => node.depth === 1)).toBe(true);
+      .nodes.filter((node) => node.plane === 2 && node.aggregate);
+    const nearest = ringed.reduce((a, b) => (a.y + a.height > b.y + b.height ? a : b));
+    const furthest = ringed.reduce((a, b) => (a.y < b.y ? a : b));
+    expect(nearest.depth!).toBeLessThan(furthest.depth!);
+    expect(nearest.width).toBeGreaterThan(furthest.width);
   });
 
-  it("lets the focus reach down over the arc", () => {
-    const result = layout(graph(), schema, view({ focusId: "week-1" }), {
-      width: 1200,
-      height: 760,
+  it("keeps the raised plane clear of the shelf", () => {
+    const result = layout(graph(), schema, view({ focusId: aggregateId("duty"), relation: "person" }), {
+      width: 1280,
+      height: 720,
     });
-    const focus = result.nodes.find((node) => node.plane === 0)!;
-    const nearest = result.nodes
-      .filter((node) => node.plane === 2)
-      .reduce((a, b) => (a.y < b.y ? a : b));
-    // Overlapping is the point: a panel that stops short is stacked above,
-    // one that overlaps is in front. Z-order puts the focus on top.
-    expect(focus.y + focus.height).toBeGreaterThan(nearest.y);
+    const raised = result.nodes.filter((node) => node.plane === 1);
+    const shelfTop = Math.min(
+      ...result.nodes.filter((node) => node.plane === 2).map((node) => node.y),
+    );
+    expect(raised.length).toBeGreaterThan(0);
+    for (const card of raised) {
+      // At least twelve pixels of clear ground between the bands, at the
+      // smallest height the surveys cover — measured on the layout boxes,
+      // which are larger than the rendered ones.
+      expect(card.y + card.height).toBeLessThanOrEqual(shelfTop - 12);
+    }
   });
 });
 
@@ -601,17 +613,18 @@ describe("the kinds plane ranks relations rather than listing them flat", () => 
     expect(placed.get(kindCardId("weather"))!.nestedUnder).toBeUndefined();
   });
 
-  it("puts a nested card against the one it hangs off, not in the row", () => {
+  it("puts a nested card behind the one it hangs off, peeking over its top", () => {
     const placed = cards(view({ focusId: "ana" }));
     const brush = placed.get(kindCardId("tool"))!;
     const chores = placed.get(kindCardId("chore"))!;
-    // Half under its parent's bottom edge: overlapping on both axes is what
-    // makes it read as belonging to that card rather than as the next
-    // sibling along.
+    // Behind means further, and further means higher on screen: the tuck
+    // stands behind its parent with its bottom edge tucked behind the
+    // parent's top, and its own label clear above it.
     expect(brush.x).toBeGreaterThan(chores.x);
     expect(brush.x).toBeLessThan(chores.x + chores.width);
-    expect(brush.y).toBeLessThan(chores.y + chores.height);
-    expect(brush.y + brush.height).toBeGreaterThan(chores.y + chores.height);
+    expect(brush.y).toBeLessThan(chores.y);
+    expect(brush.y + brush.height).toBeGreaterThan(chores.y);
+    expect(brush.y + brush.height).toBeLessThan(chores.y + chores.height);
     // Smaller, and further back within the plane.
     expect(brush.width).toBeLessThan(chores.width);
     expect(brush.depth!).toBeGreaterThan(chores.depth!);

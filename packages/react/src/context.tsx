@@ -60,23 +60,17 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly menuAt: { readonly x: number; readonly y: number } | null;
   setMenuAt(at: { x: number; y: number } | null): void;
   /**
-   * How much of the bottom of the scene is spoken for by chrome floating
-   * over it, in pixels.
+   * A relation singled out for emphasis, by edge kind, or null for none.
    *
-   * The alternative was for the strip to keep floating and for the scene to
-   * keep laying out underneath it, which is exactly what it did: the context
-   * plane's cards sit at 98.5% of the height and the actions strip sits 18
-   * pixels off the bottom, so selecting anything covered the row of kinds.
-   * Moving the strip somewhere else only moves the collision. The scene is
-   * laid out to the space it HAS, so the honest fix is to tell it the truth
-   * about how much space that is.
-   *
-   * Published here rather than measured by the scene because the strip is a
-   * primitive and the scene must not know which chrome an app mounted — it
-   * only needs the number.
+   * Hovering a row of the relation key names the relation whose lines should
+   * come forward while the rest recede — which is what makes the legend part
+   * of the picture instead of a caption beside it. Held here for the same
+   * reason selection is: the key is chrome and the connectors are the
+   * scene's, and the two must agree about which relation is being asked
+   * about.
    */
-  readonly bottomInset: number;
-  setBottomInset(pixels: number): void;
+  readonly emphasis: string | null;
+  setEmphasis(kind: string | null): void;
   /**
    * What has just happened, per node, for a few seconds.
    *
@@ -194,7 +188,7 @@ export function GraviewProvider<S extends AnySchema>({
   const [selection, setSelectionState] = useState<readonly string[]>(initialSelection ?? []);
   const [jackedIn, setJackedIn] = useState<string | null>(initialJackedIn ?? null);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
-  const [bottomInset, setBottomInset] = useState(0);
+  const [emphasis, setEmphasis] = useState<string | null>(null);
   const { activity, noteAttention } = useActivityState(store);
 
   const current = view ?? internalView;
@@ -228,8 +222,8 @@ export function GraviewProvider<S extends AnySchema>({
       setJackedIn,
       menuAt,
       setMenuAt,
-      bottomInset,
-      setBottomInset,
+      emphasis,
+      setEmphasis,
       activity,
       noteAttention,
       principal,
@@ -245,7 +239,7 @@ export function GraviewProvider<S extends AnySchema>({
       setSelection,
       jackedIn,
       menuAt,
-      bottomInset,
+      emphasis,
       activity,
       noteAttention,
       principal,

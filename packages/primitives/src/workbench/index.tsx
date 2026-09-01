@@ -21,7 +21,7 @@ import {
   type ToolCall,
   type ToolRuntime,
 } from "@graview/tools";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chip } from "../primitives/index.js";
 
 /**
@@ -173,23 +173,6 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
 const STRIP_GAP = 18;
 
 /**
- * The room the strip is kept, whether or not it is showing.
- *
- * Insetting the scene only while something is selected fixed the collision and
- * bought a worse fault: every click reflowed the whole picture, so the thing
- * you clicked moved out from under the pointer as its actions appeared. A
- * contextual surface that rearranges the scene to make room for itself is
- * worse than one that covers it.
- *
- * So the space is reserved permanently and the strip appears inside it.
- * Nothing moves for a one- or two-row strip, which is nearly every selection;
- * an unusually tall one — several rules failing at once, or an argument being
- * answered — still pushes rather than covers, because being tall is rare and
- * being covered is never right.
- */
-const STRIP_RESERVE = 128;
-
-/**
  * What is selected, what is true about it, and what can legally be done —
  * as a STRIP, not a panel.
  *
@@ -205,13 +188,12 @@ const STRIP_RESERVE = 128;
  * built around a centred focus has to spare.
  */
 export function Inspector() {
-  const { store, menuAt, setMenuAt, jackedIn, setBottomInset } = useGraview<AnySchema>();
+  const { store, menuAt, setMenuAt, jackedIn, view } = useGraview<AnySchema>();
   const { selection, clear } = useSelection();
   const { affordances, withheld, observations } = useAffordances();
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const strip = useRef<HTMLElement | null>(null);
 
   const kinds = [
     ...new Set(
@@ -228,37 +210,14 @@ export function Inspector() {
   }, [selection]);
 
   /*
-   * The strip TELLS the scene how much of the bottom it has taken.
-   *
-   * It floats, so it was covering the row of kind cards the moment anything
-   * was selected — and it grows as it goes, since expanding the actions or
-   * answering an argument makes it taller. Reporting a measured height rather
-   * than a guessed constant is the only version that stays true through that.
-   *
-   * At the pointer it is a menu over the thing you clicked, which is what a
-   * menu is for, so it reserves nothing.
+   * The strip reserves NOTHING. It is a transient elevated surface, and it
+   * floats in front of the scene the way a menu floats in front of a page —
+   * with the elevation drawn honestly, so covering reads as "nearer", not as
+   * a collision. Reserving a permanent band of the scene's height for it
+   * squeezed every band on every screen for chrome that mostly is not there,
+   * and insetting only while something is selected would reflow the picture
+   * under a double-click. Floating is the only answer that moves nothing.
    */
-  const docked = selection.length > 0 && menuAt === null && jackedIn === null;
-  useEffect(() => {
-    if (!docked) {
-      // Kept, not released: the picture must not move when the strip goes.
-      setBottomInset(STRIP_RESERVE);
-      return;
-    }
-    const element = strip.current;
-    if (!element || typeof ResizeObserver === "undefined") return;
-    const measure = () =>
-      setBottomInset(
-        Math.max(STRIP_RESERVE, element.getBoundingClientRect().height + STRIP_GAP * 2),
-      );
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => {
-      observer.disconnect();
-      setBottomInset(STRIP_RESERVE);
-    };
-  }, [docked, setBottomInset]);
 
   /*
    * A menu at the pointer closes the way a menu does. The strip does not —
@@ -288,9 +247,15 @@ export function Inspector() {
    *
    * It should not when the page you are looking at IS that thing: the document
    * has a heading, and the same string twice on one screen reads as a mistake
-   * even when both are correct.
+   * even when both are correct. The same holds after travelling — the focus
+   * panel already carries the name at full size, and the strip repeating it
+   * from the bottom of the window read as a stale leftover of the previous
+   * stop.
    */
-  const named = !(jackedIn !== null && selection.length === 1 && selection[0] === jackedIn);
+  const named = !(
+    selection.length === 1 &&
+    (selection[0] === jackedIn || (jackedIn === null && selection[0] === view.focusId))
+  );
 
   const atPointer = menuAt !== null;
 
@@ -311,15 +276,12 @@ export function Inspector() {
    * second row to wrap into.
    */
   /*
-   * Two rows normally; three when there is genuinely a lot to offer.
-   *
-   * Fifteen legal actions across a multi-selection is a real state — several
-   * rules failing at once merges their repairs — and two rows of long repair
-   * labels still buried ten of them. The strip grows for the case that needs
-   * it and stays two rows for the case that does not, and the scene reserves
-   * whatever it ends up being.
+   * Two rows, full stop. The strip floats over the scene now, so height is
+   * bought with covered picture — and the ranking already puts what answers
+   * the current question first, which is what makes hiding the tail honest.
+   * "Show N more" opens the rest, scrolling inside the strip's own box.
    */
-  const ROWS = affordances.length > 8 ? 3 : 2;
+  const ROWS = 2;
   const CHAR = 7.1;
   const PADDING = 30;
   const WIDTH = Math.min(860, (typeof window === "undefined" ? 900 : window.innerWidth) - 40);
@@ -359,7 +321,6 @@ export function Inspector() {
 
   return (
     <aside
-      ref={strip}
       aria-label="Inspector"
       data-testid={atPointer ? "context-menu" : "inspector-strip"}
       onMouseDown={(event) => event.stopPropagation()}
@@ -382,9 +343,10 @@ export function Inspector() {
         borderRadius: "var(--graview-radius, 12px)",
         border: "1px solid var(--graview-edge)",
         background: "var(--graview-float)",
-        // Lighter than the rails: this appears and disappears constantly, and
-        // a heavy shadow made every selection feel like opening a dialog.
-        boxShadow: atPointer ? "var(--graview-lift-high)" : "var(--graview-lift-low)",
+        // The high lift on both faces: the strip floats in FRONT of the
+        // scene now rather than beside it in reserved room, and the shadow
+        // is what makes covering read as "nearer" instead of as a collision.
+        boxShadow: "var(--graview-lift-high)",
         ...(atPointer
           ? {
               // Clamped so a right click near an edge does not open a menu
@@ -400,6 +362,10 @@ export function Inspector() {
               left: "50%",
               transform: "translateX(-50%)",
               maxWidth: "min(860px, calc(100vw - 40px))",
+              // Expanded actions scroll inside the strip rather than growing
+              // it over half the scene.
+              maxHeight: "min(40vh, 340px)",
+              overflow: "auto",
             }),
       }}
     >
@@ -438,6 +404,17 @@ export function Inspector() {
                 {kinds.join(" · ")}
               </span>
             ) : null}
+            {/* The onward gesture, said at the moment it applies — picking a
+                thing is exactly when "how do I go into it" arises, and the
+                jacked-in header was the one place that answered, which is
+                after you had already found out. */}
+            {selection.length === 1 && jackedIn === null ? (
+              <span
+                style={{ fontSize: 11, color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
+              >
+                · double-click opens
+              </span>
+            ) : null}
           </>
         )}
 
@@ -469,30 +446,36 @@ export function Inspector() {
           <span style={{ flex: "1 1 auto" }} />
         )}
 
-        <button
-          type="button"
-          onClick={() => {
-            setMenuAt(null);
-            clear();
-          }}
-          aria-label="Clear selection"
-          title="Clear selection"
-          // A real target. At 1px of padding it was a 16-pixel control, which
-          // is under every guideline there is and felt like it on a trackpad.
-          style={{
-            flex: "0 0 auto",
-            width: 24,
-            height: 24,
-            display: "grid",
-            placeItems: "center",
-            padding: 0,
-            fontSize: 13,
-            lineHeight: 1,
-            borderRadius: 7,
-          }}
-        >
-          ×
-        </button>
+        {/* A menu needs no close control — Escape, click-away and choosing an
+            action all close it, and a × in a context menu reads as a dialog
+            that lost its way. The docked strip keeps it: clearing the
+            selection is a real act there. */}
+        {atPointer ? null : (
+          <button
+            type="button"
+            onClick={() => {
+              setMenuAt(null);
+              clear();
+            }}
+            aria-label="Clear selection"
+            title="Clear selection"
+            // A real target. At 1px of padding it was a 16-pixel control, which
+            // is under every guideline there is and felt like it on a trackpad.
+            style={{
+              flex: "0 0 auto",
+              width: 24,
+              height: 24,
+              display: "grid",
+              placeItems: "center",
+              padding: 0,
+              fontSize: 13,
+              lineHeight: 1,
+              borderRadius: 7,
+            }}
+          >
+            ×
+          </button>
+        )}
       </div>
 
       {affordances.length === 0 ? (
@@ -535,6 +518,7 @@ export function Inspector() {
               <button
                 type="button"
                 data-affordance={affordance.id}
+                data-graview-destructive={affordance.destructive || undefined}
                 aria-pressed={pending === affordance.id}
                 title={affordance.why}
                 style={{
@@ -550,6 +534,9 @@ export function Inspector() {
                         boxShadow: "none",
                       }
                     : { whiteSpace: "nowrap" }),
+                  // What cannot be taken back says so before it is pressed —
+                  // and the ranking has already put it last.
+                  ...(affordance.destructive ? { color: "var(--graview-warn)" } : {}),
                   ...(pending === affordance.id
                     ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
                     : {}),
@@ -1387,22 +1374,92 @@ export function Trail({
     color: "var(--graview-accent)",
   } as const;
 
+  /*
+   * The home crumb appears only once you have LEFT home.
+   *
+   * Standing on it, it was a control that did nothing — clicking "This
+   * week" while looking at This week goes nowhere — printed an inch
+   * above a panel whose own heading said the same three words. Two
+   * faults from one element: a dead control and a duplicated string, on
+   * every screen of three of the four apps. Away from home it is the way
+   * back, which is the entire reason it exists.
+   */
+  /*
+   * Only once FOCUSED away from home. A raised relation is a state OF home,
+   * not a departure from it: the panel below still carries home's own title,
+   * so the crumb duplicated it an inch above, and the raised chip already
+   * holds the way back from the only thing that changed.
+   */
+  const crumb = homeLabel !== undefined && focused !== undefined;
+
+  const chips: { key: string; node: ReactNode }[] = [];
+  if (focused) {
+    chips.push({
+      key: "focused",
+      node: (
+        <button type="button" data-testid="focused" onClick={() => focus(home)} style={chip}>
+          {nameOf(store, focused.id)}
+          <span aria-hidden="true" style={{ opacity: 0.7 }}>
+            ×
+          </span>
+        </button>
+      ),
+    });
+  }
+  /*
+   * WHAT YOU MOVED, and the way to put it back.
+   *
+   * Panning and dragging are ordinary view state, so they are in the URL
+   * and they survive a reload — which means without a way to undo them
+   * a scene someone nudged stays nudged for ever. It sits in the trail
+   * with the other things you can back out of, because that is what it
+   * is.
+   */
+  if (moved) {
+    chips.push({
+      key: "moved",
+      node: (
+        <button
+          type="button"
+          data-testid="moved"
+          onClick={() => go(withoutMoves(view))}
+          title="Put the camera and everything you dragged back where the layout wanted them"
+          style={chip}
+        >
+          moved
+          <span aria-hidden="true" style={{ opacity: 0.7 }}>
+            ×
+          </span>
+        </button>
+      ),
+    });
+  }
+  if (view.relation) {
+    chips.push({
+      key: "raised",
+      node: (
+        <button
+          type="button"
+          data-testid="raised"
+          onClick={() => show(null)}
+          title={`Stop showing ${plural(view.relation!)}`}
+          style={chip}
+        >
+          {plural(view.relation)}
+          <span aria-hidden="true" style={{ opacity: 0.7 }}>
+            ×
+          </span>
+        </button>
+      ),
+    });
+  }
+
   return (
     <nav
       aria-label="View"
       style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, minWidth: 0 }}
     >
-      {/*
-        * The home crumb appears only once you have LEFT home.
-        *
-        * Standing on it, it was a control that did nothing — clicking "This
-        * week" while looking at This week goes nowhere — printed an inch
-        * above a panel whose own heading said the same three words. Two
-        * faults from one element: a dead control and a duplicated string, on
-        * every screen of three of the four apps. Away from home it is the way
-        * back, which is the entire reason it exists.
-        */}
-      {homeLabel === undefined || !(focused || view.relation) ? null : (
+      {crumb ? (
         <button
           type="button"
           onClick={() => focus(home)}
@@ -1417,63 +1474,17 @@ export function Trail({
         >
           {homeLabel}
         </button>
-      )}
-      {focused ? (
-        <>
-          {/* The separator still comes first without a home crumb: it says
-              "further in from what is to my left", which is the switcher. */}
-          <span style={{ color: "var(--graview-ink-faint)" }}>›</span>
-          <button type="button" data-testid="focused" onClick={() => focus(home)} style={chip}>
-            {nameOf(store, focused.id)}
-            <span aria-hidden="true" style={{ opacity: 0.7 }}>
-              ×
-            </span>
-          </button>
-        </>
       ) : null}
-      {/*
-        * WHAT YOU MOVED, and the way to put it back.
-        *
-        * Panning and dragging are ordinary view state, so they are in the URL
-        * and they survive a reload — which means without a way to undo them
-        * a scene someone nudged stays nudged for ever. It sits in the trail
-        * with the other things you can back out of, because that is what it
-        * is.
-        */}
-      {moved ? (
-        <>
-          <span style={{ color: "var(--graview-ink-faint)" }}>›</span>
-          <button
-            type="button"
-            data-testid="moved"
-            onClick={() => go(withoutMoves(view))}
-            title="Put the camera and everything you dragged back where the layout wanted them"
-            style={chip}
-          >
-            moved
-            <span aria-hidden="true" style={{ opacity: 0.7 }}>
-              ×
-            </span>
-          </button>
-        </>
-      ) : null}
-      {view.relation ? (
-        <>
-          <span style={{ color: "var(--graview-ink-faint)" }}>›</span>
-          <button
-            type="button"
-            data-testid="raised"
-            onClick={() => show(null)}
-            title={`Stop showing ${plural(view.relation)}`}
-            style={chip}
-          >
-            {plural(view.relation)}
-            <span aria-hidden="true" style={{ opacity: 0.7 }}>
-              ×
-            </span>
-          </button>
-        </>
-      ) : null}
+      {/* A separator separates: it appears between two things, never as a
+          leader on the first. With no home crumb the first chip opens the
+          trail bare, because a "›" pointing at nothing was read as a
+          rendering fault — which it was. */}
+      {chips.map(({ key, node }, index) => (
+        <Fragment key={key}>
+          {crumb || index > 0 ? <span style={{ color: "var(--graview-ink-faint)" }}>›</span> : null}
+          {node}
+        </Fragment>
+      ))}
       {children}
     </nav>
   );

@@ -67,6 +67,7 @@ export const retireCapability = defineMutation(
   {
     title: "Stop tracking it",
     description: "Remove a capability from the things the desk watches.",
+    destructive: true,
     subject: { kinds: ["capability"], arg: "id" },
     input: z.object({ id: nodeRef(["capability"]) }),
     describe: (args, graph) => `Stop tracking ${labelOf(graph as Reader, args.id)}`,

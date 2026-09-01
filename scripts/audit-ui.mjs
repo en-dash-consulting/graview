@@ -26,6 +26,9 @@ const APPS = {
     lists: async () => {},
     week: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The week" }).click(); },
     selected: async (p) => { await p.click('[data-graview-pick="t-deposit"]'); },
+    // Every existing state left plane 1 empty, which is how minus-one-pixel
+    // band arithmetic sat unseen: nothing ever measured a raised relation.
+    raised: async (p) => { await p.click('[data-graview-view="kind:list"]'); },
     travelled: async (p) => { await p.dblclick('[data-graview-pick="t-deposit"]'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
   } },
@@ -39,6 +42,7 @@ const APPS = {
   proposal: { port: 5191, ready: "__proposalReady", states: {
     home: async () => {},
     selected: async (p) => { const k = await p.getAttribute("[data-graview-pick]", "data-graview-pick"); await p.click(`[data-graview-pick="${k}"]`); },
+    raised: async (p) => { await p.click('[data-graview-view="kind:requirement"]'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
   } },
   the coaching example: { port: 5192, ready: "__the coaching exampleReady", states: {
@@ -46,6 +50,9 @@ const APPS = {
     training: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "What we train" }).click(); },
     week: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The week" }).click(); },
     selected: async (p) => { await p.click('[data-graview-pick="p-amara"]'); },
+    // The exact screen the raised-relation collapse was reported from: the
+    // team place with Drills raised, and one drill selected.
+    raised: async (p) => { await p.click('[data-graview-view="kind:drill"]'); await p.waitForTimeout(900); const d = await p.getAttribute('[data-graview-plane="1"]', "data-graview-view"); await p.click(`[data-graview-view="${d}"]`); },
     travelled: async (p) => { await p.dblclick('[data-graview-pick="p-amara"]'); },
     problem: async (p) => { await p.click('[data-testid="standing"]'); await p.waitForTimeout(400); await p.click('[data-testid="problems"] li:nth-child(4) button'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
@@ -160,6 +167,14 @@ const audit = () => {
   const seen = new Map();
   for (const el of document.querySelectorAll("h1,h2,h3,strong,button,[data-testid=focused],nav *")) {
     if (el.children.length > 0) continue;
+    /*
+     * A RAISED card duplicating its origin's title is the design, not the
+     * smell: keeping the origin legible while its members stand on plane 1
+     * is an acceptance criterion, and the same node drawn in two places
+     * carries the same name both times. Likewise the strip, which exists to
+     * name the selection the way a crumb names the focus.
+     */
+    if (el.closest('[data-graview-plane="1"], [data-testid="inspector-strip"]')) continue;
     const t = (el.textContent ?? "").trim();
     if (t.length < 6) continue;
     seen.set(t, (seen.get(t) ?? 0) + 1);
@@ -174,19 +189,62 @@ const audit = () => {
   const crumb = (document.querySelector("[data-testid=focused]")?.textContent ?? "")
     .replace(/\s*×\s*$/, "")
     .trim();
+  // The raised chip names the raised relation the way the crumb names the
+  // focus — and the group it names deliberately stays visible below.
+  const raisedChip = (document.querySelector("[data-testid=raised]")?.textContent ?? "")
+    .replace(/\s*×\s*$/, "")
+    .trim();
   const repeats = [...seen.entries()]
-    .filter(([t, n]) => n > 1 && t !== crumb)
+    .filter(([t, n]) => n > 1 && t !== crumb && t !== raisedChip)
     .map(([t, n]) => `${t} x${n}`);
 
-  /* Chrome sitting on the scene. */
+  /*
+   * Chrome sitting on the CONTENT.
+   *
+   * The strip is an elevated transient surface now — it floats in front of
+   * the scene instead of reserving a band of it, and hovering over the
+   * constant kinds shelf while a selection is open is the design, not a
+   * defect: the shelf is a map, the strip is dismissible, and the elevation
+   * shadow says which is nearer. What would still be wrong is the strip
+   * sitting on the thing you are actually working with — the focus or a
+   * raised card — so that is what this counts.
+   */
   const strip = document.querySelector('[data-testid="inspector-strip"]');
   const covered = [];
   if (strip && !document.querySelector('[role="dialog"]')) {
     const s = box(strip);
     for (const v of views) {
-      const o = area(box(v), s);
-      if (o > 200) covered.push({ id: v.dataset.graviewView, overlap: Math.round(o) });
+      if (Number(v.dataset.graviewPlane) >= 2) continue;
+      // The PANEL someone can see, not the band slot the layout allotted:
+      // a host is the full band with the view centred inside it, and the
+      // strip sitting on a slot's empty margin covers nothing.
+      const inner = v.querySelector('[data-graview-primitive="panel"], .graview-kind-card') ?? v;
+      const b = box(inner);
+      const o = area(b, s);
+      // A transient surface may lap a panel's margin; sitting on a real
+      // share of it is what covering means.
+      if (o > 200 && o > b.width * b.height * 0.06)
+        covered.push({ id: v.dataset.graviewView, overlap: Math.round(o) });
     }
+  }
+
+  /* The board's own arrangement: no slot on top of another, and no slot
+     clipped by the pitch edge — the two ways a shrinking pitch failed, kept
+     failing, and never showed up in a count. */
+  const boardEl = document.querySelector('[data-graview-primitive="board"]');
+  const board = [];
+  if (boardEl) {
+    const pitch = box(boardEl);
+    const slots = [...boardEl.querySelectorAll("[data-graview-slot]")]
+      .filter(visible)
+      .map((el) => ({ id: el.dataset.graviewSlot, b: box(el) }));
+    for (const { id, b } of slots) {
+      if (b.left < pitch.left - 2 || b.right > pitch.right + 2 || b.top < pitch.top - 2 || b.bottom > pitch.bottom + 2)
+        board.push(`${id} clipped by the pitch edge`);
+    }
+    for (let i = 0; i < slots.length; i++)
+      for (let j = i + 1; j < slots.length; j++)
+        if (area(slots[i].b, slots[j].b) > 40) board.push(`${slots[i].id} overlaps ${slots[j].id}`);
   }
 
   /* How much of the stage carries anything at all. */
@@ -214,7 +272,7 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, repeats, covered, fill, inspector };
+  return { collisions: collisions.slice(0, 8), small, cut, repeats, covered, board, fill, inspector };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -259,6 +317,7 @@ for (const s of report.screens) {
   const notes = [
     s.collisions.length ? `${s.collisions.length} card collisions (worst ${s.collisions[0].share}%)` : "",
     s.covered.length ? `strip covers ${s.covered.length}` : "",
+    s.board?.length ? `board: ${s.board[0]}${s.board.length > 1 ? ` +${s.board.length - 1}` : ""}` : "",
     s.cut.length ? `${s.cut.length} cut: ${s.cut[0]}` : "",
     s.repeats.length ? `repeats: ${s.repeats.join(", ")}` : "",
     s.small.length ? `${s.small.length} controls under 24px` : "",

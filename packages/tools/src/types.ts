@@ -45,6 +45,8 @@ export interface Affordance {
   readonly batch?: readonly Readonly<Record<string, unknown>>[];
   /** Higher sorts first. */
   readonly score: number;
+  /** Loses something a person made. Listed last, and marked, everywhere. */
+  readonly destructive?: boolean;
   /** The observation that produced it, in the interface's own words. */
   readonly why: string;
   /** Nodes this acts on, for highlighting across planes. */
