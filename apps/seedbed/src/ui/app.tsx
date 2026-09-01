@@ -3,6 +3,7 @@ import {
   GraviewProvider,
   Scene,
   useGraph,
+  useGraview,
   useUrlSync,
   type Scheme,
   type SceneProps,
@@ -19,7 +20,7 @@ import {
   Trail,
   Wordmark,
 } from "@graview/primitives";
-import type { ToolCall } from "@graview/tools";
+import { templateIntelligence, type ToolCall } from "@graview/tools";
 import { useCallback, useMemo, useState } from "react";
 import { createSeedbedStore, type SeedbedStore } from "../domain/app.js";
 import { seedbedBrand } from "../domain/brand.js";
@@ -186,6 +187,7 @@ function CommandBar({
  * import path, no fixture file, no bypass.
  */
 function StarterGarden({ onCall }: { onCall: (call: ToolCall) => void }) {
+  const { store } = useGraview<S>();
   const nodes = useGraph();
   const empty = nodes.length === 0;
 
@@ -199,17 +201,19 @@ function StarterGarden({ onCall }: { onCall: (call: ToolCall) => void }) {
       idle="The garden is planted"
       onCall={onCall}
       run={async (agent) => {
-        await agent.run("add-gardener", { label: "June" });
-        await agent.run("add-gardener", { label: "Ravi" });
-        await agent.run("add-plot", { label: "Plot 1", beds: 4 });
-        await agent.run("add-plot", { label: "Plot 2", beds: 3 });
-        await agent.run("adopt-rule", {});
         /*
-         * Deliberately HALF a garden: the rule fires the moment it lands,
-         * because neither plot has a caretaker yet — so the first thing the
-         * seat teaches is not "data appeared" but "the graph argues back",
-         * and the repairs it names are the next click.
+         * The seat asks the INTELLIGENCE SEAM, not a script: the starter
+         * provider proposes from the declaration alone — a creator per
+         * empty kind, honest arguments off the derived forms — and each
+         * proposal applies as an ordinary attributed mutation. Swap in
+         * `llmIntelligence({ complete })` and nothing else changes; that
+         * is the seam working. The rule lands with untended plots, so the
+         * first thing the seat teaches is that the graph argues back.
          */
+        const starter = templateIntelligence<S>();
+        for (const proposal of await starter.propose(store)) {
+          await agent.run(proposal.mutation, { ...proposal.args });
+        }
       }}
     />
   );

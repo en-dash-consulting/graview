@@ -1,7 +1,7 @@
 import type { AnySchema, NodeOfSchema, Refusal, Store, Violation } from "@graview/core";
 
 /** Which provider contributed an action. Ranking reads this. */
-export type ProviderName = "invariant" | "structure" | "schema" | "lens" | "llm";
+export type ProviderName = "invariant" | "structure" | "schema" | "lens" | "llm" | "insight";
 
 /** An argument the action still needs, and what would satisfy it. */
 import type { ArgShape } from "@graview/core";

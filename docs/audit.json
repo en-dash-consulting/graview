@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T06:59:41.609Z",
+  "at": "2026-09-01T07:10:53.755Z",
   "screens": [
     {
       "app": "todo",
@@ -347,8 +347,8 @@
       "inspector": {
         "shown": 1,
         "hidden": 0,
-        "size": "236x79",
-        "text": "Gardeners· double-click opens×Welcome a gardener …"
+        "size": "236x121",
+        "text": "Gardeners· double-click opens×Nothing here yet, though Plots expect to connect to theseWel"
       }
     },
     {

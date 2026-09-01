@@ -1,5 +1,5 @@
 import { checkApp } from "@graview/core";
-import { deriveAffordances, createToolRuntime } from "@graview/tools";
+import { deriveAffordances, createToolRuntime, llmIntelligence, templateIntelligence } from "@graview/tools";
 import { EMPTY_VIEW, kindCardId, layout } from "@graview/layout";
 import { GraviewProvider, Scene } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -60,6 +60,28 @@ describe("the empty state is generative", () => {
       kindSelection: ["planting"],
     });
     expect(affordances.map((a) => a.mutation)).not.toContain("sow");
+  });
+});
+
+describe("the intelligence seam, at zero", () => {
+  it("proposes starter data from the declaration alone — no model, no key", async () => {
+    const proposals = await templateIntelligence().propose(createSeedbedUiStore());
+    const names = proposals.map((p) => p.mutation).sort();
+    // A creator per empty kind whose form can honestly be filled; sowing
+    // waits for a plot to exist rather than faking a reference.
+    expect(names).toEqual(["add-gardener", "add-plot", "adopt-rule"]);
+  });
+
+  it("takes a model's proposals through the same validation gate", async () => {
+    const model = llmIntelligence({
+      name: "fake",
+      may: ["add-gardener"],
+      complete: async () => '[{"mutation":"add-gardener","args":{"label":"Wren"},"why":"a garden needs hands"}]',
+    });
+    const proposals = await model.propose(createSeedbedUiStore());
+    expect(proposals).toEqual([
+      { mutation: "add-gardener", args: { label: "Wren" }, why: "a garden needs hands" },
+    ]);
   });
 });
 

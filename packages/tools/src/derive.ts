@@ -1,4 +1,5 @@
 import type { AnySchema, NodeOfSchema, Principal, Store } from "@graview/core";
+import { insightProvider } from "./providers/insight.js";
 import { invariantProvider } from "./providers/invariant.js";
 import { schemaProvider } from "./providers/schema.js";
 import { structureProvider } from "./providers/structure.js";
@@ -42,7 +43,7 @@ export interface DeriveOptions<S extends AnySchema> {
  * knows which lens is active and whether an LLM is available at all.
  */
 export function defaultProviders<S extends AnySchema>(): AffordanceProvider<S>[] {
-  return [invariantProvider<S>(), structureProvider<S>(), schemaProvider<S>()];
+  return [invariantProvider<S>(), structureProvider<S>(), schemaProvider<S>(), insightProvider<S>()];
 }
 
 /**

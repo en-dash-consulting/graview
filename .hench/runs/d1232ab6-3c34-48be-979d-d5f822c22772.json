@@ -1,0 +1,28 @@
+{
+  "id": "d1232ab6-3c34-48be-979d-d5f822c22772",
+  "taskId": "8ebbc831-53db-4671-a614-a6e1fd2ac05e",
+  "taskTitle": "Intelligence is a graph capability",
+  "startedAt": "2026-09-01T07:12:38.847Z",
+  "finishedAt": "2026-09-01T07:12:38.847Z",
+  "status": "completed",
+  "turns": 31,
+  "summary": "One seam, three trust layers: graph-native insight provider, LLM behind one completion function, external agents over the tool surface; declared per app, allowlisted, checked",
+  "tokenUsage": {
+    "input": 62,
+    "output": 45593,
+    "cacheCreationInput": 62953,
+    "cacheReadInput": 13778454
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 62,
+    "output": 45593,
+    "cached": 13841407,
+    "total": 13887062
+  }
+}
