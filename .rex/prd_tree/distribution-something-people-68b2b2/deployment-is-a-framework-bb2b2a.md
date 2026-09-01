@@ -1,0 +1,21 @@
+---
+id: "bb2b2aea-ce57-48db-8e9c-a1d886fdc5b1"
+level: "feature"
+title: "Deployment is a framework concern: the ship subpackage"
+status: "pending"
+priority: "high"
+tags:
+  - "deployment"
+  - "migrations"
+  - "persistence"
+  - "ops"
+  - "sdk"
+source: "Nick, 2026-09-01: \"some amount of deployment help/opinionation could/should live in the framework as well. is it a subpackage for the deployment components (incl shit like data migrations), and then a separate repo for graview-saas...\""
+acceptanceCriteria:
+  - "A @graview/ship (name TBD) package holds what EVERY deployment needs, hosted or self-hosted: persistence adapters made first-class (the launcher rule 'No app uses a persistence adapter' finally gets its answer), schema/data migrations, app build/export, config and principal/auth wiring, health checks"
+  - "Migrations are op-log-native: a schema change ships with a declared migration whose application is itself logged ops — authored, replayable, undoable in the same vocabulary as every other change — and graview check verifies a declaration's migrations cover its schema version history"
+  - "A self-hoster can take one defineApp declaration plus ship and get a deployable artefact with persistence and versioning, no service required — rehearsed the way smoke-install rehearses the SDK"
+  - "The boundary is written down: anything a self-hoster needs lives here; anything only the operator of a multi-tenant service needs lives in the graview-saas repo (see ../graview-saas/prd.md)"
+  - "Versioned and published like the other packages, changesets and CI included"
+description: "The framework-side half of the SaaS ambition, and useful without it. Today an app built on Graview has no story for persistence beyond an adapter nobody uses, no data migrations when a schema evolves, and no opinion about how a deployment is built, configured, upgraded or health-checked. That story belongs in the framework — it must evolve in lockstep with core's schema and op log (migrations are fundamentally an op-log concern), and self-hosters need it exactly as much as a hosted service does.\n\nThe dividing rule with the sibling graview-saas repo: ship = what one deployment needs; saas = what operating many deployments for other people needs (tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX). The service consumes ship the way any customer would, through the published packages."
+---
