@@ -37,6 +37,7 @@ description: "A framework for building applications where a typed context graph 
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | completed |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
 | [React binding — @graview/react](./react-binding-graview-react.md) | completed |
+| [Relevance is a horizon, not a delete: lifecycle, archival, and the sync flood](./relevance-is-a-horizon-not-a-728589.md) | pending |
 | [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | completed |
 | [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
 | [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |

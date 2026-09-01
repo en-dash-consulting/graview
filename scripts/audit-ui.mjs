@@ -167,6 +167,9 @@ const audit = () => {
   const seen = new Map();
   for (const el of document.querySelectorAll("h1,h2,h3,strong,button,[data-testid=focused],nav *")) {
     if (el.children.length > 0) continue;
+    // A string that is not on screen cannot repeat on it: altitude-only
+    // controls exist in the tree at display none inside the stack.
+    if (!visible(el)) continue;
     /*
      * A RAISED card duplicating its origin's title is the design, not the
      * smell: keeping the origin legible while its members stand on plane 1
@@ -174,7 +177,7 @@ const audit = () => {
      * carries the same name both times. Likewise the strip, which exists to
      * name the selection the way a crumb names the focus.
      */
-    if (el.closest('[data-graview-plane="1"], [data-testid="inspector-strip"]')) continue;
+    if (el.closest('[data-graview-plane="1"], [data-testid="inspector-strip"], .graview-kind-open')) continue;
     const t = (el.textContent ?? "").trim();
     if (t.length < 6) continue;
     seen.set(t, (seen.get(t) ?? 0) + 1);

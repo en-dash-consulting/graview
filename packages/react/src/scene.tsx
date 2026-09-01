@@ -1260,9 +1260,11 @@ function SceneViewHost({
         // blank because of it. Giving each its own box keeps them distinct
         // for the capture. The GPU still draws each wherever its plane
         // transform says; this only decides what gets rasterised.
-        // Nearer planes paint over further ones, so the focus reaching down
-        // over the arc reads as in front of it rather than as a collision.
-        zIndex: 10 - Math.round(node.plane),
+        // Nearer planes paint over further ones — and an OPENED district
+        // comes to the front outright: its roster grows over whatever is
+        // beside it, and a chip half-hidden behind the live view is a chip
+        // nobody can press.
+        zIndex: node.opened ? 11 : 10 - Math.round(node.plane),
         left: useDom ? 0 : Math.round(node.x),
         top: useDom ? 0 : Math.round(node.y),
         // Whole pixels, matching what the renderer allocates a texture for.
