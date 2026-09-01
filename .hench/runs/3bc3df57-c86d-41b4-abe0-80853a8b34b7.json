@@ -1,0 +1,28 @@
+{
+  "id": "3bc3df57-c86d-41b4-abe0-80853a8b34b7",
+  "taskId": "db5b1b45-27a5-499e-b3ac-ce16f68a4ce3",
+  "taskTitle": "The menu scales: search, pins, and what you actually use",
+  "startedAt": "2026-09-01T20:11:00Z",
+  "finishedAt": "2026-09-01T20:27:28.537Z",
+  "status": "completed",
+  "turns": 107,
+  "summary": "fold-gated searcher with sole-survivor Enter, dev+user pins with localStorage persistence, deterministic op-log usage boost — bands structural in the sort; verify-menu harness green",
+  "tokenUsage": {
+    "input": 214,
+    "output": 131948,
+    "cacheCreationInput": 160516,
+    "cacheReadInput": 40427996
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 214,
+    "output": 131948,
+    "cached": 40588512,
+    "total": 40720674
+  }
+}
