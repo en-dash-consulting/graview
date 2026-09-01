@@ -14,12 +14,10 @@
 import { spawn } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { engineName, launchEngine } from "./lib/engine.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const BROWSER =
-  process.env["GRAVIEW_BROWSER"] ??
-  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+const ENGINE = engineName();
 
 const SEATS = {
   todo: { port: 5193, ready: "__todoReady", testId: "agent-tidy", query: "&today=2026-09-01" },
@@ -40,7 +38,7 @@ function startVite(name, port) {
 const criteria = [];
 const check = (name, ok, detail = "") => { criteria.push({ name, ok, detail }); };
 
-const browser = await chromium.launch({ executablePath: BROWSER, headless: true });
+const browser = await launchEngine(ENGINE, { headless: true });
 try {
   for (const [app, seat] of Object.entries(SEATS)) {
     const vite = await startVite(app, seat.port);

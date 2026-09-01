@@ -85,3 +85,25 @@ rather than merely absent from the schema.
   reasons from, and "get the graph" is worse than "read the whole graph: start
   here when you need the shape of the domain rather than one thing in it".
 - Whether the agent should be doing this at all.
+
+## The seat is one of four surfaces on one seam
+
+Everything intelligent travels the same contract — validated proposed calls
+to declared mutations — so adding AI is choosing a provider, never a second
+path to the store:
+
+- **Providers** whisper suggestions into the inspector (`insightProvider`
+  ships in the defaults; `intelligenceProvider(...)` wraps any
+  `Intelligence`).
+- **The seat** (this skill) runs one-press turns.
+- **The chat** — `<ChatPanel />` in the bar — answers questions in words.
+  Keyless it answers from the graph (`graphResponder`: standings, named
+  things, when/who, mutations phrased in their own titles); a model plugs in
+  through one completion function (`llmResponder`, `xaiCompletion`,
+  `localCompletion`), chosen by the person in the panel's gear.
+- **External agents** arrive over the derived tool surface with a scoped
+  principal.
+
+Declare what runs where on the app: `intelligence: [{ name, kind:
+"graph" | "llm" | "external", may: [...mutations] }]` — `graview check`
+refuses an allowlist naming a mutation nobody registered.

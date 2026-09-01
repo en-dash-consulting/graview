@@ -62,6 +62,13 @@ naming a mutation is why selecting an out-of-balance set of duties surfaces
    needing an argument lists it, and the framework offers real candidates for
    it — the interface never wires up a picker per mutation.
 
+## The horizon
+
+A scoped invariant judges only CURRENT subjects — nodes retired under their
+kind's declared `lifecycle` are skipped, because a rule about last term's
+agreement is noise, not a violation. An invariant that genuinely audits
+history says so with `judgesPast: true`.
+
 ## Then find out whether it worked
 
 ```sh

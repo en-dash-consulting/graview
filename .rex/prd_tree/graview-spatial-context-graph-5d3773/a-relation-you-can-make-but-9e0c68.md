@@ -2,10 +2,12 @@
 id: "9e0c6879-e15a-4c9c-adc8-64cf7bd08bb3"
 level: "feature"
 title: "A relation you can make but never unmake: edge symmetry, checked and offered"
-status: "in_progress"
+status: "completed"
 priority: "high"
 source: "Nick, 2026-09-01: \"in the The coaching example, there's no way to deallocate a position from a player, to say they cannot play a position anymore... graview should provide this more ootb\""
 startedAt: "2026-09-01T18:27:08.614Z"
+completedAt: "2026-09-01T18:38:35.978Z"
+endedAt: "2026-09-01T18:38:35.978Z"
 acceptanceCriteria:
   - "The coaching example: a player can stop being able to play a position — offered on the player, on the position, and on the drawn can-play line, with candidates scoped to what is attached"
   - "Forgetting a position someone is currently picked at surfaces selection-is-legal's violation and repairs immediately"
@@ -13,6 +15,6 @@ acceptanceCriteria:
   - "All example apps pass the new finding — each edge kind either has its severer or declares why not"
   - "Harness or unit coverage pins the the coaching example flow end to end"
 description: "The coaching example can teach a position (teach-position writes a can-play edge) but nothing can ever unteach one — a player who stops being a keeper is a keeper forever. That's the app bug; the framework lesson is the shape of it: an edge kind with a way in and no way out is an asymmetry the declaration can expose and the check can catch, which is what \"ootb\" honestly means here — mutations stay named, typed acts (no auto-generated writes bypassing the culture), but the framework refuses to let the asymmetry ship silently.\n\nWork: (1) SQUAD — a forget-position mutation (severs: [\"can-play\"], subject player or position; the reverse-offering seam then surfaces it from either end and from the drawn line itself; candidates already scope to what is attached). Guard the interaction with selection-is-legal: forgetting a position someone is currently picked at should surface the violation immediately with its repairs. Declare connects: [\"can-play\"] on teach-position while there. (2) FRAMEWORK — graview check gains an edge-symmetry finding: for every edge kind, if some mutation declares connects (or observably writes it via a subject-bound add) and none declares severs for it, warn `edge-without-severer` — \"a relation you can make but never unmake\" — with the fix naming the severs declaration. Kinds may suppress per edge with an explicit declaration (e.g. append-only history edges are legitimate; the suppression is the documentation). (3) Sweep the example apps for the same hole (the household example protects/justifies, todo explains, etc.) and either add the severing act or declare the edge append-only."
-lastModified: "2026-09-01T18:27:08.624Z"
+lastModified: "2026-09-01T18:38:35.989Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

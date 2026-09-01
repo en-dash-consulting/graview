@@ -14,11 +14,16 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
+// The GPU capture probes genuinely need Canary; the path lives in
+// scripts/lib/engine.mjs for the harnesses, and here only as a default.
+const CANARY_DEFAULT =
+  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
 const BROWSER =
   process.env["GRAVIEW_BROWSER"] ??
-  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+  CANARY_DEFAULT;
 const FLAGS = [
   "--enable-blink-features=CanvasDrawElement",
   "--enable-unsafe-webgpu",

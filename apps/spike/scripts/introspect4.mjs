@@ -12,8 +12,11 @@ const HTML = `<!doctype html><meta charset="utf-8"><style>body{margin:0;backgrou
 </script>`;
 const server = createServer((_q, r) => { r.writeHead(200, {"content-type":"text/html"}); r.end(HTML); });
 await new Promise((r) => server.listen(5188, r));
+// A GPU-capture probe: Canary genuinely required, GRAVIEW_BROWSER overrides.
 const browser = await chromium.launch({
-  executablePath: "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+  executablePath:
+    process.env["GRAVIEW_BROWSER"] ??
+    "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
   headless: true, args: ["--enable-blink-features=CanvasDrawElement", "--enable-unsafe-webgpu"] });
 const page = await browser.newPage();
 page.on("pageerror", e => console.error("PAGEERROR", e.message));

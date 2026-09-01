@@ -16,13 +16,11 @@ import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { engineName, launchEngine } from "./lib/engine.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
-const BROWSER =
-  process.env["GRAVIEW_BROWSER"] ??
-  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+const ENGINE = engineName();
 
 function startVite(name, port) {
   const child = spawn("npx", ["vite"], {
@@ -39,7 +37,7 @@ function startVite(name, port) {
   });
 }
 
-const report = { at: new Date().toISOString(), checks: {} };
+const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
 let browser;
 let vite;
 
@@ -55,7 +53,7 @@ const hygiene = (page) =>
 
 try {
   vite = await startVite("todo", 5193);
-  browser = await chromium.launch({ executablePath: BROWSER, headless: true });
+  browser = await launchEngine(ENGINE, { headless: true });
 
   /* ---------------------------------------------------- the phone, first */
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });

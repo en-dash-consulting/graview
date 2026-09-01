@@ -117,6 +117,7 @@ pnpm spike         # capture, composite, pointer routing, capture budget
 pnpm capture       # the capture path survives a pointer, and clicks still route
 pnpm a11y          # the real accessibility tree, keyboard order, axe-core
 
+pnpm engines       # the core subset in Chromium, WebKit AND Firefox, per-engine verdicts
 pnpm direct        # act in place, travel deliberately — 19 criteria
 pnpm shrunk        # the shrunk interface is the interface, scaled
 pnpm watching      # an agent turn seen from outside the plane stack
@@ -136,6 +137,33 @@ pnpm skills        # install the authoring skills for Claude Code and Codex
 
 Each writes its verdict to `docs/`, as criteria rather than as a pass count:
 when one fails it names the claim that stopped being true.
+
+Every harness takes `--engine=chromium|webkit|firefox` (or `GRAVIEW_ENGINE`),
+and none hardcodes a browser binary: the engine choice lives in
+`scripts/lib/engine.mjs`, and Chrome Canary is required only where the GPU
+capture flag genuinely is (`pnpm capture`, `pnpm shrunk`, the spikes).
+
+### Supported browsers
+
+The DOM path — the one that ships — is verified in **Chromium, WebKit and
+Firefox** by `pnpm engines`, which runs audit, direct manipulation, the pages
+face at 390×844 and a survey pass per engine and writes per-engine verdicts to
+`docs/engine-matrix.json`. iOS Safari is the mobile browser, so WebKit is a
+launch gate rather than polish.
+
+The floors, and what happens beneath them:
+
+- **`document.adoptedStyleSheets`** is the hard floor: Safari 16.4+,
+  Firefox 101+, Chromium 99+. Below it the apps do not style themselves.
+- **`@property`** (Chromium 85+, Safari 16.4+, Firefox 128+) drives the
+  altitude morph into the Graview. Where it is missing the transition
+  degrades to a clean cut — verified, not assumed: the matrix launches
+  Firefox with registered properties disabled and measures the cut.
+- **The local-AI rung** needs WebGPU or Chrome's Prompt API. In an engine
+  with neither, the chat answers from the graph and the header says why —
+  also verified by the matrix, with WebGPU switched off.
+- **The GPU capture path** (`?renderer=gpu`) is Chromium 147+ behind a flag,
+  experimental and opt-in by nature. No other engine has HTML-in-Canvas.
 
 ## Three apps, on purpose
 

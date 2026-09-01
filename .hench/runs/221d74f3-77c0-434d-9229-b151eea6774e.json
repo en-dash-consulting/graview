@@ -1,0 +1,28 @@
+{
+  "id": "221d74f3-77c0-434d-9229-b151eea6774e",
+  "taskId": "9e0c6879-e15a-4c9c-adc8-64cf7bd08bb3",
+  "taskTitle": "A relation you can make but never unmake: edge symmetry, checked and offered",
+  "startedAt": "2026-09-01T18:39:13.327Z",
+  "finishedAt": "2026-09-01T18:39:13.327Z",
+  "status": "completed",
+  "turns": 165,
+  "summary": "edge-without-severer finding + appendOnly declaration in core; the coaching example forget-position offered from player/position/line; severers and append-only declarations swept across all six apps",
+  "tokenUsage": {
+    "input": 330,
+    "output": 170156,
+    "cacheCreationInput": 625608,
+    "cacheReadInput": 22004826
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 330,
+    "output": 170156,
+    "cached": 22630434,
+    "total": 22800920
+  }
+}

@@ -20,12 +20,10 @@ import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { engineName, launchEngine } from "./lib/engine.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const BROWSER =
-  process.env["GRAVIEW_BROWSER"] ??
-  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+const ENGINE = engineName();
 
 function startVite(name, port) {
   const child = spawn("npx", ["vite"], {
@@ -48,7 +46,7 @@ function startVite(name, port) {
   });
 }
 
-const report = { at: new Date().toISOString(), steps: [] };
+const report = { at: new Date().toISOString(), engine: ENGINE, steps: [] };
 let browser;
 let vite;
 
@@ -72,11 +70,7 @@ const note = async (page, step) =>
 
 try {
   vite = await startVite("todo", 5193);
-  browser = await chromium.launch({
-    executablePath: BROWSER,
-    headless: !process.argv.includes("--headed"),
-    args: ["--enable-blink-features=CanvasDrawElement"],
-  });
+  browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
   const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });

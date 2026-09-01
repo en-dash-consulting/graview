@@ -5,7 +5,7 @@ description: Start a product on Graview in its own repository — the shape of t
 
 # Start a product on Graview
 
-Graview ships as six packages. A product built on it lives in **its own
+Graview ships as eight packages. A product built on it lives in **its own
 repository** and depends on them the way any other consumer does. This is the
 setup that gets you from nothing to something that can tell you when you have
 broken it.
@@ -38,6 +38,8 @@ whole declaration stays inspectable by a build, a CLI and an agent.
    ```sh
    pnpm add @graview/core @graview/layout @graview/tools @graview/render \
             @graview/react @graview/primitives react react-dom zod
+   # when you want them: @graview/pages (the routed, responsive face)
+   #                     @graview/ship  (persistence, migrations, deploy)
    ```
    Only reach for `@graview/render/gpu` if you want the experimental capture
    path; the main entry is pure geometry and the DOM path is what ships.
@@ -46,18 +48,39 @@ whole declaration stays inspectable by a build, a CLI and an agent.
    first. The loop you want running on day one is: declare → `graview check` →
    look at it → declare more.
 
-3. **Take the shell.** `Inspector`, `Standing`, `ActivityRail`, `BackOut`,
-   `Trail`, `OverviewButton` and `Wordmark` from `@graview/primitives` are the
-   parts of an interface that are not about your domain. A second app's shell
-   came to about eighty lines; if yours is longer, you are probably rebuilding
-   something derived.
+3. **Declare the seams that make the interface smart.** These are one-line
+   declarations on mutations and kinds, and every derived surface reads them:
+   - `creates: ["<kind>"]` on every mutation that adds a kind — an EMPTY kind
+     card offers its own beginnings, which is the whole onboarding of a blank
+     graph (see `apps/seedbed`, the example that ships with no data).
+   - `connects: [...]` / `severs: [...]` naming the edge kinds a mutation
+     makes or breaks — this is what makes drawn LINES selectable and
+     actionable, offers the act from either endpoint, scopes candidates to
+     what is actually attached, and hides a severing act with nothing to
+     sever.
+   - `lifecycle: { field, retired }` on kinds whose members expire — counts
+     advertise "+N past" instead of drowning, and `past=1` widens the view.
+   - `subject: { kinds, arg }` on every mutation that acts on a thing — the
+     seam selection-derived actions come from.
 
-4. **Register default views first, override later.** `registerDefaultViews`
+4. **Take the shell.** `Inspector`, `Standing`, `ActivityRail`, `ChatPanel`,
+   `QuickRelations`, `RelationKey`, `BackOut`, `Trail`, `OverviewButton` and
+   `Wordmark` from `@graview/primitives` are the parts of an interface that
+   are not about your domain — including a chat seat that answers from the
+   graph with no API key. A shell is about eighty lines; if yours is longer,
+   you are probably rebuilding something derived.
+
+   The routed face is one branch in `main.tsx`: when the path starts with
+   `/pages`, render `<PagesApp basename="/pages" context={{ store, brand }} />`
+   from `@graview/pages` — lists, records, forms and problems derived from
+   the same declaration, at phone widths.
+
+5. **Register default views first, override later.** `registerDefaultViews`
    means a new kind renders sensibly at all three fidelities before you write
    anything. Write a custom view for a kind when the generic one is genuinely
    wrong, not on principle.
 
-5. **Add the check to your build.** In `package.json`:
+6. **Add the check to your build.** In `package.json`:
    ```json
    "scripts": {
      "check": "graview check ./dist/domain/app.js",
@@ -88,6 +111,23 @@ Two things worth stealing later rather than at the start: a browser harness
 that walks your own acceptance criteria and writes a JSON verdict (the
 framework has five, and each names the claim that stopped being true rather
 than a pass count), and a persistence adapter test if you are not using memory.
+
+## Supported browsers
+
+Build for the DOM path: it runs in Chromium, WebKit and Firefox, and the
+framework verifies all three (`pnpm engines` in the framework repo). What to
+tell your users:
+
+- The hard floor is `document.adoptedStyleSheets`: Safari 16.4+,
+  Firefox 101+, Chromium 99+.
+- The altitude morph rides `@property` (Firefox 128+, Safari 16.4+); where
+  that is missing it degrades to a clean cut on its own — do not write a
+  fallback for it.
+- The chat's local-model rung needs WebGPU or Chrome's Prompt API. Without
+  either, the graph answers and the header says why. Nothing to do, but do
+  not promise on-device AI to Safari users without checking.
+- The GPU capture path (`?renderer=gpu`) is Chromium-only, experimental and
+  opt-in. Never make it a requirement of your product.
 
 ## Then find out whether it worked
 

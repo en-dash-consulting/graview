@@ -205,13 +205,18 @@ export function ChatPanel<S extends AnySchema>({
             <span style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
               Seat
             </span>
-            <span data-testid="chat-source" style={{ fontSize: 11, color: "var(--graview-ink-muted)" }}>
+            <span
+              data-testid="chat-source"
+              // The WHY rides along: "no WebGPU" is actionable, "failed" is not.
+              title={warmth?.state === "failed" ? warmth.detail : undefined}
+              style={{ fontSize: 11, color: "var(--graview-ink-muted)" }}
+            >
               {respond
                 ? "app-provided"
                 : warmth?.state === "warming"
                   ? `warming${warmth.progress !== undefined ? ` ${Math.round(warmth.progress * 100)}%` : "…"}`
                   : warmth?.state === "failed"
-                    ? "local model failed — graph answering"
+                    ? `graph answering — ${warmth.detail ?? "the local model failed"}`
                     : describeIntelligence(config)}
             </span>
             <span style={{ flex: "1 1 auto" }} />

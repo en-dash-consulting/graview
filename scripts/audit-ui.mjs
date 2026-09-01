@@ -14,12 +14,10 @@ import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { engineName, launchEngine } from "./lib/engine.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const BROWSER =
-  process.env["GRAVIEW_BROWSER"] ??
-  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+const ENGINE = engineName();
 
 const APPS = {
   todo: { port: 5193, ready: "__todoReady", query: "&today=2026-09-01", states: {
@@ -292,11 +290,11 @@ const audit = () => {
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
-const report = { at: new Date().toISOString(), screens: [] };
+const report = { at: new Date().toISOString(), engine: ENGINE, screens: [] };
 let browser;
 
 try {
-  browser = await chromium.launch({ executablePath: BROWSER, headless: !process.argv.includes("--headed") });
+  browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
   for (const [name, app] of Object.entries(APPS)) {
     if (only && only !== name) continue;
     const vite = await startVite(name, app.port);

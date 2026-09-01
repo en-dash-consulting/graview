@@ -56,6 +56,19 @@ agent tool that walks the graph.
 - `the household example/src/domain/schema.ts` — `fieldRoles` binding a calendar lens
   to a household's own field names
 
+## The declarations that keep paying
+
+- **`creates`** on the mutation that adds this kind (`creates: ["fixture"]`):
+  the empty kind card then offers "Add a fixture" by derivation — the blank
+  graph onboards itself.
+- **`lifecycle`** when members expire — `{ field: "status", retired:
+  ["played"] }` or `{ field: "until", retired: "date" }`. Every count then
+  aggregates over the horizon ("4, +12 past") instead of drowning, and
+  `graview check` refuses a lifecycle reading a missing field.
+- **A declared hue** in the brand (`accents: { fixture: 210 }`) if this kind
+  should wear a chosen colour rather than a stable hash — every chip dot,
+  district roof and the focus tag follow.
+
 ## Then find out whether it worked
 
 ```sh

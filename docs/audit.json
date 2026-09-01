@@ -1,5 +1,6 @@
 {
-  "at": "2026-09-01T17:57:24.069Z",
+  "at": "2026-09-01T20:06:41.722Z",
+  "engine": "chromium",
   "screens": [
     {
       "app": "todo",
@@ -176,9 +177,9 @@
       "board": [],
       "fill": 61,
       "inspector": {
-        "shown": 9,
+        "shown": 13,
         "hidden": 0,
-        "size": "236x477",
+        "size": "236x545",
         "text": "Booking flow remediationdeliverable· double-click opens×\"Legacy booking component is untes"
       }
     },
@@ -253,10 +254,10 @@
       "board": [],
       "fill": 62,
       "inspector": {
-        "shown": 5,
+        "shown": 6,
         "hidden": 0,
-        "size": "236x206",
-        "text": "Amaraplayer· double-click opens×Note why this is here …Rename …They can play here …its tie"
+        "size": "236x240",
+        "text": "Amaraplayer· double-click opens×Rename …its tiesPlay them here …Note why this is here …The"
       }
     },
     {
@@ -270,7 +271,7 @@
       "board": [],
       "fill": 58,
       "inspector": {
-        "shown": 12,
+        "shown": 13,
         "hidden": 0,
         "size": "236x545",
         "text": "Crossing and finishingdrill· double-click opens×Thursday session plans 65 minutes into 60 "
@@ -287,10 +288,10 @@
       "board": [],
       "fill": 29,
       "inspector": {
-        "shown": 5,
+        "shown": 6,
         "hidden": 0,
-        "size": "236x184",
-        "text": "×Note why this is here …Rename …They can play here …its tiesPlay them here …"
+        "size": "236x217",
+        "text": "×Rename …its tiesPlay them here …Note why this is here …They no longer play here …They can"
       }
     },
     {
