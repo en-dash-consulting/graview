@@ -83,6 +83,16 @@ export interface Brand {
     /** Padding multiplier. 1 is the framework's own spacing. */
     readonly density?: number;
   };
+  /**
+   * A HUE PER KIND, in degrees (0–360).
+   *
+   * The default is a stable hash — fine for "each kind looks like itself",
+   * useless for "our people are warm amber and our money is green". Declared
+   * here it reaches every surface that colours by kind (chips, districts,
+   * calendars) through one lookup, and `graview check` refuses a key that
+   * names no declared kind — a silent typo would just quietly hash instead.
+   */
+  readonly accents?: Readonly<Record<string, number>>;
   readonly schemes: Readonly<Record<Scheme, ThemeTokens>>;
 }
 

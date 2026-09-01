@@ -129,6 +129,32 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     });
   }
 
+  /*
+   * A declared kind accent must name a declared kind. A typo here would not
+   * fail — it would quietly fall back to the hash, which is the worst kind
+   * of wrong: a brand decision that looks applied and is not.
+   */
+  for (const [kind, hue] of Object.entries(app.brand?.accents ?? {})) {
+    if (!kinds.has(kind)) {
+      add({
+        severity: "error",
+        code: "brand-accent-unknown-kind",
+        where: `brand.accents["${kind}"]`,
+        message: `An accent is declared for "${kind}", which no defineNode declares.`,
+        fix: `Fix the kind name, or remove the entry. Declared: ${[...kinds].join(", ")}.`,
+      });
+    }
+    if (typeof hue !== "number" || !Number.isFinite(hue)) {
+      add({
+        severity: "error",
+        code: "brand-accent-not-a-hue",
+        where: `brand.accents["${kind}"]`,
+        message: `The accent must be a hue in degrees (a number), got ${JSON.stringify(hue)}.`,
+        fix: `Use a number 0–360, e.g. 152 for a green.`,
+      });
+    }
+  }
+
   const moduleEntries = Object.entries(app.modules ?? {});
   const owners = new Map<string, Set<string>>();
   for (const [name, module] of moduleEntries) {

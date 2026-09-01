@@ -212,3 +212,25 @@ describe("one accent is not a theme", () => {
     expect(built.missing).toEqual(["accent"]);
   });
 });
+
+describe("kind accents are declared, not hashed", () => {
+  it("check refuses an accent for an unknown kind, and a non-numeric hue", () => {
+    const thing = defineNode("thing", { fields: z.object({ label: z.string() }) });
+    const app = defineApp({
+      name: "test",
+      schema: createSchema([thing]),
+      mutations: [],
+      invariants: [],
+      brand: {
+        name: "T",
+        schemes: { dark, light },
+        accents: { thing: 120, ghost: 40, bad: "green" as never },
+      },
+    });
+    const codes = checkApp(app).findings.map((f) => f.code);
+    expect(codes).toContain("brand-accent-unknown-kind");
+    expect(codes).toContain("brand-accent-not-a-hue");
+    // "bad" earns two findings — an unknown kind AND a non-hue value.
+    expect(codes.filter((c) => c.startsWith("brand-accent"))).toHaveLength(3);
+  });
+});
