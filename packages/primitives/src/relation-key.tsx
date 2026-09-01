@@ -88,23 +88,24 @@ export function RelationKey<S extends AnySchema>() {
       data-testid="relation-key"
       style={{
         position: "absolute",
-        left: 20,
         /*
-         * Clear of the actions strip, which is fixed at the bottom CENTRE and
-         * grows to 860 pixels. On a narrow viewport its left edge reached over
-         * this, so the act of clicking a relation hid the legend you clicked
-         * it in.
+         * The TOP-LEFT corner, mirroring the altitude control top-right.
+         *
+         * The bottom-left is ring ground now — the near-left districts land
+         * there, and the key was sitting on them. The upper corners are the
+         * one part of the ellipse that stays empty at every count.
          */
-        bottom: 96,
+        left: 16,
+        top: 14,
         zIndex: 5,
         display: "grid",
-        gap: 3,
-        padding: "10px 12px",
+        gap: 1,
+        padding: "8px 10px",
         borderRadius: 10,
         border: "1px solid var(--graview-edge)",
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-low)",
-        maxWidth: 300,
+        maxWidth: 250,
       }}
     >
       <span
@@ -155,20 +156,20 @@ export function RelationKey<S extends AnySchema>() {
               outline: "revert-layer",
               cursor: "pointer",
               display: "grid",
-              gridTemplateColumns: "34px 1fr auto",
+              gridTemplateColumns: "30px 1fr auto",
               alignItems: "center",
-              gap: 9,
-              minHeight: 24,
-              padding: "3px 4px",
+              gap: 8,
+              minHeight: 23,
+              padding: "2px 4px",
               borderRadius: 6,
               opacity: lit ? 1 : 0.4,
             }}
           >
             {/* The same stroke the scene draws, from the same helpers — a key
                 whose swatch is an approximation is a key you cannot trust. */}
-            <svg width="34" height="8" aria-hidden="true" style={{ display: "block" }}>
+            <svg width="30" height="8" aria-hidden="true" style={{ display: "block" }}>
               <path
-                d="M 1 4 L 33 4"
+                d="M 1 4 L 29 4"
                 fill="none"
                 stroke={connectorStroke(style)}
                 strokeWidth={connectorWidth(style, true)}
@@ -176,7 +177,7 @@ export function RelationKey<S extends AnySchema>() {
                 strokeLinecap="round"
               />
             </svg>
-            <span style={{ fontSize: 12, color: "var(--graview-ink)" }}>{edgeKind}</span>
+            <span style={{ fontSize: 11.5, color: "var(--graview-ink)" }}>{edgeKind}</span>
             <span
               style={{
                 fontSize: 11,

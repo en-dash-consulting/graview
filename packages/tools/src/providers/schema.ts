@@ -50,6 +50,24 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           open.push({ name, shape: argShape(mutation.input, name) });
         }
 
+        /*
+         * Only actions the interface can actually ASK FOR.
+         *
+         * An open argument with no candidates and no scalar shape — a
+         * structured object, say — has no honest prompt: the strip offered a
+         * text box whose every answer failed validation, which read as a
+         * button that does nothing. The mutation still exists and an agent
+         * supplies structured arguments natively; it is just not a button.
+         * Invariant repairs are unaffected — a rule that names a repair has
+         * already decided it is offerable.
+         */
+        const askable = open.every(
+          (parameter) =>
+            (parameter.candidates?.length ?? 0) > 0 ||
+            (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
+        );
+        if (!askable) continue;
+
         const batch = nodes.map((node) => ({ [subject.arg]: node.id }));
         affordances.push({
           id: `schema:${mutation.name}`,

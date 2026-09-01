@@ -194,6 +194,28 @@ export function Inspector() {
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  /*
+   * A REFUSAL IS A RESULT, said where the button was pressed.
+   *
+   * A mutation that throws — a validation failure, a guard's own sentence —
+   * used to vanish into the console, and the strip read as a button that
+   * does nothing. The seat already surfaces its refusals on itself; this is
+   * the same honesty for every action.
+   */
+  const [failed, setFailed] = useState<string | null>(null);
+
+  const act = (affordance: Affordance, args?: Record<string, unknown>): boolean => {
+    try {
+      preview(affordance, args);
+      apply(affordance, args);
+      setFailed(null);
+      setMenuAt(null);
+      return true;
+    } catch (error) {
+      setFailed(error instanceof Error ? error.message : String(error));
+      return false;
+    }
+  };
 
   const kinds = [
     ...new Set(
@@ -207,6 +229,7 @@ export function Inspector() {
   useEffect(() => {
     setPending(null);
     setExpanded(false);
+    setFailed(null);
   }, [selection]);
 
   /*
@@ -475,6 +498,15 @@ export function Inspector() {
         )}
       </div>
 
+      {failed ? (
+        <p
+          data-testid="refused"
+          style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "var(--graview-warn)" }}
+        >
+          {failed}
+        </p>
+      ) : null}
+
       {affordances.length === 0 ? (
         /*
          * An empty action list is a RESULT, not a blank space. Saying which
@@ -543,9 +575,7 @@ export function Inspector() {
                     setPending(pending === affordance.id ? null : affordance.id);
                     return;
                   }
-                  preview(affordance);
-                  apply(affordance);
-                  setMenuAt(null);
+                  act(affordance);
                 }}
               >
                 {affordance.label}
@@ -623,10 +653,10 @@ export function Inspector() {
       {open ? (
         <AnswerArgs
           affordance={open}
+          // On a refusal the prompt stays put with the reason beside it, so
+          // a rejected answer can be corrected rather than retyped blind.
           onApply={(args) => {
-            apply(open, args);
-            setPending(null);
-            setMenuAt(null);
+            if (act(open, args)) setPending(null);
           }}
           onCancel={() => setPending(null)}
         />

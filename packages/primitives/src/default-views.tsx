@@ -300,11 +300,18 @@ export function registerDefaultViews<S extends AnySchema>(
               : `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
             // The kind you are looking at is brighter and lit, not labelled:
             // a ninety-pixel card has no room for a word that says so.
-            background: accent
-              ? `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * 1.1)), var(--graview-panel)`
-              : `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * ${
-                  secondary ? 0.28 : 0.5
-                }))`,
+            /*
+             * An OPAQUE face under the tint. A card that was only a wash of
+             * colour let every connector show through it — a road running
+             * through a building rather than behind it — and in daylight the
+             * wash alone read as a pastel sticky note.
+             */
+            backgroundColor: "var(--graview-panel)",
+            backgroundImage: `linear-gradient(hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * ${
+              accent ? 1.1 : secondary ? 0.28 : 0.5
+            })), hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * ${
+              accent ? 1.1 : secondary ? 0.28 : 0.5
+            })))`,
             boxShadow: accent ? "0 0 0 1px var(--graview-accent-dim)" : undefined,
           }}
         >
