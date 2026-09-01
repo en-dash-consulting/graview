@@ -27,7 +27,7 @@ description: "A framework for building applications where a typed context graph 
 
 | Title | Status |
 |-------|--------|
-| [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | pending |
+| [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | completed |
 | [From altitude the Graview reads as a city, not scattered slips](./from-altitude-the-graview-reads-f47fde/index.md) | completed |
 | [Graph core — @graview/core](./graph-core-graview-core/index.md) | completed |
 | [Platform capability validation](./platform-capability-validation/index.md) | completed |
