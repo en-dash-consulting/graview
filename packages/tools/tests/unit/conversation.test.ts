@@ -81,12 +81,22 @@ describe("the graph answers for itself", () => {
     ]);
   });
 
-  it("states a named thing's facts, trouble, and that trouble's repairs", async () => {
+  it("states a named thing's facts, relations in the declared words, and its trouble", async () => {
     const reply = await graphResponder()(store(), "tell me about the School run");
     expect(reply.say).toContain("School run — a duty");
-    expect(reply.say).toContain("connected to 1 thing");
+    // The relation summary speaks the declaration's own sentence.
+    expect(reply.say).toContain("who does the run: Ana");
     expect(reply.say).toContain("runs over an hour");
     expect(reply.proposals[0]?.mutation).toBe("shorten");
+    expect(reply.grounded).toBe(true);
+  });
+
+  it("puts a NAMED thing ahead of the standing selection", async () => {
+    // Asking about the School run while Bo is selected is about the run.
+    const reply = await graphResponder()(store(), "tell me about the School run", {
+      selection: ["bo"],
+    });
+    expect(reply.say).toContain("School run — a duty");
   });
 
   it('treats the selection as what "this" means', async () => {

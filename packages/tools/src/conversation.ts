@@ -23,6 +23,13 @@ import { validateProposals, type Completion, type ProposedCall } from "./intelli
 export interface ChatReply {
   readonly say: string;
   readonly proposals: readonly ProposedCall[];
+  /**
+   * True when the answer came from a branch that READ THE GRAPH — the
+   * standing, a named thing, a when/who, a phrased mutation. A grounded
+   * answer outranks any model on the ladder: a fact the graph holds must
+   * never be replaced by a fluent guess about the same fact.
+   */
+  readonly grounded?: boolean;
 }
 
 export interface ChatContext {
@@ -63,10 +70,6 @@ export function graphResponder<S extends AnySchema>(
      * "Morning school run" wins over "run".
      */
     const referents: ({ id: string; kind: string } & Record<string, unknown>)[] = [];
-    for (const id of context.selection ?? []) {
-      const node = store.graph.getNode(id);
-      if (node) referents.push(node as never);
-    }
     /*
      * Matching is TOKEN-ALIGNED and punctuation-blind, or names fail for
      * the dumbest reasons: a child stored as "child2" must be found by
@@ -92,6 +95,16 @@ export function graphResponder<S extends AnySchema>(
     for (const { node } of byLabel) {
       if (!referents.some((held) => held.id === node.id)) referents.push(node as never);
     }
+    /*
+     * The SELECTION comes after anything the message NAMED. "This" means
+     * what is selected — but a question that says "left back" out loud is
+     * about left back, and a standing selection answering it instead was
+     * the seat confidently describing the wrong thing.
+     */
+    for (const id of context.selection ?? []) {
+      const node = store.graph.getNode(id);
+      if (node && !referents.some((held) => held.id === node.id)) referents.push(node as never);
+    }
 
     const violations = store.violations();
     const readyRepairs = (subset = violations): ProposedCall[] =>
@@ -105,7 +118,7 @@ export function graphResponder<S extends AnySchema>(
     // ------------------------------------------------------- the standing
     if (/\b(wrong|broken|problem|violat|standing)\b/.test(asked)) {
       if (violations.length === 0) {
-        return { say: "Nothing is broken — every declared rule holds.", proposals: [] };
+        return { say: "Nothing is broken — every declared rule holds.", proposals: [], grounded: true };
       }
       return {
         say: sentence([
@@ -117,6 +130,7 @@ export function graphResponder<S extends AnySchema>(
           "The repairs below come from the rules themselves.",
         ]),
         proposals: validateProposals(store, readyRepairs().slice(0, 4)),
+        grounded: true,
       };
     }
 
@@ -140,11 +154,13 @@ export function graphResponder<S extends AnySchema>(
           proposals: validateProposals(store, [
             { mutation: phrased.name, args, why: `you asked in words` },
           ]),
+          grounded: true,
         };
       }
       return {
         say: `"${phrased.title ?? phrased.name}" needs ${missing.join(", ")} — name the ${missing.length === 1 ? "thing" : "things"} (or select ${missing.length === 1 ? "it" : "them"}) and ask again.`,
         proposals: [],
+        grounded: true,
       };
     }
 
@@ -245,6 +261,7 @@ export function graphResponder<S extends AnySchema>(
             store,
             readyRepairs(violationsTouching(violations, [subject.id])).slice(0, 3),
           ),
+          grounded: true,
         };
       }
     }
@@ -289,6 +306,7 @@ export function graphResponder<S extends AnySchema>(
               store,
               readyRepairs(violationsTouching(violations, [subject.id])).slice(0, 3),
             ),
+            grounded: true,
           };
         }
       }
@@ -302,18 +320,48 @@ export function graphResponder<S extends AnySchema>(
         .map((field) => `${field.label.toLowerCase()} ${field.value}`)
         .join(", ");
       const touching = violationsTouching(violations, [node.id]);
-      const degree = [...store.graph.allEdges()].filter(
-        (edge) => edge.from === node.id || edge.to === node.id,
-      ).length;
+      /*
+       * The relations, in the declarations' own words — "where they can
+       * play: Goalkeeper, Left back" answers "what about Bo" the way a
+       * person would, instead of a degree count.
+       */
+      const groups = new Map<string, { sentence: string; names: string[] }>();
+      for (const edge of [...store.graph.allEdges()]) {
+        const direction = edge.from === node.id ? "out" : edge.to === node.id ? "in" : null;
+        if (!direction) continue;
+        const other = store.graph.getNode(direction === "out" ? edge.to : edge.from);
+        if (!other) continue;
+        const key = `${edge.kind}|${direction}`;
+        if (!groups.has(key)) {
+          let said: string | undefined;
+          for (const definition of store.schema.definitions) {
+            const spec = (definition.edges as Record<string, { description?: string; inverse?: string }>)[
+              edge.kind
+            ];
+            if (!spec) continue;
+            const declaresOut = definition.kind === node.kind;
+            said = (direction === "out") === declaresOut ? spec.description : (spec.inverse ?? spec.description);
+            if (said) break;
+          }
+          groups.set(key, { sentence: said ?? edge.kind.replace(/-/g, " "), names: [] });
+        }
+        const group = groups.get(key)!;
+        if (group.names.length < 6) group.names.push(name(other));
+      }
+      const related = [...groups.values()]
+        .slice(0, 4)
+        .map((group) => `${group.sentence}: ${group.names.join(", ")}`)
+        .join(". ");
       return {
         say: sentence([
-          `${name(node)} — a ${node.kind}${facts ? ` (${facts})` : ""},`,
-          `connected to ${degree} ${degree === 1 ? "thing" : "things"}.`,
+          `${name(node)} — a ${node.kind}${facts ? ` (${facts})` : ""}.`,
+          related ? `${related}.` : "Connected to nothing yet.",
           touching.length > 0
             ? `Trouble: ${touching.map((violation) => violation.message).join("; ")}.`
             : "Nothing about it is broken.",
         ]),
         proposals: validateProposals(store, readyRepairs(touching).slice(0, 3)),
+        grounded: true,
       };
     }
 
