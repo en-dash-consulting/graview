@@ -245,6 +245,7 @@ export async function build() {
       const adapter = createFileAdapter(mkdtempSync(join(tmpdir(), "graview-smoke-ship-")));
       const opened = await openStore({ app, adapter, seed: store.snapshot() });
       opened.store.apply({ name: "finish", args: { id: "a" } });
+      await opened.flush();
       opened.close();
       const reopened = await openStore({ app, adapter });
       const bundle = exportBundle(app, reopened.store);

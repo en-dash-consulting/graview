@@ -108,6 +108,8 @@ describe("one declaration plus one adapter is a deployment", () => {
 
     const first = await openStore({ app, adapter });
     first.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
+    // Writes are serialised and async: the handoff is flush, then close.
+    await first.flush();
     first.close();
 
     const second = await openStore({ app, adapter });
@@ -145,11 +147,34 @@ describe("one declaration plus one adapter is a deployment", () => {
   });
 });
 
+describe("the log outranks the meta", () => {
+  it("does not re-migrate migrated data when the version stamp lags", async () => {
+    const root = scratch();
+    const adapter = createFileAdapter(root);
+    await adapter.save("garden", {
+      nodes: [{ id: "p1", kind: "plot", label: "One", size: "small" }] as never,
+      edges: [],
+    });
+    adapter.saveMeta("garden", { version: 1 });
+    const first = await openStore({ app, adapter });
+    await first.flush();
+    first.close();
+
+    // The crash window: migrated snapshot on disk, but the stamp reverts.
+    adapter.saveMeta("garden", { version: 1 });
+    const again = await openStore({ app, adapter });
+    expect(again.migrated).toHaveLength(0);
+    expect((again.store.graph.getNode("p1") as { beds?: number })?.beds).toBe(2);
+    again.close();
+  });
+});
+
 describe("everything leaves in one bundle", () => {
   it("round-trips graph, history and version", async () => {
     const root = scratch();
     const opened = await openStore({ app, adapter: createFileAdapter(root) });
     opened.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
+    await opened.flush();
     const bundle = exportBundle(app, opened.store, { now: () => "2026-09-01T00:00:00Z" });
     opened.close();
 

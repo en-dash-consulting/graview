@@ -5,9 +5,9 @@ import {
   useGraph,
   useGraview,
   useNavigation,
-  useUrlSync,
   type Scheme,
   type SceneProps,
+  UrlSync,
 } from "@graview/react";
 import {
   ActivityRail,
@@ -198,10 +198,6 @@ function CommandBar({
   calls: readonly ToolCall[];
 }) {
   const place = usePlace();
-  if (syncUrl) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useUrlSync();
-  }
   return (
     <header
       style={{
@@ -218,6 +214,7 @@ function CommandBar({
         zIndex: 20,
       }}
     >
+      {syncUrl ? <UrlSync /> : null}
       <Wordmark<S> />
       {/* Every stop is a URL, so back and forward are the browser's. This
           only makes them visible, because nobody should have to know that. */}

@@ -34,13 +34,23 @@ export interface OpenStoreOptions<S extends AnySchema> {
    * migrating data that is already new-shaped corrupts it.
    */
   readonly assumeVersion?: number;
+  /** Told when a persistence write fails; absent, failures reach the console. */
+  readonly onPersistError?: (error: unknown) => void;
   readonly storeOptions?: Partial<StoreOptions<S>>;
 }
+
+/*
+ * ONE WRITER PER SCOPE. Nothing here locks: two opens of the same scope
+ * would interleave sequence numbers and overwrite each other's snapshots.
+ * A deployment owns its scope the way a process owns its port.
+ */
 
 export interface OpenedStore<S extends AnySchema> {
   readonly store: Store<S>;
   /** Operations the opening appended: the migration run, when one happened. */
   readonly migrated: readonly Operation[];
+  /** Resolves when every write accepted so far has settled on the adapter. */
+  flush(): Promise<void>;
   /** Stops persisting. The store keeps working; nothing further is written. */
   close(): void;
 }
@@ -57,15 +67,28 @@ export async function openStore<S extends AnySchema>(
 
   const meta = adapter.loadMeta?.(scope) ?? null;
   const target = app.version ?? 1;
+  /*
+   * THE LOG OUTRANKS THE META. A crash between writing the migrated
+   * snapshot and stamping the version leaves new-shaped data under an old
+   * stamp — and re-running a migration over already-migrated data is the
+   * exact corruption migrations exist to prevent. The migration ops are in
+   * the log before anything else is written, so the log knows the truth.
+   */
+  const migratedTo = persisted
+    .filter((op) => op.author.kind === "system" && op.author.id === "ship:migration")
+    .map((op) => Number(op.intent.match(/migration \d+→(\d+):/)?.[1] ?? 0))
+    .reduce((highest, version) => Math.max(highest, version), 0);
   const storedVersion =
-    stored === null ? target : (meta?.version ?? options.assumeVersion ?? target);
+    stored === null
+      ? target
+      : Math.max(meta?.version ?? options.assumeVersion ?? target, migratedTo);
 
   let snapshot: GraphSnapshot = stored ?? options.seed ?? { nodes: [], edges: [] };
   let migrated: readonly Operation[] = [];
   if (storedVersion < target) {
     const run = migrateSnapshot(app, snapshot, storedVersion);
     snapshot = run.snapshot;
-    migrated = run.ops.map((op) => ({ ...op, seq: (seq += 1) }));
+    migrated = run.ops.map((op) => ({ ...op, seq: seq++ }));
     await adapter.appendOps?.(scope, migrated);
   }
 
@@ -78,16 +101,33 @@ export async function openStore<S extends AnySchema>(
     ...(options.storeOptions ?? {}),
   });
 
-  // Everything current the moment it opens, so a crash one second later
-  // still finds a coherent deployment on disk.
-  await adapter.save(scope, store.snapshot());
+  /*
+   * Write at open only when opening CHANGED something — a fresh scope or a
+   * migration run. Re-saving an untouched store rewrites the snapshot
+   * through the current schema's parse, which silently strips any field a
+   * rolled-back declaration does not know — data loss with no prior copy.
+   */
+  if (stored === null || migrated.length > 0) {
+    await adapter.save(scope, store.snapshot());
+  }
   adapter.saveMeta?.(scope, { version: target });
 
+  /*
+   * Writes are SERIALISED: a second diff's ops never land before the
+   * first's snapshot, and a failure is reported rather than swallowed —
+   * an app that thinks it persisted and did not is the worst quiet state.
+   */
+  const report = options.onPersistError ?? ((error: unknown) => console.error("graview ship: persistence failed", error));
+  let writing: Promise<void> = Promise.resolve();
   const unsubscribe = store.subscribe((_diff, ops) => {
-    const stamped = ops.map((op) => ({ ...op, seq: (seq += 1) }));
-    void adapter.appendOps?.(scope, stamped);
-    void adapter.save(scope, store.snapshot());
+    const stamped = ops.map((op) => ({ ...op, seq: seq++ }));
+    writing = writing
+      .then(async () => {
+        await adapter.appendOps?.(scope, stamped);
+        await adapter.save(scope, store.snapshot());
+      })
+      .catch(report);
   });
 
-  return { store, migrated, close: unsubscribe };
+  return { store, migrated, flush: () => writing, close: unsubscribe };
 }

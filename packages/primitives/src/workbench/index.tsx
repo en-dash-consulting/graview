@@ -333,17 +333,19 @@ export function Inspector() {
    * ranked order is untouched — consecutive repairs of one violation
    * gather under its sentence; everything else runs on below.
    */
-  const sections: { heading: string | null; items: typeof affordances }[] = [];
+  const sections: {
+    heading: string | null;
+    tone: "violation" | "ties" | null;
+    items: typeof affordances;
+  }[] = [];
   for (const affordance of shown) {
-    const heading =
-      !atPointer && affordance.provider === "invariant"
-        ? affordance.why
-        : !atPointer && affordance.ties && !affordance.destructive
-          ? "its ties"
-          : null;
+    const violation = !atPointer && affordance.provider === "invariant";
+    const tie = !atPointer && !violation && affordance.ties === true && !affordance.destructive;
+    const heading = violation ? affordance.why : tie ? "its ties" : null;
+    const tone = violation ? ("violation" as const) : tie ? ("ties" as const) : null;
     const last = sections[sections.length - 1];
     if (last && last.heading === heading) (last.items as Affordance[]).push(affordance);
-    else sections.push({ heading, items: [affordance] });
+    else sections.push({ heading, tone, items: [affordance] });
   }
   const open = affordances.find((affordance) => affordance.id === pending);
 
@@ -633,20 +635,28 @@ export function Inspector() {
           }}
         >
           {sections.map((section, index) => (
-            <Fragment key={section.heading ?? `plain-${index}`}>
-              {/* The violation these repairs answer, said over them. */}
+            <Fragment key={`${section.heading ?? "plain"}-${index}`}>
+              {/* The violation these repairs answer, said over them — or,
+                  for the tie group, a quiet caption: a heading is not a
+                  warning unless a rule is actually broken. */}
               {section.heading ? (
                 <li
                   role="presentation"
                   style={{
                     fontSize: 11,
                     lineHeight: 1.4,
-                    color: "var(--graview-warn)",
+                    color:
+                      section.tone === "violation"
+                        ? "var(--graview-warn)"
+                        : "var(--graview-ink-faint)",
+                    ...(section.tone !== "violation"
+                      ? { letterSpacing: "0.12em", textTransform: "uppercase" as const, fontSize: 10 }
+                      : {}),
                     padding: "2px 2px 1px",
                     marginTop: index > 0 ? 6 : 0,
                   }}
                 >
-                  ⚠ {section.heading}
+                  {section.tone === "violation" ? "⚠ " : ""}{section.heading}
                 </li>
               ) : index > 0 ? (
                 <li

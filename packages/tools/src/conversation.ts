@@ -103,7 +103,7 @@ export function graphResponder<S extends AnySchema>(
       });
 
     // ------------------------------------------------------- the standing
-    if (/\b(wrong|broken|problem|violat|standing|fix)\b/.test(asked)) {
+    if (/\b(wrong|broken|problem|violat|standing)\b/.test(asked)) {
       if (violations.length === 0) {
         return { say: "Nothing is broken — every declared rule holds.", proposals: [] };
       }
@@ -258,25 +258,28 @@ export function graphResponder<S extends AnySchema>(
        */
       for (const subject of subjectsFor(false)) {
         const parts: string[] = [];
+        const said = new Set<string>();
         for (const definition of store.schema.definitions) {
           for (const [edgeKind, spec] of Object.entries(
             definition.edges as Record<string, { description?: string; inverse?: string }>,
           )) {
+            /*
+             * Whoever declared the edge, the who-things are the nodes on
+             * the OTHER side of the subject — in-neighbours when the edge
+             * points at the subject, out-neighbours when it points away —
+             * and the sentence is whichever declared line says "who".
+             */
             const forward = /\bwho\b/i.test(spec.description ?? "");
             const backward = /\bwho\b/i.test(spec.inverse ?? "");
-            if (!forward && !backward) continue;
-            const sources = store.graph.in(subject.id, edgeKind);
-            const targets = store.graph.out(subject.id, edgeKind);
-            if (forward && sources.length > 0) {
-              parts.push(
-                `${spec.description}: ${sources.map((other) => name(other as never)).join(", ")}`,
-              );
-            }
-            if (backward && targets.length === 0 && sources.length > 0 && !forward) {
-              parts.push(
-                `${spec.inverse}: ${sources.map((other) => name(other as never)).join(", ")}`,
-              );
-            }
+            if ((!forward && !backward) || said.has(edgeKind)) continue;
+            said.add(edgeKind);
+            const others = [
+              ...store.graph.in(subject.id, edgeKind),
+              ...store.graph.out(subject.id, edgeKind),
+            ];
+            if (others.length === 0) continue;
+            const sentence = forward ? spec.description : spec.inverse;
+            parts.push(`${sentence}: ${others.map((other) => name(other as never)).join(", ")}`);
           }
         }
         if (parts.length > 0) {

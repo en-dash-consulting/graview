@@ -39,6 +39,11 @@ export function pendingMigrations<S extends AnySchema>(
   let at = storedVersion;
   while (at < target) {
     const step = bySource.get(at);
+    if (step && step.to <= step.from) {
+      throw new Error(
+        `Migration ${step.from}→${step.to} does not advance — the chain would never terminate.`,
+      );
+    }
     if (!step) {
       throw new Error(
         `No migration from version ${at} — a stored graph there cannot reach ${target}. ` +

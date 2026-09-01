@@ -4,9 +4,9 @@ import {
   Scene,
   useGraph,
   useGraview,
-  useUrlSync,
   type Scheme,
   type SceneProps,
+  UrlSync,
 } from "@graview/react";
 import {
   ActivityRail,
@@ -141,10 +141,6 @@ function CommandBar({
   onCall: (call: ToolCall) => void;
   calls: readonly ToolCall[];
 }) {
-  if (syncUrl) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useUrlSync();
-  }
   return (
     <header
       style={{
@@ -161,6 +157,7 @@ function CommandBar({
         zIndex: 20,
       }}
     >
+      {syncUrl ? <UrlSync /> : null}
       <Wordmark<S> />
       <Backtrack />
       <Trail home={null} />

@@ -9,6 +9,8 @@ import {
   withRelation,
   withZoom,
   type ViewState,
+  sameView,
+  EMPTY_VIEW,
 } from "@graview/layout";
 import {
   applyAffordance,
@@ -188,6 +190,16 @@ export function useNavigation() {
  * is the thing that makes a spatial interface navigable at all, because it
  * means no arrangement is ever unreachable once you have left it.
  */
+/**
+ * `useUrlSync` as a component, for shells that make syncing conditional —
+ * a hook inside `if (syncUrl)` is a Rules-of-Hooks trap the moment the
+ * flag ever changes; a conditionally RENDERED component is not.
+ */
+export function UrlSync(): null {
+  useUrlSync();
+  return null;
+}
+
 export function useUrlSync(): void {
   const { view, setView } = useGraview();
 
@@ -202,7 +214,10 @@ export function useUrlSync(): void {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const initial = fromUrl(window.location.hash);
-    if (initial.focusId || initial.relation || initial.expanded.length > 0) {
+    // Adopt ANY address that says something — overview, zoom, a selection —
+    // not only the focus-shaped ones. A pasted link that does not go where
+    // it says is worse than no link.
+    if (!sameView(initial, EMPTY_VIEW)) {
       setView(initial);
     }
     // Once, on mount: later changes are this hook's own writes.
@@ -226,8 +241,13 @@ export function useUrlSync(): void {
     if (typeof window === "undefined") return;
     const next = toUrl(view);
     // Only write when the view actually changed, or the back stack fills with
-    // duplicates and the back button stops meaning anything.
-    if (window.location.hash === next) return;
+    // duplicates and the back button stops meaning anything. The baseline
+    // still moves: after a popstate re-syncs the view, a stale baseline made
+    // the next drag read as travel and push a phantom stop.
+    if (window.location.hash === next) {
+      written.current = view;
+      return;
+    }
     /*
      * ARRIVING is not a navigation.
      *

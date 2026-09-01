@@ -94,3 +94,85 @@ describe("edge affordances", () => {
     expect(affordances).toEqual([]);
   });
 });
+
+describe("a move offers the new, a pure sever offers the attached", () => {
+  const move = bound.defineMutation("move-rider", {
+    title: "Move the rider",
+    description: "Put the ride with someone else's run.",
+    subject: { kinds: ["duty"], arg: "dutyId" },
+    connects: ["rides-in"],
+    severs: ["rides-in"],
+    input: z.object({ dutyId: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
+    apply(ctx, args) {
+      ctx.addEdge({ kind: "rides-in", from: args.personId, to: args.dutyId });
+    },
+  });
+  const moveStore = () =>
+    new Store({
+      schema,
+      mutations: [move],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "ana", kind: "person", label: "Ana" },
+          { id: "bo", kind: "person", label: "Bo" },
+          { id: "morning", kind: "duty", label: "Morning run" },
+          { id: "bare", kind: "duty", label: "Bare run" },
+        ] as never,
+        edges: [{ kind: "rides-in", from: "ana", to: "morning" }],
+      },
+    });
+
+  it("offers everyone NOT already on it — never a list of the current rider", () => {
+    const { affordances } = deriveAffordances(moveStore(), ["morning"]);
+    const offer = affordances.find((a) => a.mutation === "move-rider");
+    expect(offer?.open?.find((p) => p.name === "personId")?.candidates).toEqual(["bo"]);
+  });
+
+  it("is offered on a subject with nothing attached — a move is what it needs", () => {
+    const { affordances } = deriveAffordances(moveStore(), ["bare"]);
+    expect(affordances.map((a) => a.mutation)).toContain("move-rider");
+  });
+
+  it("offers from the other endpoint with the same rule", () => {
+    const { affordances } = deriveAffordances(moveStore(), ["bo"]);
+    const offer = affordances.find((a) => a.mutation === "move-rider" && a.ties);
+    expect(offer).toBeDefined();
+    expect(offer?.args).toEqual({ personId: "bo" });
+    // Bo rides nothing: every duty is a valid new home.
+    expect(offer?.open?.find((p) => p.name === "dutyId")?.candidates?.sort()).toEqual([
+      "bare",
+      "morning",
+    ]);
+  });
+
+  it("on a selected line, ambiguity resolves to the line's own two ends", () => {
+    const both = bound.defineMutation("unlink", {
+      title: "Unlink",
+      description: "Break a wait.",
+      severs: ["waits-for"],
+      input: z.object({ taskId: nodeRef(["duty"]), blockerId: nodeRef(["duty"]) }),
+      apply() {},
+    });
+    const s2 = new Store({
+      schema,
+      mutations: [both],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "a", kind: "duty", label: "A" },
+          { id: "b", kind: "duty", label: "B" },
+          { id: "c", kind: "duty", label: "C" },
+        ] as never,
+        edges: [{ kind: "waits-for", from: "a", to: "b" }],
+      },
+    });
+    const { affordances } = deriveAffordances(s2, ["edge:waits-for:a:b"], {
+      edgeSelection: [{ kind: "waits-for", from: "a", to: "b" }],
+    });
+    const offer = affordances.find((a) => a.mutation === "unlink");
+    for (const parameter of offer?.open ?? []) {
+      expect(parameter.candidates?.sort()).toEqual(["a", "b"]);
+    }
+  });
+});

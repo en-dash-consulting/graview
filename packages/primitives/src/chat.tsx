@@ -77,14 +77,20 @@ export function ChatPanel<S extends AnySchema>({
       }),
     [store, principal],
   );
-  const answer = useMemo<Responder<S>>(
-    () =>
+  const statusToken = useRef(0);
+  const answer = useMemo<Responder<S>>(() => {
+    // A replaced responder must not keep narrating: only the current
+    // build's status reaches the header.
+    const token = ++statusToken.current;
+    return (
       respond ??
       configuredResponder<S>(config, {
-        onStatus: (status) => setWarmth(status),
-      }),
-    [respond, config],
-  );
+        onStatus: (status) => {
+          if (token === statusToken.current) setWarmth(status);
+        },
+      })
+    );
+  }, [respond, config]);
 
   useEffect(() => (onCall ? runtime.onCall(onCall) : undefined), [runtime, onCall]);
   // What the conversation looked at reaches the picture, like any seat's reads.
@@ -358,19 +364,27 @@ function ChatSettings({
       data-testid="chat-settings-form"
       onSubmit={(event) => {
         event.preventDefault();
-        onDone({
-          source,
-          ...(source === "remote" && apiKey
+        /*
+         * A saved key SURVIVES switching rungs — losing it on a visit to
+         * "graph" would mean re-pasting secrets — and choosing "remote"
+         * with no key at all is not a save that does anything, so the
+         * submit button refuses it below.
+         */
+        const key = apiKey || config.remote?.apiKey || "";
+        const remote =
+          key.length > 0
             ? {
                 remote: {
                   preset,
-                  apiKey,
+                  apiKey: key,
                   ...(model ? { model } : {}),
                   ...(preset === "custom" && baseUrl ? { baseUrl } : {}),
                 },
               }
-            : {}),
-        });
+            : config.remote
+              ? { remote: config.remote }
+              : {};
+        onDone({ source, ...remote });
       }}
       style={{ display: "grid", gap: 10, padding: 12, maxHeight: "min(46vh, 400px)", overflowY: "auto" }}
     >
@@ -433,7 +447,16 @@ function ChatSettings({
         </div>
       ) : null}
 
-      <button type="submit" style={{ justifySelf: "start", fontSize: 12.5 }}>
+      <button
+        type="submit"
+        disabled={source === "remote" && !apiKey && !config.remote?.apiKey}
+        title={
+          source === "remote" && !apiKey && !config.remote?.apiKey
+            ? "A remote model needs a key"
+            : undefined
+        }
+        style={{ justifySelf: "start", fontSize: 12.5 }}
+      >
         Use this
       </button>
     </form>
