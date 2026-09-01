@@ -123,6 +123,7 @@ pnpm shrunk        # the shrunk interface is the interface, scaled
 pnpm watching      # an agent turn seen from outside the plane stack
 pnpm permissions   # one policy narrows the strip and the agent seat alike
 pnpm seat          # an agent seat does what it says, and says when there is nothing to do
+pnpm chat          # the chat: graph answers first, refusals are results, undo really works
 pnpm brand         # somebody else's product, without a fork
 pnpm navigation    # travelling, and getting back
 pnpm moving        # panning the scene and dragging cards, both as ordinary stops

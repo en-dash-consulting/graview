@@ -1113,6 +1113,8 @@ export function Standing({
 export interface Change {
   readonly intent: string;
   readonly author: string;
+  /** The author's own id, for seats that are not the person at the keyboard. */
+  readonly authorId?: string;
   readonly touched: readonly string[];
   readonly batch: string;
 }
@@ -1142,6 +1144,7 @@ export function useRecentChanges(limit = 4): readonly Change[] {
         .map((batch) => ({
           intent: batch.intent,
           author: batch.author.kind,
+          ...(batch.author.id ? { authorId: batch.author.id } : {}),
           touched: [...new Set(batch.ops.flatMap((op) => op.writes))],
           batch: batch.id,
         })),
@@ -1388,7 +1391,15 @@ export function ActivityRail({
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                     <span style={{ minWidth: 0 }}>
                       <strong style={{ fontWeight: 600 }}>
-                        {change.author === "agent" ? "claude" : "you"}
+                        {/*
+                          * WHO, by its own id. "claude" was hardcoded for
+                          * every agent, so the chat seat's turn wore
+                          * another seat's name — and a system author (a
+                          * calendar sync) would have read as "you".
+                          */}
+                        {change.author === "human"
+                          ? "you"
+                          : (change.authorId ?? change.author)}
                       </strong>{" "}
                       <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
                     </span>
