@@ -2,14 +2,13 @@
 id: "68b2b2e0-2aa9-489a-9dba-83be3975ba99"
 level: "epic"
 title: "Distribution: something people can install, extend and trust"
-status: "completed"
+status: "pending"
 priority: "high"
 tags:
   - "release"
   - "dx"
 source: "Session: skills package, changesets, GitHub CI to npm"
 startedAt: "2026-08-31T03:42:03.600Z"
-completedAt: "2026-08-31T03:42:03.600Z"
 endedAt: "2026-08-31T03:42:03.600Z"
 acceptanceCriteria:
   - "A person can npm install a Graview package and build an app from the published artefacts alone"
@@ -24,4 +23,5 @@ description: "Six packages, every one `private: true`, no licence, no `files`, n
 | Title | Status |
 |-------|--------|
 | [A skills package for building with Graview](./a-skills-package-for-building-3e30b3.md) | completed |
+| [Deployment is a framework concern: the ship subpackage](./deployment-is-a-framework-bb2b2a.md) | pending |
 | [Releases: changesets, CI, npm](./releases-changesets-ci-npm.md) | completed |
