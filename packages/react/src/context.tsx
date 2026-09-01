@@ -46,9 +46,6 @@ export interface GraviewContextValue<S extends AnySchema> {
   setView(next: ViewState | ((current: ViewState) => ViewState)): void;
   readonly selection: readonly string[];
   setSelection(next: readonly string[] | ((current: readonly string[]) => readonly string[])): void;
-  /** The view lifted out into a full page, if any. */
-  readonly jackedIn: string | null;
-  setJackedIn(id: string | null): void;
   /**
    * Where a context menu was asked for, in viewport coordinates.
    *
@@ -144,8 +141,6 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly views: ViewRegistry<S, ViewComponent<S>>;
   readonly initialView?: ViewState;
   readonly scheme?: Scheme;
-  /** Start jacked into one view — the deep-link case. */
-  readonly initialJackedIn?: string | null;
   /**
    * Start with something already selected.
    *
@@ -176,7 +171,6 @@ export function GraviewProvider<S extends AnySchema>({
   views,
   initialView,
   scheme = "dark",
-  initialJackedIn,
   initialSelection,
   principal = ANONYMOUS,
   brand,
@@ -186,7 +180,6 @@ export function GraviewProvider<S extends AnySchema>({
 }: GraviewProviderProps<S>) {
   const [internalView, setInternalView] = useState<ViewState>(initialView ?? EMPTY_VIEW);
   const [selection, setSelectionState] = useState<readonly string[]>(initialSelection ?? []);
-  const [jackedIn, setJackedIn] = useState<string | null>(initialJackedIn ?? null);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
   const [emphasis, setEmphasis] = useState<string | null>(null);
   const { activity, noteAttention } = useActivityState(store);
@@ -218,8 +211,6 @@ export function GraviewProvider<S extends AnySchema>({
       setView,
       selection,
       setSelection,
-      jackedIn,
-      setJackedIn,
       menuAt,
       setMenuAt,
       emphasis,
@@ -237,7 +228,6 @@ export function GraviewProvider<S extends AnySchema>({
       setView,
       selection,
       setSelection,
-      jackedIn,
       menuAt,
       emphasis,
       activity,

@@ -211,6 +211,44 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   opacity: 1;
 }
 
+/* FROM ALTITUDE the ground recedes: the near grid fades toward the horizon
+   and a finer, farther one takes over above it — distance drawn with cell
+   size and fade, which needs no transform the capture pipeline would have
+   to renegotiate. */
+.graview-ground[data-graview-altitude]::before {
+  mask-image: linear-gradient(to top, #000 40%, transparent 88%);
+  -webkit-mask-image: linear-gradient(to top, #000 40%, transparent 88%);
+}
+.graview-ground[data-graview-altitude]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--graview-edge) 1px, transparent 1px),
+    linear-gradient(90deg, var(--graview-edge) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: calc(var(--graview-grid-alpha) * 0.6);
+  mask-image: linear-gradient(to bottom, transparent 5%, #000 32%, transparent 60%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 5%, #000 32%, transparent 60%);
+}
+
+/* A district STANDS. Its face is the card; its height is its population —
+   the extrusion rises with how many members the kind holds, so a district
+   of twenty-nine is visibly taller than a district of one, and nothing
+   moves to say so: spatial memory holds while elevation talks. */
+.graview-ground[data-graview-altitude] .graview-kind-card {
+  box-shadow:
+    0 calc(var(--graview-rise, 8) * 1px) 0 -1px ${
+      scheme === "light"
+        ? "hsl(var(--graview-hue, 200) 30% 74% / 0.9)"
+        : "hsl(var(--graview-hue, 200) 45% 15% / 0.92)"
+    },
+    0 calc(var(--graview-rise, 8) * 1px + 16px) 30px -10px ${
+      scheme === "light" ? "rgba(20,30,32,0.30)" : "rgba(0,0,0,0.55)"
+    };
+}
+
 /* A thing inside a view that is itself a thing: an event in a calendar, a
    person in a list. It has to look reachable, and it has to SHOW focus —
    these are the primary way anyone moves through the graph, so a keyboard

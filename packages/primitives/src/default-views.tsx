@@ -276,6 +276,15 @@ export function registerDefaultViews<S extends AnySchema>(
             padding: nested ? "5px 7px" : "7px 10px",
             borderRadius: "var(--graview-radius-sm, 9px)",
             /*
+             * What the theme needs to draw this kind's ELEVATION from
+             * altitude: its hue, and a rise that grows with population —
+             * logarithmic-ish, so one giant kind does not cast a tower.
+             */
+            ["--graview-hue" as string]: Math.round(hue * 360),
+            ["--graview-rise" as string]: nested
+              ? 4
+              : Math.min(24, 5 + Math.round(Math.sqrt(members.length) * 3.4)),
+            /*
              * PLANE 2 IS A GLYPH. Its own fidelity says so.
              *
              * These were 190 by 107 holding a name, a number and a mark, and

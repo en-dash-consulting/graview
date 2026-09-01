@@ -27,11 +27,11 @@ description: "Clicking a thing currently TRAVELS to it, which is the wrong defau
 | Title | Status |
 |-------|--------|
 | [A raised relation keeps its origin visible](./a-raised-relation-keeps-its-0e68e9.md) | completed |
-| [Decide where the agent seat lives, or whether it lives in the bar at all](./decide-where-the-agent-seat-be16d0.md) | pending |
+| [Decide where the agent seat lives, or whether it lives in the bar at all](./decide-where-the-agent-seat-be16d0.md) | completed |
 | [Editing a value in place](./editing-a-value-in-place.md) | completed |
 | [Every action title says what it does](./every-action-title-says-what-it-does.md) | completed |
 | [Jacking in and travelling land in composed rooms, not corners](./jacking-in-and-travelling-land-98c1c9.md) | pending |
-| [Raising a relation breaks the composition: the planes touch and the board collapses to a stamp](./raising-a-relation-breaks-the-5f233f.md) | in_progress |
+| [Raising a relation breaks the composition: the planes touch and the board collapses to a stamp](./raising-a-relation-breaks-the-5f233f.md) | completed |
 | [Right click opens the actions at the pointer](./right-click-opens-the-actions-f89ca8.md) | completed |
 | [Selected actions stay near, current, and ranked](./selected-actions-stay-near-aecee3.md) | pending |
 | [Selecting a rule shows what it judges](./selecting-a-rule-shows-what-it-judges.md) | completed |

@@ -140,13 +140,14 @@ function shelf(
   gap: number,
   canvasWidth: number,
   baseY: number,
+  depth: number = SHELF_DEPTH,
 ): { x: number; y: number; depth: number }[] {
   const total = count * size.width + Math.max(0, count - 1) * gap;
   const startX = Math.max(gap, (canvasWidth - total) / 2);
   return Array.from({ length: count }, (_, index) => ({
     x: startX + index * (size.width + gap),
     y: baseY,
-    depth: SHELF_DEPTH,
+    depth,
   }));
 }
 
@@ -218,8 +219,41 @@ export function layout<S extends AnySchema>(
    * container on purpose — so an overflowing band is content nobody can
    * reach rather than content below the fold.
    */
-  const band =
-    focus === undefined
+  /*
+   * ZOOMED IN CLOSE, the focus takes most of the scene — most, not all.
+   *
+   * The shelf and any raised relation keep thin bands at the bottom,
+   * receded: the zoomed stop is still a place in the same picture, with its
+   * connectors, not a document that replaced it. This is what the jack-in
+   * gesture lands on now; the modal page it used to open isolated the view
+   * from every relation it had.
+   */
+  const zoomed = state.zoom === true && !state.overview && state.focusId !== null;
+  const band = zoomed
+    ? focus !== undefined
+      ? {
+          // A zoomed RECORD is a reading column with its neighbourhood
+          // under it at full size: the column does not need the height a
+          // dense picture does, and a neighbourhood squeezed into a sliver
+          // clipped its own cards.
+          focusY: opts.height * 0.03,
+          focusH: opts.height * 0.58,
+          relationY: opts.height * 0.645,
+          relationH: opts.height * 0.2,
+          contextY: opts.height * 0.895,
+          contextH: Math.max(56, opts.height * 0.062),
+        }
+      : {
+          // A zoomed PLACE is the dense picture: most of the scene, with a
+          // raised relation kept usable and the shelf receded below.
+          focusY: opts.height * 0.03,
+          focusH: opts.height * 0.71,
+          relationY: opts.height * 0.765,
+          relationH: opts.height * 0.1,
+          contextY: opts.height * 0.895,
+          contextH: Math.max(56, opts.height * 0.062),
+        }
+    : focus === undefined
       ? {
           /*
            * Checked WITH a relation raised, which is the state that broke:
@@ -252,8 +286,14 @@ export function layout<S extends AnySchema>(
    * width is a letterbox with four words in it. Narrowing the detail box is
    * the difference between a card and an empty page.
    */
-  const detailWidth = Math.min(700, opts.width - opts.gap * 6);
-  const groupWidth = Math.min(opts.focusSize.width, opts.width - opts.gap * 6);
+  // Zoomed, a group runs nearly wall to wall; a record stays a readable
+  // column even with the room — 880 is a document's width, not a letterbox.
+  const detailWidth = zoomed
+    ? Math.min(880, opts.width - opts.gap * 5)
+    : Math.min(700, opts.width - opts.gap * 6);
+  const groupWidth = zoomed
+    ? opts.width - opts.gap * 5
+    : Math.min(opts.focusSize.width, opts.width - opts.gap * 6);
 
   /** Fits `count` boxes across the canvas, never wider than the cap. */
   const fit = (count: number, cap: number, height: number) => ({
@@ -587,7 +627,7 @@ export function layout<S extends AnySchema>(
    */
   const contextSize = state.overview
     ? { width: Math.min(220, opts.width / 6.5), height: Math.min(132, opts.height * 0.18) }
-    : fit(slotted.length, opts.contextSize.width, band.contextH);
+    : fit(slotted.length, zoomed ? 240 : opts.contextSize.width, band.contextH);
   const contextPositions: {
     x: number;
     y: number;
@@ -596,7 +636,15 @@ export function layout<S extends AnySchema>(
     height?: number;
   }[] = state.overview
     ? ring(slotted.length, contextSize, opts.width, opts.height)
-    : shelf(slotted.length, contextSize, opts.gap, opts.width, band.contextY);
+    : shelf(
+        slotted.length,
+        contextSize,
+        opts.gap,
+        opts.width,
+        band.contextY,
+        // Zoomed in, the shelf recedes further — present, quieter.
+        zoomed ? 0.97 : SHELF_DEPTH,
+      );
 
   /*
    * A secondary kind is drawn SMALLER and further back inside its own slot,

@@ -51,6 +51,11 @@ try {
       await page.goto(`http://localhost:${seat.port}/?theme=light${seat.query ?? ""}`, { waitUntil: "load" });
       await page.waitForFunction((f) => f in window, seat.ready, { timeout: 60_000 });
       await page.waitForTimeout(1200);
+      // The seat lives in the Activity popover now; open it the way a person
+      // would. Clicks inside the popover keep it open, so one open serves
+      // the whole exchange.
+      await page.click('[data-testid="activity-button"]');
+      await page.waitForTimeout(300);
 
       const read = () => page.evaluate((id) => {
         const b = document.querySelector(`[data-testid="${id}"]`);
@@ -86,6 +91,9 @@ try {
         await p2.waitForTimeout(1000);
         await p2.selectOption('[data-testid="seat"] select', "analyst");
         await p2.waitForTimeout(800);
+        // Changing seats clicked outside the popover, which closed it.
+        await p2.click('[data-testid="activity-button"]');
+        await p2.waitForTimeout(300);
         const narrowed = await p2.evaluate((id) => {
           const b = document.querySelector(`[data-testid="${id}"]`);
           return { disabled: b?.disabled, permitted: b?.dataset.agentPermitted ?? null, title: b?.title ?? "" };

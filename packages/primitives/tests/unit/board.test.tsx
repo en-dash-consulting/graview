@@ -1,6 +1,6 @@
 import { createSchema, defineInvariant, defineNode, Store } from "@graview/core";
 import { aggregateId, EMPTY_VIEW } from "@graview/layout";
-import { createViews, GraviewProvider, JackedIn } from "@graview/react";
+import { createViews, GraviewProvider, ResolvedView } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -123,15 +123,38 @@ describe("what the board says a mark is about", () => {
       .register("seat", { cardinality: "many", fidelity: "full" }, BoardPicture)
       .register("seat", { cardinality: "many", fidelity: "summary" }, BoardPicture);
 
+  /*
+   * Fullscreen mode is rendered directly now: jack-in zooms the scene
+   * instead of opening a page, so the two-mode contract is exercised on the
+   * view itself rather than through a modal that no longer exists.
+   */
   const draw = (store: Store<typeof schema>) =>
     renderToStaticMarkup(
       <GraviewProvider
         store={store}
         views={views()}
         initialView={{ ...EMPTY_VIEW, focusId: aggregateId("seat") }}
-        initialJackedIn={aggregateId("seat")}
       >
-        <JackedIn />
+        <ResolvedView
+          node={{
+            id: aggregateId("seat"),
+            kind: "seat",
+            plane: 0,
+            x: 0,
+            y: 0,
+            width: 1200,
+            height: 700,
+            pinned: false,
+            aggregate: {
+              kind: "seat",
+              memberIds: store.graph.nodesOfKind("seat").map((node) => node.id),
+              label: "Seats",
+            },
+          }}
+          mode="fullscreen"
+          selected={false}
+          fidelity="full"
+        />
       </GraviewProvider>,
     );
 

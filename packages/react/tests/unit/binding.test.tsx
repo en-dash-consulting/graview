@@ -1,12 +1,11 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
-import { EMPTY_VIEW, aggregateId, kindCardId, layout, toUrl } from "@graview/layout";
+import { EMPTY_VIEW, aggregateId, fromUrl, kindCardId, layout, toUrl, withZoom } from "@graview/layout";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   createViews,
   GraviewProvider,
-  JackedIn,
   onScreen,
   Scene,
   type ViewProps,
@@ -207,110 +206,49 @@ describe("the scene", () => {
   });
 });
 
-describe("the two-mode contract", () => {
-  it("renders the same component captured in-scene and jacked in", () => {
-    const scene = render(<Scene renderer="dom" />, {
+describe("zooming in", () => {
+  /*
+   * Jacking in ZOOMS: the same scene with the focus grown to most of it,
+   * not a modal page that replaced it. The shelf stays, receded, so the
+   * zoomed stop still reads as a place among its relations — which is the
+   * thing the full-page lift could never do.
+   */
+  it("grows the focus to most of the scene, in the same scene", () => {
+    const before = render(<Scene renderer="dom" />, {
       ...EMPTY_VIEW,
-      focusId: "week-1",
-      relation: "person",
+      focusId: aggregateId("person"),
     });
-    const full = renderToStaticMarkup(
-      <GraviewProvider
-        store={store()}
-        views={views()}
-        initialView={{ ...EMPTY_VIEW, focusId: "week-1", relation: "person" }}
-        initialJackedIn="ana"
-      >
-        <JackedIn />
-      </GraviewProvider>,
-    );
-
-    expect(scene).toContain('data-mode="scene"');
-    expect(full).toContain('data-mode="fullscreen"');
-    // Same content, both ways — that is the contract.
-    expect(scene).toContain("Ana");
-    expect(full).toContain("Ana");
-    // Jacking in forces full fidelity, so the detail the plane omitted returns.
-    expect(full).toContain("parent");
+    const after = render(<Scene renderer="dom" />, {
+      ...EMPTY_VIEW,
+      focusId: aggregateId("person"),
+      zoom: true,
+    });
+    // Most, not all: the default 1200-wide canvas minus its margins.
+    expect(after).toContain("width:1120px");
+    expect(before).not.toContain("width:1120px");
+    // Still the scene — same mode, same components, no dialog.
+    expect(after).toContain('data-mode="scene"');
+    expect(after).not.toContain('role="dialog"');
+    // The kinds shelf recedes rather than vanishing.
+    expect(after).toContain('data-graview-view="kind:person"');
+    expect(after).toContain('data-graview-view="kind:duty"');
   });
 
-  it("gives a jacked-in view the dialog semantics a full page needs", () => {
-    const html = renderToStaticMarkup(
-      <GraviewProvider
-        store={store()}
-        views={views()}
-        initialView={EMPTY_VIEW}
-        initialJackedIn="ana"
-      >
-        <JackedIn />
-      </GraviewProvider>,
-    );
-    expect(html).toContain('role="dialog"');
-    expect(html).toContain('aria-modal="true"');
-    // A way out, and — the part that was missing — a header saying WHERE YOU
-    // ARE. A full page raises exactly one question the scene did not already
-    // answer, and a lone button in an empty bar does not answer it.
-    expect(html).toContain("← Back");
-    // The KIND in the chrome; the NAME is the document's own heading. Chrome
-    // that repeats the h1 reads as a mistake even when both are correct.
-    expect(html).toContain("person");
-    expect(html).toContain("Ana");
-    // Named for assistive technology by the thing itself, not by its id.
-    expect(html).toContain('aria-label="Ana in full view"');
+  it("gives a zoomed record a reading column, not a letterbox", () => {
+    const html = render(<Scene renderer="dom" />, {
+      ...EMPTY_VIEW,
+      focusId: "ana",
+      zoom: true,
+    });
+    // A two-line record set wall to wall is unreadable; 880 is a document.
+    expect(html).toContain("width:880px");
   });
 
-  it("renders nothing when nothing is jacked in", () => {
-    const html = renderToStaticMarkup(
-      <GraviewProvider store={store()} views={views()} initialView={EMPTY_VIEW}>
-        <JackedIn />
-      </GraviewProvider>,
-    );
-    expect(html).toBe("");
-  });
-});
-
-/**
- * A full page is a PLACE you can act and move from, not a screenshot of one.
- *
- * Three complaints arrived as one sentence — it is not really full screen, it
- * is not interactive, and there is no way onward — and they were one mistake:
- * the surface drew a view and left every affordance behind in the scene.
- */
-describe("the full page as a place", () => {
-  const jacked = (id: string) =>
-    renderToStaticMarkup(
-      <GraviewProvider
-        store={store()}
-        views={views()}
-        initialView={{ ...EMPTY_VIEW, focusId: aggregateId("person") }}
-        initialJackedIn={id}
-      >
-        <JackedIn />
-      </GraviewProvider>,
-    );
-
-  it("gives a place the whole page, and a record a reading column", () => {
-    // A picture whose content is WHERE THINGS ARE, capped at 1120 pixels in
-    // the middle of a wide screen, is how "full screen" came to mean a card
-    // with dead ground either side.
-    expect(jacked(aggregateId("person"))).toContain("max-width:none");
-    // Prose still gets a column — a real reading column: a two-line record
-    // set 1500 pixels wide is unreadable, and that is the same mistake in
-    // the other direction.
-    expect(jacked("ana")).toContain("max-width:780px");
-  });
-
-  it("says what the place touches, and where that goes", () => {
-    const html = jacked(aggregateId("person"));
-    expect(html).toContain('data-testid="neighbours"');
-    // Derived from the edges, so a relation appears here the day it is
-    // declared and nobody writes a link.
-    expect(html).toContain('data-graview-neighbour="duty"');
-    expect(html).toContain("Runs");
-  });
-
-  it("says nothing about relations a record's own view already draws", () => {
-    expect(jacked("ana")).not.toContain('data-testid="neighbours"');
+  it("is a stop: in the URL, and back out of it", () => {
+    const zoomed = withZoom({ ...EMPTY_VIEW, focusId: "ana" }, true);
+    expect(toUrl(zoomed)).toContain("zoom=1");
+    expect(fromUrl(toUrl(zoomed)).zoom).toBe(true);
+    expect(fromUrl(toUrl(withZoom(zoomed, false))).zoom).toBeUndefined();
   });
 });
 

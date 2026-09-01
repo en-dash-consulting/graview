@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T01:27:59.302Z",
+  "at": "2026-09-01T01:59:52.432Z",
   "shots": [
     {
       "app": "todo",
@@ -75,9 +75,9 @@
     },
     {
       "app": "todo",
-      "state": "jackedIn",
+      "state": "zoomed",
       "scheme": "light",
-      "file": "todo-jackedIn-light.png",
+      "file": "todo-zoomed-light.png",
       "viewport": [
         1560,
         940
@@ -201,9 +201,9 @@
     },
     {
       "app": "todo",
-      "state": "jackedIn",
+      "state": "zoomed",
       "scheme": "dark",
-      "file": "todo-jackedIn-dark.png",
+      "file": "todo-zoomed-dark.png",
       "viewport": [
         1560,
         940
@@ -381,9 +381,9 @@
     },
     {
       "app": "the household example",
-      "state": "jackedIn",
+      "state": "zoomed",
       "scheme": "light",
-      "file": "the household example-jackedIn-light.png",
+      "file": "the household example-zoomed-light.png",
       "viewport": [
         1560,
         940
@@ -543,9 +543,9 @@
     },
     {
       "app": "the household example",
-      "state": "jackedIn",
+      "state": "zoomed",
       "scheme": "dark",
-      "file": "the household example-jackedIn-dark.png",
+      "file": "the household example-zoomed-dark.png",
       "viewport": [
         1560,
         940
@@ -651,9 +651,9 @@
     },
     {
       "app": "proposal",
-      "state": "jackedIn",
+      "state": "zoomed",
       "scheme": "light",
-      "file": "proposal-jackedIn-light.png",
+      "file": "proposal-zoomed-light.png",
       "viewport": [
         1560,
         940
@@ -723,9 +723,9 @@
     },
     {
       "app": "proposal",
-      "state": "jackedIn",
+      "state": "zoomed",
       "scheme": "dark",
-      "file": "proposal-jackedIn-dark.png",
+      "file": "proposal-zoomed-dark.png",
       "viewport": [
         1560,
         940
@@ -867,9 +867,9 @@
     },
     {
       "app": "the coaching example",
-      "state": "jackedIn",
+      "state": "zoomed",
       "scheme": "light",
-      "file": "the coaching example-jackedIn-light.png",
+      "file": "the coaching example-zoomed-light.png",
       "viewport": [
         1560,
         940
@@ -885,9 +885,9 @@
     },
     {
       "app": "the coaching example",
-      "state": "placeFull",
+      "state": "zoomedPlace",
       "scheme": "light",
-      "file": "the coaching example-placeFull-light.png",
+      "file": "the coaching example-zoomedPlace-light.png",
       "viewport": [
         1560,
         940
@@ -1047,9 +1047,9 @@
     },
     {
       "app": "the coaching example",
-      "state": "jackedIn",
+      "state": "zoomed",
       "scheme": "dark",
-      "file": "the coaching example-jackedIn-dark.png",
+      "file": "the coaching example-zoomed-dark.png",
       "viewport": [
         1560,
         940
@@ -1065,9 +1065,9 @@
     },
     {
       "app": "the coaching example",
-      "state": "placeFull",
+      "state": "zoomedPlace",
       "scheme": "dark",
-      "file": "the coaching example-placeFull-dark.png",
+      "file": "the coaching example-zoomedPlace-dark.png",
       "viewport": [
         1560,
         940

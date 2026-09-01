@@ -91,10 +91,10 @@ try {
   /*
    * Travel again, deeper — through a PICK TARGET rather than a card.
    *
-   * Double-clicking a card with no pick target inside it jacks in, which is a
-   * different gesture with a different meaning ("lift this out as a page") and
-   * a modal that correctly covers the chrome. Travelling is following a thing
-   * the view nominated, and that is what a chain of stops is made of.
+   * Double-clicking a card with no pick target inside it zooms it in close,
+   * which is a different move with a different meaning ("give this the
+   * room") — and an ordinary stop like any other. Travelling is following a
+   * thing the view nominated, and that is what a chain of stops is made of.
    */
   const onward = await page.evaluate(
     () =>

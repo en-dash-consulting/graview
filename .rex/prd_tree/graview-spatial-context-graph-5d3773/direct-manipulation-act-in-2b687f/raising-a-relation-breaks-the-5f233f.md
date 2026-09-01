@@ -2,7 +2,7 @@
 id: "5f233f8f-feb9-431e-9515-029d94f7ec49"
 level: "task"
 title: "Raising a relation breaks the composition: the planes touch and the board collapses to a stamp"
-status: "in_progress"
+status: "completed"
 priority: "high"
 tags:
   - "bug"
@@ -11,6 +11,10 @@ tags:
   - "board-lens"
 source: "Reported from screenshots in session 2026-08-31; reproduced and measured with playwright against the coaching example."
 startedAt: "2026-09-01T00:26:28.156Z"
+completedAt: "2026-09-01T01:41:01.552Z"
+endedAt: "2026-09-01T01:41:01.552Z"
+resolutionType: "code-change"
+resolutionDetail: "Bands hold ≥12px clear ground with a relation raised (measured 97px at 1560x940; layout test asserts ≥12 at 1280x720). The kinds shelf lies flat (the arc is gone), tucks peek from behind their parent's top edge capped to the parent's slot, the board turns landscape when its room is wider than tall (pitch legible, slots asserted in audit-ui.mjs), the key states one line per distinct sentence naming all implicated codes, panel meta says \"all N filled\", the trail emits no leading separator and no home crumb while standing at home. audit-ui.mjs gained a raised state per app plus board-slot assertions; 23/23 screens clean; test/typecheck/check/survey green. Fault 4 (the seat ghost) resolved by the sibling decision task."
 acceptanceCriteria:
   - "With a relation raised in the coaching example at 1280x800, 1440x900 and 1512x780, no plane-1 card's rendered box intersects any plane-2 card's rendered box, and there is at least 12px of clear ground between the two bands"
   - "A tucked kind card never covers its parent's name or its proportion bar at any viewport the survey covers"
