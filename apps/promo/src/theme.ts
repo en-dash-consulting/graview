@@ -58,12 +58,13 @@ export const DURATION_IN_FRAMES = STORY_FRAMES + OUTRO_FRAMES; // 1740 ≈ 58s
 /** Soft-morph beat windows inside the continuous camera spine (story only). */
 export const beats = {
   open: { from: 0, duration: 90 },
-  glyphs: { from: 40, duration: 200 },
-  graph: { from: 210, duration: 230 },
-  city: { from: 410, duration: 230 },
-  coverage: { from: 610, duration: 260 },
-  brand: { from: 840, duration: 230 },
-  settle: { from: 1030, duration: 230 },
+  glyphs: { from: 40, duration: 185 },
+  /** Denser ~5.5s — jack-in, brief title, affordance candy, exit */
+  graph: { from: 200, duration: 165 },
+  city: { from: 345, duration: 215 },
+  coverage: { from: 530, duration: 250 },
+  brand: { from: 750, duration: 220 },
+  settle: { from: 940, duration: 320 },
 } as const;
 
 export const tagline = "Declare the domain. The application follows.";

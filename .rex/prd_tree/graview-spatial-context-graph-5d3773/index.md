@@ -12,8 +12,8 @@ tags:
   - "context-graph"
 source: "Session planning — architecture agreed 2026-08-29"
 startedAt: "2026-08-30T04:55:36.895Z"
-completedAt: "2026-09-01T11:34:29.333Z"
-endedAt: "2026-09-01T11:34:29.333Z"
+completedAt: "2026-09-01T13:04:35.238Z"
+endedAt: "2026-09-01T13:04:35.238Z"
 acceptanceCriteria:
   - "The household example's week calendar and People relation render as one spatial scene, editable at plane 0"
   - "Clicks, focus and screen-reader access resolve correctly against nodes drawn at depth"
@@ -35,6 +35,7 @@ description: "A framework for building applications where a typed context graph 
 | [The constellation: the graph seen from outside, and jacking in from it](./the-constellation-the-graph-cb0397/index.md) | completed |
 | [An empty app is an onboarding: the blank-graph example](./an-empty-app-is-an-onboarding-5a35eb.md) | completed |
 | [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | completed |
+| [Descending with an open district scattered the shelf](./descending-with-an-open-ae4660.md) | completed |
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | completed |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
 | [Modules: named parts of a declaration a workspace can turn on and off](./modules-named-parts-of-a-aa8097.md) | completed |

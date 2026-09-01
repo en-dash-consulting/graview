@@ -195,6 +195,20 @@ export function withRelation(state: ViewState, relation: string | null): ViewSta
 }
 
 export function withOverview(state: ViewState, overview: boolean): ViewState {
+  if (!overview) {
+    /*
+     * OPEN DISTRICTS STAY AT ALTITUDE. Opening a kind card up on the ring
+     * means "show this district's members in place"; the same expansion key
+     * inside the stack means "dissolve the shelf card into loose members",
+     * which nobody asked for on the way down — descending with districts
+     * open scattered their whole rosters across the shelf as a chip soup.
+     * The overview stop keeps the state, so going back up reopens them.
+     */
+    // "kind:" is KIND_PREFIX in layout.ts — written out here to keep this
+    // module import-free (layout already type-imports from this file).
+    const expanded = state.expanded.filter((id) => !id.startsWith("kind:"));
+    return { ...state, overview: false, expanded };
+  }
   return { ...state, overview };
 }
 

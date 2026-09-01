@@ -1,0 +1,28 @@
+{
+  "id": "89db89f6-169c-4433-9c94-7429991fa362",
+  "taskId": "ae466023-42cc-4ac9-b818-961e2ff5a854",
+  "taskTitle": "Open districts stay at altitude",
+  "startedAt": "2026-09-01T13:04:55.509Z",
+  "finishedAt": "2026-09-01T13:04:55.509Z",
+  "status": "completed",
+  "turns": 53,
+  "summary": "Descent strips kind-card expansions; plus bundles-of-one become clickable lines and the pages face mounts in the household example/the coaching example/seedbed",
+  "tokenUsage": {
+    "input": 106,
+    "output": 45883,
+    "cacheCreationInput": 2033574,
+    "cacheReadInput": 33531276
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 106,
+    "output": 45883,
+    "cached": 35564850,
+    "total": 35610839
+  }
+}
