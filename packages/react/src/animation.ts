@@ -81,7 +81,23 @@ export function useAnimatedLayout(
         frame.current = requestAnimationFrame(step);
       } else {
         from.current = target;
-        frame.current = null;
+        /*
+         * ONE SETTLE TICK after the last frame has painted.
+         *
+         * Anything that measures the DOM during render — connectors, ties,
+         * captions — reads the PREVIOUS commit's geometry, so the render
+         * that draws t = 1 measures wherever the scene was a frame earlier.
+         * On a smooth tween that is a fraction of a percent; across a
+         * dropped frame it is a visible stray line frozen in mid-air. A
+         * final render on the next frame measures the settled DOM, and a
+         * fresh object identity is what makes React run it.
+         */
+        frame.current = requestAnimationFrame(() => {
+          const settled = interpolate(target, target, 1);
+          latest.current = settled;
+          setCurrent(settled);
+          frame.current = null;
+        });
       }
     };
 
