@@ -1,0 +1,28 @@
+{
+  "id": "a320d266-d578-41f5-96d7-c17d9170529a",
+  "taskId": "728589e4-9119-4197-8a06-6f180e78be03",
+  "taskTitle": "Relevance is a horizon, not a delete",
+  "startedAt": "2026-09-01T05:52:53.987Z",
+  "finishedAt": "2026-09-01T05:52:53.987Z",
+  "status": "completed",
+  "turns": 141,
+  "summary": "Lifecycle declarations, current-by-default aggregation with advertised retired counts, past as a URL stop, judgesPast invariant scoping, the household example adoption + UI affordances",
+  "tokenUsage": {
+    "input": 282,
+    "output": 83507,
+    "cacheCreationInput": 268546,
+    "cacheReadInput": 41016408
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 282,
+    "output": 83507,
+    "cached": 41284954,
+    "total": 41368743
+  }
+}

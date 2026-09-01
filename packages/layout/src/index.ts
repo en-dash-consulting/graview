@@ -33,6 +33,7 @@ export {
   withFocus,
   withOverview,
   withPan,
+  withPast,
   withPin,
   withoutMoves,
   withRelation,

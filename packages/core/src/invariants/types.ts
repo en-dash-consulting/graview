@@ -53,6 +53,13 @@ export interface InvariantDefinition<S extends AnySchema = AnySchema> {
    * registered, instead of discovering it when a violation fires.
    */
   readonly repairs?: readonly string[];
+  /**
+   * Judge retired subjects too. By default a scoped invariant sees only the
+   * HORIZON — nodes current under their kind's lifecycle — because a rule
+   * about last term's agreement is noise, not a violation. An invariant that
+   * genuinely audits history says so here, explicitly.
+   */
+  readonly judgesPast?: boolean;
   readonly evaluate: (args: InvariantEvalArgs<S, never>) => Violation[];
 }
 
@@ -60,6 +67,12 @@ export interface EvaluateOptions<S extends AnySchema = AnySchema> {
   readonly context?: InvariantContext;
   /** What to do when a node requires an invariant nobody registered. */
   readonly onUnregistered?: "skip" | "throw";
+  /**
+   * Pins "today" for the lifecycle horizon (YYYY-MM-DD). Without it the
+   * date-retired check reads the real clock — pass this wherever determinism
+   * matters (tests, replays).
+   */
+  readonly today?: string;
   /** Filters subject nodes before evaluation, e.g. by effectivity window. */
   readonly subjectFilter?: (
     node: NodeOfSchema<S>,

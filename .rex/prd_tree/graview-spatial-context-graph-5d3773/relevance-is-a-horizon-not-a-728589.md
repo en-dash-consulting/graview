@@ -2,7 +2,7 @@
 id: "728589e4-9119-4197-8a06-6f180e78be03"
 level: "feature"
 title: "Relevance is a horizon, not a delete: lifecycle, archival, and the sync flood"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "lifecycle"
@@ -11,6 +11,11 @@ tags:
   - "scale"
   - "schema"
 source: "Nick, 2026-09-01: \"how to handle expired/irrelevant/archived entities within these nodes, esp when we start doing things like syncing google calendar... it would need to create an Exception entity for so many things, it'd get so overwhelming\""
+startedAt: "2026-09-01T05:33:44.589Z"
+completedAt: "2026-09-01T05:52:42.500Z"
+endedAt: "2026-09-01T05:52:42.500Z"
+resolutionType: "code-change"
+resolutionDetail: "Lifecycle declarations + isCurrent in core, current-by-default layout aggregation with advertised retired counts, past as URL view state, judgesPast invariant scoping, the household example adoption, UI affordances (+N past pill, trail chip), full test + harness sweep green."
 acceptanceCriteria:
   - "A kind can declare a LIFECYCLE role — a status field or an until-date that says when a node stops being current — the way it already declares label and plural roles, and graview check verifies the declaration"
   - "Every derived surface aggregates over the HORIZON by default: counts, tallies, kind cards, districts, rosters, lenses and invariants see current nodes; retired ones are one deliberate step away ('5, +12 past'), never gone and never shown by accident"

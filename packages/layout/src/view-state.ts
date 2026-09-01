@@ -39,6 +39,14 @@ export interface ViewState {
    */
   readonly overview?: boolean;
   /**
+   * The HORIZON widened: retired nodes shown alongside current ones.
+   *
+   * A stop like every other — a URL, a back-button entry, tweenable — so
+   * "show me the retired agreements" is a place you go and come back from,
+   * not a setting you forget you flipped.
+   */
+  readonly past?: boolean;
+  /**
    * Zoomed in close: the focus takes most of the scene — most, not all —
    * and the kinds shelf and any raised relation recede rather than vanish.
    *
@@ -73,6 +81,7 @@ export function toUrl(state: ViewState): string {
   if (state.relation) params.set("relation", state.relation);
   if (state.overview) params.set("overview", "1");
   if (state.zoom) params.set("zoom", "1");
+  if (state.past) params.set("past", "1");
   if (state.expanded.length > 0) {
     params.set("expand", [...state.expanded].sort().join(","));
   }
@@ -107,6 +116,7 @@ export function fromUrl(url: string): ViewState {
   return {
     ...(params.get("overview") === "1" ? { overview: true } : {}),
     ...(params.get("zoom") === "1" ? { zoom: true } : {}),
+    ...(params.get("past") === "1" ? { past: true } : {}),
     ...(panX !== null && panY !== null ? { pan: { x: panX, y: panY } } : {}),
     focusId: params.get("focus"),
     relation: params.get("relation"),
@@ -137,6 +147,15 @@ export function withRelation(state: ViewState, relation: string | null): ViewSta
 
 export function withOverview(state: ViewState, overview: boolean): ViewState {
   return { ...state, overview };
+}
+
+/** Widen the horizon to include the past, or narrow it back to now. */
+export function withPast(state: ViewState, past: boolean): ViewState {
+  if (!past) {
+    const { past: _drop, ...rest } = state;
+    return rest;
+  }
+  return { ...state, past: true };
 }
 
 /** Zoom the focus in close, or back out. */

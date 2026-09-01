@@ -688,3 +688,91 @@ describe("the kinds plane ranks relations rather than listing them flat", () => 
     }
   });
 });
+
+/**
+ * The HORIZON. A kind that declares a lifecycle aggregates over "now" by
+ * default: retired members leave the counts but never the graph, the count
+ * advertises them ("+N past"), and widening the horizon is view state — a
+ * stop, not a setting.
+ */
+describe("derivations aggregate over the horizon", () => {
+  const pact = defineNode("pact", {
+    fields: z.object({ label: z.string(), status: z.enum(["live", "lapsed"]) }),
+    plural: "Pacts",
+    edges: { binds: { to: ["person"], description: "who it binds" } },
+    lifecycle: { field: "status", retired: ["lapsed"] },
+  });
+  const horizonSchema = createSchema([person, duty, pact]);
+
+  const horizonGraph = () =>
+    Graph.from(horizonSchema, {
+      nodes: [
+        { id: "ana", kind: "person", label: "Ana" },
+        { id: "quiet", kind: "pact", label: "Quiet hours", status: "live" },
+        { id: "screens", kind: "pact", label: "Screen truce", status: "lapsed" },
+        { id: "summer", kind: "pact", label: "Summer split", status: "lapsed" },
+      ],
+      edges: [
+        { kind: "binds", from: "quiet", to: "ana" },
+        { kind: "binds", from: "screens", to: "ana" },
+      ],
+    });
+
+  const pactCard = (state: ViewState) =>
+    layout(horizonGraph(), horizonSchema, state).nodes.find(
+      (node) => node.id === kindCardId("pact"),
+    );
+
+  it("counts only current members on the kind card, and advertises the rest", () => {
+    const card = pactCard(view({}));
+    expect(card?.aggregate?.memberIds).toEqual(["quiet"]);
+    expect(card?.aggregate?.retired).toBe(2);
+  });
+
+  it("widens when the view says past — and the advert goes quiet", () => {
+    const card = pactCard(view({ past: true }));
+    expect(card?.aggregate?.memberIds?.length).toBe(3);
+    expect(card?.aggregate?.retired).toBeUndefined();
+  });
+
+  it("keeps retired nodes off the raised plane", () => {
+    const raised = (state: ViewState) =>
+      layout(horizonGraph(), horizonSchema, state)
+        .nodes.filter((node) => node.plane === 1 && !node.aggregate)
+        .map((node) => node.id)
+        .sort();
+    expect(raised(view({ focusId: "ana", relation: "pact" }))).toEqual(["quiet"]);
+    expect(raised(view({ focusId: "ana", relation: "pact", past: true }))).toEqual([
+      "quiet",
+      "screens",
+      "summer",
+    ]);
+  });
+
+  it("survives a crowd: three hundred retired nodes cost a count, not cards", () => {
+    const nodes: Parameters<typeof Graph.from>[1]["nodes"] = [
+      { id: "ana", kind: "person", label: "Ana" },
+    ];
+    for (let i = 0; i < 320; i++) {
+      nodes.push({
+        id: `p${i}`,
+        kind: "pact",
+        label: `Pact ${i}`,
+        status: i < 20 ? "live" : "lapsed",
+      });
+    }
+    const big = Graph.from(horizonSchema, { nodes, edges: [] });
+    const card = layout(big, horizonSchema, view({})).nodes.find(
+      (node) => node.id === kindCardId("pact"),
+    );
+    expect(card?.aggregate?.memberIds?.length).toBe(20);
+    expect(card?.aggregate?.retired).toBe(300);
+  });
+
+  it("is a stop: past survives the URL round trip", () => {
+    const state = view({ focusId: "ana", past: true });
+    expect(fromUrl(toUrl(state)).past).toBe(true);
+    expect(sameView(state, fromUrl(toUrl(state)))).toBe(true);
+    expect(fromUrl(toUrl(view({ focusId: "ana" }))).past).toBeUndefined();
+  });
+});

@@ -1,4 +1,5 @@
 import type { Graph } from "../graph/graph.js";
+import { isCurrent } from "../schema/define-node.js";
 import type { AnySchema, KindOfSchema, NodeOfKind, NodeOfSchema } from "../schema/schema.js";
 import type {
   EvaluateOptions,
@@ -30,6 +31,7 @@ export function defineInvariant<
     readonly label?: string;
     readonly description?: string;
     readonly repairs?: readonly string[];
+    readonly judgesPast?: boolean;
     readonly evaluate: (args: InvariantEvalArgs<S, NodeOfKind<S, K>>) => Violation[];
   },
 ): InvariantDefinition<S>;
@@ -40,6 +42,7 @@ export function defineInvariant<S extends AnySchema>(
     readonly label?: string;
     readonly description?: string;
     readonly repairs?: readonly string[];
+    readonly judgesPast?: boolean;
     readonly evaluate: (args: InvariantEvalArgs<S, undefined>) => Violation[];
   },
 ): InvariantDefinition<S>;
@@ -50,6 +53,7 @@ export function defineInvariant<S extends AnySchema>(
     readonly label?: string;
     readonly description?: string;
     readonly repairs?: readonly string[];
+    readonly judgesPast?: boolean;
     readonly evaluate: (args: never) => Violation[];
   },
 ): InvariantDefinition<S> {
@@ -57,9 +61,9 @@ export function defineInvariant<S extends AnySchema>(
 }
 
 /**
- * Pure evaluation: same graph and context in, same violations out. Nothing
- * here reads the clock, a random source, or the DOM — which is what lets the
- * whole tier run headlessly in CI.
+ * Pure evaluation: same graph, context and `today` in, same violations out.
+ * The one clock read is the lifecycle horizon's date fallback when no
+ * `options.today` is pinned — pin it and the whole tier runs headlessly in CI.
  */
 export function evaluate<S extends AnySchema>(
   graph: Graph<S>,
@@ -100,7 +104,15 @@ export function evaluate<S extends AnySchema>(
       continue;
     }
 
+    /*
+     * The horizon applies to judgement, not just display: a retired subject
+     * is only examined by invariants that opted into the past. Graph-scoped
+     * invariants read whatever they read — they have no subject to retire.
+     */
+    const retired = !isCurrent(definition, node, options.today);
+
     for (const invariant of byKind.get(node.kind) ?? []) {
+      if (retired && invariant.judgesPast !== true) continue;
       const match = (invariant.scope as { match?: (n: NodeOfSchema<S>) => boolean }).match;
       if (match && !match(node)) continue;
       violations.push(

@@ -88,6 +88,28 @@ export interface NodeDefinitionSpec<
     /** Turns a stored value into the words for it. */
     readonly format?: Readonly<Record<string, (value: unknown) => string>>;
   };
+  /**
+   * When a node of this kind stops being CURRENT.
+   *
+   * The graph accumulates; the interface must not. A kind that declares its
+   * lifecycle lets every derived surface aggregate over the horizon by
+   * default — counts, districts, rosters, violations — with the past one
+   * deliberate step away rather than gone. Nothing here deletes: retiring
+   * is an ordinary field write through an ordinary mutation, and widening
+   * the horizon is ordinary view state.
+   *
+   * Two shapes, one field: `retired` lists the values that mean "past"
+   * (a status enum), or is the string "date", which reads the field as an
+   * ISO date after which the node has expired (effectivity's `until`).
+   */
+  readonly lifecycle?: LifecycleDeclaration;
+}
+
+export interface LifecycleDeclaration {
+  /** The field that carries the node's currency. */
+  readonly field: string;
+  /** Values meaning "past", or "date" to expire after the field's ISO date. */
+  readonly retired: readonly unknown[] | "date";
 }
 
 export interface NodeDefinition<

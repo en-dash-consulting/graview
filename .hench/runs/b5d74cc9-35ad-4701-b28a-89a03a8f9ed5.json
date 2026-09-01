@@ -1,0 +1,28 @@
+{
+  "id": "b5d74cc9-35ad-4701-b28a-89a03a8f9ed5",
+  "taskId": "fc10dab0-ebdc-49ad-b33f-0b12c2621dbe",
+  "taskTitle": "A raised crowd reads as a crowd, not as ten crushed cards",
+  "startedAt": "2026-09-01T05:32:57.207Z",
+  "finishedAt": "2026-09-01T05:32:57.207Z",
+  "status": "completed",
+  "turns": 1017,
+  "summary": "Width-driven fidelity degradation: crowded plane-1 cards render kind glyphs; verified on the bid-desk example, suite green",
+  "tokenUsage": {
+    "input": 2034,
+    "output": 1242297,
+    "cacheCreationInput": 7074927,
+    "cacheReadInput": 524064109
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 2034,
+    "output": 1242297,
+    "cached": 531139036,
+    "total": 532383367
+  }
+}

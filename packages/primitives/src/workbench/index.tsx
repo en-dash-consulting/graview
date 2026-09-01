@@ -1,5 +1,5 @@
 import { labelOf, type AnySchema, type Store } from "@graview/core";
-import { withoutMoves, withOverview, withZoom } from "@graview/layout";
+import { withoutMoves, withOverview, withPast, withZoom } from "@graview/layout";
 import {
   useAffordances,
   useApplyAffordance,
@@ -1525,6 +1525,29 @@ export function Trail({
    * the others — Escape backs out of it first, this chip is the visible
    * version of the same move.
    */
+  /*
+   * THE PAST says so, and offers the way back to now. Widening the horizon
+   * is a stop; the chip is the visible version of leaving it.
+   */
+  if (view.past) {
+    chips.push({
+      key: "past",
+      node: (
+        <button
+          type="button"
+          data-testid="past"
+          onClick={() => go(withPast(view, false))}
+          title="Back to now — retired things leave the picture again"
+          style={chip}
+        >
+          the past
+          <span aria-hidden="true" style={{ opacity: 0.7 }}>
+            ×
+          </span>
+        </button>
+      ),
+    });
+  }
   if (view.zoom) {
     chips.push({
       key: "zoomed",
