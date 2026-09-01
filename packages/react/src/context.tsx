@@ -195,11 +195,25 @@ export function GraviewProvider<S extends AnySchema>({
 
   const setView = useCallback(
     (next: ViewState | ((currentView: ViewState) => ViewState)) => {
-      const resolved = typeof next === "function" ? next(current) : next;
+      let resolved = typeof next === "function" ? next(current) : next;
+      /*
+       * INSIDE THE STACK, SOMETHING IS ALWAYS FOCUSED.
+       *
+       * A focusless in-stack view renders a shelf and a void — a screen
+       * with no main view, which reads as being stuck rather than as being
+       * anywhere. No control writes that state on purpose, but URLs,
+       * history pops and chains of chrome can compose it. Whatever asked
+       * for nothing lands on the view the app opened with instead. The
+       * overview stays free to be focusless: up there the ring is the
+       * picture.
+       */
+      if (!resolved.overview && resolved.focusId === null && homeView.focusId !== null) {
+        resolved = { ...resolved, focusId: homeView.focusId };
+      }
       if (onViewChange) onViewChange(resolved);
       if (view === undefined) setInternalView(resolved);
     },
-    [current, onViewChange, view],
+    [current, onViewChange, view, homeView],
   );
 
   const setSelection = useCallback(

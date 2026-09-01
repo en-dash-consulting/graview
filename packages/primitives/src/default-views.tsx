@@ -490,13 +490,13 @@ export function registerDefaultViews<S extends AnySchema>(
                 onDoubleClick={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
               >
-                {props.opened ? "▾" : "▸"}
+                {props.opened ? "close ▴" : "open ▾"}
               </button>
             ) : null}
           </div>
           {props.opened ? (
             <div className="graview-kind-members">
-              {members.slice(0, 12).map((member) => (
+              {members.slice(0, 8).map((member) => (
                 <Chip
                   key={member.id}
                   pickId={member.id}
@@ -505,9 +505,9 @@ export function registerDefaultViews<S extends AnySchema>(
                   selected={chosen.has(member.id)}
                 />
               ))}
-              {members.length > 12 ? (
-                <span style={{ fontSize: 11, color: "var(--graview-ink-faint)", alignSelf: "center" }}>
-                  +{members.length - 12} more
+              {members.length > 8 ? (
+                <span style={{ fontSize: 11, color: "var(--graview-ink-faint)", padding: "2px 4px" }}>
+                  +{members.length - 8} more — double-click to go in
                 </span>
               ) : null}
             </div>

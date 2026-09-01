@@ -252,30 +252,41 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
-  min-height: 0;
-  padding: 0;
-  margin: -4px -4px -4px 0;
+  min-height: 24px;
+  padding: 1px 9px;
+  margin: -3px 0;
   border-radius: 999px;
-  border: none;
-  background: none;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-panel);
   box-shadow: none;
-  color: var(--graview-ink-faint);
+  color: var(--graview-ink-muted);
   cursor: pointer;
   font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   line-height: 1;
+  white-space: nowrap;
 }
 [data-graview-altitude] .graview-kind-open:hover {
   color: var(--graview-accent);
-  background: var(--graview-panel-muted);
+  border-color: var(--graview-accent-dim);
 }
+/* The roster reads as a LIST, one member a row — chips wrapping at their
+   own widths read as spilled tiles, and a district's population is a roll
+   call, not a mosaic. */
 .graview-kind-members {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
   margin-top: 7px;
   animation: graview-settle 240ms ease backwards;
+}
+[data-graview-altitude] .graview-kind-members > [data-graview-pick] {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  max-width: none;
 }
 /* An OPENED nameplate is a small panel again: the roster needs a column,
    and a pill of chips is neither. */
@@ -283,8 +294,9 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   flex-direction: column !important;
   align-items: stretch !important;
   border-radius: 11px !important;
-  padding: 8px 11px 9px !important;
-  max-width: 216px;
+  padding: 9px 11px 10px !important;
+  width: 208px;
+  max-width: 208px;
 }
 
 /* Chrome that arrives with a state settles in rather than popping. */
