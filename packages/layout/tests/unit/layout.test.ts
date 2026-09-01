@@ -787,3 +787,30 @@ describe("derivations aggregate over the horizon", () => {
     expect(fromUrl(toUrl(view({ focusId: "ana" }))).past).toBeUndefined();
   });
 });
+
+/**
+ * MODULES OFF are not drawn at all — no card, no members, no raised plane,
+ * and unlike the horizon, no advert: a workspace that turned a module off
+ * scoped its interface, it did not archive anything.
+ */
+describe("hidden kinds leave the picture entirely", () => {
+  const opts = { hiddenKinds: ["duty"] };
+
+  it("draws no kind card for a hidden kind", () => {
+    const result = layout(graph(), schema, view({ focusId: "week-1" }), opts);
+    expect(result.nodes.find((node) => node.id === kindCardId("duty"))).toBeUndefined();
+    expect(result.nodes.find((node) => node.id === kindCardId("person"))).toBeDefined();
+  });
+
+  it("keeps hidden nodes off the raised plane and out of connectors", () => {
+    const result = layout(graph(), schema, view({ focusId: "ana", relation: "assigned-to" }), opts);
+    expect(result.nodes.find((node) => node.id === "morning")).toBeUndefined();
+    expect(result.connectors.filter((c) => c.to === "morning" || c.to === kindCardId("duty"))).toEqual([]);
+  });
+
+  it("lands a hidden focus on the default view rather than a void", () => {
+    const hiddenFocus = layout(graph(), schema, view({ focusId: "morning" }), opts);
+    const plain = layout(graph(), schema, view({}), opts);
+    expect(hiddenFocus.nodes.map((n) => n.id).sort()).toEqual(plain.nodes.map((n) => n.id).sort());
+  });
+});

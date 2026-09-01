@@ -2,6 +2,7 @@ import type { InvariantDefinition } from "./invariants/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import type { Policy } from "./permissions/types.js";
 import type { Brand } from "./theme/types.js";
+import type { ModuleMap } from "./modules.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { ViewRegistry } from "./views/types.js";
 
@@ -70,6 +71,15 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * framework can measure rather than trust.
    */
   readonly brand?: Brand;
+  /**
+   * Named parts of the declaration a workspace can turn on and off.
+   *
+   * Declared on the app so `graview check` can hold the boundaries: a
+   * module naming a kind nobody declared, a requirement naming a module
+   * nobody wrote, or an always-on kind whose edge reaches into a module —
+   * a line that would dangle the moment someone turns that module off.
+   */
+  readonly modules?: ModuleMap;
 }
 
 export function defineApp<S extends AnySchema>(app: GraviewApp<S>): GraviewApp<S> {

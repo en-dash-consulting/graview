@@ -170,6 +170,8 @@ export { bindSchema } from "./bind.js";
 export type { SchemaBinding } from "./bind.js";
 
 // App bundle, checks and generated agent docs.
+export { resolveModules } from "./modules.js";
+export type { ModuleDeclaration, ModuleMap, ModuleProjection } from "./modules.js";
 export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export { checkApp, formatFindings } from "./cli/check.js";

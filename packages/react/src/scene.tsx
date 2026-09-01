@@ -142,6 +142,11 @@ export function Scene<S extends AnySchema>({
   const sized = useMemo<LayoutOptions>(
     () => ({
       ...options,
+      // A workspace's disabled modules, projected once by the store: the
+      // layout simply never draws those kinds.
+      ...(store.modules.disabledKinds.size > 0
+        ? { hiddenKinds: [...store.modules.disabledKinds].sort() }
+        : {}),
       ...(size
         ? {
             width: size.width,
@@ -156,7 +161,7 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size],
+    [options, size, store],
   );
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, sized),
