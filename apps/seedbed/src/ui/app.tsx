@@ -20,6 +20,7 @@ import {
   Trail,
   Wordmark,
   QuickRelations,
+  ChatPanel,
 } from "@graview/primitives";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
 import { useCallback, useMemo, useState } from "react";
@@ -165,6 +166,7 @@ function CommandBar({
       <Trail home={null} />
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
         <Standing clean="The garden keeps its agreements" />
+        <ChatPanel<S> onCall={onCall} />
         <ActivityRail calls={calls} seat={<StarterGarden onCall={onCall} />} />
         <button
           type="button"

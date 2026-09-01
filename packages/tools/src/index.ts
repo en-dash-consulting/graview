@@ -49,3 +49,5 @@ export {
   validateProposals,
 } from "./intelligence.js";
 export type { Completion, Intelligence, ProposedCall } from "./intelligence.js";
+export { graphResponder, llmResponder } from "./conversation.js";
+export type { ChatContext, ChatReply, Responder } from "./conversation.js";
