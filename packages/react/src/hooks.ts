@@ -280,6 +280,7 @@ function adjustment(before: ViewState | null, after: ViewState): boolean {
     before.relation === after.relation &&
     (before.overview ?? false) === (after.overview ?? false) &&
     (before.zoom ?? false) === (after.zoom ?? false) &&
+    (before.past ?? false) === (after.past ?? false) &&
     before.expanded.join(",") === after.expanded.join(",")
   );
 }

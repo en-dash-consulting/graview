@@ -10,6 +10,13 @@ export interface Aggregate {
   readonly memberIds: readonly string[];
   /** Plural label from the kind's declaration, e.g. "People". */
   readonly label: string;
+  /**
+   * How many members sit BEHIND the horizon — retired under their kind's
+   * declared lifecycle and not in memberIds while the view is on "now".
+   * Advertised, never hidden: archived must not mean invisible-and-
+   * forgotten.
+   */
+  readonly retired?: number;
 }
 
 /**
@@ -144,6 +151,11 @@ export interface LayoutOptions {
   readonly gap?: number;
   /** Plural labels by kind, from the schema. */
   readonly plurals?: Readonly<Record<string, string>>;
+  /**
+   * The day the horizon is judged against (ISO date). Injectable so a test
+   * or a pinned survey judges a different day; defaults to the real one.
+   */
+  readonly today?: string;
 }
 
 /**
@@ -157,7 +169,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1040, height: 420 },

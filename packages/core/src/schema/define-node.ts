@@ -24,6 +24,30 @@ export function defineNode<
   };
 }
 
+/**
+ * Whether a node is CURRENT under its kind's declared lifecycle.
+ *
+ * True when the kind declares no lifecycle — currency is opt-in, and a kind
+ * that never retires anything should not pay for the concept. `today` is
+ * injectable so a test (or a view pinned to a survey date) can ask about a
+ * different day; it defaults to the real one.
+ */
+export function isCurrent(
+  definition: AnyNodeDefinition | undefined,
+  node: { id: string; kind: string } & Record<string, unknown>,
+  today: string = new Date().toISOString().slice(0, 10),
+): boolean {
+  const lifecycle = definition?.lifecycle;
+  if (!lifecycle) return true;
+  const value = node[lifecycle.field];
+  if (lifecycle.retired === "date") {
+    // No date means no expiry: an open-ended node is current for ever.
+    if (typeof value !== "string" || value.length === 0) return true;
+    return value >= today;
+  }
+  return !lifecycle.retired.includes(value);
+}
+
 /** Resolves a node's display label, honouring the declaration's override. */
 export function labelOf(
   definition: AnyNodeDefinition | undefined,

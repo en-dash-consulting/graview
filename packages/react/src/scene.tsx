@@ -1789,6 +1789,7 @@ export function ResolvedView<S extends AnySchema>({
     ...(node.raised ? { raised: true } : {}),
     ...(node.focused ? { focused: true } : {}),
     ...(node.opened ? { opened: true } : {}),
+    ...(node.aggregate?.retired ? { retired: node.aggregate.retired } : {}),
     ...(node.rank ? { rank: node.rank } : {}),
     ...(node.nestedUnder ? { nestedUnder: node.nestedUnder } : {}),
     ...(hasOwnView ? { hasOwnView: true } : {}),

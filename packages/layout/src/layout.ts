@@ -1,4 +1,4 @@
-import type { AnySchema, GraphReader, NodeOfSchema } from "@graview/core";
+import { isCurrent, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
 import {
   DEFAULT_OPTIONS,
   type Aggregate,
@@ -187,13 +187,24 @@ export function layout<S extends AnySchema>(
 
   // A group may be focused as readily as a node: "show me the week" and
   // "show me this run" are the same gesture at different granularities.
+  /*
+   * THE HORIZON. A node retired under its kind's declared lifecycle is not
+   * in the picture unless the view has deliberately widened to the past —
+   * and everything that drops out is COUNTED where it dropped from, so the
+   * archive is one step away rather than gone.
+   */
+  const current = (node: NodeOfSchema<S>): boolean =>
+    state.past === true || isCurrent(schema.tryDefinition(node.kind), node, opts.today);
+
   const focusKinds = state.focusId ? kindsOfAggregate(state.focusId) : [];
-  const focusGroup =
+  const focusAll =
     focusKinds.length > 0
       ? [...graph.allNodes()]
           .filter((node) => focusKinds.includes(node.kind))
           .sort(byStableKey)
       : [];
+  const focusGroup = focusAll.filter(current);
+  const focusRetired = focusAll.length - focusGroup.length;
   const focus =
     state.focusId && focusKinds.length === 0 ? graph.getNode(state.focusId) : undefined;
 
@@ -307,7 +318,9 @@ export function layout<S extends AnySchema>(
 
   // Nothing is raised while you are above the stack: the ring IS the
   // relation plane up here.
-  const related = state.overview ? [] : relatedNodes(graph, schema, focus, state.relation);
+  const related = state.overview
+    ? []
+    : relatedNodes(graph, schema, focus, state.relation).filter((entry) => current(entry.node));
 
   /*
    * With plane 1 empty, the focus takes the relation band too.
@@ -390,6 +403,7 @@ export function layout<S extends AnySchema>(
               label:
                 options.plurals?.[state.focusId] ??
                 focusKinds.map((kind) => pluralOf(schema, kind)).join(" and "),
+              ...(focusRetired > 0 ? { retired: focusRetired } : {}),
             },
           }),
     });
@@ -420,6 +434,7 @@ export function layout<S extends AnySchema>(
         label:
           options.plurals?.[state.focusId] ??
           focusKinds.map((kind) => pluralOf(schema, kind)).join(" and "),
+        ...(focusRetired > 0 ? { retired: focusRetired } : {}),
       },
     });
   }
@@ -486,15 +501,18 @@ export function layout<S extends AnySchema>(
     id: string;
     kind: string;
     members: NodeOfSchema<S>[];
+    retired: number;
     raised?: boolean;
     focused?: boolean;
   }[] = [];
   for (const kind of schema.kinds as readonly string[]) {
-    const members = groups.get(kind) ?? [];
+    const all = groups.get(kind) ?? [];
+    const members = all.filter(current);
     entries.push({
       id: kindCardId(kind),
       kind,
-      members: [...members].sort(byStableKey),
+      members: members.sort(byStableKey),
+      retired: all.length - members.length,
       ...(focusedKinds.has(kind) ? { focused: true } : {}),
     });
   }
@@ -580,6 +598,7 @@ export function layout<S extends AnySchema>(
           kind: entry.kind,
           memberIds: entry.members.map((m) => m.id),
           label: options.plurals?.[entry.kind] ?? pluralOf(schema, entry.kind),
+          ...(entry.retired > 0 ? { retired: entry.retired } : {}),
         },
       });
     }

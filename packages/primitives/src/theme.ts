@@ -299,6 +299,29 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   max-width: 208px;
 }
 
+/* The way into the archive, on the card that fed it: quiet, but a real
+   control at a real size. */
+.graview-kind-past {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 24px;
+  padding: 1px 8px;
+  margin: -3px 0;
+  border-radius: 999px;
+  border: 1px dashed var(--graview-edge);
+  background: none;
+  box-shadow: none;
+  color: var(--graview-ink-faint);
+  cursor: pointer;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+.graview-kind-past:hover {
+  color: var(--graview-accent);
+  border-color: var(--graview-accent-dim);
+}
+
 /* Chrome that arrives with a state settles in rather than popping. */
 @keyframes graview-settle {
   from { opacity: 0; transform: translateY(7px); }

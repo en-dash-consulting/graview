@@ -5,7 +5,7 @@ import {
   type AnySchema,
   type KindOfSchema,
 } from "@graview/core";
-import { kindCardId } from "@graview/layout";
+import { kindCardId, withPast } from "@graview/layout";
 import {
   createViews,
   useNavigation,
@@ -242,7 +242,7 @@ export function registerDefaultViews<S extends AnySchema>(
     const GroupGlyph = (props: ViewProps<S>) => {
       const members = props.nodes ?? [];
       const { selection } = useSelection();
-      const { toggle } = useNavigation();
+      const { toggle, view, go } = useNavigation();
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
       const accent = props.focused || props.raised;
@@ -448,6 +448,28 @@ export function registerDefaultViews<S extends AnySchema>(
                 */}
               {members.length === 0 ? "none yet" : `${trouble ? "⚠ " : ""}${members.length}`}
             </span>
+            {/*
+              * What sits BEHIND THE HORIZON, advertised where it dropped
+              * from. Pressing it widens the view to the past — an ordinary
+              * stop, with the trail carrying the way back — after which the
+              * count includes everyone and this control has nothing to say.
+              */}
+            {(props.retired ?? 0) > 0 ? (
+              <button
+                type="button"
+                className="graview-kind-past"
+                data-graview-retired={props.retired}
+                title={`${props.retired} retired ${plural.toLowerCase()} — press to widen the view to the past`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  go(withPast(view, true));
+                }}
+                onDoubleClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                +{props.retired} past
+              </button>
+            ) : null}
             {/* The selection's reach into this kind, said in place. */}
             {tied > 0 ? (
               <span style={{ fontSize: 11.5, color: "var(--graview-accent)" }}>

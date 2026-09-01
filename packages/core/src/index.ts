@@ -1,5 +1,5 @@
 // Schema — the single declaration everything else derives from.
-export { defineNode, labelOf, describeNode } from "./schema/define-node.js";
+export { defineNode, isCurrent, labelOf, describeNode } from "./schema/define-node.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
   AnySchema,
@@ -10,6 +10,7 @@ export type {
   Schema,
 } from "./schema/schema.js";
 export type {
+  LifecycleDeclaration,
   AnyNodeDefinition,
   DeclaredEdgeTargets,
   EdgeCardinality,

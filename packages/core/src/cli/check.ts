@@ -55,6 +55,37 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
       }
     }
 
+    /*
+     * A lifecycle must name a real field. A currency read off a field that
+     * does not exist would silently make every node current for ever —
+     * which is exactly the state a kind was in before declaring anything,
+     * minus the honesty.
+     */
+    if (definition.lifecycle) {
+      const shape = definition.fields.shape as Record<string, unknown>;
+      if (!(definition.lifecycle.field in shape)) {
+        add({
+          severity: "error",
+          code: "lifecycle-missing-field",
+          where: `defineNode("${definition.kind}").lifecycle`,
+          message: `Lifecycle reads field "${definition.lifecycle.field}", which is not in this kind's fields.`,
+          fix: `Point it at one of: ${Object.keys(shape).join(", ")}.`,
+        });
+      }
+      if (
+        definition.lifecycle.retired !== "date" &&
+        definition.lifecycle.retired.length === 0
+      ) {
+        add({
+          severity: "error",
+          code: "lifecycle-never-retires",
+          where: `defineNode("${definition.kind}").lifecycle`,
+          message: `Lifecycle lists no retired values, so nothing can ever leave the horizon.`,
+          fix: `List the values that mean "past", or use "date" for an expiry field.`,
+        });
+      }
+    }
+
     for (const [role, field] of Object.entries(definition.fieldRoles ?? {})) {
       const shape = definition.fields.shape as Record<string, unknown>;
       if (!(field in shape)) {
