@@ -553,10 +553,16 @@ export function Scene<S extends AnySchema>({
         selection={selection}
         store={store}
         graphNodes={nodes}
+        overview={view.overview ?? false}
         width={result.width}
         height={result.height}
       />
-      <RelationCaptions nodes={frame.nodes} scheme={scheme} width={result.width} />
+      <RelationCaptions
+        nodes={frame.nodes}
+        scheme={scheme}
+        width={result.width}
+        stageRef={wrapperRef}
+      />
       {children}
     </div>
   );
@@ -585,6 +591,7 @@ function SelectionTies<S extends AnySchema>({
   selection,
   store,
   graphNodes,
+  overview,
   width,
   height,
 }: {
@@ -594,6 +601,8 @@ function SelectionTies<S extends AnySchema>({
   readonly selection: readonly string[];
   readonly store: { graph: GraphReader<NodeOfSchema<S>> };
   readonly graphNodes: unknown;
+  /** From altitude a district's visible body is its iso block. */
+  readonly overview: boolean;
   readonly width: number;
   readonly height: number;
 }) {
@@ -622,13 +631,24 @@ function SelectionTies<S extends AnySchema>({
    * itself is still a place a tie can land on).
    */
   const elementBox = (id: string): { x: number; y: number; width: number; height: number } | null => {
-    const el = stageRef.current?.querySelector(
+    /*
+     * The SMALLEST element wearing the id. One node can be drawn several
+     * times — a chip in a card, a row label, a rotated column header — and
+     * a rotated header's bounding box is a huge diagonal rectangle whose
+     * border is nowhere near the visible text: a tie anchored to it lands
+     * in open air. The smallest box is the most honest anchor there is.
+     */
+    const els = stageRef.current?.querySelectorAll(
       `[data-graview-pick="${CSS.escape(id)}"], [data-graview-slot="${CSS.escape(id)}"]`,
     );
-    if (!el) return null;
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 2) return null;
-    return { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height };
+    let best: DOMRect | null = null;
+    for (const el of els ?? []) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 2 || rect.height <= 2) continue;
+      if (!best || rect.width * rect.height < best.width * best.height) best = rect;
+    }
+    if (!best) return null;
+    return { x: best.left - stage.left, y: best.top - stage.top, width: best.width, height: best.height };
   };
   /** The laid-out node that IS this id, or stands for it. */
   const hostOf = (id: string): SceneNode | undefined =>
@@ -639,26 +659,66 @@ function SelectionTies<S extends AnySchema>({
   const lines: { key: string; kind: string; d: string; endX: number; endY: number }[] = [];
   for (const tie of ties) {
     const selfHost = hostOf(tie.self);
-    const otherEl = elementBox(tie.other);
-    const otherHost = hostOf(tie.other);
-    /*
-     * A tie INTERNAL to the view you are looking at draws no line. With no
-     * element of its own, the neighbour would resolve to the same container
-     * the selection sits in — a line from a thing to the border of its own
-     * room, which is the broken-looking stub this replaces. The view's own
-     * emphasis already shows in-view relationships.
-     */
-    if (!otherEl && otherHost && selfHost && otherHost.id === selfHost.id) continue;
+    const selfHostEl = selfHost
+      ? stageRef.current?.querySelector(`[data-graview-view="${CSS.escape(selfHost.id)}"]`)
+      : null;
+    const fromEl = elementBox(tie.self);
     const fromBox =
-      elementBox(tie.self) ??
+      fromEl ??
       (selfHost
         ? (measureVisible(stageRef.current, selfHost.id, false) ?? drawnBox(selfHost, scheme))
         : null);
-    const toBox =
-      otherEl ??
-      (otherHost
-        ? (measureVisible(stageRef.current, otherHost.id, true) ?? drawnBox(otherHost, scheme))
-        : null);
+    /*
+     * Where the OTHER end lands, in order of honesty:
+     *
+     * 1. Its own placed card — a raised or ring node is the thing itself,
+     *    and beats any chip that merely mentions it (the fan of dashes
+     *    sweeping out of the fixture card's own border was ties preferring
+     *    the card's OWN chips over the real cards below).
+     * 2. An element standing for it — but an element inside the selection's
+     *    own card only counts when the origin is itself an element:
+     *    chip-to-chip inside one view is the view's wiring made visible;
+     *    whole-card-to-its-own-chip is the selection restating itself.
+     * 3. The group card containing it — unless that is the very card the
+     *    selection sits in, in which case the tie is internal and the
+     *    view's own emphasis already shows it.
+     */
+    const otherNode = nodes.find((node) => node.id === tie.other);
+    let toBox: { x: number; y: number; width: number; height: number } | null = null;
+    if (otherNode) {
+      toBox =
+        measureVisible(stageRef.current, otherNode.id, overview) ?? drawnBox(otherNode, scheme);
+    } else {
+      const otherEls = [
+        ...(stageRef.current?.querySelectorAll(
+          `[data-graview-pick="${CSS.escape(tie.other)}"], [data-graview-slot="${CSS.escape(tie.other)}"]`,
+        ) ?? []),
+      ];
+      if (otherEls.length > 0) {
+        let best: DOMRect | null = null;
+        for (const el of otherEls) {
+          const internal = selfHostEl ? selfHostEl.contains(el) : false;
+          if (internal && !fromEl) continue;
+          const rect = el.getBoundingClientRect();
+          if (rect.width <= 2 || rect.height <= 2) continue;
+          if (!best || rect.width * rect.height < best.width * best.height) best = rect;
+        }
+        if (best)
+          toBox = {
+            x: best.left - stage.left,
+            y: best.top - stage.top,
+            width: best.width,
+            height: best.height,
+          };
+      } else {
+        const otherHost = hostOf(tie.other);
+        if (otherHost && (!selfHost || otherHost.id !== selfHost.id)) {
+          toBox =
+            measureVisible(stageRef.current, otherHost.id, overview) ??
+            drawnBox(otherHost, scheme);
+        }
+      }
+    }
     if (!fromBox || !toBox) continue;
     // Several members of one shelf card collapse to one line per relation.
     const key = `${tie.kind}:${Math.round(fromBox.x)}:${Math.round(toBox.x)},${Math.round(toBox.y)}`;
@@ -739,18 +799,27 @@ function RelationCaptions({
   nodes,
   scheme,
   width: stageWidth,
+  stageRef,
 }: {
   readonly nodes: readonly SceneNode[];
   readonly scheme: "light" | "dark";
   readonly width: number;
+  readonly stageRef: { current: HTMLElement | null };
 }) {
   const runs: { key: string; text: string; left: number; right: number; top: number }[] = [];
   for (const node of nodes) {
     if (!node.via || Math.round(node.plane) !== 1) continue;
+    /*
+     * Above the PANEL someone can see, not the band slot the layout allots:
+     * a raised card centres its panel in a taller host, so a caption hung
+     * from the host's top floated in open ground half a band above the
+     * cards it captions.
+     */
+    const measured = measureVisible(stageRef.current, node.id, false);
     const { scale } = styleFor(1, scheme);
-    const left = node.x;
-    const right = node.x + node.width * scale;
-    const top = node.y;
+    const left = measured?.x ?? node.x;
+    const right = measured ? measured.x + measured.width : node.x + node.width * scale;
+    const top = measured?.y ?? node.y;
     const last = runs[runs.length - 1];
     if (last && last.key === node.via.edgeKind) {
       last.right = Math.max(last.right, right);

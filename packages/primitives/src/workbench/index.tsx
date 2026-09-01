@@ -276,6 +276,21 @@ export function Inspector() {
 
   const shown = expanded || atPointer ? affordances : affordances.slice(0, fits);
   const hidden = affordances.length - shown.length;
+  /*
+   * GROUPED BY WHAT THEY ANSWER. A repair arrives carrying the violation
+   * that produced it, and without that sentence over it, "Cut X from
+   * Thursday" offered on a selection of Y reads as a non sequitur. The
+   * ranked order is untouched — consecutive repairs of one violation
+   * gather under its sentence; everything else runs on below.
+   */
+  const sections: { heading: string | null; items: typeof affordances }[] = [];
+  for (const affordance of shown) {
+    const heading =
+      !atPointer && affordance.provider === "invariant" ? affordance.why : null;
+    const last = sections[sections.length - 1];
+    if (last && last.heading === heading) (last.items as Affordance[]).push(affordance);
+    else sections.push({ heading, items: [affordance] });
+  }
   const open = affordances.find((affordance) => affordance.id === pending);
 
   /*
@@ -346,7 +361,12 @@ export function Inspector() {
               // surveyed width, so the pane sits NEXT to the picture rather
               // than on its title.
               width: 236,
-              maxHeight: view.overview ? "calc(100vh - 372px)" : "calc(100vh - 104px)",
+              /*
+               * The pane stops ABOVE the raised band (plane 1 begins at 68%
+               * of the stage) and scrolls inside itself: a tall list of
+               * repairs must not buy its height with the first raised card.
+               */
+              maxHeight: view.overview ? "calc(100vh - 372px)" : "calc(68vh - 94px)",
               overflow: "auto",
             }),
       }}
@@ -512,44 +532,83 @@ export function Inspector() {
             gap: 2,
           }}
         >
-          {shown.map((affordance) => (
-            <li key={affordance.id}>
-              <button
-                type="button"
-                data-affordance={affordance.id}
-                data-graview-destructive={affordance.destructive || undefined}
-                aria-pressed={pending === affordance.id}
-                title={affordance.why}
-                style={{
-                  padding: "4px 10px",
-                  fontSize: 12.5,
-                  borderRadius: 8,
-                  width: "100%",
-                  textAlign: "left",
-                  border: "1px solid transparent",
-                  background: "none",
-                  boxShadow: "none",
-                  // What cannot be taken back says so before it is pressed —
-                  // and the ranking has already put it last.
-                  ...(affordance.destructive ? { color: "var(--graview-warn)" } : {}),
-                  ...(pending === affordance.id
-                    ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
-                    : {}),
-                }}
-                onClick={() => {
-                  if (affordance.open.length > 0) {
-                    setPending(pending === affordance.id ? null : affordance.id);
-                    return;
-                  }
-                  act(affordance);
-                }}
-              >
-                {affordance.label}
-                {affordance.open.length > 0 ? (
-                  <span style={{ color: "var(--graview-ink-faint)" }}> …</span>
-                ) : null}
-              </button>
-            </li>
+          {sections.map((section, index) => (
+            <Fragment key={section.heading ?? `plain-${index}`}>
+              {/* The violation these repairs answer, said over them. */}
+              {section.heading ? (
+                <li
+                  role="presentation"
+                  style={{
+                    fontSize: 11,
+                    lineHeight: 1.4,
+                    color: "var(--graview-warn)",
+                    padding: "2px 2px 1px",
+                    marginTop: index > 0 ? 6 : 0,
+                  }}
+                >
+                  ⚠ {section.heading}
+                </li>
+              ) : index > 0 ? (
+                <li
+                  aria-hidden="true"
+                  style={{ borderTop: "1px solid var(--graview-edge)", margin: "6px 0 3px" }}
+                />
+              ) : null}
+              {section.items.map((affordance) => (
+                <li key={affordance.id}>
+                  <button
+                    type="button"
+                    data-affordance={affordance.id}
+                    data-graview-destructive={affordance.destructive || undefined}
+                    aria-pressed={pending === affordance.id}
+                    title={affordance.why}
+                    style={{
+                      padding: "5px 10px",
+                      fontSize: 12.5,
+                      borderRadius: 8,
+                      width: "100%",
+                      textAlign: "left",
+                      /*
+                       * In the pane an action looks PRESSABLE — border and
+                       * ground, like every other button in the product. Rows
+                       * of bare text read as a list of remarks, and nobody
+                       * presses a remark. The pointer menu keeps menu rows;
+                       * a menu's own frame already says "choose one".
+                       */
+                      ...(atPointer
+                        ? {
+                            border: "1px solid transparent",
+                            background: "none",
+                            boxShadow: "none",
+                          }
+                        : {
+                            border: "1px solid var(--graview-edge)",
+                            background: "var(--graview-panel)",
+                            boxShadow: "none",
+                          }),
+                      // What cannot be taken back says so before it is
+                      // pressed — and the ranking has already put it last.
+                      ...(affordance.destructive ? { color: "var(--graview-warn)" } : {}),
+                      ...(pending === affordance.id
+                        ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
+                        : {}),
+                    }}
+                    onClick={() => {
+                      if (affordance.open.length > 0) {
+                        setPending(pending === affordance.id ? null : affordance.id);
+                        return;
+                      }
+                      act(affordance);
+                    }}
+                  >
+                    {affordance.label}
+                    {affordance.open.length > 0 ? (
+                      <span style={{ color: "var(--graview-ink-faint)" }}> …</span>
+                    ) : null}
+                  </button>
+                </li>
+              ))}
+            </Fragment>
           ))}
           {hidden > 0 ? (
             <li>
