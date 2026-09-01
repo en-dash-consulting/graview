@@ -52,6 +52,8 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
   readonly raised?: boolean;
   /** This group is the kind currently in focus. */
   readonly focused?: boolean;
+  /** The aggregate is opened in place, showing its members (the ring). */
+  readonly opened?: boolean;
   /**
    * How near this kind is to the one in focus: `primary` is one declared edge
    * away, `secondary` is further. Absent when nothing is focused, and when

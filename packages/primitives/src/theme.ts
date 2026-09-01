@@ -135,10 +135,22 @@ html, body {
 h1, h2, h3, h4, .graview-wordmark { font-family: var(--graview-font-display); }
 code, kbd, samp { font-family: var(--graview-font-mono); }
 
+/* How far above the stack the camera is, 0..1 — REGISTERED so it can
+   transition. Rising to the Graview morphs the scene instead of cutting:
+   the square grid dissolves into the iso lattice and the districts grow up
+   out of their cards, all riding this one number. */
+@property --graview-altitude {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
 /* The ground: a slow wash, so depth has something to recede into. */
 .graview-ground {
   position: relative;
   background: var(--graview-wash), var(--graview-ground);
+  --graview-altitude: 0;
+  transition: --graview-altitude 640ms cubic-bezier(0.33, 0, 0.2, 1);
 }
 
 /* A fine measure under the scene. Faint enough to feel like calibration
@@ -153,7 +165,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
     linear-gradient(var(--graview-edge) 1px, transparent 1px),
     linear-gradient(90deg, var(--graview-edge) 1px, transparent 1px);
   background-size: 64px 64px;
-  opacity: var(--graview-grid-alpha);
+  opacity: calc(var(--graview-grid-alpha) * (1 - var(--graview-altitude)));
   mask-image: radial-gradient(120% 90% at 50% 40%, #000 30%, transparent 78%);
 }
 
@@ -212,56 +224,104 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 }
 
 /* FROM ALTITUDE the ground is an ISOMETRIC LATTICE — diamond cells at the
-   classic 2:1 pitch, the near rows fading in and the far ones dissolving
-   toward the horizon. Drawn as background, so no transform the capture
-   pipeline would have to renegotiate. */
-.graview-ground[data-graview-altitude]::before {
-  background-image:
-    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px 46px),
-    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px 46px);
-  background-size: auto;
-  mask-image: linear-gradient(to top, #000 42%, transparent 90%);
-  -webkit-mask-image: linear-gradient(to top, #000 42%, transparent 90%);
-}
-.graview-ground[data-graview-altitude]::after {
+   classic 2:1 pitch, a finer far weave above, dissolving toward the
+   horizon. Always present, faded by the altitude number, so rising
+   CROSSFADES the square grid into the lattice instead of cutting. */
+.graview-ground::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   background-image:
+    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px 46px),
     repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px 23px),
     repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px 23px);
-  opacity: calc(var(--graview-grid-alpha) * 0.55);
-  mask-image: linear-gradient(to bottom, transparent 5%, #000 30%, transparent 58%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 5%, #000 30%, transparent 58%);
+  opacity: calc(var(--graview-grid-alpha) * var(--graview-altitude));
+  mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);
+  -webkit-mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);
+}
+
+/* The district-open control and its roster: altitude-only chrome. Inside
+   the stack expanding dissolves a card, so the control does not exist
+   there. A full fingertip even though the glyph is small — the audit holds
+   every control to 24px. */
+.graview-kind-open { display: none; }
+[data-graview-altitude] .graview-kind-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  min-height: 0;
+  padding: 0;
+  margin: -4px -4px -4px 0;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: var(--graview-ink-faint);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+}
+[data-graview-altitude] .graview-kind-open:hover {
+  color: var(--graview-accent);
+  background: var(--graview-panel-muted);
+}
+.graview-kind-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+  animation: graview-settle 240ms ease backwards;
+}
+/* An OPENED nameplate is a small panel again: the roster needs a column,
+   and a pill of chips is neither. */
+[data-graview-altitude] .graview-kind-face[data-graview-opened] {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  border-radius: 11px !important;
+  padding: 8px 11px 9px !important;
+  max-width: 216px;
+}
+
+/* Chrome that arrives with a state settles in rather than popping. */
+@keyframes graview-settle {
+  from { opacity: 0; transform: translateY(7px); }
 }
 
 /* A district STANDS: an isometric block — roof, two shaded walls — whose
-   height is its population. The block exists only from altitude; inside the
-   stack the face IS the card and the block never renders. */
+   height is its population. Always in the tree, faded and settled by the
+   altitude number: rising, each block grows up out of its card while the
+   card flies to its ring stop — a morph, not a cut. At altitude zero it is
+   fully transparent and costs nothing. */
 .graview-kind-block {
-  display: none;
-}
-[data-graview-altitude] .graview-kind-block {
   display: block;
+  /* Architecture, not a control: clicks fall through to the card, and an
+     invisible in-stack block must never sit over a neighbour's tuck. */
+  pointer-events: none;
   position: absolute;
   left: 8%;
   bottom: 2px;
   width: 84%;
   height: auto;
+  opacity: var(--graview-altitude);
+  transform: translateY(calc((1 - var(--graview-altitude)) * 18px));
   filter: drop-shadow(${
     scheme === "light" ? "10px 7px 14px rgba(20,30,32,0.28)" : "12px 8px 18px rgba(0,0,0,0.6)"
   });
 }
-[data-graview-altitude] .graview-iso-roof {
+.graview-iso-roof {
   fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "48% 82%" : "42% 32%"});
   stroke: ${scheme === "light" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.14)"};
   stroke-width: 1;
 }
-[data-graview-altitude] .graview-iso-right {
+.graview-iso-right {
   fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "40% 66%" : "40% 21%"});
 }
-[data-graview-altitude] .graview-iso-left {
+.graview-iso-left {
   fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "34% 55%" : "38% 13%"});
 }
 
@@ -270,6 +330,11 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
    in any city view — the block carries the architecture, the pill carries
    the words. Inline styles drew the in-stack card, so the pill overrides
    must outrank them. */
+.graview-kind-face {
+  transition: border-radius 640ms cubic-bezier(0.33, 0, 0.2, 1),
+    padding 640ms cubic-bezier(0.33, 0, 0.2, 1),
+    box-shadow 640ms ease;
+}
 [data-graview-altitude] .graview-kind-face {
   position: absolute !important;
   left: 50% !important;

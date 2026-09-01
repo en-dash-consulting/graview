@@ -5,7 +5,14 @@ import {
   type AnySchema,
   type KindOfSchema,
 } from "@graview/core";
-import { createViews, useSelection, type ReactViewRegistry, type ViewProps } from "@graview/react";
+import { kindCardId } from "@graview/layout";
+import {
+  createViews,
+  useNavigation,
+  useSelection,
+  type ReactViewRegistry,
+  type ViewProps,
+} from "@graview/react";
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -235,6 +242,7 @@ export function registerDefaultViews<S extends AnySchema>(
     const GroupGlyph = (props: ViewProps<S>) => {
       const members = props.nodes ?? [];
       const { selection } = useSelection();
+      const { toggle } = useNavigation();
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
       const accent = props.focused || props.raised;
@@ -316,6 +324,7 @@ export function registerDefaultViews<S extends AnySchema>(
           </svg>
           <div
           className="graview-kind-face"
+          data-graview-opened={props.opened || undefined}
           style={{
             display: "flex",
             flexDirection: "column",
@@ -459,7 +468,50 @@ export function registerDefaultViews<S extends AnySchema>(
                 ◆
               </span>
             ) : null}
+            {/*
+              * OPEN THE DISTRICT: from altitude, show who is in it, in
+              * place — the ring never re-flows and every member is a real
+              * pick target, so selection and ties land on the members
+              * themselves. Ordinary expanded view state: a URL, a stop, the
+              * back button knows. The stylesheet hides this control inside
+              * the stack, where expanding dissolves the card instead.
+              */}
+            {!nested && members.length > 0 ? (
+              <button
+                type="button"
+                className="graview-kind-open"
+                data-testid={`open-${String(kind)}`}
+                aria-expanded={props.opened ?? false}
+                title={props.opened ? "Close it up" : `See the ${plural} in here`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggle(kindCardId(String(kind)));
+                }}
+                onDoubleClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                {props.opened ? "▾" : "▸"}
+              </button>
+            ) : null}
           </div>
+          {props.opened ? (
+            <div className="graview-kind-members">
+              {members.slice(0, 12).map((member) => (
+                <Chip
+                  key={member.id}
+                  pickId={member.id}
+                  label={labelOf(definition, member as never)}
+                  hue={hue}
+                  selected={chosen.has(member.id)}
+                />
+              ))}
+              {members.length > 12 ? (
+                <span style={{ fontSize: 11, color: "var(--graview-ink-faint)", alignSelf: "center" }}>
+                  +{members.length - 12} more
+                </span>
+              ) : null}
+            </div>
+          ) : null}
           </div>
         </div>
       );

@@ -51,7 +51,6 @@ export function Wordmark<S extends AnySchema>() {
         padding: 0,
         boxShadow: "none",
         cursor: "pointer",
-        font: "inherit",
       }}
     >
       {brand.logo ? (
