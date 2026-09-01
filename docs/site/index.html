@@ -1,8 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graview</title>
+<meta name="description" content="Graview is a development framework from En Dash. Declare your domain once — kinds, fields, edges, rules, mutations — and the interface, the legal actions, the agent's tools and the history all come from that one declaration.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Graview">
+<meta property="og:description" content="Declare the domain. The application follows. A development framework built on a typed context graph, from En Dash.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzMwIiBoZWlnaHQ9IjMzMCIgdmlld0JveD0iMCAwIDMzMCAzMzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjcuNSIgeT0iNy41IiB3aWR0aD0iMzE1IiBoZWlnaHQ9IjMxNSIgc3Ryb2tlPSIjMDBFNUI5IiBzdHJva2Utd2lkdGg9IjE1Ii8+CjxwYXRoIGQ9Ik0zMTUgMTVIMTVWMzE1SDMxNVYxNVoiIGZpbGw9IiMwMDE3NjkiLz4KPHBhdGggZD0iTTMxNSAyMzIuMTE5SDQ3LjAwNzRWMjQ3LjcwNUgzMTVWMjMyLjExOVoiIGZpbGw9IiMwMEU1QjkiLz4KPHBhdGggZD0iTTEzOS43OTUgMTY0Ljk5N0wxNDUuMzI0IDE2OS44MzhDMTQwLjk0MiAxNzguMzcyIDEyNi4xOTEgMTkyLjg5NCAxMDAuNTg5IDE5Mi44OTRDNzEuNzc0IDE5Mi44OTQgNDUuMDI0OCAxNzQuNjc4IDQ1LjAyNDggMTM5LjYyNUM0NS4wMjQ4IDEwMy40MjQgNzMuNjEwMiA4NS40MzggMTAyLjQyNSA4NS40MzhDMTI3LjA4OCA4NS40MzggMTQ2LjQ3MSA5OC44MTI2IDE0Ni40NzEgMTE5LjMyM0MxNDYuNDcxIDEzNy41MzggMTMxLjI2MSAxNDAuMDg0IDEwNi44MDcgMTQxLjAwMkw4MS40NTU1IDE0MS45MkM3Ny4zMDMzIDE0Mi4xNSA3Ni4zODUzIDE0NS42MTMgNzcuNzYyNCAxNTAuOTEzQzgzLjUyMTIgMTY3LjUyMiA5Ni44OTU4IDE3Ni45NzQgMTEzLjk2NCAxNzYuOTc0QzEyMi43MjcgMTc2Ljk5NSAxMzEuNzIgMTc0LjY3OSAxMzkuNzk1IDE2NC45OTdaTTc0LjU0OTEgMTI0LjE4NUM3NC4zMTk2IDEzMS4xMTIgNzYuNjE0OCAxMzMuODY2IDgyLjYyNCAxMzMuODY2SDk0Ljg1MUMxMTQuNjczIDEzMy44NjYgMTIwLjY4MiAxMjcuNjQ4IDEyMC42ODIgMTE3LjAyOEMxMjAuNjgyIDEwNS4yNiAxMTIuODM3IDk0LjIwMTQgOTkuMDAzMSA5NC4yMDE0QzgzLjMxMjUgOTQuMjIyMiA3NS42OTY3IDEwNi42NTggNzQuNTQ5MSAxMjQuMTg1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0NC4yMjUgMTczLjUzMVYxMzEuNTcxQzI0NC4yMjUgMTE0LjUwMyAyMzcuMDY4IDEwMi45ODYgMjIzLjAwNSAxMDIuOTg2QzIwOC4yNTMgMTAyLjk4NiAxOTkuMjYxIDExNC41MjQgMTk5LjI2MSAxMzEuNTcxVjE2OS42MDhDMTk5LjI2MSAxNzkuNTE5IDIwMy4xODMgMTgyLjc1NCAyMTMuNzgzIDE4My42NzJWMTkxLjUxN0gxNTYuODQyVjE4My42NzJDMTY3LjY3MSAxODIuNzU0IDE3MS41OTMgMTc5LjUxOSAxNzEuNTkzIDE2OS42MDhWMTEyLjE4N0MxNzEuNTkzIDEwMS41ODggMTY3LjIxMiA5OC44MTI4IDE1Ni44NDIgOTkuNzMwOFY5MS44ODU1TDE4OS4xMiA4NS44OTcyQzE5NS43OTcgODQuNzQ5NiAxOTkuMjYxIDg3LjczMzMgMTk5LjI2MSA5My4wNTRDMTk5LjI2MSAxMDEuMzU4IDIwMi45NTQgMTAzLjQyNCAyMDUuOTM3IDk5Ljk4MTJDMjExLjAwOCA5NC40NTE5IDIyMC4yMyA4NSAyMzguNDQ1IDg1QzI1NS4yODQgODUgMjcxLjg3MSA5My4zMDQ0IDI3MS44NzEgMTI1LjU4M1YxNzEuMDA2QzI3MS44NzEgMTc4LjYyMiAyNzUuNzk0IDE4MS4zNzYgMjgzLjYzOSAxNzkuNzdWMTg3LjYxNUMyNzkuNDg3IDE5MC44NDkgMjcwLjk1MyAxOTIuNjg1IDI2NC4yNzcgMTkyLjY4NUMyNTEuNjExIDE5Mi42NjQgMjQ0LjIyNSAxODUuOTg4IDI0NC4yMjUgMTczLjUzMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=JetBrains+Mono:wght@400;500;700&display=swap">
-
+<style>
+/* The host that publishes this as an artifact supplies a small reset; a
+   standalone page has to supply its own, so the two render identically. */
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
 <style>
 :root {
   color-scheme: light;
@@ -1277,3 +1297,6 @@ window.addEventListener("resize", markScrollers);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScrollers);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
 </script>
+
+</body>
+</html>
