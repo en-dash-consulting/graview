@@ -12,13 +12,13 @@ type Props = {
   /** Vertical bias: center | lower */
   place?: "center" | "lower";
   /**
-   * After this local frame, shrink & dock lower so the statement
-   * yields the stage to candy without vanishing cold.
+   * After this local frame, ease slightly lower (no scale change) so the
+   * statement can yield vertical space without shrinking text.
    */
   dockAt?: number;
 };
 
-/** One decisive statement — big type, mask wipe, no chrome. */
+/** One decisive statement — big type, mask wipe, fixed size (no shrink). */
 export const BigTitle: React.FC<Props> = ({
   line,
   appearAt = 0,
@@ -37,24 +37,26 @@ export const BigTitle: React.FC<Props> = ({
     easing: easings.softOut,
   });
 
-  const dock = dockAt === undefined
-    ? 0
-    : interpolate(frame, [dockAt, dockAt + 22], [0, 1], {
-        ...clamp,
-        easing: easings.softOut,
-      });
+  const dock =
+    dockAt === undefined
+      ? 0
+      : interpolate(frame, [dockAt, dockAt + 22], [0, 1], {
+          ...clamp,
+          easing: easings.softOut,
+        });
 
-  const scale = interpolate(dock, [0, 1], [1, 0.58]);
-  const yDock = dock * (place === "lower" ? 28 : 220);
+  // Dock by translate only — never change type size (readability).
+  const yDock = dock * (place === "lower" ? 18 : 120);
   const padBottom =
     place === "lower"
-      ? interpolate(dock, [0, 1], [140, 72])
-      : interpolate(dock, [0, 1], [0, 72]);
+      ? interpolate(dock, [0, 1], [140, 96])
+      : interpolate(dock, [0, 1], [0, 96]);
 
   return (
     <AbsoluteFill
       style={{
-        justifyContent: place === "center" && dock < 0.5 ? "center" : "flex-end",
+        justifyContent:
+          place === "center" && dock < 0.5 ? "center" : "flex-end",
         alignItems: "center",
         paddingBottom: padBottom,
         opacity,
@@ -63,9 +65,9 @@ export const BigTitle: React.FC<Props> = ({
     >
       <div
         style={{
-          maxWidth: interpolate(dock, [0, 1], [1400, 920]),
+          maxWidth: 1400,
           textAlign: "center",
-          transform: `translateY(${yEnter + yDock}px) scale(${scale})`,
+          transform: `translateY(${yEnter + yDock}px)`,
           filter: `blur(${blur}px)`,
           overflow: "hidden",
           clipPath: `inset(0 ${(1 - wipe) * 100}% 0 0)`,

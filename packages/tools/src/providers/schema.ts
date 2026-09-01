@@ -143,6 +143,32 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
       if (nodes.length === 0) return {};
       const kinds = new Set(nodes.map((node) => node.kind));
 
+      /*
+       * CANDIDATES KNOW THE SUBJECT. A mutation that declares the edge
+       * kinds it severs is answerable from the graph: "take someone off
+       * it" offered on a run should offer the people ON that run — all
+       * five people is a lie four-fifths of the time — and offered with
+       * nobody aboard it should not be offered at all. `connects` narrows
+       * the other way: no offering to add who is already on.
+       */
+      const across = (
+        subjectId: string,
+        edgeKinds: readonly string[],
+        wantKinds: readonly string[],
+      ): string[] => {
+        const found: string[] = [];
+        for (const edge of store.graph.allEdges()) {
+          if (!edgeKinds.includes(edge.kind)) continue;
+          const other = edge.from === subjectId ? edge.to : edge.to === subjectId ? edge.from : null;
+          if (!other) continue;
+          const node = store.graph.getNode(other);
+          if (!node) continue;
+          if (!wantKinds.includes("*") && !wantKinds.includes(node.kind as string)) continue;
+          if (!found.includes(other)) found.push(other);
+        }
+        return found;
+      };
+
       for (const mutation of store.allMutations()) {
         const subject = mutation.subject;
         if (!subject) continue;
@@ -152,14 +178,31 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             : [...kinds].every((kind) => (subject.kinds as readonly string[]).includes(kind));
         if (!accepted) continue;
 
+        const subjectId = nodes.length === 1 ? nodes[0]!.id : null;
+        const severs = mutation.severs ?? [];
+        const connects = mutation.connects ?? [];
+        // A severing act with nothing attached to sever is not an offer —
+        // "Restore one occurrence" with nothing skipped was a button that
+        // could only fail.
+        if (subjectId && severs.length > 0 && across(subjectId, severs, ["*"]).length === 0) {
+          continue;
+        }
         const open: OpenParameter[] = [];
         for (const ref of nodeRefArgs(mutation.input)) {
           if (ref.name === subject.arg) continue;
-          const candidates = ref.kinds.includes("*")
+          let candidates = ref.kinds.includes("*")
             ? store.graph.allNodes().map((node) => node.id)
             : ref.kinds.flatMap((kind) =>
                 store.graph.nodesOfKind(kind as never).map((node) => node.id),
               );
+          if (subjectId && severs.length > 0) {
+            // Severing reaches only what is actually attached.
+            candidates = across(subjectId, severs, ref.kinds);
+          } else if (subjectId && connects.length > 0) {
+            // Connecting offers only who is not already on.
+            const already = new Set(across(subjectId, connects, ref.kinds));
+            candidates = candidates.filter((id) => !already.has(id));
+          }
           open.push({
             name: ref.name,
             kinds: ref.kinds,
@@ -185,10 +228,11 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
          * Invariant repairs are unaffected — a rule that names a repair has
          * already decided it is offerable.
          */
-        const askable = open.every(
-          (parameter) =>
-            (parameter.candidates?.length ?? 0) > 0 ||
-            (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
+        const askable = open.every((parameter) =>
+          parameter.kinds !== undefined
+            ? (parameter.candidates?.length ?? 0) > 0
+            : (parameter.candidates?.length ?? 0) > 0 ||
+              (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
         );
         if (!askable) continue;
 
@@ -204,6 +248,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           args: batch[0] ?? {},
           open,
           ...(mutation.destructive ? { destructive: true } : {}),
+          ...(severs.length > 0 || connects.length > 0 ? { ties: true } : {}),
           ...(nodes.length > 1 ? { batch } : {}),
           // A mutation needing nothing more is readier than one needing three
           // more answers, so it should surface above it.
@@ -214,6 +259,83 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
               : `this is a ${nodes[0]!.kind}`,
           nodeIds: nodes.map((node) => node.id),
         });
+      }
+
+      /*
+       * THE OTHER END OF THE TIE. "Take someone off it" declares a duty as
+       * its subject, but the person standing in a run's own view is the
+       * natural place to say "take THIS one off" — and the only offers there
+       * used to be rename and a destructive remove, which is how deleting a
+       * child from the household got clicked meaning "off this run". A
+       * mutation that declares what it severs or connects is offerable from
+       * either endpoint: the selected node fills its matching argument, and
+       * the subject's candidates come from the actual edges.
+       */
+      if (nodes.length === 1) {
+        const chosen = nodes[0]!;
+        for (const mutation of store.allMutations()) {
+          const subject = mutation.subject;
+          const severs = mutation.severs ?? [];
+          const connects = mutation.connects ?? [];
+          if (!subject || (severs.length === 0 && connects.length === 0)) continue;
+          // Already offered the ordinary way when the selection IS the subject.
+          const subjectAccepts: readonly string[] | "*" =
+            (subject.kinds as unknown) === "*" ? "*" : (subject.kinds as readonly string[]);
+          if (subjectAccepts === "*" || subjectAccepts.includes(chosen.kind as string)) {
+            continue;
+          }
+          const refs = nodeRefArgs(mutation.input);
+          const mine = refs.find(
+            (ref) =>
+              ref.name !== subject.arg &&
+              (ref.kinds.includes("*") || ref.kinds.includes(chosen.kind as string)),
+          );
+          if (!mine) continue;
+          // Narrowed by the continue above: the subject names concrete kinds.
+          const subjectKinds = subjectAccepts;
+          const subjectCandidates =
+            severs.length > 0
+              ? across(chosen.id, severs, subjectKinds)
+              : (subjectKinds.includes("*")
+                  ? store.graph.allNodes().map((node) => node.id)
+                  : subjectKinds.flatMap((kind) =>
+                      store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                    )
+                ).filter((id) => !across(chosen.id, connects, subjectKinds).includes(id));
+          if (subjectCandidates.length === 0) continue;
+          const open: OpenParameter[] = [
+            {
+              name: subject.arg,
+              kinds: subjectKinds,
+              candidates: subjectCandidates,
+              shape: argShape(mutation.input, subject.arg),
+            },
+          ];
+          for (const name of otherRequiredArgs(mutation.input, mine.name)) {
+            if (name === subject.arg || open.some((parameter) => parameter.name === name)) continue;
+            open.push({ name, shape: argShape(mutation.input, name) });
+          }
+          const askable = open.every((parameter) =>
+            parameter.kinds !== undefined
+              ? (parameter.candidates?.length ?? 0) > 0
+              : (parameter.candidates?.length ?? 0) > 0 ||
+                (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
+          );
+          if (!askable) continue;
+          affordances.push({
+            id: `schema:tie:${mutation.name}:${chosen.id}`,
+            label: mutation.title ?? mutation.name,
+            provider: "schema",
+            mutation: mutation.name,
+            args: { [mine.name]: chosen.id },
+            open,
+            ties: true,
+            ...(mutation.destructive ? { destructive: true } : {}),
+            score: BASE_SCORE - open.length + 2,
+            why: `${severs.length > 0 ? "this one is on" : "this one could join"} ${open[0]!.candidates!.length === 1 ? "it" : "one of these"}`,
+            nodeIds: [chosen.id],
+          });
+        }
       }
 
       return { affordances };

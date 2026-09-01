@@ -313,8 +313,19 @@ export function Inspector() {
    */
   const fits = Math.max(1, Math.min(9, affordances.length));
 
-  const shown = expanded || atPointer ? affordances : affordances.slice(0, fits);
-  const hidden = affordances.length - shown.length;
+  /*
+   * ORDERED FOR READING, not only for ranking: what you can do to the
+   * THING, then what you can do to its TIES (the connects/severs acts,
+   * gathered under one heading instead of shuffled among the rest), then —
+   * always last — what cannot be taken back.
+   */
+  const arranged = [
+    ...affordances.filter((entry) => !entry.ties && !entry.destructive),
+    ...affordances.filter((entry) => entry.ties && !entry.destructive),
+    ...affordances.filter((entry) => entry.destructive),
+  ];
+  const shown = expanded || atPointer ? arranged : arranged.slice(0, fits);
+  const hidden = arranged.length - shown.length;
   /*
    * GROUPED BY WHAT THEY ANSWER. A repair arrives carrying the violation
    * that produced it, and without that sentence over it, "Cut X from
@@ -325,7 +336,11 @@ export function Inspector() {
   const sections: { heading: string | null; items: typeof affordances }[] = [];
   for (const affordance of shown) {
     const heading =
-      !atPointer && affordance.provider === "invariant" ? affordance.why : null;
+      !atPointer && affordance.provider === "invariant"
+        ? affordance.why
+        : !atPointer && affordance.ties && !affordance.destructive
+          ? "its ties"
+          : null;
     const last = sections[sections.length - 1];
     if (last && last.heading === heading) (last.items as Affordance[]).push(affordance);
     else sections.push({ heading, items: [affordance] });

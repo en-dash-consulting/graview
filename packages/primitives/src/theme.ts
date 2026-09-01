@@ -299,6 +299,37 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   max-width: 208px;
 }
 
+/* WHAT KIND OF THING THIS IS, astride the focus panel's top-right edge —
+   the kind's dot and its name, the same thread the chips and the legend
+   carry. Scene chrome, so no view has to remember to say it. */
+.graview-kind-tag {
+  position: absolute;
+  top: -9px;
+  right: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-float);
+  box-shadow: var(--graview-lift-low);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--graview-ink-faint);
+  pointer-events: none;
+}
+
+/* A LINE UNDER THE POINTER says it will take the press: the invisible hit
+   run ghosts in, so editability is discoverable by hovering the relation
+   itself rather than by rumor. */
+.graview-edge-hit:hover {
+  stroke: var(--graview-accent);
+  opacity: 0.3;
+}
+
 /* The way into the archive, on the card that fed it: quiet, but a real
    control at a real size. */
 .graview-kind-past {

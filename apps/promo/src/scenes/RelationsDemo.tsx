@@ -69,7 +69,7 @@ export const RelationsDemo: React.FC = () => {
   // 0–130   schema graph blooms
   // 110–end surfaces bloom (calendar + procedure + agent rail)
   // 180–320 step ↔ part highlight punch
-  const schemaOut = fadeOut(frame, 150, 32);
+  const schemaOut = fadeOut(frame, 118, 28);
   const schemaOp = fadeIn(frame, 4, 16) * schemaOut;
 
   const surfacesIn = springProgress(frame, fps, 115, "enter");
@@ -94,12 +94,13 @@ export const RelationsDemo: React.FC = () => {
   return (
     <AbsoluteFill style={{ opacity }}>
       {/* --- Act A: declare the graph --- */}
+      {schemaOp > 0.02 ? (
       <AbsoluteFill
         style={{
           justifyContent: "center",
           alignItems: "center",
           opacity: schemaOp,
-          transform: `scale(${0.94 + springProgress(frame, fps, 6, "enter") * 0.06}) translateY(${interpolate(frame, [125, 165], [0, -56], clamp)}px)`,
+          transform: `scale(${0.94 + springProgress(frame, fps, 6, "enter") * 0.06}) translateY(${interpolate(frame, [110, 145], [0, -56], clamp)}px)`,
         }}
       >
         <svg
@@ -126,7 +127,7 @@ export const RelationsDemo: React.FC = () => {
                   y2={y1 + (y2 - y1) * t}
                   stroke="rgba(0,229,185,0.55)"
                   strokeWidth={2.5}
-                  strokeDasharray="6 6"
+                  strokeLinecap="round"
                 />
                 <text
                   x={mx}
@@ -197,24 +198,30 @@ export const RelationsDemo: React.FC = () => {
         <div
           style={{
             position: "absolute",
-            bottom: 118,
+            top: 64,
             left: "50%",
             transform: "translateX(-50%)",
-            opacity: fadeIn(frame, 48, 14) * schemaOut,
+            // Upper third under open-brand area; hide once mid-story titles take over
+            opacity:
+              fadeIn(frame, 36, 10) *
+              schemaOut *
+              fadeOut(frame, 100, 12),
             padding: "10px 16px",
             borderRadius: 10,
-            background: "rgba(0,229,185,0.12)",
-            border: "1px solid rgba(0,229,185,0.4)",
+            background: "rgba(0,229,185,0.14)",
+            border: "1px solid rgba(0,229,185,0.45)",
             fontFamily: fonts.mono,
             fontSize: 14,
             letterSpacing: 1.8,
             color: colors.offWhite,
             textTransform: "uppercase",
+            zIndex: 2,
           }}
         >
           typed context graph
         </div>
       </AbsoluteFill>
+      ) : null}
 
       {/* --- Act B: surfaces bloom from the same graph --- */}
       <AbsoluteFill
@@ -223,21 +230,73 @@ export const RelationsDemo: React.FC = () => {
           pointerEvents: "none",
         }}
       >
+        {/* Center Graview iso — fills empty middle behind floating panels */}
+        <div
+          style={{
+            position: "absolute",
+            left: "42%",
+            top: "48%",
+            width: 760,
+            marginLeft: -380,
+            marginTop: -220,
+            opacity: 0.7 + surfacesIn * 0.3,
+            transform: `translateY(${(1 - surfacesIn) * 18}px) scale(${0.94 + surfacesIn * 0.06})`,
+            borderRadius: 18,
+            overflow: "hidden",
+            border: "1px solid rgba(0,229,185,0.42)",
+            boxShadow:
+              "0 32px 90px rgba(0,0,0,0.65), 0 0 48px rgba(0,229,185,0.16)",
+            background: "#0A1428",
+            zIndex: 0,
+          }}
+        >
+          <Img
+            src={staticFile(
+              frame < 250
+                ? "survey/the household product-dark.png"
+                : "survey/the coaching example-graview-dark.png",
+            )}
+            style={{
+              width: "100%",
+              display: "block",
+              filter: "saturate(1.05) contrast(1.08) brightness(1.02)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: 14,
+              bottom: 12,
+              padding: "3px 8px",
+              borderRadius: 4,
+              background: "rgba(5,11,26,0.82)",
+              fontFamily: fonts.mono,
+              fontSize: 11,
+              letterSpacing: 1.4,
+              color: colors.offWhite,
+              textTransform: "uppercase",
+            }}
+          >
+            graview · context graph
+          </div>
+        </div>
+
         {/* 1. Calendar / week — smaller, left */}
         <div
           style={{
             position: "absolute",
             left: 48,
             top: 88,
-            width: 520,
+            width: 480,
             opacity: 0.4 + surfacesIn * 0.6,
-            transform: `translateY(${(1 - surfacesIn) * 28}px) scale(${0.9 + surfacesIn * 0.1})`,
+            transform: `translateY(${(1 - surfacesIn) * 28}px) scale(${0.9 + surfacesIn * 0.1}) translateZ(20px)`,
             borderRadius: 16,
             overflow: "hidden",
             border: "1px solid rgba(124,156,255,0.4)",
             boxShadow:
               "0 28px 70px rgba(0,0,0,0.5), 0 0 36px rgba(124,156,255,0.12)",
-            background: colors.fieldElevated,
+            background: "#0A1428",
+            zIndex: 5,
           }}
         >
           <div
@@ -277,23 +336,25 @@ export const RelationsDemo: React.FC = () => {
           />
         </div>
 
-        {/* 2. Instructions / procedure — center-right hero */}
+        {/* 2. Instructions / procedure — right hero (clears center iso) */}
         <div
           style={{
             position: "absolute",
-            right: 56,
-            top: 72,
-            width: 640,
+            right: 40,
+            top: 64,
+            width: 560,
             opacity: 0.35 + surfacesIn * 0.65,
-            transform: `translateX(${(1 - surfacesIn) * 40}px) scale(${0.9 + surfacesIn * 0.1})`,
+            transform: `translateX(${(1 - surfacesIn) * 40}px) scale(${0.9 + surfacesIn * 0.1}) translateZ(48px)`,
             borderRadius: 18,
             overflow: "hidden",
             border: "1px solid rgba(255,184,107,0.45)",
             boxShadow:
               "0 36px 90px rgba(0,0,0,0.55), 0 0 44px rgba(255,184,107,0.12)",
-            background: "rgba(8,16,34,0.94)",
+            background: "#080F22",
             display: "flex",
             flexDirection: "column",
+            zIndex: 6,
+            isolation: "isolate",
           }}
         >
           <div
@@ -358,8 +419,8 @@ export const RelationsDemo: React.FC = () => {
                       padding: "12px 14px",
                       borderRadius: 12,
                       background: isHi
-                        ? `rgba(255,184,107,${0.14 + stepPulse * 0.1})`
-                        : "rgba(5,11,26,0.72)",
+                        ? `rgba(40,28,16,${0.92 + stepPulse * 0.08})`
+                        : "#050B1A",
                       border: isHi
                         ? `1.5px solid rgba(255,184,107,${0.55 + stepPulse * 0.35})`
                         : "1px solid rgba(255,184,107,0.2)",
@@ -429,7 +490,7 @@ export const RelationsDemo: React.FC = () => {
                 padding: 16,
                 opacity: Math.max(0.35, partLinkOp),
                 transform: `translateX(${(1 - partLinkIn) * 24}px)`,
-                background: "rgba(5,11,26,0.55)",
+                background: "#050B1A",
                 display: "flex",
                 flexDirection: "column",
                 gap: 12,
@@ -536,43 +597,29 @@ export const RelationsDemo: React.FC = () => {
           </div>
         </div>
 
-        {/* SVG link accent: step → part (subtle) */}
-        <svg
-          width={1920}
-          height={1080}
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            pointerEvents: "none",
-            opacity: partLinkOp * 0.85,
-          }}
-        >
-          <line
-            x1={1280}
-            y1={280}
-            x2={1280 + partLinkIn * 160}
-            y2={280 + partLinkIn * 40}
-            stroke="rgba(224,160,255,0.7)"
-            strokeWidth={2.5}
-            strokeDasharray="5 5"
-          />
-        </svg>
-
-        {/* 3. Agent / activity rail — bottom */}
+        {/* 3. Agent / activity rail — above title band */}
         <div
           style={{
             position: "absolute",
             left: 48,
-            bottom: 92,
+            bottom: 210,
             width: 560,
-            opacity: agentOp,
+            opacity:
+              agentOp *
+              (frame >= 100 && frame <= 210
+                ? interpolate(frame, [100, 108, 195, 210], [1, 0.15, 0.15, 1], clamp)
+                : frame >= 200 && frame <= 320
+                  ? interpolate(frame, [200, 208, 300, 318], [1, 0.12, 0.12, 1], clamp)
+                  : frame >= 310
+                    ? interpolate(frame, [310, 320], [1, 0.2], clamp)
+                    : 1),
             transform: `translateY(${(1 - springProgress(frame, fps, 155, "enter")) * 20}px)`,
             padding: "14px 16px",
             borderRadius: 14,
-            background: "rgba(0,229,185,0.12)",
+            background: "rgba(5,14,28,0.96)",
             border: "1px solid rgba(0,229,185,0.48)",
             boxShadow: "0 18px 48px rgba(0,0,0,0.42)",
+            zIndex: 3,
             display: "flex",
             flexDirection: "column",
             gap: 10,
@@ -650,10 +697,9 @@ export const RelationsDemo: React.FC = () => {
         line="Calendar · instructions · tools — same graph."
         appearAt={108}
         disappearAt={200}
-        size={40}
+        size={48}
         voice="display"
         place="lower"
-        dockAt={165}
       />
       <BigTitle
         line="A step linked to its part."
@@ -662,7 +708,6 @@ export const RelationsDemo: React.FC = () => {
         size={46}
         voice="display"
         place="lower"
-        dockAt={265}
       />
       <BigTitle
         line="AI-ready from the same graph."
@@ -671,7 +716,6 @@ export const RelationsDemo: React.FC = () => {
         size={46}
         voice="display"
         place="lower"
-        dockAt={380}
       />
 
       <SurveyInsert

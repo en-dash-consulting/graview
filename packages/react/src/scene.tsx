@@ -14,6 +14,7 @@ import {
   type LayoutNode,
   type LayoutOptions,
   edgeSelectionId,
+  edgeOfSelection,
 } from "@graview/layout";
 import {
   CONNECTOR_DASH,
@@ -25,6 +26,7 @@ import {
   styleFor,
   transformFor,
   type Matrix4,
+  hueFor,
 } from "@graview/render";
 import {
   useEffect,
@@ -183,6 +185,23 @@ export function Scene<S extends AnySchema>({
   // The picture as it is right now, part-way between the last view and this
   // one. Everything downstream draws the tween, not the destination.
   const frame = useAnimatedLayout(result, { enabled: animate && !dragging });
+  /*
+   * The relation pairs the CONNECTOR layer will draw (and take clicks
+   * for), so the ties layer can yield them — one line per relation, and
+   * the one that stays is the one that answers the pointer.
+   */
+  const drawnSingles = useMemo(() => {
+    const byId = new Map(frame.nodes.map((node) => [node.id, node]));
+    const held = new Set<string>();
+    for (const connector of frame.connectors) {
+      const single = (connector as { single?: { from: string; to: string } }).single;
+      if (!single) continue;
+      if (!connectorShows(connector, byId, view.overview ?? false)) continue;
+      held.add(`${connector.kind}|${single.from}|${single.to}`);
+    }
+    return held;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frame, view.overview]);
   const touched = useTouched<S>();
 
   useEffect(() => {
@@ -603,6 +622,11 @@ export function Scene<S extends AnySchema>({
         overview={view.overview ?? false}
         width={result.width}
         height={result.height}
+        onPickEdge={(edgeId, at) => {
+          setSelection([edgeId]);
+          setMenuAt(at ?? null);
+        }}
+        alreadyDrawn={drawnSingles}
       />
       <RelationCaptions
         nodes={frame.nodes}
@@ -641,7 +665,13 @@ function SelectionTies<S extends AnySchema>({
   overview,
   width,
   height,
+  onPickEdge,
+  alreadyDrawn,
 }: {
+  /** Select the ONE edge a tie stands for; `at` means "and menu here". */
+  readonly onPickEdge?: (edgeId: string, at?: { x: number; y: number }) => void;
+  /** Real edge pairs the connector layer already drew — one line, not two. */
+  readonly alreadyDrawn?: ReadonlySet<string>;
   readonly stageRef: { current: HTMLElement | null };
   readonly nodes: readonly SceneNode[];
   readonly scheme: "light" | "dark";
@@ -657,6 +687,16 @@ function SelectionTies<S extends AnySchema>({
     if (selection.length === 0 || selection.length > 4) return [];
     const chosen = new Set(selection);
     const found: { kind: string; self: string; other: string }[] = [];
+    /*
+     * A SELECTED EDGE KEEPS ITS LINE. Ties used to derive only from
+     * selected nodes, so picking a line replaced the selection and the
+     * line's own reason to exist vanished under it — an inspector about a
+     * relation the picture no longer showed.
+     */
+    for (const id of selection) {
+      const edge = edgeOfSelection(id);
+      if (edge) found.push({ kind: edge.kind, self: edge.from, other: edge.to });
+    }
     for (const edge of store.graph.allEdges()) {
       const self = chosen.has(edge.from) ? edge.from : chosen.has(edge.to) ? edge.to : null;
       if (!self) continue;
@@ -703,7 +743,19 @@ function SelectionTies<S extends AnySchema>({
     nodes.find((node) => node.aggregate?.memberIds.includes(id));
 
   const seen = new Set<string>();
-  const lines: { key: string; kind: string; d: string; endX: number; endY: number }[] = [];
+  const lines: {
+    key: string;
+    kind: string;
+    d: string;
+    endX: number;
+    endY: number;
+    from: { x: number; y: number };
+    to: { x: number; y: number };
+    control: { x: number; y: number };
+    fromBox: { x: number; y: number; width: number; height: number };
+    toBox: { x: number; y: number; width: number; height: number };
+    edgeId: string | null;
+  }[] = [];
   for (const tie of ties) {
     const selfHost = hostOf(tie.self);
     const selfHostEl = selfHost
@@ -777,15 +829,45 @@ function SelectionTies<S extends AnySchema>({
     const to = edgePoint(toBox, fromCentre);
     const dist = Math.hypot(to.x - from.x, to.y - from.y);
     if (dist < 8) continue;
+    /*
+     * ONE LINE PER RELATION. The connector layer draws (and takes clicks
+     * for) any relation whose both ends are placed cards; a tie repeating
+     * it produced the double line where one answered the pointer and its
+     * twin did not. The tie yields; the ties that remain are the ones only
+     * measurement can draw — into a chip, out of a roster.
+     */
+    if (
+      alreadyDrawn?.has(`${tie.kind}|${tie.self}|${tie.other}`) ||
+      alreadyDrawn?.has(`${tie.kind}|${tie.other}|${tie.self}`)
+    ) {
+      continue;
+    }
     const bow = Math.min(36, dist * 0.12);
     const nx = -(to.y - from.y) / dist;
     const ny = (to.x - from.x) / dist;
+    const control = {
+      x: (from.x + to.x) / 2 + nx * bow,
+      y: (from.y + to.y) / 2 + ny * bow,
+    };
+    // The real edge this tie stands for, oriented the way the graph holds it.
+    const oriented = [...store.graph.allEdges()].find(
+      (edge) =>
+        edge.kind === tie.kind &&
+        ((edge.from === tie.self && edge.to === tie.other) ||
+          (edge.from === tie.other && edge.to === tie.self)),
+    );
     lines.push({
       key: `${tie.kind}:${tie.self}:${tie.other}`,
       kind: tie.kind,
-      d: `M ${from.x} ${from.y} Q ${(from.x + to.x) / 2 + nx * bow} ${(from.y + to.y) / 2 + ny * bow} ${to.x} ${to.y}`,
+      d: `M ${from.x} ${from.y} Q ${control.x} ${control.y} ${to.x} ${to.y}`,
       endX: to.x,
       endY: to.y,
+      from,
+      to,
+      control,
+      fromBox,
+      toBox,
+      edgeId: oriented ? edgeSelectionId(oriented.kind, oriented.from, oriented.to) : null,
     });
   }
   if (lines.length === 0) return null;
@@ -809,6 +891,59 @@ function SelectionTies<S extends AnySchema>({
     >
       {lines.map((line) => {
         const style = connectorStyle(line.kind);
+        /*
+         * A tie that stands for one edge takes the pointer, like any line:
+         * the hit run is the visible stretch between its two endpoint
+         * boxes, so pressing a line never steals a card's click.
+         */
+        let hit: React.ReactNode = null;
+        if (line.edgeId && onPickEdge) {
+          const inside = (
+            box: { x: number; y: number; width: number; height: number },
+            p: { x: number; y: number },
+          ) =>
+            p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
+          const q = (t: number) => {
+            const a = (1 - t) * (1 - t);
+            const b = 2 * (1 - t) * t;
+            const c = t * t;
+            return {
+              x: a * line.from.x + b * line.control.x + c * line.to.x,
+              y: a * line.from.y + b * line.control.y + c * line.to.y,
+            };
+          };
+          const points: { x: number; y: number }[] = [];
+          for (let i = 0; i <= 40; i++) {
+            const point = q(i / 40);
+            if (inside(line.fromBox, point) || inside(line.toBox, point)) continue;
+            points.push(point);
+          }
+          if (points.length >= 2) {
+            hit = (
+              <path
+                data-graview-edge={line.edgeId}
+                className="graview-edge-hit"
+                d={`M ${points[0]!.x} ${points[0]!.y} ${points
+                  .slice(1)
+                  .map((point) => `L ${point.x} ${point.y}`)
+                  .join(" ")}`}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={14}
+                style={{ pointerEvents: "stroke", cursor: "pointer" }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onPickEdge(line.edgeId!, { x: event.clientX, y: event.clientY });
+                }}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onPickEdge(line.edgeId!, { x: event.clientX, y: event.clientY });
+                }}
+              />
+            );
+          }
+        }
         return (
           <g key={line.key} opacity={0.72}>
             <path
@@ -822,6 +957,7 @@ function SelectionTies<S extends AnySchema>({
             />
             {/* A destination, marked: the far end lands somewhere specific. */}
             <circle cx={line.endX} cy={line.endY} r={2.6} fill={connectorStroke(style)} />
+            {hit}
           </g>
         );
       })}
@@ -1347,6 +1483,28 @@ function SceneViewHost({
       ) : (
         children
       )}
+      {/*
+        * WHAT KIND OF THING THIS IS, said on the thing. The one thread that
+        * runs through every Graview surface is the kind — its hue in every
+        * chip's dot, its name in the legend — and the focus panel was the
+        * one place it went unsaid: a person's page that never says
+        * "person". The tag sits astride the panel's top-right edge, scene
+        * chrome rather than view content, so no view has to remember it.
+        */}
+      {Math.round(node.plane) === 0 && !node.aggregate ? (
+        <span data-graview-kindtag="" className="graview-kind-tag" aria-hidden="true">
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 999,
+              flex: "0 0 auto",
+              background: `hsl(${Math.round(hueFor(node.kind) * 360)} 55% var(--graview-tint-lightness) / 0.9)`,
+            }}
+          />
+          {node.kind}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -1475,6 +1633,27 @@ function edgePoint(
 }
 
 /**
+ * Whether the connector layer draws this line — ONE rule, shared with the
+ * ties layer so a relation is never drawn twice with different manners.
+ * Above the stack every relation earns its ink; inside it a line must touch
+ * a raised node and must not end on a receded group ("some of these" is not
+ * a relationship anyone can read).
+ */
+function connectorShows(
+  connector: { from: string; to: string },
+  byId: Map<string, SceneNode>,
+  overview: boolean,
+): boolean {
+  const from = byId.get(connector.from);
+  const to = byId.get(connector.to);
+  if (!from || !to) return false;
+  if (overview) return true;
+  const raised = Math.round(from.plane) === 1 || Math.round(to.plane) === 1;
+  const vagueEnd = (node: SceneNode) => Boolean(node.aggregate) && Math.round(node.plane) === 2;
+  return raised && !vagueEnd(from) && !vagueEnd(to);
+}
+
+/**
  * Connectors, drawn in SVG over the scene on BOTH renderer paths.
  *
  * A deliberate choice, not an omission: the GPU pipeline earns its cost on
@@ -1556,20 +1735,9 @@ function Connectors({
    * which is not a relationship anyone can read — while a line to a real
    * node on plane 2, like the run a person drives, says something exact.
    */
-  const connectors = result.connectors.filter((connector) => {
-    const from = byId.get(connector.from);
-    const to = byId.get(connector.to);
-    if (!from || !to) return false;
-    /*
-     * Above the stack, every relation earns its ink: the shape of the domain
-     * IS the content, and a line into a group is no longer vague because a
-     * group is what the ring is made of.
-     */
-    if (overview) return true;
-    const raised = Math.round(from.plane) === 1 || Math.round(to.plane) === 1;
-    const vagueEnd = (node: SceneNode) => node.aggregate && Math.round(node.plane) === 2;
-    return raised && !vagueEnd(from) && !vagueEnd(to);
-  });
+  const connectors = result.connectors.filter((connector) =>
+    connectorShows(connector, byId, overview),
+  );
   if (connectors.length === 0) return null;
   const drawn = connectors.map((connector) => {
         // Endpoints are the boxes a person can SEE — measured from the DOM,
@@ -1765,6 +1933,7 @@ function Connectors({
               <path
                 key={`hit:${connector.id}`}
                 data-graview-edge={edgeId}
+                className="graview-edge-hit"
                 d={`M ${points[0]!.x} ${points[0]!.y} ${points
                   .slice(1)
                   .map((point) => `L ${point.x} ${point.y}`)
@@ -1773,9 +1942,16 @@ function Connectors({
                 stroke="transparent"
                 strokeWidth={14}
                 style={{ pointerEvents: "stroke", cursor: "pointer" }}
+                /*
+                 * EITHER button opens the menu AT THE LINE. A left-click
+                 * that only swapped the rail's contents changed the world
+                 * quietly, three hundred pixels from the pointer — a line
+                 * has no page to travel to, so its one meaning is "act on
+                 * this relation, here".
+                 */
                 onClick={(event) => {
                   event.stopPropagation();
-                  onPickEdge(edgeId);
+                  onPickEdge(edgeId, { x: event.clientX, y: event.clientY });
                 }}
                 onContextMenu={(event) => {
                   event.preventDefault();

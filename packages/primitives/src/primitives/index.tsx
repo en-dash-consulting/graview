@@ -318,6 +318,25 @@ export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
         boxShadow: selected ? "0 0 14px -4px var(--graview-accent)" : undefined,
       }}
     >
+      {/*
+        * THE DOT IS THE THREAD. The same mark carries kind identity in the
+        * legend's swatches, the quick-select panel and here on every chip —
+        * one glyph, everywhere, so "what am I looking at" has one answer
+        * wherever you look.
+        */}
+      {tint === undefined ? null : (
+        <span
+          aria-hidden="true"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: 999,
+            flex: "0 0 auto",
+            marginRight: 6,
+            background: `hsl(${tint} 55% var(--graview-tint-lightness) / 0.9)`,
+          }}
+        />
+      )}
       <span
         style={{
           minWidth: 0,

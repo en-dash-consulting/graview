@@ -1,0 +1,28 @@
+{
+  "id": "48afbfe9-1dfe-4fdc-bc6b-c64c9ca4a1ea",
+  "taskId": "ae368f49-6337-43f6-829c-d8b89aef8866",
+  "taskTitle": "Remove named its blast radius, ties offer from either end",
+  "startedAt": "2026-09-01T16:33:48.172Z",
+  "finishedAt": "2026-09-01T16:33:48.172Z",
+  "status": "completed",
+  "turns": 156,
+  "summary": "Reverse tie offers + contextual candidates; menu at the line; selected edges keep their lines; one line per relation; the kind thread (dots + focus tag); household named",
+  "tokenUsage": {
+    "input": 312,
+    "output": 200467,
+    "cacheCreationInput": 2662298,
+    "cacheReadInput": 124990928
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 312,
+    "output": 200467,
+    "cached": 127653226,
+    "total": 127854005
+  }
+}
