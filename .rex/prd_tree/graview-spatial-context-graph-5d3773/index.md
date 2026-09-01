@@ -37,6 +37,7 @@ description: "A framework for building applications where a typed context graph 
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | completed |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
 | [Modules: named parts of a declaration a workspace can turn on and off](./modules-named-parts-of-a-aa8097.md) | completed |
+| [Quick-view relations: one-click emphasis chips for the people behind a view](./quick-view-relations-one-click-5234d8.md) | pending |
 | [React binding — @graview/react](./react-binding-graview-react.md) | completed |
 | [Relevance is a horizon, not a delete: lifecycle, archival, and the sync flood](./relevance-is-a-horizon-not-a-728589.md) | completed |
 | [Selection is part of the stop: URL-addressable, restored by back/forward](./selection-is-part-of-the-stop-88cfdf.md) | completed |

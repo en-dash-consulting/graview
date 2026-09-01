@@ -1,0 +1,16 @@
+---
+id: "5234d8ae-c0ac-49b3-a7b7-9d9e68e5d66d"
+level: "feature"
+title: "Quick-view relations: one-click emphasis chips for the people behind a view"
+status: "pending"
+priority: "medium"
+source: "Nick, 2026-09-01: \"a concept of quick-view relations, for instance if i have the household example open, it might be nice on that calendar view to be able to quick select Parent1 or Caregiver to see the items highlighted to them, instead of currently i have to click People and then select the person\""
+acceptanceCriteria:
+  - "From the household example's week/calendar view, one click on a person chip highlights their items (spans, ties, inspector) — no raising People first; a second click clears"
+  - "Chips derive from the schema's edges and the visible view's membership — no per-app configuration; small-cardinality related kinds only, ranked by touch, capped"
+  - "Chips reflect selection state, support additive selection, and write the ordinary URL-carried selection"
+  - "They never cover content in any state (audit covered-check stays clean at 26+ screens)"
+  - "The coaching example's board gains the same behavior with zero app code"
+  - "verify-direct-manipulation or a survey state pins the calendar quick-select flow"
+description: "Asking \"which of this week is Parent1's?\" currently costs two deliberate gestures — raise People, then select the person — for what is a one-glance question. The answer machinery already exists (selecting a node lights everything it implicates; the calendar lens highlights its spans); what is missing is a fast way IN.\n\nThe derived shape: for the current focus, the graph already knows which nodes are one edge away from the focused group's members and how few of them there are. When a related kind's cardinality is small (a household's five people, a the coaching example's two keepers), offer its members as QUICK CHIPS on or near the view — click sets the selection (the existing emphasis path does the rest: spans light, ties draw, the inspector opens), click again clears. This is derivation, not configuration: the chips fall out of the edges the schema declares, ranked by how much of the visible view each candidate touches, capped so a crowd never becomes a toolbar.\n\nPlacement wants care rather than novelty: the RelationKey (legend) is the natural home — it already names the relations in play; giving each relation row its members-as-chips when they are few makes the legend a control surface without adding chrome. In the calendar/zoomed states the chips must not cover content (the audit's covered check keeps this honest).\n\nInteraction details to hold: chips reflect the current selection state (pressed = selected); multi-select via shift/meta mirrors the scene's additive selection; selection stays URL-carried (landed earlier) so a quick-view is shareable like everything else. Apps get this with zero code — the household example's calendar with Parent1/Caregiver chips is the acceptance case, and the coaching example's board with player chips should fall out for free."
+---
