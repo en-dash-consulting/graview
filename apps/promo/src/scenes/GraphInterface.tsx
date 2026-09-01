@@ -246,7 +246,7 @@ export const GraphInterface: React.FC = () => {
                       textShadow: "0 4px 18px rgba(0,0,0,0.6)",
                     }}
                   >
-                    actions derived · schema → UI
+                    auto-derived · one model → surfaces
                   </div>
                 ) : null}
               </div>
@@ -300,20 +300,28 @@ export const GraphInterface: React.FC = () => {
       {/* Title docks lower so blooming plates keep the mid/upper stage clear */}
       <BigTitle
         line="The graph is the interface."
-        appearAt={32}
-        dockAt={78}
-        disappearAt={localDur - 28}
-        size={60}
+        appearAt={28}
+        dockAt={72}
+        disappearAt={110}
+        size={56}
         voice="display"
+        place="lower"
+      />
+      <BigTitle
+        line="UI, nav, tools — from one model."
+        appearAt={95}
+        disappearAt={localDur - 26}
+        size={36}
+        voice="literary"
         place="lower"
       />
 
       {/*
         Interfaces bloom around the graph — staggered corners/edges,
-        diverse todo lenses, overlapping lifetimes (not one TR slot).
+        diverse the household example / the coaching example lenses, overlapping lifetimes (not one TR slot).
       */}
       <SurveyInsert
-        src="survey/todo-selected-dark.png"
+        src="survey/the household example-selected-dark.png"
         appearAt={46}
         disappearAt={localDur - 18}
         corner="tl"
@@ -323,10 +331,10 @@ export const GraphInterface: React.FC = () => {
         parallax={10}
         depth={0.38}
         offsetY={8}
-        label="selected"
+        label="the household example · selected"
       />
       <SurveyInsert
-        src="survey/todo-week-dark.png"
+        src="survey/the coaching example-week-dark.png"
         appearAt={58}
         disappearAt={localDur - 14}
         corner="tr"
@@ -336,10 +344,10 @@ export const GraphInterface: React.FC = () => {
         parallax={12}
         depth={0.4}
         offsetY={-4}
-        label="week"
+        label="the coaching example · week"
       />
       <SurveyInsert
-        src="survey/todo-lists-dark.png"
+        src="survey/the coaching example-training-dark.png"
         appearAt={72}
         disappearAt={localDur - 12}
         corner="ml"
@@ -349,10 +357,10 @@ export const GraphInterface: React.FC = () => {
         parallax={8}
         depth={0.34}
         offsetY={36}
-        label="lists"
+        label="drill · training"
       />
       <SurveyInsert
-        src="survey/todo-travelled-dark.png"
+        src="survey/the household example-travelled-dark.png"
         appearAt={86}
         disappearAt={localDur - 10}
         corner="mr"
@@ -362,10 +370,10 @@ export const GraphInterface: React.FC = () => {
         parallax={11}
         depth={0.36}
         offsetY={-20}
-        label="travelled"
+        label="the household example · travel"
       />
       <SurveyInsert
-        src="survey/todo-zoomed-dark.png"
+        src="survey/the household example-raised-dark.png"
         appearAt={98}
         disappearAt={localDur - 8}
         corner="br"
@@ -376,7 +384,7 @@ export const GraphInterface: React.FC = () => {
         depth={0.42}
         offsetX={-24}
         offsetY={-8}
-        label="zoomed"
+        label="raised · select"
       />
     </AbsoluteFill>
   );

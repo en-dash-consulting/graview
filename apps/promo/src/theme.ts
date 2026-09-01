@@ -49,8 +49,8 @@ export const HEIGHT = 1080;
  * Timing (probed): endash-outro.mp4 = 16.000s @ 25fps / 400 source frames.
  * At composition 30fps → 16s = 480 frames.
  *
- * Story rebalanced: dense mid (coverage + brand) through ~32s, short settle
- * punch (~4s), then dip-to-white → outro. Total ≈ 52s.
+ * Story: relations teach-beat (one graph → many surfaces), brief En Dash
+ * bridge (no ToDo morph), short settle. Total ≈ 52s.
  */
 export const STORY_FRAMES = 1080; // 36s Graview body
 export const DIP_WHITE_FRAMES = 18; // last frames of story → pure white
@@ -63,11 +63,12 @@ export const beats = {
   glyphs: { from: 30, duration: 165 },
   /** Jack-in, brief title, affordance candy, exit */
   graph: { from: 165, duration: 155 },
-  city: { from: 290, duration: 260 },
-  /** Richer mid-story: empty cells, agent write, selective undo */
-  coverage: { from: 520, duration: 300 },
-  /** Clear ToDo sample → En Dash mark morph (~5s) */
-  brand: { from: 790, duration: 150 },
+  /** Trimmed GRAVIEW altitude — ~4.3s, not an 8s hang */
+  city: { from: 290, duration: 130 },
+  /** One graph → calendar · instructions · tools (~15s) */
+  relations: { from: 400, duration: 450 },
+  /** Brief En Dash mark lockup — bridge into settle (no ToDo) */
+  brand: { from: 830, duration: 110 },
   /** Short punch lockup — ≤120 frames (~4s), not an end pad */
   settle: { from: 960, duration: 120 },
 } as const;

@@ -11,7 +11,7 @@ import { CodeGlyphs } from "../components/CodeGlyphs";
 import { clamp, easings, springProgress } from "../motion";
 import { beats } from "../theme";
 
-/** One idea: code becomes constellation. */
+/** One idea: declare the domain (defineNode) → the application follows. */
 export const GlyphsBloom: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -26,11 +26,11 @@ export const GlyphsBloom: React.FC = () => {
     <AbsoluteFill style={{ opacity }}>
       <CodeGlyphs fadeOut={glyphFade} shatter={shatter} />
       <BigTitle
-        line="Code becomes constellation."
-        appearAt={100}
-        disappearAt={175}
-        size={56}
-        voice="literary"
+        line="Declare entities. Get the app."
+        appearAt={95}
+        disappearAt={170}
+        size={52}
+        voice="display"
       />
     </AbsoluteFill>
   );

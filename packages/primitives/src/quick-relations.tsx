@@ -20,12 +20,26 @@ import { hueFor } from "./default-views.js";
  * sessions — ranked by how much of the visible view each one touches. A
  * crowd never becomes a toolbar; it already has a district.
  */
-const MOST_MEMBERS = 6;
-const MOST_KINDS = 2;
+/*
+ * Five, so the panel always finishes above the inspector's docked top edge
+ * — the two share the left rail as a stack, never a collision. A kind with
+ * more members has a district for exactly this.
+ */
+const MOST_MEMBERS = 5;
+/*
+ * ONE kind, not a stack of them. Two labelled rows of wrapping chips read
+ * as debris; the single kind that touches the view most — the people of a
+ * week, the players of a board — is the quick-select that earns the
+ * corner. Everything else already has a district and a legend.
+ */
+const MOST_KINDS = 1;
+/** A chip is a handle, not a sentence: long names cut with their full text on hover. */
+const MOST_LABEL = 18;
 
 export function QuickRelations<S extends AnySchema>() {
-  const { store, view, brand } = useGraview<S>();
-  const { selection, set, clear, toggle, isSelected } = useSelection();
+  const { store, view, brand, menuAt } = useGraview<S>();
+  const { set } = useSelection();
+  const { selection } = useSelection();
   const nodes = useGraph<S>();
 
   const rows = useMemo(() => {
@@ -69,56 +83,70 @@ export function QuickRelations<S extends AnySchema>() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, nodes, view.focusId]);
 
-  // At altitude the legend owns this corner and the districts are the
-  // quick-select surface; in the stack this is the corner's tenant.
-  if (view.overview || rows.length === 0) return null;
+  /*
+   * THE RAIL HAS ONE TENANT AT A TIME. At altitude the legend owns the
+   * corner; in the stack these chips do — until something is selected, at
+   * which point the inspector takes the whole rail and the chips stand
+   * aside (they are the way IN; the pane is where you already are, and its
+   * × or Escape is the way back out, after which the chips return). A
+   * pointer menu quiets the corner the same way.
+   */
+  if (view.overview || rows.length === 0 || menuAt !== null || selection.length > 0) {
+    return null;
+  }
 
   return (
     <aside
       aria-label="Quick select"
       data-testid="quick-relations"
       style={{
+        /*
+         * The SAME dress the legend wears at altitude: one corner, one
+         * visual language at both heights. Loose chips floating on the
+         * ground read as something spilled; a panel reads as something
+         * placed.
+         */
         position: "absolute",
         left: 16,
         top: 14,
         zIndex: 5,
         display: "grid",
-        gap: 6,
-        maxWidth: 236,
+        gap: 5,
+        maxWidth: 250,
+        padding: "8px 10px",
+        borderRadius: 10,
+        border: "1px solid var(--graview-edge)",
+        background: "var(--graview-float)",
+        boxShadow: "var(--graview-lift-low)",
+        animation: "graview-settle 380ms 120ms ease backwards",
       }}
     >
       {rows.map((row) => (
-        <div key={row.kind} style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+        <div key={row.kind} style={{ display: "grid", gap: 5 }}>
           <span
             style={{
               fontSize: 10,
-              letterSpacing: "0.14em",
+              letterSpacing: "0.16em",
               textTransform: "uppercase",
               color: "var(--graview-ink-faint)",
-              marginRight: 2,
             }}
           >
             {row.plural}
           </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
           {row.members.map((member) => {
             const node = store.graph.getNode(member.id);
             if (!node) return null;
-            const pressed = isSelected(member.id);
             const hue = Math.round(hueFor(member.kind, brand?.accents) * 360);
+            const full = labelOf(store.schema.tryDefinition(member.kind), node as never);
+            const shown = full.length > MOST_LABEL ? `${full.slice(0, MOST_LABEL - 1).trimEnd()}…` : full;
             return (
               <button
                 key={member.id}
                 type="button"
                 data-graview-quick={member.id}
-                aria-pressed={pressed}
-                title={`${labelOf(store.schema.tryDefinition(member.kind), node as never)} — ${member.touches} of what you are looking at`}
-                onClick={(event) => {
-                  // The scene's own grammar: plain click selects, again
-                  // clears, shift adds to what is held.
-                  if (event.shiftKey || event.metaKey) toggle(member.id);
-                  else if (pressed && selection.length === 1) clear();
-                  else set([member.id]);
-                }}
+                title={`${full} — ${member.touches} of what you are looking at`}
+                onClick={() => set([member.id])}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -128,10 +156,9 @@ export function QuickRelations<S extends AnySchema>() {
                   fontSize: 11.5,
                   borderRadius: 999,
                   cursor: "pointer",
-                  border: `1px solid ${pressed ? "var(--graview-accent)" : "var(--graview-edge)"}`,
-                  background: pressed ? "var(--graview-panel)" : "var(--graview-float)",
+                  border: "1px solid var(--graview-edge)",
+                  background: "var(--graview-float)",
                   color: "var(--graview-ink)",
-                  boxShadow: pressed ? "var(--graview-lift-low)" : "none",
                 }}
               >
                 <span
@@ -144,10 +171,11 @@ export function QuickRelations<S extends AnySchema>() {
                     background: `hsl(${hue} 55% var(--graview-tint-lightness) / 0.9)`,
                   }}
                 />
-                {labelOf(store.schema.tryDefinition(member.kind), node as never)}
+                {shown}
               </button>
             );
           })}
+          </div>
         </div>
       ))}
     </aside>

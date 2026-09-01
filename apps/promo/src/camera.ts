@@ -36,7 +36,7 @@ type Key = {
   cEdge: number;
 };
 
-/** Sparse camera voyage across the 36s story (rebalanced mid / short settle). */
+/** Sparse camera voyage across the 36s story (city cut, coverage expanded). */
 const KEYS: Key[] = [
   {
     at: 0,
@@ -84,7 +84,8 @@ const KEYS: Key[] = [
     cEdge: 1,
   },
   {
-    at: 320,
+    // City altitude peak (beat ~290–420)
+    at: 340,
     x: 0,
     y: 36,
     scale: 0.93,
@@ -99,11 +100,12 @@ const KEYS: Key[] = [
     cEdge: 1,
   },
   {
-    at: 560,
-    x: -36,
-    y: 8,
+    // Relations open — schema graph declare
+    at: 460,
+    x: -28,
+    y: 6,
     scale: 1.02,
-    rotate: -0.4,
+    rotate: -0.35,
     tiltX: 3,
     focus: 0.45,
     bloom: 0.52,
@@ -114,35 +116,52 @@ const KEYS: Key[] = [
     cEdge: 0.9,
   },
   {
-    // Mid coverage — hold for product teaching
-    at: 700,
-    x: -20,
-    y: 4,
-    scale: 1.04,
-    rotate: -0.2,
+    // Surfaces bloom — calendar · instructions · tools
+    at: 580,
+    x: -16,
+    y: 2,
+    scale: 1.03,
+    rotate: -0.15,
     tiltX: 2,
-    focus: 0.42,
+    focus: 0.4,
+    bloom: 0.5,
+    cBloom: 0.52,
+    cPulse: 0.24,
+    cDrift: 0.45,
+    cSettle: 0,
+    cEdge: 0.88,
+  },
+  {
+    // Step ↔ part punch hold
+    at: 700,
+    x: -8,
+    y: 0,
+    scale: 1.04,
+    rotate: -0.1,
+    tiltX: 1,
+    focus: 0.4,
     bloom: 0.48,
-    cBloom: 0.5,
-    cPulse: 0.22,
-    cDrift: 0.4,
+    cBloom: 0.48,
+    cPulse: 0.2,
+    cDrift: 0.38,
     cSettle: 0,
     cEdge: 0.85,
   },
   {
-    at: 820,
+    // Brief En Dash lockup (no ToDo)
+    at: 860,
     x: 0,
     y: 0,
-    scale: 1.05,
+    scale: 1.04,
     rotate: 0,
     tiltX: 0,
-    focus: 0.42,
-    bloom: 0.5,
-    cBloom: 0.45,
-    cPulse: 0.16,
-    cDrift: 0.35,
-    cSettle: 0.05,
-    cEdge: 0.7,
+    focus: 0.44,
+    bloom: 0.52,
+    cBloom: 0.48,
+    cPulse: 0.15,
+    cDrift: 0.32,
+    cSettle: 0.12,
+    cEdge: 0.72,
   },
   {
     at: 980,

@@ -8,10 +8,10 @@ import {
 import { clamp, easings, springProgress } from "../motion";
 import { colors, fonts } from "../theme";
 
-const SNIPPET = `defineApp({
-  domain: "commerce",
-  entities: ["Order", "Customer"],
-  graph: true,
+const SNIPPET = `defineNode({
+  Person: { name: string },
+  Event:  { when: date },
+  edge: Person → Event,
 })`;
 
 const ORBIT_GLYPHS = [
@@ -20,12 +20,12 @@ const ORBIT_GLYPHS = [
   "node",
   "schema",
   "tool",
-  "seat",
-  "view",
+  "Person",
+  "Event",
   "declare",
   "→",
   "type",
-  "fn",
+  "SDK",
   "::",
 ];
 
@@ -43,7 +43,7 @@ type Props = {
   shatter?: number;
 };
 
-/** Typewriter defineApp block + orbiting glyphs that shatter into constellation. */
+/** Typewriter defineNode block + orbiting glyphs that shatter into constellation. */
 export const CodeGlyphs: React.FC<Props> = ({
   fadeOut = 1,
   shatter = 0,
@@ -88,7 +88,7 @@ export const CodeGlyphs: React.FC<Props> = ({
     easing: easings.softIn,
   });
 
-  const defineLen = "defineApp".length;
+  const defineLen = "defineNode".length;
   const head = text.slice(0, Math.min(defineLen, text.length));
   const tail = text.length > defineLen ? text.slice(defineLen) : "";
 
@@ -115,14 +115,14 @@ export const CodeGlyphs: React.FC<Props> = ({
               inset 0 1px 0 rgba(255,255,255,0.05)
             `,
             backdropFilter: "blur(18px)",
-            minWidth: 520,
+            minWidth: 560,
           }}
         >
           <pre
             style={{
               margin: 0,
               fontFamily: fonts.mono,
-              fontSize: 26,
+              fontSize: 24,
               lineHeight: 1.55,
               color: colors.offWhite,
               letterSpacing: 0.35,
@@ -147,7 +147,6 @@ export const CodeGlyphs: React.FC<Props> = ({
       </AbsoluteFill>
 
       {orbits.map((g, i) => {
-        const local = Math.max(0, frame - g.delay);
         const appear = springProgress(frame, fps, g.delay, "snap");
         const angle = g.angle + frame * 0.004;
         const baseX = 960 + Math.cos(angle) * g.radius;

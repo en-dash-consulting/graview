@@ -12,7 +12,7 @@ import { SurveyInsert } from "../components/SurveyInsert";
 import { clamp, easings, fadeIn, springProgress, stagger } from "../motion";
 import { beats, colors, fonts } from "../theme";
 
-/** One idea: GRAVIEW — the city from altitude. */
+/** One idea: GRAVIEW — a developer kit, surveyed from altitude. */
 export const CityAltitude: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -28,6 +28,7 @@ export const CityAltitude: React.FC = () => {
     easing: easings.softOut,
   });
   const letters = "GRAVIEW".split("");
+  const subOp = fadeIn(frame, 36, 16);
 
   return (
     <AbsoluteFill style={{ opacity }}>
@@ -35,7 +36,7 @@ export const CityAltitude: React.FC = () => {
         style={{
           opacity: plateOp,
           filter: `blur(${plateBlur}px)`,
-          transform: `scale(${interpolate(frame, [0, 200], [1.05, 1], { ...clamp, easing: easings.cinematic })})`,
+          transform: `scale(${interpolate(frame, [0, 110], [1.05, 1], { ...clamp, easing: easings.cinematic })})`,
           transformOrigin: "50% 40%",
         }}
       >
@@ -57,7 +58,12 @@ export const CityAltitude: React.FC = () => {
       </AbsoluteFill>
 
       <AbsoluteFill
-        style={{ justifyContent: "center", alignItems: "center" }}
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+          gap: 18,
+        }}
       >
         <div style={{ display: "flex" }}>
           {letters.map((ch, i) => {
@@ -82,6 +88,20 @@ export const CityAltitude: React.FC = () => {
               </span>
             );
           })}
+        </div>
+        <div
+          style={{
+            opacity: subOp,
+            fontFamily: fonts.mono,
+            fontSize: 22,
+            fontWeight: 500,
+            letterSpacing: 4,
+            color: colors.mint,
+            textTransform: "uppercase",
+            textShadow: "0 8px 28px rgba(0,0,0,0.55)",
+          }}
+        >
+          A developer kit
         </div>
       </AbsoluteFill>
 
