@@ -12,8 +12,8 @@ tags:
   - "context-graph"
 source: "Session planning — architecture agreed 2026-08-29"
 startedAt: "2026-08-30T04:55:36.895Z"
-completedAt: "2026-09-01T13:04:35.238Z"
-endedAt: "2026-09-01T13:04:35.238Z"
+completedAt: "2026-09-01T16:33:19.919Z"
+endedAt: "2026-09-01T16:33:19.919Z"
 acceptanceCriteria:
   - "The household example's week calendar and People relation render as one spatial scene, editable at plane 0"
   - "Clicks, focus and screen-reader access resolve correctly against nodes drawn at depth"
@@ -42,6 +42,7 @@ description: "A framework for building applications where a typed context graph 
 | [Quick-view relations: one-click emphasis chips for the people behind a view](./quick-view-relations-one-click-5234d8.md) | completed |
 | [React binding — @graview/react](./react-binding-graview-react.md) | completed |
 | [Relevance is a horizon, not a delete: lifecycle, archival, and the sync flood](./relevance-is-a-horizon-not-a-728589.md) | completed |
+| ["Remove" on a person in a run's view deleted them from the household](./remove-on-a-person-in-a-run-s-ae368f.md) | completed |
 | [Selection is part of the stop: URL-addressable, restored by back/forward](./selection-is-part-of-the-stop-88cfdf.md) | completed |
 | [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | completed |
 | [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |

@@ -47,20 +47,24 @@ export const HEIGHT = 1080;
 
 /**
  * Timing (probed): endash-outro.mp4 = 16.000s @ 25fps / 400 source frames.
- * At composition 30fps → 16s = 480 frames.
+ * Played at OUTRO_PLAYBACK_RATE so composition frames = ceil(16 / rate * 30).
  *
  * Story: relations teach-beat (one graph → many surfaces), brief En Dash
- * bridge (no ToDo morph), short settle. Total ≈ 52s.
+ * bridge (no ToDo morph), short settle. Total ≈ 46s (36s story + ~10s outro).
  */
 export const STORY_FRAMES = 1080; // 36s Graview body
 export const DIP_WHITE_FRAMES = 18; // last frames of story → pure white
-export const OUTRO_FRAMES = 480; // 16.0s bumper @ 30fps
-export const DURATION_IN_FRAMES = STORY_FRAMES + OUTRO_FRAMES; // 1560 ≈ 52s
+export const OUTRO_PLAYBACK_RATE = 1.6;
+export const OUTRO_SOURCE_SECONDS = 16;
+export const OUTRO_FRAMES = Math.ceil(
+  (OUTRO_SOURCE_SECONDS / OUTRO_PLAYBACK_RATE) * FPS,
+); // 1.6× → 300 frames (~10s)
+export const DURATION_IN_FRAMES = STORY_FRAMES + OUTRO_FRAMES; // 1380 ≈ 46s
 
 /** Soft-morph beat windows inside the continuous camera spine (story only). */
 export const beats = {
-  open: { from: 0, duration: 80 },
-  glyphs: { from: 30, duration: 165 },
+  open: { from: 0, duration: 110 }, // ~3.7s — En Dash presents GRAVIEW
+  glyphs: { from: 78, duration: 140 },
   /** Jack-in, brief title, affordance candy, exit */
   graph: { from: 165, duration: 155 },
   /** Trimmed GRAVIEW altitude — ~4.3s, not an 8s hang */

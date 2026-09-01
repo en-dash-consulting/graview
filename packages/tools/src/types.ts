@@ -35,6 +35,8 @@ export interface Affordance {
   readonly id: string;
   readonly label: string;
   readonly provider: ProviderName;
+  /** Set when the mutation declares edge kinds it connects or severs. */
+  readonly ties?: boolean;
   /** The mutation this would run. Every action is a typed mutation. */
   readonly mutation: string;
   /** Arguments already determined. */

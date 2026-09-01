@@ -72,7 +72,7 @@ export const GraviewIntro: React.FC = () => {
             <Sequence
               from={beats.open.from}
               durationInFrames={beats.open.duration}
-              name="0 Open En Dash"
+              name="0 Open presents GRAVIEW"
               layout="none"
             >
               <OpenBrand />

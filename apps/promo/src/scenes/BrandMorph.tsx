@@ -75,18 +75,6 @@ export const BrandMorph: React.FC = () => {
             >
               En Dash
             </div>
-            <div
-              style={{
-                fontFamily: fonts.mono,
-                fontSize: 13,
-                letterSpacing: 2.5,
-                color: colors.mint,
-                textTransform: "uppercase",
-                opacity: 0.85,
-              }}
-            >
-              house brand
-            </div>
           </div>
         </div>
       </AbsoluteFill>

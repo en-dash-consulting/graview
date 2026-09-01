@@ -41,6 +41,22 @@ function hash(value: string): number {
  * promise the rest of the framework makes: declare the kind, and the visual
  * language follows. Apps override anything they care about.
  */
+/**
+ * Stable hue per kind — THE thread of kind identity across every surface:
+ * chip dots, legend swatches, district roofs, the focus tag. A brand that
+ * declares a kind's hue (accents) wins over the hash.
+ */
+export function hueFor(kind: string, accents?: Readonly<Record<string, number>>): number {
+  const declared = accents?.[kind];
+  if (declared !== undefined) return (((declared % 360) + 360) % 360) / 360;
+  let h = 2166136261;
+  for (let i = 0; i < kind.length; i++) {
+    h ^= kind.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 360) / 360;
+}
+
 export function connectorStyle(
   kind: string,
   overrides: Readonly<Record<string, Partial<ConnectorStyle>>> = {},

@@ -58,6 +58,7 @@ export {
   CONNECTOR_DASH,
   connectorStroke,
   connectorStyle,
+  hueFor,
   connectorWidth,
   distinguishable,
 } from "./scene/connectors.js";

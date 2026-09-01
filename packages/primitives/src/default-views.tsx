@@ -28,27 +28,15 @@ import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
  * only the cells they actually care about.
  */
 
-/**
- * Stable hue per kind, so a kind looks the same everywhere it appears.
- * A brand that DECLARES a kind's hue wins over the hash — that is the whole
- * customization story for colour-by-kind: one entry in `brand.accents`,
- * every chip, district and calendar span follows.
- */
+// The canonical hue lives beside the other colour logic in @graview/render;
+// re-exported here because every view author already imports it from views.
+import { hueFor } from "@graview/render";
+export { hueFor };
+
 /** The declared accent when the installation named one, else the hash. */
 export function useHue(kind: string): number {
   const { brand } = useGraview();
   return hueFor(kind, brand?.accents);
-}
-
-export function hueFor(kind: string, accents?: Readonly<Record<string, number>>): number {
-  const declared = accents?.[kind];
-  if (declared !== undefined) return (((declared % 360) + 360) % 360) / 360;
-  let h = 2166136261;
-  for (let i = 0; i < kind.length; i++) {
-    h ^= kind.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return ((h >>> 0) % 360) / 360;
 }
 
 

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T16:01:17.303Z",
+  "at": "2026-09-01T16:31:14.932Z",
   "screens": [
     {
       "app": "todo",
@@ -36,9 +36,9 @@
       "board": [],
       "fill": 59,
       "inspector": {
-        "shown": 11,
+        "shown": 13,
         "hidden": 0,
-        "size": "236x438",
+        "size": "236x476",
         "text": "Pay the deposittask· double-click opens×Was due 2026-08-28⚠ \"Pay the deposit\" was due 2026"
       }
     },
@@ -65,9 +65,9 @@
       "board": [],
       "fill": 31,
       "inspector": {
-        "shown": 11,
+        "shown": 13,
         "hidden": 0,
-        "size": "236x398",
+        "size": "236x436",
         "text": "×Was due 2026-08-28⚠ \"Pay the deposit\" was due 2026-08-28Give it a new date …Finish itPut "
       }
     },
@@ -106,10 +106,10 @@
       "board": [],
       "fill": 61,
       "inspector": {
-        "shown": 7,
+        "shown": 8,
         "hidden": 0,
-        "size": "236x299",
-        "text": "child1 schoolblock· double-click opens×Skip one occurrence …Add them to it …Rename …Restor"
+        "size": "236x304",
+        "text": "Angie schoolblock· double-click opens×Rename …Retime block …⚠ its tiesSkip one occurrence "
       }
     },
     {
@@ -135,10 +135,10 @@
       "board": [],
       "fill": 30,
       "inspector": {
-        "shown": 7,
+        "shown": 8,
         "hidden": 0,
-        "size": "236x259",
-        "text": "×Skip one occurrence …Add them to it …Rename …Restore one occurrence …Take them off it …Re"
+        "size": "236x264",
+        "text": "×Rename …Retime block …⚠ its tiesSkip one occurrence …Add someone to it …Take someone off "
       }
     },
     {
@@ -253,10 +253,10 @@
       "board": [],
       "fill": 62,
       "inspector": {
-        "shown": 3,
+        "shown": 5,
         "hidden": 0,
-        "size": "236x148",
-        "text": "Amaraplayer· double-click opens×Note why this is here …Rename …They can play here …"
+        "size": "236x208",
+        "text": "Amaraplayer· double-click opens×Note why this is here …Rename …They can play here …⚠ its t"
       }
     },
     {
@@ -287,10 +287,10 @@
       "board": [],
       "fill": 29,
       "inspector": {
-        "shown": 3,
+        "shown": 5,
         "hidden": 0,
-        "size": "236x125",
-        "text": "×Note why this is here …Rename …They can play here …"
+        "size": "236x185",
+        "text": "×Note why this is here …Rename …They can play here …⚠ its tiesPlay them here …"
       }
     },
     {
