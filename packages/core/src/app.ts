@@ -3,6 +3,8 @@ import type { AnyMutationDefinition } from "./mutations/types.js";
 import type { Policy } from "./permissions/types.js";
 import type { Brand } from "./theme/types.js";
 import type { ModuleMap } from "./modules.js";
+import type { GraphSnapshot } from "./graph/types.js";
+import type { Primitive } from "./graph/primitives.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { ViewRegistry } from "./views/types.js";
 
@@ -91,6 +93,27 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * path to the store.
    */
   readonly intelligence?: readonly IntelligenceProviderDeclaration[];
+  /**
+   * The declaration's data-schema version, and the migrations that carry a
+   * stored graph forward through it.
+   *
+   * OP-LOG-NATIVE on purpose: a migration answers with primitives — the
+   * same vocabulary every other change speaks — so applying one is itself
+   * logged, attributed, and invertible (a patch carries its before). The
+   * `ship` engine runs them; `graview check` verifies the chain reaches
+   * this version with no gaps, because a migration discovered missing at
+   * deploy time is the most expensive place to discover it.
+   */
+  readonly version?: number;
+  readonly migrations?: readonly MigrationDeclaration[];
+}
+
+export interface MigrationDeclaration {
+  readonly from: number;
+  readonly to: number;
+  readonly title: string;
+  /** Primitives that carry a `from`-shaped stored graph to `to`. */
+  readonly apply: (snapshot: GraphSnapshot) => readonly Primitive[];
 }
 
 export interface IntelligenceProviderDeclaration {

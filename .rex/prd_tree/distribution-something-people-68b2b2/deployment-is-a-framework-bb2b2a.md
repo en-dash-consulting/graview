@@ -2,7 +2,7 @@
 id: "bb2b2aea-ce57-48db-8e9c-a1d886fdc5b1"
 level: "feature"
 title: "Deployment is a framework concern: the ship subpackage"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "deployment"
@@ -11,6 +11,11 @@ tags:
   - "ops"
   - "sdk"
 source: "Nick, 2026-09-01: \"some amount of deployment help/opinionation could/should live in the framework as well. is it a subpackage for the deployment components (incl shit like data migrations), and then a separate repo for graview-saas...\""
+startedAt: "2026-09-01T07:18:44.595Z"
+completedAt: "2026-09-01T07:18:44.595Z"
+endedAt: "2026-09-01T07:18:44.595Z"
+resolutionType: "code-change"
+resolutionDetail: "@graview/ship shipped: openStore lifecycle (load → migrate → fold → persist every diff), createFileAdapter (readable snapshot.json/log.jsonl/meta.json), op-log-native migrations (declared on the app as version + {from,to,title,apply→primitives}; runs append attributed, invertible system ops; graview check refuses gaps and multi-step jumps), exportBundle/assertBundle (anti-lock-in), health(store). Boundary with graview-cloud written in the README. Rehearsed in smoke-install (theDeploymentShipped verdict); 7 unit tests; changeset added. 558 tests + 6-app check green."
 acceptanceCriteria:
   - "A @graview/ship (name TBD) package holds what EVERY deployment needs, hosted or self-hosted: persistence adapters made first-class (the launcher rule 'No app uses a persistence adapter' finally gets its answer), schema/data migrations, app build/export, config and principal/auth wiring, health checks"
   - "Migrations are op-log-native: a schema change ships with a declared migration whose application is itself logged ops — authored, replayable, undoable in the same vocabulary as every other change — and graview check verifies a declaration's migrations cover its schema version history"

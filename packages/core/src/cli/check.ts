@@ -90,6 +90,45 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
   }
 
+  /*
+   * The migration chain must actually reach the declared version. A stored
+   * graph at version 1 with a declaration at 3 and a hole at 2 is a
+   * deployment that cannot start — findable here instead of there.
+   */
+  if (app.version !== undefined) {
+    const steps = new Map((app.migrations ?? []).map((m) => [m.from, m]));
+    for (const migration of app.migrations ?? []) {
+      if (migration.to !== migration.from + 1) {
+        add({
+          severity: "error",
+          code: "migration-not-single-step",
+          where: `migrations[${migration.from}→${migration.to}]`,
+          message: `Migrations move one version at a time; this one jumps ${migration.from}→${migration.to}.`,
+          fix: `Split it into single steps so any stored version has a path.`,
+        });
+      }
+    }
+    for (let at = 1; at < app.version; at++) {
+      if (!steps.has(at)) {
+        add({
+          severity: "error",
+          code: "migration-gap",
+          where: `defineApp("${app.name}").migrations`,
+          message: `No migration from version ${at}, so a graph stored at ${at} cannot reach ${app.version}.`,
+          fix: `Declare a migration { from: ${at}, to: ${at + 1}, ... }.`,
+        });
+      }
+    }
+  } else if ((app.migrations ?? []).length > 0) {
+    add({
+      severity: "error",
+      code: "migration-without-version",
+      where: `defineApp("${app.name}").version`,
+      message: `Migrations are declared but the app declares no version to migrate to.`,
+      fix: `Declare version: <n> alongside the migrations.`,
+    });
+  }
+
   const moduleEntries = Object.entries(app.modules ?? {});
   const owners = new Map<string, Set<string>>();
   for (const [name, module] of moduleEntries) {

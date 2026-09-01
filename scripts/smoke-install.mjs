@@ -140,6 +140,10 @@ import { planFrame } from "@graview/render";
 import { createViews, GraviewProvider, Scene, type ViewProps } from "@graview/react";
 import { Panel, registerDefaultViews, themeCss } from "@graview/primitives";
 import { PagesApp, recordFacts, pluralSlug } from "@graview/pages";
+import { createFileAdapter, exportBundle, health, openStore } from "@graview/ship";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { z } from "zod";
 
 const task = defineNode("task", {
@@ -190,7 +194,7 @@ const app = defineApp({ name: "smoke", schema, mutations: [finish], invariants: 
 const TaskView = ({ node }: ViewProps<typeof schema, "task">) =>
   node ? <Panel title={node.label} fit /> : null;
 
-export function build() {
+export async function build() {
   const store = new Store({
     schema,
     mutations: [finish],
@@ -235,6 +239,19 @@ export function build() {
     slug: pluralSlug(schema, "task"),
     record: recordFacts(store, "a")?.fields.length ?? -1,
     pages: <PagesApp context={{ store }} initialPath="/tasks" />,
+    // Deployment, rehearsed: one declaration plus one adapter, opened,
+    // written to, reopened, health-checked, exported.
+    shipped: await (async () => {
+      const adapter = createFileAdapter(mkdtempSync(join(tmpdir(), "graview-smoke-ship-")));
+      const opened = await openStore({ app, adapter, seed: store.snapshot() });
+      opened.store.apply({ name: "finish", args: { id: "a" } });
+      opened.close();
+      const reopened = await openStore({ app, adapter });
+      const bundle = exportBundle(app, reopened.store);
+      const well = health(reopened.store);
+      reopened.close();
+      return well.ok && bundle.snapshot.nodes.length > 0;
+    })(),
   };
 }
 `,
@@ -245,7 +262,7 @@ export function build() {
     `import { renderToStaticMarkup } from "react-dom/server";
 import { build } from "./app.js";
 
-const built = build();
+const built = await build();
 const html = renderToStaticMarkup(built.scene);
 const result = {
   checkOk: built.check.ok,
@@ -258,6 +275,10 @@ const result = {
   cssBytes: built.css,
   palettes: built.palettes,
   renderedViews: (html.match(/data-graview-view=/g) ?? []).length,
+  pagesRendered: renderToStaticMarkup(built.pages).includes("Tasks"),
+  recordFields: built.record,
+  slug: built.slug,
+  shipped: built.shipped,
 };
 process.stdout.write(JSON.stringify(result));
 `,
@@ -302,6 +323,10 @@ report.verdict = {
   anAgentSeatWasGenerated: (r.tools ?? 0) > 0,
   theRendererPlannedAFrame: (r.draws ?? 0) > 0,
   theSceneRendered: (r.renderedViews ?? 0) > 0,
+  // The other face renders, and its routes derive from the plurals.
+  thePagesRendered: r.pagesRendered === true && r.slug === "tasks" && (r.recordFields ?? 0) > 0,
+  // One declaration plus one adapter deployed, persisted, reopened, exported.
+  theDeploymentShipped: r.shipped === true,
   theThemeEmitted: (r.cssBytes ?? 0) > 500,
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;

@@ -1,0 +1,28 @@
+{
+  "id": "c46e60d0-1b36-4f7b-901e-12289c3768f1",
+  "taskId": "bb2b2aea-ce57-48db-8e9c-a1d886fdc5b1",
+  "taskTitle": "Deployment is a framework concern: ship",
+  "startedAt": "2026-09-01T07:19:06.689Z",
+  "finishedAt": "2026-09-01T07:19:06.689Z",
+  "status": "completed",
+  "turns": 50,
+  "summary": "openStore lifecycle, readable file adapter, op-log-native migrations with checked chains, export bundles, health — rehearsed in smoke-install",
+  "tokenUsage": {
+    "input": 100,
+    "output": 38260,
+    "cacheCreationInput": 62432,
+    "cacheReadInput": 24326995
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 100,
+    "output": 38260,
+    "cached": 24389427,
+    "total": 24427787
+  }
+}

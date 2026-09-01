@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-01T06:52:34.200Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-g4X62D",
+  "at": "2026-09-01T07:18:13.979Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-Skdlb0",
   "steps": {
     "packed": [
       "@graview/core",
@@ -9,6 +9,7 @@
       "@graview/primitives",
       "@graview/react",
       "@graview/render",
+      "@graview/ship",
       "@graview/skills",
       "@graview/tools"
     ],
@@ -30,7 +31,11 @@
       "#6fdcea",
       "#0c6e78"
     ],
-    "renderedViews": 3
+    "renderedViews": 3,
+    "pagesRendered": true,
+    "recordFields": 1,
+    "slug": "tasks",
+    "shipped": true
   },
   "verdict": {
     "installedFromTarballs": true,
@@ -43,6 +48,8 @@
     "anAgentSeatWasGenerated": true,
     "theRendererPlannedAFrame": true,
     "theSceneRendered": true,
+    "thePagesRendered": true,
+    "theDeploymentShipped": true,
     "theThemeEmitted": true
   },
   "passed": true

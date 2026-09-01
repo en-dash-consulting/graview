@@ -174,7 +174,7 @@ export { formField, formFields, formComplete } from "./mutations/form.js";
 export type { FormField, ScalarField } from "./mutations/form.js";
 export { resolveModules } from "./modules.js";
 export type { ModuleDeclaration, ModuleMap, ModuleProjection } from "./modules.js";
-export type { IntelligenceProviderDeclaration } from "./app.js";
+export type { IntelligenceProviderDeclaration, MigrationDeclaration } from "./app.js";
 export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export { checkApp, formatFindings } from "./cli/check.js";
