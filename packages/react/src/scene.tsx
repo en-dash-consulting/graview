@@ -127,7 +127,7 @@ export function Scene<S extends AnySchema>({
     setSelection,
     setJackedIn,
     setMenuAt,
-    bottomInset,
+    emphasis,
   } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -146,23 +146,17 @@ export function Scene<S extends AnySchema>({
         ? {
             width: size.width,
             /*
-             * The height the scene actually HAS, not the height of its box.
-             *
-             * Chrome that floats over the bottom — the actions strip — takes
-             * real estate the layout was still handing out, and the context
-             * plane's cards land at 98.5% of the height. So selecting
-             * anything put the strip on top of the row of kinds. Laying out
-             * into the remaining height moves the cards up instead, and the
-             * transition already tweens, so they slide rather than jump.
-             *
-             * Floored well above zero: a badly-measured or enormous piece of
-             * chrome must not be able to collapse the scene to nothing.
+             * The scene lays out into its WHOLE box. The actions strip is a
+             * transient elevated surface — it floats in front of the scene
+             * the way a menu floats in front of a page, and reserving a
+             * permanent band of the height for it squeezed every band on
+             * every screen for chrome that mostly is not there.
              */
-            height: Math.max(size.height * 0.55, size.height - bottomInset),
+            height: size.height,
           }
         : {}),
     }),
-    [options, size, bottomInset],
+    [options, size],
   );
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, sized),
@@ -503,6 +497,7 @@ export function Scene<S extends AnySchema>({
         scheme={scheme}
         overview={view.overview ?? false}
         selection={selection}
+        emphasis={emphasis}
         liveOf={(connector) => {
           /*
            * A relation PULSES where it was just made or broken.
@@ -1070,11 +1065,11 @@ export function onScreen(
   return chosen;
 }
 
-/** The centre of a node's box as DRAWN, after its plane's scale. */
-function drawnCentre(
+/** A node's box as DRAWN, after its plane's scale — anchored at its top-left. */
+function drawnBox(
   node: SceneNode | undefined,
   scheme: "light" | "dark",
-): { x: number; y: number } | null {
+): { x: number; y: number; width: number; height: number } | null {
   if (!node) return null;
   const lower = Math.max(0, Math.min(2, Math.floor(node.plane))) as 0 | 1 | 2;
   const upper = Math.max(0, Math.min(2, Math.ceil(node.plane))) as 0 | 1 | 2;
@@ -1082,7 +1077,46 @@ function drawnCentre(
     lower === upper
       ? styleFor(lower, scheme)
       : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), node.plane - lower);
-  return { x: node.x + (node.width * scale) / 2, y: node.y + (node.height * scale) / 2 };
+  return { x: node.x, y: node.y, width: node.width * scale, height: node.height * scale };
+}
+
+/** The centre of a node's box as DRAWN, after its plane's scale. */
+function drawnCentre(
+  node: SceneNode | undefined,
+  scheme: "light" | "dark",
+): { x: number; y: number } | null {
+  const box = drawnBox(node, scheme);
+  return box ? { x: box.x + box.width / 2, y: box.y + box.height / 2 } : null;
+}
+
+/**
+ * Where a line toward `towards` should MEET a box: on its border, not at its
+ * centre.
+ *
+ * Centre-anchored lines cross the card's own interior on the way out — the
+ * yellow dash sawing through the middle of REASONS was this — and where
+ * several relations share an endpoint they converge to a single point at the
+ * centre, which reads as a knot rather than as several roads arriving. The
+ * border is where a road meets a building.
+ */
+function edgePoint(
+  box: { x: number; y: number; width: number; height: number },
+  towards: { x: number; y: number },
+): { x: number; y: number } {
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  const dx = towards.x - cx;
+  const dy = towards.y - cy;
+  if (dx === 0 && dy === 0) return { x: cx, y: cy };
+  // How far along the direction the border sits, on whichever side is hit
+  // first — the standard slab intersection, for an axis-aligned box.
+  const tx = dx === 0 ? Infinity : box.width / 2 / Math.abs(dx);
+  const ty = dy === 0 ? Infinity : box.height / 2 / Math.abs(dy);
+  const t = Math.min(tx, ty);
+  // A few pixels shy of the border, so the stroke's rounded cap does not
+  // poke into the card.
+  const out = Math.max(0, t * 0.98);
+  return { x: cx + dx * out, y: cy + dy * out };
 }
 
 /**
@@ -1101,11 +1135,14 @@ function Connectors({
   scheme,
   overview,
   selection,
+  emphasis,
   liveOf,
 }: {
   readonly overview: boolean;
   /** So a chosen kind's relations can stand out from the rest. */
   readonly selection: readonly string[];
+  /** A relation the legend is asking about: its lines come forward. */
+  readonly emphasis: string | null;
   /** What just happened to this relation, if anything. */
   liveOf?: (connector: { from: string; to: string }) => ActivityMark | undefined;
   result: {
@@ -1138,6 +1175,16 @@ function Connectors({
   const chosen = onScreen(result.nodes, selection);
   const touches = (connector: { from: string; to: string }) =>
     chosen.size === 0 || chosen.has(connector.from) || chosen.has(connector.to);
+  /*
+   * The live view standing in the middle of the ring, whose box is the one
+   * thing a road between districts must not run beneath.
+   */
+  const stamp = overview
+    ? drawnBox(
+        result.nodes.find((node) => Math.round(node.plane) === 0),
+        scheme,
+      )
+    : null;
   /*
    * A connector must touch a RAISED node, and must not end on a receded
    * GROUP.
@@ -1185,9 +1232,21 @@ function Connectors({
         // centres: a plane scales its box in place, so a receded node's centre
         // is not where layout's unscaled box says it is. Using layout's
         // coordinates here sent every connector to a point off the canvas.
-        const from = centre(byId.get(connector.from));
-        const to = centre(byId.get(connector.to));
-        if (!from || !to) return null;
+        const fromBox = drawnBox(byId.get(connector.from), scheme);
+        const toBox = drawnBox(byId.get(connector.to), scheme);
+        const fromCentre = centre(byId.get(connector.from));
+        const toCentre = centre(byId.get(connector.to));
+        if (!fromBox || !toBox || !fromCentre || !toCentre) return null;
+        /*
+         * In the overview a line meets a card at its border, facing the
+         * other end — the border is honest up there, because a kind card
+         * fills its box. Inside the stack a host is a band slot with the
+         * panel centred somewhere in it, so a border anchor dangles in open
+         * ground; centre-to-centre is right there, and the SVG sits behind
+         * the cards, which clips the run inside each panel for free.
+         */
+        const from = overview ? edgePoint(fromBox, toCentre) : fromCentre;
+        const to = overview ? edgePoint(toBox, fromCentre) : toCentre;
         /*
          * A LOOP, where both ends are the same card.
          *
@@ -1201,8 +1260,7 @@ function Connectors({
         // Stroke treatment is derived from the edge kind, so `protects` can
         // never be mistaken for `assigned-to`.
         const style = connectorStyle(connector.kind);
-        const box = byId.get(connector.from);
-        const radius = self && box ? Math.max(22, Math.min(box.width, box.height) * 0.3) : 0;
+        const radius = self ? Math.max(22, Math.min(fromBox.width, fromBox.height) * 0.3) : 0;
         /*
          * The loop SITS ON the card's top edge, off to the right.
          *
@@ -1212,53 +1270,116 @@ function Connectors({
          * as a relation belonging to anything. Overlapping the edge by a few
          * pixels is what makes it hang off the card instead of near it.
          */
-        const anchor =
-          self && box
-            ? { x: from.x + box.width * 0.22, y: from.y - box.height / 2 - radius + 7 }
-            : from;
-        // A gentle curve, bowed along the dominant axis. Straight lines
-        // between distant planes read as lasers crossing the scene; a curve
-        // reads as a relationship and lets several of them stay apart.
+        const anchor = self
+          ? {
+              x: fromCentre.x + fromBox.width * 0.22,
+              y: fromCentre.y - fromBox.height / 2 - radius + 7,
+            }
+          : from;
+        /*
+         * A gentle curve, bowed AWAY from the live view. Straight lines read
+         * as lasers; and in the overview the middle is where the live view
+         * stands, so a road between districts goes around it rather than
+         * underneath it. The bow is sized to what actually needs clearing:
+         * a chord that would cross the view's box bows until its apex is
+         * outside it, and a chord that already misses keeps only a gentle
+         * arc — bowing everything as though it crossed left slack cables
+         * sagging across open ground.
+         */
         const midX = (from.x + to.x) / 2;
         const midY = (from.y + to.y) / 2;
-        const bow = Math.min(90, Math.hypot(to.x - from.x, to.y - from.y) * 0.16);
-        const control =
-          Math.abs(to.y - from.y) > Math.abs(to.x - from.x)
-            ? `${midX + bow} ${midY}`
-            : `${midX} ${midY - bow}`;
+        const dist = Math.hypot(to.x - from.x, to.y - from.y);
+        let bow = Math.min(overview ? 40 : 90, dist * (overview ? 0.09 : 0.16));
+        let nx = 0;
+        let ny = 0;
+        if (dist > 0) {
+          nx = -(to.y - from.y) / dist;
+          ny = (to.x - from.x) / dist;
+          let awayX = midX - result.width / 2;
+          let awayY = midY - result.height / 2;
+          if (stamp && !self) {
+            const cx = stamp.x + stamp.width / 2;
+            const cy = stamp.y + stamp.height / 2;
+            awayX = midX - cx;
+            awayY = midY - cy;
+            // How close the chord passes to the view's centre, against how
+            // far the view's corner reaches: the shortfall, doubled (the
+            // apex of a quadratic sits halfway to its control), is the bow
+            // that clears it.
+            const d = Math.abs(nx * (cx - from.x) + ny * (cy - from.y));
+            const reach = Math.hypot(stamp.width / 2, stamp.height / 2) * 0.85 + 24;
+            const along = ((cx - from.x) * (to.x - from.x) + (cy - from.y) * (to.y - from.y)) / (dist * dist);
+            if (d < reach && along > 0.1 && along < 0.9) {
+              bow = Math.min(180, Math.max(bow, (reach - d) * 2));
+            }
+          }
+          if (nx * awayX + ny * awayY < 0) {
+            nx = -nx;
+            ny = -ny;
+          }
+        }
+        const control = `${midX + nx * bow} ${midY + ny * bow}`;
+        const stressed = emphasis !== null && connector.kind === emphasis;
+        const opacity = overview
+          ? emphasis !== null
+            ? stressed
+              ? 0.95
+              : 0.08
+            : touches(connector)
+              ? 0.9
+              : 0.12
+          : style.opacity * 0.34;
         return (
-          <path
-            key={connector.id}
-            data-graview-connector={connector.kind}
-            data-graview-activity={liveOf?.(connector)?.manner}
-            d={
-              self
-                ? // An arc that leaves and returns: two arcs of the same
-                  // circle, so it closes cleanly at any size.
-                  `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
-                  ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`
-                : `M ${from.x} ${from.y} Q ${control} ${to.x} ${to.y}`
-            }
-            fill="none"
-            stroke={connectorStroke(style)}
-            /*
-             * Above the stack the LINES ARE THE CONTENT.
-             *
-             * Inside the scene a connector is an aside — it says how the thing
-             * you are looking at is caught up in something else, and drawing
-             * it loudly would compete with the thing itself. From the Graview
-             * the shape of the domain IS the subject, and at a third of an
-             * already-receded plane's opacity it was a set of cards floating
-             * in nothing, which answers none of the question you rose to ask.
-             */
-            strokeWidth={connectorWidth(style, overview)}
-            strokeDasharray={CONNECTOR_DASH[style.pattern]}
-            strokeLinecap="round"
-            opacity={
-              (overview ? (touches(connector) ? 0.9 : 0.12) : style.opacity * 0.34) *
-              ((connector as { opacity?: number }).opacity ?? 1)
-            }
-          />
+          <g key={connector.id}>
+            <path
+              data-graview-connector={connector.kind}
+              data-graview-activity={liveOf?.(connector)?.manner}
+              opacity={opacity * ((connector as { opacity?: number }).opacity ?? 1)}
+              d={
+                self
+                  ? // An arc that leaves and returns: two arcs of the same
+                    // circle, so it closes cleanly at any size.
+                    `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
+                    ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`
+                  : `M ${from.x} ${from.y} Q ${control} ${to.x} ${to.y}`
+              }
+              fill="none"
+              stroke={connectorStroke(style)}
+              /*
+               * Above the stack the LINES ARE THE CONTENT.
+               *
+               * Inside the scene a connector is an aside — it says how the
+               * thing you are looking at is caught up in something else, and
+               * drawing it loudly would compete with the thing itself. From
+               * the Graview the shape of the domain IS the subject.
+               */
+              strokeWidth={connectorWidth(style, overview) + (stressed ? 0.6 : 0)}
+              strokeDasharray={CONNECTOR_DASH[style.pattern]}
+              strokeLinecap="round"
+            />
+            {/*
+              * A loop says WHICH relation it is, in place. A dashed circle
+              * hanging off a card was the one unlabelled mark in the whole
+              * picture — every line has a legend row, but nothing tied this
+              * shape to its row without guessing.
+              */}
+            {self && overview ? (
+              <text
+                x={anchor.x}
+                y={anchor.y - radius - 5}
+                textAnchor="middle"
+                opacity={opacity}
+                style={{
+                  font: "9px var(--graview-font-body, system-ui)",
+                  letterSpacing: "0.09em",
+                  textTransform: "uppercase",
+                  fill: "var(--graview-ink-faint)",
+                }}
+              >
+                {connector.kind.replace(/-/g, " ")}
+              </text>
+            ) : null}
+          </g>
         );
       })}
     </svg>

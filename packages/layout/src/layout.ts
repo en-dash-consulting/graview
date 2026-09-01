@@ -74,70 +74,80 @@ function byStableKey(a: { id: string }, b: { id: string }): number {
 }
 
 /**
- * Lays boxes on an ellipse — a circle seen from above and in front.
+ * Lays boxes on an ellipse — a circle seen from above and in front — the way
+ * a city reads from altitude: what is on the near side of the ring comes
+ * toward the viewer, larger and sharper; what is on the far side sits
+ * smaller, hazier, further back. Every card is still an axis-aligned box
+ * under scale and translate, so the whole picture stays affine.
  *
- * Ordered the way the row is ordered, so a card keeps its neighbours when the
- * strip becomes a ring and the eye can follow it round.
+ * Ordered the way the shelf is ordered, so a card keeps its neighbours when
+ * the shelf becomes a ring and the eye can follow it round.
  */
 function ring(
   count: number,
   size: { width: number; height: number },
   canvasWidth: number,
   canvasHeight: number,
-): { x: number; y: number }[] {
+): { x: number; y: number; depth: number; width: number; height: number }[] {
   const cx = canvasWidth / 2;
   const cy = canvasHeight * 0.53;
   /*
-   * A wider, taller ring.
-   *
-   * At 0.33 by 0.31 the cards clustered around the middle and left two hundred
-   * pixels of ground above and a hundred and fifty below, which is a picture
-   * of the whole domain that uses two thirds of the space it was given. The
-   * ellipse is still a circle under a vertical squash, so this is still
-   * affine.
+   * A wide, tall ring: a picture of the whole domain should use the space it
+   * was given. The ellipse is a circle under a vertical squash — affine.
    */
-  const rx = canvasWidth * 0.37;
-  const ry = canvasHeight * 0.355;
+  const rx = canvasWidth * 0.385;
+  const ry = canvasHeight * 0.365;
   return Array.from({ length: count }, (_, index) => {
-    // Starting at the bottom, going clockwise, so the first card of the strip
+    // Starting at the bottom, going clockwise, so the first card of the shelf
     // ends up nearest the viewer rather than hidden at the back.
     const angle = Math.PI / 2 + (index / Math.max(1, count)) * Math.PI * 2;
+    /*
+     * How near this stop on the ring is: 1 at the bottom of the ellipse
+     * (toward the viewer), 0 at the top (the far side). Depth and size both
+     * follow it, which is the entire altitude effect — the ellipse gives the
+     * ground positions, nearness gives the elevation.
+     */
+    const near = (1 + Math.sin(angle)) / 2;
+    const grow = 0.85 + near * 0.45;
+    const width = size.width * grow;
+    const height = size.height * grow;
     return {
-      x: cx + Math.cos(angle) * rx - size.width / 2,
-      y: cy + Math.sin(angle) * ry - size.height / 2,
+      // Held inside the canvas: the near-bottom card is the largest, and a
+      // generous ring can push its lower edge past the ground line.
+      x: Math.max(4, Math.min(cx + Math.cos(angle) * rx - width / 2, canvasWidth - width - 4)),
+      y: Math.max(4, Math.min(cy + Math.sin(angle) * ry - height / 2, canvasHeight - height - 4)),
+      depth: 1 - near * 0.65,
+      width,
+      height,
     };
   });
 }
 
 /**
- * Lays boxes on a shallow arc curving away from the viewer.
+ * Lays the kinds out as a flat shelf: one baseline, even spacing.
  *
- * The middle of the arc is the far side: it sits higher on screen and further
- * back in depth, and the ends come round toward you. That is the difference
- * between a strip pinned to the bottom of the window and a set of things you
- * are standing in front of — and it costs one number per card, because the
- * renderer already mixes plane treatments continuously.
+ * It used to bow upward in an arc, middle cards lifted and receded. The bow
+ * carried no meaning — the row is not curved in the model, and the lift
+ * mostly existed to negotiate room with chrome that no longer reserves any.
+ * A shelf is a map; a map lies flat. Depth within the plane still separates
+ * a secondary kind from a primary one, without moving anything.
  */
-function arc(
+const SHELF_DEPTH = 0.85;
+
+function shelf(
   count: number,
   size: { width: number; height: number },
   gap: number,
   canvasWidth: number,
   baseY: number,
-  lift: number,
 ): { x: number; y: number; depth: number }[] {
   const total = count * size.width + Math.max(0, count - 1) * gap;
   const startX = Math.max(gap, (canvasWidth - total) / 2);
-  return Array.from({ length: count }, (_, index) => {
-    // -1 at the near left, 0 at the far middle, 1 at the near right.
-    const across = count <= 1 ? 0 : (index / (count - 1)) * 2 - 1;
-    const away = 1 - across * across;
-    return {
-      x: startX + index * (size.width + gap),
-      y: baseY - away * lift,
-      depth: 0.62 + away * 0.38,
-    };
-  });
+  return Array.from({ length: count }, (_, index) => ({
+    x: startX + index * (size.width + gap),
+    y: baseY,
+    depth: SHELF_DEPTH,
+  }));
 }
 
 /** Lays a row of equal boxes out, centred on the canvas. */
@@ -211,20 +221,17 @@ export function layout<S extends AnySchema>(
   const band =
     focus === undefined
       ? {
-          // A little smaller than it was, and a little further from the
-          // strip: the gap is what puts one in front of the other.
           /*
-           * The focus REACHES DOWN over the arc.
-           *
-           * A panel that stops short of the strip is stacked above it; one
-           * that overlaps it is in front of it. The kinds are drawn behind
-           * by z-order, so the overlap reads as depth rather than as a
-           * collision.
+           * Checked WITH a relation raised, which is the state that broke:
+           * the old proportions left plane 1's bottom edge minus one pixel
+           * from plane 2's top, and the raised cards sat directly on the
+           * kinds shelf. Every band boundary here keeps clear ground below
+           * it at any canvas height the surveys cover.
            */
           focusY: opts.height * 0.045,
-          focusH: opts.height * 0.68,
-          relationY: opts.height * 0.74,
-          relationH: opts.height * 0.175,
+          focusH: opts.height * 0.62,
+          relationY: opts.height * 0.68,
+          relationH: opts.height * 0.2,
           contextY: opts.height * 0.918,
           contextH: opts.height * 0.082,
         }
@@ -308,7 +315,16 @@ export function layout<S extends AnySchema>(
    * can use. Measured in `scripts/verify-shrunk.mjs`.
    */
   const naturalH = opts.height;
-  const overviewScale = Math.min((opts.width * 0.4) / naturalW, (opts.height * 0.42) / naturalH);
+  /*
+   * The live view is the TALLEST STRUCTURE in the picture, not a peer stamp.
+   *
+   * At 0.4 by 0.42 the shrunk interface read as one more card among the
+   * kinds — the same visual rank as a district of five nodes — and most of
+   * the scene was empty ground. Half the width and nearly half the height
+   * says what is actually true from up here: this is the thing you were
+   * standing in, and everything else is arranged around it.
+   */
+  const overviewScale = Math.min((opts.width * 0.5) / naturalW, (opts.height * 0.48) / naturalH);
   const overviewW = naturalW * overviewScale;
   const overviewH = naturalH * overviewScale;
 
@@ -369,7 +385,17 @@ export function layout<S extends AnySchema>(
   }
 
   // --------------------------------------------------- plane 1: relations
-  const relationSize = fit(related.length, opts.relationSize.width, band.relationH);
+  /*
+   * A run of one or two cards takes wider ones. The cap exists to fit a
+   * crowd; holding a lone neighbour to crowd width drew one small slip in
+   * the middle distance of an otherwise empty band, with its caption
+   * stretched past both its edges.
+   */
+  const relationSize = fit(
+    related.length,
+    related.length <= 2 ? Math.round(opts.relationSize.width * 1.35) : opts.relationSize.width,
+    band.relationH,
+  );
   const relationPositions = row(
     related.length,
     relationSize,
@@ -462,10 +488,15 @@ export function layout<S extends AnySchema>(
    * whose kind declares no edges makes EVERY other kind secondary, and a
    * strip where all nine cards shrank together carries no more information
    * than one where none did — only less legibility.
+   *
+   * On the ring nothing ranks and nothing nests: up there every kind is a
+   * district of the same city, what-touches-what is the connectors' job,
+   * and a card tucked behind another is a pile — which is exactly the thing
+   * altitude exists to undo.
    */
-  const ranked = (schema.kinds as readonly string[]).some(
-    (kind) => ranking.rankOf(kind) === "primary",
-  );
+  const ranked =
+    !state.overview &&
+    (schema.kinds as readonly string[]).some((kind) => ranking.rankOf(kind) === "primary");
 
   // Expanding an aggregate and collapsing it run through this one loop:
   // an open group contributes its members, a closed one contributes itself.
@@ -555,21 +586,17 @@ export function layout<S extends AnySchema>(
    * is the same class of transform the plane model already uses.
    */
   const contextSize = state.overview
-    ? { width: Math.min(200, opts.width / 7), height: Math.min(120, opts.height * 0.17) }
+    ? { width: Math.min(220, opts.width / 6.5), height: Math.min(132, opts.height * 0.18) }
     : fit(slotted.length, opts.contextSize.width, band.contextH);
-  const contextPositions = state.overview
-    ? ring(slotted.length, contextSize, opts.width, opts.height).map((position) => ({
-        ...position,
-        depth: 1,
-      }))
-    : arc(
-        slotted.length,
-        contextSize,
-        opts.gap,
-        opts.width,
-        band.contextY,
-        opts.height * 0.045,
-      );
+  const contextPositions: {
+    x: number;
+    y: number;
+    depth: number;
+    width?: number;
+    height?: number;
+  }[] = state.overview
+    ? ring(slotted.length, contextSize, opts.width, opts.height)
+    : shelf(slotted.length, contextSize, opts.gap, opts.width, band.contextY);
 
   /*
    * A secondary kind is drawn SMALLER and further back inside its own slot,
@@ -609,17 +636,18 @@ export function layout<S extends AnySchema>(
   const slotOf = new Map<string, Slot>();
   slotted.forEach((item, index) => {
     const position = contextPositions[index]!;
+    // A ring stop carries its own size — nearness grows it. A shelf slot is
+    // uniform, and rank shrinks into it.
+    const slotW = position.width ?? contextSize.width;
+    const slotH = position.height ?? contextSize.height;
     const shrink = item.rank === "secondary" ? SECONDARY : 1;
-    const width = contextSize.width * shrink;
-    const height = Math.max(CARD_MIN_HEIGHT, contextSize.height * shrink);
+    const width = slotW * shrink;
+    const height = Math.max(CARD_MIN_HEIGHT, slotH * shrink);
     slotOf.set(item.id, {
       // Centred across the slot it was allotted, sitting on its baseline.
-      x: position.x + (contextSize.width - width) / 2,
-      y: position.y + (contextSize.height - height),
-      depth:
-        item.rank === "secondary"
-          ? recede(position.depth ?? 1, 0.5)
-          : (position.depth ?? 1),
+      x: position.x + (slotW - width) / 2,
+      y: position.y + (slotH - height),
+      depth: item.rank === "secondary" ? recede(position.depth, 0.5) : position.depth,
       width,
       height,
     });
@@ -648,21 +676,24 @@ export function layout<S extends AnySchema>(
       const index = seen.get(item.nestedUnder!) ?? 0;
       seen.set(item.nestedUnder!, index + 1);
       /*
-       * Along the parent's BOTTOM edge, half under it, fanning right and
-       * centred on the card they belong to.
+       * PEEKING OVER the parent's top edge, from behind.
        *
-       * Above it was the obvious place and it is the one place there is no
-       * room: the focus reaches down over the arc, so anything tucked above
-       * a kind card is drawn behind the panel and only its bottom third is
-       * ever visible. Under the edge it stays inside the kinds band and
-       * stays legible, and half-covered by its parent still reads as
-       * belonging to it.
+       * Behind means further, and further means higher on screen — the same
+       * reading the whole depth model uses — so a kind reached through
+       * another stands behind it the way a building stands behind the one in
+       * front. The room above exists now that the focus stops clear of the
+       * shelf instead of reaching down over an arc.
+       *
+       * Below the parent was the old place, and it broke clicking: hovering
+       * the parent grows it downward to reveal its note, which covered the
+       * tuck under the pointer — the card you were reaching for disappeared
+       * under the one it hangs off, and stayed covered while the pointer was
+       * on it.
        *
        * Overlap is capped at just under half a card, because a card whose
        * MIDDLE is covered cannot be clicked — the point at the centre belongs
-       * to whatever is drawn over it. Four kinds behind one card left only
-       * the last of them reachable, which is a fan nobody can use. Where
-       * several share a parent they shrink to fit rather than piling up.
+       * to whatever is drawn over it. Where several share a parent they
+       * shrink to fit rather than piling up.
        */
       /*
        * Offset enough to read as a pile, not enough to hide a label.
@@ -684,9 +715,18 @@ export function layout<S extends AnySchema>(
        * pixels. A proportional rule is right until it crosses the floor;
        * below that the card is not smaller, it is broken.
        */
+      /*
+       * The whole fan fits the parent's slot plus its gap, never more.
+       *
+       * At 1.02 of the parent's width the fan of two spread to 1.86 widths,
+       * centred — so it spilled almost half a card into the slot on either
+       * side, and "PLAYERS" ran into "UNAVAILABILITY" while every automated
+       * check counted the pile as deliberate. A tuck that leaves its
+       * parent's ground is not tucked behind anything.
+       */
       const width = Math.max(
         TUCK_MIN_WIDTH,
-        Math.min(roomy, (parent.width * 1.02) / (step * (count - 1) + 1)),
+        Math.min(roomy, (parent.width + opts.gap) / (step * (count - 1) + 1)),
       );
       const height = Math.max(
         TUCK_MIN_HEIGHT,
@@ -698,21 +738,18 @@ export function layout<S extends AnySchema>(
         ...item,
         x: parent.x + (parent.width - fan) / 2 + index * spread,
         /*
-         * A FIXED bite out of the parent, not half the tuck.
+         * A FIXED bite behind the parent, not half the tuck.
          *
-         * Half was proportional to the tucked card, so when the kinds band
-         * became a strip of glyphs the tuck ate forty per cent of a
-         * sixty-pixel parent and covered the bar that says how much of it is
-         * broken. Sixteen pixels reads as "behind that one" at any card size,
-         * and is the same overlap the taller cards had.
+         * Sixteen pixels of the tuck's bottom sit behind the parent's top
+         * edge — enough to read as "behind that one" at any card size,
+         * little enough that the tuck's own label and its centre stay
+         * clickable above the edge. The parent paints over the overlap, so
+         * its name and its trouble bar are never covered.
          *
-         * Never below the canvas: a card hanging off the bottom of the screen
-         * is not tucked, it is gone.
+         * Never above the canvas: a card pushed off the top of the screen is
+         * not tucked, it is gone.
          */
-        y: Math.min(
-          parent.y + parent.height - Math.min(height * 0.5, 16),
-          opts.height - height,
-        ),
+        y: Math.max(0, parent.y - height + Math.min(height * 0.5, 16)),
         width,
         height,
         depth: recede(parent.depth, 0.8),

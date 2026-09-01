@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-31T17:25:59.998Z",
+  "at": "2026-09-01T01:23:59.568Z",
   "screens": [
     {
       "app": "todo",
@@ -9,6 +9,7 @@
       "cut": [],
       "repeats": [],
       "covered": [],
+      "board": [],
       "fill": 59,
       "inspector": null
     },
@@ -20,6 +21,7 @@
       "cut": [],
       "repeats": [],
       "covered": [],
+      "board": [],
       "fill": 59,
       "inspector": null
     },
@@ -31,13 +33,26 @@
       "cut": [],
       "repeats": [],
       "covered": [],
+      "board": [],
       "fill": 59,
       "inspector": {
         "shown": 9,
         "hidden": 0,
         "size": "780x115",
-        "text": "Pay the deposittaskWas due 2026-08-28×Give it a new date …Finish itDrop itPut it backNote "
+        "text": "Pay the deposittask· double-click opensWas due 2026-08-28×Give it a new date …Finish itPut"
       }
+    },
+    {
+      "app": "todo",
+      "state": "raised",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 51,
+      "inspector": null
     },
     {
       "app": "todo",
@@ -47,12 +62,13 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 29,
+      "board": [],
+      "fill": 31,
       "inspector": {
         "shown": 9,
         "hidden": 0,
         "size": "780x115",
-        "text": "Pay the deposittaskWas due 2026-08-28×Give it a new date …Finish itDrop itPut it backNote "
+        "text": "Was due 2026-08-28×Give it a new date …Finish itPut it backNote why this is here …Move it "
       }
     },
     {
@@ -63,7 +79,8 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 16,
+      "board": [],
+      "fill": 22,
       "inspector": null
     },
     {
@@ -74,7 +91,8 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 60,
+      "board": [],
+      "fill": 61,
       "inspector": null
     },
     {
@@ -85,12 +103,13 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 60,
+      "board": [],
+      "fill": 61,
       "inspector": {
         "shown": 5,
         "hidden": 0,
         "size": "609x80",
-        "text": "child1 schoolblock×RemoveSkip one occurrence …Rename …Restore one occurrence …Retime block"
+        "text": "child1 schoolblock· double-click opens×Skip one occurrence …Rename …Restore one occurrence"
       }
     },
     {
@@ -101,7 +120,8 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 60,
+      "board": [],
+      "fill": 57,
       "inspector": null
     },
     {
@@ -112,12 +132,13 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 29,
+      "board": [],
+      "fill": 30,
       "inspector": {
         "shown": 5,
         "hidden": 0,
-        "size": "609x80",
-        "text": "child1 schoolblock×RemoveSkip one occurrence …Rename …Restore one occurrence …Retime block"
+        "size": "609x49",
+        "text": "×Skip one occurrence …Rename …Restore one occurrence …Retime block …Remove"
       }
     },
     {
@@ -128,7 +149,8 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 21,
+      "board": [],
+      "fill": 28,
       "inspector": null
     },
     {
@@ -139,7 +161,8 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 60,
+      "board": [],
+      "fill": 61,
       "inspector": null
     },
     {
@@ -150,13 +173,26 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 60,
+      "board": [],
+      "fill": 61,
       "inspector": {
         "shown": 7,
         "hidden": 0,
         "size": "860x115",
-        "text": "Booking flow remediationdeliverable\"Legacy booking component is untested\" is likely and da"
+        "text": "Booking flow remediationdeliverable· double-click opens\"Legacy booking component is untest"
       }
+    },
+    {
+      "app": "proposal",
+      "state": "raised",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 59,
+      "inspector": null
     },
     {
       "app": "proposal",
@@ -166,7 +202,8 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 24,
+      "board": [],
+      "fill": 31,
       "inspector": null
     },
     {
@@ -177,6 +214,7 @@
       "cut": [],
       "repeats": [],
       "covered": [],
+      "board": [],
       "fill": 62,
       "inspector": null
     },
@@ -188,6 +226,7 @@
       "cut": [],
       "repeats": [],
       "covered": [],
+      "board": [],
       "fill": 61,
       "inspector": null
     },
@@ -199,6 +238,7 @@
       "cut": [],
       "repeats": [],
       "covered": [],
+      "board": [],
       "fill": 60,
       "inspector": null
     },
@@ -210,12 +250,30 @@
       "cut": [],
       "repeats": [],
       "covered": [],
+      "board": [],
       "fill": 62,
       "inspector": {
         "shown": 3,
         "hidden": 0,
         "size": "406x80",
-        "text": "Amaraplayer×Note why this is here …Rename …They can play here …"
+        "text": "Amaraplayer· double-click opens×Note why this is here …Rename …They can play here …"
+      }
+    },
+    {
+      "app": "the coaching example",
+      "state": "raised",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 58,
+      "inspector": {
+        "shown": 6,
+        "hidden": 0,
+        "size": "780x115",
+        "text": "Crossing and finishingdrill· double-click opensThursday session plans 65 minutes into 60 —"
       }
     },
     {
@@ -226,12 +284,13 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 28,
+      "board": [],
+      "fill": 29,
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "406x80",
-        "text": "Amaraplayer×Note why this is here …Rename …They can play here …"
+        "size": "406x49",
+        "text": "×Note why this is here …Rename …They can play here …"
       }
     },
     {
@@ -242,11 +301,12 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 61,
+      "board": [],
+      "fill": 62,
       "inspector": {
-        "shown": 7,
+        "shown": 6,
         "hidden": 0,
-        "size": "780x149",
+        "size": "780x115",
         "text": "3 selectedskill · positionElif is picked at Right midfield but is out — Elif — ankle, and "
       }
     },
@@ -258,7 +318,8 @@
       "cut": [],
       "repeats": [],
       "covered": [],
-      "fill": 21,
+      "board": [],
+      "fill": 31,
       "inspector": null
     }
   ]

@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-31T17:27:05.724Z",
+  "at": "2026-09-01T01:05:54.577Z",
   "steps": [
     {
       "step": "landed",
@@ -13,21 +13,21 @@
       "url": "#focus=t-deposit",
       "back": true,
       "forward": false,
-      "trail": "›Pay the deposit×"
+      "trail": "Pay the deposit×"
     },
     {
       "step": "travelled again",
       "url": "#focus=reason-deposit",
       "back": true,
       "forward": false,
-      "trail": "›The landlord holds the date for 48 hours once the deposit…×"
+      "trail": "The landlord holds the date for 48 hours once the deposit…×"
     },
     {
       "step": "back once",
       "url": "#focus=t-deposit",
       "back": true,
       "forward": true,
-      "trail": "›Pay the deposit×"
+      "trail": "Pay the deposit×"
     },
     {
       "step": "back twice",
@@ -41,7 +41,7 @@
       "url": "#focus=t-deposit",
       "back": true,
       "forward": true,
-      "trail": "›Pay the deposit×"
+      "trail": "Pay the deposit×"
     },
     {
       "step": "home by breadcrumb",

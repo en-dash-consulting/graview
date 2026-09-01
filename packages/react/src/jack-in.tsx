@@ -203,9 +203,17 @@ export function JackedIn<S extends AnySchema>({ className, style, children }: Ja
         style={{
           flex: "1 1 auto",
           width: "100%",
-          maxWidth: place ? "none" : 1120,
+          /*
+           * A record is a READING COLUMN, and 1120 pixels is not one: fields
+           * and two lines of prose set that wide left the page looking like
+           * content dumped in the corner of a void. Seven hundred and
+           * eighty is a document's width. The offset from the header is
+           * what makes the column read as a title page rather than as
+           * something pinned to the chrome.
+           */
+          maxWidth: place ? "none" : 780,
           margin: "0 auto",
-          padding: place ? "22px 26px 118px" : "34px 22px 128px",
+          padding: place ? "22px 26px 118px" : "min(11vh, 96px) 22px 128px",
           boxSizing: "border-box",
           // A place FILLS: the picture is the content, so it gets the height.
           ...(place ? { display: "flex", flexDirection: "column", minHeight: 0 } : {}),

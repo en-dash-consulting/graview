@@ -2,7 +2,7 @@
 id: "5f233f8f-feb9-431e-9515-029d94f7ec49"
 level: "task"
 title: "Raising a relation breaks the composition: the planes touch and the board collapses to a stamp"
-status: "pending"
+status: "in_progress"
 priority: "high"
 tags:
   - "bug"
@@ -10,6 +10,7 @@ tags:
   - "scene"
   - "board-lens"
 source: "Reported from screenshots in session 2026-08-31; reproduced and measured with playwright against the coaching example."
+startedAt: "2026-09-01T00:26:28.156Z"
 acceptanceCriteria:
   - "With a relation raised in the coaching example at 1280x800, 1440x900 and 1512x780, no plane-1 card's rendered box intersects any plane-2 card's rendered box, and there is at least 12px of clear ground between the two bands"
   - "A tucked kind card never covers its parent's name or its proportion bar at any viewport the survey covers"

@@ -6,7 +6,7 @@ import {
   connectorStyle,
   connectorWidth,
 } from "@graview/render";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 /**
  * What the lines mean.
@@ -26,7 +26,7 @@ import { useMemo } from "react";
  * selecting can mean.
  */
 export function RelationKey<S extends AnySchema>() {
-  const { store, view } = useGraview<S>();
+  const { store, view, emphasis, setEmphasis } = useGraview<S>();
   const { selection, set } = useSelection();
   const { show } = useNavigation();
   // Recomputed when the graph changes, so a relation nobody uses yet does not
@@ -57,6 +57,9 @@ export function RelationKey<S extends AnySchema>() {
       .map(([kind, entry]) => ({ kind, count: entry.count, ends: [...entry.ends] }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, nodes]);
+
+  // A key that disappears mid-hover must not leave its question standing.
+  useEffect(() => () => setEmphasis(null), [setEmphasis]);
 
   if (!view.overview || relations.length === 0) return null;
 
@@ -117,7 +120,10 @@ export function RelationKey<S extends AnySchema>() {
       </span>
       {relations.map(({ kind: edgeKind, count, ends }) => {
         const style = connectorStyle(edgeKind);
-        const lit = chosen.size === 0 || ends.some((id) => chosen.has(id));
+        const lit =
+          emphasis !== null
+            ? emphasis === edgeKind
+            : chosen.size === 0 || ends.some((id) => chosen.has(id));
         return (
           <button
             key={edgeKind}
@@ -126,6 +132,16 @@ export function RelationKey<S extends AnySchema>() {
             // exactly like the hand-rolled scan did, without a cast that would
             // stop catching a shape change.
             title={store.schema.edge(edgeKind)?.description ?? `${count} of these`}
+            /*
+             * Pointing at a row asks the picture the question: this relation's
+             * lines come forward and the rest recede. From up here the lines
+             * are the content, and a legend that cannot pick one line out of
+             * the picture is a caption, not a key.
+             */
+            onMouseEnter={() => setEmphasis(edgeKind)}
+            onMouseLeave={() => setEmphasis(null)}
+            onFocus={() => setEmphasis(edgeKind)}
+            onBlur={() => setEmphasis(null)}
             onClick={() => {
               // Same gesture as clicking a card: show me what this touches.
               set(ends);

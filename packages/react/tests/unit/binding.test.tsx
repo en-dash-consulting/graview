@@ -294,9 +294,10 @@ describe("the full page as a place", () => {
     // the middle of a wide screen, is how "full screen" came to mean a card
     // with dead ground either side.
     expect(jacked(aggregateId("person"))).toContain("max-width:none");
-    // Prose still gets a column: a two-line record set 1500 pixels wide is
-    // unreadable, and that is the same mistake in the other direction.
-    expect(jacked("ana")).toContain("max-width:1120px");
+    // Prose still gets a column — a real reading column: a two-line record
+    // set 1500 pixels wide is unreadable, and that is the same mistake in
+    // the other direction.
+    expect(jacked("ana")).toContain("max-width:780px");
   });
 
   it("says what the place touches, and where that goes", () => {
