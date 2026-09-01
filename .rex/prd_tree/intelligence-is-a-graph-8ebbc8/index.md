@@ -2,7 +2,7 @@
 id: "8ebbc831-53db-4671-a614-a6e1fd2ac05e"
 level: "epic"
 title: "Intelligence is a graph capability: context-graph-driven, provider-agnostic, one seam"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "ai"
@@ -12,7 +12,8 @@ tags:
   - "architecture"
 source: "Nick, 2026-09-01: \"we'll want a context-graph driven intelligence system, but also aided by other AI providers (LLM or otherwise), a way to easily interface with the graph and provide ai capabilities with this whole framework\""
 startedAt: "2026-09-01T07:12:17.616Z"
-endedAt: "2026-09-01T07:12:17.616Z"
+completedAt: "2026-09-01T11:46:09.539Z"
+endedAt: "2026-09-01T11:46:09.539Z"
 resolutionType: "code-change"
 resolutionDetail: "One declared seam shipped: Intelligence interface (propose → validated calls to declared mutations), llmIntelligence (vendor = one completion function), templateIntelligence (starter data from the declaration alone), insightProvider (graph-native, in defaultProviders), intelligenceProvider wrapper surfacing suggestions as labelled/previewable/undoable affordances, app-level intelligence declaration with may-allowlists checked by graview check, providers threaded through GraviewProvider so every surface derives from one set. Seedbed exercises it end to end. 551 tests + harness sweep green."
 acceptanceCriteria:
@@ -29,4 +30,4 @@ description: "The framework already contains the skeleton of this epic and has b
 
 | Title | Status |
 |-------|--------|
-| [Chat is a seat you can talk to: a conversational surface over the intelligence seam](./chat-is-a-seat-you-can-talk-to-a98bca.md) | pending |
+| [Chat is a seat you can talk to: a conversational surface over the intelligence seam](./chat-is-a-seat-you-can-talk-to-a98bca.md) | completed |

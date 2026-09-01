@@ -1,0 +1,28 @@
+{
+  "id": "4b265bd5-2e18-43c7-a055-a8224cbf21f9",
+  "taskId": "a98bcacf-6cf6-45c4-a11e-fb8d83f29b57",
+  "taskTitle": "Chat is a seat you can talk to",
+  "startedAt": "2026-09-01T11:46:31.484Z",
+  "finishedAt": "2026-09-01T11:46:31.484Z",
+  "status": "completed",
+  "turns": 40,
+  "summary": "Responder contract over the intelligence seam; keyless graph responder + LLM via one completion fn; ChatPanel in four app bars; proposals apply attributed and undoable",
+  "tokenUsage": {
+    "input": 80,
+    "output": 46237,
+    "cacheCreationInput": 43753,
+    "cacheReadInput": 25584905
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 80,
+    "output": 46237,
+    "cached": 25628658,
+    "total": 25674975
+  }
+}

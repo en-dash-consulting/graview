@@ -21,6 +21,7 @@ import {
   Trail,
   Wordmark,
   QuickRelations,
+  ChatPanel,
 } from "@graview/primitives";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -245,6 +246,7 @@ function CommandBar({
           Pages
         </a>
         <Standing clean="Nothing is out of order" />
+        <ChatPanel<S> onCall={onCall} />
         <ActivityRail calls={calls} seat={<TidyButton onCall={onCall} />} />
         <button
           type="button"

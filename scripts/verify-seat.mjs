@@ -51,6 +51,41 @@ try {
       await page.goto(`http://localhost:${seat.port}/?theme=light${seat.query ?? ""}`, { waitUntil: "load" });
       await page.waitForFunction((f) => f in window, seat.ready, { timeout: 60_000 });
       await page.waitForTimeout(1200);
+
+      /*
+       * THE SEAT YOU CAN TALK TO. Ask what's wrong; the graph answers with
+       * the standing and the rules' own repairs as apply buttons; applying
+       * one is an ordinary attributed change. Close it before the button
+       * seat runs, so the two exchanges don't share a surface.
+       */
+      if (app === "the household example") {
+        await page.click('[data-testid="chat"]');
+        await page.waitForTimeout(300);
+        await page.fill('[data-testid="chat-panel"] input', "what is wrong?");
+        await page.click('[data-testid="chat-panel"] button[type="submit"]');
+        await page.waitForTimeout(600);
+        const chat = await page.evaluate(() => {
+          const panel = document.querySelector('[data-testid="chat-panel"]');
+          return {
+            said: panel?.textContent ?? "",
+            applies: panel?.querySelectorAll('[data-testid="chat-apply"]').length ?? 0,
+          };
+        });
+        check("the household example: the chat states the standing in words",
+          /problem|Nothing is broken/.test(chat.said), chat.said.slice(0, 70));
+        let appliedOk = true;
+        if (chat.applies > 0) {
+          await page.click('[data-testid="chat-panel"] [data-testid="chat-apply"]');
+          await page.waitForTimeout(600);
+          appliedOk = await page.evaluate(() =>
+            (document.querySelector('[data-testid="chat-panel"]')?.textContent ?? "").includes("Done —"),
+          );
+        }
+        check("the household example: a chat proposal applies as an ordinary change",
+          appliedOk, `${chat.applies} proposal(s)`);
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(300);
+      }
       // The seat lives in the Activity popover now; open it the way a person
       // would. Clicks inside the popover keep it open, so one open serves
       // the whole exchange.
@@ -102,6 +137,31 @@ try {
           narrowed.disabled === true && narrowed.permitted === null,
           narrowed.title.slice(0, 76));
         await p2.close();
+
+        // The chat, where problems actually exist: the standing in words,
+        // a rule's own repair as a button, and the apply as an ordinary
+        // attributed change confirmed in the thread.
+        const p3 = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+        await p3.goto(`http://localhost:${seat.port}/?theme=light`, { waitUntil: "load" });
+        await p3.waitForFunction((f) => f in window, seat.ready, { timeout: 60_000 });
+        await p3.waitForTimeout(900);
+        await p3.click('[data-testid="chat"]');
+        await p3.fill('[data-testid="chat-panel"] input', "what is wrong?");
+        await p3.click('[data-testid="chat-panel"] button[type="submit"]');
+        await p3.waitForTimeout(600);
+        const proposals = await p3.evaluate(
+          () => document.querySelectorAll('[data-testid="chat-apply"]').length,
+        );
+        check("the coaching example: the chat proposes the rules' own repairs", proposals > 0, `${proposals} proposals`);
+        await p3.click('[data-testid="chat-apply"]');
+        await p3.waitForTimeout(700);
+        const applied = await p3.evaluate(() => ({
+          done: (document.querySelector('[data-testid="chat-panel"]')?.textContent ?? "").includes("Done —"),
+          activity: document.querySelector('[data-testid="activity-button"]')?.textContent?.trim() ?? "",
+        }));
+        check("the coaching example: a chat apply is an ordinary attributed change",
+          applied.done && applied.activity.length > 0, applied.activity);
+        await p3.close();
       }
     } finally {
       try { process.kill(-vite.pid, "SIGKILL"); } catch { vite.kill("SIGKILL"); }
