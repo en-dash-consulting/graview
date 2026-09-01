@@ -29,22 +29,22 @@ description: "A framework for building applications where a typed context graph 
 |-------|--------|
 | [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | completed |
 | [From altitude the Graview reads as a city, not scattered slips](./from-altitude-the-graview-reads-f47fde/index.md) | completed |
-| [Graph core — @graview/core](./graph-core-graview-core/index.md) | completed |
-| [Platform capability validation](./platform-capability-validation/index.md) | completed |
+| [Graph core — @graview/core](./graph-core-graview-core-e1153e/index.md) | completed |
+| [Platform capability validation](./platform-capability-validation-23d227/index.md) | completed |
 | [The constellation: the graph seen from outside, and jacking in from it](./the-constellation-the-graph-cb0397/index.md) | completed |
-| [A relation you can make but never unmake: edge symmetry, checked and offered](./a-relation-you-can-make-but-9e0c68.md) | pending |
+| [A relation you can make but never unmake: edge symmetry, checked and offered](./a-relation-you-can-make-but-9e0c68.md) | in_progress |
 | [An empty app is an onboarding: the blank-graph example](./an-empty-app-is-an-onboarding-5a35eb.md) | completed |
 | [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | completed |
 | [Descending with an open district scattered the shelf](./descending-with-an-open-ae4660.md) | completed |
-| [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | completed |
-| [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
+| [The household example port — the acceptance test](./the household example-port-the-acceptance-test-128eaa.md) | completed |
+| [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-c7aedc.md) | completed |
 | [Modules: named parts of a declaration a workspace can turn on and off](./modules-named-parts-of-a-aa8097.md) | completed |
 | [Quick-view relations: one-click emphasis chips for the people behind a view](./quick-view-relations-one-click-5234d8.md) | completed |
-| [React binding — @graview/react](./react-binding-graview-react.md) | completed |
+| [React binding — @graview/react](./react-binding-graview-react-a06aa2.md) | completed |
 | [Relevance is a horizon, not a delete: lifecycle, archival, and the sync flood](./relevance-is-a-horizon-not-a-728589.md) | completed |
 | ["Remove" on a person in a run's view deleted them from the household](./remove-on-a-person-in-a-run-s-ae368f.md) | completed |
 | [Selection is part of the stop: URL-addressable, restored by back/forward](./selection-is-part-of-the-stop-88cfdf.md) | completed |
-| [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | completed |
+| [Spatial renderer — @graview/render](./spatial-renderer-graview-render-e0dd64.md) | completed |
 | [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
 | [The DOM path is a citizen of every browser](./the-dom-path-is-a-citizen-of-976f8a.md) | pending |
 | [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |
@@ -52,4 +52,4 @@ description: "A framework for building applications where a typed context graph 
 | [The lines are editable: relations as first-class selectable, modifiable things](./the-lines-are-editable-492161.md) | completed |
 | [The menu scales: search, pins, and what you actually use](./the-menu-scales-search-pins-and-db5b1b.md) | pending |
 | [Theming and look-and-feel: a declarative customization API a skill can drive](./theming-and-look-and-feel-a-305f2b.md) | completed |
-| [View primitives and the timeline lens](./view-primitives-and-the-timeline-lens.md) | completed |
+| [View primitives and the timeline lens](./view-primitives-and-the-c7fbbe.md) | completed |

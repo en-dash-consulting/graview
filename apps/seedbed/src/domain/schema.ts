@@ -39,7 +39,9 @@ export const planting = defineNode("planting", {
     status: z.enum(["growing", "harvested", "failed"]),
   }),
   edges: {
-    "grows-in": { to: ["plot"], description: "the plot it is planted in" },
+    // Where it went into the ground is a fact about the past: a planting is
+    // harvested (a field write), never uprooted from the record.
+    "grows-in": { to: ["plot"], description: "the plot it is planted in", appendOnly: true },
   },
   plural: "Plantings",
   label: (node) => node.label,

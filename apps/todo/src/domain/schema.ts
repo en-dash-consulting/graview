@@ -143,6 +143,9 @@ export const reason = defineNode("reason", {
       to: ["task", "list"],
       description: "what this is about",
       inverse: "why this is here",
+      // A note that outlives whoever wrote it does not get unwritten.
+      // Declared, so the missing severer reads as a decision, not a hole.
+      appendOnly: true,
     },
   },
 });

@@ -62,6 +62,7 @@ export const sow = defineMutation("sow", {
     plotId: nodeRef(["plot"]),
     sown: isoDate,
   }),
+  connects: ["grows-in"],
   describe: (args, graph) => `Sow ${args.label} in ${nameOf(graph as Reader, args.plotId)}`,
   apply(ctx, args) {
     const id = ctx.freshId(args.label, "planting");
@@ -80,6 +81,8 @@ export const tend = defineMutation("tend", {
   title: "Name a caretaker",
   description: "Say who looks after a plot.",
   subject: { kinds: ["plot"], arg: "plotId" },
+  connects: ["tended-by"],
+  severs: ["tended-by"],
   input: z.object({ plotId: nodeRef(["plot"]), gardenerId: nodeRef(["gardener"]) }),
   describe: (args, graph) =>
     `${nameOf(graph as Reader, args.gardenerId)} takes on ${nameOf(graph as Reader, args.plotId)}`,

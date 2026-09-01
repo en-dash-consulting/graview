@@ -236,3 +236,61 @@ describe("what a mutation calls itself", () => {
     expect(findings(both)).toContain("warning:mutation-title-ambiguous");
   });
 });
+
+describe("a relation you can make but never unmake", () => {
+  const maker = bound.defineMutation("assign", {
+    title: "Assign run",
+    description: "Tie a person to a run.",
+    subject: { kinds: ["duty"], arg: "dutyId" },
+    connects: ["assigned-to"],
+    input: z.object({ dutyId: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
+    apply: () => {},
+  });
+
+  it("warns about an edge kind with a connecting act and no severing one", () => {
+    const app = defineApp({ name: "test", schema, mutations: [maker] });
+    expect(findings(app)).toContain("warning:edge-without-severer");
+    const finding = checkApp(app).findings.find((f) => f.code === "edge-without-severer")!;
+    expect(finding.where).toBe('defineMutation("assign").connects');
+    expect(finding.message).toContain('"assigned-to"');
+    // The fix names both honest ways out: a severer, or the declaration
+    // that says the asymmetry is on purpose.
+    expect(finding.fix).toContain('severs: ["assigned-to"]');
+    expect(finding.fix).toContain('defineNode("person").edges["assigned-to"]');
+    expect(finding.fix).toContain("appendOnly");
+  });
+
+  it("stays quiet once any mutation declares the severer", () => {
+    const breaker = bound.defineMutation("unassign", {
+      title: "Take them off it",
+      description: "Break the tie between a person and a run.",
+      subject: { kinds: ["duty"], arg: "dutyId" },
+      severs: ["assigned-to"],
+      input: z.object({ dutyId: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
+      apply: () => {},
+    });
+    const app = defineApp({ name: "test", schema, mutations: [maker, breaker] });
+    expect(findings(app)).not.toContain("warning:edge-without-severer");
+  });
+
+  it("is suppressed by an explicit appendOnly declaration on the edge", () => {
+    const chronicler = defineNode("person", {
+      fields: z.object({ label: z.string() }),
+      // The suppression is the documentation: this edge is a record on
+      // purpose, not an oversight.
+      edges: { "assigned-to": { to: ["duty"], appendOnly: true } },
+    });
+    const appendOnlySchema = createSchema([chronicler, duty]);
+    const boundAppendOnly = bindSchema(appendOnlySchema);
+    const historian = boundAppendOnly.defineMutation("assign", {
+      title: "Assign run",
+      description: "Tie a person to a run, for good.",
+      subject: { kinds: ["duty"], arg: "dutyId" },
+      connects: ["assigned-to"],
+      input: z.object({ dutyId: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
+      apply: () => {},
+    });
+    const app = defineApp({ name: "test", schema: appendOnlySchema, mutations: [historian] });
+    expect(findings(app)).not.toContain("warning:edge-without-severer");
+  });
+});
