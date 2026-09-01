@@ -36,6 +36,7 @@ description: "A framework for building applications where a typed context graph 
 | [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | completed |
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | completed |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
+| [Modules: named parts of a declaration a workspace can turn on and off](./modules-named-parts-of-a-aa8097.md) | completed |
 | [React binding — @graview/react](./react-binding-graview-react.md) | completed |
 | [Relevance is a horizon, not a delete: lifecycle, archival, and the sync flood](./relevance-is-a-horizon-not-a-728589.md) | completed |
 | [Selection is part of the stop: URL-addressable, restored by back/forward](./selection-is-part-of-the-stop-88cfdf.md) | completed |
@@ -43,4 +44,5 @@ description: "A framework for building applications where a typed context graph 
 | [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
 | [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |
 | [The graph also wears a traditional face: a routed webapp derived from the same declaration](./the-graph-also-wears-a-dd174e.md) | pending |
+| [Theming and look-and-feel: a declarative customization API a skill can drive](./theming-and-look-and-feel-a-305f2b.md) | pending |
 | [View primitives and the timeline lens](./view-primitives-and-the-timeline-lens.md) | completed |

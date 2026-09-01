@@ -196,14 +196,39 @@ export function layout<S extends AnySchema>(
   const current = (node: NodeOfSchema<S>): boolean =>
     state.past === true || isCurrent(schema.tryDefinition(node.kind), node, opts.today);
 
-  const focusKinds = state.focusId ? kindsOfAggregate(state.focusId) : [];
+  /*
+   * MODULES OFF are not drawn at all — no card, no members, no raised
+   * plane. Unlike the horizon there is no advert and no count: a workspace
+   * that turned Vehicles off did not archive its cars, it scoped its
+   * interface, and a "+2 elsewhere" pill would reintroduce the very concept
+   * the toggle removed. The nodes stay in the graph untouched.
+   */
+  const hidden = new Set(options.hiddenKinds ?? []);
+  const visible = (node: NodeOfSchema<S>): boolean => !hidden.has(node.kind);
+
+  let focusKinds = state.focusId
+    ? kindsOfAggregate(state.focusId).filter((kind) => !hidden.has(kind))
+    : [];
+  /*
+   * A URL can point where this workspace cannot go — a bookmarked vehicle
+   * in a workspace that turned the module off. The honest landing is the
+   * default view, not a void with that node's name on it.
+   */
+  if (state.focusId && kindsOfAggregate(state.focusId).length > 0 && focusKinds.length === 0) {
+    state = { ...state, focusId: null };
+  }
+  const hiddenFocus = state.focusId ? graph.getNode(state.focusId) : undefined;
+  if (hiddenFocus && !visible(hiddenFocus)) {
+    state = { ...state, focusId: null };
+    focusKinds = [];
+  }
   const focusAll =
     focusKinds.length > 0
       ? [...graph.allNodes()]
           .filter((node) => focusKinds.includes(node.kind))
           .sort(byStableKey)
       : [];
-  const focusGroup = focusAll.filter(current);
+  const focusGroup = focusAll.filter(visible).filter(current);
   const focusRetired = focusAll.length - focusGroup.length;
   const focus =
     state.focusId && focusKinds.length === 0 ? graph.getNode(state.focusId) : undefined;
@@ -320,7 +345,9 @@ export function layout<S extends AnySchema>(
   // relation plane up here.
   const related = state.overview
     ? []
-    : relatedNodes(graph, schema, focus, state.relation).filter((entry) => current(entry.node));
+    : relatedNodes(graph, schema, focus, state.relation)
+        .filter((entry) => visible(entry.node))
+        .filter((entry) => current(entry.node));
 
   /*
    * With plane 1 empty, the focus takes the relation band too.
@@ -506,6 +533,7 @@ export function layout<S extends AnySchema>(
     focused?: boolean;
   }[] = [];
   for (const kind of schema.kinds as readonly string[]) {
+    if (hidden.has(kind)) continue;
     const all = groups.get(kind) ?? [];
     const members = all.filter(current);
     entries.push({

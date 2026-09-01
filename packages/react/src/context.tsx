@@ -8,7 +8,7 @@ import type {
 } from "@graview/core";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
-import { EMPTY_VIEW, withSelection } from "@graview/layout";
+import { EMPTY_VIEW, kindsOfAggregate, withSelection } from "@graview/layout";
 import {
   createContext,
   useCallback,
@@ -212,6 +212,23 @@ export function GraviewProvider<S extends AnySchema>({
          * overview stays free to be focusless: up there the ring is the
          * picture.
          */
+        /*
+         * A focus this workspace cannot show — a bookmarked node whose
+         * module is off — lands on home rather than on a void with its
+         * name in the address bar.
+         */
+        if (resolved.focusId !== null && store.modules.disabledKinds.size > 0) {
+          const disabled = store.modules.disabledKinds;
+          const kinds = kindsOfAggregate(resolved.focusId);
+          const node = store.graph.getNode(resolved.focusId);
+          const gone =
+            kinds.length > 0
+              ? kinds.every((kind) => disabled.has(kind))
+              : node
+                ? disabled.has(node.kind as string)
+                : false;
+          if (gone) resolved = { ...resolved, focusId: null };
+        }
         if (!resolved.overview && resolved.focusId === null && homeView.focusId !== null) {
           resolved = { ...resolved, focusId: homeView.focusId };
         }
@@ -233,7 +250,7 @@ export function GraviewProvider<S extends AnySchema>({
        */
       setInternalView((previous) => resolve(previous));
     },
-    [current, onViewChange, view, homeView],
+    [current, onViewChange, view, homeView, store],
   );
 
   /*

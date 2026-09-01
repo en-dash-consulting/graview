@@ -156,6 +156,13 @@ export interface LayoutOptions {
    * or a pinned survey judges a different day; defaults to the real one.
    */
   readonly today?: string;
+  /**
+   * Node kinds this installation has turned OFF — a workspace's disabled
+   * modules, projected once by the store. Their nodes stay in the graph and
+   * simply are not drawn: no kind card, no membership, no raised plane.
+   * Turning a module back on is the whole undo.
+   */
+  readonly hiddenKinds?: readonly string[];
 }
 
 /**
@@ -169,7 +176,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1040, height: 420 },

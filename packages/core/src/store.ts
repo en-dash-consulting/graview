@@ -1,4 +1,5 @@
 import { Graph, GraphError } from "./graph/graph.js";
+import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
 import { invert, type Primitive } from "./graph/primitives.js";
 import type { GraphSnapshot } from "./graph/types.js";
@@ -37,6 +38,16 @@ export interface StoreOptions<S extends AnySchema> {
    * permission system — it is a suggestion, and the agent seat is the bypass.
    */
   readonly policy?: Policy;
+  /**
+   * The app's declared modules, and which are on for THIS installation.
+   *
+   * `enabledModules` absent means everything — a store that never heard of
+   * modules behaves exactly as before. The projection is fixed at
+   * construction: a workspace toggle is an entitlement change, and the
+   * honest response to one is building the store the new workspace gets.
+   */
+  readonly modules?: ModuleMap;
+  readonly enabledModules?: readonly string[];
 }
 
 export interface ApplyOptions {
@@ -94,6 +105,8 @@ export class Store<S extends AnySchema> {
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
+  /** What the enabled modules work out to; every surface reads this one answer. */
+  readonly modules: ModuleProjection;
   private readonly nextId: () => string;
   private readonly now: () => string;
   private counter = 0;
@@ -104,6 +117,7 @@ export class Store<S extends AnySchema> {
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
     this.policy = options.policy;
+    this.modules = resolveModules(options.modules, options.enabledModules);
     let n = 0;
     this.nextId = options.ids ?? (() => `op${++n}`);
     this.now = options.now ?? (() => new Date(0).toISOString());
@@ -134,15 +148,40 @@ export class Store<S extends AnySchema> {
         `Registered: ${[...this.mutations.keys()].join(", ") || "(none)"}`,
       );
     }
+    // A refusal is a result: the mutation exists, and this workspace has its
+    // module off — which is a different sentence from "unknown".
+    if (this.modules.disabledMutations.has(name)) {
+      throw new GraphError(
+        `Mutation "${name}" belongs to a module this workspace has turned off`,
+        `Enabled modules: ${[...this.modules.enabled].join(", ") || "(none)"}`,
+      );
+    }
     return found;
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values()];
+    return [...this.mutations.values()].filter(
+      (mutation) => !this.modules.disabledMutations.has(mutation.name),
+    );
   }
 
   allInvariants(): readonly InvariantDefinition<S>[] {
-    return this.invariants;
+    return this.invariants.filter((invariant) => this.invariantEnabled(invariant));
+  }
+
+  /**
+   * An invariant is off when its module is, and also when it is scoped to a
+   * kind whose module is — a rule about vehicles has nothing to judge in a
+   * workspace without them, and evaluating it anyway would resurrect the
+   * kind through its violations.
+   */
+  private invariantEnabled(invariant: InvariantDefinition<S>): boolean {
+    if (this.modules.disabledInvariants.has(invariant.name)) return false;
+    if (invariant.scope !== "graph") {
+      const kind = (invariant.scope as { kind: string }).kind;
+      if (this.modules.disabledKinds.has(kind)) return false;
+    }
+    return true;
   }
 
   /**
@@ -189,7 +228,7 @@ export class Store<S extends AnySchema> {
 
   /** Current violations, evaluated fresh — nothing is cached or stale. */
   violations(context?: InvariantContext): Violation[] {
-    return evaluate(this.graph, this.invariants, {
+    return evaluate(this.graph, this.allInvariants(), {
       ...this.invariantOptions,
       ...(context === undefined ? {} : { context }),
     });
@@ -223,7 +262,7 @@ export class Store<S extends AnySchema> {
     const before = this.violations(meta.context);
     const trial = Graph.from(this.schema, this.graph.snapshot());
     const diff = trial.applyPrimitives(primitives);
-    const after = evaluate(trial, this.invariants, {
+    const after = evaluate(trial, this.allInvariants(), {
       ...this.invariantOptions,
       ...(meta.context === undefined ? {} : { context: meta.context }),
     });

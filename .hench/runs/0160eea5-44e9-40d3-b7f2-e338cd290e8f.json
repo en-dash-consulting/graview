@@ -1,0 +1,28 @@
+{
+  "id": "0160eea5-44e9-40d3-b7f2-e338cd290e8f",
+  "taskId": "aa8097b1-89e9-49b2-acf9-a998476a0f0b",
+  "taskTitle": "Modules: parts of a declaration a workspace can turn off",
+  "startedAt": "2026-09-01T06:28:50.599Z",
+  "finishedAt": "2026-09-01T06:28:50.599Z",
+  "status": "completed",
+  "turns": 83,
+  "summary": "ModuleDeclaration + enabled-set projection through store/layout/check; the household example vehicles module with workspace toggle; disabling hides, never deletes",
+  "tokenUsage": {
+    "input": 166,
+    "output": 82916,
+    "cacheCreationInput": 111221,
+    "cacheReadInput": 20795114
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 166,
+    "output": 82916,
+    "cached": 20906335,
+    "total": 20989417
+  }
+}
