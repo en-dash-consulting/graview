@@ -2,14 +2,13 @@
 id: "2b687f3c-6253-4b93-86cf-0e592ae9fcdf"
 level: "feature"
 title: "Direct manipulation: act in place, travel deliberately"
-status: "completed"
+status: "pending"
 priority: "high"
 tags:
   - "interaction"
   - "ux"
 source: "Session feedback while using the board, calendar and desk"
 startedAt: "2026-08-31T02:50:25.657Z"
-completedAt: "2026-09-01T03:12:22.047Z"
 endedAt: "2026-09-01T03:12:22.047Z"
 acceptanceCriteria:
   - "Single click on any data-graview-pick target selects it and leaves the view where it is"
@@ -27,6 +26,7 @@ description: "Clicking a thing currently TRAVELS to it, which is the wrong defau
 
 | Title | Status |
 |-------|--------|
+| [A raised crowd reads as a crowd, not as ten crushed cards](./a-raised-crowd-reads-as-a-crowd-fc10da.md) | pending |
 | [A raised relation keeps its origin visible](./a-raised-relation-keeps-its-0e68e9.md) | completed |
 | [A selection draws its own ties, from where the thing actually is](./a-selection-draws-its-own-ties-aaf344.md) | completed |
 | [An action that cannot succeed is not offered, and one that refuses says so](./an-action-that-cannot-succeed-ea8c2c.md) | completed |
