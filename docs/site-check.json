@@ -1,0 +1,219 @@
+{
+  "at": "2026-09-01T00:08:56.596Z",
+  "viewports": [
+    {
+      "scheme": "light",
+      "width": 320,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "light",
+      "width": 360,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "light",
+      "width": 414,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "light",
+      "width": 600,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "light",
+      "width": 768,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "light",
+      "width": 900,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "light",
+      "width": 1024,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "light",
+      "width": 1280,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "light",
+      "width": 1440,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "light",
+      "width": 1920,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 320,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 360,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 414,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 600,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 768,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 900,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 1024,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 1280,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 1440,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    },
+    {
+      "scheme": "dark",
+      "width": 1920,
+      "violations": [],
+      "sideways": false,
+      "small": [],
+      "cut": [],
+      "captionHits": 0,
+      "errors": []
+    }
+  ],
+  "criteria": {
+    "theFirstStopIsTheWayPastTheNavigation": true,
+    "theSkipLinkReachesTheContent": true,
+    "focusIsVisible": true,
+    "activatingANodeIsAnnounced": true,
+    "theConnectorWordsExistAsText": true,
+    "exactlyOneNodeIsCurrent": true,
+    "everyNodeIsNamed": true,
+    "textZoomToTwoHundredDoesNotScrollSideways": true,
+    "reducedMotionIsHonoured": true,
+    "forcedColoursKeepTheMeaningfulMarks": true,
+    "everyViewportIsClean": true
+  },
+  "passed": true
+}

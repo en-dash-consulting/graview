@@ -127,6 +127,7 @@ pnpm navigation    # travelling, and getting back
 pnpm moving        # panning the scene and dragging cards, both as ordinary stops
 pnpm survey        # every place a person can land, photographed
 pnpm audit         # and what is WRONG on each: collisions, cut text, tiny targets
+pnpm site          # docs/site holds up at ten widths, to axe and to a keyboard
 
 pnpm pack:inspect  # what would actually go in each tarball
 pnpm smoke         # install the tarballs into a scratch project and build
@@ -312,6 +313,7 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | Travelling changes the address, and back and forward both work | `scripts/verify-navigation.mjs` — 12 criteria, driven through the controls rather than the keyboard |
 | A stranger can install the tarballs and build a real app | `scripts/smoke-install.mjs` — packs, installs into a scratch project with no workspace or path mapping, typechecks and runs |
 | A tarball contains what it should and nothing else | `scripts/inspect-pack.mjs` — no `src`, no tests, no tsbuildinfo, and every `exports` path present |
+| The page that explains this holds up at 320px, to axe-core and to a keyboard | `scripts/verify-site.mjs` — 10 widths, both schemes, 11 criteria |
 | The scene can be panned and its cards dragged, and both survive a reload | `scripts/verify-moving.mjs` — 10 criteria, including that a drag is not a click |
 | An agent seat states what it would do, and goes quiet when there is nothing to do | `scripts/verify-seat.mjs` — 17 criteria across all four seats |
 | The capture path survives a pointer, and a click still reaches the node that was drawn | `scripts/verify-capture.mjs` — hover, click routing and keyboard reach, in Chrome Canary |
