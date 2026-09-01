@@ -47,6 +47,16 @@ export interface ViewState {
    */
   readonly past?: boolean;
   /**
+   * What is SELECTED, as part of the stop.
+   *
+   * Selection used to live only in component state, which broke the central
+   * promise twice over: back/forward restored the view but stranded the
+   * selection — the inspector kept talking about a thing from a stop you had
+   * already left — and a shared link could name the place but not the thing.
+   * If the pane on the left depends on it, it is part of where you are.
+   */
+  readonly selection?: readonly string[];
+  /**
    * Zoomed in close: the focus takes most of the scene — most, not all —
    * and the kinds shelf and any raised relation recede rather than vanish.
    *
@@ -82,6 +92,9 @@ export function toUrl(state: ViewState): string {
   if (state.overview) params.set("overview", "1");
   if (state.zoom) params.set("zoom", "1");
   if (state.past) params.set("past", "1");
+  if (state.selection !== undefined && state.selection.length > 0) {
+    params.set("sel", [...state.selection].sort().join(","));
+  }
   if (state.expanded.length > 0) {
     params.set("expand", [...state.expanded].sort().join(","));
   }
@@ -113,7 +126,13 @@ export function fromUrl(url: string): ViewState {
   const panX = rawPan[0] === undefined ? null : num(rawPan[0]);
   const panY = rawPan[1] === undefined ? null : num(rawPan[1]);
 
+  const sel = (params.get("sel") ?? "")
+    .split(",")
+    .filter((id) => id.length > 0)
+    .sort();
+
   return {
+    ...(sel.length > 0 ? { selection: sel } : {}),
     ...(params.get("overview") === "1" ? { overview: true } : {}),
     ...(params.get("zoom") === "1" ? { zoom: true } : {}),
     ...(params.get("past") === "1" ? { past: true } : {}),
@@ -156,6 +175,18 @@ export function withPast(state: ViewState, past: boolean): ViewState {
     return rest;
   }
   return { ...state, past: true };
+}
+
+/**
+ * Change what is selected. An empty selection leaves no key behind — the
+ * default state serialises to the default URL.
+ */
+export function withSelection(state: ViewState, selection: readonly string[]): ViewState {
+  if (selection.length === 0) {
+    const { selection: _drop, ...rest } = state;
+    return rest;
+  }
+  return { ...state, selection: [...selection] };
 }
 
 /** Zoom the focus in close, or back out. */

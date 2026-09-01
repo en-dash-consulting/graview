@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   aggregateId,
   kindCardId,
+  withSelection,
   easeInOut,
   EMPTY_VIEW,
   fromUrl,
@@ -214,6 +215,16 @@ describe("every stop is a URL", () => {
     const b = toggleExpanded(toggleExpanded(EMPTY_VIEW, "a"), "b");
     expect(toUrl(a)).toBe(toUrl(b));
     expect(sameView(a, b)).toBe(true);
+  });
+
+  it("carries the selection: the pane you had open is part of the stop", () => {
+    const chosen = withSelection(withFocus(EMPTY_VIEW, "week-1"), ["bo", "ana"]);
+    const back = fromUrl(toUrl(chosen));
+    expect(back.selection).toEqual(["ana", "bo"]);
+    expect(sameView(chosen, back)).toBe(true);
+    // Clearing leaves no key behind — the default state is the default URL.
+    expect(toUrl(withSelection(chosen, []))).toBe(toUrl(withFocus(EMPTY_VIEW, "week-1")));
+    expect(fromUrl(toUrl(withSelection(chosen, []))).selection).toBeUndefined();
   });
 
   it("ignores malformed parts rather than throwing", () => {

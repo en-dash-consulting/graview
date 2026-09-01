@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T05:50:14.168Z",
+  "at": "2026-09-01T06:08:07.588Z",
   "steps": [
     {
       "step": "landed",
@@ -10,42 +10,42 @@
     },
     {
       "step": "travelled",
-      "url": "#focus=t-deposit",
+      "url": "#focus=t-deposit&sel=t-deposit",
       "back": true,
       "forward": false,
       "trail": "Pay the deposit×"
     },
     {
       "step": "travelled again",
-      "url": "#focus=reason-deposit",
+      "url": "#focus=reason-deposit&sel=reason-deposit",
       "back": true,
       "forward": false,
       "trail": "The landlord holds the date for 48 hours once the deposit…×"
     },
     {
       "step": "back once",
-      "url": "#focus=t-deposit",
+      "url": "#focus=t-deposit&sel=reason-deposit",
       "back": true,
       "forward": true,
       "trail": "Pay the deposit×"
     },
     {
       "step": "back twice",
-      "url": "#focus=aggregate%3Alist",
+      "url": "#focus=aggregate%3Alist&sel=t-deposit",
       "back": false,
       "forward": true,
       "trail": ""
     },
     {
       "step": "forward once",
-      "url": "#focus=t-deposit",
+      "url": "#focus=t-deposit&sel=reason-deposit",
       "back": true,
       "forward": true,
       "trail": "Pay the deposit×"
     },
     {
       "step": "home by breadcrumb",
-      "url": "#focus=aggregate%3Alist",
+      "url": "#focus=aggregate%3Alist&sel=reason-deposit",
       "back": true,
       "forward": false,
       "trail": ""
@@ -58,6 +58,7 @@
     "backBecomesAvailable": true,
     "nothingAheadUntilYouGoBack": true,
     "backActuallyGoesBack": true,
+    "backRestoresTheSelection": true,
     "wentDeeperThanOnce": true,
     "eachTravelIsItsOwnStop": true,
     "backAgainReachesTheStart": true,

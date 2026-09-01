@@ -1,0 +1,28 @@
+{
+  "id": "bd2abad1-b80e-4c1b-9cd6-a46bae125fa5",
+  "taskId": "88cfdf86-0d4f-44a5-84f7-fc6a9e317d28",
+  "taskTitle": "Selection is part of the stop",
+  "startedAt": "2026-09-01T06:14:36.103Z",
+  "finishedAt": "2026-09-01T06:14:36.103Z",
+  "status": "completed",
+  "turns": 127,
+  "summary": "Selection joins ViewState/URL; setView composes functional updates; violations dedupe; back/forward restores the pane",
+  "tokenUsage": {
+    "input": 254,
+    "output": 108799,
+    "cacheCreationInput": 193317,
+    "cacheReadInput": 21769941
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 254,
+    "output": 108799,
+    "cached": 21963258,
+    "total": 22072311
+  }
+}

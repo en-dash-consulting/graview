@@ -37,6 +37,7 @@ export {
   withPin,
   withoutMoves,
   withRelation,
+  withSelection,
   withZoom,
 } from "./view-state.js";
 export type { Pin, ViewState } from "./view-state.js";

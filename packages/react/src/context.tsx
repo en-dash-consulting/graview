@@ -8,7 +8,7 @@ import type {
 } from "@graview/core";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
-import { EMPTY_VIEW } from "@graview/layout";
+import { EMPTY_VIEW, withSelection } from "@graview/layout";
 import {
   createContext,
   useCallback,
@@ -142,6 +142,9 @@ export function useViewMode(): ViewMode {
  */
 const ANONYMOUS: Principal = { kind: "human" };
 
+/** One shared empty, so "nothing selected" is referentially stable. */
+const EMPTY_SELECTION: readonly string[] = [];
+
 export interface GraviewProviderProps<S extends AnySchema> {
   readonly store: Store<S>;
   readonly views: ViewRegistry<S, ViewComponent<S>>;
@@ -184,9 +187,10 @@ export function GraviewProvider<S extends AnySchema>({
   onViewChange,
   children,
 }: GraviewProviderProps<S>) {
-  const [internalView, setInternalView] = useState<ViewState>(initialView ?? EMPTY_VIEW);
+  const [internalView, setInternalView] = useState<ViewState>(() =>
+    withSelection(initialView ?? EMPTY_VIEW, initialSelection ?? initialView?.selection ?? []),
+  );
   const homeView = useRef<ViewState>(initialView ?? EMPTY_VIEW).current;
-  const [selection, setSelectionState] = useState<readonly string[]>(initialSelection ?? []);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
   const [emphasis, setEmphasis] = useState<string | null>(null);
   const { activity, noteAttention } = useActivityState(store);
@@ -195,32 +199,61 @@ export function GraviewProvider<S extends AnySchema>({
 
   const setView = useCallback(
     (next: ViewState | ((currentView: ViewState) => ViewState)) => {
-      let resolved = typeof next === "function" ? next(current) : next;
-      /*
-       * INSIDE THE STACK, SOMETHING IS ALWAYS FOCUSED.
-       *
-       * A focusless in-stack view renders a shelf and a void — a screen
-       * with no main view, which reads as being stuck rather than as being
-       * anywhere. No control writes that state on purpose, but URLs,
-       * history pops and chains of chrome can compose it. Whatever asked
-       * for nothing lands on the view the app opened with instead. The
-       * overview stays free to be focusless: up there the ring is the
-       * picture.
-       */
-      if (!resolved.overview && resolved.focusId === null && homeView.focusId !== null) {
-        resolved = { ...resolved, focusId: homeView.focusId };
+      const resolve = (base: ViewState): ViewState => {
+        let resolved = typeof next === "function" ? next(base) : next;
+        /*
+         * INSIDE THE STACK, SOMETHING IS ALWAYS FOCUSED.
+         *
+         * A focusless in-stack view renders a shelf and a void — a screen
+         * with no main view, which reads as being stuck rather than as being
+         * anywhere. No control writes that state on purpose, but URLs,
+         * history pops and chains of chrome can compose it. Whatever asked
+         * for nothing lands on the view the app opened with instead. The
+         * overview stays free to be focusless: up there the ring is the
+         * picture.
+         */
+        if (!resolved.overview && resolved.focusId === null && homeView.focusId !== null) {
+          resolved = { ...resolved, focusId: homeView.focusId };
+        }
+        return resolved;
+      };
+      if (view !== undefined) {
+        onViewChange?.(resolve(view));
+        return;
       }
-      if (onViewChange) onViewChange(resolved);
-      if (view === undefined) setInternalView(resolved);
+      if (onViewChange) onViewChange(resolve(current));
+      /*
+       * Resolved against the PREVIOUS state, not the render-time view.
+       *
+       * Two writes in one gesture are ordinary — travelling also selects,
+       * going home also clears — and React batches them into one commit.
+       * Resolving both against the same stale render made the second write
+       * silently discard the first: the travel never happened, only its
+       * selection did. Functional composition is what "two updates" means.
+       */
+      setInternalView((previous) => resolve(previous));
     },
     [current, onViewChange, view, homeView],
   );
 
+  /*
+   * Selection is VIEW STATE — part of the stop, not component state beside
+   * it. That is what makes back/forward restore the pane that was open, a
+   * refresh keep what you were pointing at, and a link carry the thing as
+   * well as the place. Changing it is an adjustment of the stop you are on
+   * (like a pan), so a run of clicks is not a run of history entries.
+   */
+  const selection = current.selection ?? EMPTY_SELECTION;
   const setSelection = useCallback(
     (next: readonly string[] | ((currentSelection: readonly string[]) => readonly string[])) => {
-      setSelectionState((previous) => (typeof next === "function" ? next(previous) : next));
+      setView((currentView) =>
+        withSelection(
+          currentView,
+          typeof next === "function" ? next(currentView.selection ?? EMPTY_SELECTION) : next,
+        ),
+      );
     },
-    [],
+    [setView],
   );
 
   const value = useMemo<GraviewContextValue<S>>(

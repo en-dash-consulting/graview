@@ -113,6 +113,34 @@ describe("the horizon applies to judgement", () => {
   });
 });
 
+describe("identical violations collapse", () => {
+  it("reports one problem when two identical rule nodes say the same thing", () => {
+    const bound = bindSchema(schema);
+    const shout = bound.defineInvariant("shout", {
+      scope: { kind: "agreement" },
+      evaluate: ({ subject }): Violation[] => [
+        {
+          invariant: "shout",
+          subjectId: subject.id,
+          label: "shout",
+          message: "the same sentence",
+          nodeIds: ["now"],
+          repairs: [],
+        },
+      ],
+    });
+    const g = Graph.from(schema, {
+      nodes: [
+        { id: "now", kind: "agreement", label: "a", status: "active" },
+        { id: "also", kind: "agreement", label: "b", status: "active" },
+      ],
+      edges: [],
+    });
+    // Two subjects, one claim about one node set: a reader sees one problem.
+    expect(evaluate(g, [shout])).toHaveLength(1);
+  });
+});
+
 describe("graview check knows about lifecycles", () => {
   const findings = (definition: ReturnType<typeof defineNode>) => {
     const app = defineApp({
