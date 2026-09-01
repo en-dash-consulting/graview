@@ -27,16 +27,16 @@ description: "A framework for building applications where a typed context graph 
 
 | Title | Status |
 |-------|--------|
-| [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | pending |
+| [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | completed |
 | [Graph core — @graview/core](./graph-core-graview-core/index.md) | completed |
 | [Platform capability validation](./platform-capability-validation/index.md) | completed |
 | [The constellation: the graph seen from outside, and jacking in from it](./the-constellation-the-graph-cb0397/index.md) | completed |
 | [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | completed |
-| [From altitude the Graview reads as a city, not scattered slips](./from-altitude-the-graview-reads-f47fde.md) | pending |
+| [From altitude the Graview reads as a city, not scattered slips](./from-altitude-the-graview-reads-f47fde.md) | in_progress |
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | completed |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
 | [React binding — @graview/react](./react-binding-graview-react.md) | completed |
 | [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | completed |
 | [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
-| [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | pending |
+| [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |
 | [View primitives and the timeline lens](./view-primitives-and-the-timeline-lens.md) | completed |

@@ -2,7 +2,7 @@
 id: "f47fde4c-84d9-4f81-a0d7-6ec608cca2c3"
 level: "feature"
 title: "From altitude the Graview reads as a city, not scattered slips"
-status: "pending"
+status: "in_progress"
 priority: "high"
 tags:
   - "ux"
@@ -10,6 +10,7 @@ tags:
   - "overview"
   - "layout"
 source: "UX pass over docs/survey 2026-08-31; user: the graview should have an isometric-city, zooming-out feel, and it doesn't"
+startedAt: "2026-09-01T02:06:05.635Z"
 acceptanceCriteria:
   - "The overview ring carries a depth gradient in the existing affine vocabulary: kinds on the far side of the ring sit smaller, hazier and further back; kinds on the near side come toward the viewer — the same arc language the in-stack strip already speaks (today ring() emits depth = 1, flat, for every card)"
   - "The live centre view visibly outranks the kind cards — it reads as the tallest structure, not a peer stamp; overview fill rises from 16-24% (measured 22-31% after the first pass) without crowding"

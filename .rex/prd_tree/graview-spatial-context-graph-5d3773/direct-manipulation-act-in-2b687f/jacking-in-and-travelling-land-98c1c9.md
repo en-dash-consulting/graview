@@ -2,7 +2,7 @@
 id: "98c1c9e8-1c0a-45ac-9506-dab58e73e519"
 level: "task"
 title: "Jacking in and travelling land in composed rooms, not corners"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "ux"
@@ -10,6 +10,11 @@ tags:
   - "jack-in"
   - "travel"
 source: "UX pass over docs/survey 2026-08-31; user: double-clicking into a view is confusing"
+startedAt: "2026-09-01T02:08:56.092Z"
+completedAt: "2026-09-01T02:08:56.092Z"
+endedAt: "2026-09-01T02:08:56.092Z"
+resolutionType: "code-change"
+resolutionDetail: "Superseded and completed by the zoom: jacking in no longer lands anywhere isolated — it zooms the focus in place with the shelf, relations and connectors present, which dissolves the barren-modal problem outright (the modal is deleted). The travelled stop composes: related cards widen when few (1.35x), captions attach to their runs, and the \"double-click opens\" hint appears in the strip at the moment a thing is picked. A zoomed record renders an 880px reading column with its neighbourhood full-size beneath; a zoomed place (board) takes the dense-picture band. Survey and audit clean in both schemes."
 acceptanceCriteria:
   - "A jacked-in record centres a readable column (not top-left flush against a 70% void) with its actions adjacent to the content rather than fixed to the bottom of the window 400px below it"
   - "A jacked-in place balances its panels across the width it has (the coaching example placeFull leaves the right half empty)"
