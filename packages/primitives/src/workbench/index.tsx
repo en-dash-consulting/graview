@@ -18,6 +18,7 @@ import {
   loadPins,
   togglePin,
   type Affordance,
+  type PinOverrides,
   type InAppAgent,
   type OpenParameter,
   type ToolCall,
@@ -201,8 +202,14 @@ export function Inspector() {
    * derivation every surface reads — so a pin made here reorders the strip,
    * the pointer menu and nothing else invents a second action system.
    */
-  const [pins, setPins] = useState<readonly string[]>(() => loadPins());
+  const [pins, setPins] = useState<PinOverrides>(() => loadPins());
   const deriveOptions = useMemo(() => ({ pins }), [pins]);
+  // Which acts the app itself pinned — the star on those demotes rather
+  // than doubling up, so pressing it always visibly does something.
+  const declaredPins = useMemo(
+    () => new Set(store.allMutations().filter((mutation) => mutation.pinned).map((mutation) => mutation.name)),
+    [store],
+  );
   const { affordances, withheld, observations } = useAffordances(deriveOptions);
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
@@ -797,6 +804,17 @@ export function Inspector() {
                     {affordance.open.length > 0 ? (
                       <span style={{ color: "var(--graview-ink-faint)" }}> …</span>
                     ) : null}
+                    {matched?.length === 1 && matched[0]?.id === affordance.id ? (
+                      // The searcher's promise, made visible exactly when
+                      // it holds: Enter runs the one act left standing.
+                      <span
+                        aria-hidden="true"
+                        title="Enter runs it"
+                        style={{ float: "right", color: "var(--graview-ink-faint)", fontSize: 11 }}
+                      >
+                        ↵
+                      </span>
+                    ) : null}
                   </button>
                   {/*
                     * The other hand on the pin. The dev pinned an act by
@@ -808,14 +826,22 @@ export function Inspector() {
                     type="button"
                     data-testid="pin-toggle"
                     data-pin-for={affordance.mutation}
-                    aria-pressed={affordance.pinned === "user"}
+                    aria-pressed={affordance.pinned !== undefined}
                     aria-label={
-                      affordance.pinned === "user"
+                      affordance.pinned !== undefined
                         ? `Unpin ${affordance.label}`
                         : `Pin ${affordance.label}`
                     }
-                    title={affordance.pinned === "user" ? "Unpin" : "Pin to the top"}
-                    onClick={() => setPins(togglePin(pins, affordance.mutation))}
+                    title={
+                      affordance.pinned === "declared"
+                        ? "Pinned by the app — unpin it for yourself"
+                        : affordance.pinned === "user"
+                          ? "Unpin"
+                          : "Pin to the top"
+                    }
+                    onClick={() =>
+                      setPins(togglePin(pins, affordance.mutation, declaredPins.has(affordance.mutation)))
+                    }
                     style={{
                       flex: "0 0 auto",
                       width: 24,
@@ -828,10 +854,18 @@ export function Inspector() {
                       background: "none",
                       boxShadow: "none",
                       borderRadius: 7,
+                      /*
+                       * WHOSE pin, said in the ink: the person's in the
+                       * accent, the app's in quiet body ink. Two filled
+                       * stars in one colour left no way to tell which pin
+                       * was yours to regret.
+                       */
                       color:
-                        affordance.pinned !== undefined
+                        affordance.pinned === "user"
                           ? "var(--graview-accent)"
-                          : "var(--graview-ink-faint)",
+                          : affordance.pinned === "declared"
+                            ? "var(--graview-ink-muted)"
+                            : "var(--graview-ink-faint)",
                     }}
                   >
                     {affordance.pinned !== undefined ? "★" : "☆"}

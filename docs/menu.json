@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-01T20:24:49.361Z",
+  "at": "2026-09-01T21:13:34.706Z",
   "engine": "chromium",
   "checks": {
     "filterOnlyPastTheFold": {
@@ -9,7 +9,7 @@
     },
     "searchThenApply": {
       "survivors": 1,
-      "soleLabel": "Mark it done",
+      "soleLabel": "Mark it done↵",
       "dueShownBeforehand": true,
       "applied": true,
       "ok": true
@@ -40,6 +40,12 @@
       "survived": true,
       "pressed": true,
       "unpinnedAgain": true,
+      "ok": true
+    },
+    "devPinOverride": {
+      "declaredShown": true,
+      "demotedNow": true,
+      "restoredNow": true,
       "ok": true
     }
   },
