@@ -27,11 +27,12 @@ description: "A framework for building applications where a typed context graph 
 
 | Title | Status |
 |-------|--------|
-| [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | completed |
+| [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | pending |
 | [From altitude the Graview reads as a city, not scattered slips](./from-altitude-the-graview-reads-f47fde/index.md) | completed |
 | [Graph core — @graview/core](./graph-core-graview-core/index.md) | completed |
 | [Platform capability validation](./platform-capability-validation/index.md) | completed |
 | [The constellation: the graph seen from outside, and jacking in from it](./the-constellation-the-graph-cb0397/index.md) | completed |
+| [An empty app is an onboarding: the blank-graph example](./an-empty-app-is-an-onboarding-5a35eb.md) | pending |
 | [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | completed |
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | completed |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |

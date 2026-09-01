@@ -465,6 +465,20 @@ export function Scene<S extends AnySchema>({
       onPointerMove={onDragMove}
       onPointerUp={onDragUp}
       onPointerCancel={onDragUp}
+      /*
+       * CLICKING EMPTY GROUND puts the selection down — the gesture every
+       * canvas tool teaches, and the graceful half of deselection the ×
+       * and Escape were carrying alone. Only the bare ground: a card, a
+       * control or a piece of chrome keeps its own meaning, and a drag
+       * that ends on the ground is still a pan, not a deselection.
+       */
+      onClick={(event) => {
+        if (swallow.current) return;
+        const target = event.target as HTMLElement;
+        if (target.closest("[data-graview-view], button, aside, a, input, select")) return;
+        setSelection([]);
+        setMenuAt(null);
+      }}
       style={{
         position: "relative",
         width: "100%",
