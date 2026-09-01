@@ -8,6 +8,7 @@ import {
   withPan,
   withPin,
   withRelation,
+  withZoom,
   type InterpolatedLayout,
   type Layout,
   type LayoutNode,
@@ -125,7 +126,6 @@ export function Scene<S extends AnySchema>({
     setView,
     selection,
     setSelection,
-    setJackedIn,
     setMenuAt,
     emphasis,
   } = useGraview<S>();
@@ -164,9 +164,19 @@ export function Scene<S extends AnySchema>({
     [store, view, sized, nodes],
   );
 
+  /*
+   * A DRAG IS NOT A TRANSITION.
+   *
+   * Every pointer move writes a new view state, and easing toward each one
+   * over half a second made the scene chase the pointer — panning felt
+   * laggy because it literally lagged, by design meant for navigation. While
+   * a drag owns the pointer the picture snaps to it; the tween is for the
+   * moves you did not make with your own hand.
+   */
+  const [dragging, setDragging] = useState(false);
   // The picture as it is right now, part-way between the last view and this
   // one. Everything downstream draws the tween, not the destination.
-  const frame = useAnimatedLayout(result, { enabled: animate });
+  const frame = useAnimatedLayout(result, { enabled: animate && !dragging });
   const touched = useTouched<S>();
 
   useEffect(() => {
@@ -260,7 +270,6 @@ export function Scene<S extends AnySchema>({
     baseY: number;
     moved: boolean;
   } | null>(null);
-  const [dragging, setDragging] = useState(false);
 
   const onGroundDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
@@ -415,7 +424,25 @@ export function Scene<S extends AnySchema>({
       }}
       onMenu={setMenuAt}
       selection={selection}
-      onJackIn={() => setJackedIn(node.id)}
+      /*
+       * Jacking in ZOOMS: the same scene, the focus grown to most of it,
+       * shelf and relations receded but present. On the node already zoomed
+       * the same gesture zooms back out — in and out are one motion.
+       */
+      onJackIn={() => {
+        setView((current) =>
+          current.zoom && current.focusId === node.id
+            ? withZoom(current, false)
+            : withZoom({ ...withFocus(current, node.id), relation: null }, true),
+        );
+        /*
+         * A zoomed RECORD is selected — reading closely is when you act.
+         * A zoomed PLACE starts quiet: the click half of the double-click
+         * had just selected every member, and arriving with the whole
+         * population selected buries the place under its own strip.
+         */
+        setSelection(node.aggregate ? [] : [node.id]);
+      }}
       onDragStart={(event) => onCardDown(node, event)}
       onDragMove={onDragMove}
       onDragEnd={onDragUp}
@@ -429,6 +456,8 @@ export function Scene<S extends AnySchema>({
     <div
       ref={wrapperRef}
       className={`graview-ground${className ? ` ${className}` : ""}`}
+      // From altitude the ground itself recedes; the theme reads this.
+      data-graview-altitude={view.overview ? "" : undefined}
       onPointerDown={onGroundDown}
       onPointerMove={onDragMove}
       onPointerUp={onDragUp}

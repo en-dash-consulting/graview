@@ -46,18 +46,24 @@ const APPS = {
       travelled: async (page) => {
         await page.dblclick('[data-graview-pick="t-deposit"]');
       },
-      jackedIn: async (page) => {
+      // The go-deeper gesture again, on the focus itself: ZOOMS it to most
+      // of the scene, shelf and relations receding but present.
+      zoomed: async (page) => {
         await page.dblclick('[data-graview-pick="t-deposit"]');
         await page.waitForTimeout(800);
-        const id = await page.getAttribute('[data-graview-plane="0"]', "data-graview-view");
-        await page.dblclick(`[data-graview-view="${id}"]`);
+        const host = await page.$('[data-graview-plane="0"]');
+        await host.dblclick({ position: { x: 40, y: 14 } });
       },
       graview: async (page) => {
         await page.click('[data-testid="overview"]');
       },
       tidied: async (page) => {
+        await page.click('[data-testid="activity-button"]');
         await page.click('[data-testid="agent-tidy"]');
         await page.waitForTimeout(1400);
+        // Photograph the tidied SCENE, not the popover the turn ran from.
+        await page.mouse.click(60, 480);
+        await page.waitForTimeout(400);
       },
     },
   },
@@ -91,7 +97,7 @@ const APPS = {
         const span = await page.getAttribute("[data-graview-span]", "data-graview-span");
         await page.dblclick(`[data-graview-pick="${span}"]`);
       },
-      jackedIn: async (page) => {
+      zoomed: async (page) => {
         await page.click('[data-graview-view="kind:rationale"]');
         await page.waitForTimeout(700);
         const id = await page.getAttribute('[data-graview-plane="1"]', "data-graview-view");
@@ -105,10 +111,9 @@ const APPS = {
         await page.click(`[data-graview-pick="${span}"]`, { button: "right" });
       },
       activity: async (page) => {
-        await page.click('[data-testid="agent-rebalance"]');
-        await page.waitForSelector('[data-testid="activity-button"]', { timeout: 30_000 });
-        await page.waitForTimeout(1500);
         await page.click('[data-testid="activity-button"]');
+        await page.click('[data-testid="agent-rebalance"]');
+        await page.waitForTimeout(1500);
       },
     },
   },
@@ -121,12 +126,12 @@ const APPS = {
         const pick = await page.getAttribute("[data-graview-pick]", "data-graview-pick");
         await page.click(`[data-graview-pick="${pick}"]`);
       },
-      jackedIn: async (page) => {
+      zoomed: async (page) => {
         const pick = await page.getAttribute("[data-graview-pick]", "data-graview-pick");
         await page.dblclick(`[data-graview-pick="${pick}"]`);
         await page.waitForTimeout(800);
-        const id = await page.getAttribute('[data-graview-plane="0"]', "data-graview-view");
-        await page.dblclick(`[data-graview-view="${id}"]`);
+        const host = await page.$('[data-graview-plane="0"]');
+        await host.dblclick({ position: { x: 40, y: 14 } });
       },
       graview: async (page) => {
         await page.click('[data-testid="overview"]');
@@ -155,18 +160,17 @@ const APPS = {
         await page.waitForTimeout(300);
         await page.click('[data-graview-pick="pos-lb"]');
       },
-      jackedIn: async (page) => {
+      zoomed: async (page) => {
         await page.dblclick('[data-graview-pick="p-amara"]');
         await page.waitForTimeout(900);
-        const id = await page.getAttribute('[data-graview-plane="0"]', "data-graview-view");
-        await page.dblclick(`[data-graview-view="${id}"]`);
+        const host = await page.$('[data-graview-plane="0"]');
+        await host.dblclick({ position: { x: 40, y: 14 } });
       },
-      // A PLACE lifted out, which is the shape jack-in was worst at: a board
-      // is a picture whose whole content is where things are, and it used to
-      // come out as a card in the middle of a lot of nothing.
-      placeFull: async (page) => {
-        const id = await page.getAttribute('[data-graview-plane="0"]', "data-graview-view");
-        await page.dblclick(`[data-graview-view="${id}"]`);
+      // A PLACE zoomed in close: a board is a picture whose whole content
+      // is where things are, and this is the state that hands it the room.
+      zoomedPlace: async (page) => {
+        const host = await page.$('[data-graview-plane="0"]');
+        await host.dblclick({ position: { x: 40, y: 14 } });
       },
       // The state that put the actions strip on top of the row of kinds:
       // several things selected at once, so the strip is at its tallest.

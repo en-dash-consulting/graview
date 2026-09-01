@@ -1,5 +1,5 @@
 import { labelOf, type AnySchema, type Store } from "@graview/core";
-import { withoutMoves, withOverview } from "@graview/layout";
+import { withoutMoves, withOverview, withZoom } from "@graview/layout";
 import {
   useAffordances,
   useApplyAffordance,
@@ -188,7 +188,7 @@ const STRIP_GAP = 18;
  * built around a centred focus has to spare.
  */
 export function Inspector() {
-  const { store, menuAt, setMenuAt, jackedIn, view } = useGraview<AnySchema>();
+  const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
   const { selection, clear } = useSelection();
   const { affordances, withheld, observations } = useAffordances();
   const { apply, preview } = useApplyAffordance();
@@ -252,10 +252,7 @@ export function Inspector() {
    * from the bottom of the window read as a stale leftover of the previous
    * stop.
    */
-  const named = !(
-    selection.length === 1 &&
-    (selection[0] === jackedIn || (jackedIn === null && selection[0] === view.focusId))
-  );
+  const named = !(selection.length === 1 && selection[0] === view.focusId);
 
   const atPointer = menuAt !== null;
 
@@ -408,7 +405,7 @@ export function Inspector() {
                 thing is exactly when "how do I go into it" arises, and the
                 jacked-in header was the one place that answered, which is
                 after you had already found out. */}
-            {selection.length === 1 && jackedIn === null ? (
+            {selection.length === 1 ? (
               <span
                 style={{ fontSize: 11, color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
@@ -876,7 +873,21 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
  * without this is a spinner and a toast. Reads are the interesting half.
  * Every node named here is a target, so checking the work is one click.
  */
-export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] }) {
+export function ActivityRail({
+  calls,
+  seat,
+}: {
+  readonly calls: readonly ToolCall[];
+  /**
+   * The agent seat, if the app gives one. It lives HERE, not in the bar:
+   * Activity is "what has happened, and what is happening", which is the
+   * agent's own surface and where you would be looking to watch a turn —
+   * and a run-a-turn control that is disabled most of the time was a
+   * permanently-visible ghost in prime bar space. See the recorded
+   * decision on the PRD task "Decide where the agent seat lives".
+   */
+  readonly seat?: ReactNode;
+}) {
   const changes = useRecentChanges();
   const { store } = useGraview<AnySchema>();
   const [open, setOpen] = useState(false);
@@ -908,7 +919,7 @@ export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] })
     };
   }, [open]);
 
-  if (calls.length === 0 && changes.length === 0) return null;
+  if (seat === undefined && calls.length === 0 && changes.length === 0) return null;
 
   return (
     <div ref={anchor} style={{ position: "relative" }}>
@@ -963,6 +974,31 @@ export function ActivityRail({ calls }: { readonly calls: readonly ToolCall[] })
             boxShadow: "var(--graview-lift-high)",
           }}
         >
+          {seat !== undefined ? (
+            <div
+              data-testid="agent-seat-row"
+              style={{
+                display: "grid",
+                gap: 5,
+                paddingBottom: calls.length > 0 || changes.length > 0 ? 9 : 0,
+                ...(calls.length > 0 || changes.length > 0
+                  ? { borderBottom: "1px solid var(--graview-edge)" }
+                  : {}),
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 10,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "var(--graview-ink-faint)",
+                }}
+              >
+                The agent's seat
+              </span>
+              {seat}
+            </div>
+          ) : null}
           {calls.length > 0 ? (
             <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 7 }}>
               {calls.slice(0, 6).map((call, index) => (
@@ -1235,22 +1271,34 @@ export function OverviewButton() {
       // already on screen fly out into the ring rather than being replaced.
       onClick={() => go(withOverview(view, !overview))}
       /*
-       * A CONTROL IN THE BAR, not a pill floating over the scene.
+       * SCENE FURNITURE, in the scene's corner — the way a map carries its
+       * own altitude control.
        *
-       * Twice now it has been "awkwardly slammed on top", and both times the
-       * fix I reached for was a different set of coordinates. The problem was
-       * never where it floated — it was that it floated at all while every
-       * other view control lives in the bar. The Graview is a place you go,
-       * like the others, so it goes where they are.
+       * It has lived in two wrong places: floating over the scene as a
+       * labelled pill ("awkwardly slammed on top", twice), and then in the
+       * command bar, where it spent prime chrome on a control that is about
+       * the CANVAS, not the app. The bar is for what the app is; rising and
+       * descending is something you do to the picture, so the control sits
+       * on the picture — quiet, glyph-first, in the one corner every state
+       * leaves empty.
        */
       style={{
+        position: "absolute",
+        top: 14,
+        right: 14,
+        zIndex: 5,
         display: "inline-flex",
         alignItems: "center",
-        gap: 6,
-        padding: "4px 11px",
+        justifyContent: "center",
+        gap: 7,
+        minWidth: 38,
+        height: 38,
+        padding: overview ? "0 13px" : 0,
         borderRadius: 999,
         fontSize: 12.5,
         whiteSpace: "nowrap",
+        background: "var(--graview-float)",
+        boxShadow: "var(--graview-lift-low)",
         ...(overview
           ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
           : {}),
@@ -1258,7 +1306,7 @@ export function OverviewButton() {
     >
       {/* The mark: three kinds and the relations between them, which is what
           the view itself is. */}
-      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 12 12" aria-hidden="true">
         <ellipse
           cx="6"
           cy="6.6"
@@ -1273,7 +1321,9 @@ export function OverviewButton() {
         <circle cx="1.6" cy="7.4" r="1.2" fill="currentColor" opacity="0.75" />
         <circle cx="10.4" cy="7.4" r="1.2" fill="currentColor" opacity="0.75" />
       </svg>
-      Graview
+      {/* Standing in the Graview the control says so, and is the way back;
+          idle it is a quiet glyph with its meaning in the tooltip. */}
+      {overview ? "Graview" : null}
     </button>
   );
 }
@@ -1397,8 +1447,39 @@ export function Trail({
     chips.push({
       key: "focused",
       node: (
-        <button type="button" data-testid="focused" onClick={() => focus(home)} style={chip}>
+        <button
+          type="button"
+          data-testid="focused"
+          // Dropping the focus drops the zoom with it: zoomed into nothing
+          // is not a place.
+          onClick={() => go(withZoom({ ...view, focusId: home }, false))}
+          style={chip}
+        >
           {nameOf(store, focused.id)}
+          <span aria-hidden="true" style={{ opacity: 0.7 }}>
+            ×
+          </span>
+        </button>
+      ),
+    });
+  }
+  /*
+   * ZOOMED IN says so, and offers the way back out. The state is a stop like
+   * the others — Escape backs out of it first, this chip is the visible
+   * version of the same move.
+   */
+  if (view.zoom) {
+    chips.push({
+      key: "zoomed",
+      node: (
+        <button
+          type="button"
+          data-testid="zoomed"
+          onClick={() => go(withZoom(view, false))}
+          title="Zoom back out"
+          style={chip}
+        >
+          zoomed in
           <span aria-hidden="true" style={{ opacity: 0.7 }}>
             ×
           </span>

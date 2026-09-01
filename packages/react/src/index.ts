@@ -25,8 +25,6 @@ export {
 export type { ActivityMark, Attention, Manner, ToolCallLike } from "./activity.js";
 export type { ResolvedViewProps, SceneProps } from "./scene.js";
 
-export { JackedIn } from "./jack-in.js";
-export type { JackedInProps } from "./jack-in.js";
 
 export { useFlagged, useImplicated, useViolations } from "./hooks.js";
 export {

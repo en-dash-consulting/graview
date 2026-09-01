@@ -1,7 +1,6 @@
 import { aggregateId, EMPTY_VIEW, type ViewState } from "@graview/layout";
 import {
   GraviewProvider,
-  JackedIn,
   Scene,
   useGraph,
   useGraview,
@@ -168,9 +167,10 @@ function Shell({
       <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0 }}>
         <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
         <RelationKey<S> />
+        {/* The altitude control, on the picture it controls. */}
+        <OverviewButton />
         <Inspector />
       </div>
-      <JackedIn />
     </div>
   );
 }
@@ -223,17 +223,10 @@ function CommandBar({
       {/* No home crumb: the pressed pill in <Places /> already names the
           place and already goes there. */}
       <Trail home={place.id} />
-      {/* WHERE YOU ARE STANDING, all in one group.
-          Rising to the Graview is a change of place like the others, and it
-          sat at the far right among the buttons that DO things — so the two
-          halves of navigation were at opposite ends of the bar with eight
-          hundred pixels between them. */}
-      <OverviewButton />
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
         <Standing clean="Nothing is out of order" />
-        <ActivityRail calls={calls} />
-        <TidyButton onCall={onCall} />
+        <ActivityRail calls={calls} seat={<TidyButton onCall={onCall} />} />
         <button
           type="button"
           data-testid="scheme"

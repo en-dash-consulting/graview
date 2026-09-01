@@ -38,6 +38,16 @@ export interface ViewState {
    * overview is for.
    */
   readonly overview?: boolean;
+  /**
+   * Zoomed in close: the focus takes most of the scene — most, not all —
+   * and the kinds shelf and any raised relation recede rather than vanish.
+   *
+   * A view state rather than a page, because jacking in used to JUMP: a
+   * modal document over the scene, isolated from every relation the thing
+   * has. A stop interpolates from wherever you were, so going deeper reads
+   * as zooming in and leaving as zooming out, and the back button knows it.
+   */
+  readonly zoom?: boolean;
 }
 
 export const EMPTY_VIEW: ViewState = {
@@ -62,6 +72,7 @@ export function toUrl(state: ViewState): string {
   if (state.focusId) params.set("focus", state.focusId);
   if (state.relation) params.set("relation", state.relation);
   if (state.overview) params.set("overview", "1");
+  if (state.zoom) params.set("zoom", "1");
   if (state.expanded.length > 0) {
     params.set("expand", [...state.expanded].sort().join(","));
   }
@@ -95,6 +106,7 @@ export function fromUrl(url: string): ViewState {
 
   return {
     ...(params.get("overview") === "1" ? { overview: true } : {}),
+    ...(params.get("zoom") === "1" ? { zoom: true } : {}),
     ...(panX !== null && panY !== null ? { pan: { x: panX, y: panY } } : {}),
     focusId: params.get("focus"),
     relation: params.get("relation"),
@@ -125,6 +137,15 @@ export function withRelation(state: ViewState, relation: string | null): ViewSta
 
 export function withOverview(state: ViewState, overview: boolean): ViewState {
   return { ...state, overview };
+}
+
+/** Zoom the focus in close, or back out. */
+export function withZoom(state: ViewState, zoom: boolean): ViewState {
+  if (!zoom) {
+    const { zoom: _drop, ...rest } = state;
+    return rest;
+  }
+  return { ...state, zoom: true };
 }
 
 /**

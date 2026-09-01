@@ -5,6 +5,7 @@ import {
   toUrl,
   withFocus,
   withRelation,
+  withZoom,
   type ViewState,
 } from "@graview/layout";
 import {
@@ -278,6 +279,7 @@ function adjustment(before: ViewState | null, after: ViewState): boolean {
     before.focusId === after.focusId &&
     before.relation === after.relation &&
     (before.overview ?? false) === (after.overview ?? false) &&
+    (before.zoom ?? false) === (after.zoom ?? false) &&
     before.expanded.join(",") === after.expanded.join(",")
   );
 }
@@ -351,12 +353,23 @@ export function useBacktrack(): {
  * and every view has to render correctly both ways.
  */
 export function useJackIn() {
-  const { jackedIn, setJackedIn } = useGraview();
-  const enter = useCallback((id: string) => setJackedIn(id), [setJackedIn]);
-  const exit = useCallback(() => setJackedIn(null), [setJackedIn]);
+  const { view, setView } = useGraview();
+  /*
+   * Jacking in ZOOMS now — it does not jump. The gesture keeps its name and
+   * this hook keeps its contract, but underneath it is ordinary view state:
+   * focus the thing and zoom the scene in close, so entering tweens from
+   * wherever you were and the back button backs out of it. The modal page
+   * this used to open isolated the view from every relation it had.
+   */
+  const enter = useCallback(
+    (id: string) => setView((current) => withZoom({ ...withFocus(current, id), relation: null }, true)),
+    [setView],
+  );
+  const exit = useCallback(() => setView((current) => withZoom(current, false)), [setView]);
+  const jackedIn = view.zoom ? view.focusId : null;
   return useMemo(
-    () => ({ jackedIn, enter, exit, isJackedIn: jackedIn !== null }),
-    [jackedIn, enter, exit],
+    () => ({ jackedIn, enter, exit, isJackedIn: view.zoom === true }),
+    [jackedIn, enter, exit, view.zoom],
   );
 }
 
