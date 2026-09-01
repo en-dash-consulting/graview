@@ -12,7 +12,7 @@ tags:
   - "context-graph"
 source: "Session planning — architecture agreed 2026-08-29"
 startedAt: "2026-08-30T04:55:36.895Z"
-endedAt: "2026-08-31T03:56:24.353Z"
+endedAt: "2026-09-01T03:54:23.991Z"
 acceptanceCriteria:
   - "The household example's week calendar and People relation render as one spatial scene, editable at plane 0"
   - "Clicks, focus and screen-reader access resolve correctly against nodes drawn at depth"
@@ -28,15 +28,16 @@ description: "A framework for building applications where a typed context graph 
 | Title | Status |
 |-------|--------|
 | [Direct manipulation: act in place, travel deliberately](./direct-manipulation-act-in-2b687f/index.md) | completed |
+| [From altitude the Graview reads as a city, not scattered slips](./from-altitude-the-graview-reads-f47fde/index.md) | completed |
 | [Graph core — @graview/core](./graph-core-graview-core/index.md) | completed |
 | [Platform capability validation](./platform-capability-validation/index.md) | completed |
 | [The constellation: the graph seen from outside, and jacking in from it](./the-constellation-the-graph-cb0397/index.md) | completed |
 | [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | completed |
-| [From altitude the Graview reads as a city, not scattered slips](./from-altitude-the-graview-reads-f47fde.md) | in_progress |
 | [The household example port — the acceptance test](./the household example-port-the-acceptance-test.md) | completed |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-layout.md) | completed |
 | [React binding — @graview/react](./react-binding-graview-react.md) | completed |
 | [Spatial renderer — @graview/render](./spatial-renderer-graview-render.md) | completed |
 | [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
 | [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |
+| [The graph also wears a traditional face: a routed webapp derived from the same declaration](./the-graph-also-wears-a-dd174e.md) | pending |
 | [View primitives and the timeline lens](./view-primitives-and-the-timeline-lens.md) | completed |
