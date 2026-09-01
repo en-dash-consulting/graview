@@ -206,6 +206,33 @@ describe("the scene", () => {
   });
 });
 
+describe("a raised crowd", () => {
+  /*
+   * Summary panels need room; a crowd divides the width until they have
+   * none. Below the legibility floor a raised card renders its GLYPH — the
+   * chip that stays readable at any width — which is what the fidelity
+   * axis exists for. the bid-desk example's ten requirements in 130-pixel slivers,
+   * each title wrapped to five lines, is the picture this replaces.
+   */
+  it("drops crowded raised cards to glyph fidelity", () => {
+    const roomy = render(<Scene renderer="dom" />, {
+      ...EMPTY_VIEW,
+      focusId: "week-1",
+      relation: "person",
+    });
+    // Three people across the default 1200 canvas: summaries fit.
+    expect(roomy).not.toContain("data-graview-crowded");
+
+    const crowded = render(
+      <Scene renderer="dom" options={{ width: 380, height: 700 }} />,
+      { ...EMPTY_VIEW, focusId: "week-1", relation: "person" },
+    );
+    // The same people over 380px are slivers: the hosts say so and render
+    // glyphs instead.
+    expect(crowded).toContain("data-graview-crowded");
+  });
+});
+
 describe("zooming in", () => {
   /*
    * Jacking in ZOOMS: the same scene with the focus grown to most of it,

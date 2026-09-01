@@ -350,10 +350,21 @@ export function Scene<S extends AnySchema>({
     setDragging(false);
   };
 
+  /*
+   * A CROWD drops to glyphs. A summary panel needs room, and a raised
+   * relation with many members divides the band until no card has any —
+   * ten titles wrapping to five lines in 130-pixel slivers. Below the
+   * legibility floor a card renders the kind's GLYPH instead, which is
+   * what the fidelity axis is for: legible at any width, still selectable,
+   * still the node.
+   */
+  const crowded = (node: SceneNode) => Math.round(node.plane) === 1 && node.width < 175;
+
   const hosts = frame.nodes.map((node) => (
     <SceneViewHost
       key={node.id}
       node={node}
+      crowded={crowded(node)}
       useDom={useDom}
       touched={touched.has(node.id)}
       {...(activityOf(node) ? { activity: activityOf(node) } : {})}
@@ -448,7 +459,12 @@ export function Scene<S extends AnySchema>({
       onDragEnd={onDragUp}
       swallowClick={swallow}
     >
-      <ResolvedView node={node} mode="scene" selected={selection.includes(node.id)} />
+      <ResolvedView
+        node={node}
+        mode="scene"
+        selected={selection.includes(node.id)}
+        {...(crowded(node) ? { fidelity: "glyph" as const } : {})}
+      />
     </SceneViewHost>
   ));
 
@@ -990,6 +1006,8 @@ interface HostProps {
   readonly node: SceneNode;
   readonly useDom: boolean;
   readonly touched: boolean;
+  /** Too narrow for its plane's fidelity; rendering its glyph instead. */
+  readonly crowded?: boolean;
   /** What just happened here, if anything. Absent on a quiet graph. */
   readonly activity?: ActivityMark;
   readonly scheme: "light" | "dark";
@@ -1023,6 +1041,7 @@ function SceneViewHost({
   node,
   useDom,
   touched,
+  crowded,
   activity,
   scheme,
   canvasWidth,
@@ -1124,6 +1143,7 @@ function SceneViewHost({
        * apart, and lets a person reading the tree know which it is.
        */
       data-graview-nested={node.nestedUnder ?? undefined}
+      data-graview-crowded={crowded || undefined}
       /*
        * A card YOU put there says so. The layout already knows — a pin wins
        * over the computed position — and without the mark there is no way to
