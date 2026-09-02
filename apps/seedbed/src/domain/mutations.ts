@@ -100,6 +100,9 @@ export const harvest = defineMutation("harvest", {
   title: "Harvest it",
   description: "Bring a planting in. It leaves the picture, never the record.",
   subject: { kinds: ["planting"], arg: "plantingId" },
+  // Harvesting writes the status without asking for it; said, so the
+  // status is offered as this act where it is shown.
+  writes: ["status"],
   input: z.object({ plantingId: nodeRef(["planting"]) }),
   describe: (args, graph) => `Harvest ${nameOf(graph as Reader, args.plantingId)}`,
   apply(ctx, args) {

@@ -112,6 +112,18 @@ export interface NodeDefinitionSpec<
    * ISO date after which the node has expired (effectivity's `until`).
    */
   readonly lifecycle?: LifecycleDeclaration;
+  /**
+   * Fields that NEVER change once set, and why.
+   *
+   * A field you could set at creation, you can change: every settable field
+   * no declared mutation writes is covered by a derived edit act per kind
+   * (`edit-<kind>`), so nothing is frozen by accident. Opting OUT is this
+   * declaration — the field name, and the sentence that says why it is not
+   * yours to change ("the client's words, as sent"). The reason is the
+   * documentation: a reader of the schema learns the field is fixed on
+   * purpose, and `graview check` stops asking who writes it.
+   */
+  readonly fixed?: Readonly<Record<string, string>>;
 }
 
 export interface LifecycleDeclaration {

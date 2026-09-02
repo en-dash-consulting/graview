@@ -49,6 +49,19 @@ agent tool that walks the graph.
    loud. If that is not what you meant, see `graview-invariant` for the rule
    shape and add at least one mutation whose `subject.kinds` includes it.
 
+6. **Let the fields be changed, or say why not.** A field you could set at
+   creation, you can change: every settable field no mutation writes is
+   covered by a derived act per kind (`edit-<kind>`, "Change the drill"),
+   editable where it is shown and logged like any other. Two declarations
+   shape it. `writes: ["done"]` on a mutation says which fields it sets when
+   its arguments do not (`finish()` writing `done`) — and a mutation whose
+   argument merely shares a field's name should say `writes: []`. `fixed:
+   { text: "the client's words, as sent" }` on the kind says a field never
+   changes, and why; the sentence is the documentation. The checker warns
+   `field-without-writer` when a field is still out of everyone's reach,
+   and refuses `writes-unknown-field`, `fixed-unknown-field` and a
+   `fixed-but-written` contradiction.
+
 ## Worked examples
 
 - `the coaching example/src/domain/schema.ts` — ten kinds, including a `rule` kind whose

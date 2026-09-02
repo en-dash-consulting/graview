@@ -34,7 +34,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Graph core — @graview/core](./graph-core-graview-core-e1153e/index.md) | completed |
 | [Platform capability validation](./platform-capability-validation-23d227/index.md) | completed |
 | [The constellation: the graph seen from outside, and jacking in from it](./the-constellation-the-graph-cb0397/index.md) | completed |
-| [A field you could set at creation, you can change: derived edits, RBAC-scoped](./a-field-you-could-set-at-2e35a5.md) | pending |
+| [A field you could set at creation, you can change: derived edits, RBAC-scoped](./a-field-you-could-set-at-2e35a5.md) | completed |
 | [A relation you can make but never unmake: edge symmetry, checked and offered](./a-relation-you-can-make-but-9e0c68.md) | completed |
 | [An empty app is an onboarding: the blank-graph example](./an-empty-app-is-an-onboarding-5a35eb.md) | completed |
 | [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | completed |

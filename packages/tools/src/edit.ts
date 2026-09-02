@@ -1,4 +1,11 @@
-import { argShape, nodeRefArgs, type AnySchema, type ArgShape, type Store } from "@graview/core";
+import {
+  argShape,
+  fieldsWrittenBy,
+  nodeRefArgs,
+  type AnySchema,
+  type ArgShape,
+  type Store,
+} from "@graview/core";
 import type { OpenParameter } from "./types.js";
 
 /**
@@ -23,6 +30,18 @@ export interface EditableField {
   /** What sort of answer the field wants, read off the mutation's input. */
   readonly shape: ArgShape;
   /**
+   * Whether the mutation takes the new value as an argument. `rename` does;
+   * `finish` sets `done` without asking — a writer by declaration whose
+   * whole meaning is in its title. A control for the second kind offers the
+   * act, not a text box.
+   */
+  readonly takesValue: boolean;
+  /**
+   * Other declared writers of the same field, for a control that must offer
+   * a choice of acts: `done` is written by "Mark it done" AND "Put it back".
+   */
+  readonly alternatives: readonly EditableField[];
+  /**
    * Anything else the mutation needs that the edit cannot supply. Present
    * rather than filtered out: a field editable only by answering a second
    * question is still worth offering, and hiding it would be a lie.
@@ -35,19 +54,23 @@ export interface EditableField {
 /**
  * Which of a node's fields can be edited in place, derived from declarations.
  *
- * The rule: a mutation whose subject accepts this kind, with an input
- * argument named exactly like one of the kind's fields, writes that field.
- * Nothing is wired up per field and no app says anything — `relabelEntity`
- * takes `label`, `rescheduleTrigger` takes `when`, `annotateTrigger` takes
- * `note`, and each of those is already the name of the field it sets.
+ * Two sources, in order of trust. A mutation that DECLARES what it writes
+ * (`writes: ["done"]`) is believed, and only about that — which is how
+ * `finish` and `reopen` stop being invisible writers of `done`. One that
+ * does not is read by name: an input argument named exactly like one of the
+ * kind's fields writes that field — `relabelEntity` takes `label`,
+ * `rescheduleTrigger` takes `when` — with no app saying anything per field.
  *
- * The heuristic is name plus shape, and it is worth being honest about its
- * limit: a mutation taking an argument called `label` that means something
- * other than the subject's own label would be matched wrongly. Nothing here
- * writes anything on its own, though — the edit runs the mutation, the
- * mutation decides, and the invariants judge the result — so the cost of a
- * wrong guess is an action offered that does not do what its name suggests,
- * not a corrupted graph.
+ * The derived edit act (`edit-<kind>`, see `deriveEditMutations` in core)
+ * arrives here like any other mutation, declaring the fields it covers, so
+ * a field you could set at creation is editable where it is shown.
+ *
+ * The name heuristic's limit is worth being honest about: an argument called
+ * `label` that means something other than the subject's own label would be
+ * matched wrongly. Nothing here writes anything on its own — the edit runs
+ * the mutation, the mutation decides, the invariants judge — so the cost of
+ * a wrong guess is an action offered that does not do what its name
+ * suggests, not a corrupted graph. Declaring `writes` removes the guess.
  */
 export function editableFields<S extends AnySchema>(
   store: Store<S>,
@@ -57,9 +80,9 @@ export function editableFields<S extends AnySchema>(
   if (!node) return [];
   const kind = node["kind"] as string;
   const definition = store.schema.tryDefinition(kind);
-  const declared = new Set(Object.keys(definition?.fields.shape ?? {}));
+  if (!definition) return [];
 
-  const found = new Map<string, EditableField>();
+  const candidates = new Map<string, EditableField[]>();
   for (const mutation of store.allMutations()) {
     const subject = mutation.subject;
     if (!subject) continue;
@@ -68,16 +91,8 @@ export function editableFields<S extends AnySchema>(
     if (!accepts) continue;
 
     const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
-    const refs = new Set(nodeRefArgs(mutation.input).map((ref) => ref.name));
-
-    for (const name of Object.keys(shape)) {
-      if (name === subject.arg) continue;
-      // A field, not an argument that happens to name another node.
-      if (!declared.has(name) || refs.has(name)) continue;
-      // First declaration wins, so which mutation edits a field is stable
-      // rather than depending on the order mutations were registered in.
-      if (found.has(name)) continue;
-
+    for (const name of fieldsWrittenBy(mutation, definition)) {
+      const takesValue = name in shape;
       const open: OpenParameter[] = [];
       for (const other of Object.keys(shape)) {
         if (other === subject.arg || other === name) continue;
@@ -98,21 +113,36 @@ export function editableFields<S extends AnySchema>(
           shape: argShape(mutation.input, other),
         });
       }
-
-      found.set(name, {
+      const field: EditableField = {
         field: name,
         mutation: mutation.name,
         title: mutation.title ?? mutation.name,
-        shape: argShape(mutation.input, name),
+        shape: takesValue ? argShape(mutation.input, name) : { type: "unknown" },
+        takesValue,
+        alternatives: [],
         open,
         call: (value) => ({
           name: mutation.name,
-          args: { [subject.arg]: nodeId, [name]: value },
+          args: takesValue
+            ? { [subject.arg]: nodeId, [name]: value }
+            : { [subject.arg]: nodeId },
         }),
-      });
+      };
+      candidates.set(name, [...(candidates.get(name) ?? []), field]);
     }
   }
-  return [...found.values()];
+
+  /*
+   * One control per field. A writer that takes the value is the natural
+   * control and comes first; among equals, declaration order holds, so
+   * which mutation edits a field is stable rather than registration luck.
+   * The rest ride along as alternatives, for a control that offers acts.
+   */
+  return [...candidates.values()].map((writers) => {
+    const ordered = [...writers.filter((w) => w.takesValue), ...writers.filter((w) => !w.takesValue)];
+    const [first, ...rest] = ordered;
+    return { ...first!, alternatives: rest };
+  });
 }
 
 /** Whether an argument may be left out, so it does not count as unanswered. */

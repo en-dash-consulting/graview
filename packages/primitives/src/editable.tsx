@@ -30,7 +30,7 @@ export function EditableValue<S extends AnySchema>({
   const editable = fields.find((candidate) => candidate.field === field);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
-  const input = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
+  const input = useRef<HTMLInputElement | HTMLSelectElement | HTMLButtonElement | null>(null);
 
   // The graph can change underneath an open editor — an agent turn, an undo —
   // and the draft must not silently overwrite it on blur.
@@ -88,6 +88,48 @@ export function EditableValue<S extends AnySchema>({
     if (next === value || next === "" || next === undefined) return;
     commit(editable, next);
   };
+
+  /*
+   * A WRITER THAT TAKES NO VALUE is an act, not a box. `done` is written by
+   * "Mark it done" and "Put it back", neither of which asks anything — so
+   * the value opens onto the acts that would change it, by their own
+   * titles, and choosing one runs it. Escape or a click away leaves it.
+   */
+  if (!editable.takesValue) {
+    const acts = [editable, ...editable.alternatives];
+    return (
+      <span
+        role="group"
+        aria-label={`Change ${field}`}
+        data-graview-field={field}
+        style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") setEditing(false);
+        }}
+      >
+        {acts.map((act, index) => (
+          <button
+            key={act.mutation}
+            type="button"
+            ref={index === 0 ? (input as { current: HTMLButtonElement | null }) : undefined}
+            data-graview-act={act.mutation}
+            onClick={() => {
+              setEditing(false);
+              commit(act, undefined);
+            }}
+            onBlur={(event) => {
+              // Leaving the group, not moving within it, closes it.
+              const next = event.relatedTarget as Node | null;
+              if (!next || !event.currentTarget.parentElement?.contains(next)) setEditing(false);
+            }}
+            style={{ padding: "2px 9px", fontSize: 12, borderRadius: 999 }}
+          >
+            {act.title}
+          </button>
+        ))}
+      </span>
+    );
+  }
 
   return (
     <form

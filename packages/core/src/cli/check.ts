@@ -1,4 +1,11 @@
 import type { GraviewApp } from "../app.js";
+import {
+  deriveEditMutations,
+  editVia,
+  fieldWriters,
+  subjectKindsOf,
+  unwrittenFields,
+} from "../mutations/derive-edits.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { permits, rolesOf } from "../permissions/policy.js";
 import { checkBrandContrast } from "../theme/derive.js";
@@ -34,7 +41,10 @@ export interface CheckResult {
 export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   const findings: Finding[] = [];
   const kinds = new Set<string>(app.schema.kinds as readonly string[]);
-  const mutations = new Map((app.mutations ?? []).map((m) => [m.name, m]));
+  const declaredMutations = app.mutations ?? [];
+  const derivedEdits = deriveEditMutations(app.schema, declaredMutations);
+  // Declared and derived: a grant may name `edit-<kind>`, and a repair may too.
+  const mutations = new Map([...declaredMutations, ...derivedEdits].map((m) => [m.name, m]));
   const invariants = new Map((app.invariants ?? []).map((i) => [i.name, i]));
 
   const add = (f: Finding) => findings.push(f);
@@ -386,6 +396,86 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
   }
 
+  /*
+   * A FIELD YOU COULD SET AT CREATION, YOU CAN CHANGE — and when you cannot,
+   * the declaration says why.
+   *
+   * Every settable field nobody writes is covered by the derived edit act,
+   * so a field is out of reach only when that act is: under a policy that
+   * lets no role write or create the kind, or where an app declared its own
+   * `edit-<kind>` that leaves the field alone. `fixed` is the way to say a
+   * field never changes on purpose; naming a field nothing declares, or one
+   * some act writes anyway, is a contradiction worth hearing about.
+   */
+  {
+    const writers = fieldWriters(app.schema, declaredMutations);
+    const roles = app.policy ? rolesOf(app.policy) : [];
+    for (const definition of app.schema.definitions) {
+      const shape = definition.fields.shape as Record<string, unknown>;
+      for (const [field, why] of Object.entries(definition.fixed ?? {})) {
+        if (!(field in shape)) {
+          add({
+            severity: "error",
+            code: "fixed-unknown-field",
+            where: `defineNode("${definition.kind}").fixed`,
+            message: `Marks "${field}" fixed, which is not in this kind's fields.`,
+            fix: `Point it at one of: ${Object.keys(shape).join(", ")}.`,
+          });
+          continue;
+        }
+        const written = writers.get(definition.kind)?.get(field) ?? [];
+        if (written.length > 0) {
+          add({
+            severity: "warning",
+            code: "fixed-but-written",
+            where: `defineNode("${definition.kind}").fixed.${field}`,
+            message: `"${field}" is marked fixed ("${why}") yet ${written.join(", ")} writes it.`,
+            fix: `Drop it from fixed, or stop ${written.join(" / ")} writing it.`,
+          });
+        }
+      }
+
+      const uncovered = unwrittenFields(app.schema, declaredMutations, definition.kind);
+      if (uncovered.length === 0) continue;
+      const derivedName = `edit-${definition.kind}`;
+      const own = declaredMutations.find((mutation) => mutation.name === derivedName);
+      let reason: string | null = null;
+      if (own) {
+        // The app kept the name; the derivation stood aside.
+        const ownWrites = writers.get(definition.kind) ?? new Map<string, readonly string[]>();
+        if (uncovered.some((field) => !ownWrites.has(field))) {
+          reason = `"${derivedName}" is declared by the app, so no edit act was derived, and it does not write them`;
+        }
+      } else if (app.policy) {
+        const via = editVia(app.schema, declaredMutations, definition.kind);
+        const reachable =
+          via.length > 0 &&
+          (roles.some((role) =>
+            permits(app.policy, { kind: "human", roles: [role] }, derivedName, definition.kind, via).ok,
+          ) ||
+            permits(app.policy, { kind: "human", roles: [] }, derivedName, definition.kind, via).ok);
+        if (!reachable) {
+          reason =
+            via.length === 0
+              ? `no declared act writes or creates a ${definition.kind}, so the derived edit is nobody's`
+              : `no role may run any act that writes or creates a ${definition.kind} (${via.join(", ")}), so the derived edit is out of everyone's reach`;
+        }
+      }
+      if (reason === null) continue;
+      for (const field of uncovered) {
+        add({
+          severity: "warning",
+          code: "field-without-writer",
+          where: `defineNode("${definition.kind}").fields.${field}`,
+          message: `"${field}" is set when a ${definition.kind} is made and nothing can ever change it — ${reason}.`,
+          fix:
+            `Declare writes: ["${field}"] on the act that changes it (and grant that act), ` +
+            `or mark it fixed: { ${field}: "why it never changes" } on defineNode("${definition.kind}").`,
+        });
+      }
+    }
+  }
+
   const titles = new Map<string, string>();
   for (const mutation of app.mutations ?? []) {
     /*
@@ -413,6 +503,32 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
           });
         }
       }
+    }
+    /*
+     * A mutation that SAYS what it writes is believed about it — so what it
+     * says has to exist. A field name no subject kind declares is a typo the
+     * in-place edit would silently offer nothing for.
+     */
+    for (const field of mutation.writes ?? []) {
+      const subjectKinds = subjectKindsOf(app.schema, mutation);
+      const onSome = subjectKinds.some((kind) => {
+        const shape = app.schema.tryDefinition(kind)?.fields.shape as Record<string, unknown> | undefined;
+        return shape !== undefined && field in shape;
+      });
+      if (onSome) continue;
+      add({
+        severity: "error",
+        code: "writes-unknown-field",
+        where: `defineMutation("${mutation.name}").writes`,
+        message:
+          subjectKinds.length === 0
+            ? `Claims to write "${field}", but declares no subject to write it on.`
+            : `Claims to write "${field}", which none of its subject kinds (${subjectKinds.join(", ")}) declares.`,
+        fix:
+          subjectKinds.length === 0
+            ? "Declare a subject, or drop writes."
+            : `Use a field of ${subjectKinds.join(" / ")}, or drop it from writes.`,
+      });
     }
     for (const created of mutation.creates ?? []) {
       if (!kinds.has(created as string)) {

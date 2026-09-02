@@ -23,9 +23,44 @@ export function permits(
   principal: Principal,
   mutation: string,
   kind?: string,
+  /**
+   * Declared mutations any ONE of which being permitted permits this one.
+   * How a derived edit act is judged: whoever may already change or make a
+   * kind may change what was set when it was made — the policy's own grants,
+   * read again, rather than a second list.
+   */
+  via?: readonly string[],
 ): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
   // No policy means permission is not a concern in this installation.
   if (!policy) return { ok: true };
+
+  /*
+   * A derived act is permitted when the policy names it (or says `*`) —
+   * the grants are read first, as for any act — and otherwise when any of
+   * the declared acts it rides is permitted for this principal on this kind.
+   */
+  if (via !== undefined) {
+    if (permits(policy, principal, mutation, kind).ok) return { ok: true };
+    if (via.some((name) => permits(policy, principal, name, kind).ok)) return { ok: true };
+    const wouldNeed = [
+      ...new Set(via.flatMap((name) => rolesWhoCould(policy, name, kind))),
+    ].sort();
+    const who =
+      via.length === 0
+        ? "no declared act writes or creates it, so no role can"
+        : wouldNeed.length === 0
+          ? "no role can"
+          : `${wouldNeed.length === 1 ? "" : "one of "}${wouldNeed.join(", ")} can`;
+    return {
+      ok: false,
+      refusal: {
+        mutation,
+        ...(kind === undefined ? {} : { kind }),
+        wouldNeed,
+        message: `Not permitted: ${mutation}${kind ? ` on a ${kind}` : ""} — ${who}.`,
+      },
+    };
+  }
 
   for (const grant of policy.grants) {
     if (!grantsTo(grant, principal)) continue;
