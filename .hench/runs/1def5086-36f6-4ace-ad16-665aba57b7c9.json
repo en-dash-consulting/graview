@@ -1,0 +1,28 @@
+{
+  "id": "1def5086-36f6-4ace-ad16-665aba57b7c9",
+  "taskId": "9d2ea790-cfb3-4d71-ba98-74b1a7dbf2f4",
+  "taskTitle": "The pages face reads like a product's own site, not a back office",
+  "startedAt": "2026-09-02T05:36:02.163Z",
+  "finishedAt": "2026-09-02T05:36:02.163Z",
+  "status": "completed",
+  "turns": 381,
+  "summary": "Redesigned @graview/pages defaults (masthead, front page, lists, records, problems) from the declaration; hueFor to core; the bid-desk example pages face",
+  "tokenUsage": {
+    "input": 33588,
+    "output": 252707,
+    "cacheCreationInput": 520337,
+    "cacheReadInput": 213020520
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 33588,
+    "output": 252707,
+    "cached": 213540857,
+    "total": 213827152
+  }
+}
