@@ -224,3 +224,22 @@ export function checkBrandContrast(
     checkContrast(schemes[scheme]).map((finding) => ({ ...finding, scheme })),
   );
 }
+
+
+/**
+ * Stable hue per kind — THE thread of kind identity across every surface:
+ * chip dots, legend swatches, district roofs, the focus tag, a page's
+ * kind mark. A brand that declares a kind's hue (`accents`) wins over the
+ * hash. Returned as a fraction of a turn (0..1), as every renderer here
+ * consumes it. Lives beside the brand because the brand is what overrides it.
+ */
+export function hueFor(kind: string, accents?: Readonly<Record<string, number>>): number {
+  const declared = accents?.[kind];
+  if (declared !== undefined) return (((declared % 360) + 360) % 360) / 360;
+  let h = 2166136261;
+  for (let i = 0; i < kind.length; i++) {
+    h ^= kind.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 360) / 360;
+}

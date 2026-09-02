@@ -104,6 +104,7 @@ export { PermissionDeniedError } from "./permissions/types.js";
 export {
   brandFromAccent,
   checkBrandContrast,
+  hueFor,
 } from "./theme/derive.js";
 export type { AccentBrandOptions, DerivedBrand, RefusedBrand } from "./theme/derive.js";
 export {

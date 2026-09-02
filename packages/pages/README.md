@@ -25,5 +25,13 @@ this package serves lists, records, forms, problems and history as ordinary link
   (390×844): no sideways scroll, named links, labelled controls, and a derived form that
   actually applies.
 
+- **It reads like the product's own site.** The default pages open with the thing itself —
+  the installation's name and a summary in its own declared words on the front page, the
+  plural and its description on a list, the record's title and its kind's `describe` on a
+  record — with controls receding below the content. Typography rides the brand's display
+  and body faces at a real scale; the brand's mark, name and per-kind accents (`hueFor`,
+  from `@graview/core`) carry through every page. Still derivation: nothing here is a
+  per-app template, and an app overrides a cell the same way it overrides a view.
+
 The host applies `themeCss` from `@graview/primitives` (or supplies its own `--graview-*`
 tokens); the default pages render entirely from those tokens.

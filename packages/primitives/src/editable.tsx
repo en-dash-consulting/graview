@@ -73,6 +73,9 @@ export function EditableValue<S extends AnySchema>({
           display: "inline-flex",
           alignItems: "flex-end",
           minHeight: 24,
+          // And at least as wide: a two-letter value ("No") that became a
+          // control when its field gained a writer is still a target.
+          minWidth: 24,
           paddingBottom: 1,
           borderBottom: "1px dashed var(--graview-edge-bright)",
           color: "var(--graview-ink)",

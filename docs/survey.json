@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-02T02:04:30.184Z",
-  "engine": "chromium",
+  "at": "2026-09-02T05:31:01.338Z",
+  "engine": "firefox",
   "shots": [
     {
       "app": "todo",
@@ -120,9 +120,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 940,
+      "contentBottom": 1436,
       "contentRight": 1560,
-      "verticalFill": 100,
+      "verticalFill": 153,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -138,9 +138,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1312,
+      "contentBottom": 1275,
       "contentRight": 1560,
-      "verticalFill": 140,
+      "verticalFill": 136,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -282,9 +282,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 940,
+      "contentBottom": 1436,
       "contentRight": 1560,
-      "verticalFill": 100,
+      "verticalFill": 153,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -300,9 +300,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1312,
+      "contentBottom": 1275,
       "contentRight": 1560,
-      "verticalFill": 140,
+      "verticalFill": 136,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-02T03:50:52.261Z",
+  "at": "2026-09-02T05:34:11.245Z",
   "engine": "chromium",
   "screens": [
     {
@@ -39,7 +39,7 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x435",
+        "size": "236x492",
         "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Finish it★Give it a new date …"
       }
     },
@@ -68,8 +68,8 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x395",
-        "text": "×⚠ Was due 2026-08-28Finish it★Give it a new date …☆Put it back☆Rename …☆Block time for it"
+        "size": "236x453",
+        "text": "×⚠ Was due 2026-08-28Finish it★Give it a new date …☆Change the task☆Put it back☆Rename …☆B"
       }
     },
     {
@@ -107,10 +107,10 @@
       "board": [],
       "fill": 61,
       "inspector": {
-        "shown": 8,
+        "shown": 9,
         "hidden": 0,
-        "size": "236x302",
-        "text": "Angie schoolblock· double-click opens×Rename …☆Retime block …☆its tiesSkip one occurrence "
+        "size": "236x336",
+        "text": "Angie schoolblock· double-click opens×Change the block☆Rename …☆Retime block …☆its tiesSki"
       }
     },
     {
@@ -136,10 +136,10 @@
       "board": [],
       "fill": 30,
       "inspector": {
-        "shown": 8,
+        "shown": 9,
         "hidden": 0,
-        "size": "236x262",
-        "text": "×Rename …☆Retime block …☆its tiesSkip one occurrence …☆Add someone to it …☆Take someone of"
+        "size": "236x296",
+        "text": "×Change the block☆Rename …☆Retime block …☆its tiesSkip one occurrence …☆Add someone to it "
       }
     },
     {
@@ -302,10 +302,10 @@
       "board": [],
       "fill": 62,
       "inspector": {
-        "shown": 6,
+        "shown": 7,
         "hidden": 0,
-        "size": "236x240",
-        "text": "Amaraplayer· double-click opens×Rename …☆its tiesPlay them here …☆Note why this is here …☆"
+        "size": "236x273",
+        "text": "Amaraplayer· double-click opens×Change the player☆Rename …☆its tiesPlay them here …☆Note w"
       }
     },
     {
@@ -319,7 +319,7 @@
       "board": [],
       "fill": 58,
       "inspector": {
-        "shown": 13,
+        "shown": 12,
         "hidden": 0,
         "size": "236x545",
         "text": "Crossing and finishingdrill· double-click opens×⚠ Thursday session plans 65 minutes into 6"
@@ -336,10 +336,10 @@
       "board": [],
       "fill": 29,
       "inspector": {
-        "shown": 6,
+        "shown": 7,
         "hidden": 0,
-        "size": "236x217",
-        "text": "×Rename …☆its tiesPlay them here …☆Note why this is here …☆They no longer play here …☆They"
+        "size": "236x250",
+        "text": "×Change the player☆Rename …☆its tiesPlay them here …☆Note why this is here …☆They no longe"
       }
     },
     {
