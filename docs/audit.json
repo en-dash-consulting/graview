@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-02T02:02:52.836Z",
+  "at": "2026-09-02T03:50:52.261Z",
   "engine": "chromium",
   "screens": [
     {
@@ -39,8 +39,8 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x475",
-        "text": "Pay the deposittask· double-click opens×Was due 2026-08-28⚠ \"Pay the deposit\" was due 2026"
+        "size": "236x435",
+        "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Finish it★Give it a new date …"
       }
     },
     {
@@ -68,8 +68,8 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x435",
-        "text": "×Was due 2026-08-28⚠ \"Pay the deposit\" was due 2026-08-28Finish it★Give it a new date …☆Pu"
+        "size": "236x395",
+        "text": "×⚠ Was due 2026-08-28Finish it★Give it a new date …☆Put it back☆Rename …☆Block time for it"
       }
     },
     {
@@ -168,6 +168,54 @@
     },
     {
       "app": "proposal",
+      "state": "work",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 61,
+      "inspector": null
+    },
+    {
+      "app": "proposal",
+      "state": "response",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 62,
+      "inspector": null
+    },
+    {
+      "app": "proposal",
+      "state": "risks",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 62,
+      "inspector": null
+    },
+    {
+      "app": "proposal",
+      "state": "ratecard",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "repeats": [],
+      "covered": [],
+      "board": [],
+      "fill": 61,
+      "inspector": null
+    },
+    {
+      "app": "proposal",
       "state": "selected",
       "collisions": [],
       "small": [],
@@ -180,7 +228,7 @@
         "shown": 13,
         "hidden": 0,
         "size": "236x545",
-        "text": "Booking flow remediationdeliverable· double-click opens×\"Legacy booking component is untes"
+        "text": "Booking flow remediationdeliverable· double-click opens×⚠ \"Legacy booking component is unt"
       }
     },
     {
@@ -274,7 +322,7 @@
         "shown": 13,
         "hidden": 0,
         "size": "236x545",
-        "text": "Crossing and finishingdrill· double-click opens×Thursday session plans 65 minutes into 60 "
+        "text": "Crossing and finishingdrill· double-click opens×⚠ Thursday session plans 65 minutes into 6"
       }
     },
     {
@@ -308,7 +356,7 @@
         "shown": 14,
         "hidden": 0,
         "size": "236x545",
-        "text": "3 selectedskill · position×Elif is picked at Right midfield but is out — Elif — ankle, and"
+        "text": "3 selectedskill · position×vs Marsden Vale lost 1-2 — \"We could not get out under a press\""
       }
     },
     {

@@ -407,12 +407,36 @@ export function Inspector() {
    */
   const title = selection.length === 1 ? nameOf(store, selection[0]!) : null;
   const trim = (text: string): string => {
-    const quoted = `"${title}"`;
-    if (!title || !text.startsWith(quoted)) return text;
-    const rest = text.slice(quoted.length).trimStart();
+    if (!title) return text;
+    // Quoted or bare: a sentence that OPENS by restating the selected
+    // name says it again three inches under the title.
+    const restated = text.startsWith(`"${title}"`)
+      ? text.slice(title.length + 2)
+      : text.startsWith(title)
+        ? text.slice(title.length)
+        : null;
+    if (restated === null) return text;
+    const rest = restated.trimStart();
     return rest.length === 0 ? text : rest[0]!.toUpperCase() + rest.slice(1);
   };
-  const said = observations.map((observation) => ({ ...observation, text: trim(observation.text) }));
+  /*
+   * A violation is stated ONCE. The invariant provider hands its message
+   * out twice — as an observation, and as the `why` on every repair — so
+   * whenever the repairs' own ⚠ heading is on screen, the observation
+   * restating it is dropped. Where the heading is not shown (the pointer
+   * menu, a violation whose repairs fell past the fold), the observation
+   * remains the one statement of the trouble.
+   */
+  const headed = new Set(
+    atPointer
+      ? []
+      : shown
+          .filter((affordance) => affordance.provider === "invariant")
+          .map((affordance) => affordance.why),
+  );
+  const said = observations
+    .filter((observation) => !headed.has(observation.text))
+    .map((observation) => ({ ...observation, text: trim(observation.text) }));
 
   return (
     <aside
@@ -752,7 +776,8 @@ export function Inspector() {
                     marginTop: index > 0 ? 6 : 0,
                   }}
                 >
-                  {section.tone === "violation" ? "⚠ " : ""}{section.heading}
+                  {section.tone === "violation" ? "⚠ " : ""}
+                  {section.tone === "violation" ? trim(section.heading) : section.heading}
                 </li>
               ) : index > 0 ? (
                 <li

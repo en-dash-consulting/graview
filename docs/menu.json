@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-02T01:53:28.674Z",
+  "at": "2026-09-02T03:52:44.293Z",
   "engine": "chromium",
   "checks": {
     "filterOnlyPastTheFold": {
@@ -36,7 +36,7 @@
         "plan-it"
       ],
       "headings": [
-        "⚠ \"Pay the deposit\" was due 2026-08-28",
+        "⚠ Was due 2026-08-28",
         "pinned",
         "its ties"
       ],
