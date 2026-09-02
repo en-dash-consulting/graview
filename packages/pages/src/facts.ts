@@ -76,12 +76,19 @@ export function recordFacts<S extends AnySchema>(
     const other = store.graph.getNode(otherId);
     if (!other) continue;
     const key = `${edge.kind}|${direction}`;
+    /*
+     * The caption, from the end that declared the edge — its `description`
+     * read from the declaring side, its `inverse` read from the other end,
+     * because one sentence does not work in both places ("the tasks on this
+     * list" is not what a task is to its list). Without an inverse, the
+     * declaring side's words are still better than none.
+     */
     const declaredOn = direction === "out" ? definition : store.schema.tryDefinition(other.kind);
-    const description = (
-      declaredOn?.edges as
-        | Record<string, { description?: string }>
-        | undefined
-    )?.[edge.kind]?.description;
+    const declaration = (
+      declaredOn?.edges as Record<string, { description?: string; inverse?: string }> | undefined
+    )?.[edge.kind];
+    const description =
+      direction === "in" ? (declaration?.inverse ?? declaration?.description) : declaration?.description;
     const group =
       groups.get(key) ??
       (() => {

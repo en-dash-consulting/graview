@@ -1,10 +1,10 @@
 {
-  "at": "2026-09-02T01:54:31.682Z",
+  "at": "2026-09-02T05:23:13.178Z",
   "engines": {
     "chromium": {
       "audit": {
         "ok": true,
-        "screens": 26
+        "screens": 30
       },
       "direct": {
         "ok": true
@@ -20,7 +20,7 @@
     "webkit": {
       "audit": {
         "ok": true,
-        "screens": 26
+        "screens": 30
       },
       "direct": {
         "ok": true
@@ -36,7 +36,7 @@
     "firefox": {
       "audit": {
         "ok": true,
-        "screens": 26
+        "screens": 30
       },
       "direct": {
         "ok": true
@@ -54,6 +54,8 @@
     "ok": true,
     "registeredPropertiesDisabled": true,
     "gridOpacityAt250ms": "0",
+    "markWingOpacityAt250ms": "0",
+    "controlLabelAt250ms": "Focus",
     "overviewReached": true
   },
   "capability": {

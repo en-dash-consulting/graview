@@ -1,0 +1,28 @@
+{
+  "id": "e63d1306-b833-4d91-90d4-908217b1d68f",
+  "taskId": "2e35a59d-ada4-4a0d-991c-663334d1daf8",
+  "taskTitle": "A field you could set at creation, you can change: derived edits, RBAC-scoped",
+  "startedAt": "2026-09-02T05:09:21.949Z",
+  "finishedAt": "2026-09-02T05:09:21.949Z",
+  "status": "completed",
+  "turns": 79,
+  "summary": "Derived edit-<kind> acts, writes/fixed declarations, policy via writers/creators, field-without-writer check, editableFields by declaration",
+  "tokenUsage": {
+    "input": 82196,
+    "output": 208683,
+    "cacheCreationInput": 368822,
+    "cacheReadInput": 32084064
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 82196,
+    "output": 208683,
+    "cached": 32452886,
+    "total": 32743765
+  }
+}

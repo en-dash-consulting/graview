@@ -54,7 +54,16 @@ function Control<S extends AnySchema>({
   if (spec.name in prefilled && spec.control !== "group" && spec.control !== "variant") {
     return null;
   }
-  const title = humaniseField(spec.name) + (spec.optional ? "" : " *");
+  /*
+   * A node picker is labelled by what it PICKS — "List", not "List id": the
+   * argument's name is an implementation detail, and the kinds it accepts
+   * are the declaration's own word for the thing.
+   */
+  const named =
+    spec.control === "node" && !spec.kinds.includes("*")
+      ? spec.kinds.map((kind) => humaniseField(kind)).join(" or ")
+      : humaniseField(spec.name);
+  const title = named + (spec.optional ? "" : " *");
 
   switch (spec.control) {
     case "text":
