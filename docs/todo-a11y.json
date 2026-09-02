@@ -1,0 +1,266 @@
+{
+  "at": "2026-09-02T15:03:22.530Z",
+  "browser": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+  "flags": [
+    "--enable-blink-features=CanvasDrawElement",
+    "--enable-unsafe-webgpu",
+    "--use-angle=metal",
+    "--force-renderer-accessibility"
+  ],
+  "scheme": "dark",
+  "renderer": "dom",
+  "axNodeCount": 336,
+  "drawnViews": 8,
+  "viewsInAxTree": [
+    {
+      "id": "aggregate:list",
+      "plane": "0",
+      "label": "Lists",
+      "inTree": true
+    },
+    {
+      "id": "kind:list",
+      "plane": "2",
+      "label": "Lists",
+      "inTree": true
+    },
+    {
+      "id": "kind:reason",
+      "plane": "2",
+      "label": "Reasons",
+      "inTree": true
+    },
+    {
+      "id": "kind:rule",
+      "plane": "2",
+      "label": "Rules",
+      "inTree": true
+    },
+    {
+      "id": "kind:task",
+      "plane": "2",
+      "label": "Tasks",
+      "inTree": true
+    },
+    {
+      "id": "reason-deposit",
+      "plane": "1",
+      "label": "reason-deposit",
+      "inTree": true
+    },
+    {
+      "id": "t-deposit",
+      "plane": "0",
+      "label": "t-deposit",
+      "inTree": true
+    },
+    {
+      "id": "today",
+      "plane": "1",
+      "label": "today",
+      "inTree": true
+    }
+  ],
+  "everyViewExposed": true,
+  "sampleNamesInTree": [
+    "RootWebArea: Things — a Graview example",
+    "button: THINGS",
+    "button: Back",
+    "button: Forward",
+    "group: View",
+    "navigation: View",
+    "link: Pages",
+    "button: Switch to light mode",
+    "button: Graview",
+    "complementary: Inspector",
+    "StaticText: THINGS",
+    "button: The week",
+    "button: The lists",
+    "button: Pay the deposit",
+    "StaticText: Pages",
+    "button: 2 problems",
+    "button: Ask",
+    "button: Activity",
+    "StaticText: Graview",
+    "button: Clear selection",
+    "textbox: Filter actions",
+    "InlineTextBox: THINGS",
+    "StaticText: The week",
+    "StaticText: The lists",
+    "StaticText: Pay the deposit",
+    "InlineTextBox: Pages",
+    "StaticText: 2 problems",
+    "StaticText: Ask",
+    "StaticText: Activity",
+    "group: Lists"
+  ],
+  "listContentExposed": true,
+  "tasksExposed": [
+    "Pay the deposit",
+    "Book the van",
+    "Read the meters"
+  ],
+  "focusOrder": [
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Book the van09-01"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Get the second quote"
+    },
+    {
+      "tag": "header",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "This week5 left"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Give notice on the flat09-02"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Read the meters09-03"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Redirect the post09-03"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Move the broadband09-04"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Hand back the keys09-05"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Order boxes"
+    },
+    {
+      "tag": "header",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Someday3 left"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Take down the shelves"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Touch up the paint"
+    },
+    {
+      "tag": "div",
+      "view": "aggregate:list",
+      "plane": "0",
+      "label": "Find someone who moves pianos"
+    },
+    {
+      "tag": "div",
+      "view": "kind:list",
+      "plane": "2",
+      "label": "Lists"
+    },
+    {
+      "tag": "div",
+      "view": "kind:reason",
+      "plane": "2",
+      "label": "Reasons"
+    },
+    {
+      "tag": "div",
+      "view": "kind:rule",
+      "plane": "2",
+      "label": "Rules"
+    },
+    {
+      "tag": "div",
+      "view": "kind:task",
+      "plane": "2",
+      "label": "Tasks"
+    },
+    {
+      "tag": "div",
+      "view": "reason-deposit",
+      "plane": "1",
+      "label": "reason-deposit"
+    },
+    {
+      "tag": "div",
+      "view": "t-deposit",
+      "plane": "0",
+      "label": "t-deposit"
+    },
+    {
+      "tag": "button",
+      "view": "t-deposit",
+      "plane": "0",
+      "label": "Pay the deposit"
+    },
+    {
+      "tag": "button",
+      "view": "t-deposit",
+      "plane": "0",
+      "label": "No"
+    },
+    {
+      "tag": "button",
+      "view": "t-deposit",
+      "plane": "0",
+      "label": "MON"
+    },
+    {
+      "tag": "button",
+      "view": "t-deposit",
+      "plane": "0",
+      "label": "09:00"
+    },
+    {
+      "tag": "button",
+      "view": "t-deposit",
+      "plane": "0",
+      "label": "09:15"
+    }
+  ],
+  "focusReachedPlanes": [
+    "0",
+    "1",
+    "2"
+  ],
+  "focusReachedViews": [
+    "aggregate:list",
+    "kind:list",
+    "kind:reason",
+    "kind:rule",
+    "kind:task",
+    "reason-deposit",
+    "t-deposit"
+  ],
+  "axe": {
+    "violations": []
+  }
+}

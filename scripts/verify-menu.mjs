@@ -157,7 +157,7 @@ try {
   await page.waitForTimeout(150);
   const after = await offeredOrder(page);
   const headings = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="inspector-strip"] ol li[role="presentation"]')].map(
+    [...document.querySelectorAll('[data-testid="inspector-strip"] ol li[data-graview-heading]')].map(
       (heading) => heading.textContent?.trim(),
     ),
   );
@@ -217,7 +217,7 @@ try {
   const headingsNow = () =>
     page.evaluate(() =>
       [
-        ...document.querySelectorAll('[data-testid="inspector-strip"] ol li[role="presentation"]'),
+        ...document.querySelectorAll('[data-testid="inspector-strip"] ol li[data-graview-heading]'),
       ].map((heading) => heading.textContent?.trim() ?? ""),
     );
   const declaredShown = headed(await headingsNow());

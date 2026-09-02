@@ -30,35 +30,6 @@ const APPS = {
     travelled: async (p) => { await p.dblclick('[data-graview-pick="t-deposit"]'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
   } },
-  the household example: { port: 5190, ready: "__the household exampleReady", states: {
-    home: async () => {},
-    selected: async (p) => { const s = await p.getAttribute("[data-graview-span]", "data-graview-span"); await p.click(`[data-graview-pick="${s}"]`); },
-    raised: async (p) => { await p.click('[data-graview-view="kind:person"]'); },
-    travelled: async (p) => { const s = await p.getAttribute("[data-graview-span]", "data-graview-span"); await p.dblclick(`[data-graview-pick="${s}"]`); },
-    graview: async (p) => { await p.click('[data-testid="overview"]'); },
-  } },
-  proposal: { port: 5191, ready: "__proposalReady", states: {
-    home: async () => {},
-    work: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The work" }).click(); },
-    response: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The response" }).click(); },
-    risks: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The risks" }).click(); },
-    ratecard: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The rate card" }).click(); },
-    selected: async (p) => { const k = await p.getAttribute("[data-graview-pick]", "data-graview-pick"); await p.click(`[data-graview-pick="${k}"]`); },
-    raised: async (p) => { await p.click('[data-graview-view="kind:requirement"]'); },
-    graview: async (p) => { await p.click('[data-testid="overview"]'); },
-  } },
-  the coaching example: { port: 5192, ready: "__the coaching exampleReady", states: {
-    team: async () => {},
-    training: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "What we train" }).click(); },
-    week: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The week" }).click(); },
-    selected: async (p) => { await p.click('[data-graview-pick="p-amara"]'); },
-    // The exact screen the raised-relation collapse was reported from: the
-    // team place with Drills raised, and one drill selected.
-    raised: async (p) => { await p.click('[data-graview-view="kind:drill"]'); await p.waitForTimeout(900); const d = await p.getAttribute('[data-graview-plane="1"]', "data-graview-view"); await p.click(`[data-graview-view="${d}"]`); },
-    travelled: async (p) => { await p.dblclick('[data-graview-pick="p-amara"]'); },
-    problem: async (p) => { await p.click('[data-testid="standing"]'); await p.waitForTimeout(400); await p.click('[data-testid="problems"] li:nth-child(4) button'); },
-    graview: async (p) => { await p.click('[data-testid="overview"]'); },
-  } },
   seedbed: { port: 5194, ready: "__seedbedReady", states: {
     // The empty app's own first screen: a city of districts saying "none yet".
     empty: async () => {},

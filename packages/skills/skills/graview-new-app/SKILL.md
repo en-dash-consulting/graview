@@ -103,7 +103,7 @@ packaging steps you do not need. What earns its place:
   fire on graphs that break them and that their repairs resolve them; that is
   the test that catches a real regression.
 - **An accessibility run, in BOTH schemes.** Copy
-  `the household example/scripts/run-a11y.mjs`. It reads the real accessibility tree
+  `apps/todo/scripts/run-a11y.mjs`. It reads the real accessibility tree
   through CDP and runs axe-core. A light palette that clears AA in the dark is
   the failure this catches, and nothing else will.
 

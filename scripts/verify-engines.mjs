@@ -136,22 +136,6 @@ for (const engine of chosen) {
     : { ok: false, error: `audit wrote no report — ${audit.tail.slice(-300)}` };
   say(`  audit: ${results.audit.ok ? "ok" : "FAIL"} (${results.audit.screens ?? "no"} screens)`);
 
-  say(`  verify-direct-manipulation …`);
-  clearReport("docs/direct-manipulation.json");
-  const direct = await run(["scripts/verify-direct-manipulation.mjs", `--engine=${engine}`]);
-  const directReport = readReport("docs/direct-manipulation.json");
-  const directFailed = Object.entries(directReport?.verdict ?? {})
-    .filter(([, ok]) => !ok)
-    .map(([name]) => name);
-  results.direct = directReport
-    ? {
-        ok: direct.code === 0 && directReport.passed === true,
-        ...(directFailed.length > 0 ? { failed: directFailed } : {}),
-        ...(directReport.error ? { error: directReport.error } : {}),
-      }
-    : { ok: false, error: `direct wrote no report — ${direct.tail.slice(-300)}` };
-  say(`  direct: ${results.direct.ok ? "ok" : `FAIL ${directFailed.join(", ")}`}`);
-
   say(`  verify-pages (390×844 first) …`);
   clearReport("docs/pages-face.json");
   const pages = await run(["scripts/verify-pages.mjs", `--engine=${engine}`]);

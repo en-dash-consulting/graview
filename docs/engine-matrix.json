@@ -1,13 +1,10 @@
 {
-  "at": "2026-09-02T05:23:13.178Z",
+  "at": "2026-09-02T14:58:27.169Z",
   "engines": {
     "chromium": {
       "audit": {
         "ok": true,
-        "screens": 30
-      },
-      "direct": {
-        "ok": true
+        "screens": 9
       },
       "pages": {
         "ok": true
@@ -20,10 +17,7 @@
     "webkit": {
       "audit": {
         "ok": true,
-        "screens": 30
-      },
-      "direct": {
-        "ok": true
+        "screens": 9
       },
       "pages": {
         "ok": true
@@ -36,10 +30,7 @@
     "firefox": {
       "audit": {
         "ok": true,
-        "screens": 30
-      },
-      "direct": {
-        "ok": true
+        "screens": 9
       },
       "pages": {
         "ok": true

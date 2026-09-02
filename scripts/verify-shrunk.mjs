@@ -32,34 +32,20 @@ const repoRoot = resolve(here, "..");
 const GPU_ARGS = ["--enable-unsafe-webgpu", "--use-angle=metal"];
 
 /**
- * Every place worth checking, named the way the app names it.
- *
- * The the coaching example's three are the hard cases — a board, a matrix and a timeline are
- * three genuinely different pictures — and the bid desk is the fourth lens.
- * The household example's week is the one the whole thing started from.
+ * Every place worth checking, named the way the app names it: the example's
+ * two, a list and a week. The product apps run their own copies of this
+ * against a board, a matrix and a calendar in their own repositories.
  */
 const APPS = [
   {
-    name: "the coaching example",
-    port: 5192,
-    ready: "__the coaching exampleReady",
+    name: "todo",
+    port: 5193,
+    ready: "__todoReady",
+    query: "&today=2026-09-01",
     places: [
-      { label: "The team", switchTo: "The team", lens: "board" },
-      { label: "What we train", switchTo: "What we train", lens: "coverage" },
+      { label: "The lists", switchTo: null, lens: null },
       { label: "The week", switchTo: "The week", lens: "timeline" },
     ],
-  },
-  {
-    name: "proposal",
-    port: 5191,
-    ready: "__proposalReady",
-    places: [{ label: "the bid desk", switchTo: null, lens: "coverage" }],
-  },
-  {
-    name: "the household example",
-    port: 5190,
-    ready: "__the household exampleReady",
-    places: [{ label: "the week", switchTo: null, lens: "timeline" }],
   },
 ];
 
@@ -164,7 +150,7 @@ try {
     try {
       for (const scheme of ["dark", "light"]) {
         const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-        await page.goto(`http://localhost:${app.port}/?theme=${scheme}`, { waitUntil: "load" });
+        await page.goto(`http://localhost:${app.port}/?theme=${scheme}${app.query ?? ""}`, { waitUntil: "load" });
         await page.waitForFunction((flag) => flag in window, app.ready, { timeout: 120_000 });
 
         for (const place of app.places) {

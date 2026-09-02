@@ -19,9 +19,8 @@ import {
   useUrlSync,
 } from "@graview/react";
 import { createInAppAdapter, createToolRuntime, type ToolCall } from "@graview/tools";
-import { HouseholdApp } from "the household example/ui";
-import { BidDeskApp } from "the bid-desk example/ui";
-import { CoachingApp } from "the coaching example/ui";
+import { SeedbedApp } from "@graview/seedbed/ui";
+import { TodoApp } from "@graview/todo/ui";
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import { createRoot } from "react-dom/client";
 import { createLauncherStore, type LauncherStore } from "./domain/app.js";
@@ -48,9 +47,8 @@ const MATRIX = aggregateId("app", "capability");
 const HOME: ViewState = { ...EMPTY_VIEW, focusId: MATRIX };
 
 const MOUNTS: Record<string, (props: Record<string, unknown>) => ReactElement> = {
-  the household example: HouseholdApp,
-  proposal: BidDeskApp,
-  the coaching example: CoachingApp,
+  todo: TodoApp,
+  seedbed: SeedbedApp,
 };
 
 /* ------------------------------------------------------------------- theme */
@@ -449,7 +447,7 @@ createRoot(root).render(<Launcher />);
 /*
  * A flag a harness can wait for.
  *
- * The other three apps have one and this did not, so every harness pointed at
+ * The other apps have one and this did not, so every harness pointed at
  * the desk had to wait on a timer and hope — which is how a screenshot of a
  * half-painted page gets taken and believed.
  */

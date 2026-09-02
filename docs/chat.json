@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-02T05:19:25.896Z",
+  "at": "2026-09-02T14:57:23.683Z",
   "engine": "chromium",
   "checks": {
     "closedByDefault": {
@@ -45,12 +45,6 @@
     "keySurvivesRungSwitch": {
       "source": "graph",
       "key": "k-test",
-      "ok": true
-    },
-    "refusalIsAResult": {
-      "proposed": true,
-      "verdict": "Refused: Not permitted: select-player on a position — coach can.",
-      "untouched": true,
       "ok": true
     }
   },

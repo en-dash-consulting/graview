@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { householdApp } from "the household example";
-import { coachingApp } from "the coaching example";
+import { seedbedApp } from "@graview/seedbed";
+import { todoApp } from "@graview/todo";
 import { createLauncherStore, launcherApp } from "../../src/domain/app.js";
 import { APPS, CAPABILITIES, surfaceOf } from "../../src/domain/survey.js";
 
@@ -24,19 +24,19 @@ describe("the desk is an app, not just a scene", () => {
     // Nothing is written down twice: an app that gains a lens shows it here
     // without anyone editing a list.
     const store = createLauncherStore();
-    const the coaching example = store.graph.getNode("the coaching example")!;
-    const counted = surfaceOf(coachingApp as never);
-    expect(the coaching example["kinds"]).toBe(counted.kinds);
-    expect(the coaching example["rules"]).toBe(counted.rules);
-    expect(counted.kinds).toBe(coachingApp.schema.kinds.length);
+    const todo = store.graph.getNode("todo")!;
+    const counted = surfaceOf(todoApp as never);
+    expect(todo["kinds"]).toBe(counted.kinds);
+    expect(todo["rules"]).toBe(counted.rules);
+    expect(counted.kinds).toBe(todoApp.schema.kinds.length);
   });
 
   it("decides every capability by looking, never by remembering", () => {
     const timeline = CAPABILITIES.find((item) => item.id === "cap-timeline")!;
-    expect(timeline.holds(householdApp as never)).toBe(true);
+    expect(timeline.holds(todoApp as never)).toBe(true);
+    expect(timeline.holds(seedbedApp as never)).toBe(false);
     const board = CAPABILITIES.find((item) => item.id === "cap-board")!;
-    expect(board.holds(householdApp as never)).toBe(false);
-    expect(board.holds(coachingApp as never)).toBe(true);
+    expect(board.holds(todoApp as never)).toBe(false);
   });
 });
 
@@ -49,13 +49,13 @@ describe("what is in front of you lives in the graph", () => {
   it("opens an app by running a mutation", () => {
     const store = createLauncherStore();
     expect(store.graph.out("desk", "showing")).toHaveLength(0);
-    store.apply({ name: "show-app", args: { appId: "the coaching example" } });
-    expect(store.graph.out("desk", "showing").map((node) => node.id)).toEqual(["the coaching example"]);
+    store.apply({ name: "show-app", args: { appId: "todo" } });
+    expect(store.graph.out("desk", "showing").map((node) => node.id)).toEqual(["todo"]);
   });
 
   it("records who opened it, and lets it be undone", () => {
     const store = createLauncherStore();
-    store.apply({ name: "show-app", args: { appId: "the coaching example" } }, { author: { kind: "human" } });
+    store.apply({ name: "show-app", args: { appId: "todo" } }, { author: { kind: "human" } });
     const batch = store.batches().at(-1)!;
     expect(batch.author.kind).toBe("human");
     expect(batch.intent).toContain("Open");
@@ -65,14 +65,14 @@ describe("what is in front of you lives in the graph", () => {
 
   it("shows one app at a time, so switching is one gesture", () => {
     const store = createLauncherStore();
-    store.apply({ name: "show-app", args: { appId: "the coaching example" } });
-    store.apply({ name: "show-app", args: { appId: "proposal" } });
-    expect(store.graph.out("desk", "showing").map((node) => node.id)).toEqual(["proposal"]);
+    store.apply({ name: "show-app", args: { appId: "todo" } });
+    store.apply({ name: "show-app", args: { appId: "seedbed" } });
+    expect(store.graph.out("desk", "showing").map((node) => node.id)).toEqual(["seedbed"]);
   });
 
   it("seeds itself from a link, so a shared URL lands where it says", () => {
-    const store = createLauncherStore("the household example");
-    expect(store.graph.out("desk", "showing").map((node) => node.id)).toEqual(["the household example"]);
+    const store = createLauncherStore("seedbed");
+    expect(store.graph.out("desk", "showing").map((node) => node.id)).toEqual(["seedbed"]);
   });
 });
 
@@ -83,15 +83,16 @@ describe("the desk can say the framework is wrong", () => {
     expect(unused.message).toContain("maintained for nobody");
   });
 
-  it("says a lens with one user is unproven — about the lens written last", () => {
+  it("says a lens with one user is unproven", () => {
     /*
      * The argument this whole exercise has been making out loud, enforced
-     * rather than asserted. It fires on the board lens today, and the honest
-     * thing is to let it say so rather than soften the rule until it passes.
+     * rather than asserted. With the product apps in their own repositories
+     * it fires on the timeline — only the todo example binds it here — and
+     * the honest thing is to let it say so rather than soften the rule.
      */
     const store = createLauncherStore();
     const unproven = store.violations().find((v) => v.invariant === "a-lens-needs-two-users")!;
-    expect(unproven.message).toContain("Board lens");
+    expect(unproven.message).toContain("Timeline lens");
     expect(unproven.message).toContain("one user does not prove a lens");
   });
 
@@ -100,16 +101,19 @@ describe("the desk can say the framework is wrong", () => {
     const before = store.violations().length;
     store.apply({
       name: "justify",
-      args: { id: "cap-board", text: "Proven against a seating plan in the lens's own tests." },
+      args: { id: "cap-timeline", text: "Proven by a household week and a coaching week, in their own repositories." },
     });
     const after = store.violations();
     expect(after).toHaveLength(before - 1);
     expect(after.some((v) => v.invariant === "a-lens-needs-two-users")).toBe(false);
   });
 
-  it("passes its own third rule, because every app here declares a lens", () => {
+  it("names the app whose main picture is bespoke, because it declares no lens", () => {
+    // The empty example draws its garden itself, and the desk says so
+    // rather than letting a rule pass by omission.
     const store = createLauncherStore();
-    expect(store.violations().some((v) => v.invariant === "every-app-uses-a-lens")).toBe(false);
-    expect(APPS).toHaveLength(3);
+    const bespoke = store.violations().find((v) => v.invariant === "every-app-uses-a-lens")!;
+    expect(bespoke.message).toContain("Seedbed");
+    expect(APPS).toHaveLength(2);
   });
 });

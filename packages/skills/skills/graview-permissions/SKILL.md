@@ -67,10 +67,11 @@ yesterday and now the button is gone.
 
 ## Worked examples
 
-- `the coaching example/src/domain/policy.ts` — three roles at a football club, and the
-  line between training and selection drawn by subject kind
-- `the coaching example/src/ui/app.tsx` — the seat switcher, and the principal reaching
-  the provider
+- `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation
+  and by subject kind, and the refusal that names who could
+- `packages/tools/tests/unit/affordances.test.ts` — a guarded store: what a
+  principal is offered, what is withheld and said, and how the agent seat
+  narrows with it
 
 ## Then find out whether it worked
 
