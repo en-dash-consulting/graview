@@ -210,16 +210,30 @@ async function verifyAltitudeCut() {
     const cut = await page.evaluate(() => {
       const ground = document.querySelector(".graview-ground");
       if (!ground) return { grid: "missing" };
+      // The control's mark rides the same property, so it must cut too:
+      // the wings already gone, the label already the way back down.
+      const control = document.querySelector('[data-testid="overview"]');
+      const wing = control?.querySelector(".graview-altitude-mark-wing");
       return {
         grid: getComputedStyle(ground, "::before").opacity,
         altitude: getComputedStyle(ground).getPropertyValue("--graview-altitude").trim(),
         overview: document.querySelector("[data-graview-altitude]") !== null,
+        markWing: wing ? getComputedStyle(wing).opacity : "missing",
+        controlLabel: control?.textContent.trim() ?? null,
       };
     });
     return {
-      ok: unsupported && cut.grid === "0" && cut.overview && errors.length === 0,
+      ok:
+        unsupported &&
+        cut.grid === "0" &&
+        cut.overview &&
+        cut.markWing === "0" &&
+        cut.controlLabel === "Focus" &&
+        errors.length === 0,
       registeredPropertiesDisabled: unsupported,
       gridOpacityAt250ms: cut.grid,
+      markWingOpacityAt250ms: cut.markWing,
+      controlLabelAt250ms: cut.controlLabel,
       overviewReached: cut.overview,
       ...(errors.length > 0 ? { pageErrors: errors.slice(0, 5) } : {}),
     };

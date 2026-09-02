@@ -1620,24 +1620,40 @@ export function BackOut({ home }: { readonly home: string | null }) {
 }
 
 /**
- * The way out to the Graview, and back.
+ * The way out to the Graview, and back — one control, two directions.
  *
  * The framework's own name for the view of the whole thing, which is the
  * right name: everything else here is a lens over part of the graph, and this
- * is the graph. A small mark at the foot of the scene rather than a labelled
- * control in the bar — it is a change of altitude, not a command, and the bar
- * is for what you are doing rather than where you are standing.
+ * is the graph. It is a TOGGLE and presents as one: labelled "Graview" from
+ * the ground (the place it takes you) and "Focus" from altitude (the way back
+ * down), with the pressed state saying the same thing to a screen reader.
+ *
+ * THE MARK MORPHS. The scene's own rising is a morph rather than a cut — the
+ * grid dissolves into the iso lattice, the districts grow out of their cards,
+ * all riding one registered number. The control sits beside the scene rather
+ * than inside it, so it carries its OWN copy of that number, transitioned on
+ * the same 640ms curve (`.graview-altitude-control` in the theme): the three
+ * kinds on their ring gather into one node inside one ring as the scene
+ * rises, and open back out as it lands. Where an engine cannot register the
+ * property the scene cuts, and so does the mark — the same mechanism, so they
+ * cannot disagree.
  */
 export function OverviewButton() {
   const { view, go } = useNavigation();
   const overview = view.overview ?? false;
+  const label = overview ? "Focus" : "Graview";
   return (
     <button
       type="button"
       data-testid="overview"
+      className="graview-altitude-control"
       aria-pressed={overview}
-      aria-label={overview ? "Back into the view" : "See the Graview"}
-      title={overview ? "Back into the view" : "The Graview — the whole thing, from outside"}
+      aria-label={label}
+      title={
+        overview
+          ? "Focus — back down into the view"
+          : "Graview — the whole thing, from outside"
+      }
       // A view state, so it is a URL, the back button works, and the cards
       // already on screen fly out into the ring rather than being replaced.
       onClick={() => go(withOverview(view, !overview))}
@@ -1650,8 +1666,7 @@ export function OverviewButton() {
        * command bar, where it spent prime chrome on a control that is about
        * the CANVAS, not the app. The bar is for what the app is; rising and
        * descending is something you do to the picture, so the control sits
-       * on the picture — quiet, glyph-first, in the one corner every state
-       * leaves empty.
+       * on the picture — quiet, in the one corner every state leaves empty.
        */
       style={{
         position: "absolute",
@@ -1662,23 +1677,32 @@ export function OverviewButton() {
         alignItems: "center",
         justifyContent: "center",
         gap: 7,
-        minWidth: 38,
         height: 38,
-        padding: overview ? "0 13px" : 0,
+        padding: "0 13px 0 11px",
         borderRadius: 999,
         fontSize: 12.5,
         whiteSpace: "nowrap",
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-low)",
+        // The number the mark rides. Inline, like the ground's own, so the
+        // theme's transition on the class carries it between the two.
+        ["--graview-altitude" as string]: overview ? 1 : 0,
         ...(overview
           ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
           : {}),
       }}
     >
-      {/* The mark: three kinds and the relations between them, which is what
-          the view itself is. */}
-      <svg width="16" height="16" viewBox="0 0 12 12" aria-hidden="true">
+      {/* The mark: three kinds and the relations between them — the Graview —
+          which gather into one node in one ring — the focus — as you rise. */}
+      <svg
+        className="graview-altitude-mark"
+        width="16"
+        height="16"
+        viewBox="0 0 12 12"
+        aria-hidden="true"
+      >
         <ellipse
+          className="graview-altitude-mark-ring"
           cx="6"
           cy="6.6"
           rx="5"
@@ -1686,15 +1710,28 @@ export function OverviewButton() {
           fill="none"
           stroke="currentColor"
           strokeWidth="0.9"
-          opacity="0.55"
         />
-        <circle cx="6" cy="4" r="1.5" fill="currentColor" />
-        <circle cx="1.6" cy="7.4" r="1.2" fill="currentColor" opacity="0.75" />
-        <circle cx="10.4" cy="7.4" r="1.2" fill="currentColor" opacity="0.75" />
+        <circle className="graview-altitude-mark-apex" cx="6" cy="4" r="1.5" fill="currentColor" />
+        <circle
+          className="graview-altitude-mark-wing"
+          data-side="left"
+          cx="1.6"
+          cy="7.4"
+          r="1.2"
+          fill="currentColor"
+        />
+        <circle
+          className="graview-altitude-mark-wing"
+          data-side="right"
+          cx="10.4"
+          cy="7.4"
+          r="1.2"
+          fill="currentColor"
+        />
       </svg>
-      {/* Standing in the Graview the control says so, and is the way back;
-          idle it is a quiet glyph with its meaning in the tooltip. */}
-      {overview ? "Graview" : null}
+      {/* Where it takes you, in a word: the place from the ground, the way
+          back from altitude. */}
+      <span className="graview-altitude-label">{label}</span>
     </button>
   );
 }

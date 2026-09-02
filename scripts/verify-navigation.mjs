@@ -120,6 +120,40 @@ try {
   await page.click('[data-testid="focused"]');
   await page.waitForTimeout(600);
   await note(page, "home by breadcrumb");
+
+  /*
+   * The altitude control is a TOGGLE, and says which way it goes.
+   *
+   * "Graview" from the ground, "Focus" from altitude, aria state agreeing
+   * with the word — and the mark morphs between its two states on the
+   * scene's own curve rather than being swapped. Sampled mid-transition on
+   * the way back down: a mark caught between its states is morphing; one
+   * already at its end is cutting. Which of those is RIGHT depends on the
+   * engine: where the property registers, the scene morphs and so must the
+   * mark; where it cannot, the scene cuts and the mark must cut with it.
+   */
+  const control = () =>
+    page.evaluate(() => {
+      const el = document.querySelector('[data-testid="overview"]');
+      if (!el) return null;
+      const wing = el.querySelector(".graview-altitude-mark-wing");
+      return {
+        label: el.textContent.trim(),
+        pressed: el.getAttribute("aria-pressed"),
+        name: el.getAttribute("aria-label"),
+        wingOpacity: wing ? Number(getComputedStyle(wing).opacity) : null,
+        registered: typeof globalThis.CSSPropertyRule !== "undefined",
+      };
+    });
+  report.control = { ground: await control() };
+  await page.click('[data-testid="overview"]');
+  await page.waitForTimeout(900);
+  report.control.altitude = await control();
+  await page.click('[data-testid="overview"]');
+  await page.waitForTimeout(300);
+  report.control.midway = await control();
+  await page.waitForTimeout(700);
+  report.control.groundAgain = await control();
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
@@ -134,6 +168,8 @@ try {
 }
 
 const step = (name) => report.steps.find((entry) => entry.step === name);
+const near = (value, target) => typeof value === "number" && Math.abs(value - target) < 0.03;
+const between = (value, low, high) => typeof value === "number" && value > low && value < high;
 /*
  * The stop without its selection. A stop's address carries what was selected
  * at it — deliberately, so returning restores the pane — and the click that
@@ -166,6 +202,24 @@ report.verdict = {
   // And the breadcrumb still names where you are, and gets you out in one.
   theTrailNamesWhereYouAre: (step("travelled")?.trail ?? "").includes("deposit"),
   theTrailGetsYouHome: placeOf(step("home by breadcrumb")?.url) === placeOf(step("landed")?.url),
+  // The altitude control: a toggle that names where it takes you.
+  theControlSaysGraviewOnTheGround:
+    report.control?.ground?.label === "Graview" &&
+    report.control?.ground?.name === "Graview" &&
+    report.control?.ground?.pressed === "false",
+  theControlSaysFocusFromAltitude:
+    report.control?.altitude?.label === "Focus" &&
+    report.control?.altitude?.name === "Focus" &&
+    report.control?.altitude?.pressed === "true",
+  theMarkHasTwoStates:
+    near(report.control?.ground?.wingOpacity, 0.75) && near(report.control?.altitude?.wingOpacity, 0),
+  // Morphing where the scene morphs; cutting where it cuts.
+  theMarkMovesAsTheSceneDoes: report.control?.midway?.registered
+    ? between(report.control?.midway?.wingOpacity, 0.04, 0.71)
+    : near(report.control?.midway?.wingOpacity, 0.75),
+  theControlComesBackDown:
+    report.control?.groundAgain?.label === "Graview" &&
+    near(report.control?.groundAgain?.wingOpacity, 0.75),
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
 
