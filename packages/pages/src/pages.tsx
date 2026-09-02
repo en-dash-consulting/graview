@@ -28,6 +28,32 @@ export interface PageContext<S extends AnySchema> {
   /** Where the spatial face lives, for the cross-links. Default "/". */
   readonly sceneHref?: string;
   readonly invariantContext?: Readonly<Record<string, unknown>>;
+  /**
+   * Whether this browser remembers the edits (a ship browser adapter behind
+   * the store). When it does, the face says so and offers the way back to
+   * the example — the `fresh=1` address `@graview/ship` reads.
+   */
+  readonly remembers?: boolean;
+}
+
+/** The way back to the example, for a face whose browser remembers. */
+export function StartFreshLink() {
+  return (
+    <a
+      href="#fresh"
+      data-testid="start-fresh"
+      title="Forget every edit made in this browser and return to the example"
+      onClick={(event) => {
+        event.preventDefault();
+        const url = new URL(window.location.href);
+        url.searchParams.set("fresh", "1");
+        window.location.assign(url.toString());
+      }}
+      style={{ color: "inherit" }}
+    >
+      Start fresh
+    </a>
+  );
 }
 
 /** Re-render on every applied diff — the page face is as live as the scene. */
@@ -118,6 +144,11 @@ export function DefaultShell<S extends AnySchema>({
         </a>
       </header>
       {children}
+      {context.remembers ? (
+        <footer style={{ ...mutedStyle, padding: "12px 16px" }} data-testid="remembered">
+          Remembered in this browser · <StartFreshLink />
+        </footer>
+      ) : null}
     </div>
   );
 }

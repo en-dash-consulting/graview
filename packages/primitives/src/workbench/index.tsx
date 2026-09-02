@@ -1231,11 +1231,57 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
  * without this is a spinner and a toast. Reads are the interesting half.
  * Every node named here is a target, so checking the work is one click.
  */
+/**
+ * The way back to the example.
+ *
+ * An app that remembers its edits in the browser needs a visible way OUT of
+ * them: a demo that can be edited into a corner with no exit teaches
+ * distrust, and "clear your site data" is not an affordance. The control
+ * goes to the same address with `fresh=1` — the framework's own convention,
+ * read by `browserStartsFresh` in `@graview/ship` — so it is a navigation
+ * like any other stop: the seed loads, the flag is dropped from the address,
+ * and what you do next is remembered again.
+ */
+export function StartFresh() {
+  const href = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("fresh", "1");
+    return url.toString();
+  };
+  return (
+    <a
+      href="#fresh"
+      data-testid="start-fresh"
+      title="Forget every edit made in this browser and return to the example"
+      onClick={(event) => {
+        event.preventDefault();
+        window.location.assign(href());
+      }}
+      style={{
+        fontSize: 12,
+        color: "var(--graview-ink-muted)",
+        textDecoration: "underline",
+        textDecorationColor: "var(--graview-edge-bright)",
+        textUnderlineOffset: 3,
+      }}
+    >
+      Start fresh
+    </a>
+  );
+}
+
 export function ActivityRail({
   calls,
   seat,
+  remembers = false,
 }: {
   readonly calls: readonly ToolCall[];
+  /**
+   * Whether this browser is remembering the edits. When it is, the popover
+   * says so and carries the way back to the example — history is where you
+   * would look for the way out of it.
+   */
+  readonly remembers?: boolean;
   /**
    * The agent seat, if the app gives one. It lives HERE, not in the bar:
    * Activity is "what has happened, and what is happening", which is the
@@ -1277,7 +1323,7 @@ export function ActivityRail({
     };
   }, [open]);
 
-  if (seat === undefined && calls.length === 0 && changes.length === 0) return null;
+  if (seat === undefined && calls.length === 0 && changes.length === 0 && !remembers) return null;
 
   return (
     <div ref={anchor} style={{ position: "relative" }}>
@@ -1445,6 +1491,24 @@ export function ActivityRail({
                 </li>
               ))}
             </ol>
+          ) : null}
+          {remembers ? (
+            <div
+              data-testid="remembered"
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                gap: 10,
+                paddingTop: 8,
+                borderTop: "1px solid var(--graview-edge)",
+                fontSize: 12,
+                color: "var(--graview-ink-faint)",
+              }}
+            >
+              <span>Remembered in this browser</span>
+              <StartFresh />
+            </div>
           ) : null}
         </aside>
       ) : null}

@@ -1,8 +1,16 @@
 import { themeCss, type Scheme } from "@graview/primitives";
 import { createRoot } from "react-dom/client";
 import { PagesApp } from "@graview/pages";
+import {
+  browserStartsFresh,
+  createBrowserAdapter,
+  forgetFreshParam,
+  openStore,
+} from "@graview/ship/browser";
+import example from "./data/example.json";
+import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
-import { createTodoUiStore, today, TodoApp } from "./ui/app.js";
+import { today, TodoApp } from "./ui/app.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -37,6 +45,26 @@ applyScheme(scheme);
 
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
+
+/*
+ * THE APP REMEMBERS. Persistence is the op log, and `openStore` is the
+ * lifecycle every deployment repeats — here with the browser adapter, so an
+ * edit survives a reload, attributed and undoable, and the example is the
+ * FIRST load rather than every load. `?fresh=1` (the "Start fresh" control)
+ * returns to the example; a driven browser starts fresh unless it asks to
+ * remember, so the harnesses keep specifying the example rather than their
+ * own residue.
+ */
+const opened = await openStore({
+  app: todoApp,
+  adapter: createBrowserAdapter(),
+  seed: example as never,
+  fresh: browserStartsFresh(),
+  storeOptions: { invariantOptions: { context: { today: today() } } },
+});
+forgetFreshParam();
+const remembers = true;
+
 /*
  * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
  * its view state); the routed face lives under "/pages" on ordinary paths.
@@ -44,21 +72,28 @@ if (!root) throw new Error("no #root");
  * and the scene's header offers the pages, because they are one app.
  */
 if (window.location.pathname.startsWith("/pages")) {
-  const store = createTodoUiStore();
   createRoot(root).render(
     <PagesApp
       basename="/pages"
       context={{
-        store,
+        store: opened.store,
         brand: thingsBrand,
         sceneHref: "/",
         invariantContext: { today: today() },
+        remembers,
       }}
     />,
   );
 } else {
   createRoot(root).render(
-    <TodoApp syncUrl renderer="dom" initialScheme={scheme} onSchemeChange={applyScheme} />,
+    <TodoApp
+      store={opened.store}
+      remembers={remembers}
+      syncUrl
+      renderer="dom"
+      initialScheme={scheme}
+      onSchemeChange={applyScheme}
+    />,
   );
 }
 

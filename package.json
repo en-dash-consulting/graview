@@ -40,6 +40,7 @@
     "navigation": "node scripts/verify-navigation.mjs",
     "moving": "node scripts/verify-moving.mjs",
     "pages": "node scripts/verify-pages.mjs",
+    "remember": "node scripts/verify-remember.mjs",
     "promo": "pnpm --filter @graview/promo dev",
     "dev:promo": "pnpm --filter @graview/promo dev"
   },

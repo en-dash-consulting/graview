@@ -1,0 +1,64 @@
+{
+  "at": "2026-09-02T04:52:58.637Z",
+  "engine": "chromium",
+  "steps": {
+    "seed": {
+      "deposit": "Pay the deposit08-28"
+    },
+    "edited": {
+      "deposit": "Pay the deposit, remembered"
+    },
+    "reloaded": {
+      "deposit": "Pay the deposit, remembered08-28",
+      "log": [
+        "you Rename to \"Pay the deposit, remembered\"undoPay the deposit, remembered"
+      ],
+      "undo": true,
+      "remembered": "Remembered in this browserStart fresh",
+      "startFresh": true
+    },
+    "undone": {
+      "deposit": "Pay the deposit"
+    },
+    "fresh": {
+      "deposit": "Pay the deposit",
+      "address": "?today=2026-09-01&remember=1",
+      "log": [],
+      "undo": false,
+      "remembered": "Remembered in this browserStart fresh",
+      "startFresh": true
+    },
+    "afterFresh": {
+      "deposit": "Pay the deposit, after fresh08-28"
+    },
+    "pages": {
+      "title": "Pay the deposit, after fresh",
+      "startFresh": true
+    },
+    "driven": {
+      "deposit": "Pay the deposit08-28",
+      "log": [],
+      "undo": false,
+      "remembered": "Remembered in this browserStart fresh",
+      "startFresh": true
+    },
+    "stranger": {
+      "deposit": "Pay the deposit08-28"
+    }
+  },
+  "verdict": {
+    "theSeedLoadsFirst": true,
+    "theEditTookEffect": true,
+    "theEditSurvivesAReload": true,
+    "theHistorySurvivesAttributed": true,
+    "theEditIsStillUndoable": true,
+    "theBrowserSaysItRemembers": true,
+    "startFreshReturnsToTheExample": true,
+    "theFreshFlagDoesNotStick": true,
+    "rememberingResumesAfterFresh": true,
+    "thePagesFaceSharesTheStore": true,
+    "aDrivenBrowserStartsFromTheSeed": true,
+    "aFreshContextStartsFromTheSeed": true
+  },
+  "passed": true
+}

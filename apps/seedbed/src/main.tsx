@@ -2,7 +2,14 @@ import { themeCss, type Scheme } from "@graview/primitives";
 import { createRoot } from "react-dom/client";
 import { seedbedBrand } from "./domain/brand.js";
 import { PagesApp } from "@graview/pages";
-import { createSeedbedUiStore, SeedbedApp } from "./ui/app.js";
+import {
+  browserStartsFresh,
+  createBrowserAdapter,
+  forgetFreshParam,
+  openStore,
+} from "@graview/ship/browser";
+import { seedbedApp } from "./domain/app.js";
+import { SeedbedApp } from "./ui/app.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -36,14 +43,34 @@ applyScheme(scheme);
 
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
+
+// The empty app remembers too: what you sow here is still here tomorrow,
+// and "Start fresh" is the way back to the blank graph (see todo's main.tsx).
+const opened = await openStore({
+  app: seedbedApp,
+  adapter: createBrowserAdapter(),
+  fresh: browserStartsFresh(),
+});
+forgetFreshParam();
+
 if (window.location.pathname.startsWith("/pages")) {
   // The routed, responsive face: same store, same ids, one app.
   createRoot(root).render(
-    <PagesApp basename="/pages" context={{ store: createSeedbedUiStore(), brand: seedbedBrand, sceneHref: "/" }} />,
+    <PagesApp
+      basename="/pages"
+      context={{ store: opened.store, brand: seedbedBrand, sceneHref: "/", remembers: true }}
+    />,
   );
 } else {
   createRoot(root).render(
-    <SeedbedApp syncUrl renderer="dom" initialScheme={scheme} onSchemeChange={applyScheme} />,
+    <SeedbedApp
+      store={opened.store}
+      remembers
+      syncUrl
+      renderer="dom"
+      initialScheme={scheme}
+      onSchemeChange={applyScheme}
+    />,
   );
 }
 

@@ -8,6 +8,7 @@ export {
 export type { BoardLens, BoardOptions, BoardSlot, BoardState, BoardViewProps } from "./lens/board.js";
 export {
   ActivityRail,
+  StartFresh,
   AgentSeat,
   AnswerArgs,
   BackOut,

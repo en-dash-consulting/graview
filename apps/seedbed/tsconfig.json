@@ -36,6 +36,9 @@
     },
     {
       "path": "../../packages/pages"
+    },
+    {
+      "path": "../../packages/ship"
     }
   ]
 }

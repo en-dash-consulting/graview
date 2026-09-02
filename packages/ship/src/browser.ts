@@ -1,5 +1,8 @@
-export { createFileAdapter } from "./file-adapter.js";
-export type { FileAdapter } from "./file-adapter.js";
+/**
+ * The browser entry: everything in `@graview/ship` that does not need a
+ * filesystem. An app bundled for the page imports from here, so a bundler
+ * never meets `node:fs` through the file adapter.
+ */
 export {
   browserStartsFresh,
   createBrowserAdapter,

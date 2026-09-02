@@ -24,6 +24,14 @@ export interface StoreOptions<S extends AnySchema> {
   readonly mutations?: readonly AnyMutationDefinition<S>[];
   readonly invariants?: readonly InvariantDefinition<S>[];
   readonly snapshot?: GraphSnapshot<NodeOfSchema<S>>;
+  /**
+   * A stored history. Alone, the graph is FOLDED from it. Together with
+   * `snapshot`, the snapshot is the graph and the log is the history that
+   * led to it — the shape a persisted deployment reopens in, where the
+   * seed was never an operation and folding the log alone would lose it.
+   * Either way the log is live: what was done before is still attributed,
+   * still in the activity, and still undoable.
+   */
   readonly log?: readonly Operation[];
   /** Defaults to a monotonic counter so tests stay deterministic. */
   readonly ids?: () => string;
@@ -129,7 +137,13 @@ export class Store<S extends AnySchema> {
       this.mutations.set(mutation.name, mutation);
     }
 
-    if (options.log) {
+    if (options.log && options.snapshot) {
+      // Hydrate: the graph as stored, the history as recorded.
+      this.log = OperationLog.from(options.log);
+      this.graph = Graph.from(options.schema, options.snapshot, {
+        validate: options.validate ?? true,
+      });
+    } else if (options.log) {
       this.log = OperationLog.from(options.log);
       this.graph = this.log.fold(options.schema, { validate: options.validate ?? true });
     } else {
