@@ -721,25 +721,36 @@ function SelectionTies<S extends AnySchema>({
    * or a board slot (an occupied slot's pick is its occupant, but the slot
    * itself is still a place a tie can land on).
    */
-  const elementBox = (id: string): { x: number; y: number; width: number; height: number } | null => {
-    /*
-     * The SMALLEST element wearing the id. One node can be drawn several
-     * times — a chip in a card, a row label, a rotated column header — and
-     * a rotated header's bounding box is a huge diagonal rectangle whose
-     * border is nowhere near the visible text: a tie anchored to it lands
-     * in open air. The smallest box is the most honest anchor there is.
-     */
+  type Box = { x: number; y: number; width: number; height: number };
+  /*
+   * EVERY element wearing the id, as candidate anchors. One node can be
+   * drawn several times — a chip in a card, a row label, a matrix dot per
+   * relation — and which drawing a tie should land on depends on where the
+   * OTHER end is: the pair of drawings closest to each other is the line a
+   * person would draw. (Picking the single smallest element anchored a
+   * 3.2-row tie to a 5.2-row dot three rows away.) Chrome is not scene:
+   * the activity rail and inspector repeat node names as chips, and a tie
+   * must never land on the furniture.
+   */
+  const elementBoxes = (id: string, insideOwnCard: (el: Element) => boolean): Box[] => {
     const els = stageRef.current?.querySelectorAll(
       `[data-graview-pick="${CSS.escape(id)}"], [data-graview-slot="${CSS.escape(id)}"]`,
     );
-    let best: DOMRect | null = null;
+    const boxes: Box[] = [];
     for (const el of els ?? []) {
+      if (el.closest("[data-graview-offstage]")) continue;
+      if (insideOwnCard(el)) continue;
       const rect = el.getBoundingClientRect();
       if (rect.width <= 2 || rect.height <= 2) continue;
-      if (!best || rect.width * rect.height < best.width * best.height) best = rect;
+      // A rotated header's bounding box is a huge diagonal rectangle whose
+      // border is nowhere near the visible text — anything card-sized or
+      // smaller stays; the degenerate stays out via the closest-pair pick
+      // preferring compact boxes on ties below.
+      boxes.push({ x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height });
     }
-    if (!best) return null;
-    return { x: best.left - stage.left, y: best.top - stage.top, width: best.width, height: best.height };
+    // Compact drawings first, so a distance tie resolves to the chip, not
+    // the panel that contains it.
+    return boxes.sort((a, b) => a.width * a.height - b.width * b.height);
   };
   /** The laid-out node that IS this id, or stands for it. */
   const hostOf = (id: string): SceneNode | undefined =>
@@ -758,6 +769,8 @@ function SelectionTies<S extends AnySchema>({
     control: { x: number; y: number };
     fromBox: { x: number; y: number; width: number; height: number };
     toBox: { x: number; y: number; width: number; height: number };
+    /** The far end is a stand-in (the kind's district), not the thing. */
+    proxy: boolean;
     edgeId: string | null;
   }[] = [];
   for (const tie of ties) {
@@ -765,12 +778,12 @@ function SelectionTies<S extends AnySchema>({
     const selfHostEl = selfHost
       ? stageRef.current?.querySelector(`[data-graview-view="${CSS.escape(selfHost.id)}"]`)
       : null;
-    const fromEl = elementBox(tie.self);
-    const fromBox =
-      fromEl ??
-      (selfHost
-        ? (measureVisible(stageRef.current, selfHost.id, false) ?? drawnBox(selfHost, scheme))
-        : null);
+    const fromCandidates = elementBoxes(tie.self, () => false);
+    const hasFromEl = fromCandidates.length > 0;
+    if (!hasFromEl && selfHost) {
+      const box = measureVisible(stageRef.current, selfHost.id, false) ?? drawnBox(selfHost, scheme);
+      if (box) fromCandidates.push(box);
+    }
     /*
      * Where the OTHER end lands, in order of honesty:
      *
@@ -787,42 +800,58 @@ function SelectionTies<S extends AnySchema>({
      *    view's own emphasis already shows it.
      */
     const otherNode = nodes.find((node) => node.id === tie.other);
-    let toBox: { x: number; y: number; width: number; height: number } | null = null;
+    const toCandidates: Box[] = [];
+    // The far end STANDS IN for the node when nothing draws the node
+    // itself: a person with no card of their own resolves to their kind's
+    // district. Such a line recedes below — it points at where the rest
+    // live rather than claiming the thing is there.
+    let toProxy = false;
     if (otherNode) {
-      toBox =
+      const box =
         measureVisible(stageRef.current, otherNode.id, overview) ?? drawnBox(otherNode, scheme);
+      if (box) toCandidates.push(box);
     } else {
-      const otherEls = [
-        ...(stageRef.current?.querySelectorAll(
-          `[data-graview-pick="${CSS.escape(tie.other)}"], [data-graview-slot="${CSS.escape(tie.other)}"]`,
-        ) ?? []),
-      ];
-      if (otherEls.length > 0) {
-        let best: DOMRect | null = null;
-        for (const el of otherEls) {
-          const internal = selfHostEl ? selfHostEl.contains(el) : false;
-          if (internal && !fromEl) continue;
-          const rect = el.getBoundingClientRect();
-          if (rect.width <= 2 || rect.height <= 2) continue;
-          if (!best || rect.width * rect.height < best.width * best.height) best = rect;
-        }
-        if (best)
-          toBox = {
-            x: best.left - stage.left,
-            y: best.top - stage.top,
-            width: best.width,
-            height: best.height,
-          };
-      } else {
+      toCandidates.push(
+        ...elementBoxes(tie.other, (el) =>
+          selfHostEl ? selfHostEl.contains(el) && !hasFromEl : false,
+        ),
+      );
+      if (toCandidates.length === 0) {
         const otherHost = hostOf(tie.other);
         if (otherHost && (!selfHost || otherHost.id !== selfHost.id)) {
-          toBox =
+          const box =
             measureVisible(stageRef.current, otherHost.id, overview) ??
             drawnBox(otherHost, scheme);
+          if (box) {
+            toCandidates.push(box);
+            toProxy = true;
+          }
         }
       }
     }
-    if (!fromBox || !toBox) continue;
+    if (fromCandidates.length === 0 || toCandidates.length === 0) continue;
+    /*
+     * THE CLOSEST PAIR of drawings is the line a person would draw. Both
+     * ends can be on screen more than once; a tie between the two nearest
+     * instances says the relation without crossing the picture to reach a
+     * copy further away.
+     */
+    let fromBox = fromCandidates[0]!;
+    let toBox = toCandidates[0]!;
+    let nearest = Infinity;
+    for (const a of fromCandidates) {
+      for (const b of toCandidates) {
+        const gap = Math.hypot(
+          a.x + a.width / 2 - (b.x + b.width / 2),
+          a.y + a.height / 2 - (b.y + b.height / 2),
+        );
+        if (gap < nearest) {
+          nearest = gap;
+          fromBox = a;
+          toBox = b;
+        }
+      }
+    }
     /*
      * ONE LINE PER RELATION. The connector layer draws (and takes clicks
      * for) any relation whose both ends are placed cards; a tie repeating
@@ -840,19 +869,9 @@ function SelectionTies<S extends AnySchema>({
     const key = `${tie.kind}:${Math.round(fromBox.x)}:${Math.round(toBox.x)},${Math.round(toBox.y)}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const toCentre = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
-    const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
-    const from = edgePoint(fromBox, toCentre);
-    const to = edgePoint(toBox, fromCentre);
-    const dist = Math.hypot(to.x - from.x, to.y - from.y);
-    if (dist < 8) continue;
-    const bow = Math.min(36, dist * 0.12);
-    const nx = -(to.y - from.y) / dist;
-    const ny = (to.x - from.x) / dist;
-    const control = {
-      x: (from.x + to.x) / 2 + nx * bow,
-      y: (from.y + to.y) / 2 + ny * bow,
-    };
+    const route = tieRoute(fromBox, toBox);
+    if (!route) continue;
+    const { from, to, control } = route;
     // The real edge this tie stands for, oriented the way the graph holds it.
     const oriented = [...store.graph.allEdges()].find(
       (edge) =>
@@ -871,6 +890,7 @@ function SelectionTies<S extends AnySchema>({
       control,
       fromBox,
       toBox,
+      proxy: toProxy,
       edgeId: oriented ? edgeSelectionId(oriented.kind, oriented.from, oriented.to) : null,
     });
   }
@@ -903,7 +923,11 @@ function SelectionTies<S extends AnySchema>({
          * boxes, so pressing a line never steals a card's click.
          */
         let hit: React.ReactNode = null;
-        if (line.edgeId && onPickEdge) {
+        // A stand-in line takes no pointer: a 14px corridor across half
+        // the scene stole clicks from every card it crossed, to select a
+        // relation whose far end is not even drawn. The edge stays
+        // selectable where it is really drawn, and from the inspector.
+        if (line.edgeId && onPickEdge && !line.proxy) {
           const inside = (
             box: { x: number; y: number; width: number; height: number },
             p: { x: number; y: number },
@@ -951,18 +975,25 @@ function SelectionTies<S extends AnySchema>({
           }
         }
         return (
-          <g key={line.key} opacity={0.72}>
+          /*
+           * A line to a STAND-IN recedes: the far end is the kind's
+           * district, not the thing itself, and five of those at full
+           * strength crossing the scene is a hairball. Present enough to
+           * say "the rest live over there", never louder than a real tie.
+           */
+          <g key={line.key} opacity={line.proxy ? 0.32 : 0.72}>
             <path
               data-graview-tie={line.kind}
+              data-graview-tie-proxy={line.proxy || undefined}
               d={line.d}
               fill="none"
               stroke={connectorStroke(style)}
-              strokeWidth={1.6}
+              strokeWidth={line.proxy ? 1.1 : 1.6}
               strokeDasharray={CONNECTOR_DASH[style.pattern]}
               strokeLinecap="round"
             />
             {/* A destination, marked: the far end lands somewhere specific. */}
-            <circle cx={line.endX} cy={line.endY} r={2.6} fill={connectorStroke(style)} />
+            <circle cx={line.endX} cy={line.endY} r={line.proxy ? 2 : 2.6} fill={connectorStroke(style)} />
             {hit}
           </g>
         );
@@ -1652,6 +1683,74 @@ function drawnCentre(
  * centre, which reads as a knot rather than as several roads arriving. The
  * border is where a road meets a building.
  */
+/**
+ * HOW A TIE RUNS between two measured drawings — a pure decision, so it is
+ * testable without a browser.
+ *
+ * Two drawings stacked in one column used to get a near-straight vertical
+ * aimed centre-to-centre — a line THROUGH every row between them, whose
+ * hit corridor then stole those rows' clicks. Boxes that share a column
+ * stitch along their common right edge, in the gutter; boxes that share a
+ * row stitch over the top. Only ends with clear air between them take the
+ * direct arc. Returns null when no honest line exists: one drawing inside
+ * another is the view's own composition, and anchors within a few pixels
+ * are one drawing restating itself.
+ */
+export function tieRoute(
+  fromBox: { x: number; y: number; width: number; height: number },
+  toBox: { x: number; y: number; width: number; height: number },
+):
+  | {
+      from: { x: number; y: number };
+      to: { x: number; y: number };
+      control: { x: number; y: number };
+      mode: "stacked" | "abreast" | "direct";
+    }
+  | null {
+  const xOverlap =
+    Math.min(fromBox.x + fromBox.width, toBox.x + toBox.width) - Math.max(fromBox.x, toBox.x);
+  const yOverlap =
+    Math.min(fromBox.y + fromBox.height, toBox.y + toBox.height) - Math.max(fromBox.y, toBox.y);
+  if (xOverlap > 0 && yOverlap > 0) return null;
+  const stacked = xOverlap > 0.5 * Math.min(fromBox.width, toBox.width);
+  const abreast = !stacked && yOverlap > 0.5 * Math.min(fromBox.height, toBox.height);
+  if (stacked) {
+    const from = { x: fromBox.x + fromBox.width, y: fromBox.y + fromBox.height / 2 };
+    const to = { x: toBox.x + toBox.width, y: toBox.y + toBox.height / 2 };
+    return {
+      from,
+      to,
+      control: { x: Math.max(from.x, to.x) + 18, y: (from.y + to.y) / 2 },
+      mode: "stacked",
+    };
+  }
+  if (abreast) {
+    const from = { x: fromBox.x + fromBox.width / 2, y: fromBox.y };
+    const to = { x: toBox.x + toBox.width / 2, y: toBox.y };
+    return {
+      from,
+      to,
+      control: { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - 18 },
+      mode: "abreast",
+    };
+  }
+  const toCentre = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
+  const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
+  const from = edgePoint(fromBox, toCentre);
+  const to = edgePoint(toBox, fromCentre);
+  const direct = Math.hypot(to.x - from.x, to.y - from.y);
+  if (direct < 8) return null;
+  const bow = Math.min(36, direct * 0.12);
+  const nx = -(to.y - from.y) / direct;
+  const ny = (to.x - from.x) / direct;
+  return {
+    from,
+    to,
+    control: { x: (from.x + to.x) / 2 + nx * bow, y: (from.y + to.y) / 2 + ny * bow },
+    mode: "direct",
+  };
+}
+
 function edgePoint(
   box: { x: number; y: number; width: number; height: number },
   towards: { x: number; y: number },
