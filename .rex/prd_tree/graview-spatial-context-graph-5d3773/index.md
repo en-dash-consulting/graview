@@ -52,7 +52,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The DOM path is a citizen of every browser](./the-dom-path-is-a-citizen-of-976f8a.md) | completed |
 | [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |
 | [The graph also wears a traditional face: a routed webapp derived from the same declaration](./the-graph-also-wears-a-dd174e.md) | completed |
-| [The graview button toggles — 'Graview' up, 'Focus' down — and its mark morphs to say so](./the-graview-button-toggles-52c4fc.md) | pending |
+| [The graview button toggles — 'Graview' up, 'Focus' down — and its mark morphs to say so](./the-graview-button-toggles-52c4fc.md) | completed |
 | [The lines are editable: relations as first-class selectable, modifiable things](./the-lines-are-editable-492161.md) | completed |
 | [The menu scales: search, pins, and what you actually use](./the-menu-scales-search-pins-and-db5b1b.md) | completed |
 | [The pages face reads like a product's own site, not a back office](./the-pages-face-reads-like-a-9d2ea7.md) | pending |

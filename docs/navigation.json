@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-02T03:52:54.379Z",
+  "at": "2026-09-02T04:41:12.398Z",
   "engine": "chromium",
   "steps": [
     {
@@ -53,6 +53,36 @@
     }
   ],
   "wentDeeper": true,
+  "control": {
+    "ground": {
+      "label": "Graview",
+      "pressed": "false",
+      "name": "Graview",
+      "wingOpacity": 0.75,
+      "registered": true
+    },
+    "altitude": {
+      "label": "Focus",
+      "pressed": "true",
+      "name": "Focus",
+      "wingOpacity": 0,
+      "registered": true
+    },
+    "midway": {
+      "label": "Graview",
+      "pressed": "false",
+      "name": "Graview",
+      "wingOpacity": 0.539254,
+      "registered": true
+    },
+    "groundAgain": {
+      "label": "Graview",
+      "pressed": "false",
+      "name": "Graview",
+      "wingOpacity": 0.75,
+      "registered": true
+    }
+  },
   "verdict": {
     "nothingToGoBackToAtFirst": true,
     "travellingChangesTheAddress": true,
@@ -66,7 +96,12 @@
     "forwardIsOfferedOnceThereIsSomewhere": true,
     "forwardActuallyGoesForward": true,
     "theTrailNamesWhereYouAre": true,
-    "theTrailGetsYouHome": true
+    "theTrailGetsYouHome": true,
+    "theControlSaysGraviewOnTheGround": true,
+    "theControlSaysFocusFromAltitude": true,
+    "theMarkHasTwoStates": true,
+    "theMarkMovesAsTheSceneDoes": true,
+    "theControlComesBackDown": true
   },
   "passed": true
 }

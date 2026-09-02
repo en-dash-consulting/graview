@@ -153,6 +153,43 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   transition: --graview-altitude 640ms cubic-bezier(0.33, 0, 0.2, 1);
 }
 
+/*
+ * The altitude control rides the SAME number the scene rides — its own copy,
+ * because it sits beside the ground rather than inside it — on the same
+ * curve. So the mark morphs exactly as long as the scene does, and where an
+ * engine cannot register the property, both cut together: one mechanism,
+ * and no way for the control and the picture to disagree about the change.
+ */
+.graview-altitude-control {
+  --graview-altitude: 0;
+  transition:
+    --graview-altitude 640ms cubic-bezier(0.33, 0, 0.2, 1),
+    color 240ms ease,
+    border-color 240ms ease;
+}
+.graview-altitude-mark * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* The ring of three kinds tightens to one ring around one node. */
+.graview-altitude-mark-ring {
+  transform: scaleX(calc(1 - 0.48 * var(--graview-altitude)));
+  opacity: calc(0.55 + 0.4 * var(--graview-altitude));
+}
+.graview-altitude-mark-apex {
+  transform: translateY(calc(2.6px * var(--graview-altitude)));
+}
+/* The two wings gather into the centre and give their ink to the apex. */
+.graview-altitude-mark-wing {
+  opacity: calc(0.75 * (1 - var(--graview-altitude)));
+}
+.graview-altitude-mark-wing[data-side="left"] {
+  transform: translate(calc(4.4px * var(--graview-altitude)), calc(-0.8px * var(--graview-altitude)));
+}
+.graview-altitude-mark-wing[data-side="right"] {
+  transform: translate(calc(-4.4px * var(--graview-altitude)), calc(-0.8px * var(--graview-altitude)));
+}
+
 /* A fine measure under the scene. Faint enough to feel like calibration
    rather than graph paper, and it fades out at the edges so the scene has no
    hard boundary. */
