@@ -288,15 +288,29 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   justify-content: flex-start;
   max-width: none;
 }
-/* An OPENED nameplate is a small panel again: the roster needs a column,
-   and a pill of chips is neither. */
+/* An OPENED district is a PANEL, not a pill with a list stuffed in it:
+   name and count share the header line, the roster sits under a hairline,
+   and the block behind fades — the plate IS the district while it is
+   open, so no roof pokes out above the roster. */
 [data-graview-altitude] .graview-kind-face[data-graview-opened] {
-  flex-direction: column !important;
-  align-items: stretch !important;
-  border-radius: 11px !important;
-  padding: 9px 11px 10px !important;
-  width: 208px;
-  max-width: 208px;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline !important;
+  column-gap: 10px;
+  border-radius: 12px !important;
+  padding: 10px 12px 11px !important;
+  width: 236px;
+  max-width: 236px;
+  box-shadow: var(--graview-lift-high) !important;
+}
+[data-graview-altitude] .graview-kind-face[data-graview-opened] .graview-kind-members {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--graview-edge);
+}
+[data-graview-altitude] .graview-kind-block[data-graview-opened] {
+  opacity: calc(var(--graview-altitude) * 0.22);
 }
 
 /* WHAT KIND OF THING THIS IS, astride the focus panel's top-right edge —
@@ -312,7 +326,10 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   gap: 5px;
   padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid var(--graview-edge);
+  /* The kind's own hue on the border and the words, so the tag and the
+     district it belongs to read as one thread. */
+  border: 1px solid hsl(var(--graview-hue, 200) 45% var(--graview-tint-lightness) / 0.55);
+  color: hsl(var(--graview-hue, 200) 45% calc(var(--graview-tint-lightness) + ${scheme === "light" ? "-32%" : "28%"}));
   background: var(--graview-float);
   box-shadow: var(--graview-lift-low);
   font-size: 9.5px;
@@ -407,7 +424,10 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   top: 2% !important;
   transform: translateX(-50%);
   width: max-content;
-  max-width: 98%;
+  /* Wider than the block when the name is: a label overflows its building
+     the way a map label does. "REQUIRE / MENTS" on two lines does not. */
+  max-width: none;
+  white-space: nowrap;
   height: auto !important;
   flex-direction: row !important;
   align-items: baseline !important;
@@ -424,7 +444,11 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
    user who cannot see where they are is stuck. */
 /* A card someone dragged into place. Marked, not decorated: a dotted tie to
    say this position is held rather than computed. */
-[data-graview-pinned] {
+/* On the CHILD, not the host: the host is the layout's box, and a view
+   that sizes to its content (a zoomed record, a fit panel) fills only part
+   of it — a dashed box around the empty remainder read as a drawing
+   mistake, not a mark. */
+[data-graview-pinned] > * {
   outline: 1px dashed var(--graview-edge-bright);
   outline-offset: 3px;
   border-radius: 12px;

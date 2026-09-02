@@ -5,6 +5,7 @@ import {
   kindsOf,
   layout,
   withFocus,
+  withOverview,
   withPan,
   withPin,
   withRelation,
@@ -136,6 +137,53 @@ export function Scene<S extends AnySchema>({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
+
+  /*
+   * PINCH IS ALTITUDE. The camera has one axis, so the universal zoom
+   * gesture maps to it: fingers together rises to the Graview, fingers
+   * apart descends — one discrete step per gesture, with a cooldown so a
+   * long pinch does not bounce. Chromium and Firefox hand a trackpad
+   * pinch over as ctrl+wheel; Safari speaks GestureEvent. Both are
+   * claimed here so the browser's own page zoom never fires on the scene.
+   */
+  const altitude = useRef({ view, charge: 0, coolUntil: 0 });
+  altitude.current.view = view;
+  useEffect(() => {
+    const element = wrapperRef.current;
+    if (!element) return;
+    const step = (rising: boolean, stamp: number) => {
+      const held = altitude.current;
+      if (stamp < held.coolUntil) return;
+      const up = held.view.overview ?? false;
+      if (rising === up) return;
+      held.coolUntil = stamp + 600;
+      held.charge = 0;
+      setView(withOverview(held.view, rising));
+    };
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey) return;
+      event.preventDefault();
+      const held = altitude.current;
+      held.charge += event.deltaY;
+      if (Math.abs(held.charge) < 60) return;
+      step(held.charge > 0, performance.now());
+    };
+    const onGesture = (event: Event) => {
+      event.preventDefault();
+      const scale = (event as Event & { scale?: number }).scale ?? 1;
+      if (scale < 0.72) step(true, performance.now());
+      else if (scale > 1.4) step(false, performance.now());
+    };
+    const swallowGesture = (event: Event) => event.preventDefault();
+    element.addEventListener("wheel", onWheel, { passive: false });
+    element.addEventListener("gesturestart", swallowGesture);
+    element.addEventListener("gesturechange", onGesture);
+    return () => {
+      element.removeEventListener("wheel", onWheel);
+      element.removeEventListener("gesturestart", swallowGesture);
+      element.removeEventListener("gesturechange", onGesture);
+    };
+  }, [setView]);
 
   // `nodes` is a cached snapshot that only changes when the graph does, so
   // the layout is recomputed exactly when the picture could have changed.
@@ -830,6 +878,13 @@ function SelectionTies<S extends AnySchema>({
       }
     }
     if (fromCandidates.length === 0 || toCandidates.length === 0) continue;
+    /*
+     * From ALTITUDE a stand-in line says nothing the constellation does
+     * not already draw between the districts themselves — and the two
+     * near-identical dashes to one district read as a mistake. The proxy
+     * tie is a ground-level device.
+     */
+    if (toProxy && overview) continue;
     /*
      * THE CLOSEST PAIR of drawings is the line a person would draw. Both
      * ends can be on screen more than once; a tie between the two nearest
@@ -1562,7 +1617,12 @@ function SceneViewHost({
           data-graview-kindtag=""
           className="graview-kind-tag"
           aria-hidden="true"
-          style={tagAt ?? undefined}
+          style={{
+            ...(tagAt ?? {}),
+            ["--graview-hue" as string]: Math.round(
+              hueFor(node.kind, hostBrand?.accents) * 360,
+            ),
+          }}
         >
           <span
             style={{

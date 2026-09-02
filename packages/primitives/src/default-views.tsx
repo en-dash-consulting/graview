@@ -322,6 +322,7 @@ export function registerDefaultViews<S extends AnySchema>(
             */}
           <svg
             className="graview-kind-block"
+            data-graview-opened={props.opened || undefined}
             viewBox={`0 0 100 ${45 + rise}`}
             aria-hidden="true"
           >

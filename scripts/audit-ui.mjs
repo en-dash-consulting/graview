@@ -39,6 +39,10 @@ const APPS = {
   } },
   proposal: { port: 5191, ready: "__proposalReady", states: {
     home: async () => {},
+    work: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The work" }).click(); },
+    response: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The response" }).click(); },
+    risks: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The risks" }).click(); },
+    ratecard: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The rate card" }).click(); },
     selected: async (p) => { const k = await p.getAttribute("[data-graview-pick]", "data-graview-pick"); await p.click(`[data-graview-pick="${k}"]`); },
     raised: async (p) => { await p.click('[data-graview-view="kind:requirement"]'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
