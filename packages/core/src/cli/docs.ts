@@ -1,4 +1,5 @@
 import type { GraviewApp } from "../app.js";
+import { deriveEditMutations } from "../mutations/derive-edits.js";
 import { mutationToolSchema } from "../schema/json-schema.js";
 import type { AnySchema } from "../schema/schema.js";
 
@@ -49,7 +50,7 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
     "These are the only writes. Nothing else may change the graph.",
     "",
   );
-  for (const mutation of app.mutations ?? []) {
+  for (const mutation of allMutationsOf(app)) {
     const tool = mutationToolSchema(mutation);
     lines.push(`### ${mutation.name}`);
     lines.push(tool.description);
@@ -92,9 +93,14 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
   return lines.join("\n");
 }
 
+/** Declared and derived alike: the surface an agent seat actually gets. */
+function allMutationsOf<S extends AnySchema>(app: GraviewApp<S>) {
+  return [...(app.mutations ?? []), ...deriveEditMutations(app.schema, app.mutations ?? [])];
+}
+
 /** The agent-facing instruction file, generated from the same declarations. */
 export function generateAgentsMd<S extends AnySchema>(app: GraviewApp<S>): string {
-  const mutationNames = (app.mutations ?? []).map((m) => m.name);
+  const mutationNames = allMutationsOf(app).map((m) => m.name);
   return [
     `# ${app.name} — working notes for agents`,
     "",

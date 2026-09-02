@@ -2,8 +2,11 @@
 id: "2e35a59d-ada4-4a0d-991c-663334d1daf8"
 level: "feature"
 title: "A field you could set at creation, you can change: derived edits, RBAC-scoped"
-status: "pending"
+status: "completed"
 priority: "high"
+startedAt: "2026-09-02T04:55:10.059Z"
+completedAt: "2026-09-02T05:09:21.604Z"
+endedAt: "2026-09-02T05:09:21.604Z"
 acceptanceCriteria:
   - "A creation field with no declared opt-out is editable in place: the coaching example's drill.minPlayers can be changed where it is shown, through a named, derived mutation in the op log"
   - "The derived edit flows through the policy like any named act — an analyst may retime a drill, a player may not — with no second permission list"
@@ -12,6 +15,6 @@ acceptanceCriteria:
   - "A mutation can declare the fields it writes (like connects/severs for edges), and editableFields prefers declarations over the name-match heuristic — task.done via finish/reopen stops being invisible"
   - "Direct-manipulation, audit, menu and chat harnesses stay green; the edit-in-place criteria cover a derived edit end to end"
 description: "You cannot change how many players a drill needs. minPlayers is asked for at creation, shown on the card, and then frozen — no mutation takes it, so the in-place edit honestly says Read-only and there is nothing to reach for. A scan of all six apps found the same hole everywhere: the coaching example alone strands drill.minPlayers and intensity, player.foot and shirt, position.code, skill.area, the coaching example.sessionMinutes and formation, fixture.competition; proposal strands role.rate and seniority, deliverable.summary and phase, section.heading and order, risk.likelihood and impact, every brief field; the household example strands person.role and accentColor, block and duty types and location; seedbed strands plot.beds. The framework's culture is right that every change is a named act — no anonymous updateX — so the fix is DERIVED, not generated boilerplate: a creation field (one a creating mutation asks for) is mutable by default through a derived, well-titled edit act per kind, flowing through the policy like any named mutation (RBAC-scoped: who may edit a drill is the analyst's grant, not a new list), landing in editableFields so the value is editable where it is shown. Opting OUT is the declaration: a field marked fixed documents why it never changes (a requirement's fields are the client's words; the scan is how we know which ones to mark). And symmetric with edge-without-severer, graview check should warn about a creation field nothing can ever change — field-without-writer — so the next app cannot ship this hole silently. Second, smaller half: editableFields misses writers whose argument name differs from the field (task.done has finish/reopen; fixture.outcome has record-outcome; planting.status has harvest) — a mutation should be able to declare the fields it writes, the way connects/severs declares edges, so the derivation stops guessing from names."
-lastModified: "2026-09-02T04:12:49.145Z"
+lastModified: "2026-09-02T05:09:21.614Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

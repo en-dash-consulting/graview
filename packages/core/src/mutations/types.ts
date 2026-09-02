@@ -68,6 +68,18 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
   readonly connects?: readonly string[];
   readonly severs?: readonly string[];
   /**
+   * Fields of the SUBJECT this mutation writes.
+   *
+   * The declared answer to "what changes this field", which the in-place
+   * edit and the derived edit act both read. Without it the framework
+   * guesses from names — an input argument called exactly like a field
+   * writes that field — which is right for `rename(label)` and blind to
+   * `finish()` setting `done`. Declared, the guess is replaced rather than
+   * added to: a mutation that says what it writes is believed about it, and
+   * only about it.
+   */
+  readonly writes?: readonly string[];
+  /**
    * The app saying "this is the act of this product". A pinned mutation
    * ranks above its unpinned peers wherever actions are offered — never
    * above a rule's repairs, never out of the destructive tail — and sits
@@ -86,6 +98,13 @@ export interface MutationDefinition<
   I extends z.ZodType = z.ZodType,
 > extends MutationDefinitionSpec<S, I> {
   readonly name: Name;
+  /**
+   * Set by the framework on a mutation it derived rather than an app
+   * declared: the per-kind edit act. Its permission resolves through the
+   * declared acts that already write or create the kind, so a policy needs
+   * no second list.
+   */
+  readonly derived?: { readonly edit: string };
 }
 
 export type AnyMutationDefinition<S extends AnySchema = AnySchema> =

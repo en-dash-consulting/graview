@@ -11,6 +11,7 @@ import type {
   Violation,
 } from "./invariants/types.js";
 import { compileMutation } from "./mutations/define-mutation.js";
+import { deriveEditMutations, editVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog } from "./ops/log.js";
 import type { Author, Batch, Operation } from "./ops/types.js";
@@ -136,6 +137,16 @@ export class Store<S extends AnySchema> {
       }
       this.mutations.set(mutation.name, mutation);
     }
+    /*
+     * THE DERIVED EDITS, registered like any other act. A field you could
+     * set at creation, you can change: each kind with settable fields nobody
+     * writes gets `edit-<kind>`, titled, logged, undoable, judged by the
+     * invariants — and by the policy, through the acts that already write or
+     * create the kind (see `permits`). Nothing an app declares is replaced.
+     */
+    for (const mutation of deriveEditMutations(options.schema, options.mutations ?? [])) {
+      this.mutations.set(mutation.name, mutation);
+    }
 
     if (options.log && options.snapshot) {
       // Hydrate: the graph as stored, the history as recorded.
@@ -164,7 +175,7 @@ export class Store<S extends AnySchema> {
     }
     // A refusal is a result: the mutation exists, and this workspace has its
     // module off — which is a different sentence from "unknown".
-    if (this.modules.disabledMutations.has(name)) {
+    if (this.mutationDisabled(found)) {
       throw new GraphError(
         `Mutation "${name}" belongs to a module this workspace has turned off`,
         `Enabled modules: ${[...this.modules.enabled].join(", ") || "(none)"}`,
@@ -173,10 +184,20 @@ export class Store<S extends AnySchema> {
     return found;
   }
 
+  /** Off by module, or a derived edit of a kind the workspace has off. */
+  private mutationDisabled(mutation: AnyMutationDefinition<S>): boolean {
+    if (this.modules.disabledMutations.has(mutation.name)) return true;
+    return mutation.derived !== undefined && this.modules.disabledKinds.has(mutation.derived.edit);
+  }
+
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values()].filter(
-      (mutation) => !this.modules.disabledMutations.has(mutation.name),
-    );
+    return [...this.mutations.values()].filter((mutation) => !this.mutationDisabled(mutation));
+  }
+
+  /** The declared acts a derived edit resolves its permission through. */
+  private viaOf(mutation: AnyMutationDefinition<S> | undefined): readonly string[] | undefined {
+    if (!mutation?.derived) return undefined;
+    return editVia(this.schema, [...this.mutations.values()], mutation.derived.edit);
   }
 
   allInvariants(): readonly InvariantDefinition<S>[] {
@@ -209,7 +230,13 @@ export class Store<S extends AnySchema> {
     call: MutationCall,
     principal: Principal = HUMAN,
   ): ReturnType<typeof permits> {
-    return permits(this.policy, principal, call.name, this.subjectKindOf(call));
+    return permits(
+      this.policy,
+      principal,
+      call.name,
+      this.subjectKindOf(call),
+      this.viaOf(this.mutations.get(call.name)),
+    );
   }
 
   /**
@@ -220,7 +247,19 @@ export class Store<S extends AnySchema> {
    * second list to keep in step.
    */
   permittedMutations(principal: Principal = HUMAN): readonly AnyMutationDefinition<S>[] {
-    return permittedMutations(this.policy, principal, this.allMutations());
+    const all = this.allMutations();
+    const declared = permittedMutations(
+      this.policy,
+      principal,
+      all.filter((mutation) => !mutation.derived),
+    );
+    // A derived edit is offered when its kind's own acts are.
+    const derived = all.filter(
+      (mutation) =>
+        mutation.derived !== undefined &&
+        permits(this.policy, principal, mutation.name, mutation.derived.edit, this.viaOf(mutation)).ok,
+    );
+    return [...declared, ...derived];
   }
 
   /**

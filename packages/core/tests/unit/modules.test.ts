@@ -161,7 +161,9 @@ describe("a store with a module off", () => {
       invariants: [fleetRule, vehicleRule],
       snapshot: { nodes: [{ id: "ana", kind: "person", label: "Ana" }] as never, edges: [] },
     });
-    expect(plain.allMutations()).toHaveLength(2);
+    // The two declared, plus whatever edits the framework derives for fields
+    // nobody writes — those are the store's ordinary business, not a module's.
+    expect(plain.allMutations().filter((mutation) => !mutation.derived)).toHaveLength(2);
     expect(plain.violations().map((v) => v.invariant)).toContain("fleet-not-empty");
   });
 });

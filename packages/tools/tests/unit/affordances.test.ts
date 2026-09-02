@@ -180,7 +180,10 @@ describe("suggestions nobody wrote a rule to produce", () => {
     // Three runs, two on Monday and one on Wednesday. No rule anywhere
     // mentions days, alignment, or majorities.
     const derived = deriveAffordances(store(), ["d1", "d2", "d3"]);
-    const align = derived.affordances.find((a) => a.id.startsWith("structure:align"));
+    // The day, through the act that writes days. (The derived edit can align
+    // the time too, now that a duty's `at` has a writer — that is a second
+    // offer, not this one.)
+    const align = derived.affordances.find((a) => a.id.startsWith("structure:align:reday"));
     expect(align).toBeDefined();
     expect(align!.mutation).toBe("reday");
     expect(align!.args).toEqual({ dutyId: "d3", day: "mon" });
@@ -211,7 +214,9 @@ describe("suggestions nobody wrote a rule to produce", () => {
     s.apply({ name: "reday", args: { dutyId: "d2", day: "tue" } });
     // mon / tue / wed — three groups, no majority, so nothing to align to.
     const derived = deriveAffordances(s, ["d1", "d2", "d3"]);
-    expect(derived.affordances.find((a) => a.id.startsWith("structure:align"))).toBeUndefined();
+    expect(
+      derived.affordances.find((a) => a.id.startsWith("structure:align:reday")),
+    ).toBeUndefined();
   });
 
   it("stays cheap enough to run on every selection change", () => {
@@ -300,16 +305,24 @@ describe("editing a value in place", () => {
     expect(editableFields(store(), "d1").map((field) => field.field)).toContain("label");
   });
 
-  it("says nothing about a field no mutation writes", () => {
+  it("covers a field no declared mutation writes through the derived edit", () => {
     /*
      * A duty's `at` is declared and shown, and nothing in this app writes it
-     * by that name — so it is read-only, and an interface can say so rather
-     * than offering a control that does nothing.
+     * by that name. It used to be read-only for that reason alone — a field
+     * you could set at creation, frozen by omission. Now the framework
+     * derives `edit-duty` for exactly the fields nobody else claims, so the
+     * value is editable where it is shown, through a named, logged act.
      */
-    const editable = editableFields(store(), "d1").map((field) => field.field);
-    expect(editable).not.toContain("at");
-    // `reday` writes the day, and it is called `day` on both sides.
-    expect(editable).toContain("day");
+    const editable = editableFields(store(), "d1");
+    const at = editable.find((field) => field.field === "at")!;
+    expect(at.mutation).toBe("edit-duty");
+    expect(at.title).toBe("Change the duty");
+    expect(at.takesValue).toBe(true);
+    expect(at.shape).toEqual({ type: "number" });
+    expect(at.call(600)).toEqual({ name: "edit-duty", args: { id: "d1", at: 600 } });
+    // `reday` writes the day, and it is called `day` on both sides — the
+    // declared act wins over the derivation for that field.
+    expect(editable.find((field) => field.field === "day")?.mutation).toBe("reday");
   });
 
   it("never mistakes an argument naming another node for a field", () => {
@@ -404,7 +417,12 @@ describe("what a principal may do", () => {
 
   it("offers only what the principal may run, with no per-app filtering", () => {
     const derived = deriveAffordances(guarded(), ["d1"], { principal: player });
-    expect([...new Set(derived.affordances.map((a) => a.mutation))]).toEqual(["reday"]);
+    // The player may retime a duty, so the player may change what was set
+    // when the duty was made — the derived edit rides that same grant.
+    expect([...new Set(derived.affordances.map((a) => a.mutation))].sort()).toEqual([
+      "edit-duty",
+      "reday",
+    ]);
   });
 
   it("states what it withheld, and who could do it", () => {
@@ -429,7 +447,7 @@ describe("what a principal may do", () => {
     // `undo_batch` stays — taking back your own work is legitimate — but the
     // store refuses undoing a batch whose mutation this principal may not run,
     // or undo would be the way around the policy.
-    expect(mutating.filter((name) => name !== "undo_batch")).toEqual(["reday"]);
+    expect(mutating.filter((name) => name !== "undo_batch").sort()).toEqual(["edit-duty", "reday"]);
   });
 
   it("refuses a seat that calls a mutation it was not given a tool for", () => {
@@ -452,7 +470,7 @@ describe("applying an affordance", () => {
   it("previews as a diff before it applies", () => {
     const s = store();
     const derived = deriveAffordances(s, ["d1", "d2", "d3"]);
-    const align = derived.affordances.find((a) => a.id.startsWith("structure:align"))!;
+    const align = derived.affordances.find((a) => a.id.startsWith("structure:align:reday"))!;
     const preview = previewAffordance(s, align);
     expect(preview.diff.changedNodes[0]?.after).toMatchObject({ id: "d3", day: "mon" });
     // Still not applied.

@@ -53,6 +53,9 @@ export const finish = defineMutation("finish", {
   // every menu. A person's own pins, made in the menu, outrank this.
   pinned: true,
   subject: { kinds: ["task"], arg: "taskId" },
+  // Declared, because the argument list does not say it: this is what
+  // makes `done` editable where it is shown, by the act's own name.
+  writes: ["done"],
   input: z.object({ taskId: nodeRef(["task"]) }),
   describe: (args, graph) => `Finish "${nameOf(graph as Reader, args.taskId)}"`,
   apply(ctx, args) {
@@ -64,6 +67,7 @@ export const reopen = defineMutation("reopen", {
   title: "Put it back",
   description: "Undo finishing something, when it turns out not to be finished.",
   subject: { kinds: ["task"], arg: "taskId" },
+  writes: ["done"],
   input: z.object({ taskId: nodeRef(["task"]) }),
   describe: (args, graph) => `Reopen "${nameOf(graph as Reader, args.taskId)}"`,
   apply(ctx, args) {
@@ -177,6 +181,10 @@ export const explain = defineMutation("explain", {
     "Attach a reason to a task or a list, so the argument for it outlives whoever made it.",
   subject: { kinds: ["task", "list"], arg: "aboutId" },
   connects: ["explains"],
+  // Its `text` becomes a NEW rationale node; nothing on the subject changes.
+  // Said, so the name-match guess does not offer "explain" as a way to
+  // rewrite a requirement's own text.
+  writes: [],
   input: z.object({ aboutId: nodeRef(["task", "list"]), text: z.string().min(1) }),
   describe: (args, graph) => `Why ${nameOf(graph as Reader, args.aboutId)} is here`,
   apply(ctx, args) {

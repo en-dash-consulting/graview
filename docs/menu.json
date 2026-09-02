@@ -1,10 +1,10 @@
 {
-  "at": "2026-09-02T03:52:44.293Z",
+  "at": "2026-09-02T05:04:39.306Z",
   "engine": "chromium",
   "checks": {
     "filterOnlyPastTheFold": {
-      "quietTaskActions": 9,
-      "filterShown": false,
+      "quietTaskActions": 10,
+      "filterShown": true,
       "ok": true
     },
     "searchThenApply": {
@@ -24,16 +24,16 @@
       "before": [
         "finish",
         "reschedule",
+        "edit-task",
         "reopen",
-        "rename",
-        "plan-it"
+        "rename"
       ],
       "after": [
         "finish",
         "reschedule",
         "rename",
-        "reopen",
-        "plan-it"
+        "edit-task",
+        "reopen"
       ],
       "headings": [
         "⚠ Was due 2026-08-28",

@@ -1,0 +1,28 @@
+{
+  "id": "0db6d42e-85b0-414f-a121-aa3d7e782eaa",
+  "taskId": "d4944239-f4bb-44c8-ac5f-0ffa52b159a1",
+  "taskTitle": "The sample apps remember: a browser adapter for ship's openStore",
+  "startedAt": "2026-09-02T04:55:09.854Z",
+  "finishedAt": "2026-09-02T04:55:09.854Z",
+  "status": "completed",
+  "turns": 73,
+  "summary": "localStorage adapter + ship/browser entry, store reopens with history, fresh/remember conventions, StartFresh, pnpm remember harness",
+  "tokenUsage": {
+    "input": 29912,
+    "output": 128639,
+    "cacheCreationInput": 208136,
+    "cacheReadInput": 22270633
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 29912,
+    "output": 128639,
+    "cached": 22478769,
+    "total": 22637320
+  }
+}

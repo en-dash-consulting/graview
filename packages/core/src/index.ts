@@ -64,6 +64,16 @@ export type {
 export { compileMutation, defineMutation } from "./mutations/define-mutation.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
 export {
+  deriveEditMutations,
+  editMutationName,
+  editVia,
+  fieldWriters,
+  fieldsWrittenBy,
+  settableFields,
+  subjectKindsOf,
+  unwrittenFields,
+} from "./mutations/derive-edits.js";
+export {
   argShape,
   describeArg,
   nodeRef,
