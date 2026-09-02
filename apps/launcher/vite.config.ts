@@ -32,14 +32,16 @@ export default defineConfig({
       "@graview/render": pkg("render"),
       "@graview/react": pkg("react"),
       "@graview/primitives": pkg("primitives"),
+      "@graview/pages": pkg("pages"),
+      "@graview/ship/browser": fileURLToPath(
+        new URL("../../packages/ship/src/browser.ts", import.meta.url),
+      ),
       // Longest first: Vite matches an alias as a prefix, so the bare package
       // name would otherwise swallow the `/ui` sub-path.
-      "the household example/ui": ui("the household example"),
-      "the bid-desk example/ui": ui("proposal"),
-      "the coaching example/ui": ui("the coaching example"),
-      "the household example": app("the household example"),
-      "the bid-desk example": app("proposal"),
-      "the coaching example": app("the coaching example"),
+      "@graview/todo/ui": ui("todo"),
+      "@graview/seedbed/ui": ui("seedbed"),
+      "@graview/todo": app("todo"),
+      "@graview/seedbed": app("seedbed"),
     },
   },
   server: { port: 5199, strictPort: true },

@@ -760,8 +760,13 @@ export function Inspector() {
                   for the tie group, a quiet caption: a heading is not a
                   warning unless a rule is actually broken. */}
               {section.heading ? (
+                // A real list item, not a presentational one: a list whose
+                // direct child has no list-item role is invalid to assistive
+                // technology (axe's "list" rule), and the heading is content —
+                // the finding these repairs answer is exactly what a screen
+                // reader should hear before them.
                 <li
-                  role="presentation"
+                  data-graview-heading={section.tone}
                   style={{
                     fontSize: 11,
                     lineHeight: 1.4,

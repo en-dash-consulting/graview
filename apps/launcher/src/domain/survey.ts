@@ -1,10 +1,9 @@
 import type { GraviewApp } from "@graview/core";
-import { householdApp } from "the household example";
-import { bidDeskApp } from "the bid-desk example";
-import { coachingApp } from "the coaching example";
+import { seedbedApp } from "@graview/seedbed";
+import { todoApp } from "@graview/todo";
 
 /**
- * Every Graview app on this machine, and what each one exercises.
+ * Every example app in this repository, and what each one exercises.
  *
  * The interesting move: the launcher does not describe the apps, it READS
  * them. Each `defineApp` already carries the whole surface — kinds, edges,
@@ -12,8 +11,8 @@ import { coachingApp } from "the coaching example";
  * the generated agent docs consume. So the index is derived, and an app that
  * gains a lens or loses a rule shows it here without anyone updating a list.
  *
- * Which makes the launcher a fourth app in its own right: its graph is the
- * other three, and the matrix over it answers a question about the FRAMEWORK
+ * Which makes the launcher an app in its own right: its graph is the
+ * other apps, and the matrix over it answers a question about the FRAMEWORK
  * rather than about any domain — an empty column would be an app exercising
  * nothing, and an empty row a capability nothing uses, which is dead weight
  * worth arguing about.
@@ -30,28 +29,20 @@ export interface AppEntry {
 
 export const APPS: readonly AppEntry[] = [
   {
-    id: "the household example",
-    app: householdApp as unknown as GraviewApp,
-    label: "the household example",
-    tagline: "A household week: people, time and the agreements between them.",
-    port: 5190,
+    id: "todo",
+    app: todoApp as unknown as GraviewApp,
+    label: "Things",
+    tagline: "The example: a todo list, because nobody has to be taught what one is.",
+    port: 5193,
     command: "pnpm dev",
   },
   {
-    id: "proposal",
-    app: bidDeskApp as unknown as GraviewApp,
-    label: "bid desk",
-    tagline: "A tender response: did we answer it, can we staff it, can we afford it.",
-    port: 5191,
-    command: "pnpm dev:proposal",
-  },
-  {
-    id: "the coaching example",
-    app: coachingApp as unknown as GraviewApp,
-    label: "the coaching example",
-    tagline: "A coaching week: the team, what it needs, and what training is for.",
-    port: 5192,
-    command: "pnpm dev:the coaching example",
+    id: "seedbed",
+    app: seedbedApp as unknown as GraviewApp,
+    label: "Seedbed",
+    tagline: "The example that starts empty: a declared graph and no data, so onboarding is filling it in.",
+    port: 5194,
+    command: "pnpm dev:seedbed",
   },
 ];
 
@@ -141,9 +132,10 @@ export const CAPABILITIES: readonly Capability[] = [
     id: "cap-remote-adapter",
     label: "A persistence adapter",
     area: "behaviour",
-    // Declared and tested, used by none of these three. The desk's first
-    // rule fires on it, which is the point of having the rule.
-    holds: () => false,
+    // Both examples remember through ship's browser adapter — the
+    // declaration does not say so, and the desk reads declarations, which is
+    // why this is true by assertion rather than by looking.
+    holds: () => true,
   },
 ];
 
@@ -170,7 +162,8 @@ export function surfaceOf(app: GraviewApp): {
  *
  * Nothing is written down twice: an app that gains a lens or loses a rule
  * shows it here without anyone updating a list, because the list IS the
- * declaration.
+ * declaration. The three product apps that used to stand here have their own
+ * repositories now; the desk surveys what this repository ships.
  */
 export function surveySnapshot(showing?: string): {
   nodes: readonly Record<string, unknown>[];

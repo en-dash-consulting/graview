@@ -3,8 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The example that starts empty. A community garden with a declared graph and no data \u2014 onboarding is filling it in.",
+  "description": "The example that starts empty. A community garden with a declared graph and no data — onboarding is filling it in.",
   "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/app.d.ts",
+      "default": "./dist/ui/app.js"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b",

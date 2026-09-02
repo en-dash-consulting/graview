@@ -35,8 +35,6 @@ const load = async (app) => (await import(resolve(repoRoot, `apps/${app}/dist/do
 const data = (path) => JSON.parse(readFileSync(resolve(repoRoot, path), "utf8"));
 
 const APPS = {
-  the household example: { data: "the household example/src/data/example-household.json" },
-  the coaching example: { data: "the coaching example/src/data/example-the coaching example.json" },
   todo: { data: "apps/todo/src/data/example.json" },
   seedbed: { data: null },
 };

@@ -16,8 +16,9 @@
     { "path": "../../packages/render" },
     { "path": "../../packages/react" },
     { "path": "../../packages/primitives" },
-    { "path": "../the household example" },
-    { "path": "../proposal" },
-    { "path": "../the coaching example" }
+    { "path": "../../packages/pages" },
+    { "path": "../../packages/ship" },
+    { "path": "../todo" },
+    { "path": "../seedbed" }
   ]
 }

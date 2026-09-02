@@ -40,16 +40,13 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [An empty app is an onboarding: the blank-graph example](./an-empty-app-is-an-onboarding-5a35eb.md) | completed |
 | [Derived affordances and agent tools — @graview/tools](./derived-affordances-and-agent-2adeeb.md) | completed |
 | [Descending with an open district scattered the shelf](./descending-with-an-open-ae4660.md) | completed |
-| [The household example port — the acceptance test](./the household example-port-the-acceptance-test-128eaa.md) | completed |
 | [Layout and plane model — @graview/layout](./layout-and-plane-model-graview-c7aedc.md) | completed |
 | [Modules: named parts of a declaration a workspace can turn on and off](./modules-named-parts-of-a-aa8097.md) | completed |
 | [Quick-view relations: one-click emphasis chips for the people behind a view](./quick-view-relations-one-click-5234d8.md) | completed |
 | [React binding — @graview/react](./react-binding-graview-react-a06aa2.md) | completed |
 | [Relevance is a horizon, not a delete: lifecycle, archival, and the sync flood](./relevance-is-a-horizon-not-a-728589.md) | completed |
-| ["Remove" on a person in a run's view deleted them from the household](./remove-on-a-person-in-a-run-s-ae368f.md) | completed |
 | [Selection is part of the stop: URL-addressable, restored by back/forward](./selection-is-part-of-the-stop-88cfdf.md) | completed |
 | [Spatial renderer — @graview/render](./spatial-renderer-graview-render-e0dd64.md) | completed |
-| [The the coaching example: fixtures carry rosters and outcomes](./the-colts-fixtures-carry-9fa731.md) | completed |
 | [The DOM path is a citizen of every browser](./the-dom-path-is-a-citizen-of-976f8a.md) | completed |
 | [The focused view can take the room it needs](./the-focused-view-can-take-the-23348e.md) | completed |
 | [The graph also wears a traditional face: a routed webapp derived from the same declaration](./the-graph-also-wears-a-dd174e.md) | completed |

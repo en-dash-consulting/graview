@@ -8,7 +8,7 @@
  * "Done" over a change the store refused), a broken model rung degrades to
  * the graph with a note rather than an error, and a saved key survives
  * visiting another rung. Every one of those is driven here, end to end —
- * todo for the conversation, the coaching example for the policy refusal.
+ * The refusal half runs in the the coaching example product's own repository, against its policy.
  *
  *   node scripts/verify-chat.mjs [--engine=chromium|webkit|firefox]
  */
@@ -266,48 +266,6 @@ try {
   await remote.close();
   stopVite(vite);
   vite = null;
-
-  /* ===================== the coaching example: a refusal is a result, not a quiet "Done" */
-  vite = await startVite("the coaching example", 5192);
-  const the coaching example = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-  await the coaching example.goto("http://localhost:5192/?theme=light", { waitUntil: "load" });
-  await the coaching example.waitForFunction(() => "__the coaching exampleReady" in window, null, { timeout: 60_000 });
-  await the coaching example.selectOption('[data-testid="seat"] select', "player");
-  await the coaching example.waitForTimeout(300);
-  await the coaching example.click('[data-testid="chat"]');
-  await the coaching example.waitForSelector('[data-testid="chat-panel"]');
-  const forbidden = await send(the coaching example, "Play them here: Bo at Left back");
-  await the coaching example.evaluate(() => {
-    const buttons = [...document.querySelectorAll('[data-testid="chat-apply"]')];
-    buttons[buttons.length - 1].click();
-  });
-  await the coaching example.waitForFunction(
-    () => {
-      const rows = [...document.querySelectorAll('[data-testid="chat-panel"] ol li')];
-      const text = rows[rows.length - 1]?.textContent ?? "";
-      return text.startsWith("Refused") || text.startsWith("Done");
-    },
-    null,
-    { timeout: 10_000 },
-  );
-  const verdict = await lastTurn(the coaching example);
-  // And the graph is untouched: left back still has nobody in it.
-  const untouched = await the coaching example.evaluate(() =>
-    (document.querySelector('[data-graview-slot="pos-lb"]')?.getAttribute("title") ?? "").includes(
-      "nobody",
-    ),
-  );
-  report.checks.refusalIsAResult = {
-    proposed: forbidden.applies === 1,
-    verdict: verdict.slice(0, 120),
-    untouched,
-    ok:
-      forbidden.applies === 1 &&
-      verdict.startsWith("Refused") &&
-      verdict.includes("coach") &&
-      untouched,
-  };
-  await the coaching example.close();
 
   report.pageErrors = errors;
   report.passed = Object.values(report.checks).every((check) => check.ok) && errors.length === 0;

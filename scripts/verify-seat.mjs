@@ -2,7 +2,7 @@
 /**
  * An agent seat does what it says, and says when there is nothing to do.
  *
- * Four apps had the same button and the same three faults: it never said how
+ * Every app's seat had the same button and the same three faults: it never said how
  * much there was to do, it stayed live and silently did nothing when there was
  * none, and a refusal from the store surfaced as an unhandled rejection. The
  * the coaching example's was worse than that — it ran as a roleless agent against a policy
@@ -21,9 +21,6 @@ const ENGINE = engineName();
 
 const SEATS = {
   todo: { port: 5193, ready: "__todoReady", testId: "agent-tidy", query: "&today=2026-09-01" },
-  the household example: { port: 5190, ready: "__the household exampleReady", testId: "agent-rebalance" },
-  proposal: { port: 5191, ready: "__proposalReady", testId: "agent-close-gaps" },
-  the coaching example: { port: 5192, ready: "__the coaching exampleReady", testId: "agent-pick-team" },
 };
 
 function startVite(name, port) {

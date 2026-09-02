@@ -5,6 +5,16 @@
   "type": "module",
   "description": "The example. A todo list, because nobody has to be taught what one is.",
   "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/app.d.ts",
+      "default": "./dist/ui/app.js"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b",

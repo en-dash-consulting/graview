@@ -8,9 +8,6 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
-    "the household example",
-    "the bid-desk example",
-    "the coaching example",
     "@graview/launcher",
     "@graview/spike"
   ]

@@ -64,10 +64,11 @@ agent tool that walks the graph.
 
 ## Worked examples
 
-- `the coaching example/src/domain/schema.ts` — ten kinds, including a `rule` kind whose
-  `spec` makes the rules a domain enforces into data
-- `the household example/src/domain/schema.ts` — `fieldRoles` binding a calendar lens
-  to a household's own field names
+- `apps/todo/src/domain/schema.ts` — four kinds, including a `rule` kind whose
+  `spec` makes the rules a domain enforces into data, and `fieldRoles` binding
+  the timeline lens to a task's own field names
+- `apps/seedbed/src/domain/schema.ts` — a kind with a declared `lifecycle`, so
+  the past is a horizon rather than a delete
 
 ## The declarations that keep paying
 
