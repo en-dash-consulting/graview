@@ -194,6 +194,7 @@ export function ChatPanel<S extends AnySchema>({
       {open ? (
         <div
           data-testid={`${testId}-panel`}
+          data-graview-offstage=""
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",

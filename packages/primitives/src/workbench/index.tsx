@@ -417,6 +417,9 @@ export function Inspector() {
   return (
     <aside
       aria-label="Inspector"
+      // Chrome, not scene: the ties layer must never anchor a line to the
+      // node names this pane repeats.
+      data-graview-offstage=""
       data-testid={atPointer ? "context-menu" : "inspector-strip"}
       onMouseDown={(event) => event.stopPropagation()}
       style={{
@@ -1286,6 +1289,7 @@ export function ActivityRail({
         <aside
           aria-label="Activity"
           data-testid="activity"
+          data-graview-offstage=""
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
