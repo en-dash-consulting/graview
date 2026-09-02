@@ -54,5 +54,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The graview button toggles — 'Graview' up, 'Focus' down — and its mark morphs to say so](./the-graview-button-toggles-52c4fc.md) | pending |
 | [The lines are editable: relations as first-class selectable, modifiable things](./the-lines-are-editable-492161.md) | completed |
 | [The menu scales: search, pins, and what you actually use](./the-menu-scales-search-pins-and-db5b1b.md) | completed |
+| [The pages face reads like a product's own site, not a back office](./the-pages-face-reads-like-a-9d2ea7.md) | pending |
 | [Theming and look-and-feel: a declarative customization API a skill can drive](./theming-and-look-and-feel-a-305f2b.md) | completed |
 | [View primitives and the timeline lens](./view-primitives-and-the-c7fbbe.md) | completed |
