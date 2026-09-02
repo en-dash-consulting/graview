@@ -92,6 +92,8 @@ export interface TodoAppProps {
   readonly attachRenderer?: SceneProps<S>["attachRenderer"];
   readonly initialScheme?: Scheme;
   readonly onSchemeChange?: (scheme: Scheme) => void;
+  /** Whether the store behind this app is remembered in the browser (see main.tsx). */
+  readonly remembers?: boolean;
 }
 
 export function TodoApp({
@@ -102,6 +104,7 @@ export function TodoApp({
   attachRenderer,
   initialScheme = "light",
   onSchemeChange,
+  remembers = false,
 }: TodoAppProps) {
   const created = useMemo(() => store ?? createTodoUiStore(), [store]);
   const views = useMemo(() => todoViews(), []);
@@ -116,6 +119,7 @@ export function TodoApp({
       brand={thingsBrand}
     >
       <Shell
+        remembers={remembers}
         syncUrl={syncUrl}
         renderer={renderer}
         scheme={scheme}
@@ -141,12 +145,14 @@ function usePlace(): (typeof PLACES)[number] {
 }
 
 function Shell({
+  remembers,
   syncUrl,
   renderer,
   scheme,
   onScheme,
   attachRenderer,
 }: {
+  remembers: boolean;
   syncUrl: boolean;
   renderer: "gpu" | "dom" | "auto";
   scheme: Scheme;
@@ -164,7 +170,8 @@ function Shell({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-      <CommandBar syncUrl={syncUrl} scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
+      <CommandBar
+        remembers={remembers} syncUrl={syncUrl} scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
       <BackOutHere />
       <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0 }}>
         <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
@@ -185,12 +192,14 @@ function BackOutHere() {
 }
 
 function CommandBar({
+  remembers,
   syncUrl,
   scheme,
   onScheme,
   onCall,
   calls,
 }: {
+  remembers: boolean;
   syncUrl: boolean;
   scheme: Scheme;
   onScheme: (scheme: Scheme) => void;
@@ -244,7 +253,7 @@ function CommandBar({
         </a>
         <Standing clean="Nothing is out of order" />
         <ChatPanel<S> onCall={onCall} />
-        <ActivityRail calls={calls} seat={<TidyButton onCall={onCall} />} />
+        <ActivityRail remembers={remembers} calls={calls} seat={<TidyButton onCall={onCall} />} />
         <button
           type="button"
           data-testid="scheme"

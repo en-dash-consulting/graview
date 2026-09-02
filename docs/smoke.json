@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-01T07:18:13.979Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-Skdlb0",
+  "at": "2026-09-02T04:53:58.340Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-2H7XYX",
   "steps": {
     "packed": [
       "@graview/core",
@@ -26,7 +26,7 @@
     "affordances": 2,
     "tools": 7,
     "draws": 3,
-    "cssBytes": 17442,
+    "cssBytes": 21051,
     "palettes": [
       "#6fdcea",
       "#0c6e78"
@@ -35,7 +35,8 @@
     "pagesRendered": true,
     "recordFields": 1,
     "slug": "tasks",
-    "shipped": true
+    "shipped": true,
+    "remembered": true
   },
   "verdict": {
     "installedFromTarballs": true,
@@ -50,6 +51,7 @@
     "theSceneRendered": true,
     "thePagesRendered": true,
     "theDeploymentShipped": true,
+    "theBrowserRemembered": true,
     "theThemeEmitted": true
   },
   "passed": true

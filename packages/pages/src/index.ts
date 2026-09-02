@@ -10,6 +10,7 @@ export {
   DefaultProblemsPage,
   DefaultRecordPage,
   DefaultShell,
+  StartFreshLink,
   useStoreTick,
 } from "./pages.js";
 export type { PageContext } from "./pages.js";

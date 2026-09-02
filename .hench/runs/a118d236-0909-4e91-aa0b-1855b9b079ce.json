@@ -1,0 +1,28 @@
+{
+  "id": "a118d236-0909-4e91-aa0b-1855b9b079ce",
+  "taskId": "52c4fc82-0af0-443c-9cf9-d00a97432769",
+  "taskTitle": "The graview button toggles — 'Graview' up, 'Focus' down — and its mark morphs to say so",
+  "startedAt": "2026-09-02T04:43:34.312Z",
+  "finishedAt": "2026-09-02T04:43:34.312Z",
+  "status": "completed",
+  "turns": 126,
+  "summary": "Toggle label + aria state, inline SVG morph on the registered altitude property, harness coverage in navigation and engines",
+  "tokenUsage": {
+    "input": 11865,
+    "output": 134410,
+    "cacheCreationInput": 459691,
+    "cacheReadInput": 21017580
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "NickBook-Pro.local",
+  "tokens": {
+    "input": 11865,
+    "output": 134410,
+    "cached": 21477271,
+    "total": 21623546
+  }
+}

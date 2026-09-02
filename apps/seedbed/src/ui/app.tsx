@@ -54,6 +54,8 @@ export interface SeedbedAppProps {
   readonly attachRenderer?: SceneProps<S>["attachRenderer"];
   readonly initialScheme?: Scheme;
   readonly onSchemeChange?: (scheme: Scheme) => void;
+  /** Whether the store behind this app is remembered in the browser (see main.tsx). */
+  readonly remembers?: boolean;
 }
 
 export function SeedbedApp({
@@ -64,6 +66,7 @@ export function SeedbedApp({
   attachRenderer,
   initialScheme = "light",
   onSchemeChange,
+  remembers = false,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
   const views = useMemo(() => seedbedViews(), []);
@@ -78,6 +81,7 @@ export function SeedbedApp({
       brand={seedbedBrand}
     >
       <Shell
+        remembers={remembers}
         syncUrl={syncUrl}
         renderer={renderer}
         scheme={scheme}
@@ -92,12 +96,14 @@ export function SeedbedApp({
 }
 
 function Shell({
+  remembers,
   syncUrl,
   renderer,
   scheme,
   onScheme,
   attachRenderer,
 }: {
+  remembers: boolean;
   syncUrl: boolean;
   renderer: "gpu" | "dom" | "auto";
   scheme: Scheme;
@@ -115,7 +121,8 @@ function Shell({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-      <CommandBar syncUrl={syncUrl} scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
+      <CommandBar
+        remembers={remembers} syncUrl={syncUrl} scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
       <BackOut home={null} />
       <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0 }}>
         <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
@@ -129,12 +136,14 @@ function Shell({
 }
 
 function CommandBar({
+  remembers,
   syncUrl,
   scheme,
   onScheme,
   onCall,
   calls,
 }: {
+  remembers: boolean;
   syncUrl: boolean;
   scheme: Scheme;
   onScheme: (scheme: Scheme) => void;
@@ -181,7 +190,7 @@ function CommandBar({
         </a>
         <Standing clean="The garden keeps its agreements" />
         <ChatPanel<S> onCall={onCall} />
-        <ActivityRail calls={calls} seat={<StarterGarden onCall={onCall} />} />
+        <ActivityRail remembers={remembers} calls={calls} seat={<StarterGarden onCall={onCall} />} />
         <button
           type="button"
           data-testid="scheme"

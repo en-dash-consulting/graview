@@ -36,6 +36,18 @@ export interface OpenStoreOptions<S extends AnySchema> {
   readonly assumeVersion?: number;
   /** Told when a persistence write fails; absent, failures reach the console. */
   readonly onPersistError?: (error: unknown) => void;
+  /**
+   * Discard what is stored for this scope and start from the seed. The
+   * way back to the example for a demo that has been edited into a corner —
+   * a graph you cannot leave teaches distrust. Everything stored is deleted
+   * first, so the seed really is the first load again.
+   */
+  readonly fresh?: boolean;
+  /**
+   * Overrides for the store. The declaration's own policy and modules are
+   * applied before these, so an app that declares who may do what gets it
+   * enforced by the store ship opens without saying so twice.
+   */
   readonly storeOptions?: Partial<StoreOptions<S>>;
 }
 
@@ -61,6 +73,7 @@ export async function openStore<S extends AnySchema>(
   const { app, adapter } = options;
   const scope = options.scope ?? app.name;
 
+  if (options.fresh) await adapter.delete(scope);
   const stored = (await adapter.load(scope)) as GraphSnapshot | null;
   const persisted = (await adapter.loadLog?.(scope)) ?? [];
   let seq = persisted.length;
@@ -92,12 +105,42 @@ export async function openStore<S extends AnySchema>(
     await adapter.appendOps?.(scope, migrated);
   }
 
+  /*
+   * The store REOPENS WITH ITS HISTORY. The snapshot is the graph; the
+   * persisted log (plus the migration run just appended) is how it got
+   * there — and it is handed to the store as the live log rather than
+   * folded, because the seed was never an operation. What was done in an
+   * earlier session is therefore still attributed, still in the activity,
+   * and still undoable, which is what "persistence is the op log" means.
+   */
+  const history: Operation[] = [...persisted, ...migrated];
+
+  /*
+   * Ids that cannot collide with an earlier session's. The store's default
+   * counter restarts at op1 every open, and an undo names its target BY ID —
+   * a second "op1" would make the log ambiguous about what was taken back.
+   * A supplied `ids` still wins.
+   */
+  const taken = new Set(history.map((op) => op.id));
+  let n = history.length;
+  const ids = () => {
+    let id = `op${++n}`;
+    while (taken.has(id)) id = `op${++n}`;
+    taken.add(id);
+    return id;
+  };
+
   const store = new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],
     invariants: app.invariants ?? [],
     ...(app.modules ? { modules: app.modules } : {}),
+    ...(app.policy ? { policy: app.policy } : {}),
     snapshot: snapshot as never,
+    log: history,
+    ids,
+    // A stored history is read back later, so its timestamps are real ones.
+    now: () => new Date().toISOString(),
     ...(options.storeOptions ?? {}),
   });
 

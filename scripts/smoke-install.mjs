@@ -141,6 +141,7 @@ import { createViews, GraviewProvider, Scene, type ViewProps } from "@graview/re
 import { Panel, registerDefaultViews, themeCss } from "@graview/primitives";
 import { PagesApp, recordFacts, pluralSlug } from "@graview/pages";
 import { createFileAdapter, exportBundle, health, openStore } from "@graview/ship";
+import { createBrowserAdapter } from "@graview/ship/browser";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -253,6 +254,29 @@ export async function build() {
       reopened.close();
       return well.ok && bundle.snapshot.nodes.length > 0;
     })(),
+    // The browser adapter, through the SAME lifecycle, against a Map dressed
+    // as localStorage: the sample apps' persistence, rehearsed from tarballs.
+    remembered: await (async () => {
+      const map = new Map<string, string>();
+      const storage = {
+        getItem: (key: string) => map.get(key) ?? null,
+        setItem: (key: string, value: string) => void map.set(key, value),
+        removeItem: (key: string) => void map.delete(key),
+      };
+      const adapter = createBrowserAdapter({ storage });
+      const opened = await openStore({ app, adapter, seed: store.snapshot() });
+      const done = opened.store.apply({ name: "finish", args: { id: "a" } });
+      await opened.flush();
+      opened.close();
+      const again = await openStore({ app, adapter, seed: store.snapshot() });
+      const survived = (again.store.graph.getNode("a") as { done: boolean }).done === true;
+      const undoable = again.store.canUndo(done.batch).ok;
+      again.close();
+      const fresh = await openStore({ app, adapter, seed: store.snapshot(), fresh: true });
+      const reset = (fresh.store.graph.getNode("a") as { done: boolean }).done === false;
+      fresh.close();
+      return survived && undoable && reset;
+    })(),
   };
 }
 `,
@@ -280,6 +304,7 @@ const result = {
   recordFields: built.record,
   slug: built.slug,
   shipped: built.shipped,
+  remembered: built.remembered,
 };
 process.stdout.write(JSON.stringify(result));
 `,
@@ -328,6 +353,8 @@ report.verdict = {
   thePagesRendered: r.pagesRendered === true && r.slug === "tasks" && (r.recordFields ?? 0) > 0,
   // One declaration plus one adapter deployed, persisted, reopened, exported.
   theDeploymentShipped: r.shipped === true,
+  // The browser adapter slots into the same lifecycle: survives, undoes, resets.
+  theBrowserRemembered: r.remembered === true,
   theThemeEmitted: (r.cssBytes ?? 0) > 500,
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;

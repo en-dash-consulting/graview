@@ -71,6 +71,9 @@ importers:
       '@graview/render':
         specifier: workspace:*
         version: link:../../packages/render
+      '@graview/ship':
+        specifier: workspace:*
+        version: link:../../packages/ship
       '@graview/tools':
         specifier: workspace:*
         version: link:../../packages/tools
@@ -188,6 +191,9 @@ importers:
       '@graview/render':
         specifier: workspace:*
         version: link:../../packages/render
+      '@graview/ship':
+        specifier: workspace:*
+        version: link:../../packages/ship
       '@graview/tools':
         specifier: workspace:*
         version: link:../../packages/tools
@@ -225,6 +231,9 @@ importers:
       '@graview/render':
         specifier: workspace:*
         version: link:../../packages/render
+      '@graview/ship':
+        specifier: workspace:*
+        version: link:../../packages/ship
       '@graview/tools':
         specifier: workspace:*
         version: link:../../packages/tools
@@ -284,6 +293,9 @@ importers:
       '@graview/render':
         specifier: workspace:*
         version: link:../../packages/render
+      '@graview/ship':
+        specifier: workspace:*
+        version: link:../../packages/ship
       '@graview/tools':
         specifier: workspace:*
         version: link:../../packages/tools
@@ -324,6 +336,9 @@ importers:
       '@graview/render':
         specifier: workspace:*
         version: link:../../packages/render
+      '@graview/ship':
+        specifier: workspace:*
+        version: link:../../packages/ship
       '@graview/tools':
         specifier: workspace:*
         version: link:../../packages/tools
