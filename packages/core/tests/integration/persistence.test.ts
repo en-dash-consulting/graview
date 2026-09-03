@@ -28,7 +28,7 @@ const snapshot: GraphSnapshot = {
 };
 
 /** The household example's real table shape, so its store plugs in without a migration. */
-function the household exampleTables() {
+function householdTables() {
   const db = new Database(":memory:");
   db.exec(`
     CREATE TABLE graph_nodes (
@@ -47,7 +47,7 @@ function the household exampleTables() {
 
 const adapters: [string, () => PersistenceAdapter<string>][] = [
   ["memory", () => createMemoryAdapter()],
-  ["sqlite", () => createSqliteAdapter({ database: the household exampleTables() as never })],
+  ["sqlite", () => createSqliteAdapter({ database: householdTables() as never })],
 ];
 
 describe.each(adapters)("%s adapter", (_name, make) => {
@@ -123,7 +123,7 @@ describe.each(adapters)("%s adapter", (_name, make) => {
 
 describe("sqlite adapter", () => {
   it("keeps the id and kind columns authoritative over the JSON blob", async () => {
-    const db = the household exampleTables();
+    const db = householdTables();
     db.prepare(
       "INSERT INTO graph_nodes (household_id, id, kind, data) VALUES (?, ?, ?, ?)",
     ).run("h", "p1", "person", JSON.stringify({ id: "stale", kind: "stale", label: "Ana" }));
@@ -133,7 +133,7 @@ describe("sqlite adapter", () => {
   });
 
   it("preserves edge order through the position column", async () => {
-    const adapter = createSqliteAdapter({ database: the household exampleTables() as never });
+    const adapter = createSqliteAdapter({ database: householdTables() as never });
     const many: GraphSnapshot = {
       nodes: [
         { id: "p1", kind: "person", label: "Ana" },

@@ -18,7 +18,7 @@ export const AGGREGATE_PREFIX = "aggregate:";
  * The kinds plane's cards have ids of their own.
  *
  * They cannot share `aggregate:<kind>` with a focusable group, because an app
- * whose primary view IS one kind — the coaching example' formation is
+ * whose primary view IS one kind — the coaching example's formation is
  * `aggregate:position` — would then place the same id twice: once as the
  * focus and once as its own card in the strip. The strip is a MAP of kinds,
  * not a set of groups you focus, so it gets its own namespace.

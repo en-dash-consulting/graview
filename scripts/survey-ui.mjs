@@ -269,7 +269,7 @@ let browser;
 /*
  * A filtered run replaces ITS OWN pictures, not everybody's.
  *
- * `node scripts/survey-ui.mjs the coaching example` used to wipe the whole directory and put
+ * `node scripts/survey-ui.mjs todo` used to wipe the whole directory and put
  * back ten files, silently deleting the other forty — so a quick look at one
  * app left the survey a fifth of a survey, and the next person to open
  * docs/survey found most of it missing with nothing to say why.

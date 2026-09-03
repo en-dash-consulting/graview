@@ -46,8 +46,8 @@ for the agent, stop: that path is the one that will drift.
 
 ## Worked examples
 
-- `the household example/src/ui/app.tsx` — the seat, the runtime, `useAttention`, and
-  an agent that reads the graph before it moves
+- `apps/todo/src/ui/app.tsx` — the seat, the runtime, and an agent that reads
+  the graph before it moves
 - `packages/tools/src/agent/tools.ts` — how the tools generate, and what a
   read-only call reports about what it looked at
 

@@ -253,8 +253,8 @@ const RUN = Math.cos((HEADER_ANGLE * Math.PI) / 180);
  * taller.
  *
  * A cap sized for the longest label anyone might write is dead space for
- * everyone who did not write it: the desk's columns are "the household example", "bid
- * desk" and "the coaching example", and a band cut for "Prescription journey
+ * everyone who did not write it: the desk's columns are "The household example", "bid
+ * desk" and "The coaching example", and a band cut for "Prescription journey
  * remediation" left a hundred empty pixels above them. Same geometry, asked
  * of the labels that are actually there.
  */

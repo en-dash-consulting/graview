@@ -28,5 +28,5 @@ description: "The headless heart of the framework: schema registry, invariant en
 |-------|--------|
 | [Invariant engine with repairs](./invariant-engine-with-repairs-2f9830.md) | completed |
 | [Operation log with reads-tracking and selective undo](./operation-log-with-reads-f62721.md) | completed |
-| [Persistence adapter and the household example graph load](./persistence-adapter-and-16267b.md) | completed |
+| [Persistence adapter and the reference graph load](./persistence-adapter-and-16267b.md) | completed |
 | [Schema registry — defineNode with build-time type safety](./schema-registry-definenode-with-aa5d62.md) | completed |

@@ -8,7 +8,7 @@ startedAt: "2026-08-31T03:01:14.190Z"
 completedAt: "2026-08-31T03:10:35.340Z"
 endedAt: "2026-08-31T03:10:35.340Z"
 resolutionType: "code-change"
-resolutionDetail: "The token contract and both shipped palettes moved to core as declarations; a Brand carries name, logo, typography and schemes; brandFromAccent derives a coherent pair from one accent and refuses when it cannot; graview check measures every text pair against WCAG AA and names the failing pair. The bid desk now ships as \"the bid-desk example\" from one declaration, with nothing in primitives touched."
+resolutionDetail: "The token contract and both shipped palettes moved to core as declarations; a Brand carries name, logo, typography and schemes; brandFromAccent derives a coherent pair from one accent and refuses when it cannot; graview check measures every text pair against WCAG AA and names the failing pair. The bid desk now ships under its own brand from one declaration, with nothing in primitives touched."
 acceptanceCriteria:
   - "A theme is declared, validated and applied without touching @graview/primitives"
   - "graview check verifies every token pair that carries text meets WCAG AA, and names the failing pair"

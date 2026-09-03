@@ -212,7 +212,7 @@ report.verdict =
 report.rankingSlot = {
   verdict: "DEFERRED",
   reason:
-    "Learning which suggestions get applied needs real op logs; none exist before launch. Revisit with the household product usage data.",
+    "Learning which suggestions get applied needs real op logs; none exist before launch. Revisit with real usage data from a launched product.",
 };
 
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
