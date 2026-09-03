@@ -1,6 +1,6 @@
 ---
 id: "9d2ea790-cfb3-4d71-ba98-74b1a7dbf2f4"
-level: "feature"
+level: "task"
 title: "The pages face reads like a product's own site, not a back office"
 status: "completed"
 priority: "high"

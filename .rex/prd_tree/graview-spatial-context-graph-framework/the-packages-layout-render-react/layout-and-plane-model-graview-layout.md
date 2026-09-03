@@ -1,6 +1,6 @@
 ---
 id: "c7aedc30-0fe8-45e2-aad3-33bd0c2e6dc7"
-level: "feature"
+level: "task"
 title: "Layout and plane model — @graview/layout"
 status: "completed"
 priority: "high"

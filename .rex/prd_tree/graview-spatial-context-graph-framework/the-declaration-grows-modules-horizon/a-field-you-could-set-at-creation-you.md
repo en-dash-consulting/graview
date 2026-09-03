@@ -1,6 +1,6 @@
 ---
 id: "2e35a59d-ada4-4a0d-991c-663334d1daf8"
-level: "feature"
+level: "task"
 title: "A field you could set at creation, you can change: derived edits, RBAC-scoped"
 status: "completed"
 priority: "high"

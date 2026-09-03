@@ -1,6 +1,6 @@
 ---
 id: "e0dd64de-6d75-466c-8093-39d411aa529e"
-level: "feature"
+level: "task"
 title: "Spatial renderer — @graview/render"
 status: "completed"
 priority: "high"

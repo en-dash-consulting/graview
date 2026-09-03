@@ -1,6 +1,6 @@
 ---
 id: "2adeebc0-df1c-4ec3-9404-08d3ac1ef04f"
-level: "feature"
+level: "task"
 title: "Derived affordances and agent tools — @graview/tools"
 status: "completed"
 priority: "high"

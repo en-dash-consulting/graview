@@ -1,6 +1,6 @@
 ---
 id: "c7fbbe07-5883-4383-b60c-1f8f64ebc916"
-level: "feature"
+level: "task"
 title: "View primitives and the timeline lens"
 status: "completed"
 priority: "medium"

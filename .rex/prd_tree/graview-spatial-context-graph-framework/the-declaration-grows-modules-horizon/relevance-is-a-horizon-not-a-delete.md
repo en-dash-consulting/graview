@@ -1,6 +1,6 @@
 ---
 id: "728589e4-9119-4197-8a06-6f180e78be03"
-level: "feature"
+level: "task"
 title: "Relevance is a horizon, not a delete: lifecycle, archival, and the sync flood"
 status: "completed"
 priority: "high"

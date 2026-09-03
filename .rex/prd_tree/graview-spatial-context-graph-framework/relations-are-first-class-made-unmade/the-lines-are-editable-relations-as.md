@@ -1,6 +1,6 @@
 ---
 id: "49216104-1961-405d-99b9-4eaf53796027"
-level: "feature"
+level: "task"
 title: "The lines are editable: relations as first-class selectable, modifiable things"
 status: "completed"
 priority: "high"

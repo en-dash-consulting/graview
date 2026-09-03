@@ -1,6 +1,6 @@
 ---
 id: "305f2b21-0dc3-426f-b927-6a139ebb8762"
-level: "feature"
+level: "task"
 title: "Theming and look-and-feel: a declarative customization API a skill can drive"
 status: "completed"
 priority: "high"

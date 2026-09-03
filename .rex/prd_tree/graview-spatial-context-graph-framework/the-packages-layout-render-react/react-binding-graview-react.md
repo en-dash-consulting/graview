@@ -1,6 +1,6 @@
 ---
 id: "a06aa246-782b-4f85-a65c-cfff749e9f35"
-level: "feature"
+level: "task"
 title: "React binding — @graview/react"
 status: "completed"
 priority: "medium"

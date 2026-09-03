@@ -1,6 +1,6 @@
 ---
 id: "dd174e35-ab9e-4e6a-9c20-83d7ab6c77a3"
-level: "feature"
+level: "task"
 title: "The graph also wears a traditional face: a routed webapp derived from the same declaration"
 status: "completed"
 priority: "high"

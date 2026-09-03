@@ -27,6 +27,9 @@ description: "A third ALTITUDE, above the three planes rather than inside them.\
 
 | Title | Status |
 |-------|--------|
+| [Descending with an open district scattered the shelf](./descending-with-an-open-district.md) | completed |
 | [Relations are grouped, not listed flat](./relations-are-grouped-not-listed-flat.md) | completed |
+| [Rising morphs, districts open in place, and lines land on what you can see](./rising-morphs-districts-open-in-place.md) | completed |
 | [The constellation is where you watch the system work](./the-constellation-is-where-you-watch.md) | completed |
+| [The graview button toggles — 'Graview' up, 'Focus' down — and its mark morphs to say so](./the-graview-button-toggles-graview-up.md) | completed |
 | [The shrunk interface must be the interface, scaled — not re-laid-out small](./the-shrunk-interface-must-be-the.md) | completed |
