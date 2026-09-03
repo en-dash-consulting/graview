@@ -19,3 +19,4 @@
 {"ts":"2026-08-30T01:55:48.571Z","vendor":"claude","binary":"claude","args":["mcp","remove","--scope","user","sourcevision"],"platform":"darwin","via":"execFileSyncCli"}
 {"ts":"2026-08-30T01:55:48.998Z","vendor":"claude","binary":"claude","args":["mcp","add","sourcevision","--","node","/Users/nick/Library/pnpm/global/5/.pnpm/@n-dx+sourcevision@0.5.0/node_modules/@n-dx/sourcevision/dist/cli/index.js","mcp","/Users/nick/development/endash/visual-system-design"],"platform":"darwin","via":"execFileSyncCli"}
 {"ts":"2026-09-01T05:24:14.164Z","vendor":"lsof","binary":"lsof","args":["-ti","tcp:3117"],"platform":"darwin","via":"execFileSyncCli"}
+{"ts":"2026-09-03T21:27:53.200Z","vendor":"claude","binary":"claude","args":["-p","-","--output-format","json","--model","claude-sonnet-5"],"platform":"darwin","via":"spawnCli"}
