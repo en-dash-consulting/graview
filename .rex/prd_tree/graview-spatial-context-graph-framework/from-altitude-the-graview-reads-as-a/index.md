@@ -30,4 +30,4 @@ description: "The zoomed-out Graview was meant to feel like rising over a city â
 
 | Title | Status |
 |-------|--------|
-| [Rising morphs, districts open in place, and lines land on what you can see](./rising-morphs-districts-open-in-b8bcd6.md) | completed |
+| [Rising morphs, districts open in place, and lines land on what you can see](./rising-morphs-districts-open-in-place.md) | completed |
