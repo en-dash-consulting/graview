@@ -9,8 +9,8 @@ tags:
   - "ux"
 source: "Session feedback while using the board, calendar and desk"
 startedAt: "2026-08-31T02:50:25.657Z"
-completedAt: "2026-09-01T05:32:43.047Z"
-endedAt: "2026-09-01T05:32:43.047Z"
+completedAt: "2026-09-03T21:20:40.882Z"
+endedAt: "2026-09-03T21:20:40.882Z"
 acceptanceCriteria:
   - "Single click on any data-graview-pick target selects it and leaves the view where it is"
   - "Double click on a pick target travels to it (focus); double click on a view with no pick target still jacks in"
@@ -21,12 +21,15 @@ acceptanceCriteria:
   - "Every mutation title says what it does in the app's own words"
   - "All four apps pass graview check, zero axe violations in both schemes, keyboard reaches all three planes"
 description: "Clicking a thing currently TRAVELS to it, which is the wrong default. Most of the time you want to act on it where it is — substitute a player without leaving the formation, move an event without leaving the week. Travel should be the deliberate second gesture, not the only one.\n\nThis feature reworks the interaction model so a single click selects in place and surfaces the context actions, a double click travels, and a right click opens the actions at the pointer. It also fixes the surfaces that made selection hard to read: a raised relation with no visible origin, a rule that appears to do nothing when selected, an activity rail that sits over the scene, and a mutation nobody can interpret from its name."
+lastModified: "2026-09-03T21:20:40.892Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
 ## Children
 
 | Title | Status |
 |-------|--------|
+| [A line starts where the thing it names is drawn](./a-line-starts-where-the-thing-it-names.md) | completed |
 | [A raised crowd reads as a crowd, not as ten crushed cards](./a-raised-crowd-reads-as-a-crowd-not-as.md) | completed |
 | [A raised relation keeps its origin visible](./a-raised-relation-keeps-its-origin.md) | completed |
 | [A selection draws its own ties, from where the thing actually is](./a-selection-draws-its-own-ties-from.md) | completed |
