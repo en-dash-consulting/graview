@@ -27,6 +27,6 @@ description: "Establish that the HTML-in-Canvas + WebGPU render loop actually wo
 
 | Title | Status |
 |-------|--------|
-| [Capture and composite DOM panels at plane depth](./capture-and-composite-dom-9a35ab.md) | completed |
-| [Measure capture budget and verify platform restrictions](./measure-capture-budget-and-1af9ad.md) | completed |
-| [Settle geometry sync — hit-testing, focus, a11y, and the perspective question](./settle-geometry-sync-hit-07a130.md) | completed |
+| [Capture and composite DOM panels at plane depth](./capture-and-composite-dom-panels-at.md) | completed |
+| [Measure capture budget and verify platform restrictions](./measure-capture-budget-and-verify.md) | completed |
+| [Settle geometry sync — hit-testing, focus, a11y, and the perspective question](./settle-geometry-sync-hit-testing-focus.md) | completed |

@@ -23,6 +23,6 @@ description: "Six packages, every one `private: true`, no licence, no `files`, n
 
 | Title | Status |
 |-------|--------|
-| [A skills package for building with Graview](./a-skills-package-for-building-3e30b3.md) | completed |
-| [Deployment is a framework concern: the ship subpackage](./deployment-is-a-framework-bb2b2a.md) | completed |
-| [Releases: changesets, CI, npm](./releases-changesets-ci-npm-1ce5c3.md) | completed |
+| [A skills package for building with Graview](./a-skills-package-for-building-with.md) | completed |
+| [Deployment is a framework concern: the ship subpackage](./deployment-is-a-framework-concern-the.md) | completed |
+| [Releases: changesets, CI, npm](./releases-changesets-ci-npm.md) | completed |
