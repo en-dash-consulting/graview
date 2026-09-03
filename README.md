@@ -191,7 +191,7 @@ failures it exists to catch are readable without a word: an empty row (a
 requirement nobody answered) and an empty column (work nobody asked for). Both
 are absences of a *relationship*, which is what prose review is worst at.
 
-**A coaching week** had to justify itself hardest — a the coaching example planner is *also*
+**A coaching week** had to justify itself hardest — a coaching-week planner is *also*
 scheduling if you build it lazily. What earned its place is the chain it turns
 on, `formation → position → skill ← drill ← session`: the team you intend to
 put out decides which skills matter, and the skills that matter decide what

@@ -23,7 +23,7 @@ somebody with a bright office files a bug — so the framework measures it.
    }
 
    export const brand: Brand = {
-     name: "the bid-desk example",
+     name: "Acme Bids",
      // Inline SVG using currentColor: one file works in both schemes.
      logo: '<svg viewBox="0 0 24 24" ... stroke="currentColor">...</svg>',
      typography: { body: '"Inter", ui-sans-serif, system-ui, sans-serif' },
@@ -83,8 +83,8 @@ to make.
 
 ## Worked example
 
-- `the bid-desk example/src/domain/brand.ts` — the bid desk shipping as "the bid-desk example"
-  from one accent, one mark and one typeface, with the refusal path left live
+- `apps/todo/src/domain/brand.ts` — "Things" from one accent, one mark and one
+  typeface, with the refusal path left live
 
 ## Then find out whether it worked
 

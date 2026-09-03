@@ -9,7 +9,7 @@ Composition: **~46s @ 30fps = 1380 frames** (36s story + ~10s outro @ 1.6×). Ta
 |------|--------|------|------------------|
 | 0–~3.7s | 0–110 | Open brand | En Dash mark · *presents* · **GRAVIEW** |
 | ~1–6s | 30–195 | Glyphs → constellation | `defineNode` types out · card: **Declare entities. Get the app.** |
-| ~5.5–11s | 165–320 | Graph interface | Center Graview iso (the household example → the coaching example) + peripheral plates · **The graph is the interface.** → **UI, nav, tools — from one model.** (crossfade, fixed size) |
+| ~5.5–11s | 165–320 | Graph interface | Center Graview iso (lists → zoomed) + peripheral plates · **The graph is the interface.** → **UI, nav, tools — from one model.** (crossfade, fixed size) |
 | ~10–14s | 290–420 | City altitude | Wordmark **GRAVIEW** + subtitle **A developer kit** (~4.3s) |
 | ~13–28s | 400–850 | Relations demo | Schema (Person / Event / Step / Part) → **calendar · instructions · tools** bloom; Step “Replace filter” ↔ Part “HEPA cartridge”; agent tools rail |
 | ~28–32s | 830–940 | En Dash bridge | Brief **En Dash** mark + wordmark lockup (no ToDo) |
@@ -48,10 +48,10 @@ Supporting chrome (not hero titles): `typed context graph` · `owns` / `routes` 
 - No audio asset wired yet; cards are optional and can be muted by removing TitleCard / BigTitle usages.
 - Prefer a dry, confident read; leave ~0.4s breath between beats.
 - Product UI plates lean on **the household example / the coaching example / proposal** survey stills (diverse surfaces), not a ToDo-app cut.
-- GraphInterface center uses **the household product-dark** → **the coaching example-graview-dark** iso plates (legible context graph), not a featureless mint orb.
+- GraphInterface center uses **todo-graview-dark** → **todo-zoomed-dark** iso plates (legible context graph), not a featureless mint orb.
 - BigTitle keeps fixed type size (no shrink-on-dock); prefer crossfade between lines.
 - BrandMorph is a brief **En Dash** lockup only — ToDo sample→morph removed.
 - Mid-story teaches **one graph → many surfaces** (calendar + procedure step↔part + agent tools), not calendar-only.
 - Outro: `OffthreadVideo` `playbackRate={1.6}`; `OUTRO_FRAMES = 300`; dip-to-white → white bumper stitch preserved.
-- RelationsDemo: center **the household example/the coaching example-graview** iso behind calendar + procedure panels; removed errant dashed step→part SVG; “typed context graph” pill sits upper-third and fades before mid titles; agent rail cleared above title band.
+- RelationsDemo: center **todo-graview** iso behind calendar + procedure panels; removed errant dashed step→part SVG; “typed context graph” pill sits upper-third and fades before mid titles; agent rail cleared above title band.
 - No “house brand” copy — BrandMorph is **En Dash** only.

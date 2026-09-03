@@ -53,7 +53,7 @@ export const GraphInterface: React.FC = () => {
   const edgesOp = edgesIn * edgesOut;
   const neighbourRise = springProgress(frame, fps, 74, "snap");
 
-  // Center iso crossfade: the household example → the coaching example mid-beat
+  // Center iso crossfade: lists → zoomed mid-beat
   const centerA =
     fadeIn(frame, 10, 18) * fadeOut(frame, 78, 16);
   const centerB =
@@ -296,7 +296,7 @@ export const GraphInterface: React.FC = () => {
       {/* Center Graview iso — answers “what is this product view?” */}
       <AbsoluteFill style={{ opacity: centerA * jack, pointerEvents: "none" }}>
         <SurveyInsert
-          src="survey/the household product-dark.png"
+          src="survey/todo-graview-dark.png"
           appearAt={0}
           disappearAt={localDur}
           corner="center"
@@ -308,12 +308,12 @@ export const GraphInterface: React.FC = () => {
           offsetY={-8}
           fadeInDur={1}
           fadeOutDur={1}
-          label="the household example · graview"
+          label="todo · graview"
         />
       </AbsoluteFill>
       <AbsoluteFill style={{ opacity: centerB * jack, pointerEvents: "none" }}>
         <SurveyInsert
-          src="survey/the coaching example-graview-dark.png"
+          src="survey/todo-zoomed-dark.png"
           appearAt={0}
           disappearAt={localDur}
           corner="center"
@@ -325,7 +325,7 @@ export const GraphInterface: React.FC = () => {
           offsetY={-8}
           fadeInDur={1}
           fadeOutDur={1}
-          label="the coaching example · graview"
+          label="todo · zoomed"
         />
       </AbsoluteFill>
 
@@ -349,7 +349,7 @@ export const GraphInterface: React.FC = () => {
 
       {/* Peripheral UI plates around the center iso */}
       <SurveyInsert
-        src="survey/the household example-selected-dark.png"
+        src="survey/todo-selected-dark.png"
         appearAt={46}
         disappearAt={localDur - 18}
         corner="tl"
@@ -359,10 +359,10 @@ export const GraphInterface: React.FC = () => {
         parallax={10}
         depth={0.38}
         offsetY={8}
-        label="the household example · selected"
+        label="todo · selected"
       />
       <SurveyInsert
-        src="survey/the coaching example-week-dark.png"
+        src="survey/todo-week-dark.png"
         appearAt={58}
         disappearAt={localDur - 14}
         corner="tr"
@@ -372,10 +372,10 @@ export const GraphInterface: React.FC = () => {
         parallax={12}
         depth={0.4}
         offsetY={-4}
-        label="the coaching example · week"
+        label="todo · week"
       />
       <SurveyInsert
-        src="survey/the coaching example-training-dark.png"
+        src="survey/todo-lists-dark.png"
         appearAt={72}
         disappearAt={localDur - 12}
         corner="ml"
@@ -388,7 +388,7 @@ export const GraphInterface: React.FC = () => {
         label="drill · training"
       />
       <SurveyInsert
-        src="survey/the household example-travelled-dark.png"
+        src="survey/todo-travelled-dark.png"
         appearAt={86}
         disappearAt={localDur - 10}
         corner="mr"
@@ -398,7 +398,7 @@ export const GraphInterface: React.FC = () => {
         parallax={11}
         depth={0.36}
         offsetY={-12}
-        label="the household example · travel"
+        label="todo · travel"
       />
       <SurveyInsert
         src="survey/proposal-graview-dark.png"

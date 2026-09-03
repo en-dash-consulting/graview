@@ -253,8 +253,8 @@ export const RelationsDemo: React.FC = () => {
           <Img
             src={staticFile(
               frame < 250
-                ? "survey/the household product-dark.png"
-                : "survey/the coaching example-graview-dark.png",
+                ? "survey/todo-graview-dark.png"
+                : "survey/todo-zoomed-dark.png",
             )}
             style={{
               width: "100%",
@@ -589,7 +589,7 @@ export const RelationsDemo: React.FC = () => {
                 }}
               >
                 <Img
-                  src={staticFile("survey/the household example-raised-dark.png")}
+                  src={staticFile("survey/todo-tidied-dark.png")}
                   style={{ width: "100%", display: "block" }}
                 />
               </div>
@@ -719,7 +719,7 @@ export const RelationsDemo: React.FC = () => {
       />
 
       <SurveyInsert
-        src="survey/the coaching example-training-dark.png"
+        src="survey/todo-lists-dark.png"
         label="drill · procedure"
         appearAt={155}
         disappearAt={290}
@@ -733,7 +733,7 @@ export const RelationsDemo: React.FC = () => {
         offsetX={-16}
       />
       <SurveyInsert
-        src="survey/the household example-activity-dark.png"
+        src="survey/todo-tidied-dark.png"
         label="activity · tools"
         appearAt={300}
         disappearAt={dur - 36}
@@ -746,7 +746,7 @@ export const RelationsDemo: React.FC = () => {
         offsetY={-4}
       />
       <SurveyInsert
-        src="survey/the household example-selected-dark.png"
+        src="survey/todo-selected-dark.png"
         label="selected · raised"
         appearAt={250}
         disappearAt={dur - 32}

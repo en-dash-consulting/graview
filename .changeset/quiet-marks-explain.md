@@ -73,7 +73,7 @@ scripts, and the same three faults in every one: the button never said how much
 there was to do, it stayed live and silently did nothing once there was none,
 and a refusal from the store arrived as an unhandled rejection in the console.
 
-The the coaching example's was worse than that and had never worked. It ran as a roleless
+The coaching example's was worse than that and had never worked. It ran as a roleless
 agent against a policy that grants selection to the coach, so every press threw
 `Not permitted: select-player on a position — coach can`, changed nothing, and
 said so nowhere. A seat is an agent acting FOR the person sitting in it, so it
@@ -135,7 +135,7 @@ the wordmark and nothing else, because the stylesheet gives it to `h1`–`h4` an
 a panel title is a `strong`.
 
 Each app now declares a real typeface: Figtree for the checklist, Fraunces over
-Nunito Sans for the household, IBM Plex for the bid desk, Archivo for the club.
+a rounded sans for the household, a Plex face for the bid desk, a narrow grotesque for the club.
 Three of them had declared `ui-sans-serif` and `ui-serif`, which resolve to the
 same faces everywhere and so were no declaration at all.
 

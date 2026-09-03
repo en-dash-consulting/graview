@@ -56,12 +56,22 @@ yesterday and now the button is gone.
    permission opt-in rather than a tax every app pays before it has decided it
    has users.
 
+6. **The derived edits ride your grants.** `edit-<kind>` — the act the
+   framework derives for fields nobody writes — is permitted to whoever may
+   already run an act that writes a field of that kind or creates one, on
+   that kind. An analyst who may `resize-drill` may change a drill's other
+   fields; a player who may not, may not. Nothing to add to the policy; a
+   grant may still name `edit-drill` outright, and `*` reaches it. When no
+   role may write or create a kind at all, `graview check` says so per
+   field (`field-without-writer`): grant an act, or mark the field `fixed`.
+
 ## Worked examples
 
-- `the coaching example/src/domain/policy.ts` — three roles at a football club, and the
-  line between training and selection drawn by subject kind
-- `the coaching example/src/ui/app.tsx` — the seat switcher, and the principal reaching
-  the provider
+- `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation
+  and by subject kind, and the refusal that names who could
+- `packages/tools/tests/unit/affordances.test.ts` — a guarded store: what a
+  principal is offered, what is withheld and said, and how the agent seat
+  narrows with it
 
 ## Then find out whether it worked
 

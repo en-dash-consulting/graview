@@ -1,7 +1,7 @@
 ---
 id: "16267bfa-7850-4eb8-ad67-d5b6dd5fb27e"
 level: "task"
-title: "Persistence adapter and the household example graph load"
+title: "Persistence adapter and the reference graph load"
 status: "completed"
 priority: "high"
 tags:

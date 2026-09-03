@@ -27,6 +27,28 @@ here requires a service.
    `log.jsonl`, `meta.json` with the stored schema version. The core's
    sqlite adapter is the scale answer.
 
+   **In the page, with no server**, the browser adapter stores the same
+   three things in `localStorage` and slots into the same call — import it
+   from `@graview/ship/browser` so the bundler never meets `node:fs`:
+
+   ```ts
+   import { browserStartsFresh, createBrowserAdapter, forgetFreshParam, openStore }
+     from "@graview/ship/browser";
+
+   const opened = await openStore({
+     app, adapter: createBrowserAdapter(), seed,
+     fresh: browserStartsFresh(),   // ?fresh=1 asks; a driven browser gets it unless ?remember=1
+   });
+   forgetFreshParam();              // the seed is the FIRST load, not every load
+   ```
+
+   Reopened, the store carries its persisted history: earlier edits are in
+   the activity, attributed, and undoable. Give the person a visible way
+   back — `StartFresh` from `@graview/primitives`, or `remembers: true` on
+   the pages context — because a demo that can be edited into a corner with
+   no exit teaches distrust. The sample apps' `main.tsx` files are the
+   worked examples; `pnpm remember` is the harness that holds them to it.
+
 2. **Version the declaration, and migrate in primitives.** When the schema
    changes shape:
 

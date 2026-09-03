@@ -202,7 +202,7 @@ describe("connectors carry meaning", () => {
   });
 
   it("gives every edge kind a distinct treatment, without anyone choosing one", () => {
-    const the household exampleEdges = [
+    const householdEdges = [
       "assigned-to",
       "participates-in",
       "protects",
@@ -210,7 +210,7 @@ describe("connectors carry meaning", () => {
       "justifies",
       "excepts",
     ];
-    const check = distinguishable(the household exampleEdges);
+    const check = distinguishable(householdEdges);
     expect(check.collisions).toEqual([]);
     expect(check.ok).toBe(true);
     // The point of the rule, stated directly.

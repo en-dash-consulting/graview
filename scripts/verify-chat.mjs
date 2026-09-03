@@ -8,7 +8,7 @@
  * "Done" over a change the store refused), a broken model rung degrades to
  * the graph with a note rather than an error, and a saved key survives
  * visiting another rung. Every one of those is driven here, end to end —
- * The refusal half runs in the the coaching example product's own repository, against its policy.
+ * The refusal half runs in a product's own repository, against its policy.
  *
  *   node scripts/verify-chat.mjs [--engine=chromium|webkit|firefox]
  */

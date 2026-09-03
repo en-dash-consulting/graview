@@ -23,7 +23,7 @@ somebody with a bright office files a bug — so the framework measures it.
    }
 
    export const brand: Brand = {
-     name: "the bid-desk example",
+     name: "Acme Bids",
      // Inline SVG using currentColor: one file works in both schemes.
      logo: '<svg viewBox="0 0 24 24" ... stroke="currentColor">...</svg>',
      typography: { body: '"Inter", ui-sans-serif, system-ui, sans-serif' },
