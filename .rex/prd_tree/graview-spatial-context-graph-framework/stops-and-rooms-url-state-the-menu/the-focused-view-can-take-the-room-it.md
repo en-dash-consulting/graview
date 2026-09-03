@@ -1,6 +1,6 @@
 ---
 id: "23348e5b-cec2-4c20-8ef0-9fcc2de400bb"
-level: "feature"
+level: "task"
 title: "The focused view can take the room it needs"
 status: "completed"
 priority: "high"

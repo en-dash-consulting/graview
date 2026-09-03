@@ -1,6 +1,6 @@
 ---
 id: "976f8afb-00c4-4a4e-856f-59f9720443ab"
-level: "feature"
+level: "task"
 title: "The DOM path is a citizen of every browser"
 status: "completed"
 priority: "high"

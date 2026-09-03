@@ -1,6 +1,6 @@
 ---
 id: "d4944239-f4bb-44c8-ac5f-0ffa52b159a1"
-level: "feature"
+level: "task"
 title: "The sample apps remember: a browser adapter for ship's openStore"
 status: "completed"
 priority: "high"

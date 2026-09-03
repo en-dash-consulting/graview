@@ -1,6 +1,6 @@
 ---
 id: "5a35ebdf-b435-4b0e-ae6e-4cc219ebef25"
-level: "feature"
+level: "task"
 title: "An empty app is an onboarding: the blank-graph example"
 status: "completed"
 priority: "high"

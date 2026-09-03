@@ -1,6 +1,6 @@
 ---
 id: "5234d8ae-c0ac-49b3-a7b7-9d9e68e5d66d"
-level: "feature"
+level: "task"
 title: "Quick-view relations: one-click emphasis chips for the people behind a view"
 status: "completed"
 priority: "medium"

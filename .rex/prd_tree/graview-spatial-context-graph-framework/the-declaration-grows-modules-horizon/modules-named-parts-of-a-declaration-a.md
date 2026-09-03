@@ -1,6 +1,6 @@
 ---
 id: "aa8097b1-89e9-49b2-acf9-a998476a0f0b"
-level: "feature"
+level: "task"
 title: "Modules: named parts of a declaration a workspace can turn on and off"
 status: "completed"
 priority: "high"

@@ -1,6 +1,6 @@
 ---
 id: "db5b1b45-27a5-499e-b3ac-ce16f68a4ce3"
-level: "feature"
+level: "task"
 title: "The menu scales: search, pins, and what you actually use"
 status: "completed"
 priority: "medium"

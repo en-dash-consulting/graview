@@ -1,6 +1,6 @@
 ---
 id: "9e0c6879-e15a-4c9c-adc8-64cf7bd08bb3"
-level: "feature"
+level: "task"
 title: "A relation you can make but never unmake: edge symmetry, checked and offered"
 status: "completed"
 priority: "high"
