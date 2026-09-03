@@ -855,6 +855,32 @@ describe("a line that stands for one edge says so", () => {
     expect(withdrawn?.single).toBeUndefined();
   });
 
+  it("carries EVERY edge a line stands for, so a renderer can unpick the bundle", () => {
+    /*
+     * A line into a group used to know only that it was a bundle. The week
+     * draws each of its sessions as a span, and a line to a drill should
+     * start at the session's span rather than at the panel's centre — which
+     * needs the real ends of each edge, not just the drawn ends of the line.
+     */
+    const mutated = graph();
+    mutated.applyPrimitives([
+      { op: "add-edge", edge: { kind: "assigned-to", from: "ana", to: "evening" } },
+    ]);
+    const many = layout(mutated, schema, view({ focusId: "week-1", relation: "person" }));
+    const bundle = many.connectors.find(
+      (c) => c.from === "ana" && c.to === kindCardId("duty") && c.kind === "assigned-to",
+    );
+    expect(bundle?.edges).toEqual([
+      { from: "ana", to: "morning" },
+      { from: "ana", to: "evening" },
+    ]);
+    // The one-edge case is the same list, one long — and says so twice.
+    const one = layout(graph(), schema, view({ focusId: "week-1", relation: "person" }));
+    const ofOne = one.connectors.find((c) => c.from === "ana" && c.to === kindCardId("duty"));
+    expect(ofOne?.edges).toEqual([{ from: "ana", to: "morning" }]);
+    expect(ofOne?.single).toEqual(ofOne?.edges[0]);
+  });
+
   it("round-trips an edge selection through the URL like everything else", () => {
     const id = edgeSelectionId("assigned-to", "ana", "morning");
     expect(edgeOfSelection(id)).toEqual({ kind: "assigned-to", from: "ana", to: "morning" });

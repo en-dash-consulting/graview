@@ -10,6 +10,7 @@ import {
   withPin,
   withRelation,
   withZoom,
+  type Connector,
   type InterpolatedLayout,
   type Layout,
   type LayoutNode,
@@ -235,22 +236,33 @@ export function Scene<S extends AnySchema>({
   // one. Everything downstream draws the tween, not the destination.
   const frame = useAnimatedLayout(result, { enabled: animate && !dragging });
   /*
-   * The relation pairs the CONNECTOR layer will draw (and take clicks
-   * for), so the ties layer can yield them — one line per relation, and
-   * the one that stays is the one that answers the pointer.
+   * The LINES the connector layer draws this render, resolved once.
+   *
+   * Resolved here rather than inside the layer because two layers need the
+   * same answer: the connector layer draws them, and the ties layer yields
+   * to exactly the relations that already have a line — one line per
+   * relation, and the one that stays is the one that answers the pointer.
+   * Deciding that from the layout alone was the bug: a session's line into
+   * the week was CLAIMED as drawn while it actually rose from the panel's
+   * centre, so selecting the session lit three of its four drills and left
+   * the fourth to a faint line from nowhere. A strand is anchored where the
+   * line will really start, so the claim and the drawing agree.
+   *
+   * Not memoised: it measures the DOM, and the DOM is what changed.
    */
-  const drawnSingles = useMemo(() => {
-    const byId = new Map(frame.nodes.map((node) => [node.id, node]));
-    const held = new Set<string>();
-    for (const connector of frame.connectors) {
-      const single = (connector as { single?: { from: string; to: string } }).single;
-      if (!single) continue;
-      if (!connectorShows(connector, byId, view.overview ?? false)) continue;
-      held.add(`${connector.kind}|${single.from}|${single.to}`);
-    }
-    return held;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frame, view.overview]);
+  const strands = connectorStrands(
+    frame.nodes,
+    frame.connectors,
+    wrapperRef.current,
+    view.overview ?? false,
+    scheme,
+  );
+  const drawnSingles = new Set<string>();
+  for (const strand of strands) {
+    if (strand.edges.length !== 1) continue;
+    const edge = strand.edges[0]!;
+    drawnSingles.add(`${strand.connector.kind}|${edge.from}|${edge.to}`);
+  }
   const touched = useTouched<S>();
 
   useEffect(() => {
@@ -629,8 +641,8 @@ export function Scene<S extends AnySchema>({
         </canvas>
       )}
       <Connectors
+        strands={strands}
         result={frame}
-        above={!useDom}
         scheme={scheme}
         overview={view.overview ?? false}
         selection={selection}
@@ -920,8 +932,14 @@ function SelectionTies<S extends AnySchema>({
     ) {
       continue;
     }
-    // Several members of one shelf card collapse to one line per relation.
-    const key = `${tie.kind}:${Math.round(fromBox.x)}:${Math.round(toBox.x)},${Math.round(toBox.y)}`;
+    /*
+     * One line per relation between two DRAWINGS. Keyed on both boxes in
+     * full: keyed on the origin's x alone, two selected chips stacked in
+     * one column lost one of their ties to the same target.
+     */
+    const key =
+      `${tie.kind}:${Math.round(fromBox.x)},${Math.round(fromBox.y)}` +
+      `:${Math.round(toBox.x)},${Math.round(toBox.y)}`;
     if (seen.has(key)) continue;
     seen.add(key);
     const route = tieRoute(fromBox, toBox);
@@ -1852,6 +1870,252 @@ function connectorShows(
   return raised && !vagueEnd(from) && !vagueEnd(to);
 }
 
+/** A box in stage space, anchored at its top-left. */
+type Box = { x: number; y: number; width: number; height: number };
+
+type SceneConnector = Connector & { readonly opacity?: number };
+
+/**
+ * ONE DRAWN LINE: an anchor at each end, and the real edges that run
+ * between them.
+ *
+ * Layout resolves an edge's ends to whatever is PLACED — a session inside
+ * the week resolves to the week — and bundles every edge that lands on the
+ * same pair. That is right for the layout, which cannot see inside a view.
+ * The renderer can: the week draws each session as its own span, a session
+ * card draws each drill as a chip, and any element wearing
+ * `data-graview-pick` for a member is where a line to that member should
+ * start. So a connector is unpicked here into strands, one per distinct
+ * pair of anchors, and bundled again only where the view draws nothing for
+ * the member. A strand that stands for exactly one edge is selectable.
+ */
+export interface Strand {
+  readonly key: string;
+  readonly connector: SceneConnector;
+  readonly edges: readonly { readonly from: string; readonly to: string }[];
+  readonly fromBox: Box;
+  readonly toBox: Box;
+  /** What each end is anchored ON: the drawn node, or a member drawn inside it. */
+  readonly fromAnchor: string;
+  readonly toAnchor: string;
+  /** Every other drawn box, so the line can dive under cards it merely crosses. */
+  readonly obstacles: readonly Box[];
+}
+
+/**
+ * The elements a view draws for a MEMBER of a drawn node — a session's span
+ * in the week, a drill's chip in a session card — measured in stage space
+ * and sorted compact-first. Chrome is not scene: an offstage rail repeating
+ * a name as a chip is never an anchor.
+ */
+function memberBoxes(
+  stageEl: HTMLElement | null,
+  host: Element | null,
+  memberId: string,
+): Box[] {
+  if (!stageEl || !host || typeof document === "undefined") return [];
+  const stage = stageEl.getBoundingClientRect();
+  const boxes: Box[] = [];
+  const selector =
+    `[data-graview-pick="${CSS.escape(memberId)}"], [data-graview-slot="${CSS.escape(memberId)}"]`;
+  for (const el of host.querySelectorAll(selector)) {
+    if (el.closest("[data-graview-offstage]")) continue;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 2 || rect.height <= 2) continue;
+    boxes.push({
+      x: rect.left - stage.left,
+      y: rect.top - stage.top,
+      width: rect.width,
+      height: rect.height,
+    });
+  }
+  return boxes.sort((a, b) => a.width * a.height - b.width * b.height);
+}
+
+/**
+ * Resolves the frame's connectors into the strands the scene will draw.
+ *
+ * Pure of React and null-safe without a DOM: headless, every strand is
+ * anchored on the layout's own boxes, which is the old behaviour exactly.
+ * From altitude nothing is unpicked — the constellation is a picture of
+ * kinds, and a line from a span inside the shrunk stamp would say nothing
+ * the road between two districts does not.
+ */
+export function connectorStrands(
+  nodes: readonly SceneNode[],
+  connectors: readonly SceneConnector[],
+  stageEl: HTMLElement | null,
+  overview: boolean,
+  scheme: "light" | "dark",
+): Strand[] {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const hostEls = new Map<string, Element | null>();
+  const hostOf = (id: string): Element | null => {
+    if (!stageEl || typeof document === "undefined") return null;
+    let held = hostEls.get(id);
+    if (held === undefined) {
+      held = stageEl.querySelector(`[data-graview-view="${CSS.escape(id)}"]`);
+      hostEls.set(id, held);
+    }
+    return held;
+  };
+  // Every drawn box, measured once; a line dives under any it merely crosses.
+  const boxes = new Map<string, Box>();
+  for (const node of nodes) {
+    const box = measureVisible(stageEl, node.id, overview) ?? drawnBox(node, scheme);
+    if (box) boxes.set(node.id, box);
+  }
+  const obstaclesFor = (a: string, b: string): Box[] => {
+    const out: Box[] = [];
+    for (const [id, box] of boxes) if (id !== a && id !== b) out.push(box);
+    return out;
+  };
+
+  const strands: Strand[] = [];
+  for (const connector of connectors) {
+    if (!connectorShows(connector, byId, overview)) continue;
+    const fromHost = boxes.get(connector.from);
+    const toHost = boxes.get(connector.to);
+    if (!fromHost || !toHost) continue;
+    const obstacles = obstaclesFor(connector.from, connector.to);
+    const edges = connector.edges;
+    if (overview || connector.loop || edges.length === 0) {
+      strands.push({
+        key: connector.id,
+        connector,
+        edges,
+        fromBox: fromHost,
+        toBox: toHost,
+        fromAnchor: connector.from,
+        toAnchor: connector.to,
+        obstacles,
+      });
+      continue;
+    }
+    const groups = new Map<
+      string,
+      { edges: { from: string; to: string }[]; fromBox: Box; toBox: Box; fromAnchor: string; toAnchor: string }
+    >();
+    for (const edge of edges) {
+      const fromCandidates =
+        edge.from === connector.from ? [] : memberBoxes(stageEl, hostOf(connector.from), edge.from);
+      const toCandidates =
+        edge.to === connector.to ? [] : memberBoxes(stageEl, hostOf(connector.to), edge.to);
+      const fromAnchor = fromCandidates.length > 0 ? edge.from : connector.from;
+      const toAnchor = toCandidates.length > 0 ? edge.to : connector.to;
+      const key = `${connector.id}|${fromAnchor}|${toAnchor}`;
+      const held = groups.get(key);
+      if (held) {
+        held.edges.push(edge);
+        continue;
+      }
+      /*
+       * THE CLOSEST PAIR of drawings, when an end is drawn more than once —
+       * the same rule a tie follows, so a line and a tie to the same chip
+       * agree about which chip.
+       */
+      const froms = fromCandidates.length > 0 ? fromCandidates : [fromHost];
+      const tos = toCandidates.length > 0 ? toCandidates : [toHost];
+      let fromBox = froms[0]!;
+      let toBox = tos[0]!;
+      let nearest = Infinity;
+      for (const a of froms) {
+        for (const b of tos) {
+          const gap = Math.hypot(
+            a.x + a.width / 2 - (b.x + b.width / 2),
+            a.y + a.height / 2 - (b.y + b.height / 2),
+          );
+          if (gap < nearest) {
+            nearest = gap;
+            fromBox = a;
+            toBox = b;
+          }
+        }
+      }
+      groups.set(key, { edges: [edge], fromBox, toBox, fromAnchor, toAnchor });
+    }
+    for (const [key, group] of groups) {
+      strands.push({ key, connector, obstacles, ...group });
+    }
+  }
+  return strands;
+}
+
+type Point = { x: number; y: number };
+type Quadratic = { p0: Point; c: Point; p1: Point };
+
+function quadraticAt(q: Quadratic, t: number): Point {
+  const a = (1 - t) * (1 - t);
+  const b = 2 * (1 - t) * t;
+  const c = t * t;
+  return {
+    x: a * q.p0.x + b * q.c.x + c * q.p1.x,
+    y: a * q.p0.y + b * q.c.y + c * q.p1.y,
+  };
+}
+
+/** The piece of a quadratic between parameters `a` and `b`, as a quadratic. */
+function subQuadratic(q: Quadratic, a: number, b: number): Quadratic {
+  // The polar form: the control point of the piece is the blossom at (a, b).
+  const w0 = (1 - a) * (1 - b);
+  const w1 = (1 - a) * b + a * (1 - b);
+  const w2 = a * b;
+  return {
+    p0: quadraticAt(q, a),
+    c: { x: w0 * q.p0.x + w1 * q.c.x + w2 * q.p1.x, y: w0 * q.p0.y + w1 * q.c.y + w2 * q.p1.y },
+    p1: quadraticAt(q, b),
+  };
+}
+
+/**
+ * THE VISIBLE RUNS of a curve: every stretch of it that lies outside the
+ * given boxes, as exact pieces of the same curve.
+ *
+ * A line used to be clipped by sitting BEHIND the cards, which was free and
+ * was also why a line anchored on a span inside the week never showed the
+ * stretch from the span to the panel's edge — it was under the panel. The
+ * lines now sit over the cards and clip themselves: out of the box they
+ * start in, into the box they end in, and under any card they cross on
+ * the way. Sampled, then each crossing refined by bisection, so a run ends
+ * on a border rather than a sample shy of it.
+ */
+export function clipQuadratic(q: Quadratic, boxes: readonly Box[]): Quadratic[] {
+  const inside = (p: Point) =>
+    boxes.some(
+      (box) =>
+        p.x > box.x && p.x < box.x + box.width && p.y > box.y && p.y < box.y + box.height,
+    );
+  const out = (t: number) => !inside(quadraticAt(q, t));
+  const STEPS = 64;
+  // Where a sample and its neighbour disagree, the border lies between them.
+  const refine = (lo: number, hi: number, loOut: boolean): number => {
+    for (let i = 0; i < 10; i++) {
+      const mid = (lo + hi) / 2;
+      if (out(mid) === loOut) lo = mid;
+      else hi = mid;
+    }
+    return (lo + hi) / 2;
+  };
+  const runs: Quadratic[] = [];
+  let open: number | null = null;
+  let wasOut = out(0);
+  if (wasOut) open = 0;
+  for (let i = 1; i <= STEPS; i++) {
+    const t = i / STEPS;
+    const isOut = out(t);
+    if (isOut === wasOut) continue;
+    const at = refine((i - 1) / STEPS, t, wasOut);
+    if (isOut) open = at;
+    else if (open !== null) {
+      if (at - open > 1e-3) runs.push(subQuadratic(q, open, at));
+      open = null;
+    }
+    wasOut = isOut;
+  }
+  if (open !== null && 1 - open > 1e-3) runs.push(subQuadratic(q, open, 1));
+  return runs;
+}
+
 /**
  * Connectors, drawn in SVG over the scene on BOTH renderer paths.
  *
@@ -1863,8 +2127,8 @@ function connectorShows(
  * because this sits outside it.
  */
 function Connectors({
+  strands,
   result,
-  above,
   scheme,
   overview,
   selection,
@@ -1873,6 +2137,8 @@ function Connectors({
   liveOf,
   onPickEdge,
 }: {
+  /** The lines to draw, resolved once per render by `connectorStrands`. */
+  readonly strands: readonly Strand[];
   readonly overview: boolean;
   /** For measuring the boxes a person can actually see. */
   readonly stageRef: { current: HTMLElement | null };
@@ -1886,16 +2152,11 @@ function Connectors({
   liveOf?: (connector: { from: string; to: string }) => ActivityMark | undefined;
   result: {
     nodes: readonly SceneNode[];
-    connectors: Layout["connectors"] | InterpolatedLayout["connectors"];
     width: number;
     height: number;
   };
-  /** The GPU canvas is opaque, so connectors have to sit over it, not under. */
-  above: boolean;
   scheme: "light" | "dark";
 }) {
-  const byId = new Map(result.nodes.map((node) => [node.id, node]));
-  const centre = (node: SceneNode | undefined) => drawnCentre(node, scheme);
   /*
    * Selecting DRAWS ITS RELATIONS and recedes the rest.
    *
@@ -1915,6 +2176,15 @@ function Connectors({
   const touches = (connector: { from: string; to: string }) =>
     chosen.size === 0 || chosen.has(connector.from) || chosen.has(connector.to);
   /*
+   * Inside the stack the SELECTED THING'S OWN LINES come forward.
+   *
+   * A strand knows the real edges it stands for, so no resolution is needed:
+   * a line touches the selection when one of its edges does. This is what
+   * the ties layer used to add on top — and then had to yield, one relation
+   * at a time, to the line already here. One line, lit.
+   */
+  const chosenReal = new Set(selection.filter((id) => edgeOfSelection(id) === null));
+  /*
    * The live view standing in the middle of the ring, whose box is the one
    * thing a road between districts must not run beneath.
    */
@@ -1924,31 +2194,9 @@ function Connectors({
   const stamp = stampNode
     ? (measureVisible(stageRef.current, stampNode.id, false) ?? drawnBox(stampNode, scheme))
     : null;
-  /*
-   * A connector must touch a RAISED node, and must not end on a receded
-   * GROUP.
-   *
-   * "Touches plane 1" alone was too loose: a person belongs to half the
-   * context groups, so raising one drew a fan of long curves down to Blocks,
-   * Runs and Agreements. A line into a group of nine says "some of these",
-   * which is not a relationship anyone can read — while a line to a real
-   * node on plane 2, like the run a person drives, says something exact.
-   */
-  const connectors = result.connectors.filter((connector) =>
-    connectorShows(connector, byId, overview),
-  );
-  if (connectors.length === 0) return null;
-  const drawn = connectors.map((connector) => {
-        // Endpoints are the boxes a person can SEE — measured from the DOM,
-        // with layout's scaled box only as the headless fallback. Host
-        // borders sat in open air wherever a view is smaller than its band.
-        const fromBox =
-          measureVisible(stageRef.current, connector.from, overview) ??
-          drawnBox(byId.get(connector.from), scheme);
-        const toBox =
-          measureVisible(stageRef.current, connector.to, overview) ??
-          drawnBox(byId.get(connector.to), scheme);
-        if (!fromBox || !toBox) return null;
+  if (strands.length === 0) return null;
+  const drawn = strands.map((strand) => {
+        const { connector, fromBox, toBox } = strand;
         const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
         const toCentre = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
         /*
@@ -1956,12 +2204,11 @@ function Connectors({
          * other end — the border is honest up there, because a kind card
          * fills its box. Inside the stack a host is a band slot with the
          * panel centred somewhere in it, so a border anchor dangles in open
-         * ground; centre-to-centre is right there, and the SVG sits behind
-         * the cards, which clips the run inside each panel for free.
+         * ground; centre-to-centre is right, and the run inside each box is
+         * clipped away below.
          */
         const from = overview ? edgePoint(fromBox, toCentre) : fromCentre;
         const to = overview ? edgePoint(toBox, fromCentre) : toCentre;
-        if (!from || !to) return null;
         /*
          * A LOOP, where both ends are the same card.
          *
@@ -1971,7 +2218,7 @@ function Connectors({
          * returning to its right, which is how every graph drawing has shown a
          * self-relation for fifty years.
          */
-        const self = (connector as { loop?: boolean }).loop === true;
+        const self = connector.loop === true;
         // Stroke treatment is derived from the edge kind, so `protects` can
         // never be mistaken for `assigned-to`.
         const style = connectorStyle(connector.kind);
@@ -2033,10 +2280,30 @@ function Connectors({
             ny = -ny;
           }
         }
-        const control = `${midX + nx * bow} ${midY + ny * bow}`;
-        const single = (connector as { single?: { from: string; to: string } }).single;
-        const edgeId = single ? edgeSelectionId(connector.kind, single.from, single.to) : null;
+        const curve: Quadratic = { p0: from, c: { x: midX + nx * bow, y: midY + ny * bow }, p1: to };
+        /*
+         * The visible runs: out of the box it starts in, into the box it
+         * ends in, and under any card it crosses between. A line with no
+         * run in the open — one drawing inside another — has nothing
+         * honest to show.
+         */
+        const runs = self ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
+        if (!self && runs.length === 0) return null;
+        const d = self
+          ? // An arc that leaves and returns: two arcs of the same
+            // circle, so it closes cleanly at any size.
+            `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
+            ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`
+          : runs
+              .map((run) => `M ${run.p0.x} ${run.p0.y} Q ${run.c.x} ${run.c.y} ${run.p1.x} ${run.p1.y}`)
+              .join(" ");
+        const only = strand.edges.length === 1 ? strand.edges[0]! : null;
+        const edgeId = only ? edgeSelectionId(connector.kind, only.from, only.to) : null;
         const edgeChosen = edgeId !== null && selection.includes(edgeId);
+        const lit =
+          !overview &&
+          chosenReal.size > 0 &&
+          strand.edges.some((edge) => chosenReal.has(edge.from) || chosenReal.has(edge.to));
         const stressed = (emphasis !== null && connector.kind === emphasis) || edgeChosen;
         const opacity = overview
           ? emphasis !== null
@@ -2046,21 +2313,31 @@ function Connectors({
             : touches(connector)
               ? 0.9
               : 0.12
-          : style.opacity * (edgeChosen ? 0.9 : 0.34);
+          : edgeChosen
+            ? 0.9
+            : lit
+              ? 0.78
+              : style.opacity * 0.34;
+        /*
+         * A lit line MARKS ITS FAR END, as a tie does: the destination is
+         * where the eye is being sent, and a dot says the line lands on
+         * something specific rather than trailing off.
+         */
+        const far =
+          lit && runs.length > 0
+            ? strand.edges.some((edge) => chosenReal.has(edge.from))
+              ? runs[runs.length - 1]!.p1
+              : runs[0]!.p0
+            : null;
         const line = (
-          <g key={connector.id}>
+          <g key={strand.key}>
             <path
               data-graview-connector={connector.kind}
+              data-graview-edges={strand.edges.length}
+              data-graview-lit={lit || undefined}
               data-graview-activity={liveOf?.(connector)?.manner}
-              opacity={opacity * ((connector as { opacity?: number }).opacity ?? 1)}
-              d={
-                self
-                  ? // An arc that leaves and returns: two arcs of the same
-                    // circle, so it closes cleanly at any size.
-                    `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
-                    ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`
-                  : `M ${from.x} ${from.y} Q ${control} ${to.x} ${to.y}`
-              }
+              opacity={opacity * (connector.opacity ?? 1)}
+              d={d}
               fill="none"
               stroke={connectorStroke(style)}
               /*
@@ -2071,10 +2348,16 @@ function Connectors({
                * drawing it loudly would compete with the thing itself. From
                * the Graview the shape of the domain IS the subject.
                */
-              strokeWidth={connectorWidth(style, overview) + (stressed ? 0.6 : 0)}
+              strokeWidth={
+                (lit ? Math.max(1.6, connectorWidth(style, overview)) : connectorWidth(style, overview)) +
+                (stressed ? 0.6 : 0)
+              }
               strokeDasharray={CONNECTOR_DASH[style.pattern]}
               strokeLinecap="round"
             />
+            {far ? (
+              <circle cx={far.x} cy={far.y} r={2.6} fill={connectorStroke(style)} opacity={opacity} />
+            ) : null}
 
             {/*
               * A loop says WHICH relation it is, in place. A dashed circle
@@ -2102,68 +2385,46 @@ function Connectors({
         );
 
         /*
-         * The HIT PATH for a line that stands for one edge: the VISIBLE run
-         * only — the curve sampled between the borders of its two endpoint
-         * boxes — hosted on a layer above the panels. Clipping is what lets
-         * the layer sit on top without stealing clicks where the line
-         * passes invisibly behind a panel; the pickable region is exactly
-         * what a person can see.
+         * The HIT PATH for a line that stands for one edge: the SAME visible
+         * runs, hosted on a layer above the panels. Because the runs are
+         * already clipped to open ground, the pickable region is exactly
+         * what a person can see, and pressing a line never steals a card's
+         * click.
          */
         let hit: React.ReactNode = null;
         // A line the picture has faded to a ghost must not keep a click
         // band: pickability follows visibility.
         if (edgeId && onPickEdge && !self && opacity >= 0.2) {
-          const inside = (box: { x: number; y: number; width: number; height: number }, p: { x: number; y: number }) =>
-            p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
-          const q = (t: number) => {
-            const mx = midX + nx * bow;
-            const my = midY + ny * bow;
-            const a = (1 - t) * (1 - t);
-            const b = 2 * (1 - t) * t;
-            const c = t * t;
-            return { x: a * from.x + b * mx + c * to.x, y: a * from.y + b * my + c * to.y };
-          };
-          const points: { x: number; y: number }[] = [];
-          for (let i = 0; i <= 48; i++) {
-            const point = q(i / 48);
-            if (inside(fromBox, point) || inside(toBox, point)) continue;
-            points.push(point);
-          }
-          if (points.length >= 2) {
-            hit = (
-              <path
-                key={`hit:${connector.id}`}
-                data-graview-edge={edgeId}
-                className="graview-edge-hit"
-                d={`M ${points[0]!.x} ${points[0]!.y} ${points
-                  .slice(1)
-                  .map((point) => `L ${point.x} ${point.y}`)
-                  .join(" ")}`}
-                fill="none"
-                stroke="transparent"
-                strokeWidth={14}
-                style={{ pointerEvents: "stroke", cursor: "pointer" }}
-                /*
-                 * EITHER button opens the menu AT THE LINE. A left-click
-                 * that only swapped the rail's contents changed the world
-                 * quietly, three hundred pixels from the pointer — a line
-                 * has no page to travel to, so its one meaning is "act on
-                 * this relation, here".
-                 */
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onPickEdge(edgeId, { x: event.clientX, y: event.clientY });
-                }}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onPickEdge(edgeId, { x: event.clientX, y: event.clientY });
-                }}
-              />
-            );
-          }
+          hit = (
+            <path
+              key={`hit:${strand.key}`}
+              data-graview-edge={edgeId}
+              className="graview-edge-hit"
+              d={d}
+              fill="none"
+              stroke="transparent"
+              strokeWidth={14}
+              style={{ pointerEvents: "stroke", cursor: "pointer" }}
+              /*
+               * EITHER button opens the menu AT THE LINE. A left-click
+               * that only swapped the rail's contents changed the world
+               * quietly, three hundred pixels from the pointer — a line
+               * has no page to travel to, so its one meaning is "act on
+               * this relation, here".
+               */
+              onClick={(event) => {
+                event.stopPropagation();
+                onPickEdge(edgeId, { x: event.clientX, y: event.clientY });
+              }}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onPickEdge(edgeId, { x: event.clientX, y: event.clientY });
+              }}
+            />
+          );
         }
-        return { key: connector.id, line, hit };
+        return { key: strand.key, line, hit };
       });
 
   return (
@@ -2177,11 +2438,16 @@ function Connectors({
           left: 0,
           top: 0,
           pointerEvents: "none",
-          // Behind the views on the DOM path, where the stage is transparent
-          // and a relationship should not compete with what it connects. Above
-          // on the GPU path, where the canvas clears to the ground colour and
-          // anything beneath it is simply painted over.
-          zIndex: above ? 2 : 0,
+          /*
+           * OVER the cards, on both paths.
+           *
+           * Behind them was free clipping on the DOM path and no clipping at
+           * all on the GPU path, whose canvas is opaque — and it hid the one
+           * stretch a line anchored inside a panel most needs to show, from
+           * the span to the panel's edge. Every run is clipped to open ground
+           * now, so sitting on top costs nothing the picture can see.
+           */
+          zIndex: 2,
         }}
       >
         {drawn.map((piece) => piece?.line)}

@@ -1097,10 +1097,10 @@ function connectorsFor<N extends { id: string; kind: string }>(
      */
     const held = connectors.get(id);
     if (held) {
-      if (held.single && (held.single.from !== edge.from || held.single.to !== edge.to)) {
-        const { single: _dropped, ...rest } = held;
-        connectors.set(id, rest);
-      }
+      // The same real pair twice is one relation, not two.
+      if (held.edges.some((e) => e.from === edge.from && e.to === edge.to)) continue;
+      const { single: _dropped, ...rest } = held;
+      connectors.set(id, { ...rest, edges: [...held.edges, { from: edge.from, to: edge.to }] });
       continue;
     }
     connectors.set(id, {
@@ -1108,6 +1108,7 @@ function connectorsFor<N extends { id: string; kind: string }>(
       kind: edge.kind,
       from: from.id,
       to: to.id,
+      edges: [{ from: edge.from, to: edge.to }],
       single: { from: edge.from, to: edge.to },
       ...(from.id === to.id ? { loop: true } : {}),
       x1: from.x + from.width / 2,

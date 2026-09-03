@@ -132,6 +132,18 @@ export interface Connector {
    * honest thing to select and act on.
    */
   readonly single?: { readonly from: string; readonly to: string };
+  /**
+   * EVERY graph edge this line stands for, in the order the walk met them.
+   *
+   * A line into a group is a bundle, and a bundle that only knew its count
+   * could not be unpicked: the week's panel draws each session as its own
+   * span, and a renderer that can see the span wants to start the session's
+   * line THERE rather than at the panel's centre. That needs the real ends
+   * of each edge, not just the drawn ends of the line. `single` is the
+   * one-edge case of this, kept because a line that stands for one edge is
+   * the only honest thing to select.
+   */
+  readonly edges: readonly { readonly from: string; readonly to: string }[];
   readonly from: string;
   readonly to: string;
   /** Endpoints in layout space, centre to centre. */

@@ -11,8 +11,16 @@ export type {
   ViewProps,
 } from "./view-registry.js";
 
-export { onScreen, ResolvedView, Scene, selectionFor, tieRoute } from "./scene.js";
-export type { SceneNode } from "./scene.js";
+export {
+  clipQuadratic,
+  connectorStrands,
+  onScreen,
+  ResolvedView,
+  Scene,
+  selectionFor,
+  tieRoute,
+} from "./scene.js";
+export type { SceneNode, Strand } from "./scene.js";
 export { useAnimatedLayout, useTouched } from "./animation.js";
 export type { TransitionOptions } from "./animation.js";
 export {

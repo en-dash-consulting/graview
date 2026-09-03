@@ -63,7 +63,22 @@ export function useAnimatedLayout(
       const settled = interpolate(target, target, 1);
       latest.current = settled;
       setCurrent(settled);
-      return;
+      /*
+       * The same settle tick the tween gets, for the cut.
+       *
+       * With motion off — reduced-motion, a test, a drag that owns the
+       * pointer — the render that draws the new layout still measures the
+       * PREVIOUS commit's DOM, so every measured line sat one navigation
+       * behind the cards until something else happened to re-render. One
+       * more render on the next frame reads the settled geometry.
+       */
+      if (typeof requestAnimationFrame === "undefined") return;
+      const tick = requestAnimationFrame(() => {
+        const again = interpolate(target, target, 1);
+        latest.current = again;
+        setCurrent(again);
+      });
+      return () => cancelAnimationFrame(tick);
     }
 
     // Tween from wherever the scene actually IS, not from the last target:
