@@ -235,34 +235,6 @@ export function Scene<S extends AnySchema>({
   // The picture as it is right now, part-way between the last view and this
   // one. Everything downstream draws the tween, not the destination.
   const frame = useAnimatedLayout(result, { enabled: animate && !dragging });
-  /*
-   * The LINES the connector layer draws this render, resolved once.
-   *
-   * Resolved here rather than inside the layer because two layers need the
-   * same answer: the connector layer draws them, and the ties layer yields
-   * to exactly the relations that already have a line — one line per
-   * relation, and the one that stays is the one that answers the pointer.
-   * Deciding that from the layout alone was the bug: a session's line into
-   * the week was CLAIMED as drawn while it actually rose from the panel's
-   * centre, so selecting the session lit three of its four drills and left
-   * the fourth to a faint line from nowhere. A strand is anchored where the
-   * line will really start, so the claim and the drawing agree.
-   *
-   * Not memoised: it measures the DOM, and the DOM is what changed.
-   */
-  const strands = connectorStrands(
-    frame.nodes,
-    frame.connectors,
-    wrapperRef.current,
-    view.overview ?? false,
-    scheme,
-  );
-  const drawnSingles = new Set<string>();
-  for (const strand of strands) {
-    if (strand.edges.length !== 1) continue;
-    const edge = strand.edges[0]!;
-    drawnSingles.add(`${strand.connector.kind}|${edge.from}|${edge.to}`);
-  }
   const touched = useTouched<S>();
 
   useEffect(() => {
@@ -640,14 +612,17 @@ export function Scene<S extends AnySchema>({
           {hosts}
         </canvas>
       )}
-      <Connectors
-        strands={strands}
-        result={frame}
+      <Lines
+        frame={frame}
+        width={result.width}
+        height={result.height}
         scheme={scheme}
         overview={view.overview ?? false}
         selection={selection}
         emphasis={emphasis}
         stageRef={wrapperRef}
+        store={store}
+        graphNodes={nodes}
         /*
          * A LINE IS A THING. Clicking one that stands for exactly one edge
          * selects the relation itself — the inspector then says what it is
@@ -675,23 +650,6 @@ export function Scene<S extends AnySchema>({
           return from?.wrote && to?.wrote ? (from.at > to.at ? from : to) : undefined;
         }}
       />
-      <SelectionTies
-        stageRef={wrapperRef}
-        nodes={frame.nodes}
-        scheme={scheme}
-        selection={selection}
-        store={store}
-        graphNodes={nodes}
-        overview={view.overview ?? false}
-        width={result.width}
-        height={result.height}
-        onPickEdge={(edgeId, at) => {
-          if (swallow.current) return;
-          setSelection([edgeId]);
-          setMenuAt(at ?? null);
-        }}
-        alreadyDrawn={drawnSingles}
-      />
       <RelationCaptions
         nodes={frame.nodes}
         scheme={scheme}
@@ -700,6 +658,100 @@ export function Scene<S extends AnySchema>({
       />
       {children}
     </div>
+  );
+}
+
+/**
+ * EVERY LINE IN THE SCENE, measured against the DOM it is drawn over.
+ *
+ * Both line layers measure elements — panels, spans, chips — and anything
+ * measured during a render reads the PREVIOUS commit's geometry. The scene
+ * used to live with that: a tween paints sixty frames so one stale frame
+ * is invisible, and a settle tick after the last one catches the rest. A
+ * cut had no such cover, and a drag left every line one pointer event
+ * behind the card it was tied to.
+ *
+ * So the lines are their own component, and after each commit that could
+ * have moved anything — a new frame, a new selection, a graph edit that
+ * re-flowed a view — they re-render ONCE from a layout effect, before the
+ * browser paints. Only this subtree renders twice; the hosts do not.
+ *
+ * The strands are resolved here rather than inside a layer because two
+ * layers need the same answer: the connector layer draws them, and the
+ * ties layer yields to exactly the relations that already have a line.
+ * Deciding that from the layout alone was the bug: a session's line into
+ * the week was CLAIMED as drawn while it actually rose from the panel's
+ * centre, so selecting the session lit three of its four drills and left
+ * the fourth to a faint line from nowhere.
+ */
+function Lines<S extends AnySchema>({
+  frame,
+  width,
+  height,
+  scheme,
+  overview,
+  selection,
+  emphasis,
+  stageRef,
+  store,
+  graphNodes,
+  onPickEdge,
+  liveOf,
+}: {
+  readonly frame: InterpolatedLayout;
+  readonly width: number;
+  readonly height: number;
+  readonly scheme: "light" | "dark";
+  readonly overview: boolean;
+  readonly selection: readonly string[];
+  readonly emphasis: string | null;
+  readonly stageRef: { current: HTMLElement | null };
+  readonly store: { graph: GraphReader<NodeOfSchema<S>> };
+  readonly graphNodes: unknown;
+  readonly onPickEdge: (edgeId: string, at?: { x: number; y: number }) => void;
+  readonly liveOf: (connector: { from: string; to: string }) => ActivityMark | undefined;
+}) {
+  const [, remeasure] = useState(0);
+  useLayoutEffect(() => {
+    remeasure((n) => n + 1);
+  }, [frame, selection, overview, graphNodes]);
+
+  // Not memoised: it measures the DOM, and the DOM is what changed.
+  const strands = connectorStrands(frame.nodes, frame.connectors, stageRef.current, overview, scheme);
+  const drawnSingles = new Set<string>();
+  for (const strand of strands) {
+    if (strand.edges.length !== 1) continue;
+    const edge = strand.edges[0]!;
+    drawnSingles.add(`${strand.connector.kind}|${edge.from}|${edge.to}`);
+  }
+
+  return (
+    <>
+      <Connectors
+        strands={strands}
+        result={frame}
+        scheme={scheme}
+        overview={overview}
+        selection={selection}
+        emphasis={emphasis}
+        stageRef={stageRef}
+        onPickEdge={onPickEdge}
+        liveOf={liveOf}
+      />
+      <SelectionTies
+        stageRef={stageRef}
+        nodes={frame.nodes}
+        scheme={scheme}
+        selection={selection}
+        store={store}
+        graphNodes={graphNodes}
+        overview={overview}
+        width={width}
+        height={height}
+        onPickEdge={onPickEdge}
+        alreadyDrawn={drawnSingles}
+      />
+    </>
   );
 }
 
@@ -768,9 +820,22 @@ function SelectionTies<S extends AnySchema>({
       if (chosen.has(other)) continue;
       found.push({ kind: edge.kind, self, other });
     }
-    return found.length > 14 ? [] : found;
+    if (found.length <= 14) return found;
+    /*
+     * A busy selection keeps its FIRST FOURTEEN rather than losing all of
+     * them: a person on half the roster went from a fan of lines to none
+     * at all the moment their sixteenth edge arrived, which read as the
+     * selection having no relations. Ties to a card actually on screen
+     * come first — a line to a real thing beats a line to a stand-in.
+     */
+    const placed = new Set(nodes.map((node) => node.id));
+    return found
+      .map((tie, index) => ({ tie, index, real: placed.has(tie.other) ? 0 : 1 }))
+      .sort((a, b) => a.real - b.real || a.index - b.index)
+      .slice(0, 14)
+      .map(({ tie }) => tie);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, selection, graphNodes]);
+  }, [store, selection, graphNodes, nodes]);
 
   if (ties.length === 0 || typeof document === "undefined") return null;
   const stage = stageRef.current?.getBoundingClientRect();
