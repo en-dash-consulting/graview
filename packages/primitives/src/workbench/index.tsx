@@ -811,23 +811,24 @@ export function Inspector() {
                        * presses a remark. The pointer menu keeps menu rows;
                        * a menu's own frame already says "choose one".
                        */
-                      ...(atPointer
-                        ? {
-                            border: "1px solid transparent",
-                            background: "none",
-                            boxShadow: "none",
-                          }
-                        : {
-                            border: "1px solid var(--graview-edge)",
-                            background: "var(--graview-panel)",
-                            boxShadow: "none",
-                          }),
+                      // Longhands, always present: a `border` shorthand with a
+                      // `borderColor` that comes and goes as the act is
+                      // opened and applied is a React warning on every
+                      // rerender, and the colour is the only part that moves.
+                      borderWidth: 1,
+                      borderStyle: "solid",
+                      borderColor:
+                        pending === affordance.id
+                          ? "var(--graview-accent)"
+                          : atPointer
+                            ? "transparent"
+                            : "var(--graview-edge)",
+                      background: atPointer ? "none" : "var(--graview-panel)",
+                      boxShadow: "none",
                       // What cannot be taken back says so before it is
                       // pressed — and the ranking has already put it last.
                       ...(affordance.destructive ? { color: "var(--graview-warn)" } : {}),
-                      ...(pending === affordance.id
-                        ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
-                        : {}),
+                      ...(pending === affordance.id ? { color: "var(--graview-accent)" } : {}),
                     }}
                     onClick={() => {
                       if (affordance.open.length > 0) {
@@ -1056,9 +1057,11 @@ export function Standing({
           gap: 7,
           fontSize: 12.5,
           whiteSpace: "nowrap",
-          ...(count === 0
-            ? { border: "1px solid transparent", background: "none", opacity: 1 }
-            : { borderColor: "var(--graview-warn)", color: "var(--graview-warn)" }),
+          // The longhand both ways: switching between a `border` shorthand
+          // and `borderColor` across renders is a React warning, and the
+          // width and style already come from the button rule in the theme.
+          borderColor: count === 0 ? "transparent" : "var(--graview-warn)",
+          ...(count === 0 ? { background: "none", opacity: 1 } : { color: "var(--graview-warn)" }),
         }}
       >
         <span

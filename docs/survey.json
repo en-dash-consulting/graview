@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-02T15:02:04.732Z",
-  "engine": "firefox",
+  "at": "2026-09-09T03:49:55.029Z",
+  "engine": "chromium",
   "shots": [
     {
       "app": "todo",
@@ -16,7 +16,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -34,7 +40,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -52,7 +64,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -70,7 +88,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -88,7 +112,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -106,7 +136,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -120,7 +156,7 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1436,
+      "contentBottom": 1440,
       "contentRight": 1560,
       "verticalFill": 153,
       "horizontalFill": 100,
@@ -160,7 +196,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -178,7 +220,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -196,7 +244,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -214,7 +268,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -232,7 +292,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -250,7 +316,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -268,7 +340,13 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -282,7 +360,7 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1436,
+      "contentBottom": 1440,
       "contentRight": 1560,
       "verticalFill": 153,
       "horizontalFill": 100,
@@ -322,7 +400,193 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 84,
+          "text": "Things"
+        }
+      ],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "launcher",
+      "state": "home",
+      "scheme": "light",
+      "file": "launcher-home-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
       "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "launcher",
+      "state": "home",
+      "scheme": "dark",
+      "file": "launcher-home-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "seedbed",
+      "state": "empty",
+      "scheme": "light",
+      "file": "seedbed-empty-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 112,
+          "text": "Seedbed"
+        }
+      ],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "seedbed",
+      "state": "invited",
+      "scheme": "light",
+      "file": "seedbed-invited-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 112,
+          "text": "Seedbed"
+        }
+      ],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "seedbed",
+      "state": "planted",
+      "scheme": "light",
+      "file": "seedbed-planted-light.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 112,
+          "text": "Seedbed"
+        }
+      ],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "seedbed",
+      "state": "empty",
+      "scheme": "dark",
+      "file": "seedbed-empty-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 112,
+          "text": "Seedbed"
+        }
+      ],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "seedbed",
+      "state": "invited",
+      "scheme": "dark",
+      "file": "seedbed-invited-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 112,
+          "text": "Seedbed"
+        }
+      ],
+      "unnamed": [],
+      "repeatedText": []
+    },
+    {
+      "app": "seedbed",
+      "state": "planted",
+      "scheme": "dark",
+      "file": "seedbed-planted-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 112,
+          "text": "Seedbed"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     }

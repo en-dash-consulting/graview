@@ -1,0 +1,170 @@
+import type { AnySchema } from "@graview/core";
+import { Scene, useGraview, UrlSync, type Scheme, type SceneProps } from "@graview/react";
+import type { ToolCall } from "@graview/tools";
+import { useCallback, useState, type ReactNode } from "react";
+import { ChatPanel } from "./chat.js";
+import { QuickRelations } from "./quick-relations.js";
+import { RelationKey } from "./relation-key.js";
+import {
+  ActivityRail,
+  BackOut,
+  Backtrack,
+  Inspector,
+  OverviewButton,
+  Standing,
+  Trail,
+} from "./workbench/index.js";
+import { Wordmark } from "./wordmark.js";
+
+/**
+ * The shell: everything an application's window holds that is not about
+ * its domain.
+ *
+ * The command bar — the wordmark that is the way home, the browser's own
+ * back and forward made visible, the trail, the other face, whether the
+ * rules hold, the chat, the activity and the seat, the scheme — then the
+ * scene with its key, its quick relations, the altitude control and the
+ * inspector. Three apps carried this same eighty lines each and drifted;
+ * now an app supplies a home, a sentence for when nothing is wrong, and
+ * whatever seat it wants to give an agent, and the rest is derived.
+ *
+ * Landmarks are here too, once: a heading for assistive technology (the
+ * wordmark is the visible one) and a main region around the scene.
+ */
+export interface ShellProps<S extends AnySchema> {
+  /** The view id that is "home" for the trail and for Escape; null for the whole graph. */
+  readonly home?: string | null;
+  readonly homeLabel?: string;
+  /** What Standing says when no rule is broken. */
+  readonly standing?: string;
+  /** The seat in the activity rail, given the rail's own call recorder. */
+  readonly seat?: (onCall: (call: ToolCall) => void) => ReactNode;
+  /** Anything the bar shows between the browser controls and the trail — a places switcher, say. */
+  readonly nav?: ReactNode;
+  /** Where the routed face lives; null hides the link. */
+  readonly pagesHref?: string | null;
+  /** Whether the store is remembered in this browser (the rail says so, and offers the way back). */
+  readonly remembers?: boolean;
+  /** Whether the view rides the URL. */
+  readonly syncUrl?: boolean;
+  readonly renderer?: "gpu" | "dom" | "auto";
+  readonly attachRenderer?: SceneProps<S>["attachRenderer"];
+  readonly scheme: Scheme;
+  readonly onScheme: (scheme: Scheme) => void;
+  /** The chat seat, on by default: it answers from the graph with no key. */
+  readonly chat?: boolean;
+}
+
+export function Shell<S extends AnySchema>({
+  home = null,
+  homeLabel,
+  standing = "Everything is in order",
+  seat,
+  nav,
+  pagesHref = "/pages",
+  remembers = false,
+  syncUrl = false,
+  renderer = "dom",
+  attachRenderer,
+  scheme,
+  onScheme,
+  chat = true,
+}: ShellProps<S>) {
+  const { brand } = useGraview<S>();
+  const [calls, setCalls] = useState<readonly ToolCall[]>([]);
+  const onCall = useCallback((call: ToolCall) => {
+    setCalls((current) => {
+      // A call that settles replaces its own "running" entry rather than
+      // stacking on it, so the rail shows twelve turns, not twelve halves.
+      const settling =
+        call.phase !== "running" && current[0]?.name === call.name && current[0]?.at === call.at;
+      return [call, ...(settling ? current.slice(1) : current)].slice(0, 12);
+    });
+  }, []);
+  const other = scheme === "dark" ? "light" : "dark";
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+      <header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          padding: "0 22px",
+          height: 56,
+          flex: "0 0 auto",
+          borderBottom: "1px solid var(--graview-edge)",
+          background: "var(--graview-bar)",
+          backdropFilter: "blur(14px)",
+          position: "relative",
+          zIndex: 20,
+        }}
+      >
+        {syncUrl ? <UrlSync /> : null}
+        <h1
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+            whiteSpace: "nowrap",
+            margin: 0,
+          }}
+        >
+          {brand?.name ?? "Graview"}
+        </h1>
+        <Wordmark<S> />
+        {/* Every stop is a URL, so back and forward are the browser's. This
+            only makes them visible, because nobody should have to know that. */}
+        <Backtrack />
+        {nav}
+        <Trail home={home} {...(homeLabel !== undefined ? { homeLabel } : {})} />
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+          {pagesHref ? (
+            // The scene offering the page face: two faces, one application.
+            <a
+              href={pagesHref}
+              data-testid="pages-link"
+              title="The same app, as ordinary pages"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                minHeight: 24,
+                padding: "2px 8px",
+                fontSize: 12.5,
+                color: "var(--graview-ink-muted)",
+                textDecoration: "none",
+              }}
+            >
+              Pages
+            </a>
+          ) : null}
+          <Standing clean={standing} />
+          {chat ? <ChatPanel<S> onCall={onCall} /> : null}
+          <ActivityRail remembers={remembers} calls={calls} seat={seat?.(onCall)} />
+          <button
+            type="button"
+            data-testid="scheme"
+            aria-label={`Switch to ${other} mode`}
+            title={`Switch to ${other} mode`}
+            onClick={() => onScheme(other)}
+            style={{ padding: "6px 9px", lineHeight: 1 }}
+          >
+            {scheme === "dark" ? "☀" : "☾"}
+          </button>
+        </div>
+      </header>
+      {/* Escape backs out to home, whatever the app says home is. */}
+      <BackOut home={home} />
+      <main style={{ position: "relative", flex: "1 1 auto", minHeight: 0 }}>
+        <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
+        <RelationKey<S> />
+        <QuickRelations<S> />
+        {/* The altitude control, on the picture it controls. */}
+        <OverviewButton />
+        <Inspector />
+      </main>
+    </div>
+  );
+}
