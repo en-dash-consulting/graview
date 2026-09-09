@@ -1,0 +1,28 @@
+{
+  "id": "2c2f7b5f-625e-4a20-b60c-6a3407da5f34",
+  "taskId": "734b926b-c960-4419-8c49-259e958fb6b7",
+  "taskTitle": "An embed API: mount(el, …) renders a declared app into any element, without the Shell",
+  "startedAt": "2026-09-09T19:54:13.685Z",
+  "finishedAt": "2026-09-09T19:54:13.685Z",
+  "status": "completed",
+  "turns": 621,
+  "summary": "@graview/embed: mount() and Embed with three faces; themeCss scope, cqh panes, memory router, fonts; tested by mounting a chapter into a detached element",
+  "tokenUsage": {
+    "input": 17980,
+    "output": 1460149,
+    "cacheCreationInput": 8961235,
+    "cacheReadInput": 259119849
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 17980,
+    "output": 1460149,
+    "cached": 268081084,
+    "total": 269559213
+  }
+}

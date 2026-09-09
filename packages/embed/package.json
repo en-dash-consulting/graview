@@ -1,0 +1,43 @@
+{
+  "name": "@graview/embed",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*",
+    "@graview/layout": "workspace:*",
+    "@graview/pages": "workspace:*",
+    "@graview/primitives": "workspace:*",
+    "@graview/react": "workspace:*",
+    "@graview/tools": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/endash/graview.git",
+    "directory": "packages/embed"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

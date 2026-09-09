@@ -16,6 +16,7 @@ packages/
   react/       @graview/react       the only UI binding, deliberately thin
   primitives/  @graview/primitives  view primitives, three lenses, the workbench
   skills/      @graview/skills      the authoring moves, each ending in a check
+  embed/       @graview/embed       mount an app into any element: scene, Graview or pages, no Shell
   create-graview/                   `npm create graview` — the door to `graview create`
 apps/
   todo/        THE EXAMPLE — a todo list, because nobody has to be taught one

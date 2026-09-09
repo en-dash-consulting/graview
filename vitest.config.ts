@@ -17,6 +17,10 @@ export default defineConfig({
       "@graview/render": src("render"),
       "@graview/react": src("react"),
       "@graview/primitives": src("primitives"),
+      "@graview/pages": src("pages"),
+      "@graview/ship/browser": fileURLToPath(new URL("./packages/ship/src/browser.ts", import.meta.url)),
+      "@graview/ship": src("ship"),
+      "@graview/embed": src("embed"),
     },
   },
   test: {

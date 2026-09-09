@@ -270,7 +270,7 @@ export function ChatPanel<S extends AnySchema>({
               display: "grid",
               gap: 8,
               alignContent: "start",
-              maxHeight: "min(46vh, 400px)",
+              maxHeight: "min(46cqh, 400px)",
               minHeight: 120,
               overflowY: "auto",
             }}
@@ -408,7 +408,7 @@ function ChatSettings({
               : {};
         onDone({ source, ...remote });
       }}
-      style={{ display: "grid", gap: 10, padding: 12, maxHeight: "min(46vh, 400px)", overflowY: "auto" }}
+      style={{ display: "grid", gap: 10, padding: 12, maxHeight: "min(46cqh, 400px)", overflowY: "auto" }}
     >
       {(
         [
