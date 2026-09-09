@@ -72,7 +72,7 @@ export type {
 
 // The visual system: tokens, and the stylesheet an app drops in.
 export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeCss, themeVariables } from "./theme.js";
-export type { Brand, Scheme, ThemeTokens } from "./theme.js";
+export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 
 // Generic views for every cell, derived from the declaration.
 export { hueFor, registerDefaultViews } from "./default-views.js";

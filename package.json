@@ -4,8 +4,8 @@
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/skills packages/create-graview",
-    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/skills packages/create-graview apps/todo apps/launcher apps/seedbed",
+    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/embed packages/skills packages/create-graview",
+    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/embed packages/skills packages/create-graview apps/todo apps/launcher apps/seedbed",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "node packages/core/dist/cli/index.js check apps/todo/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/launcher/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/seedbed/dist/domain/app.js",
@@ -49,6 +49,7 @@
     "@webgpu/types": "^0.1.60",
     "axe-core": "^4.13.0",
     "better-sqlite3": "^13.0.3",
+    "jsdom": "^30.0.1",
     "playwright": "1.49.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -99,14 +99,30 @@ export function themeVariables(tokens: ThemeTokens): string {
  * override a single token without forking a component — and switching scheme
  * is one `replaceSync`, not a re-render.
  */
-export function themeCss(scheme: Scheme = "dark", brand: Brand = GRAVIEW_BRAND): string {
+export interface ThemeCssOptions {
+  /**
+   * A selector to scope the theme to — an embed's root element — instead of
+   * the document. The tokens land on that element and the ground, type and
+   * colour that `html, body` would have taken land there too, so a Graview
+   * inside somebody else's page is themed without touching their page.
+   */
+  readonly scope?: string;
+}
+
+export function themeCss(
+  scheme: Scheme = "dark",
+  brand: Brand = GRAVIEW_BRAND,
+  options: ThemeCssOptions = {},
+): string {
   const tokens = brand.schemes[scheme];
+  const root = options.scope ?? ":root";
+  const surface = options.scope ?? "html, body";
   const radius = brand.shape?.radius ?? 12;
   const density = brand.shape?.density ?? 1;
   const body =
     brand.typography?.body ??
     'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
-  return `:root {
+  return `${root} {
 ${themeVariables(tokens)}
   --graview-font-body: ${body};
   --graview-font-display: ${brand.typography?.display ?? body};
@@ -120,7 +136,7 @@ ${themeVariables(tokens)}
   color-scheme: ${scheme};
 }
 
-html, body {
+${surface} {
   margin: 0;
   background: var(--graview-ground-deep);
   color: var(--graview-ink);

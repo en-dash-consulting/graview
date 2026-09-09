@@ -487,7 +487,7 @@ export function Inspector() {
               left: Math.min(menuAt.x, Math.max(8, window.innerWidth - 320)),
               top: Math.min(menuAt.y, Math.max(8, window.innerHeight - 260)),
               width: 300,
-              maxHeight: "min(52vh, 420px)",
+              maxHeight: "min(52cqh, 420px)",
               overflow: "auto",
             }
           : {
@@ -507,7 +507,7 @@ export function Inspector() {
                * of the stage) and scrolls inside itself: a tall list of
                * repairs must not buy its height with the first raised card.
                */
-              maxHeight: view.overview ? "calc(100vh - 372px)" : "calc(68vh - 94px)",
+              maxHeight: view.overview ? "calc(100cqh - 372px)" : "calc(68cqh - 94px)",
               overflow: "auto",
             }),
       }}
@@ -1097,7 +1097,7 @@ export function Standing({
             right: 0,
             zIndex: 20,
             width: 300,
-            maxHeight: "min(48vh, 420px)",
+            maxHeight: "min(48cqh, 420px)",
             overflow: "auto",
             margin: 0,
             padding: 4,
@@ -1386,7 +1386,7 @@ export function ActivityRail({
             right: 0,
             zIndex: 20,
             width: 300,
-            maxHeight: "min(52vh, 460px)",
+            maxHeight: "min(52cqh, 460px)",
             overflow: "auto",
             display: "flex",
             flexDirection: "column",

@@ -14,6 +14,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [An embed API: mount(el, …) renders a declared app into any element, without the Shell](./an-embed-api-mount-el-renders-a.md) | pending |
+| [An embed API: mount(el, …) renders a declared app into any element, without the Shell](./an-embed-api-mount-el-renders-a.md) | completed |
 | [The live page still holds: site harness at every width, artifact under 16MB, no console errors per embed](./the-live-page-still-holds-site-harness.md) | pending |
 | [The page's chapters are live: one embed per chapter, a three-face toggle, the same seed the photograph used](./the-page-s-chapters-are-live-one-embed.md) | pending |
