@@ -202,6 +202,7 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
     { path: "src/domain/app.ts", contents: appTs(ids) },
     { path: "src/ui/views.tsx", contents: viewsTsx(ids) },
     { path: "src/ui/app.tsx", contents: uiAppTsx(ids) },
+    { path: "src/ui/pages.tsx", contents: pagesTsx(ids) },
     { path: "src/main.tsx", contents: mainTsx(ids) },
     { path: "tests/domain.test.ts", contents: domainTest(ids) },
     { path: ".github/workflows/ci.yml", contents: ciYml(ids) },
@@ -487,6 +488,7 @@ src/domain/      the declaration — no React in here; this is what graview chec
 src/ui/
   views.tsx      registerDefaultViews, then your own where the generic one is wrong
   app.tsx        the provider, the Shell primitive, and a seat — under sixty lines
+  pages.tsx      the ${ids.kind}'s page on the routed face, in your words, over the derived ones
 src/main.tsx     the theme, the store that remembers, the two faces
 tests/           the rule fires on a graph that breaks it, and its repair resolves it
 \`\`\`
@@ -514,7 +516,9 @@ the interface, or an agent reads a tool schema.
 - **A seat, a chat, a tool surface.** The agent seat in the activity rail, the
   chat panel and the derived tool schemas all read the same declaration.
 - **Two faces.** \`/\` is the spatial workbench; \`/pages\` is the same app as
-  ordinary routed pages, at phone widths.
+  ordinary routed pages, at phone widths — lists, records, forms and problems
+  derived from the declaration, and any of them replaceable with a page you
+  write (see \`src/ui/pages.tsx\`).
 - **It remembers.** Edits persist in this browser, attributed and undoable;
   "Start fresh" is the way back.
 `;
@@ -887,6 +891,97 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
 `;
 }
 
+function pagesTsx(ids: Ids): string {
+  return `import {
+  createPageRegistry,
+  DerivedForm,
+  pageStyles,
+  recordFacts,
+  spatialHref,
+  useStoreTick,
+  type PageComponent,
+  type PageContext,
+} from "@graview/pages";
+import { useParams } from "react-router-dom";
+import { ${ids.schemaVar}, type ${ids.SchemaType} } from "../domain/schema.js";
+
+type S = ${ids.SchemaType};
+
+/**
+ * THE OTHER FACE, IN YOUR OWN WORDS. /pages is an ordinary routed web
+ * application derived from the declaration: a list and a record per kind,
+ * forms from the mutations, a problems page from the rules. Every one of
+ * those can be replaced per kind — or per surface: shell, home, problems —
+ * with a page you write. This is the ${ids.spoken}'s record page; delete it
+ * and the derived page takes over again. Everything it shows still comes
+ * from the same derivations (\`recordFacts\`, \`DerivedForm\`), so a page
+ * you write cannot drift from what the graph says.
+ */
+function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
+  const { store, principal, invariantContext } = context;
+  useStoreTick(store);
+  const id = decodeURIComponent(useParams()["id"] ?? "");
+  const facts = recordFacts(store, id, {
+    ...(principal ? { principal } : {}),
+    ...(invariantContext ? { context: invariantContext } : {}),
+  });
+  const node = store.graph.getNode(id) as { label: string; status: "open" | "closed" } | undefined;
+  if (!facts || !node) {
+    return (
+      <main style={pageStyles.column}>
+        <h1 style={pageStyles.h1}>Nothing lives at this address.</h1>
+      </main>
+    );
+  }
+  const waitsOn = store.graph.out(id, "depends-on").map((other) => (other as { label: string }).label);
+  const link = store.allMutations().find((mutation) => mutation.name === "link-${ids.kind}");
+
+  return (
+    <main style={pageStyles.column} data-testid="${ids.kind}-page">
+      <header style={{ display: "grid", gap: 10 }}>
+        <p style={pageStyles.eyebrow}>A ${ids.spoken} in ${escapeTemplate(ids.name)}</p>
+        <h1 style={pageStyles.h1}>{node.label}</h1>
+        <p style={pageStyles.lede}>
+          {node.status === "closed" ? "Closed." : "Still open."}{" "}
+          {waitsOn.length > 0 ? \`Depends on \${waitsOn.join(", ")}.\` : "Depends on nothing."}
+        </p>
+        <a href={spatialHref(id)} style={{ ...pageStyles.link, ...pageStyles.quiet }} data-testid="spatial-link">
+          See it in the scene ↗
+        </a>
+      </header>
+      {facts.violations.length > 0 ? (
+        <section style={{ ...pageStyles.rule, display: "grid", gap: 10 }} data-testid="record-violations">
+          {facts.violations.map((violation, index) => (
+            <div key={index} style={{ display: "grid", gap: 8 }}>
+              <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {violation.repairs.map((repair, at) => (
+                  <button key={at} type="button" style={pageStyles.button} onClick={() => store.apply({ name: repair.mutation, args: { ...repair.args } })}>
+                    {repair.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      ) : null}
+      {link ? (
+        <section style={{ ...pageStyles.rule, display: "grid", gap: 12 }} data-testid="record-actions">
+          <h2 style={pageStyles.h2}>Make it depend on something</h2>
+          <DerivedForm<S> store={store} mutation={link} prefilled={{ id }} />
+        </section>
+      ) : null}
+    </main>
+  );
+}
+
+/** Your pages: every derived page, with the ${ids.spoken}'s record in your own words. */
+export function pages() {
+  return createPageRegistry<S, PageComponent<S>>(${ids.schemaVar}).register("${ids.kind}", "record", ${ids.KindPascal}Page as PageComponent<S>);
+}
+`;
+}
+
 function mainTsx(ids: Ids): string {
   return `import { PagesApp } from "@graview/pages";
 import { themeCss, type Scheme } from "@graview/primitives";
@@ -895,6 +990,7 @@ import { createRoot } from "react-dom/client";
 import { ${ids.appVar} } from "./domain/app.js";
 import { ${ids.brandVar} } from "./domain/brand.js";
 import { ${ids.AppComponent} } from "./ui/app.js";
+import { pages } from "./ui/pages.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -946,7 +1042,12 @@ forgetFreshParam();
 if (window.location.pathname.startsWith("/pages")) {
   // The routed, responsive face: same store, same ids, one app.
   createRoot(root).render(
-    <PagesApp basename="/pages" context={{ store: opened.store, brand: ${ids.brandVar}, sceneHref: "/", remembers: true }} />,
+    <PagesApp
+      basename="/pages"
+      context={{ store: opened.store, brand: ${ids.brandVar}, sceneHref: "/", remembers: true }}
+      // Your own pages over the derived ones: see ui/pages.tsx.
+      registry={pages()}
+    />,
   );
 } else {
   createRoot(root).render(
@@ -1114,5 +1215,5 @@ function escapeString(text: string): string {
 }
 
 function escapeTemplate(text: string): string {
-  return text.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+  return text.replace(/\\/g, "\\\\").replace(/`/g, "\`").replace(/\$\{/g, "\${");
 }

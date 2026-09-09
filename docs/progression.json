@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-09T05:08:00.529Z",
+  "at": "2026-09-09T12:02:39.568Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -133,7 +133,7 @@
       },
       "errors": [],
       "picture": {
-        "width": 883,
+        "width": 843,
         "height": 650
       },
       "saw": {
@@ -191,7 +191,7 @@
       },
       "errors": [],
       "picture": {
-        "width": 1006,
+        "width": 856,
         "height": 575
       },
       "saw": {
@@ -249,7 +249,7 @@
       },
       "errors": [],
       "picture": {
-        "width": 1006,
+        "width": 976,
         "height": 653
       },
       "saw": {
@@ -311,7 +311,7 @@
       },
       "errors": [],
       "picture": {
-        "width": 1006,
+        "width": 976,
         "height": 653
       },
       "saw": {
@@ -369,7 +369,7 @@
       },
       "errors": [],
       "picture": {
-        "width": 1253,
+        "width": 1121,
         "height": 575
       },
       "saw": {
@@ -426,7 +426,7 @@
       },
       "errors": [],
       "picture": {
-        "width": 1006,
+        "width": 856,
         "height": 575
       },
       "saw": {
@@ -448,6 +448,57 @@
     },
     {
       "n": 9,
+      "slug": "the-other-face",
+      "title": "The other face",
+      "claim": "The same declaration is also an ordinary web application: lists, records, forms and problems, routed, at phone width. Any page can be replaced with one the app writes, in its own words, over the same derivations.",
+      "adds": [
+        "PagesApp at /pages, from the same store",
+        "createPageRegistry(schema).register(\"plot\", \"record\", PlotPage) — the plot's page in the garden's words",
+        "pageStyles from @graview/pages, so a custom page is still the same face"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/09-the-other-face-light.png",
+        "dark": "docs/progression/09-the-other-face-dark.png"
+      },
+      "errors": [],
+      "picture": {
+        "width": 390,
+        "height": 844,
+        "phone": true
+      },
+      "saw": {
+        "standing": null,
+        "districts": [],
+        "page": "A plot in the gardenPlot 23 beds, looked after by Ravi. Nothing is growing.See it in the scene ↗Sow something hereLabel *Sown *Sow something",
+        "custom": true,
+        "fitsAPhone": true
+      }
+    },
+    {
+      "n": 10,
       "slug": "a-lens",
       "title": "A lens over the garden",
       "claim": "A lens binds roles, not field names. The coverage grid was written for requirements and tests; pointed at gardeners and plots it says, in a picture, which plot nobody tends.",
@@ -479,12 +530,12 @@
         "findings": []
       },
       "pictures": {
-        "light": "docs/progression/09-a-lens-light.png",
-        "dark": "docs/progression/09-a-lens-dark.png"
+        "light": "docs/progression/10-a-lens-light.png",
+        "dark": "docs/progression/10-a-lens-dark.png"
       },
       "errors": [],
       "picture": {
-        "width": 1096,
+        "width": 880,
         "height": 623
       },
       "saw": {
@@ -505,7 +556,66 @@
       }
     },
     {
-      "n": 10,
+      "n": 11,
+      "slug": "what-grows-where",
+      "title": "What grows where",
+      "claim": "A second lens, written for a seating plan, drawn over the plots where they lie in the garden. Things sit where the domain says they sit, and an empty bed is a picture of something to do, not a missing row.",
+      "adds": [
+        "x and y on plot, 0..1 across the garden",
+        "a second lens declaration binding slots, x, y and fill to plot and grows-in",
+        "fillFrom: \"occupant\" — the lens reads the edge from the planting's end"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/11-what-grows-where-light.png",
+        "dark": "docs/progression/11-what-grows-where-dark.png"
+      },
+      "errors": [],
+      "picture": {
+        "width": 880,
+        "height": 623
+      },
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Gardeners2◆open ▾",
+          "Plantings1+1 pastopen ▾",
+          "Plots3◆open ▾",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask Activity☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": null,
+        "problems": null,
+        "wordmark": "Seedbed",
+        "focused": "What grows where1 unfilledPlot 1BeansPlot 2TomatoesPlot 3nothing sown"
+      }
+    },
+    {
+      "n": 12,
       "slug": "ship-it",
       "title": "Ship it",
       "claim": "Deployment is one declaration plus one adapter. A version and a migration on the app carry a garden stored last season forward, as a logged, attributed, undoable operation.",
@@ -537,12 +647,12 @@
         "findings": []
       },
       "pictures": {
-        "light": "docs/progression/10-ship-it-light.png",
-        "dark": "docs/progression/10-ship-it-dark.png"
+        "light": "docs/progression/12-ship-it-light.png",
+        "dark": "docs/progression/12-ship-it-dark.png"
       },
       "errors": [],
       "picture": {
-        "width": 1006,
+        "width": 975,
         "height": 653
       },
       "saw": {
@@ -550,7 +660,7 @@
         "districts": [
           "Gardeners2◆open ▾",
           "Plantings1+1 pastopen ▾",
-          "Plots2open ▾",
+          "Plots2◆open ▾",
           "Rules1open ▾"
         ],
         "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask1 ActivityThe agent's seatThe garden is plantedship:migration migration 1→2: Every garden adopts the agr",
@@ -574,8 +684,10 @@
     "itRemembersInChapterSix": true,
     "aGardenerIsRefusedInChapterSeven": true,
     "theBrandArrivesInChapterEight": true,
-    "theLensShowsWhoTendsWhatInChapterNine": true,
-    "theMigrationIsInTheLogInChapterTen": true
+    "theOtherFaceIsThePlotsOwnPageInChapterNine": true,
+    "theLensShowsWhoTendsWhatInChapterTen": true,
+    "theBoardShowsTheEmptyBedInChapterEleven": true,
+    "theMigrationIsInTheLogInChapterTwelve": true
   },
   "passed": true
 }

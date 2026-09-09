@@ -252,9 +252,10 @@ describe("zooming in", () => {
       focusId: aggregateId("person"),
       zoom: true,
     });
-    // Most, not all: the default 1200-wide canvas minus its margins.
-    expect(after).toContain("width:1120px");
-    expect(before).not.toContain("width:1120px");
+    // Most, not all: the default 1200-wide canvas, less the rails the scene
+    // reserves for chrome (264 left, 128 right), less five gaps of 16.
+    expect(after).toContain("width:728px");
+    expect(before).not.toContain("width:728px");
     // Still the scene — same mode, same components, no dialog.
     expect(after).toContain('data-mode="scene"');
     expect(after).not.toContain('role="dialog"');
@@ -270,7 +271,8 @@ describe("zooming in", () => {
       zoom: true,
     });
     // A two-line record set wall to wall is unreadable; 880 is a document.
-    expect(html).toContain("width:880px");
+    // A reading column: the lesser of 880 and the span less five gaps (728).
+    expect(html).toContain("width:728px");
   });
 
   it("is a stop: in the URL, and back out of it", () => {

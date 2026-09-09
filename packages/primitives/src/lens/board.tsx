@@ -31,8 +31,15 @@ export interface BoardOptions {
   /** Fields on a slot holding its place, each 0..1 across the board. */
   readonly x: string;
   readonly y: string;
-  /** Edge kind from a slot to whatever occupies it. */
+  /** Edge kind between a slot and whatever occupies it. */
   readonly fill: string;
+  /**
+   * Which end of that edge is the slot. A seating plan says the seat is
+   * "taken-by" a guest; a garden says a planting "grows-in" a plot. Both are
+   * one edge from slot to occupant, read from opposite ends, and a lens that
+   * only knew one of them would make a domain redraw its edges to fit.
+   */
+  readonly fillFrom?: "slot" | "occupant";
   /** Field holding a short code for the slot, e.g. "LB". */
   readonly slotCode?: string;
   /** Bands drawn behind the slots, in the same 0..1 space. */
@@ -100,8 +107,9 @@ export function buildBoard<S extends AnySchema>(
   const slots = slotNodes
     .map((node): BoardSlot => {
       const fields = record(node);
-      const edge = filling.find((candidate) => candidate.from === node.id);
-      const occupant = edge ? byId.get(edge.to) : undefined;
+      const fromOccupant = options.fillFrom === "occupant";
+      const edge = filling.find((candidate) => (fromOccupant ? candidate.to : candidate.from) === node.id);
+      const occupant = edge ? byId.get(fromOccupant ? edge.from : edge.to) : undefined;
       return {
         id: node.id,
         code: String(fields[options.slotCode ?? ""] ?? "").trim() || name(node),

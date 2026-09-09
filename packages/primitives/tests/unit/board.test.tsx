@@ -40,6 +40,17 @@ const edges = [
 
 const options = { slots: "seat", x: "x", y: "y", fill: "taken-by", slotCode: "code" } as const;
 
+describe("the board lens, read from the occupant's end", () => {
+  it("fills the same slots when the edge runs occupant → slot", () => {
+    // The garden's shape: a planting grows-in a plot. Same board, other end.
+    const reversed = edges.map((edge) => ({ kind: "grows-in", from: edge.to, to: edge.from }));
+    const board = buildBoard(nodes, reversed, { ...options, fill: "grows-in", fillFrom: "occupant" }, schema);
+    expect(board.slots.find((slot) => slot.id === "s1")?.occupantLabel).toBe("Ada");
+    expect(board.empty).toEqual(["s2"]);
+    expect(board.spare.map((g) => g.label)).toEqual(["Cleo"]);
+  });
+});
+
 describe("the board lens", () => {
   it("declares the roles an app must bind", () => {
     expect(createBoardLens(options).requiredRoles).toEqual(["slots", "x", "y", "fill"]);
