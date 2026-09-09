@@ -428,6 +428,11 @@ section > .head .tick {
 .chapters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; margin-top: 30px; }
 .chapter { min-width: 0; }
 .chapter.phone .chapter-shot img { max-width: 390px; }
+/* The chapter itself, mounted by chapters.js: sized here, themed within. */
+.chapter-live { position: relative; height: 480px; border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; background: var(--sunk); }
+.chapter.phone .chapter-live { max-width: 390px; height: 640px; }
+.chapter-loading { margin: 0; padding: 18px; font-size: 13px; color: var(--ink-3); }
+@media (max-width: 560px) { .chapter-live { height: 420px; } }
 /* An inline link is still a target: tall enough for a fingertip without leaving the line. */
 .inl { display: inline-flex; align-items: center; min-height: 24px; }
 .chapter-head { display: flex; align-items: baseline; gap: 12px; }
@@ -800,8 +805,10 @@ footer {
         </div>
         <p class="chapter-claim">One kind, one act. The city, the district, the derived form and the routed face all exist before a line of UI is written.</p>
         <figure class="chapter-shot">
-          <img src="../progression/01-a-plot-light.png" alt="A plot: the garden after chapter 1" loading="lazy" width="640" height="240" style="max-width: 640px">
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="1" role="region" aria-label="A plot, live">
+            <p class="chapter-loading">The garden after chapter 1, loading…</p>
+          </div>
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -816,8 +823,10 @@ footer {
         </div>
         <p class="chapter-claim">A second kind and one edge. The line is drawn from the declaration, captioned in its own words, and made and unmade by the act that names it.</p>
         <figure class="chapter-shot">
-          <img src="../progression/02-who-tends-what-light.png" alt="Gardeners, and who tends what: the garden after chapter 2" loading="lazy" width="756" height="623" style="max-width: 756px">
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="2" role="region" aria-label="Gardeners, and who tends what, live">
+            <p class="chapter-loading">The garden after chapter 2, loading…</p>
+          </div>
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -832,8 +841,10 @@ footer {
         </div>
         <p class="chapter-claim">A rule is data on the map, and it names its own repair. The moment it lands, an untended plot is a problem with a one-click fix, not a bug report.</p>
         <figure class="chapter-shot">
-          <img src="../progression/03-the-agreement-light.png" alt="The garden's agreement: the garden after chapter 3" loading="lazy" width="843" height="650" style="max-width: 843px">
-          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="3" role="region" aria-label="The garden's agreement, live">
+            <p class="chapter-loading">The garden after chapter 3, loading…</p>
+          </div>
+          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -848,8 +859,10 @@ footer {
         </div>
         <p class="chapter-claim">A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted.</p>
         <figure class="chapter-shot">
-          <img src="../progression/04-the-horizon-light.png" alt="Plantings, and the horizon: the garden after chapter 4" loading="lazy" width="856" height="575" style="max-width: 856px">
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="4" role="region" aria-label="Plantings, and the horizon, live">
+            <p class="chapter-loading">The garden after chapter 4, loading…</p>
+          </div>
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -864,8 +877,10 @@ footer {
         </div>
         <p class="chapter-claim">An agent gets the same acts a person does, through one declared seam. Its turn is attributed in the log, watchable from altitude, and undoable out of order.</p>
         <figure class="chapter-shot">
-          <img src="../progression/05-a-seat-light.png" alt="A seat for an agent: the garden after chapter 5" loading="lazy" width="976" height="653" style="max-width: 976px">
-          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="5" role="region" aria-label="A seat for an agent, live">
+            <p class="chapter-loading">The garden after chapter 5, loading…</p>
+          </div>
+          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -880,8 +895,10 @@ footer {
         </div>
         <p class="chapter-claim">Persistence is the operation log. One adapter in main.tsx and an edit survives a reload, still attributed, still undoable, with the way back to empty on the rail.</p>
         <figure class="chapter-shot">
-          <img src="../progression/06-it-remembers-light.png" alt="The garden remembers: the garden after chapter 6" loading="lazy" width="976" height="653" style="max-width: 976px">
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="6" role="region" aria-label="The garden remembers, live">
+            <p class="chapter-loading">The garden after chapter 6, loading…</p>
+          </div>
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -896,8 +913,10 @@ footer {
         </div>
         <p class="chapter-claim">One policy, declared once. The store refuses, the actions strip narrows, and an agent's seat narrows with it, so a gardener never sees a button that would fail.</p>
         <figure class="chapter-shot">
-          <img src="../progression/07-who-may-light.png" alt="Who may do what: the garden after chapter 7" loading="lazy" width="1121" height="575" style="max-width: 1121px">
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="7" role="region" aria-label="Who may do what, live">
+            <p class="chapter-loading">The garden after chapter 7, loading…</p>
+          </div>
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -912,8 +931,10 @@ footer {
         </div>
         <p class="chapter-claim">One accent, a mark and a typeface, and both schemes are derived and measured. Every text pair is checked against AA before the brand is allowed to ship.</p>
         <figure class="chapter-shot">
-          <img src="../progression/08-its-own-name-light.png" alt="The garden's own name: the garden after chapter 8" loading="lazy" width="856" height="575" style="max-width: 856px">
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="8" role="region" aria-label="The garden's own name, live">
+            <p class="chapter-loading">The garden after chapter 8, loading…</p>
+          </div>
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -928,8 +949,10 @@ footer {
         </div>
         <p class="chapter-claim">The same declaration is also an ordinary web application: lists, records, forms and problems, routed, at phone width. Any page can be replaced with one the app writes, in its own words, over the same derivations.</p>
         <figure class="chapter-shot">
-          <img src="../progression/09-the-other-face-light.png" alt="The other face: the garden after chapter 9" loading="lazy" width="390" height="844" style="max-width: 390px">
-          <figcaption> graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="9" role="region" aria-label="The other face, live">
+            <p class="chapter-loading">The garden after chapter 9, loading…</p>
+          </div>
+          <figcaption> graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -944,8 +967,10 @@ footer {
         </div>
         <p class="chapter-claim">A lens binds roles, not field names. The coverage grid was written for requirements and tests; pointed at gardeners and plots it says, in a picture, which plot nobody tends.</p>
         <figure class="chapter-shot">
-          <img src="../progression/10-a-lens-light.png" alt="A lens over the garden: the garden after chapter 10" loading="lazy" width="880" height="623" style="max-width: 880px">
-          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="10" role="region" aria-label="A lens over the garden, live">
+            <p class="chapter-loading">The garden after chapter 10, loading…</p>
+          </div>
+          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -960,8 +985,10 @@ footer {
         </div>
         <p class="chapter-claim">A second lens, written for a seating plan, drawn over the plots where they lie in the garden. Things sit where the domain says they sit, and an empty bed is a picture of something to do, not a missing row.</p>
         <figure class="chapter-shot">
-          <img src="../progression/11-what-grows-where-light.png" alt="What grows where: the garden after chapter 11" loading="lazy" width="880" height="623" style="max-width: 880px">
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="11" role="region" aria-label="What grows where, live">
+            <p class="chapter-loading">The garden after chapter 11, loading…</p>
+          </div>
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -976,8 +1003,10 @@ footer {
         </div>
         <p class="chapter-claim">Deployment is one declaration plus one adapter. A version and a migration on the app carry a garden stored last season forward, as a logged, attributed, undoable operation.</p>
         <figure class="chapter-shot">
-          <img src="../progression/12-ship-it-light.png" alt="Ship it: the garden after chapter 12" loading="lazy" width="975" height="653" style="max-width: 975px">
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+          <div class="chapter-live" data-graview-chapter="12" role="region" aria-label="Ship it, live">
+            <p class="chapter-loading">The garden after chapter 12, loading…</p>
+          </div>
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>
@@ -1543,6 +1572,8 @@ window.addEventListener("resize", markScrollers);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScrollers);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
 </script>
+<!-- The garden's chapters, live: built by `pnpm site:build` from apps/seedbed. -->
+<script src="chapters.js"></script>
 
 </body>
 </html>

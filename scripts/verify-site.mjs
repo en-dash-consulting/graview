@@ -40,8 +40,34 @@ try {
       const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: scheme });
       const errors = [];
       page.on("pageerror", (error) => errors.push(String(error).slice(0, 90)));
+      page.on("console", (message) => {
+        if (message.type() === "error") errors.push(`console: ${message.text().slice(0, 90)}`);
+      });
       await page.goto(PAGE, { waitUntil: "networkidle" });
       await page.waitForTimeout(700);
+      /*
+       * The chapters mount as the reader comes near them. The whole page is
+       * under test, so every one of them is brought near, and the page is
+       * judged with twelve live Graviews on it — their targets, their text,
+       * their accessibility tree, their console.
+       */
+      const height = await page.evaluate(() => document.documentElement.scrollHeight);
+      const step = Math.max(400, 900 - 100);
+      for (let y = 0; y <= height; y += step) {
+        // One step per call, as a reader scrolls: a whole sweep inside one
+        // script call starves the frames the chapters mount on.
+        await page.evaluate((to) => window.scrollTo(0, to), y);
+        await page.waitForTimeout(150);
+      }
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await page.waitForTimeout(150);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForFunction(
+        (n) => document.querySelectorAll("[data-graview-embed]").length >= n,
+        12,
+        { timeout: 30_000 },
+      ).catch(() => {});
+      await page.waitForTimeout(900);
       await page.addScriptTag({ path: AXE });
 
       const violations = await page.evaluate(async () => {
@@ -49,6 +75,7 @@ try {
         return run.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
       });
 
+      const live = await page.evaluate(() => document.querySelectorAll("[data-graview-embed]").length);
       const geometry = await page.evaluate(() => {
         const root = document.documentElement;
         const scale = (el) => {
@@ -100,6 +127,7 @@ try {
 
       report.viewports.push({
         scheme, width, violations, ...geometry,
+        live,
         errors: errors.slice(0, 2),
       });
       await page.close();
@@ -140,6 +168,15 @@ try {
   report.criteria.everyNodeIsNamed = demo.labelled === true;
   await page.addStyleTag({ content: "html { font-size: 200% }" });
   await page.waitForTimeout(400);
+  /* A chapter's face switches on the page itself: the picture is the app. */
+  await page.locator('[data-graview-chapter="1"]').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.querySelector('[data-graview-chapter="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
+  const faceBefore = await page.locator('[data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
+  await page.locator('[data-graview-chapter="1"] [data-testid="embed-face-pages"]').click().catch(() => {});
+  await page.waitForTimeout(500);
+  const faceAfter = await page.locator('[data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
+  report.criteria.aChapterSwitchesFaceOnThePage = faceBefore !== null && faceBefore !== "pages" && faceAfter === "pages";
+
   report.criteria.textZoomToTwoHundredDoesNotScrollSideways = await page.evaluate(
     () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
   );
@@ -174,6 +211,9 @@ const bad = report.viewports.filter(
   (v) => v.violations.length || v.sideways || v.small.length || v.cut.length || v.captionHits || v.errors.length,
 );
 report.criteria.everyViewportIsClean = bad.length === 0;
+// Twelve chapters, live, at every width and in both schemes — the page is
+// judged with the applications on it, not with pictures of them.
+report.criteria.everyChapterIsLiveAtEveryWidth = report.viewports.every((v) => v.live === 12);
 report.passed = Object.values(report.criteria).every(Boolean) && !report.error;
 
 writeFileSync(resolve(repoRoot, "docs/site-check.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");

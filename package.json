@@ -37,7 +37,8 @@
     "elm": "node scripts/eval-elm.mjs",
     "smoke:create": "node scripts/smoke-create.mjs",
     "graview": "node packages/core/dist/cli/index.js",
-    "progression": "node scripts/progression.mjs"
+    "progression": "node scripts/progression.mjs",
+    "site:build": "pnpm --filter @graview/seedbed exec vite build --config vite.site.config.ts"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",

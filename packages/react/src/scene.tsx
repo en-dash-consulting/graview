@@ -209,7 +209,12 @@ export function Scene<S extends AnySchema>({
        * in the top-right corner, where a full-width focus card's own corner
        * used to be — so the right has a rail too.
        */
-      inset: { left: 264, right: 128 },
+      // In proportion: an embed a paragraph wide cannot give a third of
+      // itself to chrome. From the default 1200 up these are 264 and 128.
+      inset: {
+        left: Math.round(Math.min(264, (size?.width ?? 1200) * 0.22)),
+        right: Math.round(Math.min(128, (size?.width ?? 1200) * 0.107)),
+      },
       ...(size
         ? {
             width: size.width,

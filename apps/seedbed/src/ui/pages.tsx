@@ -2,6 +2,7 @@ import type { AnySchema } from "@graview/core";
 import {
   createPageRegistry,
   DerivedForm,
+  PageMain,
   pageStyles,
   recordFacts,
   spatialHref,
@@ -34,9 +35,9 @@ function PlotPage({ context }: { context: PageContext<S> }) {
   const plot = store.graph.getNode(id) as { label: string; beds: number } | undefined;
   if (!facts || !plot) {
     return (
-      <main style={pageStyles.column}>
+      <PageMain context={context}>
         <h1 style={pageStyles.h1}>No such plot.</h1>
-      </main>
+      </PageMain>
     );
   }
   const caretaker = store.graph.out(id, "tended-by")[0] as { label: string } | undefined;
@@ -48,7 +49,7 @@ function PlotPage({ context }: { context: PageContext<S> }) {
   const untended = facts.violations.length > 0;
 
   return (
-    <main style={pageStyles.column} data-testid="plot-page">
+    <PageMain context={context} data-testid="plot-page">
       <header style={{ display: "grid", gap: 10 }}>
         <p style={pageStyles.eyebrow}>A plot in the garden</p>
         <h1 style={pageStyles.h1}>{plot.label}</h1>
@@ -83,7 +84,7 @@ function PlotPage({ context }: { context: PageContext<S> }) {
           <DerivedForm<S> store={store} mutation={sow} prefilled={{ plotId: id }} />
         </section>
       ) : null}
-    </main>
+    </PageMain>
   );
 }
 

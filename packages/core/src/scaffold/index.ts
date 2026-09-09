@@ -895,6 +895,7 @@ function pagesTsx(ids: Ids): string {
   return `import {
   createPageRegistry,
   DerivedForm,
+  PageMain,
   pageStyles,
   recordFacts,
   spatialHref,
@@ -928,16 +929,16 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
   const node = store.graph.getNode(id) as { label: string; status: "open" | "closed" } | undefined;
   if (!facts || !node) {
     return (
-      <main style={pageStyles.column}>
+      <PageMain context={context}>
         <h1 style={pageStyles.h1}>Nothing lives at this address.</h1>
-      </main>
+      </PageMain>
     );
   }
   const waitsOn = store.graph.out(id, "depends-on").map((other) => (other as { label: string }).label);
   const link = store.allMutations().find((mutation) => mutation.name === "link-${ids.kind}");
 
   return (
-    <main style={pageStyles.column} data-testid="${ids.kind}-page">
+    <PageMain context={context} data-testid="${ids.kind}-page">
       <header style={{ display: "grid", gap: 10 }}>
         <p style={pageStyles.eyebrow}>A ${ids.spoken} in ${escapeTemplate(ids.name)}</p>
         <h1 style={pageStyles.h1}>{node.label}</h1>
@@ -971,7 +972,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           <DerivedForm<S> store={store} mutation={link} prefilled={{ id }} />
         </section>
       ) : null}
-    </main>
+    </PageMain>
   );
 }
 
