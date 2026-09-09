@@ -1,30 +1,15 @@
 import { aggregateId, EMPTY_VIEW, type ViewState } from "@graview/layout";
 import {
   GraviewProvider,
-  Scene,
   useGraph,
   useGraview,
   useNavigation,
   type Scheme,
   type SceneProps,
-  UrlSync,
 } from "@graview/react";
-import {
-  ActivityRail,
-  BackOut,
-  AgentSeat,
-  Backtrack,
-  Inspector,
-  OverviewButton,
-  RelationKey,
-  Standing,
-  Trail,
-  Wordmark,
-  QuickRelations,
-  ChatPanel,
-} from "@graview/primitives";
+import { AgentSeat, Shell } from "@graview/primitives";
 import type { ToolCall } from "@graview/tools";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import example from "../data/example.json";
 import { createTodoStore, type TodoStore } from "../domain/app.js";
 import { thingsBrand } from "../domain/brand.js";
@@ -118,7 +103,7 @@ export function TodoApp({
       scheme={scheme}
       brand={thingsBrand}
     >
-      <Shell
+      <TodoShell
         remembers={remembers}
         syncUrl={syncUrl}
         renderer={renderer}
@@ -135,16 +120,20 @@ export function TodoApp({
 
 /** Where you are, remembered while you wander into a task and back. */
 function usePlace(): (typeof PLACES)[number] {
-  const { view } = useNavigation();
-  const [last, setLast] = useState<(typeof PLACES)[number]>(PLACES[1]);
-  const current = PLACES.find((place) => place.id === view.focusId);
+  const { view } = useGraview<S>();
+  const [place, setPlace] = useState<(typeof PLACES)[number]>(PLACES[1]);
   useEffect(() => {
-    if (current) setLast(current);
-  }, [current]);
-  return current ?? last;
+    const here = PLACES.find((candidate) => candidate.id === view.focusId);
+    if (here) setPlace(here);
+  }, [view.focusId]);
+  return place;
 }
 
-function Shell({
+/**
+ * The Shell, with what this app adds: a places switcher in the bar, and
+ * Escape backing out to whichever place you were in, not always the first.
+ */
+function TodoShell({
   remembers,
   syncUrl,
   renderer,
@@ -159,113 +148,20 @@ function Shell({
   onScheme: (scheme: Scheme) => void;
   attachRenderer?: SceneProps<S>["attachRenderer"];
 }) {
-  const [calls, setCalls] = useState<readonly ToolCall[]>([]);
-  const onCall = useCallback((call: ToolCall) => {
-    setCalls((current) => {
-      const settling =
-        call.phase !== "running" && current[0]?.name === call.name && current[0]?.at === call.at;
-      return [call, ...(settling ? current.slice(1) : current)].slice(0, 12);
-    });
-  }, []);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-      <CommandBar
-        remembers={remembers} syncUrl={syncUrl} scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
-      <BackOutHere />
-      <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0 }}>
-        <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
-        <RelationKey<S> />
-        <QuickRelations<S> />
-        {/* The altitude control, on the picture it controls. */}
-        <OverviewButton />
-        <Inspector />
-      </div>
-    </div>
-  );
-}
-
-/** Escape backs out to whichever place you were in, not always the first. */
-function BackOutHere() {
-  const place = usePlace();
-  return <BackOut home={place.id} />;
-}
-
-function CommandBar({
-  remembers,
-  syncUrl,
-  scheme,
-  onScheme,
-  onCall,
-  calls,
-}: {
-  remembers: boolean;
-  syncUrl: boolean;
-  scheme: Scheme;
-  onScheme: (scheme: Scheme) => void;
-  onCall: (call: ToolCall) => void;
-  calls: readonly ToolCall[];
-}) {
   const place = usePlace();
   return (
-    <header
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        padding: "0 22px",
-        height: 56,
-        flex: "0 0 auto",
-        borderBottom: "1px solid var(--graview-edge)",
-        background: "var(--graview-bar)",
-        backdropFilter: "blur(14px)",
-        position: "relative",
-        zIndex: 20,
-      }}
-    >
-      {syncUrl ? <UrlSync /> : null}
-      <Wordmark<S> />
-      {/* Every stop is a URL, so back and forward are the browser's. This
-          only makes them visible, because nobody should have to know that. */}
-      <Backtrack />
-      <Places />
-      {/* No home crumb: the pressed pill in <Places /> already names the
-          place and already goes there. */}
-      <Trail home={place.id} />
-
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-        {/* The scene offering the page face: two faces, one application. */}
-        <a
-          href="/pages"
-          data-testid="pages-link"
-          title="The same app, as ordinary pages"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            minHeight: 24,
-            padding: "2px 8px",
-            fontSize: 12.5,
-            color: "var(--graview-ink-muted)",
-            textDecoration: "none",
-          }}
-        >
-          Pages
-        </a>
-        <Standing clean="Nothing is out of order" />
-        <ChatPanel<S> onCall={onCall} />
-        <ActivityRail remembers={remembers} calls={calls} seat={<TidyButton onCall={onCall} />} />
-        <button
-          type="button"
-          data-testid="scheme"
-          aria-label={`Switch to ${scheme === "dark" ? "light" : "dark"} mode`}
-          title={`Switch to ${scheme === "dark" ? "light" : "dark"} mode`}
-          onClick={() => onScheme(scheme === "dark" ? "light" : "dark")}
-          style={{ padding: "6px 9px", lineHeight: 1 }}
-        >
-          {scheme === "dark" ? "☀" : "☾"}
-        </button>
-      </div>
-    </header>
+    <Shell<S>
+      home={place.id}
+      standing="Nothing is out of order"
+      nav={<Places />}
+      seat={(onCall) => <TidyButton onCall={onCall} />}
+      remembers={remembers}
+      syncUrl={syncUrl}
+      renderer={renderer}
+      scheme={scheme}
+      onScheme={onScheme}
+      {...(attachRenderer ? { attachRenderer } : {})}
+    />
   );
 }
 

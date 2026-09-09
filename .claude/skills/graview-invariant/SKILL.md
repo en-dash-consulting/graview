@@ -69,6 +69,13 @@ kind's declared `lifecycle` are skipped, because a rule about last term's
 agreement is noise, not a violation. An invariant that genuinely audits
 history says so with `judgesPast: true`.
 
+So a rule about the past and the present — "nothing closed may still depend
+on something open" — is written from the side that is still current: the
+subject is the OPEN thing, the violation names what closed against it, and
+the repair acts on the subject, because that is the node a person can still
+act on. Judging the closed one would put the violation behind the horizon
+and the repair on a thing that has already left the picture.
+
 ## Then find out whether it worked
 
 ```sh

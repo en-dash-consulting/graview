@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-02T15:01:21.867Z",
-  "engine": "firefox",
+  "at": "2026-09-09T03:51:12.662Z",
+  "engine": "chromium",
   "screens": [
     {
       "app": "todo",
@@ -39,7 +39,7 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x493",
+        "size": "236x492",
         "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Finish it★Give it a new date …"
       }
     },

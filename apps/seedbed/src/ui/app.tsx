@@ -1,29 +1,8 @@
 import { EMPTY_VIEW, type ViewState } from "@graview/layout";
-import {
-  GraviewProvider,
-  Scene,
-  useGraph,
-  useGraview,
-  type Scheme,
-  type SceneProps,
-  UrlSync,
-} from "@graview/react";
-import {
-  ActivityRail,
-  AgentSeat,
-  BackOut,
-  Backtrack,
-  Inspector,
-  OverviewButton,
-  RelationKey,
-  Standing,
-  Trail,
-  Wordmark,
-  QuickRelations,
-  ChatPanel,
-} from "@graview/primitives";
+import { GraviewProvider, useGraph, useGraview, type Scheme, type SceneProps } from "@graview/react";
+import { AgentSeat, Shell } from "@graview/primitives";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createSeedbedStore, type SeedbedStore } from "../domain/app.js";
 import { seedbedBrand } from "../domain/brand.js";
 import type { SeedbedSchema } from "../domain/schema.js";
@@ -58,6 +37,11 @@ export interface SeedbedAppProps {
   readonly remembers?: boolean;
 }
 
+/**
+ * The whole application: the provider, the Shell, and one seat. What the
+ * example proves is that this is ALL an app has to write above its
+ * declaration — the same file `graview create` writes for a new product.
+ */
 export function SeedbedApp({
   store,
   initialView = INITIAL_VIEW,
@@ -80,7 +64,9 @@ export function SeedbedApp({
       scheme={scheme}
       brand={seedbedBrand}
     >
-      <Shell
+      <Shell<S>
+        standing="The garden keeps its agreements"
+        seat={(onCall) => <StarterGarden onCall={onCall} />}
         remembers={remembers}
         syncUrl={syncUrl}
         renderer={renderer}
@@ -92,117 +78,6 @@ export function SeedbedApp({
         {...(attachRenderer ? { attachRenderer } : {})}
       />
     </GraviewProvider>
-  );
-}
-
-function Shell({
-  remembers,
-  syncUrl,
-  renderer,
-  scheme,
-  onScheme,
-  attachRenderer,
-}: {
-  remembers: boolean;
-  syncUrl: boolean;
-  renderer: "gpu" | "dom" | "auto";
-  scheme: Scheme;
-  onScheme: (scheme: Scheme) => void;
-  attachRenderer?: SceneProps<S>["attachRenderer"];
-}) {
-  const [calls, setCalls] = useState<readonly ToolCall[]>([]);
-  const onCall = useCallback((call: ToolCall) => {
-    setCalls((current) => {
-      const settling =
-        call.phase !== "running" && current[0]?.name === call.name && current[0]?.at === call.at;
-      return [call, ...(settling ? current.slice(1) : current)].slice(0, 12);
-    });
-  }, []);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-      <CommandBar
-        remembers={remembers} syncUrl={syncUrl} scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
-      <BackOut home={null} />
-      <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0 }}>
-        <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
-        <RelationKey<S> />
-        <QuickRelations<S> />
-        <OverviewButton />
-        <Inspector />
-      </div>
-    </div>
-  );
-}
-
-function CommandBar({
-  remembers,
-  syncUrl,
-  scheme,
-  onScheme,
-  onCall,
-  calls,
-}: {
-  remembers: boolean;
-  syncUrl: boolean;
-  scheme: Scheme;
-  onScheme: (scheme: Scheme) => void;
-  onCall: (call: ToolCall) => void;
-  calls: readonly ToolCall[];
-}) {
-  return (
-    <header
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        padding: "0 22px",
-        height: 56,
-        flex: "0 0 auto",
-        borderBottom: "1px solid var(--graview-edge)",
-        background: "var(--graview-bar)",
-        backdropFilter: "blur(14px)",
-        position: "relative",
-        zIndex: 20,
-      }}
-    >
-      {syncUrl ? <UrlSync /> : null}
-      <Wordmark<S> />
-      <Backtrack />
-      <Trail home={null} />
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-        {/* The scene offering the page face: two faces, one application. */}
-        <a
-          href="/pages"
-          data-testid="pages-link"
-          title="The same app, as ordinary pages"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            minHeight: 24,
-            padding: "2px 8px",
-            fontSize: 12.5,
-            color: "var(--graview-ink-muted)",
-            textDecoration: "none",
-          }}
-        >
-          Pages
-        </a>
-        <Standing clean="The garden keeps its agreements" />
-        <ChatPanel<S> onCall={onCall} />
-        <ActivityRail remembers={remembers} calls={calls} seat={<StarterGarden onCall={onCall} />} />
-        <button
-          type="button"
-          data-testid="scheme"
-          aria-label={`Switch to ${scheme === "dark" ? "light" : "dark"} mode`}
-          title={`Switch to ${scheme === "dark" ? "light" : "dark"} mode`}
-          onClick={() => onScheme(scheme === "dark" ? "light" : "dark")}
-          style={{ padding: "6px 9px", lineHeight: 1 }}
-        >
-          {scheme === "dark" ? "☀" : "☾"}
-        </button>
-      </div>
-    </header>
   );
 }
 
