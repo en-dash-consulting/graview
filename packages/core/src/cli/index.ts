@@ -1,12 +1,16 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import type { GraviewApp } from "../app.js";
 import { checkApp, formatFindings } from "./check.js";
+import { create, CREATE_USAGE } from "./create.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
 
-const USAGE = `graview — declaration checks and agent docs
+const USAGE = `graview — start a product, check its declaration, write its agent docs
+
+${CREATE_USAGE}
 
   graview check <entry> [--json]
       Loads <entry> (a module whose default export, or \`app\` export, is a
@@ -40,6 +44,7 @@ export async function main(argv: string[]): Promise<number> {
     process.stdout.write(USAGE);
     return 0;
   }
+  if (command === "create") return create(argv.slice(1));
   if (!entry) {
     process.stderr.write(`graview ${command}: an entry module is required\n\n${USAGE}`);
     return 2;
@@ -74,9 +79,21 @@ export async function main(argv: string[]): Promise<number> {
   }
 }
 
-const invokedDirectly =
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href;
+/*
+ * Whether this module is the program, not an import. Compared by REAL path:
+ * a project's `node_modules/.bin/graview` is a symlink to this file, and
+ * comparing the unresolved path made `npx graview check` exit 0 having done
+ * nothing — the quietest possible way for a check to pass.
+ */
+function invokedAs(argv1: string | undefined): boolean {
+  if (argv1 === undefined) return false;
+  try {
+    return realpathSync(argv1) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return import.meta.url === pathToFileURL(argv1).href;
+  }
+}
+const invokedDirectly = invokedAs(process.argv[1]);
 
 if (invokedDirectly) {
   main(process.argv.slice(2))

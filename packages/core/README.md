@@ -21,6 +21,15 @@ Everything a Graview app declares, and the checker that verifies it.
   in terms an agent can act on.
 
 ```sh
+npx graview create my-app          # a product on Graview, started (also: npm create graview)
 npx graview check ./dist/domain/app.js
 npx graview docs ./dist/domain/app.js
 ```
+
+`create` writes the declaration split into domain and UI, a shell, a headless
+test and a CI workflow, initialises a repository, installs, and says what to
+do next. `--link <path>` consumes the framework from a sibling checkout by
+path instead of a registry — the only way that works until the packages are
+published — and refuses a framework that is not built.
+The generator behind it is `@graview/core/scaffold`, a pure function from a
+name and a first kind to a list of files, for a host that provisions apps.

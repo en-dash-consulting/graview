@@ -52,6 +52,16 @@ jobs:
       - name: Build a scratch app from the tarballs
         run: node scripts/smoke-install.mjs
 
+      # And whether the ONBOARDING works: `graview create` writes a project,
+      # the project installs from the tarballs, its own `verify` passes, the
+      # skills land, and a real browser opens it — because "it typechecks"
+      # is not "it runs". Then the same by path, the way the first-party
+      # products consume the framework.
+      - name: A browser for the scaffolded app
+        run: npx playwright install --with-deps chromium
+      - name: Scaffold a project, install it, verify it, open it
+        run: node scripts/smoke-create.mjs
+
   changeset:
     # A version bump is a decision, and one nobody made is one nobody can
     # explain later. This asks for it while the change is still in front of
