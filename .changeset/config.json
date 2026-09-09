@@ -9,6 +9,13 @@
   "updateInternalDependencies": "patch",
   "ignore": [
     "@graview/launcher",
-    "@graview/spike"
-  ]
+    "@graview/spike",
+    "@graview/todo",
+    "@graview/seedbed",
+    "@graview/promo"
+  ],
+  "privatePackages": {
+    "version": true,
+    "tag": false
+  }
 }
