@@ -43,7 +43,7 @@ export interface Chapter {
   /** The stop worth a picture: a URL fragment the scene understands. */
   readonly stop: string;
   /** What the picture-taker does once there. */
-  readonly drive?: "activity" | "select-plot";
+  readonly drive?: "activity" | "select-plot" | "standing";
   /** Whether this chapter's app remembers in the browser (chapter 6 on). */
   readonly remembers: boolean;
   /** Whether the agent's seat is in the rail (chapter 5 on). */
@@ -145,7 +145,9 @@ const chapterThree: Chapter = {
     ],
     edges: [{ kind: "tended-by", from: "plot-1", to: "june" }],
   },
-  stop: "#focus=plot-2",
+  // The rule on the map, opened, and Standing's own account of what it found.
+  stop: "#overview=1&expand=kind:rule",
+  drive: "standing",
   remembers: false,
   seat: false,
   lens: false,

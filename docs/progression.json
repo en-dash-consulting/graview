@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-09T04:30:08.346Z",
+  "at": "2026-09-09T05:08:00.529Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -29,6 +29,10 @@
         "dark": "docs/progression/01-a-plot-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 640,
+        "height": 240
+      },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
@@ -38,6 +42,7 @@
         "withheld": null,
         "activity": [],
         "remembered": null,
+        "problems": null,
         "wordmark": "Graview",
         "focused": null
       }
@@ -73,6 +78,10 @@
         "dark": "docs/progression/02-who-tends-what-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 756,
+        "height": 623
+      },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
@@ -83,6 +92,7 @@
         "withheld": null,
         "activity": [],
         "remembered": null,
+        "problems": null,
         "wordmark": "Graview",
         "focused": "Plot 1A patch of ground with a number and a caretaker.Beds4who looks after itJuneplot"
       }
@@ -122,19 +132,24 @@
         "dark": "docs/progression/03-the-agreement-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 883,
+        "height": 650
+      },
       "saw": {
         "standing": "1 problem",
         "districts": [
           "Gardeners2open ▾",
           "Plots⚠ 2open ▾",
-          "Rules1open ▾"
+          "Rules1close ▴Every plot has a caretaker"
         ],
-        "trail": "GraviewGraview←→Plot 2×Pages1 problem◆Ask☾",
+        "trail": "GraviewGraview←→Pages1 problemNobody tends Plot 2Every plot has a caretaker · 2 ways to fix◆Ask☾",
         "withheld": null,
         "activity": [],
         "remembered": null,
+        "problems": "Nobody tends Plot 2Every plot has a caretaker · 2 ways to fix",
         "wordmark": "Graview",
-        "focused": "Plot 2A patch of ground with a number and a caretaker.Beds3Nothing is connected to this plot yet.plot"
+        "focused": null
       }
     },
     {
@@ -175,6 +190,10 @@
         "dark": "docs/progression/04-the-horizon-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 1006,
+        "height": 575
+      },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
@@ -187,6 +206,7 @@
         "withheld": null,
         "activity": [],
         "remembered": null,
+        "problems": null,
         "wordmark": "Graview",
         "focused": null
       }
@@ -228,6 +248,10 @@
         "dark": "docs/progression/05-a-seat-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 1006,
+        "height": 653
+      },
       "saw": {
         "standing": "1 problem",
         "districts": [
@@ -244,6 +268,7 @@
           "claude Welcome First gardenerundoFirst gardener"
         ],
         "remembered": null,
+        "problems": null,
         "wordmark": "Graview",
         "focused": null
       }
@@ -285,6 +310,10 @@
         "dark": "docs/progression/06-it-remembers-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 1006,
+        "height": 653
+      },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
@@ -297,6 +326,7 @@
         "withheld": null,
         "activity": [],
         "remembered": "Remembered in this browserStart fresh",
+        "problems": null,
         "wordmark": "Graview",
         "focused": null
       }
@@ -338,6 +368,10 @@
         "dark": "docs/progression/07-who-may-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 1253,
+        "height": 575
+      },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
@@ -350,6 +384,7 @@
         "withheld": "Stake out a plot",
         "activity": [],
         "remembered": null,
+        "problems": null,
         "wordmark": "Graview",
         "focused": null
       }
@@ -390,6 +425,10 @@
         "dark": "docs/progression/08-its-own-name-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 1006,
+        "height": 575
+      },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
@@ -402,6 +441,7 @@
         "withheld": null,
         "activity": [],
         "remembered": null,
+        "problems": null,
         "wordmark": "Seedbed",
         "focused": null
       }
@@ -443,6 +483,10 @@
         "dark": "docs/progression/09-a-lens-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 1096,
+        "height": 623
+      },
       "saw": {
         "standing": "1 problem",
         "districts": [
@@ -455,6 +499,7 @@
         "withheld": null,
         "activity": [],
         "remembered": null,
+        "problems": null,
         "wordmark": "Seedbed",
         "focused": "Who tends what1 unanswered · 1 unaskedPlot 1⚠ Plot 2JuneRavi"
       }
@@ -496,6 +541,10 @@
         "dark": "docs/progression/10-ship-it-dark.png"
       },
       "errors": [],
+      "picture": {
+        "width": 1006,
+        "height": 653
+      },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
@@ -510,6 +559,7 @@
           "ship:migration migration 1→2: Every garden adopts the agreementundoEvery plot has a caretaker"
         ],
         "remembered": "Remembered in this browserStart fresh",
+        "problems": null,
         "wordmark": "Seedbed",
         "focused": null
       }
