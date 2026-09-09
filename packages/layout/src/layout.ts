@@ -88,14 +88,18 @@ function ring(
   size: { width: number; height: number },
   canvasWidth: number,
   canvasHeight: number,
+  inset: { readonly left?: number; readonly right?: number } = {},
 ): { x: number; y: number; depth: number; width: number; height: number }[] {
-  const cx = canvasWidth / 2;
+  // The span the ring may use: the canvas, less any rail reserved for chrome.
+  const left = inset.left ?? 0;
+  const span = canvasWidth - left - (inset.right ?? 0);
+  const cx = left + span / 2;
   const cy = canvasHeight * 0.53;
   /*
    * A wide, tall ring: a picture of the whole domain should use the space it
    * was given. The ellipse is a circle under a vertical squash — affine.
    */
-  const rx = canvasWidth * 0.385;
+  const rx = span * 0.385;
   const ry = canvasHeight * 0.365;
   return Array.from({ length: count }, (_, index) => {
     // Starting at the bottom, going clockwise, so the first card of the shelf
@@ -414,7 +418,8 @@ export function layout<S extends AnySchema>(
       id: state.focusId,
       kind: focus ? focus.kind : focusKinds[0]!,
       plane: 0,
-      x: (opts.width - overviewW) / 2,
+      // Centred in the span the ring uses, so the picture and its ring agree.
+      x: (opts.inset?.left ?? 0) + (opts.width - (opts.inset?.left ?? 0) - (opts.inset?.right ?? 0) - overviewW) / 2,
       y: opts.height * 0.53 - overviewH / 2,
       width: overviewW,
       height: overviewH,
@@ -693,7 +698,7 @@ export function layout<S extends AnySchema>(
     width?: number;
     height?: number;
   }[] = state.overview
-    ? ring(slotted.length, contextSize, opts.width, opts.height)
+    ? ring(slotted.length, contextSize, opts.width, opts.height, opts.inset ?? {})
     : shelf(
         slotted.length,
         contextSize,

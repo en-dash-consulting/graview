@@ -36,7 +36,8 @@
     "audit-ui": "node scripts/audit-ui.mjs",
     "elm": "node scripts/eval-elm.mjs",
     "smoke:create": "node scripts/smoke-create.mjs",
-    "graview": "node packages/core/dist/cli/index.js"
+    "graview": "node packages/core/dist/cli/index.js",
+    "progression": "node scripts/progression.mjs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",

@@ -182,6 +182,13 @@ export interface LayoutOptions {
    * Turning a module back on is the whole undo.
    */
   readonly hiddenKinds?: readonly string[];
+  /**
+   * Room the picture must leave for chrome that lives ON the scene — the
+   * left rail at altitude, where the relation key and the inspector sit.
+   * The ring and the focused card centre within what is left, so a
+   * district is never drawn under a pane. Nothing is reserved by default.
+   */
+  readonly inset?: { readonly left?: number; readonly right?: number };
 }
 
 /**
@@ -195,7 +202,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1040, height: 420 },

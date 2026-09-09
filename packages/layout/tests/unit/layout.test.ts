@@ -440,6 +440,18 @@ describe("the kinds plane is a constant map", () => {
   });
 });
 
+describe("a rail reserved for chrome, at altitude", () => {
+  it("keeps every district clear of the reserved left rail, and centres within the rest", () => {
+    const rail = 264;
+    const result = layout(graph(), schema, view({ overview: true }), { width: 1280, height: 800, inset: { left: rail } });
+    const cards = result.nodes.filter((node) => node.aggregate);
+    expect(cards.length).toBeGreaterThan(2);
+    for (const card of cards) expect(card.x, card.id).toBeGreaterThanOrEqual(rail);
+    const centre = cards.reduce((sum, card) => sum + card.x + card.width / 2, 0) / cards.length;
+    expect(Math.abs(centre - (rail + (1280 - rail) / 2))).toBeLessThan(40);
+  });
+});
+
 describe("the overview is the same cards, on a ring", () => {
   it("keeps your interface, live and shrunk, in the middle of the ring", () => {
     /*

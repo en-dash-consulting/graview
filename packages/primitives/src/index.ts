@@ -16,6 +16,7 @@ export {
   Inspector,
   nameOf,
   OverviewButton,
+  descentTarget,
   Standing,
   Trail,
   UndoTurn,
