@@ -20,8 +20,9 @@ const report = JSON.parse(readFileSync(resolve(repoRoot, "docs/progression.json"
 const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const chapter = (c) => {
+  // One picture per chapter, in the light scheme: the dark one is on disk
+  // for the record, and a page that carried both doubled its weight.
   const light = c.pictures.light.replace(/^docs\/site\//, "").replace(/^docs\//, "../");
-  const dark = c.pictures.dark.replace(/^docs\/site\//, "").replace(/^docs\//, "../");
   const said = c.saw?.standing ?? "";
   const verdict = c.check.ok
     ? `graview check: Seedbed — ${c.check.warnings ? `${c.check.warnings} warning(s)` : "no problems found"}.`
@@ -35,8 +36,7 @@ const chapter = (c) => {
         </div>
         <p class="chapter-claim">${esc(c.claim)}</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="${light}" alt="${esc(c.title)}: the garden after chapter ${c.n}, light scheme" loading="lazy" width="${c.picture?.width ?? 1280}" height="${c.picture?.height ?? 800}" style="max-width: ${c.picture?.width ?? 1280}px">
-          <img class="only-dark" src="${dark}" alt="${esc(c.title)}: the garden after chapter ${c.n}, dark scheme" loading="lazy" width="${c.picture?.width ?? 1280}" height="${c.picture?.height ?? 800}" style="max-width: ${c.picture?.width ?? 1280}px">
+          <img src="${light}" alt="${esc(c.title)}: the garden after chapter ${c.n}" loading="lazy" width="${c.picture?.width ?? 1280}" height="${c.picture?.height ?? 800}" style="max-width: ${c.picture?.width ?? 1280}px">
           <figcaption>${esc(said ? `Standing says “${said}”.` : "")} ${esc(verdict)}</figcaption>
         </figure>
         <div class="chapter-adds">
