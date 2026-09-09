@@ -1,0 +1,28 @@
+{
+  "id": "20524fc5-0551-45f7-ad97-d8ddc8ab993a",
+  "taskId": "bcd3f8a2-db89-46aa-b1d0-9965ea828ece",
+  "taskTitle": "The page chapters are live: one embed per chapter, a three-face toggle, the same seed the photograph used",
+  "startedAt": "2026-09-09T20:35:29.280Z",
+  "finishedAt": "2026-09-09T20:35:29.280Z",
+  "status": "completed",
+  "turns": 73,
+  "summary": "docs/site/chapters.js mounts all twelve chapters live via @graview/embed; ring clamp, proportional rails, agg stops, strip wrap",
+  "tokenUsage": {
+    "input": 2246,
+    "output": 146181,
+    "cacheCreationInput": 187936,
+    "cacheReadInput": 59958960
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "nickbook-pro.lan",
+  "tokens": {
+    "input": 2246,
+    "output": 146181,
+    "cached": 60146896,
+    "total": 60295323
+  }
+}

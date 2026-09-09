@@ -58,6 +58,13 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
   readonly height?: number | string;
   /** What Standing says when nothing is wrong. */
   readonly standing?: string;
+  /**
+   * What this embed is called, for assistive technology. Several Graviews
+   * on one page each carry the same landmarks — the relation key, the
+   * inspector, the pages' navigation — and a landmark has to be unique by
+   * role and name; every landmark inside is named after the embed.
+   */
+  readonly label?: string;
 }
 
 export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOptions<S> {
@@ -102,7 +109,9 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
     height = "100%",
     standing = "Everything is in order",
     pages,
+    label,
   } = props;
+  const rootRef = useRef<HTMLDivElement>(null);
   const scope = useMemo(() => `graview-embed-${++sequence}`, []);
   const store = useMemo(() => props.store ?? storeOf(app, seed, principal), [props.store, app, seed, principal]);
   const views = useMemo(
@@ -124,8 +133,25 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
     document.head.appendChild(link);
   }, [brand, fonts]);
 
+  // Landmarks inside, named after the embed — kept so through re-renders.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root || !label) return;
+    const name = (el: Element) => {
+      const own = el.getAttribute("aria-label") ?? "";
+      if (own.startsWith(`${label} · `)) return;
+      el.setAttribute("aria-label", own ? `${label} · ${own}` : label);
+    };
+    const sweep = () => root.querySelectorAll("aside, nav, main, header, footer, [role=region], [role=complementary], [role=navigation]").forEach(name);
+    sweep();
+    const observer = new MutationObserver(sweep);
+    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label"] });
+    return () => observer.disconnect();
+  }, [label]);
+
   return (
     <div
+      ref={rootRef}
       className={scope}
       data-graview-embed={face}
       style={{ position: "relative", height, minHeight: 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
@@ -144,7 +170,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         {face === "pages" ? (
           <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "auto" }}>
             <PagesApp<S>
-              context={{ store, ...(brand ? { brand } : {}), ...(principal ? { principal } : {}) }}
+              context={{ store, embedded: true, ...(brand ? { brand } : {}), ...(principal ? { principal } : {}) }}
               {...(pages ? { registry: pages } : {})}
               initialPath={path}
             />
@@ -207,6 +233,9 @@ function Strip({ face, onFace, standing }: { face: EmbedFace; onFace?: ((face: E
       style={{
         display: "flex",
         alignItems: "center",
+        // Wraps rather than clips: at a phone's width Standing takes the
+        // next line instead of losing its last word.
+        flexWrap: "wrap",
         gap: 6,
         padding: "8px 12px",
         flex: "0 0 auto",
@@ -240,7 +269,7 @@ function Strip({ face, onFace, standing }: { face: EmbedFace; onFace?: ((face: E
           {candidate.label}
         </button>
       ))}
-      <div style={{ marginLeft: "auto" }}>
+      <div style={{ marginLeft: "auto", minWidth: 0 }}>
         <Standing clean={standing} />
       </div>
     </div>

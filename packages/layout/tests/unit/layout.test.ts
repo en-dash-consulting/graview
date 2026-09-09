@@ -451,6 +451,13 @@ describe("a rail reserved for chrome, at altitude", () => {
     expect(Math.abs(centre - (rail + (1280 - rail) / 2))).toBeLessThan(40);
   });
 
+  it("keeps the nearest district whole in a short canvas", () => {
+    const result = layout(graph(), schema, view({ overview: true }), { width: 820, height: 420 });
+    for (const card of result.nodes.filter((node) => node.aggregate)) {
+      expect(card.y + card.height, card.id).toBeLessThanOrEqual(420);
+    }
+  });
+
   it("keeps the focused card and the shelf clear of the rail in focus mode too", () => {
     const rail = 264;
     const result = layout(graph(), schema, view({ focusId: "week-1" }), { width: 1280, height: 800, inset: { left: rail } });

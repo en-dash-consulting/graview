@@ -46,6 +46,12 @@ export interface PageContext<S extends AnySchema> {
    * the example — the `fresh=1` address `@graview/ship` reads.
    */
   readonly remembers?: boolean;
+  /**
+   * Whether the face is inside somebody else's page. A standalone face owns
+   * its document and its pages are its <main>; embedded, the host owns the
+   * landmarks and the face's pages are plain regions of it.
+   */
+  readonly embedded?: boolean;
 }
 
 /** The way back to the example, for a face whose browser remembers. */
@@ -134,7 +140,15 @@ const lede: React.CSSProperties = {
 };
 const quiet: React.CSSProperties = { color: "var(--graview-ink-muted)", fontSize: 14 };
 const rule: React.CSSProperties = { borderTop: "1px solid var(--graview-edge)", paddingTop: 24 };
-const link: React.CSSProperties = { color: "inherit", textDecorationColor: "var(--graview-edge-bright)", textUnderlineOffset: 3 };
+// A link is a target: tall enough for a fingertip without leaving the line.
+const link: React.CSSProperties = {
+  color: "inherit",
+  textDecorationColor: "var(--graview-edge-bright)",
+  textUnderlineOffset: 3,
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: 24,
+};
 const plain: React.CSSProperties = { color: "inherit", textDecoration: "none" };
 const button: React.CSSProperties = {
   font: "inherit",
@@ -276,7 +290,7 @@ export function DefaultShell<S extends AnySchema>({
             </Link>
             <a
               href={sceneHref}
-              style={{ ...plain, ...quiet, marginLeft: "auto", whiteSpace: "nowrap" }}
+              style={{ ...plain, ...quiet, marginLeft: "auto", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", minHeight: 24 }}
               title="The same thing, as a scene"
             >
               Open the scene ↗
@@ -398,7 +412,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   const flagged = new Set(violations.flatMap((violation) => violation.nodeIds));
 
   return (
-    <main style={column}>
+    <PageMain context={context}>
       <header style={{ display: "grid", gap: 14 }}>
         <h1 style={h1}>{brand?.name ?? "Graview"}</h1>
         <p style={lede}>{summary}</p>
@@ -469,7 +483,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
           </ul>
         </section>
       ) : null}
-    </main>
+    </PageMain>
   );
 }
 
@@ -489,9 +503,9 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   const kind = kindOfSlug(store.schema, params["slug"] ?? "");
   if (!kind) {
     return (
-      <main style={column}>
+      <PageMain context={context}>
         <h1 style={h1}>No such kind of thing here.</h1>
-      </main>
+      </PageMain>
     );
   }
   const definition = store.schema.tryDefinition(kind);
@@ -506,7 +520,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   const plural = pluralOf(store, kind);
 
   return (
-    <main style={column}>
+    <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={{ ...eyebrow, display: "flex", alignItems: "center", gap: 8 }}>
           <KindMark kind={kind} brand={brand} size={8} />
@@ -569,7 +583,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
           <DerivedForm store={store} mutation={mutation} />
         </section>
       ))}
-    </main>
+    </PageMain>
   );
 }
 
@@ -595,9 +609,9 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const [open, setOpen] = useState<string | null>(null);
   if (!facts) {
     return (
-      <main style={column}>
+      <PageMain context={context}>
         <h1 style={h1}>Nothing lives at this address.</h1>
-      </main>
+      </PageMain>
     );
   }
   const node = store.graph.getNode(id) as (Record<string, unknown> & { id: string; kind: string }) | undefined;
@@ -618,7 +632,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const offered = facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant");
 
   return (
-    <main style={column}>
+    <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={{ ...eyebrow, display: "flex", alignItems: "center", gap: 8 }}>
           <KindMark kind={facts.kind} brand={brand} size={8} />
@@ -780,7 +794,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           </ul>
         </section>
       ) : null}
-    </main>
+    </PageMain>
   );
 }
 
@@ -795,7 +809,7 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
   useStoreTick(store);
   const violations = store.violations(invariantContext);
   return (
-    <main style={column}>
+    <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={eyebrow}>{violations.length === 0 ? "The standing" : `${violations.length} ${violations.length === 1 ? "problem" : "problems"}`}</p>
         <h1 style={h1}>{violations.length === 0 ? "All rules hold" : "What is broken"}</h1>
@@ -846,11 +860,30 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
           </section>
         );
       })}
-    </main>
+    </PageMain>
   );
 }
 
 const capitalise = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
+
+/**
+ * A page's outer element: <main> when the face owns the document, a plain
+ * section when it is embedded in a page that has its own — `main` allows no
+ * other role, so the tag itself has to change.
+ */
+export function PageMain<S extends AnySchema>({
+  context,
+  style,
+  children,
+  ...rest
+}: { context: PageContext<S>; style?: React.CSSProperties; children?: React.ReactNode } & Record<`data-${string}`, string>) {
+  const Tag = (context.embedded ? "section" : "main") as "main";
+  return (
+    <Tag style={{ ...column, ...style }} {...rest}>
+      {children}
+    </Tag>
+  );
+}
 
 /** Violations that implicate one node — re-exported so pages and tests share it. */
 export { violationsTouching };

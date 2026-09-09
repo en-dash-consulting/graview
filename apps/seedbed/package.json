@@ -32,7 +32,8 @@
     "react-dom": "^19.2.0",
     "@graview/pages": "workspace:*",
     "@graview/ship": "workspace:*",
-    "react-router-dom": "^7.1.1"
+    "react-router-dom": "^7.1.1",
+    "@graview/embed": "workspace:*"
   },
   "devDependencies": {
     "vite": "^5.4.11",

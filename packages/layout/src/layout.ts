@@ -100,7 +100,13 @@ function ring(
    * was given. The ellipse is a circle under a vertical squash — affine.
    */
   const rx = span * 0.385;
-  const ry = canvasHeight * 0.365;
+  /*
+   * The nearest card is the largest (1.3× at the bottom of the ellipse) and
+   * sits lowest; in a short canvas — an embed the height of a paragraph —
+   * the ring's natural sweep put it past the bottom edge. The ring is only
+   * as tall as leaves that card whole, with a little ground under it.
+   */
+  const ry = Math.min(canvasHeight * 0.365, canvasHeight - cy - size.height * 0.65 - 12);
   return Array.from({ length: count }, (_, index) => {
     // Starting at the bottom, going clockwise, so the first card of the shelf
     // ends up nearest the viewer rather than hidden at the back.

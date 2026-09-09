@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-09T13:26:20.102Z",
+  "at": "2026-09-09T20:29:58.954Z",
   "engine": "chromium",
   "viewports": [
     {
@@ -10,6 +10,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -20,6 +21,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -30,6 +32,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -40,6 +43,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -50,6 +54,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -60,6 +65,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -70,6 +76,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -80,6 +87,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -90,6 +98,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -100,6 +109,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -110,6 +120,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -120,6 +131,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -130,6 +142,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -140,6 +153,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -150,6 +164,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -160,6 +175,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -170,6 +186,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -180,6 +197,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -190,6 +208,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     },
     {
@@ -200,6 +219,7 @@
       "small": [],
       "cut": [],
       "captionHits": 0,
+      "live": 12,
       "errors": []
     }
   ],
@@ -211,10 +231,12 @@
     "theConnectorWordsExistAsText": true,
     "exactlyOneNodeIsCurrent": true,
     "everyNodeIsNamed": true,
+    "aChapterSwitchesFaceOnThePage": true,
     "textZoomToTwoHundredDoesNotScrollSideways": true,
     "reducedMotionIsHonoured": true,
     "forcedColoursKeepTheMeaningfulMarks": true,
-    "everyViewportIsClean": true
+    "everyViewportIsClean": true,
+    "everyChapterIsLiveAtEveryWidth": true
   },
   "passed": true
 }

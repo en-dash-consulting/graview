@@ -38,7 +38,12 @@ const inlined = source.slice(open + "<body>".length, close).trim().replace(
   /src="\.\.\/progression\/([^"]+\.png)"/g,
   (_, file) => `src="data:image/png;base64,${readFileSync(resolve(repoRoot, "docs/progression", file)).toString("base64")}"`,
 );
-const body = [`<title>${title}</title>`, ...links, "", inlined, ""].join("\n");
+// The chapters' script rides along inlined too: the host loads no external script.
+const withScript = inlined.replace(
+  /<script src="chapters\.js"><\/script>/,
+  () => `<script>${readFileSync(resolve(repoRoot, "docs/site/chapters.js"), "utf8").replace(/<\/script>/g, "<\\/script>")}</script>`,
+);
+const body = [`<title>${title}</title>`, ...links, "", withScript, ""].join("\n");
 
 const out = process.argv[2] ?? resolve(tmpdir(), "graview-artifact.html");
 writeFileSync(out, body, "utf8");

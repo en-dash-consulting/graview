@@ -375,7 +375,9 @@ export function CoverageView<S extends AnySchema>({
                 title={column.label}
                 style={{
                   flex: 1,
-                  minWidth: 0,
+                  // A column is a target: a fingertip wide at the least, and the
+                  // grid scrolls rather than crushing its columns to nothing.
+                  minWidth: 28,
                   position: "relative",
                   display: "flex",
                   alignItems: "flex-end",
@@ -528,7 +530,7 @@ export function CoverageView<S extends AnySchema>({
                           }
                           style={{
                             flex: 1,
-                            minWidth: 0,
+                            minWidth: 28,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",

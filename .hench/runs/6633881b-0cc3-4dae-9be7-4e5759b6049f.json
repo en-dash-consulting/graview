@@ -1,0 +1,28 @@
+{
+  "id": "6633881b-0cc3-4dae-9be7-4e5759b6049f",
+  "taskId": "4411f062-9526-49e2-92a8-c4afb7fb1cb9",
+  "taskTitle": "The live page still holds: site harness at every width, artifact under 16MB, no console errors per embed",
+  "startedAt": "2026-09-09T20:35:29.475Z",
+  "finishedAt": "2026-09-09T20:35:29.475Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "verify-site drives twelve live chapters at every width; landmarks named per embed, PageMain, coverage min width, link targets; artifact 762KB",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "nickbook-pro.lan",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}
