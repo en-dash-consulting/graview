@@ -62,6 +62,12 @@ jobs:
       - name: Scaffold a project, install it, verify it, open it
         run: node scripts/smoke-create.mjs
 
+      # The example the docs teach from, grown a chapter at a time, each
+      # chapter opened in a browser: a chapter that stops holding its claim
+      # fails the build rather than the page.
+      - name: Photograph the progression
+        run: node scripts/progression.mjs
+
   changeset:
     # A version bump is a decision, and one nobody made is one nobody can
     # explain later. This asks for it while the change is still in front of

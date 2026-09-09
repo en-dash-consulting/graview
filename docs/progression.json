@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-09T04:19:29.160Z",
+  "at": "2026-09-09T04:30:08.346Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -34,10 +34,12 @@
         "districts": [
           "Plots2close ▴Plot 1Plot 2"
         ],
-        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask☾",
+        "trail": "GraviewGraview←→PagesThe garden keeps its agreements◆Ask☾",
         "withheld": null,
         "activity": [],
-        "remembered": null
+        "remembered": null,
+        "wordmark": "Graview",
+        "focused": null
       }
     },
     {
@@ -77,10 +79,12 @@
           "Gardeners2open ▾",
           "Plots2open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Plot 1×PagesThe garden keeps its agreements◆Ask☾",
+        "trail": "GraviewGraview←→Plot 1×PagesThe garden keeps its agreements◆Ask☾",
         "withheld": null,
         "activity": [],
-        "remembered": null
+        "remembered": null,
+        "wordmark": "Graview",
+        "focused": "Plot 1A patch of ground with a number and a caretaker.Beds4who looks after itJuneplot"
       }
     },
     {
@@ -125,10 +129,12 @@
           "Plots⚠ 2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Plot 2×Pages1 problem◆Ask☾",
+        "trail": "GraviewGraview←→Plot 2×Pages1 problem◆Ask☾",
         "withheld": null,
         "activity": [],
-        "remembered": null
+        "remembered": null,
+        "wordmark": "Graview",
+        "focused": "Plot 2A patch of ground with a number and a caretaker.Beds3Nothing is connected to this plot yet.plot"
       }
     },
     {
@@ -177,10 +183,12 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask☾",
+        "trail": "GraviewGraview←→PagesThe garden keeps its agreements◆Ask☾",
         "withheld": null,
         "activity": [],
-        "remembered": null
+        "remembered": null,
+        "wordmark": "Graview",
+        "focused": null
       }
     },
     {
@@ -228,14 +236,16 @@
           "Plots⚠ 1open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Pages1 problem◆Ask3 ActivityThe agent's seatThe garden is plantedchanged · adopt-rulechanged · add-plotFirst plotchanged · add-gardenerFirst gar",
+        "trail": "GraviewGraview←→Pages1 problem◆Ask3 ActivityThe agent's seatThe garden is plantedchanged · adopt-rulechanged · add-plotFirst plotchanged · add-gardenerFirst gar",
         "withheld": null,
         "activity": [
           "claude Adopt: every plot has a caretakerundoEvery plot has a caretaker",
           "claude Stake out First plot (1 beds)undoFirst plot",
           "claude Welcome First gardenerundoFirst gardener"
         ],
-        "remembered": null
+        "remembered": null,
+        "wordmark": "Graview",
+        "focused": null
       }
     },
     {
@@ -283,10 +293,12 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask ActivityThe agent's seatThe garden is plantedRemembered in this browserStart fresh☾",
+        "trail": "GraviewGraview←→PagesThe garden keeps its agreements◆Ask ActivityThe agent's seatThe garden is plantedRemembered in this browserStart fresh☾",
         "withheld": null,
         "activity": [],
-        "remembered": "Remembered in this browserStart fresh"
+        "remembered": "Remembered in this browserStart fresh",
+        "wordmark": "Graview",
+        "focused": null
       }
     },
     {
@@ -334,10 +346,172 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask Activity☾",
+        "trail": "GraviewGraview←→PagesThe garden keeps its agreements◆Ask Activity☾",
         "withheld": "Stake out a plot",
         "activity": [],
-        "remembered": null
+        "remembered": null,
+        "wordmark": "Graview",
+        "focused": null
+      }
+    },
+    {
+      "n": 8,
+      "slug": "its-own-name",
+      "title": "The garden's own name",
+      "claim": "One accent, a mark and a typeface, and both schemes are derived and measured. Every text pair is checked against AA before the brand is allowed to ship.",
+      "adds": [
+        "brand: { name, logo, typography, accents, schemes: brandFromAccent(...) } on defineApp"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/08-its-own-name-light.png",
+        "dark": "docs/progression/08-its-own-name-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Gardeners2open ▾",
+          "Plantings1+1 pastopen ▾",
+          "Plots2open ▾",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask Activity☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": null,
+        "wordmark": "Seedbed",
+        "focused": null
+      }
+    },
+    {
+      "n": 9,
+      "slug": "a-lens",
+      "title": "A lens over the garden",
+      "claim": "A lens binds roles, not field names. The coverage grid was written for requirements and tests; pointed at gardeners and plots it says, in a picture, which plot nobody tends.",
+      "adds": [
+        "lenses: [{ name: \"coverage\", binds: \"entities\", bindings: { rows, columns, link } }] on defineApp",
+        "the lens's View registered for the gardeners, cardinality many"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/09-a-lens-light.png",
+        "dark": "docs/progression/09-a-lens-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "1 problem",
+        "districts": [
+          "Gardeners2◆open ▾",
+          "Plantings1+1 past",
+          "Plots⚠ 2open ▾",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→Pages1 problem◆Ask Activity☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": null,
+        "wordmark": "Seedbed",
+        "focused": "Who tends what1 unanswered · 1 unaskedPlot 1⚠ Plot 2JuneRavi"
+      }
+    },
+    {
+      "n": 10,
+      "slug": "ship-it",
+      "title": "Ship it",
+      "claim": "Deployment is one declaration plus one adapter. A version and a migration on the app carry a garden stored last season forward, as a logged, attributed, undoable operation.",
+      "adds": [
+        "version: 2 and migrations: [{ from: 1, to: 2, title, apply }] on defineApp",
+        "openStore against a stored version-1 garden"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/10-ship-it-light.png",
+        "dark": "docs/progression/10-ship-it-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Gardeners2◆open ▾",
+          "Plantings1+1 pastopen ▾",
+          "Plots2open ▾",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask1 ActivityThe agent's seatThe garden is plantedship:migration migration 1→2: Every garden adopts the agr",
+        "withheld": null,
+        "activity": [
+          "ship:migration migration 1→2: Every garden adopts the agreementundoEvery plot has a caretaker"
+        ],
+        "remembered": "Remembered in this browserStart fresh",
+        "wordmark": "Seedbed",
+        "focused": null
       }
     }
   ],
@@ -348,7 +522,10 @@
     "theHorizonShowsInChapterFour": true,
     "theSeatPlantedInChapterFive": true,
     "itRemembersInChapterSix": true,
-    "aGardenerIsRefusedInChapterSeven": true
+    "aGardenerIsRefusedInChapterSeven": true,
+    "theBrandArrivesInChapterEight": true,
+    "theLensShowsWhoTendsWhatInChapterNine": true,
+    "theMigrationIsInTheLogInChapterTen": true
   },
   "passed": true
 }

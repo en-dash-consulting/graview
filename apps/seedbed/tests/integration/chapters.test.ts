@@ -36,7 +36,7 @@ describe("the garden, grown a chapter at a time", () => {
       for (const m of before.mutations ?? []) expect((after.mutations ?? []).map((x) => x.name)).toContain(m.name);
       for (const inv of before.invariants ?? []) expect((after.invariants ?? []).map((x) => x.name)).toContain(inv.name);
     }
-    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 
   it("1 · a single kind already has a city, a district and a derived beginning", () => {
@@ -95,6 +95,32 @@ describe("the garden, grown a chapter at a time", () => {
     expect(permits(app.policy!, principal!, "add-plot", "plot").ok).toBe(false);
     const store = storeOf(7);
     expect(() => store.apply({ name: "add-plot", args: { label: "Plot 9", beds: 1 } })).toThrow();
+  });
+
+  it("8 · the brand arrives once, and the chapters before it wear the framework's own", () => {
+    for (const chapter of CHAPTERS.slice(0, 7)) expect(chapter.app.brand, chapter.slug).toBeUndefined();
+    expect(CHAPTERS[7]!.app.brand?.name).toBe("Seedbed");
+    expect(checkApp(CHAPTERS[7]!.app).findings.map((f) => f.code)).not.toContain("theme-contrast-below-aa");
+  });
+
+  it("9 · the coverage lens, bound by roles, shows the plot nobody tends", () => {
+    const { app, seed } = CHAPTERS[8]!;
+    expect(app.lenses?.[0]?.bindings).toEqual({ rows: { kind: "gardener" }, columns: { kind: "plot" }, link: { edge: "tended-by" } });
+    expect(seed.edges.filter((e) => e.kind === "tended-by")).toHaveLength(1);
+    expect(storeOf(9).violations().map((v) => v.message)).toEqual(["Nobody tends Plot 2"]);
+  });
+
+  it("10 · a garden stored last season is carried forward by a logged migration", async () => {
+    const { migrateSnapshot } = await import("@graview/ship");
+    const { app, stored } = CHAPTERS[9]!;
+    expect(app.version).toBe(2);
+    expect(checkApp(app).findings.map((f) => f.code)).not.toContain("migration-gap");
+    const run = migrateSnapshot(app, stored!.snapshot, stored!.version, { now: () => "2026-09-09T00:00:00Z" });
+    expect(run.version).toBe(2);
+    expect(run.snapshot.nodes.some((n) => n.kind === "rule")).toBe(true);
+    expect(run.ops.every((op) => op.author.kind === "system")).toBe(true);
+    // Already-migrated data is left alone: the migration is idempotent by construction.
+    expect(migrateSnapshot(app, run.snapshot, 1).ops.flatMap((op) => op.primitives ?? [])).toEqual([]);
   });
 
   it("is reached by ?chapter=N, and the finished example is the default", () => {

@@ -417,6 +417,37 @@ section > .head .tick {
   color: var(--ink-2);
 }
 .code pre { margin: 0; }
+
+/* The garden, grown: one article per chapter, its picture in the viewer's
+   own scheme. Both images ship; the one for the other scheme is hidden by
+   the same three-state token rule the palette uses. */
+.only-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .only-light { display: none; }
+  :root:not([data-theme="light"]) .only-dark { display: block; }
+}
+:root[data-theme="dark"] .only-light { display: none; }
+:root[data-theme="dark"] .only-dark { display: block; }
+.chapter-shot { margin: 22px 0 0; }
+.chapter-shot img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 2px; background: var(--sunk); }
+.chapter-shot figcaption { font-size: 12.5px; line-height: 1.6; color: var(--ink-3); margin-top: 8px; max-width: 70ch; }
+.hero-shot { margin-top: 28px; }
+/* minmax(0, 1fr) and min-width: 0, or a grid item's automatic minimum is
+   the picture's intrinsic 1280 pixels and the whole page scrolls sideways. */
+.chapters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; margin-top: 30px; }
+.chapter { min-width: 0; }
+/* An inline link is still a target: tall enough for a fingertip without leaving the line. */
+.inl { display: inline-flex; align-items: center; min-height: 24px; }
+.chapter-head { display: flex; align-items: baseline; gap: 12px; }
+.chapter-n { font-family: var(--serif); font-size: 26px; color: var(--pine); font-variant-numeric: tabular-nums; min-width: 28px; }
+.chapter-head h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.chapter-claim { margin: 8px 0 0 40px; max-width: 62ch; color: var(--ink-2); line-height: 1.6; }
+.chapter-adds { margin: 12px 0 0 40px; font-size: 13px; }
+.chapter-label { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
+.chapter-adds ul { margin: 0; padding-left: 18px; }
+.chapter-adds li { margin-top: 3px; }
+.chapter-adds code { font-size: 12px; }
+@media (max-width: 560px) { .chapter-claim, .chapter-adds { margin-left: 0; } }
 .k { color: var(--pine); }
 .s { color: var(--amber); }
 .c { color: var(--ink-3); }
@@ -679,6 +710,7 @@ footer {
     <div class="jump">
       <a href="#what">What it is</a>
       <a href="#try">Try it</a>
+      <a href="#grown">The garden, grown</a>
       <a href="#declare">The declaration</a>
       <a href="#packages">The packages</a>
       <a href="#depth">Depth</a>
@@ -691,9 +723,9 @@ footer {
     </div>
 
     <div class="railfoot">
-      7 packages<br>
-      490 tests<br>
-      no browser, no GPU
+      10 packages<br>
+      554 tests<br>
+      ten chapters, photographed
     </div>
   </nav>
 
@@ -716,8 +748,13 @@ footer {
       <p style="margin-top: 14px;">
         It is not a UI layer bolted onto a store. The graph, the rules, the
         operation log, the tool surface and the pictures are one system, and
-        they ship as seven packages you install.
+        they ship as packages you install.
       </p>
+      <figure class="chapter-shot hero-shot">
+        <img class="only-light" src="../progression/01-a-plot-light.png" alt="A garden with one declared kind, seen from altitude: one district, opened, listing two plots" width="1280" height="800">
+        <img class="only-dark" src="../progression/01-a-plot-dark.png" alt="A garden with one declared kind, seen from altitude, dark scheme" width="1280" height="800">
+        <figcaption>One kind declared, and already a city, a district, a derived form and a routed face. Declare a little, check it, look at it, declare more — <a class="inl" href="#grown">the garden, grown</a>.</figcaption>
+      </figure>
     </section>
 
     <section id="try" aria-labelledby="h-try">
@@ -748,6 +785,195 @@ footer {
         <ul id="scene-edges" class="sr-only"></ul>
       </div>
     </section>
+
+    <!-- progression:start -->
+
+    <section id="grown" aria-labelledby="h-grown">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-grown">The garden, grown</h2></div>
+      <p class="lede">
+        One example, the community garden, declared a little at a time. Every
+        chapter below is a real declaration that passes its own check, opened
+        in a real browser by <code>scripts/progression.mjs</code> on every push.
+        Nothing here is a mock-up; a chapter that stops holding its claim fails
+        the build.
+      </p>
+      <p class="sm">
+        Chapter one is what <code>graview create</code> writes. The loop from
+        there is the whole method: declare, check, look, declare more.
+      </p>
+      <div class="chapters">
+      <article class="chapter" id="chapter-1" aria-labelledby="h-chapter-1">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">1</span>
+          <h3 id="h-chapter-1">A plot</h3>
+        </div>
+        <p class="chapter-claim">One kind, one act. The city, the district, the derived form and the routed face all exist before a line of UI is written.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/01-a-plot-light.png" alt="A plot: the garden after chapter 1, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/01-a-plot-dark.png" alt="A plot: the garden after chapter 1, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>defineNode("plot")</code></li><li><code>defineMutation("add-plot") with creates: ["plot"]</code></li></ul>
+        </div>
+      </article>
+
+      <article class="chapter" id="chapter-2" aria-labelledby="h-chapter-2">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">2</span>
+          <h3 id="h-chapter-2">Gardeners, and who tends what</h3>
+        </div>
+        <p class="chapter-claim">A second kind and one edge. The line is drawn from the declaration, captioned in its own words, and made and unmade by the act that names it.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/02-who-tends-what-light.png" alt="Gardeners, and who tends what: the garden after chapter 2, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/02-who-tends-what-dark.png" alt="Gardeners, and who tends what: the garden after chapter 2, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>defineNode("gardener")</code></li><li><code>edges: { "tended-by": { to: ["gardener"], description } } on plot</code></li><li><code>defineMutation("tend") with connects and severs</code></li></ul>
+        </div>
+      </article>
+
+      <article class="chapter" id="chapter-3" aria-labelledby="h-chapter-3">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">3</span>
+          <h3 id="h-chapter-3">The garden's agreement</h3>
+        </div>
+        <p class="chapter-claim">A rule is data on the map, and it names its own repair. The moment it lands, an untended plot is a problem with a one-click fix, not a bug report.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/03-the-agreement-light.png" alt="The garden's agreement: the garden after chapter 3, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/03-the-agreement-dark.png" alt="The garden's agreement: the garden after chapter 3, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>defineNode("rule") with requiresInvariant</code></li><li><code>defineInvariant("every-plot-tended") with repairs: ["tend"]</code></li><li><code>defineMutation("adopt-rule")</code></li></ul>
+        </div>
+      </article>
+
+      <article class="chapter" id="chapter-4" aria-labelledby="h-chapter-4">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">4</span>
+          <h3 id="h-chapter-4">Plantings, and the horizon</h3>
+        </div>
+        <p class="chapter-claim">A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/04-the-horizon-light.png" alt="Plantings, and the horizon: the garden after chapter 4, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/04-the-horizon-dark.png" alt="Plantings, and the horizon: the garden after chapter 4, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>defineNode("planting") with lifecycle: { field: "status", retired: ["harvested", "failed"] }</code></li><li><code>an appendOnly edge "grows-in"</code></li><li><code>defineMutation("sow"), defineMutation("harvest") with writes: ["status"]</code></li></ul>
+        </div>
+      </article>
+
+      <article class="chapter" id="chapter-5" aria-labelledby="h-chapter-5">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">5</span>
+          <h3 id="h-chapter-5">A seat for an agent</h3>
+        </div>
+        <p class="chapter-claim">An agent gets the same acts a person does, through one declared seam. Its turn is attributed in the log, watchable from altitude, and undoable out of order.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/05-a-seat-light.png" alt="A seat for an agent: the garden after chapter 5, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/05-a-seat-dark.png" alt="A seat for an agent: the garden after chapter 5, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>intelligence: [{ name: "starter", kind: "graph", may: [...] }] on defineApp</code></li><li><code>an AgentSeat in the rail, gated on add-gardener</code></li></ul>
+        </div>
+      </article>
+
+      <article class="chapter" id="chapter-6" aria-labelledby="h-chapter-6">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">6</span>
+          <h3 id="h-chapter-6">The garden remembers</h3>
+        </div>
+        <p class="chapter-claim">Persistence is the operation log. One adapter in main.tsx and an edit survives a reload, still attributed, still undoable, with the way back to empty on the rail.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/06-it-remembers-light.png" alt="The garden remembers: the garden after chapter 6, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/06-it-remembers-dark.png" alt="The garden remembers: the garden after chapter 6, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>openStore({ app, adapter: createBrowserAdapter(), fresh: browserStartsFresh() }) in main.tsx</code></li><li><code>remembers on the Shell</code></li></ul>
+        </div>
+      </article>
+
+      <article class="chapter" id="chapter-7" aria-labelledby="h-chapter-7">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">7</span>
+          <h3 id="h-chapter-7">Who may do what</h3>
+        </div>
+        <p class="chapter-claim">One policy, declared once. The store refuses, the actions strip narrows, and an agent's seat narrows with it, so a gardener never sees a button that would fail.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/07-who-may-light.png" alt="Who may do what: the garden after chapter 7, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/07-who-may-dark.png" alt="Who may do what: the garden after chapter 7, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>policy: { roles, grants } on defineApp</code></li><li><code>a principal with roles on the store</code></li></ul>
+        </div>
+      </article>
+
+      <article class="chapter" id="chapter-8" aria-labelledby="h-chapter-8">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">8</span>
+          <h3 id="h-chapter-8">The garden's own name</h3>
+        </div>
+        <p class="chapter-claim">One accent, a mark and a typeface, and both schemes are derived and measured. Every text pair is checked against AA before the brand is allowed to ship.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/08-its-own-name-light.png" alt="The garden's own name: the garden after chapter 8, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/08-its-own-name-dark.png" alt="The garden's own name: the garden after chapter 8, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>brand: { name, logo, typography, accents, schemes: brandFromAccent(...) } on defineApp</code></li></ul>
+        </div>
+      </article>
+
+      <article class="chapter" id="chapter-9" aria-labelledby="h-chapter-9">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">9</span>
+          <h3 id="h-chapter-9">A lens over the garden</h3>
+        </div>
+        <p class="chapter-claim">A lens binds roles, not field names. The coverage grid was written for requirements and tests; pointed at gardeners and plots it says, in a picture, which plot nobody tends.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/09-a-lens-light.png" alt="A lens over the garden: the garden after chapter 9, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/09-a-lens-dark.png" alt="A lens over the garden: the garden after chapter 9, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>lenses: [{ name: "coverage", binds: "entities", bindings: { rows, columns, link } }] on defineApp</code></li><li><code>the lens's View registered for the gardeners, cardinality many</code></li></ul>
+        </div>
+      </article>
+
+      <article class="chapter" id="chapter-10" aria-labelledby="h-chapter-10">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">10</span>
+          <h3 id="h-chapter-10">Ship it</h3>
+        </div>
+        <p class="chapter-claim">Deployment is one declaration plus one adapter. A version and a migration on the app carry a garden stored last season forward, as a logged, attributed, undoable operation.</p>
+        <figure class="chapter-shot">
+          <img class="only-light" src="../progression/10-ship-it-light.png" alt="Ship it: the garden after chapter 10, light scheme" loading="lazy" width="1280" height="800">
+          <img class="only-dark" src="../progression/10-ship-it-dark.png" alt="Ship it: the garden after chapter 10, dark scheme" loading="lazy" width="1280" height="800">
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>version: 2 and migrations: [{ from: 1, to: 2, title, apply }] on defineApp</code></li><li><code>openStore against a stored version-1 garden</code></li></ul>
+        </div>
+      </article>
+      </div>
+    </section>
+    <!-- progression:end -->
 
     <section id="declare" aria-labelledby="h-declare">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-declare">The declaration</h2></div>
@@ -990,25 +1216,27 @@ footer {
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-install">Install</h2></div>
       <div class="two">
         <div class="stack">
-          <div class="term" data-scroller aria-label="Commands to install the packages">
-            <div class="l"><span class="p">$</span><span class="c2">pnpm add @graview/core @graview/react</span><span class="n2"></span></div>
-            <div class="l"><span class="p">$</span><span class="c2">pnpm add @graview/primitives</span><span class="n2">views + workbench</span></div>
-            <div class="l"><span class="p">$</span><span class="c2">npx graview check src/app.ts</span><span class="n2">against the declaration</span></div>
+          <div class="term" data-scroller aria-label="Commands to start a product from a checkout">
+            <div class="l"><span class="p">$</span><span class="c2">pnpm install &amp;&amp; pnpm build</span><span class="n2">the framework, first</span></div>
+            <div class="l"><span class="p">$</span><span class="c2">pnpm graview create ../my-app --link .</span><span class="n2">chapter one, written for you</span></div>
+            <div class="l"><span class="p">$</span><span class="c2">cd ../my-app &amp;&amp; pnpm verify</span><span class="n2">typecheck, tests, build, check</span></div>
           </div>
           <div class="term" data-scroller aria-label="Commands to run inside the repository">
-            <div class="l"><span class="p">$</span><span class="c2">pnpm install</span><span class="n2"></span></div>
-            <div class="l"><span class="p">$</span><span class="c2">pnpm dev:todo</span><span class="n2">the worked example</span></div>
-            <div class="l"><span class="p">$</span><span class="c2">pnpm test</span><span class="n2">490, no browser</span></div>
+            <div class="l"><span class="p">$</span><span class="c2">pnpm dev:seedbed</span><span class="n2">the garden — ?chapter=N opens any chapter</span></div>
+            <div class="l"><span class="p">$</span><span class="c2">pnpm progression</span><span class="n2">every chapter, photographed</span></div>
+            <div class="l"><span class="p">$</span><span class="c2">pnpm test</span><span class="n2">554, no browser</span></div>
           </div>
         </div>
         <div class="stack">
           <p class="sm">
-            <strong>Start with the todo example.</strong> Four kinds, ten named
-            mutations, three rules that name their own repairs, a lens borrowed
-            from a calendar, a declared brand and an agent seat. Small enough to
-            read in one sitting, and it asks you to learn nothing about a domain
-            before you can learn the framework. It found two framework bugs
-            while it was being written, which is what an example is for.
+            <strong>Start with the garden.</strong> <a class="inl" href="#grown">Ten chapters</a>,
+            from one kind to a shipped, branded, permissioned application with a
+            lens and an agent's seat — each a real declaration you can open with
+            <code>?chapter=N</code>. <code>graview create</code> writes chapter one
+            for your own domain; the packages are not on a registry yet, so a
+            product starts from a checkout and consumes the framework by path.
+            The todo example is the second thing to read: four kinds, ten acts,
+            three rules, a lens borrowed from a calendar.
           </p>
           <p class="sm">
             The scene renders through the DOM by default. The plane model is

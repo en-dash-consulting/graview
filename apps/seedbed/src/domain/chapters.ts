@@ -50,22 +50,17 @@ export interface Chapter {
   readonly seat: boolean;
   /** Who is at the keyboard, once the garden has a policy. */
   readonly principal?: Principal;
+  /** Whether the coverage lens is mounted over the gardeners (chapter 9 on). */
+  readonly lens: boolean;
+  /**
+   * What an older deployment left behind, for the chapter about shipping:
+   * a graph stored at an earlier version, which opening must carry forward.
+   */
+  readonly stored?: { readonly version: number; readonly snapshot: GraphSnapshot };
 }
 
 /** A chapter's app at the boundary where every chapter is the same shape. */
 const asApp = (app: unknown): GraviewApp => app as GraviewApp;
-
-/**
- * The brand, narrowed to the kinds a chapter has. `accents` names kinds by
- * hue, and an accent for a kind nobody declared is a check ERROR — rightly:
- * it is a brand decision that looks applied and is not.
- */
-const brandFor = (kinds: readonly string[]) => ({
-  ...seedbedBrand,
-  accents: Object.fromEntries(
-    Object.entries(seedbedBrand.accents ?? {}).filter(([kind]) => kinds.includes(kind)),
-  ),
-});
 
 /* ------------------------------------------------ 1 · a plot, alone */
 
@@ -84,7 +79,7 @@ const chapterOne: Chapter = {
   title: "A plot",
   claim: "One kind, one act. The city, the district, the derived form and the routed face all exist before a line of UI is written.",
   adds: ['defineNode("plot")', 'defineMutation("add-plot") with creates: ["plot"]'],
-  app: asApp(defineApp({ name: "Seedbed", schema: one, mutations: [addPlot as never], brand: brandFor(one.kinds) })),
+  app: asApp(defineApp({ name: "Seedbed", schema: one, mutations: [addPlot as never] })),
   seed: {
     nodes: [
       { id: "plot-1", kind: "plot", label: "Plot 1", beds: 4 },
@@ -95,6 +90,7 @@ const chapterOne: Chapter = {
   stop: "#overview=1&expand=kind:plot",
   remembers: false,
   seat: false,
+  lens: false,
 };
 
 /* ------------------------------- 2 · gardeners, and who tends what */
@@ -106,7 +102,7 @@ const chapterTwo: Chapter = {
   title: "Gardeners, and who tends what",
   claim: "A second kind and one edge. The line is drawn from the declaration, captioned in its own words, and made and unmade by the act that names it.",
   adds: ['defineNode("gardener")', 'edges: { "tended-by": { to: ["gardener"], description } } on plot', 'defineMutation("tend") with connects and severs'],
-  app: asApp(defineApp({ name: "Seedbed", schema: two, mutations: [addGardener, addPlot, tend] as never, brand: brandFor(two.kinds) })),
+  app: asApp(defineApp({ name: "Seedbed", schema: two, mutations: [addGardener, addPlot, tend] as never })),
   seed: {
     nodes: [
       { id: "june", kind: "gardener", label: "June" },
@@ -119,6 +115,7 @@ const chapterTwo: Chapter = {
   stop: "#focus=plot-1",
   remembers: false,
   seat: false,
+  lens: false,
 };
 
 /* ------------------------------------------- 3 · the garden's agreement */
@@ -136,7 +133,6 @@ const chapterThree: Chapter = {
       schema: three,
       mutations: [addGardener, addPlot, tend, adoptRule] as never,
       invariants: [everyPlotTended as never],
-      brand: brandFor(three.kinds),
     }),
   ),
   seed: {
@@ -152,6 +148,7 @@ const chapterThree: Chapter = {
   stop: "#focus=plot-2",
   remembers: false,
   seat: false,
+  lens: false,
 };
 
 /* ------------------------------------------ 4 · plantings and the past */
@@ -177,11 +174,12 @@ const chapterFour: Chapter = {
   title: "Plantings, and the horizon",
   claim: "A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted.",
   adds: ['defineNode("planting") with lifecycle: { field: "status", retired: ["harvested", "failed"] }', 'an appendOnly edge "grows-in"', 'defineMutation("sow"), defineMutation("harvest") with writes: ["status"]'],
-  app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never], brand: seedbedBrand })),
+  app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never] })),
   seed: seedFour,
   stop: "#overview=1",
   remembers: false,
   seat: false,
+  lens: false,
 };
 
 /* ----------------------------------------------- 5 · a seat for an agent */
@@ -200,12 +198,13 @@ const chapterFive: Chapter = {
   title: "A seat for an agent",
   claim: "An agent gets the same acts a person does, through one declared seam. Its turn is attributed in the log, watchable from altitude, and undoable out of order.",
   adds: ["intelligence: [{ name: \"starter\", kind: \"graph\", may: [...] }] on defineApp", "an AgentSeat in the rail, gated on add-gardener"],
-  app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never], brand: seedbedBrand, intelligence })),
+  app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never], intelligence })),
   seed: { nodes: [], edges: [] },
   stop: "#overview=1",
   drive: "activity",
   remembers: false,
   seat: true,
+  lens: false,
 };
 
 /* ---------------------------------------------- 6 · the garden remembers */
@@ -222,6 +221,7 @@ const chapterSix: Chapter = {
   drive: "activity",
   remembers: true,
   seat: true,
+  lens: false,
 };
 
 /* ---------------------------------------------- 7 · who may do what */
@@ -239,13 +239,126 @@ const chapterSeven: Chapter = {
   title: "Who may do what",
   claim: "One policy, declared once. The store refuses, the actions strip narrows, and an agent's seat narrows with it, so a gardener never sees a button that would fail.",
   adds: ["policy: { roles, grants } on defineApp", "a principal with roles on the store"],
-  app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never], brand: seedbedBrand, intelligence, policy })),
+  app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never], intelligence, policy })),
   seed: seedFour,
   stop: "#overview=1&sel=kind:plot",
   drive: "select-plot",
   remembers: false,
   seat: true,
+  lens: false,
   principal: { kind: "human", id: "ravi", roles: ["gardener"] },
+};
+
+/* ------------------------------------------ 8 · the garden's own name */
+
+const coordinator: Principal = { kind: "human", id: "june", roles: ["coordinator"] };
+const chapterEight: Chapter = {
+  n: 8,
+  slug: "its-own-name",
+  title: "The garden's own name",
+  claim: "One accent, a mark and a typeface, and both schemes are derived and measured. Every text pair is checked against AA before the brand is allowed to ship.",
+  adds: ["brand: { name, logo, typography, accents, schemes: brandFromAccent(...) } on defineApp"],
+  app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never], intelligence, policy, brand: seedbedBrand })),
+  seed: seedFour,
+  stop: "#overview=1",
+  remembers: false,
+  seat: true,
+  lens: false,
+  principal: coordinator,
+};
+
+/* ---------------------------------------------- 9 · a lens over the garden */
+
+/**
+ * The coverage lens, written for requirements and the tests that answer
+ * them, over gardeners and the plots they tend. It binds ROLES — rows,
+ * columns, the edge between — and has never heard of a garden.
+ */
+const coverage = {
+  name: "coverage",
+  requiredRoles: ["rows", "columns", "link"],
+  binds: "entities" as const,
+  bindings: { rows: { kind: "gardener" }, columns: { kind: "plot" }, link: { edge: "tended-by" } },
+};
+const chapterNine: Chapter = {
+  n: 9,
+  slug: "a-lens",
+  title: "A lens over the garden",
+  claim: "A lens binds roles, not field names. The coverage grid was written for requirements and tests; pointed at gardeners and plots it says, in a picture, which plot nobody tends.",
+  adds: ["lenses: [{ name: \"coverage\", binds: \"entities\", bindings: { rows, columns, link } }] on defineApp", "the lens's View registered for the gardeners, cardinality many"],
+  app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never], intelligence, policy, brand: seedbedBrand, lenses: [coverage] })),
+  seed: {
+    nodes: seedFour.nodes,
+    // Plot 2's caretaker steps back: the grid shows the gap the rule names.
+    edges: seedFour.edges.filter((edge) => !(edge.kind === "tended-by" && edge.from === "plot-2")),
+  },
+  stop: "#focus=agg:gardener",
+  remembers: false,
+  seat: true,
+  lens: true,
+  principal: coordinator,
+};
+
+/* ------------------------------------------------------------ 10 · ship it */
+
+/**
+ * The declaration gains a version and the migration between them. A garden
+ * stored by the earlier deployment — before there was an agreement — is
+ * carried forward on open: the migration is an operation in the log, by
+ * the system, invertible like any other.
+ */
+const chapterTen: Chapter = {
+  n: 10,
+  slug: "ship-it",
+  title: "Ship it",
+  claim: "Deployment is one declaration plus one adapter. A version and a migration on the app carry a garden stored last season forward, as a logged, attributed, undoable operation.",
+  adds: ["version: 2 and migrations: [{ from: 1, to: 2, title, apply }] on defineApp", "openStore against a stored version-1 garden"],
+  app: asApp(
+    defineApp({
+      name: "Seedbed",
+      schema: four,
+      mutations: grown,
+      invariants: [everyPlotTended as never],
+      intelligence,
+      policy,
+      brand: seedbedBrand,
+      lenses: [coverage],
+      version: 2,
+      migrations: [
+        {
+          from: 1,
+          to: 2,
+          title: "Every garden adopts the agreement",
+          apply: (snapshot) =>
+            snapshot.nodes.some((node) => node.kind === "rule")
+              ? []
+              : [
+                  {
+                    op: "add-node" as const,
+                    node: {
+                      id: "every-plot-tended",
+                      kind: "rule",
+                      label: "Every plot has a caretaker",
+                      spec: { type: "every-plot-tended" },
+                    },
+                  },
+                ],
+        },
+      ],
+    }),
+  ),
+  seed: seedFour,
+  stored: {
+    version: 1,
+    // Last season's garden: plots, gardeners and plantings, and no rule yet.
+    snapshot: { nodes: seedFour.nodes.filter((node) => node.kind !== "rule"), edges: seedFour.edges },
+  },
+  stop: "#overview=1",
+  drive: "activity",
+  remembers: true,
+  seat: true,
+  lens: true,
+  principal: coordinator,
 };
 
 export const CHAPTERS: readonly Chapter[] = [
@@ -256,6 +369,9 @@ export const CHAPTERS: readonly Chapter[] = [
   chapterFive,
   chapterSix,
   chapterSeven,
+  chapterEight,
+  chapterNine,
+  chapterTen,
 ];
 
 /** The chapter a URL asks for, or none: the finished example is the default. */

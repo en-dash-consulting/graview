@@ -32,7 +32,7 @@ function initialScheme(): Scheme {
 }
 
 export function applyScheme(scheme: Scheme): void {
-  sheet.replaceSync(themeCss(scheme, seedbedBrand));
+  sheet.replaceSync(themeCss(scheme, brand));
   document.documentElement.dataset["graviewScheme"] = scheme;
   try {
     localStorage.setItem(STORED, scheme);
@@ -42,7 +42,6 @@ export function applyScheme(scheme: Scheme): void {
 }
 
 const scheme = initialScheme();
-applyScheme(scheme);
 
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
@@ -57,16 +56,30 @@ if (!root) throw new Error("no #root");
  */
 type Opened = Awaited<ReturnType<typeof openStore<SeedbedSchema>>>;
 const chapter = chapterFromSearch(window.location.search);
+const brand = chapter ? chapter.app.brand : seedbedBrand;
+applyScheme(scheme);
+const adapter = !chapter || chapter.remembers ? createBrowserAdapter() : createMemoryAdapter();
+if (chapter?.stored) {
+  /*
+   * What an earlier deployment left behind, put where opening will find
+   * it: the snapshot at its old version. Opening then has to carry it
+   * forward, and the migration it runs is the chapter's whole point.
+   */
+  const scope = `chapter-${chapter.n}`;
+  await adapter.delete(scope);
+  await adapter.save(scope, chapter.stored.snapshot as never);
+  (adapter as { saveMeta?: (scope: string, meta: { version: number }) => void }).saveMeta?.(scope, { version: chapter.stored.version });
+}
 const opened: Opened = chapter
   ? ((await openStore({
       app: chapter.app as never,
-      adapter: chapter.remembers ? createBrowserAdapter() : createMemoryAdapter(),
+      adapter,
       scope: `chapter-${chapter.n}`,
       seed: chapter.seed as never,
-      fresh: !chapter.remembers || browserStartsFresh(),
+      fresh: chapter.stored ? false : !chapter.remembers || browserStartsFresh(),
       storeOptions: chapter.principal ? { principal: chapter.principal } : {},
     } as never)) as unknown as Opened)
-  : await openStore({ app: seedbedApp, adapter: createBrowserAdapter(), fresh: browserStartsFresh() });
+  : await openStore({ app: seedbedApp, adapter, fresh: browserStartsFresh() });
 forgetFreshParam();
 const remembers = chapter ? chapter.remembers : true;
 
@@ -75,7 +88,7 @@ if (window.location.pathname.startsWith("/pages")) {
   createRoot(root).render(
     <PagesApp
       basename="/pages"
-      context={{ store: opened.store, brand: seedbedBrand, sceneHref: "/", remembers }}
+      context={{ store: opened.store, ...(brand ? { brand } : {}), sceneHref: "/", remembers }}
     />,
   );
 } else {
@@ -84,6 +97,8 @@ if (window.location.pathname.startsWith("/pages")) {
       store={opened.store}
       remembers={remembers}
       seat={chapter ? chapter.seat : true}
+      lens={chapter ? chapter.lens : true}
+      brand={brand}
       syncUrl
       renderer="dom"
       initialScheme={scheme}

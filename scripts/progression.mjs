@@ -28,6 +28,7 @@ const port = 5194;
 // The chapters themselves, from the compiled app: the same objects the page opens.
 const { CHAPTERS } = await import(pathToFileURL(resolve(repoRoot, "apps/seedbed/dist/domain/chapters.js")).href);
 const { checkApp } = await import(pathToFileURL(resolve(repoRoot, "packages/core/dist/index.js")).href);
+const { aggregateId } = await import(pathToFileURL(resolve(repoRoot, "packages/layout/dist/index.js")).href);
 
 function startVite() {
   const child = spawn("npx", ["vite"], { cwd: resolve(repoRoot, "apps/seedbed"), stdio: ["ignore", "pipe", "pipe"], detached: true });
@@ -66,7 +67,9 @@ try {
     page.on("console", (message) => { if (message.type() === "error") entry.errors.push(message.text()); });
     for (const scheme of ["light", "dark"]) {
       const remember = chapter.remembers ? "&remember=1" : "";
-      await page.goto(`http://localhost:${port}/?chapter=${chapter.n}&theme=${scheme}${remember}${chapter.stop}`, { waitUntil: "networkidle" });
+      // A stop may name an aggregate by kind; the id is the layout's to mint.
+      const stop = chapter.stop.replace(/agg:([a-z-]+)/g, (_, kind) => aggregateId(kind));
+      await page.goto(`http://localhost:${port}/?chapter=${chapter.n}&theme=${scheme}${remember}${stop}`, { waitUntil: "networkidle" });
       await page.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 30_000 });
       await page.waitForTimeout(900);
       if (chapter.drive === "activity") {
@@ -96,6 +99,8 @@ try {
           withheld: document.querySelector('[data-testid="withheld"]')?.textContent?.trim() ?? null,
           activity: [...document.querySelectorAll('[data-testid="diff-log"] li')].map((li) => li.textContent?.trim().replace(/\s+/g, " ") ?? "").slice(0, 6),
           remembered: document.querySelector('[data-testid="remembered"]')?.textContent?.trim() ?? null,
+          wordmark: document.querySelector("header h1")?.textContent?.trim() ?? null,
+          focused: document.querySelector('[data-graview-plane="0"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 200) ?? null,
         }));
       }
     }
@@ -118,6 +123,9 @@ report.verdict = {
   theSeatPlantedInChapterFive: (report.chapters[4]?.saw?.activity ?? []).length > 0,
   itRemembersInChapterSix: /Remembered/.test(report.chapters[5]?.saw?.remembered ?? ""),
   aGardenerIsRefusedInChapterSeven: (report.chapters[6]?.saw?.withheld ?? "") !== "",
+  theBrandArrivesInChapterEight: report.chapters[6]?.saw?.wordmark === "Graview" && report.chapters[7]?.saw?.wordmark === "Seedbed",
+  theLensShowsWhoTendsWhatInChapterNine: /June/.test(report.chapters[8]?.saw?.focused ?? "") && /Plot 2/.test(report.chapters[8]?.saw?.focused ?? ""),
+  theMigrationIsInTheLogInChapterTen: (report.chapters[9]?.saw?.activity ?? []).some((line) => /agreement|migration/i.test(line)),
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
 writeFileSync(resolve(repoRoot, "docs/progression.json"), `${JSON.stringify(report, null, 2)}\n`);
