@@ -1,5 +1,5 @@
-import { createViews, type ViewProps, type ViewComponent } from "@graview/react";
-import { Chip, hueFor, Panel, registerDefaultViews } from "@graview/primitives";
+import { createViews, useGraview, type ViewProps, type ViewComponent } from "@graview/react";
+import { Chip, createCoverageLens, hueFor, Panel, registerDefaultViews } from "@graview/primitives";
 import { seedbedSchema, type SeedbedSchema } from "../domain/schema.js";
 
 type S = SeedbedSchema;
@@ -32,10 +32,27 @@ function PlotView({ node, fidelity, selected, mode, flagged }: ViewProps<S, "plo
   );
 }
 
+/**
+ * The coverage lens over the garden: gardeners down the side, plots across
+ * the top, a mark where one tends the other. Written for requirements and
+ * the tests that answer them; it has never heard of a garden.
+ */
+const tending = createCoverageLens<S>({ rows: "gardener", columns: "plot", link: "tended-by" });
+const TendingView = ((props: ViewProps<S>) => {
+  /*
+   * A group of gardeners is the view's subject, but the grid is about two
+   * kinds: the lens needs the plots too, or it draws rows with no columns.
+   * The store has them; the view is what puts them in the lens's hands.
+   */
+  const { store } = useGraview<S>();
+  const nodes = store.graph.allNodes().filter((node) => node.kind === "gardener" || node.kind === "plot");
+  return <tending.View {...props} nodes={nodes as never} label="Who tends what" />;
+}) as ViewComponent<S>;
+
 /** The views for the garden — or for a chapter of it, which may not have plots yet. */
-export function seedbedViews(schema: SeedbedSchema = seedbedSchema) {
-  const registry = registerDefaultViews(schema, createViews(schema));
-  if (!(schema.kinds as readonly string[]).includes("plot")) return registry;
+export function seedbedViews(schema: SeedbedSchema = seedbedSchema, options: { lens?: boolean } = {}) {
+  let registry = registerDefaultViews(schema, createViews(schema));
+  const kinds = schema.kinds as readonly string[];
   /*
    * Summary only. At full fidelity the generic view already shows the
    * plot's fields and what it is connected to — and this one, which only
@@ -43,5 +60,14 @@ export function seedbedViews(schema: SeedbedSchema = seedbedSchema) {
    * the skill applies to the framework's own example: override a fidelity
    * when the generic view is genuinely wrong there, not on principle.
    */
-  return registry.register("plot", { cardinality: "one", fidelity: "summary" }, PlotView as ViewComponent<S>);
+  if (kinds.includes("plot")) {
+    registry = registry.register("plot", { cardinality: "one", fidelity: "summary" }, PlotView as ViewComponent<S>);
+  }
+  if (options.lens && kinds.includes("gardener")) {
+    // The lens, for a group of gardeners. The lens supplies the picture.
+    registry = registry
+      .register("gardener", { cardinality: "many", fidelity: "full" }, TendingView)
+      .register("gardener", { cardinality: "many", fidelity: "summary" }, TendingView);
+  }
+  return registry;
 }

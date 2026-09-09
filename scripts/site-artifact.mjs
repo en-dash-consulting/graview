@@ -29,7 +29,16 @@ if (open === -1 || close === -1) {
   process.exit(1);
 }
 
-const body = [`<title>${title}</title>`, ...links, "", source.slice(open + "<body>".length, close).trim(), ""].join("\n");
+/*
+ * The chapter pictures live beside the page as files; the artifact host
+ * blocks every external image, so they ride along inlined. The page's own
+ * copy keeps the file references — one source, two renderings.
+ */
+const inlined = source.slice(open + "<body>".length, close).trim().replace(
+  /src="\.\.\/progression\/([^"]+\.png)"/g,
+  (_, file) => `src="data:image/png;base64,${readFileSync(resolve(repoRoot, "docs/progression", file)).toString("base64")}"`,
+);
+const body = [`<title>${title}</title>`, ...links, "", inlined, ""].join("\n");
 
 const out = process.argv[2] ?? resolve(tmpdir(), "graview-artifact.html");
 writeFileSync(out, body, "utf8");

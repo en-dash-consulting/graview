@@ -1,10 +1,10 @@
 import { EMPTY_VIEW, type ViewState } from "@graview/layout";
+import type { Brand } from "@graview/core";
 import { GraviewProvider, useGraph, useGraview, type Scheme, type SceneProps } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
 import { useMemo, useState } from "react";
 import { createSeedbedStore, type SeedbedStore } from "../domain/app.js";
-import { seedbedBrand } from "../domain/brand.js";
 import type { SeedbedSchema } from "../domain/schema.js";
 import { seedbedViews } from "./views.js";
 
@@ -37,6 +37,10 @@ export interface SeedbedAppProps {
   readonly remembers?: boolean;
   /** Whether the agent's seat is in the rail; a chapter before the seat exists says no. */
   readonly seat?: boolean;
+  /** The brand, if the declaration has one yet; the framework's own otherwise. */
+  readonly brand?: Brand | undefined;
+  /** Whether the coverage lens is mounted over the gardeners. */
+  readonly lens?: boolean;
 }
 
 /**
@@ -54,9 +58,13 @@ export function SeedbedApp({
   onSchemeChange,
   remembers = false,
   seat = true,
+  // No default: a chapter before the brand exists passes nothing, and the
+  // framework's own name and palette are the honest picture of that.
+  brand,
+  lens = true,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
-  const views = useMemo(() => seedbedViews(created.schema as never), [created]);
+  const views = useMemo(() => seedbedViews(created.schema as never, { lens }), [created, lens]);
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
 
   return (
@@ -65,7 +73,7 @@ export function SeedbedApp({
       views={views}
       initialView={initialView}
       scheme={scheme}
-      brand={seedbedBrand}
+      {...(brand ? { brand } : {})}
     >
       <Shell<S>
         standing="The garden keeps its agreements"
