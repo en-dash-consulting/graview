@@ -34,8 +34,8 @@ const chapter = (c) => {
         </div>
         <p class="chapter-claim">${esc(c.claim)}</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="${light}" alt="${esc(c.title)}: the garden after chapter ${c.n}, light scheme" loading="lazy" width="1280" height="800">
-          <img class="only-dark" src="${dark}" alt="${esc(c.title)}: the garden after chapter ${c.n}, dark scheme" loading="lazy" width="1280" height="800">
+          <img class="only-light" src="${light}" alt="${esc(c.title)}: the garden after chapter ${c.n}, light scheme" loading="lazy" width="${c.picture?.width ?? 1280}" height="${c.picture?.height ?? 800}" style="max-width: ${c.picture?.width ?? 1280}px">
+          <img class="only-dark" src="${dark}" alt="${esc(c.title)}: the garden after chapter ${c.n}, dark scheme" loading="lazy" width="${c.picture?.width ?? 1280}" height="${c.picture?.height ?? 800}" style="max-width: ${c.picture?.width ?? 1280}px">
           <figcaption>${esc(said ? `Standing says “${said}”.` : "")} ${esc(verdict)}</figcaption>
         </figure>
         <div class="chapter-adds">

@@ -61,7 +61,9 @@ try {
       errors: [],
     };
     // A fresh context per chapter: what one chapter remembered must not leak into the next.
-    const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
+    // Twice the pixels: the page shows these in a column two-thirds this
+    // wide, and text photographed at 1x and shown at 0.6x is not text.
+    const context = await browser.newContext({ viewport: { width: 1280, height: 680 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
     page.on("pageerror", (error) => entry.errors.push(String(error.message ?? error)));
     page.on("console", (message) => { if (message.type() === "error") entry.errors.push(message.text()); });
@@ -88,9 +90,38 @@ try {
         await page.click('[data-graview-view="kind:plot"]');
         await page.waitForTimeout(500);
       }
+      if (chapter.drive === "standing") {
+        await page.click('[data-testid="standing"]');
+        await page.waitForTimeout(500);
+      }
+      /*
+       * The picture is the part that matters, not the whole window. A city
+       * with one district is mostly ground, and a full frame shrunk into a
+       * column makes every label a smudge. So: the union of what is drawn —
+       * views, the inspector, a popover — with room around it, and the bar
+       * across the top so Standing and the trail stay in the picture.
+       */
+      const clip = await page.evaluate(() => {
+        const rects = [...document.querySelectorAll('[data-graview-view], [data-testid="inspector-strip"], [data-testid="activity"], [data-testid="problems"], [data-testid="context-menu"]')]
+          .map((el) => el.getBoundingClientRect())
+          .filter((r) => r.width > 0 && r.height > 0);
+        if (rects.length === 0) return null;
+        const pad = 28;
+        const left = Math.max(0, Math.min(...rects.map((r) => r.left)) - pad);
+        const right = Math.min(innerWidth, Math.max(...rects.map((r) => r.right)) + pad);
+        const top = Math.max(0, Math.min(...rects.map((r) => r.top)) - pad);
+        const bottom = Math.min(innerHeight, Math.max(...rects.map((r) => r.bottom)) + pad);
+        // At least a readable width, centred on what is drawn. The bar is not
+        // in the picture: the caption quotes what Standing said.
+        const minW = 640;
+        const width = Math.max(minW, right - left);
+        const x = Math.max(0, Math.min(innerWidth - width, (left + right) / 2 - width / 2));
+        return { x, y: top, width: Math.min(width, innerWidth - x), height: Math.max(240, bottom - top) };
+      });
       const file = `${String(chapter.n).padStart(2, "0")}-${chapter.slug}-${scheme}.png`;
-      await page.screenshot({ path: resolve(out, file) });
+      await page.screenshot({ path: resolve(out, file), ...(clip ? { clip } : {}) });
       entry.pictures[scheme] = `docs/progression/${file}`;
+      if (clip) entry.picture = { width: Math.round(clip.width), height: Math.round(clip.height) };
       if (scheme === "light") {
         entry.saw = await page.evaluate(() => ({
           standing: document.querySelector('[data-testid="standing"]')?.textContent?.trim() ?? null,
@@ -99,6 +130,7 @@ try {
           withheld: document.querySelector('[data-testid="withheld"]')?.textContent?.trim() ?? null,
           activity: [...document.querySelectorAll('[data-testid="diff-log"] li')].map((li) => li.textContent?.trim().replace(/\s+/g, " ") ?? "").slice(0, 6),
           remembered: document.querySelector('[data-testid="remembered"]')?.textContent?.trim() ?? null,
+          problems: document.querySelector('[data-testid="problems"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 300) ?? null,
           wordmark: document.querySelector("header h1")?.textContent?.trim() ?? null,
           focused: document.querySelector('[data-graview-plane="0"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 200) ?? null,
         }));
@@ -118,7 +150,7 @@ try {
 report.verdict = {
   everyChapterChecksClean: report.chapters.length === CHAPTERS.length && report.chapters.every((c) => c.check.ok),
   everyChapterRenderedWithoutErrors: report.chapters.every((c) => c.errors.length === 0 && c.pictures.light && c.pictures.dark),
-  theRuleFiresInChapterThree: /1 problem|1 /.test(report.chapters[2]?.saw?.standing ?? ""),
+  theRuleFiresInChapterThree: /1 problem/.test(report.chapters[2]?.saw?.standing ?? "") && /Nobody tends Plot 2/.test(report.chapters[2]?.saw?.problems ?? ""),
   theHorizonShowsInChapterFour: (report.chapters[3]?.saw?.districts ?? []).some((d) => /past/.test(d)),
   theSeatPlantedInChapterFive: (report.chapters[4]?.saw?.activity ?? []).length > 0,
   itRemembersInChapterSix: /Remembered/.test(report.chapters[5]?.saw?.remembered ?? ""),
