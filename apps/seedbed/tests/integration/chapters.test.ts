@@ -36,7 +36,7 @@ describe("the garden, grown a chapter at a time", () => {
       for (const m of before.mutations ?? []) expect((after.mutations ?? []).map((x) => x.name)).toContain(m.name);
       for (const inv of before.invariants ?? []) expect((after.invariants ?? []).map((x) => x.name)).toContain(inv.name);
     }
-    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   });
 
   it("1 · a single kind already has a city, a district and a derived beginning", () => {
@@ -103,16 +103,49 @@ describe("the garden, grown a chapter at a time", () => {
     expect(checkApp(CHAPTERS[7]!.app).findings.map((f) => f.code)).not.toContain("theme-contrast-below-aa");
   });
 
-  it("9 · the coverage lens, bound by roles, shows the plot nobody tends", () => {
-    const { app, seed } = CHAPTERS[8]!;
-    expect(app.lenses?.[0]?.bindings).toEqual({ rows: { kind: "gardener" }, columns: { kind: "plot" }, link: { edge: "tended-by" } });
-    expect(seed.edges.filter((e) => e.kind === "tended-by")).toHaveLength(1);
-    expect(storeOf(9).violations().map((v) => v.message)).toEqual(["Nobody tends Plot 2"]);
+  it("9 · the other face is the plot's own page, over the derived defaults", async () => {
+    const { PagesApp } = await import("@graview/pages");
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { createElement } = await import("react");
+    const { seedbedPages } = await import("../../src/ui/pages.js");
+    const chapter = CHAPTERS[8]!;
+    expect(chapter.face).toBe("pages");
+    const store = storeOf(9);
+    const html = renderToStaticMarkup(
+      createElement(PagesApp as never, {
+        context: { store, brand: chapter.app.brand },
+        registry: seedbedPages(store.schema),
+        initialPath: "/plots/plot-2",
+      } as never),
+    );
+    expect(html).toContain('data-testid="plot-page"');
+    expect(html).toMatch(/looked after by Ravi/);
+    // The default face is still there for everything the app did not replace.
+    const list = renderToStaticMarkup(
+      createElement(PagesApp as never, { context: { store }, registry: seedbedPages(store.schema), initialPath: "/gardeners" } as never),
+    );
+    expect(list).toContain("June");
   });
 
-  it("10 · a garden stored last season is carried forward by a logged migration", async () => {
+  it("10 · the coverage lens, bound by roles, shows the plot nobody tends", () => {
+    const { app, seed } = CHAPTERS[9]!;
+    expect(app.lenses?.[0]?.bindings).toEqual({ rows: { kind: "gardener" }, columns: { kind: "plot" }, link: { edge: "tended-by" } });
+    expect(seed.edges.filter((e) => e.kind === "tended-by")).toHaveLength(1);
+    expect(storeOf(10).violations().map((v) => v.message)).toEqual(["Nobody tends Plot 2"]);
+  });
+
+  it("11 · the board, written for a seating plan, shows the empty bed", async () => {
+    const { buildBoard } = await import("@graview/primitives");
+    const { app, seed } = CHAPTERS[10]!;
+    expect(app.lenses?.map((l) => l.name)).toEqual(["coverage", "board"]);
+    const board = buildBoard(seed.nodes as never, seed.edges as never, { slots: "plot", x: "x", y: "y", fill: "grows-in", fillFrom: "occupant" }, app.schema as never);
+    expect(board.slots.map((s) => [s.label, s.occupantLabel])).toEqual([["Plot 1", "Beans"], ["Plot 2", "Tomatoes"], ["Plot 3", null]]);
+    expect(board.empty).toEqual(["plot-3"]);
+  });
+
+  it("12 · a garden stored last season is carried forward by a logged migration", async () => {
     const { migrateSnapshot } = await import("@graview/ship");
-    const { app, stored } = CHAPTERS[9]!;
+    const { app, stored } = CHAPTERS[11]!;
     expect(app.version).toBe(2);
     expect(checkApp(app).findings.map((f) => f.code)).not.toContain("migration-gap");
     const run = migrateSnapshot(app, stored!.snapshot, stored!.version, { now: () => "2026-09-09T00:00:00Z" });

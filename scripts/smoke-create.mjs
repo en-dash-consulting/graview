@@ -275,6 +275,12 @@ try {
     const recordsAfter = await phone.locator('[data-testid="records"] a').count();
     b.pagesRecords = [recordsBefore, recordsAfter];
     b.pagesFormApplied = recordsAfter === recordsBefore + 1;
+    // The project's own record page, over the derived one.
+    await phone.locator('[data-testid="records"] a').first().click();
+    await phone.waitForTimeout(600);
+    b.ownRecordPage = (await phone.locator('[data-testid="note-page"]').count()) === 1;
+    await phone.goBack();
+    await phone.waitForTimeout(400);
     b.axePagesLight = await axe(phone);
     await phone.goto(`${base}/pages/notes?remember=1&theme=dark`, { waitUntil: "networkidle" });
     await phone.waitForTimeout(500);
@@ -378,7 +384,7 @@ try {
 const b = report.browser;
 const clean = (violations) => Array.isArray(violations) && violations.length === 0;
 report.verdict = {
-  theScaffoldWroteAProject: (report.npm.tree ?? []).length === 17,
+  theScaffoldWroteAProject: (report.npm.tree ?? []).length === 18,
   itInstalledFromTheTarballsWithNpm: report.npm.installed === true && report.npm.lockfile === true,
   itsOwnVerifyPassed: report.npm.verified === true,
   theCheckerActuallySpoke: typeof report.npm.checkSaid === "string" && report.npm.checkSaid.includes("no problems found"),
@@ -396,6 +402,7 @@ report.verdict = {
         theDerivedFormAddsIt: b.theFormAddedIt === true,
         anEditSurvivesAReload: b.survivedAReload === true && b.offersStartFresh === true,
         thePagesFaceFitsAPhoneAndItsFormApplies: b.pagesHome === true && b.pagesFitsAPhone === true && b.pagesFormApplied === true,
+        theProjectsOwnPageReplacesTheDerivedOne: b.ownRecordPage === true,
         axeFindsNothingInEitherScheme: clean(b.axeEmptyLight) && clean(b.axeAfterDark) && clean(b.axePagesLight) && clean(b.axePagesDark),
         nothingErroredInTheBrowser: Array.isArray(b.errors) && b.errors.length === 0,
       }

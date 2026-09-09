@@ -1,5 +1,5 @@
 import { createViews, useGraview, type ViewProps, type ViewComponent } from "@graview/react";
-import { Chip, createCoverageLens, hueFor, Panel, registerDefaultViews } from "@graview/primitives";
+import { Chip, createBoardLens, createCoverageLens, hueFor, Panel, registerDefaultViews } from "@graview/primitives";
 import { seedbedSchema, type SeedbedSchema } from "../domain/schema.js";
 
 type S = SeedbedSchema;
@@ -49,8 +49,28 @@ const TendingView = ((props: ViewProps<S>) => {
   return <tending.View {...props} nodes={nodes as never} label="Who tends what" />;
 }) as ViewComponent<S>;
 
+/**
+ * The board lens over the garden: every plot where it lies, holding what
+ * grows in it — and the empty bed is the whole point. Written for a seating
+ * plan; here the occupant is the end of the edge that names the slot.
+ */
+const beds = createBoardLens<S>({
+  slots: "plot",
+  x: "x",
+  y: "y",
+  fill: "grows-in",
+  fillFrom: "occupant",
+  emptyLabel: "nothing sown",
+  aspect: 1.7,
+});
+const BedsView = ((props: ViewProps<S>) => {
+  const { store } = useGraview<S>();
+  const nodes = store.graph.allNodes().filter((node) => node.kind === "plot" || node.kind === "planting");
+  return <beds.View {...props} nodes={nodes as never} label="What grows where" />;
+}) as ViewComponent<S>;
+
 /** The views for the garden — or for a chapter of it, which may not have plots yet. */
-export function seedbedViews(schema: SeedbedSchema = seedbedSchema, options: { lens?: boolean } = {}) {
+export function seedbedViews(schema: SeedbedSchema = seedbedSchema, options: { lens?: boolean; board?: boolean } = {}) {
   let registry = registerDefaultViews(schema, createViews(schema));
   const kinds = schema.kinds as readonly string[];
   /*
@@ -62,6 +82,11 @@ export function seedbedViews(schema: SeedbedSchema = seedbedSchema, options: { l
    */
   if (kinds.includes("plot")) {
     registry = registry.register("plot", { cardinality: "one", fidelity: "summary" }, PlotView as ViewComponent<S>);
+  }
+  if (options.board && kinds.includes("plot") && kinds.includes("planting")) {
+    registry = registry
+      .register("plot", { cardinality: "many", fidelity: "full" }, BedsView)
+      .register("plot", { cardinality: "many", fidelity: "summary" }, BedsView);
   }
   if (options.lens && kinds.includes("gardener")) {
     // The lens, for a group of gardeners. The lens supplies the picture.

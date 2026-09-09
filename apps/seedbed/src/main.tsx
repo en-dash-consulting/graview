@@ -13,6 +13,7 @@ import { seedbedApp } from "./domain/app.js";
 import type { SeedbedSchema } from "./domain/schema.js";
 import { chapterFromSearch } from "./domain/chapters.js";
 import { SeedbedApp } from "./ui/app.js";
+import { seedbedPages } from "./ui/pages.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -89,6 +90,8 @@ if (window.location.pathname.startsWith("/pages")) {
     <PagesApp
       basename="/pages"
       context={{ store: opened.store, ...(brand ? { brand } : {}), sceneHref: "/", remembers }}
+      // The garden's own plot page, over the derived defaults for the rest.
+      {...(!chapter || chapter.pages ? { registry: seedbedPages(opened.store.schema) } : {})}
     />,
   );
 } else {
@@ -98,6 +101,7 @@ if (window.location.pathname.startsWith("/pages")) {
       remembers={remembers}
       seat={chapter ? chapter.seat : true}
       lens={chapter ? chapter.lens : true}
+      board={chapter ? chapter.board : true}
       brand={brand}
       syncUrl
       renderer="dom"

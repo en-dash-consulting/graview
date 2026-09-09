@@ -12,6 +12,7 @@ export {
   DefaultShell,
   StartFreshLink,
   useStoreTick,
+  pageStyles,
 } from "./pages.js";
 export type { PageContext } from "./pages.js";
 export { PagesApp, PagesRoutes } from "./router.js";

@@ -186,6 +186,15 @@ export function layout<S extends AnySchema>(
   options: LayoutOptions = {},
 ): Layout {
   const opts = { ...DEFAULT_OPTIONS, ...options };
+  /*
+   * THE SPAN: the canvas less the rail reserved for chrome. Every card is
+   * sized and centred within it, in every mode — the inspector and the
+   * quick relations live on the left edge whether the picture is the whole
+   * domain or one thing, and a lens that takes the full focus width was
+   * drawn under them. The reported width stays the canvas's own.
+   */
+  const railLeft = opts.inset?.left ?? 0;
+  const spanW = opts.width - railLeft - (opts.inset?.right ?? 0);
   const nodes: LayoutNode[] = [];
   const placed = new Map<string, LayoutNode>();
 
@@ -329,18 +338,18 @@ export function layout<S extends AnySchema>(
   // Zoomed, a group runs nearly wall to wall; a record stays a readable
   // column even with the room — 880 is a document's width, not a letterbox.
   const detailWidth = zoomed
-    ? Math.min(880, opts.width - opts.gap * 5)
-    : Math.min(700, opts.width - opts.gap * 6);
+    ? Math.min(880, spanW - opts.gap * 5)
+    : Math.min(700, spanW - opts.gap * 6);
   const groupWidth = zoomed
-    ? opts.width - opts.gap * 5
-    : Math.min(opts.focusSize.width, opts.width - opts.gap * 6);
+    ? spanW - opts.gap * 5
+    : Math.min(opts.focusSize.width, spanW - opts.gap * 6);
 
   /** Fits `count` boxes across the canvas, never wider than the cap. */
   const fit = (count: number, cap: number, height: number) => ({
     width:
       count === 0
         ? cap
-        : Math.min(cap, (opts.width - opts.gap * (count + 1)) / count),
+        : Math.min(cap, (spanW - opts.gap * (count + 1)) / count),
     height,
   });
   const expanded = new Set(state.expanded);
@@ -408,7 +417,7 @@ export function layout<S extends AnySchema>(
    * says what is actually true from up here: this is the thing you were
    * standing in, and everything else is arranged around it.
    */
-  const overviewScale = Math.min((opts.width * 0.5) / naturalW, (opts.height * 0.48) / naturalH);
+  const overviewScale = Math.min((spanW * 0.5) / naturalW, (opts.height * 0.48) / naturalH);
   const overviewW = naturalW * overviewScale;
   const overviewH = naturalH * overviewScale;
 
@@ -419,7 +428,7 @@ export function layout<S extends AnySchema>(
       kind: focus ? focus.kind : focusKinds[0]!,
       plane: 0,
       // Centred in the span the ring uses, so the picture and its ring agree.
-      x: (opts.inset?.left ?? 0) + (opts.width - (opts.inset?.left ?? 0) - (opts.inset?.right ?? 0) - overviewW) / 2,
+      x: railLeft + (spanW - overviewW) / 2,
       y: opts.height * 0.53 - overviewH / 2,
       width: overviewW,
       height: overviewH,
@@ -446,7 +455,7 @@ export function layout<S extends AnySchema>(
       id: focus.id,
       kind: focus.kind,
       plane: 0,
-      x: (opts.width - detailWidth) / 2,
+      x: railLeft + (spanW - detailWidth) / 2,
       y: band.focusY,
       width: detailWidth,
       height: focusHeight,
@@ -456,7 +465,7 @@ export function layout<S extends AnySchema>(
       id: state.focusId,
       kind: focusKinds[0]!,
       plane: 0,
-      x: (opts.width - groupWidth) / 2,
+      x: railLeft + (spanW - groupWidth) / 2,
       y: band.focusY,
       width: groupWidth,
       height: focusHeight,
@@ -487,9 +496,9 @@ export function layout<S extends AnySchema>(
     related.length,
     relationSize,
     opts.gap,
-    opts.width,
+    spanW,
     band.relationY,
-  );
+  ).map((position) => ({ ...position, x: position.x + railLeft }));
   related.forEach((entry, index) => {
     const position = relationPositions[index]!;
     push({
@@ -689,7 +698,7 @@ export function layout<S extends AnySchema>(
     ? // Squat cards: a kind card holds a name, a count and a bar, and a tall
       // one from altitude was mostly empty tint — a sticky note, not a
       // building face.
-      { width: Math.min(220, opts.width / 6.5), height: Math.min(92, opts.height * 0.125) }
+      { width: Math.min(220, spanW / 6.5), height: Math.min(92, opts.height * 0.125) }
     : fit(slotted.length, zoomed ? 240 : opts.contextSize.width, band.contextH);
   const contextPositions: {
     x: number;
@@ -703,11 +712,11 @@ export function layout<S extends AnySchema>(
         slotted.length,
         contextSize,
         opts.gap,
-        opts.width,
+        spanW,
         band.contextY,
         // Zoomed in, the shelf recedes further — present, quieter.
         zoomed ? 0.97 : SHELF_DEPTH,
-      );
+      ).map((position) => ({ ...position, x: position.x + railLeft }));
 
   /*
    * A secondary kind is drawn SMALLER and further back inside its own slot,

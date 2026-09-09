@@ -50,8 +50,16 @@ export interface Chapter {
   readonly seat: boolean;
   /** Who is at the keyboard, once the garden has a policy. */
   readonly principal?: Principal;
-  /** Whether the coverage lens is mounted over the gardeners (chapter 9 on). */
+  /** Whether the garden's own plot page is registered over the derived face (chapter 9 on). */
+  readonly pages: boolean;
+  /** Whether the coverage lens is mounted over the gardeners (chapter 10 on). */
   readonly lens: boolean;
+  /** Whether the board lens is mounted over the plots (chapter 11 on). */
+  readonly board: boolean;
+  /** Which face the picture is of: the scene (default) or the routed pages at phone width. */
+  readonly face?: "scene" | "pages";
+  /** For the pages face: the path to photograph. */
+  readonly path?: string;
   /**
    * What an older deployment left behind, for the chapter about shipping:
    * a graph stored at an earlier version, which opening must carry forward.
@@ -90,7 +98,9 @@ const chapterOne: Chapter = {
   stop: "#overview=1&expand=kind:plot",
   remembers: false,
   seat: false,
+  pages: false,
   lens: false,
+  board: false,
 };
 
 /* ------------------------------- 2 · gardeners, and who tends what */
@@ -115,7 +125,9 @@ const chapterTwo: Chapter = {
   stop: "#focus=plot-1",
   remembers: false,
   seat: false,
+  pages: false,
   lens: false,
+  board: false,
 };
 
 /* ------------------------------------------- 3 · the garden's agreement */
@@ -139,8 +151,8 @@ const chapterThree: Chapter = {
     nodes: [
       { id: "june", kind: "gardener", label: "June" },
       { id: "ravi", kind: "gardener", label: "Ravi" },
-      { id: "plot-1", kind: "plot", label: "Plot 1", beds: 4 },
-      { id: "plot-2", kind: "plot", label: "Plot 2", beds: 3 },
+      { id: "plot-1", kind: "plot", label: "Plot 1", beds: 4, x: 0.25, y: 0.35 },
+      { id: "plot-2", kind: "plot", label: "Plot 2", beds: 3, x: 0.72, y: 0.35 },
       { id: "every-plot-tended", kind: "rule", label: "Every plot has a caretaker", spec: { type: "every-plot-tended" } },
     ],
     edges: [{ kind: "tended-by", from: "plot-1", to: "june" }],
@@ -150,7 +162,9 @@ const chapterThree: Chapter = {
   drive: "standing",
   remembers: false,
   seat: false,
+  pages: false,
   lens: false,
+  board: false,
 };
 
 /* ------------------------------------------ 4 · plantings and the past */
@@ -181,7 +195,9 @@ const chapterFour: Chapter = {
   stop: "#overview=1",
   remembers: false,
   seat: false,
+  pages: false,
   lens: false,
+  board: false,
 };
 
 /* ----------------------------------------------- 5 · a seat for an agent */
@@ -206,7 +222,9 @@ const chapterFive: Chapter = {
   drive: "activity",
   remembers: false,
   seat: true,
+  pages: false,
   lens: false,
+  board: false,
 };
 
 /* ---------------------------------------------- 6 · the garden remembers */
@@ -223,7 +241,9 @@ const chapterSix: Chapter = {
   drive: "activity",
   remembers: true,
   seat: true,
+  pages: false,
   lens: false,
+  board: false,
 };
 
 /* ---------------------------------------------- 7 · who may do what */
@@ -247,7 +267,9 @@ const chapterSeven: Chapter = {
   drive: "select-plot",
   remembers: false,
   seat: true,
+  pages: false,
   lens: false,
+  board: false,
   principal: { kind: "human", id: "ravi", roles: ["gardener"] },
 };
 
@@ -265,11 +287,34 @@ const chapterEight: Chapter = {
   stop: "#overview=1",
   remembers: false,
   seat: true,
+  pages: false,
   lens: false,
+  board: false,
   principal: coordinator,
 };
 
-/* ---------------------------------------------- 9 · a lens over the garden */
+/* ------------------------------------------------- 9 · the other face */
+
+const chapterNine: Chapter = {
+  n: 9,
+  slug: "the-other-face",
+  title: "The other face",
+  claim: "The same declaration is also an ordinary web application: lists, records, forms and problems, routed, at phone width. Any page can be replaced with one the app writes, in its own words, over the same derivations.",
+  adds: ["PagesApp at /pages, from the same store", "createPageRegistry(schema).register(\"plot\", \"record\", PlotPage) — the plot's page in the garden's words", "pageStyles from @graview/pages, so a custom page is still the same face"],
+  app: chapterEight.app,
+  seed: seedFour,
+  stop: "",
+  face: "pages",
+  path: "/pages/plots/plot-2",
+  remembers: false,
+  seat: true,
+  pages: true,
+  lens: false,
+  board: false,
+  principal: coordinator,
+};
+
+/* ---------------------------------------------- 10 · a lens over the garden */
 
 /**
  * The coverage lens, written for requirements and the tests that answer
@@ -282,8 +327,8 @@ const coverage = {
   binds: "entities" as const,
   bindings: { rows: { kind: "gardener" }, columns: { kind: "plot" }, link: { edge: "tended-by" } },
 };
-const chapterNine: Chapter = {
-  n: 9,
+const chapterTen: Chapter = {
+  n: 10,
   slug: "a-lens",
   title: "A lens over the garden",
   claim: "A lens binds roles, not field names. The coverage grid was written for requirements and tests; pointed at gardeners and plots it says, in a picture, which plot nobody tends.",
@@ -297,11 +342,51 @@ const chapterNine: Chapter = {
   stop: "#focus=agg:gardener",
   remembers: false,
   seat: true,
+  pages: true,
   lens: true,
+  board: false,
   principal: coordinator,
 };
 
-/* ------------------------------------------------------------ 10 · ship it */
+/* ------------------------------------------------ 11 · what grows where */
+
+/**
+ * The board lens, written for a seating plan, over the plots where they
+ * lie and what grows in each. The garden binds a kind, two fields and an
+ * edge to the lens's roles; the empty bed is the whole point.
+ */
+const board = {
+  name: "board",
+  requiredRoles: ["slots", "x", "y", "fill"],
+  binds: "entities" as const,
+  bindings: { slots: { kind: "plot" }, x: { field: "x", on: "slots" }, y: { field: "y", on: "slots" }, fill: { edge: "grows-in" } },
+};
+const chapterEleven: Chapter = {
+  n: 11,
+  slug: "what-grows-where",
+  title: "What grows where",
+  claim: "A second lens, written for a seating plan, drawn over the plots where they lie in the garden. Things sit where the domain says they sit, and an empty bed is a picture of something to do, not a missing row.",
+  adds: ["x and y on plot, 0..1 across the garden", "a second lens declaration binding slots, x, y and fill to plot and grows-in", "fillFrom: \"occupant\" — the lens reads the edge from the planting's end"],
+  app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never], intelligence, policy, brand: seedbedBrand, lenses: [coverage, board] })),
+  seed: {
+    nodes: [
+      ...seedFour.nodes.filter((node) => node.kind !== "plot"),
+      { id: "plot-1", kind: "plot", label: "Plot 1", beds: 4, x: 0.18, y: 0.3 },
+      { id: "plot-2", kind: "plot", label: "Plot 2", beds: 3, x: 0.5, y: 0.3 },
+      { id: "plot-3", kind: "plot", label: "Plot 3", beds: 2, x: 0.82, y: 0.3 },
+    ],
+    edges: [...seedFour.edges, { kind: "tended-by", from: "plot-3", to: "june" }],
+  },
+  stop: "#focus=agg:plot",
+  remembers: false,
+  seat: true,
+  pages: true,
+  lens: true,
+  board: true,
+  principal: coordinator,
+};
+
+/* ------------------------------------------------------------ 12 · ship it */
 
 /**
  * The declaration gains a version and the migration between them. A garden
@@ -309,8 +394,8 @@ const chapterNine: Chapter = {
  * carried forward on open: the migration is an operation in the log, by
  * the system, invertible like any other.
  */
-const chapterTen: Chapter = {
-  n: 10,
+const chapterTwelve: Chapter = {
+  n: 12,
   slug: "ship-it",
   title: "Ship it",
   claim: "Deployment is one declaration plus one adapter. A version and a migration on the app carry a garden stored last season forward, as a logged, attributed, undoable operation.",
@@ -324,7 +409,7 @@ const chapterTen: Chapter = {
       intelligence,
       policy,
       brand: seedbedBrand,
-      lenses: [coverage],
+      lenses: [coverage, board],
       version: 2,
       migrations: [
         {
@@ -359,7 +444,9 @@ const chapterTen: Chapter = {
   drive: "activity",
   remembers: true,
   seat: true,
+  pages: true,
   lens: true,
+  board: true,
   principal: coordinator,
 };
 
@@ -374,6 +461,8 @@ export const CHAPTERS: readonly Chapter[] = [
   chapterEight,
   chapterNine,
   chapterTen,
+  chapterEleven,
+  chapterTwelve,
 ];
 
 /** The chapter a URL asks for, or none: the finished example is the default. */

@@ -450,6 +450,14 @@ describe("a rail reserved for chrome, at altitude", () => {
     const centre = cards.reduce((sum, card) => sum + card.x + card.width / 2, 0) / cards.length;
     expect(Math.abs(centre - (rail + (1280 - rail) / 2))).toBeLessThan(40);
   });
+
+  it("keeps the focused card and the shelf clear of the rail in focus mode too", () => {
+    const rail = 264;
+    const result = layout(graph(), schema, view({ focusId: "week-1" }), { width: 1280, height: 800, inset: { left: rail } });
+    for (const node of result.nodes) expect(node.x, node.id).toBeGreaterThanOrEqual(rail - 1);
+    const focus = result.nodes.find((node) => node.plane === 0)!;
+    expect(Math.abs(focus.x + focus.width / 2 - (rail + (1280 - rail) / 2))).toBeLessThan(2);
+  });
 });
 
 describe("the overview is the same cards, on a ring", () => {

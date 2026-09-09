@@ -201,12 +201,15 @@ export function Scene<S extends AnySchema>({
         ? { hiddenKinds: [...store.modules.disabledKinds].sort() }
         : {}),
       /*
-       * THE LEFT RAIL, at altitude. The relation key and the inspector live
-       * on the scene's left edge when the picture is the whole domain, and
-       * the ring used to run under them: a district drawn beneath a pane
-       * is a card nobody can reach. The ring keeps to what is left.
+       * THE LEFT RAIL. The relation key, the quick relations and the
+       * inspector live on the scene's left edge in every mode, and the
+       * picture used to run under them — a district beneath the pane at
+       * altitude, a lens's title under the quick relations in focus. The
+       * layout keeps every card to what is left. The altitude control sits
+       * in the top-right corner, where a full-width focus card's own corner
+       * used to be — so the right has a rail too.
        */
-      ...(view.overview ? { inset: { left: 264 } } : {}),
+      inset: { left: 264, right: 128 },
       ...(size
         ? {
             width: size.width,
@@ -221,7 +224,7 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size, store, view.overview],
+    [options, size, store],
   );
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, sized),

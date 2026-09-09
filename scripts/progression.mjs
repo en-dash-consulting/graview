@@ -68,6 +68,31 @@ try {
     page.on("pageerror", (error) => entry.errors.push(String(error.message ?? error)));
     page.on("console", (message) => { if (message.type() === "error") entry.errors.push(message.text()); });
     for (const scheme of ["light", "dark"]) {
+      if (chapter.face === "pages") {
+        // The routed face, at phone width: the whole page, as a phone shows it.
+        const phone = await context.newPage();
+        await phone.setViewportSize({ width: 390, height: 844 });
+        phone.on("pageerror", (error) => entry.errors.push(String(error.message ?? error)));
+        phone.on("console", (message) => { if (message.type() === "error") entry.errors.push(message.text()); });
+        await phone.goto(`http://localhost:${port}${chapter.path}?chapter=${chapter.n}&theme=${scheme}`, { waitUntil: "networkidle" });
+        await phone.waitForTimeout(900);
+        const file = `${String(chapter.n).padStart(2, "0")}-${chapter.slug}-${scheme}.png`;
+        await phone.screenshot({ path: resolve(out, file), fullPage: true });
+        entry.pictures[scheme] = `docs/progression/${file}`;
+        const height = await phone.evaluate(() => document.documentElement.scrollHeight);
+        entry.picture = { width: 390, height: Math.min(height, 1400), phone: true };
+        if (scheme === "light") {
+          entry.saw = await phone.evaluate(() => ({
+            standing: null,
+            districts: [],
+            page: document.querySelector("main")?.textContent?.trim().replace(/\s+/g, " ").slice(0, 240) ?? null,
+            custom: document.querySelector('[data-testid="plot-page"]') !== null,
+            fitsAPhone: document.documentElement.scrollWidth <= window.innerWidth + 1,
+          }));
+        }
+        await phone.close();
+        continue;
+      }
       const remember = chapter.remembers ? "&remember=1" : "";
       // A stop may name an aggregate by kind; the id is the layout's to mint.
       const stop = chapter.stop.replace(/agg:([a-z-]+)/g, (_, kind) => aggregateId(kind));
@@ -132,7 +157,7 @@ try {
           remembered: document.querySelector('[data-testid="remembered"]')?.textContent?.trim() ?? null,
           problems: document.querySelector('[data-testid="problems"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 300) ?? null,
           wordmark: document.querySelector("header h1")?.textContent?.trim() ?? null,
-          focused: document.querySelector('[data-graview-plane="0"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 200) ?? null,
+          focused: document.querySelector('[data-graview-plane="0"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 400) ?? null,
         }));
       }
     }
@@ -156,8 +181,10 @@ report.verdict = {
   itRemembersInChapterSix: /Remembered/.test(report.chapters[5]?.saw?.remembered ?? ""),
   aGardenerIsRefusedInChapterSeven: (report.chapters[6]?.saw?.withheld ?? "") !== "",
   theBrandArrivesInChapterEight: report.chapters[6]?.saw?.wordmark === "Graview" && report.chapters[7]?.saw?.wordmark === "Seedbed",
-  theLensShowsWhoTendsWhatInChapterNine: /June/.test(report.chapters[8]?.saw?.focused ?? "") && /Plot 2/.test(report.chapters[8]?.saw?.focused ?? ""),
-  theMigrationIsInTheLogInChapterTen: (report.chapters[9]?.saw?.activity ?? []).some((line) => /agreement|migration/i.test(line)),
+  theOtherFaceIsThePlotsOwnPageInChapterNine: report.chapters[8]?.saw?.custom === true && report.chapters[8]?.saw?.fitsAPhone === true && /looked after by|nobody looks after/.test(report.chapters[8]?.saw?.page ?? ""),
+  theLensShowsWhoTendsWhatInChapterTen: /June/.test(report.chapters[9]?.saw?.focused ?? "") && /Plot 2/.test(report.chapters[9]?.saw?.focused ?? ""),
+  theBoardShowsTheEmptyBedInChapterEleven: /nothing sown/i.test(report.chapters[10]?.saw?.focused ?? "") && /Beans/.test(report.chapters[10]?.saw?.focused ?? ""),
+  theMigrationIsInTheLogInChapterTwelve: (report.chapters[11]?.saw?.activity ?? []).some((line) => /agreement|migration/i.test(line)),
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
 writeFileSync(resolve(repoRoot, "docs/progression.json"), `${JSON.stringify(report, null, 2)}\n`);

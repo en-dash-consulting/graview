@@ -1,9 +1,9 @@
 {
-  "at": "2026-09-09T03:47:48.364Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-VS7y3X",
+  "at": "2026-09-09T11:55:03.158Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-k391Ss",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 17 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-VS7y3X/field-notes",
+    "created": "graview create: 18 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-k391Ss/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -17,6 +17,7 @@
       "src/domain/schema.ts",
       "src/main.tsx",
       "src/ui/app.tsx",
+      "src/ui/pages.tsx",
       "src/ui/views.tsx",
       "tests/domain.test.ts",
       "tsconfig.build.json",
@@ -41,7 +42,7 @@
     "checkSaid": "graview check: Field Notes — no problems found."
   },
   "door": {
-    "said": "graview create: 17 files → door-app",
+    "said": "graview create: 18 files → door-app",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -55,6 +56,7 @@
       "src/domain/schema.ts",
       "src/main.tsx",
       "src/ui/app.tsx",
+      "src/ui/pages.tsx",
       "src/ui/views.tsx",
       "tests/domain.test.ts",
       "tsconfig.build.json",
@@ -65,7 +67,7 @@
   },
   "linked": {
     "said": [
-      "graview create: 17 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-VS7y3X/linked-orders",
+      "graview create: 18 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-k391Ss/linked-orders",
       "graview create: pnpm install"
     ],
     "consumesByPath": true,
@@ -110,6 +112,7 @@
       1
     ],
     "pagesFormApplied": true,
+    "ownRecordPage": true,
     "axePagesLight": [],
     "axePagesDark": [],
     "errors": []
@@ -143,6 +146,7 @@
     "theDerivedFormAddsIt": true,
     "anEditSurvivesAReload": true,
     "thePagesFaceFitsAPhoneAndItsFormApplies": true,
+    "theProjectsOwnPageReplacesTheDerivedOne": true,
     "axeFindsNothingInEitherScheme": true,
     "nothingErroredInTheBrowser": true,
     "theSameProjectVerifiesUnderPnpm": true,

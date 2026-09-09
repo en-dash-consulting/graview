@@ -41,6 +41,8 @@ export interface SeedbedAppProps {
   readonly brand?: Brand | undefined;
   /** Whether the coverage lens is mounted over the gardeners. */
   readonly lens?: boolean;
+  /** Whether the board lens is mounted over the plots. */
+  readonly board?: boolean;
 }
 
 /**
@@ -62,9 +64,10 @@ export function SeedbedApp({
   // framework's own name and palette are the honest picture of that.
   brand,
   lens = true,
+  board = true,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
-  const views = useMemo(() => seedbedViews(created.schema as never, { lens }), [created, lens]);
+  const views = useMemo(() => seedbedViews(created.schema as never, { lens, board }), [created, lens, board]);
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
 
   return (

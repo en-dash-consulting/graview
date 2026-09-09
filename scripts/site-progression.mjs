@@ -26,8 +26,9 @@ const chapter = (c) => {
   const verdict = c.check.ok
     ? `graview check: Seedbed — ${c.check.warnings ? `${c.check.warnings} warning(s)` : "no problems found"}.`
     : `graview check: ${c.check.errors} error(s)`;
+  const phone = c.picture?.phone ? " phone" : "";
   return `
-      <article class="chapter" id="chapter-${c.n}" aria-labelledby="h-chapter-${c.n}">
+      <article class="chapter${phone}" id="chapter-${c.n}" aria-labelledby="h-chapter-${c.n}">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">${c.n}</span>
           <h3 id="h-chapter-${c.n}">${esc(c.title)}</h3>

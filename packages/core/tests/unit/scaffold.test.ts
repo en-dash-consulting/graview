@@ -36,10 +36,19 @@ describe("what a project starts with", () => {
       "src/domain/app.ts",
       "src/ui/views.tsx",
       "src/ui/app.tsx",
+      "src/ui/pages.tsx",
       "src/main.tsx",
       "tests/domain.test.ts",
       ".github/workflows/ci.yml",
     ]);
+  });
+
+  it("writes the other face's page in the kind's own words, over the derived defaults", () => {
+    const pages = file("Field Notes", "src/ui/pages.tsx");
+    expect(pages).toContain('register("item", "record", ItemPage');
+    expect(pages).toContain("pageStyles");
+    expect(pages).toContain("recordFacts(store, id");
+    expect(file("Field Notes", "src/main.tsx")).toContain("registry={pages()}");
   });
 
   it("keeps React out of the domain, so graview check can load it", () => {

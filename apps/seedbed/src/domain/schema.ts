@@ -23,6 +23,10 @@ export const plot = defineNode("plot", {
   fields: z.object({
     label: z.string().min(1),
     beds: z.number().int().min(1),
+    // Where it lies in the garden, 0..1 across and down: what the board
+    // lens reads to draw the plots where they are rather than in a list.
+    x: z.number().min(0).max(1).optional(),
+    y: z.number().min(0).max(1).optional(),
   }),
   edges: {
     "tended-by": { to: ["gardener"], description: "who looks after it" },
