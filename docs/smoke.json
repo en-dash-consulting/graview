@@ -1,9 +1,10 @@
 {
-  "at": "2026-09-02T14:58:17.567Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-MNzvyR",
+  "at": "2026-09-09T03:49:30.019Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-8nvYzL",
   "steps": {
     "packed": [
       "@graview/core",
+      "create-graview",
       "@graview/layout",
       "@graview/pages",
       "@graview/primitives",

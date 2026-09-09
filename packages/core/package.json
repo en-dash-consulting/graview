@@ -16,6 +16,14 @@
     "./sqlite": {
       "types": "./dist/persistence/sqlite.d.ts",
       "default": "./dist/persistence/sqlite.js"
+    },
+    "./scaffold": {
+      "types": "./dist/scaffold/index.d.ts",
+      "default": "./dist/scaffold/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "default": "./dist/cli/index.js"
     }
   },
   "scripts": {

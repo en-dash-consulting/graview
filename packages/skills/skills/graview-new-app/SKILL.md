@@ -5,10 +5,30 @@ description: Start a product on Graview in its own repository — the shape of t
 
 # Start a product on Graview
 
-Graview ships as eight packages. A product built on it lives in **its own
+Graview ships as nine packages. A product built on it lives in **its own
 repository** and depends on them the way any other consumer does. This is the
 setup that gets you from nothing to something that can tell you when you have
 broken it.
+
+## Start with the scaffolder
+
+```sh
+# from a framework checkout (the packages are not published yet):
+pnpm install && pnpm build
+pnpm graview create ../my-app --link . --name "My App" --kind thing
+# once published, from anywhere:
+npm create graview@latest my-app        # or: pnpm create graview my-app
+```
+
+Put the product BESIDE the framework, never inside it: `--link` names the
+framework relative to where you run the command, and the CLI warns when the
+target would land in the framework's own git tree.
+
+`graview create` writes exactly the shape below — one kind with `creates`,
+`connects`, `writes` and a `lifecycle`, one rule with its repair, the shell,
+the routed face, a headless test, a CI workflow — installs it, and installs
+these skills into it. Run its `verify`, then start replacing the first kind
+with the product's own. The rest of this skill is what each part is for.
 
 ## The shape
 
@@ -132,6 +152,8 @@ tell your users:
 ## Then find out whether it worked
 
 ```sh
+pnpm verify        # what the scaffold wrote: typecheck, tests, build, graview check
+# or, by hand:
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 

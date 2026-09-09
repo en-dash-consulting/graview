@@ -1,0 +1,37 @@
+{
+  "name": "create-graview",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "create-graview": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/endash/graview.git",
+    "directory": "packages/create-graview"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -16,6 +16,7 @@ packages/
   react/       @graview/react       the only UI binding, deliberately thin
   primitives/  @graview/primitives  view primitives, three lenses, the workbench
   skills/      @graview/skills      the authoring moves, each ending in a check
+  create-graview/                   `npm create graview` — the door to `graview create`
 apps/
   todo/        THE EXAMPLE — a todo list, because nobody has to be taught one
   seedbed/     the example that starts EMPTY — a declared graph and no data
@@ -49,6 +50,46 @@ Only `@graview/render` touches the browser or the GPU, and only through its
 `@graview/render/gpu` entry — the main one is pure geometry, so nothing that
 imports it inherits a WebGPU type dependency. Everything else runs headlessly
 in CI with no browser flag.
+
+## Start a project
+
+The packages are not published yet, so today a product starts from a checkout
+of this repository and consumes the framework **by path**, the way the
+first-party products do:
+
+```sh
+pnpm install && pnpm build                      # the framework, first
+pnpm graview create ../my-app --link . --name "My App" --kind thing
+cd ../my-app
+pnpm dev                                        # http://localhost:5170 — the scene; /pages is the routed face
+pnpm verify                                     # typecheck, tests, build, graview check
+```
+
+That is a product on Graview: one declared kind with its fields, an edge, a
+horizon and four named acts, one rule that names its repair, an eighty-line
+shell made of framework parts, the routed face, persistence in the browser,
+a headless test, a git repository and a CI workflow that checks the framework
+out beside the app. `src/domain/` is the whole surface; the loop from there
+is declare → `graview check` → look at it → declare more.
+
+Once the packages are published, the same project is one command from
+anywhere, with no checkout:
+
+```sh
+npm create graview@latest my-app     # or: pnpm create graview my-app
+```
+
+`scripts/smoke-create.mjs` is what keeps this honest, on every push: it
+scaffolds a project from the packed tarballs, installs it with npm and no
+workspace, runs the project's own `verify`, reads the checker's own sentence,
+breaks the schema to see `tsc` refuse it, installs the skills, and walks the
+first hour in a real browser — the empty district, the seat planting starter
+data, the derived form, a reload that remembers, the way back to empty, the
+routed face and its form at phone width, axe-core in both schemes. Then the
+same project under pnpm; then `create-graview` (what `npm create graview`
+runs) making the identical project; then a project consuming this checkout
+by path, through the CLI's own install, with a hyphenated kind, opened in
+the browser too.
 
 ## Run it
 
@@ -129,6 +170,7 @@ pnpm site          # docs/site holds up at ten widths, to axe and to a keyboard
 
 pnpm pack:inspect  # what would actually go in each tarball
 pnpm smoke         # install the tarballs into a scratch project and build
+pnpm smoke:create  # graview create → install → its own verify → a real browser
 pnpm skills        # install the authoring skills for Claude Code and Codex
 ```
 
@@ -312,6 +354,7 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | Offline degrades to local-only and reconciles on reconnect | `packages/core/tests/integration/sync.test.ts` |
 | Travelling changes the address, and back and forward both work | `scripts/verify-navigation.mjs` — 12 criteria, driven through the controls rather than the keyboard |
 | A stranger can install the tarballs and build a real app | `scripts/smoke-install.mjs` — packs, installs into a scratch project with no workspace or path mapping, typechecks and runs |
+| `graview create` makes a project a stranger can install, verify, and use | `scripts/smoke-create.mjs` — 22 criteria: from the tarballs under npm and pnpm, through `create-graview`, and by path; the project's own `verify`; the first hour driven in a browser with axe-core in both schemes |
 | A tarball contains what it should and nothing else | `scripts/inspect-pack.mjs` — no `src`, no tests, no tsbuildinfo, and every `exports` path present |
 | The page that explains this holds up at 320px, to axe-core and to a keyboard | `scripts/verify-site.mjs` — 10 widths, both schemes, 11 criteria |
 | An agent seat states what it would do, and goes quiet when there is nothing to do | `scripts/verify-seat.mjs` — the example's seat; the products run the same harness against theirs |
@@ -337,7 +380,7 @@ anything about HTML-in-Canvas. The short version, measured in Chrome Canary
 
 ## Shipping it
 
-The six packages are the deliverable: an SDK someone builds a product on, in
+The packages are the deliverable: an SDK someone builds a product on, in
 their own repository. Everything needed for that exists and runs on every push
 — `pnpm changeset` for versioning, `pnpm pack:inspect` for what goes in the
 tarball, `pnpm smoke` for whether a stranger can install and build from it —

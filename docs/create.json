@@ -1,0 +1,156 @@
+{
+  "at": "2026-09-09T03:47:48.364Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-VS7y3X",
+  "engine": "chromium",
+  "npm": {
+    "created": "graview create: 17 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-VS7y3X/field-notes",
+    "tree": [
+      ".github/workflows/ci.yml",
+      ".gitignore",
+      "README.md",
+      "index.html",
+      "package.json",
+      "src/domain/app.ts",
+      "src/domain/brand.ts",
+      "src/domain/invariants.ts",
+      "src/domain/mutations.ts",
+      "src/domain/schema.ts",
+      "src/main.tsx",
+      "src/ui/app.tsx",
+      "src/ui/views.tsx",
+      "tests/domain.test.ts",
+      "tsconfig.build.json",
+      "tsconfig.json",
+      "vite.config.ts"
+    ],
+    "installed": true,
+    "lockfile": true,
+    "verified": true,
+    "checkSaid": "graview check: Field Notes — no problems found.",
+    "brokenSchemaTypechecked": false,
+    "tscSaid": "src/domain/schema.ts(29,46): error TS2345: Argument of type '[NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; }; }>]' is not assignable to parameter of type 'readonly [NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; }; }>] & { ...; }'.",
+    "docsWritten": true,
+    "docsNameTheActs": true,
+    "skills": true,
+    "built": true
+  },
+  "pnpm": {
+    "ciUsesPnpm": true,
+    "installed": true,
+    "verified": true,
+    "checkSaid": "graview check: Field Notes — no problems found."
+  },
+  "door": {
+    "said": "graview create: 17 files → door-app",
+    "tree": [
+      ".github/workflows/ci.yml",
+      ".gitignore",
+      "README.md",
+      "index.html",
+      "package.json",
+      "src/domain/app.ts",
+      "src/domain/brand.ts",
+      "src/domain/invariants.ts",
+      "src/domain/mutations.ts",
+      "src/domain/schema.ts",
+      "src/main.tsx",
+      "src/ui/app.tsx",
+      "src/ui/views.tsx",
+      "tests/domain.test.ts",
+      "tsconfig.build.json",
+      "tsconfig.json",
+      "vite.config.ts"
+    ],
+    "sameProject": true
+  },
+  "linked": {
+    "said": [
+      "graview create: 17 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-VS7y3X/linked-orders",
+      "graview create: pnpm install"
+    ],
+    "consumesByPath": true,
+    "skills": true,
+    "verified": true,
+    "checkSaid": "graview check: Linked Orders — no problems found.",
+    "hyphenatedKind": true,
+    "gitInitialised": true,
+    "ciChecksOutTheFramework": true,
+    "browser": {
+      "districtAfterAdd": "Work Orders1open ▾",
+      "errors": []
+    }
+  },
+  "browser": {
+    "districts": 1,
+    "saysNoneYet": true,
+    "wordmarkSaysTheName": true,
+    "standingIsClean": "Everything is in order",
+    "axeEmptyLight": [],
+    "seatOffered": "Add some starter data",
+    "seatLog": [
+      "claude Add First noteundoFirst note"
+    ],
+    "afterSeat": "Notes1open ▾",
+    "seatPlantedSomething": true,
+    "freshIsEmptyAgain": true,
+    "offers": [
+      "Add a note …"
+    ],
+    "afterForm": "Notes1open ▾",
+    "theFormAddedIt": true,
+    "axeAfterDark": [],
+    "afterReload": "Notes1open ▾",
+    "survivedAReload": true,
+    "saysRemembered": "Remembered in this browserStart fresh",
+    "offersStartFresh": true,
+    "pagesHome": true,
+    "pagesFitsAPhone": true,
+    "pagesRecords": [
+      0,
+      1
+    ],
+    "pagesFormApplied": true,
+    "axePagesLight": [],
+    "axePagesDark": [],
+    "errors": []
+  },
+  "packed": [
+    "@graview/core",
+    "create-graview",
+    "@graview/layout",
+    "@graview/pages",
+    "@graview/primitives",
+    "@graview/react",
+    "@graview/render",
+    "@graview/ship",
+    "@graview/skills",
+    "@graview/tools"
+  ],
+  "verdict": {
+    "theScaffoldWroteAProject": true,
+    "itInstalledFromTheTarballsWithNpm": true,
+    "itsOwnVerifyPassed": true,
+    "theCheckerActuallySpoke": true,
+    "anEdgeToAnUndeclaredKindFailsTsc": true,
+    "theDeclarationLoadsOutsideABundler": true,
+    "theSkillsLandedForBothAssistants": true,
+    "itBuiltASite": true,
+    "theFirstScreenIsOneDistrictSayingNoneYet": true,
+    "theBrandIsTheProductsName": true,
+    "theSeatPlantsStarterDataFromTheDeclaration": true,
+    "freshIsTheWayBackToEmpty": true,
+    "theEmptyDistrictOffersTheFirstNote": true,
+    "theDerivedFormAddsIt": true,
+    "anEditSurvivesAReload": true,
+    "thePagesFaceFitsAPhoneAndItsFormApplies": true,
+    "axeFindsNothingInEitherScheme": true,
+    "nothingErroredInTheBrowser": true,
+    "theSameProjectVerifiesUnderPnpm": true,
+    "npmCreateGraviewMakesTheSameProject": true,
+    "aLinkedProjectInstallsSkillsAndVerifies": true,
+    "aHyphenatedKindWorksEndToEnd": true,
+    "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": true,
+    "theLinkedDevServerRunsInABrowser": true
+  },
+  "passed": true
+}

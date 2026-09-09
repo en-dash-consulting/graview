@@ -4,8 +4,8 @@
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/skills",
-    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/skills apps/todo apps/launcher apps/seedbed",
+    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/skills packages/create-graview",
+    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/skills packages/create-graview apps/todo apps/launcher apps/seedbed",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "node packages/core/dist/cli/index.js check apps/todo/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/launcher/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/seedbed/dist/domain/app.js",
@@ -34,7 +34,9 @@
     "a11y": "node apps/todo/scripts/run-a11y.mjs",
     "apps:all": "pnpm --parallel --filter @graview/launcher --filter @graview/todo --filter @graview/seedbed dev",
     "audit-ui": "node scripts/audit-ui.mjs",
-    "elm": "node scripts/eval-elm.mjs"
+    "elm": "node scripts/eval-elm.mjs",
+    "smoke:create": "node scripts/smoke-create.mjs",
+    "graview": "node packages/core/dist/cli/index.js"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",
