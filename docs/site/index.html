@@ -418,16 +418,7 @@ section > .head .tick {
 }
 .code pre { margin: 0; }
 
-/* The garden, grown: one article per chapter, its picture in the viewer's
-   own scheme. Both images ship; the one for the other scheme is hidden by
-   the same three-state token rule the palette uses. */
-.only-dark { display: none; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .only-light { display: none; }
-  :root:not([data-theme="light"]) .only-dark { display: block; }
-}
-:root[data-theme="dark"] .only-light { display: none; }
-:root[data-theme="dark"] .only-dark { display: block; }
+/* The garden, grown: one article per chapter, one picture each. */
 .chapter-shot { margin: 22px 0 0; }
 .chapter-shot img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 2px; background: var(--sunk); }
 .chapter-shot figcaption { font-size: 12.5px; line-height: 1.6; color: var(--ink-3); margin-top: 8px; max-width: 70ch; }
@@ -752,8 +743,7 @@ footer {
         they ship as packages you install.
       </p>
       <figure class="chapter-shot hero-shot">
-        <img class="only-light" src="../progression/01-a-plot-light.png" alt="A garden with one declared kind, seen from altitude: one district, opened, listing two plots" width="1280" height="800">
-        <img class="only-dark" src="../progression/01-a-plot-dark.png" alt="A garden with one declared kind, seen from altitude, dark scheme" width="1280" height="800">
+        <img src="../progression/01-a-plot-light.png" alt="A garden with one declared kind, seen from altitude: one district, opened, listing two plots" width="640" height="240" style="max-width: 640px">
         <figcaption>One kind declared, and already a city, a district, a derived form and a routed face. Declare a little, check it, look at it, declare more — <a class="inl" href="#grown">the garden, grown</a>.</figcaption>
       </figure>
     </section>
@@ -810,8 +800,7 @@ footer {
         </div>
         <p class="chapter-claim">One kind, one act. The city, the district, the derived form and the routed face all exist before a line of UI is written.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/01-a-plot-light.png" alt="A plot: the garden after chapter 1, light scheme" loading="lazy" width="640" height="240" style="max-width: 640px">
-          <img class="only-dark" src="../progression/01-a-plot-dark.png" alt="A plot: the garden after chapter 1, dark scheme" loading="lazy" width="640" height="240" style="max-width: 640px">
+          <img src="../progression/01-a-plot-light.png" alt="A plot: the garden after chapter 1" loading="lazy" width="640" height="240" style="max-width: 640px">
           <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -827,8 +816,7 @@ footer {
         </div>
         <p class="chapter-claim">A second kind and one edge. The line is drawn from the declaration, captioned in its own words, and made and unmade by the act that names it.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/02-who-tends-what-light.png" alt="Gardeners, and who tends what: the garden after chapter 2, light scheme" loading="lazy" width="756" height="623" style="max-width: 756px">
-          <img class="only-dark" src="../progression/02-who-tends-what-dark.png" alt="Gardeners, and who tends what: the garden after chapter 2, dark scheme" loading="lazy" width="756" height="623" style="max-width: 756px">
+          <img src="../progression/02-who-tends-what-light.png" alt="Gardeners, and who tends what: the garden after chapter 2" loading="lazy" width="756" height="623" style="max-width: 756px">
           <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -844,8 +832,7 @@ footer {
         </div>
         <p class="chapter-claim">A rule is data on the map, and it names its own repair. The moment it lands, an untended plot is a problem with a one-click fix, not a bug report.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/03-the-agreement-light.png" alt="The garden's agreement: the garden after chapter 3, light scheme" loading="lazy" width="843" height="650" style="max-width: 843px">
-          <img class="only-dark" src="../progression/03-the-agreement-dark.png" alt="The garden's agreement: the garden after chapter 3, dark scheme" loading="lazy" width="843" height="650" style="max-width: 843px">
+          <img src="../progression/03-the-agreement-light.png" alt="The garden's agreement: the garden after chapter 3" loading="lazy" width="843" height="650" style="max-width: 843px">
           <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -861,8 +848,7 @@ footer {
         </div>
         <p class="chapter-claim">A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/04-the-horizon-light.png" alt="Plantings, and the horizon: the garden after chapter 4, light scheme" loading="lazy" width="856" height="575" style="max-width: 856px">
-          <img class="only-dark" src="../progression/04-the-horizon-dark.png" alt="Plantings, and the horizon: the garden after chapter 4, dark scheme" loading="lazy" width="856" height="575" style="max-width: 856px">
+          <img src="../progression/04-the-horizon-light.png" alt="Plantings, and the horizon: the garden after chapter 4" loading="lazy" width="856" height="575" style="max-width: 856px">
           <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -878,8 +864,7 @@ footer {
         </div>
         <p class="chapter-claim">An agent gets the same acts a person does, through one declared seam. Its turn is attributed in the log, watchable from altitude, and undoable out of order.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/05-a-seat-light.png" alt="A seat for an agent: the garden after chapter 5, light scheme" loading="lazy" width="976" height="653" style="max-width: 976px">
-          <img class="only-dark" src="../progression/05-a-seat-dark.png" alt="A seat for an agent: the garden after chapter 5, dark scheme" loading="lazy" width="976" height="653" style="max-width: 976px">
+          <img src="../progression/05-a-seat-light.png" alt="A seat for an agent: the garden after chapter 5" loading="lazy" width="976" height="653" style="max-width: 976px">
           <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -895,8 +880,7 @@ footer {
         </div>
         <p class="chapter-claim">Persistence is the operation log. One adapter in main.tsx and an edit survives a reload, still attributed, still undoable, with the way back to empty on the rail.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/06-it-remembers-light.png" alt="The garden remembers: the garden after chapter 6, light scheme" loading="lazy" width="976" height="653" style="max-width: 976px">
-          <img class="only-dark" src="../progression/06-it-remembers-dark.png" alt="The garden remembers: the garden after chapter 6, dark scheme" loading="lazy" width="976" height="653" style="max-width: 976px">
+          <img src="../progression/06-it-remembers-light.png" alt="The garden remembers: the garden after chapter 6" loading="lazy" width="976" height="653" style="max-width: 976px">
           <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -912,8 +896,7 @@ footer {
         </div>
         <p class="chapter-claim">One policy, declared once. The store refuses, the actions strip narrows, and an agent's seat narrows with it, so a gardener never sees a button that would fail.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/07-who-may-light.png" alt="Who may do what: the garden after chapter 7, light scheme" loading="lazy" width="1121" height="575" style="max-width: 1121px">
-          <img class="only-dark" src="../progression/07-who-may-dark.png" alt="Who may do what: the garden after chapter 7, dark scheme" loading="lazy" width="1121" height="575" style="max-width: 1121px">
+          <img src="../progression/07-who-may-light.png" alt="Who may do what: the garden after chapter 7" loading="lazy" width="1121" height="575" style="max-width: 1121px">
           <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -929,8 +912,7 @@ footer {
         </div>
         <p class="chapter-claim">One accent, a mark and a typeface, and both schemes are derived and measured. Every text pair is checked against AA before the brand is allowed to ship.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/08-its-own-name-light.png" alt="The garden's own name: the garden after chapter 8, light scheme" loading="lazy" width="856" height="575" style="max-width: 856px">
-          <img class="only-dark" src="../progression/08-its-own-name-dark.png" alt="The garden's own name: the garden after chapter 8, dark scheme" loading="lazy" width="856" height="575" style="max-width: 856px">
+          <img src="../progression/08-its-own-name-light.png" alt="The garden's own name: the garden after chapter 8" loading="lazy" width="856" height="575" style="max-width: 856px">
           <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -946,8 +928,7 @@ footer {
         </div>
         <p class="chapter-claim">The same declaration is also an ordinary web application: lists, records, forms and problems, routed, at phone width. Any page can be replaced with one the app writes, in its own words, over the same derivations.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/09-the-other-face-light.png" alt="The other face: the garden after chapter 9, light scheme" loading="lazy" width="390" height="844" style="max-width: 390px">
-          <img class="only-dark" src="../progression/09-the-other-face-dark.png" alt="The other face: the garden after chapter 9, dark scheme" loading="lazy" width="390" height="844" style="max-width: 390px">
+          <img src="../progression/09-the-other-face-light.png" alt="The other face: the garden after chapter 9" loading="lazy" width="390" height="844" style="max-width: 390px">
           <figcaption> graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -963,8 +944,7 @@ footer {
         </div>
         <p class="chapter-claim">A lens binds roles, not field names. The coverage grid was written for requirements and tests; pointed at gardeners and plots it says, in a picture, which plot nobody tends.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/10-a-lens-light.png" alt="A lens over the garden: the garden after chapter 10, light scheme" loading="lazy" width="880" height="623" style="max-width: 880px">
-          <img class="only-dark" src="../progression/10-a-lens-dark.png" alt="A lens over the garden: the garden after chapter 10, dark scheme" loading="lazy" width="880" height="623" style="max-width: 880px">
+          <img src="../progression/10-a-lens-light.png" alt="A lens over the garden: the garden after chapter 10" loading="lazy" width="880" height="623" style="max-width: 880px">
           <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -980,8 +960,7 @@ footer {
         </div>
         <p class="chapter-claim">A second lens, written for a seating plan, drawn over the plots where they lie in the garden. Things sit where the domain says they sit, and an empty bed is a picture of something to do, not a missing row.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/11-what-grows-where-light.png" alt="What grows where: the garden after chapter 11, light scheme" loading="lazy" width="880" height="623" style="max-width: 880px">
-          <img class="only-dark" src="../progression/11-what-grows-where-dark.png" alt="What grows where: the garden after chapter 11, dark scheme" loading="lazy" width="880" height="623" style="max-width: 880px">
+          <img src="../progression/11-what-grows-where-light.png" alt="What grows where: the garden after chapter 11" loading="lazy" width="880" height="623" style="max-width: 880px">
           <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
@@ -997,8 +976,7 @@ footer {
         </div>
         <p class="chapter-claim">Deployment is one declaration plus one adapter. A version and a migration on the app carry a garden stored last season forward, as a logged, attributed, undoable operation.</p>
         <figure class="chapter-shot">
-          <img class="only-light" src="../progression/12-ship-it-light.png" alt="Ship it: the garden after chapter 12, light scheme" loading="lazy" width="975" height="653" style="max-width: 975px">
-          <img class="only-dark" src="../progression/12-ship-it-dark.png" alt="Ship it: the garden after chapter 12, dark scheme" loading="lazy" width="975" height="653" style="max-width: 975px">
+          <img src="../progression/12-ship-it-light.png" alt="Ship it: the garden after chapter 12" loading="lazy" width="975" height="653" style="max-width: 975px">
           <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found.</figcaption>
         </figure>
         <div class="chapter-adds">
