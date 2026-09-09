@@ -32,9 +32,16 @@ function PlotView({ node, fidelity, selected, mode, flagged }: ViewProps<S, "plo
   );
 }
 
-export function seedbedViews() {
-  const registry = registerDefaultViews(seedbedSchema, createViews(seedbedSchema));
-  return registry
-    .register("plot", { cardinality: "one", fidelity: "full" }, PlotView as ViewComponent<S>)
-    .register("plot", { cardinality: "one", fidelity: "summary" }, PlotView as ViewComponent<S>);
+/** The views for the garden — or for a chapter of it, which may not have plots yet. */
+export function seedbedViews(schema: SeedbedSchema = seedbedSchema) {
+  const registry = registerDefaultViews(schema, createViews(schema));
+  if (!(schema.kinds as readonly string[]).includes("plot")) return registry;
+  /*
+   * Summary only. At full fidelity the generic view already shows the
+   * plot's fields and what it is connected to — and this one, which only
+   * has the warning to add, showed a large empty card instead. The rule in
+   * the skill applies to the framework's own example: override a fidelity
+   * when the generic view is genuinely wrong there, not on principle.
+   */
+  return registry.register("plot", { cardinality: "one", fidelity: "summary" }, PlotView as ViewComponent<S>);
 }

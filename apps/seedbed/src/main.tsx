@@ -8,7 +8,10 @@ import {
   forgetFreshParam,
   openStore,
 } from "@graview/ship/browser";
+import { createMemoryAdapter } from "@graview/core";
 import { seedbedApp } from "./domain/app.js";
+import type { SeedbedSchema } from "./domain/schema.js";
+import { chapterFromSearch } from "./domain/chapters.js";
 import { SeedbedApp } from "./ui/app.js";
 
 const sheet = new CSSStyleSheet();
@@ -44,28 +47,43 @@ applyScheme(scheme);
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
 
-// The empty app remembers too: what you sow here is still here tomorrow,
-// and "Start fresh" is the way back to the blank graph (see todo's main.tsx).
-const opened = await openStore({
-  app: seedbedApp,
-  adapter: createBrowserAdapter(),
-  fresh: browserStartsFresh(),
-});
+/*
+ * The empty app remembers too: what you sow here is still here tomorrow,
+ * and "Start fresh" is the way back to the blank graph (see todo's main.tsx).
+ *
+ * `?chapter=N` opens the garden as it stood at that chapter of the
+ * progression instead (see domain/chapters.ts): its declaration, its seed,
+ * and — from the chapter that earns it — the browser adapter.
+ */
+type Opened = Awaited<ReturnType<typeof openStore<SeedbedSchema>>>;
+const chapter = chapterFromSearch(window.location.search);
+const opened: Opened = chapter
+  ? ((await openStore({
+      app: chapter.app as never,
+      adapter: chapter.remembers ? createBrowserAdapter() : createMemoryAdapter(),
+      scope: `chapter-${chapter.n}`,
+      seed: chapter.seed as never,
+      fresh: !chapter.remembers || browserStartsFresh(),
+      storeOptions: chapter.principal ? { principal: chapter.principal } : {},
+    } as never)) as unknown as Opened)
+  : await openStore({ app: seedbedApp, adapter: createBrowserAdapter(), fresh: browserStartsFresh() });
 forgetFreshParam();
+const remembers = chapter ? chapter.remembers : true;
 
 if (window.location.pathname.startsWith("/pages")) {
   // The routed, responsive face: same store, same ids, one app.
   createRoot(root).render(
     <PagesApp
       basename="/pages"
-      context={{ store: opened.store, brand: seedbedBrand, sceneHref: "/", remembers: true }}
+      context={{ store: opened.store, brand: seedbedBrand, sceneHref: "/", remembers }}
     />,
   );
 } else {
   createRoot(root).render(
     <SeedbedApp
       store={opened.store}
-      remembers
+      remembers={remembers}
+      seat={chapter ? chapter.seat : true}
       syncUrl
       renderer="dom"
       initialScheme={scheme}

@@ -1,0 +1,354 @@
+{
+  "at": "2026-09-09T04:19:29.160Z",
+  "engine": "chromium",
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "a-plot",
+      "title": "A plot",
+      "claim": "One kind, one act. The city, the district, the derived form and the routed face all exist before a line of UI is written.",
+      "adds": [
+        "defineNode(\"plot\")",
+        "defineMutation(\"add-plot\") with creates: [\"plot\"]"
+      ],
+      "kinds": [
+        "plot"
+      ],
+      "mutations": [
+        "add-plot"
+      ],
+      "invariants": [],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/01-a-plot-light.png",
+        "dark": "docs/progression/01-a-plot-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Plots2close ▴Plot 1Plot 2"
+        ],
+        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": null
+      }
+    },
+    {
+      "n": 2,
+      "slug": "who-tends-what",
+      "title": "Gardeners, and who tends what",
+      "claim": "A second kind and one edge. The line is drawn from the declaration, captioned in its own words, and made and unmade by the act that names it.",
+      "adds": [
+        "defineNode(\"gardener\")",
+        "edges: { \"tended-by\": { to: [\"gardener\"], description } } on plot",
+        "defineMutation(\"tend\") with connects and severs"
+      ],
+      "kinds": [
+        "gardener",
+        "plot"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "tend"
+      ],
+      "invariants": [],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/02-who-tends-what-light.png",
+        "dark": "docs/progression/02-who-tends-what-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Gardeners2open ▾",
+          "Plots2open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→Plot 1×PagesThe garden keeps its agreements◆Ask☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": null
+      }
+    },
+    {
+      "n": 3,
+      "slug": "the-agreement",
+      "title": "The garden's agreement",
+      "claim": "A rule is data on the map, and it names its own repair. The moment it lands, an untended plot is a problem with a one-click fix, not a bug report.",
+      "adds": [
+        "defineNode(\"rule\") with requiresInvariant",
+        "defineInvariant(\"every-plot-tended\") with repairs: [\"tend\"]",
+        "defineMutation(\"adopt-rule\")"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "tend",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/03-the-agreement-light.png",
+        "dark": "docs/progression/03-the-agreement-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "1 problem",
+        "districts": [
+          "Gardeners2open ▾",
+          "Plots⚠ 2open ▾",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→Plot 2×Pages1 problem◆Ask☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": null
+      }
+    },
+    {
+      "n": 4,
+      "slug": "the-horizon",
+      "title": "Plantings, and the horizon",
+      "claim": "A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted.",
+      "adds": [
+        "defineNode(\"planting\") with lifecycle: { field: \"status\", retired: [\"harvested\", \"failed\"] }",
+        "an appendOnly edge \"grows-in\"",
+        "defineMutation(\"sow\"), defineMutation(\"harvest\") with writes: [\"status\"]"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/04-the-horizon-light.png",
+        "dark": "docs/progression/04-the-horizon-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Gardeners2open ▾",
+          "Plantings1+1 pastopen ▾",
+          "Plots2open ▾",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": null
+      }
+    },
+    {
+      "n": 5,
+      "slug": "a-seat",
+      "title": "A seat for an agent",
+      "claim": "An agent gets the same acts a person does, through one declared seam. Its turn is attributed in the log, watchable from altitude, and undoable out of order.",
+      "adds": [
+        "intelligence: [{ name: \"starter\", kind: \"graph\", may: [...] }] on defineApp",
+        "an AgentSeat in the rail, gated on add-gardener"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/05-a-seat-light.png",
+        "dark": "docs/progression/05-a-seat-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "1 problem",
+        "districts": [
+          "Gardeners1open ▾",
+          "Plantingsnone yet",
+          "Plots⚠ 1open ▾",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→Pages1 problem◆Ask3 ActivityThe agent's seatThe garden is plantedchanged · adopt-rulechanged · add-plotFirst plotchanged · add-gardenerFirst gar",
+        "withheld": null,
+        "activity": [
+          "claude Adopt: every plot has a caretakerundoEvery plot has a caretaker",
+          "claude Stake out First plot (1 beds)undoFirst plot",
+          "claude Welcome First gardenerundoFirst gardener"
+        ],
+        "remembered": null
+      }
+    },
+    {
+      "n": 6,
+      "slug": "it-remembers",
+      "title": "The garden remembers",
+      "claim": "Persistence is the operation log. One adapter in main.tsx and an edit survives a reload, still attributed, still undoable, with the way back to empty on the rail.",
+      "adds": [
+        "openStore({ app, adapter: createBrowserAdapter(), fresh: browserStartsFresh() }) in main.tsx",
+        "remembers on the Shell"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/06-it-remembers-light.png",
+        "dark": "docs/progression/06-it-remembers-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Gardeners2open ▾",
+          "Plantings1+1 pastopen ▾",
+          "Plots2open ▾",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask ActivityThe agent's seatThe garden is plantedRemembered in this browserStart fresh☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": "Remembered in this browserStart fresh"
+      }
+    },
+    {
+      "n": 7,
+      "slug": "who-may",
+      "title": "Who may do what",
+      "claim": "One policy, declared once. The store refuses, the actions strip narrows, and an agent's seat narrows with it, so a gardener never sees a button that would fail.",
+      "adds": [
+        "policy: { roles, grants } on defineApp",
+        "a principal with roles on the store"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/07-who-may-light.png",
+        "dark": "docs/progression/07-who-may-dark.png"
+      },
+      "errors": [],
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Gardeners2open ▾",
+          "Plantings1+1 pastopen ▾",
+          "Plots2open ▾",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask Activity☾",
+        "withheld": "Stake out a plot",
+        "activity": [],
+        "remembered": null
+      }
+    }
+  ],
+  "verdict": {
+    "everyChapterChecksClean": true,
+    "everyChapterRenderedWithoutErrors": true,
+    "theRuleFiresInChapterThree": true,
+    "theHorizonShowsInChapterFour": true,
+    "theSeatPlantedInChapterFive": true,
+    "itRemembersInChapterSix": true,
+    "aGardenerIsRefusedInChapterSeven": true
+  },
+  "passed": true
+}

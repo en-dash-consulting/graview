@@ -1,5 +1,16 @@
 import { humaniseField, labelOf, type AnySchema, type Store } from "@graview/core";
-import { edgeOfSelection, kindsOf, withoutMoves, withOverview, withPast, withZoom } from "@graview/layout";
+import {
+  aggregateId,
+  edgeOfSelection,
+  kindOfCard,
+  kindsOf,
+  withFocus,
+  withoutMoves,
+  withOverview,
+  withPast,
+  withZoom,
+  type ViewState,
+} from "@graview/layout";
 import {
   useAffordances,
   useApplyAffordance,
@@ -1710,9 +1721,29 @@ export function BackOut({ home }: { readonly home: string | null }) {
  * property the scene cuts, and so does the mark — the same mechanism, so they
  * cannot disagree.
  */
+/**
+ * Where "Focus" lands from altitude when nothing is focused.
+ *
+ * An app that opens from the city has no in-stack default, and the provider
+ * lands a focusless descent back on the overview — which made the control a
+ * button that did nothing, in every such app. Descending has to go
+ * SOMEWHERE: into the district that is selected, or the first one declared.
+ */
+export function descentTarget(view: ViewState, kinds: readonly string[]): string | null {
+  if (view.focusId) return view.focusId;
+  const selected = (view.selection ?? []).map(kindOfCard).find((kind) => kind !== null);
+  const kind = selected ?? kinds[0] ?? null;
+  return kind === null ? null : aggregateId(kind);
+}
+
 export function OverviewButton() {
   const { view, go } = useNavigation();
+  const { store } = useGraview();
   const overview = view.overview ?? false;
+  const descend = () => {
+    const target = descentTarget(view, store.schema.kinds as readonly string[]);
+    go(withFocus(withOverview(view, false), target));
+  };
   const label = overview ? "Focus" : "Graview";
   return (
     <button
@@ -1728,7 +1759,7 @@ export function OverviewButton() {
       }
       // A view state, so it is a URL, the back button works, and the cards
       // already on screen fly out into the ring rather than being replaced.
-      onClick={() => go(withOverview(view, !overview))}
+      onClick={() => (overview ? descend() : go(withOverview(view, true)))}
       /*
        * SCENE FURNITURE, in the scene's corner — the way a map carries its
        * own altitude control.

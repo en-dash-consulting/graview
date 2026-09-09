@@ -200,6 +200,13 @@ export function Scene<S extends AnySchema>({
       ...(store.modules.disabledKinds.size > 0
         ? { hiddenKinds: [...store.modules.disabledKinds].sort() }
         : {}),
+      /*
+       * THE LEFT RAIL, at altitude. The relation key and the inspector live
+       * on the scene's left edge when the picture is the whole domain, and
+       * the ring used to run under them: a district drawn beneath a pane
+       * is a card nobody can reach. The ring keeps to what is left.
+       */
+      ...(view.overview ? { inset: { left: 264 } } : {}),
       ...(size
         ? {
             width: size.width,
@@ -214,7 +221,7 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size, store],
+    [options, size, store, view.overview],
   );
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, sized),

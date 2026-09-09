@@ -63,3 +63,15 @@ describe("the shell", () => {
     expect(places).toBeGreaterThan(backtrack);
   });
 });
+
+describe("Focus, from altitude", () => {
+  it("descends into the selected district, or the first one declared, never nowhere", async () => {
+    const { descentTarget } = await import("../../src/index.js");
+    const { aggregateId, kindCardId } = await import("@graview/layout");
+    const altitude = { ...EMPTY_VIEW, overview: true };
+    expect(descentTarget(altitude, ["note", "tag"])).toBe(aggregateId("note"));
+    expect(descentTarget({ ...altitude, selection: [kindCardId("tag")] }, ["note", "tag"])).toBe(aggregateId("tag"));
+    expect(descentTarget({ ...altitude, focusId: "note:a" }, ["note"])).toBe("note:a");
+    expect(descentTarget(altitude, [])).toBeNull();
+  });
+});

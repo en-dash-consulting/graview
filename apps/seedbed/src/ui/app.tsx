@@ -35,6 +35,8 @@ export interface SeedbedAppProps {
   readonly onSchemeChange?: (scheme: Scheme) => void;
   /** Whether the store behind this app is remembered in the browser (see main.tsx). */
   readonly remembers?: boolean;
+  /** Whether the agent's seat is in the rail; a chapter before the seat exists says no. */
+  readonly seat?: boolean;
 }
 
 /**
@@ -51,9 +53,10 @@ export function SeedbedApp({
   initialScheme = "light",
   onSchemeChange,
   remembers = false,
+  seat = true,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
-  const views = useMemo(() => seedbedViews(), []);
+  const views = useMemo(() => seedbedViews(created.schema as never), [created]);
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
 
   return (
@@ -66,7 +69,7 @@ export function SeedbedApp({
     >
       <Shell<S>
         standing="The garden keeps its agreements"
-        seat={(onCall) => <StarterGarden onCall={onCall} />}
+        seat={seat ? (onCall) => <StarterGarden onCall={onCall} /> : undefined}
         remembers={remembers}
         syncUrl={syncUrl}
         renderer={renderer}
