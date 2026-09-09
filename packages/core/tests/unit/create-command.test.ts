@@ -99,7 +99,7 @@ describe("graview create", () => {
     expect(readdirSync(scratch)).toEqual([]);
   });
 
-  it("warns that an unpublished core cannot be installed from a registry", async () => {
+  it("warns that a private core cannot be installed from a registry, whatever its version", async () => {
     const t = io();
     await create(["plain", "--no-install"], t.handle);
     expect(t.err()).toMatch(/unpublished|--link/);

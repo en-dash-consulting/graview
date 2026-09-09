@@ -58,15 +58,20 @@ export function packageManagerFromEnv(env: NodeJS.ProcessEnv = process.env): "pn
   return agent.startsWith("pnpm") ? "pnpm" : "npm";
 }
 
-/** The version of the core that is running, so a project pins what made it. */
-function ownVersion(): string {
+/**
+ * The core that is running: its version, so a project pins what made it,
+ * and whether it is published at all. A version number says nothing about
+ * that — the packages were 0.0.1 and on no registry — but \`private: true\`
+ * is exactly the flag that keeps them off one.
+ */
+function ownManifest(): { version: string; unpublished: boolean } {
   try {
     const manifest = JSON.parse(
       readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../../package.json"), "utf8"),
-    ) as { version?: string };
-    return manifest.version ?? "0.0.0";
+    ) as { version?: string; private?: boolean };
+    return { version: manifest.version ?? "0.0.0", unpublished: manifest.private === true };
   } catch {
-    return "0.0.0";
+    return { version: "0.0.0", unpublished: true };
   }
 }
 
@@ -83,7 +88,7 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     return 2;
   }
 
-  const version = ownVersion();
+  const { version, unpublished } = ownManifest();
   const pmFlag = flag(argv, "--pm");
   const packageManager: "pnpm" | "npm" =
     pmFlag === "pnpm" || pmFlag === "npm" ? pmFlag : packageManagerFromEnv();
@@ -98,7 +103,7 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     ...(flag(argv, "--accent") ? { accent: flag(argv, "--accent") } : {}),
     ...(portFlag ? { port: Number(portFlag) } : {}),
     packageManager,
-    range: version === "0.0.0" ? "*" : `^${version}`,
+    range: `^${version}`,
   };
   const problems = [...validateScaffoldOptions(base)];
   if (linkFlag !== undefined && linkFlag !== "") {
@@ -167,9 +172,9 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     ...(frameworkRepo ? { frameworkRepo } : {}),
   };
 
-  if (link === undefined && version === "0.0.0") {
+  if (link === undefined && unpublished) {
     io.stderr(
-      "graview create: this copy of @graview/core is unpublished (0.0.0), so the project's\n" +
+      `graview create: this copy of @graview/core (${version}) is unpublished, so the project's\n` +
         "dependencies cannot resolve from a registry. Pass --link <path-to-framework> to consume\n" +
         "the framework by path, or install from a published version.\n",
     );
