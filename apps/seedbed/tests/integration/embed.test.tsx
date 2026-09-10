@@ -16,6 +16,8 @@ import { seedbedViews } from "../../src/ui/views.js";
 window.matchMedia = ((query: string) =>
   ({ matches: query.includes("reduce"), media: query, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as never;
 
+const seatOf = (chapter: (typeof CHAPTERS)[number], id: string) => chapter.seats!.find((seat) => seat.principal.id === id)!.principal;
+
 describe("a chapter, embedded", () => {
   const chapter = CHAPTERS[10]!; // what grows where: four kinds, two lenses, a policy
   const into = () => {
@@ -88,6 +90,28 @@ describe("a chapter, embedded", () => {
     // A click's update lands on the next microtask; the handle's own calls flush at once.
     await Promise.resolve();
     expect(place()?.getAttribute("aria-pressed")).toBe("true");
+    handle.unmount();
+  });
+
+  it("lets a reader change seats, and the pages withhold by the seat that sat down", () => {
+    const seven = CHAPTERS[6]!;
+    const element = into();
+    const handle = mount(element, {
+      app: seven.app,
+      seed: seven.seed,
+      face: "pages",
+      path: "/gardeners",
+      principal: seven.principal,
+      seats: seven.seats,
+    });
+    const seat = (id: string) => element.querySelector<HTMLButtonElement>(`[data-testid="embed-seat-${id}"]`);
+    // Ravi, a gardener, is at the keyboard: welcoming a gardener is the coordinator's.
+    expect(seat("ravi")?.getAttribute("aria-pressed")).toBe("true");
+    expect(element.querySelector('[data-testid="withheld"]')?.textContent).toContain("coordinator can");
+    handle.setSeat(seatOf(seven, "june"));
+    expect(seat("june")?.getAttribute("aria-pressed")).toBe("true");
+    expect(element.querySelector('[data-testid="withheld"]')).toBeNull();
+    expect(element.querySelector('[data-testid="form-add-gardener"]')).not.toBeNull();
     handle.unmount();
   });
 

@@ -50,6 +50,8 @@ export interface Chapter {
   readonly seat: boolean;
   /** Who is at the keyboard, once the garden has a policy. */
   readonly principal?: Principal;
+  /** The seats a reader may take on the page, once there is a policy to feel. */
+  readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
   /** Whether the garden's own plot page is registered over the derived face (chapter 9 on). */
   readonly pages: boolean;
   /** Whether the coverage lens is mounted over the gardeners (chapter 10 on). */
@@ -261,6 +263,14 @@ const policy: Policy = {
     { roles: ["gardener"], mutations: ["sow", "harvest", "tend"], describe: "A gardener works the ground." },
   ],
 };
+const ravi: Principal = { kind: "human", id: "ravi", roles: ["gardener"] };
+const coordinator: Principal = { kind: "human", id: "june", roles: ["coordinator"] };
+/** Two seats at the keyboard, from the chapter that declares who may do what. */
+const seats = [
+  { label: "June, coordinator", principal: coordinator },
+  { label: "Ravi, gardener", principal: ravi },
+] as const;
+
 const chapterSeven: Chapter = {
   n: 7,
   slug: "who-may",
@@ -276,12 +286,12 @@ const chapterSeven: Chapter = {
   pages: false,
   lens: false,
   board: false,
-  principal: { kind: "human", id: "ravi", roles: ["gardener"] },
+  principal: ravi,
+  seats,
 };
 
 /* ------------------------------------------ 8 · the garden's own name */
 
-const coordinator: Principal = { kind: "human", id: "june", roles: ["coordinator"] };
 const chapterEight: Chapter = {
   n: 8,
   slug: "its-own-name",
@@ -297,6 +307,7 @@ const chapterEight: Chapter = {
   lens: false,
   board: false,
   principal: coordinator,
+  seats,
 };
 
 /* ------------------------------------------------- 9 · the other face */
@@ -318,6 +329,7 @@ const chapterNine: Chapter = {
   lens: false,
   board: false,
   principal: coordinator,
+  seats,
 };
 
 /* ---------------------------------------------- 10 · a lens over the garden */
@@ -352,6 +364,7 @@ const chapterTen: Chapter = {
   lens: true,
   board: false,
   principal: coordinator,
+  seats,
 };
 
 /* ------------------------------------------------ 11 · what grows where */
@@ -390,6 +403,7 @@ const chapterEleven: Chapter = {
   lens: true,
   board: true,
   principal: coordinator,
+  seats,
 };
 
 /* ------------------------------------------------------------ 12 · ship it */
@@ -454,6 +468,7 @@ const chapterTwelve: Chapter = {
   lens: true,
   board: true,
   principal: coordinator,
+  seats,
 };
 
 /* ------------------------------------------- 13 · the garden's own face */
@@ -490,6 +505,7 @@ const chapterThirteen: Chapter = {
   board: false,
   map: true,
   principal: coordinator,
+  seats,
 };
 
 export const CHAPTERS: readonly Chapter[] = [

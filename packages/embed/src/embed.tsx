@@ -43,6 +43,14 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
   /** For the pages face: the path to open, within the app's own routes. */
   readonly path?: string;
   readonly principal?: Principal;
+  /**
+   * The seats a reader may take, when the page wants the policy to be felt
+   * rather than read: each is a name and a principal, shown on the strip and
+   * pressed while it is at the keyboard. The strip, the pages and the acts
+   * all narrow to the seat, so what a gardener may not do is struck through
+   * the moment a gardener sits down.
+   */
+  readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
   /** "auto" reads the host page: its `data-theme` stamp, else the system's preference. */
   readonly scheme?: Scheme | "auto";
   /** Defaults to the app's own brand. */
@@ -73,6 +81,8 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
 export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOptions<S> {
   /** Called when the strip's switcher is pressed; the host decides the face. */
   readonly onFace?: (face: EmbedFace) => void;
+  /** Called when a seat on the strip is pressed; the host decides who sits. */
+  readonly onSeat?: (principal: Principal) => void;
 }
 
 let sequence = 0;
@@ -183,7 +193,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         {...(principal ? { principal } : {})}
       >
         <Faces face={face} stop={stop} kinds={kinds} />
-        {toggle ? <Strip face={face} onFace={props.onFace} standing={standing} /> : null}
+        {toggle ? <Strip face={face} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} /> : null}
         {face === "pages" ? (
           <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "auto" }}>
             <PagesApp<S>
@@ -235,8 +245,23 @@ function Faces({ face, stop, kinds }: { face: EmbedFace; stop: string | undefine
   return null;
 }
 
-function Strip({ face, onFace, standing }: { face: EmbedFace; onFace?: ((face: EmbedFace) => void) | undefined; standing: string }) {
+function Strip({
+  face,
+  onFace,
+  standing,
+  seats,
+  principal,
+  onSeat,
+}: {
+  face: EmbedFace;
+  onFace?: ((face: EmbedFace) => void) | undefined;
+  standing: string;
+  seats?: EmbedOptions["seats"] | undefined;
+  principal?: Principal | undefined;
+  onSeat?: ((principal: Principal) => void) | undefined;
+}) {
   const { brand } = useGraview();
+  const sameSeat = (a: Principal | undefined, b: Principal) => a !== undefined && a.id === b.id && a.kind === b.kind;
   // Two faces, not three: altitude is the scene's own control, on the
   // picture, and a third pill for it here said the same thing twice.
   const faces: readonly { id: EmbedFace; label: string; title: string; pressed: boolean }[] = [
@@ -289,6 +314,36 @@ function Strip({ face, onFace, standing }: { face: EmbedFace; onFace?: ((face: E
       ))}
       {/* The named pictures over the graph — a lens is somewhere to go, by name. */}
       {face !== "pages" ? <Places /> : null}
+      {seats && seats.length > 1 ? (
+        <div role="group" aria-label="Seat" data-testid="embed-seats" style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 6 }}>
+          <span style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>As</span>
+          {seats.map((seat) => {
+            const pressed = sameSeat(principal, seat.principal);
+            return (
+              <button
+                key={seat.principal.id}
+                type="button"
+                aria-pressed={pressed}
+                data-testid={`embed-seat-${seat.principal.id}`}
+                title={`Sit down as ${seat.label}: the strip, the pages and the acts narrow to what this seat may do`}
+                onClick={() => onSeat?.(seat.principal)}
+                style={{
+                  padding: "3px 11px",
+                  borderRadius: 999,
+                  fontSize: 12.5,
+                  borderWidth: 1,
+                  borderStyle: "solid",
+                  borderColor: pressed ? "var(--graview-accent)" : "var(--graview-edge)",
+                  color: pressed ? "var(--graview-accent)" : "var(--graview-ink-muted)",
+                  background: pressed ? "var(--graview-panel)" : "transparent",
+                }}
+              >
+                {seat.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
       <div style={{ marginLeft: "auto", minWidth: 0 }}>
         <Standing clean={standing} />
       </div>
@@ -300,6 +355,8 @@ export interface EmbedHandle {
   setFace(face: EmbedFace): void;
   setStop(stop: string): void;
   setScheme(scheme: Scheme): void;
+  /** Put another principal at the keyboard; the store and its history stay. */
+  setSeat(principal: Principal): void;
   readonly store: Store<AnySchema>;
   unmount(): void;
 }
@@ -310,13 +367,25 @@ export interface EmbedHandle {
  */
 export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
   const store = options.store ?? storeOf(options.app, options.seed, options.principal);
-  let setters: { face: (f: EmbedFace) => void; stop: (s: string) => void; scheme: (s: Scheme) => void } | null = null;
+  let setters: { face: (f: EmbedFace) => void; stop: (s: string) => void; scheme: (s: Scheme) => void; seat: (p: Principal) => void } | null = null;
   function Host() {
     const [face, setFace] = useState<EmbedFace>(options.face ?? faceOf(options.stop));
     const [stop, setStop] = useState<string | undefined>(options.stop);
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
-    setters = { face: setFace, stop: setStop, scheme: setScheme };
-    return <Embed<S> {...options} store={store as never} face={face} {...(stop !== undefined ? { stop } : {})} scheme={scheme} onFace={setFace} />;
+    const [principal, setSeat] = useState<Principal | undefined>(options.principal);
+    setters = { face: setFace, stop: setStop, scheme: setScheme, seat: setSeat };
+    return (
+      <Embed<S>
+        {...options}
+        store={store as never}
+        face={face}
+        {...(stop !== undefined ? { stop } : {})}
+        {...(principal ? { principal } : {})}
+        scheme={scheme}
+        onFace={setFace}
+        onSeat={setSeat}
+      />
+    );
   }
   const root: Root = createRoot(element);
   flushSync(() => root.render(<Host />));
@@ -325,6 +394,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setFace: (face) => flushSync(() => setters?.face(face)),
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
     setScheme: (scheme) => flushSync(() => setters?.scheme(scheme)),
+    setSeat: (principal) => flushSync(() => setters?.seat(principal)),
     unmount: () => root.unmount(),
   };
 }
