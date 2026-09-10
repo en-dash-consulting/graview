@@ -443,7 +443,22 @@ export function layout<S extends AnySchema>(
   const overviewH = naturalH * overviewScale;
 
   // ------------------------------------------------------- plane 0: focus
-  if (state.overview && (focus || focusGroup.length > 0) && state.focusId) {
+  /*
+   * A focused GROUP, from altitude, is its district when its picture is only
+   * the framework's list: the district opens in place instead. A group with
+   * its own view keeps the scaled card — and then its district stays shut,
+   * so the same names are never drawn twice.
+   */
+  const plain = new Set(options.plainGroups ?? []);
+  const groupFocus = state.overview && !focus && focusGroup.length > 0 && state.focusId !== null;
+  const groupIsPlain = groupFocus && focusKinds.length > 0 && focusKinds.every((kind) => plain.has(kind));
+  if (groupFocus) {
+    for (const kind of focusKinds) {
+      if (groupIsPlain) expanded.add(kindCardId(kind));
+      else expanded.delete(kindCardId(kind));
+    }
+  }
+  if (state.overview && (focus || focusGroup.length > 0) && state.focusId && !groupIsPlain) {
     push({
       id: state.focusId,
       kind: focus ? focus.kind : focusKinds[0]!,
