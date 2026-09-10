@@ -576,6 +576,27 @@ code { color: var(--graview-ink-muted); font-size: 12px; letter-spacing: 0.02em;
 [data-graview-view] {
   transition: filter 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* WHAT YOU CAN PRESS IS WHAT YOU CAN SEE.
+
+   A host is the box the LAYOUT gave a view — a band on the ground, the whole
+   scene scaled small from altitude — and a view that sizes to its content
+   fills only part of it. The rest is invisible, and an invisible box must
+   not be a target: a record read from altitude and pinned beside a district
+   covered that district's open button with nothing at all, and the button
+   stopped answering. So the host itself is out of hit-testing on the DOM
+   path and only the drawn content is in; every handler still hears the
+   content's events on the way up. The GPU path keeps its own rule: there
+   the whole subtree stays out, because the platform's hit-test descending
+   into a captured view brings the renderer down. */
+[data-graview-stage="dom"] [data-graview-view],
+[data-graview-stage="dom"] [data-graview-view] > [data-graview-natural] {
+  pointer-events: none;
+}
+[data-graview-stage="dom"] [data-graview-view] > :not([data-graview-natural]),
+[data-graview-stage="dom"] [data-graview-view] > [data-graview-natural] > * {
+  pointer-events: auto;
+}
 [data-graview-view][data-graview-selected] {
   filter: drop-shadow(0 0 14px var(--graview-accent-dim));
 }
