@@ -60,6 +60,37 @@ describe("a chapter, embedded", () => {
     handle.unmount();
   });
 
+  it("names the lenses on the strip, and a lens is a place you can get back to", async () => {
+    const element = into();
+    const handle = mount(element, {
+      app: chapter.app,
+      seed: chapter.seed,
+      face: "scene",
+      stop: "#focus=aggregate:gardener",
+      principal: chapter.principal,
+      views: (schema) => seedbedViews(schema as never, { lens: true, board: true }) as never,
+    });
+    const place = () => element.querySelector<HTMLButtonElement>('[data-testid="place-gardener"]');
+    expect(place()?.textContent).toBe("Who tends what");
+    expect(element.querySelector('[data-testid="place-plot"]')?.textContent).toBe("What grows where");
+    expect(place()?.getAttribute("aria-pressed")).toBe("true");
+    // Into a gardener: the grid is gone, and the strip still says where it is.
+    handle.setStop("#focus=ravi");
+    // A fresh scene, as the face test does: the mounted one lands on the
+    // next frame, which a static test never gets.
+    handle.setFace("pages");
+    handle.setFace("scene");
+    expect(place()?.getAttribute("aria-pressed")).toBe("false");
+    expect(element.querySelector('[data-graview-view="ravi"]')).not.toBeNull();
+    // Pressing the place is the way back. (No face toggle here: a face
+    // change re-applies the handle's last stop, which is the point of it.)
+    place()?.click();
+    // A click's update lands on the next microtask; the handle's own calls flush at once.
+    await Promise.resolve();
+    expect(place()?.getAttribute("aria-pressed")).toBe("true");
+    handle.unmount();
+  });
+
   it("never touches the host page's address or theme", () => {
     const before = window.location.href;
     const element = into();

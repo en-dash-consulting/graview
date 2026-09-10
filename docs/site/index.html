@@ -425,6 +425,15 @@ section > .head .tick {
 .hero-shot { margin-top: 28px; }
 /* minmax(0, 1fr) and min-width: 0, or a grid item's automatic minimum is
    the picture's intrinsic 1280 pixels and the whole page scrolls sideways. */
+.hero-pair { margin-top: 30px; }
+.hero-pair .two { align-items: stretch; }
+.hero-pair .code { max-height: 480px; overflow: auto; }
+.hero-pair .chapter-live { height: 480px; }
+@media (max-width: 820px) { .hero-pair .code { max-height: 320px; } }
+.derived { margin: 26px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; }
+.derived li { font-size: 15px; line-height: 1.6; color: var(--ink-2); padding-top: 12px; border-top: 1px solid var(--rule); min-width: 0; }
+.derived li strong { color: var(--ink); }
+@media (max-width: 640px) { .derived { grid-template-columns: minmax(0, 1fr); } }
 .chapters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; margin-top: 30px; }
 .chapter { min-width: 0; }
 .chapter.phone .chapter-shot img { max-width: 390px; }
@@ -731,26 +740,86 @@ footer {
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">Declare the domain. The application follows.</h1>
       <p class="lede" style="margin-top: 22px;">
-        Most frameworks give you a way to draw things. Graview asks you to
-        describe your domain once, then derives the interface from it.
+        Graview is a development framework built on a typed context graph.
+        You declare the kinds of things in your domain, how they connect, the
+        acts that change them and the rules they must not break — once, as
+        code. The picture, the pages, the checks and an agent's tools are
+        derived from that one declaration. A model can read and write it
+        beside you.
       </p>
-      <p style="margin-top: 18px;">
-        A node kind carries its own fields, its edges, its views, its mutations
-        and the rules it must not break. From that one declaration the framework
-        works out where things sit on screen, what a user is allowed to do to a
-        selection, what tools to hand an agent, and how to name everything for a
-        screen reader. Change the declaration and all four move together. There
-        is no second file to keep in step.
-      </p>
-      <p style="margin-top: 14px;">
-        It is not a UI layer bolted onto a store. The graph, the rules, the
-        operation log, the tool surface and the pictures are one system, and
-        they ship as packages you install.
-      </p>
-      <figure class="chapter-shot hero-shot">
-        <img src="../progression/01-a-plot-light.png" alt="A garden with one declared kind, seen from altitude: one district, opened, listing two plots" width="640" height="240" style="max-width: 640px">
-        <figcaption>One kind declared, and already a city, a district, a derived form and a routed face. Declare a little, check it, look at it, declare more — <a class="inl" href="#grown">the garden, grown</a>.</figcaption>
+
+      <figure class="chapter-shot hero-pair">
+        <div class="two">
+          <div class="code" data-scroller aria-label="Chapter one of the garden, as code">
+<pre><span class="c">// The whole of chapter one. Nothing else is written.</span>
+<span class="k">const</span> <span class="n">plot</span> = <span class="n">defineNode</span>(<span class="s">"plot"</span>, {
+  description:
+    <span class="s">"A patch of ground with a number and a caretaker."</span>,
+  fields: z.<span class="n">object</span>({
+    label: z.<span class="n">string</span>().min(<span class="n">1</span>),
+    beds:  z.<span class="n">number</span>().int().min(<span class="n">1</span>),
+  }),
+  plural: <span class="s">"Plots"</span>,
+  label: (node) =&gt; node.label,
+});
+
+<span class="k">const</span> <span class="n">addPlot</span> = <span class="n">defineMutation</span>(<span class="s">"add-plot"</span>, {
+  title: <span class="s">"Stake out a plot"</span>,
+  description:
+    <span class="s">"Add a patch of ground, with how many beds it holds."</span>,
+  creates: [<span class="s">"plot"</span>],
+  input: z.<span class="n">object</span>({
+    label: z.<span class="n">string</span>().min(<span class="n">1</span>),
+    beds:  z.<span class="n">number</span>().int().min(<span class="n">1</span>),
+  }),
+  apply(ctx, args) {
+    ctx.<span class="n">addNode</span>({
+      id: ctx.<span class="n">freshId</span>(args.label, <span class="s">"plot"</span>),
+      kind: <span class="s">"plot"</span>,
+      ...args,
+    });
+  },
+});
+
+<span class="k">export default</span> <span class="n">defineApp</span>({
+  name: <span class="s">"Seedbed"</span>,
+  schema: <span class="n">createSchema</span>([plot]),
+  mutations: [addPlot],
+});</pre>
+          </div>
+          <div class="chapter-live" data-graview-chapter="1" data-label="The opener" role="region" aria-label="What chapter one makes, live">
+            <p class="chapter-loading">The garden after chapter 1, loading…</p>
+          </div>
+        </div>
+        <figcaption>
+          Left: the whole of chapter one — one kind, one act. Right: what it
+          makes, running on this page: a city with one district, the plots in
+          it, a form derived from the act, the same app as routed pages, a
+          checked declaration, and a typed tool an agent can take. Nothing on
+          the right was drawn by hand. Change the left and the right moves.
+        </figcaption>
       </figure>
+
+      <ul class="derived" aria-label="What is derived from the declaration">
+        <li><strong>The picture.</strong> Every kind is a district of one city; every record is a card among its relations; the words on the lines are the declaration's own, read from whichever end you are standing on.</li>
+        <li><strong>The acts, and the checks.</strong> What a selection may have done to it comes from the mutations and the policy — a seat never sees a button that would fail. <code>graview check</code> reads the whole declaration and says what is wrong before a page does.</li>
+        <li><strong>The pages.</strong> The same declaration, routed: lists, records and forms for the person who wanted an ordinary web app, and a custom page wherever the generic one is wrong.</li>
+        <li><strong>The agent's seat.</strong> Every act is a typed tool with a sentence attached. A model works the same graph, in the same operation log, under the same policy, and its turns can be taken back.</li>
+      </ul>
+
+      <p style="margin-top: 22px;">
+        <strong>It is built to be worked on with an agent.</strong> The
+        declaration is a context graph, and a context graph is the one thing
+        a model reads as well as a person does. Open a session beside the
+        declaration and work it together: describe a kind, let the model draft
+        its edges, its acts and its rule, run <code>graview check</code>, look
+        at the picture, declare more. The skills that ship with the framework
+        teach the model the shapes; the checker tells you both when a shape is
+        wrong; every act the model takes lands in the log with its author, its
+        intent and its inverse. It is not a UI layer bolted onto a store: the
+        graph, the rules, the log, the tool surface and the pictures are one
+        system, and they ship as packages you install.
+      </p>
     </section>
 
     <section id="try" aria-labelledby="h-try">
@@ -1115,7 +1184,7 @@ footer {
 
     <section id="lenses" aria-labelledby="h-lenses">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-lenses">Lenses</h2></div>
-      <p class="sm" style="margin-bottom: 18px; max-width: 62ch;">
+      <p class="sm" style="margin-bottom: 14px; max-width: 62ch;">
         A lens binds <em>roles</em>, not field names. Point the timeline at
         <code>plannedAt</code> in one app and at <code>leaveAt</code> in
         another; it never learns what either one means. That is the line
@@ -1125,6 +1194,18 @@ footer {
         board, written for a seating plan, shows
         <a class="inl" href="#chapter-11">what grows where</a> — and the
         empty bed.
+      </p>
+      <p class="sm" style="margin-bottom: 18px; max-width: 62ch;">
+        <strong>Lenses are yours to make.</strong> A lens is an ordinary
+        React component that takes the nodes, the bindings and the selection
+        the framework hands it, and draws whatever your domain needs to see —
+        a map, a ledger, a floor plan, a Gantt of the week. Register it over
+        a kind with a title and it is a named place in the bar; every mark it
+        draws is a real pick target, so selection, ties and actions land on
+        the things themselves. The core ships with three starters — the
+        board, the coverage grid and the timeline — as the shapes most
+        domains reach for first, and every one of them is a hundred lines you
+        can read.
       </p>
       <div class="lenses">
         <div class="lens">

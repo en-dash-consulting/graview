@@ -7,6 +7,7 @@ import {
   type NodeOfKind,
   type NodeOfSchema,
   type ViewCell,
+  type ViewMeta,
   type ViewRegistry,
 } from "@graview/core";
 import type { ComponentType } from "react";
@@ -100,6 +101,7 @@ export interface ReactViewRegistry<S extends AnySchema>
     kind: K,
     cell: ViewCell,
     view: ViewComponent<S, K>,
+    meta?: ViewMeta,
   ): ReactViewRegistry<S>;
 }
 

@@ -162,3 +162,50 @@ describe("the routed face renders from the declaration", () => {
     expect(empty).toContain("None yet");
   });
 });
+
+describe("an act the seat may not take is stated, not offered", () => {
+  /*
+   * The list page offered every creating act to everyone, and a gardener
+   * met "Agree every plot has a caretaker" as a live form that refused on
+   * submit. The verdict is the store's own, asked before anything is drawn.
+   */
+  const adopt = bound.defineMutation("adopt", {
+    title: "Adopt a duty",
+    description: "Take on a new run.",
+    creates: ["duty"],
+    input: z.object({ label: z.string().min(1) }),
+    apply(ctx, args) {
+      ctx.addNode({ id: `duty-${args.label}`, kind: "duty", label: args.label, minutes: 10 } as never);
+    },
+  });
+  const policy = {
+    roles: ["coordinator", "helper"],
+    grants: [{ roles: ["coordinator"], mutations: "*" as const, describe: "The coordinator keeps the map." }],
+  };
+  const page = (roles: readonly string[]) =>
+    renderToStaticMarkup(
+      <PagesApp
+        context={{
+          store: new Store({ schema, mutations: [adopt], invariants: [], policy }),
+          principal: { id: "someone", kind: "human", roles },
+        }}
+        initialPath="/duties"
+      />,
+    );
+
+  it("withholds the creating act from a seat without the role, with the reason", () => {
+    const html = page(["helper"]);
+    expect(html).not.toContain('data-testid="form-adopt"');
+    expect(html).toContain('data-testid="withheld"');
+    expect(html).toContain("<s>Adopt a duty</s>");
+    expect(html).toContain("coordinator can");
+    // The empty-list hint does not send a helper to a form they cannot use.
+    expect(html).not.toContain("starts below");
+  });
+
+  it("offers it to a seat with the role", () => {
+    const html = page(["coordinator"]);
+    expect(html).toContain('data-testid="form-adopt"');
+    expect(html).not.toContain('data-testid="withheld"');
+  });
+});

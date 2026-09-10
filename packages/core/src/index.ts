@@ -166,6 +166,8 @@ export type {
   Fidelity,
   ViewCell,
   ViewRegistration,
+  ViewMeta,
+  Place,
   ViewRegistry,
 } from "./views/types.js";
 

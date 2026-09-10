@@ -5,6 +5,7 @@ import {
   descentTarget,
   Inspector,
   OverviewButton,
+  Places,
   QuickRelations,
   registerDefaultViews,
   RelationKey,
@@ -270,6 +271,8 @@ function Strip({ face, onFace, standing }: { face: EmbedFace; onFace?: ((face: E
           {candidate.label}
         </button>
       ))}
+      {/* The named pictures over the graph — a lens is somewhere to go, by name. */}
+      {face !== "pages" ? <Places /> : null}
       <div style={{ marginLeft: "auto", minWidth: 0 }}>
         <Standing clean={standing} />
       </div>

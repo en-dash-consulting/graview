@@ -84,15 +84,17 @@ export function seedbedViews(schema: SeedbedSchema = seedbedSchema, options: { l
     registry = registry.register("plot", { cardinality: "one", fidelity: "summary" }, PlotView as ViewComponent<S>);
   }
   if (options.board && kinds.includes("plot") && kinds.includes("planting")) {
+    // Titled, so the lens is a PLACE: listed by name in the bar, pressable
+    // from anywhere, and findable again after you have clicked into a plot.
     registry = registry
-      .register("plot", { cardinality: "many", fidelity: "full" }, BedsView)
-      .register("plot", { cardinality: "many", fidelity: "summary" }, BedsView);
+      .register("plot", { cardinality: "many", fidelity: "full" }, BedsView, { title: "What grows where" })
+      .register("plot", { cardinality: "many", fidelity: "summary" }, BedsView, { title: "What grows where" });
   }
   if (options.lens && kinds.includes("gardener")) {
     // The lens, for a group of gardeners. The lens supplies the picture.
     registry = registry
-      .register("gardener", { cardinality: "many", fidelity: "full" }, TendingView)
-      .register("gardener", { cardinality: "many", fidelity: "summary" }, TendingView);
+      .register("gardener", { cardinality: "many", fidelity: "full" }, TendingView, { title: "Who tends what" })
+      .register("gardener", { cardinality: "many", fidelity: "summary" }, TendingView, { title: "Who tends what" });
   }
   return registry;
 }

@@ -64,7 +64,7 @@ try {
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForFunction(
         (n) => document.querySelectorAll("[data-graview-embed]").length >= n,
-        12,
+        13,
         { timeout: 30_000 },
       ).catch(() => {});
       await page.waitForTimeout(900);
@@ -169,12 +169,12 @@ try {
   await page.addStyleTag({ content: "html { font-size: 200% }" });
   await page.waitForTimeout(400);
   /* A chapter's face switches on the page itself: the picture is the app. */
-  await page.locator('[data-graview-chapter="1"]').scrollIntoViewIfNeeded();
-  await page.waitForFunction(() => document.querySelector('[data-graview-chapter="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const faceBefore = await page.locator('[data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
-  await page.locator('[data-graview-chapter="1"] [data-testid="embed-face-pages"]').click().catch(() => {});
+  await page.locator('#chapter-1 [data-graview-chapter="1"]').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.querySelector('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
+  const faceBefore = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
+  await page.locator('#chapter-1 [data-graview-chapter="1"] [data-testid="embed-face-pages"]').click().catch(() => {});
   await page.waitForTimeout(500);
-  const faceAfter = await page.locator('[data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
+  const faceAfter = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
   report.criteria.aChapterSwitchesFaceOnThePage = faceBefore !== null && faceBefore !== "pages" && faceAfter === "pages";
 
   report.criteria.textZoomToTwoHundredDoesNotScrollSideways = await page.evaluate(
@@ -213,7 +213,8 @@ const bad = report.viewports.filter(
 report.criteria.everyViewportIsClean = bad.length === 0;
 // Twelve chapters, live, at every width and in both schemes — the page is
 // judged with the applications on it, not with pictures of them.
-report.criteria.everyChapterIsLiveAtEveryWidth = report.viewports.every((v) => v.live === 12);
+// Twelve chapters and the opener's own copy of the first: thirteen live.
+report.criteria.everyChapterIsLiveAtEveryWidth = report.viewports.every((v) => v.live === 13);
 report.passed = Object.values(report.criteria).every(Boolean) && !report.error;
 
 writeFileSync(resolve(repoRoot, "docs/site-check.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
