@@ -85,12 +85,25 @@ export function AnswerArgs({
 
   if (!parameter) return null;
 
+  /*
+   * An OPTIONAL argument may be passed over. A skipped one is answered
+   * `undefined` here so the walk moves on, and left out of what is applied,
+   * so the mutation sees only what was actually said. Skipping every one
+   * of them is allowed: the mutation's own refusal then says what it
+   * needed, on the button, which is the honest answer to an empty change.
+   */
   const answer = (value: unknown) => {
     const next = { ...answers, [parameter.name]: value };
     const outstanding = affordance.open.filter((other) => !(other.name in next));
-    if (outstanding.length === 0) onApply(next);
-    else setAnswers(next);
+    if (outstanding.length === 0) {
+      onApply(Object.fromEntries(Object.entries(next).filter(([, given]) => given !== undefined)));
+    } else setAnswers(next);
   };
+  const skip = parameter.optional ? (
+    <button type="button" onClick={() => answer(undefined)} style={{ fontSize: 12 }}>
+      Skip
+    </button>
+  ) : null;
 
   const shape = parameter.shape ?? { type: "unknown" as const };
   const choices = choicesFor(parameter, shape);
@@ -116,6 +129,7 @@ export function AnswerArgs({
               {nameOf(store, choice)}
             </button>
           ))}
+          {skip}
         </div>
       ) : (
         <form
@@ -153,6 +167,7 @@ export function AnswerArgs({
           <button type="submit" disabled={draft.trim().length === 0} style={{ fontSize: 12 }}>
             {remaining.length > 1 ? "Next" : "Apply"}
           </button>
+          {skip}
         </form>
       )}
     </div>
