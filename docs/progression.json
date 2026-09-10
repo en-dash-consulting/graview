@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-10T01:12:29.245Z",
+  "at": "2026-09-10T02:33:07.733Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -54,7 +54,7 @@
       "claim": "A second kind and one edge. The line is drawn from the declaration, captioned in its own words, and made and unmade by the act that names it.",
       "adds": [
         "defineNode(\"gardener\")",
-        "edges: { \"tended-by\": { to: [\"gardener\"], description } } on plot",
+        "edges: { \"tended-by\": { to: [\"gardener\"], description, inverse } } on plot",
         "defineMutation(\"tend\") with connects and severs"
       ],
       "kinds": [

@@ -25,7 +25,7 @@ export const desk = defineNode("desk", {
   description: "This machine's Graview desk.",
   fields: z.object({ label: z.string().min(1) }),
   edges: {
-    showing: { to: ["app"], description: "what is in front of you" },
+    showing: { to: ["app"], description: "what is in front of you", inverse: "the desk it is open on" },
   },
   plural: "Desks",
   label: (node) => node.label,
@@ -50,7 +50,7 @@ export const app = defineNode("app", {
     rules: z.number().int(),
   }),
   edges: {
-    uses: { to: ["capability"], description: "what it exercises" },
+    uses: { to: ["capability"], description: "what it exercises", inverse: "the apps that exercise it" },
   },
   plural: "Apps",
   label: (node) => node.label,
@@ -98,7 +98,12 @@ export const rationale = defineNode("rationale", {
   fields: z.object({ text: z.string().min(1) }),
   edges: {
     // A reason, once given, is part of the record; nothing unmakes it.
-    justifies: { to: "*", description: "the decision this explains", appendOnly: true },
+    justifies: {
+      to: "*",
+      description: "the decision this explains",
+      inverse: "why it is the way it is",
+      appendOnly: true,
+    },
   },
   plural: "Reasons",
   label: (node) => summarise(node.text),

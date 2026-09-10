@@ -544,7 +544,12 @@ export const ${ids.kindVar} = defineNode("${ids.kind}", {
   edges: {
     // An edge to a kind nobody declared is a typecheck failure, not a
     // runtime surprise.
-    "depends-on": { to: ["${ids.kind}"], description: "what has to be closed first" },
+    // One edge, two readings: each end is captioned in its own words.
+    "depends-on": {
+      to: ["${ids.kind}"],
+      description: "what has to be closed first",
+      inverse: "what is waiting on this",
+    },
   },
   plural: "${ids.Plural}",
   label: (node) => node.label,

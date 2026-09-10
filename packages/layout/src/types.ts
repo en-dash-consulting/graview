@@ -32,7 +32,11 @@ export interface Aggregate {
 export interface Via {
   readonly edgeKind: string;
   readonly direction: "out" | "in";
-  /** The edge declaration's own description, when it has one. */
+  /**
+   * How the relation reads FROM THE FOCUS: the declaration's `description`
+   * along an outgoing edge, its `inverse` along an incoming one. Absent when
+   * the declaration has no words for this direction.
+   */
   readonly description?: string;
 }
 
