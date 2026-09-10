@@ -20,9 +20,8 @@ pnpm graview create ../my-app --link . --name "My App" --kind thing
 npm create graview@latest my-app        # or: pnpm create graview my-app
 ```
 
-Put the product BESIDE the framework, never inside it: `--link` names the
-framework relative to where you run the command, and the CLI warns when the
-target would land in the framework's own git tree.
+Put the product BESIDE the framework, never inside its git tree; `--link`
+names the framework relative to where you run the command.
 
 `graview create` writes exactly the shape below — one kind with `creates`,
 `connects`, `writes` and a `lifecycle`, one rule with its repair, the shell,
@@ -47,22 +46,16 @@ src/
   main.tsx
 ```
 
-The domain/ui split is not tidiness. `graview check` and the docs generator
-both consume `defineApp`, and the moment a React import reaches that file the
-checker has to load a UI package to look at your schema. Keep it clean and the
-whole declaration stays inspectable by a build, a CLI and an agent.
+The domain/ui split is what keeps the declaration inspectable by a build, a
+CLI and an agent: `graview check` reads `defineApp`, and a React import in
+that file would drag a UI package into the checker.
 
 ## Do this
 
-1. **Install.**
-   ```sh
-   pnpm add @graview/core @graview/layout @graview/tools @graview/render \
-            @graview/react @graview/primitives react react-dom zod
-   # when you want them: @graview/pages (the routed, responsive face)
-   #                     @graview/ship  (persistence, migrations, deploy)
-   ```
+1. **Install.** The scaffold already did: `@graview/core`, `layout`, `tools`,
+   `render`, `react`, `primitives`, `pages`, `ship`, `react`, `react-dom`, `zod`.
    Only reach for `@graview/render/gpu` if you want the experimental capture
-   path; the main entry is pure geometry and the DOM path is what ships.
+   path; the DOM path is what ships.
 
 2. **Declare one kind, one mutation, one rule.** Do not model the whole domain
    first. The loop you want running on day one is: declare → `graview check` →
@@ -79,9 +72,8 @@ whole declaration stays inspectable by a build, a CLI and an agent.
      what is actually attached, and hides a severing act with nothing to
      sever.
    - `lifecycle: { field, retired }` on kinds whose members expire — counts
-     advertise "+N past" instead of drowning, and `past=1` widens the view.
-   - `subject: { kinds, arg }` on every mutation that acts on a thing — the
-     seam selection-derived actions come from.
+     say "+N past", and `past=1` widens the view.
+   - `subject: { kinds, arg }` on every mutation that acts on a thing.
 
 4. **Take the shell.** `Inspector`, `Standing`, `ActivityRail`, `ChatPanel`,
    `QuickRelations`, `RelationKey`, `BackOut`, `Trail`, `OverviewButton` and
@@ -108,6 +100,36 @@ whole declaration stays inspectable by a build, a CLI and an agent.
    }
    ```
 
+## What to make yours next
+
+The scaffold is deliberately the framework's own face. A product replaces it
+in this order, and each step has a skill and a worked chapter in
+`apps/seedbed` behind it:
+
+1. **The words.** Every edge gets `description` and `inverse` — how it reads
+   from each end — or `graview check` says `edge-without-inverse` and the
+   far end is captioned with the edge kind's name. Every mutation gets a
+   `title` and `description`; they are the button and the tool schema.
+   (`graview-node-kind`.)
+2. **A lens with a name.** Register a lens over a group with a `title` and it
+   is a PLACE — in the bar, on an embed's strip, one press from anywhere.
+   Start from the three that ship (board, coverage, timeline); write your own
+   when the domain has a picture of itself, the way the garden has a map.
+   (`graview-lens`, chapters 10, 11 and 13.)
+3. **The pages.** One page in the product's words first, then, when the
+   product needs to look like a product, every surface: the shell, the home,
+   the lists, the records, the problems — over the same store, acts, rules
+   and permissions. (`graview-pages`, chapters 9 and 13.)
+4. **A seat and a policy.** Who may do what, declared once; the strip, the
+   pages and the agent's tools all narrow from it. (`graview-permissions`,
+   `graview-agent-seat`, chapters 5 and 7.)
+5. **A brand, and shipping.** The name, the mark, the typefaces, the palette
+   the checker holds to AA; a version and a migration so a stored graph is
+   carried forward. (`graview-brand`, `graview-ship`, chapters 8 and 12.)
+
+Work with an agent beside the declaration: describe a kind, let it draft the
+edges, acts and rule, run `pnpm verify`, look, declare more.
+
 ## The CI a product on Graview needs
 
 Copy the shape from the framework's own `.github/workflows/ci.yml`, minus the
@@ -123,44 +145,34 @@ packaging steps you do not need. What earns its place:
   fire on graphs that break them and that their repairs resolve them; that is
   the test that catches a real regression.
 - **An accessibility run, in BOTH schemes.** Copy
-  `apps/todo/scripts/run-a11y.mjs`. It reads the real accessibility tree
-  through CDP and runs axe-core. A light palette that clears AA in the dark is
-  the failure this catches, and nothing else will.
+  `apps/todo/scripts/run-a11y.mjs`: the real accessibility tree through CDP,
+  plus axe-core. A light palette that clears AA in the dark is what it catches.
 
-Two things worth stealing later rather than at the start: a browser harness
-that walks your own acceptance criteria and writes a JSON verdict (the
-framework has five, and each names the claim that stopped being true rather
-than a pass count), and a persistence adapter test if you are not using memory.
+Worth stealing later: a browser harness that walks your own acceptance
+criteria and writes a JSON verdict (the framework has several; each names
+the claim that stopped being true), and a persistence adapter test.
 
 ## Supported browsers
 
-Build for the DOM path: it runs in Chromium, WebKit and Firefox, and the
-framework verifies all three (`pnpm engines` in the framework repo). What to
-tell your users:
-
-- The hard floor is `document.adoptedStyleSheets`: Safari 16.4+,
-  Firefox 101+, Chromium 99+.
-- The altitude morph rides `@property` (Firefox 128+, Safari 16.4+); where
-  that is missing it degrades to a clean cut on its own — do not write a
-  fallback for it.
-- The chat's local-model rung needs WebGPU or Chrome's Prompt API. Without
-  either, the graph answers and the header says why. Nothing to do, but do
-  not promise on-device AI to Safari users without checking.
-- The GPU capture path (`?renderer=gpu`) is Chromium-only, experimental and
-  opt-in. Never make it a requirement of your product.
+Build for the DOM path: Chromium, WebKit and Firefox, all three verified by
+the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets`
+(Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides
+`@property` and degrades to a clean cut where that is missing — write no
+fallback. The chat's local-model rung needs WebGPU or Chrome's Prompt API;
+without either the graph still answers and the header says why. The GPU
+capture path (`?renderer=gpu`) is Chromium-only, experimental and opt-in —
+never a requirement of your product.
 
 ## Then find out whether it worked
 
 ```sh
-pnpm verify        # what the scaffold wrote: typecheck, tests, build, graview check
-# or, by hand:
-pnpm build && npx graview check ./dist/domain/app.js
+pnpm verify        # typecheck, tests, build, graview check
 ```
 
 Report the real output. On a new app the useful early findings are
-`mutation-untitled`, `mutation-undescribed` and
-`required-invariant-unregistered` — all three are things that look fine until
-somebody reads the interface or an agent reads a tool schema.
+`mutation-untitled`, `mutation-undescribed`, `edge-without-inverse` and
+`required-invariant-unregistered` — things that look fine until somebody
+reads the interface or an agent reads a tool schema.
 
 ## What the check cannot see
 

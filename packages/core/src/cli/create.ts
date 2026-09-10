@@ -99,7 +99,8 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
   const base: ScaffoldOptions = {
     name: flag(argv, "--name") || fromDirectoryName(dir),
     ...(flag(argv, "--kind") ? { kind: flag(argv, "--kind") } : {}),
-    ...(flag(argv, "--plural") ? { plural: flag(argv, "--plural") } : {}),
+    // "Shifts" is what a person types; the slug is what the generator wants.
+    ...(flag(argv, "--plural") ? { plural: flag(argv, "--plural")!.trim().toLowerCase() } : {}),
     ...(flag(argv, "--accent") ? { accent: flag(argv, "--accent") } : {}),
     ...(portFlag ? { port: Number(portFlag) } : {}),
     packageManager,

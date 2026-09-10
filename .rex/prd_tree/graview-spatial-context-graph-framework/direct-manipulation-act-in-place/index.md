@@ -9,8 +9,8 @@ tags:
   - "ux"
 source: "Session feedback while using the board, calendar and desk"
 startedAt: "2026-08-31T02:50:25.657Z"
-completedAt: "2026-09-03T21:20:40.882Z"
-endedAt: "2026-09-03T21:20:40.882Z"
+completedAt: "2026-09-10T14:59:41.075Z"
+endedAt: "2026-09-10T14:59:41.075Z"
 acceptanceCriteria:
   - "Single click on any data-graview-pick target selects it and leaves the view where it is"
   - "Double click on a pick target travels to it (focus); double click on a view with no pick target still jacks in"
@@ -21,7 +21,7 @@ acceptanceCriteria:
   - "Every mutation title says what it does in the app's own words"
   - "All four apps pass graview check, zero axe violations in both schemes, keyboard reaches all three planes"
 description: "Clicking a thing currently TRAVELS to it, which is the wrong default. Most of the time you want to act on it where it is — substitute a player without leaving the formation, move an event without leaving the week. Travel should be the deliberate second gesture, not the only one.\n\nThis feature reworks the interaction model so a single click selects in place and surfaces the context actions, a double click travels, and a right click opens the actions at the pointer. It also fixes the surfaces that made selection hard to read: a raised relation with no visible origin, a rule that appears to do nothing when selected, an activity rail that sits over the scene, and a mutation nobody can interpret from its name."
-lastModified: "2026-09-03T21:20:40.892Z"
+lastModified: "2026-09-10T14:59:41.085Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -35,6 +35,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A selection draws its own ties, from where the thing actually is](./a-selection-draws-its-own-ties-from.md) | completed |
 | [An action that cannot succeed is not offered, and one that refuses says so](./an-action-that-cannot-succeed-is-not.md) | completed |
 | [Decide where the agent seat lives, or whether it lives in the bar at all](./decide-where-the-agent-seat-lives-or.md) | completed |
+| [Direct manipulation, corrected three ways: deeper into a group, only the drawn card is a target, a one-press act must be able to act](./direct-manipulation-corrected-three.md) | completed |
 | [Editing a value in place](./editing-a-value-in-place.md) | completed |
 | [Every action title says what it does](./every-action-title-says-what-it-does.md) | completed |
 | [Jacking in and travelling land in composed rooms, not corners](./jacking-in-and-travelling-land-in.md) | completed |

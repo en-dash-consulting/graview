@@ -793,12 +793,8 @@ import { ${ids.schemaVar} } from "../domain/schema.js";
  * Nothing custom yet, on purpose. \`registerDefaultViews\` renders every kind
  * at every fidelity from the declaration alone. Write a view for a kind when
  * the generic one is genuinely wrong, not on principle — see the framework's
- * \`apps/todo/src/ui/views.tsx\` for what one looks like when it earns its place.
- */
-/**
- * Every kind at every fidelity, from the declaration alone. Register a view
- * of your own over a cell to replace the framework's there — and give a
- * group view a title to make it a PLACE, listed by name in the bar:
+ * \`apps/todo/src/ui/views.tsx\` for one that earns its place. Give a group
+ * view a title and it is a PLACE, listed by name in the bar:
  *
  *   .register("${ids.kind}", { cardinality: "many", fidelity: "full" }, lens.View, { title: "…" })
  */
@@ -1116,7 +1112,8 @@ describe("the rule", () => {
   };
 
   it("fires when a closed ${ids.spoken} still depends on an open one", () => {
-    const violations = broken().violations();
+    // One rule at a time: the second rule you declare must not fail this test.
+    const violations = broken().violations().filter((v) => v.invariant === "closed-in-order");
     expect(violations).toHaveLength(1);
     expect(violations[0]?.message).toMatch(/still open, but 1 closed/);
     expect(violations[0]?.repairs).toHaveLength(1);
@@ -1124,9 +1121,9 @@ describe("the rule", () => {
 
   it("is resolved by the repair it names", () => {
     const store = broken();
-    const repair = store.violations()[0]!.repairs[0]!;
+    const repair = store.violations().find((v) => v.invariant === "closed-in-order")!.repairs[0]!;
     store.apply({ name: repair.mutation, args: { ...repair.args } });
-    expect(store.violations()).toEqual([]);
+    expect(store.violations().filter((v) => v.invariant === "closed-in-order")).toEqual([]);
   });
 
   it("keeps a closed ${ids.spoken} in the record, behind the horizon", () => {
