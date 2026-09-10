@@ -8,6 +8,7 @@ export {
   KIND_PREFIX,
   layout,
   planeOf,
+  withJackIn,
   AGGREGATE_PREFIX,
 } from "./layout.js";
 export { easeInOut, interpolate } from "./interpolate.js";

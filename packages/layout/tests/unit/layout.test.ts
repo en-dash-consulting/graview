@@ -17,6 +17,7 @@ import {
   toggleExpanded,
   toUrl,
   withFocus,
+  withJackIn,
   withPin,
   withOverview,
   withRelation,
@@ -953,5 +954,44 @@ describe("open districts stay at altitude", () => {
     expect(down.expanded).toEqual(["aggregate:person"]);
     // The overview stop itself is untouched: back up, the district reopens.
     expect(up.expanded).toContain(kindCardId("duty"));
+  });
+});
+
+describe("going deeper into a card", () => {
+  /*
+   * Double-clicking a group card once landed on `focus=kind:person&zoom=1`:
+   * a kind card's own id, which no layout resolves, so the scene emptied
+   * out with the card's name in the URL. Deeper into a kind card means the
+   * GROUP: zoomed as a place on the ground, opened as a district up high.
+   */
+  it("zooms a record, and the same gesture zooms it back out", () => {
+    const zoomed = withJackIn({ ...EMPTY_VIEW, relation: "duty" }, "ana");
+    expect(zoomed.focusId).toBe("ana");
+    expect(zoomed.zoom).toBe(true);
+    expect(zoomed.relation).toBeNull();
+    expect(withJackIn(zoomed, "ana").zoom).toBeUndefined();
+  });
+
+  it("zooms into a kind card's group on the ground, never the card itself", () => {
+    const zoomed = withJackIn({ ...EMPTY_VIEW, focusId: aggregateId("duty") }, kindCardId("person"));
+    expect(zoomed.focusId).toBe(aggregateId("person"));
+    expect(zoomed.zoom).toBe(true);
+    // The zoomed place is drawn: a plane-0 group, not an empty scene.
+    const drawn = layout(graph(), schema, zoomed, { width: 1280, height: 800 });
+    expect(drawn.nodes.find((node) => node.id === aggregateId("person"))?.plane).toBe(0);
+    // Again on the zoomed place zooms back out and stays on the group.
+    const out = withJackIn(zoomed, aggregateId("person"));
+    expect(out.zoom).toBeUndefined();
+    expect(out.focusId).toBe(aggregateId("person"));
+  });
+
+  it("opens a district from altitude, and closes it again", () => {
+    const up = withOverview(EMPTY_VIEW, true);
+    const opened = withJackIn(up, kindCardId("person"));
+    expect(opened.expanded).toContain(kindCardId("person"));
+    expect(opened.focusId).toBeNull();
+    expect(opened.zoom).toBeUndefined();
+    expect(layout(graph(), schema, opened, { width: 1280, height: 800 }).nodes.find((node) => node.id === kindCardId("person"))?.opened).toBe(true);
+    expect(withJackIn(opened, kindCardId("person")).expanded).not.toContain(kindCardId("person"));
   });
 });

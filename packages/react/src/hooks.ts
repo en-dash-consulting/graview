@@ -11,6 +11,7 @@ import {
   type ViewState,
   sameView,
   EMPTY_VIEW,
+  withJackIn,
 } from "@graview/layout";
 import {
   applyAffordance,
@@ -396,10 +397,7 @@ export function useJackIn() {
    * wherever you were and the back button backs out of it. The modal page
    * this used to open isolated the view from every relation it had.
    */
-  const enter = useCallback(
-    (id: string) => setView((current) => withZoom({ ...withFocus(current, id), relation: null }, true)),
-    [setView],
-  );
+  const enter = useCallback((id: string) => setView((current) => withJackIn(current, id)), [setView]);
   const exit = useCallback(() => setView((current) => withZoom(current, false)), [setView]);
   const jackedIn = view.zoom ? view.focusId : null;
   return useMemo(
