@@ -170,7 +170,7 @@ pnpm remember      # edits survive a reload, and the way back to the example
 pnpm menu          # the menu scales: search, pins, and what you use
 pnpm survey        # every place a person can land, photographed
 pnpm audit-ui      # and what is WRONG on each: collisions, cut text, tiny targets
-pnpm site          # docs/site holds up at ten widths, to axe and to a keyboard, with twelve live chapters on it
+pnpm site          # docs/site holds up at ten widths, to axe and to a keyboard, with thirteen live chapters on it
 pnpm site:build    # the chapters' bundle: apps/seedbed → docs/site/chapters.js
 
 pnpm pack:inspect  # what would actually go in each tarball
@@ -361,7 +361,7 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | A stranger can install the tarballs and build a real app | `scripts/smoke-install.mjs` — packs, installs into a scratch project with no workspace or path mapping, typechecks and runs |
 | `graview create` makes a project a stranger can install, verify, and use | `scripts/smoke-create.mjs` — 22 criteria: from the tarballs under npm and pnpm, through `create-graview`, and by path; the project's own `verify`; the first hour driven in a browser with axe-core in both schemes |
 | A tarball contains what it should and nothing else | `scripts/inspect-pack.mjs` — no `src`, no tests, no tsbuildinfo, and every `exports` path present |
-| The page that explains this holds up at 320px, to axe-core and to a keyboard, with twelve live Graviews on it | `scripts/verify-site.mjs` — 10 widths, both schemes, every chapter mounted and judged, a face switched on the page |
+| The page that explains this holds up at 320px, to axe-core and to a keyboard, with thirteen live Graviews on it | `scripts/verify-site.mjs` — 10 widths, both schemes, every chapter mounted and judged, a face switched on the page |
 | An agent seat states what it would do, and goes quiet when there is nothing to do | `scripts/verify-seat.mjs` — the example's seat; the products run the same harness against theirs |
 | Every skill ends in a check, and names only findings the checker can produce | `packages/skills/tests/unit/skills.test.ts` — cross-checked against `check.ts` itself |
 | No card is drawn on top of another, no caption is cut, no control is under a fingertip | `scripts/audit-ui.mjs` — every state of the examples, measuring what a photograph makes you squint at |

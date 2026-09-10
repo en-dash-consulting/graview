@@ -5,7 +5,7 @@ description: Start a product on Graview in its own repository — the shape of t
 
 # Start a product on Graview
 
-Graview ships as nine packages. A product built on it lives in **its own
+Graview ships as eleven packages. A product built on it lives in **its own
 repository** and depends on them the way any other consumer does. This is the
 setup that gets you from nothing to something that can tell you when you have
 broken it.

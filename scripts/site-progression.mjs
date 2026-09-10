@@ -76,5 +76,19 @@ if (a === -1 || b === -1 || b < a) {
   process.exit(1);
 }
 const next = `${source.slice(0, a + start.length)}\n${section}    ${source.slice(b)}`;
-writeFileSync(page, next, "utf8");
+/*
+ * The page says how many chapters there are in words, in more than one
+ * place. Counted here, from the same report, so the words cannot rot when
+ * a chapter is added: every `data-chapters-word` span takes the number.
+ */
+const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen"];
+const word = WORDS[report.chapters.length] ?? String(report.chapters.length);
+const titled = word[0].toUpperCase() + word.slice(1);
+// The span holds the whole phrase ("Thirteen chapters"): inside an
+// inline-flex link a space between two nodes is dropped.
+const counted = next.replace(/(<span data-chapters-word(?:="title")?>)([^<]*)(<\/span>)/g, (_, open, inner, close) => {
+  const rest = inner.replace(/^\S+/, "");
+  return `${open}${open.includes("title") ? titled : word}${rest}${close}`;
+});
+writeFileSync(page, counted, "utf8");
 process.stdout.write(`wrote ${report.chapters.length} chapters into docs/site/index.html\n`);

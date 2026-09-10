@@ -106,10 +106,38 @@ try {
           })
           .map((el) => (el.textContent ?? "").trim().slice(0, 30));
 
+        /*
+         * Text drawn over text. Two leaf elements with words in them whose
+         * boxes intersect is a layout that has failed, whatever the CSS
+         * meant — the terminal's notes were drawn across its commands for
+         * a week before anyone looked. Siblings only, outside the live
+         * Graviews (a scene's planes overlap on purpose), and only where the
+         * intersection is more than a rounding.
+         */
+        const words = [...document.querySelectorAll("main.col *")]
+          .filter((el) => el.children.length === 0 && (el.textContent ?? "").trim().length > 0)
+          .filter((el) => !el.closest("[data-graview-embed], svg, pre") && getComputedStyle(el).display !== "none")
+          // An inline that wrapped onto two lines has a bounding box that
+          // spans both, and "intersects" the next inline honestly: only
+          // elements drawn as one box are compared.
+          .filter((el) => el.getClientRects().length === 1)
+          .map((el) => ({ el, box: el.getBoundingClientRect() }))
+          .filter(({ box }) => box.width > 0 && box.height > 0);
+        const overlaps = [];
+        for (let i = 0; i < words.length && overlaps.length < 4; i++) {
+          for (let j = i + 1; j < words.length; j++) {
+            const a = words[i], b = words[j];
+            if (a.el.parentElement !== b.el.parentElement) continue;
+            const w = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
+            const h = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
+            if (w > 3 && h > 3) overlaps.push(`${(a.el.textContent ?? "").trim().slice(0, 18)} × ${(b.el.textContent ?? "").trim().slice(0, 18)}`);
+          }
+        }
         return {
           sideways: root.scrollWidth > root.clientWidth + 1,
           small: small.slice(0, 4),
           cut: cut.slice(0, 4),
+          overlaps,
         };
       });
 
@@ -185,7 +213,7 @@ try {
 }
 
 const bad = report.viewports.filter(
-  (v) => v.violations.length || v.sideways || v.small.length || v.cut.length || v.errors.length,
+  (v) => v.violations.length || v.sideways || v.small.length || v.cut.length || v.overlaps.length || v.errors.length,
 );
 report.criteria.everyViewportIsClean = bad.length === 0;
 // Twelve chapters, live, at every width and in both schemes — the page is
