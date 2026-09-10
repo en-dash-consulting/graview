@@ -8,3 +8,5 @@ coverage/
 .DS_Store
 apps/*/generated/
 .rex/.backups/
+.n-dx-web.port
+.rex/.cache/

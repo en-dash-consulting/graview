@@ -92,6 +92,14 @@ describe("graview create", () => {
     expect(await create(["busy", "--no-install", "--force"], t.handle)).toBe(0);
   });
 
+  it("takes the plural as a person types it, and writes the slug the generator wants", async () => {
+    const t = io();
+    // "Shifts" was refused as not a slug; the word is what a person types.
+    expect(await create(["roster", "--kind", "shift", "--plural", "Shifts", "--no-install", "--no-git"], t.handle)).toBe(0);
+    const schema = readFileSync(resolve(scratch, "roster", "src", "domain", "schema.ts"), "utf8");
+    expect(schema).toContain('plural: "Shifts"');
+  });
+
   it("refuses a kind that is not a slug, before writing anything", async () => {
     const t = io();
     expect(await create(["bad", "--kind", "Bad Kind", "--no-install"], t.handle)).toBe(2);

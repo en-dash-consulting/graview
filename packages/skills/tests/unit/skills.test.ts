@@ -36,6 +36,7 @@ describe("the skills package", () => {
       "graview-lens",
       "graview-new-app",
       "graview-node-kind",
+      "graview-pages",
       "graview-permissions",
       "graview-port-app",
       "graview-ship",

@@ -1,0 +1,25 @@
+---
+id: "ebbcef1a-944c-4534-a9ea-7a1a3f5c4251"
+level: "feature"
+title: "graview create: a scaffolder, its rehearsal, and the door package"
+status: "completed"
+priority: "high"
+tags:
+  - "scaffold"
+  - "onboarding"
+  - "cli"
+source: "claude-code session 2026-09-07..10"
+startedAt: "2026-09-10T14:59:30.763Z"
+completedAt: "2026-09-10T14:59:30.763Z"
+endedAt: "2026-09-10T14:59:30.763Z"
+resolutionType: "code-change"
+resolutionDetail: "packages/core/src/scaffold, packages/core/src/cli/create.ts, packages/create-graview, scripts/smoke-create.mjs; commits 34c1600 onward, CI green"
+acceptanceCriteria:
+  - "pnpm graview create ../my-app --link . produces a project whose own verify passes"
+  - "npm create graview delegates to the same command"
+  - "smoke-create passes in CI with 25 criteria across three engines"
+  - "the graview-new-app skill leads with the scaffolder"
+description: "`graview create <dir>` in @graview/core over a pure generator (`@graview/core/scaffold`, no fs, for graview-cloud to provision in-process) plus `packages/create-graview` so `npm create graview` works. Writes an 18-file project: one kind with creates/connects/severs/writes/lifecycle, one invariant with a repair, the Shell, the pages face with a custom record page, browser adapter, headless test, CI workflow. `--link <framework>` emits link: deps, vite aliases and a zod dedupe through tsconfig paths (two zod copies made tsc OOM). Refuses an unbuilt framework, warns inside the checkout, git-inits, writes a link-mode CI that checks the framework out as a sibling. `scripts/smoke-create.mjs` rehearses it from packed tarballs in npm, pnpm, door and link modes, runs the project's own verify, installs skills, opens it in a browser; 25 criteria across chromium, webkit, firefox; in CI."
+lastModified: "2026-09-10T14:59:30.778Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
+---

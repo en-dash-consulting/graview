@@ -10,8 +10,8 @@ tags:
   - "spatial"
 source: "Session: \"zoom out and down, iso style, seeing the graph as it's connected, just to the relation types\""
 startedAt: "2026-08-31T02:32:11.463Z"
-completedAt: "2026-08-31T02:32:11.463Z"
-endedAt: "2026-08-31T02:32:11.463Z"
+completedAt: "2026-09-10T14:59:35.594Z"
+endedAt: "2026-09-10T14:59:35.594Z"
 acceptanceCriteria:
   - "An isometric or tilted overview draws every declared kind and every edge kind between them, from the schema alone"
   - "Every transform stays affine — the capture pipeline and the plane model are unchanged"
@@ -21,12 +21,15 @@ acceptanceCriteria:
   - "The camera remains locked: every stop is a URL, no free orbit"
   - "The current full-page lift is renamed to something that does not claim the word"
 description: "A third ALTITUDE, above the three planes rather than inside them.\n\nToday there are two: the scene (three planes, one primary lens) and a full page for a single view. Missing is the one that answers \"what is this whole thing, and how does it hang together\" — the graph drawn at the level of KINDS and RELATION TYPES rather than instances, viewed from outside the plane stack: pulled back and tilted, either from below looking up or isometric from above, so the planes read as strata rather than as a stack seen edge-on.\n\nTwo constraints make this fit rather than fight the framework. Isometric IS an affine projection, so it does not break the \"affine only, no perspective\" rule the capture pipeline depends on. And the camera stays locked to one axis: this is a named stop like any other, not free orbit.\n\nThe interaction that makes it worth building: selecting or hovering a kind draws faint lines to every kind it relates to, so the shape of the domain is legible in one picture — which is the thing no app here can currently show you, including the desk.\n\nAND IT GIVES \"JACKING IN\" ITS REAL MEANING. Dropping from the constellation into a primary interface is what jacking in should feel like: you were looking at the whole thing from outside, you pick a place, and you fall into it. The current full-page lift is a different, smaller gesture and should be renamed accordingly."
+lastModified: "2026-09-10T14:59:35.605Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
 ## Children
 
 | Title | Status |
 |-------|--------|
+| [A titled group view is a place: named lenses in the bar and the embed strip](./a-titled-group-view-is-a-place-named.md) | completed |
 | [Descending with an open district scattered the shelf](./descending-with-an-open-district.md) | completed |
 | [Relations are grouped, not listed flat](./relations-are-grouped-not-listed-flat.md) | completed |
 | [Rising morphs, districts open in place, and lines land on what you can see](./rising-morphs-districts-open-in-place.md) | completed |
