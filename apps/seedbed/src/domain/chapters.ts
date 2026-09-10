@@ -56,6 +56,12 @@ export interface Chapter {
   readonly lens: boolean;
   /** Whether the board lens is mounted over the plots (chapter 11 on). */
   readonly board: boolean;
+  /** Whether the garden's own lens — the map — is mounted over the plots instead of the board (chapter 13). */
+  readonly map?: boolean;
+  /** Whether the pages face wears the garden's own design, every surface replaced (chapter 13). */
+  readonly design?: boolean;
+  /** For the pages face: photograph at a desk's width rather than a phone's. */
+  readonly wide?: boolean;
   /** Which face the picture is of: the scene (default) or the routed pages at phone width. */
   readonly face?: "scene" | "pages";
   /** For the pages face: the path to photograph. */
@@ -450,6 +456,42 @@ const chapterTwelve: Chapter = {
   principal: coordinator,
 };
 
+/* ------------------------------------------- 13 · the garden's own face */
+
+/**
+ * Chapter nine replaced one page. This replaces every surface and every
+ * page — the shell, the home, the lists, the records, the problems — with
+ * the garden's own design, and the board in the scene with a lens the
+ * garden drew of itself. Nothing underneath changed: the same store, the
+ * same acts, the same rules and the same permissions the derived face
+ * reads. That is what a registry is for.
+ */
+const chapterThirteen: Chapter = {
+  n: 13,
+  slug: "the-gardens-own-face",
+  title: "The garden's own face",
+  claim: "Every surface of the pages face replaced with the garden's own design — an almanac, not an admin panel — and a lens the garden drew of itself in the scene. The same store, acts, rules and permissions underneath; only what a reader sees is the app's.",
+  adds: [
+    'createPageRegistry(schema).surface("shell" | "home" | "problems", …) and .register(kind, "list" | "record", …) for every kind',
+    'register("plot", { cardinality: "many", fidelity: "full" }, GardenMapView, { title: "The garden map" }) — a lens of the garden\'s own',
+  ],
+  app: chapterTwelve.app,
+  // The garden with the untended plot in it: the design has something to say.
+  seed: chapterEleven.seed,
+  stop: "#focus=agg:plot",
+  face: "pages",
+  path: "/pages",
+  wide: true,
+  remembers: false,
+  seat: true,
+  pages: true,
+  design: true,
+  lens: true,
+  board: false,
+  map: true,
+  principal: coordinator,
+};
+
 export const CHAPTERS: readonly Chapter[] = [
   chapterOne,
   chapterTwo,
@@ -463,6 +505,7 @@ export const CHAPTERS: readonly Chapter[] = [
   chapterTen,
   chapterEleven,
   chapterTwelve,
+  chapterThirteen,
 ];
 
 /** The chapter a URL asks for, or none: the finished example is the default. */

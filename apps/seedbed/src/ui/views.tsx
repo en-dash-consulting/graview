@@ -1,6 +1,7 @@
 import { createViews, type ViewProps, type ViewComponent } from "@graview/react";
 import { Chip, createBoardLens, createCoverageLens, hueFor, Panel, registerDefaultViews } from "@graview/primitives";
 import { seedbedSchema, type SeedbedSchema } from "../domain/schema.js";
+import { GardenMapView } from "./garden-map.js";
 
 type S = SeedbedSchema;
 
@@ -55,7 +56,10 @@ const beds = createBoardLens<S>({
 });
 
 /** The views for the garden — or for a chapter of it, which may not have plots yet. */
-export function seedbedViews(schema: SeedbedSchema = seedbedSchema, options: { lens?: boolean; board?: boolean } = {}) {
+export function seedbedViews(
+  schema: SeedbedSchema = seedbedSchema,
+  options: { lens?: boolean; board?: boolean; map?: boolean } = {},
+) {
   let registry = registerDefaultViews(schema, createViews(schema));
   const kinds = schema.kinds as readonly string[];
   /*
@@ -74,6 +78,13 @@ export function seedbedViews(schema: SeedbedSchema = seedbedSchema, options: { l
     registry = registry
       .register("plot", { cardinality: "many", fidelity: "full" }, beds.View as ViewComponent<S>, { title: "What grows where" })
       .register("plot", { cardinality: "many", fidelity: "summary" }, beds.View as ViewComponent<S>, { title: "What grows where" });
+  }
+  if (options.map && kinds.includes("plot")) {
+    // The garden's own lens over its plots, in place of the board: the same
+    // registry cell, a drawing the garden made of itself.
+    registry = registry
+      .register("plot", { cardinality: "many", fidelity: "full" }, GardenMapView, { title: "The garden map" })
+      .register("plot", { cardinality: "many", fidelity: "summary" }, GardenMapView, { title: "The garden map" });
   }
   if (options.lens && kinds.includes("gardener")) {
     // The lens, for a group of gardeners. The lens supplies the picture.

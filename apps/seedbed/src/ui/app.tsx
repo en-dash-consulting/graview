@@ -43,6 +43,8 @@ export interface SeedbedAppProps {
   readonly lens?: boolean;
   /** Whether the board lens is mounted over the plots. */
   readonly board?: boolean;
+  /** Whether the garden's own map lens is mounted over the plots, in place of the board. */
+  readonly map?: boolean;
 }
 
 /**
@@ -65,9 +67,10 @@ export function SeedbedApp({
   brand,
   lens = true,
   board = true,
+  map = false,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
-  const views = useMemo(() => seedbedViews(created.schema as never, { lens, board }), [created, lens, board]);
+  const views = useMemo(() => seedbedViews(created.schema as never, { lens, board, map }), [created, lens, board, map]);
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
 
   return (

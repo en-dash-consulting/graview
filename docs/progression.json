@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-10T06:41:30.848Z",
+  "at": "2026-09-10T11:56:26.736Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -494,6 +494,7 @@
         "districts": [],
         "page": "A plot in the gardenPlot 23 beds, looked after by Ravi. Nothing is growing.See it in the scene ↗Sow something hereLabel *Sown *Sow something",
         "custom": true,
+        "design": false,
         "fitsAPhone": true
       }
     },
@@ -673,6 +674,56 @@
         "wordmark": "Seedbed",
         "focused": null
       }
+    },
+    {
+      "n": 13,
+      "slug": "the-gardens-own-face",
+      "title": "The garden's own face",
+      "claim": "Every surface of the pages face replaced with the garden's own design — an almanac, not an admin panel — and a lens the garden drew of itself in the scene. The same store, acts, rules and permissions underneath; only what a reader sees is the app's.",
+      "adds": [
+        "createPageRegistry(schema).surface(\"shell\" | \"home\" | \"problems\", …) and .register(kind, \"list\" | \"record\", …) for every kind",
+        "register(\"plot\", { cardinality: \"many\", fidelity: \"full\" }, GardenMapView, { title: \"The garden map\" }) — a lens of the garden's own"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/13-the-gardens-own-face-light.png",
+        "dark": "docs/progression/13-the-gardens-own-face-dark.png"
+      },
+      "errors": [],
+      "picture": {
+        "width": 1280,
+        "height": 1344
+      },
+      "saw": {
+        "standing": null,
+        "districts": [],
+        "page": "The garden, this seasonEvery plot has someone.3 plots, 1 thing in the ground, 1 already harvested, and 2 pairs of hands. The garden holds itself to one agreement.The plots, where they lieAll plots →Plot 1JPlot 2RPlot 3JWhose handsAll garden",
+        "custom": false,
+        "design": true,
+        "fitsAPhone": true
+      }
     }
   ],
   "verdict": {
@@ -687,7 +738,8 @@
     "theOtherFaceIsThePlotsOwnPageInChapterNine": true,
     "theLensShowsWhoTendsWhatInChapterTen": true,
     "theBoardShowsTheEmptyBedInChapterEleven": true,
-    "theMigrationIsInTheLogInChapterTwelve": true
+    "theMigrationIsInTheLogInChapterTwelve": true,
+    "theGardenWearsItsOwnFaceInChapterThirteen": true
   },
   "passed": true
 }

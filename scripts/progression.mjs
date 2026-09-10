@@ -71,7 +71,8 @@ try {
       if (chapter.face === "pages") {
         // The routed face, at phone width: the whole page, as a phone shows it.
         const phone = await context.newPage();
-        await phone.setViewportSize({ width: 390, height: 844 });
+        // A phone for the derived face; a desk for a design that earns one.
+        await phone.setViewportSize(chapter.wide ? { width: 1280, height: 800 } : { width: 390, height: 844 });
         phone.on("pageerror", (error) => entry.errors.push(String(error.message ?? error)));
         phone.on("console", (message) => { if (message.type() === "error") entry.errors.push(message.text()); });
         await phone.goto(`http://localhost:${port}${chapter.path}?chapter=${chapter.n}&theme=${scheme}`, { waitUntil: "networkidle" });
@@ -80,13 +81,16 @@ try {
         await phone.screenshot({ path: resolve(out, file), fullPage: true });
         entry.pictures[scheme] = `docs/progression/${file}`;
         const height = await phone.evaluate(() => document.documentElement.scrollHeight);
-        entry.picture = { width: 390, height: Math.min(height, 1400), phone: true };
+        entry.picture = chapter.wide
+          ? { width: 1280, height: Math.min(height, 1400) }
+          : { width: 390, height: Math.min(height, 1400), phone: true };
         if (scheme === "light") {
           entry.saw = await phone.evaluate(() => ({
             standing: null,
             districts: [],
             page: document.querySelector("main")?.textContent?.trim().replace(/\s+/g, " ").slice(0, 240) ?? null,
             custom: document.querySelector('[data-testid="plot-page"]') !== null,
+            design: document.querySelector('[data-testid="seedbed-design"]') !== null && document.querySelector('[data-testid="garden-map"]') !== null,
             fitsAPhone: document.documentElement.scrollWidth <= window.innerWidth + 1,
           }));
         }
@@ -185,6 +189,7 @@ report.verdict = {
   theLensShowsWhoTendsWhatInChapterTen: /June/.test(report.chapters[9]?.saw?.focused ?? "") && /Plot 2/.test(report.chapters[9]?.saw?.focused ?? ""),
   theBoardShowsTheEmptyBedInChapterEleven: /nothing sown/i.test(report.chapters[10]?.saw?.focused ?? "") && /Beans/.test(report.chapters[10]?.saw?.focused ?? ""),
   theMigrationIsInTheLogInChapterTwelve: (report.chapters[11]?.saw?.activity ?? []).some((line) => /agreement|migration/i.test(line)),
+  theGardenWearsItsOwnFaceInChapterThirteen: report.chapters[12]?.saw?.design === true && report.chapters[12]?.saw?.fitsAPhone === true && /Every plot has someone|waits? for a caretaker/.test(report.chapters[12]?.saw?.page ?? ""),
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
 writeFileSync(resolve(repoRoot, "docs/progression.json"), `${JSON.stringify(report, null, 2)}\n`);

@@ -13,6 +13,7 @@ import { seedbedApp } from "./domain/app.js";
 import type { SeedbedSchema } from "./domain/schema.js";
 import { chapterFromSearch } from "./domain/chapters.js";
 import { SeedbedApp } from "./ui/app.js";
+import { seedbedDesign } from "./ui/design.js";
 import { seedbedPages } from "./ui/pages.js";
 
 const sheet = new CSSStyleSheet();
@@ -89,9 +90,18 @@ if (window.location.pathname.startsWith("/pages")) {
   createRoot(root).render(
     <PagesApp
       basename="/pages"
-      context={{ store: opened.store, ...(brand ? { brand } : {}), sceneHref: "/", remembers }}
+      context={{
+        store: opened.store,
+        ...(brand ? { brand } : {}),
+        // The seat the chapter puts at the keyboard: the pages withhold by it.
+        ...(chapter?.principal ? { principal: chapter.principal } : {}),
+        sceneHref: "/",
+        remembers,
+      }}
       // The garden's own plot page, over the derived defaults for the rest.
-      {...(!chapter || chapter.pages ? { registry: seedbedPages(opened.store.schema) } : {})}
+      {...(!chapter || chapter.pages
+        ? { registry: chapter?.design ? seedbedDesign(opened.store.schema) : seedbedPages(opened.store.schema) }
+        : {})}
     />,
   );
 } else {
@@ -102,6 +112,7 @@ if (window.location.pathname.startsWith("/pages")) {
       seat={chapter ? chapter.seat : true}
       lens={chapter ? chapter.lens : true}
       board={chapter ? chapter.board : true}
+      map={chapter ? (chapter.map ?? false) : false}
       brand={brand}
       syncUrl
       renderer="dom"

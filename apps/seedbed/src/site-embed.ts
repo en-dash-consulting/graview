@@ -1,5 +1,6 @@
 import { mount, mountWhenNear, type EmbedFace, type EmbedHandle } from "@graview/embed";
 import { CHAPTERS, type Chapter } from "./domain/chapters.js";
+import { seedbedDesign } from "./ui/design.js";
 import { seedbedPages } from "./ui/pages.js";
 import { seedbedViews } from "./ui/views.js";
 
@@ -26,12 +27,14 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
   return mount(element, {
     app: chapter.app,
     seed: chapter.seed,
-    ...(face ? { face } : {}),
+    // The page's own say first, then the chapter's face (a pages chapter
+    // opens on its pages), else the stop decides — altitude or the scene.
+    ...(face ? { face } : chapter.face === "pages" ? { face: "pages" as const } : {}),
     ...(chapter.stop ? { stop: chapter.stop } : {}),
     path: (chapter.path ?? "/pages").replace(/^\/pages/, "") || "/",
     ...(chapter.principal ? { principal: chapter.principal } : {}),
-    views: (s) => seedbedViews(s as never, { lens: chapter.lens, board: chapter.board }) as never,
-    ...(chapter.pages ? { pages: seedbedPages(schema) as never } : {}),
+    views: (s) => seedbedViews(s as never, { lens: chapter.lens, board: chapter.board, map: chapter.map ?? false }) as never,
+    ...(chapter.pages ? { pages: (chapter.design ? seedbedDesign(schema) : seedbedPages(schema)) as never } : {}),
     standing: "The garden keeps its agreements",
     // The page may name an embed itself: the opener carries chapter one
     // too, and two regions called "Chapter 1" is one landmark said twice.
