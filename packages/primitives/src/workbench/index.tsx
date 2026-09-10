@@ -35,7 +35,7 @@ import {
   type ToolCall,
   type ToolRuntime,
 } from "@graview/tools";
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chip } from "../primitives/index.js";
 
 /**
@@ -207,6 +207,25 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
  */
 export function Inspector() {
   const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
+  /*
+   * The pane is positioned within the SCENE'S BOX, not the window. It was
+   * fixed to the viewport, which put it at the page's edge when the scene
+   * was a box on a page — an embed's inspector drawn over the host's own
+   * navigation. The pointer menu's client coordinates are translated into
+   * that box, and clamped to it.
+   */
+  const asideRef = useRef<HTMLElement>(null);
+  const [box, setBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  useLayoutEffect(() => {
+    const parent = asideRef.current?.offsetParent;
+    if (!parent) return;
+    const rect = parent.getBoundingClientRect();
+    setBox((current) =>
+      current && current.left === rect.left && current.top === rect.top && current.width === rect.width && current.height === rect.height
+        ? current
+        : { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+    );
+  });
   const { selection, set, clear } = useSelection();
   /*
    * THE PERSON'S OWN PINS, loaded once per mount and passed into the same
@@ -451,6 +470,7 @@ export function Inspector() {
 
   return (
     <aside
+      ref={asideRef}
       aria-label="Inspector"
       // Chrome, not scene: the ties layer must never anchor a line to the
       // node names this pane repeats.
@@ -458,7 +478,7 @@ export function Inspector() {
       data-testid={atPointer ? "context-menu" : "inspector-strip"}
       onMouseDown={(event) => event.stopPropagation()}
       style={{
-        position: "fixed",
+        position: "absolute",
         /*
          * Above the jacked-in page, not only above the scene.
          *
@@ -484,8 +504,8 @@ export function Inspector() {
           ? {
               // Clamped so a right click near an edge does not open a menu
               // half off the screen.
-              left: Math.min(menuAt.x, Math.max(8, window.innerWidth - 320)),
-              top: Math.min(menuAt.y, Math.max(8, window.innerHeight - 260)),
+              left: Math.min(menuAt.x - (box?.left ?? 0), Math.max(8, (box?.width ?? window.innerWidth) - 320)),
+              top: Math.min(menuAt.y - (box?.top ?? 0), Math.max(8, (box?.height ?? window.innerHeight) - 260)),
               width: 300,
               maxHeight: "min(52cqh, 420px)",
               overflow: "auto",
@@ -497,7 +517,10 @@ export function Inspector() {
                * Everything past the viewport scrolls inside the pane.
                */
               left: 14,
-              top: view.overview ? 352 : 100,
+              // Under the relation key in the Graview; under the bar's edge
+              // otherwise — measured from the scene's own top, and no lower
+              // than a short box can afford.
+              top: view.overview ? "min(296px, 38cqh)" : 44,
               // Inside the gutter beside a 1040-wide centred focus at the
               // surveyed width, so the pane sits NEXT to the picture rather
               // than on its title.
@@ -507,7 +530,7 @@ export function Inspector() {
                * of the stage) and scrolls inside itself: a tall list of
                * repairs must not buy its height with the first raised card.
                */
-              maxHeight: view.overview ? "calc(100cqh - 372px)" : "calc(68cqh - 94px)",
+              maxHeight: view.overview ? "calc(100cqh - min(296px, 38cqh) - 20px)" : "calc(68cqh - 94px)",
               overflow: "auto",
             }),
       }}

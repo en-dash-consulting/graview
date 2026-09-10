@@ -220,10 +220,11 @@ function Faces({ face, stop, kinds }: { face: EmbedFace; stop: string | undefine
 
 function Strip({ face, onFace, standing }: { face: EmbedFace; onFace?: ((face: EmbedFace) => void) | undefined; standing: string }) {
   const { brand } = useGraview();
-  const faces: readonly { id: EmbedFace; label: string; title: string }[] = [
-    { id: "scene", label: "Scene", title: "The picture, from the ground" },
-    { id: "graview", label: "Graview", title: "The whole domain, from altitude" },
-    { id: "pages", label: "Pages", title: "The same app as ordinary pages" },
+  // Two faces, not three: altitude is the scene's own control, on the
+  // picture, and a third pill for it here said the same thing twice.
+  const faces: readonly { id: EmbedFace; label: string; title: string; pressed: boolean }[] = [
+    { id: "scene", label: "Scene", title: "The picture — rise and descend on it", pressed: face !== "pages" },
+    { id: "pages", label: "Pages", title: "The same app as ordinary pages", pressed: face === "pages" },
   ];
   return (
     <div
@@ -251,7 +252,7 @@ function Strip({ face, onFace, standing }: { face: EmbedFace; onFace?: ((face: E
         <button
           key={candidate.id}
           type="button"
-          aria-pressed={face === candidate.id}
+          aria-pressed={candidate.pressed}
           data-testid={`embed-face-${candidate.id}`}
           title={candidate.title}
           onClick={() => onFace?.(candidate.id)}
@@ -261,9 +262,9 @@ function Strip({ face, onFace, standing }: { face: EmbedFace; onFace?: ((face: E
             fontSize: 12.5,
             borderWidth: 1,
             borderStyle: "solid",
-            borderColor: face === candidate.id ? "var(--graview-accent)" : "var(--graview-edge)",
-            color: face === candidate.id ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-            background: face === candidate.id ? "var(--graview-panel)" : "transparent",
+            borderColor: candidate.pressed ? "var(--graview-accent)" : "var(--graview-edge)",
+            color: candidate.pressed ? "var(--graview-accent)" : "var(--graview-ink-muted)",
+            background: candidate.pressed ? "var(--graview-panel)" : "transparent",
           }}
         >
           {candidate.label}

@@ -89,6 +89,8 @@ function ring(
   canvasWidth: number,
   canvasHeight: number,
   inset: { readonly left?: number; readonly right?: number } = {},
+  /** Extra height the nearest card may take: a district opened in place lists its members. */
+  opened = 0,
 ): { x: number; y: number; depth: number; width: number; height: number }[] {
   // The span the ring may use: the canvas, less any rail reserved for chrome.
   const left = inset.left ?? 0;
@@ -106,7 +108,7 @@ function ring(
    * the ring's natural sweep put it past the bottom edge. The ring is only
    * as tall as leaves that card whole, with a little ground under it.
    */
-  const ry = Math.min(canvasHeight * 0.365, canvasHeight - cy - size.height * 0.65 - 12);
+  const ry = Math.max(0, Math.min(canvasHeight * 0.365, canvasHeight - cy - size.height * 0.65 - opened - 12));
   return Array.from({ length: count }, (_, index) => {
     // Starting at the bottom, going clockwise, so the first card of the shelf
     // ends up nearest the viewer rather than hidden at the back.
@@ -324,14 +326,27 @@ export function layout<S extends AnySchema>(
           contextY: opts.height * 0.918,
           contextH: opts.height * 0.082,
         }
-      : {
-          focusY: opts.height * 0.04,
-          focusH: opts.height * 0.42,
-          relationY: opts.height * 0.52,
-          relationH: opts.height * 0.29,
-          contextY: opts.height * 0.878,
-          contextH: opts.height * 0.092,
-        };
+      : (() => {
+          /*
+           * A SHORT CANVAS gives the focus more of itself. At a window's
+           * height 42% is a card with room to spare; in a box the height of
+           * a paragraph it is a card cut across its own facts. The focus
+           * takes up to 56% until it has 300 pixels, and the relations band
+           * gives up what the focus took; at 715 and above nothing changes.
+           */
+          const h = opts.height;
+          const focusY = h * 0.04;
+          const focusH = Math.max(h * 0.42, Math.min(h * 0.56, 300));
+          const relationY = focusY + focusH + h * 0.06;
+          return {
+            focusY,
+            focusH,
+            relationY,
+            relationH: Math.max(h * 0.12, h * 0.878 - h * 0.068 - relationY),
+            contextY: h * 0.878,
+            contextH: h * 0.092,
+          };
+        })();
 
   /*
    * A group gets the whole width; a single node does not.
@@ -713,7 +728,15 @@ export function layout<S extends AnySchema>(
     width?: number;
     height?: number;
   }[] = state.overview
-    ? ring(slotted.length, contextSize, opts.width, opts.height, opts.inset ?? {})
+    ? ring(
+        slotted.length,
+        contextSize,
+        opts.width,
+        opts.height,
+        opts.inset ?? {},
+        // An opened district lists its members below its name: room for a few.
+        slotted.some((item) => expanded.has(item.id)) ? 96 : 0,
+      )
     : shelf(
         slotted.length,
         contextSize,

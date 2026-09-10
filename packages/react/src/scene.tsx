@@ -2059,7 +2059,19 @@ export function connectorStrands(
     if (!fromHost || !toHost) continue;
     const obstacles = obstaclesFor(connector.from, connector.to);
     const edges = connector.edges;
-    if (overview || connector.loop || edges.length === 0) {
+    /*
+     * At altitude a line runs district to district — unless a district has
+     * been opened in place and draws the member the line is about, in which
+     * case it lands on the member. Whether one is drawn is the only test.
+     */
+    const drawnMember =
+      overview &&
+      edges.some(
+        (edge) =>
+          (edge.from !== connector.from && memberBoxes(stageEl, hostOf(connector.from), edge.from).length > 0) ||
+          (edge.to !== connector.to && memberBoxes(stageEl, hostOf(connector.to), edge.to).length > 0),
+      );
+    if ((overview && !drawnMember) || connector.loop || edges.length === 0) {
       strands.push({
         key: connector.id,
         connector,
