@@ -9,8 +9,8 @@
  * for years because nobody measures it.
  *
  * Ten widths, both schemes, plus the things axe cannot see: keyboard order,
- * reduced motion, forced colours, text-only zoom, and whether the interactive
- * demo's connector captions collide.
+ * reduced motion, forced colours, text-only zoom, and whether every live
+ * Graview on it is there at every width.
  *
  *   node scripts/verify-site.mjs
  *
@@ -106,22 +106,10 @@ try {
           })
           .map((el) => (el.textContent ?? "").trim().slice(0, 30));
 
-        // The demo's connector captions must not run into one another.
-        const labels = [...document.querySelectorAll(".wire-label")].map((t) => t.getBBox());
-        let captionHits = 0;
-        for (let i = 0; i < labels.length; i++) {
-          for (let j = i + 1; j < labels.length; j++) {
-            const a = labels[i], b = labels[j];
-            const w = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
-            const h = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
-            if (w > 2 && h > 2) captionHits++;
-          }
-        }
         return {
           sideways: root.scrollWidth > root.clientWidth + 1,
           small: small.slice(0, 4),
           cut: cut.slice(0, 4),
-          captionHits,
         };
       });
 
@@ -151,21 +139,6 @@ try {
     const style = getComputedStyle(link);
     return style.outlineStyle === "solid" && parseFloat(style.outlineWidth) >= 2;
   });
-  const demo = await page.evaluate(() => {
-    const nodes = [...document.querySelectorAll(".node")];
-    nodes[3].click();
-    return {
-      live: document.getElementById("foot")?.getAttribute("aria-live"),
-      said: (document.getElementById("foot")?.textContent ?? "").length,
-      edges: document.querySelectorAll("#scene-edges li").length,
-      current: document.querySelectorAll('.node[aria-current="true"]').length,
-      labelled: nodes.every((n) => (n.getAttribute("aria-label") ?? "").length > 3),
-    };
-  });
-  report.criteria.activatingANodeIsAnnounced = demo.live === "polite" && demo.said > 10;
-  report.criteria.theConnectorWordsExistAsText = demo.edges > 0;
-  report.criteria.exactlyOneNodeIsCurrent = demo.current === 1;
-  report.criteria.everyNodeIsNamed = demo.labelled === true;
   await page.addStyleTag({ content: "html { font-size: 200% }" });
   await page.waitForTimeout(400);
   /* A chapter's face switches on the page itself: the picture is the app. */
@@ -185,10 +158,14 @@ try {
   const reduced = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
   await reduced.goto(PAGE, { waitUntil: "networkidle" });
   await reduced.waitForTimeout(400);
+  // The opener's own Graview is on screen at load, so its cards are the
+  // thing to ask: under reduced motion the theme turns their transitions off.
+  await reduced.waitForFunction(() => document.querySelector("[data-graview-view]") !== null, null, { timeout: 20_000 }).catch(() => {});
   report.criteria.reducedMotionIsHonoured = await reduced.evaluate(() => {
-    const node = document.querySelector(".node");
+    const card = document.querySelector("[data-graview-view]");
     return (
-      parseFloat(getComputedStyle(node).transitionDuration) < 0.05 &&
+      card !== null &&
+      parseFloat(getComputedStyle(card).transitionDuration) < 0.05 &&
       getComputedStyle(document.documentElement).scrollBehavior === "auto"
     );
   });
@@ -208,7 +185,7 @@ try {
 }
 
 const bad = report.viewports.filter(
-  (v) => v.violations.length || v.sideways || v.small.length || v.cut.length || v.captionHits || v.errors.length,
+  (v) => v.violations.length || v.sideways || v.small.length || v.cut.length || v.errors.length,
 );
 report.criteria.everyViewportIsClean = bad.length === 0;
 // Twelve chapters, live, at every width and in both schemes — the page is
@@ -225,7 +202,6 @@ for (const v of report.viewports) {
     v.sideways ? "sideways scroll" : "",
     v.small.length ? `small: ${v.small.join("; ")}` : "",
     v.cut.length ? `cut: ${v.cut.join("; ")}` : "",
-    v.captionHits ? `${v.captionHits} caption collisions` : "",
     v.errors.length ? `js: ${v.errors[0]}` : "",
   ].filter(Boolean);
   if (notes.length) process.stdout.write(`?? ${v.scheme}/${String(v.width).padStart(4)}  ${notes.join("  ")}\n`);

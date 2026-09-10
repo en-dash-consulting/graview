@@ -45,9 +45,37 @@ describe("the board lens, read from the occupant's end", () => {
     // The garden's shape: a planting grows-in a plot. Same board, other end.
     const reversed = edges.map((edge) => ({ kind: "grows-in", from: edge.to, to: edge.from }));
     const board = buildBoard(nodes, reversed, { ...options, fill: "grows-in", fillFrom: "occupant" }, schema);
-    expect(board.slots.find((slot) => slot.id === "s1")?.occupantLabel).toBe("Ada");
+    expect(board.slots.find((slot) => slot.id === "s1")?.occupants.map((o) => o.label)).toEqual(["Ada"]);
     expect(board.empty).toEqual(["s2"]);
     expect(board.spare.map((g) => g.label)).toEqual(["Cleo"]);
+  });
+});
+
+describe("a slot that holds several", () => {
+  it("shows every occupant and lists none of them as not in", () => {
+    // Two plantings in one plot. The board showed one and benched the other,
+    // which was a picture stating something untrue.
+    const shared = [...edges, { kind: "taken-by", from: "s1", to: "g-cleo" }];
+    const board = buildBoard(nodes, shared, options, schema);
+    expect(board.slots.find((slot) => slot.id === "s1")?.occupants.map((o) => o.label)).toEqual(["Ada", "Cleo"]);
+    expect(board.spare).toEqual([]);
+    expect(board.empty).toEqual(["s2"]);
+  });
+
+  it("makes each name its own target when the disc stands for the slot", () => {
+    const shared = [...edges, { kind: "taken-by", from: "s1", to: "g-cleo" }];
+    const store = new Store({ schema, mutations: [], invariants: [], snapshot: { nodes, edges: shared } });
+    const lens = createBoardLens<typeof schema>(options);
+    const html = renderToStaticMarkup(
+      <GraviewProvider store={store} views={createViews(schema)} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("seat") }}>
+        <lens.View nodes={nodes as never} fidelity="full" cardinality="many" mode="scene" selected={false} />
+      </GraviewProvider>,
+    );
+    expect(html).toContain('data-graview-pick="s1"');
+    expect(html).toContain('data-graview-pick="g-ada"');
+    expect(html).toContain('data-graview-pick="g-cleo"');
+    // A slot with one occupant is still that occupant's disc.
+    expect(html).toContain('data-graview-pick="g-bram"');
   });
 });
 

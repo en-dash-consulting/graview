@@ -1,4 +1,4 @@
-import { createViews, useGraview, type ViewProps, type ViewComponent } from "@graview/react";
+import { createViews, type ViewProps, type ViewComponent } from "@graview/react";
 import { Chip, createBoardLens, createCoverageLens, hueFor, Panel, registerDefaultViews } from "@graview/primitives";
 import { seedbedSchema, type SeedbedSchema } from "../domain/schema.js";
 
@@ -38,16 +38,6 @@ function PlotView({ node, fidelity, selected, mode, flagged }: ViewProps<S, "plo
  * the tests that answer them; it has never heard of a garden.
  */
 const tending = createCoverageLens<S>({ rows: "gardener", columns: "plot", link: "tended-by" });
-const TendingView = ((props: ViewProps<S>) => {
-  /*
-   * A group of gardeners is the view's subject, but the grid is about two
-   * kinds: the lens needs the plots too, or it draws rows with no columns.
-   * The store has them; the view is what puts them in the lens's hands.
-   */
-  const { store } = useGraview<S>();
-  const nodes = store.graph.allNodes().filter((node) => node.kind === "gardener" || node.kind === "plot");
-  return <tending.View {...props} nodes={nodes as never} label="Who tends what" />;
-}) as ViewComponent<S>;
 
 /**
  * The board lens over the garden: every plot where it lies, holding what
@@ -63,11 +53,6 @@ const beds = createBoardLens<S>({
   emptyLabel: "nothing sown",
   aspect: 1.7,
 });
-const BedsView = ((props: ViewProps<S>) => {
-  const { store } = useGraview<S>();
-  const nodes = store.graph.allNodes().filter((node) => node.kind === "plot" || node.kind === "planting");
-  return <beds.View {...props} nodes={nodes as never} label="What grows where" />;
-}) as ViewComponent<S>;
 
 /** The views for the garden — or for a chapter of it, which may not have plots yet. */
 export function seedbedViews(schema: SeedbedSchema = seedbedSchema, options: { lens?: boolean; board?: boolean } = {}) {
@@ -87,14 +72,14 @@ export function seedbedViews(schema: SeedbedSchema = seedbedSchema, options: { l
     // Titled, so the lens is a PLACE: listed by name in the bar, pressable
     // from anywhere, and findable again after you have clicked into a plot.
     registry = registry
-      .register("plot", { cardinality: "many", fidelity: "full" }, BedsView, { title: "What grows where" })
-      .register("plot", { cardinality: "many", fidelity: "summary" }, BedsView, { title: "What grows where" });
+      .register("plot", { cardinality: "many", fidelity: "full" }, beds.View as ViewComponent<S>, { title: "What grows where" })
+      .register("plot", { cardinality: "many", fidelity: "summary" }, beds.View as ViewComponent<S>, { title: "What grows where" });
   }
   if (options.lens && kinds.includes("gardener")) {
     // The lens, for a group of gardeners. The lens supplies the picture.
     registry = registry
-      .register("gardener", { cardinality: "many", fidelity: "full" }, TendingView, { title: "Who tends what" })
-      .register("gardener", { cardinality: "many", fidelity: "summary" }, TendingView, { title: "Who tends what" });
+      .register("gardener", { cardinality: "many", fidelity: "full" }, tending.View as ViewComponent<S>, { title: "Who tends what" })
+      .register("gardener", { cardinality: "many", fidelity: "summary" }, tending.View as ViewComponent<S>, { title: "Who tends what" });
   }
   return registry;
 }

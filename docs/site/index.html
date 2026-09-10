@@ -160,11 +160,9 @@ html { scroll-behavior: smooth; }
 /* Windows High Contrast throws the palette away, so anything carrying meaning
    in a border or a fill has to say so in system colours too. */
 @media (forced-colors: active) {
-  .demo, .code, .term, .endash, .node, .lens figure { border-color: CanvasText; }
+  .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }
   section > .head .tick, .plane .no i { background: CanvasText; forced-color-adjust: none; }
-  .node[data-plane="0"] { outline: 2px solid Highlight; }
-  .wire { stroke: CanvasText; }
 }
 
 a { color: var(--pine); text-underline-offset: 3px; text-decoration-thickness: 1px; }
@@ -295,113 +293,6 @@ section > .head .tick {
   transform: translateY(-6px);
 }
 .stack { display: grid; gap: 16px; align-items: start; }
-
-/* ── demo ──────────────────────────────────────────────────────────── */
-
-.demo {
-  border: 1px solid var(--rule);
-  background: var(--panel);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.demo-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--rule-2);
-  background: var(--sunk);
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  color: var(--ink-3);
-}
-.demo-bar .g { flex: 1 1 auto; }
-.demo-bar b { color: var(--pine); font-weight: 500; }
-
-#scene {
-  position: relative;
-  /* Tall enough for the fan at any width: narrow viewports arrange the
-     neighbours in two rows rather than squeezing them into one. */
-  height: clamp(300px, 46vw + 130px, 372px);
-  touch-action: manipulation;
-}
-@media (max-width: 560px) { #scene { height: 360px; } }
-#wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-
-.node {
-  position: absolute;
-  left: 0; top: 0;
-  display: grid;
-  gap: 1px;
-  padding: 8px 11px;
-  min-width: 76px;
-  max-width: 46%;
-  border: 1px solid var(--rule);
-  background: var(--panel);
-  border-radius: 2px;
-  font-family: var(--sans);
-  text-align: left;
-  color: var(--ink);
-  cursor: pointer;
-  transform-origin: 50% 50%;
-  transition: transform 380ms cubic-bezier(.22,.61,.36,1), opacity 380ms ease,
-              border-color 160ms ease, box-shadow 260ms ease;
-  will-change: transform;
-}
-.node:hover { border-color: var(--pine); }
-.node .kind {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.node .name {
-  font-size: 13.5px;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-  /* A long label wraps inside the card rather than pushing it off the frame. */
-  overflow-wrap: anywhere;
-}
-@media (max-width: 560px) {
-  .node { padding: 6px 8px; min-width: 64px; }
-  .node .name { font-size: 12px; }
-  .node[data-plane="0"] .name { font-size: 15px; }
-}
-.node[data-plane="0"] {
-  border-color: var(--pine);
-  box-shadow: 0 14px 30px -20px rgba(0, 23, 105, 0.75);
-  z-index: 3;
-}
-.node[data-plane="0"] .name { font-size: 18px; }
-.node[data-plane="0"] .kind { color: var(--pine); }
-.node[data-plane="1"] { z-index: 2; }
-.node[data-plane="2"] { z-index: 1; color: var(--ink-3); }
-.node[data-plane="2"] .name { font-size: 11.5px; font-weight: 500; }
-
-.wire { stroke: var(--rule); stroke-width: 1; fill: none; }
-.wire.on { stroke: var(--pine); stroke-opacity: 0.5; }
-.wire-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.03em;
-  fill: var(--ink-3);
-  text-anchor: middle;
-}
-
-.demo-foot {
-  border-top: 1px solid var(--rule-2);
-  padding: 10px 13px;
-  background: var(--sunk);
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink-2);
-  min-height: 42px;
-  display: flex;
-  align-items: center;
-}
 
 /* ── code ──────────────────────────────────────────────────────────── */
 
@@ -693,7 +584,6 @@ footer {
   .two { gap: 20px; }
   section { padding-top: 42px; }
 }
-@media (prefers-reduced-motion: reduce) { .node { transition-duration: 1ms; } }
 </style>
 
 <a class="skip" href="#what">Skip to content</a>
@@ -715,7 +605,6 @@ footer {
 
     <div class="jump">
       <a href="#what">What it is</a>
-      <a href="#try">Try it</a>
       <a href="#grown">The garden, grown</a>
       <a href="#declare">The declaration</a>
       <a href="#packages">The packages</a>
@@ -820,35 +709,6 @@ footer {
         graph, the rules, the log, the tool surface and the pictures are one
         system, and they ship as packages you install.
       </p>
-    </section>
-
-    <section id="try" aria-labelledby="h-try">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-try">Try it</h2></div>
-      <p class="sm" style="margin-bottom: 14px; max-width: 62ch;">
-        Click any node. It moves to the front and everything one edge away
-        rises behind it. The words on the connectors are read out of the
-        schema. Nobody wrote them for this page.
-      </p>
-
-      <div class="demo">
-        <div class="demo-bar">
-          <b>● plane 0</b>
-          <span class="g"></span>
-          <span>graview/react · dom path</span>
-        </div>
-        <div id="scene" role="group" aria-labelledby="h-try" aria-describedby="scene-help">
-          <svg id="wires" aria-hidden="true"></svg>
-        </div>
-        <p id="scene-help" class="sr-only">
-          A graph of seven nodes. Activate any node to bring it to the front;
-          the list below it names everything one edge away and the relation
-          that reaches it.
-        </p>
-        <div class="demo-foot">
-          <span id="foot" role="status" aria-live="polite"></span>
-        </div>
-        <ul id="scene-edges" class="sr-only"></ul>
-      </div>
     </section>
 
     <!-- progression:start -->
@@ -1443,188 +1303,6 @@ footer {
 
 
 <script>
-/* The demo. Four kinds from the worked example, and the edge descriptions the
-   schema actually carries. */
-
-const NODES = [
-  { id: "deposit", kind: "task",   name: "Pay the deposit" },
-  { id: "today",   kind: "list",   name: "Today" },
-  { id: "why",     kind: "reason", name: "Landlord holds it 48h" },
-  { id: "van",     kind: "task",   name: "Book the van" },
-  { id: "past",    kind: "rule",   name: "Nothing due in the past" },
-  { id: "week",    kind: "list",   name: "This week" },
-  { id: "meters",  kind: "task",   name: "Read the meters" },
-];
-
-const EDGES = [
-  { from: "today",  to: "deposit", out: "the tasks on this list",  in: "the list it is on" },
-  { from: "today",  to: "van",     out: "the tasks on this list",  in: "the list it is on" },
-  { from: "week",   to: "meters",  out: "the tasks on this list",  in: "the list it is on" },
-  { from: "why",    to: "deposit", out: "what this is about",      in: "why this is here" },
-  { from: "van",    to: "deposit", out: "what has to happen first", in: "what is waiting on this" },
-  { from: "past",   to: "deposit", out: "what it judges",          in: "the rule that judges it" },
-  { from: "past",   to: "meters",  out: "what it judges",          in: "the rule that judges it" },
-];
-
-const scene = document.getElementById("scene");
-const wires = document.getElementById("wires");
-const foot  = document.getElementById("foot");
-const edges = document.getElementById("scene-edges");
-
-const cards = new Map();
-for (const node of NODES) {
-  const el = document.createElement("button");
-  el.type = "button";
-  el.className = "node";
-  el.innerHTML = '<span class="kind"></span><span class="name"></span>';
-  el.querySelector(".kind").textContent = node.kind;
-  el.querySelector(".name").textContent = node.name;
-  el.setAttribute("aria-label", node.name + ", " + node.kind);
-  el.addEventListener("click", () => focus(node.id));
-  scene.appendChild(el);
-  cards.set(node.id, el);
-}
-
-let focused = "deposit";
-
-function neighbours(id) {
-  const out = [];
-  for (const edge of EDGES) {
-    if (edge.from === id) out.push({ id: edge.to, label: edge.out });
-    else if (edge.to === id) out.push({ id: edge.from, label: edge.in });
-  }
-  return out;
-}
-
-function place() {
-  const box = scene.getBoundingClientRect();
-  const W = box.width, H = box.height;
-  const near = neighbours(focused);
-  const nearIds = new Set(near.map((n) => n.id));
-  const rest = NODES.filter((n) => n.id !== focused && !nearIds.has(n.id));
-  const seats = new Map();
-
-  /*
-   * Two rows when one will not fit.
-   *
-   * The fan divides the width between the neighbours, so on a phone four of
-   * them came out as four overlapping cards. Measuring against the widest card
-   * actually rendered means the break happens when it is needed rather than at
-   * a width somebody guessed.
-   */
-  const widest = Math.max(96, ...[...cards.values()].map((el) => el.offsetWidth));
-  const perRow = Math.max(1, Math.min(near.length, Math.floor(W / (widest + 10))));
-  const rows = Math.ceil(near.length / perRow);
-  const tight = rows > 1;
-
-  seats.set(focused, { x: W * 0.5, y: H * (tight ? 0.14 : 0.24), scale: 1, plane: 0, opacity: 1 });
-
-  near.forEach((n, i) => {
-    const row = Math.floor(i / perRow);
-    const inRow = i % perRow;
-    const count = Math.min(perRow, near.length - row * perRow);
-    const spread = Math.min(0.82, 0.23 * count);
-    const t = count === 1 ? 0.5 : inRow / (count - 1);
-    const x = W * (0.5 - spread / 2 + spread * t);
-    const baseY = tight ? 0.42 + row * 0.23 : 0.62;
-    const lift = tight ? 0 : Math.sin(t * Math.PI) * H * 0.05;
-    seats.set(n.id, { x, y: H * baseY - lift, scale: tight ? 0.84 : 0.9, plane: 1, opacity: 1 });
-  });
-
-  rest.forEach((n, i) => {
-    const step = W / (rest.length + 1);
-    seats.set(n.id, { x: step * (i + 1), y: H * 0.92, scale: 0.62, plane: 2, opacity: 0.62 });
-  });
-
-  for (const [id, el] of cards) {
-    const seat = seats.get(id);
-    const w = el.offsetWidth, h = el.offsetHeight;
-    // Keep the card inside the frame. The arc spreads from the middle, so the
-    // outer two run off the edge as soon as their labels are long.
-    const half = (w * seat.scale) / 2;
-    seat.x = Math.max(half + 12, Math.min(W - half - 12, seat.x));
-    el.style.transform =
-      "translate(" + (seat.x - w / 2) + "px," + (seat.y - h / 2) + "px) scale(" + seat.scale + ")";
-    el.style.opacity = seat.opacity;
-    el.dataset.plane = seat.plane;
-    // `aria-current` is present or absent. "false" is legal and says nothing.
-    if (id === focused) el.setAttribute("aria-current", "true");
-    else el.removeAttribute("aria-current");
-  }
-
-  wires.setAttribute("viewBox", "0 0 " + W + " " + H);
-  wires.innerHTML = "";
-  const hub = seats.get(focused);
-  for (const n of near) {
-    const seat = seats.get(n.id);
-    const midY = (hub.y + seat.y) / 2;
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    line.setAttribute(
-      "d",
-      "M " + hub.x + " " + (hub.y + 20) + " C " + hub.x + " " + midY +
-      ", " + seat.x + " " + midY + ", " + seat.x + " " + (seat.y - 19),
-    );
-    line.setAttribute("class", "wire on");
-    wires.appendChild(line);
-
-    /*
-     * The caption is trimmed to its own slot.
-     *
-     * Two rows on a phone put "what is waiting on this" and "the rule that
-     * judges it" side by side in 150 pixels each, and they ran into one
-     * another and read as one sentence. The full wording is still in the
-     * caption under the frame and in the list the screen reader gets, so
-     * nothing is lost by clipping the drawn one.
-     */
-    const slot = W / Math.max(1, perRow) - 14;
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("class", "wire-label");
-    text.setAttribute("x", Math.max(56, Math.min(W - 56, seat.x)));
-    text.setAttribute("y", seat.y - 27);
-    text.textContent = n.label;
-    wires.appendChild(text);
-    // MEASURED, not estimated. Guessing the advance width of the mono face
-    // left both second-row captions one pixel inside their slots and touching
-    // each other on a 320-pixel screen, which reads as one sentence made of
-    // two. The browser knows the answer; ask it.
-    let label = n.label;
-    while (label.length > 4 && text.getComputedTextLength() > slot) {
-      label = label.slice(0, -1).trimEnd();
-      text.textContent = label + "…";
-    }
-  }
-}
-
-function focus(id) {
-  focused = id;
-  const node = NODES.find((n) => n.id === id);
-  const near = neighbours(id);
-  foot.textContent =
-    node.name + " is a " + node.kind + ". " +
-    (near.length === 1 ? "One thing touches it." : near.length + " things touch it.") +
-    " Each connector is captioned by the edge that reaches it.";
-
-  /*
-   * The connectors, in text.
-   *
-   * Their captions are the point of the demo and they exist only as words
-   * drawn on an SVG that is hidden from assistive technology — which would
-   * make the one thing this is meant to show the one thing a screen reader
-   * cannot get at. The same data, as a list.
-   */
-  edges.innerHTML = "";
-  for (const n of near) {
-    const other = NODES.find((x) => x.id === n.id);
-    const li = document.createElement("li");
-    li.textContent = n.label + ": " + other.name + ", " + other.kind;
-    edges.appendChild(li);
-  }
-  place();
-}
-
-focus(focused);
-window.addEventListener("resize", place);
-
 /*
  * A scroll region is a tab stop only when there is something to scroll to.
  *
@@ -1651,7 +1329,6 @@ function markScrollers() {
 markScrollers();
 window.addEventListener("resize", markScrollers);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScrollers);
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
 </script>
 <!-- The garden's chapters, live: built by `pnpm site:build` from apps/seedbed. -->
 <script src="chapters.js"></script>
