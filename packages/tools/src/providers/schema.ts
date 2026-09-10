@@ -1,4 +1,4 @@
-import { argShape, nodeRefArgs, type AnySchema } from "@graview/core";
+import { argShape, nodeRefArgs, type AnySchema, type Store } from "@graview/core";
 import type { Affordance, AffordanceProvider, OpenParameter } from "../types.js";
 
 const BASE_SCORE = 40;
@@ -241,6 +241,32 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
         }
 
         /*
+         * A ONE-PRESS ACT MUST BE ABLE TO ACT. An action with nothing
+         * required left to ask is offered as a single press — and pressed
+         * with only its subject, a derived edit whose every field is
+         * optional refused: "Nothing to change — give at least one of
+         * label a value", said on the button. Its inputs were inputs all
+         * along; being optional made them askable one at a time, not
+         * unnecessary. So an action that needs nothing more is rehearsed
+         * with what it has, and one that would refuse asks for its optional
+         * arguments instead, each of which may be skipped.
+         */
+        if (open.length === 0 && subjectId) {
+          const optionalArgs = otherOptionalArgs(mutation.input, subject.arg);
+          if (optionalArgs.length > 0 && !rehearses(store as unknown as Pick<Store<AnySchema>, "preview">, mutation.name, { [subject.arg]: subjectId })) {
+            for (const name of optionalArgs) {
+              const ref = nodeRefArgs(mutation.input).find((candidate) => candidate.name === name);
+              open.push({
+                name,
+                optional: true,
+                ...(ref ? { kinds: ref.kinds } : {}),
+                shape: argShape(mutation.input, name),
+              });
+            }
+          }
+        }
+
+        /*
          * Only actions the interface can actually ASK FOR.
          *
          * An open argument with no candidates and no scalar shape — a
@@ -391,6 +417,30 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
 }
 
 /** Required input fields that are not node references and not the subject. */
+/** The arguments the input would accept unanswered, the subject aside. */
+function otherOptionalArgs(input: unknown, subjectArg: string): string[] {
+  const shape = (input as { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> })
+    .shape;
+  if (!shape) return [];
+  return Object.entries(shape)
+    .filter(([name, field]) => name !== subjectArg && field.safeParse(undefined).success)
+    .map(([name]) => name);
+}
+
+/** Whether the mutation, called with exactly these arguments, would go through. */
+function rehearses(
+  store: Pick<Store<AnySchema>, "preview">,
+  name: string,
+  args: Record<string, unknown>,
+): boolean {
+  try {
+    store.preview({ name, args });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function otherRequiredArgs(input: unknown, subjectArg: string): string[] {
   const shape = (input as { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> })
     .shape;

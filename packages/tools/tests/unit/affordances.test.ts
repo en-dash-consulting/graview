@@ -586,3 +586,51 @@ describe("one tool surface, two transports", () => {
     expect(result.error).toContain("later operation depends on it");
   });
 });
+
+describe("a one-press act must be able to act", () => {
+  /*
+   * The strip counted only REQUIRED arguments as open, so a derived edit
+   * whose every field is optional looked like a single press — and pressed
+   * with just its subject it refused, on the button: "Nothing to change".
+   * An action with nothing required left is rehearsed with what it has;
+   * one that would refuse asks for its optional arguments instead.
+   */
+  const retitle = bound.defineMutation("retitle", {
+    title: "Change the run",
+    subject: { kinds: ["duty"], arg: "dutyId" },
+    input: z.object({ dutyId: nodeRef(["duty"]), label: z.string().optional(), day: z.string().optional() }),
+    apply(ctx, args) {
+      const patch = Object.fromEntries(Object.entries(args).filter(([key, value]) => key !== "dutyId" && value !== undefined));
+      if (Object.keys(patch).length === 0) throw new Error("Nothing to change.");
+      ctx.patchNode(args.dutyId, patch);
+    },
+  });
+  const nudge = bound.defineMutation("nudge", {
+    title: "Nudge",
+    subject: { kinds: ["duty"], arg: "dutyId" },
+    input: z.object({ dutyId: nodeRef(["duty"]), by: z.number().optional() }),
+    apply(ctx, args) {
+      ctx.patchNode(args.dutyId, { at: 9 + (args.by ?? 1) });
+    },
+  });
+  const withBoth = () =>
+    new Store({
+      schema,
+      mutations: [retitle, nudge],
+      snapshot: { nodes: [{ id: "d1", kind: "duty", label: "Morning", day: "mon", at: 9 }], edges: [] },
+    });
+
+  it("asks for the optional arguments of an act that would refuse with none", () => {
+    const derived = deriveAffordances(withBoth(), ["d1"]);
+    const action = derived.affordances.find((a) => a.mutation === "retitle")!;
+    expect(action.open).toEqual([
+      { name: "label", optional: true, shape: { type: "text" } },
+      { name: "day", optional: true, shape: { type: "text" } },
+    ]);
+  });
+
+  it("keeps an act that goes through as it is to a single press", () => {
+    const derived = deriveAffordances(withBoth(), ["d1"]);
+    expect(derived.affordances.find((a) => a.mutation === "nudge")!.open).toEqual([]);
+  });
+});

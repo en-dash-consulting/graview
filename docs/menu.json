@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-10T01:10:19.060Z",
+  "at": "2026-09-10T05:18:37.929Z",
   "engine": "chromium",
   "checks": {
     "filterOnlyPastTheFold": {
@@ -24,16 +24,16 @@
       "before": [
         "finish",
         "reschedule",
-        "edit-task",
         "reopen",
-        "rename"
+        "rename",
+        "edit-task"
       ],
       "after": [
         "finish",
         "reschedule",
         "rename",
-        "edit-task",
-        "reopen"
+        "reopen",
+        "edit-task"
       ],
       "headings": [
         "⚠ Was due 2026-08-28",
