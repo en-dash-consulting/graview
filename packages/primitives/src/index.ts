@@ -46,6 +46,7 @@ export { QuickRelations } from "./quick-relations.js";
 export { ChatPanel } from "./chat.js";
 export type { ChatPanelProps } from "./chat.js";
 export { Wordmark } from "./wordmark.js";
+export { Places } from "./places.js";
 export { Shell } from "./shell.js";
 export type { ShellProps } from "./shell.js";
 // The primitive set: enough for a new kind to render before anyone writes a view.

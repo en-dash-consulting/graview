@@ -27,6 +27,27 @@ export interface ViewRegistration<V = unknown> {
   readonly cardinality: Cardinality;
   readonly fidelity: Fidelity;
   readonly view: V;
+  /** The place's name, when the registration gave it one. */
+  readonly title?: string;
+}
+
+/**
+ * What a registration may say about itself beyond the cell it fills.
+ *
+ * A `title` on a group view makes it a PLACE: a lens over the gardeners is
+ * "Who tends what", and an interface can list it, press it, and say where
+ * you are. Without a name a lens was only reachable by focusing the group
+ * it happened to be registered on, and once you had clicked into a member
+ * there was no way to know it existed, let alone get back to it.
+ */
+export interface ViewMeta {
+  readonly title?: string;
+}
+
+/** A named group view: somewhere to go, by name. */
+export interface Place {
+  readonly kind: string;
+  readonly title: string;
 }
 
 export interface ViewRegistry<S extends AnySchema, V = unknown> {
@@ -39,9 +60,12 @@ export interface ViewRegistry<S extends AnySchema, V = unknown> {
     kind: K,
     cell: ViewCell,
     view: V,
+    meta?: ViewMeta,
   ): ViewRegistry<S, V>;
   /** The exact cell, with no fallback. */
   lookup(kind: string, cell: ViewCell): V | undefined;
+  /** The named group views, one per kind, in registration order. */
+  places(): readonly Place[];
   /**
    * The best available view for a cell: exact match, then a coarser fidelity,
    * then the primitive fallback the caller supplies.
@@ -72,14 +96,24 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
   const entries = new Map<string, ViewRegistration<V>>();
 
   const registry: ViewRegistry<S, V> = {
-    register(kind, cell, view) {
+    register(kind, cell, view, meta) {
       entries.set(key(kind, cell), {
         kind,
         cardinality: cell.cardinality,
         fidelity: cell.fidelity,
         view,
+        ...(meta?.title ? { title: meta.title } : {}),
       });
       return registry;
+    },
+    places() {
+      const found: Place[] = [];
+      for (const entry of entries.values()) {
+        if (entry.cardinality !== "many" || !entry.title) continue;
+        if (found.some((place) => place.kind === entry.kind)) continue;
+        found.push({ kind: entry.kind, title: entry.title });
+      }
+      return found;
     },
     lookup(kind, cell) {
       return entries.get(key(kind, cell))?.view;

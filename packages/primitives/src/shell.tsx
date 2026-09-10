@@ -3,6 +3,7 @@ import { Scene, useGraview, UrlSync, type Scheme, type SceneProps } from "@gravi
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode } from "react";
 import { ChatPanel } from "./chat.js";
+import { Places } from "./places.js";
 import { QuickRelations } from "./quick-relations.js";
 import { RelationKey } from "./relation-key.js";
 import {
@@ -120,6 +121,8 @@ export function Shell<S extends AnySchema>({
         <Backtrack />
         {nav}
         <Trail home={home} {...(homeLabel !== undefined ? { homeLabel } : {})} />
+        {/* The named pictures over the graph, if the app registered any. */}
+        <Places<S> />
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
           {pagesHref ? (
             // The scene offering the page face: two faces, one application.

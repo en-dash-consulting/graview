@@ -49,6 +49,15 @@ Read one before writing your own:
 6. **Render at three fidelities.** `glyph` is a chip; `summary` is denser
    content, not the same content scaled down; `full` is the picture.
 
+7. **Give it a name when you register it.** A lens mounted over a group is
+   registered on that kind's `many` cells, and the fourth argument names it:
+   `registry.register("gardener", { cardinality: "many", fidelity: "full" },
+   TendingView, { title: "Who tends what" })`. A titled group view is a
+   PLACE — the bar and an embed's strip list it by name, press it from
+   anywhere, and show it pressed while you are there. Without the title the
+   lens is reachable only by focusing the group, and once someone clicks
+   into a member nothing on screen says it exists.
+
 ## Then find out whether it worked
 
 ```sh

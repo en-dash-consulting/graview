@@ -26,7 +26,7 @@ function faceOf(chapter: Chapter): EmbedFace {
   return chapter.stop.includes("overview=1") ? "graview" : "scene";
 }
 
-export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace): EmbedHandle {
+export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, label?: string): EmbedHandle {
   const chapter = CHAPTERS[n - 1];
   if (!chapter) throw new Error(`No chapter ${n}; there are ${CHAPTERS.length}.`);
   const schema = chapter.app.schema;
@@ -41,7 +41,9 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace):
     views: (s) => seedbedViews(s as never, { lens: chapter.lens, board: chapter.board }) as never,
     ...(chapter.pages ? { pages: seedbedPages(schema) as never } : {}),
     standing: "The garden keeps its agreements",
-    label: `Chapter ${chapter.n}`,
+    // The page may name an embed itself: the opener carries chapter one
+    // too, and two regions called "Chapter 1" is one landmark said twice.
+    label: label ?? `Chapter ${chapter.n}`,
     scheme: document.documentElement.dataset["theme"] === "dark" || (!document.documentElement.dataset["theme"] && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light",
   });
 }
@@ -61,7 +63,7 @@ export function mountAll(root: ParentNode = document): void {
     if (element.dataset["graviewMounted"]) return;
     element.dataset["graviewMounted"] = "1";
     element.replaceChildren();
-    mountChapter(element, Number(element.dataset["graviewChapter"]), element.dataset["face"] as EmbedFace | undefined);
+    mountChapter(element, Number(element.dataset["graviewChapter"]), element.dataset["face"] as EmbedFace | undefined, element.dataset["label"]);
   };
   const NEAR = 900;
   let pending = false;

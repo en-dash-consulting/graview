@@ -385,12 +385,17 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   }));
   const present = counted.filter((entry) => entry.members.length > 0);
   // An empty installation says where to begin, in the act's own words.
+  // The beginning it names is one THIS seat may take.
   const beginning = counted
     .map((entry) => ({
       entry,
       creator: store
         .allMutations()
-        .find((mutation) => (mutation.creates ?? []).includes(entry.kind as never)),
+        .find(
+          (mutation) =>
+            (mutation.creates ?? []).includes(entry.kind as never) &&
+            store.permits({ name: mutation.name, args: {} }, context.principal).ok,
+        ),
     }))
     .find((candidate) => candidate.creator !== undefined);
   const summary =
@@ -514,9 +519,20 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   const members = past ? all : all.filter((node) => isCurrent(definition, node as never));
   const retired = all.length - members.length;
   const flagged = new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds));
-  const creators = store
+  /*
+   * AN ACT THE SEAT MAY NOT TAKE IS STATED, NOT OFFERED. The strip and the
+   * record page already withhold by the policy; the list page offered every
+   * creating act to everyone, and a gardener met "Agree every plot has a
+   * caretaker" as a live form that refused on submit. The verdict is the
+   * store's own, asked before anything is drawn.
+   */
+  const { principal } = context;
+  const creating = store
     .allMutations()
-    .filter((mutation) => (mutation.creates ?? []).includes(kind as never));
+    .filter((mutation) => (mutation.creates ?? []).includes(kind as never))
+    .map((mutation) => ({ mutation, verdict: store.permits({ name: mutation.name, args: {} }, principal) }));
+  const creators = creating.filter((entry) => entry.verdict.ok).map((entry) => entry.mutation);
+  const withheld = creating.filter((entry) => !entry.verdict.ok);
   const plural = pluralOf(store, kind);
 
   return (
@@ -583,6 +599,15 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
           <DerivedForm store={store} mutation={mutation} />
         </section>
       ))}
+      {withheld.length > 0 ? (
+        <ul style={{ ...rule, margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }} data-testid="withheld">
+          {withheld.map(({ mutation, verdict }) => (
+            <li key={mutation.name} style={quiet}>
+              <s>{mutation.title ?? mutation.name}</s> — {verdict.ok ? "" : verdict.refusal.message}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </PageMain>
   );
 }
