@@ -30,8 +30,9 @@ const person = defineNode("person", {
   fields: z.object({ label: z.string() }),
   plural: "People",
   edges: {
-    "assigned-to": { to: ["duty"], description: "who does the run" },
-    "rides-in": { to: ["duty"], description: "who is along for it" },
+    // Read from the person: the runs they do. Read from the run: who does it.
+    "assigned-to": { to: ["duty"], description: "the runs they do", inverse: "who does the run" },
+    "rides-in": { to: ["duty"], description: "the runs they ride in", inverse: "who is along for it" },
   },
 });
 const duty = defineNode("duty", { fields: z.object({ label: z.string() }), plural: "Runs" });
@@ -1035,5 +1036,29 @@ describe("a move belongs to the stop it was made at", () => {
 
   it("is left behind by going deeper", () => {
     expect(withJackIn(arranged, "ana").pins).toEqual({});
+  });
+});
+
+describe("a relation is captioned from the focus", () => {
+  it("reads the declaring side's words along an outgoing edge", () => {
+    // From Ana, the morning run is one of the runs she does.
+    const result = layout(graph(), schema, view({ focusId: "ana" }));
+    expect(result.nodes.find((n) => n.id === "morning")?.via).toEqual({
+      edgeKind: "assigned-to",
+      direction: "out",
+      description: "the runs they do",
+    });
+  });
+
+  it("reads the inverse along an incoming edge, never the far end's words", () => {
+    // From the run, Ana is who does it — not "the runs they do" hung over
+    // her as though she were a run, which is what the person's words
+    // said there before the inverse was read.
+    const result = layout(graph(), schema, view({ focusId: "morning" }));
+    expect(result.nodes.find((n) => n.id === "ana")?.via).toEqual({
+      edgeKind: "assigned-to",
+      direction: "in",
+      description: "who does the run",
+    });
   });
 });

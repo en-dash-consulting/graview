@@ -263,6 +263,35 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
   }
 
+  /*
+   * AN EDGE HAS ONE DIRECTION AND TWO READINGS, and every surface reads it
+   * from the end it is standing on: a plot's page says "who looks after
+   * it", the gardener's page says what she looks after. With only the
+   * declaring side's words, the other end is captioned with the edge kind
+   * in plain words — "tended by", on the gardener — which reads the wrong
+   * way round. The words are part of the declaration, so their absence is
+   * a finding here rather than a surprise on a page.
+   */
+  for (const definition of app.schema.definitions) {
+    for (const [edgeKind, edge] of Object.entries(definition.edges)) {
+      if (edge.inverse) continue;
+      const farEnd =
+        edge.to === "*" ? "the other end" : edge.to.map((kind) => `a ${kind}`).join(" or ");
+      add({
+        severity: "warning",
+        code: "edge-without-inverse",
+        where: `defineNode("${definition.kind}").edges["${edgeKind}"]`,
+        message: edge.description
+          ? `"${edgeKind}" reads from a ${definition.kind} only ("${edge.description}"); from ${farEnd} it is captioned "${edgeKind.replace(/-/g, " ")}", which is the wrong way round.`
+          : `"${edgeKind}" has no words in either direction; both ends are captioned "${edgeKind.replace(/-/g, " ")}".`,
+        fix:
+          `Add inverse: "…" — how the relation reads from ${farEnd}` +
+          (edge.description ? "" : `, and description: "…" for how it reads from a ${definition.kind}`) +
+          `.`,
+      });
+    }
+  }
+
   for (const definition of app.schema.definitions) {
     for (const [edgeKind, edge] of Object.entries(definition.edges)) {
       if (edge.to === "*") continue;

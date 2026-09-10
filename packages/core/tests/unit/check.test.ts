@@ -14,7 +14,9 @@ import {
 
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),
-  edges: { "assigned-to": { to: ["duty"] } },
+  edges: {
+    "assigned-to": { to: ["duty"], description: "the runs they do", inverse: "who does the run" },
+  },
 });
 const duty = defineNode("duty", {
   fields: z.object({ label: z.string(), at: z.number(), until: z.number() }),
@@ -317,5 +319,39 @@ describe("a relation you can make but never unmake", () => {
     });
     const app = defineApp({ name: "test", schema: sharedSchema, mutations: [maker] });
     expect(findings(app)).toContain("warning:edge-without-severer");
+  });
+});
+
+describe("an edge reads from both ends", () => {
+  it("warns about an edge with the declaring side's words only", () => {
+    const oneWay = defineNode("person", {
+      fields: z.object({ label: z.string() }),
+      edges: { "assigned-to": { to: ["duty"], description: "the runs they do" } },
+    });
+    const app = defineApp({ name: "test", schema: createSchema([oneWay, duty]), mutations: [] });
+    expect(findings(app)).toContain("warning:edge-without-inverse");
+    const finding = checkApp(app).findings.find((f) => f.code === "edge-without-inverse")!;
+    expect(finding.where).toBe('defineNode("person").edges["assigned-to"]');
+    // It says what the other end will be captioned with, and why that is wrong.
+    expect(finding.message).toContain('"assigned to"');
+    expect(finding.message).toContain("a duty");
+    expect(finding.fix).toContain("inverse");
+  });
+
+  it("asks for both readings when there are none", () => {
+    const wordless = defineNode("person", {
+      fields: z.object({ label: z.string() }),
+      edges: { "assigned-to": { to: ["duty"] } },
+    });
+    const app = defineApp({ name: "test", schema: createSchema([wordless, duty]), mutations: [] });
+    const finding = checkApp(app).findings.find((f) => f.code === "edge-without-inverse")!;
+    expect(finding.message).toContain("either direction");
+    expect(finding.fix).toContain("description");
+  });
+
+  it("is quiet once the far end has its words", () => {
+    expect(findings(defineApp({ name: "test", schema, mutations: [] }))).not.toContain(
+      "warning:edge-without-inverse",
+    );
   });
 });

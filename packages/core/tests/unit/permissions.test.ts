@@ -23,7 +23,9 @@ import {
 
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),
-  edges: { "assigned-to": { to: ["duty"] } },
+  edges: {
+    "assigned-to": { to: ["duty"], description: "the runs they do", inverse: "who does the run" },
+  },
 });
 const duty = defineNode("duty", { fields: z.object({ label: z.string() }) });
 const schema = createSchema([person, duty]);

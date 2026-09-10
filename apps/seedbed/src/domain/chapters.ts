@@ -111,7 +111,7 @@ const chapterTwo: Chapter = {
   slug: "who-tends-what",
   title: "Gardeners, and who tends what",
   claim: "A second kind and one edge. The line is drawn from the declaration, captioned in its own words, and made and unmade by the act that names it.",
-  adds: ['defineNode("gardener")', 'edges: { "tended-by": { to: ["gardener"], description } } on plot', 'defineMutation("tend") with connects and severs'],
+  adds: ['defineNode("gardener")', 'edges: { "tended-by": { to: ["gardener"], description, inverse } } on plot', 'defineMutation("tend") with connects and severs'],
   app: asApp(defineApp({ name: "Seedbed", schema: two, mutations: [addGardener, addPlot, tend] as never })),
   seed: {
     nodes: [

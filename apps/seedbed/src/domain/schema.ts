@@ -29,7 +29,10 @@ export const plot = defineNode("plot", {
     y: z.number().min(0).max(1).optional(),
   }),
   edges: {
-    "tended-by": { to: ["gardener"], description: "who looks after it" },
+    // One edge, two readings: the plot's page asks who looks after it, the
+    // gardener's page says what she looks after. Every surface reads from
+    // the end it is standing on.
+    "tended-by": { to: ["gardener"], description: "who looks after it", inverse: "what they look after" },
   },
   plural: "Plots",
   label: (node) => node.label,
@@ -45,7 +48,12 @@ export const planting = defineNode("planting", {
   edges: {
     // Where it went into the ground is a fact about the past: a planting is
     // harvested (a field write), never uprooted from the record.
-    "grows-in": { to: ["plot"], description: "the plot it is planted in", appendOnly: true },
+    "grows-in": {
+      to: ["plot"],
+      description: "the plot it is planted in",
+      inverse: "what is planted here",
+      appendOnly: true,
+    },
   },
   plural: "Plantings",
   label: (node) => node.label,

@@ -1068,7 +1068,15 @@ function relatedNodes<S extends AnySchema>(
       if (found.has(otherId)) continue;
       const direction = edge.from === focus.id ? "out" : "in";
       const owner = direction === "out" ? focus.kind : node.kind;
-      const description = edgeDescription(schema, owner, edge.kind);
+      /*
+       * READ FROM THE END YOU ARE STANDING ON. An edge has one direction
+       * and two readings; the caption over a neighbour is how the relation
+       * reads from the FOCUS. A gardener's plot was captioned "who looks
+       * after it" — the plot's words — as though the plot looked after her.
+       * An incoming edge takes the declaration's `inverse`; without one,
+       * the caption falls back to the edge kind in plain words downstream.
+       */
+      const description = edgeReading(schema, owner, edge.kind, direction);
       found.set(otherId, {
         node,
         via: { edgeKind: edge.kind, direction, ...(description ? { description } : {}) },
@@ -1099,15 +1107,17 @@ function relatedNodes<S extends AnySchema>(
  * An edge declaration's own description. The schema has been carrying these
  * since the first commit; this is the first thing that reads them.
  */
-function edgeDescription(
+function edgeReading(
   schema: AnySchema,
   ownerKind: string,
   edgeKind: string,
+  direction: "out" | "in",
 ): string | undefined {
   const edges = schema.tryDefinition(ownerKind)?.edges as
-    | Record<string, { description?: string }>
+    | Record<string, { description?: string; inverse?: string }>
     | undefined;
-  return edges?.[edgeKind]?.description;
+  const declaration = edges?.[edgeKind];
+  return direction === "out" ? declaration?.description : declaration?.inverse;
 }
 
 /**
