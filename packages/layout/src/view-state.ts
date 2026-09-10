@@ -196,8 +196,26 @@ export function edgeOfSelection(id: string): EdgeRef | null {
   return { kind, from, to };
 }
 
+/*
+ * A MOVE BELONGS TO THE STOP IT WAS MADE AT.
+ *
+ * A pin and a pan adjust the picture you are looking at: this card a little
+ * to the left, the whole scene nudged up. They are stored by node id and in
+ * canvas pixels, which say nothing once the picture is a different one — the
+ * card you dragged as the focus is a neighbour at the next stop, and holding
+ * it at the focus's old coordinates draws it over the new focus. So a new
+ * stop starts where the layout puts things: changing the focus, rising or
+ * descending, and zooming in or out all leave the moves behind. The old stop
+ * keeps them in its own address, so Back returns to the picture you arranged.
+ */
+function leavingTheStop(state: ViewState): ViewState {
+  const { pan: _drop, ...rest } = state;
+  return { ...rest, pins: {} };
+}
+
 export function withFocus(state: ViewState, focusId: string | null): ViewState {
-  return { ...state, focusId };
+  if (focusId === state.focusId) return { ...state, focusId };
+  return { ...leavingTheStop(state), focusId };
 }
 
 export function withRelation(state: ViewState, relation: string | null): ViewState {
@@ -205,6 +223,7 @@ export function withRelation(state: ViewState, relation: string | null): ViewSta
 }
 
 export function withOverview(state: ViewState, overview: boolean): ViewState {
+  if (overview !== state.overview) state = leavingTheStop(state);
   if (!overview) {
     /*
      * OPEN DISTRICTS STAY AT ALTITUDE. Opening a kind card up on the ring
@@ -245,6 +264,7 @@ export function withSelection(state: ViewState, selection: readonly string[]): V
 
 /** Zoom the focus in close, or back out. */
 export function withZoom(state: ViewState, zoom: boolean): ViewState {
+  if (zoom !== (state.zoom === true)) state = leavingTheStop(state);
   if (!zoom) {
     const { zoom: _drop, ...rest } = state;
     return rest;
@@ -282,8 +302,7 @@ export function withPan(state: ViewState, pan: Pin | null): ViewState {
 
 /** Put everything the user moved back where the layout wanted it. */
 export function withoutMoves(state: ViewState): ViewState {
-  const { pan: _drop, ...rest } = state;
-  return { ...rest, pins: {} };
+  return leavingTheStop(state);
 }
 
 export function withPin(state: ViewState, id: string, pin: Pin | null): ViewState {

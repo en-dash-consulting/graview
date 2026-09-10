@@ -200,6 +200,48 @@ try {
       };
     })),
   };
+
+  /*
+   * A MOVE BELONGS TO THE STOP IT WAS MADE AT.
+   *
+   * Drag the focus a little, then travel: the next stop starts where the
+   * layout puts things — no pin in its address, no pinned host on the
+   * scene — and Back returns to the arranged picture, pin and all.
+   */
+  await page.click('[data-testid="overview"]');
+  await page.waitForTimeout(900);
+  {
+    const card = await page.$('[data-graview-plane="0"] [data-graview-natural] > *, [data-graview-plane="0"] > :not(.graview-kind-tag)');
+    const box = await card.boundingBox();
+    const fromX = box.x + box.width - 14;
+    const fromY = box.y + box.height - 14;
+    await page.mouse.move(fromX, fromY);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(fromX + i * 8, fromY - i * 4);
+      await page.waitForTimeout(16);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(500);
+  }
+  const pinnedNow = () =>
+    page.evaluate(() => ({
+      url: location.hash,
+      pinned: [...document.querySelectorAll("[data-graview-pinned]")].map((el) => el.dataset.graviewView),
+    }));
+  report.moves = { arranged: await pinnedNow() };
+  const next = await page.evaluate(() => {
+    const focus = document.querySelector('[data-graview-plane="0"]')?.dataset.graviewView;
+    return [...document.querySelectorAll("[data-graview-pick]")].map((el) => el.dataset.graviewPick).find((id) => id && id !== focus) ?? null;
+  });
+  if (next) {
+    await page.dblclick(`[data-graview-pick="${next}"]`);
+    await page.waitForTimeout(900);
+    report.moves.travelled = await pinnedNow();
+    await page.click('[data-testid="backtrack"] button[aria-label="Back"]');
+    await page.waitForTimeout(900);
+    report.moves.back = await pinnedNow();
+  }
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
@@ -267,6 +309,13 @@ report.verdict = {
     report.control?.groundAgain?.label === "Graview" &&
     near(report.control?.groundAgain?.wingOpacity, 0.75),
   // An invisible box is not a target: the record answers on its content and nowhere else.
+  // A move belongs to the stop it was made at: the next stop is the layout's, and Back has the arrangement.
+  aNewStopStartsWhereTheLayoutPutsThings:
+    (report.moves?.arranged?.pinned?.length ?? 0) > 0 &&
+    report.moves?.arranged?.url.includes("pin.") &&
+    report.moves?.travelled?.pinned?.length === 0 &&
+    !report.moves?.travelled?.url.includes("pin.") &&
+    (report.moves?.back?.pinned?.length ?? 0) > 0,
   whatYouCanPressIsWhatYouCanSee:
     report.hitArea?.onContent === "t-deposit" &&
     report.hitArea?.belowContent !== "t-deposit" &&

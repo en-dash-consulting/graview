@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-10T02:04:53.912Z",
+  "at": "2026-09-10T02:22:07.916Z",
   "engine": "chromium",
   "steps": [
     {
@@ -72,7 +72,7 @@
       "label": "Graview",
       "pressed": "false",
       "name": "Graview",
-      "wingOpacity": 0.539254,
+      "wingOpacity": 0.539198,
       "registered": true
     },
     "groundAgain": {
@@ -95,6 +95,24 @@
     "onContent": "t-deposit",
     "belowContent": null
   },
+  "moves": {
+    "arranged": {
+      "url": "#focus=t-deposit&sel=t-deposit&pin.t-deposit=562%2C3.32",
+      "pinned": [
+        "t-deposit"
+      ]
+    },
+    "travelled": {
+      "url": "#focus=reason-deposit&sel=reason-deposit",
+      "pinned": []
+    },
+    "back": {
+      "url": "#focus=t-deposit&sel=reason-deposit&pin.t-deposit=562%2C3.32",
+      "pinned": [
+        "t-deposit"
+      ]
+    }
+  },
   "verdict": {
     "nothingToGoBackToAtFirst": true,
     "travellingChangesTheAddress": true,
@@ -114,6 +132,7 @@
     "theMarkHasTwoStates": true,
     "theMarkMovesAsTheSceneDoes": true,
     "theControlComesBackDown": true,
+    "aNewStopStartsWhereTheLayoutPutsThings": true,
     "whatYouCanPressIsWhatYouCanSee": true
   },
   "passed": true

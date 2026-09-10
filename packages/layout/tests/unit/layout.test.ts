@@ -18,9 +18,11 @@ import {
   toUrl,
   withFocus,
   withJackIn,
+  withPan,
   withPin,
   withOverview,
   withRelation,
+  withZoom,
   type ViewState,
 } from "../../src/index.js";
 
@@ -993,5 +995,45 @@ describe("going deeper into a card", () => {
     expect(opened.zoom).toBeUndefined();
     expect(layout(graph(), schema, opened, { width: 1280, height: 800 }).nodes.find((node) => node.id === kindCardId("person"))?.opened).toBe(true);
     expect(withJackIn(opened, kindCardId("person")).expanded).not.toContain(kindCardId("person"));
+  });
+});
+
+describe("a move belongs to the stop it was made at", () => {
+  /*
+   * A pin is stored by node id in canvas pixels, which mean nothing once
+   * the picture is a different one: the card dragged as the focus was held
+   * at the focus's old coordinates as a neighbour of the next stop, drawn
+   * straight over the new focus. A new stop starts where the layout puts
+   * things; the old stop's address still carries the arrangement.
+   */
+  const arranged = withPan(withPin(view({ focusId: "week-1" }), "bo", { x: 12, y: 34 }), { x: 40, y: 0 });
+
+  it("stays while the stop stays", () => {
+    expect(withFocus(arranged, "week-1").pins).toEqual({ bo: { x: 12, y: 34 } });
+    expect(withRelation(arranged, "person").pins).toEqual({ bo: { x: 12, y: 34 } });
+    expect(toggleExpanded(arranged, "aggregate:duty").pan).toEqual({ x: 40, y: 0 });
+  });
+
+  it("is left behind by a new focus", () => {
+    const next = withFocus(arranged, "ana");
+    expect(next.pins).toEqual({});
+    expect(next.pan).toBeUndefined();
+    expect(layout(graph(), schema, next).nodes.some((n) => n.pinned)).toBe(false);
+  });
+
+  it("is left behind by rising, descending, and zooming", () => {
+    const up = withOverview(arranged, true);
+    expect(up.pins).toEqual({});
+    const rearranged = withPin(up, kindCardId("person"), { x: 5, y: 6 });
+    expect(withOverview(rearranged, false).pins).toEqual({});
+    expect(withZoom(arranged, true).pins).toEqual({});
+    expect(withZoom(withZoom(withPin(arranged, "bo", { x: 1, y: 2 }), true), false).pins).toEqual({});
+    // Already zoomed: zooming "in" again is the same stop.
+    const zoomed = withPin(withZoom(arranged, true), "bo", { x: 1, y: 2 });
+    expect(withZoom(zoomed, true).pins).toEqual({ bo: { x: 1, y: 2 } });
+  });
+
+  it("is left behind by going deeper", () => {
+    expect(withJackIn(arranged, "ana").pins).toEqual({});
   });
 });
