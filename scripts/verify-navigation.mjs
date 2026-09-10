@@ -154,6 +154,52 @@ try {
   report.control.midway = await control();
   await page.waitForTimeout(700);
   report.control.groundAgain = await control();
+
+  /*
+   * WHAT YOU CAN PRESS IS WHAT YOU CAN SEE.
+   *
+   * A record read from altitude is drawn scaled inside a host the size of
+   * the layout's slot, and its content fills only part of that. The rest is
+   * invisible — and it must not be a target, or a district it happens to
+   * sit over stops answering. Hit-tested directly: a point inside the host
+   * but below the drawn content must resolve to something else; a point on
+   * the content must resolve to the record.
+   */
+  await page.click('[data-testid="overview"]');
+  await page.waitForTimeout(900);
+  const kindOfDeposit = await page.evaluate(() => {
+    const chip = document.querySelector('[data-graview-pick="t-deposit"]');
+    return chip?.closest("[data-graview-view]")?.dataset.graviewView ?? null;
+  });
+  if (!kindOfDeposit) {
+    // The district is shut: open the one the deposit lives in.
+    const opened = await page.evaluate(() => {
+      const buttons = [...document.querySelectorAll("[data-testid^='open-']")];
+      for (const button of buttons) button.click();
+      return buttons.length;
+    });
+    report.hitArea = { openedDistricts: opened };
+    await page.waitForTimeout(700);
+  }
+  await page.dblclick('[data-graview-pick="t-deposit"]');
+  await page.waitForTimeout(800);
+  report.hitArea = {
+    ...(report.hitArea ?? {}),
+    ...(await page.evaluate(() => {
+      const host = document.querySelector('[data-graview-view="t-deposit"]');
+      if (!host) return { host: null };
+      const box = host.getBoundingClientRect();
+      const content = host.querySelector("[data-graview-natural] > *") ?? host.firstElementChild;
+      const drawn = content.getBoundingClientRect();
+      const viewAt = (x, y) => document.elementFromPoint(x, y)?.closest("[data-graview-view]")?.dataset.graviewView ?? null;
+      return {
+        host: [box.width, box.height].map(Math.round),
+        drawn: [drawn.width, drawn.height].map(Math.round),
+        onContent: viewAt(drawn.left + drawn.width / 2, drawn.top + drawn.height / 2),
+        belowContent: drawn.bottom + 24 < box.bottom ? viewAt(drawn.left + drawn.width / 2, drawn.bottom + 24) : "no remainder",
+      };
+    })),
+  };
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
@@ -220,6 +266,11 @@ report.verdict = {
   theControlComesBackDown:
     report.control?.groundAgain?.label === "Graview" &&
     near(report.control?.groundAgain?.wingOpacity, 0.75),
+  // An invisible box is not a target: the record answers on its content and nowhere else.
+  whatYouCanPressIsWhatYouCanSee:
+    report.hitArea?.onContent === "t-deposit" &&
+    report.hitArea?.belowContent !== "t-deposit" &&
+    report.hitArea?.belowContent !== "no remainder",
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
 

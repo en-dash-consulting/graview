@@ -1649,6 +1649,10 @@ function SceneViewHost({
          * Keyboard reach and the accessibility tree are untouched:
          * `pointer-events` says nothing about focus, and the views stay real,
          * focusable DOM.
+         *
+         * On the DOM path the theme narrows the host's hit area to its drawn
+         * content (`[data-graview-stage="dom"] [data-graview-view]`): the
+         * box is the layout's, the target is the view's.
          */
         ...(useDom ? {} : { pointerEvents: "none" as const }),
         // Each host sits at its own layout position, on BOTH paths.

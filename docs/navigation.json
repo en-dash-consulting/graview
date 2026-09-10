@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-10T01:10:10.677Z",
+  "at": "2026-09-10T02:04:53.912Z",
   "engine": "chromium",
   "steps": [
     {
@@ -72,7 +72,7 @@
       "label": "Graview",
       "pressed": "false",
       "name": "Graview",
-      "wingOpacity": 0.539198,
+      "wingOpacity": 0.539254,
       "registered": true
     },
     "groundAgain": {
@@ -82,6 +82,18 @@
       "wingOpacity": 0.75,
       "registered": true
     }
+  },
+  "hitArea": {
+    "host": [
+      499,
+      424
+    ],
+    "drawn": [
+      499,
+      143
+    ],
+    "onContent": "t-deposit",
+    "belowContent": null
   },
   "verdict": {
     "nothingToGoBackToAtFirst": true,
@@ -101,7 +113,8 @@
     "theControlSaysFocusFromAltitude": true,
     "theMarkHasTwoStates": true,
     "theMarkMovesAsTheSceneDoes": true,
-    "theControlComesBackDown": true
+    "theControlComesBackDown": true,
+    "whatYouCanPressIsWhatYouCanSee": true
   },
   "passed": true
 }

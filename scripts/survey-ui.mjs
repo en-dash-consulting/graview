@@ -49,8 +49,15 @@ const APPS = {
       zoomed: async (page) => {
         await page.dblclick('[data-graview-pick="t-deposit"]');
         await page.waitForTimeout(800);
+        /*
+         * On the DRAWN card, not the host: the host is the layout's box and
+         * only its content is a target now, so the gesture lands on the
+         * card's own bottom corner — padding, never a title or a chip.
+         */
         const host = await page.$('[data-graview-plane="0"]');
-        await host.dblclick({ position: { x: 40, y: 14 } });
+        const card = (await host.$("[data-graview-natural] > *")) ?? (await host.$(":scope > :not(.graview-kind-tag)"));
+        const box = await card.boundingBox();
+        await page.mouse.dblclick(box.x + box.width - 14, box.y + box.height - 14);
       },
       graview: async (page) => {
         await page.click('[data-testid="overview"]');
