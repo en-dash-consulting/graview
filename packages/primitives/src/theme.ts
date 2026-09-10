@@ -501,7 +501,11 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
    that sizes to its content (a zoomed record, a fit panel) fills only part
    of it — a dashed box around the empty remainder read as a drawing
    mistake, not a mark. */
-[data-graview-pinned] > * {
+/* And never on the natural box either — a view drawn scaled sits inside a
+   box the size of the whole scene, and the mark belongs on the drawing, not
+   on the box; nor on the kind tag, which is a label and not the thing. */
+[data-graview-pinned] > :not([data-graview-natural]):not(.graview-kind-tag),
+[data-graview-pinned] > [data-graview-natural] > * {
   outline: 1px dashed var(--graview-edge-bright);
   outline-offset: 3px;
   border-radius: 12px;
@@ -633,7 +637,8 @@ code { color: var(--graview-ink-muted); font-size: 12px; letter-spacing: 0.02em;
   25%  { outline-color: var(--graview-activity); }
   100% { outline-color: transparent; }
 }
-[data-graview-view][data-graview-read] > * {
+[data-graview-view][data-graview-read] > :not([data-graview-natural]):not(.graview-kind-tag),
+[data-graview-view][data-graview-read] > [data-graview-natural] > * {
   outline: 1px dashed transparent;
   outline-offset: 3px;
   border-radius: 10px;

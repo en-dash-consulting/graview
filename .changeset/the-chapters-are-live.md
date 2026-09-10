@@ -23,3 +23,15 @@ whole; the rails are in proportion; an embed names its landmarks after
 itself and a page is a `main` only when it owns the document (`PageMain`,
 `context.embedded`); a coverage column is a fingertip wide at the least;
 and a page link is tall enough to press.
+
+Using the live chapters found four more, all fixed where they live: the
+inspector pane was fixed to the window and so opened at the page's edge
+over the host's navigation — it is positioned within the scene's own box
+now, and the pointer menu is clamped to it; a focused card in a box the
+height of a paragraph was cut across its own facts — a short canvas gives
+the focus more of itself; a line at altitude ran to a district even when
+the district was opened and drawing the very member the line is about — it
+lands on the member; and the dashed marks for a pinned or considered card
+were drawn around the whole natural box and the kind tag rather than the
+drawing. The embed's strip shows two faces, the picture and the pages,
+since altitude is the scene's own control.

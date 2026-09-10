@@ -37,7 +37,8 @@ describe("a chapter, embedded", () => {
     const style = element.querySelector("style")?.textContent ?? "";
     expect(style).toContain(".graview-embed-");
     expect(style).not.toContain(":root");
-    expect(element.querySelector('[data-testid="embed-face-graview"]')?.getAttribute("aria-pressed")).toBe("true");
+    expect(element.querySelector('[data-testid="embed-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+    expect(element.querySelector('[data-testid="embed-face-graview"]')).toBeNull();
     expect(element.querySelector('[data-testid="standing"]')?.textContent).toContain("Everything is in order");
     handle.unmount();
     expect(element.innerHTML).toBe("");
