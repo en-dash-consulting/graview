@@ -36,7 +36,7 @@ describe("the garden, grown a chapter at a time", () => {
       for (const m of before.mutations ?? []) expect((after.mutations ?? []).map((x) => x.name)).toContain(m.name);
       for (const inv of before.invariants ?? []) expect((after.invariants ?? []).map((x) => x.name)).toContain(inv.name);
     }
-    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   });
 
   it("1 · a single kind already has a city, a district and a derived beginning", () => {
@@ -154,6 +154,40 @@ describe("the garden, grown a chapter at a time", () => {
     expect(run.ops.every((op) => op.author.kind === "system")).toBe(true);
     // Already-migrated data is left alone: the migration is idempotent by construction.
     expect(migrateSnapshot(app, run.snapshot, 1).ops.flatMap((op) => op.primitives ?? [])).toEqual([]);
+  });
+
+  it("13 · the garden's own face: every surface replaced, and a lens of its own", async () => {
+    const { PagesApp } = await import("@graview/pages");
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { createElement } = await import("react");
+    const { seedbedDesign } = await import("../../src/ui/design.js");
+    const { seedbedViews } = await import("../../src/ui/views.js");
+    const chapter = CHAPTERS[12]!;
+    expect(chapter.face).toBe("pages");
+    expect(chapter.design).toBe(true);
+    const store = storeOf(13);
+    const html = renderToStaticMarkup(
+      createElement(PagesApp as never, {
+        context: { store, brand: chapter.app.brand, principal: chapter.principal },
+        registry: seedbedDesign(store.schema),
+        initialPath: "/",
+      } as never),
+    );
+    // The garden's shell, home and map — none of the derived face's markup.
+    expect(html).toContain('data-testid="seedbed-design"');
+    expect(html).toContain('data-testid="seedbed-home"');
+    expect(html).toContain('data-testid="garden-map"');
+    expect(html).not.toContain('aria-label="Kinds"');
+    // Every page is the garden's, over the same store.
+    for (const [path, id] of [["/plots", "seedbed-plots"], ["/gardeners/june", "gardener-page"], ["/plantings/beans", "planting-page"], ["/rules/every-plot-tended", "rule-page"], ["/problems", "seedbed-problems"]]) {
+      const page = renderToStaticMarkup(
+        createElement(PagesApp as never, { context: { store, principal: chapter.principal }, registry: seedbedDesign(store.schema), initialPath: path } as never),
+      );
+      expect(page, path).toContain(`data-testid="${id}"`);
+    }
+    // The scene's lens is the garden's own, and it is a named place.
+    const views = seedbedViews(store.schema as never, { lens: true, map: true });
+    expect(views.places().map((place) => place.title)).toEqual(["Who tends what", "The garden map"]);
   });
 
   it("is reached by ?chapter=N, and the finished example is the default", () => {

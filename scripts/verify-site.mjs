@@ -48,7 +48,7 @@ try {
       /*
        * The chapters mount as the reader comes near them. The whole page is
        * under test, so every one of them is brought near, and the page is
-       * judged with twelve live Graviews on it — their targets, their text,
+       * judged with fourteen live Graviews on it — their targets, their text,
        * their accessibility tree, their console.
        */
       const height = await page.evaluate(() => document.documentElement.scrollHeight);
@@ -64,7 +64,7 @@ try {
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForFunction(
         (n) => document.querySelectorAll("[data-graview-embed]").length >= n,
-        13,
+        14,
         { timeout: 30_000 },
       ).catch(() => {});
       await page.waitForTimeout(900);
@@ -190,8 +190,8 @@ const bad = report.viewports.filter(
 report.criteria.everyViewportIsClean = bad.length === 0;
 // Twelve chapters, live, at every width and in both schemes — the page is
 // judged with the applications on it, not with pictures of them.
-// Twelve chapters and the opener's own copy of the first: thirteen live.
-report.criteria.everyChapterIsLiveAtEveryWidth = report.viewports.every((v) => v.live === 13);
+// Thirteen chapters and the opener's own copy of the first: fourteen live.
+report.criteria.everyChapterIsLiveAtEveryWidth = report.viewports.every((v) => v.live === 14);
 report.passed = Object.values(report.criteria).every(Boolean) && !report.error;
 
 writeFileSync(resolve(repoRoot, "docs/site-check.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
