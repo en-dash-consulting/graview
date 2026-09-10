@@ -439,14 +439,18 @@ td.where { font-family: var(--mono); font-size: 11.5px; }
   overflow-x: auto;
 }
 .term .l {
-  display: grid;
-  grid-template-columns: 14px minmax(0, 1fr) auto;
-  gap: 11px;
+  /* The command keeps its width and the note takes what is left, right-
+     aligned; a row wider than the box scrolls the box (data-scroller)
+     instead of drawing the note over the command. */
+  display: flex;
+  gap: 11px 18px;
   padding: 8px 15px;
   border-top: 1px solid var(--rule-2);
   white-space: nowrap;
   align-items: baseline;
 }
+.term .p, .term .c2 { flex: 0 0 auto; }
+.term .n2 { flex: 0 0 auto; margin-left: auto; }
 .term .l:first-child { border-top: none; }
 .term .p { color: var(--pine); }
 .term .c2 { color: var(--ink); }
@@ -618,9 +622,9 @@ footer {
     </div>
 
     <div class="railfoot">
-      10 packages<br>
-      554 tests<br>
-      thirteen chapters, live
+      11 packages<br>
+      <span data-chapters-word>thirteen</span> chapters, live<br>
+      verified on every push
     </div>
   </nav>
 
@@ -1012,13 +1016,14 @@ footer {
     <section id="packages" aria-labelledby="h-packages">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-packages">The packages</h2></div>
       <p class="sm" style="margin-bottom: 16px; max-width: 62ch;">
-        Seven packages, layered. Take the whole stack or take the parts that
+        Eleven packages, layered. Take the whole stack or take the parts that
         earn their place. <code>layout</code> is pure geometry with no React in
-        it; <code>core</code> runs headless in a worker or a test.
+        it; <code>core</code> runs headless in a worker or a test; <code>embed</code>
+        puts an app on somebody else's page.
       </p>
       <div class="scroll" data-scroller aria-label="The packages, as a table">
         <table>
-          <caption class="sr-only">The seven packages and what each contains</caption>
+          <caption class="sr-only">The eleven packages and what each contains</caption>
             <thead><tr><th scope="col">Package</th><th scope="col">What is in it</th></tr></thead>
           <tbody>
             <tr><td class="pkg">@graview/core</td><td>Schema, graph, invariants, mutations, the operation log, persistence and sync adapters, and the <code>graview check</code> CLI.</td></tr>
@@ -1026,8 +1031,12 @@ footer {
             <tr><td class="pkg">@graview/tools</td><td>Derived affordances, and one tool surface an agent and an interface both use.</td></tr>
             <tr><td class="pkg">@graview/render</td><td>Capture, depth compositing, pointer routing. Only this package touches the GPU, and only through its <code>/gpu</code> entry.</td></tr>
             <tr><td class="pkg">@graview/react</td><td>The binding. Deliberately thin.</td></tr>
-            <tr><td class="pkg">@graview/primitives</td><td>View primitives, three lenses, and the workbench: inspector, standing, activity, undo, trail.</td></tr>
+            <tr><td class="pkg">@graview/primitives</td><td>View primitives, three lenses, the named places, and the workbench: inspector, standing, activity, undo, trail, the shell.</td></tr>
+            <tr><td class="pkg">@graview/pages</td><td>The routed face: home, lists, records, forms and problems derived from the declaration, every surface replaceable.</td></tr>
+            <tr><td class="pkg">@graview/ship</td><td>Persistence in the browser, versions and migrations, and the deploy shape.</td></tr>
+            <tr><td class="pkg">@graview/embed</td><td><code>mount(el, { app, seed, stop })</code>: an app inside any element, themed to itself, with faces, places and seats on a strip.</td></tr>
             <tr><td class="pkg">@graview/skills</td><td>Authoring moves for Claude Code and Codex. Each one ends in a check rather than a claim.</td></tr>
+            <tr><td class="pkg">create-graview</td><td>The door: <code>npm create graview</code> runs <code>graview create</code>, which writes chapter one for your domain.</td></tr>
           </tbody>
         </table>
       </div>
@@ -1085,8 +1094,8 @@ footer {
         planting, and the same drawing on the home page of a pages face that
         replaced every surface. The core ships with three starters — the
         board, the coverage grid and the timeline — as the shapes most
-        domains reach for first, and every one of them is a hundred lines you
-        can read.
+        domains reach for first, and every one of them is one file you can
+        read and copy.
       </p>
       <div class="lenses">
         <div class="lens">
@@ -1213,8 +1222,11 @@ footer {
             <tr><td>One policy narrows the interface and the agent seat alike</td><td class="where">scripts/verify-permissions · 9 criteria</td></tr>
             <tr><td>A brand reaches the pixels without forking a package</td><td class="where">scripts/verify-brand · WCAG AA measured</td></tr>
             <tr><td>A stranger can install the tarballs and build from them</td><td class="where">scripts/smoke-install</td></tr>
-            <tr><td>No card covers another, no caption is cut, no control is under a fingertip</td><td class="where">scripts/audit-ui · 20 screens</td></tr>
+            <tr><td>No card covers another, no caption is cut, no control is under a fingertip</td><td class="where">scripts/audit-ui · 9 screens</td></tr>
             <tr><td>Every authoring skill ends in a check the checker can actually produce</td><td class="where">skills/tests/unit/skills</td></tr>
+            <tr><td>A stranger can create an app from a checkout, and its own verify passes in three browsers</td><td class="where">scripts/smoke-create · 25 criteria</td></tr>
+            <tr><td>Every chapter of the garden still holds its claim, in a real browser</td><td class="where">scripts/progression · 13 claims</td></tr>
+            <tr><td>The page that explains this holds up at ten widths, to axe and to a keyboard, with fourteen live Graviews on it</td><td class="where">scripts/verify-site · text over text is a failure</td></tr>
             <tr><td>The capture path survives a pointer, and a click still reaches the node it drew</td><td class="where">scripts/verify-capture</td></tr>
           </tbody>
         </table>
@@ -1233,18 +1245,18 @@ footer {
           <div class="term" data-scroller aria-label="Commands to run inside the repository">
             <div class="l"><span class="p">$</span><span class="c2">pnpm dev:seedbed</span><span class="n2">the garden — ?chapter=N opens any chapter</span></div>
             <div class="l"><span class="p">$</span><span class="c2">pnpm progression</span><span class="n2">every chapter, photographed</span></div>
-            <div class="l"><span class="p">$</span><span class="c2">pnpm test</span><span class="n2">554, no browser</span></div>
+            <div class="l"><span class="p">$</span><span class="c2">pnpm test</span><span class="n2">headless, no browser</span></div>
           </div>
         </div>
         <div class="stack">
           <p class="sm">
-            <strong>Start with the garden.</strong> <a class="inl" href="#grown">Twelve chapters</a>,
+            <strong>Start with the garden.</strong> <a class="inl" href="#grown"><span data-chapters-word="title">Thirteen chapters</span></a>,
             from one kind to a shipped, branded, permissioned application with a
             lens and an agent's seat — each a real declaration you can open with
             <code>?chapter=N</code>. <code>graview create</code> writes chapter one
             for your own domain; the packages are not on a registry yet, so a
             product starts from a checkout and consumes the framework by path.
-            The todo example is the second thing to read: four kinds, ten acts,
+            The todo example is the second thing to read: four kinds, eleven acts,
             three rules, a lens borrowed from a calendar.
           </p>
           <p class="sm">
@@ -1306,7 +1318,7 @@ footer {
           <li><b>The capture path is experimental.</b> Capture falls off a cliff past about 128 live captures a frame, and every claim above is measured against the DOM path. Use it for the per-plane blur, not because it is faster.</li>
           <li><b>The calendar sync has never run against Google.</b> Echo suppression, conflict detection and offline reconciliation are covered against a scripted remote. A token that expires mid-run is not.</li>
           <li><b>No screen-reader pass with real assistive technology.</b> The tree is populated and axe-core reports nothing. A populated tree is not proof that VoiceOver reads it well.</li>
-          <li><b>The public API is pre-1.0.</b> Every package exposes a single <code>src/public.ts</code> and nothing else is supported, but the surface still moves while nobody depends on it.</li>
+          <li><b>The public API is pre-1.0.</b> Every package exposes a single <code>src/index.ts</code> and nothing else is supported, but the surface still moves while nobody depends on it.</li>
         </ul>
       </div>
     </section>
@@ -1317,7 +1329,7 @@ footer {
 
 <footer>
     <span>Graview</span>
-    <span>core · layout · tools · render · react · primitives · skills</span>
+    <span>core · layout · tools · render · react · primitives · pages · ship · embed · skills · create-graview</span>
     <span style="flex: 1 1 auto;"></span>
     <span><a href="https://endash.us" style="text-decoration: none;">En&nbsp;Dash</a> · Richmond, VA, and across the US</span>
   </footer>
