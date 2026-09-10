@@ -56,8 +56,12 @@ export interface BoardSlot {
   readonly label: string;
   readonly x: number;
   readonly y: number;
-  readonly occupantId: string | null;
-  readonly occupantLabel: string | null;
+  /**
+   * Whoever is in it — none, one, or several. A plot with two plantings
+   * showed one and listed the other as "not in", which was a picture
+   * stating something untrue: the second planting was in the ground.
+   */
+  readonly occupants: readonly { readonly id: string; readonly label: string }[];
 }
 
 export interface BoardState {
@@ -108,16 +112,18 @@ export function buildBoard<S extends AnySchema>(
     .map((node): BoardSlot => {
       const fields = record(node);
       const fromOccupant = options.fillFrom === "occupant";
-      const edge = filling.find((candidate) => (fromOccupant ? candidate.to : candidate.from) === node.id);
-      const occupant = edge ? byId.get(fromOccupant ? edge.from : edge.to) : undefined;
+      const occupants = filling
+        .filter((candidate) => (fromOccupant ? candidate.to : candidate.from) === node.id)
+        .map((edge) => byId.get(fromOccupant ? edge.from : edge.to))
+        .filter((occupant): occupant is NodeOfSchema<S> => occupant !== undefined)
+        .map((occupant) => ({ id: occupant.id, label: name(occupant) }));
       return {
         id: node.id,
         code: String(fields[options.slotCode ?? ""] ?? "").trim() || name(node),
         label: name(node),
         x: clamp01(Number(fields[options.x] ?? 0.5)),
         y: clamp01(Number(fields[options.y] ?? 0.5)),
-        occupantId: occupant?.id ?? null,
-        occupantLabel: occupant ? name(occupant) : null,
+        occupants,
       };
     })
     // Top to bottom, then left to right: a stable reading order for the
@@ -125,10 +131,10 @@ export function buildBoard<S extends AnySchema>(
     // happened to be in.
     .sort((a, b) => a.y - b.y || a.x - b.x);
 
-  const placed = new Set(slots.map((slot) => slot.occupantId).filter(Boolean) as string[]);
+  const placed = new Set(slots.flatMap((slot) => slot.occupants.map((occupant) => occupant.id)));
   const occupantKinds = new Set(
-    slots
-      .map((slot) => (slot.occupantId ? byId.get(slot.occupantId)?.kind : undefined))
+    [...placed]
+      .map((id) => byId.get(id)?.kind)
       .filter((kind): kind is string => kind !== undefined),
   );
   const spare = nodes
@@ -138,7 +144,7 @@ export function buildBoard<S extends AnySchema>(
 
   return {
     slots,
-    empty: slots.filter((slot) => slot.occupantId === null).map((slot) => slot.id),
+    empty: slots.filter((slot) => slot.occupants.length === 0).map((slot) => slot.id),
     spare,
   };
 }
@@ -298,8 +304,8 @@ export function BoardView<S extends AnySchema>({
     };
     for (const slot of board.slots) {
       for (const text of reasons(slot.id)) note(slot.id, slot.code, text);
-      for (const text of reasons(slot.occupantId))
-        note(slot.occupantId!, slot.occupantLabel ?? slot.code, text);
+      for (const occupant of slot.occupants)
+        for (const text of reasons(occupant.id)) note(occupant.id, occupant.label, text);
     }
     return [...byText.entries()].map(([text, entry]) => ({
       id: entry.ids[0]!,
@@ -596,9 +602,9 @@ export function BoardView<S extends AnySchema>({
             : null}
 
           {board.slots.map((slot) => {
-            const hole = slot.occupantId === null;
+            const hole = slot.occupants.length === 0;
             const dim =
-              lit.size > 0 && !lit.has(slot.id) && !(slot.occupantId && lit.has(slot.occupantId));
+              lit.size > 0 && !lit.has(slot.id) && !slot.occupants.some((occupant) => lit.has(occupant.id));
             /*
              * TWO different marks, because they are two different facts.
              *
@@ -610,13 +616,23 @@ export function BoardView<S extends AnySchema>({
              * picture stating something untrue.
              */
             const slotBad = broken.has(slot.id);
-            const occupantBad = slot.occupantId !== null && broken.has(slot.occupantId);
+            const occupantBad = slot.occupants.some((occupant) => broken.has(occupant.id));
             const bad = slotBad;
-            const said = [...reasons(slot.id), ...reasons(slot.occupantId)];
+            const said = [
+              ...reasons(slot.id),
+              ...slot.occupants.flatMap((occupant) => reasons(occupant.id)),
+            ];
+            /*
+             * WHO THE DISC STANDS FOR. One occupant: the disc is them, as it
+             * always was. Several: the disc is the slot, and each name under
+             * it is its own target, so a click lands on the planting you
+             * meant and never on "the first one".
+             */
+            const one = slot.occupants.length === 1 ? slot.occupants[0]! : null;
             return (
               <div
                 key={slot.id}
-                data-graview-pick={slot.occupantId ?? slot.id}
+                data-graview-pick={one ? one.id : slot.id}
                 data-graview-slot={slot.id}
                 data-graview-flagged={
                   slotBad && occupantBad
@@ -636,7 +652,7 @@ export function BoardView<S extends AnySchema>({
                 title={[
                   hole
                     ? `${slot.label} — nobody in it`
-                    : `${slot.occupantLabel} at ${slot.label}`,
+                    : `${slot.occupants.map((occupant) => occupant.label).join(", ")} at ${slot.label}`,
                   ...said,
                 ].join("\n")}
                 style={{
@@ -703,20 +719,29 @@ export function BoardView<S extends AnySchema>({
                     </span>
                   ) : null}
                 </span>
-                <span
-                  style={{
-                    fontSize: 10.5,
-                    whiteSpace: "nowrap",
-                    // The NAME carries the person's own trouble — an injury, a
-                    // suspension — and nothing else. A rule about the position
-                    // has no business marking the person standing in it.
-                    color:
-                      hole || occupantBad ? "var(--graview-warn)" : "var(--graview-ink-muted)",
-                  }}
-                >
-                  {slot.occupantLabel ?? (options.emptyLabel ?? "empty")}
-                  {occupantBad ? " ⚠" : ""}
-                </span>
+                {hole ? (
+                  <span style={{ fontSize: 10.5, whiteSpace: "nowrap", color: "var(--graview-warn)" }}>
+                    {options.emptyLabel ?? "empty"}
+                  </span>
+                ) : (
+                  slot.occupants.map((occupant) => (
+                    <span
+                      key={occupant.id}
+                      {...(one ? {} : { "data-graview-pick": occupant.id })}
+                      style={{
+                        fontSize: 10.5,
+                        whiteSpace: "nowrap",
+                        // The NAME carries the person's own trouble — an injury,
+                        // a suspension — and nothing else. A rule about the
+                        // position has no business marking the person in it.
+                        color: broken.has(occupant.id) ? "var(--graview-warn)" : "var(--graview-ink-muted)",
+                      }}
+                    >
+                      {occupant.label}
+                      {broken.has(occupant.id) ? " ⚠" : ""}
+                    </span>
+                  ))
+                )}
               </div>
             );
           })}

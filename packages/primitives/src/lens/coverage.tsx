@@ -294,8 +294,20 @@ export function CoverageView<S extends AnySchema>({
   flagged = [],
 }: CoverageViewProps<S>) {
   const { store } = useGraview<AnySchema>();
+  /*
+   * The whole graph's rows and columns, not the aggregate's members.
+   *
+   * A grid over gardeners and plots registered on the gardeners drew rows
+   * with no columns, because the group it was handed held gardeners only;
+   * every app then wrote the same wrapper to fetch the other kind. The lens
+   * knows both kinds it is bound to, so it reads them itself. The aggregate
+   * still decides what is focused; it does not decide what can be looked up.
+   */
+  void nodes;
   const grid = buildCoverage<S>(
-    nodes ?? [],
+    store.graph
+      .allNodes()
+      .filter((node) => node.kind === options.rows || node.kind === options.columns) as never,
     store.graph.allEdges(),
     options,
     schema,

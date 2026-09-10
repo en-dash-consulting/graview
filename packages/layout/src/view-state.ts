@@ -110,6 +110,15 @@ export function toUrl(state: ViewState): string {
 }
 
 /** Parses a fragment back. Unknown or malformed parts are dropped, not thrown. */
+/**
+ * A stop may name a group by its kind in short: `focus=agg:plot` is
+ * `focus=aggregate:plot`. The long form is what the layout mints and what
+ * `toUrl` writes; the short form is what a person or a page writes by hand.
+ */
+function unabbreviated(id: string | null): string | null {
+  return id && id.startsWith("agg:") ? `aggregate:${id.slice(4)}` : id;
+}
+
 export function fromUrl(url: string): ViewState {
   const hash = url.includes("#") ? url.slice(url.indexOf("#") + 1) : url;
   const params = new URLSearchParams(hash);
@@ -147,7 +156,7 @@ export function fromUrl(url: string): ViewState {
     ...(params.get("zoom") === "1" ? { zoom: true } : {}),
     ...(params.get("past") === "1" ? { past: true } : {}),
     ...(panX !== null && panY !== null ? { pan: { x: panX, y: panY } } : {}),
-    focusId: params.get("focus"),
+    focusId: unabbreviated(params.get("focus")),
     relation: params.get("relation"),
     expanded: (params.get("expand") ?? "")
       .split(",")

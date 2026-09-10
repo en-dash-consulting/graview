@@ -36,13 +36,15 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
   /** The graph to open with. Nothing means the empty city. */
   readonly seed?: { readonly nodes: readonly unknown[]; readonly edges: readonly unknown[] };
   /** Which face to show. */
+  /** Which face to open on. Omitted, the stop decides: altitude opens the Graview, anything else the scene. */
   readonly face?: EmbedFace;
   /** The scene's view state, as the fragment the app itself would put in its address bar. */
   readonly stop?: string;
   /** For the pages face: the path to open, within the app's own routes. */
   readonly path?: string;
   readonly principal?: Principal;
-  readonly scheme?: Scheme;
+  /** "auto" reads the host page: its `data-theme` stamp, else the system's preference. */
+  readonly scheme?: Scheme | "auto";
   /** Defaults to the app's own brand. */
   readonly brand?: Brand;
   /** A store to share; otherwise one is made from the app and the seed. */
@@ -95,15 +97,28 @@ function viewFor(face: EmbedFace, stop: string | undefined, kinds: readonly stri
   return asked;
 }
 
+/** The face a stop implies: a stop at altitude opens the Graview. */
+export function faceOf(stop: string | undefined): EmbedFace {
+  return stop && fromUrl(stop).overview ? "graview" : "scene";
+}
+
+/** The host page's scheme: an explicit `data-theme`, else the system's preference. */
+export function hostScheme(): Scheme {
+  if (typeof document === "undefined") return "light";
+  const stamped = document.documentElement.dataset["theme"];
+  if (stamped === "dark" || stamped === "light") return stamped;
+  return typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const {
     app,
     seed,
-    face = "scene",
+    face = faceOf(props.stop),
     stop,
     path = "/",
     principal,
-    scheme = "light",
+    scheme: askedScheme = "auto",
     brand = app.brand,
     toggle = true,
     fonts = true,
@@ -121,6 +136,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   );
   const kinds = app.schema.kinds as readonly string[];
   const initialView = useMemo(() => viewFor(face, stop, kinds), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const scheme: Scheme = askedScheme === "auto" ? hostScheme() : askedScheme;
   const css = useMemo(() => themeCss(scheme, brand, { scope: `.${scope}` }), [scheme, brand, scope]);
 
   // The brand's fonts, fetched once per family set, without the host's help.
@@ -296,9 +312,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   const store = options.store ?? storeOf(options.app, options.seed, options.principal);
   let setters: { face: (f: EmbedFace) => void; stop: (s: string) => void; scheme: (s: Scheme) => void } | null = null;
   function Host() {
-    const [face, setFace] = useState<EmbedFace>(options.face ?? "scene");
+    const [face, setFace] = useState<EmbedFace>(options.face ?? faceOf(options.stop));
     const [stop, setStop] = useState<string | undefined>(options.stop);
-    const [scheme, setScheme] = useState<Scheme>(options.scheme ?? "light");
+    const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
     setters = { face: setFace, stop: setStop, scheme: setScheme };
     return <Embed<S> {...options} store={store as never} face={face} {...(stop !== undefined ? { stop } : {})} scheme={scheme} onFace={setFace} />;
   }
@@ -310,5 +326,50 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
     setScheme: (scheme) => flushSync(() => setters?.scheme(scheme)),
     unmount: () => root.unmount(),
+  };
+}
+
+
+/**
+ * Mount each element as the reader comes near it.
+ *
+ * Twelve applications at once is a lot to ask of a first paint; each mounts
+ * when the reader is a screen away, and stays. A sweep on scroll rather than
+ * an IntersectionObserver: a fast scroll can jump an element through the
+ * observer's margin between two of its checks, and a picture that stayed
+ * "loading…" because the reader scrolled quickly is worse than a sweep that
+ * costs one rectangle per element per frame.
+ */
+export function mountWhenNear(
+  elements: Iterable<HTMLElement>,
+  mountOne: (element: HTMLElement) => void,
+  options: { readonly near?: number } = {},
+): () => void {
+  const near = options.near ?? 900;
+  const waiting = new Set(elements);
+  let pending = false;
+  const sweep = () => {
+    pending = false;
+    for (const element of waiting) {
+      const rect = element.getBoundingClientRect();
+      // Near below, on screen, or already scrolled past: all of these are
+      // places a reader can be looking at next.
+      if (rect.top < innerHeight + near && rect.bottom > -near) {
+        waiting.delete(element);
+        mountOne(element);
+      }
+    }
+  };
+  const later = () => {
+    if (pending || waiting.size === 0) return;
+    pending = true;
+    requestAnimationFrame(sweep);
+  };
+  addEventListener("scroll", later, { passive: true });
+  addEventListener("resize", later, { passive: true });
+  sweep();
+  return () => {
+    removeEventListener("scroll", later);
+    removeEventListener("resize", later);
   };
 }

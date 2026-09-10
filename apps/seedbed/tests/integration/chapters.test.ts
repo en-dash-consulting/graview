@@ -139,7 +139,7 @@ describe("the garden, grown a chapter at a time", () => {
     const { app, seed } = CHAPTERS[10]!;
     expect(app.lenses?.map((l) => l.name)).toEqual(["coverage", "board"]);
     const board = buildBoard(seed.nodes as never, seed.edges as never, { slots: "plot", x: "x", y: "y", fill: "grows-in", fillFrom: "occupant" }, app.schema as never);
-    expect(board.slots.map((s) => [s.label, s.occupantLabel])).toEqual([["Plot 1", "Beans"], ["Plot 2", "Tomatoes"], ["Plot 3", null]]);
+    expect(board.slots.map((s) => [s.label, s.occupants.map((o) => o.label)])).toEqual([["Plot 1", ["Beans"]], ["Plot 2", ["Tomatoes"]], ["Plot 3", []]]);
     expect(board.empty).toEqual(["plot-3"]);
   });
 

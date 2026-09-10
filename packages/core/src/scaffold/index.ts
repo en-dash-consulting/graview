@@ -795,6 +795,13 @@ import { ${ids.schemaVar} } from "../domain/schema.js";
  * the generic one is genuinely wrong, not on principle — see the framework's
  * \`apps/todo/src/ui/views.tsx\` for what one looks like when it earns its place.
  */
+/**
+ * Every kind at every fidelity, from the declaration alone. Register a view
+ * of your own over a cell to replace the framework's there — and give a
+ * group view a title to make it a PLACE, listed by name in the bar:
+ *
+ *   .register("${ids.kind}", { cardinality: "many", fidelity: "full" }, lens.View, { title: "…" })
+ */
 export function views() {
   return registerDefaultViews(${ids.schemaVar}, createViews(${ids.schemaVar}));
 }

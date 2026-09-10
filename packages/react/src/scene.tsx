@@ -2652,7 +2652,8 @@ export function ResolvedView<S extends AnySchema>({
           nodes: node.aggregate.memberIds
             .map((id) => store.graph.getNode(id))
             .filter((n): n is NodeOfSchema<S> => n !== undefined),
-          label: node.aggregate.label,
+          // A titled registration names the picture; the plural is the fallback.
+          label: registration?.title ?? node.aggregate.label,
         }
       : { node: store.graph.getNode(node.id) as never }),
     fidelity: cell.fidelity,
