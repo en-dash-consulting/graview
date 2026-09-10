@@ -13,7 +13,7 @@ import {
   useSelection,
   type ReactViewRegistry,
   type ViewProps,
-} from "@graview/react";
+ markDefaultView } from "@graview/react";
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -556,9 +556,9 @@ export function registerDefaultViews<S extends AnySchema>(
       .register(kind, { cardinality: "one", fidelity: "full" }, Full)
       .register(kind, { cardinality: "one", fidelity: "summary" }, Summary)
       .register(kind, { cardinality: "one", fidelity: "glyph" }, Glyph)
-      .register(kind, { cardinality: "many", fidelity: "full" }, Group)
-      .register(kind, { cardinality: "many", fidelity: "summary" }, Group)
-      .register(kind, { cardinality: "many", fidelity: "glyph" }, GroupGlyph);
+      .register(kind, { cardinality: "many", fidelity: "full" }, markDefaultView(Group))
+      .register(kind, { cardinality: "many", fidelity: "summary" }, markDefaultView(Group))
+      .register(kind, { cardinality: "many", fidelity: "glyph" }, markDefaultView(GroupGlyph));
   }
 
   return registry;

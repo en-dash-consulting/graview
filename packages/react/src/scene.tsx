@@ -44,6 +44,7 @@ import { useActivity, type ActivityMark, type Manner } from "./activity.js";
 import { useAnimatedLayout, useTouched } from "./animation.js";
 import { useFlagged, useImplicated } from "./hooks.js";
 import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
+import { isDefaultView } from "./view-registry.js";
 import { pickedFrom, usePickTargets } from "./picking.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
@@ -215,6 +216,11 @@ export function Scene<S extends AnySchema>({
         left: Math.round(Math.min(264, (size?.width ?? 1200) * 0.22)),
         right: Math.round(Math.min(128, (size?.width ?? 1200) * 0.107)),
       },
+      // Groups the framework's own list shows: from altitude those are
+      // districts, not scaled cards. A group with an app's view keeps its card.
+      plainGroups: (store.schema.kinds as readonly string[]).filter((kind) =>
+        isDefaultView(views.lookup(kind as never, { cardinality: "many", fidelity: "full" })),
+      ),
       ...(size
         ? {
             width: size.width,
@@ -229,7 +235,7 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size, store],
+    [options, size, store, views],
   );
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, sized),
@@ -1111,6 +1117,11 @@ function SelectionTies<S extends AnySchema>({
                   .map((point) => `L ${point.x} ${point.y}`)
                   .join(" ")}`}
                 fill="none"
+                // The ends stay clear: a line lands ON a chip, and a hit stroke that reached
+                // the chip took the click meant for it. Seven percent off each end.
+                pathLength={1}
+                strokeDasharray="0.86"
+                strokeDashoffset={-0.07}
                 stroke="transparent"
                 strokeWidth={14}
                 style={{ pointerEvents: "stroke", cursor: "pointer" }}
@@ -1980,6 +1991,13 @@ export interface Strand {
   readonly toAnchor: string;
   /** Every other drawn box, so the line can dive under cards it merely crosses. */
   readonly obstacles: readonly Box[];
+  /**
+   * The cards an end is drawn INSIDE, when it lands on a member: the line
+   * is visible across them (that is what landing on a member means), but
+   * its hit stroke is not, so a line to Ravi never takes a click meant
+   * for June above him.
+   */
+  readonly hosts: readonly Box[];
 }
 
 /**
@@ -2081,6 +2099,7 @@ export function connectorStrands(
         fromAnchor: connector.from,
         toAnchor: connector.to,
         obstacles,
+        hosts: [],
       });
       continue;
     }
@@ -2127,7 +2146,16 @@ export function connectorStrands(
       groups.set(key, { edges: [edge], fromBox, toBox, fromAnchor, toAnchor });
     }
     for (const [key, group] of groups) {
-      strands.push({ key, connector, obstacles, ...group });
+      strands.push({
+        key,
+        connector,
+        obstacles,
+        hosts: [
+          ...(group.fromAnchor !== connector.from ? [fromHost] : []),
+          ...(group.toAnchor !== connector.to ? [toHost] : []),
+        ],
+        ...group,
+      });
     }
   }
   return strands;
@@ -2381,14 +2409,20 @@ function Connectors({
          */
         const runs = self ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
         if (!self && runs.length === 0) return null;
-        const d = self
-          ? // An arc that leaves and returns: two arcs of the same
-            // circle, so it closes cleanly at any size.
-            `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
-            ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`
-          : runs
-              .map((run) => `M ${run.p0.x} ${run.p0.y} Q ${run.c.x} ${run.c.y} ${run.p1.x} ${run.p1.y}`)
-              .join(" ");
+        const quad = (segments: Quadratic[]) =>
+          segments
+            .map((run) => `M ${run.p0.x} ${run.p0.y} Q ${run.c.x} ${run.c.y} ${run.p1.x} ${run.p1.y}`)
+            .join(" ");
+        const loopD =
+          // An arc that leaves and returns: two arcs of the same
+          // circle, so it closes cleanly at any size.
+          `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
+          ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`;
+        const d = self ? loopD : quad(runs);
+        // The hit stroke also keeps out of the cards an end is drawn inside.
+        const hitD = self
+          ? loopD
+          : quad(clipQuadratic(curve, [fromBox, toBox, ...strand.hosts, ...strand.obstacles]));
         const only = strand.edges.length === 1 ? strand.edges[0]! : null;
         const edgeId = only ? edgeSelectionId(connector.kind, only.from, only.to) : null;
         const edgeChosen = edgeId !== null && selection.includes(edgeId);
@@ -2492,8 +2526,13 @@ function Connectors({
               key={`hit:${strand.key}`}
               data-graview-edge={edgeId}
               className="graview-edge-hit"
-              d={d}
+              d={hitD}
               fill="none"
+              // The ends stay clear: a line lands ON a chip, and a hit stroke that reached
+              // the chip took the click meant for it. Seven percent off each end.
+              pathLength={1}
+              strokeDasharray="0.86"
+              strokeDashoffset={-0.07}
               stroke="transparent"
               strokeWidth={14}
               style={{ pointerEvents: "stroke", cursor: "pointer" }}

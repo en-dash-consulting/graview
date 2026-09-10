@@ -189,6 +189,15 @@ export interface LayoutOptions {
    * district is never drawn under a pane. Nothing is reserved by default.
    */
   readonly inset?: { readonly left?: number; readonly right?: number };
+  /**
+   * Kinds whose group is shown by the framework's own list rather than a
+   * view the app wrote. From altitude a focused group of such a kind is its
+   * district, opened — drawing the list scaled in the middle AND the same
+   * names in the district was the same thing twice. A group with a real
+   * view — a week, a board — keeps its scaled card, since that picture is
+   * the thing you were standing in.
+   */
+  readonly plainGroups?: readonly string[];
 }
 
 /**
@@ -202,7 +211,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1040, height: 420 },

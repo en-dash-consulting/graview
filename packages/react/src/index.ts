@@ -1,7 +1,7 @@
 export { GraviewProvider, useGraph, useGraview, useNode, useViewMode, ViewModeProvider } from "./context.js";
 export type { GraviewContextValue, GraviewProviderProps, Scheme, ViewMode } from "./context.js";
 
-export { createViews } from "./view-registry.js";
+export { createViews, DEFAULT_VIEW, isDefaultView, markDefaultView } from "./view-registry.js";
 export type {
   Cardinality,
   Fidelity,

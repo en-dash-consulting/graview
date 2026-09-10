@@ -35,3 +35,12 @@ lands on the member; and the dashed marks for a pinned or considered card
 were drawn around the whole natural box and the kind tag rather than the
 drawing. The embed's strip shows two faces, the picture and the pages,
 since altitude is the scene's own control.
+
+From altitude a focused GROUP shown by the framework's own list is its
+district, opened — the scaled list in the middle and the same names in the
+district were one thing drawn twice, and a reader said so. A group with a
+view of its own (a week, a board) keeps its scaled card, and then its
+district stays shut. The framework's own group views carry a mark
+(`markDefaultView`, `isDefaultView`) so a scene can tell. And a line's hit
+stroke now keeps out of the cards an end is drawn inside, so a line to Ravi
+never takes the click meant for June above him.

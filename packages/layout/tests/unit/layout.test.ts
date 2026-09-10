@@ -467,6 +467,23 @@ describe("a rail reserved for chrome, at altitude", () => {
   });
 });
 
+describe("a focused group, from altitude", () => {
+  it("is its district, opened, when its picture is only the framework's list", () => {
+    const result = layout(graph(), schema, view({ focusId: aggregateId("duty"), overview: true }), { plainGroups: ["duty"] });
+    expect(result.nodes.some((node) => node.plane === 0)).toBe(false);
+    const district = result.nodes.find((node) => node.id === kindCardId("duty"))!;
+    expect(district.opened).toBe(true);
+  });
+
+  it("keeps its scaled card when it has a view of its own, and its district stays shut", () => {
+    const result = layout(graph(), schema, view({ focusId: aggregateId("duty"), overview: true, expanded: [kindCardId("duty")] }));
+    const card = result.nodes.find((node) => node.plane === 0)!;
+    expect(card.id).toBe(aggregateId("duty"));
+    expect(card.natural).toBeDefined();
+    expect(result.nodes.find((node) => node.id === kindCardId("duty"))!.opened).toBeFalsy();
+  });
+});
+
 describe("the overview is the same cards, on a ring", () => {
   it("keeps your interface, live and shrunk, in the middle of the ring", () => {
     /*
