@@ -10,7 +10,7 @@ import {
   type Via,
 } from "./types.js";
 import { rankKinds } from "./rank.js";
-import type { ViewState } from "./view-state.js";
+import { toggleExpanded, withFocus, withZoom, type ViewState } from "./view-state.js";
 
 export const AGGREGATE_PREFIX = "aggregate:";
 
@@ -59,6 +59,29 @@ export function isAggregateId(id: string): boolean {
 export function kindsOfAggregate(id: string): string[] {
   if (!isAggregateId(id)) return [];
   return id.slice(AGGREGATE_PREFIX.length).split("+").filter(Boolean);
+}
+
+/**
+ * Going deeper into a card, as view state.
+ *
+ * A record ZOOMS: the same scene with the record grown to most of it, and
+ * the same gesture on the zoomed record zooms back out. A KIND CARD stands
+ * for a group, so deeper means the group: on the ground it zooms into the
+ * group as a place (`aggregate:<kind>`), and from altitude it opens the
+ * district in place — the exploded view — and the same gesture closes it.
+ *
+ * The card's own id (`kind:<kind>`) is never made the focus. A focus
+ * resolves to a node or to a group's kinds, and a kind card is neither: a
+ * focus on one laid out an empty scene with the card's name in the URL,
+ * which is what double-clicking a group looked like before this existed.
+ */
+export function withJackIn(state: ViewState, id: string): ViewState {
+  const kind = kindOfCard(id);
+  if (kind !== null && state.overview) return toggleExpanded(state, id);
+  const target = kind !== null ? aggregateId(kind) : id;
+  return state.zoom && state.focusId === target
+    ? withZoom(state, false)
+    : withZoom({ ...withFocus(state, target), relation: null }, true);
 }
 
 /**

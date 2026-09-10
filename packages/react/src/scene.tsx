@@ -9,7 +9,6 @@ import {
   withPan,
   withPin,
   withRelation,
-  withZoom,
   type Connector,
   type InterpolatedLayout,
   type Layout,
@@ -17,6 +16,7 @@ import {
   type LayoutOptions,
   edgeSelectionId,
   edgeOfSelection,
+  withJackIn,
 } from "@graview/layout";
 import {
   CONNECTOR_DASH,
@@ -520,11 +520,7 @@ export function Scene<S extends AnySchema>({
        * the same gesture zooms back out — in and out are one motion.
        */
       onJackIn={() => {
-        setView((current) =>
-          current.zoom && current.focusId === node.id
-            ? withZoom(current, false)
-            : withZoom({ ...withFocus(current, node.id), relation: null }, true),
-        );
+        setView((current) => withJackIn(current, node.id));
         /*
          * A zoomed RECORD is selected — reading closely is when you act.
          * A zoomed PLACE starts quiet: the click half of the double-click
