@@ -8,6 +8,42 @@ Each entry names the commit by its subject line — commits here are
 `walkthrough: <stage> · <finding>`, one per finding, with the criterion in
 the same commit as the fix.
 
+## The first walk (2026-09-11)
+
+Thirty-one findings across the nine stages, every one fixed in a framework
+package and covered by a criterion that fails without the fix. The subject
+was a project scaffolded beside the framework with
+`pnpm graview create ../walk --link . --name "Walk" --kind item
+--plural items`, taken through two kinds and an edge, two rules, two lenses
+(one the framework's, one its own), a design over every surface, two roles
+with a seat each, two migrations, and two embeds on a plain article page.
+
+The shapes that came up more than once, which are the ones to expect again:
+
+- **An identifier where a name belongs.** A card named by its node id
+  (W-003), a field asked for by its key (W-004), a line's inspector titled
+  with its raw address (W-006), a relation captioned from the wrong end
+  (W-007).
+- **An act that cannot act.** A line offering the act that makes it (W-008),
+  a repair with a blank in it offered as one press (W-012), a repair the
+  seat may not take (W-020), a form asking a wider question than its act
+  (W-018).
+- **A refusal that is not said.** In the strip (W-019), on a seat (W-023),
+  on an undo (W-025) — all three had the reason in a `title` on a disabled
+  control, which a keyboard cannot reach.
+- **A harness that never asked.** Every fixture populated, so the empty
+  graph was the one state nobody tested (W-016, W-015); every screen at 1560
+  wide, so the phone was invisible (W-029, W-031); every browser rehearsal
+  clicking, so the keyboard was untried (W-005).
+- **Something true in memory and false once written down.** "Remove this
+  field" through JSON (W-024), an edge id whose ends contain its separator
+  (W-006).
+
+And one regression made by this walk and caught by it: W-026, the card
+swallowing the editor's Enter, introduced by W-005 two stages earlier and
+found by `pnpm remember`. That is why stage I now says to run every harness
+at the end of every stage.
+
 ### W-001 · The first screen of a project offers "Add a item"
 - stage: A · face: both · width: 1280 and 390 · scheme: both
 - expected: the empty district offers "Add an item …", and every generated
