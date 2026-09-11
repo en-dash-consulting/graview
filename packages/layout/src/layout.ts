@@ -164,8 +164,9 @@ function ring(
    */
   const far = Math.max(CARD_MIN_HEIGHT, size.height * 0.85);
   const near = Math.max(CARD_MIN_HEIGHT, size.height * 1.3);
-  const apart = far / 2 + near / 2 + 5;
-  const opening = Math.max(0, Math.min(opened, slack - apart));
+  // The two ends are 2·ry apart, and each reaches half its own height in.
+  const leastRy = (far / 2 + near / 2 + 5) / 2;
+  const opening = Math.max(0, Math.min(opened, slack - leastRy));
   const ry = Math.max(0, Math.min(canvasHeight * 0.365, slack - opening));
   return Array.from({ length: count }, (_, index) => {
     // Starting at the bottom, going clockwise, so the first card of the shelf
