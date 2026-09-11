@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-10T11:56:26.736Z",
+  "at": "2026-09-11T18:19:30.405Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -263,9 +263,9 @@
         "trail": "GraviewGraview←→Pages1 problem◆Ask3 ActivityThe agent's seatThe garden is plantedchanged · adopt-rulechanged · add-plotFirst plotchanged · add-gardenerFirst gar",
         "withheld": null,
         "activity": [
-          "claude Adopt: every plot has a caretakerundoEvery plot has a caretaker",
-          "claude Stake out First plot (1 beds)undoFirst plot",
-          "claude Welcome First gardenerundoFirst gardener"
+          "starter Adopt: every plot has a caretakerundoEvery plot has a caretaker",
+          "starter Stake out First plot (1 beds)undoFirst plot",
+          "starter Welcome First gardenerundoFirst gardener"
         ],
         "remembered": null,
         "problems": null,
@@ -381,7 +381,7 @@
           "Rules1open ▾"
         ],
         "trail": "GraviewGraview←→PagesThe garden keeps its agreements◆Ask Activity☾",
-        "withheld": "Stake out a plot",
+        "withheld": "Stake out a plotNot permitted: add-plot — coordinator can. The coordinator keeps the map.",
         "activity": [],
         "remembered": null,
         "problems": null,
@@ -664,7 +664,7 @@
           "Plots2◆open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Who tends whatWhat grows wherePagesThe garden keeps its agreements◆Ask1 ActivityThe agent's seatThe garden is plantedship:migration migration 1→",
+        "trail": "SeedbedSeedbed←→Who tends whatWhat grows wherePagesThe garden keeps its agreements◆Ask1 ActivityThe agent's seatPlant a starter gardenNot yours to do from this ",
         "withheld": null,
         "activity": [
           "ship:migration migration 1→2: Every garden adopts the agreementundoEvery plot has a caretaker"

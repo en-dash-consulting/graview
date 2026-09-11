@@ -1,0 +1,425 @@
+{
+  "at": "2026-09-11T18:14:35.801Z",
+  "engine": "canary-gpu",
+  "flags": [
+    "--enable-unsafe-webgpu",
+    "--use-angle=metal"
+  ],
+  "places": [
+    {
+      "app": "todo",
+      "scheme": "dark",
+      "place": "The lists",
+      "lens": null,
+      "present": true,
+      "natural": {
+        "width": 1040,
+        "height": 883
+      },
+      "drawn": {
+        "width": 499,
+        "height": 424
+      },
+      "slot": {
+        "width": 499,
+        "height": 424
+      },
+      "scaleX": 0.48000001173753004,
+      "scaleY": 0.47999999585265074,
+      "overflowRight": 0,
+      "overflowBottom": 0,
+      "clipped": null,
+      "picks": [
+        {
+          "id": "today",
+          "x": 684,
+          "y": 340,
+          "inside": true
+        },
+        {
+          "id": "t-deposit",
+          "x": 684,
+          "y": 358,
+          "inside": true
+        },
+        {
+          "id": "t-book",
+          "x": 684,
+          "y": 376,
+          "inside": true
+        },
+        {
+          "id": "t-quote",
+          "x": 684,
+          "y": 393,
+          "inside": true
+        },
+        {
+          "id": "week",
+          "x": 848,
+          "y": 340,
+          "inside": true
+        },
+        {
+          "id": "t-notice",
+          "x": 848,
+          "y": 358,
+          "inside": true
+        },
+        {
+          "id": "t-meter",
+          "x": 848,
+          "y": 376,
+          "inside": true
+        },
+        {
+          "id": "t-post",
+          "x": 848,
+          "y": 393,
+          "inside": true
+        },
+        {
+          "id": "t-broadband",
+          "x": 848,
+          "y": 410,
+          "inside": true
+        },
+        {
+          "id": "t-keys",
+          "x": 848,
+          "y": 428,
+          "inside": true
+        },
+        {
+          "id": "t-boxes",
+          "x": 848,
+          "y": 445,
+          "inside": true
+        },
+        {
+          "id": "someday",
+          "x": 1012,
+          "y": 340,
+          "inside": true
+        },
+        {
+          "id": "t-shelves",
+          "x": 1012,
+          "y": 358,
+          "inside": true
+        },
+        {
+          "id": "t-paint",
+          "x": 1012,
+          "y": 376,
+          "inside": true
+        },
+        {
+          "id": "t-piano",
+          "x": 1012,
+          "y": 393,
+          "inside": true
+        }
+      ],
+      "clickedInside": "today",
+      "stillLive": true,
+      "stayedInGraview": true
+    },
+    {
+      "app": "todo",
+      "scheme": "dark",
+      "place": "The week",
+      "lens": "timeline",
+      "present": true,
+      "natural": {
+        "width": 1040,
+        "height": 883
+      },
+      "drawn": {
+        "width": 499,
+        "height": 424
+      },
+      "slot": {
+        "width": 499,
+        "height": 424
+      },
+      "scaleX": 0.48000001173753004,
+      "scaleY": 0.47999999585265074,
+      "overflowRight": 0,
+      "overflowBottom": 0,
+      "clipped": null,
+      "picks": [
+        {
+          "id": "t-quote",
+          "x": 663,
+          "y": 478,
+          "inside": true
+        },
+        {
+          "id": "t-deposit",
+          "x": 682,
+          "y": 424,
+          "inside": true
+        },
+        {
+          "id": "t-book",
+          "x": 748,
+          "y": 445,
+          "inside": true
+        },
+        {
+          "id": "t-boxes",
+          "x": 748,
+          "y": 489,
+          "inside": true
+        },
+        {
+          "id": "t-notice",
+          "x": 795,
+          "y": 440,
+          "inside": true
+        },
+        {
+          "id": "t-broadband",
+          "x": 860,
+          "y": 476,
+          "inside": true
+        },
+        {
+          "id": "t-meter",
+          "x": 880,
+          "y": 381,
+          "inside": true
+        },
+        {
+          "id": "t-post",
+          "x": 880,
+          "y": 402,
+          "inside": true
+        },
+        {
+          "id": "t-keys",
+          "x": 946,
+          "y": 683,
+          "inside": true
+        }
+      ],
+      "clickedInside": "t-quote",
+      "stillLive": true,
+      "stayedInGraview": true
+    },
+    {
+      "app": "todo",
+      "scheme": "light",
+      "place": "The lists",
+      "lens": null,
+      "present": true,
+      "natural": {
+        "width": 1040,
+        "height": 883
+      },
+      "drawn": {
+        "width": 499,
+        "height": 424
+      },
+      "slot": {
+        "width": 499,
+        "height": 424
+      },
+      "scaleX": 0.48000001173753004,
+      "scaleY": 0.47999999585265074,
+      "overflowRight": 0,
+      "overflowBottom": 0,
+      "clipped": null,
+      "picks": [
+        {
+          "id": "today",
+          "x": 684,
+          "y": 340,
+          "inside": true
+        },
+        {
+          "id": "t-deposit",
+          "x": 684,
+          "y": 358,
+          "inside": true
+        },
+        {
+          "id": "t-book",
+          "x": 684,
+          "y": 376,
+          "inside": true
+        },
+        {
+          "id": "t-quote",
+          "x": 684,
+          "y": 393,
+          "inside": true
+        },
+        {
+          "id": "week",
+          "x": 848,
+          "y": 340,
+          "inside": true
+        },
+        {
+          "id": "t-notice",
+          "x": 848,
+          "y": 358,
+          "inside": true
+        },
+        {
+          "id": "t-meter",
+          "x": 848,
+          "y": 376,
+          "inside": true
+        },
+        {
+          "id": "t-post",
+          "x": 848,
+          "y": 393,
+          "inside": true
+        },
+        {
+          "id": "t-broadband",
+          "x": 848,
+          "y": 410,
+          "inside": true
+        },
+        {
+          "id": "t-keys",
+          "x": 848,
+          "y": 428,
+          "inside": true
+        },
+        {
+          "id": "t-boxes",
+          "x": 848,
+          "y": 445,
+          "inside": true
+        },
+        {
+          "id": "someday",
+          "x": 1012,
+          "y": 340,
+          "inside": true
+        },
+        {
+          "id": "t-shelves",
+          "x": 1012,
+          "y": 358,
+          "inside": true
+        },
+        {
+          "id": "t-paint",
+          "x": 1012,
+          "y": 376,
+          "inside": true
+        },
+        {
+          "id": "t-piano",
+          "x": 1012,
+          "y": 393,
+          "inside": true
+        }
+      ],
+      "clickedInside": "today",
+      "stillLive": true,
+      "stayedInGraview": true
+    },
+    {
+      "app": "todo",
+      "scheme": "light",
+      "place": "The week",
+      "lens": "timeline",
+      "present": true,
+      "natural": {
+        "width": 1040,
+        "height": 883
+      },
+      "drawn": {
+        "width": 499,
+        "height": 424
+      },
+      "slot": {
+        "width": 499,
+        "height": 424
+      },
+      "scaleX": 0.48000001173753004,
+      "scaleY": 0.47999999585265074,
+      "overflowRight": 0,
+      "overflowBottom": 0,
+      "clipped": null,
+      "picks": [
+        {
+          "id": "t-quote",
+          "x": 663,
+          "y": 478,
+          "inside": true
+        },
+        {
+          "id": "t-deposit",
+          "x": 682,
+          "y": 424,
+          "inside": true
+        },
+        {
+          "id": "t-book",
+          "x": 748,
+          "y": 445,
+          "inside": true
+        },
+        {
+          "id": "t-boxes",
+          "x": 748,
+          "y": 489,
+          "inside": true
+        },
+        {
+          "id": "t-notice",
+          "x": 795,
+          "y": 440,
+          "inside": true
+        },
+        {
+          "id": "t-broadband",
+          "x": 860,
+          "y": 476,
+          "inside": true
+        },
+        {
+          "id": "t-meter",
+          "x": 880,
+          "y": 381,
+          "inside": true
+        },
+        {
+          "id": "t-post",
+          "x": 880,
+          "y": 402,
+          "inside": true
+        },
+        {
+          "id": "t-keys",
+          "x": 946,
+          "y": 683,
+          "inside": true
+        }
+      ],
+      "clickedInside": "t-quote",
+      "stillLive": true,
+      "stayedInGraview": true
+    }
+  ],
+  "verdict": {
+    "everyPlaceShrinks": true,
+    "scaleIsUniform": true,
+    "laidOutAtNaturalSize": true,
+    "nothingOverflows": true,
+    "nothingClipped": true,
+    "everyPickInsideTheSlot": true,
+    "staysLive": true,
+    "selectsInPlace": true
+  },
+  "passed": true
+}

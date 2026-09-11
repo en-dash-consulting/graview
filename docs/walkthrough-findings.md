@@ -575,3 +575,24 @@ the same commit as the fix.
   — "commits on Enter, because the card does not swallow the field's key" and
   "does not let the card's own Enter reach a field being typed in". The
   second fails without the fix, in a second, inside `pnpm test`.
+
+### W-027 · The scaffolder can ship a project that does not parse
+- stage: G · face: neither — the scaffold
+- expected: `pnpm smoke:create` passes
+- actual: every one of its 28 verdicts went false, because the project's own
+  `verify` died on `src/embed.tsx(22,16): error TS1005: ',' expected.` — the
+  template had written `label: ${escapeString(ids.name)}` where
+  `label: "${escapeString(ids.name)}"` was meant, so the generated line read
+  `label: Field Notes,`. A template is a string, and nothing checked that the
+  strings it produces are the language they claim to be. `smoke:create` did
+  catch it — after packing tarballs, installing and building, minutes later,
+  and with every unrelated verdict false around it.
+- where it belongs: `packages/core/src/scaffold/index.ts`
+- harness that should have caught it:
+  `packages/core/tests/unit/scaffold.test.ts` asserted that particular
+  strings appear in the output and never that the output is a program
+- status: fixed in "walkthrough: G · a generated file is a program" ·
+  criteria added: scaffold "parses every .ts and .tsx the scaffolder writes"
+  — TypeScript's own parser over every generated source for three kinds,
+  which fails in 300ms with `note: src/embed.tsx: expected [ "',' expected."
+  ] to deeply equal []` — and "writes JSON files that are JSON"

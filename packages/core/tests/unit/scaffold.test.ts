@@ -212,6 +212,46 @@ describe("the CI it writes", () => {
  * that dependency — and without the dev alias the other packages get — could
  * not follow it.
  */
+/*
+ * THE GENERATED SOURCE PARSES.
+ *
+ * A template is a string, and a string can be malformed in ways nothing
+ * here noticed: `label: ${name}` where `label: "${name}"` was meant shipped
+ * a project whose own typecheck died on "',' expected". `smoke:create`
+ * catches it — after packing tarballs, installing and building, minutes
+ * later. TypeScript's own parser catches it in milliseconds.
+ */
+describe("every generated file is syntactically whole", () => {
+  it("parses every .ts and .tsx the scaffolder writes", async () => {
+    const ts = await import("typescript");
+    for (const kind of ["note", "item", "work-order"]) {
+      for (const file of scaffoldProject({ name: "Field Notes", kind }).files) {
+        if (!/\.tsx?$/.test(file.path)) continue;
+        const parsed = ts.createSourceFile(
+          file.path,
+          file.contents,
+          ts.ScriptTarget.ES2022,
+          true,
+          file.path.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+        );
+        const problems = (parsed as unknown as { parseDiagnostics: readonly ts.Diagnostic[] })
+          .parseDiagnostics;
+        expect(
+          problems.map((one) => ts.flattenDiagnosticMessageText(one.messageText, " ")),
+          `${kind}: ${file.path}`,
+        ).toEqual([]);
+      }
+    }
+  });
+
+  it("writes JSON files that are JSON", () => {
+    for (const file of scaffoldProject({ name: "Field Notes", kind: "note" }).files) {
+      if (!file.path.endsWith(".json")) continue;
+      expect(() => JSON.parse(file.contents), file.path).not.toThrow();
+    }
+  });
+});
+
 describe("a project can do what its own skills tell it to", () => {
   it("depends on every package the skills reach for, including the embed", () => {
     const manifest = JSON.parse(file("Walk", "package.json")) as {
