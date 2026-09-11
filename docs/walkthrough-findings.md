@@ -423,3 +423,24 @@ the same commit as the fix.
   "speaks the subject kind rather than spelling it"; edge-inspector "strikes
   a withheld act and says the policy's reason in the open" and "names the
   kind when the selection is a district". All fail without the fix.
+
+### W-020 · A repair the seat may not take is offered live, and refuses on press
+- stage: F · face: pages · width: 1280 and 390 · scheme: both
+- expected: nothing is hidden and nothing refuses on press
+- actual: a rule names its repairs without knowing who is reading, and both
+  repair surfaces rendered them straight from the violation — going round the
+  permission question the actions strip has always asked through
+  `deriveAffordances`. A hand was handed a live "Hand Buy milk to somebody …"
+  on the problems page, opened it, chose an owner, submitted, and met
+  "Not permitted: assign-item on an item — keeper can." The strip beside it
+  had already struck the same act through.
+  The scaffolder's record-page template wrote the same call, so every new
+  project shipped with it.
+- where it belongs: `packages/pages/src/pages.tsx` (`Repairs`) and
+  `packages/core/src/scaffold/index.ts`
+- harness that should have caught it:
+  `packages/pages/tests/unit/parity.test.tsx` — it had a policy for the LIST
+  page's creating acts and no policy on any page with a rule in it
+- status: fixed in "walkthrough: F · a repair is an act, and a seat may not
+  be able to take it" · criterion added: parity "withholds it on /problems"
+  and "withholds it on /duties/school-run", which fail without the fix

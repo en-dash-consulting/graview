@@ -987,7 +987,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
                 * component the derived problems page uses, so a page you
                 * write cannot get this wrong on its own.
                 */}
-              <Repairs<S> store={store} repairs={violation.repairs} />
+              <Repairs<S> store={store} repairs={violation.repairs} {...(principal ? { principal } : {})} />
             </div>
           ))}
         </section>

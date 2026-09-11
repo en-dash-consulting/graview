@@ -355,6 +355,89 @@ describe("a form asks the question the act left open", () => {
   });
 });
 
+/*
+ * A REPAIR IS AN ACT, AND A SEAT MAY NOT BE ABLE TO TAKE IT.
+ *
+ * A rule names its repairs without knowing who is reading, and both repair
+ * surfaces rendered them straight from the violation — going round the
+ * permission question the actions strip has always asked through
+ * `deriveAffordances`. A narrower seat was handed a live button and met the
+ * refusal on submit.
+ */
+describe("a repair the seat may not take is struck through, not offered", () => {
+  const handOver = bound.defineMutation("hand-over", {
+    title: "Hand it over",
+    description: "Give a run to somebody.",
+    connects: ["owned-by"],
+    input: z.object({ id: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
+    apply(ctx, args) {
+      ctx.addEdge({ kind: "owned-by", from: args.id, to: args.personId });
+    },
+  });
+  const unowned = bound.defineInvariant("somebody-owns-it", {
+    scope: { kind: "duty" },
+    repairs: ["hand-over"],
+    evaluate: ({ graph, subject }): Violation[] =>
+      graph.out(subject.id, "owned-by").length > 0
+        ? []
+        : [
+            {
+              invariant: "somebody-owns-it",
+              subjectId: subject.id,
+              label: subject.label,
+              message: `${subject.label} has nobody`,
+              nodeIds: [subject.id],
+              repairs: [
+                {
+                  mutation: "hand-over",
+                  args: { id: subject.id, personId: "ana" },
+                  label: `Hand ${subject.label} over`,
+                },
+              ],
+            },
+          ],
+  });
+  const guarded = () =>
+    new Store({
+      schema,
+      mutations: [handOver],
+      invariants: [unowned],
+      policy: {
+        roles: ["coordinator", "helper"],
+        grants: [
+          { roles: ["coordinator"], mutations: "*", describe: "The coordinator keeps the map." },
+        ],
+      },
+      snapshot: {
+        nodes: [
+          { id: "ana", kind: "person", label: "Ana" },
+          { id: "school-run", kind: "duty", label: "School run", minutes: 20 },
+        ] as never,
+        edges: [],
+      },
+    });
+  const asRole = (roles: readonly string[], path: string) =>
+    renderToStaticMarkup(
+      <PagesApp
+        context={{ store: guarded(), principal: { id: "somebody", kind: "human", roles } }}
+        initialPath={path}
+      />,
+    );
+
+  for (const path of ["/problems", "/duties/school-run"]) {
+    it(`withholds it on ${path}`, () => {
+      const helper = asRole(["helper"], path);
+      expect(helper).toContain("<s>Hand School run over</s>");
+      expect(helper).toContain("coordinator can");
+      expect(helper).toContain("The coordinator keeps the map.");
+      // And the coordinator still gets the button.
+      const boss = asRole(["coordinator"], path);
+      expect(boss).toContain("data-graview-repair=\"hand-over\"");
+      expect(boss).not.toContain("<s>Hand School run over</s>");
+    });
+  }
+});
+
 describe("an act the seat may not take is stated, not offered", () => {
   /*
    * The list page offered every creating act to everyone, and a gardener

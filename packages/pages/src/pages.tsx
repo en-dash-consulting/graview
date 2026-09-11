@@ -704,7 +704,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           {facts.violations.map((violation, index) => (
             <div key={index} style={{ display: "grid", gap: 8 }}>
               <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>
-              <Repairs<S> store={store} repairs={violation.repairs} />
+              <Repairs<S> store={store} repairs={violation.repairs} {...(principal ? { principal } : {})} />
             </div>
           ))}
         </section>
@@ -851,7 +851,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
  * is about as a link, and the repairs the rule itself named.
  */
 export function DefaultProblemsPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
-  const { store, brand, invariantContext } = context;
+  const { store, brand, invariantContext, principal } = context;
   useStoreTick(store);
   const violations = store.violations(invariantContext);
   return (
@@ -889,7 +889,7 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
                 </Link>
               </p>
             ) : null}
-            <Repairs<S> store={store} repairs={violation.repairs} />
+            <Repairs<S> store={store} repairs={violation.repairs} {...(principal ? { principal } : {})} />
           </section>
         );
       })}
@@ -915,9 +915,18 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
 export function Repairs<S extends AnySchema>({
   store,
   repairs,
+  principal,
 }: {
   readonly store: Store<S>;
   readonly repairs: readonly Repair[];
+  /**
+   * Who is pressing. A rule names its repairs without knowing who is
+   * reading, so the page has to ask — the actions strip already does, by
+   * going through `deriveAffordances`, and a repair rendered straight from
+   * the violation went round it: a hand was offered "Hand Buy milk to
+   * somebody", pressed it, and met the refusal on submit.
+   */
+  readonly principal?: Principal;
 }): ReactNode {
   const [open, setOpen] = useState<number | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
@@ -932,6 +941,19 @@ export function Repairs<S extends AnySchema>({
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {repairs.map((repair, at) => {
           const asks = (repair.missing ?? []).length > 0;
+          const verdict = store.permits({ name: repair.mutation, args: { ...repair.args } }, principal);
+          if (!verdict.ok) {
+            return (
+              <p
+                key={at}
+                data-testid="withheld"
+                data-withheld={verdict.refusal.wouldNeed.join(",") || "nobody"}
+                style={{ margin: 0, fontSize: 13, color: "var(--graview-ink-muted)" }}
+              >
+                <s>{repair.label}</s> — {verdict.refusal.message}
+              </p>
+            );
+          }
           return (
             <button
               key={at}
