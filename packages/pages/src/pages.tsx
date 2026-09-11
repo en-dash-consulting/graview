@@ -180,6 +180,22 @@ function KindMark({ kind, brand, size = 10 }: { kind: string; brand?: Brand; siz
   );
 }
 
+/**
+ * The kinds on the far end of a connections group, in their own plurals:
+ * "Owners" over an item's assignment, "Items" over the owner's.
+ */
+function listed<S extends AnySchema>(
+  store: Store<S>,
+  group: { readonly targets: readonly { readonly kind: string }[]; readonly edgeKind: string },
+): string {
+  const kinds = [...new Set(group.targets.map((target) => target.kind))];
+  const said = kinds.map((kind) => {
+    const definition = store.schema.tryDefinition(kind);
+    return definition?.plural ?? humaniseField(kind);
+  });
+  return said.length > 0 ? said.join(" and ") : humaniseField(group.edgeKind);
+}
+
 /** Words for who did something, from the op's own author. */
 function whoDid(op: Operation): string {
   if (op.author.kind === "human") return "you";
@@ -729,7 +745,22 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
 
       {facts.links.map((group) => (
         <section key={`${group.edgeKind}|${group.direction}`} style={{ ...rule, display: "grid", gap: 10 }}>
-          <p style={eyebrow}>{humaniseField(group.edgeKind)}</p>
+          {/*
+            * THE EYEBROW SAYS WHAT IS LISTED, NOT WHICH WAY THE EDGE WAS
+            * DECLARED.
+            *
+            * It used to be the edge kind — so an owner's record read
+            * "Assigned to" over "What they are seeing to", which is the
+            * reading `graview check` warns about by name
+            * (`edge-without-inverse`: "from an owner it is captioned
+            * 'assigned to', which is the wrong way round"). And where the
+            * declaration had no words for this direction, the eyebrow and the
+            * heading under it were the same string twice.
+            *
+            * The kinds on the far end are true from either end, and say
+            * something the heading does not.
+            */}
+          <p style={eyebrow}>{listed(store, group)}</p>
           <h2 style={h2}>{group.description ? capitalise(group.description) : humaniseField(group.edgeKind)}</h2>
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "6px 18px" }}>
             {group.targets.map((target) => (
