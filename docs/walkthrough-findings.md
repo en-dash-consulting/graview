@@ -795,3 +795,37 @@ at the end of every stage.
   `a ${…kind…}` interpolation anywhere under `packages/*/src`. Verified
   failing without the fix: all four assertions fail and the guard names all
   six sites.
+
+### W-034 · Escape does nothing at all on the first screen of a scaffolded app
+- stage: A · face: scene · width: 1280 and 390 · scheme: both
+- expected: "Press Escape from every state" — the key backs out one rung at a
+  time and never drops a selection while rising
+- actual: at altitude it did nothing, in every state, on every press. A
+  scaffolded app opens at altitude, so this is the first screen. Traced live:
+  six presses at `#overview=1&sel=kind%3Aitem` left the address untouched.
+  The ladder checks the overview rung BEFORE the selection, and calls plain
+  `go(withOverview(view, false))`; the provider deliberately coerces a
+  focusless descent back to the overview ("so Escape at the outermost place
+  is a no-op rather than a void" — `packages/react/src/context.tsx`). So the
+  rung neither moved nor fell through, and every rung under it — the
+  selection, the moves, a raised relation, the focus — was unreachable. The
+  altitude CONTROL had the same bug and was fixed for itself (`descentTarget`
+  exists for exactly this); `BackOut` was left behind.
+- where it belongs: `packages/primitives/src/workbench/index.tsx` (`BackOut`)
+- harness that should have caught it: `scripts/verify-navigation.mjs` drives
+  `apps/todo`, which opens focused, so the altitude-home case was never a
+  state any harness stood in; `pnpm smoke:create` drives a scaffolded app at
+  altitude and never pressed Escape there
+- status: fixed in "walkthrough: A · the top rung of the ladder swallowed the
+  rest" · the overview is a rung only when it is something you climbed TO.
+  An app whose home is altitude is already out, so Escape falls through to
+  the selection, then the moves, then the relation — and never leaves
+  altitude, because leaving would be going further in. An app with an
+  in-stack home still descends first, keeping its selection, exactly as
+  before. Criteria added:
+  `packages/primitives/tests/unit/back-out.test.tsx` (four ladders, both
+  kinds of home) and `smoke-create`'s `escapeDoesSomethingFromTheFirstScreen`
+  on the scaffolded app in a real browser. Verified failing without the fix:
+  two of the four jsdom ladders fail, the in-stack one passes either way
+  (so the change is not a regression), and smoke-create reports
+  `"escapeDoesSomethingFromTheFirstScreen": false`.
