@@ -72,6 +72,22 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
                     (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
             );
             if (!askable) continue;
+            /*
+             * A LINE DOES NOT OFFER THE ACT THAT WOULD MAKE IT.
+             *
+             * Both ends come from the line, so a mutation that only makes
+             * this edge kind arrives with nothing left to ask and nothing
+             * left to change: the relation it would create is the one you
+             * selected. Pressed, it was a one-press button that appeared to
+             * do nothing — and did do something, writing a second identical
+             * op into the history, undoable, describing a change that never
+             * happened.
+             *
+             * A make with a question still open is a different act (connect
+             * this end to something else), and a mutation that also breaks
+             * the kind is a move. Both stay.
+             */
+            if (makes && !breaks && open.length === 0) continue;
             affordances.push({
               id: `schema:edge:${mutation.name}:${edge.kind}:${edge.from}:${edge.to}`,
               label: mutation.title ?? mutation.name,
