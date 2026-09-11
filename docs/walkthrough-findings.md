@@ -444,3 +444,42 @@ the same commit as the fix.
 - status: fixed in "walkthrough: F · a repair is an act, and a seat may not
   be able to take it" · criterion added: parity "withholds it on /problems"
   and "withholds it on /duties/school-run", which fail without the fix
+
+### W-021 · A project cannot follow the last rung of its own pages skill
+- stage: F/H · face: neither — the scaffold
+- expected: `graview-pages` ends by telling a project to mount itself into
+  somebody else's page with `@graview/embed`; a scaffolded project can do it
+- actual: `@graview/embed` was not a dependency of a new project and had no
+  alias in its vite config, so the import did not resolve. And when the
+  dependency was added by hand, the option the whole thing turns on would not
+  typecheck: `EmbedOptions.views` was declared as `ReturnType<typeof
+  registerDefaultViews>`, which erases to `AnySchema` — so passing the
+  registry an app wrote for its own declaration was a type error eleven lines
+  deep in variance. The framework's own `apps/seedbed/src/site-embed.ts` got
+  past it with `as never` on both sides of the call.
+- where it belongs: `packages/embed/src/embed.tsx` (the type) and
+  `packages/core/src/scaffold/index.ts` (the dependency, the alias, and an
+  `embed.html` + `src/embed.tsx` so a project has somewhere to put one — and
+  so its own `pnpm typecheck`, which covers `src/`, covers the embed surface)
+- harness that should have caught it: nothing typechecked a `mount` call from
+  an app with a concrete schema; the seedbed call site is heterogeneous by
+  design (a chapter per schema) and its cast is legitimate, which is why the
+  wrong type looked fine there
+- status: fixed in "walkthrough: F · a project can mount itself" · criteria
+  added: scaffold "depends on every package the skills reach for, including
+  the embed" and "aliases every one of them for the linked dev server"; the
+  shipped `src/embed.tsx` passes a typed registry with no cast, so the
+  project's own typecheck is the standing criterion, and `smoke:create` runs
+  it in all four rehearsals
+
+### W-022 · Changing seats had no criterion for keeping the store
+- stage: F · face: embed · width: 1280
+- expected: changing seats on the embed keeps the store and its history
+- actual: it does — but nothing said so. The embed's seat test asserted what
+  narrows and never that the graph and the op log are the ones the reader was
+  already looking at, which is the whole point of demonstrating a policy on a
+  live store rather than on a fresh one.
+- where it belongs: `apps/seedbed/tests/integration/embed.test.tsx`
+- status: criterion added: "keeps the store and its history across a change
+  of seat" — the same `Store` instance, the same op count and the same node
+  count across two changes of seat, with the narrowing still happening

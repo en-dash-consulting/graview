@@ -405,7 +405,7 @@ describe("what a principal may do", () => {
       policy: {
         roles: ["coach", "player"],
         grants: [
-          { roles: ["coach"], mutations: "*" },
+          { roles: ["coach"], mutations: "*", describe: "The coach owns the rota." },
           { roles: ["player"], mutations: ["reday"] },
         ],
       },
@@ -462,6 +462,17 @@ describe("what a principal may do", () => {
         expect(result.ok).toBe(false);
         if (result.ok) return;
         expect(result.error).toContain("Not permitted");
+        /*
+         * THE SAME SENTENCE the strip strikes the act through with. One
+         * refusal, wherever it is met: a person reading the pane and an
+         * agent reading an error get the same words, including the
+         * policy's own.
+         */
+        const shown = deriveAffordances(guarded(), ["d1"], { principal: player }).withheld.find(
+          (one) => one.mutation === "rename",
+        )!;
+        expect(result.error).toContain(shown.refusal.message);
+        expect(result.error).toContain("The coach owns the rota.");
       });
   });
 });

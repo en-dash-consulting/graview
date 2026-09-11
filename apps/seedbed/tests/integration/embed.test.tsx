@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { Store } from "@graview/core";
 import { mount } from "@graview/embed";
 import { describe, expect, it } from "vitest";
 import { CHAPTERS } from "../../src/domain/chapters.js";
@@ -18,6 +19,15 @@ window.matchMedia = ((query: string) =>
 
 const seatOf = (chapter: (typeof CHAPTERS)[number], id: string) => chapter.seats!.find((seat) => seat.principal.id === id)!.principal;
 
+/*
+ * THE CASTS THAT ARE NOT HERE ARE THE POINT.
+ *
+ * `EmbedOptions.views` used to be typed as `ReturnType<typeof
+ * registerDefaultViews>`, which erases to `AnySchema` — so passing the
+ * registry an app wrote for its own declaration, the only thing the option
+ * exists for, was a type error, and this file got past it with `as never` on
+ * both sides. They are gone; `pnpm typecheck` is the criterion.
+ */
 describe("a chapter, embedded", () => {
   const chapter = CHAPTERS[10]!; // what grows where: four kinds, two lenses, a policy
   const into = () => {
@@ -33,7 +43,7 @@ describe("a chapter, embedded", () => {
       seed: chapter.seed,
       face: "graview",
       principal: chapter.principal,
-      views: (schema) => seedbedViews(schema as never, { lens: true, board: true }) as never,
+      views: (schema) => seedbedViews(schema, { lens: true, board: true }),
     });
     expect(element.querySelectorAll('[data-graview-view^="kind:"]').length).toBe(4);
     const style = element.querySelector("style")?.textContent ?? "";
@@ -70,7 +80,7 @@ describe("a chapter, embedded", () => {
       face: "scene",
       stop: "#focus=aggregate:gardener",
       principal: chapter.principal,
-      views: (schema) => seedbedViews(schema as never, { lens: true, board: true }) as never,
+      views: (schema) => seedbedViews(schema, { lens: true, board: true }),
     });
     const place = () => element.querySelector<HTMLButtonElement>('[data-testid="place-gardener"]');
     expect(place()?.textContent).toBe("Who tends what");
@@ -112,6 +122,45 @@ describe("a chapter, embedded", () => {
     expect(seat("june")?.getAttribute("aria-pressed")).toBe("true");
     expect(element.querySelector('[data-testid="withheld"]')).toBeNull();
     expect(element.querySelector('[data-testid="form-add-gardener"]')).not.toBeNull();
+    handle.unmount();
+  });
+
+  /*
+   * CHANGING SEATS IS NOT STARTING AGAIN. The reader sits somewhere else;
+   * the graph, the log and the store itself are the same ones they were
+   * looking at a moment ago — otherwise "what a gardener may not do" would
+   * be demonstrated on a different garden.
+   */
+  it("keeps the store and its history across a change of seat", () => {
+    const seven = CHAPTERS[6]!;
+    const element = into();
+    const store = new Store({
+      schema: seven.app.schema,
+      mutations: seven.app.mutations ?? [],
+      invariants: seven.app.invariants ?? [],
+      ...(seven.app.policy ? { policy: seven.app.policy } : {}),
+      ...(seven.seed ? { snapshot: seven.seed as never } : {}),
+    });
+    const handle = mount(element, {
+      app: seven.app,
+      store,
+      face: "pages",
+      path: "/gardeners",
+      principal: seven.principal,
+      seats: seven.seats,
+    });
+    const before = {
+      ops: store.log.all().length,
+      nodes: store.graph.allNodes().length,
+    };
+    handle.setSeat(seatOf(seven, "june"));
+    expect(store.log.all().length).toBe(before.ops);
+    expect(store.graph.allNodes().length).toBe(before.nodes);
+    // And what the new seat may do, it may do to the SAME graph.
+    expect(element.querySelector('[data-testid="form-add-gardener"]')).not.toBeNull();
+    handle.setSeat(seatOf(seven, "ravi"));
+    expect(store.graph.allNodes().length).toBe(before.nodes);
+    expect(element.querySelector('[data-testid="withheld"]')?.textContent).toContain("coordinator can");
     handle.unmount();
   });
 

@@ -448,7 +448,7 @@ try {
 const b = report.browser;
 const clean = (violations) => Array.isArray(violations) && violations.length === 0;
 report.verdict = {
-  theScaffoldWroteAProject: (report.npm.tree ?? []).length === 18,
+  theScaffoldWroteAProject: (report.npm.tree ?? []).length === 20,
   itInstalledFromTheTarballsWithNpm: report.npm.installed === true && report.npm.lockfile === true,
   itsOwnVerifyPassed: report.npm.verified === true,
   theCheckerActuallySpoke: typeof report.npm.checkSaid === "string" && report.npm.checkSaid.includes("no problems found"),

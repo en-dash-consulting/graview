@@ -12,7 +12,16 @@ import {
   Standing,
   themeCss,
 } from "@graview/primitives";
-import { createViews, GraviewProvider, Scene, useGraview, useNavigation, type Scheme, type ViewComponent } from "@graview/react";
+import {
+  createViews,
+  GraviewProvider,
+  Scene,
+  useGraview,
+  useNavigation,
+  type Scheme,
+  type ViewComponent,
+  type ReactViewRegistry,
+} from "@graview/react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
@@ -58,7 +67,15 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
   /** A store to share; otherwise one is made from the app and the seed. */
   readonly store?: Store<S>;
   /** Views beyond the derived defaults. */
-  readonly views?: (schema: S) => ReturnType<typeof registerDefaultViews>;
+  /*
+   * The app's OWN registry, in the app's own schema.
+   *
+   * This was typed as `ReturnType<typeof registerDefaultViews>`, which erases
+   * to `AnySchema` — so a project passing the `views()` it wrote for its own
+   * declaration, which is the only thing this option is for, was a type
+   * error with eleven lines of variance in it.
+   */
+  readonly views?: (schema: S) => ReactViewRegistry<S>;
   /** The pages face's own pages, over the derived defaults. */
   readonly pages?: PageRegistry<S, PageComponent<S>>;
   /** The face switcher and Standing, above the picture. Default on. */
