@@ -16,7 +16,7 @@ import {
 } from "@graview/core";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useCallback, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { recordFacts } from "./facts.js";
+import { kindFacts, recordFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { kindOfSlug, pluralSlug, recordPath, spatialHref } from "./registry.js";
 
@@ -544,12 +544,29 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
    * store's own, asked before anything is drawn.
    */
   const { principal } = context;
-  const creating = store
-    .allMutations()
-    .filter((mutation) => (mutation.creates ?? []).includes(kind as never))
-    .map((mutation) => ({ mutation, verdict: store.permits({ name: mutation.name, args: {} }, principal) }));
-  const creators = creating.filter((entry) => entry.verdict.ok).map((entry) => entry.mutation);
-  const withheld = creating.filter((entry) => !entry.verdict.ok);
+  /*
+   * THE ACTS THE DERIVATION OFFERS, not the ones the declaration lists.
+   *
+   * This scanned `allMutations()` by `creates` and checked `store.permits` —
+   * which is the thing `graview-pages` tells an app's own page not to do,
+   * done by the framework's own page. The two answers differ: the derivation
+   * also drops an act it cannot ASK for. "Add an item for someone", with
+   * nobody to hand it to yet, is withheld in the scene and was offered here
+   * as a live form whose picker was empty and whose submit could only refuse.
+   */
+  const facts = kindFacts(store, kind as string, {
+    ...(principal ? { principal } : {}),
+    ...(context.invariantContext ? { context: context.invariantContext } : {}),
+  });
+  const creators = facts.actions.affordances
+    .map((affordance) => ({
+      affordance,
+      mutation: store.allMutations().find((m) => m.name === affordance.mutation),
+    }))
+    .filter((entry): entry is { affordance: typeof entry.affordance; mutation: NonNullable<typeof entry.mutation> } =>
+      entry.mutation !== undefined,
+    );
+  const withheld = facts.actions.withheld;
   const plural = pluralOf(store, kind);
 
   return (
@@ -569,7 +586,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         <p style={{ ...lede, fontSize: 16 }} data-testid="none-yet">
           None yet
           {creators.length > 0
-            ? ` — the first one starts below, with “${creators[0]?.title ?? creators[0]?.name}”.`
+            ? ` — the first one starts below, with “${creators[0]?.mutation.title ?? creators[0]?.mutation.name}”.`
             : "."}
         </p>
       ) : (
@@ -609,18 +626,19 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         </Link>
       ) : null}
 
-      {creators.map((mutation) => (
-        <section key={mutation.name} style={{ ...rule, display: "grid", gap: 14 }}>
+      {creators.map(({ affordance, mutation }) => (
+        <section key={affordance.id} style={{ ...rule, display: "grid", gap: 14 }}>
           <h2 style={h2}>{mutation.title ?? mutation.name}</h2>
           {mutation.description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{mutation.description}</p> : null}
-          <DerivedForm store={store} mutation={mutation} />
+          {/* The candidates the derivation narrowed, not every node. */}
+          <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} />
         </section>
       ))}
       {withheld.length > 0 ? (
         <ul style={{ ...rule, margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }} data-testid="withheld">
-          {withheld.map(({ mutation, verdict }) => (
-            <li key={mutation.name} style={quiet}>
-              <s>{mutation.title ?? mutation.name}</s> — {verdict.ok ? "" : verdict.refusal.message}
+          {withheld.map((entry) => (
+            <li key={entry.id} style={quiet}>
+              <s>{entry.label}</s> — {entry.refusal.message}
             </li>
           ))}
         </ul>
