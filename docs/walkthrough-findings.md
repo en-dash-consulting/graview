@@ -165,3 +165,22 @@ the same commit as the fix.
   would make the line you already selected" (fails without the fix:
   `['remove-rider', 'give-a-ride']`) and "keeps a maker on a line when it
   still has something to ask"
+
+### W-009 · The scene's heading list skips two levels as soon as a relation is drawn
+- stage: B · face: scene · width: 1280 and 390 · scheme: both
+- expected: axe reports nothing on either face
+- actual: axe `heading-order` (moderate), on every scene state once an item
+  was connected to an owner. The connections panel writes a relation's
+  caption as an `h4` — for its size, which its own style sets anyway — and
+  the only heading above it is the shell's `h1`, so a screen reader's heading
+  list reads as though two sections are missing.
+- where it belongs: `packages/primitives/src/connections.tsx`
+- harness that should have caught it: `scripts/audit-ui.mjs` — no criterion,
+  and nothing in the repository ran axe on a scene with a relation drawn in
+  it
+- status: fixed in "walkthrough: B · a relation's caption is an h2" ·
+  criterion added: audit-ui `headings` (any jump of more than one level).
+  Verified failing without the fix: `?? todo/travelled  headings skip a
+  level: h1 → h4 at "why this is here"`. A heading is counted whether or not
+  it is painted — the shell's h1 is clipped to a pixel on purpose, and
+  measuring its box was what hid the jump on the first attempt.

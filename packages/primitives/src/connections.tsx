@@ -53,7 +53,16 @@ export function Connections({ id, max = 8, empty }: ConnectionsProps) {
         const hidden = group.ids.length - shown.length;
         return (
           <section key={group.key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <h4
+            {/*
+              * h2, not h4. The scene's document has exactly one heading above
+              * this — the app's name in the bar — so a relation's caption is
+              * the next level down. Written as an h4 for its size (which the
+              * style sets anyway), it skipped two, and a screen reader's
+              * heading list read as though two sections were missing. axe
+              * calls it `heading-order`; nothing here ran axe on a scene with
+              * a relation drawn in it until the walkthrough did.
+              */}
+            <h2
               style={{
                 margin: 0,
                 fontSize: 10,
@@ -64,7 +73,7 @@ export function Connections({ id, max = 8, empty }: ConnectionsProps) {
               }}
             >
               {group.label}
-            </h4>
+            </h2>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {shown.map((neighbourId) => {
                 const node = store.graph.getNode(neighbourId);

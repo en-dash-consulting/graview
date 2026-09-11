@@ -132,6 +132,34 @@ const audit = () => {
     .slice(0, 6)
     .map((el) => el.dataset.graviewField);
 
+  /*
+   * HEADINGS THAT SKIP A LEVEL. The scene has one h1 — the app's name — and
+   * a card's own sub-headings hang off it. A connections caption written as
+   * an h4 jumped two levels, which is what a screen reader's heading list
+   * reads as a missing section. axe calls this `heading-order`, and no
+   * harness here ran axe on a scene with a relation drawn in it.
+   */
+  /*
+   * Not `visible`: the shell's h1 is deliberately clipped to a pixel, and a
+   * screen reader reads it all the same. Rendered-or-not is the question, so
+   * only display:none and visibility:hidden take a heading out of the list —
+   * measuring the box would have dropped the h1 and hidden the very jump
+   * this looks for.
+   */
+  const levels = [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")]
+    .filter((el) => {
+      const style = getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden";
+    })
+    .map((el) => ({ level: Number(el.tagName[1]), text: (el.textContent ?? "").trim().slice(0, 30) }));
+  const headings = [];
+  let previous = 0;
+  for (const heading of levels) {
+    if (previous !== 0 && heading.level > previous + 1)
+      headings.push(`h${previous} → h${heading.level} at "${heading.text}"`);
+    previous = heading.level;
+  }
+
   /* A control too small to hit. 24px is the WCAG 2.2 minimum. */
   /*
    * A control's DESIGNED size, not its projected one.
@@ -307,7 +335,7 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
+  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -358,6 +386,7 @@ for (const s of report.screens) {
     s.articles?.length ? `article disagrees: ${s.articles.join(", ")}` : "",
     s.unnamed?.length ? `${s.unnamed.length} cards named by their address: ${s.unnamed[0]}` : "",
     s.keyed?.length ? `fields asked for by their key: ${s.keyed.join(", ")}` : "",
+    s.headings?.length ? `headings skip a level: ${s.headings.join(", ")}` : "",
     s.small.length ? `${s.small.length} controls under 24px` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",
   ].filter(Boolean);
