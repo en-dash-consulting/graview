@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-10T02:22:07.916Z",
+  "at": "2026-09-11T17:29:16.680Z",
   "engine": "chromium",
   "steps": [
     {
@@ -113,6 +113,10 @@
       ]
     }
   },
+  "districts": {
+    "withAPicture": "#focus=t-deposit&overview=1&expand=kind%3Atask",
+    "withoutOne": "#focus=t-deposit&overview=1&expand=kind%3Areason"
+  },
   "verdict": {
     "nothingToGoBackToAtFirst": true,
     "travellingChangesTheAddress": true,
@@ -133,7 +137,9 @@
     "theMarkMovesAsTheSceneDoes": true,
     "theControlComesBackDown": true,
     "aNewStopStartsWhereTheLayoutPutsThings": true,
+    "aDistrictWithAPictureGoesIntoIt": false,
+    "aDistrictWithoutOneOpensInPlace": true,
     "whatYouCanPressIsWhatYouCanSee": true
   },
-  "passed": true
+  "passed": false
 }

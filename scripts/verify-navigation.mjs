@@ -242,6 +242,50 @@ try {
     await page.waitForTimeout(900);
     report.moves.back = await pinnedNow();
   }
+
+  /*
+   * GOING DEEPER INTO A DISTRICT THAT HAS A PICTURE OF ITS OWN.
+   *
+   * A district explodes into a ring of chips because a bag of names is the
+   * best a generic card can do with its members. A kind with a lens over it
+   * has something better, and the card draws a ◆ to say so — and going
+   * deeper burst it into chips anyway. Both branches, from the same gesture:
+   * "task" has the week lens over it, "reason" has nothing but the default.
+   */
+  // Rise — the control is a TOGGLE, so ask where it is rather than pressing it.
+  const rise = async () => {
+    const up = await page.evaluate(
+      () => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+    );
+    if (!up) {
+      await page.click('[data-testid="overview"]');
+      await page.waitForTimeout(900);
+    }
+  };
+  await rise();
+  const deeper = async (kind) => {
+    await rise();
+    await page.evaluate(() => {
+      for (const button of document.querySelectorAll("[data-testid^='open-']")) {
+        if (button.getAttribute("aria-expanded") === "true") button.click();
+      }
+    });
+    await page.waitForTimeout(400);
+    const card = await page.$(`[data-graview-view="kind:${kind}"]`);
+    const box = await card.boundingBox();
+    // The card's own top edge: never a chip, never the open control.
+    await page.mouse.dblclick(box.x + 14, box.y + 6);
+    await page.waitForTimeout(900);
+    const at = await page.evaluate(() => location.hash);
+    await page.click('[data-testid="backtrack"] button[aria-label="Back"]');
+    await page.waitForTimeout(700);
+    return at;
+  };
+  report.districts = {
+    withAPicture: await deeper("task"),
+    withoutOne: await deeper("reason"),
+  };
+
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
@@ -316,6 +360,14 @@ report.verdict = {
     report.moves?.travelled?.pinned?.length === 0 &&
     !report.moves?.travelled?.url.includes("pin.") &&
     (report.moves?.back?.pinned?.length ?? 0) > 0,
+  // A kind with a lens goes INTO the lens; a kind without one opens in place.
+  aDistrictWithAPictureGoesIntoIt:
+    (report.districts?.withAPicture ?? "").includes("focus=aggregate%3Atask") &&
+    (report.districts?.withAPicture ?? "").includes("zoom=1") &&
+    !(report.districts?.withAPicture ?? "").includes("expand="),
+  aDistrictWithoutOneOpensInPlace:
+    (report.districts?.withoutOne ?? "").includes("expand=kind%3Areason") &&
+    !(report.districts?.withoutOne ?? "").includes("focus=aggregate"),
   whatYouCanPressIsWhatYouCanSee:
     report.hitArea?.onContent === "t-deposit" &&
     report.hitArea?.belowContent !== "t-deposit" &&
