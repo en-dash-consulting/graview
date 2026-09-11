@@ -137,4 +137,33 @@ describe("installing them", () => {
       rmSync(scratch, { recursive: true, force: true });
     }
   });
+
+  /*
+   * AND THIS REPOSITORY'S OWN COPIES ARE CURRENT.
+   *
+   * The skills are installed here too, because the framework is the first
+   * project anybody works in — and the copies drifted: `graview-pages` had
+   * never been installed at all, and three others were an edit behind. An
+   * agent reading the walkthrough in this checkout was told to follow a skill
+   * it could not load. Nothing in a build noticed, because every check was
+   * about a scratch directory.
+   *
+   * Run `pnpm skills` when this fails. It is a copy, not a judgement.
+   */
+  it("keeps this repository's own installed copies current", () => {
+    const root = resolve(SKILLS_DIR, "../../..");
+    for (const destination of SKILL_DESTINATIONS) {
+      const here = join(root, destination);
+      const installed = readdirSync(here).filter((name) => name.startsWith("graview-")).sort();
+      expect(installed, `${destination} is missing skills — run pnpm skills`).toEqual(
+        skills.map((skill) => skill.name),
+      );
+      for (const skill of skills) {
+        expect(
+          readFileSync(join(here, skill.name, "SKILL.md"), "utf8"),
+          `${destination}/${skill.name} is out of date — run pnpm skills`,
+        ).toBe(readFileSync(join(SKILLS_DIR, skill.name, "SKILL.md"), "utf8"));
+      }
+    }
+  });
 });

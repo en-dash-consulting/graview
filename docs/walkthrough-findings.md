@@ -341,3 +341,24 @@ the same commit as the fix.
   three failed with the binding errors quoted above. The declaration now
   answers the question the node count was guessing at: a role naming a kind
   nobody declared still throws, whatever is in the graph.
+
+### W-017 · The framework's own copies of its skills are stale
+- stage: E · face: neither — the repository itself
+- expected: the walkthrough's stage E says "follow `graview-pages`", and an
+  agent working in this checkout can load it
+- actual: `.claude/skills` and `.agents/skills` here held nine skills, not
+  ten — `graview-pages` had never been installed at all — and three of the
+  nine (`graview-lens`, `graview-new-app`, `graview-node-kind`) were an edit
+  behind their source in `packages/skills/skills/`. The skills are the thing
+  every future app gets, and the framework is the first project anybody works
+  in; an agent following the playbook here was sent to a skill it could not
+  load.
+- where it belongs: the checkout's own installed copies (`pnpm skills`), and
+  the missing criterion
+- harness that should have caught it:
+  `packages/skills/tests/unit/skills.test.ts` — it installed into a scratch
+  directory and checked that, never this repository's own copies
+- status: fixed in "walkthrough: E · the framework's own skills are current"
+  · criterion added: skills "keeps this repository's own installed copies
+  current", which fails on the previous checkout with
+  `.claude/skills/graview-lens is out of date — run pnpm skills`
