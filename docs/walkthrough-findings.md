@@ -483,3 +483,25 @@ the same commit as the fix.
 - status: criterion added: "keeps the store and its history across a change
   of seat" — the same `Store` instance, the same op count and the same node
   count across two changes of seat, with the narrowing still happening
+
+### W-023 · A seat that may not sit down gives the wrong reason, quietly
+- stage: F · face: scene · width: 1280 · scheme: both
+- expected: nothing is hidden and nothing refuses on press; a seat the policy
+  refuses says so
+- actual: with the narrower seat at the keyboard, the starter seat was
+  disabled and labelled "There is something here already" — its idle text,
+  which is a different answer to a different question. The real reason ("Not
+  yours to do from this seat. The store refuses add-item…") was in a `title`
+  on the DISABLED button, unreachable from a keyboard and needing a hover
+  over a dead control otherwise. The same shape as W-019, in the seat rather
+  than the strip.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`AgentSeat`)
+- harness that should have caught it: `scripts/verify-seat.mjs` drove a seat
+  that is always permitted; no test rendered a seat under a policy that
+  refuses it
+- status: fixed in "walkthrough: F · a seat that may not sit down says so" ·
+  criteria added: shell "strikes a seat the policy refuses and says why
+  beside it" (fails without the fix) and verify-seat "a permitted seat is not
+  struck through and needs no excuse", so the strike cannot leak the other
+  way

@@ -93,6 +93,25 @@ try {
           el.textContent.trim(),
         ),
       );
+      /*
+       * A SEAT THAT MAY NOT SIT DOWN SAYS SO where the strike is. The reason
+       * was a `title` on a disabled button and the label under it said
+       * something else — "There is something here already" where the answer
+       * was "not from this seat".
+       */
+      const refusedSeat = await page.evaluate((id) => {
+        const button = document.querySelector(`[data-testid="${id}"]`);
+        const why = document.querySelector(`[data-testid="${id}-why"]`);
+        return {
+          permitted: button?.getAttribute("data-agent-permitted"),
+          struck: Boolean(button?.querySelector("s")),
+          why: why?.textContent ?? null,
+        };
+      }, seat.testId);
+      check(`${app}: a permitted seat is not struck through and needs no excuse`,
+        refusedSeat.permitted === "true" && refusedSeat.struck === false && refusedSeat.why === null,
+        JSON.stringify(refusedSeat));
+
       check(`${app}: the seat signs its own work`,
         signed.includes(seat.who) && !signed.includes("claude"),
         signed.slice(0, 3).join(", "));
