@@ -303,6 +303,20 @@ export function Inspector() {
   ];
 
   /*
+   * WHAT THE SELECTION IS ABOUT, including a district.
+   *
+   * `kinds` above reads the selection's NODES, so a selected kind card — a
+   * district, which has no node behind it — came out empty, and a pane with
+   * every act withheld said "Nothing you may do with this mix of kinds"
+   * about one district plainly named Owners. The card's own id knows the
+   * kind; the badge stays off, because the title is already the plural.
+   */
+  const subjectKinds =
+    kinds.length > 0
+      ? kinds
+      : [...new Set(selection.flatMap((id) => kindsOf(id)))];
+
+  /*
    * A selected LINE. The pane's job flips from "what is this thing" to
    * "what is this relation": the declaration's own sentence for the edge,
    * both ends as pressable names, and the derived actions below — which
@@ -786,13 +800,17 @@ export function Inspector() {
             ? // "Nothing can be done" would be a lie here: things can be
               // done, by somebody else. Which is a different sentence.
               `Nothing you may do with ${
-                edge ? "this relation" : kinds.length === 1 ? withArticle(kinds[0]!) : "this mix of kinds"
+                edge
+                  ? "this relation"
+                  : subjectKinds.length === 1
+                    ? withArticle(subjectKinds[0]!)
+                    : "this mix of kinds"
               } — ${withheld.length} action${withheld.length === 1 ? "" : "s"} withheld.`
             : edge
               ? `Nothing can be done with this line yet — no mutation declares that it makes or breaks "${edge.kind}".`
               : `Nothing can be done with ${
-                  kinds.length === 1 ? withArticle(kinds[0]!) : "this mix of kinds"
-                } yet — no mutation declares ${kinds.length === 1 ? "it" : "them"} as a subject.`}
+                  subjectKinds.length === 1 ? withArticle(subjectKinds[0]!) : "this mix of kinds"
+                } yet — no mutation declares ${subjectKinds.length === 1 ? "it" : "them"} as a subject.`}
         </p>
       ) : (
         <ol
@@ -1010,13 +1028,12 @@ export function Inspector() {
           }}
         >
           {withheld.slice(0, atPointer ? withheld.length : 3).map((action) => (
-            <li key={action.id}>
+            <li key={action.id} style={{ display: "grid", gap: 2 }}>
               <button
                 type="button"
                 disabled
                 data-affordance={action.id}
                 data-withheld={action.refusal.wouldNeed.join(",") || "nobody"}
-                title={action.refusal.message}
                 style={{
                   padding: "4px 10px",
                   fontSize: 12.5,
@@ -1027,8 +1044,26 @@ export function Inspector() {
                   background: "none",
                 }}
               >
-                {action.label}
+                <s>{action.label}</s>
               </button>
+              {/*
+                * THE REASON, OUT LOUD. It was a `title` on a DISABLED button
+                * — which cannot be focused, so a keyboard had no way to ask
+                * and a pointer had to hover a dead control to find out. The
+                * pages face has always said the sentence in the open; this
+                * is the same sentence, in the same place as the strike.
+                */}
+              <span
+                data-testid="withheld-why"
+                style={{
+                  fontSize: 11.5,
+                  lineHeight: 1.4,
+                  color: "var(--graview-ink-muted)",
+                  padding: "0 10px",
+                }}
+              >
+                {action.refusal.message}
+              </span>
             </li>
           ))}
         </ul>

@@ -1,5 +1,5 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
-import { EMPTY_VIEW, edgeSelectionId } from "@graview/layout";
+import { EMPTY_VIEW, edgeSelectionId, kindCardId } from "@graview/layout";
 import { GraviewProvider, createViews } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -90,6 +90,86 @@ describe("the inspector for a selected line", () => {
       </GraviewProvider>,
     );
     expect(html).toContain("no mutation declares");
+  });
+
+  /*
+   * A WITHHELD ACT SAYS WHY, WHERE THE STRIKE IS.
+   *
+   * The reason lived in a `title` on a DISABLED button, which cannot be
+   * focused — so a keyboard had no way to ask for it and a pointer had to
+   * hover a dead control. The pages face has always said the sentence in the
+   * open; the two surfaces disagreed about whether a refusal is explained.
+   */
+  it("strikes a withheld act and says the policy's reason in the open", () => {
+    const guarded = new Store({
+      schema,
+      mutations: [removeRider],
+      invariants: [],
+      policy: {
+        roles: ["driver", "rider"],
+        grants: [
+          { roles: ["driver"], mutations: "*", describe: "The driver decides who is aboard." },
+        ],
+      },
+      snapshot: {
+        nodes: [
+          { id: "ana", kind: "person", label: "Ana" },
+          { id: "morning", kind: "duty", label: "Morning run" },
+        ] as never,
+        edges: [{ kind: "rides-in", from: "ana", to: "morning" }],
+      },
+    });
+    const html = renderToStaticMarkup(
+      <GraviewProvider
+        store={guarded}
+        views={registerDefaultViews(schema, createViews(schema))}
+        initialView={{ ...EMPTY_VIEW, focusId: "morning" }}
+        initialSelection={["morning"]}
+        principal={{ kind: "human", id: "somebody", roles: ["rider"] }}
+      >
+        <Inspector />
+      </GraviewProvider>,
+    );
+    // Struck through, not hidden: the act is named and crossed out.
+    expect(html).toContain("<s>Change the duty</s>");
+    // And the reason is in the open, not in a title on a control that
+    // cannot be focused.
+    expect(html).toContain('data-testid="withheld-why"');
+    expect(html).toContain("driver can");
+    expect(html).toContain("The driver decides who is aboard.");
+    expect(html).not.toContain('title="Not permitted');
+    // The roles that could, on the element a harness can read.
+    expect(html).toContain('data-withheld="driver"');
+  });
+
+  /*
+   * A DISTRICT IS A KIND, AND THE SENTENCE SHOULD SAY WHICH.
+   *
+   * The strip reads its kinds from the selection's NODES, and a kind card
+   * has none — so a district with every act withheld said "Nothing you may
+   * do with this mix of kinds" about one district plainly titled "People".
+   */
+  it("names the kind when the selection is a district", () => {
+    const guarded = new Store({
+      schema,
+      mutations: [removeRider],
+      invariants: [],
+      policy: { roles: ["driver", "rider"], grants: [{ roles: ["driver"], mutations: "*" }] },
+      snapshot: { nodes: [{ id: "ana", kind: "person", label: "Ana" }] as never, edges: [] },
+    });
+    const html = renderToStaticMarkup(
+      <GraviewProvider
+        store={guarded}
+        views={registerDefaultViews(schema, createViews(schema))}
+        initialView={{ ...EMPTY_VIEW, overview: true }}
+        initialSelection={[kindCardId("person")]}
+        principal={{ kind: "human", id: "somebody", roles: ["rider"] }}
+      >
+        <Inspector />
+      </GraviewProvider>,
+    );
+    expect(html).toContain("a person");
+    expect(html).not.toContain("this mix of kinds");
   });
 
   /*

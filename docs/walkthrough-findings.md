@@ -390,3 +390,36 @@ the same commit as the fix.
   the narrowed list to the form rather than every node of the kind" (fails
   without the fix: `expected ['ana','bo'] to deeply equal ['bo']`) and "falls
   back to every node of the kind when there is no act to ask"
+
+### W-019 · A withheld act does not say why, and what it does say is wrong
+- stage: F · face: scene · width: 1280 and 390 · scheme: both
+- expected: every act the narrower seat may not take is struck through with
+  the policy's reason, in the strip as well as on the pages
+- actual: three things at once in the actions strip.
+  1. The act was not struck through, and its reason was a `title` on a
+     DISABLED button — which cannot be focused, so a keyboard had no way to
+     ask for it and a pointer had to hover a dead control. The pages face has
+     always said the sentence in the open.
+  2. `Grant.describe` is documented as "shown when an action is withheld, so
+     a refusal can say something useful" and NOTHING read it. Every refusal
+     on every surface was a mutation id and a list of role names.
+  3. A refusal about a derived edit counted only the acts it rides, so with a
+     `mutations: "*"` grant in the policy it said "no declared act writes or
+     creates it, so no role can" while another role plainly could —
+     `data-withheld="nobody"` where it should have said the role.
+  And a fourth, beside them: a district with everything withheld read
+  "Nothing you may do with this mix of kinds" about one district titled
+  "Owners", because the strip reads its kinds from the selection's nodes and
+  a kind card has none.
+- where it belongs: `packages/core/src/permissions/policy.ts` and
+  `packages/primitives/src/workbench/index.tsx`
+- harness that should have caught it:
+  `packages/core/tests/unit/permissions.test.ts` (no grant in it had a
+  `describe`, so the field was never exercised) and the primitives inspector
+  tests (no policy in them at all)
+- status: fixed in "walkthrough: F · a withheld act says why" · criteria
+  added: permissions "repeats the policy's own sentence, which is why the
+  grant has one", "says nothing extra when the grants have nothing to say",
+  "speaks the subject kind rather than spelling it"; edge-inspector "strikes
+  a withheld act and says the policy's reason in the open" and "names the
+  kind when the selection is a district". All fail without the fix.

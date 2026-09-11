@@ -1,5 +1,6 @@
 import type { AnyMutationDefinition } from "../mutations/types.js";
 import type { AnySchema } from "../schema/schema.js";
+import { withArticle } from "../schema/define-node.js";
 import type { Grant, Policy, Principal, Refusal } from "./types.js";
 
 const matches = (allowed: readonly string[] | "*", value: string): boolean =>
@@ -42,22 +43,30 @@ export function permits(
   if (via !== undefined) {
     if (permits(policy, principal, mutation, kind).ok) return { ok: true };
     if (via.some((name) => permits(policy, principal, name, kind).ok)) return { ok: true };
+    /*
+     * A derived edit is reachable two ways, and the refusal has to count
+     * both: a grant naming it (or saying `*`), and a grant on any declared
+     * act it rides. Counting only the second said "no declared act writes or
+     * creates it, so no role can" to a rider while the driver's `mutations:
+     * "*"` grant plainly reached it.
+     */
+    const names = [mutation, ...via];
     const wouldNeed = [
-      ...new Set(via.flatMap((name) => rolesWhoCould(policy, name, kind))),
+      ...new Set(names.flatMap((name) => rolesWhoCould(policy, name, kind))),
     ].sort();
     const who =
-      via.length === 0
-        ? "no declared act writes or creates it, so no role can"
-        : wouldNeed.length === 0
-          ? "no role can"
-          : `${wouldNeed.length === 1 ? "" : "one of "}${wouldNeed.join(", ")} can`;
+      wouldNeed.length === 0
+        ? via.length === 0
+          ? "no declared act writes or creates it, so no role can"
+          : "no role can"
+        : `${wouldNeed.length === 1 ? "" : "one of "}${wouldNeed.join(", ")} can`;
     return {
       ok: false,
       refusal: {
         mutation,
         ...(kind === undefined ? {} : { kind }),
         wouldNeed,
-        message: `Not permitted: ${mutation}${kind ? ` on a ${kind}` : ""} — ${who}.`,
+        message: said(policy, names, kind, who),
       },
     };
   }
@@ -82,9 +91,51 @@ export function permits(
       mutation,
       ...(kind === undefined ? {} : { kind }),
       wouldNeed,
-      message: `Not permitted: ${mutation}${kind ? ` on a ${kind}` : ""} — ${who}.`,
+      message: said(policy, [mutation], kind, who),
     },
   };
+}
+
+/**
+ * The refusal in words: what it was, who could, and why the policy says so.
+ *
+ * `names` is every act that would have reached this one, because a derived
+ * edit rides the acts that write its fields — and the sentence has to come
+ * from the same grants the roles did, or the two halves contradict.
+ */
+function said(
+  policy: Policy,
+  names: readonly string[],
+  kind: string | undefined,
+  who: string,
+): string {
+  const because = [...new Set(names.flatMap((name) => whyNot(policy, name, kind)))];
+  return (
+    `Not permitted: ${names[0]}${kind ? ` on ${withArticle(kind)}` : ""} — ${who}.` +
+    (because.length > 0 ? ` ${because.join(" ")}` : "")
+  );
+}
+
+/**
+ * WHY, IN THE POLICY'S OWN WORDS.
+ *
+ * A grant carries a `describe` — documented from the day it was added as
+ * "shown when an action is withheld, so a refusal can say something useful"
+ * — and nothing read it. Every refusal in every surface was assembled from a
+ * mutation id and a list of role names, which is what the declaration says,
+ * not what the organisation means. The sentences of the grants that WOULD
+ * allow this are the ones worth repeating.
+ */
+export function whyNot(policy: Policy, mutation: string, kind?: string): readonly string[] {
+  const said = new Set<string>();
+  for (const grant of policy.grants) {
+    if (!matches(grant.mutations, mutation)) continue;
+    if (grant.kinds !== undefined && grant.kinds !== "*" && kind !== undefined) {
+      if (!grant.kinds.includes(kind)) continue;
+    }
+    if (grant.describe) said.add(grant.describe);
+  }
+  return [...said];
 }
 
 /**
