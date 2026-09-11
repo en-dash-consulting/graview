@@ -269,6 +269,42 @@ try {
     b.offersStartFresh = (await page.locator('[data-testid="start-fresh"]').count()) > 0;
     await page.keyboard.press("Escape");
 
+    /* ---- the keyboard alone, on a blank app */
+    /*
+     * A new product's first record, with no pointer at all.
+     *
+     * The one district is the whole of a blank app's interface: selecting it
+     * is what opens the strip, and the strip is where the first act lives.
+     * The card was a tab stop that did nothing, so this could not be done —
+     * and nothing measured it, because every other rehearsal clicks.
+     */
+    const keys = watch(await browser.newPage({ viewport: { width: 1280, height: 800 } }));
+    await keys.goto(`${base}/?fresh=1`, { waitUntil: "networkidle" });
+    await ready(keys);
+    const tabUntil = async (find) => {
+      for (let press = 0; press < 24; press += 1) {
+        await keys.keyboard.press("Tab");
+        await keys.waitForTimeout(80);
+        if (await keys.evaluate(find)) return true;
+      }
+      return false;
+    };
+    b.keyboardReachedTheDistrict = await tabUntil(
+      () => document.activeElement?.dataset?.graviewView === "kind:note",
+    );
+    await keys.keyboard.press("Enter");
+    await keys.waitForTimeout(400);
+    b.keyboardSelectedIt = (await keys.locator('[data-testid="inspector-strip"]').count()) === 1;
+    b.keyboardReachedTheOffer = await tabUntil(() => Boolean(document.activeElement?.dataset?.affordance));
+    await keys.keyboard.press("Enter");
+    await keys.waitForTimeout(300);
+    await keys.keyboard.type("Sharpen the shears");
+    await keys.keyboard.press("Enter");
+    await keys.waitForTimeout(800);
+    b.afterKeyboard = (await districtText(keys)).trim();
+    b.theKeyboardAloneAddedIt = !b.afterKeyboard.includes("none yet");
+    await keys.close();
+
     /* ---- the routed face, from the same declaration, at phone width */
     const phone = watch(await browser.newPage({ viewport: { width: 390, height: 844 } }));
     await phone.goto(`${base}/pages?remember=1`, { waitUntil: "networkidle" });
@@ -429,6 +465,11 @@ report.verdict = {
         theEmptyDistrictOffersTheFirstNote: (b.offers ?? []).some((text) => text.includes("Add a note")),
         theAskNamesItsFieldInWords: b.asksInWords?.name === "Label" && b.asksInWords?.placeholder === "Label",
         theDerivedFormAddsIt: b.theFormAddedIt === true,
+        theKeyboardAloneMakesTheFirstRecord:
+          b.keyboardReachedTheDistrict === true &&
+          b.keyboardSelectedIt === true &&
+          b.keyboardReachedTheOffer === true &&
+          b.theKeyboardAloneAddedIt === true,
         anEditSurvivesAReload: b.survivedAReload === true && b.offersStartFresh === true,
         thePagesFaceFitsAPhoneAndItsFormApplies: b.pagesHome === true && b.pagesFitsAPhone === true && b.pagesFormApplied === true,
         theProjectsOwnPageReplacesTheDerivedOne: b.ownRecordPage === true,

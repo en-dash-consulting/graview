@@ -1612,11 +1612,29 @@ function SceneViewHost({
       onKeyDown={(event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         const picked = pickedFrom(event.target);
-        // Only when the key landed on an inner target; the host itself is
-        // reached by Tab and has its own meaning.
-        if (!picked || picked === node.id) return;
         event.preventDefault();
         event.stopPropagation();
+        /*
+         * THE CARD ITSELF ANSWERS THE KEYBOARD.
+         *
+         * It was a tab stop that did nothing: the handler returned unless the
+         * key had landed on an inner pick target, on the grounds that the
+         * host "has its own meaning" — which was true, and reachable only
+         * with a pointer. On a blank app that is the whole of it. The one
+         * district is the only thing on screen, selecting it is what opens
+         * the strip, and the strip is where the first act lives, so a
+         * keyboard alone could not add the first record to a new product.
+         *
+         * Enter on the host does what a click on it does; Enter again on a
+         * card already selected alone does what the second click does — the
+         * same two-step the inner targets have.
+         */
+        if (!picked || picked === node.id) {
+          const already = selection.length === 1 && selection[0] === node.id;
+          if (already && !event.metaKey && !event.shiftKey) onJackIn();
+          else onSelect(event.metaKey || event.shiftKey);
+          return;
+        }
         /*
          * Enter selects; Enter again on something already selected alone
          * travels. The keyboard needs the same two-step the pointer has, and

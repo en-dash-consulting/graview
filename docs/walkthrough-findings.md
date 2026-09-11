@@ -82,3 +82,21 @@ the same commit as the fix.
 - status: fixed in "walkthrough: A · a field is asked for in words" ·
   criteria added: smoke-create verdict `theAskNamesItsFieldInWords`;
   audit-ui `keyed` (an editor whose name is the key it edits)
+
+### W-005 · A card in the scene is a tab stop that does nothing
+- stage: A · face: scene · width: 1280 and 390 · scheme: both
+- expected: keyboard alone can do everything — select the empty district,
+  take its offer, add the first record
+- actual: every view host is `tabIndex={0}`, and its `onKeyDown` returned
+  unless the key had landed on an inner pick target: the host itself
+  answered only a pointer. On a blank app that is the entire interface — one
+  district, whose selection is what opens the strip, where the only act
+  lives — so a keyboard alone could not put the first record into a new
+  product. Enter and Space on the focused card did nothing at all.
+- where it belongs: `packages/react/src/scene.tsx` (`SceneViewHost`'s
+  `onKeyDown`)
+- harness that should have caught it: `scripts/smoke-create.mjs` — no
+  criterion; every browser rehearsal in the repository clicks
+- status: fixed in "walkthrough: A · the card itself answers the keyboard" ·
+  criterion added: smoke-create verdict `theKeyboardAloneMakesTheFirstRecord`
+  — tab to the district, Enter, tab to the offer, Enter, type, Enter
