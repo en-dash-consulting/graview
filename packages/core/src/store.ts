@@ -292,6 +292,27 @@ export class Store<S extends AnySchema> {
    * previews through here first — a typed mutation is checkable before it
    * applies, whether a human or an agent proposed it.
    */
+  /**
+   * Would this act change anything at all?
+   *
+   * Cheaper than `preview` — it compiles the mutation and counts what came
+   * out, without snapshotting the graph or re-evaluating the rules — because
+   * it is asked for every act on every selection. An act that compiles to no
+   * primitives leaves the graph exactly as it was: "Close it" on something
+   * already closed, an edge to a node that already has it, a guard inside
+   * the act that decided to do nothing. That is not an act, and offering it
+   * is a button that appears broken.
+   */
+  wouldChange(call: MutationCall): boolean {
+    try {
+      return compileMutation(this.graph, this.mutation(call.name), call.args).primitives.length > 0;
+    } catch {
+      // An act that cannot even compile is not one that changes nothing; let
+      // whoever asked find out the honest way.
+      return true;
+    }
+  }
+
   preview(call: MutationCall, context?: InvariantContext): Preview<S> {
     const definition = this.mutation(call.name);
     const compiled = compileMutation(this.graph, definition, call.args);
@@ -372,6 +393,18 @@ export class Store<S extends AnySchema> {
       for (const call of calls) {
         const definition = this.mutation(call.name);
         const compiled = compileMutation(this.graph, definition, call.args);
+        /*
+         * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
+         *
+         * A mutation whose body decided to do nothing — the guard against a
+         * self-referential edge is the one every scaffolded app carries —
+         * compiles to no primitives. Logged anyway, it put a line in the
+         * activity rail saying a thing had happened, with an undo beside it
+         * that undid nothing, and wrote a record that replays to nothing on
+         * every future load. The call is still legal and still returns; it
+         * simply leaves no trace, because it left no trace.
+         */
+        if (compiled.primitives.length === 0) continue;
         const op: Operation = {
           id: this.nextId(),
           seq: this.log.length,

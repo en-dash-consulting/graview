@@ -307,6 +307,21 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
         if (!askable) continue;
 
         const batch = nodes.map((node) => ({ [subject.arg]: node.id }));
+
+        /*
+         * AN ACT WITH NOTHING LEFT TO ASK MUST HAVE SOMETHING LEFT TO DO.
+         *
+         * One press, no arguments, and the mutation compiles to no
+         * primitives: "Close it" offered on something already closed. It was
+         * offered, pressed, and nothing happened — except a line in the
+         * activity rail claiming it had. Only asked where there is nothing
+         * left to ask, because an act still holding a question has not been
+         * decided yet, and only of the batch, so a selection of five where
+         * one is still open keeps the offer.
+         */
+        if (open.length === 0 && !batch.some((args) => store.wouldChange({ name: mutation.name, args }))) {
+          continue;
+        }
         affordances.push({
           id: `schema:${mutation.name}`,
           label:
