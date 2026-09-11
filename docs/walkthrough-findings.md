@@ -767,3 +767,31 @@ at the end of every stage.
   `@graview/seedbed` and `@graview/todo` and the file that imports them.
   Re-verified by re-running `pnpm install && pnpm build && pnpm test` in the
   clean clone — 56 files, 651 tests, all passing.
+
+### W-033 · The strip's tooltip under the first act says "this makes a item"
+- stage: A · face: scene · width: 1280 · scheme: both
+- expected: every sentence the framework writes about a kind takes its
+  article from `withArticle` and says the kind in words, the way W-001 made
+  every SCAFFOLDED sentence do
+- actual: six sentences the framework writes at RUNTIME still did it by
+  hand, hardcoding "a" and printing the kind's identifier:
+  `this makes a item` (the tooltip on the affordance in the strip — the
+  first act a blank app offers), `this is a item` (why an act is offered on
+  a selection), `Pump — a work-order` (the chat's one-line account of a
+  node), and three checker messages under `field-without-writer`. A
+  hyphenated kind came out hyphenated inside an English sentence.
+- where it belongs: `packages/tools/src/providers/schema.ts` (two),
+  `packages/tools/src/conversation.ts`, `packages/core/src/cli/check.ts`
+  (three)
+- harness that should have caught it: nothing read the `why` on an
+  affordance or the responder's opening sentence for its English; W-001's
+  criterion covered the scaffold's output only
+- status: fixed in "walkthrough: A · six sentences the framework writes
+  about a kind" · all six go through `withArticle`, and the multi-kind
+  variant humanises each kind. Criterion added:
+  `packages/tools/tests/unit/says-the-kind.test.ts` — a vowel-initial kind
+  and a hyphenated one, checking the act's reason, the selection's reason
+  and the chat's sentence, plus a source guard that fails on any
+  `a ${…kind…}` interpolation anywhere under `packages/*/src`. Verified
+  failing without the fix: all four assertions fail and the guard names all
+  six sites.

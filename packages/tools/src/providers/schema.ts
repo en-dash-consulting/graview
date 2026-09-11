@@ -1,4 +1,4 @@
-import { argShape, nodeRefArgs, type AnySchema, type Store } from "@graview/core";
+import { argShape, humaniseField, nodeRefArgs, withArticle, type AnySchema, type Store } from "@graview/core";
 import type { Affordance, AffordanceProvider, OpenParameter } from "../types.js";
 
 const BASE_SCORE = 40;
@@ -157,7 +157,10 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             args: {},
             open,
             score: BASE_SCORE - open.length,
-            why: `this makes a ${(mutation.creates ?? []).filter((kind) => wanted.has(kind as string)).join(", ")}`,
+            why: `this makes ${(mutation.creates ?? [])
+              .filter((kind) => wanted.has(kind as string))
+              .map((kind) => withArticle(kind as string))
+              .join(", ")}`,
             nodeIds: [],
           });
         }
@@ -322,8 +325,10 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           score: BASE_SCORE - open.length,
           why:
             nodes.length > 1
-              ? `all ${nodes.length} selected nodes are ${[...kinds].join(" or ")}`
-              : `this is a ${nodes[0]!.kind}`,
+              ? `all ${nodes.length} selected nodes are ${[...kinds]
+                  .map((kind) => humaniseField(kind as string).toLowerCase())
+                  .join(" or ")}`
+              : `this is ${withArticle(nodes[0]!.kind as string)}`,
           nodeIds: nodes.map((node) => node.id),
         });
       }

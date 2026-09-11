@@ -3,6 +3,7 @@ import {
   labelOf,
   readableFields,
   violationsTouching,
+  withArticle,
   type AnySchema,
   type FormField,
   type Store,
@@ -354,7 +355,7 @@ export function graphResponder<S extends AnySchema>(
         .join(". ");
       return {
         say: sentence([
-          `${name(node)} — a ${node.kind}${facts ? ` (${facts})` : ""}.`,
+          `${name(node)} — ${withArticle(node.kind as string)}${facts ? ` (${facts})` : ""}.`,
           related ? `${related}.` : "Connected to nothing yet.",
           touching.length > 0
             ? `Trouble: ${touching.map((violation) => violation.message).join("; ")}.`
