@@ -3,6 +3,7 @@ import {
   createSchema,
   defineNode,
   labelOf,
+  nodeRef,
   readableFields,
   Store,
   violationsTouching,
@@ -190,6 +191,92 @@ describe("the routed face renders from the declaration", () => {
       />,
     );
     expect(empty).toContain("None yet");
+  });
+});
+
+/*
+ * A REPAIR WITH A BLANK IN IT IS AN ASK.
+ *
+ * Both repair surfaces rendered every repair as a bare button applying the
+ * violation's args — so a repair that declared `missing: ["personId"]` threw
+ * "Invalid arguments for mutation: personId: expected string, received
+ * undefined" into the console and told the person nothing. The actions strip
+ * has always turned that repair into an ask; the two faces disagreed.
+ */
+describe("a repair is one press, or an ask, and never a refusal", () => {
+  const handOver = bound.defineMutation("hand-over", {
+    title: "Hand it over",
+    description: "Give a run to somebody.",
+    connects: ["owned-by"],
+    input: z.object({ id: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
+    apply(ctx, args) {
+      ctx.addEdge({ kind: "owned-by", from: args.id, to: args.personId });
+    },
+  });
+  const unowned = bound.defineInvariant("somebody-owns-it", {
+    scope: { kind: "duty" },
+    repairs: ["hand-over", "relabel"],
+    evaluate: ({ graph, subject }): Violation[] =>
+      graph.out(subject.id, "owned-by").length > 0
+        ? []
+        : [
+            {
+              invariant: "somebody-owns-it",
+              subjectId: subject.id,
+              label: subject.label,
+              message: `${subject.label} has nobody`,
+              nodeIds: [subject.id],
+              repairs: [
+                {
+                  mutation: "hand-over",
+                  args: { id: subject.id },
+                  missing: ["personId"],
+                  label: `Hand ${subject.label} over`,
+                },
+                { mutation: "relabel", args: { id: subject.id, label: "Unowned run" }, label: "Rename it" },
+              ],
+            },
+          ],
+  });
+  const orphaned = () =>
+    new Store({
+      schema,
+      mutations: [relabel, handOver],
+      invariants: [unowned],
+      snapshot: {
+        nodes: [
+          { id: "ana", kind: "person", label: "Ana" },
+          { id: "school-run", kind: "duty", label: "School run", minutes: 20 },
+        ] as never,
+        edges: [],
+      },
+    });
+
+  const rendered = (path: string) =>
+    renderToStaticMarkup(<PagesApp context={{ store: orphaned() }} initialPath={path} />);
+
+  for (const [where, path] of [
+    ["the problems page", "/problems"],
+    ["a record page", "/duties/school-run"],
+  ] as const) {
+    it(`marks the incomplete repair as an ask on ${where}`, () => {
+      const html = rendered(path);
+      expect(html).toContain('data-graview-asks="true"');
+      expect(html).toContain("Hand School run over …");
+      // And the one that needs nothing stays one press.
+      expect(html).toContain(">Rename it</button>");
+      expect(html).not.toContain("Rename it …");
+    });
+  }
+
+  it("asks only for what the violation left blank", () => {
+    const store = orphaned();
+    const html = renderToStaticMarkup(
+      <PagesApp context={{ store }} initialPath="/problems" />,
+    );
+    // Closed until pressed: the ask is a question, not a form lying open.
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).not.toContain('data-testid="form-hand-over"');
   });
 });
 

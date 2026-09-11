@@ -223,3 +223,27 @@ the same commit as the fix.
   added: verify-seat "the seat signs its own work". Verified failing with a
   seat declared `who="claude"`: `FAIL todo: the seat signs its own work
   claude`.
+
+### W-012 · A repair with a blank in it is offered as one press, and refuses on press
+- stage: C · face: pages · width: 1280 and 390 · scheme: both
+- expected: the repair is one press when it needs nothing, an ask when it
+  needs one thing, and never a refusal on press
+- actual: on the problems page and on a record page, every repair was a bare
+  button applying the violation's own args. A repair that declares
+  `missing: ["owner"]` therefore applied `assign-item` with no owner and
+  threw into the console —
+  `Invalid arguments for mutation "assign-item": owner: Invalid input:
+  expected string, received undefined` — with the count unchanged and nothing
+  said to the person. The scaffolder's own record-page template wrote the
+  same loop, so every new project shipped with it. The actions strip has
+  always turned this repair into an ask; the two faces simply disagreed.
+- where it belongs: `packages/pages/src/pages.tsx` (both repair blocks, now
+  one exported `Repairs` component) and `packages/core/src/scaffold/index.ts`
+  (the template's record page, which uses it)
+- harness that should have caught it:
+  `packages/pages/tests/unit/parity.test.tsx` — its only invariant declared
+  `repairs: []`, so no repair was ever rendered
+- status: fixed in "walkthrough: C · a repair with a blank in it is an ask" ·
+  criteria added: parity "marks the incomplete repair as an ask on the
+  problems page" / "… on a record page" / "asks only for what the violation
+  left blank". All three fail without the fix.
