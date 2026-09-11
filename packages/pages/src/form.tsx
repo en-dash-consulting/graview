@@ -146,12 +146,21 @@ function Control<S extends AnySchema>({
        * record's own "Depends on" offered the record.
        *
        * With no affordance to ask (a rule's repair, a creating act on a list
-       * page), every node of the kind is still the honest answer.
+       * page), every node of the kind is still the honest answer — EXCEPT
+       * the one the form is already about. A page that pins the subject in
+       * `prefilled` and lets this fall back listed that subject as an answer
+       * to its own edge, which for a self-referential kind was the ONLY
+       * answer: "Make it depend on something" whose only something was
+       * itself. The act then has to guard against it and the guard is
+       * invisible, so the one press anyone could make did nothing.
        */
       const narrowed = open.find((parameter) => parameter.name === spec.name)?.candidates;
-      const all = spec.kinds.includes("*")
-        ? [...store.graph.allNodes()]
-        : spec.kinds.flatMap((kind) => store.graph.nodesOfKind(kind as never));
+      const pinned = new Set(Object.values(prefilled).filter((held): held is string => typeof held === "string"));
+      const all = (
+        spec.kinds.includes("*")
+          ? [...store.graph.allNodes()]
+          : spec.kinds.flatMap((kind) => store.graph.nodesOfKind(kind as never))
+      ).filter((node) => !pinned.has(node.id));
       const candidates = narrowed
         ? narrowed
             .map((id) => store.graph.getNode(id))

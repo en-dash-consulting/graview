@@ -1045,7 +1045,18 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
     );
   }
   const waitsOn = store.graph.out(id, "depends-on").map((other) => (other as { label: string }).label);
-  const link = store.allMutations().find((mutation) => mutation.name === "link-${ids.kind}");
+  /*
+   * THE ACT AS THE DERIVATION OFFERS IT, not as the declaration lists it.
+   *
+   * Reaching for the mutation by name gets an act that is always there; the
+   * affordance is the act that can actually be taken RIGHT NOW, and it
+   * carries the candidates — everything of this kind that is not already
+   * depended on, and never this record itself. With one ${ids.spoken} in the
+   * graph there is nothing to depend on, so there is no section, rather than
+   * a heading over a picker with one wrong answer in it.
+   */
+  const link = facts.actions.affordances.find((affordance) => affordance.mutation === "link-${ids.kind}");
+  const linkAct = link ? store.allMutations().find((mutation) => mutation.name === link.mutation) : undefined;
 
   return (
     <PageMain context={context} data-testid="${ids.kind}-page">
@@ -1076,10 +1087,10 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           ))}
         </section>
       ) : null}
-      {link ? (
+      {link && linkAct ? (
         <section style={{ ...pageStyles.rule, display: "grid", gap: 12 }} data-testid="record-actions">
           <h2 style={pageStyles.h2}>Make it depend on something</h2>
-          <DerivedForm<S> store={store} mutation={link} prefilled={{ id }} />
+          <DerivedForm<S> store={store} mutation={linkAct} prefilled={{ id }} open={link.open} />
         </section>
       ) : null}
     </PageMain>

@@ -829,3 +829,35 @@ at the end of every stage.
   two of the four jsdom ladders fail, the in-stack one passes either way
   (so the change is not a regression), and smoke-create reports
   `"escapeDoesSomethingFromTheFirstScreen": false`.
+
+### W-035 · The record page offers the record as the answer to its own edge
+- stage: A · face: pages · width: 1280 and 390 · scheme: both
+- expected: "Make it depend on something" offers something. The scene gets
+  this right — with one item it withholds the connecting act entirely,
+  because the derivation drops the subject from its own candidates
+- actual: on the pages record, the select listed the record itself, and at
+  one item that was the ONLY option. Pressing it ran `link-item` with
+  `id === dependsOn`; the act guards against that with a silent `return`, so
+  nothing happened — and a line went into the history saying "First thing
+  depends on First thing" with an undo beside it. Two causes, one symptom:
+  `DerivedForm`'s fallback (used when a page has no affordance to ask) lists
+  every node of the kind including the one pinned in `prefilled`, and the
+  scaffold's own record page reaches for the act BY NAME and passes no
+  candidates — while its own comment claims "everything it shows still comes
+  from the same derivations … so a page you write cannot drift from what the
+  graph says".
+- where it belongs: `packages/pages/src/form.tsx` (the fallback),
+  `packages/core/src/scaffold/index.ts` (the record-page template)
+- harness that should have caught it: `packages/pages/tests/unit/parity.test.tsx`
+  holds the page's FACTS to the scene's, and this was a difference in what
+  each face OFFERS; nothing rendered the scaffolded record page at one record
+- status: fixed in "walkthrough: A · nothing is its own far end" · the
+  fallback drops anything pinned in `prefilled`, so a form about a record
+  never offers that record; and the scaffolded page takes the act from
+  `facts.actions.affordances` and passes the candidates it narrowed, so at
+  one item there is no section at all and at two there is exactly one honest
+  option. Criteria added: `packages/pages/tests/unit/its-own-far-end.test.tsx`
+  (three cases, including that an unpinned form still lists everything) and a
+  scaffold assertion that the generated page uses the derivation and not the
+  raw lookup. Verified failing without the fixes: all three fail and name the
+  record as its own candidate.
