@@ -160,6 +160,25 @@ const audit = () => {
     previous = heading.level;
   }
 
+  /*
+   * EMPHASIS THAT IS ONLY A COLOUR.
+   *
+   * A lens says what a selection lights with `data-graview-emphasis`, so the
+   * claim is a fact rather than a shade. The coverage grid said it on its row
+   * labels and merely painted it on its column heads and its filled cells —
+   * half the marks in one picture making a claim nothing could check. Within
+   * one view it is all of them or none.
+   */
+  const halfSaid = [];
+  for (const host of views) {
+    const marks = [...host.querySelectorAll("[data-graview-pick]")].filter(visible);
+    if (marks.length === 0) continue;
+    const said = marks.filter((el) => el.dataset.graviewEmphasis !== undefined);
+    if (said.length !== 0 && said.length !== marks.length) {
+      halfSaid.push(`${host.dataset.graviewView}: ${said.length} of ${marks.length} marks`);
+    }
+  }
+
   /* A control too small to hit. 24px is the WCAG 2.2 minimum. */
   /*
    * A control's DESIGNED size, not its projected one.
@@ -335,7 +354,7 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
+  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -387,6 +406,7 @@ for (const s of report.screens) {
     s.unnamed?.length ? `${s.unnamed.length} cards named by their address: ${s.unnamed[0]}` : "",
     s.keyed?.length ? `fields asked for by their key: ${s.keyed.join(", ")}` : "",
     s.headings?.length ? `headings skip a level: ${s.headings.join(", ")}` : "",
+    s.halfSaid?.length ? `emphasis painted but not said: ${s.halfSaid.join("; ")}` : "",
     s.small.length ? `${s.small.length} controls under 24px` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",
   ].filter(Boolean);

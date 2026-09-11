@@ -272,3 +272,27 @@ the same commit as the fix.
   "#focus=aggregate%3Atask&overview=1&zoom=1"` became
   `"#focus=t-deposit&overview=1&expand=kind%3Atask"`-shaped and the verdict
   read false.
+
+### W-014 · Half a lens's emphasis exists only as a colour
+- stage: D · face: scene · width: 1280 and 390 · scheme: both
+- expected: every mark the lens draws is a pick target; selection lights it
+  and dims the rest, and the DOM says so (`data-graview-emphasis`)
+- actual: in the coverage grid the row labels said their emphasis; the column
+  heads and the filled cells only painted it. Selecting an item lit the
+  owner's row in the tree and said nothing about the column you had selected
+  or the cell that answers it — three marks of nine making a checkable claim.
+  The same defect turned out to be in the framework's own todo app: the list
+  headers in `ListsView` painted emphasis the tasks under them said (12 of 15
+  marks), found by the new criterion rather than by eye.
+- where it belongs: `packages/primitives/src/lens/coverage.tsx`, and
+  `apps/todo/src/ui/views.tsx` for the instance the criterion then found
+- harness that should have caught it:
+  `packages/primitives/tests/unit/coverage.test.tsx` tested the built grid and
+  never rendered it; `scripts/audit-ui.mjs` had no criterion
+- status: fixed in "walkthrough: D · a lens says all its emphasis or none" ·
+  criteria added: coverage "says plain on every mark when nothing is
+  selected" / "lights and dims every mark once something is selected" (the
+  first fails without the fix: `expected 3 to be greater than or equal to
+  6`); audit-ui `halfSaid` — within one view, either every pick target
+  carries `data-graview-emphasis` or none does. It found the todo instance on
+  its first run.
