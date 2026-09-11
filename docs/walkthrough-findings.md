@@ -667,3 +667,21 @@ the same commit as the fix.
   the shipped `embed.html` at 390, a record selected: nothing of the focus
   covered, no control buried under the pane, and the pane inside its own box.
   Verified failing without the fix.
+
+### W-030 · Stage I asked for a renderer a scaffolded app does not have
+- stage: I · face: neither — the playbook
+- expected: `?renderer=gpu` in Chromium is something the next agent can do
+- actual: there is no such switch anywhere. `Scene`'s `renderer="auto"`
+  resolves to the DOM path unless the app passes an `attachRenderer`, which a
+  scaffolded app does not and the two demo apps explicitly opt out of
+  (`renderer="dom"`). The GPU path is opt-in, experimental and
+  Chromium-Canary-only, and `pnpm engines` is where it is exercised.
+- where it belongs: `docs/walkthrough.md`
+- status: fixed in "walkthrough: I · the cross-cutting pass asks for what can
+  be done" · the condition is now the three shipping engines, which is a
+  scaffolded app's real cross-cutting risk and was verified: the walk app
+  runs, adds, travels to a lens, renders its own design and mounts two
+  embeds, with no console errors, in WebKit and in Firefox as well as
+  Chromium. The stage's harness list also now names every harness rather
+  than four, and says to run them at the end of every stage — which is the
+  lesson of W-026.

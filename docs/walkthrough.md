@@ -229,13 +229,27 @@ True when:
 ### I · The cross-cutting pass
 
 Do, in the app as it now stands: a keyboard-only pass of every stage;
-reduced motion on; `?renderer=gpu` in Chromium; text zoom to 200%; a
-window 320px wide.
+reduced motion on; the app in WebKit and Firefox as well as Chromium; text
+zoom to 200% — the root font size, not page zoom, which is a scale factor
+and proves nothing about reflow; a window 320px wide.
+
+There is no `?renderer=gpu` to try, and this used to ask for one: `auto`
+means the DOM path unless an app passes an `attachRenderer`, and the GPU
+path is opt-in, experimental and Chromium-Canary-only. `pnpm engines` is
+where that lives. A scaffolded app's cross-cutting risk is the three
+shipping engines, so that is what this asks for.
 
 True when:
 - Everything above is still true.
 - `pnpm site` on the framework page, `pnpm audit-ui`, `pnpm survey` and
-  `pnpm progression` pass with the criteria you added.
+  `pnpm progression` pass with the criteria you added — and so do
+  `pnpm test`, `pnpm smoke:create`, `pnpm remember`, `pnpm navigation`,
+  `pnpm menu`, `pnpm pages`, `pnpm chat`, `pnpm seat` and `pnpm shrunk`.
+
+Run that list at the END OF EVERY STAGE, not only here. This session broke
+the in-place editor in stage A and did not find out until stage G, because
+`pnpm remember` is a browser harness outside `pnpm test` and nothing had
+asked it since.
 
 ## Done
 
