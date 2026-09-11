@@ -12,6 +12,7 @@ import {
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  applyToSnapshot,
   assertBundle,
   createFileAdapter,
   exportBundle,
@@ -98,6 +99,39 @@ describe("the migration chain", () => {
     expect(op.intent).toContain("size words become bed counts");
     // The inverse is real: applying it says `size` again.
     expect(op.inverse[0]).toMatchObject({ op: "patch-node", after: { size: "large" } });
+  });
+
+  /*
+   * AND IT IS STILL REAL AFTER IT HAS BEEN WRITTEN DOWN.
+   *
+   * "Remove this key" was said by carrying the key with the value
+   * `undefined`, which JSON drops — so every persisted patch that cleared a
+   * field came back with an empty half and its inverse silently did nothing.
+   * A migration that added a field could be "undone" after a reload and
+   * leave the field exactly where it was.
+   */
+  it("keeps its inverse through JSON, which cannot carry undefined", () => {
+    const stored = {
+      nodes: [{ id: "p1", kind: "plot", label: "One", size: "large" }],
+      edges: [],
+    };
+    const op = migrateSnapshot(app, stored, 1, { now: () => "2026-09-01T00:00:00Z" }).ops[0]!;
+    const written = JSON.parse(JSON.stringify(op)) as typeof op;
+
+    // The instruction survives as a value rather than as an absence.
+    expect(Object.keys((written.primitives[0] as { after: object }).after).sort()).toEqual(
+      ["beds", "size"],
+    );
+    expect(Object.keys((written.inverse[0] as { after: object }).after).sort()).toEqual(
+      ["beds", "size"],
+    );
+
+    // And applying the re-read inverse actually puts `size` back and takes
+    // `beds` away again.
+    const forward = applyToSnapshot(stored, written.primitives);
+    expect(forward.nodes[0]).toEqual({ id: "p1", kind: "plot", label: "One", beds: 6 });
+    const back = applyToSnapshot(forward, written.inverse);
+    expect(back.nodes[0]).toEqual({ id: "p1", kind: "plot", label: "One", size: "large" });
   });
 });
 

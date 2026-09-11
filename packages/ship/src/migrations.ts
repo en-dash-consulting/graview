@@ -1,5 +1,6 @@
 import {
   invert,
+  normalise,
   writesOf,
   type GraviewApp,
   type AnySchema,
@@ -75,7 +76,12 @@ export function migrateSnapshot<S extends AnySchema>(
   const batch = `migration:${storedVersion}->${app.version ?? storedVersion}`;
 
   for (const step of pendingMigrations(app, storedVersion)) {
-    const primitives: readonly Primitive[] = step.apply(snapshot);
+    /*
+     * Normalised, like every other op: a step that clears a field says so
+     * with a value rather than with an absence, so the inverse it carries is
+     * still there after the log has been through JSON.
+     */
+    const primitives: readonly Primitive[] = step.apply(snapshot).map(normalise);
     snapshot = applyToSnapshot(snapshot, primitives);
     ops.push({
       id: nextOpId(`${step.from}-${step.to}`),

@@ -505,3 +505,31 @@ the same commit as the fix.
   beside it" (fails without the fix) and verify-seat "a permitted seat is not
   struck through and needs no excuse", so the strike cannot leak the other
   way
+
+### W-024 · "Remove this field" does not survive being written down
+- stage: G · face: both · width: any · scheme: any
+- expected: the migration is in the log with its author and intent, and is
+  undoable
+- actual: a patch says "remove this key" by carrying the key with the value
+  `undefined` — and the log, every adapter and the export bundle are JSON,
+  which drops it. So a persisted op that cleared a field came back with an
+  empty half: `before: {}` where it should have said which key to put back.
+  Undoing a migration that added a field, after a reload, reported success,
+  wrote "you Undo: migration 1→2 …" into the log, and left the field exactly
+  where it was. Every ordinary mutation that clears a field — `ctx.patchNode(
+  id, { x: undefined })` — had the same hole.
+- where it belongs: `packages/core/src/graph/primitives.ts` (the
+  instruction), `packages/core/src/graph/graph.ts` and
+  `packages/ship/src/snapshot.ts` (the two appliers),
+  `packages/core/src/store.ts` and `packages/ship/src/migrations.ts` (where
+  primitives become operations)
+- harness that should have caught it: `packages/ship/tests/unit/ship.test.ts`
+  asserted the inverse on the op OBJECT, in memory, and never after JSON;
+  `packages/core/tests/unit/op-log.test.ts` had no mutation that clears a
+  field
+- status: fixed in "walkthrough: G · remove this field, said out loud" ·
+  `UNSET` is the instruction as a value, normalised in on the way into every
+  operation. Criteria added: ship "keeps its inverse through JSON, which
+  cannot carry undefined" (fails without the fix: `expected ['beds'] to
+  deeply equal ['beds','size']`) and core "keeps a cleared field's
+  instruction through JSON" (`expected [] to deeply equal ['pinned']`).
