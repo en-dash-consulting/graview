@@ -362,3 +362,31 @@ the same commit as the fix.
   · criterion added: skills "keeps this repository's own installed copies
   current", which fails on the previous checkout with
   `.claude/skills/graview-lens is out of date — run pnpm skills`
+
+### W-018 · A page's form asks a wider question than the act it is for
+- stage: E · face: pages · width: 1280 and 390 · scheme: both
+- expected: one act reads the same way on both faces
+- actual: an affordance carries the only honest answers for each node
+  reference it leaves open — a connecting act offers who is NOT already on, a
+  severing act only what is attached, and neither ever offers the record
+  itself. `DerivedForm` listed every node of the kind regardless, so a
+  record's own "Depends on" offered the record (whose mutation then returns
+  early: an act that cannot act), and "Hand it to somebody" on a record
+  already with Ana offered Ana. The strip has narrowed these since it was
+  written.
+  Found while following `graview-pages` to build a design of the app's own —
+  and the skill was part of it: its rung-two rules said to read
+  `store.permits` and the mutations, and never named `facts.actions`, the
+  derivation the framework's own record page uses. A design following the
+  skill offered "Take it back" on a record with nothing taken.
+- where it belongs: `packages/pages/src/form.tsx` (the node control),
+  `packages/pages/src/pages.tsx` (which has the affordance and did not pass
+  it), and `packages/skills/skills/graview-pages/SKILL.md`
+- harness that should have caught it:
+  `packages/pages/tests/unit/parity.test.tsx` — it asserted the derived
+  affordances match the scene's, and never rendered the form they produce
+- status: fixed in "walkthrough: E · a form asks the question the act left
+  open" · criteria added: parity "offers only who is not already on", "hands
+  the narrowed list to the form rather than every node of the kind" (fails
+  without the fix: `expected ['ana','bo'] to deeply equal ['bo']`) and "falls
+  back to every node of the kind when there is no act to ask"

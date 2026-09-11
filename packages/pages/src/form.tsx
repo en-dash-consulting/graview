@@ -7,6 +7,7 @@ import {
   type Store,
 } from "@graview/core";
 import type { AnyMutationDefinition } from "@graview/core";
+import type { OpenParameter } from "@graview/tools";
 import { useState, type ReactNode } from "react";
 
 /**
@@ -42,12 +43,14 @@ function Control<S extends AnySchema>({
   value,
   onChange,
   prefilled,
+  open,
 }: {
   store: Store<S>;
   spec: FormField;
   value: unknown;
   onChange: (next: unknown) => void;
   prefilled: Readonly<Record<string, unknown>>;
+  open: readonly OpenParameter[];
 }): ReactNode {
   // An argument the caller already answered — a subject id, a repair's own
   // args — is stated, not asked again.
@@ -132,9 +135,28 @@ function Control<S extends AnySchema>({
         </label>
       );
     case "node": {
-      const candidates = spec.kinds.includes("*")
+      /*
+       * THE CANDIDATES THE DERIVATION WORKED OUT, when there are any.
+       *
+       * The affordance already knows which ids are honest answers here: a
+       * connecting act offers only who is NOT already on, a severing act
+       * only what is attached, and neither ever offers the record itself.
+       * This form listed every node of the kind instead, so the same act
+       * asked a narrower question in the strip than on the page — and a
+       * record's own "Depends on" offered the record.
+       *
+       * With no affordance to ask (a rule's repair, a creating act on a list
+       * page), every node of the kind is still the honest answer.
+       */
+      const narrowed = open.find((parameter) => parameter.name === spec.name)?.candidates;
+      const all = spec.kinds.includes("*")
         ? [...store.graph.allNodes()]
         : spec.kinds.flatMap((kind) => store.graph.nodesOfKind(kind as never));
+      const candidates = narrowed
+        ? narrowed
+            .map((id) => store.graph.getNode(id))
+            .filter((node): node is NonNullable<typeof node> => node !== undefined)
+        : all;
       return (
         <label style={field}>
           <span style={labelStyle}>{title}</span>
@@ -168,6 +190,7 @@ function Control<S extends AnySchema>({
               value={held[child.name]}
               onChange={(next) => onChange({ ...held, [child.name]: next })}
               prefilled={prefilled}
+              open={open}
             />
           ))}
         </fieldset>
@@ -203,6 +226,7 @@ function Control<S extends AnySchema>({
               value={held[child.name]}
               onChange={(next) => onChange({ ...held, [child.name]: next })}
               prefilled={prefilled}
+              open={open}
             />
           ))}
         </fieldset>
@@ -222,6 +246,7 @@ function Control<S extends AnySchema>({
                   value={item}
                   onChange={(next) => onChange(items.map((held, at) => (at === index ? next : held)))}
                   prefilled={prefilled}
+                  open={open}
                 />
               </div>
               <button type="button" onClick={() => onChange(items.filter((_, at) => at !== index))}>
@@ -251,6 +276,13 @@ export interface DerivedFormProps<S extends AnySchema> {
   readonly mutation: AnyMutationDefinition<S>;
   /** Arguments already decided — a record page's own id, a repair's args. */
   readonly prefilled?: Readonly<Record<string, unknown>>;
+  /**
+   * The affordance's open parameters, when this form is an act the interface
+   * derived. Their `candidates` are the only honest answers for a node
+   * reference here; without them the form falls back to every node of the
+   * kind, which is what a repair's blank and a list page's creating act get.
+   */
+  readonly open?: readonly OpenParameter[];
   readonly onDone?: () => void;
 }
 
@@ -259,6 +291,7 @@ export function DerivedForm<S extends AnySchema>({
   store,
   mutation,
   prefilled = {},
+  open = [],
   onDone,
 }: DerivedFormProps<S>) {
   const [values, setValues] = useState<Record<string, unknown>>({});
@@ -290,6 +323,7 @@ export function DerivedForm<S extends AnySchema>({
           value={values[spec.name]}
           onChange={(next) => setValues((current) => ({ ...current, [spec.name]: next }))}
           prefilled={prefilled}
+          open={open}
         />
       ))}
       {failed ? (

@@ -77,6 +77,14 @@ Rules for a page at this rung:
 5. **Read permission before drawing an act.** `store.permits({ name, args },
    principal)` — draw the act struck through with `verdict.refusal.message`
    when it is not ok. A form that refuses on submit is the bug this prevents.
+6. **Take the act LIST from the derivation, not from the mutations.**
+   `recordFacts(store, id, { principal }).actions` is the same `AffordanceSet`
+   the scene's strip reads: `affordances` are the acts that can actually act
+   here, each with its `args` already decided and its `open` questions left,
+   and `withheld` are the ones this seat may not take, with the reason.
+   Filtering `store.allMutations()` by `subject.kinds` yourself looks
+   equivalent and is not — it offers "Take it back" on a record with nothing
+   attached, and a picker with no candidates in it.
 
 ## Rung two: a product design
 
@@ -109,8 +117,12 @@ forms in place. What a design must keep doing:
 - **Keep landmarks and targets honest.** One `main` (a `section` when
   `context.embedded`), controls at least 24px tall, AA contrast on the tinted
   ground. Run `apps/todo/scripts/run-a11y.mjs`.
-- **Withhold, do not hide.** Ask `store.permits` for every act and draw the
-  refused ones struck through with the reason.
+- **Withhold, do not hide.** `facts.actions.withheld` is the list, each entry
+  carrying the policy's own sentence; draw them struck through rather than
+  dropping them.
+- **Offer what can act.** `facts.actions.affordances`, never your own scan of
+  the mutations: the derivation drops an act whose every candidate is already
+  taken and prefills the arguments the record itself decides.
 
 ## The embed
 
@@ -148,6 +160,8 @@ and reads like an admin panel has not replaced anything.
 - Whether the design's words are the domain's. The derived pages use the
   declaration's `description` and `inverse`; a design that writes its own
   sentences must keep them true as the declaration changes.
-- Whether a page still offers everything the seat may do. `store.permits` says
-  what is allowed; only reading the mutations says what exists. A design that
-  lists acts by name will miss the one declared after it was written.
+- Whether a page still offers everything the seat may do. A design that lists
+  acts by NAME will miss the one declared after it was written, and one that
+  lists them by scanning the mutations will offer acts that cannot act.
+  `facts.actions` is neither, and is the only list that stays right on its
+  own — but only a person can see whether the page gives them room.
