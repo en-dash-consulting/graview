@@ -36,7 +36,7 @@ export { Graph, GraphError } from "./graph/graph.js";
 export type { GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
-export { invert, writesOf } from "./graph/primitives.js";
+export { invert, isUnset, normalise, UNSET, writesOf } from "./graph/primitives.js";
 export type { Primitive } from "./graph/primitives.js";
 export { TrackedReader } from "./graph/tracked.js";
 export { edgeId } from "./graph/types.js";

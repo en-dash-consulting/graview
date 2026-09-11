@@ -1,7 +1,7 @@
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
 import { diffSnapshots, type GraphDiff } from "./diff.js";
-import type { Primitive } from "./primitives.js";
+import { isUnset, type Primitive } from "./primitives.js";
 import { edgeId, type GraphEdge, type GraphReader, type GraphSnapshot } from "./types.js";
 
 export interface GraphOptions {
@@ -194,7 +194,9 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         }
         const next = { ...current } as Record<string, unknown>;
         for (const [key, value] of Object.entries(primitive.after)) {
-          if (value === undefined) delete next[key];
+          // `undefined` in memory, `UNSET` once written down: both mean the
+          // key goes away. See `normalise` in primitives.ts.
+          if (isUnset(value)) delete next[key];
           else next[key] = value;
         }
         this.nodes.set(primitive.id, this.check(next) as NodeOfSchema<S>);

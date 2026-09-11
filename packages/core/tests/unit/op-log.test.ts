@@ -109,6 +109,57 @@ describe("operation log", () => {
     ]);
   });
 
+  /*
+   * "REMOVE THIS KEY" HAS TO SURVIVE BEING WRITTEN DOWN.
+   *
+   * A patch says it by carrying the key with the value `undefined`, which
+   * JSON drops — and the log, every adapter and the export bundle are JSON.
+   * So a persisted op that cleared a field came back with an empty half and
+   * its inverse silently did nothing, which is the one thing an op log
+   * exists to prevent.
+   */
+  it("keeps a cleared field's instruction through JSON", () => {
+    const note = defineNode("note", {
+      fields: z.object({ label: z.string(), pinned: z.string().optional() }),
+    });
+    const small = createSchema([note]);
+    const bound = bindSchema(small);
+    const unpin = bound.defineMutation("unpin", {
+      input: z.object({ id: nodeRef(["note"]) }),
+      subject: { kinds: ["note"], arg: "id" },
+      apply(ctx, args) {
+        ctx.patchNode(args.id, { pinned: undefined });
+      },
+    });
+    const store = new Store({
+      schema: small,
+      mutations: [unpin],
+      invariants: [],
+      snapshot: { nodes: [{ id: "n1", kind: "note", label: "One", pinned: "top" }] as never, edges: [] },
+    });
+    store.apply({ name: "unpin", args: { id: "n1" } });
+    expect(store.graph.getNode("n1")).toEqual({ id: "n1", kind: "note", label: "One" });
+
+    const recorded = store.log.all()[0]!;
+    const written = JSON.parse(JSON.stringify(recorded)) as typeof recorded;
+    // The instruction is a VALUE, so it is still there.
+    expect(Object.keys((written.primitives[0] as { after: object }).after)).toEqual(["pinned"]);
+    expect((written.inverse[0] as { after: Record<string, unknown> }).after["pinned"]).toBe("top");
+
+    // And the re-read op still does what it says, both ways round: a store
+    // that has been reopened holds these, not the objects that made them.
+    const reopened = new Store({
+      schema: small,
+      mutations: [unpin],
+      invariants: [],
+      snapshot: { nodes: [{ id: "n1", kind: "note", label: "One", pinned: "top" }] as never, edges: [] },
+    });
+    reopened.graph.applyPrimitives(written.primitives);
+    expect(reopened.graph.getNode("n1")).toEqual({ id: "n1", kind: "note", label: "One" });
+    reopened.graph.applyPrimitives(written.inverse);
+    expect(reopened.graph.getNode("n1")).toEqual({ id: "n1", kind: "note", label: "One", pinned: "top" });
+  });
+
   it("reconstructs the graph by folding the log from empty", () => {
     const s = new Store({ schema, mutations: [addPerson, addDuty, retime, reassign] });
     s.apply({ name: "add-person", args: { label: "Ana" } });

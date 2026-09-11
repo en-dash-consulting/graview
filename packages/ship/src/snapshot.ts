@@ -1,4 +1,4 @@
-import type { Primitive } from "@graview/core";
+import { isUnset, type Primitive } from "@graview/core";
 
 /**
  * A stored graph mid-migration is BETWEEN schemas, so nothing here
@@ -32,9 +32,11 @@ export function applyToSnapshot(
         nodes = nodes.map((node) => {
           if (node.id !== primitive.id) return node;
           const patched: Record<string, unknown> = { ...node, ...primitive.after };
-          // A key patched TO undefined is a removal, not a stored undefined.
+          // A key patched away is a removal, not a stored undefined — said
+          // as `undefined` in memory and as `UNSET` once the op has been
+          // written down, because JSON cannot carry the first one.
           for (const [key, value] of Object.entries(primitive.after)) {
-            if (value === undefined) delete patched[key];
+            if (isUnset(value)) delete patched[key];
           }
           return patched as GraphSnapshot["nodes"][number];
         });

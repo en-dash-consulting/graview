@@ -1,7 +1,7 @@
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
-import { invert, type Primitive } from "./graph/primitives.js";
+import { invert, normalise, type Primitive } from "./graph/primitives.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { evaluate } from "./invariants/engine.js";
 import type {
@@ -379,8 +379,14 @@ export class Store<S extends AnySchema> {
           author,
           intent: options.intent ?? compiled.intent,
           mutation: call,
-          primitives: compiled.primitives,
-          inverse: [...compiled.primitives].reverse().map(invert),
+          /*
+           * NORMALISED on the way into the record: a patch that clears a
+           * field says so with a value rather than with an absence, or the
+           * instruction is lost the moment the op is written to JSON and the
+           * inverse quietly does nothing. See `normalise` in primitives.ts.
+           */
+          primitives: compiled.primitives.map(normalise),
+          inverse: [...compiled.primitives].reverse().map(normalise).map(invert),
           reads: compiled.reads,
           writes: compiled.writes,
           at: this.now(),

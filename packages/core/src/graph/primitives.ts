@@ -17,6 +17,39 @@ export type Primitive =
   | { readonly op: "add-edge"; readonly edge: GraphEdge }
   | { readonly op: "remove-edge"; readonly edge: GraphEdge };
 
+/**
+ * "THIS KEY GOES AWAY", written down.
+ *
+ * A patch says "remove this field" by carrying the key with the value
+ * `undefined` — which is fine in memory and vanishes the moment the op is
+ * written to JSON. So every persisted patch that cleared a field came back
+ * with an empty `before`, and its inverse — the whole promise of an op log —
+ * silently did nothing. A migration that added a field could be "undone"
+ * after a reload and leave the field exactly where it was.
+ *
+ * `UNSET` is that instruction as a value. It survives JSON, it survives an
+ * export bundle, and `normalise` puts it in front of every primitive on its
+ * way into an operation so nobody writing a mutation has to know.
+ */
+export const UNSET = "\u0000graview:unset";
+
+/** Whether a patch value means "take this key off the node". */
+export const isUnset = (value: unknown): boolean => value === undefined || value === UNSET;
+
+/**
+ * A primitive with every "remove this key" said as a value rather than as an
+ * absence. Applied where primitives become operations, so the log, the
+ * adapters and the export all carry the same instruction.
+ */
+export function normalise(primitive: Primitive): Primitive {
+  if (primitive.op !== "patch-node") return primitive;
+  const said = (fields: Readonly<Record<string, unknown>>): Record<string, unknown> =>
+    Object.fromEntries(
+      Object.entries(fields).map(([key, value]) => [key, value === undefined ? UNSET : value]),
+    );
+  return { ...primitive, before: said(primitive.before), after: said(primitive.after) };
+}
+
 /** Every primitive's inverse is another primitive — no special cases. */
 export function invert(primitive: Primitive): Primitive {
   switch (primitive.op) {
