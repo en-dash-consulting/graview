@@ -27,6 +27,7 @@ describe("what a project starts with", () => {
       "tsconfig.build.json",
       "vite.config.ts",
       "index.html",
+      "embed.html",
       ".gitignore",
       "README.md",
       "src/domain/schema.ts",
@@ -38,6 +39,7 @@ describe("what a project starts with", () => {
       "src/ui/app.tsx",
       "src/ui/pages.tsx",
       "src/main.tsx",
+      "src/embed.tsx",
       "tests/domain.test.ts",
       ".github/workflows/ci.yml",
     ]);
@@ -204,6 +206,33 @@ describe("the CI it writes", () => {
  * now, so the generated prose is checked as prose — every "a" in it, against
  * the word that follows.
  */
+/*
+ * The pages skill's last section tells a project to mount itself into
+ * somebody else's page with `@graview/embed`. A project scaffolded without
+ * that dependency — and without the dev alias the other packages get — could
+ * not follow it.
+ */
+describe("a project can do what its own skills tell it to", () => {
+  it("depends on every package the skills reach for, including the embed", () => {
+    const manifest = JSON.parse(file("Walk", "package.json")) as {
+      dependencies: Record<string, string>;
+    };
+    for (const pkg of GRAVIEW_PACKAGES) {
+      expect(Object.keys(manifest.dependencies), pkg).toContain(`@graview/${pkg}`);
+    }
+    expect(GRAVIEW_PACKAGES).toContain("embed");
+  });
+
+  it("aliases every one of them for the linked dev server", () => {
+    const vite = scaffoldProject({ name: "Walk", link: "../framework" }).files.find(
+      (one) => one.path === "vite.config.ts",
+    )!.contents;
+    for (const pkg of GRAVIEW_PACKAGES) {
+      expect(vite, pkg).toContain(`"@graview/${pkg}"`);
+    }
+  });
+});
+
 describe("the article agrees with the kind", () => {
   const prose = (kind: string): string =>
     scaffoldProject({ name: "Walk", kind })

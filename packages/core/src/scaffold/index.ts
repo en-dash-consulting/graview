@@ -83,6 +83,12 @@ export const GRAVIEW_PACKAGES = [
   "primitives",
   "pages",
   "ship",
+  /*
+   * `embed` too, because the pages skill's last section tells a project to
+   * `mount` itself into somebody else's page — and a project scaffolded
+   * without it could not, in a repository that ships the package.
+   */
+  "embed",
 ] as const;
 
 const SLUG = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -205,6 +211,7 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
     { path: "tsconfig.build.json", contents: tsconfigBuild() },
     { path: "vite.config.ts", contents: viteConfig(ids) },
     { path: "index.html", contents: indexHtml(ids) },
+    { path: "embed.html", contents: embedHtml(ids) },
     { path: ".gitignore", contents: gitignore() },
     { path: "README.md", contents: readme(ids) },
     { path: "src/domain/schema.ts", contents: schemaTs(ids) },
@@ -216,6 +223,7 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
     { path: "src/ui/app.tsx", contents: uiAppTsx(ids) },
     { path: "src/ui/pages.tsx", contents: pagesTsx(ids) },
     { path: "src/main.tsx", contents: mainTsx(ids) },
+    { path: "src/embed.tsx", contents: embedTsx(ids) },
     { path: "tests/domain.test.ts", contents: domainTest(ids) },
     { path: ".github/workflows/ci.yml", contents: ciYml(ids) },
   ];
@@ -424,6 +432,7 @@ export default defineConfig({
       // The browser entry, so the file adapter's node:fs never meets the bundler.
       "@graview/ship/browser": framework("ship/src/browser.ts"),
       "@graview/ship": framework("ship/src/index.ts"),
+      "@graview/embed": framework("embed/src/index.ts"),
     },
   },
   server: {
@@ -454,6 +463,76 @@ function indexHtml(ids: Ids): string {
 </style>
 <div id="root"></div>
 <script type="module" src="/src/main.tsx"></script>
+`;
+}
+
+/**
+ * SOMEBODY ELSE'S PAGE. The last rung of the `graview-pages` skill, shipped
+ * as a page rather than as a paragraph — so a project has a place to put an
+ * embed, and so the project's own `pnpm typecheck` covers the embed surface.
+ * Delete both files if the app is never going anywhere but its own address.
+ */
+function embedHtml(ids: Ids): string {
+  return `<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${escapeHtml(ids.name)}, on somebody else's page</title>
+<style>
+  /* THE HOST PAGE'S OWN LOOK. Nothing here is ${escapeHtml(ids.name)}'s, and
+     nothing ${escapeHtml(ids.name)} draws may reach out and change it: the
+     embed themes itself inside its own element. */
+  body {
+    margin: 0 auto;
+    max-width: 44rem;
+    padding: 3rem 1.25rem 6rem;
+    background: #fbfaf7;
+    color: #1c1b19;
+    font: 17px/1.7 Georgia, "Times New Roman", serif;
+  }
+  h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 1.2rem; }
+  p { margin: 0 0 1.2rem; }
+  .figure { margin: 1.5rem 0 2rem; height: 520px; }
+</style>
+
+<h1>An ordinary page</h1>
+<p>
+  Written in its own typeface, on its own paper. The picture below is
+  ${escapeHtml(ids.name)}, mounted into one element of it.
+</p>
+<div class="figure" id="here"></div>
+<p>
+  And the page carries on afterwards, untouched.
+</p>
+
+<script type="module" src="/src/embed.tsx"></script>
+`;
+}
+
+function embedTsx(ids: Ids): string {
+  return `import { mount } from "@graview/embed";
+import { ${ids.appVar}, createStore } from "./domain/app.js";
+import { views } from "./ui/views.js";
+
+/**
+ * ${escapeTemplate(ids.name).toUpperCase()} ON SOMEBODY ELSE'S PAGE.
+ *
+ * The embed brings its own strip, its own theme scoped to the element it is
+ * given, and this app's named places — no Shell, nothing on the host page
+ * touched. Pass \`seats\` once a policy exists and the reader can sit in each
+ * one: the strip, the pages and the acts all narrow together.
+ */
+const store = createStore();
+
+mount(document.getElementById("here")!, {
+  app: ${ids.appVar},
+  store,
+  // The app's own registry, in the app's own schema — no casts.
+  views,
+  scheme: "auto",
+  stop: "#overview=1",
+  label: ${escapeString(ids.name)},
+});
 `;
 }
 

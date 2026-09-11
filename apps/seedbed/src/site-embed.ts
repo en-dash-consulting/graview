@@ -34,6 +34,13 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
     path: (chapter.path ?? "/pages").replace(/^\/pages/, "") || "/",
     ...(chapter.principal ? { principal: chapter.principal } : {}),
     ...(chapter.seats ? { seats: chapter.seats } : {}),
+    /*
+     * The cast here is the CHAPTER MODEL's, not the embed's: a chapter holds
+     * a different schema per chapter, so `chapter.app` is a
+     * `GraviewApp<AnySchema>` and `s` arrives erased. An app with one
+     * declaration passes its own typed registry with no cast at all — see
+     * the `src/embed.tsx` every scaffolded project now starts with.
+     */
     views: (s) => seedbedViews(s as never, { lens: chapter.lens, board: chapter.board, map: chapter.map ?? false }) as never,
     ...(chapter.pages ? { pages: (chapter.design ? seedbedDesign(schema) : seedbedPages(schema)) as never } : {}),
     standing: "The garden keeps its agreements",
