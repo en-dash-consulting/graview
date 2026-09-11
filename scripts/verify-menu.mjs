@@ -153,7 +153,7 @@ try {
   await page.click('[data-graview-pick="t-deposit"]');
   await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for]');
   const before = await offeredOrder(page);
-  await page.click('[data-pin-for="rename"]');
+  await page.click('[data-pin-for="edit-task"]');
   await page.waitForTimeout(150);
   const after = await offeredOrder(page);
   const headings = await page.evaluate(() =>
@@ -162,18 +162,29 @@ try {
     ),
   );
   /*
-   * On this overdue task "finish" is a REPAIR, so it sits in the top band
-   * where no pin may reach — which is itself part of the claim. The pin's
-   * movement is measured against an unpinned peer (reopen), and the
-   * repairs must still lead afterwards.
+   * On this overdue task "finish" and "reschedule" are REPAIRS, so they sit
+   * in the top band where no pin may reach — which is itself part of the
+   * claim. The pin's movement is measured against an unpinned peer that sits
+   * above it beforehand ("rename"), and the repairs must still lead
+   * afterwards.
+   *
+   * The peer used to be "reopen", which is offered on nothing: it sets
+   * `done: false` on a task that was never finished, so it changes nothing,
+   * and an act with nothing left to do is no longer offered. A peer that is
+   * not there makes `indexOf` return -1, and a comparison against -1 passes
+   * or fails for reasons that have nothing to do with pinning — so the peer
+   * is asserted to be present before it is compared against.
    */
   report.checks.pinThenReorder = {
-    before: before.slice(0, 5),
-    after: after.slice(0, 5),
+    before,
+    after,
     headings,
+    peerIsOffered: before.includes("rename") && before.includes("edit-task"),
     ok:
-      before.indexOf("rename") > before.indexOf("reopen") &&
-      after.indexOf("rename") < after.indexOf("reopen") &&
+      before.includes("rename") &&
+      before.includes("edit-task") &&
+      before.indexOf("edit-task") > before.indexOf("rename") &&
+      after.indexOf("edit-task") < after.indexOf("rename") &&
       after.indexOf("finish") === 0 &&
       headings.includes("pinned") &&
       headings.some((heading) => heading?.includes("⚠")),
@@ -188,21 +199,20 @@ try {
   const pressed = await page.evaluate(
     () =>
       document
-        .querySelector('[data-pin-for="rename"]')
+        .querySelector('[data-pin-for="edit-task"]')
         ?.getAttribute("aria-pressed") === "true",
   );
   // Unpinning is the same gesture.
-  await page.click('[data-pin-for="rename"]');
+  await page.click('[data-pin-for="edit-task"]');
   await page.waitForTimeout(150);
   const unpinned = await offeredOrder(page);
+  const above = (list) =>
+    list.includes("rename") && list.indexOf("edit-task") < list.indexOf("rename");
   report.checks.pinSurvivesReloadAndUnpins = {
-    survived: survived.indexOf("rename") < survived.indexOf("reopen"),
+    survived: above(survived),
     pressed,
-    unpinnedAgain: unpinned.indexOf("rename") > unpinned.indexOf("reopen"),
-    ok:
-      survived.indexOf("rename") < survived.indexOf("reopen") &&
-      pressed &&
-      unpinned.indexOf("rename") > unpinned.indexOf("reopen"),
+    unpinnedAgain: !above(unpinned) && unpinned.includes("rename"),
+    ok: above(survived) && pressed && !above(unpinned) && unpinned.includes("rename"),
   };
 
   /* ------------------------------------- the dev's pin is overridable too */

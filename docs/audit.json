@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-11T19:17:32.239Z",
-  "engine": "firefox",
+  "at": "2026-09-11T20:44:45.646Z",
+  "engine": "chromium",
   "screens": [
     {
       "app": "todo",
@@ -15,6 +15,7 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [],
       "board": [],
       "fill": 59,
       "inspector": null
@@ -32,6 +33,7 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [],
       "board": [],
       "fill": 59,
       "inspector": null
@@ -49,12 +51,13 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [],
       "board": [],
       "fill": 59,
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x493",
+        "size": "236x435",
         "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Finish it★Give it a new date …"
       }
     },
@@ -71,6 +74,7 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [],
       "board": [],
       "fill": 51,
       "inspector": null
@@ -88,13 +92,14 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [],
       "board": [],
       "fill": 31,
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x453",
-        "text": "×⚠ Was due 2026-08-28Finish it★Give it a new date …☆Put it back☆Rename …☆Change the task …"
+        "size": "236x395",
+        "text": "×⚠ Was due 2026-08-28Finish it★Give it a new date …☆Rename …☆Change the task …☆Block time "
       }
     },
     {
@@ -110,6 +115,7 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [],
       "board": [],
       "fill": 19,
       "inspector": null
@@ -127,12 +133,21 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [
+        "wordmark at -102..-3",
+        "place-gardener at 111..169",
+        "chat at 358..422",
+        "activity-button at 434..524",
+        "scheme at 536..568",
+        "Change the garde at -101..217",
+        "Name a caretaker at -101..217"
+      ],
       "board": [],
       "fill": 4,
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "370x162",
+        "size": "370x160",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       }
     },
@@ -149,6 +164,7 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [],
       "board": [],
       "fill": 4,
       "inspector": null
@@ -166,6 +182,7 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [],
       "board": [],
       "fill": 4,
       "inspector": {
@@ -188,6 +205,7 @@
       "repeats": [],
       "articles": [],
       "covered": [],
+      "offscreen": [],
       "board": [],
       "fill": 4,
       "inspector": null

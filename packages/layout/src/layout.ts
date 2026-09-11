@@ -144,7 +144,29 @@ function ring(
    * the ring's natural sweep put it past the bottom edge. The ring is only
    * as tall as leaves that card whole, with a little ground under it.
    */
-  const ry = Math.max(0, Math.min(canvasHeight * 0.365, canvasHeight - cy - size.height * 0.65 - opened - 12));
+  const slack = canvasHeight - cy - size.height * 0.65 - 12;
+  /*
+   * THE RING HAS TO STAY A RING.
+   *
+   * With an even number of kinds two districts sit directly opposite, in the
+   * same column, and the vertical radius is the only thing holding them
+   * apart: the far card's lower edge is `ry - 0.425h` above centre, the near
+   * card's upper edge `ry - 0.65h` below it. Below that the picture is two
+   * districts on top of each other, and which one answers a click is
+   * whichever happened to be drawn second.
+   *
+   * An opened district asks for more room under the near card to list its
+   * members, and it used to take that room out of the radius without
+   * looking: at 320 high with one district open, `ry` came out at under a
+   * pixel and all four cards landed in one line. The listing is the luxury
+   * here and the ring is the picture, so the listing gets what is left after
+   * the ring has what it needs, rather than the other way round.
+   */
+  const far = Math.max(CARD_MIN_HEIGHT, size.height * 0.85);
+  const near = Math.max(CARD_MIN_HEIGHT, size.height * 1.3);
+  const apart = far / 2 + near / 2 + 5;
+  const opening = Math.max(0, Math.min(opened, slack - apart));
+  const ry = Math.max(0, Math.min(canvasHeight * 0.365, slack - opening));
   return Array.from({ length: count }, (_, index) => {
     // Starting at the bottom, going clockwise, so the first card of the shelf
     // ends up nearest the viewer rather than hidden at the back.
@@ -181,6 +203,14 @@ function ring(
  * a secondary kind from a primary one, without moving anything.
  */
 const SHELF_DEPTH = 0.85;
+
+/*
+ * A kind card holds a name and a count, and that is a fixed number of
+ * pixels. Both the ring and the shelf are held to it: the ring has to reason
+ * about the height that will be DRAWN, which is this one whenever its own
+ * proportional answer lands under it.
+ */
+const CARD_MIN_HEIGHT = 56;
 
 function shelf(
   count: number,
@@ -831,7 +861,6 @@ export function layout<S extends AnySchema>(
    * glyph-sized band the multiplications land under the content and the card
    * clips. Proportion is right until it crosses the floor.
    */
-  const CARD_MIN_HEIGHT = 56;
   const TUCK_MIN_HEIGHT = 52;
   const TUCK_MIN_WIDTH = 86;
   /** Further back within the plane. 1 is the plane's own depth. */
