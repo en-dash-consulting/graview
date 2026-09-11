@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  article,
   createSchema,
   createViewRegistry,
   defineNode,
@@ -9,6 +10,7 @@ import {
   nodeJsonSchema,
   nodeRef,
   SchemaError,
+  withArticle,
 } from "../../src/index.js";
 
 const person = defineNode("person", {
@@ -124,5 +126,44 @@ describe("view registry", () => {
     // An aggregate cell must not borrow a single-node view: it would draw one
     // node where the scene asked for the group.
     expect(views.resolve("duty", { cardinality: "many", fidelity: "glyph" })).toBeUndefined();
+  });
+});
+
+/**
+ * The article is derived, in one place, because every surface writes
+ * sentences about a kind the author named: the scaffolder's "Add an item",
+ * the checker's "from an item it is captioned", the strip's "Nothing you may
+ * do with an item". Sound decides it, not spelling — which is why "a user"
+ * and "an hour" are listed rather than guessed at.
+ */
+describe("a or an", () => {
+  it("takes an before a vowel sound", () => {
+    for (const word of ["item", "asset", "order", "issue", "epic", "invoice", "entry"]) {
+      expect(`${article(word)} ${word}`).toBe(`an ${word}`);
+    }
+  });
+
+  it("takes a before a consonant sound", () => {
+    for (const word of ["note", "task", "person", "gardener", "run"]) {
+      expect(`${article(word)} ${word}`).toBe(`a ${word}`);
+    }
+  });
+
+  it("hears the yoo in user and unit, and the silence in hour", () => {
+    expect(article("user")).toBe("a");
+    expect(article("unit")).toBe("a");
+    expect(article("uniform")).toBe("a");
+    expect(article("union")).toBe("a");
+    expect(article("umbrella")).toBe("an");
+    expect(article("update")).toBe("an");
+    expect(article("hour")).toBe("an");
+    expect(article("heir")).toBe("an");
+    expect(article("house")).toBe("a");
+  });
+
+  it("speaks a hyphenated identifier as words", () => {
+    expect(withArticle("work-order")).toBe("a work order");
+    expect(withArticle("action-item")).toBe("an action item");
+    expect(withArticle("orderLine")).toBe("an order line");
   });
 });

@@ -12,6 +12,7 @@
  * it scaffolds a project from the packed tarballs, installs it the way a
  * stranger would, and runs the project's own `verify`.
  */
+import { withArticle } from "../schema/define-node.js";
 
 export interface ScaffoldOptions {
   /** The product's name, as a person would say it: "Field Notes". */
@@ -161,12 +162,23 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
   // "work-order" is an identifier; a button says "work order".
   const spoken = kind.replace(/-/g, " ");
   const spokenPlural = plural.replace(/-/g, " ");
+  /*
+   * "Add a item" is what a template writes when the article is a literal.
+   * The kind is the author's word and half of them begin with a vowel, so
+   * every generated sentence takes its article from `withArticle` — the same
+   * one the checker and the strip use, so the project a stranger reads and
+   * the framework talking about it cannot disagree.
+   */
+  const aSpoken = withArticle(kind);
+  const ASpoken = aSpoken.charAt(0).toUpperCase() + aSpoken.slice(1);
   const ids = {
     name,
     kind,
     plural,
     spoken,
     spokenPlural,
+    aSpoken,
+    ASpoken,
     Kind: titleCase(kind),
     Plural: titleCase(plural),
     kindVar: camel(kind),
@@ -217,6 +229,10 @@ type Ids = {
   plural: string;
   spoken: string;
   spokenPlural: string;
+  /** The kind spoken with its article: "an item", "a work order". */
+  aSpoken: string;
+  /** The same, capitalised for the head of a sentence. */
+  ASpoken: string;
   Kind: string;
   Plural: string;
   kindVar: string;
@@ -536,7 +552,7 @@ import { z } from "zod";
  * declare more.
  */
 export const ${ids.kindVar} = defineNode("${ids.kind}", {
-  description: "A ${ids.spoken}: something ${escapeString(ids.name)} keeps track of.",
+  description: "${ids.ASpoken}: something ${escapeString(ids.name)} keeps track of.",
   fields: z.object({
     label: z.string().min(1),
     status: z.enum(["open", "closed"]),
@@ -584,7 +600,7 @@ const nameOf = (graph: Reader, id: string): string => {
  */
 
 export const add${ids.KindPascal} = defineMutation("add-${ids.kind}", {
-  title: "Add a ${ids.spoken}",
+  title: "Add ${ids.aSpoken}",
   description: "Bring a new ${ids.spoken} into ${escapeString(ids.name)}.",
   // Says what it brings into existence: an EMPTY district offers this act
   // as its own beginning, which is the whole onboarding of a blank graph.
@@ -634,7 +650,7 @@ export const unlink${ids.KindPascal} = defineMutation("unlink-${ids.kind}", {
 
 export const close${ids.KindPascal} = defineMutation("close-${ids.kind}", {
   title: "Close it",
-  description: "Mark a ${ids.spoken} closed. It leaves the picture, never the record.",
+  description: "Mark ${ids.aSpoken} closed. It leaves the picture, never the record.",
   subject: { kinds: ["${ids.kind}"], arg: "id" },
   // Writes the status without asking for it, and says so.
   writes: ["status"],
@@ -948,7 +964,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
   return (
     <PageMain context={context} data-testid="${ids.kind}-page">
       <header style={{ display: "grid", gap: 10 }}>
-        <p style={pageStyles.eyebrow}>A ${ids.spoken} in ${escapeTemplate(ids.name)}</p>
+        <p style={pageStyles.eyebrow}>${ids.ASpoken} in ${escapeTemplate(ids.name)}</p>
         <h1 style={pageStyles.h1}>{node.label}</h1>
         <p style={pageStyles.lede}>
           {node.status === "closed" ? "Closed." : "Still open."}{" "}

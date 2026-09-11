@@ -7,6 +7,7 @@ import {
   unwrittenFields,
 } from "../mutations/derive-edits.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
+import { withArticle } from "../schema/define-node.js";
 import { permits, rolesOf } from "../permissions/policy.js";
 import { checkBrandContrast } from "../theme/derive.js";
 import type { AnySchema } from "../schema/schema.js";
@@ -276,17 +277,17 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     for (const [edgeKind, edge] of Object.entries(definition.edges)) {
       if (edge.inverse) continue;
       const farEnd =
-        edge.to === "*" ? "the other end" : edge.to.map((kind) => `a ${kind}`).join(" or ");
+        edge.to === "*" ? "the other end" : edge.to.map((kind) => withArticle(kind)).join(" or ");
       add({
         severity: "warning",
         code: "edge-without-inverse",
         where: `defineNode("${definition.kind}").edges["${edgeKind}"]`,
         message: edge.description
-          ? `"${edgeKind}" reads from a ${definition.kind} only ("${edge.description}"); from ${farEnd} it is captioned "${edgeKind.replace(/-/g, " ")}", which is the wrong way round.`
+          ? `"${edgeKind}" reads from ${withArticle(definition.kind)} only ("${edge.description}"); from ${farEnd} it is captioned "${edgeKind.replace(/-/g, " ")}", which is the wrong way round.`
           : `"${edgeKind}" has no words in either direction; both ends are captioned "${edgeKind.replace(/-/g, " ")}".`,
         fix:
           `Add inverse: "…" — how the relation reads from ${farEnd}` +
-          (edge.description ? "" : `, and description: "…" for how it reads from a ${definition.kind}`) +
+          (edge.description ? "" : `, and description: "…" for how it reads from ${withArticle(definition.kind)}`) +
           `.`,
       });
     }

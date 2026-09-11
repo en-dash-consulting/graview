@@ -114,6 +114,41 @@ export function humaniseField(field: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
+/*
+ * "a item" is the sound of generated prose.
+ *
+ * Every surface here writes sentences about a kind the author named —
+ * "Add a item", "Nothing you may do with a item", "from a item it is
+ * captioned" — and a kind is as likely to begin with a vowel as not. The
+ * article is therefore never a literal: it is derived from the word, in one
+ * place, so that the scaffolder, the checker and the strip cannot disagree.
+ *
+ * Sound, not spelling, decides it, and the two disagree in exactly two small
+ * families that domain vocabulary is full of: "a user", "a unit" (the "yoo"
+ * sound), and "an hour", "an heir" (the silent h). Both are listed rather
+ * than guessed at.
+ */
+const SOUNDS_LIKE_YOU = /^(u[nt]i|use|usu|uti|ubiq|eu|ewe|one|once)/;
+const SILENT_H = /^(hour|honest|hono[ur]r?|heir)/;
+
+/** "a" or "an", by how the word SOUNDS. */
+export function article(word: string): "a" | "an" {
+  const first = humaniseField(word).toLowerCase();
+  if (SILENT_H.test(first)) return "an";
+  if (SOUNDS_LIKE_YOU.test(first)) return "a";
+  return /^[aeiou]/.test(first) ? "an" : "a";
+}
+
+/**
+ * A kind in words, with its article: "an item", "a work order".
+ *
+ * Takes the declared id and speaks it — the hyphen in `work-order` is a
+ * identifier's punctuation, not a word's.
+ */
+export function withArticle(word: string): string {
+  return `${article(word)} ${humaniseField(word).toLowerCase()}`;
+}
+
 /**
  * WHICH of a node's fields a person sees, and HOW each one reads.
  *

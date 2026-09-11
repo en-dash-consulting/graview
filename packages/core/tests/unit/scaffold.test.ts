@@ -197,3 +197,36 @@ describe("the CI it writes", () => {
     expect(npm).toContain("npm run verify");
   });
 });
+
+/**
+ * "Add a item" is a sentence the scaffolder wrote, and a stranger reads it
+ * on the very first screen. The article is derived from the kind's own word
+ * now, so the generated prose is checked as prose — every "a" in it, against
+ * the word that follows.
+ */
+describe("the article agrees with the kind", () => {
+  const prose = (kind: string): string =>
+    scaffoldProject({ name: "Walk", kind })
+      .files.filter((f) => /^(src|README)/.test(f.path))
+      .map((f) => f.contents)
+      .join("\n");
+
+  it("says an item, not a item", () => {
+    const written = prose("item");
+    expect(written).toContain('title: "Add an item"');
+    expect(written).toContain('description: "An item: something Walk keeps track of.');
+    expect(written).not.toMatch(/\ba item\b/);
+  });
+
+  it("keeps a before a consonant, and spells a hyphenated kind", () => {
+    expect(prose("note")).toContain('title: "Add a note"');
+    expect(prose("work-order")).toContain('title: "Add a work order"');
+  });
+
+  it("writes no 'a' before a vowel anywhere in a generated project", () => {
+    for (const kind of ["item", "asset", "order", "issue", "epic", "invoice"]) {
+      const offending = prose(kind).match(/\ba (?=[aeiou])[a-z]+/g) ?? [];
+      expect(offending, `kind "${kind}"`).toEqual([]);
+    }
+  });
+});
