@@ -63,6 +63,17 @@ export function insightProvider<S extends AnySchema>(): AffordanceProvider<S> {
       for (const kind of kindSelection) {
         if (store.graph.nodesOfKind(kind as never).length > 0) continue;
         const expectedBy = store.schema.definitions
+          /*
+           * OTHER kinds, and only other kinds.
+           *
+           * A first kind with an edge to itself — which is what a scaffolded
+           * project starts with — made this say "Nothing here yet, though
+           * Items expect to connect to these" on an empty graph: the
+           * expectant party was the absent kind itself, so the sentence
+           * named no one and pointed at nothing. A gap is only worth
+           * stating when somebody ELSE is waiting on it.
+           */
+          .filter((definition) => definition.kind !== kind)
           .filter((definition) =>
             Object.values(definition.edges).some(
               (edge) => edge.to !== "*" && (edge.to as readonly string[]).includes(kind),

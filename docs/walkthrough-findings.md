@@ -31,3 +31,21 @@ the same commit as the fix.
   `the article agrees with the kind` (scaffold.test.ts); smoke-create verdict
   `aVowelKindIsSpokenWithAn`; audit-ui `articles` (every article on screen
   against the word after it)
+
+### W-002 · The empty district says something is waiting for it that is not
+- stage: A · face: scene · width: 1280 · scheme: dark
+- expected: the blank app's one district offers its beginning and nothing
+  else — a gap is only worth stating when another kind is waiting on it
+- actual: selecting the empty district said "Nothing here yet, though Items
+  expect to connect to these". The kind expecting Items was Items: a
+  scaffolded project's first kind declares one edge and it points at itself,
+  so on an empty graph the sentence named the absent kind as the party
+  waiting for it, which is nobody.
+- where it belongs: `packages/tools/src/providers/insight.ts` (the gap
+  observation)
+- harness that should have caught it: `packages/tools/tests/unit/intelligence.test.ts`
+  — its gap case had two kinds and an edge between them, so a self-edge was
+  never asked about
+- status: fixed in "walkthrough: A · a gap nobody is waiting on is not an
+  observation" · criterion added: intelligence.test.ts "says nothing about a
+  gap only the missing kind itself expects"
