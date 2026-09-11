@@ -331,6 +331,68 @@ describe("the timeline's spans are things, not decoration", () => {
  * further back, and the CARD has to look like a quieter card rather than a
  * full-size one that shrank.
  */
+/*
+ * A district's count says "⚠ 1". Opening it to find out WHICH one is the
+ * entire reason to open it — and every member chip came out unmarked, while
+ * the same node drawn as a glyph elsewhere carried its warning.
+ */
+describe("an opened district says which member is in trouble", () => {
+  const lowOnBoosters = {
+    name: "enough-boosters",
+    scope: { kind: "vehicle" } as const,
+    repairs: [],
+    evaluate: ({ subject }: { subject: never }) => {
+      const node = subject as unknown as { id: string; label: string; boosters: number };
+      return node.boosters >= 3
+        ? []
+        : [
+            {
+              invariant: "enough-boosters",
+              subjectId: node.id,
+              label: node.label,
+              message: `${node.label} has ${node.boosters} boosters`,
+              nodeIds: [node.id],
+              repairs: [],
+            },
+          ];
+    },
+  };
+
+  const opened = renderToStaticMarkup(
+    <GraviewProvider
+      store={
+        new Store({
+          schema,
+          mutations: [],
+          invariants: [lowOnBoosters],
+          snapshot: {
+            nodes: [
+              { id: "ana", kind: "person", label: "Ana", role: "parent" },
+              { id: "estate", kind: "vehicle", label: "The estate", seats: 5, boosters: 2 },
+              { id: "van", kind: "vehicle", label: "The van", seats: 8, boosters: 4 },
+            ],
+            edges: [],
+          },
+        })
+      }
+      views={registerDefaultViews(schema, createViews(schema))}
+      initialView={{ ...EMPTY_VIEW, overview: true, expanded: [kindCardId("vehicle")] }}
+    >
+      <Scene renderer="dom" />
+    </GraviewProvider>,
+  );
+
+  it("counts the trouble on the card", () => {
+    expect(opened).toContain("⚠ 2");
+  });
+
+  it("marks the member that is in trouble, and only that one", () => {
+    expect(opened).toContain("The estate ⚠");
+    expect(opened).toContain("implicated in a problem");
+    expect(opened).not.toContain("The van ⚠");
+  });
+});
+
 describe("a kind card carries its rank", () => {
   const focusedOnAna = renderScene({ ...EMPTY_VIEW, focusId: "ana" });
 
