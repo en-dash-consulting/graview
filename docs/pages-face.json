@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-11T23:01:48.304Z",
+  "at": "2026-09-11T23:03:09.096Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -7,9 +7,7 @@
       "hasH1": true,
       "namedLinks": true,
       "labelledInputs": true,
-      "bigEnoughToHit": [
-        "a \"Start fresh\" 62x15"
-      ]
+      "bigEnoughToHit": []
     },
     "homeIndexesKinds": true,
     "phoneList": {
@@ -17,9 +15,7 @@
       "hasH1": true,
       "namedLinks": true,
       "labelledInputs": true,
-      "bigEnoughToHit": [
-        "a \"Start fresh\" 62x15"
-      ]
+      "bigEnoughToHit": []
     },
     "listLinksRecords": true,
     "phoneRecord": {
@@ -27,10 +23,7 @@
       "hasH1": true,
       "namedLinks": true,
       "labelledInputs": true,
-      "bigEnoughToHit": [
-        "a \"Tasks\" 44x19",
-        "a \"Start fresh\" 62x15"
-      ]
+      "bigEnoughToHit": []
     },
     "recordSaysItsFacts": {
       "fields": true,
@@ -42,5 +35,5 @@
     "sceneOffersThePages": true,
     "recordLinksItsStop": true
   },
-  "passed": false
+  "passed": true
 }
