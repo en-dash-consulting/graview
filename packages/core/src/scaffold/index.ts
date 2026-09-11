@@ -531,7 +531,7 @@ mount(document.getElementById("here")!, {
   views,
   scheme: "auto",
   stop: "#overview=1",
-  label: ${escapeString(ids.name)},
+  label: "${escapeString(ids.name)}",
 });
 `;
 }
