@@ -978,3 +978,39 @@ at the end of every stage.
   `packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx` — three
   cases over both branches. Verified failing without the fix: the group is
   absent and the counter reads "label · 1 of 2".
+
+### W-040 · An act offered on the far end of its tie is labelled from the near end
+- stage: B · face: both · width: any · scheme: both
+- expected: a control that changes the graph says what pressing it would do,
+  read from where it is offered
+- actual: an act declaring `connects` or `severs` is offered from EITHER
+  endpoint — that is deliberate and right, "take this one off the run" is
+  the natural thing to say standing on the person. The button there was
+  labelled `mutation.title`, which is written from the SUBJECT's side. On the
+  owner's record and in the owner's strip, "Hand it to someone" reads as
+  handing the owner to someone. The framework's own two example apps had it
+  too, found the moment the check existed: todo offered "Move it to another
+  list" on a list, seedbed offered "Name a caretaker" on a gardener (where it
+  reads as naming hers). Exactly `edge-without-inverse` one layer up — the
+  relation carries two readings and the act carried one.
+- where it belongs: `packages/core/src/mutations/types.ts` (no way to say
+  it), `packages/tools/src/providers/schema.ts` (the label),
+  `packages/core/src/cli/check.ts` (nothing warned)
+- harness that should have caught it: the far-end offer has been exercised by
+  `pnpm menu` and `pnpm seat` since it existed — both read the act's
+  IDENTIFIER, never its words, so the sentence on the button was never looked
+  at by anything
+- status: fixed in "walkthrough: B · an act read from the end it is offered
+  at" · `fromTheOtherEnd` on the mutation says how the act reads standing on
+  the far end, declared rather than derived for the reason `connects` is: an
+  edge's `inverse` gives the relation's two readings but not the verb, and a
+  guessed verb on a control that changes the graph is the wrong place to be
+  nearly right. Without it the near-end title is still used — an offer that
+  disappears is worse — and `graview check` warns
+  `act-without-far-end-reading`, naming the end, in the shape
+  `edge-without-inverse` already uses. Both example apps now declare theirs,
+  and `graview-node-kind` teaches it. Criterion added:
+  `packages/tools/tests/unit/from-the-other-end.test.ts` — six cases over the
+  label at both ends, the fallback, and the warning (including that an act
+  whose two ends are the same kind is never warned about, because it is never
+  offered from a far end). Verified failing without the fix.

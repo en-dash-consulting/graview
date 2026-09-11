@@ -150,6 +150,9 @@ export const stopWaiting = defineMutation("stop-waiting", {
 
 export const moveToList = defineMutation("move-to-list", {
   title: "Move it to another list",
+  // Standing on the list rather than on the task, the same act is the list
+  // taking something on.
+  fromTheOtherEnd: "Take a task onto this list",
   description: "Take a task off one list and put it on another.",
   subject: { kinds: ["task"], arg: "taskId" },
   connects: ["holds"],

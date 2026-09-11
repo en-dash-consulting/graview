@@ -68,6 +68,23 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
   readonly connects?: readonly string[];
   readonly severs?: readonly string[];
   /**
+   * How this act reads from the OTHER end of the tie.
+   *
+   * An act that declares what it connects or severs is offered from either
+   * endpoint — standing on a person, "take this one off the run" is the
+   * natural thing to say. The button there was labelled with `title`, which
+   * is written from the subject's side: "Hand it to someone", offered on the
+   * person, reads as handing the PERSON to someone.
+   *
+   * Declared rather than derived, for the reason `connects` is: an edge's
+   * `inverse` gives the relation's two readings but not the verb, and a
+   * guessed verb on a control that changes the graph is the wrong place to
+   * be nearly right. `graview check` warns `act-without-far-end-reading`
+   * when an act is offerable from an end it has no words for, naming that
+   * end — the same warning shape as `edge-without-inverse`.
+   */
+  readonly fromTheOtherEnd?: string;
+  /**
    * Fields of the SUBJECT this mutation writes.
    *
    * The declared answer to "what changes this field", which the in-place

@@ -433,7 +433,14 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           if (!askable) continue;
           affordances.push({
             id: `schema:tie:${mutation.name}:${chosen.id}`,
-            label: mutation.title ?? mutation.name,
+            /*
+             * THE FAR END'S OWN WORDS. `title` is written from the subject's
+             * side — "Hand it to someone", offered on the person, read as
+             * handing the person to someone. `fromTheOtherEnd` is the act's
+             * reading from here; without it the near-end title is all there
+             * is, and `graview check` says so by name.
+             */
+            label: mutation.fromTheOtherEnd ?? mutation.title ?? mutation.name,
             provider: "schema",
             mutation: mutation.name,
             args: { [mine.name]: chosen.id },
