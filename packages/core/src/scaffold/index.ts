@@ -495,15 +495,20 @@ function embedHtml(ids: Ids): string {
   .figure { margin: 1.5rem 0 2rem; height: 520px; }
 </style>
 
-<h1>An ordinary page</h1>
-<p>
-  Written in its own typeface, on its own paper. The picture below is
-  ${escapeHtml(ids.name)}, mounted into one element of it.
-</p>
-<div class="figure" id="here"></div>
-<p>
-  And the page carries on afterwards, untouched.
-</p>
+<!-- The HOST page's own landmark. The embed brings a named region of its
+     own and deliberately no <main>: the page it lands on owns that, and two
+     mains is one landmark said twice. -->
+<main>
+  <h1>An ordinary page</h1>
+  <p>
+    Written in its own typeface, on its own paper. The picture below is
+    ${escapeHtml(ids.name)}, mounted into one element of it.
+  </p>
+  <div class="figure" id="here"></div>
+  <p>
+    And the page carries on afterwards, untouched.
+  </p>
+</main>
 
 <script type="module" src="/src/embed.tsx"></script>
 `;
