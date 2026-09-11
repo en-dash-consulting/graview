@@ -1046,3 +1046,57 @@ at the end of every stage.
   the theme's warning ground specifically — "not the default ground" catches
   every muted card in the app and says nothing about problems. Verified
   failing without the fix, naming `t-deposit` in `todo/travelled`.
+
+### W-042 · A lens built from the framework's own primitives cannot say what it lights
+- stage: D · face: scene · width: any · scheme: both
+- expected: `graview-lens` step 5 — "Expose what you decide as
+  `data-graview-emphasis` so it can be checked" — is something an app's lens
+  can actually do with the primitives the skill points it at
+- actual: `Chip` takes a `pickId` and becomes a target; it has no way to say
+  its emphasis, and neither has `Roster`, whose `pick` makes every chip a
+  target. The three shipped lenses all say it on elements of their own, so
+  nothing had noticed. Writing Walk's own lens, the natural primitive for "a
+  list of nodes" produced pick targets emphasised by opacity alone — a claim
+  about a picture that nothing can check: not a test, not `audit-ui`'s
+  `halfSaid`, and not a person reading the tree. A contract only the
+  framework's own views can keep is not a contract.
+- where it belongs: `packages/primitives/src/primitives/index.tsx`
+- harness that should have caught it: `audit-ui`'s `halfSaid` counts marks
+  that say it against marks that do not, and every shipped lens says it on
+  all of them, so the count was never uneven in any app the harnesses drive
+- status: fixed in "walkthrough: D · a mark drawn with the shipped primitives
+  can say what it claims" · `ChipProps.emphasis` and a per-item `emphasis` on
+  `Roster`'s items, rendered as `data-graview-emphasis`, absent when absent.
+  Criterion added: `packages/primitives/tests/unit/a-mark-can-say-so.test.tsx`
+  — three cases, including that a roster says it for all its marks or none,
+  which is the shape the audit counts. Verified failing without the fix.
+
+### W-043 · The coverage lens reports nothing covered when everything is
+- stage: D · face: scene · width: any · scheme: both
+- expected: the lens is told which kinds are rows and which are columns, and
+  reads the graph
+- actual: `buildCoverage` assumed `edge.from` was the column and `edge.to` the
+  row. Half of all domains declare the relation the other way round — "an
+  item is kept by an owner" runs row → column, "a control mitigates a risk"
+  runs column → row — and for those the lens silently dropped every edge. In
+  Walk, with three items all handed to owners, the picture read "3 unanswered
+  · 3 unasked" and flagged all three owners: a lens stating a falsehood with
+  no error anywhere. `graview check` passed, because the binding was not
+  wrong — the assumption was. The comment sitting on that code claimed the
+  opposite of what the code did: "anything else is a binding mistake rather
+  than an empty grid, and saying so beats drawing nothing".
+- where it belongs: `packages/primitives/src/lens/coverage.tsx`
+- harness that should have caught it: the lens's own unit tests, whose
+  fixture declares `mitigates` on the control — column → row, the direction
+  the code assumed — so every case in the file agreed with the assumption
+- status: fixed in "walkthrough: D · which way the edge runs is something the
+  schema already says" · the direction comes from the declaration: whichever
+  kind declares `link`, and what it points at, IS the orientation, and an
+  edge that does not fit it is still ignored. Guessing per edge would be
+  worse — a hand-built illegal edge would then fill a cell and the picture
+  would lie about who covers what, which is what the existing "ignores an
+  edge pointing the wrong way" case is protecting and which still passes.
+  Criterion added: three cases in `coverage.test.tsx` over a second fixture
+  whose edge runs row → column, including that the same graph reads the same
+  bound either way up, and that a self-referential edge keeps its declared
+  reading. Verified failing without the fix.

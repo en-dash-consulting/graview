@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-11T21:33:31.133Z",
+  "at": "2026-09-11T21:43:46.186Z",
   "engine": "chromium",
   "shots": [
     {
@@ -93,6 +93,11 @@
           "tag": "h1",
           "by": 84,
           "text": "Things"
+        },
+        {
+          "tag": "span",
+          "by": 149,
+          "text": "Implicated in a problem."
         }
       ],
       "unnamed": [],
@@ -117,6 +122,11 @@
           "tag": "h1",
           "by": 84,
           "text": "Things"
+        },
+        {
+          "tag": "span",
+          "by": 149,
+          "text": "Implicated in a problem."
         }
       ],
       "unnamed": [],
@@ -297,6 +307,11 @@
           "tag": "h1",
           "by": 84,
           "text": "Things"
+        },
+        {
+          "tag": "span",
+          "by": 149,
+          "text": "Implicated in a problem."
         }
       ],
       "unnamed": [],
@@ -321,6 +336,11 @@
           "tag": "h1",
           "by": 84,
           "text": "Things"
+        },
+        {
+          "tag": "span",
+          "by": 149,
+          "text": "Implicated in a problem."
         }
       ],
       "unnamed": [],
@@ -559,7 +579,7 @@
       "overflowing": [
         {
           "tag": "h1",
-          "by": 120,
+          "by": 112,
           "text": "Seedbed"
         }
       ],
@@ -570,7 +590,25 @@
       "app": "seedbed",
       "state": "planted",
       "scheme": "dark",
-      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5194/?theme=dark\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5194/?theme=dark\", waiting until \"load\"\u001b[22m\n"
+      "file": "seedbed-planted-dark.png",
+      "viewport": [
+        1560,
+        940
+      ],
+      "covered": [],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [
+        {
+          "tag": "h1",
+          "by": 112,
+          "text": "Seedbed"
+        }
+      ],
+      "unnamed": [],
+      "repeatedText": []
     }
   ]
 }

@@ -275,10 +275,23 @@ export interface ChipProps {
    * field value stands for nothing you can navigate to.
    */
   readonly pickId?: string;
+  /**
+   * What this mark CLAIMS about the current selection, said rather than
+   * painted: "lit" when the selection reaches it, "dimmed" when it does not,
+   * "plain" when nothing is selected.
+   *
+   * Every lens the framework ships says this on its own marks, and the skill
+   * asks an app's lens to say it too — while the primitive an app would
+   * naturally reach for could not. A lens built out of `Roster` therefore had
+   * pick targets that were emphasised by opacity alone, which is a claim
+   * about a picture that nothing can check: not a test, not `audit-ui`'s
+   * `halfSaid`, and not a person reading the tree.
+   */
+  readonly emphasis?: "lit" | "dimmed" | "plain";
 }
 
 /** One small labelled thing. The glyph-fidelity workhorse. */
-export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
+export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProps) {
   // A capped chip must be able to say the rest somewhere, or capping it loses
   // information rather than tidying it.
   const full = typeof label === "string" && label.length > 28 ? label : undefined;
@@ -291,6 +304,7 @@ export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
       data-graview-primitive="chip"
       data-selected={selected || undefined}
       data-graview-pick={pickId}
+      data-graview-emphasis={emphasis}
       title={title ?? full}
       style={{
         cursor: pickId ? "pointer" : undefined,
@@ -377,7 +391,13 @@ export function Chip({ label, hue, selected, title, pickId }: ChipProps) {
 }
 
 export interface RosterProps {
-  readonly items: readonly { id: string; label: ReactNode; hue?: number }[];
+  readonly items: readonly {
+    id: string;
+    label: ReactNode;
+    hue?: number;
+    /** What this mark claims about the selection. See `ChipProps.emphasis`. */
+    emphasis?: "lit" | "dimmed" | "plain";
+  }[];
   readonly max?: number;
   readonly selectedIds?: readonly string[];
   /** True when the item ids are real node ids, so each chip can be a target. */
@@ -403,6 +423,7 @@ export function Roster({ items, max = 8, selectedIds = [], pick = false }: Roste
           label={item.label}
           {...(item.hue === undefined ? {} : { hue: item.hue })}
           {...(pick ? { pickId: item.id } : {})}
+          {...(item.emphasis === undefined ? {} : { emphasis: item.emphasis })}
           selected={selectedIds.includes(item.id)}
         />
       ))}
