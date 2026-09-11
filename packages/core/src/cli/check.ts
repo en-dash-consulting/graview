@@ -487,8 +487,8 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
         if (!reachable) {
           reason =
             via.length === 0
-              ? `no declared act writes or creates a ${definition.kind}, so the derived edit is nobody's`
-              : `no role may run any act that writes or creates a ${definition.kind} (${via.join(", ")}), so the derived edit is out of everyone's reach`;
+              ? `no declared act writes or creates ${withArticle(definition.kind)}, so the derived edit is nobody's`
+              : `no role may run any act that writes or creates ${withArticle(definition.kind)} (${via.join(", ")}), so the derived edit is out of everyone's reach`;
         }
       }
       if (reason === null) continue;
@@ -497,7 +497,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
           severity: "warning",
           code: "field-without-writer",
           where: `defineNode("${definition.kind}").fields.${field}`,
-          message: `"${field}" is set when a ${definition.kind} is made and nothing can ever change it — ${reason}.`,
+          message: `"${field}" is set when ${withArticle(definition.kind)} is made and nothing can ever change it — ${reason}.`,
           fix:
             `Declare writes: ["${field}"] on the act that changes it (and grant that act), ` +
             `or mark it fixed: { ${field}: "why it never changes" } on defineNode("${definition.kind}").`,
