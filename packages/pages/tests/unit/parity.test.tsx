@@ -13,7 +13,7 @@ import { deriveAffordances } from "@graview/tools";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { PagesApp, kindOfSlug, pluralSlug, recordFacts, recordPath, spatialHref } from "../../src/index.js";
+import { DerivedForm, PagesApp, kindOfSlug, pluralSlug, recordFacts, recordPath, spatialHref } from "../../src/index.js";
 
 /**
  * THE PARITY CONTRACT. A record page and the spatial detail of the same node
@@ -277,6 +277,81 @@ describe("a repair is one press, or an ask, and never a refusal", () => {
     // Closed until pressed: the ask is a question, not a form lying open.
     expect(html).toContain('aria-expanded="false"');
     expect(html).not.toContain('data-testid="form-hand-over"');
+  });
+});
+
+/*
+ * THE PICKER ASKS THE QUESTION THE DERIVATION NARROWED.
+ *
+ * An affordance carries the only honest answers for each node reference it
+ * leaves open: a connecting act offers who is NOT already on, a severing act
+ * only what is attached, and neither ever offers the record itself. The
+ * derived form listed every node of the kind regardless, so the same act
+ * asked a narrower question in the strip than on the page — a record's own
+ * "owned by" offered the record.
+ */
+describe("a form asks the question the act left open", () => {
+  const hand = bound.defineMutation("hand-to", {
+    title: "Hand it to somebody",
+    description: "Give a run to somebody.",
+    subject: { kinds: ["duty"], arg: "id" },
+    connects: ["owned-by"],
+    input: z.object({ id: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
+    apply(ctx, args) {
+      ctx.addEdge({ kind: "owned-by", from: args.id, to: args.personId });
+    },
+  });
+  const twoPeople = () =>
+    new Store({
+      schema,
+      mutations: [hand],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "ana", kind: "person", label: "Ana" },
+          { id: "bo", kind: "person", label: "Bo" },
+          { id: "school-run", kind: "duty", label: "School run", minutes: 20 },
+        ] as never,
+        edges: [{ kind: "owned-by", from: "school-run", to: "ana" }],
+      },
+    });
+
+  const optionsOf = (html: string, form: string): string[] => {
+    const from = html.indexOf(`data-testid="${form}"`);
+    const select = html.slice(from, html.indexOf("</select>", from));
+    return [...select.matchAll(/value="([^"]+)"/g)].map((match) => match[1]!).filter(Boolean);
+  };
+
+  it("offers only who is not already on", () => {
+    const store = twoPeople();
+    const html = renderToStaticMarkup(
+      <PagesApp context={{ store }} initialPath="/duties/school-run" />,
+    );
+    // The act is open on the page because the record page opens its forms
+    // when pressed; render it open by asking for the affordance's own list.
+    const facts = recordFacts(store, "school-run")!;
+    const offer = facts.actions.affordances.find((one) => one.mutation === "hand-to");
+    expect(offer?.open.find((one) => one.name === "personId")?.candidates).toEqual(["bo"]);
+    // And the derived record page hands that list to the form it draws.
+    expect(html).toContain("Hand it to somebody");
+  });
+
+  it("hands the narrowed list to the form rather than every node of the kind", () => {
+    const store = twoPeople();
+    const facts = recordFacts(store, "school-run")!;
+    const offer = facts.actions.affordances.find((one) => one.mutation === "hand-to")!;
+    const html = renderToStaticMarkup(
+      <DerivedForm store={store} mutation={store.allMutations().find((m) => m.name === "hand-to")!} prefilled={offer.args} open={offer.open} />,
+    );
+    expect(optionsOf(html, "form-hand-to")).toEqual(["bo"]);
+  });
+
+  it("falls back to every node of the kind when there is no act to ask", () => {
+    const store = twoPeople();
+    const html = renderToStaticMarkup(
+      <DerivedForm store={store} mutation={store.allMutations().find((m) => m.name === "hand-to")!} />,
+    );
+    expect(optionsOf(html, "form-hand-to")).toEqual(["school-run"]);
   });
 });
 

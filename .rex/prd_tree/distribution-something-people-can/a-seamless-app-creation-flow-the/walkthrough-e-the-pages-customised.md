@@ -2,16 +2,17 @@
 id: "3198508f-c841-4bcb-b283-74524a097c20"
 level: "task"
 title: "Walkthrough E · The pages, customised"
-status: "pending"
+status: "in_progress"
 priority: "critical"
 tags:
   - "walkthrough"
   - "pages"
+startedAt: "2026-09-11T17:42:53.937Z"
 acceptanceCriteria:
   - "a custom page re-renders on every op, offers acts by store.permits, and uses PageMain"
   - "the full design passes axe at 390 and 1280 in both schemes; every control is at least 24px; its colours hold AA on both grounds"
   - "the derived face is nowhere in it and every route renders"
 description: "Stage E of docs/walkthrough.md: following graview-pages, replace one record page, then every surface with a design of the app's own."
-lastModified: "2026-09-11T16:34:59.736Z"
+lastModified: "2026-09-11T17:42:53.948Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

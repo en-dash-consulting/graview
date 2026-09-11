@@ -809,6 +809,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   store={store}
                   mutation={mutation}
                   prefilled={affordance.args}
+                  // The candidates the derivation narrowed, not every node.
+                  open={affordance.open}
                   onDone={() => setOpen(null)}
                 />
               </div>
