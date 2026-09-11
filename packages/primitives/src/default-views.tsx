@@ -2,6 +2,7 @@ import {
   describeNode,
   labelOf,
   readableFields,
+  violationsTouching,
   type AnySchema,
   type KindOfSchema,
 } from "@graview/core";
@@ -11,6 +12,7 @@ import {
   useGraview,
   useNavigation,
   useSelection,
+  useViolations,
   type ReactViewRegistry,
   type ViewProps,
  markDefaultView } from "@graview/react";
@@ -72,6 +74,18 @@ export function registerDefaultViews<S extends AnySchema>(
 
     const Full = (props: ViewProps<S>) => {
       const node = props.node as (Record<string, unknown> & { id: string; kind: string }) | undefined;
+      /*
+       * WHAT IS WRONG WITH IT, ON IT.
+       *
+       * A flagged record wore the warning TONE and said nothing: a
+       * background tint, no words, no mark, nothing in the accessibility
+       * tree. The chips in a district get a "⚠" in their own label and the
+       * routed record page carries the rule's sentence — the biggest drawing
+       * of the same record, the one you travelled to, was the only place the
+       * problem existed purely as a shade. That is W-014's shape, one view
+       * along: emphasis painted and not said.
+       */
+      const violations = useViolations<S>();
       if (!node) return null;
       /*
        * On a page, the heading is the WHOLE thing.
@@ -89,6 +103,7 @@ export function registerDefaultViews<S extends AnySchema>(
       const short = labelOf(definition, node);
       const heading =
         props.mode === "fullscreen" ? (longFormOf(node, short) ?? short) : short;
+      const touching = violationsTouching(violations, [node.id]);
       return (
         <Panel
           // The name is the rename control. Nothing else on the page repeats
@@ -156,6 +171,23 @@ export function registerDefaultViews<S extends AnySchema>(
               empty={`Nothing is connected to this ${String(kind)} yet.`}
             />
           </div>
+          {touching.length > 0 ? (
+            <p
+              data-graview-broken=""
+              style={{
+                margin: "14px 0 0",
+                paddingTop: 12,
+                borderTop: "1px solid var(--graview-edge)",
+                fontSize: 13,
+                color: "var(--graview-warn)",
+              }}
+            >
+              {/* The rule's own sentence, as the problems page says it. The
+                  repair is offered in the strip rather than here: this says
+                  what is wrong, once. */}
+              {touching.map((violation) => violation.message).join(" · ")}
+            </p>
+          ) : null}
         </Panel>
       );
     };

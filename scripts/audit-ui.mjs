@@ -199,6 +199,48 @@ const audit = () => {
     }
   }
 
+  /*
+   * A PROBLEM THAT IS ONLY A COLOUR.
+   *
+   * The same rule as `halfSaid`, for the other claim a view makes with a
+   * shade. A record implicated in a broken rule is drawn with the warning
+   * tone — and the focused record, the biggest drawing of it and the one you
+   * travelled to, said nothing else: no words, no mark, nothing in the
+   * accessibility tree. The district's chips carry a "⚠" in their own label
+   * and the routed record page carries the rule's sentence, so the scene was
+   * the one place the problem existed purely as a tint.
+   *
+   * Measured from the ground truth — the app's own count of what is broken —
+   * rather than from the shade, because a shade is exactly what is not
+   * trustworthy here.
+   */
+  const painted = [];
+  if (document.querySelector('[data-testid="standing"]')?.textContent?.match(/\d+ problem/)) {
+    for (const host of views) {
+      if (!visible(host)) continue;
+      const plane = Number(host.dataset.graviewPlane);
+      if (!(plane === 0)) continue;
+      const panel = host.querySelector('[data-graview-primitive="panel"]');
+      if (!panel) continue;
+      /*
+       * The WARNING ground specifically. A panel may legitimately be drawn on
+       * the muted ground — a summary is — so "not the default ground" catches
+       * every quiet card in the app and says nothing about problems.
+       */
+      const ground = getComputedStyle(panel).backgroundColor;
+      const swatch = document.createElement("div");
+      swatch.style.background = "var(--graview-panel-warning)";
+      document.body.append(swatch);
+      const warning = getComputedStyle(swatch).backgroundColor;
+      swatch.remove();
+      if (!/rgb/.test(warning) || ground !== warning) continue;
+      const says =
+        /⚠/.test(panel.textContent ?? "") ||
+        panel.querySelector("[data-graview-broken]") !== null;
+      if (!says) painted.push(host.dataset.graviewView);
+    }
+  }
+
   /* A control too small to hit. 24px is the WCAG 2.2 minimum. */
   /*
    * A control's DESIGNED size, not its projected one.
@@ -418,7 +460,7 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, repeats, articles: [...new Set(articles)].slice(0, 8), covered, offscreen, board, fill, inspector };
+  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, painted, repeats, articles: [...new Set(articles)].slice(0, 8), covered, offscreen, board, fill, inspector };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -474,6 +516,7 @@ for (const s of report.screens) {
     s.keyed?.length ? `fields asked for by their key: ${s.keyed.join(", ")}` : "",
     s.headings?.length ? `headings skip a level: ${s.headings.join(", ")}` : "",
     s.halfSaid?.length ? `emphasis painted but not said: ${s.halfSaid.join("; ")}` : "",
+    s.painted?.length ? `a problem painted but not said: ${s.painted.join(", ")}` : "",
     s.small.length ? `${s.small.length} controls under 24px` : "",
     s.offscreen?.length ? `${s.offscreen.length} off the edge with nowhere to scroll: ${s.offscreen[0]}` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",

@@ -155,8 +155,33 @@ export function Panel({
         ...style,
       }}
     >
+      {/*
+        * THE WARNING TONE SAYS SO.
+        *
+        * The tone was a background tint and nothing else: no words, no mark,
+        * nothing in the accessibility tree. Every view that draws a flagged
+        * record was making a claim that only one kind of eyesight could read
+        * and no screen reader could read at all, and getting it right was
+        * left to each view — which the framework's own example app did not.
+        * A contract only some views keep is not a contract, so the primitive
+        * that carries the tone carries the mark, and a view with something
+        * more specific to say says it as well.
+        */}
+      {tone === "warning" ? (
+        <span
+          data-graview-broken=""
+          style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}
+        >
+          Implicated in a problem.
+        </span>
+      ) : null}
       {title === undefined ? null : (
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          {tone === "warning" ? (
+            <span aria-hidden="true" title="Implicated in a problem" style={{ color: "var(--graview-warn)", flex: "0 0 auto" }}>
+              ⚠
+            </span>
+          ) : null}
           <strong
             style={{
               /*
