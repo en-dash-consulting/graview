@@ -462,6 +462,69 @@ describe("a rail reserved for chrome, at altitude", () => {
     }
   });
 
+  /*
+   * TWO DISTRICTS NEVER SIT ON EACH OTHER, HOWEVER SHORT THE SCENE.
+   *
+   * The ring is an ellipse with the near card at the bottom and the far one
+   * at the top, and its vertical radius shrinks with the canvas while the
+   * cards keep a minimum size. Below about 480 of scene the two ends met:
+   * at 390x476 the seedbed drew `kind:plot` across `kind:gardener` by 52% of
+   * its area, and the district you pressed was whichever happened to be on
+   * top. An embed the height of a paragraph is a short scene on the widest
+   * monitor there is, so this is not only a phone.
+   */
+  it("never lays one district on top of another, at any height a scene can have", () => {
+    /*
+     * An EVEN number of kinds is the case that broke: at four, two districts
+     * sit directly opposite on the ellipse, same column, and the ring's
+     * vertical radius is the only thing keeping them apart. The three-kind
+     * fixture above never puts two cards in one column, which is why this
+     * survived every layout test there was.
+     */
+    const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes" });
+    const four = createSchema([person, duty, week, note]);
+    const fourGraph = () =>
+      Graph.from(four, {
+        nodes: [
+          { id: "week-1", kind: "week", label: "This week" },
+          { id: "ana", kind: "person", label: "Ana" },
+          { id: "morning", kind: "duty", label: "Morning run" },
+          { id: "n-1", kind: "note", label: "A note" },
+        ],
+        edges: [],
+      });
+    const overlaps = [];
+    // Shut, and with one district opened in place — an opened district asks
+    // the ring for 96 more pixels under the near card, which is the state
+    // the seedbed was in when two of them landed on each other.
+    const states = [
+      view({ overview: true }),
+      toggleExpanded(view({ overview: true }), kindCardId("person")),
+    ];
+    for (const height of [900, 800, 700, 620, 560, 500, 476, 440, 400, 360, 320, 280, 240]) {
+      for (const width of [1280, 820, 390]) {
+        for (const state of states) {
+        const cards = layout(fourGraph(), four, state, { width, height }).nodes.filter(
+          (node) => node.aggregate,
+        );
+        for (let i = 0; i < cards.length; i += 1) {
+          for (let j = i + 1; j < cards.length; j += 1) {
+            const a = cards[i]!;
+            const b = cards[j]!;
+            const over =
+              Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) *
+              Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+            if (over > 1) {
+              overlaps.push(`${width}x${height} ${a.id}/${b.id} by ${Math.round(over)}`);
+            }
+          }
+        }
+        }
+      }
+    }
+    expect(overlaps).toEqual([]);
+  });
+
   it("keeps the focused card and the shelf clear of the rail in focus mode too", () => {
     const rail = 264;
     const result = layout(graph(), schema, view({ focusId: "week-1" }), { width: 1280, height: 800, inset: { left: rail } });

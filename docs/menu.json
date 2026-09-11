@@ -1,10 +1,10 @@
 {
-  "at": "2026-09-11T19:07:45.875Z",
+  "at": "2026-09-11T20:29:45.815Z",
   "engine": "chromium",
   "checks": {
     "filterOnlyPastTheFold": {
-      "quietTaskActions": 10,
-      "filterShown": true,
+      "quietTaskActions": 9,
+      "filterShown": false,
       "ok": true
     },
     "searchThenApply": {
@@ -24,22 +24,31 @@
       "before": [
         "finish",
         "reschedule",
-        "reopen",
         "rename",
-        "edit-task"
+        "edit-task",
+        "plan-it",
+        "explain",
+        "move-to-list",
+        "wait-for",
+        "drop"
       ],
       "after": [
         "finish",
         "reschedule",
+        "edit-task",
         "rename",
-        "reopen",
-        "edit-task"
+        "plan-it",
+        "explain",
+        "move-to-list",
+        "wait-for",
+        "drop"
       ],
       "headings": [
         "⚠ Was due 2026-08-28",
         "pinned",
         "its ties"
       ],
+      "peerIsOffered": true,
       "ok": true
     },
     "pinSurvivesReloadAndUnpins": {

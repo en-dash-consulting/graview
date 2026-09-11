@@ -330,6 +330,50 @@ const audit = () => {
     }
   }
 
+  /*
+   * A CONTROL PAINTED OFF THE EDGE OF THE WINDOW.
+   *
+   * The command bar was one unwrapping row inside a wrapper that hides its
+   * overflow: at 390 it wanted 649, so Ask, Activity and the scheme toggle
+   * were painted past the right edge with nothing to scroll. A phone had no
+   * undo, no chat and no way back to light, and every count here was looking
+   * at the part of the page that fitted.
+   *
+   * Only counted where the page cannot be scrolled to reach it — a document
+   * that scrolls sideways is a different argument, and not this one.
+   */
+  /*
+   * "Nowhere to scroll" means no ANCESTOR scrolls, not just the document. A
+   * pane that is its own scroll region can be scrolled to, which is a
+   * different design and not a defect — the strip below the fold of a short
+   * window is reached by scrolling the strip.
+   */
+  const scrollableAbove = (el, axis) => {
+    for (let at = el; at && at !== document.documentElement.parentElement; at = at.parentElement) {
+      const style = getComputedStyle(at);
+      const way = axis === "x" ? style.overflowX : style.overflowY;
+      const room =
+        axis === "x" ? at.scrollWidth > at.clientWidth + 2 : at.scrollHeight > at.clientHeight + 2;
+      if (room && (way === "auto" || way === "scroll" || at === document.documentElement)) return true;
+    }
+    return false;
+  };
+  const offscreen = [...document.querySelectorAll("button, [role=button], a[href], select, input")]
+    .filter((el) => {
+      const b = el.getBoundingClientRect();
+      if (b.width < 1 || b.height < 1) return false;
+      if (getComputedStyle(el).visibility === "hidden") return false;
+      const pastSide = b.right > window.innerWidth + 1 || b.left < -1;
+      const pastEnd = b.bottom > window.innerHeight + 1 || b.top < -1;
+      if (pastSide && !scrollableAbove(el, "x")) return true;
+      return pastEnd && !scrollableAbove(el, "y");
+    })
+    .slice(0, 8)
+    .map((el) => {
+      const b = el.getBoundingClientRect();
+      return `${el.getAttribute("data-testid") ?? el.getAttribute("aria-label") ?? (el.textContent ?? "").trim().slice(0, 16)} at ${Math.round(b.left)}..${Math.round(b.right)}`;
+    });
+
   /* The board's own arrangement: no slot on top of another, and no slot
      clipped by the pitch edge — the two ways a shrinking pitch failed, kept
      failing, and never showed up in a count. */
@@ -374,7 +418,7 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
+  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, repeats, articles: [...new Set(articles)].slice(0, 8), covered, offscreen, board, fill, inspector };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -431,6 +475,7 @@ for (const s of report.screens) {
     s.headings?.length ? `headings skip a level: ${s.headings.join(", ")}` : "",
     s.halfSaid?.length ? `emphasis painted but not said: ${s.halfSaid.join("; ")}` : "",
     s.small.length ? `${s.small.length} controls under 24px` : "",
+    s.offscreen?.length ? `${s.offscreen.length} off the edge with nowhere to scroll: ${s.offscreen[0]}` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",
   ].filter(Boolean);
   if (notes.length) bad++;

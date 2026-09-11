@@ -892,3 +892,62 @@ at the end of every stage.
   `packages/tools/tests/unit/nothing-left-to-do.test.ts` — seven cases across
   both halves, including a batch where one act acts and one does not.
   Verified failing without the fixes: five of the seven fail.
+
+### W-037 · On a phone the command bar runs off the screen, taking undo with it
+- stage: A · face: scene · width: 390 and 320 · scheme: both
+- expected: every control the bar offers is on the screen, or can be scrolled
+  to
+- actual: the bar is one unwrapping flex row inside a wrapper with
+  `overflow: hidden`. At 390 the row wanted 649px, so the standing sentence
+  was cut and Ask, Activity and the scheme toggle were painted entirely past
+  the right edge — measured `standing` 267..432, `chat` 444..513,
+  `activity-button` 525..604, `scheme` 616..649 in a 390 window, with
+  `document.scrollWidth === 390`: nothing to scroll. On a phone a scaffolded
+  app had no undo, no activity rail, no chat and no way back to light, and
+  nothing said so. At 320 the wordmark itself was pushed off the LEFT
+  (-102..-3).
+- where it belongs: `packages/primitives/src/shell.tsx`
+- harness that should have caught it: `scripts/audit-ui.mjs`, whose narrow
+  screen is 390 wide (W-031) — it counted collisions, small controls, cut
+  captions and chrome over content, and never asked whether a control was on
+  the screen at all
+- status: fixed in "walkthrough: A · a bar that runs off the edge of a
+  phone" · the bar wraps, and so does its right-hand group, which as one
+  unwrapping unit carried the whole overflow across the edge by itself. The
+  height is a minimum on a border-box, so a bar with room is exactly the 57
+  it always was; at 390 it becomes three rows and the scene gives up the
+  height, the same trade as W-029. Criterion added: audit-ui's
+  `N off the edge with nowhere to scroll`, which counts controls painted past
+  any edge that no scrollable ancestor can reach — a pane that is its own
+  scroll region is a different design, not a defect. Verified failing without
+  the fix: `7 off the edge with nowhere to scroll: wordmark at -102..-3`.
+
+### W-038 · Two districts sit on top of each other in a short scene
+- stage: A · face: scene · width: any · scheme: both
+- expected: the ring at altitude is a ring — no district drawn over another,
+  whatever the scene's height
+- actual: with an EVEN number of kinds two districts sit directly opposite on
+  the ellipse, in the same column, and the vertical radius is the only thing
+  holding them apart. An opened district asks for 96 more pixels under the
+  near card and took them straight out of that radius: at 320 high with one
+  open, `ry` came out under a pixel and all four districts landed in one
+  line. In the browser, the seedbed at 390 with a district open drew
+  `kind:plot` across `kind:gardener` by 52% of its area — and which one
+  answers a click is whichever was drawn second. Found because W-037's fix
+  gives the bar three rows on a phone, which took the scene under the
+  threshold; it was always there, and an embed the height of a paragraph is a
+  short scene on the widest monitor.
+- where it belongs: `packages/layout/src/layout.ts` (`ring`)
+- harness that should have caught it: `packages/layout/tests/unit/layout.test.ts`
+  has a three-kind fixture, and three cards never share a column — the whole
+  suite was blind to the case by arithmetic. `audit-ui` counts collisions and
+  its narrow screen sat just above the cliff
+- status: fixed in "walkthrough: A · the ring has to stay a ring" · the
+  listing under an opened district is the luxury and the ring is the picture,
+  so the opening gets what is left after the radius has what it needs, rather
+  than the other way round; and the radius is measured against the height
+  that will be DRAWN — `CARD_MIN_HEIGHT` is now module-scope, because a card
+  clamped up to 56 needs more room than the proportional answer asked for.
+  Criterion added: a sweep over 13 heights × 3 widths × shut and opened, with
+  a FOUR-kind schema, asserting no two districts overlap by even a pixel.
+  Verified failing without the fix, at every height from 320 down.

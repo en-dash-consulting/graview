@@ -87,12 +87,33 @@ export function Shell<S extends AnySchema>({
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <header
+        /*
+         * THE BAR WRAPS RATHER THAN RUNNING OFF THE EDGE.
+         *
+         * One unwrapping row, a fixed 56 high, inside a wrapper that clips:
+         * at 390 the row wanted 649, so the standing sentence was cut and
+         * Ask, Activity and the scheme toggle were painted entirely off the
+         * right — with `canScrollX` false, because the wrapper hides the
+         * overflow. On a phone a scaffolded app had no undo, no activity, no
+         * chat and no way back to light, and nothing said so.
+         *
+         * Wrapping is the same answer as the strip's at W-029: where there
+         * is no room beside something, it goes underneath, and the layout
+         * re-runs into what is left. The height is a MINIMUM now, so one row
+         * is unchanged on any screen with the room for it.
+         */
         style={{
           display: "flex",
           alignItems: "center",
+          flexWrap: "wrap",
           gap: 16,
-          padding: "0 22px",
-          height: 56,
+          rowGap: 6,
+          // Vertical padding the one-row bar never feels: border-box, so
+          // 4 + 35 + 4 + the rule is under the minimum and a bar with room
+          // is exactly the 57 it always was.
+          boxSizing: "border-box",
+          padding: "4px 22px",
+          minHeight: 57,
           flex: "0 0 auto",
           borderBottom: "1px solid var(--graview-edge)",
           background: "var(--graview-bar)",
@@ -123,7 +144,21 @@ export function Shell<S extends AnySchema>({
         <Trail home={home} {...(homeLabel !== undefined ? { homeLabel } : {})} />
         {/* The named pictures over the graph, if the app registered any. */}
         <Places<S> />
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+        {/* The right-hand group wraps for the same reason the bar does: as one
+            unwrapping unit it carried the whole overflow across the edge by
+            itself, so the bar wrapped and the controls were still gone. */}
+        <div
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+            gap: 12,
+            rowGap: 6,
+            minWidth: 0,
+          }}
+        >
           {pagesHref ? (
             // The scene offering the page face: two faces, one application.
             <a
