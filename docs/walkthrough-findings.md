@@ -143,3 +143,25 @@ the same commit as the fix.
   are standing on" · criterion added: parity "captions a connections section
   from this end, and never backwards". Verified failing without the fix
   ("Owned by" over "What they own" on a person's record).
+
+### W-008 · A line offers the act that would make it, and logs a lie when pressed
+- stage: B · face: scene · width: 1280 and 390 · scheme: both
+- expected: selecting the line offers the severing act; an act that cannot
+  change anything is not offered
+- actual: the line's inspector offered "Hand it to somebody" — the act that
+  makes exactly the relation you had selected. Both ends prefill from the
+  line, so it arrived with nothing left to ask: a one-press button that
+  appeared to do nothing. It did not do nothing. It applied the mutation,
+  re-adding an edge that was already there, and wrote a second identical
+  "Hand it to somebody" into Activity — undoable, attributed, describing a
+  change that never happened.
+- where it belongs: `packages/tools/src/providers/schema.ts` (the selected
+  line's branch)
+- harness that should have caught it:
+  `packages/tools/tests/unit/edge-affordances.test.ts` — every mutation in it
+  severs, so a maker was never offered on a line
+- status: fixed in "walkthrough: B · a line does not offer the act that would
+  make it" · criteria added: edge-affordances "does not offer the act that
+  would make the line you already selected" (fails without the fix:
+  `['remove-rider', 'give-a-ride']`) and "keeps a maker on a line when it
+  still has something to ask"

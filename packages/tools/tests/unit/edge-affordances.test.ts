@@ -86,6 +86,71 @@ describe("edge affordances", () => {
     expect(offer?.open?.map((p) => p.name).sort()).toEqual(["blockerId", "taskId"]);
   });
 
+  /*
+   * The line IS the relation, so the act that would make it has nothing to
+   * make. Both ends prefill from the line, so it arrived with no question
+   * left — a one-press button that looked inert and was not: pressed, it
+   * wrote a second identical op into the history describing a change that
+   * never happened.
+   */
+  it("does not offer the act that would make the line you already selected", () => {
+    const tie = bound.defineMutation("give-a-ride", {
+      title: "Give them a ride",
+      description: "Put a rider on a run.",
+      connects: ["rides-in"],
+      input: z.object({ dutyId: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
+      apply(ctx, args) {
+        ctx.addEdge({ kind: "rides-in", from: args.personId, to: args.dutyId });
+      },
+    });
+    const both = new Store({
+      schema,
+      mutations: [tie, removeRider],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "ana", kind: "person", label: "Ana" },
+          { id: "morning", kind: "duty", label: "Morning run" },
+        ] as never,
+        edges: [{ kind: "rides-in", from: "ana", to: "morning" }],
+      },
+    });
+    const { affordances } = deriveAffordances(both, ["edge:rides-in:ana:morning"], {
+      edgeSelection: [{ kind: "rides-in", from: "ana", to: "morning" }],
+    });
+    expect(affordances.map((a) => a.mutation)).toEqual(["remove-rider"]);
+  });
+
+  it("keeps a maker on a line when it still has something to ask", () => {
+    // Two arguments accepting the same kind leave a real question open, so
+    // the act can produce a relation that is not the one you selected.
+    const chain = bound.defineMutation("make-it-wait", {
+      title: "Make it wait",
+      description: "Put one run behind another.",
+      connects: ["waits-for"],
+      input: z.object({ taskId: nodeRef(["duty"]), blockerId: nodeRef(["duty"]) }),
+      apply(ctx, args) {
+        ctx.addEdge({ kind: "waits-for", from: args.taskId, to: args.blockerId });
+      },
+    });
+    const chained = new Store({
+      schema,
+      mutations: [chain],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "morning", kind: "duty", label: "Morning run" },
+          { id: "evening", kind: "duty", label: "Evening run" },
+        ] as never,
+        edges: [{ kind: "waits-for", from: "evening", to: "morning" }],
+      },
+    });
+    const { affordances } = deriveAffordances(chained, ["edge:waits-for:evening:morning"], {
+      edgeSelection: [{ kind: "waits-for", from: "evening", to: "morning" }],
+    });
+    expect(affordances.map((a) => a.mutation)).toContain("make-it-wait");
+  });
+
   it("offers nothing for an edge kind no mutation claims", () => {
     const bare = new Store({ schema, mutations: [], invariants: [] });
     const { affordances } = deriveAffordances(bare, ["edge:rides-in:ana:morning"], {
