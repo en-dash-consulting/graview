@@ -533,3 +533,23 @@ the same commit as the fix.
   cannot carry undefined" (fails without the fix: `expected ['beds'] to
   deeply equal ['beds','size']`) and core "keeps a cleared field's
   instruction through JSON" (`expected [] to deeply equal ['pinned']`).
+
+### W-025 · An undo the declaration refuses throws into the console
+- stage: G · face: scene · width: 1280 · scheme: both
+- expected: the migration is undoable — or, when it is not, the interface
+  says so
+- actual: `store.canUndo` answers what the LOG can answer (whether a later op
+  read what this one wrote) and not what the SCHEMA answers. Taking back a
+  migration that added a required field leaves a node the declaration
+  refuses, so `store.undo` threw out of the click handler: an unhandled error
+  in a console nobody is reading, and a button that appeared to do nothing.
+  Beside it in the same file the agent seat already treats a refusal as a
+  result and says it on the control.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`UndoTurn`)
+- harness that should have caught it: nothing rendered an undo that the
+  store would refuse
+- status: fixed in "walkthrough: G · an undo that is refused says so" ·
+  criterion added: `packages/primitives/tests/unit/undo-turn.test.tsx` "says
+  why when the declaration will not have it, rather than throwing", which
+  fails without the fix
