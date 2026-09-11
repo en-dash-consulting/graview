@@ -1631,6 +1631,19 @@ function SceneViewHost({
       }}
       onKeyDown={(event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
+        /*
+         * NEVER STEAL A KEY FROM A CONTROL THAT HAS ITS OWN MEANING FOR IT.
+         *
+         * A card is a target, and so are the pick marks a view draws inside
+         * it — but a real control is not. Preventing the default before
+         * asking swallowed Enter inside the title's own editor, so renaming
+         * a record in place stopped committing: the field stayed open and
+         * nothing was written. `pnpm remember` is what noticed.
+         */
+        const inControl = (event.target as HTMLElement | null)?.closest(
+          "input, textarea, select, button, [contenteditable='true']",
+        );
+        if (inControl) return;
         const picked = pickedFrom(event.target);
         event.preventDefault();
         event.stopPropagation();
