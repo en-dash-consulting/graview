@@ -23,7 +23,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [Walkthrough A · The blank app](./walkthrough-a-the-blank-app.md) | pending |
+| [Walkthrough A · The blank app](./walkthrough-a-the-blank-app.md) | in_progress |
 | [Walkthrough B · A second kind and an edge](./walkthrough-b-a-second-kind-and-an-edge.md) | pending |
 | [Walkthrough C · A rule and its repair](./walkthrough-c-a-rule-and-its-repair.md) | pending |
 | [Walkthrough D · Lenses](./walkthrough-d-lenses.md) | pending |

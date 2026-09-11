@@ -307,6 +307,25 @@ try {
   report.pnpm.verified = true;
   report.pnpm.checkSaid = checkerSentence(run("pnpm", ["check"], viaPnpm));
 
+  /* ============================================================== vowel */
+  /*
+   * "Add a item" was on the first screen of every project whose kind began
+   * with a vowel — the scaffolder wrote the article as a literal. It is
+   * derived from the kind's own word now, so the generated prose is read as
+   * prose: every "a" in it, against the word that follows.
+   */
+  const vowel = resolve(scratch, "vowel-app");
+  run(process.execPath, [cli, "create", vowel, "--name", "Walk", "--kind", "item", "--plural", "items", "--pm", "npm", "--no-install"], scratch);
+  const vowelProse = tree(vowel)
+    .filter((path) => path.startsWith("src/") || path === "README.md")
+    .map((path) => readFileSync(resolve(vowel, path), "utf8"))
+    .join("\n");
+  report.vowel = {
+    theAddActSaysAn: vowelProse.includes('title: "Add an item"'),
+    theKindDescriptionSaysAn: vowelProse.includes("An item: something Walk keeps track of."),
+    articlesBeforeVowels: vowelProse.match(/\ba (?=[aeiou])[a-z]+/g) ?? [],
+  };
+
   /* =============================================================== door */
   const doorHost = resolve(scratch, "door-host");
   mkdirSync(doorHost);
@@ -409,6 +428,10 @@ report.verdict = {
     : {}),
   theSameProjectVerifiesUnderPnpm: report.pnpm.verified === true && (report.pnpm.checkSaid ?? "").includes("no problems found") && report.pnpm.ciUsesPnpm === true,
   npmCreateGraviewMakesTheSameProject: report.door.sameProject === true,
+  aVowelKindIsSpokenWithAn:
+    report.vowel?.theAddActSaysAn === true &&
+    report.vowel?.theKindDescriptionSaysAn === true &&
+    (report.vowel?.articlesBeforeVowels ?? ["unrun"]).length === 0,
   aLinkedProjectInstallsSkillsAndVerifies:
     report.linked.verified === true && report.linked.skills === true && (report.linked.checkSaid ?? "").includes("no problems found"),
   aHyphenatedKindWorksEndToEnd: report.linked.hyphenatedKind === true && report.linked.verified === true,

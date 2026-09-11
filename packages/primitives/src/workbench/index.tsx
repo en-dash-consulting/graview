@@ -1,4 +1,4 @@
-import { humaniseField, labelOf, type AnySchema, type Store } from "@graview/core";
+import { humaniseField, labelOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import {
   aggregateId,
   edgeOfSelection,
@@ -780,12 +780,12 @@ export function Inspector() {
             ? // "Nothing can be done" would be a lie here: things can be
               // done, by somebody else. Which is a different sentence.
               `Nothing you may do with ${
-                edge ? "this relation" : kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"
+                edge ? "this relation" : kinds.length === 1 ? withArticle(kinds[0]!) : "this mix of kinds"
               } — ${withheld.length} action${withheld.length === 1 ? "" : "s"} withheld.`
             : edge
               ? `Nothing can be done with this line yet — no mutation declares that it makes or breaks "${edge.kind}".`
               : `Nothing can be done with ${
-                  kinds.length === 1 ? `a ${kinds[0]}` : "this mix of kinds"
+                  kinds.length === 1 ? withArticle(kinds[0]!) : "this mix of kinds"
                 } yet — no mutation declares ${kinds.length === 1 ? "it" : "them"} as a subject.`}
         </p>
       ) : (

@@ -149,6 +149,24 @@ const audit = () => {
     .slice(0, 8)
     .map((el) => (el.textContent ?? "").trim().slice(0, 34));
 
+  /*
+   * "Add a item". An article written as a literal beside a word the AUTHOR
+   * chose disagrees with it half the time, and the half where it does is on
+   * the very first screen of a project whose kind begins with a vowel. It is
+   * derived from the word now — so this reads what is on the glass and asks
+   * whether each article agrees with what follows it.
+   */
+  const SOUNDS_LIKE_YOU = /^(u[nt]i|use|usu|uti|ubiq|eu|ewe|one|once)/i;
+  const SILENT_H = /^(hour|honest|hono[ur]r?|heir)/i;
+  const articles = [];
+  for (const el of document.querySelectorAll("*")) {
+    if (el.children.length > 0 || !visible(el)) continue;
+    for (const [, art, word] of (el.textContent ?? "").matchAll(/\b(an?) ([A-Za-z]{2,})\b/g)) {
+      const wants = SILENT_H.test(word) ? "an" : SOUNDS_LIKE_YOU.test(word) ? "a" : /^[aeiou]/i.test(word) ? "an" : "a";
+      if (art.toLowerCase() !== wants) articles.push(`${art} ${word} (wants "${wants}")`);
+    }
+  }
+
   /* The same string twice: the smell the codebase already names. */
   const seen = new Map();
   for (const el of document.querySelectorAll("h1,h2,h3,strong,button,[data-testid=focused],nav *")) {
@@ -261,7 +279,7 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, repeats, covered, board, fill, inspector };
+  return { collisions: collisions.slice(0, 8), small, cut, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -309,6 +327,7 @@ for (const s of report.screens) {
     s.board?.length ? `board: ${s.board[0]}${s.board.length > 1 ? ` +${s.board.length - 1}` : ""}` : "",
     s.cut.length ? `${s.cut.length} cut: ${s.cut[0]}` : "",
     s.repeats.length ? `repeats: ${s.repeats.join(", ")}` : "",
+    s.articles?.length ? `article disagrees: ${s.articles.join(", ")}` : "",
     s.small.length ? `${s.small.length} controls under 24px` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",
   ].filter(Boolean);
