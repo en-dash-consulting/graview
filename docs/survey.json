@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-11T21:43:46.186Z",
+  "at": "2026-09-11T22:54:25.524Z",
   "engine": "chromium",
   "shots": [
     {
@@ -16,13 +16,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -40,13 +34,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -64,13 +52,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -88,18 +70,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        },
-        {
-          "tag": "span",
-          "by": 149,
-          "text": "Implicated in a problem."
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -117,18 +88,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        },
-        {
-          "tag": "span",
-          "by": 149,
-          "text": "Implicated in a problem."
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -146,13 +106,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -206,13 +160,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -230,13 +178,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -254,13 +196,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -278,13 +214,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -302,18 +232,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        },
-        {
-          "tag": "span",
-          "by": 149,
-          "text": "Implicated in a problem."
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -331,18 +250,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        },
-        {
-          "tag": "span",
-          "by": 149,
-          "text": "Implicated in a problem."
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -360,13 +268,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -420,13 +322,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 84,
-          "text": "Things"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -480,13 +376,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 112,
-          "text": "Seedbed"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -504,13 +394,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 112,
-          "text": "Seedbed"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -528,13 +412,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 112,
-          "text": "Seedbed"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -552,13 +430,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 112,
-          "text": "Seedbed"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -576,13 +448,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 112,
-          "text": "Seedbed"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -600,13 +466,7 @@
       "contentRight": 1560,
       "verticalFill": 100,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "h1",
-          "by": 112,
-          "text": "Seedbed"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     }

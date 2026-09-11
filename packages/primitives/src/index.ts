@@ -59,6 +59,7 @@ export {
   Grid,
   MUTED_TEXT,
   Panel,
+  VISUALLY_HIDDEN,
   Roster,
 } from "./primitives/index.js";
 export type {

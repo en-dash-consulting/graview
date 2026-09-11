@@ -3,6 +3,7 @@ import { Scene, useGraview, UrlSync, type Scheme, type SceneProps } from "@gravi
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode } from "react";
 import { ChatPanel } from "./chat.js";
+import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { Places } from "./places.js";
 import { QuickRelations } from "./quick-relations.js";
 import { RelationKey } from "./relation-key.js";
@@ -123,17 +124,7 @@ export function Shell<S extends AnySchema>({
         }}
       >
         {syncUrl ? <UrlSync /> : null}
-        <h1
-          style={{
-            position: "absolute",
-            width: 1,
-            height: 1,
-            overflow: "hidden",
-            clip: "rect(0 0 0 0)",
-            whiteSpace: "nowrap",
-            margin: 0,
-          }}
-        >
+        <h1 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>
           {brand?.name ?? "Graview"}
         </h1>
         <Wordmark<S> />

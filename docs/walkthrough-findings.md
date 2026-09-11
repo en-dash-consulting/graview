@@ -1100,3 +1100,32 @@ at the end of every stage.
   whose edge runs row → column, including that the same graph reads the same
   bound either way up, and that a self-referential edge keeps its declared
   reading. Verified failing without the fix.
+
+### W-044 · The survey called the visually-hidden idiom a cut caption, on every screen
+- stage: D · face: both · width: 1560 · scheme: both
+- expected: `pnpm survey`'s "overflowing" count means a caption with a hard
+  edge and text behind it — the thing it says it means
+- actual: the 1×1 clip-rect idiom (text present for a screen reader, absent
+  to the eye) is BY CONSTRUCTION an element whose content does not fit its
+  box, so the wordmark's own `h1` was reported as overflowing on every screen
+  of every app: 20 of 26 screens flagged, permanently. A count whose whole
+  job is to make one real cut visible had twenty lines of noise in front of
+  it. Noticed by adding a second instance of the idiom (W-041's "Implicated
+  in a problem"), which took `todo/travelled` from 1 to 2 — the first useful
+  thing that count had said in a long time, and it was about my own sentence.
+  The idiom was also written out longhand in two places, so there were two
+  shapes for one decision and nothing could recognise either.
+- where it belongs: `scripts/survey-ui.mjs`, and
+  `packages/primitives/src/primitives/index.tsx` (the idiom, written once)
+- harness that should have caught it: the survey is the harness; its own
+  comment already draws the line — "an ellipsis is a decision; a hard edge
+  with text behind it is a bug" — and a clip rect is a decision by exactly
+  the same argument
+- status: fixed in "walkthrough: D · a clip rect is a decision, not a cut" ·
+  `VISUALLY_HIDDEN` is exported from primitives and used by both sites, and
+  the survey no longer counts an element whose box is a pixel. Every one of
+  the 26 screens is clean. Criterion added: the survey now FAILS on a flag
+  rather than printing one — advisory was the only thing it could be while
+  twenty screens carried noise, and a count nobody has to read past is a
+  count that can be enforced. Verified: with the exclusion removed the gate
+  reports "6 of 26 screens clean" and exits 1.
