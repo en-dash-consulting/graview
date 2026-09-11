@@ -526,15 +526,27 @@ export function registerDefaultViews<S extends AnySchema>(
           </div>
           {props.opened ? (
             <div className="graview-kind-members">
-              {members.slice(0, 8).map((member) => (
-                <Chip
-                  key={member.id}
-                  pickId={member.id}
-                  label={labelOf(definition, member as never)}
-                  hue={hue}
-                  selected={chosen.has(member.id)}
-                />
-              ))}
+              {members.slice(0, 8).map((member) => {
+                /*
+                 * WHICH ONE. The card's own count already says "⚠ 1" —
+                 * opening the district to find out which member that is was
+                 * the whole point of opening it, and every chip came out
+                 * unmarked. The glyph view marks a flagged node exactly this
+                 * way; the members inside a district simply never asked.
+                 */
+                const broken = props.flagged?.includes(member.id) ?? false;
+                const name = labelOf(definition, member as never);
+                return (
+                  <Chip
+                    key={member.id}
+                    pickId={member.id}
+                    label={broken ? `${name} ⚠` : name}
+                    title={broken ? `${name} — implicated in a problem` : undefined}
+                    hue={hue}
+                    selected={chosen.has(member.id)}
+                  />
+                );
+              })}
               {members.length > 8 ? (
                 <span style={{ fontSize: 11, color: "var(--graview-ink-faint)", padding: "2px 4px" }}>
                   +{members.length - 8} more — double-click to go in

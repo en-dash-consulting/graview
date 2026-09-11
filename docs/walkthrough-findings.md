@@ -184,3 +184,21 @@ the same commit as the fix.
   level: h1 → h4 at "why this is here"`. A heading is counted whether or not
   it is painted — the shell's h1 is clipped to a pixel on purpose, and
   measuring its box was what hid the jump on the first attempt.
+
+### W-010 · A district says one of its members is broken, then will not say which
+- stage: C · face: scene · width: 1280 and 390 · scheme: both
+- expected: the flagged record is marked in the scene, in its district, and
+  on its pages record
+- actual: the district card said "Items ⚠ 1", and opening it — which is the
+  whole reason to open it — showed every member as a plain chip. The same
+  node drawn as a glyph elsewhere carries "⚠" and a title saying it is
+  implicated in a problem; the members inside an opened district never asked
+  whether they were flagged.
+- where it belongs: `packages/primitives/src/default-views.tsx` (the opened
+  district's members)
+- harness that should have caught it:
+  `packages/primitives/tests/unit/primitives.test.tsx` — the district tests
+  never had a store with a rule in it
+- status: fixed in "walkthrough: C · an opened district says which member is
+  in trouble" · criterion added: primitives "marks the member that is in
+  trouble, and only that one". Verified failing without the fix.

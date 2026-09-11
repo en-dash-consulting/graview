@@ -24,8 +24,8 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [Walkthrough A · The blank app](./walkthrough-a-the-blank-app.md) | completed |
-| [Walkthrough B · A second kind and an edge](./walkthrough-b-a-second-kind-and-an-edge.md) | in_progress |
-| [Walkthrough C · A rule and its repair](./walkthrough-c-a-rule-and-its-repair.md) | pending |
+| [Walkthrough B · A second kind and an edge](./walkthrough-b-a-second-kind-and-an-edge.md) | completed |
+| [Walkthrough C · A rule and its repair](./walkthrough-c-a-rule-and-its-repair.md) | in_progress |
 | [Walkthrough D · Lenses](./walkthrough-d-lenses.md) | pending |
 | [Walkthrough E · The pages, customised](./walkthrough-e-the-pages-customised.md) | pending |
 | [Walkthrough F · Who may do what](./walkthrough-f-who-may-do-what.md) | pending |
