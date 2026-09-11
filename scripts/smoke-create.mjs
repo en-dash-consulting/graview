@@ -269,6 +269,69 @@ try {
     b.offersStartFresh = (await page.locator('[data-testid="start-fresh"]').count()) > 0;
     await page.keyboard.press("Escape");
 
+    /* ---- the scene at phone width: chrome must not sit on the content */
+    /*
+     * A rail needs a gutter, and 390 has none. The actions strip is placed
+     * from the SCENE's box rather than the window's — an embed in a column
+     * of an article is narrow on the widest monitor there is — and where
+     * there is no room beside the picture it goes along the bottom. What
+     * must never happen is the pane sitting on the thing you are acting on.
+     */
+    const narrow = watch(await browser.newPage({ viewport: { width: 390, height: 844 } }));
+    // The embed page, at phone width: a box about 350 wide, which is the
+    // shape a Graview in a column of an article has on any monitor.
+    await narrow.goto(`${base}/embed.html`, { waitUntil: "networkidle" });
+    await narrow.waitForTimeout(1500);
+    // An empty graph has nothing to act on: put one thing in it, then go in.
+    await narrow.click('#here [data-graview-view^="kind:"]');
+    await narrow.waitForTimeout(400);
+    await narrow.click('#here [data-testid="affordances"] button[data-affordance]');
+    await narrow.waitForTimeout(300);
+    await narrow.fill('#here input[aria-label="Label"]', "Sweep the path");
+    await narrow.click('#here [data-testid="inspector-strip"] button[type="submit"]');
+    await narrow.waitForTimeout(700);
+    await narrow.click('#here [data-testid^="open-"]');
+    await narrow.waitForTimeout(500);
+    await narrow.dblclick("#here [data-graview-pick]");
+    await narrow.waitForTimeout(900);
+    b.narrow = await narrow.evaluate(() => {
+      const strip = document.querySelector('#here [data-testid="inspector-strip"]');
+      const focus = document.querySelector('#here [data-graview-plane="0"] [data-graview-primitive="panel"]');
+      if (!strip || !focus) return { strip: Boolean(strip), focus: Boolean(focus) };
+      const a = strip.getBoundingClientRect();
+      const b = focus.getBoundingClientRect();
+      const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      const over = w > 0 && h > 0 ? w * h : 0;
+      /*
+       * The box the pane belongs to is the one it is positioned in — which
+       * in a narrow Graview is bigger than the stage, because the stage
+       * gives up room for the sheet rather than being covered by it.
+       */
+      const stage = strip.offsetParent.getBoundingClientRect();
+      /*
+       * And nothing the picture drew is buried under it: a control a
+       * person needs, covered by the pane that appeared over it, is the
+       * same defect said a different way.
+       */
+      const buried = [...document.querySelectorAll("#here [data-testid^='open-'], #here [data-graview-pick]")]
+        .filter((el) => {
+          const box = el.getBoundingClientRect();
+          if (box.width < 2 || box.height < 2) return false;
+          const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+          return Boolean(top && strip.contains(top));
+        })
+        .map((el) => el.getAttribute("data-testid") ?? el.getAttribute("data-graview-pick"));
+      return {
+        strip: true,
+        focus: true,
+        share: Math.round((over / (b.width * b.height)) * 100),
+        buried,
+        inside: a.left >= stage.left - 1 && a.right <= stage.right + 1 && a.bottom <= stage.bottom + 1,
+      };
+    });
+    await narrow.close();
+
     /* ---- somebody else's page: the embed the project ships with */
     /*
      * A project's `embed.html` is an ordinary page with the app mounted into
@@ -490,6 +553,14 @@ report.verdict = {
         theEmptyDistrictOffersTheFirstNote: (b.offers ?? []).some((text) => text.includes("Add a note")),
         theAskNamesItsFieldInWords: b.asksInWords?.name === "Label" && b.asksInWords?.placeholder === "Label",
         theDerivedFormAddsIt: b.theFormAddedIt === true,
+        // A quarter of the card is a pane lapping its margin; most of it is
+        // the pane sitting on the thing you came to act on.
+        theStripDoesNotCoverWhatYouAreActingOn:
+          b.narrow?.strip === true &&
+          b.narrow?.focus === true &&
+          b.narrow?.inside === true &&
+          (b.narrow?.share ?? 100) === 0 &&
+          (b.narrow?.buried ?? ["unrun"]).length === 0,
         theProjectMountsItselfOnSomebodyElsesPage:
           b.embed?.mounted === true &&
           b.embed?.tag === "SECTION" &&

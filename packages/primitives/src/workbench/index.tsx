@@ -376,6 +376,45 @@ export function Inspector() {
     };
   }, [menuAt, setMenuAt]);
 
+  const atPointer = menuAt !== null;
+
+  /*
+   * Whether the picture has room for a rail beside it. Measured from the
+   * scene's own box, not the window's: an embed in a column of an article is
+   * narrow on the widest monitor there is.
+   */
+  const RAIL_NEEDS = 14 + 236 + 14 + 300;
+  const narrow = (box?.width ?? Number.POSITIVE_INFINITY) < RAIL_NEEDS;
+
+  /*
+   * IN A NARROW BOX THE PICTURE MAKES ROOM.
+   *
+   * Floating is the right answer where there is ground to float over. In a
+   * 350-wide Graview — an embed in a column of an article, or a phone —
+   * there is none: a sheet along the bottom covers the districts and buries
+   * the control that opens one, and a rail down the side covers the very
+   * card it is about. So the scene's own box loses the sheet's height while
+   * the sheet is open, and the layout re-runs into what is left.
+   *
+   * The old objection to insetting was that it reflows the picture under a
+   * double-click. It does — once, when the sheet appears, and once when it
+   * goes. Against chrome permanently over the content, that is the better
+   * trade, and it is what every narrow interface already does.
+   */
+  useLayoutEffect(() => {
+    const parent = asideRef.current?.offsetParent as HTMLElement | null;
+    if (!parent || !narrow || atPointer) return;
+    const height = asideRef.current?.getBoundingClientRect().height ?? 0;
+    const room = `${Math.round(height) + 20}px`;
+    if (parent.style.paddingBottom === room) return;
+    const before = parent.style.paddingBottom;
+    parent.style.paddingBottom = room;
+    return () => {
+      parent.style.paddingBottom = before;
+    };
+  });
+
+
   if (selection.length === 0) return null;
 
   /*
@@ -389,8 +428,6 @@ export function Inspector() {
    * stop.
    */
   const named = !(selection.length === 1 && selection[0] === view.focusId);
-
-  const atPointer = menuAt !== null;
 
   /*
    * Nine rows before "Show N more", and the ranking has already put what
@@ -545,7 +582,33 @@ export function Inspector() {
               maxHeight: "min(52cqh, 420px)",
               overflow: "auto",
             }
-          : {
+          : narrow
+            ? {
+                /*
+                 * A RAIL NEEDS A GUTTER. 14 + 236 + 14 of rail beside a
+                 * picture that still wants three hundred pixels of its own
+                 * is six hundred and twenty before anything is drawn — and
+                 * a Graview in a column of an article, or at 390, has
+                 * neither. The rail went straight over the focus: measured
+                 * in a 350-wide embed, the pane covered 85% of the card it
+                 * was about, and a click meant for the picture landed on
+                 * "Close it".
+                 *
+                 * Along the bottom instead, full width, which is where a
+                 * narrow interface has always put this. It still floats —
+                 * the shadow says "nearer" — and it still scrolls inside
+                 * itself.
+                 */
+                left: 10,
+                right: 10,
+                width: "auto",
+                // Along the bottom, below the picture rather than over it:
+                // the scene's box has given up this much room above.
+                bottom: 10,
+                maxHeight: "min(42cqh, 300px)",
+                overflow: "auto",
+              }
+            : {
               /*
                * The left rail. Under the bar; in the Graview the relation
                * key holds the top of the rail, so the pane starts below it.

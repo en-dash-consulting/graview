@@ -639,3 +639,31 @@ the same commit as the fix.
   real browser: one main (the host's), a named section (the embed's), the
   host's own typeface untouched, no `--graview-accent` on `:root`, and axe
   clean
+
+### W-029 · In a narrow Graview the actions strip sits on the thing you are acting on
+- stage: H · face: scene · width: 390 (and any embed narrower than ~620)
+- expected: nothing in either embed escapes its box, and chrome does not sit
+  on content
+- actual: the strip is placed as a left rail 236 wide at x=14, sized for the
+  gutter beside a centred focus on a wide screen. In a 350-wide embed there
+  is no gutter: measured, the pane covered 85% of the very card it was about
+  (22375 of 26320 square pixels), and a click meant for the picture landed on
+  "Close it". Docking it to the bottom instead moved the problem: from
+  altitude the districts ARE the bottom, and the sheet buried the `open ▾`
+  control on one.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+- harness that should have caught it: `scripts/audit-ui.mjs` measures exactly
+  this (`covered`) and runs at 1560 only; nothing drove the scene in a
+  narrow box
+- status: fixed in "walkthrough: H · in a narrow box the picture makes room"
+  · the rail's need is measured against the SCENE's box, not the window's —
+  an embed in a column of an article is narrow on the widest monitor — and
+  where there is no room beside the picture the sheet goes along the bottom
+  and the scene's box gives up that height while it is open, so the layout
+  re-runs into what is left. The old objection to insetting (it reflows the
+  picture) stands, and loses: it reflows once when the sheet appears and once
+  when it goes, against chrome permanently over the content.
+  Criterion added: smoke-create's `theStripDoesNotCoverWhatYouAreActingOn` —
+  the shipped `embed.html` at 390, a record selected: nothing of the focus
+  covered, no control buried under the pane, and the pane inside its own box.
+  Verified failing without the fix.
