@@ -1014,3 +1014,35 @@ at the end of every stage.
   label at both ends, the fallback, and the warning (including that an act
   whose two ends are the same kind is never warned about, because it is never
   offered from a far end). Verified failing without the fix.
+
+### W-041 · A record implicated in a broken rule is a shade and nothing else
+- stage: C · face: scene · width: any · scheme: both
+- expected: the flagged record is marked in the scene, in its district and on
+  its pages record — marked, not tinted
+- actual: the district's chips get "⚠" in their own label and the routed
+  record page carries the rule's sentence. The FOCUSED record — the biggest
+  drawing of the same thing, the one you travelled to — was drawn on the
+  warning ground and said nothing else: measured, the only difference between
+  a broken record and a whole one was `rgb(253, 244, 234)` against
+  `rgb(255, 255, 255)`. No words, no mark, nothing in the accessibility tree.
+  W-014's shape ("half a lens's emphasis exists only as a colour") one view
+  along. The framework's own todo app had it too, in its own `TaskView`.
+- where it belongs: `packages/primitives/src/primitives/index.tsx` (the
+  `Panel` that carries the tone) and
+  `packages/primitives/src/default-views.tsx` (which had the rule's sentence
+  available and did not show it)
+- harness that should have caught it: `scripts/audit-ui.mjs` has `halfSaid`
+  for exactly this class — emphasis painted and not said — and it only ever
+  looked at `data-graview-emphasis`, which is the lens's claim, not the
+  rule's
+- status: fixed in "walkthrough: C · a problem that is only a colour" ·
+  `Panel` carries the mark with the tone — a visible ⚠ beside the title and a
+  sentence in the accessibility tree — so every view that draws a flagged
+  record inherits it, including an app's own, because a contract only some
+  views keep is not a contract. The default record view additionally says the
+  rule's own sentence, the way the problems page says it. Criterion added:
+  audit-ui's `a problem painted but not said`, measured from the app's own
+  count of what is broken rather than from the shade, and comparing against
+  the theme's warning ground specifically — "not the default ground" catches
+  every muted card in the app and says nothing about problems. Verified
+  failing without the fix, naming `t-deposit` in `todo/travelled`.
