@@ -53,6 +53,22 @@ describe("what a project starts with", () => {
     expect(file("Field Notes", "src/main.tsx")).toContain("registry={pages()}");
   });
 
+  /*
+   * The page it writes claims, in its own comment, that "everything it shows
+   * still comes from the same derivations, so a page you write cannot drift
+   * from what the graph says". It reached for the act by NAME instead — an
+   * act that is always there — and handed the form no candidates, so the
+   * record was offered as the answer to its own edge and, at one record,
+   * was the only answer. The claim has to be true of the file that makes it.
+   */
+  it("takes the act it offers from the derivation, with the candidates the derivation narrowed", () => {
+    const pages = file("Field Notes", "src/ui/pages.tsx");
+    expect(pages).toContain("facts.actions.affordances.find(");
+    expect(pages).toContain("open={link.open}");
+    // Never the raw lookup as the thing that decides whether to offer it.
+    expect(pages).not.toMatch(/const link = store\.allMutations\(\)/);
+  });
+
   it("keeps React out of the domain, so graview check can load it", () => {
     const domain = scaffoldProject({ name: "Field Notes" }).files.filter((f) => f.path.startsWith("src/domain/"));
     expect(domain.length).toBe(5);
