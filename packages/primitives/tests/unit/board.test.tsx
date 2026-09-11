@@ -51,6 +51,15 @@ describe("the board lens, read from the occupant's end", () => {
   });
 });
 
+describe("an empty graph is a picture, not a crash", () => {
+  it("builds a board with no slots and nobody benched", () => {
+    const board = buildBoard([], [], options, schema);
+    expect(board.slots).toEqual([]);
+    expect(board.spare).toEqual([]);
+    expect(board.empty).toEqual([]);
+  });
+});
+
 describe("a slot that holds several", () => {
   it("shows every occupant and lists none of them as not in", () => {
     // Two plantings in one plot. The board showed one and benched the other,

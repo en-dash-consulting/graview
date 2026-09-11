@@ -97,8 +97,20 @@ export function buildBoard<S extends AnySchema>(
       ? labelOf(schema.tryDefinition(node.kind), node as never)
       : String(record(node)["label"] ?? node.id);
 
+  /*
+   * AN EMPTY GRAPH IS NOT A MISBINDING. See the same note in coverage.tsx:
+   * a blank app has no slots yet and its board's title is already in the
+   * bar, so throwing on "no slot nodes" took the scene down at exactly the
+   * moment somebody was looking for the empty picture.
+   */
+  if (schema && schema.tryDefinition(options.slots) === undefined) {
+    throw new BoardBindingError(
+      `No kind is declared for "${options.slots}".`,
+      `Check the lens bindings: { slots: "<kind>", x: "<field>", y: "<field>", fill: "<edge kind>" }`,
+    );
+  }
   const slotNodes = nodes.filter((node) => node.kind === options.slots);
-  if (slotNodes.length === 0) {
+  if (!schema && slotNodes.length === 0) {
     throw new BoardBindingError(
       `Nothing to arrange: no "${options.slots}" nodes.`,
       `Check the lens bindings: { slots: "<kind>", x: "<field>", y: "<field>", fill: "<edge kind>" }`,
