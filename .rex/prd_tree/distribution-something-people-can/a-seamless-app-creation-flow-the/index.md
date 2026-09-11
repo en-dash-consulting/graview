@@ -29,6 +29,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Walkthrough D · Lenses](./walkthrough-d-lenses.md) | completed |
 | [Walkthrough E · The pages, customised](./walkthrough-e-the-pages-customised.md) | completed |
 | [Walkthrough F · Who may do what](./walkthrough-f-who-may-do-what.md) | completed |
-| [Walkthrough G · Remembering and shipping](./walkthrough-g-remembering-and-shipping.md) | in_progress |
-| [Walkthrough H · On somebody else's page](./walkthrough-h-on-somebody-else-s-page.md) | pending |
+| [Walkthrough G · Remembering and shipping](./walkthrough-g-remembering-and-shipping.md) | completed |
+| [Walkthrough H · On somebody else's page](./walkthrough-h-on-somebody-else-s-page.md) | in_progress |
 | [Walkthrough I · The cross-cutting pass](./walkthrough-i-the-cross-cutting-pass.md) | pending |

@@ -269,6 +269,31 @@ try {
     b.offersStartFresh = (await page.locator('[data-testid="start-fresh"]').count()) > 0;
     await page.keyboard.press("Escape");
 
+    /* ---- somebody else's page: the embed the project ships with */
+    /*
+     * A project's `embed.html` is an ordinary page with the app mounted into
+     * one element of it. What must be true there is not what is true at the
+     * app's own address: the host owns the `main`, the embed brings a named
+     * region of its own, and nothing it draws sits outside a landmark.
+     */
+    const host = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+    await host.goto(`${base}/embed.html`, { waitUntil: "networkidle" });
+    await host.waitForTimeout(1500);
+    b.embed = await host.evaluate(() => {
+      const root = document.getElementById("here")?.firstElementChild;
+      return {
+        mounted: Boolean(root),
+        tag: root?.tagName ?? null,
+        named: root?.getAttribute("aria-label") ?? null,
+        mains: document.querySelectorAll("main").length,
+        // The host page's own look, untouched by the app inside it.
+        hostFont: getComputedStyle(document.body).fontFamily.slice(0, 8),
+        rootTheme: getComputedStyle(document.documentElement).getPropertyValue("--graview-accent"),
+      };
+    });
+    b.axeEmbed = await axe(host);
+    await host.close();
+
     /* ---- the keyboard alone, on a blank app */
     /*
      * A new product's first record, with no pointer at all.
@@ -465,6 +490,14 @@ report.verdict = {
         theEmptyDistrictOffersTheFirstNote: (b.offers ?? []).some((text) => text.includes("Add a note")),
         theAskNamesItsFieldInWords: b.asksInWords?.name === "Label" && b.asksInWords?.placeholder === "Label",
         theDerivedFormAddsIt: b.theFormAddedIt === true,
+        theProjectMountsItselfOnSomebodyElsesPage:
+          b.embed?.mounted === true &&
+          b.embed?.tag === "SECTION" &&
+          typeof b.embed?.named === "string" &&
+          b.embed?.mains === 1 &&
+          b.embed?.hostFont?.startsWith("Georgia") === true &&
+          b.embed?.rootTheme === "" &&
+          clean(b.axeEmbed),
         theKeyboardAloneMakesTheFirstRecord:
           b.keyboardReachedTheDistrict === true &&
           b.keyboardSelectedIt === true &&

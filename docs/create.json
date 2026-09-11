@@ -1,9 +1,9 @@
 {
-  "at": "2026-09-11T18:21:08.124Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-JhKKzd",
+  "at": "2026-09-11T18:24:17.357Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-45wthb",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-JhKKzd/field-notes",
+    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-45wthb/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -71,7 +71,7 @@
   },
   "linked": {
     "said": [
-      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-JhKKzd/linked-orders",
+      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-45wthb/linked-orders",
       "graview create: pnpm install"
     ],
     "consumesByPath": true,
@@ -113,6 +113,15 @@
     "survivedAReload": true,
     "saysRemembered": "Remembered in this browserStart fresh",
     "offersStartFresh": true,
+    "embed": {
+      "mounted": true,
+      "tag": "SECTION",
+      "named": "Field Notes",
+      "mains": 1,
+      "hostFont": "Georgia,",
+      "rootTheme": ""
+    },
+    "axeEmbed": [],
     "keyboardReachedTheDistrict": true,
     "keyboardSelectedIt": true,
     "keyboardReachedTheOffer": true,
@@ -164,6 +173,7 @@
     "theEmptyDistrictOffersTheFirstNote": true,
     "theAskNamesItsFieldInWords": true,
     "theDerivedFormAddsIt": true,
+    "theProjectMountsItselfOnSomebodyElsesPage": true,
     "theKeyboardAloneMakesTheFirstRecord": true,
     "anEditSurvivesAReload": true,
     "thePagesFaceFitsAPhoneAndItsFormApplies": true,

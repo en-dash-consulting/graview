@@ -612,3 +612,30 @@ the same commit as the fix.
   batch, so "undo the migration" means the whole run. Reasonable — a run is
   one event — but it means a run containing an un-undoable step cannot be
   undone at all.
+
+### W-028 · An embed is not a landmark, so nothing it draws is inside one
+- stage: H · face: embed · width: 1280 and 390 · scheme: both
+- expected: two embeds have two landmark names; nothing in either escapes its
+  box
+- actual: `label` named every landmark INSIDE an embed ("Chapter 13 ·
+  Places") and left the root a plain `<div>`. On a host page that means the
+  strip, the seats, the faces and the picture all sit outside any landmark —
+  axe `region`, ten nodes — and a reader moving by landmark cannot reach the
+  app at all, let alone tell two of them apart. The label was for exactly
+  this.
+  Beside it: the scaffolder's own `embed.html` had no `<main>`, so axe also
+  reported `landmark-one-main` on the page every project now ships.
+- where it belongs: `packages/embed/src/embed.tsx` (the root) and
+  `packages/core/src/scaffold/index.ts` (the host page)
+- harness that should have caught it: the embed tests asserted the names of
+  the landmarks inside and never that the embed is one; no harness ran axe on
+  a host page with an embed in it
+- status: fixed in "walkthrough: H · an embed is a region with a name" ·
+  the root is a `<section>` named by `label`, or by the app when the page
+  does not say. Criteria added: seedbed embed "is a region of its own, named,
+  and two of them are two names" and "falls back to the app's own name when
+  the page does not say"; smoke-create's
+  `theProjectMountsItselfOnSomebodyElsesPage` — the shipped `embed.html` in a
+  real browser: one main (the host's), a named section (the embed's), the
+  host's own typeface untouched, no `--graview-accent` on `:root`, and axe
+  clean

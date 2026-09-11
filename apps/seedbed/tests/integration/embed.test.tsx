@@ -164,6 +164,36 @@ describe("a chapter, embedded", () => {
     handle.unmount();
   });
 
+  /*
+   * THE EMBED IS ITSELF A LANDMARK. `label` named every landmark inside it
+   * and left the root a plain div, so on somebody else's page the strip, the
+   * seats and the picture sat outside any landmark at all — axe's `region`
+   * rule, and a reader moving by landmark who could not reach the app.
+   */
+  it("is a region of its own, named, and two of them are two names", () => {
+    const one = into();
+    const two = into();
+    const first = mount(one, { app: chapter.app, seed: chapter.seed, face: "graview", label: "Chapter 13" });
+    const second = mount(two, { app: chapter.app, seed: chapter.seed, face: "graview", label: "Chapter 1" });
+    const rootOf = (element: HTMLElement) => element.firstElementChild as HTMLElement;
+    expect(rootOf(one).tagName).toBe("SECTION");
+    expect(rootOf(one).getAttribute("aria-label")).toBe("Chapter 13");
+    expect(rootOf(two).getAttribute("aria-label")).toBe("Chapter 1");
+    // Everything the embed drew is inside it.
+    expect(one.querySelectorAll('[data-testid="embed-faces"]')[0]?.closest("section")).toBe(rootOf(one));
+    first.unmount();
+    second.unmount();
+  });
+
+  it("falls back to the app's own name when the page does not say", () => {
+    const element = into();
+    const handle = mount(element, { app: chapter.app, seed: chapter.seed, face: "graview" });
+    expect((element.firstElementChild as HTMLElement).getAttribute("aria-label")).toBe(
+      chapter.app.name,
+    );
+    handle.unmount();
+  });
+
   it("never touches the host page's address or theme", () => {
     const before = window.location.href;
     const element = into();

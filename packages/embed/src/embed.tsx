@@ -186,6 +186,8 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       if (own.startsWith(`${label} · `)) return;
       el.setAttribute("aria-label", own ? `${label} · ${own}` : label);
     };
+    // The root is the embed's own region and already wears the label; the
+    // sweep names what is INSIDE it.
     const sweep = () => root.querySelectorAll("aside, nav, main, header, footer, [role=region], [role=complementary], [role=navigation]").forEach(name);
     sweep();
     const observer = new MutationObserver(sweep);
@@ -193,10 +195,25 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
     return () => observer.disconnect();
   }, [label]);
 
+  /*
+   * THE EMBED IS ITSELF A LANDMARK.
+   *
+   * `label` named every landmark INSIDE ("Chapter 13 · Places") and left the
+   * root a plain div — so on somebody else's page the strip, the seats and
+   * the picture sat outside any landmark at all (axe `region`), and a reader
+   * moving by landmark could not reach the app, let alone tell two of them
+   * apart at the top. A named region is what the label was for.
+   *
+   * Without a label it takes the app's own name, and two unlabelled embeds
+   * of one app are then two regions with one name — which is the ambiguity
+   * the docs warn about, said out loud by `landmark-unique` instead of
+   * silently.
+   */
   return (
-    <div
+    <section
       ref={rootRef}
       className={scope}
+      aria-label={label ?? app.name}
       data-graview-embed={face}
       style={{ position: "relative", height, minHeight: 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
     >
@@ -229,7 +246,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
           </div>
         )}
       </GraviewProvider>
-    </div>
+    </section>
   );
 }
 
