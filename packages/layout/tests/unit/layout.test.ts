@@ -936,6 +936,29 @@ describe("a line that stands for one edge says so", () => {
     const state = withSelection(withFocus(EMPTY_VIEW, "week-1"), [id]);
     expect(fromUrl(toUrl(state)).selection).toEqual([id]);
   });
+
+  /*
+   * `ctx.freshId(label, kind)` mints "item:buy-milk" — so every scaffolded
+   * app's node ids carry the separator this id is built out of. Split three
+   * ways they came back as five, the selection was not recognised as an edge
+   * at all, and a clicked line opened a pane titled with the raw address
+   * saying nothing could be done with it.
+   */
+  it("round-trips ends whose ids carry the separator", () => {
+    const id = edgeSelectionId("assigned-to", "item:buy-milk", "owner:ana");
+    expect(edgeOfSelection(id)).toEqual({
+      kind: "assigned-to",
+      from: "item:buy-milk",
+      to: "owner:ana",
+    });
+    const state = withSelection(EMPTY_VIEW, [id]);
+    expect(fromUrl(toUrl(state)).selection).toEqual([id]);
+    expect(edgeOfSelection(fromUrl(toUrl(state)).selection[0]!)).toEqual({
+      kind: "assigned-to",
+      from: "item:buy-milk",
+      to: "owner:ana",
+    });
+  });
 });
 
 describe("open districts stay at altitude", () => {
