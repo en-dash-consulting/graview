@@ -70,14 +70,27 @@ export function kindsOfAggregate(id: string): string[] {
  * group as a place (`aggregate:<kind>`), and from altitude it opens the
  * district in place — the exploded view — and the same gesture closes it.
  *
+ * UNLESS THE KIND HAS A PICTURE OF ITS OWN. A district explodes into a ring
+ * of chips because a bag of names is the best a generic card can do with its
+ * members. A kind with a lens registered over it has something better, and
+ * the card already says so with its ◆ — so "deeper" there means that
+ * picture, and the district stays shut. Exploding it replaced a designed
+ * view with the fallback it exists to improve on.
+ *
  * The card's own id (`kind:<kind>`) is never made the focus. A focus
  * resolves to a node or to a group's kinds, and a kind card is neither: a
  * focus on one laid out an empty scene with the card's name in the URL,
  * which is what double-clicking a group looked like before this existed.
  */
-export function withJackIn(state: ViewState, id: string): ViewState {
+export function withJackIn(
+  state: ViewState,
+  id: string,
+  options: { readonly ownPicture?: boolean } = {},
+): ViewState {
   const kind = kindOfCard(id);
-  if (kind !== null && state.overview) return toggleExpanded(state, id);
+  if (kind !== null && state.overview && options.ownPicture !== true) {
+    return toggleExpanded(state, id);
+  }
   const target = kind !== null ? aggregateId(kind) : id;
   return state.zoom && state.focusId === target
     ? withZoom(state, false)

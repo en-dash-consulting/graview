@@ -247,3 +247,28 @@ the same commit as the fix.
   criteria added: parity "marks the incomplete repair as an ask on the
   problems page" / "… on a record page" / "asks only for what the violation
   left blank". All three fail without the fix.
+
+### W-013 · A district with a lens over it bursts into chips anyway
+- stage: D · face: scene · width: 1280 and 390 · scheme: both
+- expected: from altitude a group with a lens keeps its scaled card and its
+  district stays shut; a group without one opens as its district
+- actual: both opened as districts. A district explodes into a ring of chips
+  because a bag of names is the best a generic card can do with its members;
+  a kind with a lens over it has something better, and the card already draws
+  a ◆ to say so — going deeper traded the designed picture for the fallback
+  it exists to improve on, in the framework's own todo app as much as in the
+  walkthrough's.
+- where it belongs: `packages/layout/src/layout.ts` (`withJackIn`, which had
+  no way to be told) and `packages/react/src/scene.tsx` (which knows, and
+  did not say)
+- harness that should have caught it: `scripts/verify-navigation.mjs` — it
+  drove the altitude control and the district's own open button, never the
+  gesture that goes deeper into a district
+- status: fixed in "walkthrough: D · a kind with a picture of its own is
+  where deeper goes" · criteria added: layout "goes INTO the picture a kind
+  has of its own, leaving the district shut"; verify-navigation
+  `aDistrictWithAPictureGoesIntoIt` and `aDistrictWithoutOneOpensInPlace`.
+  Verified against the previous build: `withAPicture:
+  "#focus=aggregate%3Atask&overview=1&zoom=1"` became
+  `"#focus=t-deposit&overview=1&expand=kind%3Atask"`-shaped and the verdict
+  read false.

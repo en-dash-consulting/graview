@@ -440,6 +440,19 @@ export function Scene<S extends AnySchema>({
    */
   const crowded = (node: SceneNode) => Math.round(node.plane) === 1 && node.width < 175;
 
+  /*
+   * Whether this card stands for a kind the app gave a picture of its own —
+   * the same question `ResolvedView` asks to draw the ◆, asked here so the
+   * gesture and the mark cannot disagree.
+   */
+  const ownPictureOf = (node: SceneNode): boolean => {
+    if (kindOfCard(node.id) === null && !node.aggregate) return false;
+    const own = views.resolve(node.kind, { cardinality: "many", fidelity: "full" })?.view as
+      | { generic?: boolean }
+      | undefined;
+    return own !== undefined && own.generic !== true;
+  };
+
   const hosts = frame.nodes.map((node) => (
     <SceneViewHost
       key={node.id}
@@ -521,7 +534,14 @@ export function Scene<S extends AnySchema>({
        * the same gesture zooms back out — in and out are one motion.
        */
       onJackIn={() => {
-        setView((current) => withJackIn(current, node.id));
+        /*
+         * A kind with a lens over it goes INTO the lens; a kind without one
+         * explodes into its district. The card already draws a ◆ when it has
+         * a picture of its own, and used to burst into a ring of chips
+         * anyway — trading the designed view for the fallback it exists to
+         * improve on.
+         */
+        setView((current) => withJackIn(current, node.id, { ownPicture: ownPictureOf(node) }));
         /*
          * A zoomed RECORD is selected — reading closely is when you act.
          * A zoomed PLACE starts quiet: the click half of the double-click

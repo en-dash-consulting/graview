@@ -1020,6 +1020,25 @@ describe("going deeper into a card", () => {
     expect(layout(graph(), schema, opened, { width: 1280, height: 800 }).nodes.find((node) => node.id === kindCardId("person"))?.opened).toBe(true);
     expect(withJackIn(opened, kindCardId("person")).expanded).not.toContain(kindCardId("person"));
   });
+
+  /*
+   * A district explodes into a ring of chips because a bag of names is the
+   * best a generic card can do with its members. A kind with a lens over it
+   * has something better — and the card already draws a ◆ to say so — yet
+   * going deeper burst it into chips anyway, trading the designed picture
+   * for the fallback it exists to improve on.
+   */
+  it("goes INTO the picture a kind has of its own, leaving the district shut", () => {
+    const up = withOverview(EMPTY_VIEW, true);
+    const gone = withJackIn(up, kindCardId("person"), { ownPicture: true });
+    expect(gone.expanded ?? []).not.toContain(kindCardId("person"));
+    expect(gone.focusId).toBe(aggregateId("person"));
+    expect(gone.zoom).toBe(true);
+    // And a kind without one still opens in place, from the same gesture.
+    expect(withJackIn(up, kindCardId("person"), { ownPicture: false }).expanded).toContain(
+      kindCardId("person"),
+    );
+  });
 });
 
 describe("a move belongs to the stop it was made at", () => {
