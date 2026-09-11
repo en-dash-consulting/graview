@@ -17,7 +17,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 
 const SEATS = {
-  todo: { port: 5193, ready: "__todoReady", testId: "agent-tidy", query: "&today=2026-09-01" },
+  todo: { port: 5193, ready: "__todoReady", testId: "agent-tidy", who: "tidy", query: "&today=2026-09-01" },
 };
 
 function startVite(name, port) {
@@ -80,6 +80,22 @@ try {
       check(`${app}: it goes quiet once there is nothing to do`,
         after.disabled === true && !/\d/.test(after.label ?? ""), after.label);
       check(`${app}: no unhandled rejection`, errors.length === 0, errors[0] ?? "");
+
+      /*
+       * WHOSE TURN IT WAS. Every seat in every app signed its ops "claude" —
+       * a hardcoded id, so two seats on one embed were indistinguishable in
+       * the history and a seat that is a rules mender or a scheduled job wore
+       * a vendor's name. The seat says who is sitting in it now, and Activity
+       * reads that back.
+       */
+      const signed = await page.evaluate(() =>
+        [...document.querySelectorAll('[data-testid="diff-log"] li strong')].map((el) =>
+          el.textContent.trim(),
+        ),
+      );
+      check(`${app}: the seat signs its own work`,
+        signed.includes(seat.who) && !signed.includes("claude"),
+        signed.slice(0, 3).join(", "));
       await page.close();
 
       // The permission claim, where there is a policy to narrow it.

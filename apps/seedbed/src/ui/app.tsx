@@ -112,6 +112,7 @@ function StarterGarden({ onCall }: { onCall: (call: ToolCall) => void }) {
 
   return (
     <AgentSeat<S>
+      who="starter"
       testId="agent-starter"
       count={empty ? 1 : 0}
       gate="add-gardener"

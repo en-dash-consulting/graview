@@ -233,6 +233,7 @@ function TidyButton({ onCall }: { onCall: (call: ToolCall) => void }) {
 
   return (
     <AgentSeat<S>
+      who="tidy"
       testId="agent-tidy"
       count={late}
       gate="reschedule"

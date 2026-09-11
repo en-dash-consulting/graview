@@ -1598,6 +1598,17 @@ export interface AgentSeatProps<S extends AnySchema> {
    * looks live and throws is the worst of both.
    */
   readonly gate?: string;
+  /**
+   * WHO IS SITTING IN IT. The author every op this seat writes is signed
+   * with, and the name Activity reads back.
+   *
+   * Required, because the default was "claude" for every seat in every app —
+   * so two seats on one embed were indistinguishable in the history, and a
+   * seat that is a scheduled job, a rules mender or somebody else's model
+   * wore a vendor's name. The chat seat has always signed "chat"; this is the
+   * same contract, said out loud.
+   */
+  readonly who: string;
   readonly testId: string;
   onCall(call: ToolCall): void;
   /** The turn itself. Everything the app knows and the framework does not. */
@@ -1624,6 +1635,7 @@ export function AgentSeat<S extends AnySchema>({
   count,
   idle,
   gate,
+  who,
   testId,
   onCall,
   run,
@@ -1634,7 +1646,7 @@ export function AgentSeat<S extends AnySchema>({
       createToolRuntime(store, {
         author: {
           kind: "agent",
-          id: "claude",
+          id: who,
           session: "ui",
           ...(principal.roles ? { roles: principal.roles } : {}),
         },
@@ -1643,7 +1655,7 @@ export function AgentSeat<S extends AnySchema>({
         // pointer menu and the agent must never disagree about the acts.
         derive: () => ({ pins: loadPins() }),
       }),
-    [store, principal],
+    [store, principal, who],
   );
   const agent = useMemo(() => createInAppAdapter(runtime), [runtime]);
   const [busy, setBusy] = useState(false);
