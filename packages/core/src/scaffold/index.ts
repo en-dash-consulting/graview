@@ -896,6 +896,7 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
   const empty = nodes.length === 0;
   return (
     <AgentSeat<S>
+      who="starter"
       testId="agent-starter"
       count={empty ? 1 : 0}
       gate="add-${ids.kind}"

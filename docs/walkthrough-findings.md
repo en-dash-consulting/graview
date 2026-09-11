@@ -202,3 +202,24 @@ the same commit as the fix.
 - status: fixed in "walkthrough: C · an opened district says which member is
   in trouble" · criterion added: primitives "marks the member that is in
   trouble, and only that one". Verified failing without the fix.
+
+### W-011 · Every agent seat signs its work "claude"
+- stage: C · face: scene · width: 1280 · scheme: both
+- expected: repairing from the agent's seat leaves one op in the log with
+  the right author
+- actual: the op read "claude Close Buy milk" — `AgentSeat` hardcoded
+  `id: "claude"` as the author of every seat in every app. A seat that is a
+  rules mender, a scheduled job or somebody else's model wore a vendor's
+  name; two seats on one embed (stage F) would be indistinguishable in the
+  history. The chat seat next to it has always signed "chat", and a comment
+  three hundred lines above records the same bug being fixed once already in
+  the rendering of the name — but not in the writing of it.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`AgentSeat`), and the three call sites that now have to say who is sitting
+  in them (the scaffold template, apps/todo, apps/seedbed)
+- harness that should have caught it: `scripts/verify-seat.mjs` — it checked
+  what the seat did, never who did it
+- status: fixed in "walkthrough: C · a seat signs its own work" · criterion
+  added: verify-seat "the seat signs its own work". Verified failing with a
+  seat declared `who="claude"`: `FAIL todo: the seat signs its own work
+  claude`.
