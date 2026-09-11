@@ -1290,6 +1290,7 @@ export function useRecentChanges(limit = 4): readonly Change[] {
 export function UndoTurn({ batch }: { readonly batch: string }) {
   const { store } = useGraview<AnySchema>();
   const nodes = useGraph();
+  const [refused, setRefused] = useState<string | null>(null);
   const check = useMemo(
     () => store.canUndo(batch),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1301,16 +1302,32 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
   const alsoNeeded = blocked ? check.includeBatches : [];
 
   return (
+    <span style={{ marginLeft: "auto", flex: "0 0 auto", display: "grid", justifyItems: "end", gap: 2 }}>
     <button
       type="button"
       data-testid="undo-turn"
       title={
         blocked ? `${check.message} — undo those too` : "Take this back, keeping everything since"
       }
-      onClick={() => store.undo(blocked ? [batch, ...alsoNeeded] : batch)}
+      /*
+       * A REFUSAL IS A RESULT, said on the control that asked for it.
+       *
+       * `store.canUndo` answers the questions the LOG can answer — a later
+       * op read what this one wrote — and not the one the SCHEMA answers:
+       * taking back a migration that added a required field leaves a node
+       * the declaration refuses. That threw out of the click handler, which
+       * is an unhandled error in a console nobody is reading and a button
+       * that looked like it did nothing.
+       */
+      onClick={() => {
+        setRefused(null);
+        try {
+          store.undo(blocked ? [batch, ...alsoNeeded] : batch);
+        } catch (error) {
+          setRefused(error instanceof Error ? error.message : String(error));
+        }
+      }}
       style={{
-        marginLeft: "auto",
-        flex: "0 0 auto",
         padding: "1px 7px",
         fontSize: 11,
         ...(blocked ? { borderColor: "var(--graview-warn)", color: "var(--graview-warn)" } : {}),
@@ -1318,6 +1335,16 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
     >
       {blocked ? `undo +${alsoNeeded.length}` : "undo"}
     </button>
+      {refused ? (
+        <span
+          data-testid="undo-refused"
+          role="alert"
+          style={{ fontSize: 11, lineHeight: 1.4, color: "var(--graview-warn)", maxWidth: 260, textAlign: "right" }}
+        >
+          {refused}
+        </span>
+      ) : null}
+    </span>
   );
 }
 
