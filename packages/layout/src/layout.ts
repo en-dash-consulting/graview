@@ -263,8 +263,19 @@ export function layout<S extends AnySchema>(
   const hidden = new Set(options.hiddenKinds ?? []);
   const visible = (node: NodeOfSchema<S>): boolean => !hidden.has(node.kind);
 
+  /*
+   * A GROUP IS A PLACE WHETHER OR NOT ANYBODY IS IN IT.
+   *
+   * The kinds are read from the ADDRESS, and then checked against the
+   * declaration: `aggregate:nonsense` is a focus id nothing resolves and
+   * falls back to the default view below, while `aggregate:item` with no
+   * items is a real place holding nobody — which is exactly the picture a
+   * blank app needs, and exactly where a lens's empty state lives.
+   */
   let focusKinds = state.focusId
-    ? kindsOfAggregate(state.focusId).filter((kind) => !hidden.has(kind))
+    ? kindsOfAggregate(state.focusId)
+        .filter((kind) => schema.tryDefinition(kind) !== undefined)
+        .filter((kind) => !hidden.has(kind))
     : [];
   /*
    * A URL can point where this workspace cannot go — a bookmarked vehicle
@@ -486,7 +497,7 @@ export function layout<S extends AnySchema>(
    * so the same names are never drawn twice.
    */
   const plain = new Set(options.plainGroups ?? []);
-  const groupFocus = state.overview && !focus && focusGroup.length > 0 && state.focusId !== null;
+  const groupFocus = state.overview && !focus && focusKinds.length > 0 && state.focusId !== null;
   const groupIsPlain = groupFocus && focusKinds.length > 0 && focusKinds.every((kind) => plain.has(kind));
   if (groupFocus) {
     for (const kind of focusKinds) {
@@ -494,7 +505,7 @@ export function layout<S extends AnySchema>(
       else expanded.delete(kindCardId(kind));
     }
   }
-  if (state.overview && (focus || focusGroup.length > 0) && state.focusId && !groupIsPlain) {
+  if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain) {
     push({
       id: state.focusId,
       kind: focus ? focus.kind : focusKinds[0]!,
@@ -532,7 +543,7 @@ export function layout<S extends AnySchema>(
       width: detailWidth,
       height: focusHeight,
     });
-  } else if (focusGroup.length > 0 && state.focusId) {
+  } else if (focusKinds.length > 0 && state.focusId) {
     push({
       id: state.focusId,
       kind: focusKinds[0]!,

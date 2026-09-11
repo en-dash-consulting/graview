@@ -296,3 +296,25 @@ the same commit as the fix.
   6`); audit-ui `halfSaid` — within one view, either every pick target
   carries `data-graview-emphasis` or none does. It found the todo instance on
   its first run.
+
+### W-015 · A lens is offered as a place you cannot go while its kind is empty
+- stage: D · face: scene · width: 1280 and 390 · scheme: both
+- expected: the title is a place — a pill in the bar, pressed while there —
+  and the lens does not fall over on an empty graph
+- actual: on a blank app both lens pills were in the bar from the first
+  paint. Pressing one changed the address to `#focus=aggregate:item` and drew
+  nothing: no card on plane 0, no lens, and the pill did not even light.
+  Every branch in the layout that places a focused group required the group
+  to have members, so a group holding nobody was not a place at all. The
+  empty picture is exactly the one a blank app needs — it is where a lens's
+  own "none yet" lives.
+- where it belongs: `packages/layout/src/layout.ts`
+- harness that should have caught it:
+  `packages/layout/tests/unit/layout.test.ts` — every focus test had a
+  populated graph
+- status: fixed in "walkthrough: D · a group is a place whether or not
+  anybody is in it" · criteria added: layout "draws a group you have gone to
+  even when nobody is in it" (fails without the fix: `expected undefined to
+  be defined`) and "still refuses an address whose kind nobody declared" —
+  the kinds in an aggregate address are checked against the declaration now,
+  so `aggregate:unicorn` remains a focus id nothing resolves.
