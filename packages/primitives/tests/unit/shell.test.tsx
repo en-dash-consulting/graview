@@ -1,10 +1,10 @@
-import { createSchema, defineNode, Store } from "@graview/core";
+import { bindSchema, createSchema, defineNode, Store } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { GraviewProvider, createViews } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { registerDefaultViews, Shell } from "../../src/index.js";
+import { AgentSeat, registerDefaultViews, Shell } from "../../src/index.js";
 
 /**
  * The shell is the one file every app used to write and get slightly wrong.
@@ -17,6 +17,7 @@ const note = defineNode("note", {
   plural: "Notes",
 });
 const schema = createSchema([note]);
+const { defineMutation } = bindSchema(schema);
 const store = () => new Store({ schema, mutations: [], invariants: [] });
 
 const render = (props: Partial<Parameters<typeof Shell<typeof schema>>[0]> = {}) =>
@@ -65,6 +66,59 @@ describe("the shell", () => {
 });
 
 describe("Focus, from altitude", () => {
+  /*
+   * A SEAT THAT MAY NOT SIT DOWN SAYS SO, in the open. The reason was a
+   * `title` on a disabled button — unreachable from a keyboard — and the
+   * label under it said something else entirely.
+   */
+  it("strikes a seat the policy refuses and says why beside it", () => {
+    const add = defineMutation("add-note", {
+      title: "Add a note",
+      description: "Bring a note in.",
+      creates: ["note"],
+      input: z.object({ label: z.string().min(1) }),
+      apply(ctx, args) {
+        ctx.addNode({ id: `note-${args.label}`, kind: "note", label: args.label } as never);
+      },
+    });
+    const guarded = new Store({
+      schema,
+      mutations: [add],
+      invariants: [],
+      policy: {
+        roles: ["keeper", "reader"],
+        grants: [{ roles: ["keeper"], mutations: "*", describe: "The keeper writes." }],
+      },
+    });
+    const html = renderToStaticMarkup(
+      <GraviewProvider
+        store={guarded}
+        views={registerDefaultViews(schema, createViews(schema))}
+        initialView={{ ...EMPTY_VIEW, overview: true }}
+        principal={{ kind: "human", id: "somebody", roles: ["reader"] }}
+      >
+        {/* The seat itself: in the app it lives inside the Activity
+            popover, which a static render never opens. */}
+        <AgentSeat<typeof schema>
+          who="starter"
+          testId="agent-starter"
+          count={1}
+          gate="add-note"
+          label={() => "Add some starter data"}
+          busyLabel="Adding…"
+          idle="There is something here already"
+          onCall={() => {}}
+          run={async () => {}}
+        />
+      </GraviewProvider>,
+    );
+    expect(html).toContain("<s>Add some starter data</s>");
+    expect(html).toContain('data-testid="agent-starter-why"');
+    expect(html).toContain("Not yours to do from this seat");
+    // Not "there is something here already", which is a different answer.
+    expect(html).not.toContain(">There is something here already<");
+  });
+
   it("descends into the selected district, or the first one declared, never nowhere", async () => {
     const { descentTarget } = await import("../../src/index.js");
     const { aggregateId, kindCardId } = await import("@graview/layout");

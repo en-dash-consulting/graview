@@ -1713,7 +1713,18 @@ export function AgentSeat<S extends AnySchema>({
       ? idle
       : `${runtime.definitions.length} tools, generated from the schema. Its edits produce the diffs yours do, and Activity can take the turn back.`;
 
+  /*
+   * A SEAT THAT MAY NOT SIT DOWN SAYS SO, in the open.
+   *
+   * The reason was a `title` on a DISABLED button — unreachable by keyboard,
+   * and needing a hover over a dead control otherwise — and the label
+   * underneath it said something else entirely ("There is something here
+   * already" when the real answer was "not from this seat"). The strip
+   * strikes a withheld act through and says why beside it; a seat is the
+   * same claim about the same policy.
+   */
   return (
+    <span style={{ display: "inline-flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
     <button
       type="button"
       data-testid={testId}
@@ -1740,8 +1751,25 @@ export function AgentSeat<S extends AnySchema>({
       }}
       style={{ whiteSpace: "nowrap" }}
     >
-      {busy ? busyLabel : nothing ? idle : label(count)}
+      {busy ? (
+        busyLabel
+      ) : !permitted ? (
+        <s>{label(count)}</s>
+      ) : nothing ? (
+        idle
+      ) : (
+        label(count)
+      )}
     </button>
+      {!permitted || refused ? (
+        <span
+          data-testid={`${testId}-why`}
+          style={{ fontSize: 11.5, lineHeight: 1.4, color: "var(--graview-ink-muted)", maxWidth: 260 }}
+        >
+          {refused ?? why}
+        </span>
+      ) : null}
+    </span>
   );
 }
 
