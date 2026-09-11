@@ -1,9 +1,9 @@
 {
-  "at": "2026-09-11T18:38:54.543Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-5T0j1h",
+  "at": "2026-09-11T18:54:45.668Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-GnzZ8E",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-5T0j1h/field-notes",
+    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-GnzZ8E/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -71,7 +71,7 @@
   },
   "linked": {
     "said": [
-      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-5T0j1h/linked-orders",
+      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-GnzZ8E/linked-orders",
       "graview create: pnpm install"
     ],
     "consumesByPath": true,
@@ -115,7 +115,10 @@
     "offersStartFresh": true,
     "narrow": {
       "strip": true,
-      "focus": false
+      "focus": true,
+      "share": 0,
+      "buried": [],
+      "inside": true
     },
     "embed": {
       "mounted": true,
@@ -177,7 +180,7 @@
     "theEmptyDistrictOffersTheFirstNote": true,
     "theAskNamesItsFieldInWords": true,
     "theDerivedFormAddsIt": true,
-    "theStripDoesNotCoverWhatYouAreActingOn": false,
+    "theStripDoesNotCoverWhatYouAreActingOn": true,
     "theProjectMountsItselfOnSomebodyElsesPage": true,
     "theKeyboardAloneMakesTheFirstRecord": true,
     "anEditSurvivesAReload": true,
@@ -193,5 +196,5 @@
     "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": true,
     "theLinkedDevServerRunsInABrowser": true
   },
-  "passed": false
+  "passed": true
 }

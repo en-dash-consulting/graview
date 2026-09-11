@@ -685,3 +685,19 @@ the same commit as the fix.
   Chromium. The stage's harness list also now names every harness rather
   than four, and says to run them at the end of every stage — which is the
   lesson of W-026.
+
+### W-031 · Every count in audit-ui ran at one width
+- stage: I · face: scene · width: 390
+- expected: `pnpm audit-ui` would have caught W-029 — it measures exactly
+  that (`covered`: the strip sitting on a plane-0 or plane-1 panel)
+- actual: it opens every screen at 1560×940 and nothing else, so a rail 236
+  wide sitting on the card it is about, in a box 350 wide, was invisible to
+  it — along with every other count in the file at phone width: the small
+  controls, the cut captions, the collisions, the headings, the emphasis, the
+  articles.
+- where it belongs: `scripts/audit-ui.mjs`
+- status: fixed in "walkthrough: I · one narrow screen" · a state may now ask
+  for its own window, and `seedbed/narrow` is 390×620 with a record
+  travelled into. Verified: with the rail forced back to its wide placement
+  the screen reads `?? seedbed/narrow  strip covers 1`, and clean with the
+  fix.

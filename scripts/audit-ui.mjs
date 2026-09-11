@@ -31,6 +31,26 @@ const APPS = {
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
   } },
   seedbed: { port: 5194, ready: "__seedbedReady", states: {
+    /*
+     * A PHONE, and a Graview in a column of an article, are the same shape.
+     * Every count in this file ran at 1560 only — so a rail 236 wide sitting
+     * on the card it was about, in a box 350 wide, was invisible to all of
+     * them. One narrow screen puts every criterion here at that width.
+     */
+    narrow: { viewport: { width: 390, height: 620 }, go: async (p) => {
+      await p.click('[data-testid="activity-button"]');
+      await p.waitForTimeout(300);
+      await p.click('[data-testid="agent-starter"]');
+      await p.waitForTimeout(1600);
+      await p.keyboard.press("Escape");
+      await p.waitForTimeout(400);
+      // Into a record: a focused card in a short, narrow box is where a rail
+      // sized for a wide screen lands on the thing you came to act on.
+      const opener = await p.$("[data-testid^='open-']");
+      if (opener) { await opener.click(); await p.waitForTimeout(500); }
+      const chip = await p.$("[data-graview-pick]");
+      if (chip) { await chip.dblclick(); await p.waitForTimeout(900); }
+    } },
     // The empty app's own first screen: a city of districts saying "none yet".
     empty: async () => {},
     invited: async (p) => { await p.click('[data-graview-view="kind:gardener"]'); },
@@ -367,8 +387,11 @@ try {
     if (only && only !== name) continue;
     const vite = await startVite(name, app.port);
     try {
-      for (const [state, go] of Object.entries(app.states)) {
-        const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+      for (const [state, entry] of Object.entries(app.states)) {
+        // A state may ask for its own window; the rest get the surveyed one.
+        const go = typeof entry === "function" ? entry : entry.go;
+        const viewport = typeof entry === "function" ? { width: 1560, height: 940 } : entry.viewport;
+        const page = await browser.newPage({ viewport });
         try {
           await page.goto(`http://localhost:${app.port}/?theme=light${app.query ?? ""}`, { waitUntil: "load" });
           await page.waitForFunction((f) => f in window, app.ready, { timeout: 120_000 });
