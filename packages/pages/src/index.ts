@@ -14,6 +14,7 @@ export {
   useStoreTick,
   pageStyles,
   PageMain,
+  Repairs,
 } from "./pages.js";
 export type { PageContext } from "./pages.js";
 export { PagesApp, PagesRoutes } from "./router.js";

@@ -923,6 +923,7 @@ function pagesTsx(ids: Ids): string {
   PageMain,
   pageStyles,
   recordFacts,
+  Repairs,
   spatialHref,
   useStoreTick,
   type PageComponent,
@@ -980,13 +981,13 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           {facts.violations.map((violation, index) => (
             <div key={index} style={{ display: "grid", gap: 8 }}>
               <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {violation.repairs.map((repair, at) => (
-                  <button key={at} type="button" style={pageStyles.button} onClick={() => store.apply({ name: repair.mutation, args: { ...repair.args } })}>
-                    {repair.label}
-                  </button>
-                ))}
-              </div>
+              {/*
+                * A repair that needs nothing is one press; one that still has
+                * an argument to choose is an ask. \`Repairs\` is the same
+                * component the derived problems page uses, so a page you
+                * write cannot get this wrong on its own.
+                */}
+              <Repairs<S> store={store} repairs={violation.repairs} />
             </div>
           ))}
         </section>

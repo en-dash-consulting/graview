@@ -11,6 +11,7 @@ import {
   type Brand,
   type Operation,
   type Principal,
+  type Repair,
   type Store,
 } from "@graview/core";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
@@ -703,20 +704,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           {facts.violations.map((violation, index) => (
             <div key={index} style={{ display: "grid", gap: 8 }}>
               <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>
-              {violation.repairs.length > 0 ? (
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {violation.repairs.map((repair, at) => (
-                    <button
-                      key={at}
-                      type="button"
-                      onClick={() => store.apply({ name: repair.mutation, args: { ...repair.args } })}
-                      style={button}
-                    >
-                      {repair.label}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
+              <Repairs<S> store={store} repairs={violation.repairs} />
             </div>
           ))}
         </section>
@@ -899,24 +887,97 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
                 </Link>
               </p>
             ) : null}
-            {violation.repairs.length > 0 ? (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {violation.repairs.map((repair, at) => (
-                  <button
-                    key={at}
-                    type="button"
-                    onClick={() => store.apply({ name: repair.mutation, args: { ...repair.args } })}
-                    style={button}
-                  >
-                    {repair.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
+            <Repairs<S> store={store} repairs={violation.repairs} />
           </section>
         );
       })}
     </PageMain>
+  );
+}
+
+/**
+ * A RULE'S REPAIRS, EACH IN THE SHAPE IT ACTUALLY IS.
+ *
+ * A repair that needs nothing is one press. A repair that still has an
+ * argument to choose — the invariant said `missing: ["owner"]` — is an ASK:
+ * the same derived form the record page uses, with everything the violation
+ * already decided filled in.
+ *
+ * Both were rendered as a bare button calling `store.apply` with the
+ * violation's partial args, so pressing "Hand Buy milk to somebody" on the
+ * problems page threw `Invalid arguments for mutation "assign-item": owner:
+ * expected string, received undefined` into the console and told the person
+ * nothing at all. The actions strip has always turned this repair into an
+ * ask; the two faces simply disagreed.
+ */
+export function Repairs<S extends AnySchema>({
+  store,
+  repairs,
+}: {
+  readonly store: Store<S>;
+  readonly repairs: readonly Repair[];
+}): ReactNode {
+  const [open, setOpen] = useState<number | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  if (repairs.length === 0) return null;
+  const opened = open === null ? null : repairs[open];
+  const asking =
+    opened && (opened.missing ?? []).length > 0
+      ? store.allMutations().find((mutation) => mutation.name === opened.mutation)
+      : undefined;
+  return (
+    <div style={{ display: "grid", gap: 10 }} data-testid="repairs">
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {repairs.map((repair, at) => {
+          const asks = (repair.missing ?? []).length > 0;
+          return (
+            <button
+              key={at}
+              type="button"
+              data-graview-repair={repair.mutation}
+              data-graview-asks={asks || undefined}
+              aria-expanded={asks ? open === at : undefined}
+              onClick={() => {
+                setFailed(null);
+                if (asks) {
+                  setOpen(open === at ? null : at);
+                  return;
+                }
+                setOpen(null);
+                try {
+                  store.apply({ name: repair.mutation, args: { ...repair.args } });
+                } catch (error) {
+                  // A refusal is a result, said where the press happened.
+                  setFailed(error instanceof Error ? error.message : String(error));
+                }
+              }}
+              style={button}
+            >
+              {/* The ellipsis the strip uses: a press that opens a question. */}
+              {asks ? `${repair.label} …` : repair.label}
+            </button>
+          );
+        })}
+      </div>
+      {asking && opened ? (
+        <DerivedForm<S>
+          store={store}
+          mutation={asking}
+          prefilled={{ ...opened.args }}
+          onDone={() => setOpen(null)}
+        />
+      ) : null}
+      {opened && !asking && (opened.missing ?? []).length > 0 ? (
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: 13 }}>
+          “{opened.label}” names {opened.mutation}, which this app does not declare.
+        </p>
+      ) : null}
+      {failed ? (
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: 13 }}>
+          {failed}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
