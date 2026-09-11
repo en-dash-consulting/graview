@@ -1028,6 +1028,31 @@ describe("going deeper into a card", () => {
    * going deeper burst it into chips anyway, trading the designed picture
    * for the fallback it exists to improve on.
    */
+  /*
+   * A place you are offered must be a place you can go. A lens registered
+   * over a kind is listed by name in the bar from the first paint — and
+   * pressing it on an empty graph changed the address and drew nothing at
+   * all, because every branch that places a focused group required the group
+   * to have members. The empty picture is exactly the one a blank app needs.
+   */
+  it("draws a group you have gone to even when nobody is in it", () => {
+    const bare = new Graph([], []);
+    const at = { ...EMPTY_VIEW, focusId: aggregateId("person"), zoom: true };
+    const placed = layout(bare as never, schema, at, { width: 1280, height: 800 });
+    const card = placed.nodes.find((node) => node.id === aggregateId("person"));
+    expect(card).toBeDefined();
+    expect(card?.plane).toBe(0);
+    expect(card?.aggregate?.memberIds).toEqual([]);
+    expect(card?.aggregate?.label).toBe("People");
+  });
+
+  it("still refuses an address whose kind nobody declared", () => {
+    const at = { ...EMPTY_VIEW, focusId: aggregateId("unicorn"), zoom: true };
+    const placed = layout(graph(), schema, at, { width: 1280, height: 800 });
+    expect(placed.nodes.some((node) => node.plane === 0)).toBe(false);
+    expect(placed.nodes.some((node) => node.id === aggregateId("unicorn"))).toBe(false);
+  });
+
   it("goes INTO the picture a kind has of its own, leaving the district shut", () => {
     const up = withOverview(EMPTY_VIEW, true);
     const gone = withJackIn(up, kindCardId("person"), { ownPicture: true });
