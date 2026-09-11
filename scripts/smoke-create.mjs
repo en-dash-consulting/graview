@@ -238,7 +238,16 @@ try {
     b.offers = await offers.allTextContents();
     await offers.filter({ hasText: "Add a note" }).first().click();
     await page.waitForTimeout(300);
-    await page.fill('input[aria-label="label"]', "Water the ferns");
+    /*
+     * The ask names its field IN WORDS. `label` is the declaration's
+     * identifier; the pages face has always said "Label", and the scene
+     * asked with the raw key — the same act reading two ways on two faces.
+     */
+    b.asksInWords = await page.evaluate(() => {
+      const input = document.querySelector('[data-testid="inspector-strip"] input');
+      return input ? { name: input.getAttribute("aria-label"), placeholder: input.placeholder } : null;
+    });
+    await page.fill('input[aria-label="Label"]', "Water the ferns");
     await page.click('form button[type="submit"]');
     await page.waitForTimeout(700);
     b.afterForm = (await districtText(page)).trim();
@@ -380,7 +389,7 @@ try {
     await page.waitForTimeout(500);
     await page.locator('[data-testid="affordances"] button[data-affordance]').filter({ hasText: "Add a work order" }).first().click();
     await page.waitForTimeout(300);
-    await page.fill('input[aria-label="label"]', "Replace the pump");
+    await page.fill('input[aria-label="Label"]', "Replace the pump");
     await page.click('form button[type="submit"]');
     await page.waitForTimeout(700);
     report.linked.browser = {
@@ -418,6 +427,7 @@ report.verdict = {
         theSeatPlantsStarterDataFromTheDeclaration: b.seatPlantedSomething === true && (b.seatLog ?? []).length > 0,
         freshIsTheWayBackToEmpty: b.freshIsEmptyAgain === true,
         theEmptyDistrictOffersTheFirstNote: (b.offers ?? []).some((text) => text.includes("Add a note")),
+        theAskNamesItsFieldInWords: b.asksInWords?.name === "Label" && b.asksInWords?.placeholder === "Label",
         theDerivedFormAddsIt: b.theFormAddedIt === true,
         anEditSurvivesAReload: b.survivedAReload === true && b.offersStartFresh === true,
         thePagesFaceFitsAPhoneAndItsFormApplies: b.pagesHome === true && b.pagesFitsAPhone === true && b.pagesFormApplied === true,

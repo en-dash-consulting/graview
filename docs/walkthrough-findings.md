@@ -65,3 +65,20 @@ the same commit as the fix.
   criterion added: audit-ui `unnamed` (a view host whose name is its own
   `data-graview-view`, or reads like an id). Verified failing without the
   fix: `?? todo/raised 3 cards named by their address: someday → someday`
+
+### W-004 · The scene asks for a field by its key; the pages face asks in words
+- stage: A · face: scene · width: 1280 · scheme: both
+- expected: one act reads the same way on both faces
+- actual: the strip's ask labelled its field `label` (aria-label and
+  placeholder both the raw identifier), and an editor opened in place was
+  named `label` too, while the same act on `/pages` said "Label". A second
+  kind's `dependsOn` would have read `dependsOn` on one face and "Depends on"
+  on the other.
+- where it belongs: `packages/primitives/src/workbench/index.tsx` (the ask's
+  input), `packages/primitives/src/editable.tsx` (the in-place editors)
+- harness that should have caught it: `scripts/smoke-create.mjs` used
+  `input[aria-label="label"]` as a selector — it depended on the bug;
+  `scripts/audit-ui.mjs` — no criterion
+- status: fixed in "walkthrough: A · a field is asked for in words" ·
+  criteria added: smoke-create verdict `theAskNamesItsFieldInWords`;
+  audit-ui `keyed` (an editor whose name is the key it edits)

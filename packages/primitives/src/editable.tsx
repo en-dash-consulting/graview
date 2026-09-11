@@ -1,4 +1,4 @@
-import { readableFields, type AnySchema } from "@graview/core";
+import { humaniseField as humanise, readableFields, type AnySchema } from "@graview/core";
 import { useEditableFields, useGraview, useNode } from "@graview/react";
 import type { EditableField } from "@graview/tools";
 import { useEffect, useRef, useState } from "react";
@@ -103,7 +103,7 @@ export function EditableValue<S extends AnySchema>({
     return (
       <span
         role="group"
-        aria-label={`Change ${field}`}
+        aria-label={`Change ${humanise(field).toLowerCase()}`}
         data-graview-field={field}
         style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}
         onKeyDown={(event) => {
@@ -145,7 +145,7 @@ export function EditableValue<S extends AnySchema>({
       {editable.shape.type === "choice" ? (
         <select
           ref={input as { current: HTMLSelectElement | null }}
-          aria-label={field}
+          aria-label={humanise(field)}
           data-graview-field={field}
           value={draft}
           onChange={(event) => done(event.target.value)}
@@ -161,7 +161,7 @@ export function EditableValue<S extends AnySchema>({
       ) : (
         <input
           ref={input as { current: HTMLInputElement | null }}
-          aria-label={field}
+          aria-label={humanise(field)}
           data-graview-field={field}
           type={
             editable.shape.type === "number"
@@ -214,7 +214,7 @@ function coerce(field: EditableField, draft: string): unknown {
  * A field name, in words. Re-exported from the framework so a view that wants
  * only this does not have to reach past the primitive that uses it.
  */
-export { humaniseField as humanise } from "@graview/core";
+export { humanise };
 
 /**
  * A node's own fields, shown as a definition list and editable in place.
