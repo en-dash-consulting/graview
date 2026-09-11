@@ -79,6 +79,9 @@ export const sow = defineMutation("sow", {
 
 export const tend = defineMutation("tend", {
   title: "Name a caretaker",
+  // Standing on the gardener, naming her the caretaker of a plot is her
+  // taking one on — "Name a caretaker" there reads as naming HERS.
+  fromTheOtherEnd: "Take on a plot",
   description: "Say who looks after a plot.",
   subject: { kinds: ["plot"], arg: "plotId" },
   connects: ["tended-by"],

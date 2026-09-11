@@ -293,6 +293,44 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
   }
 
+  /*
+   * AN ACT OFFERED FROM AN END IT HAS NO WORDS FOR.
+   *
+   * A mutation that declares what it connects or severs is offered from
+   * EITHER endpoint — standing on a person, "take this one off the run" is
+   * the natural thing to say. The button there is labelled with `title`,
+   * which is written from the subject's side: "Hand it to someone", offered
+   * on the owner, reads as handing the owner to someone. The same shape as
+   * `edge-without-inverse`, one layer up: the relation has two readings and
+   * the act only has one.
+   */
+  for (const mutation of app.mutations ?? []) {
+    if (mutation.fromTheOtherEnd) continue;
+    const subject = mutation.subject;
+    const ties = [...(mutation.connects ?? []), ...(mutation.severs ?? [])];
+    if (!subject || ties.length === 0 || (subject.kinds as unknown) === "*") continue;
+    const subjectKinds = subject.kinds as readonly string[];
+    // The far ends: node-reference arguments naming a kind the subject is not.
+    const farEnds = new Set<string>();
+    for (const ref of nodeRefArgs(mutation.input)) {
+      if (ref.name === subject.arg) continue;
+      for (const kind of ref.kinds) {
+        if (kind !== "*" && !subjectKinds.includes(kind)) farEnds.add(kind);
+      }
+    }
+    if (farEnds.size === 0) continue;
+    const spoken = [...farEnds].map((kind) => withArticle(kind)).join(" or ");
+    add({
+      severity: "warning",
+      code: "act-without-far-end-reading",
+      where: `defineMutation("${mutation.name}")`,
+      message:
+        `"${mutation.title ?? mutation.name}" is written from ${subjectKinds.map((kind) => withArticle(kind)).join(" or ")}, ` +
+        `and is also offered on ${spoken}, where it is labelled with those same words — which is the wrong way round.`,
+      fix: `Add fromTheOtherEnd: "…" — how this act reads standing on ${spoken}.`,
+    });
+  }
+
   for (const definition of app.schema.definitions) {
     for (const [edgeKind, edge] of Object.entries(definition.edges)) {
       if (edge.to === "*") continue;

@@ -81,6 +81,12 @@ agent tool that walks the graph.
 - **`creates`** on the mutation that adds this kind (`creates: ["fixture"]`):
   the empty kind card then offers "Add a fixture" by derivation — the blank
   graph onboards itself.
+- **`fromTheOtherEnd`** on the act that makes or breaks the edge. An act
+  declaring `connects` or `severs` is offered from BOTH ends of the tie, and
+  `title` is written from the subject's side: "Name a caretaker", offered on
+  the gardener, reads as naming hers. Say how it reads standing there
+  (`fromTheOtherEnd: "Take on a plot"`) — `graview check` warns
+  `act-without-far-end-reading` and names the end it has no words for.
 - **`lifecycle`** when members expire — `{ field: "status", retired:
   ["played"] }` or `{ field: "until", retired: "date" }`. Every count then
   aggregates over the horizon ("4, +12 past") instead of drowning, and
@@ -98,6 +104,8 @@ pnpm build && npx graview check ./dist/domain/app.js
 Report **the actual output**, including warnings. What it catches here:
 
 - `edge-target-undeclared` — an edge to a kind nobody declared
+- `edge-without-inverse` — a relation with words for one of its two readings
+- `act-without-far-end-reading` — an act offered on an end it has no words for
 - `field-role-missing-field` — a role pointing at a field that is not there
 - `required-invariant-unregistered` — `requiresInvariant` naming no rule
 - `mutation-untitled` / `mutation-undescribed` — a verb nobody can read
