@@ -384,6 +384,16 @@ export function CoverageView<S extends AnySchema>({
               <div
                 key={column.id}
                 data-graview-pick={column.id}
+                /*
+                 * SAID, NOT ONLY PAINTED. The column head already went faint
+                 * when a selection reached past it; the row labels said so in
+                 * the tree and the columns and cells did not, so half this
+                 * picture's emphasis existed only as a colour — checkable by
+                 * nothing, and absent from what a screen reader can reach.
+                 */
+                data-graview-emphasis={
+                  lit.size === 0 ? "plain" : lit.has(column.id) ? "lit" : "dimmed"
+                }
                 title={column.label}
                 style={{
                   flex: 1,
@@ -534,7 +544,17 @@ export function CoverageView<S extends AnySchema>({
                            * anything else on the screen. The a11y harness
                            * caught it: focus never left plane 0.
                            */
-                          {...(filled ? { "data-graview-pick": column.id } : {})}
+                          {...(filled
+                            ? {
+                                "data-graview-pick": column.id,
+                                "data-graview-emphasis":
+                                  lit.size === 0
+                                    ? "plain"
+                                    : lit.has(column.id) || lit.has(row.id)
+                                      ? "lit"
+                                      : "dimmed",
+                              }
+                            : {})}
                           title={
                             filled
                               ? `${column.label} answers ${row.ref || row.label}`

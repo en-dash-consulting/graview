@@ -191,6 +191,15 @@ const ListsView = ((props: ViewProps<S>) => {
             <section key={list.id} style={{ display: "grid", gap: 8, minWidth: 0 }}>
               <header
                 data-graview-pick={list.id}
+                /*
+                 * The tasks under it said what a selection lit; the list's own
+                 * header only painted it — so twelve of this view's fifteen
+                 * marks made a claim the tree could be asked about and three
+                 * did not. Within one picture it is all of them or none.
+                 */
+                data-graview-emphasis={
+                  lit.size === 0 ? "plain" : lit.has(list.id) ? "lit" : "dimmed"
+                }
                 style={{
                   display: "flex",
                   alignItems: "baseline",

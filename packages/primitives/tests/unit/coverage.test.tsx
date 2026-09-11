@@ -1,7 +1,15 @@
-import { createSchema, defineNode } from "@graview/core";
+import { createSchema, defineNode, Store } from "@graview/core";
+import { EMPTY_VIEW, aggregateId } from "@graview/layout";
+import { GraviewProvider, Scene, createViews } from "@graview/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { buildCoverage, CoverageBindingError, createCoverageLens } from "../../src/index.js";
+import {
+  buildCoverage,
+  CoverageBindingError,
+  createCoverageLens,
+  registerDefaultViews,
+} from "../../src/index.js";
 
 /**
  * The lens knows nothing about bids. This fixture is deliberately a different
@@ -98,5 +106,49 @@ describe("the coverage lens", () => {
     // filling one would make the picture lie about who covers what.
     const grid = buildCoverage(nodes, [{ kind: "mitigates", from: "r1", to: "c1" }], options, schema);
     expect(grid.cells).toEqual([]);
+  });
+});
+
+/*
+ * WHAT A SELECTION LIGHTS IS A FACT, NOT A COLOUR.
+ *
+ * The row labels said their emphasis in the tree; the column heads and the
+ * filled cells only painted it — so half the marks in the picture made a
+ * claim nothing could check and a screen reader could not reach.
+ */
+describe("the grid says what it lights", () => {
+  const render = (selection: readonly string[]) =>
+    renderToStaticMarkup(
+      <GraviewProvider
+        store={new Store({ schema, mutations: [], invariants: [], snapshot: { nodes, edges } })}
+        views={registerDefaultViews(schema, createViews(schema)).register(
+          "risk",
+          { cardinality: "many", fidelity: "full" },
+          createCoverageLens({ rows: "risk", columns: "control", link: "mitigates" })
+            .View as never,
+          { title: "Covered" },
+        )}
+        initialView={{ ...EMPTY_VIEW, focusId: aggregateId("risk"), zoom: true }}
+        initialSelection={selection}
+      >
+        <Scene renderer="dom" />
+      </GraviewProvider>,
+    );
+
+  const marks = (html: string): string[] =>
+    [...html.matchAll(/data-graview-emphasis="([a-z]+)"/g)].map((match) => match[1]!);
+
+  it("says plain on every mark when nothing is selected", () => {
+    const said = marks(render([]));
+    // Rows, column heads and filled cells: every one of them, and all plain.
+    expect(said.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(said)).toEqual(new Set(["plain"]));
+  });
+
+  it("lights and dims every mark once something is selected", () => {
+    const said = marks(render(["c1"]));
+    expect(said).toContain("lit");
+    expect(said).toContain("dimmed");
+    expect(said).not.toContain("plain");
   });
 });
