@@ -2,7 +2,7 @@
 id: "b04b600e-401f-49a1-97a0-a8539408dd70"
 level: "feature"
 title: "A seamless app-creation flow: the walkthrough"
-status: "completed"
+status: "in_progress"
 priority: "critical"
 tags:
   - "walkthrough"
@@ -11,14 +11,12 @@ tags:
   - "pages"
 source: "Nick, 2026-09-10: \"i'm still seeing quite a few bugs in the interfaces, both in the demo page we've been building, and the apps we've built using the package. i think we need to do a more robust walk-through of spinning up a new app, with clear acceptance criteria along the way\""
 startedAt: "2026-09-11T19:51:47.517Z"
-completedAt: "2026-09-11T19:51:47.517Z"
-endedAt: "2026-09-11T19:51:47.517Z"
 acceptanceCriteria:
   - "docs/walkthrough.md is followed stage by stage by an agent that has not seen the repository"
   - "every finding is logged, fixed in a package, and covered by a harness criterion in the same commit"
   - "a second run from a fresh checkout adds nothing to the findings log"
 description: "The plan is docs/walkthrough.md: a new app created beside the framework with `graview create`, worked through nine stages (the blank app; a second kind and an edge; a rule and its repair; lenses; the pages customised; who may do what; remembering and shipping; on somebody else's page; the cross-cutting pass) in both faces, both schemes and both widths, with acceptance criteria per stage. Every finding goes in docs/walkthrough-findings.md, is fixed in the framework package it belongs to (never only in the app), and gains the harness criterion that should have caught it. Done when a second agent works all nine stages from the kick-off prompt and the findings log gains nothing."
-lastModified: "2026-09-11T19:51:47.528Z"
+lastModified: "2026-09-11T20:00:23.250Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -35,3 +33,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Walkthrough G · Remembering and shipping](./walkthrough-g-remembering-and-shipping.md) | completed |
 | [Walkthrough H · On somebody else's page](./walkthrough-h-on-somebody-else-s-page.md) | completed |
 | [Walkthrough I · The cross-cutting pass](./walkthrough-i-the-cross-cutting-pass.md) | completed |
+| [Walkthrough II · The second walk, from a fresh checkout, adds nothing](./walkthrough-ii-the-second-walk-from-a.md) | pending |
