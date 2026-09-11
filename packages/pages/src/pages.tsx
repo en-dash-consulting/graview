@@ -68,7 +68,20 @@ export function StartFreshLink() {
         url.searchParams.set("fresh", "1");
         window.location.assign(url.toString());
       }}
-      style={{ color: "inherit" }}
+      /*
+       * A TARGET, not just a phrase. Inline text at 12.5px is a 15-pixel
+       * target — under the 24 WCAG 2.2 asks for, and the only control on the
+       * routed face that was: it sits in the footer of every page of every
+       * app, so every page of the pages face had exactly one control too
+       * small to hit.
+       */
+      style={{
+        color: "inherit",
+        display: "inline-flex",
+        alignItems: "center",
+        minHeight: 24,
+        minWidth: 24,
+      }}
     >
       Start fresh
     </a>
@@ -150,7 +163,22 @@ const link: React.CSSProperties = {
   alignItems: "center",
   minHeight: 24,
 };
-const plain: React.CSSProperties = { color: "inherit", textDecoration: "none" };
+/*
+ * An UNDERLINED link is a target and an undecorated one is the same target.
+ *
+ * `link` carried the 24px minimum and `plain` — the same thing without the
+ * underline, used on the record page's eyebrow, the list's rows and the
+ * masthead — did not, so the framework's own record page had a 19-pixel
+ * control on it. One site had already patched the minimum back in by hand,
+ * which is the style telling you where it should have lived.
+ */
+const plain: React.CSSProperties = {
+  color: "inherit",
+  textDecoration: "none",
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: 24,
+};
 const button: React.CSSProperties = {
   font: "inherit",
   fontSize: 14,
@@ -307,7 +335,7 @@ export function DefaultShell<S extends AnySchema>({
             </Link>
             <a
               href={sceneHref}
-              style={{ ...plain, ...quiet, marginLeft: "auto", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", minHeight: 24 }}
+              style={{ ...plain, ...quiet, marginLeft: "auto", whiteSpace: "nowrap" }}
               title="The same thing, as a scene"
             >
               Open the scene ↗

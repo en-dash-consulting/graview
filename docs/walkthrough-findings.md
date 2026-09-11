@@ -1164,3 +1164,28 @@ at the end of every stage.
   `packages/pages/tests/unit/what-begins-a-kind.test.tsx` — four cases,
   including that the page's answer and the scene's are the same answer at
   zero owners and at one. Verified failing without the fix.
+
+### W-046 · Every page of the routed face has a control too small to hit
+- stage: E · face: pages · width: 1280 and 390 · scheme: both
+- expected: "every link and button is at least 24px" — the WCAG 2.2 minimum
+  `audit-ui` has counted on the scene's screens since it existed
+- actual: two, in the framework's own pages, in every app. "Start fresh" is
+  inline text in the footer of EVERY page of the routed face: measured 62×15.
+  And `pageStyles.plain` — the same link as `pageStyles.link` without the
+  underline, used for the record page's eyebrow, the list's rows and the
+  masthead — carried no minimum at all, so the derived record page had a
+  44×19 link back to its own list. One site had already patched the minimum
+  back in by hand, which is a style saying where it should have lived.
+- where it belongs: `packages/pages/src/pages.tsx`
+- harness that should have caught it: `audit-ui` measures exactly this and
+  runs on the scene only; `pnpm pages` drives the routed face at phone width
+  and checked side-scroll, headings, link names and labelled inputs — never a
+  control's size
+- status: fixed in "walkthrough: E · a control on a page is a target too" ·
+  `StartFreshLink` and `pageStyles.plain` both carry the 24px minimum, and
+  the hand-patched site drops its duplicate. Criterion added:
+  `verify-pages.mjs`'s `bigEnoughToHit`, which names what it found rather
+  than answering true or false — a bare `false` on a page with forty controls
+  tells you nothing — and fails the harness on a non-empty list. Verified
+  failing without the fix: "Start fresh" 62×15 on all three pages, plus
+  "Tasks" 44×19 on the record.
