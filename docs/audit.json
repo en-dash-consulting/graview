@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-11T20:44:45.646Z",
+  "at": "2026-09-11T20:54:39.181Z",
   "engine": "chromium",
   "screens": [
     {
@@ -133,21 +133,13 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [
-        "wordmark at -102..-3",
-        "place-gardener at 111..169",
-        "chat at 358..422",
-        "activity-button at 434..524",
-        "scheme at 536..568",
-        "Change the garde at -101..217",
-        "Name a caretaker at -101..217"
-      ],
+      "offscreen": [],
       "board": [],
-      "fill": 4,
+      "fill": 5,
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "370x160",
+        "size": "370x124",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       }
     },

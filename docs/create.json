@@ -1,9 +1,9 @@
 {
-  "at": "2026-09-11T20:19:31.098Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-dtLAwM",
+  "at": "2026-09-11T20:55:12.148Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-bO0epH",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-dtLAwM/field-notes",
+    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-bO0epH/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -71,7 +71,7 @@
   },
   "linked": {
     "said": [
-      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-dtLAwM/linked-orders",
+      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-bO0epH/linked-orders",
       "graview create: pnpm install"
     ],
     "consumesByPath": true,
@@ -114,7 +114,7 @@
         "atAltitude": true
       },
       "pressed": {
-        "hash": "#overview=1&sel=kind%3Anote",
+        "hash": "#overview=1",
         "atAltitude": true
       }
     },
@@ -190,7 +190,7 @@
     "theEmptyDistrictOffersTheFirstNote": true,
     "theAskNamesItsFieldInWords": true,
     "theDerivedFormAddsIt": true,
-    "escapeDoesSomethingFromTheFirstScreen": false,
+    "escapeDoesSomethingFromTheFirstScreen": true,
     "theStripDoesNotCoverWhatYouAreActingOn": true,
     "theProjectMountsItselfOnSomebodyElsesPage": true,
     "theKeyboardAloneMakesTheFirstRecord": true,
@@ -207,5 +207,5 @@
     "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": true,
     "theLinkedDevServerRunsInABrowser": true
   },
-  "passed": false
+  "passed": true
 }
