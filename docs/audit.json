@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-11T21:36:44.574Z",
+  "at": "2026-09-11T21:43:13.102Z",
   "engine": "chromium",
   "screens": [
     {
@@ -93,9 +93,7 @@
       "keyed": [],
       "headings": [],
       "halfSaid": [],
-      "painted": [
-        "t-deposit"
-      ],
+      "painted": [],
       "repeats": [],
       "articles": [],
       "covered": [],

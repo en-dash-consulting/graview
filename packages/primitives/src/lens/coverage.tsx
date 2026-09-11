@@ -181,13 +181,42 @@ export function buildCoverage<S extends AnySchema>(
     ? edges.filter((edge) => edge.kind === options.badge!.edge)
     : [];
 
+  /*
+   * WHICH WAY THE EDGE RUNS IS SOMETHING THE SCHEMA ALREADY SAYS.
+   *
+   * This assumed `edge.from` was the column and `edge.to` the row, and the
+   * comment beside it claimed anything else was "a binding mistake rather
+   * than an empty grid, and saying so beats drawing nothing" — which the code
+   * did not do: it dropped the edge in silence. Half of all domains declare
+   * the relation the other way round ("an item is kept by an owner" reads row
+   * → column; "a control mitigates a risk" reads column → row), and those got
+   * a grid of entirely empty cells, every row flagged, and the lens reporting
+   * that nothing was covered when everything was. `graview check` passed,
+   * because the binding was not wrong — the assumption was.
+   *
+   * Guessing per edge would be worse: a hand-built edge running the illegal
+   * way would then fill a cell and the picture would lie about who covers
+   * what. The declaration settles it without guessing — whichever kind
+   * declares `link`, and what it points at, IS the direction — and an edge
+   * that does not fit that orientation is still ignored.
+   */
+  const declares = (kind: string) =>
+    schema?.tryDefinition?.(kind)?.edges?.[options.link]?.to as readonly string[] | undefined;
+  const columnPointsAtRow = (declares(options.columns) ?? []).some(
+    (target) => target === options.rows || target === "*",
+  );
+  const rowPointsAtColumn = (declares(options.rows) ?? []).some(
+    (target) => target === options.columns || target === "*",
+  );
+  // Undeclared either way: keep the reading this lens has always had.
+  const fromIsColumn = columnPointsAtRow || !rowPointsAtColumn;
+  const rowIds = new Set(rowNodes.map((node) => node.id));
+  const columnIds = new Set(columnNodes.map((node) => node.id));
   const cells: CoverageCell[] = [];
   for (const edge of linked) {
-    // The edge runs column → row; anything else is a binding mistake rather
-    // than an empty grid, and saying so beats drawing nothing.
-    const rowId = rowNodes.find((node) => node.id === edge.to)?.id;
-    const columnId = columnNodes.find((node) => node.id === edge.from)?.id;
-    if (rowId && columnId) cells.push({ rowId, columnId });
+    const rowId = fromIsColumn ? edge.to : edge.from;
+    const columnId = fromIsColumn ? edge.from : edge.to;
+    if (rowIds.has(rowId) && columnIds.has(columnId)) cells.push({ rowId, columnId });
   }
 
   const required = new Set(options.requiredGroups ?? []);

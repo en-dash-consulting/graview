@@ -188,3 +188,87 @@ describe("the grid says what it lights", () => {
     expect(said).not.toContain("plain");
   });
 });
+
+/**
+ * THE LENS IS TOLD WHICH KINDS PLAY WHICH PART, NOT WHICH WAY THE EDGE RUNS.
+ *
+ * `buildCoverage` read `edge.from` as the column and `edge.to` as the row,
+ * and the comment beside it claimed that anything else was "a binding mistake
+ * rather than an empty grid, and saying so beats drawing nothing" — which the
+ * code did not do: it dropped the edge in silence. Half of all domains
+ * declare the edge the other way round ("an item is kept by an owner" reads
+ * row → column; "a control mitigates a risk" reads column → row), and those
+ * got a full grid of empty cells, every row flagged, and the lens reporting
+ * that nothing was covered when everything was. `graview check` passed,
+ * because the binding was not wrong — the assumption was.
+ */
+const held = defineNode("held", {
+  fields: z.object({ label: z.string() }),
+  // The edge runs held → holder: the row points at the column.
+  edges: { "kept-by": { to: ["holder"], description: "who keeps it", inverse: "what they keep" } },
+  plural: "Held",
+});
+const holder = defineNode("holder", {
+  fields: z.object({ label: z.string() }),
+  plural: "Holders",
+});
+const otherWay = createSchema([held, holder]);
+const otherNodes = [
+  { id: "h1", kind: "held", label: "One" },
+  { id: "h2", kind: "held", label: "Two" },
+  { id: "k1", kind: "holder", label: "Ana" },
+  { id: "k2", kind: "holder", label: "Bo" },
+];
+const otherEdges = [
+  { kind: "kept-by", from: "h1", to: "k1" },
+  { kind: "kept-by", from: "h2", to: "k1" },
+];
+
+describe("an edge declared from the row towards the column", () => {
+  const bound = { rows: "held", columns: "holder", link: "kept-by" } as const;
+
+  it("fills the cells rather than reporting an empty grid", () => {
+    const grid = buildCoverage(otherNodes as never, otherEdges, bound, otherWay);
+    expect(grid.cells.map((cell) => [cell.rowId, cell.columnId])).toEqual([
+      ["h1", "k1"],
+      ["h2", "k1"],
+    ]);
+    // Nothing uncovered, and the holder nobody uses is the one empty column.
+    expect(grid.gaps).toEqual([]);
+    expect(grid.unasked).toEqual(["k2"]);
+    expect(grid.columns.filter((column) => !column.used).map((column) => column.id)).toEqual(["k2"]);
+  });
+
+  it("reads the same graph the same way when bound the other way up", () => {
+    const grid = buildCoverage(
+      otherNodes as never,
+      otherEdges,
+      { rows: "holder", columns: "held", link: "kept-by" },
+      otherWay,
+    );
+    expect(grid.cells.map((cell) => [cell.rowId, cell.columnId]).sort()).toEqual([
+      ["k1", "h1"],
+      ["k1", "h2"],
+    ]);
+  });
+
+  it("keeps the declared direction when both ends are the same kind", () => {
+    const item = defineNode("item", {
+      fields: z.object({ label: z.string() }),
+      edges: { "depends-on": { to: ["item"], description: "what comes first", inverse: "what waits" } },
+      plural: "Items",
+    });
+    const selfish = createSchema([item]);
+    const grid = buildCoverage(
+      [
+        { id: "a", kind: "item", label: "A" },
+        { id: "b", kind: "item", label: "B" },
+      ] as never,
+      [{ kind: "depends-on", from: "a", to: "b" }],
+      { rows: "item", columns: "item", link: "depends-on" },
+      selfish,
+    );
+    // One cell, the declared way round: from is the column, to is the row.
+    expect(grid.cells.map((cell) => [cell.rowId, cell.columnId])).toEqual([["b", "a"]]);
+  });
+});
