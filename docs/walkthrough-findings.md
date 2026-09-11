@@ -1129,3 +1129,38 @@ at the end of every stage.
   twenty screens carried noise, and a count nobody has to read past is a
   count that can be enforced. Verified: with the exclusion removed the gate
   reports "6 of 26 screens clean" and exits 1.
+
+### W-045 · The derived list page offers an act it cannot ask for
+- stage: E · face: pages · width: any · scheme: both
+- expected: every surface offers what can act, which is what
+  `graview-pages` tells an app's own pages to do — "filtering
+  `store.allMutations()` by `subject.kinds` yourself looks equivalent and is
+  not"
+- actual: the framework's own list page did exactly that scan — `creates`
+  plus `store.permits` — which answers the permission question and not the
+  askability one. A creating act needing a node reference with no candidates
+  ("Add an item for someone", with nobody to hand it to yet) is withheld in
+  the scene and was offered on the list page as a live form: an empty picker
+  with a `required` select, so the one thing anyone could do was press submit
+  and be refused for a reason the page already knew. There was also no
+  derivation an APP's own list page could ask instead — `recordFacts` wants a
+  node id and a list page is about a kind — so the skill's rule was one an
+  app could not follow on that surface either. Found writing Walk's design:
+  its list pages rendered no acts at all, because `recordFacts(store,
+  "kind:item")` is null.
+- where it belongs: `packages/pages/src/facts.ts` (nothing to ask),
+  `packages/pages/src/pages.tsx` (the scan)
+- harness that should have caught it: `pnpm pages` drives the routed face of
+  `apps/todo`, whose creating acts all take a label and nothing else — so
+  every act in every list page of every fixture happened to be askable
+- status: fixed in "walkthrough: E · a list page offers what can act" ·
+  `kindFacts(store, kind, options)` is the sibling of `recordFacts` for a
+  surface about a kind rather than a node, making the same
+  `deriveAffordances` call the scene makes for a selected district. The
+  derived list page uses it, and passes the candidates the derivation
+  narrowed rather than letting the form list everything; withheld acts come
+  from the same set with the policy's own sentence. `graview-pages` teaches
+  it. Criterion added:
+  `packages/pages/tests/unit/what-begins-a-kind.test.tsx` — four cases,
+  including that the page's answer and the scene's are the same answer at
+  zero owners and at one. Verified failing without the fix.

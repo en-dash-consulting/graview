@@ -120,3 +120,45 @@ export function recordFacts<S extends AnySchema>(
     })),
   };
 }
+
+export interface KindFacts {
+  readonly kind: string;
+  readonly members: readonly { readonly id: string; readonly kind: string }[];
+  /**
+   * The acts that can BEGIN this kind, as the derivation offers them — and
+   * the ones this seat may not take, with the policy's own sentence.
+   */
+  readonly actions: AffordanceSet;
+}
+
+/**
+ * Everything a LIST page says about a kind, derived once — the sibling of
+ * `recordFacts` for the surface that is about a kind rather than a node.
+ *
+ * The list page had no derivation to ask, so it filtered `store.allMutations()`
+ * by `creates` and checked `store.permits` — which is the exact thing
+ * `graview-pages` tells an app's own page not to do, done by the framework's
+ * own page. The two answers differ: the derivation also drops an act it
+ * cannot ASK for. A creating act that needs a node reference with no
+ * candidates — "add an item for someone", with nobody yet — is withheld in
+ * the scene and was offered on the list page as a live form whose picker was
+ * empty and whose submit could only refuse.
+ *
+ * Same call the scene makes for a selected district: an empty selection,
+ * with the kind named.
+ */
+export function kindFacts<S extends AnySchema>(
+  store: Store<S>,
+  kind: string,
+  options: FactsOptions = {},
+): KindFacts {
+  return {
+    kind,
+    members: store.graph.nodesOfKind(kind as never) as readonly { id: string; kind: string }[],
+    actions: deriveAffordances(store, [], {
+      kindSelection: [kind],
+      ...(options.principal ? { principal: options.principal } : {}),
+      ...(options.context ? { context: options.context } : {}),
+    }),
+  };
+}

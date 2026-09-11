@@ -43,7 +43,7 @@ may not take and says why; a page you write does the same.
 `createPageRegistry(schema)` replaces pages per kind and surfaces per app:
 
 ```tsx
-import { createPageRegistry, DerivedForm, PageMain, pageStyles, recordFacts, spatialHref, useStoreTick } from "@graview/pages";
+import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, spatialHref, useStoreTick } from "@graview/pages";
 
 function PlotPage({ context }: { context: PageContext<S> }) {
   const { store, principal } = context;
@@ -86,6 +86,13 @@ Rules for a page at this rung:
    equivalent and is not — it offers "Take it back" on a record with nothing
    attached, and a picker with no candidates in it.
 
+   A **list** page is about a kind rather than a node, so its question is
+   `kindFacts(store, kind, { principal }).actions` — the acts that can BEGIN
+   this kind. Same rule, same reason: filtering by `creates` and checking
+   `store.permits` answers the permission question and not the askability
+   one, so "add an item for someone" is offered with nobody to hand it to,
+   as a form whose picker is empty and whose submit can only refuse.
+
 ## Rung two: a product design
 
 The registry has three surfaces and two page types, and replacing all of them
@@ -122,7 +129,8 @@ forms in place. What a design must keep doing:
   dropping them.
 - **Offer what can act.** `facts.actions.affordances`, never your own scan of
   the mutations: the derivation drops an act whose every candidate is already
-  taken and prefills the arguments the record itself decides.
+  taken and prefills the arguments the record itself decides. On a list page
+  that is `kindFacts(store, kind).actions`.
 
 ## The embed
 
