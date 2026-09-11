@@ -951,3 +951,30 @@ at the end of every stage.
   Criterion added: a sweep over 13 heights × 3 widths × shut and opened, with
   a FOUR-kind schema, asserting no two districts overlap by even a pixel.
   Verified failing without the fix, at every height from 320 down.
+
+### W-039 · The strip offers answers without ever saying what the question is
+- stage: B · face: scene · width: 1280 and 390 · scheme: both
+- expected: the ask names what it is asking, in the app's own words, the way
+  W-004 made the text field do
+- actual: two shapes of ask, one of them mute. Pressing "Hand it to
+  someone …" on an item put two bare buttons on the strip — "Ana", "Bo" —
+  under no heading, with no `aria-label` and no `title`: what was being asked
+  was a guess for anyone looking and nothing at all for anyone listening. The
+  strip's whole text for that state was "AnaBo". And where a multi-part ask
+  DID name the parameter, the step counter printed the declaration's
+  identifier: "label · 1 of 2", the same bug W-004 fixed one element lower
+  down (it would read "dependsOn · 1 of 2" on the scaffold's own edge act).
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+- harness that should have caught it: `smoke-create`'s `theAskNamesItsFieldInWords`
+  reads the strip's `input` — the branch with an input is the branch that was
+  already right, and no harness had ever pressed an act whose open argument
+  is a node reference
+- status: fixed in "walkthrough: B · an ask that says what it is asking" ·
+  the question is a named group over the candidates (`role="group"`,
+  `aria-labelledby`), each candidate carries it in its own accessible name
+  ("Owner: Ana"), and every place the parameter is named goes through
+  `humaniseField`. A single text field still names itself and is not given a
+  heading saying the same word again. Criterion added:
+  `packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx` — three
+  cases over both branches. Verified failing without the fix: the group is
+  absent and the counter reads "label · 1 of 2".

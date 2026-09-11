@@ -35,7 +35,7 @@ import {
   type ToolCall,
   type ToolRuntime,
 } from "@graview/tools";
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chip } from "../primitives/index.js";
 
 /**
@@ -77,6 +77,8 @@ export function AnswerArgs({
   const { store } = useGraview<AnySchema>();
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [draft, setDraft] = useState("");
+  // Stable across the walk's steps, so the group's label never dangles.
+  const promptId = useId();
 
   const remaining = affordance.open.filter((parameter) => !(parameter.name in answers));
   const parameter = remaining[0];
@@ -108,21 +110,47 @@ export function AnswerArgs({
   const shape = parameter.shape ?? { type: "unknown" as const };
   const choices = choicesFor(parameter, shape);
 
+  /*
+   * THE ASK SAYS WHAT IT IS ASKING, IN WORDS.
+   *
+   * The text branch has said so since W-004 — the input's own label and
+   * placeholder are the question. The CHOICES branch said nothing at all: an
+   * act with one node reference to fill put two bare buttons on the strip
+   * ("Ana", "Bo") under no heading, so what was being asked was a guess for
+   * anyone looking and unsaid entirely for anyone listening. And where a
+   * step counter did name the parameter it used the declaration's
+   * IDENTIFIER — "dependsOn · 1 of 2" — which is the same bug W-004 fixed
+   * one element lower down.
+   */
+  const asking = humaniseField(parameter.name);
+  const step =
+    affordance.open.length > 1
+      ? `${asking} · ${affordance.open.length - remaining.length + 1} of ${affordance.open.length}`
+      : asking;
+
   return (
     <div style={{ display: "grid", gap: 4, padding: "5px 0 2px" }}>
-      {affordance.open.length > 1 ? (
-        <span style={{ fontSize: 10.5, color: "var(--graview-ink-faint)" }}>
-          {parameter.name} · {affordance.open.length - remaining.length + 1} of{" "}
-          {affordance.open.length}
+      {/* A single text field is named by the field itself; naming it twice
+          over is the same sentence twice. Anything else needs the question. */}
+      {affordance.open.length > 1 || choices.length > 0 ? (
+        <span id={promptId} style={{ fontSize: 10.5, color: "var(--graview-ink-faint)" }}>
+          {step}
         </span>
       ) : null}
 
       {choices.length > 0 ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+        <div
+          role="group"
+          aria-labelledby={promptId}
+          style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
+        >
           {choices.slice(0, 10).map((choice) => (
             <button
               key={choice}
               type="button"
+              // The question travels with the answer: a control read on its
+              // own says what choosing it would mean.
+              aria-label={`${asking}: ${nameOf(store, choice)}`}
               style={{ padding: "3px 9px", fontSize: 12 }}
               onClick={() => answer(choice)}
             >
