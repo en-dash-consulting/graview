@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-11T19:06:12.061Z",
-  "engine": "chromium",
+  "at": "2026-09-11T19:17:32.239Z",
+  "engine": "firefox",
   "screens": [
     {
       "app": "todo",
@@ -54,7 +54,7 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x492",
+        "size": "236x493",
         "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Finish it★Give it a new date …"
       }
     },
@@ -132,7 +132,7 @@
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "370x160",
+        "size": "370x162",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       }
     },

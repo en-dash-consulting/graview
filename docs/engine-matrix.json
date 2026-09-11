@@ -1,10 +1,10 @@
 {
-  "at": "2026-09-11T18:50:11.993Z",
+  "at": "2026-09-11T19:14:27.574Z",
   "engines": {
     "chromium": {
       "audit": {
         "ok": true,
-        "screens": 9
+        "screens": 10
       },
       "pages": {
         "ok": true
@@ -17,7 +17,7 @@
     "webkit": {
       "audit": {
         "ok": true,
-        "screens": 9
+        "screens": 10
       },
       "pages": {
         "ok": true
@@ -30,7 +30,7 @@
     "firefox": {
       "audit": {
         "ok": true,
-        "screens": 9
+        "screens": 10
       },
       "pages": {
         "ok": true
