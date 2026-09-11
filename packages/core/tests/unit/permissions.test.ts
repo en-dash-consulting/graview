@@ -9,6 +9,7 @@ import {
   nodeRef,
   PermissionDeniedError,
   Store,
+  whyNot,
   type Policy,
 } from "../../src/index.js";
 
@@ -54,9 +55,9 @@ const rename = bound.defineMutation("rename", {
 const policy: Policy = {
   roles: ["parent", "child"],
   grants: [
-    { roles: ["parent"], mutations: "*" },
+    { roles: ["parent"], mutations: "*", describe: "A parent keeps the rota." },
     // A child may rename a duty and nothing else.
-    { roles: ["child"], mutations: ["rename"], kinds: ["duty"] },
+    { roles: ["child"], mutations: ["rename"], kinds: ["duty"], describe: "A child names their own runs." },
   ],
 };
 
@@ -114,6 +115,35 @@ describe("who may do what", () => {
     if (verdict.ok) return;
     expect(verdict.refusal.wouldNeed).toEqual(["parent"]);
     expect(verdict.refusal.message).toContain("parent can");
+  });
+
+  /*
+   * `describe` on a grant has been documented from the day it was added as
+   * "shown when an action is withheld, so a refusal can say something
+   * useful" — and nothing read it. Every refusal on every surface was a
+   * mutation id and a list of role names: what the declaration says, not what
+   * the organisation means.
+   */
+  it("repeats the policy's own sentence, which is why the grant has one", () => {
+    const verdict = store().permits({ name: "reassign", args: { id: "d1" } }, child);
+    expect(verdict.ok).toBe(false);
+    if (verdict.ok) return;
+    expect(verdict.refusal.message).toContain("A parent keeps the rota.");
+    expect(whyNot(policy, "reassign")).toEqual(["A parent keeps the rota."]);
+  });
+
+  it("says nothing extra when the grants have nothing to say", () => {
+    const quiet = {
+      roles: ["parent", "child"],
+      grants: [{ roles: ["parent"], mutations: "*" }],
+    };
+    expect(whyNot(quiet, "rename")).toEqual([]);
+  });
+
+  it("speaks the subject kind rather than spelling it", () => {
+    const verdict = store().permits({ name: "rename", args: { id: "ana" } }, child);
+    if (verdict.ok) return;
+    expect(verdict.refusal.message).toContain("on a person");
   });
 
   it("refuses a whole gesture before running any of it", () => {

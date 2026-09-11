@@ -98,7 +98,7 @@ export {
   permits,
   permittedMutations,
   rolesOf,
-  rolesWhoCould,
+  rolesWhoCould, whyNot,
 } from "./permissions/policy.js";
 export { PermissionDeniedError } from "./permissions/types.js";
 export {
