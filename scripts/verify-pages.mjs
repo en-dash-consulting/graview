@@ -49,6 +49,26 @@ const hygiene = (page) =>
     labelledInputs: [...document.querySelectorAll("input, select")].every(
       (el) => el.closest("label")?.textContent?.trim() || el.type === "checkbox",
     ),
+    /*
+     * A CONTROL BIG ENOUGH TO HIT. 24px is the WCAG 2.2 minimum, and
+     * `audit-ui` has counted it on the SCENE's screens since it existed —
+     * nothing measured the routed face, where "Start fresh" sat in the
+     * footer of every page of every app at 15 pixels tall. The count names
+     * what it found rather than answering true or false, because a bare
+     * `false` on a page with forty controls tells you nothing.
+     */
+    bigEnoughToHit: [...document.querySelectorAll("a[href], button, summary, select, input")]
+      .filter((el) => {
+        const box = el.getBoundingClientRect();
+        if (box.width === 0 && box.height === 0) return false;
+        if (el.type === "hidden") return false;
+        return box.height < 24 || box.width < 24;
+      })
+      .slice(0, 6)
+      .map((el) => {
+        const box = el.getBoundingClientRect();
+        return `${el.tagName.toLowerCase()} "${(el.textContent ?? "").trim().slice(0, 20)}" ${Math.round(box.width)}x${Math.round(box.height)}`;
+      }),
   }));
 
 try {
@@ -123,7 +143,8 @@ try {
 }
 
 const flat = JSON.stringify(report.checks);
-report.passed = !report.error && !flat.includes("false");
+const tooSmall = Object.values(report.checks).flatMap((check) => check?.bigEnoughToHit ?? []);
+report.passed = !report.error && !flat.includes("false") && tooSmall.length === 0;
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/pages-face.json"), `${JSON.stringify(report, null, 2)}\n`);
 process.stdout.write(`${JSON.stringify(report.checks, null, 1)}\n\nwrote docs/pages-face.json\n`);

@@ -1,26 +1,36 @@
 {
-  "at": "2026-09-11T21:46:26.789Z",
+  "at": "2026-09-11T23:01:48.304Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true
+      "labelledInputs": true,
+      "bigEnoughToHit": [
+        "a \"Start fresh\" 62x15"
+      ]
     },
     "homeIndexesKinds": true,
     "phoneList": {
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true
+      "labelledInputs": true,
+      "bigEnoughToHit": [
+        "a \"Start fresh\" 62x15"
+      ]
     },
     "listLinksRecords": true,
     "phoneRecord": {
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true
+      "labelledInputs": true,
+      "bigEnoughToHit": [
+        "a \"Tasks\" 44x19",
+        "a \"Start fresh\" 62x15"
+      ]
     },
     "recordSaysItsFacts": {
       "fields": true,
@@ -32,5 +42,5 @@
     "sceneOffersThePages": true,
     "recordLinksItsStop": true
   },
-  "passed": true
+  "passed": false
 }
