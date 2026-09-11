@@ -318,3 +318,26 @@ the same commit as the fix.
   be defined`) and "still refuses an address whose kind nobody declared" —
   the kinds in an aggregate address are checked against the declaration now,
   so `aggregate:unicorn` remains a focus id nothing resolves.
+
+### W-016 · Both shipped lenses throw on an empty graph
+- stage: D · face: scene · width: 1280 and 390 · scheme: both
+- expected: neither the board nor the coverage grid throws on an empty graph
+- actual: `buildCoverage` threw `CoverageBindingError: Nothing to lay out: no
+  "risk" and no "control" nodes.` and `buildBoard` threw
+  `BoardBindingError: Nothing to arrange: no "seat" nodes.` — whenever the
+  kinds they are bound to held nothing. Both were written as a helpful
+  diagnostic on the reasoning that an empty result probably means a wrong
+  binding; that is true of a kind nobody declared and false of a blank app,
+  where every kind is empty and the lens's title is already in the bar.
+  Pressing it there took the scene down.
+- where it belongs: `packages/primitives/src/lens/coverage.tsx` and
+  `packages/primitives/src/lens/board.tsx`
+- harness that should have caught it: their own unit tests — every fixture in
+  both files was populated, so the first state of every app was the one state
+  never asked about
+- status: fixed in "walkthrough: D · an empty graph is not a misbinding" ·
+  criteria added: coverage "builds a grid with no rows and no columns" and
+  "renders it"; board "builds a board with no slots and nobody benched". All
+  three failed with the binding errors quoted above. The declaration now
+  answers the question the node count was guessing at: a role naming a kind
+  nobody declared still throws, whatever is in the graph.

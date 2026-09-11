@@ -110,6 +110,42 @@ describe("the coverage lens", () => {
 });
 
 /*
+ * A blank app is where a lens is FIRST seen: its title is in the bar from
+ * the first paint, and pressing it there must draw the empty picture rather
+ * than fall over on it.
+ */
+describe("an empty graph is a picture, not a crash", () => {
+  it("builds a grid with no rows and no columns", () => {
+    const grid = buildCoverage([], [], options, schema);
+    expect(grid.rows).toEqual([]);
+    expect(grid.columns).toEqual([]);
+    expect(grid.cells).toEqual([]);
+  });
+
+  it("renders it", () => {
+    const html = renderToStaticMarkup(
+      <GraviewProvider
+        store={new Store({ schema, mutations: [], invariants: [] })}
+        views={registerDefaultViews(schema, createViews(schema)).register(
+          "risk",
+          { cardinality: "many", fidelity: "full" },
+          createCoverageLens({ rows: "risk", columns: "control", link: "mitigates" })
+            .View as never,
+          { title: "Covered" },
+        )}
+        initialView={{ ...EMPTY_VIEW, focusId: aggregateId("risk"), zoom: true }}
+      >
+        <Scene renderer="dom" />
+      </GraviewProvider>,
+    );
+    // The place is drawn, holding nobody — not an empty scene with a name
+    // in the address.
+    expect(html).toContain('data-graview-view="aggregate:risk"');
+    expect(html).toContain("Covered");
+  });
+});
+
+/*
  * WHAT A SELECTION LIGHTS IS A FACT, NOT A COLOUR.
  *
  * The row labels said their emphasis in the tree; the column heads and the

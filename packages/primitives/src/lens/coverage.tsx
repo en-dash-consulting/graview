@@ -134,9 +134,36 @@ export function buildCoverage<S extends AnySchema>(
   const label = (node: NodeOfSchema<S>) =>
     schema ? labelOf(schema.tryDefinition(node.kind), node as never) : String(asRecord(node)["label"] ?? node.id);
 
+  /*
+   * AN EMPTY GRAPH IS NOT A MISBINDING.
+   *
+   * This used to throw whenever there were no rows and no columns, on the
+   * reasoning that the binding was probably wrong — which is true of a kind
+   * nobody declared and false of a blank app, where every kind is empty and
+   * the lens's title is in the bar from the first paint. Pressing it there
+   * took the whole scene down.
+   *
+   * The declaration answers the question the node count was guessing at: a
+   * role naming a kind that does not exist is a binding error whatever is in
+   * the graph, and a declared kind with nothing in it is an empty picture.
+   */
+  const undeclared = schema
+    ? ([options.rows, options.columns] as const).filter(
+        (kind) => schema.tryDefinition(kind) === undefined,
+      )
+    : [];
+  if (undeclared.length > 0) {
+    throw new CoverageBindingError(
+      `No kind is declared for ${undeclared.map((kind) => `"${kind}"`).join(" or ")}.`,
+      `Check the lens bindings: { rows: "<kind>", columns: "<kind>", link: "<edge kind>" }`,
+    );
+  }
   const rowNodes = nodes.filter((node) => node.kind === options.rows);
   const columnNodes = nodes.filter((node) => node.kind === options.columns);
-  if (rowNodes.length === 0 && columnNodes.length === 0) {
+  if (!schema && rowNodes.length === 0 && columnNodes.length === 0) {
+    // Called headlessly with no schema to ask: the node count is the only
+    // evidence there is, and it is still better than an empty picture with
+    // no explanation.
     throw new CoverageBindingError(
       `Nothing to lay out: no "${options.rows}" and no "${options.columns}" nodes.`,
       `Check the lens bindings: { rows: "<kind>", columns: "<kind>", link: "<edge kind>" }`,
