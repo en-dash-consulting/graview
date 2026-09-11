@@ -596,3 +596,19 @@ the same commit as the fix.
   — TypeScript's own parser over every generated source for three kinds,
   which fails in 300ms with `note: src/embed.tsx: expected [ "',' expected."
   ] to deeply equal []` — and "writes JSON files that are JSON"
+
+### Note · a migration that adds a required field cannot be undone
+- stage: G
+- Not a defect, and worth writing down because the playbook's criterion says
+  "undoable": undoing a step is judged against the CURRENT declaration. A
+  step that introduces a required field has an inverse that leaves a node the
+  new schema refuses, so it cannot be taken back while the app is at the new
+  version — and the interface now says which node and which field rather than
+  throwing (W-025). A step that reshapes values within a field both versions
+  accept — Walk's 2→3, which lower-cases addresses — is undoable, and the
+  walk verified it: the address came back as it was and the undo is in the
+  log as "you Undo: migration 2→3 …".
+- Also observed: `migrateSnapshot` gives every step of one run the same
+  batch, so "undo the migration" means the whole run. Reasonable — a run is
+  one event — but it means a run containing an un-undoable step cannot be
+  undone at all.
