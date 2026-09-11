@@ -124,3 +124,22 @@ the same commit as the fix.
   criteria added: layout "round-trips ends whose ids carry the separator";
   edge-inspector "inspects a line whose ends have minted ids". Both verified
   failing without the fix.
+
+### W-007 · A record page captions a relation from the wrong end
+- stage: B · face: pages · width: 1280 and 390 · scheme: both
+- expected: the pages record captions both directions correctly
+- actual: the connections section's eyebrow was the edge kind, always: an
+  owner's record read "Assigned to" over "What they are seeing to". That is
+  the reading `graview check` warns about by name — `edge-without-inverse`
+  says "from an owner it is captioned 'assigned to', which is the wrong way
+  round" — printed by the framework's own derived page. Where a declaration
+  had no words for a direction, the eyebrow and the heading under it were
+  also the same string twice.
+- where it belongs: `packages/pages/src/pages.tsx` (the connections group)
+- harness that should have caught it:
+  `packages/pages/tests/unit/parity.test.tsx` — it asserted the link data in
+  both directions but never rendered the far end's page
+- status: fixed in "walkthrough: B · a relation is captioned from the end you
+  are standing on" · criterion added: parity "captions a connections section
+  from this end, and never backwards". Verified failing without the fix
+  ("Owned by" over "What they own" on a person's record).

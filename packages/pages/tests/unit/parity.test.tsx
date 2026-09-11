@@ -29,7 +29,9 @@ const duty = defineNode("duty", {
   description: "A run someone owns.",
   fields: z.object({ label: z.string(), minutes: z.number() }),
   plural: "Duties",
-  edges: { "owned-by": { to: ["person"], description: "who owns it" } },
+  // Both readings, because a relation has two ends — and `graview check`
+  // warns `edge-without-inverse` at a declaration that has only one.
+  edges: { "owned-by": { to: ["person"], description: "who owns it", inverse: "what they own" } },
 });
 const schema = createSchema([person, duty]);
 const bound = bindSchema(schema);
@@ -115,6 +117,34 @@ describe("one derivation, two faces", () => {
     const fromPerson = recordFacts(store, "ana")!;
     expect(fromPerson.links[0]?.direction).toBe("in");
     expect(fromPerson.links[0]?.targets[0]?.id).toBe("school-run");
+    expect(fromPerson.links[0]?.description).toBe("what they own");
+  });
+
+  /*
+   * A CONNECTIONS SECTION READS FROM THE END YOU ARE STANDING ON.
+   *
+   * Its eyebrow was the edge kind, so a person's record read "Owned by" over
+   * "What they own" — the reading `graview check` warns about by name
+   * ("from a person it is captioned 'owned by', which is the wrong way
+   * round"). It says what is listed now, which is true from either end.
+   */
+  it("captions a connections section from this end, and never backwards", () => {
+    const store = makeStore();
+    const onTheDuty = renderToStaticMarkup(
+      <PagesApp context={{ store }} initialPath="/duties/school-run" />,
+    );
+    expect(onTheDuty).toContain("Who owns it");
+    expect(onTheDuty).toContain("People");
+    expect(onTheDuty).not.toContain("What they own");
+
+    const onThePerson = renderToStaticMarkup(
+      <PagesApp context={{ store }} initialPath="/people/ana" />,
+    );
+    expect(onThePerson).toContain("What they own");
+    expect(onThePerson).toContain("Duties");
+    // The declaring end's words, over the far end's list, is the wrong way round.
+    expect(onThePerson).not.toContain("Who owns it");
+    expect(onThePerson).not.toContain("Owned by");
   });
 });
 
