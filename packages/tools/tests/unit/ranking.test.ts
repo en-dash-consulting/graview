@@ -10,8 +10,15 @@ import { usageBoost, usageWeights } from "../../src/usage.js";
  * pins and however often anything ran.
  */
 
+/*
+ * `touched` is here so that every act in this fixture CHANGES something
+ * every time it runs. Ranking is about how often an act was used, and an act
+ * that only ever set `done` to true compiled to nothing on its second run —
+ * no primitives, so no op, so nothing for the usage weights to count. The
+ * fixture was measuring the ranking of acts that had stopped happening.
+ */
 const thing = defineNode("thing", {
-  fields: z.object({ label: z.string(), done: z.boolean() }),
+  fields: z.object({ label: z.string(), done: z.boolean(), touched: z.number() }),
   plural: "Things",
 });
 const schema = createSchema([thing]);
@@ -24,7 +31,8 @@ const plain = (name: string, extras: Record<string, unknown> = {}) =>
     subject: { kinds: ["thing"], arg: "id" },
     input: z.object({ id: nodeRef(["thing"]) }),
     apply(ctx, args) {
-      ctx.patchNode(args.id, { done: true });
+      const node = ctx.graph.getNode(args.id) as { touched?: number } | undefined;
+      ctx.patchNode(args.id, { done: true, touched: (node?.touched ?? 0) + 1 });
     },
     ...extras,
   });
@@ -104,7 +112,7 @@ describe("pins and bands", () => {
           intent: "seed",
           mutation: null,
           primitives: [
-            { op: "add-node", node: { id: "t1", kind: "thing", label: "One", done: false } },
+            { op: "add-node", node: { id: "t1", kind: "thing", label: "One", done: false, touched: 0 } },
           ],
           inverse: [{ op: "remove-node", id: "t1" }],
           reads: [],

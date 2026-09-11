@@ -861,3 +861,34 @@ at the end of every stage.
   scaffold assertion that the generated page uses the derivation and not the
   raw lookup. Verified failing without the fixes: all three fail and name the
   record as its own candidate.
+
+### W-036 · "Close it" stays on the strip of something already closed
+- stage: A · face: scene · width: 1280 · scheme: both
+- expected: an act offered as one press, with nothing left to ask, does
+  something when pressed
+- actual: a closed item still offered "Close it". Pressed, nothing changed —
+  and the activity rail gained a second "Close First thing" with an undo
+  beside it that undid nothing. The op went into the log with
+  `primitives: []`, `inverse: []`, `writes: []`: a record that replays to
+  nothing on every future load. The same hole was reachable three ways —
+  this, an agent calling the act twice, and the self-referential link of
+  W-035 whose act guards itself with a silent `return`.
+- where it belongs: `packages/tools/src/providers/schema.ts` (offering it)
+  and `packages/core/src/store.ts` (recording it)
+- harness that should have caught it: nothing pressed an act twice; every
+  fixture applied each act once. `packages/tools/tests/unit/ranking.test.ts`
+  applied one five times to measure usage and got one op — and passed,
+  because it never counted them
+- status: fixed in "walkthrough: A · an act that did nothing is not in the
+  history" · two halves of one rule. `Store.wouldChange` compiles an act and
+  counts what comes out, without snapshotting the graph or re-evaluating the
+  rules, so the provider can ask it for every act on every selection; a
+  one-press act that would change nothing for any of the selection is not
+  offered — an act still holding a question is untouched, because it has not
+  been decided yet. And `applyAll` does not write an op with no primitives:
+  the call stays legal and still returns, it simply leaves no trace, because
+  it left none. `ranking.test.ts`'s fixture now changes something on every
+  run, which is what it always meant to be measuring. Criterion added:
+  `packages/tools/tests/unit/nothing-left-to-do.test.ts` — seven cases across
+  both halves, including a batch where one act acts and one does not.
+  Verified failing without the fixes: five of the seven fail.
