@@ -1870,12 +1870,25 @@ export function AgentSeat<S extends AnySchema>({
  * drop the selection, then the raised relation, then the focus. A spatial
  * interface has to have a way out that does not require finding the right
  * small × in a trail.
+ *
+ * THE OVERVIEW IS ONLY A RUNG WHEN IT IS SOMETHING YOU CLIMBED TO. An app
+ * that OPENS from altitude — which is what `graview create` writes, and what
+ * every app with no in-stack default does — is already home up there, and
+ * leaving it would be going further IN. It is also, until this was fixed, the
+ * state in which Escape did nothing at all: the provider lands a focusless
+ * descent back on the overview (deliberately, so the key is never a void),
+ * which means the rung neither moved nor fell through, and every rung below
+ * it — the selection, the moves, the raised relation — was unreachable from
+ * the first screen of every scaffolded app.
  */
 export function BackOut({ home }: { readonly home: string | null }) {
   const { view, focus, show, go } = useNavigation();
+  const { homeView } = useGraview();
   const { selection, clear } = useSelection();
   const { isJackedIn, exit } = useJackIn();
-  const overview = view.overview ?? false;
+  // Up here on purpose, with somewhere below to land: only then is rising
+  // something Escape can undo.
+  const overview = (view.overview ?? false) && homeView.overview !== true;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

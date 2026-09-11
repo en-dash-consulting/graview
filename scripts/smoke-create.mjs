@@ -252,6 +252,28 @@ try {
     await page.waitForTimeout(700);
     b.afterForm = (await districtText(page)).trim();
     b.theFormAddedIt = !b.afterForm.includes("none yet");
+
+    /*
+     * ESCAPE, FROM THE SCREEN A SCAFFOLDED APP OPENS ON.
+     *
+     * This app's home is altitude, and the provider lands a focusless
+     * descent back on the overview on purpose — so the overview rung of the
+     * ladder moved nothing and fell through to nothing, and Escape did
+     * nothing at all from the first screen. A selection made here, then one
+     * press: the selection has to come off, and the altitude has to stay.
+     */
+    await page.click('[data-graview-view="kind:note"]');
+    await page.waitForTimeout(400);
+    const escapeState = () =>
+      page.evaluate(() => ({
+        hash: location.hash,
+        atAltitude:
+          document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+      }));
+    b.escape = { selected: await escapeState() };
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(400);
+    b.escape.pressed = await escapeState();
     b.axeAfterDark = await (async () => {
       await page.click('[data-testid="scheme"]');
       await page.waitForTimeout(300);
@@ -553,6 +575,12 @@ report.verdict = {
         theEmptyDistrictOffersTheFirstNote: (b.offers ?? []).some((text) => text.includes("Add a note")),
         theAskNamesItsFieldInWords: b.asksInWords?.name === "Label" && b.asksInWords?.placeholder === "Label",
         theDerivedFormAddsIt: b.theFormAddedIt === true,
+        // The top rung of the ladder does not swallow the rest of it.
+        escapeDoesSomethingFromTheFirstScreen:
+          b.escape?.selected?.hash?.includes("sel=") === true &&
+          b.escape?.pressed?.hash?.includes("sel=") === false &&
+          b.escape?.selected?.atAltitude === true &&
+          b.escape?.pressed?.atAltitude === true,
         // A quarter of the card is a pane lapping its margin; most of it is
         // the pane sitting on the thing you came to act on.
         theStripDoesNotCoverWhatYouAreActingOn:
