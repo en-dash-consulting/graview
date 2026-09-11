@@ -72,6 +72,21 @@ describe("the skills package", () => {
     }
   });
 
+  it("sends a page to the derivation for its act list, not to the mutations", () => {
+    /*
+     * A design that scans `store.allMutations()` by subject kind gets acts
+     * that cannot act — "Take it back" on a record with nothing taken, and a
+     * picker with no honest candidates in it. `facts.actions` is the same
+     * `AffordanceSet` the scene's strip reads and is the only list that stays
+     * right on its own. The skill used to name `store.permits` and stop
+     * there, and a design written from it had exactly that defect.
+     */
+    const pages = skills.find((skill) => skill.name === "graview-pages")!;
+    expect(pages.body).toMatch(/facts\.actions|recordFacts\([^)]*\)\.actions/);
+    expect(pages.body).toContain("withheld");
+    expect(pages.body).toContain("store.permits");
+  });
+
   it("never names a finding code the checker cannot produce", () => {
     /*
      * The load-bearing test in this file.
