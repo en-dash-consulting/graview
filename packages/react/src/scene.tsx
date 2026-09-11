@@ -1,3 +1,4 @@
+import { labelOf } from "@graview/core";
 import type { AnySchema, Fidelity, GraphReader, NodeOfSchema } from "@graview/core";
 import {
   isAggregateId,
@@ -1410,7 +1411,18 @@ function SceneViewHost({
   children,
 }: HostProps) {
   // The tag's dot must agree with every other dot in a branded app.
-  const { brand: hostBrand } = useGraview();
+  const { brand: hostBrand, store: hostStore } = useGraview();
+  /*
+   * The name a screen reader reads for this box: the group's plural, or the
+   * node's own label — never the id, which is an address.
+   */
+  const hostName = node.aggregate
+    ? node.aggregate.label
+    : (() => {
+        const graphNode = hostStore.graph.getNode(node.id);
+        if (!graphNode) return node.id;
+        return labelOf(hostStore.schema.tryDefinition(node.kind), graphNode as never);
+      })();
   /*
    * The tag hugs the PANEL, not the band slot. A host flex-centres a
    * panel shorter than its slot, so a fixed top offset hung the tag in
@@ -1557,7 +1569,17 @@ function SceneViewHost({
             : undefined
       }
       role="group"
-      aria-label={node.aggregate ? node.aggregate.label : node.id}
+      /*
+       * A CARD IS NAMED WHAT IT SAYS IT IS.
+       *
+       * A district had its plural and a record had its id, so the whole
+       * accessibility tree of a populated scene read "item:buy-milk" while
+       * the card in front of you said "Buy milk". An id is an address, not a
+       * name; the label comes from the declaration, the same `label(node)`
+       * every heading, chip and crumb reads. An id with no node behind it
+       * (mid-removal) keeps the address, which is at least true.
+       */
+      aria-label={hostName}
       tabIndex={0}
       onPointerDown={onDragStart}
       onPointerMove={onDragMove}

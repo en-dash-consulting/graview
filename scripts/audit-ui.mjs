@@ -104,6 +104,24 @@ const audit = () => {
     }
   }
 
+  /*
+   * A CARD NAMED BY ITS ADDRESS.
+   *
+   * Every view host is a `role="group"`, so its aria-label is the whole name
+   * a screen reader has for that card. Districts had their plural; records
+   * had their node id, so a populated scene read "item:buy-milk" to anybody
+   * not looking at the screen — the identifier-as-a-title smell, in the one
+   * place where the screen cannot correct it.
+   */
+  const unnamed = views
+    .filter((el) => {
+      const name = el.getAttribute("aria-label");
+      if (!name) return true;
+      return name === el.dataset.graviewView || /^[a-z][a-z0-9]*:[a-z0-9._-]+$/i.test(name);
+    })
+    .slice(0, 8)
+    .map((el) => `${el.dataset.graviewView} → ${el.getAttribute("aria-label") ?? "(no name)"}`);
+
   /* A control too small to hit. 24px is the WCAG 2.2 minimum. */
   /*
    * A control's DESIGNED size, not its projected one.
@@ -279,7 +297,7 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
+  return { collisions: collisions.slice(0, 8), small, cut, unnamed, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -328,6 +346,7 @@ for (const s of report.screens) {
     s.cut.length ? `${s.cut.length} cut: ${s.cut[0]}` : "",
     s.repeats.length ? `repeats: ${s.repeats.join(", ")}` : "",
     s.articles?.length ? `article disagrees: ${s.articles.join(", ")}` : "",
+    s.unnamed?.length ? `${s.unnamed.length} cards named by their address: ${s.unnamed[0]}` : "",
     s.small.length ? `${s.small.length} controls under 24px` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",
   ].filter(Boolean);

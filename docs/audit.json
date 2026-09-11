@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-10T05:19:01.745Z",
+  "at": "2026-09-11T16:51:08.479Z",
   "engine": "chromium",
   "screens": [
     {
@@ -8,7 +8,9 @@
       "collisions": [],
       "small": [],
       "cut": [],
+      "unnamed": [],
       "repeats": [],
+      "articles": [],
       "covered": [],
       "board": [],
       "fill": 59,
@@ -20,7 +22,9 @@
       "collisions": [],
       "small": [],
       "cut": [],
+      "unnamed": [],
       "repeats": [],
+      "articles": [],
       "covered": [],
       "board": [],
       "fill": 59,
@@ -32,7 +36,9 @@
       "collisions": [],
       "small": [],
       "cut": [],
+      "unnamed": [],
       "repeats": [],
+      "articles": [],
       "covered": [],
       "board": [],
       "fill": 59,
@@ -49,7 +55,13 @@
       "collisions": [],
       "small": [],
       "cut": [],
+      "unnamed": [
+        "someday → someday",
+        "today → today",
+        "week → week"
+      ],
       "repeats": [],
+      "articles": [],
       "covered": [],
       "board": [],
       "fill": 51,
@@ -61,7 +73,13 @@
       "collisions": [],
       "small": [],
       "cut": [],
+      "unnamed": [
+        "reason-deposit → reason-deposit",
+        "t-deposit → t-deposit",
+        "today → today"
+      ],
       "repeats": [],
+      "articles": [],
       "covered": [],
       "board": [],
       "fill": 31,
@@ -78,51 +96,12 @@
       "collisions": [],
       "small": [],
       "cut": [],
+      "unnamed": [],
       "repeats": [],
+      "articles": [],
       "covered": [],
       "board": [],
       "fill": 19,
-      "inspector": null
-    },
-    {
-      "app": "seedbed",
-      "state": "empty",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "repeats": [],
-      "covered": [],
-      "board": [],
-      "fill": 4,
-      "inspector": null
-    },
-    {
-      "app": "seedbed",
-      "state": "invited",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "repeats": [],
-      "covered": [],
-      "board": [],
-      "fill": 4,
-      "inspector": {
-        "shown": 1,
-        "hidden": 0,
-        "size": "236x121",
-        "text": "Gardeners· double-click opens×Nothing here yet, though Plots expect to connect to theseWel"
-      }
-    },
-    {
-      "app": "seedbed",
-      "state": "planted",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "repeats": [],
-      "covered": [],
-      "board": [],
-      "fill": 4,
       "inspector": null
     }
   ]

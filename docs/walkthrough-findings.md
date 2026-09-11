@@ -49,3 +49,19 @@ the same commit as the fix.
 - status: fixed in "walkthrough: A · a gap nobody is waiting on is not an
   observation" · criterion added: intelligence.test.ts "says nothing about a
   gap only the missing kind itself expects"
+
+### W-003 · A record card is named by its address, not by its name
+- stage: A · face: scene · width: 1280 and 390 · scheme: both
+- expected: the accessibility tree names every card — the card that reads
+  "Buy milk" is called "Buy milk"
+- actual: every view host is a `role="group"`, and a record's was labelled
+  with its node id: `aria-label="item:buy-milk"`. Districts were right (their
+  plural); records were the identifier. axe is silent about this — the card
+  IS named, just not with a name — so nothing caught it.
+- where it belongs: `packages/react/src/scene.tsx` (`SceneViewHost`'s
+  `aria-label`)
+- harness that should have caught it: `scripts/audit-ui.mjs` — no criterion
+- status: fixed in "walkthrough: A · a card is named what it says it is" ·
+  criterion added: audit-ui `unnamed` (a view host whose name is its own
+  `data-graview-view`, or reads like an id). Verified failing without the
+  fix: `?? todo/raised 3 cards named by their address: someday → someday`
