@@ -737,3 +737,33 @@ at the end of every stage.
   travelled into. Verified: with the rail forced back to its wide placement
   the screen reads `?? seedbed/narrow  strip covers 1`, and clean with the
   fix.
+
+## The second walk (2026-09-11)
+
+### W-032 · `pnpm test` fails in the checkout the playbook tells you to make
+- stage: Setup · face: neither — the repository
+- expected: `pnpm install && pnpm build && pnpm test`, the playbook's first
+  instruction, passes in a checkout with nothing built in it
+- actual: one suite fails to collect — `Failed to resolve entry for package
+  "@graview/seedbed"`. `apps/launcher/tests/integration/acceptance.test.ts`
+  imports `@graview/seedbed` and `@graview/todo` by workspace name. Every
+  framework package is aliased to its source in `vitest.config.ts`, but the
+  two apps are not, so node resolution wants `apps/*/dist/index.js` — and
+  `pnpm build` compiles `packages/*` only, leaving `apps/` to `pnpm
+  typecheck`. The suite passed on this machine for the whole first walk
+  because `pnpm typecheck` had been run here at some point and the dist was
+  lying around. 55 files, 637 tests, 1 failed suite.
+- where it belongs: `vitest.config.ts`
+- harness that should have caught it: nothing ran the repository's own setup
+  from scratch; every harness assumes the tree it is already standing in
+- status: fixed in "walkthrough: setup · a checkout with nothing built in it"
+  · the two apps are aliased to `apps/<name>/src/index.ts` alongside the
+  packages, so a cross-app import resolves to source like every other
+  workspace name and never depends on a build step that does not write it.
+  Criterion added: `tests/setup.test.ts` — "resolves every workspace name its
+  tests import without a dist that build does not write", which reads the
+  root `build` script and the alias table and walks every test file's
+  `@graview/*` imports. Verified failing without the fix: it names
+  `@graview/seedbed` and `@graview/todo` and the file that imports them.
+  Re-verified by re-running `pnpm install && pnpm build && pnpm test` in the
+  clean clone — 56 files, 651 tests, all passing.
