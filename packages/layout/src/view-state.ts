@@ -176,17 +176,26 @@ export function sameView(a: ViewState, b: ViewState): boolean {
 }
 
 /**
- * A RELATION in the selection: `edge:<kind>:<from>:<to>`.
+ * A RELATION in the selection: `edge:<kind>:<from>:<to>`, each part escaped.
  *
  * Lines joined the selection model after nodes did, and for the same
  * reason the selection is in the URL at all — an inspector about a thing
- * you cannot name is an inspector you cannot share or return to. Node and
- * edge ids must not contain ":"; the framework's own ids never do.
+ * you cannot name is an inspector you cannot share or return to.
+ *
+ * THE SEPARATOR CANNOT BE A CHARACTER AN ID MAY CONTAIN. This used to say
+ * that node ids never hold a ":" and leave it there, and the framework's own
+ * `ctx.freshId(label, kind)` mints "item:buy-milk" — so in every scaffolded
+ * app the three-part split came back with five parts, `edgeOfSelection`
+ * returned null, and a selected line fell through to the inspector's
+ * "nothing can be done with this mix of kinds" while the strip's title was
+ * the raw selection string. Escaping each part is the fix that does not
+ * depend on what an app calls things.
  */
 export const EDGE_SELECTION_PREFIX = "edge:";
 
 export function edgeSelectionId(kind: string, from: string, to: string): string {
-  return `${EDGE_SELECTION_PREFIX}${kind}:${from}:${to}`;
+  const part = (value: string): string => encodeURIComponent(value);
+  return `${EDGE_SELECTION_PREFIX}${part(kind)}:${part(from)}:${part(to)}`;
 }
 
 export interface EdgeRef {
@@ -202,7 +211,12 @@ export function edgeOfSelection(id: string): EdgeRef | null {
   if (parts.length !== 3) return null;
   const [kind, from, to] = parts;
   if (!kind || !from || !to) return null;
-  return { kind, from, to };
+  try {
+    return { kind: decodeURIComponent(kind), from: decodeURIComponent(from), to: decodeURIComponent(to) };
+  } catch {
+    // A half-typed or truncated address is a selection of nothing, not a crash.
+    return null;
+  }
 }
 
 /*

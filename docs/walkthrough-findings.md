@@ -100,3 +100,27 @@ the same commit as the fix.
 - status: fixed in "walkthrough: A · the card itself answers the keyboard" ·
   criterion added: smoke-create verdict `theKeyboardAloneMakesTheFirstRecord`
   — tab to the district, Enter, tab to the offer, Enter, type, Enter
+
+### W-006 · No line in a scaffolded app can be selected
+- stage: B · face: scene · width: 1280 · scheme: both
+- expected: selecting the drawn line opens the relation's inspector — its
+  name, its sentence, both ends, and the severing act
+- actual: the strip's title was the raw selection string
+  `edge:assigned-to:item:buy-milk:owner:ana`, under it "Nothing can be done
+  with this mix of kinds yet — no mutation declares them as a subject", and
+  the severing act was nowhere. A selection entry for a line is
+  `edge:<kind>:<from>:<to>`, split three ways; `ctx.freshId(label, kind)`
+  mints "item:buy-milk", so the split came back with five parts and
+  `edgeOfSelection` returned null. Every line in every scaffolded app. The
+  source comment asserted the opposite — "the framework's own ids never
+  [contain ':']" — while the framework's own id minter does.
+- where it belongs: `packages/layout/src/view-state.ts` (`edgeSelectionId` /
+  `edgeOfSelection`)
+- harness that should have caught it: `packages/layout/tests/unit/layout.test.ts`
+  and `packages/primitives/tests/unit/edge-inspector.test.tsx` — both used
+  hand-written ids ("ana", "morning"), as do apps/todo and apps/seedbed, so
+  no test or demo in the repository ever held a minted id
+- status: fixed in "walkthrough: B · a line whose ends have minted ids" ·
+  criteria added: layout "round-trips ends whose ids carry the separator";
+  edge-inspector "inspects a line whose ends have minted ids". Both verified
+  failing without the fix.

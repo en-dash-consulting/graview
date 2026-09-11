@@ -91,4 +91,41 @@ describe("the inspector for a selected line", () => {
     );
     expect(html).toContain("no mutation declares");
   });
+
+  /*
+   * The ids a scaffolded app actually mints. `ctx.freshId(label, kind)`
+   * writes "person:ana", which carries the very separator the edge selection
+   * id is built out of — and every selected line in every new project opened
+   * a pane titled with the raw address, saying nothing could be done with
+   * this mix of kinds.
+   */
+  it("inspects a line whose ends have minted ids", () => {
+    const minted = new Store({
+      schema,
+      mutations: [removeRider],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "person:ana", kind: "person", label: "Ana" },
+          { id: "duty:morning-run", kind: "duty", label: "Morning run" },
+        ] as never,
+        edges: [{ kind: "rides-in", from: "person:ana", to: "duty:morning-run" }],
+      },
+    });
+    const html = renderToStaticMarkup(
+      <GraviewProvider
+        store={minted}
+        views={registerDefaultViews(schema, createViews(schema))}
+        initialView={{ ...EMPTY_VIEW, focusId: "duty:morning-run" }}
+        initialSelection={[edgeSelectionId("rides-in", "person:ana", "duty:morning-run")]}
+      >
+        <Inspector />
+      </GraviewProvider>,
+    );
+    expect(html).toContain("Rides in");
+    expect(html).toContain("who is along for it");
+    expect(html).toContain("Take them off it");
+    expect(html).not.toContain("no mutation declares");
+    expect(html).not.toContain("mix of kinds");
+  });
 });
