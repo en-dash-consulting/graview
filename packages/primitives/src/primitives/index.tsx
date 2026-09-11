@@ -168,10 +168,7 @@ export function Panel({
         * more specific to say says it as well.
         */}
       {tone === "warning" ? (
-        <span
-          data-graview-broken=""
-          style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}
-        >
+        <span data-graview-broken="" style={VISUALLY_HIDDEN}>
           Implicated in a problem.
         </span>
       ) : null}
@@ -262,6 +259,26 @@ export function Panel({
     </div>
   );
 }
+
+/**
+ * Present to a screen reader, absent to the eye — the one idiom, written
+ * once.
+ *
+ * Written out by hand in two places, which meant two shapes for the same
+ * decision and no way for a harness to tell either of them from a caption
+ * that had genuinely been cut off. `scripts/survey-ui.mjs` reported both as
+ * "overflowing" on every screen of every app, twenty lines of noise that a
+ * real clipped caption would have hidden behind.
+ */
+export const VISUALLY_HIDDEN = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  whiteSpace: "nowrap",
+} as const satisfies CSSProperties;
 
 export interface ChipProps {
   readonly label: ReactNode;

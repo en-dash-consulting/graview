@@ -170,6 +170,19 @@ const measure = () => {
       const style = getComputedStyle(el);
       if (style.display === "none") return false;
       if (style.textOverflow === "ellipsis") return false;
+      /*
+       * VISUALLY HIDDEN IS A DECISION TOO.
+       *
+       * The 1x1 clip-rect idiom — text present for a screen reader and absent
+       * to the eye — is by construction an element whose content does not fit
+       * its box, so it read here exactly like a caption cut off mid-word. It
+       * was reported on every screen of every app (the wordmark's own `h1`),
+       * which is twenty lines of noise for a count whose entire job is to
+       * make one real cut visible. Same argument as the ellipsis above: an
+       * ellipsis is a decision, a clip rect is a decision, a hard edge with
+       * text behind it is a bug.
+       */
+      if (el.clientWidth <= 1 && el.clientHeight <= 1) return false;
       if (style.webkitLineClamp && style.webkitLineClamp !== "none") return false;
       // A scroll region can be scrolled to, so it is not lost either.
       if (style.overflowY === "auto" || style.overflowY === "scroll") return false;
@@ -334,6 +347,7 @@ try {
 }
 
 writeFileSync(resolve(repoRoot, "docs/survey.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+let flagged = 0;
 for (const shot of report.shots) {
   if (shot.error) {
     process.stdout.write(`FAIL ${shot.app}/${shot.state}/${shot.scheme}: ${shot.error}\n`);
@@ -346,12 +360,25 @@ for (const shot of report.shots) {
     shot.covered?.length ? `chrome covers ${shot.covered.length} views` : "",
     shot.repeatedText.length ? `repeats: ${shot.repeatedText.map((r) => r.text.slice(0, 24)).join(" / ")}` : "",
   ].filter(Boolean);
+  if (flags.length) flagged += 1;
   process.stdout.write(
     `${flags.length ? "??" : "ok"} ${`${shot.app}/${shot.state}/${shot.scheme}`.padEnd(34)} ${flags.join("; ")}\n`,
   );
 }
+process.stdout.write(`\n${report.shots.length - flagged} of ${report.shots.length} screens clean\n`);
 
-// A pass that could not take its pictures is a FAILED pass, and the engine
-// matrix reads this exit code — exiting 0 over broken shots made the
-// matrix's survey verdict vacuous.
-process.exit(report.error || report.shots.some((shot) => shot.error) ? 1 : 0);
+/*
+ * A FLAG IS A FAILURE NOW.
+ *
+ * These were advisory for as long as twenty of twenty-six screens carried
+ * one: the wordmark's own visually-hidden `h1` counted as a cut caption on
+ * every screen of every app, so the `??` column was noise and a real cut
+ * would have sat in the middle of it unnoticed. With the idiom recognised
+ * for what it is, every screen is clean — and a count nobody has to read
+ * past is a count that can be enforced.
+ *
+ * A pass that could not take its pictures is a FAILED pass too, and the
+ * engine matrix reads this exit code — exiting 0 over broken shots made the
+ * matrix's survey verdict vacuous.
+ */
+process.exit(report.error || flagged > 0 || report.shots.some((shot) => shot.error) ? 1 : 0);
