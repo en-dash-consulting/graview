@@ -169,6 +169,33 @@ describe("the graph itself is the first intelligence", () => {
     }).observations ?? []).map((o) => o.text);
     expect(gap[0]).toMatch(/Plots expect to connect/);
   });
+
+  /*
+   * A scaffolded project's first kind has one edge, and it points at itself.
+   * On the empty graph that made the only district say "Nothing here yet,
+   * though Items expect to connect to these" — naming the absent kind as the
+   * party waiting for it, which is nobody.
+   */
+  it("says nothing about a gap only the missing kind itself expects", () => {
+    const item = defineNode("item", {
+      fields: z.object({ label: z.string() }),
+      plural: "Items",
+      edges: { "depends-on": { to: ["item"], description: "what comes first" } },
+    });
+    const alone = createSchema([item]);
+    const bare = new Store({ schema: alone, mutations: [], invariants: [] });
+    const said = (
+      insightProvider().derive({
+        store: bare,
+        selection: ["kind:item"],
+        nodes: [],
+        kindSelection: ["item"],
+        violations: [],
+        context: {},
+      }).observations ?? []
+    ).map((o) => o.text);
+    expect(said).toEqual([]);
+  });
 });
 
 describe("an intelligence surfaces as an ordinary provider", () => {
