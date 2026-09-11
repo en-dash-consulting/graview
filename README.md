@@ -171,6 +171,11 @@ pnpm menu          # the menu scales: search, pins, and what you use
 pnpm survey        # every place a person can land, photographed
 pnpm audit-ui      # and what is WRONG on each: collisions, cut text, tiny targets
 pnpm site          # docs/site holds up at ten widths, to axe and to a keyboard, with thirteen live chapters on it
+
+The walk that finds what is still weird between `graview create` and a
+seamless app is `docs/walkthrough.md`: nine stages with acceptance criteria,
+a findings log, and the rule that every finding is fixed in a package with
+the criterion that would have caught it.
 pnpm site:build    # the chapters' bundle: apps/seedbed → docs/site/chapters.js
 
 pnpm pack:inspect  # what would actually go in each tarball
