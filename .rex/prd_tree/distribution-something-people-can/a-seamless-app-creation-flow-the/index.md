@@ -33,4 +33,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Walkthrough G · Remembering and shipping](./walkthrough-g-remembering-and-shipping.md) | completed |
 | [Walkthrough H · On somebody else's page](./walkthrough-h-on-somebody-else-s-page.md) | completed |
 | [Walkthrough I · The cross-cutting pass](./walkthrough-i-the-cross-cutting-pass.md) | completed |
-| [Walkthrough II · The second walk, from a fresh checkout, adds nothing](./walkthrough-ii-the-second-walk-from-a.md) | pending |
+| [Walkthrough II · The second walk, from a fresh checkout, adds nothing](./walkthrough-ii-the-second-walk-from-a.md) | in_progress |
