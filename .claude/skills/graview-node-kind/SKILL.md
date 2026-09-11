@@ -29,7 +29,13 @@ agent tool that walks the graph.
      plural: "Fixtures",
      description: "A match, and the team you intend to put out for it.",
      edges: {
-       "picked-for": { to: ["player"], description: "who is in the team" },
+       // One edge, two readings: the fixture's page says who is in the
+       // team; the player's page says which fixtures they are picked for.
+       "picked-for": {
+         to: ["player"],
+         description: "who is in the team",
+         inverse: "the fixtures they are picked for",
+       },
      },
      // Lets a lens ask for "the start time" without knowing your field names.
      fieldRoles: { start: "kickOff" },
