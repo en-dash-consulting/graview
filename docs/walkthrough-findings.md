@@ -553,3 +553,25 @@ the same commit as the fix.
   criterion added: `packages/primitives/tests/unit/undo-turn.test.tsx` "says
   why when the declaration will not have it, rather than throwing", which
   fails without the fix
+
+### W-026 · Renaming a record in place stopped committing — a regression from W-005
+- stage: G · face: scene · width: 1280 · scheme: both
+- expected: the in-place editor commits on Enter, as stage A verified
+- actual: after the fix for W-005 (making the card answer the keyboard), the
+  host called `preventDefault()` on Enter BEFORE asking whose key it was. The
+  editor is a one-field form inside the card, and a one-field form submits on
+  Enter by default — so the default was swallowed, the form never submitted,
+  the field stayed open and nothing was written. `pnpm remember` found it:
+  four of its twelve criteria went false.
+- where it belongs: `packages/react/src/scene.tsx` (`SceneViewHost`'s
+  `onKeyDown`)
+- harness that should have caught it: `scripts/verify-remember.mjs` DID —
+  `theEditTookEffect`, `theEditSurvivesAReload`, `theHistorySurvivesAttributed`
+  and `theEditIsStillUndoable` all failed. It is a browser harness that is
+  not part of `pnpm test`, so it caught the regression two stages later than
+  it happened.
+- status: fixed in "walkthrough: G · a card does not swallow a field's key" ·
+  criteria added: `packages/primitives/tests/unit/rename-in-place.test.tsx`
+  — "commits on Enter, because the card does not swallow the field's key" and
+  "does not let the card's own Enter reach a field being typed in". The
+  second fails without the fix, in a second, inside `pnpm test`.
