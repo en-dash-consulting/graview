@@ -122,6 +122,16 @@ const audit = () => {
     .slice(0, 8)
     .map((el) => `${el.dataset.graviewView} → ${el.getAttribute("aria-label") ?? "(no name)"}`);
 
+  /*
+   * A FIELD ASKED FOR BY ITS KEY. An editor opened in place named itself
+   * `label` or `dependsOn` — the declaration's identifier — where the pages
+   * face has always said "Label" and "Depends on".
+   */
+  const keyed = [...document.querySelectorAll("input[data-graview-field], select[data-graview-field]")]
+    .filter((el) => el.getAttribute("aria-label") === el.dataset.graviewField)
+    .slice(0, 6)
+    .map((el) => el.dataset.graviewField);
+
   /* A control too small to hit. 24px is the WCAG 2.2 minimum. */
   /*
    * A control's DESIGNED size, not its projected one.
@@ -297,7 +307,7 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, unnamed, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
+  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, repeats, articles: [...new Set(articles)].slice(0, 8), covered, board, fill, inspector };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -347,6 +357,7 @@ for (const s of report.screens) {
     s.repeats.length ? `repeats: ${s.repeats.join(", ")}` : "",
     s.articles?.length ? `article disagrees: ${s.articles.join(", ")}` : "",
     s.unnamed?.length ? `${s.unnamed.length} cards named by their address: ${s.unnamed[0]}` : "",
+    s.keyed?.length ? `fields asked for by their key: ${s.keyed.join(", ")}` : "",
     s.small.length ? `${s.small.length} controls under 24px` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",
   ].filter(Boolean);

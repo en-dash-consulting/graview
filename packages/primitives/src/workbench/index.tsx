@@ -143,8 +143,14 @@ export function AnswerArgs({
           <input
             autoFocus
             type={shape.type === "date" ? "date" : shape.type === "number" ? "number" : "text"}
-            aria-label={parameter.name}
-            placeholder={parameter.name}
+            /*
+             * A FIELD IS ASKED FOR IN WORDS. `dependsOn` and `label` are the
+             * declaration's identifiers; the pages face has always humanised
+             * them ("Depends on", "Label") and the scene asked with the raw
+             * key, so the same act read two ways on the two faces.
+             */
+            aria-label={humaniseField(parameter.name)}
+            placeholder={humaniseField(parameter.name)}
             value={draft}
             {...(shape.type === "number" && shape.min !== undefined ? { min: shape.min } : {})}
             {...(shape.type === "number" && shape.max !== undefined ? { max: shape.max } : {})}
