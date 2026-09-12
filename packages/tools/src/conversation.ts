@@ -1,5 +1,6 @@
 import {
   formFields,
+  humaniseField,
   labelOf,
   readableFields,
   violationsTouching,
@@ -47,6 +48,12 @@ export type Responder<S extends AnySchema = AnySchema> = (
 ) => Promise<ChatReply>;
 
 const sentence = (parts: readonly string[]): string => parts.filter(Boolean).join(" ");
+
+/** "a person", "a person and a date" — a list a person would say out loud. */
+const withList = (words: readonly string[]): string =>
+  words.length <= 1
+    ? withArticle(words[0] ?? "something")
+    : `${words.slice(0, -1).map(withArticle).join(", ")} and ${withArticle(words[words.length - 1]!)}`;
 
 /**
  * The graph answers for itself. Deterministic, keyless, derived:
@@ -121,6 +128,40 @@ export function graphResponder<S extends AnySchema>(
       if (violations.length === 0) {
         return { say: "Nothing is broken — every declared rule holds.", proposals: [], grounded: true };
       }
+      /*
+       * THE SENTENCE MATCHES WHAT IS ACTUALLY BELOW IT.
+       *
+       * "The repairs below come from the rules themselves" was said
+       * unconditionally, and `readyRepairs` drops every repair that still
+       * needs an argument chosen — so a rule whose repair asks for one thing
+       * ("hand it to someone": which someone is the decision the rule cannot
+       * make) produced a seat promising repairs under an empty list. Naming
+       * what the repair still wants is the honest answer, and it is the same
+       * answer the phrased-mutation branch below already gives.
+       */
+      const offered = validateProposals(store, readyRepairs().slice(0, 4));
+      /*
+       * And what it wants is said the way a picker is named — by the KIND it
+       * would pick, not by the argument's identifier. Otherwise the seat
+       * asks for "a handler" where the strip and the routed face both say
+       * "a person".
+       */
+      const asked = (mutation: string, field: string): string => {
+        const declared = store.allMutations().find((candidate) => candidate.name === mutation);
+        const spec = declared
+          ? formFields(declared.input).find((candidate) => candidate.name === field)
+          : undefined;
+        return spec?.control === "node" && !spec.kinds.includes("*")
+          ? spec.kinds.map((kind) => humaniseField(kind).toLowerCase()).join(" or ")
+          : humaniseField(field).toLowerCase();
+      };
+      const wants = [
+        ...new Set(
+          violations
+            .flatMap((violation) => violation.repairs)
+            .flatMap((repair) => (repair.missing ?? []).map((field) => asked(repair.mutation, field))),
+        ),
+      ];
       return {
         say: sentence([
           `${violations.length} ${violations.length === 1 ? "problem" : "problems"}:`,
@@ -128,9 +169,13 @@ export function graphResponder<S extends AnySchema>(
             .slice(0, 4)
             .map((violation) => violation.message)
             .join("; ") + (violations.length > 4 ? "…" : "."),
-          "The repairs below come from the rules themselves.",
+          offered.length > 0
+            ? "The repairs below come from the rules themselves."
+            : wants.length > 0
+              ? `The rules name a way to fix ${violations.length === 1 ? "it" : "these"}, but it needs ${withList(wants)} chosen — select the record and its own actions will ask.`
+              : "No rule here names a way to fix it.",
         ]),
-        proposals: validateProposals(store, readyRepairs().slice(0, 4)),
+        proposals: offered,
         grounded: true,
       };
     }
