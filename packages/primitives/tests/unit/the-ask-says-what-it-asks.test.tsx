@@ -118,6 +118,30 @@ describe("the strip's ask", () => {
     cleanup(rendered);
   });
 
+  /*
+   * AND A NODE PICKER IS NAMED BY WHAT IT PICKS, not by the argument.
+   *
+   * The routed face has said so since it was written — "the argument's name
+   * is an implementation detail, and the kinds it accepts are the
+   * declaration's own word for the thing" — and the strip asked with the
+   * identifier. It never showed while the argument happened to be called
+   * after its kind ("owner" picking an owner). Standing on the OWNER, the
+   * open argument is the act's SUBJECT, which every scaffolded app and every
+   * skill example calls `id` — so the strip put the word "Id" over a list of
+   * items.
+   */
+  it("names a node picker by what it picks, never by the argument", async () => {
+    // Offered on the far end, the act arrives from the tie provider.
+    const rendered = await pressing("schema:tie:keep-item:owner:ana", ["owner:ana"]);
+    const group = rendered.host.querySelector('[role="group"]');
+    const label = rendered.host.querySelector(`#${group!.getAttribute("aria-labelledby")}`);
+    expect(label?.textContent).toBe("Item");
+    const names = [...group!.querySelectorAll("button")].map((b) => b.getAttribute("aria-label"));
+    expect(names).toEqual(["Item: Pay the deposit"]);
+    expect(rendered.host.textContent).not.toContain("Id");
+    cleanup(rendered);
+  });
+
   it("counts the steps of a longer ask in words, not in keys", async () => {
     const rendered = await pressing("schema:add:add-owner", ["kind:owner"]);
     expect(rendered.host.textContent).toContain("Label · 1 of 2");
