@@ -160,8 +160,8 @@ the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets`
 `@property` and degrades to a clean cut where that is missing — write no
 fallback. The chat's local-model rung needs WebGPU or Chrome's Prompt API;
 without either the graph still answers and the header says why. The GPU
-capture path (`?renderer=gpu`) is Chromium-only, experimental and opt-in —
-never a requirement of your product.
+capture path is Chromium-only, experimental and opt-in (`attachRenderer`
+from `@graview/render/gpu`; there is no URL switch) — never a requirement.
 
 ## Then find out whether it worked
 

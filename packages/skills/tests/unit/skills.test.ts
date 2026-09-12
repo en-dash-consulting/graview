@@ -147,6 +147,41 @@ describe("the skills package", () => {
     }
   });
 
+  /*
+   * A SWITCH A SKILL NAMES IS A SWITCH THE FRAMEWORK READS.
+   *
+   * `graview-new-app` told a reader the GPU path was `?renderer=gpu` for a
+   * long time after nothing anywhere read `renderer` from a URL — W-030 had
+   * taken the same switch out of the walkthrough, and the skill kept it. A
+   * URL parameter is prose that can be checked against the code, the way a
+   * finding code can, so it is: every `?name=` a skill mentions has to be
+   * one the sources ask a `URLSearchParams` for.
+   */
+  it("names only URL switches the framework reads", () => {
+    const packages = resolve(SKILLS_DIR, "../..");
+    const read = new Set<string>();
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (entry.isDirectory()) {
+          if (entry.name !== "node_modules" && entry.name !== "dist") walk(join(dir, entry.name));
+        } else if (/\.(ts|tsx)$/.test(entry.name)) {
+          for (const match of readFileSync(join(dir, entry.name), "utf8").matchAll(/\.get\("([a-z]+)"\)/g)) {
+            read.add(match[1]!);
+          }
+        }
+      }
+    };
+    for (const name of readdirSync(packages)) {
+      if (existsSync(join(packages, name, "src"))) walk(join(packages, name, "src"));
+    }
+    expect(read.size).toBeGreaterThan(5);
+    for (const skill of skills) {
+      for (const match of skill.body.matchAll(/\?([a-z]+)=/g)) {
+        expect(read, `${skill.name} names "?${match[1]}=" and nothing reads it`).toContain(match[1]!);
+      }
+    }
+  });
+
   it("points at the worked examples rather than restating them", () => {
     // A skill that copies an example goes stale the moment the example
     // changes, and nothing tells you.
