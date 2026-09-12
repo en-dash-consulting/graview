@@ -35,4 +35,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Walkthrough I · The cross-cutting pass](./walkthrough-i-the-cross-cutting-pass.md) | completed |
 | [Walkthrough II · The second walk, from a fresh checkout, adds nothing](./walkthrough-ii-the-second-walk-from-a.md) | failing |
 | [Walkthrough III · The third walk, from a fresh checkout, adds nothing](./walkthrough-iii-the-third-walk-from-a.md) | failing |
-| [Walkthrough IV · The fourth walk, from a fresh checkout, adds nothing](./walkthrough-iv-the-fourth-walk-from-a.md) | pending |
+| [Walkthrough IV · The fourth walk, from a fresh checkout, adds nothing](./walkthrough-iv-the-fourth-walk-from-a.md) | in_progress |

@@ -89,6 +89,11 @@ export const GRAVIEW_PACKAGES = [
    * without it could not, in a repository that ships the package.
    */
   "embed",
+  /*
+   * `studio` too: the studio skill opens the project's own declaration as a
+   * graph, and a project without the package could not follow it.
+   */
+  "studio",
 ] as const;
 
 const SLUG = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -433,6 +438,7 @@ export default defineConfig({
       "@graview/ship/browser": framework("ship/src/browser.ts"),
       "@graview/ship": framework("ship/src/index.ts"),
       "@graview/embed": framework("embed/src/index.ts"),
+      "@graview/studio": framework("studio/src/index.ts"),
     },
   },
   server: {

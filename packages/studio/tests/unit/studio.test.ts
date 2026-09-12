@@ -241,3 +241,24 @@ describe("the declaration is written back as the files graview create writes", (
     expect(files["src/domain/policy.ts"]).toContain('{ roles: ["gardener"], mutations: ["tend", "untend"], kinds: ["plot"], describe: "a gardener may tend" },');
   });
 });
+
+describe("renaming a kind", () => {
+  it("is a migration that carries every record and its edges under the new name", () => {
+    const studio = createStudio(garden);
+    studio.store.apply({ name: "rename-kind", args: { id: "kind:plot", label: "bed" } });
+    const applied = studio.apply();
+    expect(applied.ok).toBe(true);
+    if (!applied.ok) return;
+    expect(applied.app.schema.kinds).toContain("bed");
+    expect(applied.migration!.title).toContain("plot records become bed");
+    const ops = applied.migration!.apply(seed);
+    expect(ops.map((p) => p.op)).toEqual(["remove-node", "add-node", "add-edge", "remove-node", "add-node"]);
+    expect(ops[1]).toMatchObject({ op: "add-node", node: { id: "plot-1", kind: "bed", label: "Plot 1" } });
+    expect(ops[2]).toMatchObject({ op: "add-edge", edge: { kind: "tended-by", from: "plot-1", to: "june" } });
+    // Kept acts on the renamed kind now act on bed; the store accepts the migrated graph.
+    const migrated: GraphSnapshot = { nodes: seed.nodes.map((node) => (node.kind === "plot" ? { ...node, kind: "bed" } : node)), edges: seed.edges };
+    const store = new Store({ schema: applied.app.schema, mutations: applied.app.mutations ?? [], invariants: applied.app.invariants ?? [], snapshot: migrated } as never);
+    store.apply({ name: "tend", args: { plot: "plot-2", gardener: "june" } });
+    expect(store.graph.out("plot-2", "tended-by")).toHaveLength(1);
+  });
+});

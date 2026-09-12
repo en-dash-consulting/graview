@@ -13,8 +13,9 @@ import type { FieldType } from "./meta.js";
  */
 
 export interface MigrationStep {
-  readonly what: "remove-kind" | "remove-field" | "remove-edge" | "start-field";
+  readonly what: "remove-kind" | "rename-kind" | "remove-field" | "remove-edge" | "start-field";
   readonly kind: string;
+  /** For a rename, the kind's new name; otherwise the field or edge concerned. */
   readonly name?: string;
   readonly type?: FieldType;
   readonly options?: readonly string[];
@@ -31,7 +32,12 @@ export function migrationSteps(before: Reading, after: Reading): MigrationStep[]
   const steps: MigrationStep[] = [];
   const beforeKinds = new Map(ofKind(before, "kind").map((node) => [node.id, node]));
   const afterKinds = new Map(ofKind(after, "kind").map((node) => [node.id, node]));
-  for (const [id, node] of beforeKinds) if (!afterKinds.has(id)) steps.push({ what: "remove-kind", kind: label(node) });
+  for (const [id, node] of beforeKinds) {
+    const after = afterKinds.get(id);
+    if (!after) steps.push({ what: "remove-kind", kind: label(node) });
+    // The same declaration, called something else: its records carry the new name.
+    else if (label(after) !== label(node)) steps.push({ what: "rename-kind", kind: label(node), name: label(after) });
+  }
 
   const fieldKey = (reading: Reading, field: Node) => {
     const kindId = targetsOf(reading, field.id, "of")[0];
@@ -86,6 +92,19 @@ export function primitivesFor(step: MigrationStep, stored: GraphSnapshot): Primi
       for (const node of stored.nodes) if (gone.has(node.id)) out.push({ op: "remove-node", node });
       return out;
     }
+    case "rename-kind": {
+      // A node's kind is its identity to the schema, so each record is taken
+      // out and put back under the new name, with the edges it carried —
+      // a snapshot drops a removed node's edges with it.
+      for (const node of stored.nodes) {
+        if (node.kind !== step.kind) continue;
+        const carried = stored.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
+        out.push({ op: "remove-node", node });
+        out.push({ op: "add-node", node: { ...node, kind: step.name! } });
+        for (const edge of carried) out.push({ op: "add-edge", edge });
+      }
+      return out;
+    }
     case "remove-field":
       for (const node of stored.nodes) {
         if (node.kind !== step.kind || !(step.name! in node)) continue;
@@ -110,6 +129,8 @@ const say = (step: MigrationStep): string => {
   switch (step.what) {
     case "remove-kind":
       return `${step.kind} records go`;
+    case "rename-kind":
+      return `${step.kind} records become ${step.name}`;
     case "remove-field":
       return `${step.kind}.${step.name} is dropped`;
     case "start-field":
@@ -122,9 +143,12 @@ const say = (step: MigrationStep): string => {
 /**
  * The migration from one declaration to the next, or null when a stored
  * graph shaped like the old one is already a graph shaped like the new.
+ * Given the studio's own graph as `after`, a renamed kind is seen as a
+ * rename — its node kept its id — where two declarations read separately
+ * would show one kind gone and another arrived.
  */
-export function migrationBetween<S extends AnySchema>(before: GraviewApp<S>, after: GraviewApp<AnySchema>): MigrationDeclaration | null {
-  const steps = migrationSteps(declarationToGraph(before), declarationToGraph(after));
+export function migrationBetween<S extends AnySchema>(before: GraviewApp<S>, after: GraviewApp<AnySchema> | Reading): MigrationDeclaration | null {
+  const steps = migrationSteps(declarationToGraph(before), "nodes" in after ? after : declarationToGraph(after));
   if (steps.length === 0) return null;
   const from = before.version ?? 1;
   return {

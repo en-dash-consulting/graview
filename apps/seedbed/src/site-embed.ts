@@ -58,7 +58,7 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
      */
     views: (s) => seedbedViews(s as never, { lens: chapter.lens, board: chapter.board, map: chapter.map ?? false, reach: chapter.reach ?? false, ...(chapter.studioOf ? { studio: chapter.studioOf } : {}) }) as never,
     ...(chapter.pages ? { pages: (chapter.design ? seedbedDesign(schema) : seedbedPages(schema)) as never } : {}),
-    standing: "The garden keeps its agreements",
+    standing: chapter.studioOf ? "The declaration holds up" : "The garden keeps its agreements",
     // The page may name an embed itself: the opener carries chapter one
     // too, and two regions called "Chapter 1" is one landmark said twice.
     label: label ?? `Chapter ${chapter.n}`,
