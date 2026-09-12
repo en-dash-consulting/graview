@@ -83,7 +83,15 @@ describe("taking a turn back", () => {
     });
     const said = host.querySelector('[data-testid="undo-refused"]');
     expect(said).not.toBeNull();
-    expect(said?.textContent).toContain("does not match its declared fields");
+    expect(said?.textContent).toContain("does not match what note declares");
+    /*
+     * SAID FOR A PERSON, in the rail beside a sentence about a thing with a
+     * name. The reason used to be the validator's own dump — `[ { "code":
+     * "invalid_value", "values": [ … ], "path": [ "urgency" ] … } ]` —
+     * rendered verbatim in the interface.
+     */
+    expect(said?.textContent).toMatch(/Urgency/);
+    expect(said?.textContent).not.toMatch(/"code"|"path"|\[\s*\{/);
     // And nothing changed: a refusal is not a half-applied undo.
     expect((rewritten.graph.getNode("n1") as { urgency: string }).urgency).toBe("today");
     await act(async () => root.unmount());

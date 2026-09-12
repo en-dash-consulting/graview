@@ -1243,3 +1243,30 @@ at the end of every stage.
   that every awaited `.call(...)` result is narrowed on `.ok` before anything
   is read through it — the shape that recurs, rather than this one line.
   Verified failing without the fix, naming the skill and the property.
+
+### W-049 · A refused undo shows the validator's JSON to the person who pressed it
+- stage: G · face: scene · width: any · scheme: both
+- expected: an undo the declaration will not have says why, in the app's own
+  words — W-025 built the mechanism and put the sentence in the activity rail
+- actual: the sentence it puts there was
+  `Node "item:pay-the-deposit" (item) does not match its declared fields [ {
+  "code": "invalid_value", "values": [ "whenever", "soon" ], "path": [
+  "urgency" ], "message": "Invalid option: expected one of \"whenever\"|
+  \"soon\"" } ]` — the validator's whole issue list as JSON, rendered verbatim
+  beside a row about a thing called "Pay the deposit", with the node named by
+  its address. Reached by exactly the path stage G asks for: bump the version,
+  add a migration that fills in a new required field, reload against the old
+  store, press undo on the migration.
+- where it belongs: `packages/core/src/graph/graph.ts`
+- harness that should have caught it: `packages/primitives/tests/unit/undo-turn.test.tsx`
+  is W-025's own criterion and asserted the message was PRESENT
+  (`toContain("does not match its declared fields")`) — the half of the
+  sentence written by a person — and said nothing about the half written by
+  Zod
+- status: fixed in "walkthrough: G · a refusal a person can read" · the node
+  is named by its label, the kind is said plainly, and each of the
+  validator's issues becomes `<Field in words>: <its own sentence>` — every
+  issue already carries a readable message and the path it is about; nothing
+  else in that object is for a person. Criteria extended: both tests now
+  assert the node's NAME, the field humanised, and that no issue object,
+  code or path appears. Verified failing without the fix.
