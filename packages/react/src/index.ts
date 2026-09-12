@@ -37,6 +37,7 @@ export type { ResolvedViewProps, SceneProps } from "./scene.js";
 export { useFlagged, useImplicated, useViolations } from "./hooks.js";
 export { kitConnector, useKit } from "./kit.js";
 export { clipPolyline, orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./routes.js";
+export { bandRows, channelRoute } from "./channels.js";
 export {
   useAffordances,
   useApplyAffordance,

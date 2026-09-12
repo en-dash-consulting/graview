@@ -49,6 +49,7 @@ import { isDefaultView } from "./view-registry.js";
 import { pickedFrom, usePickTargets } from "./picking.js";
 import { kitConnector, useKit } from "./kit.js";
 import { clipPolyline, orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./routes.js";
+import { channelRoute } from "./channels.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
 export interface SceneProps<S extends AnySchema> {
@@ -2092,6 +2093,8 @@ export interface Strand {
   readonly toAnchor: string;
   /** Every other drawn box, so the line can dive under cards it merely crosses. */
   readonly obstacles: readonly Box[];
+  /** Both ends are chips of the relation band: every chip of it, so the line can take the gutters. */
+  readonly band?: readonly Box[];
   /**
    * The cards an end is drawn INSIDE, when it lands on a member: the line
    * is visible across them (that is what landing on a member means), but
@@ -2169,6 +2172,14 @@ export function connectorStrands(
     for (const [id, box] of boxes) if (id !== a && id !== b) out.push(box);
     return out;
   };
+  // The relation band's chips, for a line whose both ends are in it.
+  const inBand = (id: string) => Math.round(byId.get(id)?.plane ?? -1) === 1;
+  const bandBoxes: Box[] = [];
+  for (const node of nodes) {
+    const box = boxes.get(node.id);
+    if (box && Math.round(node.plane) === 1) bandBoxes.push(box);
+  }
+  const bandFor = (a: string, b: string): Box[] | undefined => (!overview && inBand(a) && inBand(b) ? bandBoxes : undefined);
 
   const strands: Strand[] = [];
   for (const connector of connectors) {
@@ -2190,6 +2201,7 @@ export function connectorStrands(
           (edge.from !== connector.from && memberBoxes(stageEl, hostOf(connector.from), edge.from).length > 0) ||
           (edge.to !== connector.to && memberBoxes(stageEl, hostOf(connector.to), edge.to).length > 0),
       );
+    const band = bandFor(connector.from, connector.to);
     if ((overview && !drawnMember) || connector.loop || edges.length === 0) {
       strands.push({
         key: connector.id,
@@ -2201,6 +2213,7 @@ export function connectorStrands(
         toAnchor: connector.to,
         obstacles,
         hosts: [],
+        ...(band ? { band } : {}),
       });
       continue;
     }
@@ -2255,6 +2268,7 @@ export function connectorStrands(
           ...(group.fromAnchor !== connector.from ? [fromHost] : []),
           ...(group.toAnchor !== connector.to ? [toHost] : []),
         ],
+        ...(band ? { band } : {}),
         ...group,
       });
     }
@@ -2417,7 +2431,7 @@ function Connectors({
     ? (measureVisible(stageRef.current, stampNode.id, false) ?? drawnBox(stampNode, scheme))
     : null;
   if (strands.length === 0) return null;
-  const drawn = strands.map((strand) => {
+  const drawn = strands.map((strand, lane) => {
         const { connector, fromBox, toBox } = strand;
         const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
         const toCentre = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
@@ -2513,12 +2527,18 @@ function Connectors({
          * run in the open — one drawing inside another — has nothing
          * honest to show.
          */
-        const runs = self || orthogonal ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
-        const legs = !self && orthogonal ? clipPolyline(orthogonalPoints(from, to), [fromBox, toBox, ...strand.obstacles]) : [];
+        /*
+         * TWO CHIPS OF ONE BAND take the gutters: a road through the grid
+         * that crosses nothing, so it is drawn whole rather than clipped to
+         * the pieces an arc left between the chips it ran under.
+         */
+        const channelled = !self && strand.band ? channelRoute(fromBox, toBox, strand.band, lane) : null;
+        const runs = self || orthogonal || channelled ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
+        const legs = channelled ? [channelled] : !self && orthogonal ? clipPolyline(orthogonalPoints(from, to), [fromBox, toBox, ...strand.obstacles]) : [];
         if (!self && runs.length === 0 && legs.length === 0) return null;
         const lastLeg = legs[legs.length - 1];
-        const firstDrawn = orthogonal ? legs[0]?.[0] : runs[0]?.p0;
-        const lastDrawn = orthogonal ? lastLeg?.[lastLeg.length - 1] : runs[runs.length - 1]?.p1;
+        const firstDrawn = orthogonal || channelled ? legs[0]?.[0] : runs[0]?.p0;
+        const lastDrawn = orthogonal || channelled ? lastLeg?.[lastLeg.length - 1] : runs[runs.length - 1]?.p1;
         const quad = (segments: Quadratic[]) =>
           segments
             .map((run) => `M ${run.p0.x} ${run.p0.y} Q ${run.c.x} ${run.c.y} ${run.p1.x} ${run.p1.y}`)
@@ -2528,11 +2548,13 @@ function Connectors({
           // circle, so it closes cleanly at any size.
           `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
           ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`;
-        const d = self ? loopD : orthogonal ? polylineD(legs) : quad(runs);
+        const d = self ? loopD : orthogonal || channelled ? polylineD(legs) : quad(runs);
         // The hit stroke also keeps out of the cards an end is drawn inside.
         const hitD = self
           ? loopD
-          : orthogonal
+          : channelled
+            ? polylineD(legs)
+            : orthogonal
             ? polylineD(clipPolyline(orthogonalPoints(from, to), [fromBox, toBox, ...strand.hosts, ...strand.obstacles]))
             : quad(clipQuadratic(curve, [fromBox, toBox, ...strand.hosts, ...strand.obstacles]));
         const only = strand.edges.length === 1 ? strand.edges[0]! : null;
