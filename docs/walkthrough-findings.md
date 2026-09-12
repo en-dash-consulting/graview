@@ -1727,3 +1727,65 @@ The shapes that came up again, and the new ones:
   fix. Seen in the walked app: as the helper the page now reads "~~Close
   it~~ — Not permitted: close-item on an item — keeper can." where before it
   showed nothing at all.
+
+### W-063 · Nobody can take back their own edit once an app has a policy
+- stage: G · face: scene · width: any · scheme: both
+- expected: "undo takes it back and the problem returns" — stage C's words,
+  and `graview-permissions`' own: "Undo is a change and is judged like one:
+  what you may undo is what you may have done."
+- actual: it is judged like one, and the control never says who is asking.
+  `UndoTurn` called `store.undo(batch)` with no author at all, so the store
+  judged the default anonymous principal — who, once a policy exists, may do
+  nothing. In the walked app: add an item as the keeper, open the rail, and
+  the row says `you Add an item`; press the undo beside it and it answers
+  `Not permitted to undo "Add an item": Not permitted: add-item — one of
+  helper, keeper can.` The op said "you" and the undo of it was refused for
+  being nobody. Every act taken from the strip has passed the provider's
+  principal since it was written ("The principal, not a bare 'human': the
+  store enforces against this and the log attributes to it, and they must be
+  one object" — `useApplyAffordance`); the undo beside them did not.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`UndoTurn`)
+- harness that should have caught it: `scripts/verify-remember.mjs` presses
+  this exact control twice and `packages/primitives/tests/unit/
+  undo-turn.test.tsx` renders it — and every app either of them drives is
+  policy-free, so the store had nothing to refuse
+- status: fixed in "walkthrough: G · an undo that says who is undoing" · the
+  control passes the provider's principal, exactly as every act does.
+  Criteria added: `undo-turn.test.tsx`'s "undoes as the person at the
+  keyboard, not as nobody" — a store with a policy, a principal at the
+  keyboard, the turn actually coming off and the undo attributed to the same
+  person — and `verify-seat`'s "a person can take back their own edit where
+  there is a policy", driving seedbed's seventh chapter in a browser.
+  Verified failing without the fix.
+
+### W-064 · From chapter seven on, the framework's own progression shows a reader who may do nothing
+- stage: G · face: scene · width: any · scheme: both
+- expected: chapter seven's own claim — "One policy, declared once. The
+  store refuses, the actions strip narrows, and an agent's seat narrows with
+  it, so a gardener never sees a button that would fail."
+- actual: the gardener sees nothing but buttons that would fail. The
+  chapter's principal reaches the store (`storeOptions`) and the routed face
+  (`PagesApp context`) and never the scene: `SeedbedApp` takes no principal
+  and `GraviewProvider` defaults to anonymous, who under a policy may do
+  nothing. So chapters 7, 8, 10, 11 and 12 — every scene chapter after the
+  policy arrives, and the pictures `pnpm progression` publishes as the
+  framework's own story — showed every act struck through, several of them
+  refusing the seat for the role it holds: `Not permitted: tend — one of
+  coordinator, gardener can`, said to a gardener.
+- where it belongs: `apps/seedbed/src/ui/app.tsx` and
+  `apps/seedbed/src/main.tsx`
+- harness that should have caught it: `scripts/progression.mjs`'s
+  `aGardenerIsRefusedInChapterSeven`, which asks whether anything at all was
+  withheld — and everything was, so the criterion was at its happiest in the
+  broken state. It also read only the screen the chapter's picture is taken
+  on, a district whose creating act a gardener may legitimately not take.
+- status: fixed in "walkthrough: G · a chapter whose seat is at the
+  keyboard" · `SeedbedApp` takes the principal and hands it to the provider,
+  as the routed face already did. Criterion added: `progression`'s
+  `theSeatIsNeverRefusedByItsOwnRole`, which selects a MEMBER in every
+  chapter that declares a principal and asks two things of what it finds —
+  that the seat is offered something, and that no refusal names a role the
+  seat already holds. Verified failing without the fix, with five chapters
+  reporting `offered: []` and refusals reading "one of coordinator, gardener
+  can" to a gardener.

@@ -1,5 +1,5 @@
 import { EMPTY_VIEW, type ViewState } from "@graview/layout";
-import type { Brand } from "@graview/core";
+import type { Brand, Principal } from "@graview/core";
 import { GraviewProvider, useGraph, useGraview, type Scheme, type SceneProps } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
@@ -45,6 +45,14 @@ export interface SeedbedAppProps {
   readonly board?: boolean;
   /** Whether the garden's own map lens is mounted over the plots, in place of the board. */
   readonly map?: boolean;
+  /**
+   * WHO IS AT THE KEYBOARD, once a chapter declares a policy. The store
+   * enforces against it, this face decides what to OFFER by it and the log
+   * attributes to it — one object, three readings. Without it the scene
+   * derives what an anonymous reader may do, which under a policy is
+   * nothing at all.
+   */
+  readonly principal?: Principal;
 }
 
 /**
@@ -68,6 +76,7 @@ export function SeedbedApp({
   lens = true,
   board = true,
   map = false,
+  principal,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
   const views = useMemo(() => seedbedViews(created.schema as never, { lens, board, map }), [created, lens, board, map]);
@@ -80,6 +89,16 @@ export function SeedbedApp({
       initialView={initialView}
       scheme={scheme}
       {...(brand ? { brand } : {})}
+      /*
+       * WHO IS AT THE KEYBOARD. The chapter's seat reached the store and the
+       * routed face and not this one, so from chapter seven onward the scene
+       * derived what an ANONYMOUS reader may do — which, with a policy
+       * declared, is nothing. The chapter whose claim is "the actions strip
+       * narrows, so a gardener never sees a button that would fail" showed a
+       * gardener every act struck through, one of them reading "Not
+       * permitted: tend — one of coordinator, gardener can" to a gardener.
+       */
+      {...(principal ? { principal } : {})}
     >
       <Shell<S>
         standing="The garden keeps its agreements"

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T12:19:27.147Z",
+  "at": "2026-09-12T12:57:59.649Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -387,6 +387,10 @@
         "problems": null,
         "wordmark": "Graview",
         "focused": null
+      },
+      "seatSees": {
+        "offered": [],
+        "withheld": "Name a caretakerNot permitted: tend on a plot — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the plotNot permitted: edit-plot on a plot — coordinator can. The coordinator keeps the map."
       }
     },
     {
@@ -444,6 +448,10 @@
         "problems": null,
         "wordmark": "Seedbed",
         "focused": null
+      },
+      "seatSees": {
+        "offered": [],
+        "withheld": "Take on a plotNot permitted: tend — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the gardenerNot permitted: edit-gardener on a gardener — coordinator can. The coordinator keeps the map."
       }
     },
     {
@@ -554,6 +562,10 @@
         "problems": null,
         "wordmark": "Seedbed",
         "focused": "Who tends what1 unanswered · 1 unaskedPlot 1⚠ Plot 2JuneRavi"
+      },
+      "seatSees": {
+        "offered": [],
+        "withheld": "Name a caretakerNot permitted: tend on a plot — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the plotNot permitted: edit-plot on a plot — coordinator can. The coordinator keeps the map."
       }
     },
     {
@@ -613,6 +625,10 @@
         "problems": null,
         "wordmark": "Seedbed",
         "focused": "What grows where1 unfilledPlot 1BeansPlot 2TomatoesPlot 3nothing sown"
+      },
+      "seatSees": {
+        "offered": [],
+        "withheld": "Harvest itNot permitted: harvest on a planting — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the plantingNot permitted: edit-planting on a planting — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground."
       }
     },
     {
@@ -673,6 +689,10 @@
         "problems": null,
         "wordmark": "Seedbed",
         "focused": null
+      },
+      "seatSees": {
+        "offered": [],
+        "withheld": "Name a caretakerNot permitted: tend on a plot — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the plotNot permitted: edit-plot on a plot — coordinator can. The coordinator keeps the map."
       }
     },
     {
@@ -734,6 +754,7 @@
     "theSeatPlantedInChapterFive": true,
     "itRemembersInChapterSix": true,
     "aGardenerIsRefusedInChapterSeven": true,
+    "theSeatIsNeverRefusedByItsOwnRole": false,
     "theBrandArrivesInChapterEight": true,
     "theOtherFaceIsThePlotsOwnPageInChapterNine": true,
     "theLensShowsWhoTendsWhatInChapterTen": true,
@@ -741,5 +762,5 @@
     "theMigrationIsInTheLogInChapterTwelve": true,
     "theGardenWearsItsOwnFaceInChapterThirteen": true
   },
-  "passed": true
+  "passed": false
 }

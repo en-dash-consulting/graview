@@ -118,6 +118,9 @@ if (window.location.pathname.startsWith("/pages")) {
       renderer="dom"
       initialScheme={scheme}
       onSchemeChange={applyScheme}
+      // The seat the chapter puts at the keyboard: the strip narrows by it,
+      // exactly as the routed face above already did.
+      {...(chapter?.principal ? { principal: chapter.principal } : {})}
     />,
   );
 }
