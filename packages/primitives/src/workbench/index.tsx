@@ -337,23 +337,36 @@ export function Inspector() {
    *
    * What is remembered is WHICH act, not which element: the ask's controls
    * belong to the act above them, so answering one puts you back on it.
-   * `relatedTarget` tells the two cases apart — tabbing away is somebody
-   * leaving on purpose and is not restored; a null one means the element
-   * went away underneath them, which is the only case this is for.
+   * Tabbing away is somebody leaving on purpose and is not restored; the
+   * element going away underneath them is the only case this is for.
+   *
+   * And "went away" is asked of the ELEMENT, not of the blur. `relatedTarget`
+   * is null when a removed node loses focus — and also when a Tab from the
+   * last control in the document wraps round to the first, which Chromium
+   * reports the same way. Trusting the blur alone left the pane holding a
+   * stale key after an ordinary Tab out of it, and the next time focus fell
+   * to <body> anywhere on the page — a rename committed in a card — the pane
+   * reclaimed the keyboard from work it had no part in. So the element the
+   * keyboard stood on is kept beside the key, and the pane restores only
+   * when that element is no longer in the document.
    */
-  const keptFocus = useRef<string | null>(null);
+  const keptFocus = useRef<{ readonly key: string; readonly element: HTMLElement } | null>(null);
   /** The picture the pane sits on: where the keyboard goes if the pane goes. */
   const scene = useRef<HTMLElement | null>(null);
   const remember = (target: HTMLElement) => {
     const asking = target.closest("[data-graview-asking]")?.getAttribute("data-graview-asking");
     const pin = target.getAttribute("data-pin-for");
-    keptFocus.current =
-      asking ?? target.getAttribute("data-affordance") ?? (pin === null ? null : `pin:${pin}`);
+    const key = asking ?? target.getAttribute("data-affordance") ?? (pin === null ? null : `pin:${pin}`);
+    keptFocus.current = key === null ? null : { key, element: target };
   };
   useEffect(() => {
     const pane = asideRef.current;
-    const key = keptFocus.current;
-    if (key === null || document.activeElement !== document.body) return;
+    const kept = keptFocus.current;
+    if (kept === null || document.activeElement !== document.body) return;
+    // Still on the page: nothing was pulled out from under the keyboard, so
+    // wherever it went, it went on purpose.
+    if (kept.element.isConnected) return;
+    const key = kept.key;
     /*
      * AND WHEN THE PANE ITSELF GOES — Escape, the ×, or an act that clears
      * the selection — there is nothing inside it left to go back to. Chrome

@@ -31,12 +31,34 @@ export function EditableValue<S extends AnySchema>({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const input = useRef<HTMLInputElement | HTMLSelectElement | HTMLButtonElement | null>(null);
+  /*
+   * THE VALUE IS THE CONTROL, AND THE KEYBOARD COMES BACK TO IT.
+   *
+   * The editor is a field mounted in place of the value; committing or
+   * abandoning it unmounts the field, and a removed element takes focus to
+   * <body> with it — so a rename made from the keyboard ended six tabs from
+   * where it started, or on whatever ELSE was waiting for a stray focus
+   * (the actions pane reclaimed it once). The value's own button is the
+   * honest home, so it is remembered across the edit and focused again —
+   * but only when the editor still held the keyboard as it closed. A blur
+   * is somebody leaving on purpose, and is never undone.
+   */
+  const opener = useRef<HTMLButtonElement | null>(null);
+  const comeBack = useRef(false);
+  const close = (keepTheKeyboard: boolean) => {
+    comeBack.current = keepTheKeyboard;
+    setEditing(false);
+  };
 
   // The graph can change underneath an open editor — an agent turn, an undo —
   // and the draft must not silently overwrite it on blur.
   useEffect(() => setDraft(value), [value, editing]);
   useEffect(() => {
     if (editing) input.current?.focus();
+    else if (comeBack.current) {
+      comeBack.current = false;
+      opener.current?.focus();
+    }
   }, [editing]);
 
   if (!editable) {
@@ -56,6 +78,7 @@ export function EditableValue<S extends AnySchema>({
   if (!editing) {
     return (
       <button
+        ref={opener}
         type="button"
         data-graview-field={field}
         data-graview-editable={editable.mutation}
@@ -86,8 +109,9 @@ export function EditableValue<S extends AnySchema>({
     );
   }
 
-  const done = (next: unknown) => {
-    setEditing(false);
+  /** Commit the draft. `left` says the person already moved the keyboard elsewhere. */
+  const done = (next: unknown, { left = false } = {}) => {
+    close(!left);
     if (next === value || next === "" || next === undefined) return;
     commit(editable, next);
   };
@@ -107,7 +131,7 @@ export function EditableValue<S extends AnySchema>({
         data-graview-field={field}
         style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}
         onKeyDown={(event) => {
-          if (event.key === "Escape") setEditing(false);
+          if (event.key === "Escape") close(true);
         }}
       >
         {acts.map((act, index) => (
@@ -117,13 +141,13 @@ export function EditableValue<S extends AnySchema>({
             ref={index === 0 ? (input as { current: HTMLButtonElement | null }) : undefined}
             data-graview-act={act.mutation}
             onClick={() => {
-              setEditing(false);
+              close(true);
               commit(act, undefined);
             }}
             onBlur={(event) => {
               // Leaving the group, not moving within it, closes it.
               const next = event.relatedTarget as Node | null;
-              if (!next || !event.currentTarget.parentElement?.contains(next)) setEditing(false);
+              if (!next || !event.currentTarget.parentElement?.contains(next)) close(false);
             }}
             style={{ padding: "2px 9px", fontSize: "0.75rem", borderRadius: 999 }}
           >
@@ -149,7 +173,7 @@ export function EditableValue<S extends AnySchema>({
           data-graview-field={field}
           value={draft}
           onChange={(event) => done(event.target.value)}
-          onBlur={() => setEditing(false)}
+          onBlur={() => close(false)}
           style={{ font: "inherit", fontSize: "inherit" }}
         >
           {editable.shape.options.map((option) => (
@@ -172,11 +196,11 @@ export function EditableValue<S extends AnySchema>({
           }
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          onBlur={() => done(coerce(editable, draft))}
+          onBlur={() => done(coerce(editable, draft), { left: true })}
           onKeyDown={(event) => {
             // Escape abandons the edit. Without it the only way out of a
             // field you opened by accident is to commit it.
-            if (event.key === "Escape") setEditing(false);
+            if (event.key === "Escape") close(true);
           }}
           style={{
             font: "inherit",
