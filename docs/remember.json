@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T03:52:01.293Z",
+  "at": "2026-09-12T03:53:38.573Z",
   "engine": "chromium",
   "steps": {
     "seed": {
@@ -47,7 +47,8 @@
         "you Rename to \"Pay the deposit, on the first visit\"undoPay the deposit, on the first visit"
       ],
       "log": [
-        "you Rename to \"Pay the deposit, on the first visit\"undoPay the deposit, on the second"
+        "you Rename to \"Pay the deposit, on the second\"undoPay the deposit, on the second",
+        "you Rename to \"Pay the deposit, on the first visit\"undo +1Pay the deposit, on the second"
       ],
       "undo": true,
       "remembered": "Remembered in this browserStart fresh",
@@ -63,7 +64,7 @@
     "theEditSurvivesAReload": true,
     "theHistorySurvivesAttributed": true,
     "theEditIsStillUndoable": true,
-    "aChangeOnTheSecondVisitIsATurnOfItsOwn": false,
+    "aChangeOnTheSecondVisitIsATurnOfItsOwn": true,
     "theBrowserSaysItRemembers": true,
     "startFreshReturnsToTheExample": true,
     "theFreshFlagDoesNotStick": true,
@@ -72,5 +73,5 @@
     "aDrivenBrowserStartsFromTheSeed": true,
     "aFreshContextStartsFromTheSeed": true
   },
-  "passed": false
+  "passed": true
 }
