@@ -250,8 +250,12 @@ function listed<S extends AnySchema>(
 }
 
 /** Words for who did something, from the op's own author. */
-function whoDid(op: Operation): string {
-  if (op.author.kind === "human") return "you";
+/** Who did an op, as the person at the keyboard reads it: "you" only for their own work. */
+function whoDid(op: Operation, principal?: Principal): string {
+  if (op.author.kind === "human") {
+    if (op.author.id === undefined || principal?.id === undefined || op.author.id === principal.id) return "you";
+    return op.author.id;
+  }
   if (op.author.kind === "agent") return op.author.id ?? "an agent";
   return op.author.id ?? op.author.kind;
 }
@@ -449,6 +453,7 @@ export function DefaultShell<S extends AnySchema>({
  * the way to the rest. The standing is a sentence, not a widget.
  */
 export function DefaultHomePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
+  const { principal } = context;
   const { store, brand, invariantContext } = context;
   useStoreTick(store);
   const violations = store.violations(invariantContext);
@@ -560,7 +565,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
             {recent.map((op) => (
               <li key={op.id} style={quiet}>
-                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op)}
+                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op, principal)}
               </li>
             ))}
           </ul>
@@ -914,7 +919,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
             {history.map((op) => (
               <li key={op.id} style={quiet}>
-                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op)}
+                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op, principal)}
               </li>
             ))}
           </ul>
