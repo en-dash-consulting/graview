@@ -86,6 +86,15 @@ describe("what a project starts with", () => {
    * sections of this page vanish for a narrower seat with nothing said. The
    * derived record page beside it has always struck them through.
    */
+  it("submits its forms as the person at the keyboard", () => {
+    /*
+     * The page asks "may I?" as the principal and then pressed submit as
+     * nobody: under a policy every act it offered live was refused on
+     * press. The same principal goes to the form.
+     */
+    expect(file("Field Notes", "src/ui/pages.tsx")).toMatch(/<DerivedForm<S>[^>]*principal/);
+  });
+
   it("says what a seat may not do rather than dropping it", () => {
     const pages = file("Field Notes", "src/ui/pages.tsx");
     expect(pages).toContain("facts.actions.withheld");

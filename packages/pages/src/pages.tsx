@@ -692,7 +692,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
           <h2 style={h2}>{mutation.title ?? mutation.name}</h2>
           {mutation.description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{mutation.description}</p> : null}
           {/* The candidates the derivation narrowed, not every node. */}
-          <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} />
+          <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} {...(context.principal ? { principal: context.principal } : {})} />
         </section>
       ))}
       {withheld.length > 0 ? (
@@ -891,6 +891,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   // The candidates the derivation narrowed, not every node.
                   open={affordance.open}
                   onDone={() => setOpen(null)}
+                  {...(principal ? { principal } : {})}
                 />
               </div>
             );
@@ -1048,7 +1049,8 @@ export function Repairs<S extends AnySchema>({
                 }
                 setOpen(null);
                 try {
-                  store.apply({ name: repair.mutation, args: { ...repair.args } });
+                  // As the person at the keyboard: the store judges the author, and the log names them.
+                  store.apply({ name: repair.mutation, args: { ...repair.args } }, principal ? { author: principal } : {});
                 } catch (error) {
                   // A refusal is a result, said where the press happened.
                   setFailed(error instanceof Error ? error.message : String(error));
@@ -1068,6 +1070,7 @@ export function Repairs<S extends AnySchema>({
           mutation={asking}
           prefilled={{ ...opened.args }}
           onDone={() => setOpen(null)}
+          {...(principal ? { principal } : {})}
         />
       ) : null}
       {opened && !asking && (opened.missing ?? []).length > 0 ? (

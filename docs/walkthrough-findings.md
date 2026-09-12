@@ -2321,3 +2321,56 @@ The shapes, in the order of how much they cost:
   skill names and refuses `<Acts names={[`, `store.permits(` and the
   absence of `recordFacts(`/`kindFacts(`. Both verified failing against
   the old file.
+
+### W-082 · The routed face writes as nobody, so under a policy every form refuses on press
+- stage: E (found writing the design; it is stage F's face) · face: pages ·
+  width: any · scheme: both
+- expected: "nothing refuses on press" — an act the derivation offered live
+  to this seat applies when this seat presses submit
+- actual: `DerivedForm` applied with no author, and so did `Repairs`' one-
+  press path and the ask it opens; the store then judged its default, the
+  anonymous human, who under a policy may do nothing. So with a policy
+  declared the list page, the record page, the problems page and every
+  design built on them offered every permitted act live and refused each
+  on press: `Not permitted: tend on a plot — one of coordinator, gardener
+  can`, said to the coordinator. Found by a jsdom test that pressed "Take
+  on a plot" on June's page in chapter thirteen and read the form's own
+  `refused` line. W-047 made the derivation ask as somebody and W-063 made
+  the undo say who was undoing; the submit between them still said nobody.
+- where it belongs: `packages/pages/src/form.tsx` (`DerivedForm` had no way
+  to be told), `packages/pages/src/pages.tsx` (three `DerivedForm` sites and
+  `Repairs`), `packages/core/src/scaffold/index.ts` (the page every project
+  starts from), and the two designs that copy the pattern
+- harness that should have caught it: `packages/pages/tests/unit/parity.test.tsx`
+  renders every page under a policy and asserts what is withheld; nothing
+  ever SUBMITTED a permitted form under one. `pnpm pages` drives `apps/todo`,
+  which has no policy.
+- status: fixed in "walkthrough: E · the routed face writes as the person at
+  the keyboard" · `DerivedForm` takes `principal` and applies as it; `Repairs`
+  applies as the principal it already held and hands it to its ask; the
+  derived pages, the scaffold's record page and both designs pass the
+  context's principal. Criteria: `asked-as-the-person.test.tsx` — a derived
+  form and a one-press repair under a policy, applied by a permitted
+  keeper, no refusal, the op authored by her (both fail without the fix:
+  `Not permitted: close-note on a note`); scaffold "submits its forms as the
+  person at the keyboard".
+
+### W-083 · An act taken from the keyboard on the product design ends on <body>
+- stage: E · face: pages · width: any · scheme: both
+- expected: pressing an act's form on the design leaves the keyboard where
+  it was, the way the derived pages do (their forms stay mounted)
+- actual: the design's act is a button that opens its form in place and
+  closes it on `onDone` — `setOpen(null)`, the form unmounts, and a removed
+  element takes focus to `<body>` with it. Measured on Walk's design after
+  handing an item to Bo: `activeElement: <body>`. The pattern is the
+  worked example's (`apps/seedbed/src/ui/design.tsx`), copied verbatim;
+  W-053's defect on the third surface in a row.
+- where it belongs: `apps/seedbed/src/ui/design.tsx` (the example), and
+  Walk's copy of it
+- harness that should have caught it: the chapter tests render the design
+  with `renderToStaticMarkup`, which has no keyboard
+- status: fixed in the same commit · the button that opened the form is
+  remembered and focused when the form is done; it never left the page.
+  Criterion: `apps/seedbed/tests/integration/design-keyboard.test.tsx` —
+  press "Take on a plot" on June's page, answer the form, and the keyboard
+  is on the button. Verified failing without the fix.
