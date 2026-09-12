@@ -69,6 +69,9 @@ support:
 it("produces the same diff whether a human or an agent acts", async () => {
   const byHand = human.apply({ name: "reassign", args });
   const byAgent = await seat.call("reassign", args);
+  // A refusal is a RESULT, so `ToolResult` is a union: establish there was a
+  // diff before claiming anything about it, or this does not compile.
+  if (!byAgent.ok) throw new Error(byAgent.error);
   expect(byAgent.diff).toEqual(byHand.diff);
 });
 ```
