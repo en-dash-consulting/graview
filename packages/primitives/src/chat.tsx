@@ -299,18 +299,37 @@ export function ChatPanel<S extends AnySchema>({
                 >
                   {turn.text}
                 </p>
-                {(turn.proposals ?? []).map((proposal, at) => (
-                  <button
-                    key={at}
-                    type="button"
-                    data-testid="chat-apply"
-                    onClick={() => void apply(proposal)}
-                    title={proposal.why ?? "Apply this change"}
-                    style={{ fontSize: "0.75rem", justifySelf: "start" }}
-                  >
-                    {describeProposal(store, proposal)}
-                  </button>
-                ))}
+                {(turn.proposals ?? []).map((proposal, at) => {
+                  /*
+                   * WITHHELD, NOT OFFERED — the same rule as the strip. The
+                   * responder proposes from the graph and knows nothing of
+                   * the policy, so the seat was handed "Add an item" with
+                   * an apply button and refused on press. The store's own
+                   * verdict, asked as the person at the keyboard, decides
+                   * whether a proposal is a press or a struck line with
+                   * the policy's reason beside it.
+                   */
+                  const verdict = store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal);
+                  if (!verdict.ok) {
+                    return (
+                      <span key={at} data-testid="chat-withheld" style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+                        <s>{describeProposal(store, proposal)}</s> — {verdict.refusal.message}
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      key={at}
+                      type="button"
+                      data-testid="chat-apply"
+                      onClick={() => void apply(proposal)}
+                      title={proposal.why ?? "Apply this change"}
+                      style={{ fontSize: "0.75rem", justifySelf: "start" }}
+                    >
+                      {describeProposal(store, proposal)}
+                    </button>
+                  );
+                })}
               </li>
             ))}
             {busy ? (

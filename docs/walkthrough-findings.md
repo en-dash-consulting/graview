@@ -2374,3 +2374,49 @@ The shapes, in the order of how much they cost:
   Criterion: `apps/seedbed/tests/integration/design-keyboard.test.tsx` —
   press "Take on a plot" on June's page, answer the form, and the keyboard
   is on the button. Verified failing without the fix.
+
+### W-084 · The chat proposes an act the seat may not take, and refuses on press
+- stage: F · face: scene (the chat) · width: 1280 and 390 · scheme: both
+- expected: "nothing is hidden and nothing refuses on press" — the seat's
+  own turn under a policy withholds what the seat may not do and says why,
+  the way the strip, the pages and the starter seat already do
+- actual: with the helper at the keyboard, "Add an item \"Sneak one in\""
+  came back as `I can do that. Review it below — it applies like any other
+  change, and undo works.` with an apply button; pressing it answered
+  `Refused: Not permitted: add-item — keeper can.` The responder proposes
+  from the graph and `validateProposals` checks that the act exists and its
+  arguments are an object — never who is asking — and the panel rendered
+  every proposal as a press. The third walk's note asked for exactly this:
+  the agent seat's own turn under a policy.
+- where it belongs: `packages/primitives/src/chat.tsx`
+- harness that should have caught it: `packages/primitives/tests/unit/chat.test.tsx`
+  renders the panel closed and under no policy; `scripts/verify-chat.mjs`
+  drives `apps/todo`, which has none
+- status: fixed in "walkthrough: F · two seats on one store" · a proposal is
+  a press only when `store.permits` says so for the person at the keyboard;
+  otherwise it is drawn struck through with the policy's own sentence
+  (`chat-withheld`), the same rule as the strip. Criterion:
+  `the-seat-under-a-policy.test.tsx` "withholds a proposal the seat may not
+  take, with the policy's reason, rather than offering a press that
+  refuses". Verified failing without the fix.
+
+### W-085 · The rail and the pages call the other seat's work "you"
+- stage: F · face: both · width: any · scheme: both
+- expected: with two seats on one store, the history says whose work is
+  whose; "you" is the person at the keyboard
+- actual: the keeper seeds the graph, the helper sits down, and the
+  activity rail reads `you Pay the deposit is handled by Ada Nowak`, `you
+  Add Bo Lind` — Kai's work, said to Hana as hers. The routed face's
+  "Recently" and every record's history said the same: `whoDid` returned
+  "you" for any human author, and the rail's row did likewise. W-011 gave
+  every agent seat its own name; the humans were still one "you".
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`ActivityRail`) and `packages/pages/src/pages.tsx` (`whoDid`)
+- harness that should have caught it: every rehearsal with a rail in it has
+  one human in it
+- status: fixed in the same commit · "you" only when the op's author is the
+  principal at the keyboard (or when nobody has an id — an app with no
+  seats still says "you"); otherwise the author's own id. Criteria:
+  `the-seat-under-a-policy.test.tsx` "says \"you\" only for the person at
+  the keyboard, and names the other seat", and `whose-work.test.tsx` on the
+  routed face's home for both seats. Verified failing without the fix.

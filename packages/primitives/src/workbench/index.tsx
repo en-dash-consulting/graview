@@ -1682,7 +1682,7 @@ export function ActivityRail({
   readonly seat?: ReactNode;
 }) {
   const changes = useRecentChanges();
-  const { store } = useGraview<AnySchema>();
+  const { store, principal } = useGraview<AnySchema>();
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
   const running = calls.some((call) => call.phase === "running");
@@ -1873,7 +1873,10 @@ export function ActivityRail({
                           * another seat's name — and a system author (a
                           * calendar sync) would have read as "you".
                           */}
-                        {change.author === "human"
+                        {/* "you" is the person at the keyboard, not any
+                            human: two seats on one store read each other's
+                            work as their own. */}
+                        {change.author === "human" && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
                           ? "you"
                           : (change.authorId ?? change.author)}
                       </strong>{" "}
