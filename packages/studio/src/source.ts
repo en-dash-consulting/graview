@@ -177,6 +177,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
       const lines = [``, `export const ${camel(actName)} = defineMutation(${q(actName)}, {`];
       const body: string[] = [];
       if (str(act, "title")) lines.push(`  title: ${q(str(act, "title")!)},`);
+      if (str(act, "fromTheOtherEnd")) lines.push(`  fromTheOtherEnd: ${q(str(act, "fromTheOtherEnd")!)},`);
       if (str(act, "description")) lines.push(`  description: ${q(str(act, "description")!)},`);
       if (bool(act, "destructive")) lines.push(`  destructive: true,`);
       if (onAny || on.length > 0) lines.push(`  subject: { kinds: ${subjectKinds}, arg: ${q(arg)} },`);
