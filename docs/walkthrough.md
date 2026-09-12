@@ -35,7 +35,7 @@ Paste this to start a session:
 ## Setup
 
 ```sh
-# in the framework checkout
+# in the framework checkout - use walk2/walk3/etc for subsequent walks
 pnpm install && pnpm build && pnpm test
 pnpm graview create ../walk --link . --name "Walk" --kind item --plural items
 cd ../walk && pnpm verify && pnpm dev            # http://localhost:5170

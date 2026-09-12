@@ -1330,3 +1330,42 @@ The shapes that came up again, and the new ones:
   `packages/primitives/tests/unit/the-readers-own-text-size.test.ts` — the
   theme's base is relative, and no face sizes text in absolute pixels.
   Verified failing without the fix, naming all 120 sites.
+
+## The third walk (2026-09-11)
+
+### W-051 · The ask you open is drawn off the side of the pane, or below it
+- stage: A · face: scene · width: 1280 and 390 · scheme: both
+- expected: "the inspector, menu and strip stay inside the scene's box" — and
+  what is inside them stays inside them. Pressing an act that still needs
+  something shows you the thing it needs.
+- actual: two shapes of the same failure, both reached by the first act the
+  scaffolded app offers on a record ("Change the item …", the derived edit).
+  At 1280 the pane is a 236-wide rail and the ask laid out at 257: the grid
+  track under it is `auto`, whose minimum is the min-content width of a text
+  input plus an Apply plus a Skip, so the track grew past the pane and the
+  Skip button was painted half-on, half-off its right edge — reachable only
+  by scrolling a pane that shows no horizontal scrollbar. At 390 the pane is
+  a sheet along the bottom with `max-height: min(42cqh, 300px)`, the ask
+  opened under a list of acts already filling it, and the field, the Apply
+  and the Skip were all below the sheet's fold AND below the window: the
+  person pressed a button and, as far as the screen showed, nothing
+  happened. The field even had `autoFocus`, so the keyboard was in a box
+  nobody could see.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`AnswerArgs` — the grid it lays the ask out in, and its silence about
+  having opened)
+- harness that should have caught it: `scripts/audit-ui.mjs` — no criterion.
+  Twelve screens and not one of them had an ask open: every state pressed
+  acts that need nothing, so the pane's hardest layout was never measured.
+- status: fixed in "walkthrough: A · an ask that fits the pane it opens in" ·
+  the track is `minmax(0, 1fr)` so it can never be wider than the pane (the
+  input already carries `minWidth: 0`, so it is the thing that gives), the
+  row wraps rather than squeezing the field to nothing, and the ask scrolls
+  itself into view on open — `block: "nearest"`, which moves the pane the
+  least amount that works. Criterion added: `audit-ui`'s `asking` — an ask
+  marks itself `data-graview-asking`, and every control inside one must be
+  within the box that clips it, with no scrolling. Two states added to reach
+  it: `todo/asked` and `seedbed/asked`, plus `seedbed/askedNarrow` at 390.
+  Verified failing without the fix: `seedbed/asked` reports the Skip at
+  222..271 outside a pane ending at 250, and `seedbed/askedNarrow` reports
+  all three controls at 651..683 outside a sheet ending at 610.

@@ -24,7 +24,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [Walkthrough A · The blank app](./walkthrough-a-the-blank-app.md) | completed |
+| [Walkthrough A · The blank app](./walkthrough-a-the-blank-app.md) | in_progress |
 | [Walkthrough B · A second kind and an edge](./walkthrough-b-a-second-kind-and-an-edge.md) | completed |
 | [Walkthrough C · A rule and its repair](./walkthrough-c-a-rule-and-its-repair.md) | completed |
 | [Walkthrough D · Lenses](./walkthrough-d-lenses.md) | completed |
@@ -34,4 +34,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Walkthrough H · On somebody else's page](./walkthrough-h-on-somebody-else-s-page.md) | completed |
 | [Walkthrough I · The cross-cutting pass](./walkthrough-i-the-cross-cutting-pass.md) | completed |
 | [Walkthrough II · The second walk, from a fresh checkout, adds nothing](./walkthrough-ii-the-second-walk-from-a.md) | failing |
-| [Walkthrough III · The third walk, from a fresh checkout, adds nothing](./walkthrough-iii-the-third-walk-from-a.md) | pending |
+| [Walkthrough III · The third walk, from a fresh checkout, adds nothing](./walkthrough-iii-the-third-walk-from-a.md) | in_progress |
