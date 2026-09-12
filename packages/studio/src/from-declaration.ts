@@ -1,3 +1,4 @@
+import { nodeRefArgs } from "@graview/core";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
 import type { FieldType } from "./meta.js";
@@ -102,6 +103,12 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
   }
 
   const actId = (name: string) => `act:${name}`;
+  /** The checkout's own name for the far end of a tie: the node argument that is not the subject. */
+  const targetArgOf = (mutation: AnyMutationDefinition): string | undefined => {
+    if (!(mutation.connects?.length || mutation.severs?.length)) return undefined;
+    const refs = nodeRefArgs(mutation.input as never);
+    return refs.find((ref) => ref.name !== mutation.subject?.arg)?.name;
+  };
   for (const mutation of (app.mutations ?? []) as unknown as readonly AnyMutationDefinition[]) {
     const id = actId(mutation.name);
     nodes.push({
@@ -115,6 +122,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       ...(mutation.description ? { description: mutation.description } : {}),
       ...(mutation.writes ? { writes: [...mutation.writes] } : {}),
       ...(mutation.subject ? { subjectArg: mutation.subject.arg } : {}),
+      ...(targetArgOf(mutation) ? { targetArg: targetArgOf(mutation) } : {}),
     });
     if (mutation.subject && mutation.subject.kinds !== "*") for (const kind of mutation.subject.kinds) edges.push({ kind: "on", from: id, to: kindId(kind) });
     for (const kind of mutation.creates ?? []) edges.push({ kind: "creates", from: id, to: kindId(kind) });
@@ -136,6 +144,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       label: rule.name,
       judgesPast: rule.judgesPast ?? false,
       wholeGraph: rule.scope === "graph",
+      ...(rule.label ? { title: rule.label } : {}),
       ...(rule.description ?? rule.label ? { description: rule.description ?? rule.label } : {}),
     });
     if (rule.scope !== "graph") edges.push({ kind: "over", from: id, to: kindId(rule.scope.kind) });

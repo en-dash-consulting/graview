@@ -1,4 +1,4 @@
-import type { GraphEdge, GraphSnapshot } from "@graview/core";
+import type { GraphEdge, GraphSnapshot, AnySchema, GraviewApp } from "@graview/core";
 import type { FieldType } from "./meta.js";
 
 /*
@@ -20,11 +20,22 @@ export interface SourceOptions {
   readonly name?: string;
   /** The exported schema's variable name; `graview create` uses `<camel>Schema`. */
   readonly schemaVar?: string;
+  /**
+   * The app the studio opened on. A judgement and a hand-written body are
+   * code the studio cannot write; for a rule or an act the checkout
+   * already has, the file says so LOUDLY — a stub that throws naming what
+   * belongs there — rather than a stub that quietly holds. Every rule the
+   * checkout wrote used to come back as `evaluate() { return []; }` under
+   * a comment claiming the checkout's evaluate was kept.
+   */
+  readonly base?: GraviewApp<AnySchema>;
 }
 
 export interface WrittenFile {
   readonly path: string;
   readonly contents: string;
+  /** The bodies the checkout must supply, by name: what this file could not write. */
+  readonly kept: readonly string[];
 }
 
 const q = (text: string): string => JSON.stringify(text);
@@ -78,6 +89,10 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const read = new Read(snapshot as Reading);
   const schemaVar = options.schemaVar ?? "schema";
   const name = options.name ?? "the app";
+  const baseActs = new Set((options.base?.mutations ?? []).map((mutation) => mutation.name));
+  const baseRules = new Set((options.base?.invariants ?? []).map((rule) => rule.name));
+  const keptActs: string[] = [];
+  const keptRules: string[] = [];
   const kinds = read.ofKind("kind");
   const kindName = new Map(kinds.map((kind) => [kind.id, label(kind)]));
   const fieldsOf = (kind: Node) =>
@@ -129,11 +144,18 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
 
   const acts = read.ofKind("act").filter((act) => !bool(act, "derived"));
   const mutationsTs = [
-    `import { bindSchema, nodeRef } from "@graview/core";`,
+    `import { bindSchema, nodeRef, type GraphReader } from "@graview/core";`,
     `import { z } from "zod";`,
     `import { ${schemaVar} } from "./schema.js";`,
     ``,
     `const { defineMutation } = bindSchema(${schemaVar});`,
+    ``,
+    `// A node's name for the history: an id in the interface is a bug you shipped.`,
+    `type Reader = GraphReader<{ id: string; kind: string } & Record<string, unknown>>;`,
+    `const nameOf = (graph: Reader, id: string): string => {`,
+    `  const node = graph.getNode(id);`,
+    `  return typeof node?.["label"] === "string" ? (node["label"] as string) : id;`,
+    `};`,
     ``,
     `/*`,
     ` * ${name}'s acts, written by the studio from what each act declares:`,
@@ -148,9 +170,12 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
       const severs = read.out(act.id, "severs");
       const writes = list(act, "writes") ?? [];
       const arg = str(act, "subjectArg") ?? "id";
+      // The checkout's own word for the far end, kept; `to` only for an act the studio declared.
+      const far = str(act, "targetArg") ?? "to";
       const onAny = bool(act, "onAny");
       const subjectKinds = onAny ? '"*"' : `[${on.map(q).join(", ")}]`;
       const lines = [``, `export const ${camel(actName)} = defineMutation(${q(actName)}, {`];
+      const body: string[] = [];
       if (str(act, "title")) lines.push(`  title: ${q(str(act, "title")!)},`);
       if (str(act, "description")) lines.push(`  description: ${q(str(act, "description")!)},`);
       if (bool(act, "destructive")) lines.push(`  destructive: true,`);
@@ -166,40 +191,53 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
         const asked = fields.filter((field) => field.required && field.type !== "list");
         lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options)}`).join("")} }),`);
         lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.label}\`,`);
-        lines.push(`  apply(ctx, args) {`);
-        lines.push(`    ctx.addNode({`);
-        lines.push(`      id: ctx.freshId(args.label, ${q(kind)}),`);
-        lines.push(`      kind: ${q(kind)},`);
-        lines.push(`      label: args.label,`);
-        for (const field of fields) if (field.required) lines.push(`      ${field.name}: args.${field.name} ?? ${defaultSource(field.type, field.options)},`);
-        lines.push(`    });`);
-        lines.push(`  },`);
+        body.push(`    ctx.addNode({`);
+        body.push(`      id: ctx.freshId(args.label, ${q(kind)}),`);
+        body.push(`      kind: ${q(kind)},`);
+        body.push(`      label: args.label,`);
+        for (const field of fields) if (field.required) body.push(`      ${field.name}: args.${field.name} ?? ${defaultSource(field.type, field.options)},`);
+        body.push(`    });`);
       } else if (connects[0] ?? severs[0]) {
         const edge = (connects[0] ?? severs[0])!;
         const targets = read.out(edge.id, "to-kind").map((target) => kindName.get(target.id) ?? label(target));
         const making = connects.length > 0;
-        lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds}), to: nodeRef(${targets.length > 0 ? `[${targets.map(q).join(", ")}]` : '"*"'}) }),`);
-        lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.${arg}} ${making ? "→" : "⇸"} \${args.to}\`,`);
-        lines.push(`  apply(ctx, args) {`);
-        lines.push(`    ctx.${making ? "addEdge" : "removeEdge"}({ kind: ${q(label(edge))}, from: args.${arg}, to: args.to });`);
-        lines.push(`  },`);
+        lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds}), ${far}: nodeRef(${targets.length > 0 ? `[${targets.map(q).join(", ")}]` : '"*"'}) }),`);
+        lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})} ${making ? "→" : "⇸"} \${nameOf(graph as Reader, args.${far})}\`,`);
+        body.push(`    ctx.${making ? "addEdge" : "removeEdge"}({ kind: ${q(label(edge))}, from: args.${arg}, to: args.${far} });`);
       } else {
         const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
         for (const kindNode of kinds) if (on.includes(label(kindNode))) for (const field of fieldsOf(kindNode)) declared.set(field.name, { type: field.type, options: field.options });
         lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options) : "z.string().optional()"}`).join("")} }),`);
-        lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.${arg}}\`,`);
-        lines.push(`  apply(ctx, args) {`);
+        lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})}\`,`);
         if (writes.length > 0) {
-          lines.push(`    const patch: Record<string, unknown> = {};`);
-          for (const field of writes) lines.push(`    if (args.${field} !== undefined) patch[${q(field)}] = args.${field};`);
-          lines.push(`    if (Object.keys(patch).length > 0) ctx.patchNode(args.${arg}, patch);`);
+          body.push(`    const patch: Record<string, unknown> = {};`);
+          for (const field of writes) body.push(`    if (args.${field} !== undefined) patch[${q(field)}] = args.${field};`);
+          body.push(`    if (Object.keys(patch).length > 0) ctx.patchNode(args.${arg}, patch);`);
         } else {
-          lines.push(`    // Declared in the studio with no create, connect, sever or write: give it a body.`);
-          lines.push(`    void ctx;`);
-          lines.push(`    void args;`);
+          body.push(`    // Declared in the studio with no create, connect, sever or write: give it a body.`);
+          body.push(`    void ctx;`);
+          body.push(`    void args;`);
         }
-        lines.push(`  },`);
       }
+      lines.push(`  apply(ctx, args) {`);
+      if (baseActs.has(actName)) {
+        /*
+         * AN ACT THE CHECKOUT WROTE keeps its declaration and loses its body
+         * here, because a body is code the studio never saw. A generated one
+         * that does something ELSE — "close it" patching only when a status
+         * is passed, a tie without the checkout's own guard — is worse than
+         * none, so the stub throws, naming what belongs here, and `kept`
+         * says so to whoever writes the files.
+         */
+        keptActs.push(actName);
+        lines.push(`    // The checkout's own body belongs here: the studio cannot write what it never saw.`);
+        lines.push(`    void ctx;`);
+        lines.push(`    void args;`);
+        lines.push(`    throw new Error(${q(`${actName}: the checkout's apply belongs here — the studio cannot write a hand-written body`)});`);
+      } else {
+        lines.push(...body);
+      }
+      lines.push(`  },`);
       lines.push(`});`);
       return lines;
     }),
@@ -227,14 +265,27 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
       const repairs = read.out(rule.id, "repairs").map(label);
       const whole = bool(rule, "wholeGraph") || !over;
       const lines = [``, `export const ${camel(ruleName)} = ${whole ? "defineGraphInvariant" : "defineInvariant"}(${q(ruleName)}, {`];
-      lines.push(`  label: ${q(ruleName)},`);
+      // The checkout's words for it, not its identifier.
+      lines.push(`  label: ${q(str(rule, "title") ?? ruleName)},`);
       if (str(rule, "description")) lines.push(`  description: ${q(str(rule, "description")!)},`);
       if (!whole) lines.push(`  scope: { kind: ${q(kindName.get(over!.id) ?? label(over!))} },`);
       if (repairs.length > 0) lines.push(`  repairs: [${repairs.map(q).join(", ")}],`);
       if (bool(rule, "judgesPast")) lines.push(`  judgesPast: true,`);
       lines.push(`  evaluate(): Violation[] {`);
-      lines.push(`    // The judgement: return a violation per subject that breaks the rule.`);
-      lines.push(`    return [];`);
+      if (baseRules.has(ruleName)) {
+        /*
+         * A rule the checkout already judges: its evaluate is code the
+         * studio never saw. A stub that returns nothing would hold, and a
+         * rule that holds when it should not is a lie the interface tells
+         * with a green light. So it throws, naming what belongs here.
+         */
+        keptRules.push(ruleName);
+        lines.push(`    // The checkout's own judgement belongs here: the studio cannot write what it never saw.`);
+        lines.push(`    throw new Error(${q(`${ruleName}: the checkout's evaluate belongs here — the studio cannot write a judgement`)});`);
+      } else {
+        lines.push(`    // The judgement: return a violation per subject that breaks the rule.`);
+        lines.push(`    return [];`);
+      }
       lines.push(`  },`);
       lines.push(`});`);
       return lines;
@@ -247,9 +298,9 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const roles = read.ofKind("role").map(label);
   const grants = read.ofKind("grant");
   const files: WrittenFile[] = [
-    { path: "src/domain/schema.ts", contents: schemaTs },
-    { path: "src/domain/mutations.ts", contents: mutationsTs },
-    { path: "src/domain/invariants.ts", contents: invariantsTs },
+    { path: "src/domain/schema.ts", contents: schemaTs, kept: [] },
+    { path: "src/domain/mutations.ts", contents: mutationsTs, kept: keptActs.map((act) => `${act}: apply`) },
+    { path: "src/domain/invariants.ts", contents: invariantsTs, kept: keptRules.map((rule) => `${rule}: evaluate`) },
   ];
   if (roles.length > 0 || grants.length > 0) {
     const policyTs = [
@@ -276,7 +327,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
       `};`,
       ``,
     ].join("\n");
-    files.push({ path: "src/domain/policy.ts", contents: policyTs });
+    files.push({ path: "src/domain/policy.ts", contents: policyTs, kept: [] });
   }
   return files;
 }

@@ -235,7 +235,7 @@ describe("the declaration is written back as the files graview create writes", (
     expect(files["src/domain/schema.ts"]).toContain("export const gardenSchema = createSchema([gardener, plot]);");
     expect(files["src/domain/mutations.ts"]).toContain('export const tend = defineMutation("tend", {');
     expect(files["src/domain/mutations.ts"]).toContain('connects: ["tended-by"],');
-    expect(files["src/domain/mutations.ts"]).toContain('ctx.addEdge({ kind: "tended-by", from: args.plot, to: args.to });');
+    expect(files["src/domain/mutations.ts"]).toContain('ctx.addEdge({ kind: "tended-by", from: args.plot, to: args.gardener });');
     expect(files["src/domain/invariants.ts"]).toContain('defineInvariant("every-plot-tended", {');
     expect(files["src/domain/invariants.ts"]).toContain('repairs: ["tend"],');
     expect(files["src/domain/policy.ts"]).toContain('{ roles: ["gardener"], mutations: ["tend", "untend"], kinds: ["plot"], describe: "a gardener may tend" },');
