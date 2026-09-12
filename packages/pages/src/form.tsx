@@ -22,6 +22,9 @@ import { useState, type ReactNode } from "react";
 
 const field: React.CSSProperties = {
   display: "grid",
+  // A track the width it was given: see the note on `column` in pages.tsx.
+  gridTemplateColumns: "minmax(0, 1fr)",
+  minWidth: 0,
   gap: 4,
 };
 const labelStyle: React.CSSProperties = {
@@ -374,7 +377,11 @@ export function DerivedForm<S extends AnySchema>({
           setFailed(error instanceof Error ? error.message : String(error));
         }
       }}
-      style={{ display: "grid", gap: 12 }}
+      // A form is a grid item of the section above it and a grid container
+      // for the fields below: both halves have to be allowed to be narrower
+      // than what is in them, or a big enough text size pushes the page
+      // sideways. See the note on `column` in pages.tsx.
+      style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", minWidth: 0, gap: 12 }}
     >
       {fields.map((spec) => (
         <Control
