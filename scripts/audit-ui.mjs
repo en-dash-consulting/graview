@@ -30,6 +30,20 @@ const APPS = {
     travelled: async (p) => { await p.dblclick('[data-graview-pick="t-deposit"]'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
     /*
+     * THE RAIL, OPEN. Two states here opened it and pressed Escape on the
+     * way past, so every count was taken with it shut — and the two
+     * controls inside it, the only way to take a turn back and the only way
+     * out of a remembered store, were measured by nothing.
+     */
+    activity: async (p) => {
+      await p.click('[data-graview-pick="t-deposit"]');
+      await p.waitForTimeout(300);
+      await p.locator('[data-testid="affordances"] button', { hasText: "Finish it" }).first().click();
+      await p.waitForTimeout(400);
+      await p.click('[data-testid="activity-button"]');
+      await p.waitForTimeout(400);
+    },
+    /*
      * AN ACT THAT STILL WANTS SOMETHING, mid-ask. Every state here pressed
      * acts that need nothing, so the pane that opens under one that does —
      * a field, an Apply and a Skip laid out in a 236-wide rail — was a

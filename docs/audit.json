@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T02:04:47.301Z",
+  "at": "2026-09-12T02:07:29.080Z",
   "engine": "chromium",
   "screens": [
     {
@@ -131,6 +131,31 @@
       "board": [],
       "fill": 19,
       "inspector": null
+    },
+    {
+      "app": "todo",
+      "state": "activity",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 59,
+      "inspector": {
+        "shown": 11,
+        "hidden": 0,
+        "size": "236x374",
+        "text": "Pay the deposittask· double-click opens×Put it back☆Rename …☆Move the date …☆Change the ta"
+      }
     },
     {
       "app": "todo",

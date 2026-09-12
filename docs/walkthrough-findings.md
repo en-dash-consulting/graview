@@ -1369,3 +1369,27 @@ The shapes that came up again, and the new ones:
   Verified failing without the fix: `seedbed/asked` reports the Skip at
   222..271 outside a pane ending at 250, and `seedbed/askedNarrow` reports
   all three controls at 651..683 outside a sheet ending at 610.
+
+### W-052 · The rail's undo and its way out of a remembered store are too small to hit
+- stage: A · face: scene · width: 1280 and 390 · scheme: both
+- expected: no control under 24px, which the framework already counts
+- actual: the activity rail holds exactly two controls, and both were under
+  it: `undo` at 38x18 (11px text in one pixel of vertical padding) and
+  "Start fresh" at 50x16 (an inline anchor with no box of its own). They are
+  the only way to take a turn back and the only way out of a store the
+  browser remembers. The routed face's copy of the same link was fixed for
+  exactly this in W-046, with the comment still on it — the fix landed on
+  one face and the other kept the 16-pixel link.
+- where it belongs: `packages/primitives/src/workbench/index.tsx` (`UndoTurn`
+  and `StartFresh`)
+- harness that should have caught it: `scripts/audit-ui.mjs` — the `small`
+  criterion has counted controls under 24px since W-046, and no screen it
+  takes had the rail open. Two states opened it on the way to something else
+  (`seedbed/narrow`, `seedbed/planted`) and pressed Escape before the count
+  was taken, so the rail was measured shut fourteen times.
+- status: fixed in "walkthrough: A · a rail you can hit" · both are
+  `inline-flex` with `minHeight`/`minWidth` 24, which is what
+  `StartFreshLink` in `@graview/pages` already was. Criterion added:
+  `audit-ui`'s `todo/activity` state — act once, then open the rail, and
+  count. Verified failing without the fix: `2 controls under 24px`, named as
+  `undo 38x18` and `Start fresh 50x16`.
