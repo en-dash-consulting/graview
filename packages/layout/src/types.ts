@@ -187,6 +187,15 @@ export interface LayoutOptions {
    */
   readonly hiddenKinds?: readonly string[];
   /**
+   * WHAT A NODE JUDGES, by its id: the nodes its current violations name.
+   * A rule has no edges, so a focused rule used to raise nothing — or,
+   * with a relation named, every node of that kind wholesale — and its
+   * card said nothing was connected while the picture showed twelve. What
+   * a rule is about is derivable from its violations; the scene supplies
+   * them here so the layout can draw them as its neighbourhood.
+   */
+  readonly judged?: Readonly<Record<string, readonly string[]>>;
+  /**
    * Room the picture must leave for chrome that lives ON the scene — the
    * left rail at altitude, where the relation key and the inspector sit.
    * The ring and the focused card centre within what is left, so a
@@ -215,7 +224,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1040, height: 420 },

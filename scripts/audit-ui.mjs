@@ -27,6 +27,23 @@ const APPS = {
     // Every existing state left plane 1 empty, which is how minus-one-pixel
     // band arithmetic sat unseen: nothing ever measured a raised relation.
     raised: async (p) => { await p.click('[data-graview-view="kind:list"]'); },
+    /*
+     * A RULE'S NEIGHBOURHOOD, and a CROWD in the band. A focused rule with
+     * "Tasks" raised showed every task, twelve in slots 57 pixels wide under
+     * chips 150 wide, while its card said nothing was connected. The first
+     * state is what a rule judges; the second is a kind raised wholesale on
+     * a node with no edge or judgement of it, twelve chips that must wrap.
+     */
+    judged: async (p) => {
+      await p.goto("http://localhost:5193/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1", { waitUntil: "load" });
+      await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(900);
+    },
+    crowd: async (p) => {
+      await p.goto("http://localhost:5193/?theme=light&today=2026-09-01#focus=reason-deposit&relation=task&zoom=1", { waitUntil: "load" });
+      await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(900);
+    },
     travelled: async (p) => { await p.dblclick('[data-graview-pick="t-deposit"]'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
     /*

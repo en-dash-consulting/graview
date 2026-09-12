@@ -66,6 +66,16 @@ const section = `
     </section>
 `;
 
+/*
+ * A FAILED RUN WRITES NOTHING. The report is whatever the last run left; a
+ * run whose dev server never came up leaves no chapters, and writing that
+ * into the page erased every chapter once. The page keeps what it has.
+ */
+if (report.error || !Array.isArray(report.chapters) || report.chapters.length === 0) {
+  process.stderr.write(`docs/progression.json has no chapters${report.error ? ` (${String(report.error).slice(0, 120)})` : ""}; the page is left as it is.\n`);
+  process.exit(1);
+}
+
 const source = readFileSync(page, "utf8");
 const start = "<!-- progression:start -->";
 const end = "<!-- progression:end -->";
