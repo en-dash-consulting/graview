@@ -140,7 +140,22 @@ export function AnswerArgs({
    * IDENTIFIER — "dependsOn · 1 of 2" — which is the same bug W-004 fixed
    * one element lower down.
    */
-  const asking = humaniseField(parameter.name);
+  /*
+   * A NODE PICKER IS NAMED BY WHAT IT PICKS — "Item", not "Id".
+   *
+   * The routed face has said so since it was written ("the argument's name
+   * is an implementation detail, and the kinds it accepts are the
+   * declaration's own word for the thing" — `formFields` in
+   * `@graview/pages`), and the strip asked with the argument's identifier.
+   * Every scaffolded app names its subject argument `id`, as the skills'
+   * own examples do, so an act offered from the FAR END of its tie — "Hand
+   * one back", standing on the person — put the word "Id" over a list of
+   * items.
+   */
+  const asking =
+    parameter.kinds && parameter.kinds.length > 0 && !parameter.kinds.includes("*")
+      ? parameter.kinds.map((kind) => humaniseField(kind)).join(" or ")
+      : humaniseField(parameter.name);
   const step =
     affordance.open.length > 1
       ? `${asking} · ${affordance.open.length - remaining.length + 1} of ${affordance.open.length}`

@@ -1509,3 +1509,32 @@ The shapes that came up again, and the new ones:
   corrected: `edge-inspector`'s "no mutation claims the edge kind" case
   selected a line in an EMPTY store, which only rendered at all while a stop
   could name what was not there.
+
+### W-056 · An act offered from the far end asks for its subject by the word "Id"
+- stage: B · face: scene · width: any · scheme: both
+- expected: "the connecting act offers only candidates not already
+  connected" — and says what it is asking for, which W-039 established
+- actual: standing on Ada Nowak, "Hand one back …" opened its ask under the
+  heading **"Id"**, over a list of items. The open argument there is the
+  act's SUBJECT, and every scaffolded app names that argument `id` — the
+  scaffold's own mutations do, and so does every example in
+  `graview-node-kind` — so this is what the far end of every tie in every
+  new project says. The routed face gets it right on the same act, and has
+  the rule written down in `formFields`: "A node picker is labelled by what
+  it PICKS — 'List', not 'List id': the argument's name is an implementation
+  detail, and the kinds it accepts are the declaration's own word for the
+  thing." The strip had `humaniseField(parameter.name)` and nothing else.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`AnswerArgs`)
+- harness that should have caught it: W-039's own criterion,
+  `packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx`,
+  asserts the heading over a picker is "Owner" — for an argument called
+  `owner` picking an `owner`, where the identifier and the kind are the same
+  word, so it could not tell which of the two was being read
+- status: fixed in "walkthrough: B · a picker named by what it picks" · a
+  parameter that names node kinds is asked for by those kinds, exactly as
+  the routed face does it; anything else is still the humanised argument.
+  Criterion added to the same file: "names a node picker by what it picks,
+  never by the argument" — the act pressed from the far end, where the open
+  argument is `id` and the kinds are `item`. Verified failing without the
+  fix: `expected 'Id' to be 'Item'`.
