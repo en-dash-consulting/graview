@@ -63,10 +63,32 @@ describe("what a project starts with", () => {
    */
   it("takes the act it offers from the derivation, with the candidates the derivation narrowed", () => {
     const pages = file("Field Notes", "src/ui/pages.tsx");
-    expect(pages).toContain("facts.actions.affordances.find(");
-    expect(pages).toContain("open={link.open}");
+    expect(pages).toContain("facts.actions.affordances.filter(");
+    expect(pages).toContain("open={affordance.open}");
+    expect(pages).toContain("prefilled={affordance.args}");
     // Never the raw lookup as the thing that decides whether to offer it.
     expect(pages).not.toMatch(/const link = store\.allMutations\(\)/);
+  });
+
+  /*
+   * AND THE SAME CLAIM ABOUT ITS TIES. The page said "Depends on X" from
+   * `out(id, "depends-on")` and offered one form found by the mutation name
+   * `link-<kind>` — so the moment a project followed `graview-node-kind`
+   * and declared a second kind with an edge to it, the record page silently
+   * left the new relation out and offered no way to make one. Following the
+   * next skill in the set must not break the page the last one wrote.
+   */
+  it("reads its ties and its acts from the declaration, naming neither by hand", () => {
+    const pages = file("Field Notes", "src/ui/pages.tsx");
+    expect(pages).toContain("facts.links");
+    const code = pages
+      .split("\n")
+      .filter((line) => !/^\s*(\*|\/\*|\/\/)/.test(line))
+      .join("\n");
+    // No edge kind and no mutation of its own: "depends-on", "link-item".
+    expect(code).not.toMatch(/"depends-on"/);
+    expect(code).not.toMatch(/"link-item"/);
+    expect(code).not.toMatch(/graph\.(out|in)\(/);
   });
 
   it("keeps React out of the domain, so graview check can load it", () => {

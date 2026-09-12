@@ -1044,19 +1044,26 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
       </PageMain>
     );
   }
-  const waitsOn = store.graph.out(id, "depends-on").map((other) => (other as { label: string }).label);
   /*
-   * THE ACT AS THE DERIVATION OFFERS IT, not as the declaration lists it.
+   * THE TIES, AS THE DECLARATION READS THEM.
    *
-   * Reaching for the mutation by name gets an act that is always there; the
-   * affordance is the act that can actually be taken RIGHT NOW, and it
-   * carries the candidates — everything of this kind that is not already
-   * depended on, and never this record itself. With one ${ids.spoken} in the
-   * graph there is nothing to depend on, so there is no section, rather than
-   * a heading over a picker with one wrong answer in it.
+   * \`facts.links\` is every edge on this record, both directions, each
+   * carrying the caption the declaration gives THAT end. Asking the graph
+   * for one edge by name here instead — \`out(id, "depends-on")\` — is a
+   * page that stops telling the truth the day the schema grows a second
+   * edge, which is the first thing every project does.
    */
-  const link = facts.actions.affordances.find((affordance) => affordance.mutation === "link-${ids.kind}");
-  const linkAct = link ? store.allMutations().find((mutation) => mutation.name === link.mutation) : undefined;
+  const ties = facts.links;
+  /*
+   * THE ACTS AS THE DERIVATION OFFERS THEM, not as the declaration lists
+   * them. Reaching for a mutation by name gets an act that is always there;
+   * an affordance is an act that can actually be taken RIGHT NOW, and it
+   * carries its candidates — everything not already tied, and never this
+   * record itself. With one ${ids.spoken} in the graph there is nothing to
+   * point at, so there is no form, rather than a heading over a picker with
+   * one wrong answer in it.
+   */
+  const connecting = facts.actions.affordances.filter((affordance) => affordance.ties === true);
 
   return (
     <PageMain context={context} data-testid="${ids.kind}-page">
@@ -1065,7 +1072,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
         <h1 style={pageStyles.h1}>{node.label}</h1>
         <p style={pageStyles.lede}>
           {node.status === "closed" ? "Closed." : "Still open."}{" "}
-          {waitsOn.length > 0 ? \`Depends on \${waitsOn.join(", ")}.\` : "Depends on nothing."}
+          {ties.length === 0 ? "Connected to nothing yet." : null}
         </p>
         <a href={spatialHref(id)} style={{ ...pageStyles.link, ...pageStyles.quiet }} data-testid="spatial-link">
           See it in the scene ↗
@@ -1087,10 +1094,34 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           ))}
         </section>
       ) : null}
-      {link && linkAct ? (
-        <section style={{ ...pageStyles.rule, display: "grid", gap: 12 }} data-testid="record-actions">
-          <h2 style={pageStyles.h2}>Make it depend on something</h2>
-          <DerivedForm<S> store={store} mutation={linkAct} prefilled={{ id }} open={link.open} />
+      {ties.length > 0 ? (
+        <section style={{ ...pageStyles.rule, display: "grid", gap: 14 }} data-testid="record-ties">
+          {ties.map((group) => (
+            <div key={\`\${group.edgeKind}|\${group.direction}\`} style={{ display: "grid", gap: 6 }}>
+              {/* The edge's own words for THIS end — its description read
+                  from the end that declared it, its inverse read from the
+                  other. */}
+              <h2 style={pageStyles.h2}>
+                {(group.description ?? group.edgeKind).replace(/^./, (first) => first.toUpperCase())}
+              </h2>
+              <p style={{ margin: 0 }}>{group.targets.map((target) => target.label).join(", ")}</p>
+            </div>
+          ))}
+        </section>
+      ) : null}
+      {connecting.length > 0 ? (
+        <section style={{ ...pageStyles.rule, display: "grid", gap: 14 }} data-testid="record-actions">
+          {connecting.map((affordance) => {
+            const act = store.allMutations().find((mutation) => mutation.name === affordance.mutation);
+            return act ? (
+              <div key={affordance.id} style={{ display: "grid", gap: 10 }}>
+                {/* The act's own title, and the arguments the derivation
+                    already settled — never a subject name written out here. */}
+                <h2 style={pageStyles.h2}>{affordance.label}</h2>
+                <DerivedForm<S> store={store} mutation={act} prefilled={affordance.args} open={affordance.open} />
+              </div>
+            ) : null;
+          })}
         </section>
       ) : null}
     </PageMain>
