@@ -1,9 +1,9 @@
 {
-  "at": "2026-09-12T14:42:49.075Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-sikFQV",
+  "at": "2026-09-12T19:25:27.374Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-afZwb1",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-sikFQV/field-notes",
+    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-afZwb1/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -71,7 +71,7 @@
   },
   "linked": {
     "said": [
-      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-sikFQV/linked-orders",
+      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-afZwb1/linked-orders",
       "graview create: pnpm install"
     ],
     "consumesByPath": true,
@@ -167,6 +167,7 @@
     "@graview/render",
     "@graview/ship",
     "@graview/skills",
+    "@graview/studio",
     "@graview/tools"
   ],
   "vowel": {

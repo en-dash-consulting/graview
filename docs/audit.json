@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-12T15:23:26.334Z",
-  "engine": "chromium",
+  "at": "2026-09-12T19:30:39.035Z",
+  "engine": "firefox",
   "screens": [
     {
       "app": "todo",
@@ -203,7 +203,7 @@
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "370x131",
+        "size": "370x151",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       }
     },
@@ -338,7 +338,7 @@
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "370x112",
+        "size": "370x197",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       }
     }

@@ -1977,6 +1977,59 @@ The shapes, in the order of how much they cost:
 
 ## The fourth walk (2026-09-12)
 
+Sixteen findings, W-070 to W-085, across the setup and stages A to F —
+every one fixed in a framework package (or the worked example a skill
+points at) and covered by a criterion verified to fail without the fix. So
+the fourth walk did NOT leave the log still either, and a fifth is owed.
+Stages G, H and I added nothing: every claim in them held at both widths,
+in both schemes, in all three engines, at a 32px root, at 320 wide and
+with reduced motion on.
+
+The two things that had never been walked produced most of the weight:
+
+- **The studio writes back something other than what it read** (W-077,
+  W-078, W-079). Every tie act came back asking for an invented `to`;
+  every rule the checkout wrote came back as `evaluate() { return []; }`
+  under a comment claiming the opposite; every act the checkout wrote got
+  a generic body that did something else; every `fromTheOtherEnd` was
+  dropped. The studio's own tests declared none of these and called none
+  of them. Its round trip on Walk is clean now, with `kept` naming what a
+  person must put back and a loud failure until they do.
+- **The routed face wrote as nobody** (W-082): under a policy every form
+  and every one-press repair the derivation offered live was refused on
+  press, because `DerivedForm` and `Repairs` applied with no author. Found
+  by pressing an act in a jsdom test of the worked example — which is
+  also how the example was found picking its acts by name (W-081), the
+  thing its own skill says twice not to do.
+
+The shapes that came up again:
+
+- **Asking as nobody, or calling nobody "you"** — the submit (W-082), the
+  chat's proposal (W-084), the rail's and the pages' attribution with two
+  seats on one store (W-085).
+- **The keyboard ending on `<body>`** — the in-place editor (W-070), and
+  the design's act form (W-083); W-053's defect on two more surfaces, and
+  the pane's keeper reclaiming the keyboard from one of them.
+- **One press, two rungs** — Escape closing a popover and dropping the
+  selection under it (W-072), which the first version of the fix learned
+  needs the capture phase, because React commits between listeners.
+- **The words** — the log written from the button rather than the act
+  (W-074), the chat reading a tie from the wrong end (W-075) and a
+  question as a command (W-076), a hint that said "opens" over something
+  open (W-073), a skill naming a switch nothing reads (W-071).
+- **A project that cannot follow its own skill** — a lens typed the way
+  `graview-lens` says would not register without a cast (W-080).
+
+Also observed and not logged, because they are the walked app's own: a
+lens using `h3` under a `Panel` whose title is not a heading (the shipped
+lenses use none), a tinted paper that drops the accent below AA where the
+framework's own ground holds it, and a scaffolded app's headless tests
+applying as nobody once it declares a policy (a clear refusal, one line to
+fix). `pnpm engines` reported `firefox audit:FAIL` once, at the end of
+stage D, while a stage E browser session ran beside it; the same audit run
+alone in Firefox was 15 of 15 clean and every later engines run held.
+
+
 ### W-070 · A rename made in place leaves the keyboard on <body>, or on a pin nobody pressed
 - stage: A · face: scene · width: 1280 and 390 · scheme: both
 - expected: "keyboard alone can do everything above" — rename it in place,
