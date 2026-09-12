@@ -1458,3 +1458,54 @@ The shapes that came up again, and the new ones:
   its comments stripped and refuses `"depends-on"`, `"link-item"` and
   `graph.out(`. Verified failing against the old template: both tests fail,
   naming `facts.links` and `facts.actions.affordances.filter(`.
+
+### W-055 · An act that removes what you are standing in leaves a stop about nothing, and blanks the page
+- stage: B · face: scene · width: any · scheme: both
+- expected: severing a relation removes exactly that line, and the interface
+  goes on being an interface
+- actual: three faces of one defect, all reached by acts the declaration
+  offers. Every stop is an id in the address, and nothing ever resolved those
+  ids against the graph again.
+  1. **A severed relation still selected.** Sever "Pay the deposit is handled
+     by Ada Nowak" from the line's own menu and the pane stays open about it —
+     the caption, both ends, and "Take it back from" offered again. Pressing
+     it says `Cannot remove missing edge handled-by item:pay-the-deposit
+     person:ada-nowak` — the graph's internal sentence, with both node
+     addresses in it, in front of the person who pressed the button.
+  2. **A dropped record still selected.** In the framework's own todo app,
+     dropping a selected task leaves its pane titled `t-book` — the raw node
+     id, because the label helper has no node to ask — over the sentence
+     "Nothing can be done with this mix of kinds yet".
+  3. **A dropped record still FOCUSED blanks the app.** Travel into a task,
+     drop it: `Maximum update depth exceeded`, `#root` emptied, a white
+     screen. The cause is a second bug the first one exposes — the view host
+     measures `host.firstElementChild` to place its kind tag, and with the
+     view rendering nothing the tag is the only child, so the measurement
+     reads its own output and moves the tag nine pixels up and fourteen
+     right on every render until React gives up. Fifty renders, one press.
+- where it belongs: `packages/react/src/context.tsx` (the stop is resolved
+  only at navigation time) and `packages/react/src/scene.tsx`
+  (`SceneViewHost` — a measurement that can read its own output)
+- harness that should have caught it: `scripts/verify-navigation.mjs` walks
+  every stop in a real browser and never took one that an act had removed;
+  it also did not watch for page errors, so a blank page would have passed
+  every assertion it makes about addresses
+- status: fixed in "walkthrough: B · a stop you can still stand on" · the
+  stop is resolved on the way OUT as well as in — every render prunes a
+  selection and a focus the graph no longer has, so the very render that
+  reports the removal has already left the address somewhere real (a kind
+  card and a group are not nodes and always stand). And the tag measures the
+  first child that is not the tag, so a view with nothing to draw moves
+  nothing. Criteria added:
+  `packages/react/tests/unit/a-stop-that-still-exists.test.tsx` — four
+  ladders (a removed record selected, a severed relation selected, the
+  removed record you were focused on, and a kind card, which stays) — and
+  `verify-navigation`'s `theStopSurvivesWhatItNames`, which travels into a
+  task, drops it, and asks where it landed, how many views are on screen and
+  whether the pane is gone; that harness now also fails on any page error.
+  Verified failing without the fix: three of the four unit ladders, and the
+  browser criterion reports `landedOn` unchanged, `views: 0` and the
+  "Maximum update depth exceeded" error. One existing test needed its setup
+  corrected: `edge-inspector`'s "no mutation claims the edge kind" case
+  selected a line in an EMPTY store, which only rendered at all while a stop
+  could name what was not there.

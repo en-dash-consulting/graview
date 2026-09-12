@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T02:12:59.372Z",
+  "at": "2026-09-12T02:41:53.984Z",
   "engine": "chromium",
   "steps": [
     {
@@ -52,6 +52,9 @@
       "trail": ""
     }
   ],
+  "pageErrors": [
+    "Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent "
+  ],
   "wentDeeper": true,
   "control": {
     "ground": {
@@ -72,7 +75,7 @@
       "label": "Graview",
       "pressed": "false",
       "name": "Graview",
-      "wingOpacity": 0.539254,
+      "wingOpacity": 0.565435,
       "registered": true
     },
     "groundAgain": {
@@ -117,6 +120,13 @@
     "withAPicture": "#focus=aggregate%3Atask&overview=1&zoom=1",
     "withoutOne": "#focus=t-deposit&overview=1&expand=kind%3Areason"
   },
+  "removed": {
+    "standingIn": "#focus=t-deposit&sel=t-deposit",
+    "landedOn": "#focus=t-deposit&sel=t-deposit",
+    "views": 0,
+    "pane": null,
+    "ok": false
+  },
   "verdict": {
     "nothingToGoBackToAtFirst": true,
     "travellingChangesTheAddress": true,
@@ -139,7 +149,8 @@
     "aNewStopStartsWhereTheLayoutPutsThings": true,
     "aDistrictWithAPictureGoesIntoIt": true,
     "aDistrictWithoutOneOpensInPlace": true,
+    "theStopSurvivesWhatItNames": false,
     "whatYouCanPressIsWhatYouCanSee": true
   },
-  "passed": true
+  "passed": false
 }

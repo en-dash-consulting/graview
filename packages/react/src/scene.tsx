@@ -1453,7 +1453,22 @@ function SceneViewHost({
   useLayoutEffect(() => {
     if (Math.round(node.plane) !== 0 || node.aggregate) return;
     const host = ref.current;
-    const child = host?.firstElementChild as HTMLElement | null;
+    /*
+     * The PANEL, never the tag itself.
+     *
+     * `firstElementChild` was the drawn panel right up until the view had
+     * nothing to draw — a focus on a node an act had just removed — and
+     * then the tag was the only child, so this measured the tag against its
+     * own host and moved it by the offset below. Every render moved it nine
+     * pixels up and fourteen right, for fifty renders, until React gave up
+     * with "Maximum update depth exceeded" and blanked the page. A
+     * measurement that can read its own output has to say which child it
+     * means.
+     */
+    const child = [...(host?.children ?? [])].find(
+      // An empty data attribute reads as "", so presence is the question.
+      (element) => (element as HTMLElement).dataset["graviewKindtag"] === undefined,
+    ) as HTMLElement | undefined;
     if (!host || !child) return;
     const hostBox = host.getBoundingClientRect();
     const childBox = child.getBoundingClientRect();
