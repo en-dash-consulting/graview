@@ -27,7 +27,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { firefox } from "playwright";
-import { ENGINES } from "./lib/engine.mjs";
+import { ENGINES, launchEngine } from "./lib/engine.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const chosen =
@@ -167,7 +167,69 @@ for (const engine of chosen) {
     : { ok: false, error: `survey wrote no report — ${survey.tail.slice(-300)}` };
   say(`  survey: ${results.survey.ok ? "ok" : "FAIL"}`);
 
+  say(`  the keyboard after a pane goes …`);
+  results.keyboardSurvivesThePane = await verifyKeyboardSurvivesThePane(engine, () =>
+    launchEngine(engine, { headless: true }),
+  );
+  say(`  keyboard: ${results.keyboardSurvivesThePane.ok ? "ok" : "FAIL"} (${results.keyboardSurvivesThePane.tabbedTo?.join(" → ") ?? "-"})`);
+
   matrix.engines[engine] = results;
+}
+
+/* ------------- the keyboard must never be stranded by a pane going away */
+
+/**
+ * THE PANE GOES AND THE KEYBOARD HAS SOMEWHERE TO BE.
+ *
+ * Press Escape with the keyboard on an act and the selection clears, which
+ * takes the whole pane — and the focused control inside it — out of the
+ * document. Chrome and Firefox pick a new starting point for the next Tab
+ * on their own; WEBKIT DOES NOT: focus went away with the removed node and
+ * four presses of Tab moved nothing at all, which is a keyboard that has
+ * stopped working and a pointer as the only way out. iOS Safari is the
+ * mobile browser, so this is a launch gate rather than polish.
+ */
+async function verifyKeyboardSurvivesThePane(engine, launch) {
+  const vite = await startVite("todo", 5193);
+  const browser = await launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+    await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+    await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+    await page.waitForTimeout(900);
+    // Somewhere with a pane, and the keyboard inside it.
+    await page.click('[data-graview-pick="t-deposit"]');
+    await page.waitForSelector('[data-testid="affordances"] [data-affordance]');
+    await page.focus('[data-testid="affordances"] [data-affordance]');
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(500);
+    const gone = await page.evaluate(
+      () => document.querySelector('[data-testid="inspector-strip"]') === null,
+    );
+    // And now Tab has to go somewhere.
+    const reached = [];
+    for (let step = 0; step < 3; step++) {
+      await page.keyboard.press("Tab");
+      await page.waitForTimeout(120);
+      reached.push(
+        await page.evaluate(() =>
+          document.activeElement && document.activeElement !== document.body
+            ? (document.activeElement.getAttribute("data-testid") ??
+              document.activeElement.getAttribute("data-graview-view") ??
+              document.activeElement.tagName.toLowerCase())
+            : "body",
+        ),
+      );
+    }
+    return {
+      ok: gone && reached.some((where) => where !== "body"),
+      paneWentAway: gone,
+      tabbedTo: reached,
+    };
+  } finally {
+    await browser.close();
+    stopVite(vite);
+  }
 }
 
 /* --------------------------- degradation: the morph must cut, not break */

@@ -1821,3 +1821,59 @@ The shapes that came up again, and the new ones:
   design on the routed face, and every named region on the document must be
   unique. Verified failing without the fix: `Chapter 13 | The garden |
   Chapter 1 | The garden: expected 3 to be 4`.
+
+### W-066 · In WebKit the keyboard stops working when the pane it was in goes away
+- stage: I · face: scene · width: any · scheme: both
+- expected: "a keyboard-only pass of every stage … the app in WebKit and
+  Firefox as well as Chromium"
+- actual: in WebKit the walk stops at the first Escape. Put the keyboard on
+  an act, press Escape — the selection clears, which takes the whole pane and
+  the focused control out of the document — and `document.activeElement` is
+  `body` with **Tab moving nothing at all**, four presses running. The
+  keyboard has stopped working and a pointer is the only way out. Chromium
+  resumes from the top of the document and Firefox from the scene; WebKit
+  picks no new starting point for a document whose focus went away with a
+  removed node, and it is the browser iOS ships. W-053 gave the pane a way to
+  keep the keyboard's place when a CONTROL inside it goes; this is the case
+  where the pane itself goes, and there was nothing left inside it to go back
+  to.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`Inspector`) and `packages/primitives/src/shell.tsx` (the scene had no
+  programmatic focus target)
+- harness that should have caught it: every keyboard assertion the framework
+  makes runs in Chromium. `pnpm engines` is the only harness that runs
+  anything in WebKit, and it runs audit, pages and survey — none of which
+  presses a key.
+- status: fixed in "walkthrough: I · a keyboard the pane cannot strand" ·
+  when the pane goes while it holds the keyboard, focus lands on the picture
+  the pane was about (`main`, focusable programmatically), so the next Tab
+  continues into the scene in all three engines. Criterion added to
+  `scripts/verify-engines.mjs`: `keyboardSurvivesThePane`, run for every
+  engine in the matrix — focus an act, press Escape, and Tab has to reach
+  something. Verified failing without the fix in WebKit (`body → body →
+  body`) and passing in Chromium and Firefox, which is exactly why one
+  browser's verdict was not one.
+
+### W-067 · Every picker on the routed face is under the minimum target size in WebKit
+- stage: I · face: pages · width: 390 and 1280 · scheme: both
+- expected: "every link and button is at least 24px" — in the three engines
+  the framework ships in
+- actual: 22 pixels in WebKit, 35 in Chromium, from one `controlStyle` that
+  sets padding and no height. WebKit ignores an author's padding and minimum
+  height on a `select` while the native appearance is on, so every picker the
+  derived form draws — a choice, a node reference, a variant's tag — was
+  under the WCAG 2.2 minimum in the browser iOS ships and nowhere else.
+- where it belongs: `packages/pages/src/form.tsx`
+- harness that should have caught it: `scripts/verify-pages.mjs` measures
+  exactly this and names it `bigEnoughToHit`. It had been reporting `select
+  "—TodayThis weekSomed" 350x22` for as long as anyone ran it in WebKit — and
+  the only thing that does is `pnpm engines`, which the walkthrough's own
+  end-of-stage list did not name.
+- status: fixed in "walkthrough: I · a picker that is a target in every
+  engine" · the picker turns the native appearance off, which is what makes
+  the box the size it was asked to be, and carries a chevron of its own in
+  the scheme's own ink so it still reads as a picker. 38 pixels in all three
+  engines now. Criterion: `verify-pages`' own `bigEnoughToHit`, verified
+  failing in WebKit before the fix — and `pnpm engines` added to the
+  playbook's end-of-stage list, because a criterion nothing runs in the
+  engine it is about is a criterion that cannot fail.

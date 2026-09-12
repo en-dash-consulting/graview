@@ -189,7 +189,12 @@ export function Shell<S extends AnySchema>({
       {/* The scene's box is the container the panes size against (cqh), so
           a pane never reaches past the picture it belongs to — here or in
           an embed the size of a paragraph. */}
-      <main style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size" }}>
+      {/* Focusable only programmatically: where the keyboard lands when the
+          pane it was in stops existing (see `Inspector`). */}
+      <main
+        tabIndex={-1}
+        style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size", outline: "none" }}
+      >
         <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
         <RelationKey<S> />
         <QuickRelations<S> />

@@ -1,10 +1,10 @@
 {
-  "at": "2026-09-11T19:14:27.574Z",
+  "at": "2026-09-12T13:44:51.770Z",
   "engines": {
     "chromium": {
       "audit": {
         "ok": true,
-        "screens": 10
+        "screens": 15
       },
       "pages": {
         "ok": true
@@ -12,12 +12,21 @@
       "survey": {
         "ok": true,
         "shots": 18
+      },
+      "keyboardSurvivesThePane": {
+        "ok": true,
+        "paneWentAway": true,
+        "tabbedTo": [
+          "aggregate:list",
+          "header",
+          "div"
+        ]
       }
     },
     "webkit": {
       "audit": {
         "ok": true,
-        "screens": 10
+        "screens": 15
       },
       "pages": {
         "ok": true
@@ -25,12 +34,21 @@
       "survey": {
         "ok": true,
         "shots": 18
+      },
+      "keyboardSurvivesThePane": {
+        "ok": true,
+        "paneWentAway": true,
+        "tabbedTo": [
+          "aggregate:list",
+          "header",
+          "div"
+        ]
       }
     },
     "firefox": {
       "audit": {
         "ok": true,
-        "screens": 10
+        "screens": 15
       },
       "pages": {
         "ok": true
@@ -38,6 +56,15 @@
       "survey": {
         "ok": true,
         "shots": 18
+      },
+      "keyboardSurvivesThePane": {
+        "ok": true,
+        "paneWentAway": true,
+        "tabbedTo": [
+          "aggregate:list",
+          "header",
+          "div"
+        ]
       }
     }
   },
