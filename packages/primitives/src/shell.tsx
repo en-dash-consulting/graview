@@ -4,6 +4,7 @@ import type { ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode } from "react";
 import { ChatPanel } from "./chat.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
+import { ShowInstallation } from "./installation.js";
 import { Places } from "./places.js";
 import { QuickRelations } from "./quick-relations.js";
 import { RelationKey } from "./relation-key.js";
@@ -135,6 +136,8 @@ export function Shell<S extends AnySchema>({
         <Trail home={home} {...(homeLabel !== undefined ? { homeLabel } : {})} />
         {/* The named pictures over the graph, if the app registered any. */}
         <Places<S> />
+        {/* The way into the installation, for the seat that keeps it. */}
+        <ShowInstallation<S> />
         {/* The right-hand group wraps for the same reason the bar does: as one
             unwrapping unit it carried the whole overflow across the edge by
             itself, so the bar wrapped and the controls were still gone. */}

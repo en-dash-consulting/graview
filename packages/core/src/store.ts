@@ -260,7 +260,45 @@ export class Store<S extends AnySchema> {
       call.name,
       this.subjectKindOf(call),
       this.viaOf(this.mutations.get(call.name)),
+      this.subjectIdOf(call),
     );
+  }
+
+  /**
+   * Whether a principal may run ANY act of a module drawn only for those
+   * who administer it. This is the one question the interface asks before
+   * offering to show the installation's own districts; the answer comes
+   * from the same policy that refuses the acts.
+   */
+  mayAdminister(module: string, principal: Principal = HUMAN): boolean {
+    const declared = this.modules.administered.get(module);
+    if (!declared) return false;
+    return (declared.mutations ?? []).some((name) => {
+      const mutation = this.mutations.get(name);
+      if (!mutation) return false;
+      const kinds =
+        mutation.subject && mutation.subject.kinds !== "*"
+          ? (mutation.subject.kinds as readonly string[])
+          : [undefined];
+      return kinds.some((kind) => permits(this.policy, principal, name, kind, this.viaOf(mutation)).ok);
+    });
+  }
+
+  /** The kinds of administered modules this principal may not see at all. */
+  kindsKeptFrom(principal: Principal = HUMAN): ReadonlySet<string> {
+    const kept = new Set<string>();
+    for (const [name, module] of this.modules.administered) {
+      if (this.mayAdminister(name, principal)) continue;
+      for (const kind of module.kinds ?? []) kept.add(kind);
+    }
+    return kept;
+  }
+
+  private subjectIdOf(call: MutationCall): string | undefined {
+    const subject = this.mutations.get(call.name)?.subject;
+    if (!subject) return undefined;
+    const id = call.args[subject.arg];
+    return typeof id === "string" ? id : undefined;
   }
 
   /**

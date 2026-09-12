@@ -1,4 +1,4 @@
-import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
+import { bindSchema, createSchema, DARK, defineNode, LIGHT, nodeRef, Store, type KitOverrides } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, kindCardId, layout, toUrl, withZoom } from "@graview/layout";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -196,6 +196,35 @@ describe("the scene", () => {
       expanded: [kindCardId("duty")],
     });
     expect(html).toContain('data-graview-connector="assigned-to"');
+  });
+
+  /*
+   * THE KIT IS THE BRAND'S SAY over the lines: a kind it keeps quiet is not
+   * drawn, its route is one of the declared strategies, its colour is what
+   * the brand said. All of it arrives through the brand on the provider —
+   * nothing in the scene reads a literal.
+   */
+  describe("the kit", () => {
+    const stop = { ...EMPTY_VIEW, focusId: "week-1", relation: "person", expanded: [kindCardId("duty")] };
+    const dressed = (kit: KitOverrides) =>
+      renderToStaticMarkup(
+        <GraviewProvider store={store()} views={views()} initialView={stop} brand={{ name: "Kit", schemes: { dark: DARK, light: LIGHT }, kit }}>
+          <Scene renderer="dom" />
+        </GraviewProvider>,
+      );
+
+    it("keeps a kind quiet when the brand says so", () => {
+      expect(dressed({})).toContain('data-graview-connector="assigned-to"');
+      expect(dressed({ connectors: { byEdge: { "assigned-to": { visible: false } } } })).not.toContain('data-graview-connector="assigned-to"');
+    });
+
+    it("routes with elbows or a chord on request, and paints the brand's colour", () => {
+      const path = (html: string) => /<path data-graview-connector="assigned-to"[^>]*>/.exec(html)?.[0] ?? "";
+      expect(path(dressed({}))).toMatch(/ d="M [^"]* Q /);
+      expect(path(dressed({ connectors: { all: { route: "orthogonal" } } }))).toMatch(/ d="M [^"]* L /);
+      expect(path(dressed({ connectors: { all: { route: "orthogonal" } } }))).not.toMatch(/ Q /);
+      expect(path(dressed({ connectors: { byEdge: { "assigned-to": { colour: "#1d3f8a", pattern: "dotted" } } } }))).toContain('stroke="#1d3f8a"');
+    });
   });
 
   it("labels every view for assistive technology", () => {

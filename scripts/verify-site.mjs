@@ -60,11 +60,24 @@ try {
         await page.waitForTimeout(150);
       }
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      /*
+       * A chapter mounts on the frame after the scroll that brought it near.
+       * Scrolling away before that frame is what a reader may do, and then
+       * nothing should mount — so the harness stays put at the foot of the
+       * page until everything near it is up, and only then goes back.
+       */
+      await page
+        .waitForFunction(
+          () => [...document.querySelectorAll("[data-graview-chapter]")].every((el) => el.querySelector("[data-graview-embed]") !== null),
+          null,
+          { timeout: 20_000 },
+        )
+        .catch(() => {});
       await page.waitForTimeout(150);
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForFunction(
         (n) => document.querySelectorAll("[data-graview-embed]").length >= n,
-        14,
+        17,
         { timeout: 30_000 },
       ).catch(() => {});
       await page.waitForTimeout(900);
@@ -178,6 +191,26 @@ try {
   const faceAfter = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
   report.criteria.aChapterSwitchesFaceOnThePage = faceBefore !== null && faceBefore !== "pages" && faceAfter === "pages";
 
+  /* The kit re-dresses the live garden: a right-angled route draws elbows, a kind kept quiet is not drawn. */
+  await page.locator('#kit [data-graview-chapter="8"]').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]') !== null, null, { timeout: 20_000 }).catch(() => {});
+  const kitPath = () => page.evaluate(() => document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null);
+  const curved = await kitPath();
+  await page.locator('#kit-form input[name="route"][value="orthogonal"]').check().catch(() => {});
+  await page.waitForTimeout(400);
+  const elbowed = await kitPath();
+  await page.locator('#kit-form input[name="tended-visible"]').uncheck().catch(() => {});
+  await page.waitForTimeout(400);
+  const quiet = await kitPath();
+  const declared = await page.evaluate(() => document.getElementById("kit-decl")?.textContent ?? "");
+  report.criteria.theKitRedressesTheLiveGarden =
+    curved !== null && curved.includes(" Q ") && elbowed !== null && elbowed.includes(" L ") && !elbowed.includes(" Q ") && quiet === null && declared.includes('visible: false');
+  await page.locator('#kit-form input[name="tended-visible"]').check().catch(() => {});
+  await page.locator('#kit-form input[name="tended-painted"]').check().catch(() => {});
+  await page.locator('#kit-form input[name="tended-colour"]').fill("#f4f4f4").catch(() => {});
+  await page.waitForTimeout(300);
+  report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("kit-contrast-below-aa") ?? false);
+
   report.criteria.textZoomToTwoHundredDoesNotScrollSideways = await page.evaluate(
     () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
   );
@@ -218,8 +251,8 @@ const bad = report.viewports.filter(
 report.criteria.everyViewportIsClean = bad.length === 0;
 // Twelve chapters, live, at every width and in both schemes — the page is
 // judged with the applications on it, not with pictures of them.
-// Thirteen chapters and the opener's own copy of the first: fourteen live.
-report.criteria.everyChapterIsLiveAtEveryWidth = report.viewports.every((v) => v.live === 14);
+// Fifteen chapters, the opener's own copy of the first, and the kit's garden: seventeen live.
+report.criteria.everyChapterIsLiveAtEveryWidth = report.viewports.every((v) => v.live === 17);
 report.passed = Object.values(report.criteria).every(Boolean) && !report.error;
 
 writeFileSync(resolve(repoRoot, "docs/site-check.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");

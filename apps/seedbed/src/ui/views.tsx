@@ -1,5 +1,7 @@
+import type { GraviewApp } from "@graview/core";
 import { createViews, type ViewProps, type ViewComponent } from "@graview/react";
-import { Chip, createBoardLens, createCoverageLens, hueFor, Panel, registerDefaultViews } from "@graview/primitives";
+import { createStudioLens } from "@graview/studio";
+import { Chip, createBoardLens, createCoverageLens, hueFor, Panel, reachLens, registerDefaultViews } from "@graview/primitives";
 import { seedbedSchema, type SeedbedSchema } from "../domain/schema.js";
 import { GardenMapView } from "./garden-map.js";
 
@@ -58,7 +60,7 @@ const beds = createBoardLens<S>({
 /** The views for the garden — or for a chapter of it, which may not have plots yet. */
 export function seedbedViews(
   schema: SeedbedSchema = seedbedSchema,
-  options: { lens?: boolean; board?: boolean; map?: boolean } = {},
+  options: { lens?: boolean; board?: boolean; map?: boolean; reach?: boolean; studio?: GraviewApp } = {},
 ) {
   let registry = registerDefaultViews(schema, createViews(schema));
   const kinds = schema.kinds as readonly string[];
@@ -85,6 +87,21 @@ export function seedbedViews(
     registry = registry
       .register("plot", { cardinality: "many", fidelity: "full" }, GardenMapView, { title: "The garden map" })
       .register("plot", { cardinality: "many", fidelity: "summary" }, GardenMapView, { title: "The garden map" });
+  }
+  if (options.studio && kinds.includes("kind")) {
+    // The studio over a declaration: what the checker says about it as it
+    // now stands, a place over the kinds.
+    const check = createStudioLens(options.studio);
+    registry = registry
+      .register("kind" as never, { cardinality: "many", fidelity: "full" }, check.View as unknown as ViewComponent<S>, { title: "What the checker says" })
+      .register("kind" as never, { cardinality: "many", fidelity: "summary" }, check.View as unknown as ViewComponent<S>, { title: "What the checker says" });
+  }
+  if (options.reach && kinds.includes("user")) {
+    // What each role reaches, read from the policy the store refuses with:
+    // a place, for the seat that keeps the installation.
+    registry = registry
+      .register("user" as never, { cardinality: "many", fidelity: "full" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
+      .register("user" as never, { cardinality: "many", fidelity: "summary" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" });
   }
   if (options.lens && kinds.includes("gardener")) {
     // The lens, for a group of gardeners. The lens supplies the picture.

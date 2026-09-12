@@ -40,6 +40,7 @@ describe("the skills package", () => {
       "graview-permissions",
       "graview-port-app",
       "graview-ship",
+      "graview-studio",
     ]);
   });
 

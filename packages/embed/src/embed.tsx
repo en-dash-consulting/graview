@@ -7,6 +7,7 @@ import {
   OverviewButton,
   Places,
   QuickRelations,
+  ShowInstallation,
   registerDefaultViews,
   RelationKey,
   Standing,
@@ -348,6 +349,7 @@ function Strip({
       ))}
       {/* The named pictures over the graph — a lens is somewhere to go, by name. */}
       {face !== "pages" ? <Places /> : null}
+      {face !== "pages" ? <ShowInstallation /> : null}
       {seats && seats.length > 1 ? (
         <div role="group" aria-label="Seat" data-testid="embed-seats" style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 6 }}>
           <span style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>As</span>
@@ -391,6 +393,8 @@ export interface EmbedHandle {
   setScheme(scheme: Scheme): void;
   /** Put another principal at the keyboard; the store and its history stay. */
   setSeat(principal: Principal): void;
+  /** Re-dress the embed: another brand, or the same brand with a different kit. */
+  setBrand(brand: Brand | undefined): void;
   readonly store: Store<AnySchema>;
   unmount(): void;
 }
@@ -401,13 +405,14 @@ export interface EmbedHandle {
  */
 export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
   const store = options.store ?? storeOf(options.app, options.seed, options.principal);
-  let setters: { face: (f: EmbedFace) => void; stop: (s: string) => void; scheme: (s: Scheme) => void; seat: (p: Principal) => void } | null = null;
+  let setters: { face: (f: EmbedFace) => void; stop: (s: string) => void; scheme: (s: Scheme) => void; seat: (p: Principal) => void; brand: (b: Brand | undefined) => void } | null = null;
   function Host() {
     const [face, setFace] = useState<EmbedFace>(options.face ?? faceOf(options.stop));
     const [stop, setStop] = useState<string | undefined>(options.stop);
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
     const [principal, setSeat] = useState<Principal | undefined>(options.principal);
-    setters = { face: setFace, stop: setStop, scheme: setScheme, seat: setSeat };
+    const [brand, setBrand] = useState<Brand | undefined>(options.brand);
+    setters = { face: setFace, stop: setStop, scheme: setScheme, seat: setSeat, brand: setBrand };
     return (
       <Embed<S>
         {...options}
@@ -415,6 +420,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         face={face}
         {...(stop !== undefined ? { stop } : {})}
         {...(principal ? { principal } : {})}
+        {...(brand ? { brand } : {})}
         scheme={scheme}
         onFace={setFace}
         onSeat={setSeat}
@@ -429,6 +435,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
     setScheme: (scheme) => flushSync(() => setters?.scheme(scheme)),
     setSeat: (principal) => flushSync(() => setters?.seat(principal)),
+    setBrand: (brand) => flushSync(() => setters?.brand(brand)),
     unmount: () => root.unmount(),
   };
 }

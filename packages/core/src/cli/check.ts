@@ -10,6 +10,8 @@ import { nodeRefArgs } from "../mutations/node-ref.js";
 import { withArticle } from "../schema/define-node.js";
 import { permits, rolesOf } from "../permissions/policy.js";
 import { checkBrandContrast } from "../theme/derive.js";
+import { checkKitContrast, resolveKit } from "../theme/kit.js";
+import type { Scheme } from "../theme/types.js";
 import type { AnySchema } from "../schema/schema.js";
 
 export type Severity = "error" | "warning";
@@ -715,7 +717,10 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
           : [undefined];
       const reachable = roles.some((role) =>
         subjectKinds.some(
-          (kind) => permits(app.policy, { kind: "human", roles: [role] }, mutation.name, kind).ok,
+          // A self grant counts: a role that may edit its own record may do
+          // something, so the role is judged as somebody acting on themselves.
+          (kind) =>
+            permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, undefined, "themselves").ok,
         ),
       );
       const openToAll = subjectKinds.some(
@@ -735,13 +740,25 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
 
     for (const role of roles) {
-      const canDo = (app.mutations ?? []).some((mutation) => {
+      /*
+       * Declared AND derived acts count, and a self grant counts: a role
+       * that may edit its own record may do something. The role is judged
+       * as somebody acting on themselves, which is the most a self grant
+       * ever allows.
+       */
+      const canDo = [...mutations.values()].some((mutation) => {
         const subjectKinds =
           mutation.subject && mutation.subject.kinds !== "*"
             ? (mutation.subject.kinds as readonly string[])
             : [undefined];
+        const via = mutation.derived
+          ? declaredMutations
+              .filter((m) => (m.creates ?? []).includes(mutation.derived!.edit as never) || (m.writes ?? []).length > 0)
+              .map((m) => m.name)
+          : undefined;
         return subjectKinds.some(
-          (kind) => permits(app.policy, { kind: "human", roles: [role] }, mutation.name, kind).ok,
+          (kind) =>
+            permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, via, "themselves").ok,
         );
       });
       if (!canDo) {
@@ -810,6 +827,39 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
         message: `${finding.ratio}:1 where ${finding.requires}:1 is required — ${finding.where}.`,
         fix: `Darken or lighten "${finding.ink}", or change the ground it sits on.`,
       });
+    }
+    /*
+     * The kit's colours are held to the same standard as the text's, at the
+     * graphics floor: a line a brand paints explicitly must be told from
+     * the ground it crosses, on both grounds, in both schemes.
+     */
+    if (app.brand.kit) {
+      const kit = resolveKit(app.brand.kit);
+      const unreadable = new Set<string>();
+      for (const scheme of Object.keys(app.brand.schemes) as Scheme[]) {
+        for (const finding of checkKitContrast(kit, app.brand.schemes[scheme])) {
+          const where = `brand.kit.connectors.${finding.edgeKind === "*" ? "all" : `byEdge.${finding.edgeKind}`}.colour`;
+          if (finding.unreadable !== undefined) {
+            if (unreadable.has(where)) continue;
+            unreadable.add(where);
+            add({
+              severity: "warning",
+              code: "kit-colour-unreadable",
+              where,
+              message: `Could not read "${finding.unreadable}" as a colour, so the line was not checked against the ground.`,
+              fix: "Use a hex, rgb() or hsl() value.",
+            });
+            continue;
+          }
+          add({
+            severity: "error",
+            code: "kit-contrast-below-aa",
+            where: `${where} in ${scheme}`,
+            message: `${finding.ratio}:1 against the ground where ${finding.requires}:1 is required for a line to be seen.`,
+            fix: `Darken or lighten "${finding.colour}", or drop it and let the kind's own hue paint the line.`,
+          });
+        }
+      }
     }
     if (app.brand.name.trim().length === 0) {
       add({

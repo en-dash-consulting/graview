@@ -65,6 +65,25 @@ yesterday and now the button is gone.
    role may write or create a kind at all, `graview check` says so per
    field (`field-without-writer`): grant an act, or mark the field `fixed`.
 
+7. **Put the installation in the graph.** Who may use the app, who has been
+   asked to, and what each holds are nodes and acts, not a second app:
+
+   ```ts
+   const installation = declareInstallation({ roles: ["coach", "analyst", "player"], admin: "coach" });
+   createSchema([...yours, ...installation.kinds]);        // user, invitation
+   mutations: [...yours, ...installation.mutations];        // invite, welcome, remove-user, grant, revoke, revoke-invitation
+   modules: installation.modules;                           // drawn only for those who administer it
+   policy: installation.withPolicy(policy);                 // the admin's grants, and "you, on yours" for a profile
+   ```
+
+   The coach sees "Show the installation" in the bar and on an embed's strip
+   and the people and invitations rise as ordinary districts; nobody else
+   ever sees them. A person's record page is their profile, and the derived
+   `edit-user` is theirs alone through a `self: true` grant. Register
+   `reachLens` over the people with a title and the policy is a picture:
+   roles down the side, acts across the top, a mark where the store would
+   say yes. Chapter 14 of `apps/seedbed` is the worked example.
+
 ## Worked examples
 
 - `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation

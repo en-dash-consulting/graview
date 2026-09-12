@@ -37,6 +37,7 @@ skills say which parts of their work the checker cannot see.
 | `graview-new-app` | Start a product on Graview in its own repository, with the CI that keeps it honest |
 | `graview-pages` | The routed face: derived pages, one page in the app's words, a product design over every surface, and the embed |
 | `graview-port-app` | Port an existing application onto Graview, deciding what is a node and what is a field |
+| `graview-studio` | Open the declaration as a graph, change it with acts, check before applying, migrate, and write it back as the scaffold's files |
 
 The worked examples live in `apps/` in the framework repository. The skills
 point at them rather than restating them — a skill that copies an example goes

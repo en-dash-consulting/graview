@@ -26,6 +26,7 @@ export default defineConfig({
       "@graview/ship/browser": fileURLToPath(new URL("./packages/ship/src/browser.ts", import.meta.url)),
       "@graview/ship": src("ship"),
       "@graview/embed": src("embed"),
+      "@graview/studio": src("studio"),
       "@graview/todo": app("todo"),
       "@graview/seedbed": app("seedbed"),
     },

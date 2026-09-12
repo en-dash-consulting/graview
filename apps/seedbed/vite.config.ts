@@ -19,6 +19,7 @@ export default defineConfig({
       "@graview/react": pkg("react"),
       "@graview/primitives": pkg("primitives"),
       "@graview/pages": pkg("pages"),
+      "@graview/studio": pkg("studio"),
       // The browser entry, so the file adapter's node:fs never meets the bundler.
       "@graview/ship/browser": fileURLToPath(
         new URL("../../packages/ship/src/browser.ts", import.meta.url),

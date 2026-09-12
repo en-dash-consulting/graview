@@ -242,6 +242,8 @@ report.verdict = {
   theLensShowsWhoTendsWhatInChapterTen: /June/.test(report.chapters[9]?.saw?.focused ?? "") && /Plot 2/.test(report.chapters[9]?.saw?.focused ?? ""),
   theBoardShowsTheEmptyBedInChapterEleven: /nothing sown/i.test(report.chapters[10]?.saw?.focused ?? "") && /Beans/.test(report.chapters[10]?.saw?.focused ?? ""),
   theMigrationIsInTheLogInChapterTwelve: (report.chapters[11]?.saw?.activity ?? []).some((line) => /agreement|migration/i.test(line)),
+  theInstallationIsDrawnForTheKeeperInChapterFourteen: (report.chapters[13]?.saw?.districts ?? []).some((d) => /People/.test(d)) && (report.chapters[13]?.saw?.districts ?? []).some((d) => /Invitations/.test(d)),
+  theDeclarationIsAGraphInChapterFifteen: (report.chapters[14]?.saw?.districts ?? []).some((d) => /^kinds/i.test(d)) && (report.chapters[14]?.saw?.districts ?? []).some((d) => /^acts/i.test(d)) && report.chapters[14]?.check?.ok === true,
   theGardenWearsItsOwnFaceInChapterThirteen: report.chapters[12]?.saw?.design === true && report.chapters[12]?.saw?.fitsAPhone === true && /Every plot has someone|waits? for a caretaker/.test(report.chapters[12]?.saw?.page ?? ""),
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;

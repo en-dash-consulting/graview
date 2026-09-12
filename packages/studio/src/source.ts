@@ -1,0 +1,282 @@
+import type { GraphEdge, GraphSnapshot } from "@graview/core";
+import type { FieldType } from "./meta.js";
+
+/*
+ * THE DECLARATION WRITTEN BACK AS CODE — the same files `graview create`
+ * writes into `src/domain/`, so the studio and the checkout never disagree
+ * about the shape of the app. Shape is what a graph can carry: a rule's
+ * judgement and an act's hand-written body are code, and the files say
+ * where the checkout's own must be kept.
+ */
+
+type Node = { readonly id: string; readonly kind: string } & Record<string, unknown>;
+interface Reading {
+  readonly nodes: readonly Node[];
+  readonly edges: readonly GraphEdge[];
+}
+
+export interface SourceOptions {
+  /** The app's name, for the comments. */
+  readonly name?: string;
+  /** The exported schema's variable name; `graview create` uses `<camel>Schema`. */
+  readonly schemaVar?: string;
+}
+
+export interface WrittenFile {
+  readonly path: string;
+  readonly contents: string;
+}
+
+const q = (text: string): string => JSON.stringify(text);
+const camel = (slug: string): string => slug.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+const pascal = (slug: string): string => {
+  const c = camel(slug);
+  return c.charAt(0).toUpperCase() + c.slice(1);
+};
+const label = (node: Node): string => String(node["label"] ?? node.id);
+const str = (node: Node, key: string): string | undefined => (typeof node[key] === "string" ? (node[key] as string) : undefined);
+const bool = (node: Node, key: string): boolean => node[key] === true;
+const list = (node: Node, key: string): string[] | undefined => (Array.isArray(node[key]) ? (node[key] as unknown[]).map(String) : undefined);
+
+class Read {
+  private readonly byId = new Map<string, Node>();
+  constructor(private readonly reading: Reading) {
+    for (const node of reading.nodes) this.byId.set(node.id, node);
+  }
+  ofKind(kind: string): Node[] {
+    return this.reading.nodes.filter((node) => node.kind === kind);
+  }
+  out(from: string, kind: string): Node[] {
+    return this.reading.edges.filter((edge) => edge.from === from && edge.kind === kind).map((edge) => this.byId.get(edge.to)).filter((node): node is Node => node !== undefined);
+  }
+  in(to: string, kind: string): Node[] {
+    return this.reading.edges.filter((edge) => edge.to === to && edge.kind === kind).map((edge) => this.byId.get(edge.from)).filter((node): node is Node => node !== undefined);
+  }
+}
+
+function zodSource(type: FieldType, required: boolean, options?: readonly string[]): string {
+  const base =
+    type === "number"
+      ? "z.number()"
+      : type === "boolean"
+        ? "z.boolean()"
+        : type === "enum" && options && options.length > 0
+          ? `z.enum([${options.map(q).join(", ")}])`
+          : type === "list"
+            ? "z.array(z.string())"
+            : type === "string"
+              ? "z.string().min(1)"
+              : "z.string()";
+  return required ? base : `${base}.optional()`;
+}
+
+const defaultSource = (type: FieldType, options?: readonly string[]): string =>
+  type === "number" ? "0" : type === "boolean" ? "false" : type === "enum" ? q(options?.[0] ?? "") : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
+
+/** `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles, `policy.ts`. */
+export function declarationFiles(snapshot: GraphSnapshot | Reading, options: SourceOptions = {}): WrittenFile[] {
+  const read = new Read(snapshot as Reading);
+  const schemaVar = options.schemaVar ?? "schema";
+  const name = options.name ?? "the app";
+  const kinds = read.ofKind("kind");
+  const kindName = new Map(kinds.map((kind) => [kind.id, label(kind)]));
+  const fieldsOf = (kind: Node) =>
+    read.in(kind.id, "of").map((field) => ({ name: label(field), type: (str(field, "type") ?? "string") as FieldType, required: bool(field, "required"), options: list(field, "options") }));
+
+  const schemaTs = [
+    `import { createSchema, defineNode } from "@graview/core";`,
+    `import { z } from "zod";`,
+    ``,
+    `/*`,
+    ` * ${name}'s kinds, written by the studio. The shape is the declaration's;`,
+    ` * edit it here or there, and \`graview check\` judges either.`,
+    ` */`,
+    ...kinds.flatMap((kind) => {
+      const fields = fieldsOf(kind);
+      const edges = read.in(kind.id, "from-kind");
+      const lifecycleField = str(kind, "lifecycleField");
+      const retired = list(kind, "retired");
+      const lines = [``, `export const ${camel(label(kind))} = defineNode(${q(label(kind))}, {`];
+      if (str(kind, "description")) lines.push(`  description: ${q(str(kind, "description")!)},`);
+      lines.push(`  fields: z.object({`);
+      for (const field of fields) lines.push(`    ${/^[a-z_$][\w$]*$/i.test(field.name) ? field.name : q(field.name)}: ${zodSource(field.type, field.required, field.options)},`);
+      lines.push(`  }),`);
+      if (edges.length > 0) {
+        lines.push(`  edges: {`);
+        for (const edge of edges) {
+          const targets = read.out(edge.id, "to-kind").map((target) => kindName.get(target.id) ?? label(target));
+          lines.push(`    ${q(label(edge))}: {`);
+          lines.push(`      to: ${bool(edge, "toAny") ? '"*"' : `[${targets.map(q).join(", ")}]`},`);
+          if (str(edge, "cardinality") === "one") lines.push(`      cardinality: "one",`);
+          if (str(edge, "description")) lines.push(`      description: ${q(str(edge, "description")!)},`);
+          if (str(edge, "inverse")) lines.push(`      inverse: ${q(str(edge, "inverse")!)},`);
+          if (bool(edge, "appendOnly")) lines.push(`      appendOnly: true,`);
+          lines.push(`    },`);
+        }
+        lines.push(`  },`);
+      }
+      if (str(kind, "plural")) lines.push(`  plural: ${q(str(kind, "plural")!)},`);
+      if (fields.some((field) => field.name === "label")) lines.push(`  label: (node) => node.label,`);
+      if (lifecycleField && retired) lines.push(`  lifecycle: { field: ${q(lifecycleField)}, retired: ${retired[0] === "date" ? '"date"' : `[${retired.map(q).join(", ")}]`} },`);
+      lines.push(`});`);
+      return lines;
+    }),
+    ``,
+    `export const ${schemaVar} = createSchema([${kinds.map((kind) => camel(label(kind))).join(", ")}]);`,
+    `export type ${pascal(schemaVar)} = typeof ${schemaVar};`,
+    ``,
+  ].join("\n");
+
+  const acts = read.ofKind("act").filter((act) => !bool(act, "derived"));
+  const mutationsTs = [
+    `import { bindSchema, nodeRef } from "@graview/core";`,
+    `import { z } from "zod";`,
+    `import { ${schemaVar} } from "./schema.js";`,
+    ``,
+    `const { defineMutation } = bindSchema(${schemaVar});`,
+    ``,
+    `/*`,
+    ` * ${name}'s acts, written by the studio from what each act declares:`,
+    ` * create, connect, sever or write. Where the checkout's own body did`,
+    ` * more, keep the checkout's body under the studio's declaration.`,
+    ` */`,
+    ...acts.flatMap((act) => {
+      const actName = label(act);
+      const on = read.out(act.id, "on").map((kind) => kindName.get(kind.id) ?? label(kind));
+      const creates = read.out(act.id, "creates").map((kind) => kindName.get(kind.id) ?? label(kind));
+      const connects = read.out(act.id, "connects");
+      const severs = read.out(act.id, "severs");
+      const writes = list(act, "writes") ?? [];
+      const arg = str(act, "subjectArg") ?? "id";
+      const onAny = bool(act, "onAny");
+      const subjectKinds = onAny ? '"*"' : `[${on.map(q).join(", ")}]`;
+      const lines = [``, `export const ${camel(actName)} = defineMutation(${q(actName)}, {`];
+      if (str(act, "title")) lines.push(`  title: ${q(str(act, "title")!)},`);
+      if (str(act, "description")) lines.push(`  description: ${q(str(act, "description")!)},`);
+      if (bool(act, "destructive")) lines.push(`  destructive: true,`);
+      if (onAny || on.length > 0) lines.push(`  subject: { kinds: ${subjectKinds}, arg: ${q(arg)} },`);
+      if (creates.length > 0) lines.push(`  creates: [${creates.map(q).join(", ")}],`);
+      if (connects.length > 0) lines.push(`  connects: [${connects.map((edge) => q(label(edge))).join(", ")}],`);
+      if (severs.length > 0) lines.push(`  severs: [${severs.map((edge) => q(label(edge))).join(", ")}],`);
+      if (writes.length > 0) lines.push(`  writes: [${writes.map(q).join(", ")}],`);
+      if (creates.length > 0) {
+        const kind = creates[0]!;
+        const kindNode = kinds.find((node) => label(node) === kind);
+        const fields = kindNode ? fieldsOf(kindNode).filter((field) => field.name !== "label") : [];
+        const asked = fields.filter((field) => field.required && field.type !== "list");
+        lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options)}`).join("")} }),`);
+        lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.label}\`,`);
+        lines.push(`  apply(ctx, args) {`);
+        lines.push(`    ctx.addNode({`);
+        lines.push(`      id: ctx.freshId(args.label, ${q(kind)}),`);
+        lines.push(`      kind: ${q(kind)},`);
+        lines.push(`      label: args.label,`);
+        for (const field of fields) if (field.required) lines.push(`      ${field.name}: args.${field.name} ?? ${defaultSource(field.type, field.options)},`);
+        lines.push(`    });`);
+        lines.push(`  },`);
+      } else if (connects[0] ?? severs[0]) {
+        const edge = (connects[0] ?? severs[0])!;
+        const targets = read.out(edge.id, "to-kind").map((target) => kindName.get(target.id) ?? label(target));
+        const making = connects.length > 0;
+        lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds}), to: nodeRef(${targets.length > 0 ? `[${targets.map(q).join(", ")}]` : '"*"'}) }),`);
+        lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.${arg}} ${making ? "→" : "⇸"} \${args.to}\`,`);
+        lines.push(`  apply(ctx, args) {`);
+        lines.push(`    ctx.${making ? "addEdge" : "removeEdge"}({ kind: ${q(label(edge))}, from: args.${arg}, to: args.to });`);
+        lines.push(`  },`);
+      } else {
+        const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
+        for (const kindNode of kinds) if (on.includes(label(kindNode))) for (const field of fieldsOf(kindNode)) declared.set(field.name, { type: field.type, options: field.options });
+        lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options) : "z.string().optional()"}`).join("")} }),`);
+        lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.${arg}}\`,`);
+        lines.push(`  apply(ctx, args) {`);
+        if (writes.length > 0) {
+          lines.push(`    const patch: Record<string, unknown> = {};`);
+          for (const field of writes) lines.push(`    if (args.${field} !== undefined) patch[${q(field)}] = args.${field};`);
+          lines.push(`    if (Object.keys(patch).length > 0) ctx.patchNode(args.${arg}, patch);`);
+        } else {
+          lines.push(`    // Declared in the studio with no create, connect, sever or write: give it a body.`);
+          lines.push(`    void ctx;`);
+          lines.push(`    void args;`);
+        }
+        lines.push(`  },`);
+      }
+      lines.push(`});`);
+      return lines;
+    }),
+    ``,
+    `export const mutations = [${acts.map((act) => camel(label(act))).join(", ")}];`,
+    ``,
+  ].join("\n");
+
+  const rules = read.ofKind("rule");
+  const invariantsTs = [
+    `import { bindSchema, type Violation } from "@graview/core";`,
+    `import { ${schemaVar} } from "./schema.js";`,
+    ``,
+    `const { defineInvariant, defineGraphInvariant } = bindSchema(${schemaVar});`,
+    ``,
+    `/*`,
+    ` * ${name}'s rules, as the studio declares them: what each judges and what`,
+    ` * repairs it. A judgement is code — a rule the studio declared holds`,
+    ` * nothing wrong until its evaluate says otherwise; a rule the checkout`,
+    ` * already judges keeps the checkout's evaluate.`,
+    ` */`,
+    ...rules.flatMap((rule) => {
+      const ruleName = label(rule);
+      const over = read.out(rule.id, "over")[0];
+      const repairs = read.out(rule.id, "repairs").map(label);
+      const whole = bool(rule, "wholeGraph") || !over;
+      const lines = [``, `export const ${camel(ruleName)} = ${whole ? "defineGraphInvariant" : "defineInvariant"}(${q(ruleName)}, {`];
+      lines.push(`  label: ${q(ruleName)},`);
+      if (str(rule, "description")) lines.push(`  description: ${q(str(rule, "description")!)},`);
+      if (!whole) lines.push(`  scope: { kind: ${q(kindName.get(over!.id) ?? label(over!))} },`);
+      if (repairs.length > 0) lines.push(`  repairs: [${repairs.map(q).join(", ")}],`);
+      if (bool(rule, "judgesPast")) lines.push(`  judgesPast: true,`);
+      lines.push(`  evaluate(): Violation[] {`);
+      lines.push(`    // The judgement: return a violation per subject that breaks the rule.`);
+      lines.push(`    return [];`);
+      lines.push(`  },`);
+      lines.push(`});`);
+      return lines;
+    }),
+    ``,
+    `export const invariants = [${rules.map((rule) => camel(label(rule))).join(", ")}];`,
+    ``,
+  ].join("\n");
+
+  const roles = read.ofKind("role").map(label);
+  const grants = read.ofKind("grant");
+  const files: WrittenFile[] = [
+    { path: "src/domain/schema.ts", contents: schemaTs },
+    { path: "src/domain/mutations.ts", contents: mutationsTs },
+    { path: "src/domain/invariants.ts", contents: invariantsTs },
+  ];
+  if (roles.length > 0 || grants.length > 0) {
+    const policyTs = [
+      `import type { Policy } from "@graview/core";`,
+      ``,
+      `/* Who may do what in ${name}, as the studio declares it. */`,
+      `export const policy: Policy = {`,
+      `  roles: [${roles.map(q).join(", ")}],`,
+      `  grants: [`,
+      ...grants.map((g) => {
+        const lets = read.out(g.id, "lets").map(label);
+        const may = read.out(g.id, "may").map(label);
+        const over = read.out(g.id, "over").map((kind) => kindName.get(kind.id) ?? label(kind));
+        const parts = [
+          `roles: ${bool(g, "everyone") ? '"*"' : `[${lets.map(q).join(", ")}]`}`,
+          `mutations: ${bool(g, "allActs") ? '"*"' : `[${may.map(q).join(", ")}]`}`,
+          ...(bool(g, "allKinds") ? [] : [`kinds: [${over.map(q).join(", ")}]`]),
+          ...(str(g, "describe") ? [`describe: ${q(str(g, "describe")!)}`] : []),
+          ...(bool(g, "self") ? ["self: true"] : []),
+        ];
+        return `    { ${parts.join(", ")} },`;
+      }),
+      `  ],`,
+      `};`,
+      ``,
+    ].join("\n");
+    files.push({ path: "src/domain/policy.ts", contents: policyTs });
+  }
+  return files;
+}

@@ -279,8 +279,17 @@ function glance(
 const pluralOf = <S extends AnySchema>(store: Store<S>, kind: string): string =>
   store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
 
-const liveKinds = <S extends AnySchema>(store: Store<S>): readonly string[] =>
-  (store.schema.kinds as readonly string[]).filter((kind) => !store.modules.disabledKinds.has(kind));
+/**
+ * The kinds this face lists: not a disabled module's, and not an administered
+ * module's unless the seat administers it — a gardener's pages never have a
+ * People section, the coordinator's always do.
+ */
+const liveKinds = <S extends AnySchema>(store: Store<S>, principal?: Principal): readonly string[] => {
+  const kept = store.kindsKeptFrom(principal);
+  return (store.schema.kinds as readonly string[]).filter(
+    (kind) => !store.modules.disabledKinds.has(kind) && !kept.has(kind),
+  );
+};
 
 /* ------------------------------------------------------------- the shell */
 
@@ -369,7 +378,7 @@ export function DefaultShell<S extends AnySchema>({
             aria-label="Kinds"
             style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "baseline" }}
           >
-            {liveKinds(store).map((kind) => {
+            {liveKinds(store, context.principal).map((kind) => {
               const path = `/${pluralSlug(store.schema, kind)}`;
               return (
                 <Link
@@ -444,7 +453,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   useStoreTick(store);
   const violations = store.violations(invariantContext);
   const recent = [...store.log.all()].slice(-5).reverse();
-  const kinds = liveKinds(store);
+  const kinds = liveKinds(store, context.principal);
   const counted = kinds.map((kind) => ({
     kind,
     definition: store.schema.tryDefinition(kind),

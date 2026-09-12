@@ -1,3 +1,4 @@
+import type { KitOverrides } from "./kit.js";
 /**
  * The token contract, declared in core so it can be CHECKED.
  *
@@ -94,6 +95,12 @@ export interface Brand {
    */
   readonly accents?: Readonly<Record<string, number>>;
   readonly schemes: Readonly<Record<Scheme, ThemeTokens>>;
+  /**
+   * The kit: what the scene draws that is not a view — connectors, captions,
+   * grid, lattice, tags, marks — as this brand wants it. Any part; the rest
+   * as shipped. See `resolveKit`.
+   */
+  readonly kit?: KitOverrides;
 }
 
 /**

@@ -42,6 +42,9 @@
     },
     {
       "path": "../../packages/embed"
+    },
+    {
+      "path": "../../packages/studio"
     }
   ]
 }

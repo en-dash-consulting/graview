@@ -10,3 +10,4 @@ apps/*/generated/
 .rex/.backups/
 .n-dx-web.port
 .rex/.cache/
+.generated/
