@@ -122,8 +122,11 @@ forms in place. What a design must keep doing:
   `color-mix` for the design's own paper. Never a colour that works in one
   scheme only; the design then wears both schemes and the brand's typefaces.
 - **Keep landmarks and targets honest.** One `main` (a `section` when
-  `context.embedded`), controls at least 24px tall, AA contrast on the tinted
-  ground. Run `apps/todo/scripts/run-a11y.mjs`.
+  `context.embedded`, and an UNNAMED one — the embed has already made a
+  region carrying the name the page gave it, so naming this one as well puts
+  two regions with the same name on any page holding two embeds of the
+  design). Controls at least 24px tall, AA contrast on the tinted ground.
+  Run `apps/todo/scripts/run-a11y.mjs`.
 - **Withhold, do not hide.** `facts.actions.withheld` is the list, each entry
   carrying the policy's own sentence; draw them struck through rather than
   dropping them.

@@ -167,7 +167,15 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
         </p>
       </aside>
       {/* One main per document: inside somebody else's page this is a section. */}
-      {context.embedded ? <section className="sb-main" aria-label="The garden">{children}</section> : <main className="sb-main">{children}</main>}
+      {/*
+        * THE LANDMARK, ONCE. Standalone the design owns the document's main;
+        * embedded, the host owns that and the EMBED has already made a
+        * region carrying the name the page gave it ("Chapter 13"). Naming
+        * this one as well put two regions called "The garden" on any page
+        * holding two embeds of the same design — the landmark said twice,
+        * which axe reports as `landmark-unique`.
+        */}
+      {context.embedded ? <section className="sb-main">{children}</section> : <main className="sb-main">{children}</main>}
     </div>
   );
 }
