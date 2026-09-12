@@ -2232,3 +2232,30 @@ The shapes, in the order of how much they cost:
   undefined to deeply equal ['labelled-things: evaluate']`). In Walk: the
   regenerated copy fails loudly naming both rules and every act, and
   verifies clean once their bodies are put back where the files say.
+
+### W-079 · The studio drops the far-end reading, so a clean checkout comes back warning
+- stage: B (the studio) · face: neither — the declaration
+- expected: a declaration read into the studio and written back unchanged
+  says what it said; `graview check` on the round trip is what it was
+- actual: Walk's `hand-item` and `take-back` declare `fromTheOtherEnd`
+  ("Take one on", "Hand one back" — W-040's declaration). The studio's act
+  node had no field for it, so `declarationToGraph` dropped it,
+  `graphToDeclaration` gave back acts without it, and the written
+  `mutations.ts` omitted it: the regenerated checkout warned
+  `act-without-far-end-reading` twice where the original was clean, and
+  the far end of every tie in the app went back to reading from the near
+  end. The studio's own fixture declared no `fromTheOtherEnd` anywhere, so
+  nothing could notice.
+- where it belongs: `packages/studio/src/meta.ts`, `from-declaration.ts`,
+  `to-declaration.ts`, `source.ts`
+- harness that should have caught it: `packages/studio/tests/unit/studio.test.ts`
+  — "reads every kind, field, edge, act … in" asserted the ids and a
+  field or two; "gives the declaration back" never ran the checker over
+  what came back against what went in
+- status: fixed in "walkthrough: B · the studio keeps the far-end reading"
+  · the act node carries `fromTheOtherEnd`, read in, given back and
+  written. Criterion: the fixture's tie acts declare it, the read-in node
+  is asserted to carry it, the declaration given back is asserted to carry
+  it AND to pass the checker without `act-without-far-end-reading`, and
+  the written file is asserted to contain it. Verified failing without the
+  fix (three tests).

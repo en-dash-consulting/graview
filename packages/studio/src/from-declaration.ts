@@ -119,6 +119,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       onAny: mutation.subject?.kinds === "*",
       derived: mutation.derived !== undefined,
       ...(mutation.title ? { title: mutation.title } : {}),
+      ...(mutation.fromTheOtherEnd ? { fromTheOtherEnd: mutation.fromTheOtherEnd } : {}),
       ...(mutation.description ? { description: mutation.description } : {}),
       ...(mutation.writes ? { writes: [...mutation.writes] } : {}),
       ...(mutation.subject ? { subjectArg: mutation.subject.arg } : {}),

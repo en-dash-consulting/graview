@@ -171,6 +171,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     const said = {
       name: actName,
       ...(str(act, "title") ? { title: str(act, "title")! } : {}),
+      ...(str(act, "fromTheOtherEnd") ? { fromTheOtherEnd: str(act, "fromTheOtherEnd")! } : {}),
       ...(str(act, "description") ? { description: str(act, "description")! } : {}),
       ...(bool(act, "destructive") ? { destructive: true } : {}),
       ...(subject ? { subject } : {}),

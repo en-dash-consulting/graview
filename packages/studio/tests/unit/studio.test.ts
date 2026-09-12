@@ -27,6 +27,9 @@ const schema = createSchema([gardener, plot]);
 
 const tend = defineMutation("tend", {
   title: "Tend",
+  // Read from the gardener's end: the round trip has to carry it, or a
+  // checkout that was clean comes back warning act-without-far-end-reading.
+  fromTheOtherEnd: "Take on a plot",
   description: "Put a gardener on a plot.",
   subject: { kinds: ["plot"], arg: "plot" },
   connects: ["tended-by"],
@@ -38,6 +41,7 @@ const tend = defineMutation("tend", {
 });
 const untend = defineMutation("untend", {
   title: "Leave it",
+  fromTheOtherEnd: "Leave a plot",
   description: "Take a gardener off a plot.",
   subject: { kinds: ["plot"], arg: "plot" },
   severs: ["tended-by"],
@@ -94,6 +98,7 @@ describe("the declaration is a graph", () => {
     const ids = graph.nodes.map((node) => node.id);
     expect(ids).toEqual(expect.arrayContaining(["kind:gardener", "kind:plot", "field:plot.label", "field:plot.size", "field:plot.status", "edge:plot.tended-by", "act:tend", "act:untend", "act:add-plot", "rule:every-plot-tended", "role:coordinator", "role:gardener", "grant:1", "grant:2", "lens:coverage", "brand"]));
     expect(graph.nodes.find((node) => node.id === "field:plot.status")).toMatchObject({ type: "enum", required: true, options: ["open", "retired"] });
+    expect(graph.nodes.find((node) => node.id === "act:tend")).toMatchObject({ fromTheOtherEnd: "Take on a plot", targetArg: "gardener" });
     expect(graph.nodes.find((node) => node.id === "field:gardener.phone")).toMatchObject({ type: "string", required: false });
     expect(graph.nodes.find((node) => node.id === "kind:plot")).toMatchObject({ lifecycleField: "status", retired: ["retired"] });
     expect(graph.edges).toEqual(
@@ -129,6 +134,8 @@ describe("the declaration is a graph", () => {
     expect(back.schema.definition("plot").edges["tended-by"]).toMatchObject({ to: ["gardener"], description: "who looks after it", inverse: "what they look after" });
     expect(back.schema.definition("plot").lifecycle).toEqual({ field: "status", retired: ["retired"] });
     expect(back.policy).toEqual(garden.policy);
+    expect(back.mutations?.find((m) => m.name === "tend")?.fromTheOtherEnd).toBe("Take on a plot");
+    expect(checkApp(back).findings.map((f) => f.code)).not.toContain("act-without-far-end-reading");
     expect(back.lenses).toEqual([{ name: "coverage", requiredRoles: ["coordinator"] }]);
     expect(back.version).toBe(1);
     // The kept body runs: tending plot-2 makes the edge the checkout's act makes.
@@ -235,7 +242,7 @@ describe("the declaration is written back as the files graview create writes", (
     expect(files["src/domain/schema.ts"]).toContain("export const gardenSchema = createSchema([gardener, plot]);");
     expect(files["src/domain/mutations.ts"]).toContain('export const tend = defineMutation("tend", {');
     expect(files["src/domain/mutations.ts"]).toContain('connects: ["tended-by"],');
-    expect(files["src/domain/mutations.ts"]).toContain('ctx.addEdge({ kind: "tended-by", from: args.plot, to: args.gardener });');
+    expect(files["src/domain/mutations.ts"]).toContain('fromTheOtherEnd: "Take on a plot",');
     expect(files["src/domain/invariants.ts"]).toContain('defineInvariant("every-plot-tended", {');
     expect(files["src/domain/invariants.ts"]).toContain('repairs: ["tend"],');
     expect(files["src/domain/policy.ts"]).toContain('{ roles: ["gardener"], mutations: ["tend", "untend"], kinds: ["plot"], describe: "a gardener may tend" },');

@@ -76,6 +76,8 @@ export const actNode = defineNode("act", {
   fields: z.object({
     label,
     title: z.string().optional(),
+    /** How the act reads standing on the far end of the tie it makes or breaks (W-040). */
+    fromTheOtherEnd: z.string().optional(),
     description: z.string().optional(),
     destructive: z.boolean(),
     writes: z.array(z.string()).optional(),
@@ -100,7 +102,7 @@ export const actNode = defineNode("act", {
     severs: { to: ["edge"], description: "the relation it breaks", inverse: "the acts that break it" },
   },
   label: (node) => node.title ?? node.label,
-  display: { labels: { label: "name", subjectArg: "subject argument", targetArg: "far-end argument", onAny: "on any kind" } },
+  display: { labels: { label: "name", subjectArg: "subject argument", targetArg: "far-end argument", fromTheOtherEnd: "from the other end", onAny: "on any kind" } },
 });
 
 export const ruleNode = defineNode("rule", {
