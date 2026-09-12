@@ -172,6 +172,67 @@ describe("the graph answers for itself", () => {
     ]);
   });
 
+  it("never proposes an act in answer to a question", async () => {
+    /*
+     * "what depends on Pay the deposit?" carried an act's title and a
+     * record's name and came back as a proposal to run the act on the
+     * record, apply button and all. A question is answered from the graph.
+     */
+    for (const question of ["who should reassign the run to Bo?", "Reassign the run to Bo?", "does it shorten it"]) {
+      const reply = await graphResponder()(store(), question, { selection: ["school"] });
+      // The rules' own repairs may still be proposed; the question is not.
+      expect(reply.proposals.map((p) => p.why), question).not.toContain("you asked in words");
+      expect(reply.say, question).not.toContain("I can do that");
+    }
+  });
+
+  it("never fills two blanks of a tie with the one thing that was named", async () => {
+    const link = bound.defineMutation("link", {
+      title: "Depends on",
+      description: "Say one run has to finish before another.",
+      subject: { kinds: ["duty"], arg: "dutyId" },
+      input: z.object({ dutyId: nodeRef(["duty"]), afterId: nodeRef(["duty"]) }),
+      apply() {},
+    });
+    const one = new Store({
+      schema,
+      mutations: [link],
+      invariants: [],
+      snapshot: { nodes: [{ id: "school", kind: "duty", label: "School run", minutes: 20 }] as never, edges: [] },
+    });
+    const reply = await graphResponder()(one, "depends on the School run");
+    // One record named, two ends to fill: the second is honestly missing.
+    expect(reply.proposals).toEqual([]);
+    expect(reply.say).toContain("needs");
+  });
+
+  it("captions a relation from the end the named thing is at", async () => {
+    const item = defineNode("item", {
+      fields: z.object({ label: z.string() }),
+      plural: "Items",
+      edges: { "handled-by": { to: ["helper"], description: "who is seeing to it", inverse: "what they are seeing to" } },
+    });
+    const helper = defineNode("helper", { fields: z.object({ label: z.string() }), plural: "Helpers" });
+    const two = createSchema([item, helper]);
+    const tied = new Store({
+      schema: two,
+      mutations: [],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "deposit", kind: "item", label: "Pay the deposit" },
+          { id: "ada", kind: "helper", label: "Ada" },
+        ] as never,
+        edges: [{ kind: "handled-by", from: "deposit", to: "ada" }],
+      },
+    });
+    const fromTheItem = await graphResponder()(tied, "tell me about Pay the deposit");
+    expect(fromTheItem.say).toContain("who is seeing to it: Ada");
+    const fromTheHelper = await graphResponder()(tied, "tell me about Ada");
+    expect(fromTheHelper.say).toContain("what they are seeing to: Pay the deposit");
+    expect(fromTheHelper.say).not.toContain("who is seeing to it");
+  });
+
   it("asks for what it cannot honestly fill rather than guessing", async () => {
     const reply = await graphResponder()(store(), "reassign the run please");
     // "the run" is not a node label; nothing is selected; both refs missing.

@@ -2096,3 +2096,74 @@ The shapes, in the order of how much they cost:
   hint reads `view.expanded`: "· double-click closes" on an opened district.
   Criterion added: edge-inspector "says the gesture closes a district that
   is already open". Verified failing without the fix.
+
+### W-074 · The strip logs the button's words; the pages log the act's own
+- stage: C · face: both · width: any · scheme: both
+- expected: "one act reads the same way on both faces" (W-004), and "each
+  leave one op in the log with the right author" — the same op from either
+  face
+- actual: repair "Pay the deposit is open and nobody is seeing to it" from
+  the strip, answer the ask with Ada, and the activity rail reads `you Hand
+  Pay the deposit to somebody` — the question's words standing in the
+  history for the answer. Take the same repair on the pages record and the
+  row reads `you Pay the deposit is handled by Ada Nowak`, the act's own
+  `describe`. It is every act, not only repairs: stage A's strip logged
+  `you Add an item` where the home's "Recently" said `Add First thing — you`.
+  `applyAffordance` passed `intent: affordance.label` unconditionally, so
+  the button's caption overrode the words the declaration wrote for exactly
+  this; the routed face's `DerivedForm` never passed one.
+- where it belongs: `packages/tools/src/derive.ts` (`applyAffordance`)
+- harness that should have caught it: nothing compared the two faces'
+  histories; `verify-remember` and `verify-seat` read the rail's rows for a
+  signature and a title and never for what the row SAID about the change
+- status: fixed in "walkthrough: C · the log says what happened, and a
+  question is not a change" · an act that declares `describe` is logged in
+  its own words from every face; the label is only the fallback for an act
+  with none, where the compiled intent would be `name(k=v)`. Criterion
+  added: `packages/tools/tests/unit/the-log-says-what-happened.test.ts` —
+  three cases (a plain act, a repair answered through an ask, the fallback).
+  Verified failing without the fix.
+
+### W-075 · The chat captions a relation from the wrong end
+- stage: C · face: scene (the chat) · width: any · scheme: both
+- expected: "the caption over a neighbour must be the focus's reading" —
+  the chat's account of a node reads each tie from the end that node is at
+- actual: "what is Ada Nowak seeing to?" → `Ada Nowak — a person. who is
+  seeing to it: Pay the deposit.` — the ITEM's caption in the person's
+  mouth. The named-thing branch chose `description` or `inverse` by which
+  KIND declared the edge rather than by which END the node is at, so every
+  cross-kind tie read wrongly from the far end. W-007 fixed the same
+  reading on the pages record; the chat kept it.
+- where it belongs: `packages/tools/src/conversation.ts` (the named-thing
+  account)
+- harness that should have caught it: `packages/tools/tests/unit/conversation.test.ts`
+  — its fixture's only edge has no `inverse`, so both readings were the
+  same string and the direction could not be told
+- status: fixed in the same commit · an edge is declared at its `from` end,
+  so `description` is the reading from there and `inverse` from the `to`
+  end, whatever kind the node is. Criterion added: conversation "captions a
+  relation from the end the named thing is at". Verified failing without
+  the fix.
+
+### W-076 · A question is answered with an act to run, on the wrong two ends
+- stage: C · face: scene (the chat) · width: any · scheme: both
+- expected: something the chat can be asked is answered from the graph or
+  not at all — never wrongly
+- actual: "what depends on Pay the deposit?" → `I can do that. Review it
+  below — it applies like any other change, and undo works.` with an apply
+  button reading `Depends on — Pay the deposit`. The act's title ("Depends
+  on") appeared in the question, so the responder proposed RUNNING it — and
+  filled both of the tie's node blanks with the one record named, so the
+  proposal was Pay the deposit depending on itself, the self-link W-035
+  chased off the record page. A question mark counted for nothing.
+- where it belongs: `packages/tools/src/conversation.ts` (the phrased-act
+  branch)
+- harness that should have caught it: the conversation tests ask the
+  responder to propose and never ask it a question that happens to carry
+  an act's title
+- status: fixed in the same commit · a sentence that asks (a trailing "?",
+  or an interrogative opening) is never a change, and each thing named
+  fills one blank — a second blank of the same kind is honestly missing.
+  Criteria added: conversation "never proposes an act in answer to a
+  question" and "never fills two blanks of a tie with the one thing that
+  was named". Both verified failing without the fix.
