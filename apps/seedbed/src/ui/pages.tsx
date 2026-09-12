@@ -90,5 +90,7 @@ function PlotPage({ context }: { context: PageContext<S> }) {
 
 /** The garden's pages: every default page, with the plot's record in its own words. */
 export function seedbedPages(schema: AnySchema) {
-  return createPageRegistry<S, PageComponent<S>>(schema as never).register("plot", "record", PlotPage as PageComponent<S>);
+  const registry = createPageRegistry<S, PageComponent<S>>(schema as never);
+  // The plot's own page, where the declaration has plots: the studio's schema has kinds, not plots.
+  return (schema.kinds as readonly string[]).includes("plot") ? registry.register("plot", "record", PlotPage as PageComponent<S>) : registry;
 }

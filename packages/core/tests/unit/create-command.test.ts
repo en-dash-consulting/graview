@@ -1,3 +1,4 @@
+import { GRAVIEW_PACKAGES } from "../../src/scaffold/index.js";
 import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -118,7 +119,7 @@ describe("graview create", () => {
     mkdirSync(resolve(scratch, "fw/node_modules/.pnpm/zod@4.4.3/node_modules/zod"), { recursive: true });
     mkdirSync(resolve(scratch, "fw/packages/core/node_modules"), { recursive: true });
     symlinkSync("../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod", resolve(scratch, "fw/packages/core/node_modules/zod"));
-    for (const pkg of ["core", "layout", "tools", "render", "react", "primitives", "pages", "ship", "embed", "skills"]) {
+    for (const pkg of [...GRAVIEW_PACKAGES, "skills"]) {
       mkdirSync(resolve(scratch, `fw/packages/${pkg}/dist`), { recursive: true });
       writeFileSync(resolve(scratch, `fw/packages/${pkg}/dist/index.js`), "");
     }
@@ -147,7 +148,7 @@ describe("graview create", () => {
 
   it("warns when the project would land inside the framework's own tree", async () => {
     mkdirSync(resolve(scratch, "fw/packages/core/node_modules"), { recursive: true });
-    for (const pkg of ["core", "layout", "tools", "render", "react", "primitives", "pages", "ship", "embed", "skills"]) {
+    for (const pkg of [...GRAVIEW_PACKAGES, "skills"]) {
       mkdirSync(resolve(scratch, `fw/packages/${pkg}/dist`), { recursive: true });
       writeFileSync(resolve(scratch, `fw/packages/${pkg}/dist/index.js`), "");
     }

@@ -3,6 +3,7 @@ import {
   defineInvariant,
   defineNode,
   nodeRef,
+  nodeRefArgs,
   type AnyMutationDefinition,
   type AnySchema,
   type EdgeDeclaration,
@@ -108,6 +109,14 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
   const base = options.base;
   const kindName = new Map<string, string>();
   for (const kind of read.ofKind("kind")) kindName.set(kind.id, name(kind));
+  // A kind called something else: `kind:plot` whose name is now "bed". The
+  // checkout's acts still ask for a plot by name, so their references follow.
+  const renamed = new Map<string, string>();
+  for (const [id, now] of kindName) {
+    const was = id.slice("kind:".length);
+    if (was !== now) renamed.set(was, now);
+  }
+  const follow = (kind: string) => renamed.get(kind) ?? kind;
   const edgeName = new Map<string, string>();
   for (const edge of read.ofKind("edge")) edgeName.set(edge.id, name(edge));
 
@@ -172,8 +181,9 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     };
     const kept = baseMutations.get(actName);
     if (kept) {
-      // The checkout's body, under what the studio now says about it.
-      mutations.push({ ...kept, ...said, input: kept.input, apply: kept.apply } as AnyMutationDefinition);
+      // The checkout's body, under what the studio now says about it; its
+      // node references follow a renamed kind.
+      mutations.push({ ...kept, ...said, input: renamed.size > 0 ? followingRenames(kept.input, follow) : kept.input, apply: kept.apply } as AnyMutationDefinition);
       continue;
     }
     mutations.push(writtenBody(said, { creates, connects, severs, writes: writes ?? [], on, read, kindName, fieldsOf }));
@@ -187,7 +197,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     const kept = baseInvariants.get(ruleName);
     const scope = bool(rule, "wholeGraph") || !over ? ("graph" as const) : { kind: kindName.get(over.id) ?? name(over) };
     const description = str(rule, "description");
-    if (kept) return { ...kept, ...(description ? { description } : {}), ...(repairs.length > 0 ? { repairs } : {}) } as InvariantDefinition;
+    if (kept) return { ...kept, scope, ...(description ? { description } : {}), ...(repairs.length > 0 ? { repairs } : {}) } as InvariantDefinition;
     return defineInvariant(ruleName, {
       scope,
       label: ruleName,
@@ -239,6 +249,25 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     ...(base?.version !== undefined ? { version: base.version } : {}),
     ...(base?.migrations ? { migrations: base.migrations } : {}),
   };
+}
+
+/** The same input, with every node reference to a renamed kind pointing at its new name. */
+function followingRenames(input: z.ZodType, follow: (kind: string) => string): z.ZodType {
+  const shape = (input as { shape?: Record<string, z.ZodType> }).shape;
+  if (!shape) return input;
+  const refs = new Map(nodeRefArgs(input).map((ref) => [ref.name, ref]));
+  const next: Record<string, z.ZodType> = {};
+  for (const [key, type] of Object.entries(shape)) {
+    const ref = refs.get(key);
+    if (!ref || ref.kinds.length === 0) {
+      next[key] = type;
+      continue;
+    }
+    const kinds = ref.kinds.map(follow);
+    const ofKind = nodeRef(kinds);
+    next[key] = ref.optional ? ofKind.optional() : ofKind;
+  }
+  return z.object(next);
 }
 
 interface BodyContext {

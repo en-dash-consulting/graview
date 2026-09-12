@@ -82,7 +82,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       const next = declaration();
       const check = checkApp(next);
       if (check.errors > 0) return { ok: false, check };
-      const migration = migrationBetween(base as unknown as GraviewApp<AnySchema>, next);
+      const migration = migrationBetween(base as unknown as GraviewApp<AnySchema>, store.snapshot() as GraphSnapshot);
       const version = migration ? migration.to : base.version;
       return {
         ok: true,

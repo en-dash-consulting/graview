@@ -10,6 +10,7 @@ import { kindCardId, withPast } from "@graview/layout";
 import {
   createViews,
   useGraview,
+  useKit,
   useNavigation,
   useSelection,
   useViolations,
@@ -229,11 +230,13 @@ export function registerDefaultViews<S extends AnySchema>(
     const Glyph = (props: ViewProps<S>) => {
       const node = props.node as (Record<string, unknown> & { id: string; kind: string }) | undefined;
       const hue = useHue(kind as string);
+      // The mark a broken rule leaves is the kit's, not a literal here.
+      const flag = useKit().marks.flag;
       if (!node) return null;
       const broken = props.flagged?.includes(node.id) ?? false;
       return (
         <Chip
-          label={broken ? `${labelOf(definition, node)} ⚠` : labelOf(definition, node)}
+          label={broken ? `${labelOf(definition, node)} ${flag}` : labelOf(definition, node)}
           hue={hue}
           selected={props.selected}
           title={broken ? `${String(kind)} — implicated in a problem` : String(kind)}
@@ -280,6 +283,7 @@ export function registerDefaultViews<S extends AnySchema>(
     const GroupGlyph = (props: ViewProps<S>) => {
       const members = props.nodes ?? [];
       const hue = useHue(kind as string);
+      const flag = useKit().marks.flag;
       const { selection } = useSelection();
       const { toggle, view, go } = useNavigation();
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
@@ -486,7 +490,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 * it is — the same honesty the actions strip gives when a kind
                 * has no verbs.
                 */}
-              {members.length === 0 ? "none yet" : `${trouble ? "⚠ " : ""}${members.length}`}
+              {members.length === 0 ? "none yet" : `${trouble ? `${flag} ` : ""}${members.length}`}
             </span>
             {/*
               * What sits BEHIND THE HORIZON, advertised where it dropped
@@ -572,7 +576,7 @@ export function registerDefaultViews<S extends AnySchema>(
                   <Chip
                     key={member.id}
                     pickId={member.id}
-                    label={broken ? `${name} ⚠` : name}
+                    label={broken ? `${name} ${flag}` : name}
                     title={broken ? `${name} — implicated in a problem` : undefined}
                     hue={hue}
                     selected={chosen.has(member.id)}

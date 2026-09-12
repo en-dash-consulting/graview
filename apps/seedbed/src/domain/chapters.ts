@@ -607,7 +607,7 @@ const chapterFifteen: Chapter = {
   stop: "#overview=1",
   remembers: false,
   seat: true,
-  pages: false,
+  pages: true,
   lens: false,
   board: false,
   studioOf: chapterFourteen.app,
