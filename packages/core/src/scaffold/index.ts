@@ -1141,7 +1141,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
                 {/* The act's own title, and the arguments the derivation
                     already settled — never a subject name written out here. */}
                 <h2 style={pageStyles.h2}>{affordance.label}</h2>
-                <DerivedForm<S> store={store} mutation={act} prefilled={affordance.args} open={affordance.open} />
+                <DerivedForm<S> store={store} mutation={act} prefilled={affordance.args} open={affordance.open} {...(principal ? { principal } : {})} />
               </div>
             ) : null;
           })}

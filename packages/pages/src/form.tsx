@@ -4,6 +4,7 @@ import {
   labelOf,
   type AnySchema,
   type FormField,
+  type Principal,
   type Store,
 } from "@graview/core";
 import type { AnyMutationDefinition } from "@graview/core";
@@ -348,6 +349,15 @@ export interface DerivedFormProps<S extends AnySchema> {
    */
   readonly open?: readonly OpenParameter[];
   readonly onDone?: () => void;
+  /**
+   * WHO IS SUBMITTING. The store judges every change against its author
+   * and the log attributes to it; a form that applied with no author acted
+   * as the anonymous human — who, under a policy, may do nothing — so on
+   * the routed face every permitted act was refused on press while the
+   * derivation beside it had offered it live. The same principal the page
+   * asked "may I?" with is the one that presses submit.
+   */
+  readonly principal?: Principal;
 }
 
 /** The submit path is the ordinary one: `store.apply`, refusals shown. */
@@ -357,6 +367,7 @@ export function DerivedForm<S extends AnySchema>({
   prefilled = {},
   open = [],
   onDone,
+  principal,
 }: DerivedFormProps<S>) {
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [failed, setFailed] = useState<string | null>(null);
@@ -368,7 +379,7 @@ export function DerivedForm<S extends AnySchema>({
       onSubmit={(event) => {
         event.preventDefault();
         try {
-          store.apply({ name: mutation.name, args: { ...values, ...prefilled } });
+          store.apply({ name: mutation.name, args: { ...values, ...prefilled } }, principal ? { author: principal } : {});
           setFailed(null);
           setValues({});
           onDone?.();

@@ -11,7 +11,7 @@ import {
   type PageContext,
 } from "@graview/pages";
 import type { AffordanceSet } from "@graview/tools";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import type { SeedbedSchema } from "../domain/schema.js";
 import { GardenMapPicture, initials, readGarden, Sprout, type Garden, type GardenPlot } from "./garden-map.js";
@@ -203,16 +203,59 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
 function Acts({ context, actions, only }: { context: Ctx; actions: AffordanceSet; only?: readonly string[] }) {
   const { store } = context;
   const [open, setOpen] = useState<string | null>(null);
+  /*
+   * THE KEYBOARD COMES BACK TO THE ACT. The form is mounted in place when
+   * its button is pressed and unmounted when it is done — and a removed
+   * element takes focus to <body> with it, so an act taken from the
+   * keyboard ended at the top of the document. The button that opened it
+   * is where the keyboard was, and where it belongs after.
+   */
+  const buttons = useRef(new Map<string, HTMLButtonElement>());
+  const box = useRef<HTMLDivElement | null>(null);
+  const comeBack = useRef<{ id: string; heading: HTMLElement | null } | null>(null);
+  const done = (id: string) => {
+    // The act may not be offered once it has acted; the heading its section
+    // stood under is then the honest home, found now while the box is here.
+    const heading = box.current?.parentElement?.closest("section, main, article")?.querySelector<HTMLElement>("h1, h2, h3") ?? null;
+    comeBack.current = { id, heading };
+    setOpen(null);
+  };
+  // After the commit: the acts re-render with the graph, so the button is
+  // found by the act's id once the page has settled, not before.
+  useEffect(() => {
+    if (comeBack.current === null) return;
+    const { id, heading } = comeBack.current;
+    comeBack.current = null;
+    const button = buttons.current.get(id) ?? buttons.current.values().next().value;
+    if (button) {
+      button.focus();
+      return;
+    }
+    if (heading) {
+      heading.tabIndex = -1;
+      heading.focus();
+    }
+  });
   const offered = actions.affordances.filter((a) => !only || only.includes(a.mutation));
   const withheld = actions.withheld.filter((w) => !only || only.includes(w.mutation));
   if (offered.length === 0 && withheld.length === 0) return null;
   const opened = offered.find((a) => a.id === open);
   const mutation = opened ? store.allMutations().find((m) => m.name === opened.mutation) : undefined;
   return (
-    <div style={{ display: "grid", gap: 12 }} data-testid="record-actions">
+    <div ref={box} style={{ display: "grid", gap: 12 }} data-testid="record-actions">
       <div className="sb-acts">
         {offered.map((a) => (
-          <button key={a.id} type="button" className="sb-act" aria-expanded={open === a.id} onClick={() => setOpen(open === a.id ? null : a.id)}>
+          <button
+            key={a.id}
+            ref={(el) => {
+              if (el) buttons.current.set(a.id, el);
+              else buttons.current.delete(a.id);
+            }}
+            type="button"
+            className="sb-act"
+            aria-expanded={open === a.id}
+            onClick={() => setOpen(open === a.id ? null : a.id)}
+          >
             {a.label}
           </button>
         ))}
@@ -230,7 +273,7 @@ function Acts({ context, actions, only }: { context: Ctx; actions: AffordanceSet
         <div className="sb-form">
           <span className="sb-tag">{opened.label}</span>
           {mutation.description ? <p style={{ margin: 0, color: "var(--graview-ink-muted)", fontSize: 14 }}>{mutation.description}</p> : null}
-          <DerivedForm<S> store={store} mutation={mutation} prefilled={opened.args} open={opened.open} onDone={() => setOpen(null)} />
+          <DerivedForm<S> store={store} mutation={mutation} prefilled={opened.args} {...(context.principal ? { principal: context.principal as Principal } : {})} open={opened.open} onDone={() => done(opened.id)} />
         </div>
       ) : null}
     </div>
