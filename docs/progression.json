@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T12:57:59.649Z",
+  "at": "2026-09-12T13:06:48.862Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -389,8 +389,10 @@
         "focused": null
       },
       "seatSees": {
-        "offered": [],
-        "withheld": "Name a caretakerNot permitted: tend on a plot — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the plotNot permitted: edit-plot on a plot — coordinator can. The coordinator keeps the map."
+        "offered": [
+          "Name a caretaker …"
+        ],
+        "withheld": "Change the plotNot permitted: edit-plot on a plot — coordinator can. The coordinator keeps the map."
       }
     },
     {
@@ -450,8 +452,11 @@
         "focused": null
       },
       "seatSees": {
-        "offered": [],
-        "withheld": "Take on a plotNot permitted: tend — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the gardenerNot permitted: edit-gardener on a gardener — coordinator can. The coordinator keeps the map."
+        "offered": [
+          "Change the gardener …",
+          "Take on a plot …"
+        ],
+        "withheld": ""
       }
     },
     {
@@ -564,8 +569,11 @@
         "focused": "Who tends what1 unanswered · 1 unaskedPlot 1⚠ Plot 2JuneRavi"
       },
       "seatSees": {
-        "offered": [],
-        "withheld": "Name a caretakerNot permitted: tend on a plot — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the plotNot permitted: edit-plot on a plot — coordinator can. The coordinator keeps the map."
+        "offered": [
+          "Change the plot …",
+          "Name a caretaker …"
+        ],
+        "withheld": ""
       }
     },
     {
@@ -627,8 +635,11 @@
         "focused": "What grows where1 unfilledPlot 1BeansPlot 2TomatoesPlot 3nothing sown"
       },
       "seatSees": {
-        "offered": [],
-        "withheld": "Harvest itNot permitted: harvest on a planting — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the plantingNot permitted: edit-planting on a planting — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground."
+        "offered": [
+          "Harvest it",
+          "Change the planting …"
+        ],
+        "withheld": ""
       }
     },
     {
@@ -680,7 +691,7 @@
           "Plots2◆open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Who tends whatWhat grows wherePagesThe garden keeps its agreements◆Ask1 ActivityThe agent's seatPlant a starter gardenNot yours to do from this ",
+        "trail": "SeedbedSeedbed←→Who tends whatWhat grows wherePagesThe garden keeps its agreements◆Ask1 ActivityThe agent's seatThe garden is plantedship:migration migration 1→",
         "withheld": null,
         "activity": [
           "ship:migration migration 1→2: Every garden adopts the agreementundoEvery plot has a caretaker"
@@ -691,8 +702,11 @@
         "focused": null
       },
       "seatSees": {
-        "offered": [],
-        "withheld": "Name a caretakerNot permitted: tend on a plot — one of coordinator, gardener can. The coordinator keeps the map. A gardener works the ground.Change the plotNot permitted: edit-plot on a plot — coordinator can. The coordinator keeps the map."
+        "offered": [
+          "Change the plot …",
+          "Name a caretaker …"
+        ],
+        "withheld": ""
       }
     },
     {
@@ -754,7 +768,7 @@
     "theSeatPlantedInChapterFive": true,
     "itRemembersInChapterSix": true,
     "aGardenerIsRefusedInChapterSeven": true,
-    "theSeatIsNeverRefusedByItsOwnRole": false,
+    "theSeatIsNeverRefusedByItsOwnRole": true,
     "theBrandArrivesInChapterEight": true,
     "theOtherFaceIsThePlotsOwnPageInChapterNine": true,
     "theLensShowsWhoTendsWhatInChapterTen": true,
@@ -762,5 +776,5 @@
     "theMigrationIsInTheLogInChapterTwelve": true,
     "theGardenWearsItsOwnFaceInChapterThirteen": true
   },
-  "passed": false
+  "passed": true
 }
