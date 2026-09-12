@@ -86,6 +86,18 @@ describe("the skills package", () => {
     expect(pages.body).toMatch(/facts\.actions|recordFacts\([^)]*\)\.actions/);
     expect(pages.body).toContain("withheld");
     expect(pages.body).toContain("store.permits");
+    /*
+     * AND SO DOES THE WORKED EXAMPLE IT POINTS AT. The skill said "never
+     * your own scan of the mutations" and `apps/seedbed/src/ui/design.tsx`
+     * — named in the skill as the design to copy — picked acts by name
+     * and asked `store.permits`. A reader copies the example, not the rule.
+     */
+    for (const example of [...pages.body.matchAll(/apps\/seedbed\/src\/ui\/[\w-]+\.tsx/g)].map((m) => m[0])) {
+      const source = readFileSync(resolve(SKILLS_DIR, "../../..", example), "utf8");
+      expect(source, `${example} lists acts by name`).not.toMatch(/<Acts[^>]*names=\{\[/);
+      expect(source, `${example} asks permission itself`).not.toContain("store.permits(");
+      expect(source, `${example} takes its acts from the derivation`).toMatch(/recordFacts\(|kindFacts\(/);
+    }
   });
 
   it("never names a finding code the checker cannot produce", () => {

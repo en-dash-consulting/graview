@@ -2,12 +2,15 @@ import type { AnySchema, Principal } from "@graview/core";
 import {
   createPageRegistry,
   DerivedForm,
+  kindFacts,
+  recordFacts,
   recordPath,
   spatialHref,
   useStoreTick,
   type PageComponent,
   type PageContext,
 } from "@graview/pages";
+import type { AffordanceSet } from "@graview/tools";
 import { useState, type ReactNode } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import type { SeedbedSchema } from "../domain/schema.js";
@@ -182,53 +185,74 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
 
 /* ---------------------------------------------------------- the acts */
 
-/** An act as a button that opens its form in place, or a struck line when the seat may not. */
-function Acts({ context, names, prefilled = {} }: { context: Ctx; names: readonly string[]; prefilled?: Record<string, unknown> }) {
-  const { store, principal } = context;
+/**
+ * THE ACTS THE DERIVATION OFFERS — never a scan of the mutations by name.
+ *
+ * This took `names={["tend"]}` and asked `store.permits` for years: the
+ * permission question, not the askability one. So a plot with no gardener
+ * anywhere offered "Name a caretaker" over an empty picker, a gardener's
+ * own page offered "Name a caretaker" beside each untended plot — the
+ * near end's words on the far end's page, W-040's defect in the worked
+ * example the skill points readers at — and a plot already hers was
+ * offered to her again. `recordFacts(...).actions` and
+ * `kindFacts(...).actions` are the same `AffordanceSet` the scene's strip
+ * reads: what can act, each with its arguments decided and its questions
+ * left; what is withheld, with the policy's own sentence. `only` narrows
+ * a section to the acts it is about, from that list.
+ */
+function Acts({ context, actions, only }: { context: Ctx; actions: AffordanceSet; only?: readonly string[] }) {
+  const { store } = context;
   const [open, setOpen] = useState<string | null>(null);
-  const acts = names
-    .map((name) => store.allMutations().find((mutation) => mutation.name === name))
-    .filter((mutation): mutation is NonNullable<typeof mutation> => mutation !== undefined)
-    .map((mutation) => ({ mutation, verdict: store.permits({ name: mutation.name, args: prefilled }, principal as Principal | undefined) }));
-  if (acts.length === 0) return null;
-  const opened = acts.find((entry) => entry.mutation.name === open);
+  const offered = actions.affordances.filter((a) => !only || only.includes(a.mutation));
+  const withheld = actions.withheld.filter((w) => !only || only.includes(w.mutation));
+  if (offered.length === 0 && withheld.length === 0) return null;
+  const opened = offered.find((a) => a.id === open);
+  const mutation = opened ? store.allMutations().find((m) => m.name === opened.mutation) : undefined;
   return (
     <div style={{ display: "grid", gap: 12 }} data-testid="record-actions">
       <div className="sb-acts">
-        {acts
-          .filter((entry) => entry.verdict.ok)
-          .map(({ mutation }) => (
-            <button
-              key={mutation.name}
-              type="button"
-              className="sb-act"
-              aria-expanded={open === mutation.name}
-              onClick={() => setOpen(open === mutation.name ? null : mutation.name)}
-            >
-              {mutation.title ?? mutation.name}
-            </button>
-          ))}
+        {offered.map((a) => (
+          <button key={a.id} type="button" className="sb-act" aria-expanded={open === a.id} onClick={() => setOpen(open === a.id ? null : a.id)}>
+            {a.label}
+          </button>
+        ))}
       </div>
-      {acts.some((entry) => !entry.verdict.ok) ? (
+      {withheld.length > 0 ? (
         <p className="sb-withheld" data-testid="withheld">
-          {acts
-            .filter((entry) => !entry.verdict.ok)
-            .map(({ mutation, verdict }) => (
-              <span key={mutation.name}>
-                <s>{mutation.title ?? mutation.name}</s> — {verdict.ok ? "" : verdict.refusal.message}{" "}
-              </span>
-            ))}
+          {withheld.map((w) => (
+            <span key={w.id}>
+              <s>{w.label}</s> — {w.refusal.message}{" "}
+            </span>
+          ))}
         </p>
       ) : null}
-      {opened && opened.verdict.ok ? (
+      {opened && mutation ? (
         <div className="sb-form">
-          <span className="sb-tag">{opened.mutation.title ?? opened.mutation.name}</span>
-          {opened.mutation.description ? <p style={{ margin: 0, color: "var(--graview-ink-muted)", fontSize: 14 }}>{opened.mutation.description}</p> : null}
-          <DerivedForm<S> store={store} mutation={opened.mutation} prefilled={prefilled} onDone={() => setOpen(null)} />
+          <span className="sb-tag">{opened.label}</span>
+          {mutation.description ? <p style={{ margin: 0, color: "var(--graview-ink-muted)", fontSize: 14 }}>{mutation.description}</p> : null}
+          <DerivedForm<S> store={store} mutation={mutation} prefilled={opened.args} open={opened.open} onDone={() => setOpen(null)} />
         </div>
       ) : null}
     </div>
   );
+}
+
+/** What can BEGIN these kinds, as the seat at the keyboard — the list page's question. */
+function beginsOf(context: Ctx, kinds: readonly string[]): AffordanceSet {
+  const { store, principal } = context;
+  const sets = kinds.map((kind) => kindFacts(store, kind, principal ? { principal: principal as Principal } : {}).actions);
+  return {
+    affordances: sets.flatMap((set) => set.affordances),
+    withheld: sets.flatMap((set) => set.withheld),
+    observations: sets.flatMap((set) => set.observations),
+    ms: sets.reduce((total, set) => total + set.ms, 0),
+  };
+}
+
+/** The derivation's answer for a record, as the seat at the keyboard. */
+function factsOf(context: Ctx, id: string) {
+  const { store, principal, invariantContext } = context;
+  return recordFacts(store, id, { ...(principal ? { principal: principal as Principal } : {}), ...(invariantContext ? { context: invariantContext } : {}) });
 }
 
 /* ---------------------------------------------------------- the home */
@@ -362,7 +386,7 @@ function Home({ context }: { context: Ctx }) {
         <header>
           <h2 className="sb-h2" id="sb-do-h">Do something</h2>
         </header>
-        <Acts context={context} names={["add-plot", "add-gardener", "sow", "adopt-rule"]} />
+        <Acts context={context} actions={beginsOf(context, ["plot", "gardener", "planting", "rule"])} />
       </section>
     </div>
   );
@@ -386,7 +410,7 @@ function Plots({ context }: { context: Ctx }) {
             <PlotCard key={plot.id} plot={plot} schema={store.schema} />
           ))}
         </div>
-        <Acts context={context} names={["add-plot"]} />
+        <Acts context={context} actions={beginsOf(context, ["plot"])} />
       </section>
     </div>
   );
@@ -414,7 +438,7 @@ function Gardeners({ context }: { context: Ctx }) {
             </div>
           ))}
         </div>
-        <Acts context={context} names={["add-gardener"]} />
+        <Acts context={context} actions={beginsOf(context, ["gardener"])} />
       </section>
     </div>
   );
@@ -447,7 +471,7 @@ function Plantings({ context }: { context: Ctx }) {
             ))}
           </tbody>
         </table>
-        <Acts context={context} names={["sow"]} />
+        <Acts context={context} actions={beginsOf(context, ["planting"])} />
       </section>
     </div>
   );
@@ -472,7 +496,7 @@ function Rules({ context }: { context: Ctx }) {
             </div>
           ))}
         </div>
-        <Acts context={context} names={["adopt-rule"]} />
+        <Acts context={context} actions={beginsOf(context, ["rule"])} />
       </section>
     </div>
   );
@@ -494,7 +518,8 @@ function PlotRecord({ context }: { context: Ctx }) {
   const { store } = context;
   const { id, garden } = useRecord(context);
   const plot = garden.plots.find((p) => p.id === id);
-  if (!plot) return <Missing what="plot" />;
+  const facts = factsOf(context, id);
+  if (!plot || !facts) return <Missing what="plot" />;
   const untended = plot.caretaker === null;
   return (
     <div data-testid="plot-page">
@@ -513,7 +538,7 @@ function PlotRecord({ context }: { context: Ctx }) {
         <section className="sb-section" data-testid="record-violations">
           <div className="sb-trouble">
             {plot.trouble.map((line, index) => <p key={index}>{line}</p>)}
-            <Acts context={context} names={["tend"]} prefilled={{ plotId: id }} />
+            <Acts context={context} actions={facts.actions} only={["tend"]} />
           </div>
         </section>
       ) : null}
@@ -547,11 +572,11 @@ function PlotRecord({ context }: { context: Ctx }) {
             <span className="grow" style={{ color: "var(--graview-warn)" }}>Nobody, yet.</span>
           )}
         </div>
-        {!untended ? <Acts context={context} names={["tend"]} prefilled={{ plotId: id }} /> : null}
+        {!untended ? <Acts context={context} actions={facts.actions} only={["tend"]} /> : null}
       </section>
       <section className="sb-section" aria-label="Sow something">
         <header><h2 className="sb-h2">Sow something here</h2></header>
-        <Acts context={context} names={["sow"]} prefilled={{ plotId: id }} />
+        <Acts context={context} actions={facts.actions} only={["sow"]} />
       </section>
     </div>
   );
@@ -561,7 +586,8 @@ function GardenerRecord({ context }: { context: Ctx }) {
   const { store } = context;
   const { id, garden } = useRecord(context);
   const gardener = garden.gardeners.find((g) => g.id === id);
-  if (!gardener) return <Missing what="gardener" />;
+  const facts = factsOf(context, id);
+  if (!gardener || !facts) return <Missing what="gardener" />;
   const plots = garden.plots.filter((plot) => plot.caretaker?.id === id);
   return (
     <div data-testid="gardener-page">
@@ -586,11 +612,12 @@ function GardenerRecord({ context }: { context: Ctx }) {
               <div className="sb-row" key={plot.id}>
                 <Link to={recordPath(store.schema, "plot", plot.id)} className="grow" style={{ fontWeight: 600 }}>{plot.label}</Link>
                 <span className="k" style={{ color: "var(--graview-warn)" }}>nobody tends it</span>
-                <Acts context={context} names={["tend"]} prefilled={{ plotId: plot.id, gardenerId: id }} />
               </div>
             ))}
           </div>
         ) : null}
+        {/* From HER end: the act reads "Take on a plot", and asks which — the derivation decides whether there is one to take. */}
+        <Acts context={context} actions={facts.actions} only={["tend"]} />
       </section>
     </div>
   );
@@ -600,7 +627,8 @@ function PlantingRecord({ context }: { context: Ctx }) {
   const { store } = context;
   const { id, garden } = useRecord(context);
   const planting = [...garden.growing, ...garden.past].find((p) => p.id === id);
-  if (!planting) return <Missing what="planting" />;
+  const facts = factsOf(context, id);
+  if (!planting || !facts) return <Missing what="planting" />;
   const plot = (store.graph.out(id, "grows-in")[0] as { id: string; label: string } | undefined) ?? null;
   return (
     <div data-testid="planting-page">
@@ -618,7 +646,7 @@ function PlantingRecord({ context }: { context: Ctx }) {
       {planting.status === "growing" ? (
         <section className="sb-section" aria-label="Harvest">
           <header><h2 className="sb-h2">When it is ready</h2></header>
-          <Acts context={context} names={["harvest"]} prefilled={{ plantingId: id }} />
+          <Acts context={context} actions={facts.actions} only={["harvest"]} />
         </section>
       ) : null}
     </div>

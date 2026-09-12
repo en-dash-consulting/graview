@@ -189,6 +189,34 @@ describe("the garden, grown a chapter at a time", () => {
       );
       expect(page, path).toContain(`data-testid="${id}"`);
     }
+    /*
+     * THE ACTS COME FROM THE DERIVATION, in the worked example the skill
+     * points readers at. Picked by name with `store.permits`, a gardener's
+     * own page offered "Name a caretaker" beside every untended plot — the
+     * plot's words on her page — and a plot with no gardener anywhere
+     * offered the same over an empty picker.
+     */
+    const june = renderToStaticMarkup(
+      createElement(PagesApp as never, { context: { store, principal: chapter.principal }, registry: seedbedDesign(store.schema), initialPath: "/gardeners/june" } as never),
+    );
+    expect(june).toContain("Take on a plot");
+    expect(june).not.toContain("Name a caretaker");
+    const seed = chapter.seed as { nodes: { id: string; kind: string }[]; edges: { kind: string }[] };
+    const nobody = new Store({
+      schema: chapter.app.schema,
+      mutations: chapter.app.mutations ?? [],
+      invariants: chapter.app.invariants ?? [],
+      snapshot: { nodes: seed.nodes.filter((node) => node.kind !== "gardener"), edges: seed.edges.filter((edge) => edge.kind !== "tended-by") } as never,
+      ...(chapter.app.policy ? { policy: chapter.app.policy } : {}),
+      ...(chapter.app.modules ? { modules: chapter.app.modules } : {}),
+      ...(chapter.principal ? { principal: chapter.principal } : {}),
+    } as never);
+    const untended = nobody.graph.nodesOfKind("plot")[0]!;
+    const alone = renderToStaticMarkup(
+      createElement(PagesApp as never, { context: { store: nobody, principal: chapter.principal }, registry: seedbedDesign(nobody.schema), initialPath: `/plots/${untended.id}` } as never),
+    );
+    expect(alone).not.toContain("Name a caretaker");
+    expect(alone).not.toContain('data-testid="form-tend"');
     // The scene's lens is the garden's own, and it is a named place.
     const views = seedbedViews(store.schema as never, { lens: true, map: true });
     expect(views.places().map((place) => place.title)).toEqual(["Who tends what", "The garden map"]);

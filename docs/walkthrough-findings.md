@@ -2286,3 +2286,38 @@ The shapes, in the order of how much they cost:
   (`apps/seedbed/src/ui/views.tsx(81,68)` and on). The four casts that
   remain are real: a lens over the studio's meta-schema and one over
   `AnySchema`.
+
+### W-081 · The worked example a design is told to copy picks its acts by name
+- stage: E · face: pages · width: any · scheme: both
+- expected: `graview-pages`, rung two — "Offer what can act.
+  `facts.actions.affordances`, never your own scan of the mutations", and
+  "A design that lists acts by NAME will miss the one declared after it was
+  written, and one that lists them by scanning the mutations will offer
+  acts that cannot act" — in `apps/seedbed/src/ui/design.tsx`, which the
+  same skill names as the design to copy
+- actual: the example's `Acts` took `names={["tend"]}` and asked
+  `store.permits` — the permission question, not the askability one. So a
+  gardener's own page offered "Name a caretaker" beside every untended
+  plot, both ends prefilled: the plot's words on her page (W-040's defect,
+  in the example), and a one-press act that re-adds a tie she may already
+  hold (W-008's). A plot with no gardener anywhere offered the same over an
+  empty picker (W-045's). A reader copies the example, not the rule; Walk's
+  design, written from the skill's text instead, reads
+  `recordFacts(...).actions` and none of this happens.
+- where it belongs: `apps/seedbed/src/ui/design.tsx`, and
+  `packages/skills/tests/unit/skills.test.ts` (which checked the skill's
+  prose for the rule and never the example it points at)
+- harness that should have caught it: `apps/seedbed/tests/integration/chapters.test.ts`
+  renders chapter thirteen and asserts its testids, never what an act on a
+  page is called or whether one is offered with nothing to point at
+- status: fixed in "walkthrough: E · the worked example takes its acts from
+  the derivation" · `Acts` takes an `AffordanceSet` — `recordFacts` on a
+  record, `kindFacts` merged across kinds on a list or the home — narrowed
+  by `only` where a section is about one act; withheld acts are drawn
+  struck through with the policy's sentence as before. Criteria: chapter
+  thirteen asserts June's page reads "Take on a plot" and never "Name a
+  caretaker", and a plot in a garden with no gardeners offers no live tend
+  form; the skills test reads every `apps/seedbed/src/ui/*.tsx` the pages
+  skill names and refuses `<Acts names={[`, `store.permits(` and the
+  absence of `recordFacts(`/`kindFacts(`. Both verified failing against
+  the old file.
