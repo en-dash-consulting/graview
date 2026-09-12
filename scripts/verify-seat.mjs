@@ -82,6 +82,25 @@ try {
       check(`${app}: no unhandled rejection`, errors.length === 0, errors[0] ?? "");
 
       /*
+       * WHAT IT DID, IN THE ACT'S OWN WORDS.
+       *
+       * The rail lists the calls a seat made, and listed them by the name
+       * the mutation is REGISTERED under: "changed · close-item", the tool
+       * surface's identifier read out in the one place a person looks to
+       * see what an agent just did. Every act carries a title; this is the
+       * same smell as a card named by its node id.
+       */
+      const said = await page.evaluate(() =>
+        [...document.querySelectorAll('[data-testid="activity"] li span')]
+          .map((el) => (el.textContent ?? "").trim())
+          .filter((text) => /^(changed|read) · /.test(text))
+          .map((text) => text.replace(/^(changed|read) · /, "")),
+      );
+      check(`${app}: the rail says what the act is called, not what it is registered as`,
+        said.length > 0 && said.every((name) => /^[A-Z]/.test(name) && !/[-_]/.test(name)),
+        said.join(" | ") || "no calls listed");
+
+      /*
        * WHOSE TURN IT WAS. Every seat in every app signed its ops "claude" —
        * a hardcoded id, so two seats on one embed were indistinguishable in
        * the history and a seat that is a rules mender or a scheduled job wore
