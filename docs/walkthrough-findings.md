@@ -1220,3 +1220,26 @@ at the end of every stage.
   added: `packages/tools/tests/unit/asked-as-somebody.test.ts` — four cases
   including that the derivation and `store.apply` agree, and that an app with
   no policy still offers everything. Verified failing without the fix.
+
+### W-048 · The agent-seat skill's own example does not compile
+- stage: F · face: neither — the skills
+- expected: an agent following a skill verbatim gets working code; the skill
+  is the contract the walkthrough is testing
+- actual: `graview-agent-seat` says to prove the two paths are one path with
+  `expect(byAgent.diff).toEqual(byHand.diff)`. `ToolResult` is a union —
+  a refusal is a result — so `.diff` does not exist on the arm the compiler
+  has to consider, and the test the skill asks for fails to typecheck in any
+  TypeScript project. Found by writing exactly that test in Walk: `Property
+  'diff' does not exist on type '{ readonly ok: false; readonly error:
+  string; }'`. Same class as W-021, a project that cannot follow its own
+  skill.
+- where it belongs: `packages/skills/skills/graview-agent-seat/SKILL.md`
+- harness that should have caught it: `packages/skills/tests/unit/skills.test.ts`
+  asserts about the prose — that each skill ends in a real verdict, and that
+  any finding code it names is one the checker emits — and nothing about
+  whether its code is code
+- status: fixed in "walkthrough: F · a skill's code is code" · the example
+  narrows the result first, and says why. Criterion added: a skills assertion
+  that every awaited `.call(...)` result is narrowed on `.ok` before anything
+  is read through it — the shape that recurs, rather than this one line.
+  Verified failing without the fix, naming the skill and the property.

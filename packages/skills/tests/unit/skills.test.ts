@@ -117,6 +117,35 @@ describe("the skills package", () => {
     }
   });
 
+  /*
+   * A SKILL'S CODE IS CODE.
+   *
+   * `graview-agent-seat` told an agent to write
+   * `expect(byAgent.diff).toEqual(byHand.diff)` — and `ToolResult` is a
+   * union, because a refusal is a result, so following the skill verbatim in
+   * a TypeScript test does not compile. Same class as W-021: a project that
+   * cannot follow its own skill.
+   *
+   * Reading a property off a union arm is the shape that recurs, so this
+   * holds every skill to narrowing a result it has just awaited before it
+   * reads through it.
+   */
+  it("narrows a result before reading through it", () => {
+    const awaited = /const (\w+) = await [^;]*\.call\(/g;
+    for (const skill of skills) {
+      for (const [, name] of skill.body.matchAll(awaited)) {
+        const after = skill.body.slice(skill.body.indexOf(`const ${name} = await`));
+        const reads = new RegExp(`${name}\\.(?!ok\\b|error\\b)\\w+`).exec(after);
+        if (!reads) continue;
+        const narrowsAt = after.search(new RegExp(`if \\(!${name}\\.ok\\)`));
+        expect(
+          narrowsAt >= 0 && narrowsAt < after.indexOf(reads[0]),
+          `${skill.name} reads ${reads[0]} without establishing ${name}.ok first`,
+        ).toBe(true);
+      }
+    }
+  });
+
   it("points at the worked examples rather than restating them", () => {
     // A skill that copies an example goes stale the moment the example
     // changes, and nothing tells you.
