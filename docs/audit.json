@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T01:19:46.655Z",
+  "at": "2026-09-12T02:04:47.301Z",
   "engine": "chromium",
   "screens": [
     {
@@ -17,6 +17,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 59,
       "inspector": null
@@ -36,6 +37,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 59,
       "inspector": null
@@ -55,6 +57,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 59,
       "inspector": {
@@ -79,6 +82,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 51,
       "inspector": null
@@ -98,6 +102,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 31,
       "inspector": {
@@ -122,9 +127,35 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 19,
       "inspector": null
+    },
+    {
+      "app": "todo",
+      "state": "asked",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 59,
+      "inspector": {
+        "shown": 13,
+        "hidden": 0,
+        "size": "236x469",
+        "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Finish it★Give it a new date …"
+      }
     },
     {
       "app": "seedbed",
@@ -141,6 +172,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 5,
       "inspector": {
@@ -165,6 +197,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 4,
       "inspector": null
@@ -184,6 +217,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 4,
       "inspector": {
@@ -208,9 +242,60 @@
       "articles": [],
       "covered": [],
       "offscreen": [],
+      "asking": [],
       "board": [],
       "fill": 4,
       "inspector": null
+    },
+    {
+      "app": "seedbed",
+      "state": "asked",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 4,
+      "inspector": {
+        "shown": 3,
+        "hidden": 0,
+        "size": "236x214",
+        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
+      }
+    },
+    {
+      "app": "seedbed",
+      "state": "askedNarrow",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 6,
+      "inspector": {
+        "shown": 3,
+        "hidden": 0,
+        "size": "370x112",
+        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
+      }
     }
   ]
 }

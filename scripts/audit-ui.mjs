@@ -29,6 +29,20 @@ const APPS = {
     raised: async (p) => { await p.click('[data-graview-view="kind:list"]'); },
     travelled: async (p) => { await p.dblclick('[data-graview-pick="t-deposit"]'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
+    /*
+     * AN ACT THAT STILL WANTS SOMETHING, mid-ask. Every state here pressed
+     * acts that need nothing, so the pane that opens under one that does —
+     * a field, an Apply and a Skip laid out in a 236-wide rail — was a
+     * screen no count had ever been taken of.
+     */
+    asked: async (p) => {
+      await p.click('[data-graview-pick="t-deposit"]');
+      await p.waitForTimeout(400);
+      // The DERIVED edit act specifically: its arguments are optional, so
+      // its ask carries a Skip beside the Apply — the widest row the pane
+      // is ever asked to hold.
+      await p.locator('[data-testid="affordances"] button', { hasText: "Change the" }).first().click();
+    },
   } },
   seedbed: { port: 5194, ready: "__seedbedReady", states: {
     /*
@@ -62,6 +76,40 @@ const APPS = {
       await p.keyboard.press("Escape");
       await p.waitForTimeout(400);
     },
+    /*
+     * AN ASK WITH A TEXT FIELD IN IT, at both widths. The two are different
+     * failures of the same pane: in the 236-wide rail the row is laid out
+     * wider than the pane and loses its buttons off the side; in the sheet a
+     * phone gets, the ask opens below the fold and is not on the screen at
+     * all. A number field is narrower and hides both, which is why todo's
+     * ask alone was not enough.
+     */
+    asked: async (p) => {
+      await p.click('[data-testid="activity-button"]');
+      await p.waitForTimeout(300);
+      await p.click('[data-testid="agent-starter"]');
+      await p.waitForTimeout(1600);
+      await p.keyboard.press("Escape");
+      await p.waitForTimeout(400);
+      const opener = await p.$("[data-testid^='open-']");
+      if (opener) { await opener.click(); await p.waitForTimeout(500); }
+      const chip = await p.$("[data-graview-pick]");
+      if (chip) { await chip.click(); await p.waitForTimeout(500); }
+      await p.locator('[data-testid="affordances"] button', { hasText: "Change the" }).first().click();
+    },
+    askedNarrow: { viewport: { width: 390, height: 620 }, go: async (p) => {
+      await p.click('[data-testid="activity-button"]');
+      await p.waitForTimeout(300);
+      await p.click('[data-testid="agent-starter"]');
+      await p.waitForTimeout(1600);
+      await p.keyboard.press("Escape");
+      await p.waitForTimeout(400);
+      const opener = await p.$("[data-testid^='open-']");
+      if (opener) { await opener.click(); await p.waitForTimeout(500); }
+      const chip = await p.$("[data-graview-pick]");
+      if (chip) { await chip.click(); await p.waitForTimeout(500); }
+      await p.locator('[data-testid="affordances"] button', { hasText: "Change the" }).first().click();
+    } },
   } },
 };
 
@@ -242,6 +290,42 @@ const audit = () => {
   }
 
   /* A control too small to hit. 24px is the WCAG 2.2 minimum. */
+  /*
+   * AN ASK YOU CANNOT ANSWER.
+   *
+   * Pressing an act that still needs something opens the ask for it inside
+   * the same pane. The pane scrolls in one direction and clips in both, so
+   * an ask laid out wider than the pane loses its buttons off the side, and
+   * an ask opened below the pane's fold is simply not on the screen — in
+   * both cases the person pressed a button and nothing they can see
+   * happened. The ask says it is one (`data-graview-asking`), so this asks
+   * the only question that matters about it: is every control of it inside
+   * the box that clips it, right now, without scrolling anything.
+   */
+  const clipperOf = (el) => {
+    for (let at = el.parentElement; at; at = at.parentElement) {
+      const style = getComputedStyle(at);
+      if (style.overflowX !== "visible" || style.overflowY !== "visible") return at;
+    }
+    return null;
+  };
+  const asking = [];
+  for (const ask of document.querySelectorAll("[data-graview-asking]")) {
+    const host = clipperOf(ask);
+    if (!host) continue;
+    const h = box(host);
+    for (const el of ask.querySelectorAll("button, input, select, textarea")) {
+      if (!visible(el)) continue;
+      const b = box(el);
+      // Two pixels of tolerance for the host's own border.
+      if (b.left < h.left - 2 || b.right > h.right + 2 || b.top < h.top - 2 || b.bottom > h.bottom + 2) {
+        asking.push(
+          `${(el.getAttribute("aria-label") ?? el.textContent ?? el.getAttribute("placeholder") ?? "").trim().slice(0, 20)} at ${Math.round(b.left)}..${Math.round(b.right)}/${Math.round(b.top)}..${Math.round(b.bottom)} outside ${Math.round(h.left)}..${Math.round(h.right)}/${Math.round(h.top)}..${Math.round(h.bottom)}`,
+        );
+      }
+    }
+  }
+
   /*
    * A control's DESIGNED size, not its projected one.
    *
@@ -460,7 +544,7 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, painted, repeats, articles: [...new Set(articles)].slice(0, 8), covered, offscreen, board, fill, inspector };
+  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, painted, repeats, articles: [...new Set(articles)].slice(0, 8), covered, offscreen, asking: asking.slice(0, 6), board, fill, inspector };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -518,6 +602,7 @@ for (const s of report.screens) {
     s.halfSaid?.length ? `emphasis painted but not said: ${s.halfSaid.join("; ")}` : "",
     s.painted?.length ? `a problem painted but not said: ${s.painted.join(", ")}` : "",
     s.small.length ? `${s.small.length} controls under 24px` : "",
+    s.asking?.length ? `an ask drawn outside its pane: ${s.asking.join("; ")}` : "",
     s.offscreen?.length ? `${s.offscreen.length} off the edge with nowhere to scroll: ${s.offscreen[0]}` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",
   ].filter(Boolean);

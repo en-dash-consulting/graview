@@ -79,11 +79,29 @@ export function AnswerArgs({
   const [draft, setDraft] = useState("");
   // Stable across the walk's steps, so the group's label never dangles.
   const promptId = useId();
+  const asked = useRef<HTMLDivElement>(null);
 
   const remaining = affordance.open.filter((parameter) => !(parameter.name in answers));
   const parameter = remaining[0];
 
   useEffect(() => setDraft(""), [parameter?.name]);
+
+  /*
+   * AND IT IS ON THE SCREEN.
+   *
+   * The pane scrolls inside itself, and an ask opened under a list of acts
+   * taller than the pane lands below its fold: on a phone the field, the
+   * Apply and the Skip were all off the bottom of the window, so pressing
+   * an act looked like pressing a button that did nothing. The ask is the
+   * thing that just happened, so it is what the pane shows. `nearest`
+   * moves the pane the least amount that works and leaves everything
+   * already visible where it is.
+   */
+  useEffect(() => {
+    // Optional: jsdom has no scrolling at all, and a pane that cannot
+    // scroll needs none.
+    asked.current?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [parameter?.name]);
 
   if (!parameter) return null;
 
@@ -129,7 +147,29 @@ export function AnswerArgs({
       : asking;
 
   return (
-    <div style={{ display: "grid", gap: 4, padding: "5px 0 2px" }}>
+    <div
+      ref={asked}
+      // An ask says it is one, so a harness can ask whether the thing it
+      // opened is on the screen rather than off the side of the pane.
+      data-graview-asking={affordance.mutation}
+      style={{
+        display: "grid",
+        /*
+         * THE ASK FITS THE PANE IT OPENS IN.
+         *
+         * An auto track takes the min-content width of what is in it, and a
+         * text input's is its own default size — so a field, an Apply and a
+         * Skip came to 257 inside a 236-wide rail, and the Skip was drawn
+         * past the pane's edge, half of it painted and none of it reachable
+         * without scrolling a pane that shows no scrollbar. `minmax(0, 1fr)`
+         * says the track may not be wider than the pane; the input already
+         * carries `minWidth: 0`, so it is the thing that gives.
+         */
+        gridTemplateColumns: "minmax(0, 1fr)",
+        gap: 4,
+        padding: "5px 0 2px",
+      }}
+    >
       {/* A single text field is named by the field itself; naming it twice
           over is the same sentence twice. Anything else needs the question. */}
       {affordance.open.length > 1 || choices.length > 0 ? (
@@ -161,7 +201,10 @@ export function AnswerArgs({
         </div>
       ) : (
         <form
-          style={{ display: "flex", gap: 4 }}
+          // And where even a shrunk field would leave no room to type, the
+          // buttons drop to a line of their own rather than squeezing it to
+          // nothing.
+          style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
           onSubmit={(event) => {
             event.preventDefault();
             if (draft.trim().length === 0) return;
