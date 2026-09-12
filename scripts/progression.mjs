@@ -163,6 +163,33 @@ try {
           wordmark: document.querySelector("header h1")?.textContent?.trim() ?? null,
           focused: document.querySelector('[data-graview-plane="0"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 400) ?? null,
         }));
+        /*
+         * WHAT THE SEAT MAY DO, asked somewhere it could do something.
+         *
+         * The picture above is taken wherever the chapter stands, and for
+         * the policy chapters that is a district whose creating act this
+         * seat may legitimately not take — so "something was withheld" was
+         * true whether or not the seat was reaching the interface at all.
+         * It was not: the chapter's principal went to the store and the
+         * routed face and never to the scene, so the strip derived what
+         * ANONYMOUS may do, which under a policy is nothing. Asked on a
+         * MEMBER, after the picture is safely taken.
+         */
+        if (chapter.principal) {
+          await page.click('[data-testid="overview"]').catch(() => {});
+          await page.waitForTimeout(700);
+          const member = await page.$("[data-graview-pick]");
+          if (member) {
+            await member.click();
+            await page.waitForTimeout(600);
+          }
+          entry.seatSees = await page.evaluate(() => ({
+            offered: [...document.querySelectorAll('[data-testid="affordances"] [data-affordance]')].map(
+              (button) => button.textContent?.trim() ?? "",
+            ),
+            withheld: document.querySelector('[data-testid="withheld"]')?.textContent?.trim() ?? "",
+          }));
+        }
       }
     }
     await context.close();
@@ -184,6 +211,32 @@ report.verdict = {
   theSeatPlantedInChapterFive: (report.chapters[4]?.saw?.activity ?? []).length > 0,
   itRemembersInChapterSix: /Remembered/.test(report.chapters[5]?.saw?.remembered ?? ""),
   aGardenerIsRefusedInChapterSeven: (report.chapters[6]?.saw?.withheld ?? "") !== "",
+  /*
+   * AND REFUSED FOR A REASON THAT IS NOT THEIR OWN ROLE.
+   *
+   * The chapter's seat reached the store and the routed face and not the
+   * scene, so from here on the strip derived what an ANONYMOUS reader may
+   * do — nothing, under a policy. The chapter claiming "the actions strip
+   * narrows, so a gardener never sees a button that would fail" published a
+   * picture of a gardener refused everything, one line reading "Not
+   * permitted: tend — one of coordinator, gardener can" to a gardener. The
+   * check above passes on that: any withheld text at all satisfies it.
+   * This one reads the roles the refusal names and asks whether the seat
+   * already holds one.
+   */
+  theSeatIsNeverRefusedByItsOwnRole: report.chapters
+    .map((chapter, at) => ({ chapter, roles: new Set(CHAPTERS[at]?.principal?.roles ?? []) }))
+    // Where the SCENE is what the chapter shows: a pages chapter has no
+    // strip to ask, and says its half of this on its own surfaces.
+    .filter(({ chapter, roles }) => roles.size > 0 && chapter.seatSees !== undefined)
+    .every(({ chapter, roles }) => {
+      const said = chapter.seatSees?.withheld ?? "";
+      const named = [...said.matchAll(/—\s*(?:one of\s*)?([^—]*?)\s+can\./g)].flatMap((match) =>
+        match[1].split(/,\s*/).map((role) => role.trim()),
+      );
+      // Something it MAY do, and nothing refused for a role it already holds.
+      return (chapter.seatSees?.offered.length ?? 0) > 0 && !named.some((role) => roles.has(role));
+    }) && report.chapters[6]?.seatSees !== undefined,
   theBrandArrivesInChapterEight: report.chapters[6]?.saw?.wordmark === "Graview" && report.chapters[7]?.saw?.wordmark === "Seedbed",
   theOtherFaceIsThePlotsOwnPageInChapterNine: report.chapters[8]?.saw?.custom === true && report.chapters[8]?.saw?.fitsAPhone === true && /looked after by|nobody looks after/.test(report.chapters[8]?.saw?.page ?? ""),
   theLensShowsWhoTendsWhatInChapterTen: /June/.test(report.chapters[9]?.saw?.focused ?? "") && /Plot 2/.test(report.chapters[9]?.saw?.focused ?? ""),

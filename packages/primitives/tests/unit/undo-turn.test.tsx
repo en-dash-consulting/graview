@@ -96,4 +96,57 @@ describe("taking a turn back", () => {
     expect((rewritten.graph.getNode("n1") as { urgency: string }).urgency).toBe("today");
     await act(async () => root.unmount());
   });
+
+  /*
+   * AND IT SAYS WHO IS UNDOING.
+   *
+   * The store judges an undo the way it judges any other change — "what you
+   * may undo is what you may have done" — and this control called
+   * `store.undo(batch)` with no author at all. So in any app with a policy
+   * the store judged an anonymous principal, who may do nothing, and a
+   * person could not take back the edit they had just made: the row said
+   * "you Add a note" and pressing undo on it answered "Not permitted to undo
+   * "Add a note"". Every act taken from the strip has passed the provider's
+   * principal since it was written; the undo beside them did not.
+   */
+  it("undoes as the person at the keyboard, not as nobody", async () => {
+    const policy = {
+      roles: ["keeper"],
+      grants: [{ roles: ["keeper"], mutations: ["clear-urgency"] }],
+    } as const;
+    const keeper = { kind: "human", id: "nina", roles: ["keeper"] } as const;
+    const store = new Store({
+      schema,
+      mutations: [clear],
+      invariants: [],
+      policy: policy as never,
+      snapshot: { nodes: [{ id: "n1", kind: "note", label: "One", urgency: "whenever" }] as never, edges: [] },
+    });
+    store.apply({ name: "clear-urgency", args: { id: "n1" } }, { author: keeper as never });
+    const batch = store.batches()[0]!;
+
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => {
+      root.render(
+        <GraviewProvider
+          store={store}
+          views={registerDefaultViews(schema, createViews(schema))}
+          initialView={EMPTY_VIEW}
+          principal={keeper as never}
+        >
+          <UndoTurn batch={batch.id} />
+        </GraviewProvider>,
+      );
+    });
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('[data-testid="undo-turn"]')!.click();
+    });
+    expect(host.querySelector('[data-testid="undo-refused"]')).toBeNull();
+    // It actually came off, and the undo is attributed to the same person.
+    expect((store.graph.getNode("n1") as { urgency: string }).urgency).toBe("whenever");
+    expect(store.batches()[1]?.author.id).toBe("nina");
+    await act(async () => root.unmount());
+  });
 });

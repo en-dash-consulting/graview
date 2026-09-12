@@ -1487,7 +1487,16 @@ export function useRecentChanges(limit = 4): readonly Change[] {
  * what the check already returns.
  */
 export function UndoTurn({ batch }: { readonly batch: string }) {
-  const { store } = useGraview<AnySchema>();
+  /*
+   * WHO IS UNDOING. Undo is a change and the store judges it like one —
+   * "what you may undo is what you may have done" — so it has to be told
+   * who is asking, exactly as every act taken from the strip is. It was not:
+   * the control called `store.undo(batch)` with no author, so the store
+   * judged an anonymous principal, who may do nothing once a policy exists.
+   * In any app with one, a person could not take back the edit they had
+   * just made, and the row they made it on said "you".
+   */
+  const { store, principal } = useGraview<AnySchema>();
   const nodes = useGraph();
   const [refused, setRefused] = useState<string | null>(null);
   const check = useMemo(
@@ -1521,7 +1530,7 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
       onClick={() => {
         setRefused(null);
         try {
-          store.undo(blocked ? [batch, ...alsoNeeded] : batch);
+          store.undo(blocked ? [batch, ...alsoNeeded] : batch, { author: principal });
         } catch (error) {
           setRefused(error instanceof Error ? error.message : String(error));
         }

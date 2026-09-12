@@ -141,6 +141,65 @@ try {
       try { process.kill(-vite.pid, "SIGKILL"); } catch { vite.kill("SIGKILL"); }
     }
   }
+
+  /*
+   * AND TAKING IT BACK IS A CHANGE SOMEBODY MAKES.
+   *
+   * The store judges an undo the way it judges any other change — what you
+   * may undo is what you may have done — and the rail's control called
+   * `store.undo(batch)` with no author at all, so in any app with a policy
+   * the store judged an anonymous principal, who may do nothing. A person
+   * could not take back the edit they had just made, on a row that said
+   * "you". Every app this harness drove was policy-free, so the refusal had
+   * nowhere to happen. Seedbed's seventh chapter is the framework's own app
+   * WITH one, sat in by a gardener who may sow.
+   */
+  const seedbed = await startVite("seedbed", 5194);
+  try {
+    const seven = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+    const seatErrors = [];
+    seven.on("pageerror", (e) => seatErrors.push(String(e).slice(0, 90)));
+    await seven.goto("http://localhost:5194/?chapter=7&theme=light#overview=1", { waitUntil: "load" });
+    await seven.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
+    await seven.waitForTimeout(1400);
+    // An ordinary act this seat may take, from the strip.
+    await seven.click('[data-graview-view="kind:plot"]');
+    await seven.waitForTimeout(600);
+    const took = await seven
+      // The OFFERED list, not the withheld one beside it: those are
+      // deliberately disabled buttons carrying the policy's reason.
+      .locator('[data-testid="affordances"] [data-affordance]')
+      .first()
+      .textContent()
+      .catch(() => null);
+    await seven.locator('[data-testid="affordances"] [data-affordance]').first().click();
+    await seven.waitForTimeout(900);
+    // Answer anything the act still wants, so there is a turn to take back.
+    for (let step = 0; step < 3 && (await seven.$("[data-graview-asking]")) !== null; step++) {
+      const choice = await seven.$("[data-graview-asking] button:not([disabled])");
+      if (!choice) break;
+      await choice.click();
+      await seven.waitForTimeout(500);
+    }
+    await seven.click('[data-testid="activity-button"]');
+    await seven.waitForTimeout(600);
+    const turns = await seven.evaluate(
+      () => document.querySelectorAll('[data-testid="diff-log"] li').length,
+    );
+    await seven.locator('[data-testid="undo-turn"]').first().click();
+    await seven.waitForTimeout(900);
+    const undone = await seven.evaluate(() => ({
+      refused: document.querySelector('[data-testid="undo-refused"]')?.textContent ?? null,
+      turns: document.querySelectorAll('[data-testid="diff-log"] li').length,
+    }));
+    check("seedbed: a person can take back their own edit where there is a policy",
+      turns > 0 && undone.refused === null && undone.turns > turns,
+      `took "${(took ?? "").trim()}" · ${turns} turns → ${undone.turns}${undone.refused ? ` · ${undone.refused}` : ""}`);
+    check("seedbed: nothing threw on the way", seatErrors.length === 0, seatErrors[0] ?? "");
+    await seven.close();
+  } finally {
+    try { process.kill(-seedbed.pid, "SIGKILL"); } catch { seedbed.kill("SIGKILL"); }
+  }
 } finally {
   await browser.close();
 }
