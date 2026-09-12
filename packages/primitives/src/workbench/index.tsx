@@ -102,7 +102,7 @@ export function AnswerArgs({
     } else setAnswers(next);
   };
   const skip = parameter.optional ? (
-    <button type="button" onClick={() => answer(undefined)} style={{ fontSize: 12 }}>
+    <button type="button" onClick={() => answer(undefined)} style={{ fontSize: "0.75rem" }}>
       Skip
     </button>
   ) : null;
@@ -133,7 +133,7 @@ export function AnswerArgs({
       {/* A single text field is named by the field itself; naming it twice
           over is the same sentence twice. Anything else needs the question. */}
       {affordance.open.length > 1 || choices.length > 0 ? (
-        <span id={promptId} style={{ fontSize: 10.5, color: "var(--graview-ink-faint)" }}>
+        <span id={promptId} style={{ fontSize: "0.65625rem", color: "var(--graview-ink-faint)" }}>
           {step}
         </span>
       ) : null}
@@ -151,7 +151,7 @@ export function AnswerArgs({
               // The question travels with the answer: a control read on its
               // own says what choosing it would mean.
               aria-label={`${asking}: ${nameOf(store, choice)}`}
-              style={{ padding: "3px 9px", fontSize: 12 }}
+              style={{ padding: "3px 9px", fontSize: "0.75rem" }}
               onClick={() => answer(choice)}
             >
               {nameOf(store, choice)}
@@ -190,7 +190,7 @@ export function AnswerArgs({
               flex: 1,
               minWidth: 0,
               font: "inherit",
-              fontSize: 13,
+              fontSize: "0.8125rem",
               padding: "5px 8px",
               borderRadius: 7,
               border: "1px solid var(--graview-edge)",
@@ -198,7 +198,7 @@ export function AnswerArgs({
               color: "var(--graview-ink)",
             }}
           />
-          <button type="submit" disabled={draft.trim().length === 0} style={{ fontSize: 12 }}>
+          <button type="submit" disabled={draft.trim().length === 0} style={{ fontSize: "0.75rem" }}>
             {remaining.length > 1 ? "Next" : "Apply"}
           </button>
           {skip}
@@ -687,14 +687,14 @@ export function Inspector() {
           */}
         {!named ? null : (
           <>
-            <strong style={{ fontSize: 13.5, whiteSpace: "nowrap" }}>
+            <strong style={{ fontSize: "0.84375rem", whiteSpace: "nowrap" }}>
               {selection.length === 1
                 ? nameOf(store, selection[0]!)
                 : `${selection.length} selected`}
             </strong>
             {kinds.length > 0 || edge ? (
               <span
-                style={{ fontSize: 11, color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
+                style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
                 {edge ? "relation" : kinds.join(" · ")}
               </span>
@@ -705,7 +705,7 @@ export function Inspector() {
                 after you had already found out. */}
             {selection.length === 1 && !edge ? (
               <span
-                style={{ fontSize: 11, color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
+                style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
                 · double-click opens
               </span>
@@ -741,7 +741,7 @@ export function Inspector() {
             display: "grid",
             placeItems: "center",
             padding: 0,
-            fontSize: 13,
+            fontSize: "0.8125rem",
             lineHeight: 1,
             borderRadius: 7,
           }}
@@ -759,7 +759,7 @@ export function Inspector() {
           {edgeSaid ? (
             <p
               data-testid="edge-said"
-              style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
+              style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
             >
               {edgeSaid}
             </p>
@@ -781,12 +781,12 @@ export function Inspector() {
                     data-testid={`edge-${which}`}
                     onClick={() => set([end.id])}
                     title={`Select ${nameOf(store, end.id)}`}
-                    style={{ fontSize: 12, padding: "3px 9px", borderRadius: 999 }}
+                    style={{ fontSize: "0.75rem", padding: "3px 9px", borderRadius: 999 }}
                   >
                     {nameOf(store, end.id)}
                   </button>
                 ) : (
-                  <span style={{ fontSize: 12, color: "var(--graview-ink-faint)" }}>gone</span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>gone</span>
                 )}
               </Fragment>
             ))}
@@ -808,7 +808,7 @@ export function Inspector() {
               key={observation.id}
               style={{
                 margin: 0,
-                fontSize: 12,
+                fontSize: "0.75rem",
                 lineHeight: 1.45,
                 color: "var(--graview-ink-muted)",
               }}
@@ -825,7 +825,7 @@ export function Inspector() {
       {failed ? (
         <p
           data-testid="refused"
-          style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "var(--graview-warn)" }}
+          style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-warn)" }}
         >
           {failed}
         </p>
@@ -860,7 +860,7 @@ export function Inspector() {
           }}
           style={{
             font: "inherit",
-            fontSize: 12.5,
+            fontSize: "0.78125rem",
             padding: "5px 9px",
             borderRadius: 8,
             border: "1px solid var(--graview-edge)",
@@ -872,7 +872,7 @@ export function Inspector() {
       {matched !== null && matched.length === 0 ? (
         <p
           data-testid="no-matches"
-          style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
+          style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
         >
           Nothing offered here matches “{query.trim()}”.
         </p>
@@ -885,7 +885,7 @@ export function Inspector() {
          */
         <p
           data-testid="no-affordances"
-          style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
+          style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
         >
           {withheld.length > 0
             ? // "Nothing can be done" would be a lie here: things can be
@@ -932,14 +932,14 @@ export function Inspector() {
                 <li
                   data-graview-heading={section.tone}
                   style={{
-                    fontSize: 11,
+                    fontSize: "0.6875rem",
                     lineHeight: 1.4,
                     color:
                       section.tone === "violation"
                         ? "var(--graview-warn)"
                         : "var(--graview-ink-faint)",
                     ...(section.tone !== "violation"
-                      ? { letterSpacing: "0.12em", textTransform: "uppercase" as const, fontSize: 10 }
+                      ? { letterSpacing: "0.12em", textTransform: "uppercase" as const, fontSize: "0.625rem" }
                       : {}),
                     padding: "2px 2px 1px",
                     marginTop: index > 0 ? 6 : 0,
@@ -964,7 +964,7 @@ export function Inspector() {
                     title={affordance.why}
                     style={{
                       padding: "5px 10px",
-                      fontSize: 12.5,
+                      fontSize: "0.78125rem",
                       borderRadius: 8,
                       width: "100%",
                       textAlign: "left",
@@ -1014,7 +1014,7 @@ export function Inspector() {
                       <span
                         aria-hidden="true"
                         title="Enter runs it"
-                        style={{ float: "right", color: "var(--graview-ink-faint)", fontSize: 11 }}
+                        style={{ float: "right", color: "var(--graview-ink-faint)", fontSize: "0.6875rem" }}
                       >
                         ↵
                       </span>
@@ -1053,7 +1053,7 @@ export function Inspector() {
                       display: "grid",
                       placeItems: "center",
                       padding: 0,
-                      fontSize: 11,
+                      fontSize: "0.6875rem",
                       border: "1px solid transparent",
                       background: "none",
                       boxShadow: "none",
@@ -1087,7 +1087,7 @@ export function Inspector() {
                 // on a quantity; this is a control, and a control says what
                 // pressing it will do.
                 title={`Show all ${affordances.length} actions`}
-                style={{ padding: "4px 10px", fontSize: 12.5, borderRadius: 8 }}
+                style={{ padding: "4px 10px", fontSize: "0.78125rem", borderRadius: 8 }}
               >
                 Show {hidden} more
               </button>
@@ -1127,7 +1127,7 @@ export function Inspector() {
                 data-withheld={action.refusal.wouldNeed.join(",") || "nobody"}
                 style={{
                   padding: "4px 10px",
-                  fontSize: 12.5,
+                  fontSize: "0.78125rem",
                   borderRadius: 8,
                   borderStyle: "dashed",
                   width: "100%",
@@ -1147,7 +1147,7 @@ export function Inspector() {
               <span
                 data-testid="withheld-why"
                 style={{
-                  fontSize: 11.5,
+                  fontSize: "0.71875rem",
                   lineHeight: 1.4,
                   color: "var(--graview-ink-muted)",
                   padding: "0 10px",
@@ -1236,7 +1236,7 @@ export function Standing({
           display: "inline-flex",
           alignItems: "center",
           gap: 7,
-          fontSize: 12.5,
+          fontSize: "0.78125rem",
           whiteSpace: "nowrap",
           // The longhand both ways: switching between a `border` shorthand
           // and `borderColor` across renders is a React warning, and the
@@ -1298,7 +1298,7 @@ export function Standing({
                 style={{
                   width: "100%",
                   textAlign: "left",
-                  fontSize: 12,
+                  fontSize: "0.75rem",
                   lineHeight: 1.4,
                   padding: "7px 8px",
                   border: "1px solid transparent",
@@ -1310,7 +1310,7 @@ export function Standing({
                 <span style={{ display: "block", color: "var(--graview-ink)" }}>
                   {violation.message}
                 </span>
-                <span style={{ color: "var(--graview-ink-faint)", fontSize: 11 }}>
+                <span style={{ color: "var(--graview-ink-faint)", fontSize: "0.6875rem" }}>
                   {violation.label}
                   {violation.repairs.length > 0
                     ? ` · ${violation.repairs.length} ${violation.repairs.length === 1 ? "way" : "ways"} to fix`
@@ -1420,7 +1420,7 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
       }}
       style={{
         padding: "1px 7px",
-        fontSize: 11,
+        fontSize: "0.6875rem",
         ...(blocked ? { borderColor: "var(--graview-warn)", color: "var(--graview-warn)" } : {}),
       }}
     >
@@ -1430,7 +1430,7 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
         <span
           data-testid="undo-refused"
           role="alert"
-          style={{ fontSize: 11, lineHeight: 1.4, color: "var(--graview-warn)", maxWidth: 260, textAlign: "right" }}
+          style={{ fontSize: "0.6875rem", lineHeight: 1.4, color: "var(--graview-warn)", maxWidth: 260, textAlign: "right" }}
         >
           {refused}
         </span>
@@ -1474,7 +1474,7 @@ export function StartFresh() {
         window.location.assign(href());
       }}
       style={{
-        fontSize: 12,
+        fontSize: "0.75rem",
         color: "var(--graview-ink-muted)",
         textDecoration: "underline",
         textDecorationColor: "var(--graview-edge-bright)",
@@ -1555,7 +1555,7 @@ export function ActivityRail({
           gap: 6,
           padding: "4px 11px",
           borderRadius: 999,
-          fontSize: 12.5,
+          fontSize: "0.78125rem",
           whiteSpace: "nowrap",
           ...(running ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" } : {}),
         }}
@@ -1609,7 +1609,7 @@ export function ActivityRail({
             >
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: "0.625rem",
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
                   color: "var(--graview-ink-faint)",
@@ -1625,7 +1625,7 @@ export function ActivityRail({
               {calls.slice(0, 6).map((call, index) => (
                 <li
                   key={`${call.at}:${index}`}
-                  style={{ display: "grid", gap: 2, fontSize: 12, lineHeight: 1.45 }}
+                  style={{ display: "grid", gap: 2, fontSize: "0.75rem", lineHeight: 1.45 }}
                 >
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                     <span
@@ -1674,7 +1674,7 @@ export function ActivityRail({
                 listStyle: "none",
                 display: "grid",
                 gap: 6,
-                fontSize: 12,
+                fontSize: "0.75rem",
               }}
             >
               {changes.map((change, index) => (
@@ -1718,7 +1718,7 @@ export function ActivityRail({
                 gap: 10,
                 paddingTop: 8,
                 borderTop: "1px solid var(--graview-edge)",
-                fontSize: 12,
+                fontSize: "0.75rem",
                 color: "var(--graview-ink-faint)",
               }}
             >
@@ -1882,7 +1882,7 @@ export function AgentSeat<S extends AnySchema>({
       {!permitted || refused ? (
         <span
           data-testid={`${testId}-why`}
-          style={{ fontSize: 11.5, lineHeight: 1.4, color: "var(--graview-ink-muted)", maxWidth: 260 }}
+          style={{ fontSize: "0.71875rem", lineHeight: 1.4, color: "var(--graview-ink-muted)", maxWidth: 260 }}
         >
           {refused ?? why}
         </span>
@@ -2033,7 +2033,7 @@ export function OverviewButton() {
         height: 38,
         padding: "0 13px 0 11px",
         borderRadius: 999,
-        fontSize: 12.5,
+        fontSize: "0.78125rem",
         whiteSpace: "nowrap",
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-low)",
@@ -2116,7 +2116,7 @@ export function Backtrack() {
     display: "inline-grid",
     placeItems: "center",
     padding: "0 9px",
-    fontSize: 13,
+    fontSize: "0.8125rem",
     lineHeight: 1,
     borderRadius: 999,
   } as const;
@@ -2179,7 +2179,7 @@ export function Trail({
     // A crumb is a control, and a control is at least a fingertip tall.
     minHeight: 24,
     padding: "3px 9px",
-    fontSize: 13,
+    fontSize: "0.8125rem",
     borderRadius: 999,
     borderColor: "var(--graview-accent)",
     color: "var(--graview-accent)",
@@ -2322,7 +2322,7 @@ export function Trail({
   return (
     <nav
       aria-label="View"
-      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, minWidth: 0 }}
+      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.8125rem", minWidth: 0 }}
     >
       {crumb ? (
         <button

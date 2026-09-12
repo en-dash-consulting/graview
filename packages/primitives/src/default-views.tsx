@@ -178,7 +178,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 margin: "14px 0 0",
                 paddingTop: 12,
                 borderTop: "1px solid var(--graview-edge)",
-                fontSize: 13,
+                fontSize: "0.8125rem",
                 color: "var(--graview-warn)",
               }}
             >
@@ -473,7 +473,7 @@ export function registerDefaultViews<S extends AnySchema>(
             {props.label ?? plural}
           </span>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78125rem" }}>
             <span
               style={{
                 fontVariantNumeric: "tabular-nums",
@@ -512,7 +512,7 @@ export function registerDefaultViews<S extends AnySchema>(
             ) : null}
             {/* The selection's reach into this kind, said in place. */}
             {tied > 0 ? (
-              <span style={{ fontSize: 11.5, color: "var(--graview-accent)" }}>
+              <span style={{ fontSize: "0.71875rem", color: "var(--graview-accent)" }}>
                 {tied} tied
               </span>
             ) : null}
@@ -525,7 +525,7 @@ export function registerDefaultViews<S extends AnySchema>(
               <span
                 title={`${plural} has a view of its own`}
                 aria-label="has its own view"
-                style={{ fontSize: 9.5, color: "var(--graview-accent)" }}
+                style={{ fontSize: "0.59375rem", color: "var(--graview-accent)" }}
               >
                 ◆
               </span>
@@ -580,7 +580,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 );
               })}
               {members.length > 8 ? (
-                <span style={{ fontSize: 11, color: "var(--graview-ink-faint)", padding: "2px 4px" }}>
+                <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)", padding: "2px 4px" }}>
                   +{members.length - 8} more — double-click to go in
                 </span>
               ) : null}

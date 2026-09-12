@@ -125,7 +125,7 @@ export function QuickRelations<S extends AnySchema>() {
         <div key={row.kind} style={{ display: "grid", gap: 5 }}>
           <span
             style={{
-              fontSize: 10,
+              fontSize: "0.625rem",
               letterSpacing: "0.16em",
               textTransform: "uppercase",
               color: "var(--graview-ink-faint)",
@@ -153,7 +153,7 @@ export function QuickRelations<S extends AnySchema>() {
                   gap: 5,
                   minHeight: 24,
                   padding: "2px 9px",
-                  fontSize: 11.5,
+                  fontSize: "0.71875rem",
                   borderRadius: 999,
                   cursor: "pointer",
                   border: "1px solid var(--graview-edge)",

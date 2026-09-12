@@ -113,7 +113,7 @@ export function RelationKey<S extends AnySchema>() {
     >
       <span
         style={{
-          fontSize: 10,
+          fontSize: "0.625rem",
           letterSpacing: "0.16em",
           textTransform: "uppercase",
           color: "var(--graview-ink-faint)",
@@ -180,10 +180,10 @@ export function RelationKey<S extends AnySchema>() {
                 strokeLinecap="round"
               />
             </svg>
-            <span style={{ fontSize: 11.5, color: "var(--graview-ink)" }}>{edgeKind}</span>
+            <span style={{ fontSize: "0.71875rem", color: "var(--graview-ink)" }}>{edgeKind}</span>
             <span
               style={{
-                fontSize: 11,
+                fontSize: "0.6875rem",
                 color: "var(--graview-ink-faint)",
                 fontVariantNumeric: "tabular-nums",
               }}
