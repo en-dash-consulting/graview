@@ -2045,3 +2045,54 @@ The shapes, in the order of how much they cost:
   be a parameter some source file asks a `URLSearchParams` for. Verified
   failing against the old prose: `graview-new-app names "?renderer=" and
   nothing reads it`.
+
+### W-072 · One Escape closes the rail and drops the selection under it
+- stage: B · face: scene · width: 1280 and 390 · scheme: both
+- expected: "Escape backs out one level at a time in the documented order" —
+  with the activity rail open, the press closes the rail; the next press is
+  the ladder's
+- actual: one press did both. Open the rail on a selected record and press
+  Escape: the rail closes AND `sel=` leaves the address, in one stroke. The
+  chat panel and the problems list are the same. On the ground it is worse:
+  the rail closes and the focus backs out to home, so pressing Escape after
+  reading the activity of the record you are standing on takes you off the
+  record. Each popover has an Escape listener of its own on `document`, and
+  `BackOut`'s ladder listens on `window` and never asked whether anything was
+  open over the scene. Found because a stage-B probe pressed Escape to close
+  the rail and the next click of the altitude control descended from a place
+  it had not been.
+- where it belongs: `packages/primitives/src/workbench/index.tsx` (`BackOut`,
+  the rail and the problems list) and `packages/primitives/src/chat.tsx`
+- harness that should have caught it: `packages/primitives/tests/unit/back-out.test.tsx`
+  walks the ladder with nothing open over it; `scripts/verify-chat.mjs`
+  presses Escape on the panel and asked only whether the panel closed;
+  `scripts/verify-remember.mjs` presses Escape on the rail and never looked at
+  the address afterwards
+- status: fixed in "walkthrough: B · a popover is the outermost rung" · each
+  popover marks itself `data-graview-overlay` while open, and the ladder
+  leaves the press to it — asked in the CAPTURE phase, because the popover's
+  own listener runs first in the bubble and React commits its closing in the
+  microtask between listeners; a bubble listener on the window found the
+  popover already gone, which the first version of the fix learned in the
+  browser. Criteria added: back-out "leaves the press to the popover, and
+  takes the next one" (fails without the fix: `expected [] to deeply equal
+  ['kind:item']`), and `verify-chat`'s `escapeKeptTheSelection`, which is
+  where the capture-phase half is held — only a real browser dispatches in
+  that order.
+
+### W-073 · The strip says "double-click opens" on a district that is already open
+- stage: B · face: scene · width: any · scheme: both
+- expected: the onward gesture is said for the state the thing is in — and
+  stage B's own claim is that "the district closes on a second double-click"
+- actual: select an opened district and the strip's subtitle reads
+  "Items · double-click opens" over a card whose own control says "close ▴".
+  The hint was written once, for a record, and a district selected while
+  open got the same words.
+- where it belongs: `packages/primitives/src/workbench/index.tsx` (the
+  strip's header)
+- harness that should have caught it: `packages/primitives/tests/unit/edge-inspector.test.tsx`
+  renders the strip over a selected district and never over an opened one
+- status: fixed in "walkthrough: B · a popover is the outermost rung" · the
+  hint reads `view.expanded`: "· double-click closes" on an opened district.
+  Criterion added: edge-inspector "says the gesture closes a district that
+  is already open". Verified failing without the fix.

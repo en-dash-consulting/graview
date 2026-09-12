@@ -104,17 +104,38 @@ try {
   };
 
   /* -------------------------- opens, and every way out actually leads out */
+  /*
+   * ONE PRESS, ONE RUNG. With something selected underneath, Escape closes
+   * the panel and nothing else: the product-wide ladder used to take the
+   * same press and drop the selection with it. The ladder's own listener
+   * now asks in the capture phase whether a popover is open — the panel's
+   * document listener runs first in the bubble and React has committed its
+   * closing by the time a bubble listener on the window looks — and only a
+   * real browser dispatches in that order, so this is where it is held.
+   */
+  await page.click('[data-graview-pick="t-deposit"]');
+  await page.waitForTimeout(300);
+  const selectedBefore = await page.evaluate(() => location.hash.includes("sel="));
   await page.click('[data-testid="chat"]');
   const opened = (await page.$('[data-testid="chat-panel"]')) !== null;
   await page.keyboard.press("Escape");
   await page.waitForTimeout(150);
   const escaped = (await page.$('[data-testid="chat-panel"]')) === null;
+  const escapeKeptTheSelection = selectedBefore && (await page.evaluate(() => location.hash.includes("sel=")));
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
   await page.click('[data-testid="chat"]');
   await page.waitForSelector('[data-testid="chat-panel"]');
   await page.mouse.click(1450, 720); // empty ground, well away from the panel
   await page.waitForTimeout(150);
   const clickedAway = (await page.$('[data-testid="chat-panel"]')) === null;
-  report.checks.opensAndCloses = { opened, escaped, clickedAway, ok: opened && escaped && clickedAway };
+  report.checks.opensAndCloses = {
+    opened,
+    escaped,
+    escapeKeptTheSelection,
+    clickedAway,
+    ok: opened && escaped && escapeKeptTheSelection && clickedAway,
+  };
 
   // The click-away may have selected whatever it landed near; a clean
   // conversation starts unselected, so "what is here?" means the graph.

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T14:36:13.628Z",
+  "at": "2026-09-12T17:46:22.511Z",
   "engine": "chromium",
   "checks": {
     "closedByDefault": {
@@ -8,8 +8,9 @@
     "opensAndCloses": {
       "opened": true,
       "escaped": true,
+      "escapeKeptTheSelection": false,
       "clickedAway": true,
-      "ok": true
+      "ok": false
     },
     "headerSaysGraphNative": {
       "source": "graph-native",
@@ -49,5 +50,5 @@
     }
   },
   "pageErrors": [],
-  "passed": true
+  "passed": false
 }
