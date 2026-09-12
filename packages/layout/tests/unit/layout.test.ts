@@ -1192,3 +1192,56 @@ describe("a relation is captioned from the focus", () => {
     });
   });
 });
+
+/*
+ * WHAT A NODE JUDGES, and a CROWD in the band. A rule has no edges; its
+ * violations name what it is about, and those are its neighbourhood. And a
+ * band never squeezes a slot below a chip's width: past that it wraps.
+ */
+describe("the relation band", () => {
+  const crowd = () =>
+    Graph.from(schema, {
+      nodes: [
+        { id: "week-1", kind: "week", label: "This week" },
+        ...Array.from({ length: 12 }, (_, i) => ({ id: `person-${i}`, kind: "person", label: `Person ${i}` })),
+      ],
+      edges: [],
+    });
+
+  it("wraps a crowd into rows rather than squeezing every slot under a chip", () => {
+    const result = layout(crowd(), schema, view({ focusId: "week-1", relation: "person" }), { width: 1200, height: 800 });
+    const band = result.nodes.filter((node) => node.plane === 1);
+    expect(band).toHaveLength(12);
+    for (const slot of band) expect(slot.width).toBeGreaterThanOrEqual(150);
+    expect(new Set(band.map((slot) => Math.round(slot.y))).size).toBeGreaterThan(1);
+    for (const a of band) for (const b of band) {
+      if (a === b) continue;
+      const overlap = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+      expect(overlap, `${a.id} over ${b.id}`).toBe(0);
+    }
+  });
+
+  it("raises what the focus judges as its neighbourhood, captioned, and a named kind filters it", () => {
+    const g = Graph.from(schema, {
+      nodes: [
+        { id: "rule-1", kind: "week", label: "A rule" },
+        { id: "ana", kind: "person", label: "Ana" },
+        { id: "bo", kind: "person", label: "Bo" },
+        { id: "cass", kind: "person", label: "Cass" },
+        { id: "morning", kind: "duty", label: "Morning run" },
+      ],
+      edges: [],
+    });
+    const judged = { "rule-1": ["ana", "morning", "rule-1"] };
+    const all = layout(g, schema, view({ focusId: "rule-1" }), { judged });
+    const band = all.nodes.filter((node) => node.plane === 1);
+    expect(band.map((node) => node.id).sort()).toEqual(["ana", "morning"]);
+    expect(band[0]?.via).toMatchObject({ edgeKind: "judges", description: "what it finds wrong" });
+    // A named kind filters what it judges: Ana, not every person.
+    const people = layout(g, schema, view({ focusId: "rule-1", relation: "person" }), { judged });
+    expect(people.nodes.filter((node) => node.plane === 1).map((node) => node.id)).toEqual(["ana"]);
+    // Nothing judged and no edge of that kind: the kind is still raised wholesale.
+    const wholesale = layout(g, schema, view({ focusId: "rule-1", relation: "person" }));
+    expect(wholesale.nodes.filter((node) => node.plane === 1).map((node) => node.id).sort()).toEqual(["ana", "bo", "cass"]);
+  });
+});

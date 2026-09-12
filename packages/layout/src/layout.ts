@@ -457,7 +457,7 @@ export function layout<S extends AnySchema>(
   // relation plane up here.
   const related = state.overview
     ? []
-    : relatedNodes(graph, schema, focus, state.relation)
+    : relatedNodes(graph, schema, focus, state.relation, opts.judged)
         .filter((entry) => visible(entry.node))
         .filter((entry) => current(entry.node));
 
@@ -601,18 +601,29 @@ export function layout<S extends AnySchema>(
    * the middle distance of an otherwise empty band, with its caption
    * stretched past both its edges.
    */
+  /*
+   * A CROWD WRAPS. Twelve neighbours in one row gave each a slot 57 pixels
+   * wide under a chip 150 wide, and the band was a heap of overlapping
+   * labels with the lines between them cut to confetti. A slot is never
+   * narrower than a chip can be read in; past that the band takes another
+   * row, each row sharing the band's height.
+   */
+  const minRelationW = Math.round(opts.relationSize.width * 0.75);
+  const perRow = Math.max(1, Math.floor((spanW - opts.gap) / (minRelationW + opts.gap)));
+  const relationRows = Math.max(1, Math.ceil(related.length / perRow));
+  const rowH = relationRows === 1 ? band.relationH : (band.relationH - opts.gap * (relationRows - 1)) / relationRows;
   const relationSize = fit(
-    related.length,
+    Math.min(related.length, perRow),
     related.length <= 2 ? Math.round(opts.relationSize.width * 1.35) : opts.relationSize.width,
-    band.relationH,
+    rowH,
   );
-  const relationPositions = row(
-    related.length,
-    relationSize,
-    opts.gap,
-    spanW,
-    band.relationY,
-  ).map((position) => ({ ...position, x: position.x + railLeft }));
+  const relationPositions: { x: number; y: number }[] = [];
+  for (let r = 0; r < relationRows; r++) {
+    const inRow = Math.min(perRow, related.length - r * perRow);
+    for (const position of row(inRow, relationSize, opts.gap, spanW, band.relationY + r * (rowH + opts.gap))) {
+      relationPositions.push({ ...position, x: position.x + railLeft });
+    }
+  }
   related.forEach((entry, index) => {
     const position = relationPositions[index]!;
     push({
@@ -1106,6 +1117,7 @@ function relatedNodes<S extends AnySchema>(
   schema: S,
   focus: NodeOfSchema<S> | undefined,
   relation: string | null,
+  judged: Readonly<Record<string, readonly string[]>> = {},
 ): Related<NodeOfSchema<S>>[] {
   if (focus) {
     const found = new Map<string, Related<NodeOfSchema<S>>>();
@@ -1145,6 +1157,26 @@ function relatedNodes<S extends AnySchema>(
           byStableKey(a.node, b.node),
       );
     }
+  }
+
+  /*
+   * WHAT THE FOCUS JUDGES. A rule has no edges; what it is about is what
+   * its violations name. Those are its neighbourhood, captioned as such,
+   * and a relation naming a kind filters them the way it filters edges.
+   */
+  if (focus) {
+    const named = judged[focus.id] ?? [];
+    const seen = new Set<string>();
+    const found: Related<NodeOfSchema<S>>[] = [];
+    for (const id of named) {
+      if (id === focus.id || seen.has(id)) continue;
+      const node = graph.getNode(id);
+      if (!node) continue;
+      if (relation && relation !== "judges" && node.kind !== relation) continue;
+      seen.add(id);
+      found.push({ node, via: { edgeKind: "judges", direction: "out", description: "what it finds wrong" } });
+    }
+    if (found.length > 0) return found.sort((a, b) => byStableKey(a.node, b.node));
   }
 
   if (!relation) return [];

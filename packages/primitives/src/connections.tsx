@@ -35,7 +35,10 @@ export function Connections({ id, max = 8, empty }: ConnectionsProps) {
   const { store } = useGraview<AnySchema>();
   // Subscribing to the graph keeps this current when an edge is added.
   useGraph();
-  const groups = groupsFor(store, id);
+  // What it JUDGES counts as a connection: a rule's violations name the
+  // nodes it is about, and a card saying "nothing is connected" over a band
+  // of them was two surfaces disagreeing.
+  const groups = groupsFor(store, id, store.violations());
 
   if (groups.length === 0) {
     return empty ? (
@@ -108,10 +111,17 @@ export function Connections({ id, max = 8, empty }: ConnectionsProps) {
 function groupsFor(
   store: { graph: GraphReader<AnyGraphNode>; schema: AnySchema },
   id: string,
+  violations: readonly { readonly subjectId?: string; readonly nodeIds: readonly string[] }[] = [],
 ): Group[] {
   const focus = store.graph.getNode(id);
   if (!focus) return [];
   const byKey = new Map<string, Group>();
+  const judged: string[] = [];
+  for (const violation of violations) {
+    if (violation.subjectId !== id) continue;
+    for (const other of violation.nodeIds) if (other !== id && !judged.includes(other) && store.graph.has(other)) judged.push(other);
+  }
+  if (judged.length > 0) byKey.set("judges", { key: "judges", label: "what it finds wrong", ids: judged });
 
   for (const edge of store.graph.allEdges()) {
     const otherId = edge.from === id ? edge.to : edge.to === id ? edge.from : null;

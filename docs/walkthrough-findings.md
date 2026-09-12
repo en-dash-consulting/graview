@@ -2473,3 +2473,30 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
   `the-seat-under-a-policy.test.tsx` "says \"you\" only for the person at
   the keyboard, and names the other seat", and `whose-work.test.tsx` on the
   routed face's home for both seats. Verified failing without the fix.
+
+### W-086 · A rule's neighbourhood is every task, twelve to a row, while its card says nothing is connected
+- stage: B/C · face: scene · width: 1280 · scheme: light · found by Nick in the todo app at `#focus=rule-order&relation=task&zoom=1`
+- expected: focusing a rule and raising Tasks shows the tasks the rule finds
+  wrong, captioned as such, with the card's connections agreeing; a band of
+  many neighbours stays readable
+- actual: a rule has no edges, so a named relation fell through to "raise
+  the kind wholesale": all twelve tasks in one row, each in a slot 57 pixels
+  wide under a chip 150 wide — overlapping labels, and the depends-on lines
+  between them clipped by the mismatched hosts into dashed confetti. The
+  card below said "Nothing is connected to this rule yet."
+- where it belongs: `packages/layout/src/layout.ts` (the relation band and
+  `relatedNodes`), `packages/react/src/scene.tsx` (what the layout is told),
+  `packages/primitives/src/connections.tsx`
+- harness that should have caught it: `audit-ui` measures same-plane card
+  collisions, but no todo state ever focused a rule or raised a crowd; every
+  raised state had three chips or fewer
+- status: fixed in "a rule's neighbourhood is what it finds wrong, and a crowd wraps" ·
+  the layout takes `judged` (subject → the ids its violations name, supplied
+  by the scene from `store.violations()`) and draws them as the focus's
+  neighbourhood captioned "what it finds wrong", filtered by a named kind
+  like an edge would be; the band never gives a slot less than three
+  quarters of a relation card's width and wraps into rows past that; the
+  connections panel lists what a node finds wrong as a group. Criteria:
+  layout "the relation band" ×2, primitives `what-it-finds-wrong`, audit-ui
+  todo states `judged` and `crowd` (collisions at the same stop before: 12
+  slots of 57px under 150px chips).

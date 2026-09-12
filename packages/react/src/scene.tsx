@@ -43,7 +43,7 @@ import {
 } from "react";
 import { useActivity, type ActivityMark, type Manner } from "./activity.js";
 import { useAnimatedLayout, useTouched } from "./animation.js";
-import { useFlagged, useImplicated } from "./hooks.js";
+import { useFlagged, useImplicated, useViolations } from "./hooks.js";
 import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
 import { isDefaultView } from "./view-registry.js";
 import { pickedFrom, usePickTargets } from "./picking.js";
@@ -192,6 +192,17 @@ export function Scene<S extends AnySchema>({
   // `nodes` is a cached snapshot that only changes when the graph does, so
   // the layout is recomputed exactly when the picture could have changed.
   const nodes = useGraph<S>();
+  // What each subject's violations name, so a rule's neighbourhood is what it judges.
+  const violations = useViolations<S>();
+  const judged = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const violation of violations) {
+      if (violation.subjectId === undefined) continue;
+      const list = (map[violation.subjectId] ??= []);
+      for (const id of violation.nodeIds) if (id !== violation.subjectId && !list.includes(id)) list.push(id);
+    }
+    return map;
+  }, [violations]);
   // The scene is laid out to the space it actually has. A fixed canvas leaves
   // dead ground on a wide screen and clips on a narrow one, and the plane
   // bands are proportions rather than pixels, so they follow.
@@ -202,6 +213,7 @@ export function Scene<S extends AnySchema>({
       // modules, and the administered ones this seat may not see or has not
       // asked to — one set, from the provider, so every surface agrees.
       ...(hiddenKinds.size > 0 ? { hiddenKinds: [...hiddenKinds].sort() } : {}),
+      ...(Object.keys(judged).length > 0 ? { judged } : {}),
       /*
        * THE LEFT RAIL. The relation key, the quick relations and the
        * inspector live on the scene's left edge in every mode, and the
@@ -236,7 +248,7 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size, store, views, hiddenKinds],
+    [options, size, store, views, hiddenKinds, judged],
   );
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, sized),
@@ -436,9 +448,10 @@ export function Scene<S extends AnySchema>({
    * ten titles wrapping to five lines in 130-pixel slivers. Below the
    * legibility floor a card renders the kind's GLYPH instead, which is
    * what the fidelity axis is for: legible at any width, still selectable,
-   * still the node.
+   * still the node. A band that WRAPPED into rows is a crowd by height: a
+   * summary card in a 46-pixel row showed its title cut at the second line.
    */
-  const crowded = (node: SceneNode) => Math.round(node.plane) === 1 && node.width < 175;
+  const crowded = (node: SceneNode) => Math.round(node.plane) === 1 && (node.width < 175 || node.height < 64);
 
   /*
    * Whether this card stands for a kind the app gave a picture of its own —
