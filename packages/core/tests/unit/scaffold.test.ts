@@ -78,6 +78,21 @@ describe("what a project starts with", () => {
    * left the new relation out and offered no way to make one. Following the
    * next skill in the set must not break the page the last one wrote.
    */
+  /*
+   * AND SAYS WHAT THIS SEAT MAY NOT DO. An act the policy refuses is not in
+   * `affordances`; it is in `withheld`, with the policy's own sentence on
+   * it. The page drew the first list and dropped the second, so declaring a
+   * policy — `graview-permissions`, the next skill in the set — made whole
+   * sections of this page vanish for a narrower seat with nothing said. The
+   * derived record page beside it has always struck them through.
+   */
+  it("says what a seat may not do rather than dropping it", () => {
+    const pages = file("Field Notes", "src/ui/pages.tsx");
+    expect(pages).toContain("facts.actions.withheld");
+    expect(pages).toContain("<s>{withheld.label}</s>");
+    expect(pages).toContain("withheld.refusal.message");
+  });
+
   it("reads its ties and its acts from the declaration, naming neither by hand", () => {
     const pages = file("Field Notes", "src/ui/pages.tsx");
     expect(pages).toContain("facts.links");

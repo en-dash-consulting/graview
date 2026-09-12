@@ -1696,3 +1696,34 @@ The shapes that came up again, and the new ones:
   under a design that replaces one kind and leaves the other, the derived
   face with no shell, an embedded face, and `PageMain` itself. Verified
   failing without the fix: `/: expected 2 to be 1`.
+
+### W-062 · The page the scaffolder writes hides what a seat may not do
+- stage: F · face: pages · width: any · scheme: both
+- expected: `graview-permissions`' second inviolable — "An action you may not
+  take should SAY SO rather than vanish. Hiding it teaches people the
+  software is broken: they watched a colleague do this yesterday and now the
+  button is gone" — and `graview-pages` saying the same twice, for a page at
+  rung one ("draw the act struck through with `verdict.refusal.message`")
+  and for a design at rung two ("Withhold, do not hide")
+- actual: the record page the scaffolder writes reads
+  `facts.actions.affordances` and never `facts.actions.withheld`. Declare a
+  policy — the next skill in the set — and whole sections of that page
+  vanish for the narrower seat with nothing said: as the keeper it carried
+  "Depends on" with its form; as the helper the heading, the form and the
+  reason were all simply absent. The DERIVED record page beside it has always
+  struck them through with the policy's sentence, so the framework got this
+  right on the page it renders and wrong on the page it writes for you —
+  which is the one every project starts from.
+- where it belongs: `packages/core/src/scaffold/index.ts` (`pagesTsx`)
+- harness that should have caught it: nothing scaffolds a project WITH a
+  policy. `smoke:create` walks a scaffolded app end to end and its projects
+  have no policy at all, so every act in them is permitted and the withheld
+  branch has never existed to be looked at.
+- status: fixed in "walkthrough: F · a page that says what it will not do" ·
+  the generated page renders `facts.actions.withheld` struck through with
+  `withheld.refusal.message`, in the same shape the derived page uses.
+  Criterion added to `packages/core/tests/unit/scaffold.test.ts`: "says what
+  a seat may not do rather than dropping it". Verified failing without the
+  fix. Seen in the walked app: as the helper the page now reads "~~Close
+  it~~ — Not permitted: close-item on an item — keeper can." where before it
+  showed nothing at all.

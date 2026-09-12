@@ -1109,6 +1109,23 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           ))}
         </section>
       ) : null}
+      {/*
+        * WITHHELD, NOT HIDDEN. The affordances above are what this seat may
+        * do; an act the policy refuses is in withheld, carrying the policy's
+        * own sentence. Dropping it teaches a person the software is broken —
+        * they watched a colleague do this yesterday and now the control is
+        * gone — so it is drawn struck through with the reason beside it, the
+        * way the derived pages and the scene's strip both draw it.
+        */}
+      {facts.actions.withheld.length > 0 ? (
+        <section style={{ ...pageStyles.rule, display: "grid", gap: 8 }} data-testid="record-withheld">
+          {facts.actions.withheld.map((withheld) => (
+            <p key={withheld.id} style={{ margin: 0, ...pageStyles.quiet }}>
+              <s>{withheld.label}</s> — {withheld.refusal.message}
+            </p>
+          ))}
+        </section>
+      ) : null}
       {connecting.length > 0 ? (
         <section style={{ ...pageStyles.rule, display: "grid", gap: 14 }} data-testid="record-actions">
           {connecting.map((affordance) => {
