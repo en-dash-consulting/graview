@@ -163,6 +163,30 @@ export class Store<S extends AnySchema> {
         validate: options.validate ?? true,
       });
     }
+
+    /*
+     * A HYDRATED STORE COUNTS ON FROM WHERE THE LOG LEFT OFF.
+     *
+     * Both counters started at zero whatever history was handed in, so the
+     * first change after a reload was minted `op1` in `batch:1` — ids the
+     * log already held. `batches()` groups by batch id, so the new work was
+     * filed under the FIRST turn ever taken: the activity rail went on
+     * saying "Add a person" and never grew, undoing that turn would have
+     * taken the new change with it, and `log.get(id)` answered with the
+     * older op of the two. Every app that remembers anything did this on
+     * its second visit.
+     *
+     * Only the DEFAULT generators are wound forward; an app that supplies
+     * its own `ids` owns their uniqueness.
+     */
+    const trailing = (value: string): number => {
+      const digits = /(\d+)$/.exec(value);
+      return digits ? Number(digits[1]) : 0;
+    };
+    for (const op of this.log.all()) {
+      this.counter = Math.max(this.counter, trailing(op.batch));
+      n = Math.max(n, trailing(op.id));
+    }
   }
 
   mutation(name: string): AnyMutationDefinition<S> {

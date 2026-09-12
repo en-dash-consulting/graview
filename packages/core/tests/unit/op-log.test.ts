@@ -196,6 +196,60 @@ describe("operation log", () => {
   });
 });
 
+/**
+ * A HYDRATED STORE COUNTS ON FROM WHERE THE LOG LEFT OFF.
+ *
+ * Both id counters started at zero whatever history was handed in, so the
+ * first change after a reload was minted `op1` in `batch:1` — ids the log
+ * already held. `batches()` groups by batch id, so new work was filed under
+ * the FIRST turn ever taken: the activity rail went on naming that turn and
+ * never grew, undoing it would have taken the new change with it, and
+ * `log.get(id)` answered with the older of the two ops. Every app that
+ * remembers anything did this on its second visit.
+ */
+describe("a store hydrated from a log", () => {
+  const reloaded = () => {
+    const first = store();
+    first.apply({ name: "add-person", args: { label: "Cal" } });
+    first.apply({ name: "retime", args: { dutyId: "d1", at: 500 } });
+    return new Store({
+      schema,
+      mutations: [reassign, retime, mirror, rename, addDuty, addPerson],
+      log: [...first.log.all()],
+      snapshot: first.graph.snapshot(),
+    });
+  };
+
+  it("puts new work in a turn of its own, not into the first one ever taken", () => {
+    const after = reloaded();
+    expect(after.batches().length).toBe(2);
+    after.apply({ name: "rename", args: { id: "d1", label: "Early" } });
+    expect(after.batches().length).toBe(3);
+    expect(after.batches()[2]?.intent).toBe("Rename d1");
+    // And the turns it hydrated with keep their own contents.
+    expect(after.batches()[0]?.ops.length).toBe(1);
+  });
+
+  it("mints op ids the log does not already hold", () => {
+    const after = reloaded();
+    after.apply({ name: "rename", args: { id: "d1", label: "Early" } });
+    const ids = after.log.all().map((op) => op.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const batches = after.log.all().map((op) => op.batch);
+    expect(new Set(batches).size).toBe(3);
+  });
+
+  it("keeps undo honest across the reload", () => {
+    const after = reloaded();
+    after.apply({ name: "rename", args: { id: "d1", label: "Early" } });
+    const renamed = after.batches()[2]!;
+    after.undo(renamed.id);
+    expect((after.graph.getNode("d1") as { label: string }).label).toBe("Morning");
+    // The turn it was filed beside is untouched.
+    expect((after.graph.getNode("d1") as { at: number }).at).toBe(500);
+  });
+});
+
 describe("selective undo", () => {
   it("drops the agent's turn and keeps the human edits under it", () => {
     const s = store();

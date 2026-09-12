@@ -111,6 +111,7 @@ try {
     await page.keyboard.press("Escape");
   }
 
+
   // Edit again, so there is something to forget; then start fresh through
   // the control, and check the flag did not stick to the address.
   await rename(page, "Pay the deposit, again");
@@ -147,6 +148,32 @@ try {
   await ready(page);
   report.steps.driven = { deposit: await labelOf(page, "t-deposit"), ...(await activity(page)) };
   await context.close();
+
+  /* ----------------------- a second visit, and what it does on arriving */
+  /*
+   * A CHANGE MADE AFTER A RELOAD IS A TURN OF ITS OWN.
+   *
+   * A hydrated store started both id counters at zero, so the first change
+   * of the second visit was minted `op1` in `batch:1` — ids the log already
+   * held. `batches()` groups by batch id, so the new work was filed under
+   * the FIRST turn ever taken: the rail went on naming that turn and never
+   * grew, and undoing it would have taken the new change with it. Every
+   * check above passes anyway, because every one of them asks about a
+   * change made BEFORE the reload — so this is a visit of its own.
+   */
+  const second = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+  const visitor = await second.newPage();
+  await visitor.goto(`${BASE}&remember=1`, { waitUntil: "load" });
+  await ready(visitor);
+  await rename(visitor, "Pay the deposit, on the first visit");
+  const firstVisit = await activity(visitor);
+  await visitor.keyboard.press("Escape");
+  // Away, and back: the same browser, the same address.
+  await visitor.goto(`${BASE}&remember=1`, { waitUntil: "load" });
+  await ready(visitor);
+  await rename(visitor, "Pay the deposit, on the second");
+  report.steps.secondVisit = { before: firstVisit.log, ...(await activity(visitor)) };
+  await second.close();
 
   /* --------------------------------------- and a browser that never saw any of it */
   const other = await browser.newContext({ viewport: { width: 1560, height: 940 } });
@@ -185,6 +212,10 @@ report.verdict = {
     (line) => line.startsWith("you") && line.includes("remembered"),
   ),
   theEditIsStillUndoable: s.reloaded?.undo === true && isSeed(s.undone),
+  aChangeOnTheSecondVisitIsATurnOfItsOwn:
+    (s.secondVisit?.log ?? []).length === (s.secondVisit?.before ?? []).length + 1 &&
+    (s.secondVisit?.log ?? [])[0]?.includes("on the second") === true &&
+    (s.secondVisit?.log ?? [])[1]?.includes("on the first visit") === true,
   theBrowserSaysItRemembers:
     (s.reloaded?.remembered ?? "").includes("Remembered") && s.reloaded?.startFresh === true,
   startFreshReturnsToTheExample: isSeed(s.fresh) && (s.fresh?.log ?? []).length === 0,

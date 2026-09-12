@@ -1593,3 +1593,41 @@ The shapes that came up again, and the new ones:
   registered as" — every call row must begin with a capital and carry no
   hyphen or underscore. Verified failing without the fix: `reschedule |
   get_violations`.
+
+### W-059 · Everything done on the second visit is filed under the first turn ever taken
+- stage: C · face: both · width: any · scheme: both
+- expected: "repairing from the scene, from the pages and from the agent's
+  seat each leave one op in the log with the right author; undo takes it
+  back". Reached by the ordinary path: repair, then reload, then act again.
+- actual: a `Store` hydrated from a log starts BOTH its id counters at zero
+  — `private counter = 0` for batches, `let n = 0` for ops — whatever
+  history it was handed. So the first change after a reload is minted `op1`
+  in `batch:1`, ids the log already holds, and `batches()` groups by batch
+  id: the new work joins the FIRST turn the app ever took. In the walked
+  app: seed two records, reload, close one — the activity rail still said
+  "2 Activity" and listed the two original turns, with the third change
+  invisible and `undo +1` appearing on rows that had needed no such thing.
+  Measured at the core: a store hydrated from a two-batch log reports two
+  batches after a third change, and `log.get(id)` answers with the older of
+  two ops sharing an id. In the framework's own todo app, a rename on the
+  second visit is listed under `Rename to "Pay the deposit, on the first
+  visit"` with the new name beside it. Undoing that turn would have taken
+  the newer change with it.
+- where it belongs: `packages/core/src/store.ts` (the constructor)
+- harness that should have caught it: `scripts/verify-remember.mjs` is
+  entirely about this — it reloads, reads the rail, and undoes from it — but
+  every one of its thirteen claims is about a change made BEFORE the reload.
+  Nothing ever made a change after one.
+- status: fixed in "walkthrough: C · a store that counts on from its own
+  log" · a hydrated store winds both default generators past the highest
+  number the log already uses, so the next turn is a new one. Only the
+  DEFAULT generators move; an app that supplies its own `ids` owns their
+  uniqueness. Criteria added: three ladders in
+  `packages/core/tests/unit/op-log.test.ts` ("a store hydrated from a log" —
+  new work in a turn of its own, unique op and batch ids, and an undo that
+  takes back only what it names), and `verify-remember`'s
+  `aChangeOnTheSecondVisitIsATurnOfItsOwn`, which visits twice in one
+  browser and reads the rail. Verified failing without the fix: all three
+  unit ladders, and the browser criterion reports one row where there
+  should be two, still titled `Rename to "Pay the deposit, on the first
+  visit"` with "on the second" beside it.
