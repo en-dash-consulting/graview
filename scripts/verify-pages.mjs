@@ -101,6 +101,44 @@ try {
     spatialLink: document.querySelector('[data-testid="spatial-link"]') !== null,
   }));
 
+  /* ------------------- the reader's own text size, on the narrow screen */
+  /*
+   * 200% TEXT AT PHONE WIDTH, WHICH IS WHAT WCAG 1.4.4 AND 1.4.10 ACTUALLY
+   * ASK. W-050 made every size in the framework relative and pinned it with
+   * a test that reads the SOURCE for absolute pixels; nothing ever rendered
+   * anything at a bigger root and looked. A rem-based grid minimum is the
+   * shape that gets through that test and still pushes the document
+   * sideways — `minmax(12rem, 1fr)` is 384px once a reader asks for 32, and
+   * a column that cannot shrink is a page that scrolls two ways.
+   */
+  for (const path of ["/pages", "/pages/tasks", "/pages/tasks/t-deposit", "/pages/problems"]) {
+    await phone.goto(`http://localhost:5193${path}?today=2026-09-01`, { waitUntil: "networkidle" });
+    await phone.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
+    await phone.waitForTimeout(400);
+    const reflow = await phone.evaluate(() => ({
+      root: getComputedStyle(document.documentElement).fontSize,
+      // The text really is bigger — a pass at the default size proves nothing.
+      body: getComputedStyle(document.body).fontSize,
+      scrollWidth: document.documentElement.scrollWidth,
+      width: window.innerWidth,
+      widest: [...document.querySelectorAll("*")]
+        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1)
+        .slice(0, 3)
+        .map((el) => `${el.tagName.toLowerCase()}.${String(el.className || "").split(" ")[0]}`),
+    }));
+    report.checks.readersOwnTextSize = {
+      ...(report.checks.readersOwnTextSize ?? {}),
+      [path]: {
+        ...reflow,
+        ok:
+          reflow.scrollWidth <= reflow.width + 1 &&
+          parseFloat(reflow.body) > 20 &&
+          reflow.widest.length === 0,
+      },
+    };
+  }
+  await phone.evaluate(() => { document.documentElement.style.fontSize = ""; });
+
   /* ------------------------------------- a derived form actually applies */
   await phone.goto("http://localhost:5193/pages/tasks?today=2026-09-01", { waitUntil: "networkidle" });
   await phone.waitForTimeout(500);

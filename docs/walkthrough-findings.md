@@ -1877,3 +1877,34 @@ The shapes that came up again, and the new ones:
   failing in WebKit before the fix — and `pnpm engines` added to the
   playbook's end-of-stage list, because a criterion nothing runs in the
   engine it is about is a criterion that cannot fail.
+
+### W-068 · Nothing ever rendered a page at the reader's own text size
+- stage: I · face: pages · width: 390 · scheme: both
+- expected: "text zoom to 200% — the root font size, not page zoom, which is
+  a scale factor and proves nothing about reflow", and no sideways scroll at
+  a phone's width
+- actual: the walked app's own record page scrolls two ways at 390 with a
+  32px root — 459 CSS pixels wide in a 390 viewport — because a grid's
+  column minimum is written in rem: `minmax(12rem, 1fr)` is 384 pixels once
+  a reader asks for 32, and a column that cannot shrink takes the document
+  with it. That is the app's own CSS, not the framework's, and the point is
+  what did not notice: W-050 made every size in the framework relative and
+  pinned it with a test that reads the SOURCE for absolute pixels. A rem
+  column minimum passes that test and breaks reflow, which is the failure
+  the rem conversion was supposed to prevent. **Nothing anywhere rendered
+  anything at a bigger root font and looked at it.** The framework's own
+  pages survive only because their column minimum happens to be in px.
+- where it belongs: `scripts/verify-pages.mjs` (the criterion that was
+  missing) — and, in the app under test,
+  `walk3/src/ui/design.tsx`
+- harness that should have caught it: none. `verify-pages` already measures
+  `noSideScroll` at phone width, at the default text size, where every
+  rem-based mistake is invisible.
+- status: fixed in "walkthrough: I · the reader's own text size, rendered" ·
+  `verify-pages` gains `readersOwnTextSize`: four routes at phone width with
+  the root font at 32px, asserting the document does not scroll sideways,
+  that nothing sticks out past the viewport, AND that the body text really
+  did grow — a pass at the default size proves nothing. The app's column
+  minimum is capped at the screen (`minmax(min(12rem, 100%), 1fr)`).
+  Verified failing by giving the framework's own record page the same rem
+  minimum: `scrollWidth: 404, width: 390, widest: [header, p, h1]`.

@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-12T13:49:47.948Z",
-  "engine": "firefox",
+  "at": "2026-09-12T14:02:33.254Z",
+  "engine": "chromium",
   "checks": {
     "phoneHome": {
       "noSideScroll": true,
@@ -31,9 +31,47 @@
       "actions": true,
       "spatialLink": true
     },
+    "readersOwnTextSize": {
+      "/pages": {
+        "root": "32px",
+        "body": "28px",
+        "scrollWidth": 390,
+        "width": 390,
+        "widest": [],
+        "ok": true
+      },
+      "/pages/tasks": {
+        "root": "32px",
+        "body": "28px",
+        "scrollWidth": 390,
+        "width": 390,
+        "widest": [],
+        "ok": true
+      },
+      "/pages/tasks/t-deposit": {
+        "root": "32px",
+        "body": "28px",
+        "scrollWidth": 404,
+        "width": 390,
+        "widest": [
+          "header.",
+          "p.",
+          "h1."
+        ],
+        "ok": false
+      },
+      "/pages/problems": {
+        "root": "32px",
+        "body": "28px",
+        "scrollWidth": 390,
+        "width": 390,
+        "widest": [],
+        "ok": true
+      }
+    },
     "derivedFormApplies": true,
     "sceneOffersThePages": true,
     "recordLinksItsStop": true
   },
-  "passed": true
+  "passed": false
 }
