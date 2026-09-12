@@ -96,11 +96,19 @@ export interface ReactViewRegistry<S extends AnySchema>
    * Registering a view for a kind the schema never declared is a TYPECHECK
    * failure — `K` is constrained to the schema's kinds, so the mistake
    * surfaces at build time rather than at render.
+   *
+   * A view written over the whole schema — every lens is, and it is what
+   * `graview-lens` tells an app to write — registers on any one kind
+   * without a cast. React's `FunctionComponent<P>` is covariant in `P`
+   * (its `propTypes`), so a `ViewComponent<S>` was not assignable to
+   * `ViewComponent<S, "plot">` and every lens in the framework's own apps
+   * carried `as ViewComponent<S>` to get past it; a project following the
+   * skill verbatim did not typecheck.
    */
   register<K extends KindOfSchema<S>>(
     kind: K,
     cell: ViewCell,
-    view: ViewComponent<S, K>,
+    view: ViewComponent<S, K> | ViewComponent<S>,
     meta?: ViewMeta,
   ): ReactViewRegistry<S>;
 }

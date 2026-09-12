@@ -72,14 +72,14 @@ export function seedbedViews(
    * when the generic view is genuinely wrong there, not on principle.
    */
   if (kinds.includes("plot")) {
-    registry = registry.register("plot", { cardinality: "one", fidelity: "summary" }, PlotView as ViewComponent<S>);
+    registry = registry.register("plot", { cardinality: "one", fidelity: "summary" }, PlotView);
   }
   if (options.board && kinds.includes("plot") && kinds.includes("planting")) {
     // Titled, so the lens is a PLACE: listed by name in the bar, pressable
     // from anywhere, and findable again after you have clicked into a plot.
     registry = registry
-      .register("plot", { cardinality: "many", fidelity: "full" }, beds.View as ViewComponent<S>, { title: "What grows where" })
-      .register("plot", { cardinality: "many", fidelity: "summary" }, beds.View as ViewComponent<S>, { title: "What grows where" });
+      .register("plot", { cardinality: "many", fidelity: "full" }, beds.View, { title: "What grows where" })
+      .register("plot", { cardinality: "many", fidelity: "summary" }, beds.View, { title: "What grows where" });
   }
   if (options.map && kinds.includes("plot")) {
     // The garden's own lens over its plots, in place of the board: the same
@@ -106,8 +106,8 @@ export function seedbedViews(
   if (options.lens && kinds.includes("gardener")) {
     // The lens, for a group of gardeners. The lens supplies the picture.
     registry = registry
-      .register("gardener", { cardinality: "many", fidelity: "full" }, tending.View as ViewComponent<S>, { title: "Who tends what" })
-      .register("gardener", { cardinality: "many", fidelity: "summary" }, tending.View as ViewComponent<S>, { title: "Who tends what" });
+      .register("gardener", { cardinality: "many", fidelity: "full" }, tending.View, { title: "Who tends what" })
+      .register("gardener", { cardinality: "many", fidelity: "summary" }, tending.View, { title: "Who tends what" });
   }
   return registry;
 }
