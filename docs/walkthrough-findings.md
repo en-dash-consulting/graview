@@ -2259,3 +2259,30 @@ The shapes, in the order of how much they cost:
   it AND to pass the checker without `act-without-far-end-reading`, and
   the written file is asserted to contain it. Verified failing without the
   fix (three tests).
+
+### W-080 · A lens written the way the skill says does not register without a cast
+- stage: D · face: neither — the types
+- expected: `graview-lens` step 7 — `registry.register("gardener", {
+  cardinality: "many", fidelity: "full" }, TendingView, { title: "Who tends
+  what" })` — typechecks in a project that wrote `TendingView:
+  ViewComponent<S>`
+- actual: `Argument of type 'FunctionComponent<ViewProps<S, "item" |
+  "person">>' is not assignable to parameter of type 'ViewComponent<S,
+  "person">'`. `register<K>` asked for `ViewComponent<S, K>`, and React's
+  `FunctionComponent<P>` is covariant in `P` (its `propTypes`), so a view
+  over the whole schema — which is what every lens is — was refused on any
+  one kind. The framework's own apps knew: fourteen `as ViewComponent<S>`
+  casts, on every lens registration in seedbed and todo, including the
+  worked example the skill points readers at. Same class as W-021 and
+  W-048: a project that cannot follow its own skill.
+- where it belongs: `packages/react/src/view-registry.ts`
+- harness that should have caught it: the framework's own `pnpm typecheck`,
+  which the casts kept green
+- status: fixed in "walkthrough: D · a lens registers without a cast" ·
+  `register` takes `ViewComponent<S, K> | ViewComponent<S>`; a kind the
+  schema never declared is still a typecheck failure. The nine casts on
+  the worked examples' lenses are gone, so `pnpm typecheck` is the
+  criterion — verified failing without the widening at every uncast site
+  (`apps/seedbed/src/ui/views.tsx(81,68)` and on). The four casts that
+  remain are real: a lens over the studio's meta-schema and one over
+  `AnySchema`.
