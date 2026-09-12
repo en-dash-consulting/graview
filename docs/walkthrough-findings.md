@@ -1538,3 +1538,34 @@ The shapes that came up again, and the new ones:
   never by the argument" — the act pressed from the far end, where the open
   argument is `id` and the kinds are `item`. Verified failing without the
   fix: `expected 'Id' to be 'Item'`.
+
+### W-057 · The seat promises repairs and offers none
+- stage: C · face: scene · width: any · scheme: both
+- expected: the repair is "an ask when it needs one thing, and never a
+  refusal on press" — on every surface, the seat included
+- actual: asked "what's wrong?", the seat answered `1 problem: Pay the
+  deposit is open and nobody is seeing to it. The repairs below come from
+  the rules themselves.` — with nothing below it. The sentence is written
+  unconditionally, and the proposals are `readyRepairs`, which deliberately
+  drops every repair that still needs an argument: a seat may not guess
+  which person, and the rule declined to choose for exactly that reason. So
+  the one rule shape stage C asks for — "a repair that names an act and
+  leaves one argument to be asked for" — is the shape that makes the seat
+  promise something it has not got.
+- where it belongs: `packages/tools/src/conversation.ts`
+- harness that should have caught it: `scripts/verify-chat.mjs`'s
+  `problemsProposeRepairs` and the unit test beside it both drive `apps/todo`,
+  whose every repair is complete, so the branch where none survive the filter
+  had never been asked a question
+- status: fixed in "walkthrough: C · a seat that says what the repair wants"
+  · the sentence is chosen from what is actually below it: the repairs when
+  there are any, otherwise what they still want — "The rules name a way to
+  fix it, but it needs a person chosen — select the record and its own
+  actions will ask" — and "No rule here names a way to fix it" when there
+  are no repairs at all. What it wants is said the way every picker in the
+  framework is named, by the KIND it picks, so the seat says "a person"
+  where the argument is called `handler` (the same rule as W-056, one layer
+  up). Criterion added to
+  `packages/tools/tests/unit/conversation.test.ts`: "says what a repair
+  still wants, rather than promising repairs it has none of". Verified
+  failing without the fix.

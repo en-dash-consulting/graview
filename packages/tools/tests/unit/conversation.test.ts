@@ -81,6 +81,60 @@ describe("the graph answers for itself", () => {
     ]);
   });
 
+  /*
+   * A SENTENCE THAT MATCHES THE LIST UNDER IT.
+   *
+   * "The repairs below come from the rules themselves" was said whenever
+   * anything was broken, and only COMPLETE repairs are ever proposed — a
+   * repair still needing an argument chosen is not something a seat may
+   * guess at. So a rule whose repair asks for one thing ("hand it to
+   * someone": which someone is precisely the decision the rule declined to
+   * make) produced a promise of repairs over an empty list. And what it
+   * wants is named the way every other picker is: by the kind it picks.
+   */
+  it("says what a repair still wants, rather than promising repairs it has none of", async () => {
+    const asking = new Store({
+      schema,
+      mutations: [reassign, shorten],
+      invariants: [
+        bound.defineInvariant("unclaimed", {
+          scope: { kind: "duty" },
+          repairs: ["reassign"],
+          evaluate: ({ subject }): Violation[] => [
+            {
+              invariant: "unclaimed",
+              subjectId: subject.id,
+              label: "Unclaimed",
+              message: `${subject.label} is nobody's`,
+              nodeIds: [subject.id],
+              repairs: [
+                {
+                  mutation: "reassign",
+                  args: { dutyId: subject.id },
+                  missing: ["toPersonId"],
+                  label: "Give it to someone",
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+      snapshot: {
+        nodes: [
+          { id: "ana", kind: "person", label: "Ana" },
+          { id: "school", kind: "duty", label: "School run", minutes: 30 },
+        ] as never,
+        edges: [],
+      },
+    });
+    const reply = await graphResponder()(asking, "what's wrong?");
+    expect(reply.proposals).toEqual([]);
+    expect(reply.say).not.toContain("The repairs below");
+    // Named by what it picks — "a person", never the argument "toPersonId".
+    expect(reply.say).toContain("it needs a person chosen");
+    expect(reply.say).not.toContain("to person id");
+  });
+
   it("states a named thing's facts, relations in the declared words, and its trouble", async () => {
     const reply = await graphResponder()(store(), "tell me about the School run");
     expect(reply.say).toContain("School run — a duty");
