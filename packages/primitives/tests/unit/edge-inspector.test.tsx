@@ -77,8 +77,26 @@ describe("the inspector for a selected line", () => {
     expect(html).toContain("Take them off it");
   });
 
+  /*
+   * The same graph, with nothing declared that touches the edge. It used to
+   * be an EMPTY store — a selection of a line the graph did not have, which
+   * only rendered anything at all while a stop was allowed to name what was
+   * not there (see `a-stop-that-still-exists`). The question this asks is
+   * about the MUTATIONS, so only those change.
+   */
   it("says plainly when no mutation claims the edge kind", () => {
-    const plain = new Store({ schema, mutations: [], invariants: [] });
+    const plain = new Store({
+      schema,
+      mutations: [],
+      invariants: [],
+      snapshot: {
+        nodes: [
+          { id: "ana", kind: "person", label: "Ana" },
+          { id: "morning", kind: "duty", label: "Morning run" },
+        ] as never,
+        edges: [{ kind: "rides-in", from: "ana", to: "morning" }],
+      },
+    });
     const html = renderToStaticMarkup(
       <GraviewProvider
         store={plain}

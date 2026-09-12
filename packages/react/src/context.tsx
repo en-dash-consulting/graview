@@ -9,11 +9,12 @@ import type {
 import type { AffordanceProvider } from "@graview/tools";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
-import { EMPTY_VIEW, kindsOfAggregate, withSelection } from "@graview/layout";
+import { EMPTY_VIEW, edgeOfSelection, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout";
 import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -207,53 +208,104 @@ export function GraviewProvider<S extends AnySchema>({
   const [emphasis, setEmphasis] = useState<string | null>(null);
   const { activity, noteAttention } = useActivityState(store);
 
-  const current = view ?? internalView;
+  /** Whether an id in the address still names something the graph has. */
+  const stillThere = useCallback(
+    (id: string): boolean => {
+      if (kindOfCard(id) !== null || kindsOfAggregate(id).length > 0) return true;
+      const edge = edgeOfSelection(id);
+      if (edge) {
+        return store.graph
+          .allEdges()
+          .some(
+            (other) => other.kind === edge.kind && other.from === edge.from && other.to === edge.to,
+          );
+      }
+      return store.graph.getNode(id) !== undefined;
+    },
+    [store],
+  );
+
+  /** The same stop with every dead id taken out of it. */
+  const withoutWhatIsGone = useCallback(
+    (state: ViewState): ViewState => {
+      const held = state.selection ?? EMPTY_SELECTION;
+      const kept = held.filter(stillThere);
+      let next = kept.length === held.length ? state : withSelection(state, kept);
+      // Null, not home: `resolveStop` below already knows where an app's
+      // home is, and an app that opens from altitude has no in-stack one.
+      if (next.focusId !== null && !stillThere(next.focusId)) next = withFocus(next, null);
+      return next;
+    },
+    [stillThere],
+  );
+
+  /*
+   * A STOP, MADE STANDABLE-ON.
+   *
+   * Every way in writes here — a control, a popstate, a pasted link — and
+   * so does the render itself, because the graph can change underneath a
+   * stop nobody navigated away from. An id resolved at navigation time only
+   * is an id that goes stale the moment an act removes what it names.
+   */
+  const resolveStop = useCallback(
+    (state: ViewState): ViewState => {
+      let resolved = withoutWhatIsGone(state);
+      /*
+       * A focus this workspace cannot show — a bookmarked node whose
+       * module is off — lands on home rather than on a void with its
+       * name in the address bar.
+       */
+      if (resolved.focusId !== null && store.modules.disabledKinds.size > 0) {
+        const disabled = store.modules.disabledKinds;
+        const kinds = kindsOfAggregate(resolved.focusId);
+        const node = store.graph.getNode(resolved.focusId);
+        const gone =
+          kinds.length > 0
+            ? kinds.every((kind) => disabled.has(kind))
+            : node
+              ? disabled.has(node.kind as string)
+              : false;
+        if (gone) resolved = { ...resolved, focusId: null };
+      }
+      /*
+       * INSIDE THE STACK, SOMETHING IS ALWAYS FOCUSED.
+       *
+       * A focusless in-stack view renders a shelf and a void — a screen
+       * with no main view, which reads as being stuck rather than as being
+       * anywhere. No control writes that state on purpose, but URLs,
+       * history pops and chains of chrome can compose it. Whatever asked
+       * for nothing lands on the view the app opened with instead. The
+       * overview stays free to be focusless: up there the ring is the
+       * picture.
+       */
+      if (!resolved.overview && resolved.focusId === null) {
+        if (homeView.focusId !== null) {
+          resolved = { ...resolved, focusId: homeView.focusId };
+        } else if (homeView.overview === true) {
+          // An app that OPENS from altitude has no in-stack default:
+          // falling out of the overview with nothing to focus lands back
+          // on the overview, so Escape at the outermost place is a no-op
+          // rather than a void.
+          resolved = { ...resolved, overview: true };
+        }
+      }
+      return resolved;
+    },
+    [withoutWhatIsGone, store, homeView],
+  );
+
+  /*
+   * Resolved on the way OUT, not only on the way in: an act that removes
+   * the focused record has to leave a stop standing on solid ground in the
+   * very render that reports the removal, before a layout is asked to place
+   * a node that is not there.
+   */
+  const current = resolveStop(view ?? internalView);
 
   const setView = useCallback(
     (next: ViewState | ((currentView: ViewState) => ViewState)) => {
-      const resolve = (base: ViewState): ViewState => {
-        let resolved = typeof next === "function" ? next(base) : next;
-        /*
-         * INSIDE THE STACK, SOMETHING IS ALWAYS FOCUSED.
-         *
-         * A focusless in-stack view renders a shelf and a void — a screen
-         * with no main view, which reads as being stuck rather than as being
-         * anywhere. No control writes that state on purpose, but URLs,
-         * history pops and chains of chrome can compose it. Whatever asked
-         * for nothing lands on the view the app opened with instead. The
-         * overview stays free to be focusless: up there the ring is the
-         * picture.
-         */
-        /*
-         * A focus this workspace cannot show — a bookmarked node whose
-         * module is off — lands on home rather than on a void with its
-         * name in the address bar.
-         */
-        if (resolved.focusId !== null && store.modules.disabledKinds.size > 0) {
-          const disabled = store.modules.disabledKinds;
-          const kinds = kindsOfAggregate(resolved.focusId);
-          const node = store.graph.getNode(resolved.focusId);
-          const gone =
-            kinds.length > 0
-              ? kinds.every((kind) => disabled.has(kind))
-              : node
-                ? disabled.has(node.kind as string)
-                : false;
-          if (gone) resolved = { ...resolved, focusId: null };
-        }
-        if (!resolved.overview && resolved.focusId === null) {
-          if (homeView.focusId !== null) {
-            resolved = { ...resolved, focusId: homeView.focusId };
-          } else if (homeView.overview === true) {
-            // An app that OPENS from altitude has no in-stack default:
-            // falling out of the overview with nothing to focus lands back
-            // on the overview, so Escape at the outermost place is a no-op
-            // rather than a void.
-            resolved = { ...resolved, overview: true };
-          }
-        }
-        return resolved;
-      };
+      const resolve = (base: ViewState): ViewState =>
+        resolveStop(typeof next === "function" ? next(base) : next);
       if (view !== undefined) {
         onViewChange?.(resolve(view));
         return;
@@ -270,8 +322,23 @@ export function GraviewProvider<S extends AnySchema>({
        */
       setInternalView((previous) => resolve(previous));
     },
-    [current, onViewChange, view, homeView, store],
+    [current, onViewChange, view, resolveStop],
   );
+
+  /*
+   * And the address follows: once the render has resolved the stop, the
+   * fragment says the place you are actually standing in rather than the
+   * one that was removed underneath you. `useUrlSync` writes from the
+   * resolved view, so this only has to make sure the state behind it
+   * agrees — otherwise the next navigation resolves against a dead id.
+   */
+  useEffect(() => {
+    if (view !== undefined) return;
+    setInternalView((previous) => {
+      const resolved = resolveStop(previous);
+      return resolved === previous ? previous : resolved;
+    });
+  }, [current, view, resolveStop]);
 
   /*
    * Selection is VIEW STATE — part of the stop, not component state beside

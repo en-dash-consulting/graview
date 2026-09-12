@@ -72,6 +72,13 @@ try {
   vite = await startVite("todo", 5193);
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
   const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  /*
+   * A page that throws is not navigating, whatever the addresses say. The
+   * blank screen this file now drives into was an unhandled React error
+   * with a perfectly ordinary-looking hash behind it.
+   */
+  report.pageErrors = [];
+  page.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
   await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(900);
@@ -286,6 +293,63 @@ try {
     withoutOne: await deeper("reason"),
   };
 
+  /*
+   * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
+   *
+   * Every stop here is an id in the address, and ordinary acts remove
+   * things. Travelled into a task and dropped it, the focus was an id
+   * nothing resolved: the layout placed nothing, the view host measured its
+   * own kind tag instead of the panel that was no longer there, and moved
+   * it nine pixels up and fourteen right on every render until React gave
+   * up with "Maximum update depth exceeded" and blanked the page. Selecting
+   * a record and dropping it left its pane open, titled with the raw node
+   * id and saying "nothing can be done with this mix of kinds".
+   */
+  const dropTheFocus = async () => {
+    await page.evaluate(() => {
+      const up = document.querySelector('[data-testid="overview"]');
+      if (up?.getAttribute("aria-pressed") === "true") up.click();
+    });
+    await page.waitForTimeout(900);
+    // Whichever task the scene is showing: the point is the act, not the row.
+    const victim = await page.evaluate(
+      () =>
+        [...document.querySelectorAll("[data-graview-pick]")]
+          .map((el) => el.dataset.graviewPick)
+          .find((id) => id?.startsWith("t-")) ?? null,
+    );
+    if (!victim) return { standingIn: null, landedOn: null, views: 0, pane: "no task on screen" };
+    await page.dblclick(`[data-graview-pick="${victim}"]`);
+    await page.waitForTimeout(900);
+    const standingIn = await page.evaluate(() => location.hash);
+    // The destructive act by its own row — the searcher appears only past
+    // the fold, and Enter deliberately never runs a destructive act.
+    await page
+      .locator('[data-testid="inspector-strip"] li:has([data-pin-for="drop"]) button[data-affordance]')
+      .first()
+      .click();
+    await page.waitForTimeout(1000);
+    return {
+      standingIn,
+      landedOn: await page.evaluate(() => location.hash),
+      // A live picture, not a blank page.
+      views: await page.evaluate(() => document.querySelectorAll("[data-graview-view]").length),
+      pane: await page.evaluate(
+        () => document.querySelector('[data-testid="inspector-strip"]')?.innerText ?? null,
+      ),
+    };
+  };
+  const removed = await dropTheFocus();
+  report.removed = {
+    ...removed,
+    ok:
+      removed.standingIn !== null &&
+      removed.standingIn.includes("focus=t-") &&
+      !removed.landedOn.includes(removed.standingIn.replace(/^#focus=/, "").split("&")[0]) &&
+      removed.views > 0 &&
+      removed.pane === null,
+  };
+
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
@@ -368,12 +432,17 @@ report.verdict = {
   aDistrictWithoutOneOpensInPlace:
     (report.districts?.withoutOne ?? "").includes("expand=kind%3Areason") &&
     !(report.districts?.withoutOne ?? "").includes("focus=aggregate"),
+  // The act that removes what you are standing in leaves you somewhere real.
+  theStopSurvivesWhatItNames: report.removed?.ok === true,
   whatYouCanPressIsWhatYouCanSee:
     report.hitArea?.onContent === "t-deposit" &&
     report.hitArea?.belowContent !== "t-deposit" &&
     report.hitArea?.belowContent !== "no remainder",
 };
-report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
+report.passed =
+  Object.values(report.verdict).every(Boolean) &&
+  !report.error &&
+  (report.pageErrors?.length ?? 0) === 0;
 
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/navigation.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
