@@ -1461,8 +1461,18 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
           setRefused(error instanceof Error ? error.message : String(error));
         }
       }}
+      /*
+       * A TARGET, not just a word. At 11px in a 1px-tall padding this was a
+       * 38x18 control — the only way to take a turn back, and under the 24
+       * WCAG 2.2 asks for on both counts. The rail row grows by six pixels;
+       * the alternative is an undo you have to aim at.
+       */
       style={{
-        padding: "1px 7px",
+        display: "inline-flex",
+        alignItems: "center",
+        minHeight: 24,
+        minWidth: 24,
+        padding: "1px 8px",
         fontSize: "0.6875rem",
         ...(blocked ? { borderColor: "var(--graview-warn)", color: "var(--graview-warn)" } : {}),
       }}
@@ -1516,7 +1526,16 @@ export function StartFresh() {
         event.preventDefault();
         window.location.assign(href());
       }}
+      /*
+       * The same target the routed face's copy of this link already is
+       * (`StartFreshLink` in @graview/pages): inline text at 12px is a
+       * 50x16 control, and the fix landed on one face only.
+       */
       style={{
+        display: "inline-flex",
+        alignItems: "center",
+        minHeight: 24,
+        minWidth: 24,
         fontSize: "0.75rem",
         color: "var(--graview-ink-muted)",
         textDecoration: "underline",
