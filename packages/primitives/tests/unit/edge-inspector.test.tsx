@@ -191,6 +191,28 @@ describe("the inspector for a selected line", () => {
   });
 
   /*
+   * THE HINT SAYS WHAT THE GESTURE WOULD DO NOW. A district's subtitle read
+   * "· double-click opens" while the district was already open — and the
+   * same double-click closes it.
+   */
+  it("says the gesture closes a district that is already open", () => {
+    const html = (expanded: readonly string[]) =>
+      renderToStaticMarkup(
+        <GraviewProvider
+          store={store()}
+          views={registerDefaultViews(schema, createViews(schema))}
+          initialView={{ ...EMPTY_VIEW, overview: true, expanded }}
+          initialSelection={[kindCardId("person")]}
+        >
+          <Inspector />
+        </GraviewProvider>,
+      );
+    expect(html([])).toContain("double-click opens");
+    expect(html([kindCardId("person")])).toContain("double-click closes");
+    expect(html([kindCardId("person")])).not.toContain("double-click opens");
+  });
+
+  /*
    * The ids a scaffolded app actually mints. `ctx.freshId(label, kind)`
    * writes "person:ana", which carries the very separator the edge selection
    * id is built out of — and every selected line in every new project opened

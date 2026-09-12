@@ -847,7 +847,9 @@ export function Inspector() {
               <span
                 style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
-                · double-click opens
+                {/* Said for the state the thing is in: on a district already
+                    opened, the same gesture closes it. */}
+                {view.expanded.includes(selection[0]!) ? "· double-click closes" : "· double-click opens"}
               </span>
             ) : null}
           </>
@@ -1401,6 +1403,9 @@ export function Standing({
       {open && count > 0 ? (
         <ol
           data-testid="problems"
+          // A popover over the scene: Escape is this popover's while it is
+          // open, and the ladder underneath waits for the next press.
+          data-graview-overlay=""
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
@@ -1745,6 +1750,7 @@ export function ActivityRail({
           aria-label="Activity"
           data-testid="activity"
           data-graview-offstage=""
+          data-graview-overlay=""
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
@@ -2104,6 +2110,21 @@ export function BackOut({ home }: { readonly home: string | null }) {
       const active = document.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
       /*
+       * A POPOVER IS THE OUTERMOST RUNG, and it climbs down by itself.
+       *
+       * The activity rail, the problems list and the chat each close on
+       * Escape with a listener of their own — and this one ran too, so one
+       * press closed the rail AND dropped the selection under it (or, on
+       * the ground, backed out of the focus). Whatever is open over the
+       * scene owns the press; the ladder takes the next one.
+       *
+       * Asked in the CAPTURE phase, because the popover's own listener sits
+       * on the document, runs first in the bubble, and React commits its
+       * closing in the microtask between listeners — by the time a bubble
+       * listener on the window looked, the popover was already gone.
+       */
+      if (document.querySelector("[data-graview-overlay]")) return;
+      /*
        * Outermost first, and the full page is the outermost thing there is.
        *
        * It is a modal dialog covering everything, and Escape did not close it
@@ -2124,8 +2145,8 @@ export function BackOut({ home }: { readonly home: string | null }) {
       } else if (view.relation) show(null);
       else if (view.focusId !== home) focus(home);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [view, focus, show, go, selection, clear, home, overview, isJackedIn, exit]);
 
   return null;
