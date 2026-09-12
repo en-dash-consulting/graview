@@ -1974,3 +1974,74 @@ The shapes, in the order of how much they cost:
   `readersOwnTextSize` across all three engines: 408 before in WebKit and
   Firefox, 390 in all three after, and `pnpm engines` reports every engine
   holding.
+
+## The fourth walk (2026-09-12)
+
+### W-070 · A rename made in place leaves the keyboard on <body>, or on a pin nobody pressed
+- stage: A · face: scene · width: 1280 and 390 · scheme: both
+- expected: "keyboard alone can do everything above" — rename it in place,
+  and be where you were afterwards, the way pressing a button on the routed
+  face leaves you on the button (W-053's rule, one component over)
+- actual: two endings for one gesture. With a pointer: click the title, type,
+  Enter — `document.activeElement` is `BODY`. The editor is a field mounted
+  in place of the value, committing it unmounts the field, and a removed
+  element takes focus to the document with it; nothing put it back. From the
+  keyboard it was stranger: focus landed on `Pin Change the item` — a pin
+  toggle in the actions pane, six tabs away, that nobody had pressed. Traced
+  with focus events: a Tab out of the pane's LAST control wraps the document
+  and Chromium reports that focusout with `relatedTarget: null`, which is the
+  exact signal W-053's keeper takes to mean "the element went away under
+  them". So the pane kept a stale key through the whole rename, and the
+  moment focus fell to body it reclaimed the keyboard from work it had no
+  part in.
+- where it belongs: `packages/primitives/src/editable.tsx` (the editor never
+  returned focus) and `packages/primitives/src/workbench/index.tsx`
+  (`Inspector`'s keeper trusted the blur where it should have asked the
+  element)
+- harness that should have caught it: `scripts/verify-remember.mjs` renames
+  in place in a real browser and asked only what the graph said afterwards;
+  `packages/primitives/tests/unit/rename-in-place.test.tsx` asserted the
+  commit and never where the keyboard was left; `verify-menu`'s
+  `theKeyboardKeepsItsPlace` only ever pressed acts INSIDE the pane
+- status: fixed in "walkthrough: A · the keyboard comes back to the value it
+  edited" · the editor remembers its own button across the edit and focuses
+  it again when it closes with the keyboard still in it (Enter, Escape, an
+  act chosen) — never after a blur, which is somebody leaving on purpose.
+  And the keeper keeps the ELEMENT beside the key and restores only when
+  that element is no longer in the document. Criteria added:
+  `rename-in-place.test.tsx` "puts the keyboard back on the value it just
+  changed", "puts it back after Escape abandons the edit, too", "leaves the
+  keyboard wherever a blur sent it"; and
+  `the-pane-keeps-its-hands-off.test.tsx` "does not reclaim the keyboard
+  from work it had no part in" — the pin blurred with no relatedTarget and
+  still connected, the graph changing underneath. Verified failing without
+  the fix: three of the four (`expected <body>`; `expected <button …> to be
+  <body>`); the blur case passes either way, so it is a guard rather than a
+  regression. Also `verify-remember`'s `theKeyboardStaysOnWhatItRenamed`,
+  the same gesture in a real browser.
+
+### W-071 · The new-app skill still sends a reader to `?renderer=gpu`
+- stage: Setup · face: neither — the skills
+- expected: a skill's prose can be followed; W-030 established that there is
+  no `?renderer=gpu` anywhere — `auto` is the DOM path unless an app passes
+  an `attachRenderer` — and took it out of the playbook
+- actual: `graview-new-app`'s "Supported browsers" section still said "The
+  GPU capture path (`?renderer=gpu`) is Chromium-only, experimental and
+  opt-in". Nothing in `packages/*/src` reads `renderer` from a URL; the
+  twelve parameters the sources do ask a `URLSearchParams` for are `theme`,
+  `fresh`, `remember`, `past`, `show`, `focus`, `sel`, `expand`, `overview`,
+  `pan`, `relation` and `zoom`. The same sentence W-030 fixed in the
+  walkthrough had a copy in the skill every project installs, and the skills
+  test checks finding codes against the checker and nothing else against
+  the code.
+- where it belongs: `packages/skills/skills/graview-new-app/SKILL.md`
+- harness that should have caught it: `packages/skills/tests/unit/skills.test.ts`
+  — "never names a finding code the checker cannot produce" is the shape,
+  applied to codes only
+- status: fixed in "walkthrough: setup · a switch a skill names is a switch
+  the framework reads" · the sentence says how the GPU path is actually
+  opted into and that there is no URL switch. Criterion added: skills "names
+  only URL switches the framework reads" — every `?name=` in any skill must
+  be a parameter some source file asks a `URLSearchParams` for. Verified
+  failing against the old prose: `graview-new-app names "?renderer=" and
+  nothing reads it`.
