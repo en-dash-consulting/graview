@@ -1770,8 +1770,19 @@ export function ActivityRail({
                               : "var(--graview-edge-bright)",
                       }}
                     />
+                    {/*
+                      * THE ACT'S OWN TITLE, not the name it is registered
+                      * under. "changed · close-item" is the tool surface's
+                      * identifier read out in the one place a person looks
+                      * to see what an agent just did — the same smell as a
+                      * card named by its node id. A call that names no
+                      * declared mutation (a read tool) is still humanised
+                      * rather than printed raw.
+                      */}
                     <span style={{ color: "var(--graview-ink)" }}>
-                      {call.mutating ? "changed" : "read"} · {call.name}
+                      {call.mutating ? "changed" : "read"} ·{" "}
+                      {store.allMutations().find((mutation) => mutation.name === call.name)?.title ??
+                        humaniseField(call.name)}
                     </span>
                   </div>
                   {Object.values(call.args).some((value) => typeof value === "string") ? (

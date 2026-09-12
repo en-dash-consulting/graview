@@ -1569,3 +1569,27 @@ The shapes that came up again, and the new ones:
   `packages/tools/tests/unit/conversation.test.ts`: "says what a repair
   still wants, rather than promising repairs it has none of". Verified
   failing without the fix.
+
+### W-058 · The rail says what an agent did by the name the mutation is registered under
+- stage: C · face: scene · width: any · scheme: both
+- expected: the record of what the seat just did reads like the rest of the
+  interface — an act by its own title
+- actual: `changed · close-item`. The activity rail lists every call a seat
+  makes as `{changed|read} · {call.name}`, and `call.name` is the tool
+  surface's identifier. So the one place a person looks to see what an agent
+  did printed the schema: `changed · close-item`, `read · get_violations`,
+  `changed · reschedule` in the framework's own todo app. Every act carries
+  a `title` the strip, the pages and the agent's own tool description all
+  use.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`ActivityRail`, the calls list)
+- harness that should have caught it: `scripts/verify-seat.mjs` presses the
+  seat and then reads the rail — for the signature on the ops and for the
+  seat's own label, never for the call rows between them
+- status: fixed in "walkthrough: C · what the agent did, in the act's own
+  words" · the declared mutation's `title`, falling back to the humanised
+  name for a read tool that is not a mutation. Criterion added to
+  `verify-seat`: "the rail says what the act is called, not what it is
+  registered as" — every call row must begin with a capital and carry no
+  hyphen or underscore. Verified failing without the fix: `reschedule |
+  get_violations`.
