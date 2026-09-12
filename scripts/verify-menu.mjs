@@ -244,6 +244,77 @@ try {
     ok: declaredShown && demotedNow && restoredNow,
   };
 
+  /* ------------------------------------ the keyboard keeps its place */
+  /*
+   * EVERY ACT TAKEN FROM THE KEYBOARD used to end at the top of the
+   * document. The pane is a live list — an act applies and leaves the list,
+   * a pin regroups it, an ask closes — and React drops focus to <body>
+   * whenever the focused element goes away. So somebody working from the
+   * keyboard pressed Enter on "Mark it done" and landed on nothing, six
+   * tabs from where they had been, once per act.
+   *
+   * Three presses, all from the keyboard: an act that needs nothing, the
+   * pin beside it, and the Apply of an ask. After each, focus must still be
+   * inside the pane.
+   */
+  await page.click('[aria-label="Clear selection"]');
+  await page.waitForTimeout(200);
+  await page.click('[data-graview-pick="t-deposit"]');
+  await page.waitForSelector('[data-testid="inspector-strip"] [data-affordance]');
+  const inThePane = () =>
+    page.evaluate(() => {
+      const active = document.activeElement;
+      const pane = document.querySelector('[data-testid="inspector-strip"]');
+      return {
+        where:
+          active === document.body
+            ? "body"
+            : (active?.getAttribute("data-affordance") ??
+              active?.getAttribute("data-pin-for") ??
+              active?.getAttribute("aria-label") ??
+              active?.tagName.toLowerCase() ??
+              "none"),
+        inside: pane !== null && active !== null && pane.contains(active),
+      };
+    });
+  const pressFromTheKeyboard = async (selector) => {
+    await page.focus(selector);
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(500);
+    return inThePane();
+  };
+  // Each act is reached through its own row, since the affordance id
+  // carries the provider's prefix and the mutation name does not.
+  const actRow = (mutation) =>
+    `[data-testid="inspector-strip"] li:has([data-pin-for="${mutation}"]) button[data-affordance]`;
+  const afterAnAct = await pressFromTheKeyboard(actRow("finish"));
+  await page.click('[aria-label="Clear selection"]');
+  await page.waitForTimeout(200);
+  await page.click('[data-graview-pick="t-book"]');
+  await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for]');
+  const afterAPin = await pressFromTheKeyboard(
+    '[data-testid="inspector-strip"] [data-pin-for="edit-task"]',
+  );
+  await page.focus(actRow("edit-task"));
+  await page.keyboard.press("Enter");
+  await page.waitForSelector("[data-graview-asking]");
+  await page.waitForTimeout(200);
+  // Answer every open argument, so the ask actually CLOSES — a two-step
+  // ask that merely moves to its second field proves nothing about where
+  // focus lands when the field it was in goes away.
+  while ((await page.$("[data-graview-asking]")) !== null) {
+    await page.keyboard.type("90");
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(400);
+  }
+  const afterAnAsk = await inThePane();
+  report.checks.theKeyboardKeepsItsPlace = {
+    afterAnAct,
+    afterAPin,
+    afterAnAsk,
+    ok: afterAnAct.inside && afterAPin.inside && afterAnAsk.inside,
+  };
+
   report.pageErrors = errors;
   report.passed =
     Object.values(report.checks).every((check) => check.ok) && errors.length === 0;

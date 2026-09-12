@@ -151,7 +151,7 @@ export function AnswerArgs({
       ref={asked}
       // An ask says it is one, so a harness can ask whether the thing it
       // opened is on the screen rather than off the side of the pane.
-      data-graview-asking={affordance.mutation}
+      data-graview-asking={affordance.id}
       style={{
         display: "grid",
         /*
@@ -307,6 +307,48 @@ export function Inspector() {
    * that box, and clamped to it.
    */
   const asideRef = useRef<HTMLElement>(null);
+
+  /*
+   * THE KEYBOARD KEEPS ITS PLACE.
+   *
+   * The pane is a live list: an act applies and leaves it, a pin regroups
+   * it, an ask closes when it is answered. Every one of those removes the
+   * element the keyboard was standing on, and a removed element takes focus
+   * to <body> with it — so pressing Enter on "Mark it done" left somebody
+   * working from the keyboard at the top of the document, six tabs from
+   * where they were, once per act. The routed face never had this: its
+   * forms stay mounted, so the two faces disagreed about what pressing a
+   * button does.
+   *
+   * What is remembered is WHICH act, not which element: the ask's controls
+   * belong to the act above them, so answering one puts you back on it.
+   * `relatedTarget` tells the two cases apart — tabbing away is somebody
+   * leaving on purpose and is not restored; a null one means the element
+   * went away underneath them, which is the only case this is for.
+   */
+  const keptFocus = useRef<string | null>(null);
+  const remember = (target: HTMLElement) => {
+    const asking = target.closest("[data-graview-asking]")?.getAttribute("data-graview-asking");
+    const pin = target.getAttribute("data-pin-for");
+    keptFocus.current =
+      asking ?? target.getAttribute("data-affordance") ?? (pin === null ? null : `pin:${pin}`);
+  };
+  useEffect(() => {
+    const pane = asideRef.current;
+    const key = keptFocus.current;
+    if (!pane || key === null || document.activeElement !== document.body) return;
+    const home =
+      (key.startsWith("pin:")
+        ? pane.querySelector(`[data-pin-for="${CSS.escape(key.slice(4))}"]`)
+        : null) ??
+      pane.querySelector(`[data-affordance="${CSS.escape(key)}"]:not([disabled])`) ??
+      // The act is gone — finished, severed, no longer offered. The pane
+      // itself is then the honest home: the keyboard stays where the work
+      // is, and Enter on a container does nothing by accident.
+      pane;
+    (home as HTMLElement).focus();
+  });
+
   const [box, setBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   useLayoutEffect(() => {
     const parent = asideRef.current?.offsetParent;
@@ -619,6 +661,14 @@ export function Inspector() {
       // node names this pane repeats.
       data-graview-offstage=""
       data-testid={atPointer ? "context-menu" : "inspector-strip"}
+      // Focusable only programmatically: the fallback home when the act
+      // somebody was standing on is no longer offered.
+      tabIndex={-1}
+      onFocus={(event) => remember(event.target as HTMLElement)}
+      onBlur={(event) => {
+        // Somewhere else to go means they went there on purpose.
+        if (event.relatedTarget !== null) keptFocus.current = null;
+      }}
       onMouseDown={(event) => event.stopPropagation()}
       style={{
         position: "absolute",

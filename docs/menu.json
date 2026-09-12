@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T01:15:54.084Z",
+  "at": "2026-09-12T02:11:25.788Z",
   "engine": "chromium",
   "checks": {
     "filterOnlyPastTheFold": {
@@ -61,6 +61,21 @@
       "declaredShown": true,
       "demotedNow": true,
       "restoredNow": true,
+      "ok": true
+    },
+    "theKeyboardKeepsItsPlace": {
+      "afterAnAct": {
+        "where": "Inspector",
+        "inside": true
+      },
+      "afterAPin": {
+        "where": "edit-task",
+        "inside": true
+      },
+      "afterAnAsk": {
+        "where": "schema:edit-task",
+        "inside": true
+      },
       "ok": true
     }
   },
