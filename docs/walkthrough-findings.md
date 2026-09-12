@@ -1393,3 +1393,33 @@ The shapes that came up again, and the new ones:
   `audit-ui`'s `todo/activity` state — act once, then open the rail, and
   count. Verified failing without the fix: `2 controls under 24px`, named as
   `undo 38x18` and `Start fresh 50x16`.
+
+### W-053 · Every act taken from the keyboard ends at the top of the document
+- stage: A · face: scene · width: any · scheme: both
+- expected: "keyboard alone can do everything above" — and doing it leaves
+  you where you were, the way pressing a button on the routed face does
+- actual: focus went to `<body>` after every act. The pane is a live list:
+  an act applies and leaves it, a pin regroups it into a new section, an ask
+  closes when it is answered — and React takes focus to the document with an
+  element it unmounts. So somebody working from the keyboard pressed Enter
+  on "Close it" and landed on nothing, six tabs from where they had been,
+  once per act. Measured in the scaffolded app: `Close it` → BODY, the pin
+  → BODY, and applying the derived edit's ask → BODY. The routed face does
+  not do this — its forms stay mounted and focus stays on the submit button
+  — so the two faces disagreed about what pressing a button does.
+- where it belongs: `packages/primitives/src/workbench/index.tsx`
+  (`Inspector` — nothing in the file managed focus at all)
+- harness that should have caught it: `scripts/verify-menu.mjs` drives this
+  exact pane in a real browser and presses Enter in it (`searchThenApply`,
+  `destructiveNeedsTheClick`), and asked only what the graph said afterwards,
+  never where the keyboard was left
+- status: fixed in "walkthrough: A · the keyboard keeps its place" · the pane
+  remembers WHICH ACT the keyboard was on — an ask's controls count as the
+  act above them — and when the element goes away underneath it, puts focus
+  back on the same act, or on the same pin, or on the pane itself when the
+  act is no longer offered. `relatedTarget` separates the two cases: tabbing
+  away is leaving on purpose and is never undone. Criterion added:
+  `verify-menu`'s `theKeyboardKeepsItsPlace` — three presses from the
+  keyboard (an act, a pin, an ask answered to the end), focus inside the
+  pane after each. Verified failing without the fix: all three report
+  `"where": "body"`.
