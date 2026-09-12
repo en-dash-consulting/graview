@@ -157,15 +157,29 @@ export function deriveAffordances<S extends AnySchema>(
    * honesty. Silently hiding it teaches people the software is broken, and
    * teaches an agent that a capability does not exist when it does.
    */
+  /*
+   * ASKED AS SOMEBODY, ALWAYS — the same somebody the store assumes.
+   *
+   * This skipped the check entirely when no principal was passed, so a
+   * caller that did not thread one was told it could do everything while
+   * `store.apply` refused it: `store.permits` and `applyAll` both default to
+   * `{ kind: "human" }` and fail CLOSED, and this failed open. The scene was
+   * fine because the React provider defaults the principal to that same
+   * anonymous human; every other caller — `recordFacts`, `kindFacts`, an
+   * app calling this directly — got a face full of acts that refused on
+   * press, which is the one thing the permission contract exists to prevent.
+   *
+   * Opt-in is unaffected: a store with no policy permits this principal
+   * everything, which is exactly what made the old shortcut look harmless.
+   */
+  const asking: Principal = options.principal ?? { kind: "human" };
   const allowed: Affordance[] = [];
   const withheld: WithheldAffordance[] = [];
   for (const affordance of ranked) {
-    const verdict = options.principal
-      ? store.permits(
-          { name: affordance.mutation, args: { ...affordance.args, ...(affordance.batch?.[0] ?? {}) } },
-          options.principal,
-        )
-      : ({ ok: true } as const);
+    const verdict = store.permits(
+      { name: affordance.mutation, args: { ...affordance.args, ...(affordance.batch?.[0] ?? {}) } },
+      asking,
+    );
     if (verdict.ok) allowed.push(affordance);
     else withheld.push({ ...affordance, refusal: verdict.refusal });
   }

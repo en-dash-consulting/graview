@@ -1189,3 +1189,34 @@ at the end of every stage.
   tells you nothing — and fails the harness on a non-empty list. Verified
   failing without the fix: "Start fresh" 62×15 on all three pages, plus
   "Tasks" 44×19 on the record.
+
+### W-047 · The interface asks "may I?" of nobody, and is told yes
+- stage: F · face: pages (and any surface that does not thread a principal) ·
+  width: any · scheme: both
+- expected: what a face offers is what the store would accept — the whole
+  reason `graview-permissions` says "the narrowing happens once, in
+  `deriveAffordances`"
+- actual: `deriveAffordances` SKIPPED the permission check entirely when no
+  principal was passed (`options.principal ? store.permits(...) : { ok:
+  true }`). `store.permits` and `applyAll` both default to `{ kind: "human" }`
+  and fail CLOSED; this failed open. So with a policy declared and no
+  principal threaded, the routed face offered every act and the store refused
+  every one on press with `PermissionDeniedError`. Measured in Walk the
+  moment the policy existed: the scene said "Nothing you may do with an item
+  — 1 action withheld. Add an item — Not permitted: add-item — keeper can",
+  and the same app's list page rendered "Add an item" as a live form. The
+  scene was right only because the React provider defaults the principal to
+  that same anonymous human; nothing else does.
+- where it belongs: `packages/tools/src/derive.ts`
+- harness that should have caught it: `pnpm seat` drives permissions through
+  a principal that is always supplied, and every fixture with a policy passes
+  one — permission opt-in made the shortcut agree with the store in every app
+  that had not declared a policy yet, which is every app any harness drives
+  on its pages face
+- status: fixed in "walkthrough: F · asked as somebody, always" · the
+  derivation asks as `{ kind: "human" }` when nobody is named, which is the
+  principal the store already assumes, so the two cannot disagree. Opt-in is
+  untouched: with no policy that principal may do everything. Criterion
+  added: `packages/tools/tests/unit/asked-as-somebody.test.ts` — four cases
+  including that the derivation and `store.apply` agree, and that an app with
+  no policy still offers everything. Verified failing without the fix.
