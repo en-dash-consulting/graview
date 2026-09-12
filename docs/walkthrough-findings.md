@@ -1789,3 +1789,35 @@ The shapes that came up again, and the new ones:
   seat already holds. Verified failing without the fix, with five chapters
   reporting `offered: []` and refusals reading "one of coordinator, gardener
   can" to a gardener.
+
+### W-065 · Two embeds of one design are two regions with the same name
+- stage: H · face: pages · width: any · scheme: both
+- expected: "two embeds have two landmark names", and `graview-pages`' own
+  rule for a design: "Keep landmarks and targets honest. One `main` (a
+  `section` when `context.embedded`)"
+- actual: three names for two embeds, two of them identical. A design's shell
+  renders the landmark itself — a `main` standing alone, a `section` inside
+  an embed — and the worked example NAMES that section (`aria-label="The
+  garden"`), so two embeds of the same design on one page put two regions
+  called "The garden" in the landmark list. axe reports it as
+  `landmark-unique`. Reached exactly as stage H asks: the app mounted twice
+  on a plain article page, both on the routed face. The embed has already
+  made a region carrying the name the page gave it ("Chapter 13"), and the
+  framework's own `PageMain` gets this right — it renders an UNNAMED section
+  when embedded. Only the example a reader copies names it.
+- where it belongs: `apps/seedbed/src/ui/design.tsx` (the worked example)
+  and `packages/skills/skills/graview-pages/SKILL.md` (the rule that did not
+  say it)
+- harness that should have caught it:
+  `apps/seedbed/tests/integration/embed.test.tsx`'s "is a region of its own,
+  named, and two of them are two names" — which mounts both embeds on the
+  SCENE face, where a design's shell does not exist. `pnpm site` runs axe
+  over a page with fourteen embeds and passes, because every one of them is
+  on the scene.
+- status: fixed in "walkthrough: H · a landmark the embed already named" ·
+  the design's embedded section carries no name of its own, and the skill's
+  rule now says why. Criterion added to the same test file: "does not name a
+  second region inside the one the embed already named" — two embeds of the
+  design on the routed face, and every named region on the document must be
+  unique. Verified failing without the fix: `Chapter 13 | The garden |
+  Chapter 1 | The garden: expected 3 to be 4`.

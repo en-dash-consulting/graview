@@ -3,6 +3,7 @@ import { Store } from "@graview/core";
 import { mount } from "@graview/embed";
 import { describe, expect, it } from "vitest";
 import { CHAPTERS } from "../../src/domain/chapters.js";
+import { seedbedDesign } from "../../src/ui/design.js";
 import { seedbedPages } from "../../src/ui/pages.js";
 import { seedbedViews } from "../../src/ui/views.js";
 
@@ -181,6 +182,43 @@ describe("a chapter, embedded", () => {
     expect(rootOf(two).getAttribute("aria-label")).toBe("Chapter 1");
     // Everything the embed drew is inside it.
     expect(one.querySelectorAll('[data-testid="embed-faces"]')[0]?.closest("section")).toBe(rootOf(one));
+    first.unmount();
+    second.unmount();
+  });
+
+  /*
+   * AND TWO OF A DESIGN ARE STILL TWO NAMES.
+   *
+   * The check above mounts both on the scene, where the embed's own region
+   * is the only one. A design's shell renders the landmark itself — a main
+   * standalone, a section inside an embed — and named it, so two embeds of
+   * the same design put two regions called "The garden" on one page: the
+   * landmark said twice, which axe reports as `landmark-unique`. The
+   * embed's own region already carries the name the page gave it; the
+   * design's section inside it needs none.
+   */
+  it("does not name a second region inside the one the embed already named", () => {
+    const one = into();
+    const two = into();
+    const design = seedbedDesign(chapter.app.schema as never);
+    const first = mount(one, {
+      app: chapter.app,
+      seed: chapter.seed,
+      face: "pages",
+      pages: design,
+      label: "Chapter 13",
+    });
+    const second = mount(two, {
+      app: chapter.app,
+      seed: chapter.seed,
+      face: "pages",
+      pages: design,
+      label: "Chapter 1",
+    });
+    const named = [...document.querySelectorAll("[role=region], section[aria-label], main")].map(
+      (element) => element.getAttribute("aria-label") ?? "(unnamed main)",
+    );
+    expect(new Set(named).size, named.join(" | ")).toBe(named.length);
     first.unmount();
     second.unmount();
   });
