@@ -59,6 +59,11 @@ const labelOf = (page, id) =>
     (pick) => document.querySelector(`[data-graview-pick="${pick}"]`)?.textContent?.trim() ?? null,
     id,
   );
+/**
+ * Where the keyboard was left after the last rename committed — read
+ * BEFORE the Escape that closes the pane, which has a home of its own.
+ */
+let keyboardAfterRename = null;
 /** Rename the deposit task in place, through the mutation, to `to`. */
 const rename = async (page, to) => {
   await page.dblclick('[data-graview-pick="t-deposit"]');
@@ -68,6 +73,16 @@ const rename = async (page, to) => {
   await page.fill('input[data-graview-field="label"]', to);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(500);
+  /*
+   * THE KEYBOARD COMES BACK TO THE VALUE. Committing the editor unmounts
+   * the field, and a removed element takes focus to <body> — so a rename
+   * ended at the top of the document, once per edit, and this harness had
+   * asked only what the graph said afterwards.
+   */
+  keyboardAfterRename = await page.evaluate(() => {
+    const at = document.activeElement;
+    return { tag: at?.tagName ?? null, editable: at?.getAttribute("data-graview-field") ?? null };
+  });
   await page.keyboard.press("Escape");
   await page.waitForTimeout(400);
 };
@@ -96,7 +111,7 @@ try {
   report.steps.seed = { deposit: await labelOf(page, "t-deposit") };
 
   await rename(page, "Pay the deposit, remembered");
-  report.steps.edited = { deposit: await labelOf(page, "t-deposit") };
+  report.steps.edited = { deposit: await labelOf(page, "t-deposit"), keyboard: keyboardAfterRename };
 
   // The reload: same address, same browser.
   await page.goto(`${BASE}&remember=1`, { waitUntil: "load" });
@@ -206,6 +221,7 @@ const isSeed = (step) => says(step, "Pay the deposit") && !(step?.deposit ?? "")
 report.verdict = {
   theSeedLoadsFirst: isSeed(s.seed),
   theEditTookEffect: says(s.edited, "Pay the deposit, remembered"),
+  theKeyboardStaysOnWhatItRenamed: s.edited?.keyboard?.tag === "BUTTON" && s.edited?.keyboard?.editable === "label",
   theEditSurvivesAReload: says(s.reloaded, "Pay the deposit, remembered"),
   // In the history, attributed to you, and takeable back.
   theHistorySurvivesAttributed: (s.reloaded?.log ?? []).some(

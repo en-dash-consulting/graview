@@ -1,12 +1,16 @@
 {
-  "at": "2026-09-12T14:36:27.832Z",
+  "at": "2026-09-12T17:20:14.433Z",
   "engine": "chromium",
   "steps": {
     "seed": {
       "deposit": "Pay the deposit08-28"
     },
     "edited": {
-      "deposit": "Pay the deposit, remembered"
+      "deposit": "Pay the deposit, remembered",
+      "keyboard": {
+        "tag": "BUTTON",
+        "editable": "label"
+      }
     },
     "reloaded": {
       "deposit": "Pay the deposit, remembered08-28",
@@ -61,6 +65,7 @@
   "verdict": {
     "theSeedLoadsFirst": true,
     "theEditTookEffect": true,
+    "theKeyboardStaysOnWhatItRenamed": true,
     "theEditSurvivesAReload": true,
     "theHistorySurvivesAttributed": true,
     "theEditIsStillUndoable": true,
