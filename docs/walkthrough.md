@@ -245,6 +245,11 @@ True when:
   `pnpm progression` pass with the criteria you added — and so do
   `pnpm test`, `pnpm smoke:create`, `pnpm remember`, `pnpm navigation`,
   `pnpm menu`, `pnpm pages`, `pnpm chat`, `pnpm seat` and `pnpm shrunk`.
+- `pnpm engines` passes. It is the only one that runs anything in WebKit and
+  Firefox, and a stage that asks for three browsers has to run the harness
+  that uses them: the third walk found a picker on every page of the routed
+  face under the minimum target size in WebKit and nowhere else, measured by
+  a criterion that had been there all along and only ever run in Chromium.
 
 Run that list at the END OF EVERY STAGE, not only here. This session broke
 the in-place editor in stage A and did not find out until stage G, because

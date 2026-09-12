@@ -342,6 +342,8 @@ export function Inspector() {
    * went away underneath them, which is the only case this is for.
    */
   const keptFocus = useRef<string | null>(null);
+  /** The picture the pane sits on: where the keyboard goes if the pane goes. */
+  const scene = useRef<HTMLElement | null>(null);
   const remember = (target: HTMLElement) => {
     const asking = target.closest("[data-graview-asking]")?.getAttribute("data-graview-asking");
     const pin = target.getAttribute("data-pin-for");
@@ -351,7 +353,21 @@ export function Inspector() {
   useEffect(() => {
     const pane = asideRef.current;
     const key = keptFocus.current;
-    if (!pane || key === null || document.activeElement !== document.body) return;
+    if (key === null || document.activeElement !== document.body) return;
+    /*
+     * AND WHEN THE PANE ITSELF GOES — Escape, the ×, or an act that clears
+     * the selection — there is nothing inside it left to go back to. Chrome
+     * and Firefox pick a new starting point for the next Tab on their own;
+     * WEBKIT DOES NOT. Focus went away with a removed node and four presses
+     * of Tab moved nothing at all, which is a keyboard that has stopped
+     * working and a pointer as the only way out. The picture the pane was
+     * about is the honest home.
+     */
+    if (!pane) {
+      keptFocus.current = null;
+      scene.current?.focus();
+      return;
+    }
     const home =
       (key.startsWith("pin:")
         ? pane.querySelector(`[data-pin-for="${CSS.escape(key.slice(4))}"]`)
@@ -367,6 +383,9 @@ export function Inspector() {
   const [box, setBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   useLayoutEffect(() => {
     const parent = asideRef.current?.offsetParent;
+    // Held while the pane exists, because the keyboard needs somewhere to
+    // land at the moment it stops existing.
+    if (parent instanceof HTMLElement) scene.current = parent;
     if (!parent) return;
     const rect = parent.getBoundingClientRect();
     setBox((current) =>

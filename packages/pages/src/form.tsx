@@ -30,12 +30,60 @@ const labelStyle: React.CSSProperties = {
 };
 const controlStyle: React.CSSProperties = {
   font: "inherit",
+  /*
+   * A TARGET IN EVERY ENGINE, not only in the one it was measured in.
+   *
+   * Padding and line height alone came to 24 in Chromium and to 22 in
+   * WebKit, which has its own intrinsic metrics for a `select` and rounds
+   * nothing up for anybody. So every picker on the routed face was under
+   * the WCAG 2.2 minimum in the browser iOS ships, and the check that says
+   * so (`verify-pages`' `bigEnoughToHit`) only ever ran there through
+   * `pnpm engines`.
+   */
+  minHeight: 24,
+  boxSizing: "border-box",
   padding: "7px 10px",
   borderRadius: 8,
   border: "1px solid var(--graview-edge)",
   background: "var(--graview-panel)",
   color: "var(--graview-ink)",
 };
+
+/**
+ * A PICKER THAT STILL LOOKS LIKE ONE.
+ *
+ * WebKit ignores an author's padding and minimum height on a `select` while
+ * the native appearance is on — so every picker on the routed face came out
+ * 22 pixels tall in the browser iOS ships, under the 24 WCAG 2.2 asks for,
+ * while the same element measured 35 in Chromium. Turning the appearance off
+ * is what makes the box the size it was asked to be, and it takes the
+ * platform's chevron with it; this puts one back, in the ink the scheme is
+ * already using.
+ */
+const pickerStyle: React.CSSProperties = { ...controlStyle, appearance: "none", paddingRight: 28 };
+
+function Picker({ children }: { children: React.ReactNode }) {
+  return (
+    <span style={{ position: "relative", display: "grid", minWidth: 0 }}>
+      {children}
+      <span
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          right: 10,
+          top: "50%",
+          transform: "translateY(-50%)",
+          fontSize: "0.6875rem",
+          lineHeight: 1,
+          color: "var(--graview-ink-muted)",
+          pointerEvents: "none",
+        }}
+      >
+        ▾
+      </span>
+    </span>
+  );
+}
 
 function Control<S extends AnySchema>({
   store,
@@ -118,20 +166,22 @@ function Control<S extends AnySchema>({
       return (
         <label style={field}>
           <span style={labelStyle}>{title}</span>
-          <select
-            name={spec.name}
-            required={!spec.optional}
-            value={typeof value === "string" ? value : ""}
-            onChange={(event) => onChange(event.target.value || undefined)}
-            style={controlStyle}
-          >
-            <option value="">—</option>
-            {(spec.options ?? []).map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          <Picker>
+            <select
+              name={spec.name}
+              required={!spec.optional}
+              value={typeof value === "string" ? value : ""}
+              onChange={(event) => onChange(event.target.value || undefined)}
+              style={pickerStyle}
+            >
+              <option value="">—</option>
+              {(spec.options ?? []).map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </Picker>
         </label>
       );
     case "node": {
@@ -169,20 +219,22 @@ function Control<S extends AnySchema>({
       return (
         <label style={field}>
           <span style={labelStyle}>{title}</span>
-          <select
-            name={spec.name}
-            required={!spec.optional}
-            value={typeof value === "string" ? value : ""}
-            onChange={(event) => onChange(event.target.value || undefined)}
-            style={controlStyle}
-          >
-            <option value="">—</option>
-            {candidates.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {labelOf(store.schema.tryDefinition(candidate.kind), candidate as never)}
-              </option>
-            ))}
-          </select>
+          <Picker>
+            <select
+              name={spec.name}
+              required={!spec.optional}
+              value={typeof value === "string" ? value : ""}
+              onChange={(event) => onChange(event.target.value || undefined)}
+              style={pickerStyle}
+            >
+              <option value="">—</option>
+              {candidates.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {labelOf(store.schema.tryDefinition(candidate.kind), candidate as never)}
+                </option>
+              ))}
+            </select>
+          </Picker>
         </label>
       );
     }

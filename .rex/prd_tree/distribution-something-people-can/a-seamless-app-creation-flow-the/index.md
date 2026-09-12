@@ -31,7 +31,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Walkthrough E · The pages, customised](./walkthrough-e-the-pages-customised.md) | completed |
 | [Walkthrough F · Who may do what](./walkthrough-f-who-may-do-what.md) | completed |
 | [Walkthrough G · Remembering and shipping](./walkthrough-g-remembering-and-shipping.md) | completed |
-| [Walkthrough H · On somebody else's page](./walkthrough-h-on-somebody-else-s-page.md) | in_progress |
-| [Walkthrough I · The cross-cutting pass](./walkthrough-i-the-cross-cutting-pass.md) | completed |
+| [Walkthrough H · On somebody else's page](./walkthrough-h-on-somebody-else-s-page.md) | completed |
+| [Walkthrough I · The cross-cutting pass](./walkthrough-i-the-cross-cutting-pass.md) | in_progress |
 | [Walkthrough II · The second walk, from a fresh checkout, adds nothing](./walkthrough-ii-the-second-walk-from-a.md) | failing |
 | [Walkthrough III · The third walk, from a fresh checkout, adds nothing](./walkthrough-iii-the-third-walk-from-a.md) | in_progress |
