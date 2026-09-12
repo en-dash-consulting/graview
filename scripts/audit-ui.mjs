@@ -111,6 +111,22 @@ const APPS = {
       if (chip) { await chip.click(); await p.waitForTimeout(500); }
       await p.locator('[data-testid="affordances"] button', { hasText: "Change the" }).first().click();
     },
+    /*
+     * A LENS, AT ITS OWN PLACE. Every state here reached a picture by
+     * focusing a group rather than by pressing its name, so a titled
+     * registration — what `graview-lens` tells an app to write — had never
+     * been on screen beside the pill that names it.
+     */
+    lens: async (p) => {
+      await p.click('[data-testid="activity-button"]');
+      await p.waitForTimeout(300);
+      await p.click('[data-testid="agent-starter"]');
+      await p.waitForTimeout(1600);
+      await p.keyboard.press("Escape");
+      await p.waitForTimeout(400);
+      await p.locator('[data-testid="places"] button', { hasText: "What grows where" }).first().click();
+      await p.waitForTimeout(900);
+    },
     askedNarrow: { viewport: { width: 390, height: 620 }, go: async (p) => {
       await p.click('[data-testid="activity-button"]');
       await p.waitForTimeout(300);
@@ -436,8 +452,31 @@ const audit = () => {
   const raisedChip = (document.querySelector("[data-testid=raised]")?.textContent ?? "")
     .replace(/\s*×\s*$/, "")
     .trim();
+  /*
+   * And the PLACE YOU ARE LOOKING AT is the crumb for a lens.
+   *
+   * A titled group view is a place: its name is a pill in the bar and the
+   * picture carries the same name as its heading, because `label` on a view
+   * IS the registered title. That is the pairing the crumb exemption above
+   * is for — a breadcrumb beside a heading — and counting it made every
+   * lens in the framework read as a repeat the moment a screen was taken at
+   * one. Asked of the PICTURE rather than of the pill's pressed state: the
+   * pill is deliberately unpressed from altitude (you are above the place,
+   * not in it) while the scaled picture below still carries its name. A
+   * place whose picture is NOT on the screen is still the smell this looks
+   * for.
+   */
+  const atThisPlace = [...document.querySelectorAll("[data-testid^=place-]")]
+    .filter((el) => {
+      const kind = (el.getAttribute("data-testid") ?? "").slice("place-".length);
+      return (
+        document.querySelector(`[data-graview-view="aggregate:${kind}"][data-graview-plane="0"]`) !==
+        null
+      );
+    })
+    .map((el) => (el.textContent ?? "").trim());
   const repeats = [...seen.entries()]
-    .filter(([t, n]) => n > 1 && t !== crumb && t !== raisedChip)
+    .filter(([t, n]) => n > 1 && t !== crumb && t !== raisedChip && !atThisPlace.includes(t))
     .map(([t, n]) => `${t} x${n}`);
 
   /*

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T03:58:53.331Z",
+  "at": "2026-09-12T04:46:36.868Z",
   "engine": "chromium",
   "screens": [
     {
@@ -296,6 +296,26 @@
         "size": "236x214",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       }
+    },
+    {
+      "app": "seedbed",
+      "state": "lens",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 59,
+      "inspector": null
     },
     {
       "app": "seedbed",

@@ -365,6 +365,9 @@ export function BoardView<S extends AnySchema>({
             <li
               key={entry.id}
               data-graview-pick={entry.id}
+              // A target in the key is a mark like any other, and said
+              // nothing about the selection.
+              data-graview-emphasis={lit.size === 0 ? "plain" : lit.has(entry.id) ? "lit" : "dimmed"}
               title={entry.text}
               style={{
                 display: page ? "grid" : "flex",
@@ -739,7 +742,19 @@ export function BoardView<S extends AnySchema>({
                   slot.occupants.map((occupant) => (
                     <span
                       key={occupant.id}
-                      {...(one ? {} : { "data-graview-pick": occupant.id })}
+                      {...(one
+                        ? {}
+                        : {
+                            "data-graview-pick": occupant.id,
+                            /*
+                             * A MARK SAYS WHAT IT CLAIMS. The slot's disc has
+                             * said this since W-014; the names under a slot
+                             * holding SEVERAL occupants are targets of their
+                             * own and said nothing, so half this picture's
+                             * marks made a claim only in opacity.
+                             */
+                            "data-graview-emphasis": lit.size === 0 ? "plain" : dim ? "dimmed" : "lit",
+                          })}
                       style={{
                         fontSize: "0.65625rem",
                         whiteSpace: "nowrap",
@@ -772,7 +787,19 @@ export function BoardView<S extends AnySchema>({
             >
               Not in
             </span>
-            <Roster pick max={10} items={board.spare} />
+            {/* The bench is made of targets too, and its chips said
+                nothing about the selection either. */}
+            <Roster
+              pick
+              max={10}
+              items={board.spare.map((spare) => ({
+                ...spare,
+                emphasis: (lit.size === 0 ? "plain" : lit.has(spare.id) ? "lit" : "dimmed") as
+                  | "plain"
+                  | "lit"
+                  | "dimmed",
+              }))}
+            />
           </div>
         ) : null}
       </div>
