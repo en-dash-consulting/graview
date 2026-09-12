@@ -1631,3 +1631,37 @@ The shapes that came up again, and the new ones:
   unit ladders, and the browser criterion reports one row where there
   should be two, still titled `Rename to "Pay the deposit, on the first
   visit"` with "on the second" beside it.
+
+### W-060 · Half the board lens's marks say nothing about the selection
+- stage: D · face: scene · width: 1280 and 390 · scheme: both
+- expected: "every mark the lens draws is a pick target; selection lights it
+  and dims the rest, and the DOM says so (`data-graview-emphasis`)" — the
+  rule `graview-lens` gives an app, and W-014's own criterion
+- actual: in the framework's own board lens, three kinds of mark carry
+  `data-graview-pick` and only one of them said anything: the slot's disc.
+  The NAMES under a slot holding several occupants (each its own target
+  since the fan-out fix), the bench's chips ("Not in"), and every row of the
+  key that names the flagged slots were all emphasised by opacity alone.
+  `audit-ui`'s `halfSaid` reports `aggregate:plot: 1 of 2 marks` the moment
+  a screen is taken at the lens — which is a claim about a picture that
+  nothing could check, in the framework's own worked example of the
+  authoring API.
+- where it belongs: `packages/primitives/src/lens/board.tsx`
+- harness that should have caught it: `scripts/audit-ui.mjs`'s `halfSaid`,
+  which exists for exactly this and has since W-014. Every state it takes
+  reached a picture by focusing a group or travelling; not one of them was
+  AT a lens, so the two lenses registered with a title — what
+  `graview-lens` tells an app to write — had never been on a screen it
+  measured.
+- status: fixed in "walkthrough: D · every mark in a lens says what it
+  claims" · all three now carry the emphasis the disc has carried since
+  W-014. Criterion added: `audit-ui`'s `seedbed/lens` state, which presses
+  the place by name and takes the count there. Verified failing without the
+  fix: `emphasis painted but not said: aggregate:plot: 1 of 2 marks`.
+  The same state also showed `repeats: What grows where x2` — the place's
+  pill and the picture's own heading, which is the breadcrumb-beside-a-
+  heading pairing the check already exempts for the crumb and the raised
+  chip; the exemption now covers a place whose picture is on the screen,
+  asked of the PICTURE rather than of the pill, because the pill is
+  deliberately unpressed from altitude while the scaled picture still
+  carries its name.
