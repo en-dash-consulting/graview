@@ -21,6 +21,7 @@ export default defineConfig({
       "@graview/react": pkg("react"),
       "@graview/primitives": pkg("primitives"),
       "@graview/pages": pkg("pages"),
+      "@graview/studio": pkg("studio"),
       "@graview/ship/browser": fileURLToPath(new URL("../../packages/ship/src/browser.ts", import.meta.url)),
       "@graview/ship": pkg("ship"),
       "@graview/embed": pkg("embed"),

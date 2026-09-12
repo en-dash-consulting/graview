@@ -1,3 +1,4 @@
+import { createStudio } from "@graview/studio";
 import { checkApp, permits, Store } from "@graview/core";
 import { EMPTY_VIEW, kindCardId, layout } from "@graview/layout";
 import { describe, expect, it } from "vitest";
@@ -16,6 +17,7 @@ const storeOf = (n: number) => {
     invariants: chapter.app.invariants ?? [],
     snapshot: chapter.seed as never,
     ...(chapter.app.policy ? { policy: chapter.app.policy } : {}),
+    ...(chapter.app.modules ? { modules: chapter.app.modules } : {}),
     ...(chapter.principal ? { principal: chapter.principal } : {}),
   } as never);
 };
@@ -30,13 +32,15 @@ describe("the garden, grown a chapter at a time", () => {
 
   it("only ever grows: no chapter loses a kind, an act or a rule the last one had", () => {
     for (let i = 1; i < CHAPTERS.length; i++) {
+      // The studio is a chapter OVER the garden, not a chapter of it.
+      if (CHAPTERS[i]!.studioOf) continue;
       const before = CHAPTERS[i - 1]!.app;
       const after = CHAPTERS[i]!.app;
       for (const kind of before.schema.kinds) expect(after.schema.kinds, `${CHAPTERS[i]!.slug} keeps ${kind}`).toContain(kind);
       for (const m of before.mutations ?? []) expect((after.mutations ?? []).map((x) => x.name)).toContain(m.name);
       for (const inv of before.invariants ?? []) expect((after.invariants ?? []).map((x) => x.name)).toContain(inv.name);
     }
-    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
   });
 
   it("1 · a single kind already has a city, a district and a derived beginning", () => {
@@ -188,6 +192,46 @@ describe("the garden, grown a chapter at a time", () => {
     // The scene's lens is the garden's own, and it is a named place.
     const views = seedbedViews(store.schema as never, { lens: true, map: true });
     expect(views.places().map((place) => place.title)).toEqual(["Who tends what", "The garden map"]);
+  });
+
+  it("14 · the installation is in the graph: drawn for the keeper, refused for the rest, a profile is yours", () => {
+    const chapter = CHAPTERS[13]!;
+    expect(checkApp(chapter.app).findings.filter((f) => f.severity === "error")).toEqual([]);
+    const store = storeOf(14);
+    expect(store.mayAdminister("installation", chapter.principal)).toBe(true);
+    const ravi = chapter.seats!.find((seat) => seat.principal.id === "user-ravi")!.principal;
+    expect(store.mayAdminister("installation", ravi)).toBe(false);
+    expect([...store.kindsKeptFrom(ravi)].sort()).toEqual(["invitation", "user"]);
+    // The stop shows the installation; the seed has the coordinator, a gardener and one pending invitation.
+    expect(chapter.stop).toContain("show=installation");
+    expect(store.graph.nodesOfKind("invitation" as never)).toHaveLength(1);
+    // Ravi may change his own name and not June's; June may invite and Ravi may not.
+    expect(store.permits({ name: "edit-user", args: { id: "user-ravi", label: "R" } }, ravi).ok).toBe(true);
+    expect(store.permits({ name: "edit-user", args: { id: "user-june", label: "J" } }, ravi).ok).toBe(false);
+    expect(store.permits({ name: "invite", args: { email: "x@y.z", roles: ["gardener"] } }, ravi).ok).toBe(false);
+    expect(store.permits({ name: "invite", args: { email: "x@y.z", roles: ["gardener"] } }, chapter.principal).ok).toBe(true);
+  });
+
+  it("15 · the studio: chapter fourteen's declaration is a graph, its acts change it, the checker judges it, and it writes back", async () => {
+    const chapter = CHAPTERS[14]!;
+    expect(chapter.studioOf).toBe(CHAPTERS[13]!.app);
+    expect(checkApp(chapter.app).findings.filter((f) => f.severity === "error")).toEqual([]);
+    const store = storeOf(15);
+    const kinds = store.graph.nodesOfKind("kind" as never).map((node) => (node as { label: string }).label);
+    expect(kinds).toEqual(expect.arrayContaining(["gardener", "plot", "planting", "rule", "user", "invitation"]));
+    expect(store.graph.getNode("act:tend")).toMatchObject({ title: expect.any(String) });
+    expect(store.graph.out("edge:plot.tended-by", "to-kind").map((n) => n.id)).toEqual(["kind:gardener"]);
+    // A change is an act with an inverse; the checker judges the result; it writes back.
+    const studio = createStudio(chapter.studioOf!);
+    studio.store.apply({ name: "add-field", args: { kind: "kind:plot", label: "soil", type: "enum", required: false, options: ["clay", "loam"] } });
+    expect(studio.check().errors).toBe(0);
+    const applied = studio.apply();
+    expect(applied.ok).toBe(true);
+    if (applied.ok) expect(applied.app.schema.definition("plot").fields.shape).toHaveProperty("soil");
+    expect(studio.files().map((file) => file.path)).toContain("src/domain/schema.ts");
+    const { seedbedViews } = await import("../../src/ui/views.js");
+    const views = seedbedViews(store.schema as never, { studio: chapter.studioOf! });
+    expect(views.places().map((place) => place.title)).toEqual(["What the checker says"]);
   });
 
   it("is reached by ?chapter=N, and the finished example is the default", () => {

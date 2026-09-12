@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The example that starts empty. A community garden with a declared graph and no data — onboarding is filling it in.",
+  "description": "The example that starts empty. A community garden with a declared graph and no data \u2014 onboarding is filling it in.",
   "main": "./dist/index.js",
   "exports": {
     ".": {
@@ -33,7 +33,8 @@
     "@graview/pages": "workspace:*",
     "@graview/ship": "workspace:*",
     "react-router-dom": "^7.1.1",
-    "@graview/embed": "workspace:*"
+    "@graview/embed": "workspace:*",
+    "@graview/studio": "workspace:*"
   },
   "devDependencies": {
     "vite": "^5.4.11",

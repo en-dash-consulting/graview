@@ -40,7 +40,7 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
  * without reaching into the UI package.
  */
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
-import { SCHEMES } from "@graview/core";
+import { SCHEMES, kitVariables, resolveKit } from "@graview/core";
 
 
 /**
@@ -122,8 +122,10 @@ export function themeCss(
   const body =
     brand.typography?.body ??
     'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
+  const kit = resolveKit(brand.kit);
   return `${root} {
 ${themeVariables(tokens)}
+${kitVariables(kit)}
   --graview-font-body: ${body};
   --graview-font-display: ${brand.typography?.display ?? body};
   --graview-font-mono: ${brand.typography?.mono ?? 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace'};
@@ -226,8 +228,8 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   background-image:
     linear-gradient(var(--graview-edge) 1px, transparent 1px),
     linear-gradient(90deg, var(--graview-edge) 1px, transparent 1px);
-  background-size: 64px 64px;
-  opacity: calc(var(--graview-grid-alpha) * (1 - var(--graview-altitude)));
+  background-size: var(--graview-kit-grid-size, 64px) var(--graview-kit-grid-size, 64px);
+  opacity: calc(var(--graview-kit-grid, 1) * var(--graview-grid-alpha) * (1 - var(--graview-altitude)));
   mask-image: radial-gradient(120% 90% at 50% 40%, #000 30%, transparent 78%);
 }
 
@@ -295,11 +297,11 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   inset: 0;
   pointer-events: none;
   background-image:
-    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px 46px),
-    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px 46px),
-    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px 23px),
-    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px 23px);
-  opacity: calc(var(--graview-grid-alpha) * var(--graview-altitude));
+    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px var(--graview-kit-lattice-size, 46px)),
+    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px var(--graview-kit-lattice-size, 46px)),
+    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px calc(var(--graview-kit-lattice-size, 46px) / 2)),
+    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px calc(var(--graview-kit-lattice-size, 46px) / 2));
+  opacity: calc(var(--graview-kit-lattice, 1) * var(--graview-grid-alpha) * var(--graview-altitude));
   mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);
   -webkit-mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);
 }
@@ -383,7 +385,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   top: -9px;
   right: 14px;
   z-index: 2;
-  display: inline-flex;
+  display: var(--graview-kit-tags, inline-flex);
   align-items: center;
   gap: 5px;
   padding: 2px 8px;

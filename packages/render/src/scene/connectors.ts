@@ -14,6 +14,8 @@ export interface ConnectorStyle {
   /** 0..1 around the colour wheel; the renderer maps it into its own palette. */
   readonly hue: number;
   readonly opacity: number;
+  /** An explicit CSS colour from the brand's kit; absent, the hue paints it. */
+  readonly colour?: string;
 }
 
 /**
@@ -105,7 +107,7 @@ export const CONNECTOR_DASH: Readonly<Record<StrokePattern, string | undefined>>
 
 /** The colour a connector of this kind is stroked in, on either surface. */
 export function connectorStroke(style: ConnectorStyle): string {
-  return `hsl(${Math.round(style.hue * 360)} 55% 62%)`;
+  return style.colour ?? `hsl(${Math.round(style.hue * 360)} 55% 62%)`;
 }
 
 /**

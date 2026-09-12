@@ -31,6 +31,11 @@ export function permits(
    * read again, rather than a second list.
    */
   via?: readonly string[],
+  /**
+   * The id of the node the call acts on, when it names one. A `self` grant
+   * is only ever satisfied when this is the principal's own id.
+   */
+  subjectId?: string,
 ): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
   // No policy means permission is not a concern in this installation.
   if (!policy) return { ok: true };
@@ -41,8 +46,8 @@ export function permits(
    * the declared acts it rides is permitted for this principal on this kind.
    */
   if (via !== undefined) {
-    if (permits(policy, principal, mutation, kind).ok) return { ok: true };
-    if (via.some((name) => permits(policy, principal, name, kind).ok)) return { ok: true };
+    if (permits(policy, principal, mutation, kind, undefined, subjectId).ok) return { ok: true };
+    if (via.some((name) => permits(policy, principal, name, kind, undefined, subjectId).ok)) return { ok: true };
     /*
      * A derived edit is reachable two ways, and the refusal has to count
      * both: a grant naming it (or saying `*`), and a grant on any declared
@@ -77,6 +82,8 @@ export function permits(
     if (grant.kinds !== undefined && grant.kinds !== "*") {
       if (kind === undefined || !grant.kinds.includes(kind)) continue;
     }
+    // "You, on yours": a self grant needs the subject to be the principal.
+    if (grant.self && (subjectId === undefined || principal.id === undefined || subjectId !== principal.id)) continue;
     return { ok: true };
   }
 

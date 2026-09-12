@@ -24,6 +24,14 @@ export interface ModuleDeclaration {
   readonly invariants?: readonly string[];
   /** Modules this one cannot stand without. */
   readonly requires?: readonly string[];
+  /**
+   * Who the module's kinds are drawn for. `always` (the default) is every
+   * seat; `admin` keeps them out of the picture until a seat that may run
+   * one of the module's acts asks to see them — the installation's own
+   * users and invitations sit beside the domain for the person who keeps
+   * it, and are never a district for anyone else.
+   */
+  readonly visibility?: "always" | "admin";
 }
 
 export type ModuleMap = Readonly<Record<string, ModuleDeclaration>>;
@@ -35,6 +43,8 @@ export interface ModuleProjection {
   readonly disabledKinds: ReadonlySet<string>;
   readonly disabledMutations: ReadonlySet<string>;
   readonly disabledInvariants: ReadonlySet<string>;
+  /** Enabled modules drawn only for those who administer them, by name. */
+  readonly administered: ReadonlyMap<string, ModuleDeclaration>;
 }
 
 const NOTHING: ReadonlySet<string> = new Set();
@@ -59,6 +69,7 @@ export function resolveModules(
       disabledKinds: NOTHING,
       disabledMutations: NOTHING,
       disabledInvariants: NOTHING,
+      administered: administeredOf(modules, new Set(Object.keys(modules ?? {}))),
     };
   }
 
@@ -90,5 +101,16 @@ export function resolveModules(
     for (const invariant of module?.invariants ?? []) disabledInvariants.delete(invariant);
   }
 
-  return { enabled: on, disabledKinds, disabledMutations, disabledInvariants };
+  return { enabled: on, disabledKinds, disabledMutations, disabledInvariants, administered: administeredOf(modules, on) };
+}
+
+function administeredOf(
+  modules: ModuleMap | undefined,
+  on: ReadonlySet<string>,
+): ReadonlyMap<string, ModuleDeclaration> {
+  const found = new Map<string, ModuleDeclaration>();
+  for (const [name, module] of Object.entries(modules ?? {})) {
+    if (on.has(name) && module.visibility === "admin") found.set(name, module);
+  }
+  return found;
 }

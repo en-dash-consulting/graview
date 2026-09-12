@@ -31,6 +31,12 @@ export interface Grant {
   readonly kinds?: readonly string[] | "*";
   /** Shown when an action is withheld, so a refusal can say something useful. */
   readonly describe?: string;
+  /**
+   * Only on the principal's OWN record: the call's subject must be the node
+   * whose id is the principal's. This is how a person edits their profile
+   * without a role that edits everyone's — the grant reads "you, on yours".
+   */
+  readonly self?: boolean;
 }
 
 /**

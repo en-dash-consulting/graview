@@ -6,8 +6,10 @@ import {
   type GraviewApp,
   type Policy,
   type Principal,
+  declareInstallation,
 } from "@graview/core";
 import { z } from "zod";
+import { declarationToGraph, studioApp } from "@graview/studio";
 import { seedbedBrand } from "./brand.js";
 import { everyPlotTended } from "./invariants.js";
 import { addGardener, addPlot, adoptRule, harvest, sow, tend } from "./mutations.js";
@@ -56,6 +58,8 @@ export interface Chapter {
   readonly pages: boolean;
   /** Whether the coverage lens is mounted over the gardeners (chapter 10 on). */
   readonly lens: boolean;
+  /** The declaration this chapter's studio edits: the chapter is the studio over it (chapter 15). */
+  readonly studioOf?: GraviewApp;
   /** Whether the board lens is mounted over the plots (chapter 11 on). */
   readonly board: boolean;
   /** Whether the garden's own lens — the map — is mounted over the plots instead of the board (chapter 13). */
@@ -64,6 +68,8 @@ export interface Chapter {
   readonly design?: boolean;
   /** For the pages face: photograph at a desk's width rather than a phone's. */
   readonly wide?: boolean;
+  /** Whether the reach lens — what each role may do — is registered over the people (chapter 14). */
+  readonly reach?: boolean;
   /** Which face the picture is of: the scene (default) or the routed pages at phone width. */
   readonly face?: "scene" | "pages";
   /** For the pages face: the path to photograph. */
@@ -508,6 +514,105 @@ const chapterThirteen: Chapter = {
   seats,
 };
 
+/* ------------------------------------------------ 14 · who is here */
+
+/**
+ * The installation is in the graph. Who may use the garden, who has been
+ * asked to, and what each of them may do are nodes and acts like everything
+ * else — drawn only for the coordinator, who sees "Show the installation"
+ * on the bar, and never a district for a gardener. A person's card is their
+ * profile; the derived edit of it is theirs alone by a self grant; and a
+ * lens over the policy draws what each role reaches, read through the same
+ * function the store refuses with.
+ */
+const installation = declareInstallation({ roles: ["coordinator", "gardener"], admin: "coordinator" });
+const fourAndWhoIsHere = createSchema([gardener, plot, planting, rule, ...installation.kinds] as never);
+/*
+ * The people at the keyboard ARE nodes now: a seat's principal id is its
+ * user node's id, which is what a self grant compares. The gardener nodes
+ * june and ravi keep their ids; the users are the same two people as the
+ * installation knows them.
+ */
+const juneUser: Principal = { kind: "human", id: "user-june", roles: ["coordinator"] };
+const raviUser: Principal = { kind: "human", id: "user-ravi", roles: ["gardener"] };
+const seatsWhoIsHere = [
+  { label: "June, coordinator", principal: juneUser },
+  { label: "Ravi, gardener", principal: raviUser },
+] as const;
+const chapterFourteen: Chapter = {
+  n: 14,
+  slug: "who-is-here",
+  title: "Who is here",
+  claim: "Users, invitations and roles are nodes and acts like everything else: drawn only for the seat that keeps the installation, refused for everyone else by the same policy, and a person's own record is theirs to edit. A lens over the policy shows what each role reaches.",
+  adds: [
+    'declareInstallation({ roles, admin }) — two kinds, six acts, a module drawn only for those who administer it, and a self grant for a profile',
+    'createSchema([...yours, ...installation.kinds]), mutations: [...yours, ...installation.mutations], policy: installation.withPolicy(policy)',
+    'reachLens registered over the people as "Who may do what"',
+  ],
+  app: asApp(
+    defineApp({
+      name: "Seedbed",
+      schema: fourAndWhoIsHere as never,
+      mutations: [...grown, ...installation.mutations] as never,
+      invariants: [everyPlotTended as never],
+      intelligence,
+      policy: installation.withPolicy(policy),
+      modules: installation.modules,
+      brand: seedbedBrand,
+      lenses: [coverage, board],
+      version: 2,
+      migrations: chapterTwelve.app.migrations as never,
+    }),
+  ),
+  seed: {
+    nodes: [
+      ...chapterEleven.seed.nodes,
+      { id: "user-june", kind: "user", label: "June", email: "june@seedbed.test", roles: ["coordinator"], status: "active" },
+      { id: "user-ravi", kind: "user", label: "Ravi", email: "ravi@seedbed.test", roles: ["gardener"], status: "active" },
+      { id: "sam-invited", kind: "invitation", label: "sam@seedbed.test", email: "sam@seedbed.test", roles: ["gardener"], status: "pending" },
+    ],
+    edges: chapterEleven.seed.edges,
+  },
+  stop: "#overview=1&show=installation",
+  remembers: false,
+  seat: true,
+  pages: true,
+  design: true,
+  lens: true,
+  board: true,
+  reach: true,
+  principal: juneUser,
+  seats: seatsWhoIsHere,
+};
+
+/*
+ * THE STUDIO. The declaration chapter fourteen arrived at — its kinds,
+ * fields, edges, acts, rules, roles, grants, lenses and brand — read into
+ * the graph and opened in Graview's own interface. Adding a field is an
+ * act; every change is an op with an author and an inverse; a place says
+ * what the checker makes of the declaration as it now stands.
+ */
+const chapterFifteen: Chapter = {
+  n: 15,
+  slug: "the-studio",
+  title: "The studio",
+  claim: "The declaration itself is a graph: every kind, field, edge, act, rule, role and grant of chapter fourteen is a node here, edited with ordinary acts, checked before it is applied, migrated when a stored garden needs it, and written back as the files graview create writes.",
+  adds: [
+    'createStudio(app) — the declaration as a store of the meta-schema; studio.check(), studio.apply(), studio.files()',
+    'add-kind, add-field, add-edge, add-act, add-rule, name-repair, add-role, grant — acts on the declaration, undone like any other',
+    'createStudioLens(app) registered over the kinds as "What the checker says"',
+  ],
+  app: asApp(studioApp("Seedbed studio") as never),
+  seed: declarationToGraph(chapterFourteen.app as never),
+  stop: "#overview=1",
+  remembers: false,
+  seat: true,
+  pages: false,
+  lens: false,
+  board: false,
+  studioOf: chapterFourteen.app,
+};
+
 export const CHAPTERS: readonly Chapter[] = [
   chapterOne,
   chapterTwo,
@@ -522,6 +627,8 @@ export const CHAPTERS: readonly Chapter[] = [
   chapterEleven,
   chapterTwelve,
   chapterThirteen,
+  chapterFourteen,
+  chapterFifteen,
 ];
 
 /** The chapter a URL asks for, or none: the finished example is the default. */

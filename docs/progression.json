@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T14:40:47.895Z",
+  "at": "2026-09-12T16:11:59.915Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -758,6 +758,162 @@
         "design": true,
         "fitsAPhone": true
       }
+    },
+    {
+      "n": 14,
+      "slug": "who-is-here",
+      "title": "Who is here",
+      "claim": "Users, invitations and roles are nodes and acts like everything else: drawn only for the seat that keeps the installation, refused for everyone else by the same policy, and a person's own record is theirs to edit. A lens over the policy shows what each role reaches.",
+      "adds": [
+        "declareInstallation({ roles, admin }) — two kinds, six acts, a module drawn only for those who administer it, and a self grant for a profile",
+        "createSchema([...yours, ...installation.kinds]), mutations: [...yours, ...installation.mutations], policy: installation.withPolicy(policy)",
+        "reachLens registered over the people as \"Who may do what\""
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rule",
+        "user",
+        "invitation"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule",
+        "invite",
+        "welcome",
+        "revoke-invitation",
+        "remove-user",
+        "grant",
+        "revoke"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/14-who-is-here-light.png",
+        "dark": "docs/progression/14-who-is-here-dark.png"
+      },
+      "errors": [],
+      "picture": {
+        "width": 778,
+        "height": 575
+      },
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Gardeners2◆open ▾",
+          "Invitations1open ▾",
+          "Plantings1+1 pastopen ▾",
+          "Plots3◆open ▾",
+          "Rules1open ▾",
+          "People2◆open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→Who tends whatWhat grows whereWho may do whatHide the installationPagesThe garden keeps its agreements◆Ask Activity☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": null,
+        "problems": null,
+        "wordmark": "Seedbed",
+        "focused": null
+      },
+      "seatSees": {
+        "offered": [
+          "Change the plot …",
+          "Name a caretaker …"
+        ],
+        "withheld": ""
+      }
+    },
+    {
+      "n": 15,
+      "slug": "the-studio",
+      "title": "The studio",
+      "claim": "The declaration itself is a graph: every kind, field, edge, act, rule, role and grant of chapter fourteen is a node here, edited with ordinary acts, checked before it is applied, migrated when a stored garden needs it, and written back as the files graview create writes.",
+      "adds": [
+        "createStudio(app) — the declaration as a store of the meta-schema; studio.check(), studio.apply(), studio.files()",
+        "add-kind, add-field, add-edge, add-act, add-rule, name-repair, add-role, grant — acts on the declaration, undone like any other",
+        "createStudioLens(app) registered over the kinds as \"What the checker says\""
+      ],
+      "kinds": [
+        "kind",
+        "field",
+        "edge",
+        "act",
+        "rule",
+        "role",
+        "grant",
+        "lens",
+        "brand"
+      ],
+      "mutations": [
+        "add-kind",
+        "rename-kind",
+        "remove-kind",
+        "add-field",
+        "remove-field",
+        "add-edge",
+        "remove-edge",
+        "add-act",
+        "remove-act",
+        "add-rule",
+        "remove-rule",
+        "name-repair",
+        "forget-repair",
+        "add-role",
+        "grant",
+        "revoke-grant"
+      ],
+      "invariants": [],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 2,
+        "findings": [
+          "act-without-far-end-reading",
+          "act-without-far-end-reading"
+        ]
+      },
+      "pictures": {
+        "light": "docs/progression/15-the-studio-light.png",
+        "dark": "docs/progression/15-the-studio-dark.png"
+      },
+      "errors": [],
+      "picture": {
+        "width": 850,
+        "height": 561
+      },
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "acts12open ▾",
+          "brands1open ▾",
+          "edges3open ▾",
+          "fields18open ▾",
+          "grants4open ▾",
+          "kinds6◆open ▾",
+          "lenses2open ▾",
+          "roles9open ▾",
+          "rules1open ▾"
+        ],
+        "trail": "GraviewGraview←→What the checker saysPagesThe garden keeps its agreements◆Ask Activity☾",
+        "withheld": null,
+        "activity": [],
+        "remembered": null,
+        "problems": null,
+        "wordmark": "Graview",
+        "focused": null
+      }
     }
   ],
   "verdict": {
@@ -774,6 +930,8 @@
     "theLensShowsWhoTendsWhatInChapterTen": true,
     "theBoardShowsTheEmptyBedInChapterEleven": true,
     "theMigrationIsInTheLogInChapterTwelve": true,
+    "theInstallationIsDrawnForTheKeeperInChapterFourteen": true,
+    "theDeclarationIsAGraphInChapterFifteen": true,
     "theGardenWearsItsOwnFaceInChapterThirteen": true
   },
   "passed": true

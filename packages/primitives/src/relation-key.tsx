@@ -1,9 +1,8 @@
 import type { AnySchema } from "@graview/core";
-import { useGraph, useGraview, useNavigation, useSelection } from "@graview/react";
+import { kitConnector, useGraph, useGraview, useKit, useNavigation, useSelection } from "@graview/react";
 import {
   CONNECTOR_DASH,
   connectorStroke,
-  connectorStyle,
   connectorWidth,
 } from "@graview/render";
 import { useEffect, useMemo } from "react";
@@ -27,6 +26,8 @@ import { useEffect, useMemo } from "react";
  */
 export function RelationKey<S extends AnySchema>() {
   const { store, view, emphasis, setEmphasis } = useGraview<S>();
+  // The same kit the scene draws with: a swatch that ignored the brand's kit would be a key you cannot trust.
+  const kit = useKit();
   const { selection, set } = useSelection();
   const { show } = useNavigation();
   // Recomputed when the graph changes, so a relation nobody uses yet does not
@@ -123,7 +124,7 @@ export function RelationKey<S extends AnySchema>() {
         {relations.length === 1 ? "1 relation" : `${relations.length} relations`}
       </span>
       {relations.map(({ kind: edgeKind, count, ends }) => {
-        const style = connectorStyle(edgeKind);
+        const { connector, style } = kitConnector(kit, edgeKind);
         const lit =
           emphasis !== null
             ? emphasis === edgeKind
@@ -170,7 +171,7 @@ export function RelationKey<S extends AnySchema>() {
           >
             {/* The same stroke the scene draws, from the same helpers — a key
                 whose swatch is an approximation is a key you cannot trust. */}
-            <svg width="30" height="8" aria-hidden="true" style={{ display: "block" }}>
+            <svg width="30" height="8" aria-hidden="true" style={{ display: "block", opacity: connector.visible ? 1 : 0.35 }}>
               <path
                 d="M 1 4 L 29 4"
                 fill="none"
@@ -181,6 +182,12 @@ export function RelationKey<S extends AnySchema>() {
               />
             </svg>
             <span style={{ fontSize: "0.71875rem", color: "var(--graview-ink)" }}>{edgeKind}</span>
+            {/* A kind the kit keeps quiet says so here, the one place it is still listed. */}
+            {connector.visible ? null : (
+              <span data-graview-quiet={edgeKind} style={{ fontSize: "0.625rem", color: "var(--graview-ink-faint)", fontStyle: "italic" }}>
+                not drawn
+              </span>
+            )}
             <span
               style={{
                 fontSize: "0.6875rem",

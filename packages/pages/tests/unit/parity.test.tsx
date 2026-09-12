@@ -484,3 +484,29 @@ describe("an act the seat may not take is stated, not offered", () => {
     expect(html).not.toContain('data-testid="withheld"');
   });
 });
+
+describe("an administered module on the pages", () => {
+  it("lists its kinds for the seat that keeps it and for nobody else", async () => {
+    const { createSchema: make, declareInstallation, defineNode: node, Store: MakeStore } = await import("@graview/core");
+    const { z: zed } = await import("zod");
+    const thing = node("thing", { fields: zed.object({ label: zed.string() }), plural: "Things" });
+    const installation = declareInstallation({ roles: ["keeper", "hand"], admin: "keeper" });
+    const kept = make([thing, ...installation.kinds] as never);
+    const policy = installation.withPolicy({ roles: ["hand"], grants: [{ roles: ["hand"], mutations: "*", kinds: ["thing"] }] });
+    const page = (roles: readonly string[]) =>
+      renderToStaticMarkup(
+        <PagesApp
+          context={{
+            store: new MakeStore({ schema: kept as never, mutations: installation.mutations as never, modules: installation.modules, policy }),
+            principal: { id: "someone", kind: "human", roles },
+          }}
+          initialPath="/"
+        />,
+      );
+    expect(page(["keeper"])).toContain("People");
+    expect(page(["keeper"])).toContain("Invitations");
+    expect(page(["hand"])).not.toContain("People");
+    expect(page(["hand"])).not.toContain("Invitations");
+    expect(page(["hand"])).toContain("Things");
+  });
+});

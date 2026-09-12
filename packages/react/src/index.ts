@@ -1,5 +1,5 @@
 export { GraviewProvider, useGraph, useGraview, useNode, useViewMode, ViewModeProvider } from "./context.js";
-export type { GraviewContextValue, GraviewProviderProps, Scheme, ViewMode } from "./context.js";
+export type { AdministeredModule, GraviewContextValue, GraviewProviderProps, Scheme, ViewMode } from "./context.js";
 
 export { createViews, DEFAULT_VIEW, isDefaultView, markDefaultView } from "./view-registry.js";
 export type {
@@ -35,6 +35,8 @@ export type { ResolvedViewProps, SceneProps } from "./scene.js";
 
 
 export { useFlagged, useImplicated, useViolations } from "./hooks.js";
+export { kitConnector, useKit } from "./kit.js";
+export { clipPolyline, orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./routes.js";
 export {
   useAffordances,
   useApplyAffordance,

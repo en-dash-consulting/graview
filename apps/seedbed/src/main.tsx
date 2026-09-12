@@ -113,6 +113,8 @@ if (window.location.pathname.startsWith("/pages")) {
       lens={chapter ? chapter.lens : true}
       board={chapter ? chapter.board : true}
       map={chapter ? (chapter.map ?? false) : false}
+      reach={chapter ? (chapter.reach ?? false) : true}
+      {...(chapter?.studioOf ? { studio: chapter.studioOf } : {})}
       brand={brand}
       syncUrl
       renderer="dom"

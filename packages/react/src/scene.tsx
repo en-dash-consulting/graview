@@ -47,6 +47,8 @@ import { useFlagged, useImplicated } from "./hooks.js";
 import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
 import { isDefaultView } from "./view-registry.js";
 import { pickedFrom, usePickTargets } from "./picking.js";
+import { kitConnector, useKit } from "./kit.js";
+import { clipPolyline, orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./routes.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
 export interface SceneProps<S extends AnySchema> {
@@ -135,8 +137,7 @@ export function Scene<S extends AnySchema>({
     selection,
     setSelection,
     setMenuAt,
-    emphasis,
-  } = useGraview<S>();
+    emphasis, hiddenKinds } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -197,11 +198,10 @@ export function Scene<S extends AnySchema>({
   const sized = useMemo<LayoutOptions>(
     () => ({
       ...options,
-      // A workspace's disabled modules, projected once by the store: the
-      // layout simply never draws those kinds.
-      ...(store.modules.disabledKinds.size > 0
-        ? { hiddenKinds: [...store.modules.disabledKinds].sort() }
-        : {}),
+      // What is not drawn for this seat at this stop: a workspace's disabled
+      // modules, and the administered ones this seat may not see or has not
+      // asked to — one set, from the provider, so every surface agrees.
+      ...(hiddenKinds.size > 0 ? { hiddenKinds: [...hiddenKinds].sort() } : {}),
       /*
        * THE LEFT RAIL. The relation key, the quick relations and the
        * inspector live on the scene's left edge in every mode, and the
@@ -236,7 +236,7 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size, store, views],
+    [options, size, store, views, hiddenKinds],
   );
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, sized),
@@ -837,6 +837,7 @@ function SelectionTies<S extends AnySchema>({
   readonly width: number;
   readonly height: number;
 }) {
+  const kit = useKit();
   const ties = useMemo(() => {
     if (selection.length === 0 || selection.length > 4) return [];
     const chosen = new Set(selection);
@@ -924,7 +925,6 @@ function SelectionTies<S extends AnySchema>({
   const lines: {
     key: string;
     kind: string;
-    d: string;
     endX: number;
     endY: number;
     from: { x: number; y: number };
@@ -1058,7 +1058,6 @@ function SelectionTies<S extends AnySchema>({
     lines.push({
       key: `${tie.kind}:${tie.self}:${tie.other}`,
       kind: tie.kind,
-      d: `M ${from.x} ${from.y} Q ${control.x} ${control.y} ${to.x} ${to.y}`,
       endX: to.x,
       endY: to.y,
       from,
@@ -1092,7 +1091,15 @@ function SelectionTies<S extends AnySchema>({
       }}
     >
       {lines.map((line) => {
-        const style = connectorStyle(line.kind);
+        const { connector, style } = kitConnector(kit, line.kind);
+        // A kind the kit keeps quiet is not drawn — still selectable from the inspector.
+        if (!connector.visible) return null;
+        const quadratic = { p0: line.from, c: line.control, p1: line.to };
+        // The route is the kit's call: the arc the layout chose, its chord, or two elbows.
+        const d =
+          connector.route === "orthogonal"
+            ? polylineD([orthogonalPoints(line.from, line.to)])
+            : (({ p0, c, p1 }) => `M ${p0.x} ${p0.y} Q ${c.x} ${c.y} ${p1.x} ${p1.y}`)(routedQuadratic(connector.route, quadratic));
         /*
          * A tie that stands for one edge takes the pointer, like any line:
          * the hit run is the visible stretch between its two endpoint
@@ -1109,18 +1116,9 @@ function SelectionTies<S extends AnySchema>({
             p: { x: number; y: number },
           ) =>
             p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
-          const q = (t: number) => {
-            const a = (1 - t) * (1 - t);
-            const b = 2 * (1 - t) * t;
-            const c = t * t;
-            return {
-              x: a * line.from.x + b * line.control.x + c * line.to.x,
-              y: a * line.from.y + b * line.control.y + c * line.to.y,
-            };
-          };
           const points: { x: number; y: number }[] = [];
           for (let i = 0; i <= 40; i++) {
-            const point = q(i / 40);
+            const point = routePoint(connector.route, quadratic, i / 40);
             if (inside(line.fromBox, point) || inside(line.toBox, point)) continue;
             points.push(point);
           }
@@ -1166,7 +1164,7 @@ function SelectionTies<S extends AnySchema>({
             <path
               data-graview-tie={line.kind}
               data-graview-tie-proxy={line.proxy || undefined}
-              d={line.d}
+              d={d}
               fill="none"
               stroke={connectorStroke(style)}
               strokeWidth={line.proxy ? 1.1 : 1.6}
@@ -1207,6 +1205,7 @@ function RelationCaptions({
   readonly width: number;
   readonly stageRef: { current: HTMLElement | null };
 }) {
+  const kit = useKit();
   const runs: { key: string; text: string; left: number; right: number; top: number }[] = [];
   for (const node of nodes) {
     if (!node.via || Math.round(node.plane) !== 1) continue;
@@ -1235,7 +1234,8 @@ function RelationCaptions({
       top,
     });
   }
-  if (runs.length === 0) return null;
+  // The kit may keep the captions off: the edge's words stay on the inspector.
+  if (runs.length === 0 || !kit.captions.visible) return null;
 
   return (
     <div
@@ -2365,6 +2365,7 @@ function Connectors({
   };
   scheme: "light" | "dark";
 }) {
+  const kit = useKit();
   /*
    * Selecting DRAWS ITS RELATIONS and recedes the rest.
    *
@@ -2429,7 +2430,9 @@ function Connectors({
         const self = connector.loop === true;
         // Stroke treatment is derived from the edge kind, so `protects` can
         // never be mistaken for `assigned-to`.
-        const style = connectorStyle(connector.kind);
+        const { connector: kitLine, style } = kitConnector(kit, connector.kind);
+        // A kind the kit keeps quiet is not drawn; the legend still lists it.
+        if (!kitLine.visible) return null;
         const radius = self ? Math.max(22, Math.min(fromBox.width, fromBox.height) * 0.3) : 0;
         /*
          * The loop SITS ON the card's top edge, off to the right.
@@ -2488,15 +2491,21 @@ function Connectors({
             ny = -ny;
           }
         }
-        const curve: Quadratic = { p0: from, c: { x: midX + nx * bow, y: midY + ny * bow }, p1: to };
+        // The route is the kit's call: the bowed arc, its chord, or two elbows.
+        const curve: Quadratic = routedQuadratic(kitLine.route, { p0: from, c: { x: midX + nx * bow, y: midY + ny * bow }, p1: to });
+        const orthogonal = kitLine.route === "orthogonal";
         /*
          * The visible runs: out of the box it starts in, into the box it
          * ends in, and under any card it crosses between. A line with no
          * run in the open — one drawing inside another — has nothing
          * honest to show.
          */
-        const runs = self ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
-        if (!self && runs.length === 0) return null;
+        const runs = self || orthogonal ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
+        const legs = !self && orthogonal ? clipPolyline(orthogonalPoints(from, to), [fromBox, toBox, ...strand.obstacles]) : [];
+        if (!self && runs.length === 0 && legs.length === 0) return null;
+        const lastLeg = legs[legs.length - 1];
+        const firstDrawn = orthogonal ? legs[0]?.[0] : runs[0]?.p0;
+        const lastDrawn = orthogonal ? lastLeg?.[lastLeg.length - 1] : runs[runs.length - 1]?.p1;
         const quad = (segments: Quadratic[]) =>
           segments
             .map((run) => `M ${run.p0.x} ${run.p0.y} Q ${run.c.x} ${run.c.y} ${run.p1.x} ${run.p1.y}`)
@@ -2506,11 +2515,13 @@ function Connectors({
           // circle, so it closes cleanly at any size.
           `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
           ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`;
-        const d = self ? loopD : quad(runs);
+        const d = self ? loopD : orthogonal ? polylineD(legs) : quad(runs);
         // The hit stroke also keeps out of the cards an end is drawn inside.
         const hitD = self
           ? loopD
-          : quad(clipQuadratic(curve, [fromBox, toBox, ...strand.hosts, ...strand.obstacles]));
+          : orthogonal
+            ? polylineD(clipPolyline(orthogonalPoints(from, to), [fromBox, toBox, ...strand.hosts, ...strand.obstacles]))
+            : quad(clipQuadratic(curve, [fromBox, toBox, ...strand.hosts, ...strand.obstacles]));
         const only = strand.edges.length === 1 ? strand.edges[0]! : null;
         const edgeId = only ? edgeSelectionId(connector.kind, only.from, only.to) : null;
         const edgeChosen = edgeId !== null && selection.includes(edgeId);
@@ -2531,17 +2542,17 @@ function Connectors({
             ? 0.9
             : lit
               ? 0.78
-              : style.opacity * 0.34;
+              : style.opacity * kit.emphasis.dim;
         /*
          * A lit line MARKS ITS FAR END, as a tie does: the destination is
          * where the eye is being sent, and a dot says the line lands on
          * something specific rather than trailing off.
          */
         const far =
-          lit && runs.length > 0
+          lit && firstDrawn && lastDrawn
             ? strand.edges.some((edge) => chosenReal.has(edge.from))
-              ? runs[runs.length - 1]!.p1
-              : runs[0]!.p0
+              ? lastDrawn
+              : firstDrawn
             : null;
         const line = (
           <g key={strand.key}>

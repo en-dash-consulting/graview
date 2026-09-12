@@ -59,6 +59,27 @@ somebody with a bright office files a bug — so the framework measures it.
    `graview check` refuses an accent naming a kind nobody declared (a typo
    would otherwise silently hash) and a value that is not a number.
 
+6. **Dress the lines: the kit.** Everything the scene draws that is not a
+   view is declared on `brand.kit` — any part, the rest as shipped:
+
+   ```ts
+   kit: {
+     connectors: {
+       all: { route: "orthogonal" },                       // curve | straight | orthogonal
+       byEdge: { "tended-by": { colour: "#1d3f8a", pattern: "dashed" }, "grows-in": { visible: false } },
+     },
+     captions: { visible: true }, grid: { visible: false }, lattice: { size: 46 },
+     tags: { visible: true }, emphasis: { dim: 0.34 }, marks: { flag: "⚠" },
+   },
+   ```
+
+   A route or a pattern is a named strategy, one case in one file
+   (`@graview/react` `routes.ts`, `@graview/render` `connectors.ts`), so
+   the next one is one more case. `graview check` holds an explicit line
+   colour to 3:1 against both grounds in both schemes
+   (`kit-contrast-below-aa`); a kind kept quiet is still on the inspector.
+   An embed's `handle.setBrand({ ...brand, kit })` re-dresses it live.
+
 ## Styling by conversation
 
 This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more
@@ -67,6 +88,8 @@ because the whole look is one serialisable declaration:
 
 - **palette** → change `accent` (or supply explicit scheme tokens) and let
   `brandFromAccent` move lightness the minimum distance that clears AA;
+- **lines** → `kit.connectors` ("right-angled lines", "hide the grows-in
+  lines", "make tended-by dashed and navy") and the ground's `kit.grid`;
 - **feel** → `shape.radius` (square = formal) and `shape.density` (tight =
   dense) — one number each;
 - **voice** → `typography.body/display/mono` with real fallback stacks;

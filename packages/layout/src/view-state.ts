@@ -47,6 +47,15 @@ export interface ViewState {
    */
   readonly past?: boolean;
   /**
+   * Modules drawn only for those who administer them, SHOWN at this stop:
+   * the installation's own users and invitations raised beside the domain.
+   * A stop like any other — in the URL, so an embed can open on it and Back
+   * knows the way out — and never on for a seat that may not see them; the
+   * provider keeps what it may not show out of the picture whatever the
+   * address says.
+   */
+  readonly shown?: readonly string[];
+  /**
    * What is SELECTED, as part of the stop.
    *
    * Selection used to live only in component state, which broke the central
@@ -92,6 +101,7 @@ export function toUrl(state: ViewState): string {
   if (state.overview) params.set("overview", "1");
   if (state.zoom) params.set("zoom", "1");
   if (state.past) params.set("past", "1");
+  if (state.shown && state.shown.length > 0) params.set("show", [...state.shown].sort().join(","));
   if (state.selection !== undefined && state.selection.length > 0) {
     params.set("sel", [...state.selection].sort().join(","));
   }
@@ -155,6 +165,9 @@ export function fromUrl(url: string): ViewState {
     ...(overview ? { overview: true } : {}),
     ...(params.get("zoom") === "1" ? { zoom: true } : {}),
     ...(params.get("past") === "1" ? { past: true } : {}),
+    ...(params.get("show")
+      ? { shown: [...new Set(params.get("show")!.split(",").filter(Boolean))].sort() }
+      : {}),
     ...(panX !== null && panY !== null ? { pan: { x: panX, y: panY } } : {}),
     focusId: unabbreviated(params.get("focus")),
     relation: params.get("relation"),
@@ -262,6 +275,18 @@ export function withOverview(state: ViewState, overview: boolean): ViewState {
     return { ...state, overview: false, expanded };
   }
   return { ...state, overview };
+}
+
+/** Show or hide a module drawn only for those who administer it. */
+export function withShown(state: ViewState, module: string, shown: boolean): ViewState {
+  const held = new Set(state.shown ?? []);
+  if (shown) held.add(module);
+  else held.delete(module);
+  if (held.size === 0) {
+    const { shown: _drop, ...rest } = state;
+    return rest;
+  }
+  return { ...state, shown: [...held].sort() };
 }
 
 /** Widen the horizon to include the past, or narrow it back to now. */

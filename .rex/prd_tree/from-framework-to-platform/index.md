@@ -26,7 +26,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [Branding an installation without forking it](./branding-an-installation-without.md) | completed |
-| [Studio: the declaration itself, edited in the graph's own interface, with changes applied as mutations](./studio-the-declaration-itself-edited.md) | pending |
+| [Studio: the declaration itself, edited in the graph's own interface, with changes applied as mutations](./studio-the-declaration-itself-edited.md) | in_progress |
 | [Systems of record: two-way sync with the world](./systems-of-record-two-way-sync-with.md) | completed |
-| [The installation is in the graph: users, invitations and profiles as nodes, with an admin entrypoint in the app](./the-installation-is-in-the-graph-users.md) | pending |
+| [The installation is in the graph: users, invitations and profiles as nodes, with an admin entrypoint in the app](./the-installation-is-in-the-graph-users.md) | completed |
 | [Who may do what, derived and enforced](./who-may-do-what-derived-and-enforced.md) | completed |

@@ -96,6 +96,18 @@ export interface GraviewContextValue<S extends AnySchema> {
    */
   readonly principal: Principal;
   /**
+   * The kinds not drawn for this seat at this stop: a workspace's disabled
+   * modules, the administered modules this seat may not see, and the ones
+   * it may see but has not asked to. One set, so the scene, the shelf, the
+   * chat and the pages never disagree about what is there.
+   */
+  readonly hiddenKinds: ReadonlySet<string>;
+  /**
+   * The modules drawn only for those who administer them, as this seat
+   * meets them: whether it may show each, and whether it is shown now.
+   */
+  readonly administered: readonly AdministeredModule[];
+  /**
    * The intelligence this installation runs, as affordance providers.
    *
    * Held here so every suggestion surface derives from the same set — the
@@ -154,6 +166,16 @@ const ANONYMOUS: Principal = { kind: "human" };
 
 /** One shared empty, so "nothing selected" is referentially stable. */
 const EMPTY_SELECTION: readonly string[] = [];
+
+export interface AdministeredModule {
+  readonly name: string;
+  readonly description?: string;
+  readonly kinds: readonly string[];
+  /** Whether this seat may run any of the module's acts, and so may see it. */
+  readonly canShow: boolean;
+  /** Whether the stop shows it. Never true when `canShow` is false. */
+  readonly shown: boolean;
+}
 
 export interface GraviewProviderProps<S extends AnySchema> {
   readonly store: Store<S>;
@@ -255,8 +277,8 @@ export function GraviewProvider<S extends AnySchema>({
        * module is off — lands on home rather than on a void with its
        * name in the address bar.
        */
-      if (resolved.focusId !== null && store.modules.disabledKinds.size > 0) {
-        const disabled = store.modules.disabledKinds;
+      const disabled = hiddenFor(store, principal, resolved.shown);
+      if (resolved.focusId !== null && disabled.size > 0) {
         const kinds = kindsOfAggregate(resolved.focusId);
         const node = store.graph.getNode(resolved.focusId);
         const gone =
@@ -291,7 +313,7 @@ export function GraviewProvider<S extends AnySchema>({
       }
       return resolved;
     },
-    [withoutWhatIsGone, store, homeView],
+    [withoutWhatIsGone, store, homeView, principal],
   );
 
   /*
@@ -301,6 +323,21 @@ export function GraviewProvider<S extends AnySchema>({
    * a node that is not there.
    */
   const current = resolveStop(view ?? internalView);
+  const hiddenKinds = useMemo(() => hiddenFor(store, principal, current.shown), [store, principal, current.shown]);
+  const administered = useMemo<readonly AdministeredModule[]>(
+    () =>
+      [...store.modules.administered.entries()].map(([name, module]) => {
+        const canShow = store.mayAdminister(name, principal);
+        return {
+          name,
+          ...(module.description ? { description: module.description } : {}),
+          kinds: module.kinds ?? [],
+          canShow,
+          shown: canShow && (current.shown ?? []).includes(name),
+        };
+      }),
+    [store, principal, current.shown],
+  );
 
   const setView = useCallback(
     (next: ViewState | ((currentView: ViewState) => ViewState)) => {
@@ -377,6 +414,8 @@ export function GraviewProvider<S extends AnySchema>({
       activity,
       noteAttention,
       principal,
+      hiddenKinds,
+      administered,
       ...(providers ? { providers } : {}),
       ...(brand ? { brand } : {}),
     }),
@@ -393,6 +432,8 @@ export function GraviewProvider<S extends AnySchema>({
       activity,
       noteAttention,
       principal,
+      hiddenKinds,
+      administered,
       providers,
       brand,
     ],
@@ -459,4 +500,24 @@ export function useNode<S extends AnySchema>(id: string | null): NodeOfSchema<S>
     [store, id],
   );
   return useSyncExternalStore(subscribe, read, read);
+}
+
+/**
+ * What a seat does not see at a stop. Disabled modules are nobody's; an
+ * administered module is kept from a seat that may not run its acts, and
+ * from one that may until the stop says `shown` — what the address says is
+ * never enough on its own.
+ */
+function hiddenFor<S extends AnySchema>(
+  store: Store<S>,
+  principal: Principal,
+  shown: readonly string[] | undefined,
+): ReadonlySet<string> {
+  const hidden = new Set<string>(store.modules.disabledKinds);
+  for (const kind of store.kindsKeptFrom(principal)) hidden.add(kind);
+  for (const [name, module] of store.modules.administered) {
+    if (store.mayAdminister(name, principal) && (shown ?? []).includes(name)) continue;
+    for (const kind of module.kinds ?? []) hidden.add(kind);
+  }
+  return hidden;
 }

@@ -146,6 +146,8 @@ export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
 export { article, humaniseField, readableFields, summarise, withArticle } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
+export { checkKitContrast, connectorHueColour, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
+export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/kit.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal } from "./permissions/types.js";
 
@@ -186,6 +188,8 @@ export type { SchemaBinding } from "./bind.js";
 export { formField, formFields, formComplete } from "./mutations/form.js";
 export type { FormField, ScalarField } from "./mutations/form.js";
 export { resolveModules } from "./modules.js";
+export { declareInstallation, INSTALLATION_MODULE } from "./installation.js";
+export type { Installation, InstallationOptions } from "./installation.js";
 export type { ModuleDeclaration, ModuleMap, ModuleProjection } from "./modules.js";
 export type { IntelligenceProviderDeclaration, MigrationDeclaration } from "./app.js";
 export { defineApp } from "./app.js";
