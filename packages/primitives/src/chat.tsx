@@ -185,7 +185,7 @@ export function ChatPanel<S extends AnySchema>({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
         title="Talk to the seat: ask about anything here, or say a change in words"
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5 }}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.78125rem" }}
       >
         <span aria-hidden="true">◆</span>
         Ask
@@ -219,14 +219,14 @@ export function ChatPanel<S extends AnySchema>({
               borderBottom: "1px solid var(--graview-edge)",
             }}
           >
-            <span style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
+            <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
               Seat
             </span>
             <span
               data-testid="chat-source"
               // The WHY rides along: "no WebGPU" is actionable, "failed" is not.
               title={warmth?.state === "failed" ? warmth.detail : undefined}
-              style={{ fontSize: 11, color: "var(--graview-ink-muted)" }}
+              style={{ fontSize: "0.6875rem", color: "var(--graview-ink-muted)" }}
             >
               {respond
                 ? "app-provided"
@@ -244,7 +244,7 @@ export function ChatPanel<S extends AnySchema>({
                 aria-expanded={settings}
                 onClick={() => setSettings((current) => !current)}
                 title="Choose what answers: the graph, a model in this browser, or your own key"
-                style={{ fontSize: 12, padding: "2px 8px", minHeight: 24 }}
+                style={{ fontSize: "0.75rem", padding: "2px 8px", minHeight: 24 }}
               >
                 ⚙
               </button>
@@ -276,7 +276,7 @@ export function ChatPanel<S extends AnySchema>({
             }}
           >
             {turns.length === 0 ? (
-              <li style={{ fontSize: 12, color: "var(--graview-ink-muted)", lineHeight: 1.5 }}>
+              <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)", lineHeight: 1.5 }}>
                 Ask what's wrong, ask about anything by name, or say a change in its own words.
                 {selection.length > 0 ? " “This” means what you have selected." : ""}
               </li>
@@ -289,7 +289,7 @@ export function ChatPanel<S extends AnySchema>({
                     maxWidth: 260,
                     padding: "6px 10px",
                     borderRadius: 10,
-                    fontSize: 12.5,
+                    fontSize: "0.78125rem",
                     lineHeight: 1.45,
                     background: turn.role === "person" ? "var(--graview-panel-muted)" : "var(--graview-panel)",
                     border: "1px solid var(--graview-edge)",
@@ -305,7 +305,7 @@ export function ChatPanel<S extends AnySchema>({
                     data-testid="chat-apply"
                     onClick={() => void apply(proposal)}
                     title={proposal.why ?? "Apply this change"}
-                    style={{ fontSize: 12, justifySelf: "start" }}
+                    style={{ fontSize: "0.75rem", justifySelf: "start" }}
                   >
                     {describeProposal(store, proposal)}
                   </button>
@@ -313,7 +313,7 @@ export function ChatPanel<S extends AnySchema>({
               </li>
             ))}
             {busy ? (
-              <li style={{ fontSize: 12, color: "var(--graview-ink-faint)" }}>thinking…</li>
+              <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>thinking…</li>
             ) : null}
           </ol>
           )}
@@ -332,7 +332,7 @@ export function ChatPanel<S extends AnySchema>({
               style={{
                 flex: 1,
                 font: "inherit",
-                fontSize: 12.5,
+                fontSize: "0.78125rem",
                 padding: "6px 9px",
                 borderRadius: 8,
                 border: "1px solid var(--graview-edge)",
@@ -340,7 +340,7 @@ export function ChatPanel<S extends AnySchema>({
                 color: "var(--graview-ink)",
               }}
             />
-            <button type="submit" disabled={busy || draft.trim().length === 0} style={{ fontSize: 12.5 }}>
+            <button type="submit" disabled={busy || draft.trim().length === 0} style={{ fontSize: "0.78125rem" }}>
               Send
             </button>
           </form>
@@ -368,10 +368,10 @@ function ChatSettings({
   const [model, setModel] = useState(config.remote?.model ?? "");
   const [baseUrl, setBaseUrl] = useState(config.remote?.baseUrl ?? "");
 
-  const label: React.CSSProperties = { fontSize: 11, color: "var(--graview-ink-muted)" };
+  const label: React.CSSProperties = { fontSize: "0.6875rem", color: "var(--graview-ink-muted)" };
   const field: React.CSSProperties = {
     font: "inherit",
-    fontSize: 12.5,
+    fontSize: "0.78125rem",
     padding: "6px 9px",
     borderRadius: 8,
     border: "1px solid var(--graview-edge)",
@@ -426,7 +426,7 @@ function ChatSettings({
             onChange={() => setSource(value)}
           />
           <span style={{ display: "grid", gap: 2 }}>
-            <span style={{ fontSize: 12.5 }}>{title}</span>
+            <span style={{ fontSize: "0.78125rem" }}>{title}</span>
             <span style={{ ...label, lineHeight: 1.4 }}>{detail}</span>
           </span>
         </label>
@@ -477,7 +477,7 @@ function ChatSettings({
             ? "A remote model needs a key"
             : undefined
         }
-        style={{ justifySelf: "start", fontSize: 12.5 }}
+        style={{ justifySelf: "start", fontSize: "0.78125rem" }}
       >
         Use this
       </button>

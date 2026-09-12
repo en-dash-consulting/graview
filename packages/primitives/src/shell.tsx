@@ -161,7 +161,7 @@ export function Shell<S extends AnySchema>({
                 alignItems: "center",
                 minHeight: 24,
                 padding: "2px 8px",
-                fontSize: 12.5,
+                fontSize: "0.78125rem",
                 color: "var(--graview-ink-muted)",
                 textDecoration: "none",
               }}

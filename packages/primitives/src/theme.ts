@@ -140,7 +140,16 @@ ${surface} {
   margin: 0;
   background: var(--graview-ground-deep);
   color: var(--graview-ink);
-  font: 14px/1.55 var(--graview-font-body);
+  /*
+   * THE READER'S OWN TEXT SIZE.
+   *
+   * This was 14px, and every size in the framework was an absolute pixel
+   * count under it, so somebody who sets a larger default font in their
+   * browser — the setting WCAG 1.4.4 is about — got a Graview that ignored
+   * them completely. 0.875rem is 14px at the default 16px root, so nothing
+   * moves for anyone who has not asked for anything.
+   */
+  font: 0.875rem/1.55 var(--graview-font-body);
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }

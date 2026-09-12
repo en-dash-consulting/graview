@@ -204,7 +204,7 @@ export function Panel({
             <span
               style={{
                 marginLeft: "auto",
-                fontSize: 11,
+                fontSize: "0.6875rem",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 ...FAINT_TEXT,
@@ -338,7 +338,7 @@ export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProp
         boxSizing: "border-box",
         padding: "3px 9px",
         borderRadius: 999,
-        fontSize: 12,
+        fontSize: "0.75rem",
         lineHeight: 1.5,
         whiteSpace: "nowrap",
         /*
@@ -490,7 +490,7 @@ export function Axis({ ticks, orientation = "vertical", extent }: AxisProps) {
   return (
     <div
       data-graview-primitive="axis"
-      style={{ position: "relative", width: "100%", height: "100%", fontSize: 11, ...FAINT_TEXT }}
+      style={{ position: "relative", width: "100%", height: "100%", fontSize: "0.6875rem", ...FAINT_TEXT }}
     >
       {ticks.map((tick) => (
         <div
@@ -538,7 +538,7 @@ export function Grid({ columns, extent, gutter = 46, children }: GridProps) {
             key={column.id}
             style={{
               flex: 1,
-              fontSize: 11,
+              fontSize: "0.6875rem",
               letterSpacing: "0.14em",
               textTransform: "uppercase",
               textAlign: "center",

@@ -479,7 +479,7 @@ export function CoverageView<S extends AnySchema>({
                     maxWidth: HEADER_MAX,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    fontSize: 10.5,
+                    fontSize: "0.65625rem",
                     letterSpacing: "0.005em",
                     color: column.used
                       ? lit.size > 0 && !lit.has(column.id)
@@ -507,7 +507,7 @@ export function CoverageView<S extends AnySchema>({
                 {startsGroup && row.group ? (
                   <div
                     style={{
-                      fontSize: 9.5,
+                      fontSize: "0.59375rem",
                       letterSpacing: "0.16em",
                       textTransform: "uppercase",
                       color: "var(--graview-ink-faint)",
@@ -538,7 +538,7 @@ export function CoverageView<S extends AnySchema>({
                       alignItems: "center",
                       gap: 7,
                       padding: "6px 10px 6px 0",
-                      fontSize: 12,
+                      fontSize: "0.75rem",
                       minWidth: 0,
                       color:
                         missing || broken.has(row.id) ? "var(--graview-warn)" : "var(--graview-ink)",
@@ -571,7 +571,7 @@ export function CoverageView<S extends AnySchema>({
                         style={{
                           marginLeft: "auto",
                           flex: "0 0 auto",
-                          fontSize: 11,
+                          fontSize: "0.6875rem",
                           color: row.badged
                             ? "var(--graview-ink-faint)"
                             : "var(--graview-warn)",

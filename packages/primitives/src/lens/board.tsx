@@ -242,7 +242,7 @@ export function BoardView<S extends AnySchema>({
             items={holes.map((slot) => ({ id: slot.id, label: slot.code }))}
           />
         ) : (
-          <span style={{ fontSize: 12, color: "var(--graview-ink-faint)" }}>Every slot filled.</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>Every slot filled.</span>
         )}
       </Panel>
     );
@@ -370,7 +370,7 @@ export function BoardView<S extends AnySchema>({
                 display: page ? "grid" : "flex",
                 gap: page ? 1 : 7,
                 alignItems: page ? "start" : "baseline",
-                fontSize: 11.5,
+                fontSize: "0.71875rem",
                 lineHeight: 1.45,
                 color: "var(--graview-ink-muted)",
                 /*
@@ -413,7 +413,7 @@ export function BoardView<S extends AnySchema>({
             </li>
           ))}
           {marked.length > (page ? 6 : 2) ? (
-            <li style={{ fontSize: 11.5, color: "var(--graview-ink-faint)" }}>
+            <li style={{ fontSize: "0.71875rem", color: "var(--graview-ink-faint)" }}>
               +{marked.length - (page ? 6 : 2)} more
             </li>
           ) : null}
@@ -480,7 +480,7 @@ export function BoardView<S extends AnySchema>({
           >
             <span
               style={{
-                fontSize: 10,
+                fontSize: "0.625rem",
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
                 color: "var(--graview-ink-faint)",
@@ -524,7 +524,7 @@ export function BoardView<S extends AnySchema>({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 9,
+                  fontSize: "0.5625rem",
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
                   whiteSpace: "nowrap",
@@ -600,7 +600,7 @@ export function BoardView<S extends AnySchema>({
                     left: `${(1 - zone.to) * 100}%`,
                     width: `${(zone.to - zone.from) * 100}%`,
                     textAlign: "center",
-                    fontSize: 9,
+                    fontSize: "0.5625rem",
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
                     whiteSpace: "nowrap",
@@ -687,7 +687,7 @@ export function BoardView<S extends AnySchema>({
                     borderRadius: 999,
                     display: "grid",
                     placeItems: "center",
-                    fontSize: 10.5,
+                    fontSize: "0.65625rem",
                     letterSpacing: "0.02em",
                     // An empty slot is drawn as an OUTLINE, not as a filled
                     // shape with no name: the hole should look like a hole.
@@ -722,7 +722,7 @@ export function BoardView<S extends AnySchema>({
                         position: "absolute",
                         top: -3,
                         right: -3,
-                        fontSize: 9,
+                        fontSize: "0.5625rem",
                         lineHeight: 1,
                         color: "var(--graview-warn)",
                       }}
@@ -732,7 +732,7 @@ export function BoardView<S extends AnySchema>({
                   ) : null}
                 </span>
                 {hole ? (
-                  <span style={{ fontSize: 10.5, whiteSpace: "nowrap", color: "var(--graview-warn)" }}>
+                  <span style={{ fontSize: "0.65625rem", whiteSpace: "nowrap", color: "var(--graview-warn)" }}>
                     {options.emptyLabel ?? "empty"}
                   </span>
                 ) : (
@@ -741,7 +741,7 @@ export function BoardView<S extends AnySchema>({
                       key={occupant.id}
                       {...(one ? {} : { "data-graview-pick": occupant.id })}
                       style={{
-                        fontSize: 10.5,
+                        fontSize: "0.65625rem",
                         whiteSpace: "nowrap",
                         // The NAME carries the person's own trouble — an injury,
                         // a suspension — and nothing else. A rule about the
@@ -764,7 +764,7 @@ export function BoardView<S extends AnySchema>({
           <div style={{ display: "grid", gap: 6, alignContent: "start", minWidth: 0 }}>
             <span
               style={{
-                fontSize: 10,
+                fontSize: "0.625rem",
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
                 color: "var(--graview-ink-faint)",

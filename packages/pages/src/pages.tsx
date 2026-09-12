@@ -133,26 +133,26 @@ const h1: React.CSSProperties = {
 const h2: React.CSSProperties = {
   margin: 0,
   fontFamily: DISPLAY,
-  fontSize: 22,
+  fontSize: "1.375rem",
   lineHeight: 1.25,
   fontWeight: 600,
   letterSpacing: "-0.006em",
 };
 const eyebrow: React.CSSProperties = {
   margin: 0,
-  fontSize: 12,
+  fontSize: "0.75rem",
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: "var(--graview-ink-muted)",
 };
 const lede: React.CSSProperties = {
   margin: 0,
-  fontSize: 18,
+  fontSize: "1.125rem",
   lineHeight: 1.5,
   color: "var(--graview-ink-muted)",
   maxWidth: "58ch",
 };
-const quiet: React.CSSProperties = { color: "var(--graview-ink-muted)", fontSize: 14 };
+const quiet: React.CSSProperties = { color: "var(--graview-ink-muted)", fontSize: "0.875rem" };
 const rule: React.CSSProperties = { borderTop: "1px solid var(--graview-edge)", paddingTop: 24 };
 // A link is a target: tall enough for a fingertip without leaving the line.
 const link: React.CSSProperties = {
@@ -181,7 +181,7 @@ const plain: React.CSSProperties = {
 };
 const button: React.CSSProperties = {
   font: "inherit",
-  fontSize: 14,
+  fontSize: "0.875rem",
   padding: "8px 14px",
   borderRadius: "var(--graview-radius-sm, 8px)",
   border: "1px solid var(--graview-edge-bright)",
@@ -276,7 +276,7 @@ export function DefaultShell<S extends AnySchema>({
     location.pathname === path || location.pathname.startsWith(`${path}/`);
   const navLink = (path: string): React.CSSProperties => ({
     ...plain,
-    fontSize: 14,
+    fontSize: "0.875rem",
     padding: "6px 0",
     color: current(path) ? "var(--graview-ink)" : "var(--graview-ink-muted)",
     borderBottom: current(path) ? "2px solid var(--graview-accent)" : "2px solid transparent",
@@ -290,7 +290,7 @@ export function DefaultShell<S extends AnySchema>({
         background: "var(--graview-ground)",
         color: "var(--graview-ink)",
         fontFamily: "var(--graview-font-body, system-ui)",
-        fontSize: 16,
+        fontSize: "1rem",
         lineHeight: 1.6,
       }}
     >
@@ -316,7 +316,7 @@ export function DefaultShell<S extends AnySchema>({
                 alignItems: "center",
                 gap: 10,
                 fontFamily: DISPLAY,
-                fontSize: 20,
+                fontSize: "1.25rem",
                 fontWeight: 600,
                 letterSpacing: "-0.01em",
                 minHeight: 32,
@@ -370,7 +370,7 @@ export function DefaultShell<S extends AnySchema>({
                 <span
                   data-testid="problems-count"
                   style={{
-                    fontSize: 12,
+                    fontSize: "0.75rem",
                     lineHeight: 1,
                     padding: "3px 7px",
                     borderRadius: 999,
@@ -391,7 +391,7 @@ export function DefaultShell<S extends AnySchema>({
           borderTop: "1px solid var(--graview-edge)",
           padding: "18px 20px 28px",
           ...quiet,
-          fontSize: 13,
+          fontSize: "0.8125rem",
         }}
       >
         <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap" }}>
@@ -466,7 +466,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
       <header style={{ display: "grid", gap: 14 }}>
         <h1 style={h1}>{brand?.name ?? "Graview"}</h1>
         <p style={lede}>{summary}</p>
-        <p style={{ margin: 0, fontSize: 15 }} data-testid="standing-card">
+        <p style={{ margin: 0, fontSize: "0.9375rem" }} data-testid="standing-card">
           {violations.length === 0 ? (
             <span style={quiet}>All rules hold.</span>
           ) : (
@@ -611,7 +611,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
       </header>
 
       {members.length === 0 ? (
-        <p style={{ ...lede, fontSize: 16 }} data-testid="none-yet">
+        <p style={{ ...lede, fontSize: "1rem" }} data-testid="none-yet">
           None yet
           {creators.length > 0
             ? ` — the first one starts below, with “${creators[0]?.mutation.title ?? creators[0]?.mutation.name}”.`
@@ -637,7 +637,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
               >
                 <Link
                   to={recordPath(store.schema, kind, node.id)}
-                  style={{ ...plain, fontFamily: DISPLAY, fontSize: 19, fontWeight: 600, lineHeight: 1.3 }}
+                  style={{ ...plain, fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, lineHeight: 1.3 }}
                 >
                   {flagged.has(node.id) ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
                   {label}
@@ -769,8 +769,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           >
             {facts.fields.map((field) => (
               <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0 }}>
-                <dt style={{ ...eyebrow, fontSize: 11 }}>{field.label}</dt>
-                <dd style={{ margin: 0, fontSize: 17, overflowWrap: "anywhere" }}>{field.value}</dd>
+                <dt style={{ ...eyebrow, fontSize: "0.6875rem" }}>{field.label}</dt>
+                <dd style={{ margin: 0, fontSize: "1.0625rem", overflowWrap: "anywhere" }}>{field.value}</dd>
               </div>
             ))}
           </dl>
@@ -800,7 +800,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             {group.targets.map((target) => (
               <li key={target.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 <KindMark kind={target.kind} brand={brand} size={7} />
-                <Link to={recordPath(store.schema, target.kind, target.id)} style={{ ...link, fontSize: 17 }}>
+                <Link to={recordPath(store.schema, target.kind, target.id)} style={{ ...link, fontSize: "1.0625rem" }}>
                   {target.label}
                 </Link>
               </li>
@@ -849,7 +849,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   background: "var(--graview-panel)",
                 }}
               >
-                <h3 style={{ ...h2, fontSize: 18 }}>{affordance.label}</h3>
+                <h3 style={{ ...h2, fontSize: "1.125rem" }}>{affordance.label}</h3>
                 {mutation.description ? <p style={{ ...quiet, margin: 0 }}>{mutation.description}</p> : null}
                 <DerivedForm
                   store={store}
@@ -994,7 +994,7 @@ export function Repairs<S extends AnySchema>({
                 key={at}
                 data-testid="withheld"
                 data-withheld={verdict.refusal.wouldNeed.join(",") || "nobody"}
-                style={{ margin: 0, fontSize: 13, color: "var(--graview-ink-muted)" }}
+                style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}
               >
                 <s>{repair.label}</s> — {verdict.refusal.message}
               </p>
@@ -1038,12 +1038,12 @@ export function Repairs<S extends AnySchema>({
         />
       ) : null}
       {opened && !asking && (opened.missing ?? []).length > 0 ? (
-        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: 13 }}>
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.8125rem" }}>
           “{opened.label}” names {opened.mutation}, which this app does not declare.
         </p>
       ) : null}
       {failed ? (
-        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: 13 }}>
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.8125rem" }}>
           {failed}
         </p>
       ) : null}

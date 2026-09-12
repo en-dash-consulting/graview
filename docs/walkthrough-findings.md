@@ -1270,3 +1270,33 @@ at the end of every stage.
   else in that object is for a person. Criteria extended: both tests now
   assert the node's NAME, the field humanised, and that no issue object,
   code or path appears. Verified failing without the fix.
+
+### W-050 · The reader's own text size never reaches the app
+- stage: I · face: both · width: any · scheme: both
+- expected: stage I's "text zoom to 200% — the root font size, not page zoom,
+  which is a scale factor and proves nothing about reflow" is a criterion
+  that can fail
+- actual: the theme pinned the base to `font: 14px/1.55` and every one of the
+  120 font sizes under it across primitives, pages and react was an absolute
+  pixel count — zero rem anywhere. Measured with the root at 32px: the body
+  stayed at 14 and a heading at 28. So somebody who sets a larger default
+  font in their browser, which is the setting WCAG 1.4.4 is about, got a
+  Graview that ignored them completely — and stage I passed by nothing
+  changing, which is a criterion that cannot fail rather than a property that
+  holds. The first walk ran this stage and recorded a pass.
+- where it belongs: `packages/primitives/src/theme.ts` (the base) and the 120
+  sites under it in `packages/{primitives,pages,react}/src`
+- harness that should have caught it: nothing drove any face at a root font
+  size other than the default, and `audit-ui`'s and `survey`'s counts are all
+  taken at 16px
+- status: fixed in "walkthrough: I · the reader's own text size" · the base is
+  `0.875rem/1.55` and every font size is a rem of the same value. 0.875rem is
+  14px at the default 16px root, so nothing moves for anyone who has not
+  asked for anything — `audit-ui` (10 of 10) and `survey` (26 of 26) are
+  unchanged by it, which is the evidence that the conversion is exact. At a
+  32px root the app now scales, and the 320-wide, reduced-motion and
+  200%-text sweeps are clean across every route of both faces and the embed.
+  Criterion added:
+  `packages/primitives/tests/unit/the-readers-own-text-size.test.ts` — the
+  theme's base is relative, and no face sizes text in absolute pixels.
+  Verified failing without the fix, naming all 120 sites.

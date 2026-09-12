@@ -371,7 +371,7 @@ export function TimelineView<S extends AnySchema>({
               key={column.id}
               style={{
                 flex: 1,
-                fontSize: 10.5,
+                fontSize: "0.65625rem",
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
                 textAlign: "center",
@@ -417,7 +417,7 @@ export function TimelineView<S extends AnySchema>({
                   ...(index === ticks.length - 1 ? { bottom: 2 } : { top: -7 }),
                   width: GUTTER - 16,
                   textAlign: "right",
-                  fontSize: 10,
+                  fontSize: "0.625rem",
                   letterSpacing: "0.06em",
                   color: "var(--graview-ink-faint)",
                 }}
@@ -523,7 +523,7 @@ function Column({
                 minHeight: 15,
                 borderRadius: 6,
                 padding: "3px 6px",
-                fontSize: 10.5,
+                fontSize: "0.65625rem",
                 lineHeight: 1.25,
                 overflow: "hidden",
                 // Two lines beats one truncated one at these widths.
@@ -582,7 +582,7 @@ function Column({
         >
           <span
             style={{
-              fontSize: 9.5,
+              fontSize: "0.59375rem",
               letterSpacing: "0.04em",
               whiteSpace: "nowrap",
               color:

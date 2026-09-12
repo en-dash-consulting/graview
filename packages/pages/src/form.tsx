@@ -25,7 +25,7 @@ const field: React.CSSProperties = {
   gap: 4,
 };
 const labelStyle: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: "0.75rem",
   color: "var(--graview-ink-muted)",
 };
 const controlStyle: React.CSSProperties = {
@@ -336,7 +336,7 @@ export function DerivedForm<S extends AnySchema>({
         />
       ))}
       {failed ? (
-        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: 13 }}>
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.8125rem" }}>
           {failed}
         </p>
       ) : null}

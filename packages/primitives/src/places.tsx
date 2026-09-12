@@ -36,7 +36,7 @@ export function Places<S extends AnySchema>() {
             style={{
               padding: "3px 11px",
               borderRadius: 999,
-              fontSize: 12.5,
+              fontSize: "0.78125rem",
               borderWidth: 1,
               borderStyle: "solid",
               borderColor: here ? "var(--graview-accent)" : "var(--graview-edge)",

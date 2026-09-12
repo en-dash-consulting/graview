@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T01:05:09.579Z",
+  "at": "2026-09-12T01:11:29.917Z",
   "engine": "chromium",
   "screens": [
     {
@@ -60,7 +60,7 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x435",
+        "size": "236x405",
         "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Finish it★Give it a new date …"
       }
     },
@@ -103,7 +103,7 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x395",
+        "size": "236x369",
         "text": "×⚠ Was due 2026-08-28Finish it★Give it a new date …☆Rename …☆Change the task …☆Block time "
       }
     },
@@ -146,7 +146,7 @@
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "370x124",
+        "size": "370x131",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       }
     },
@@ -189,7 +189,7 @@
       "inspector": {
         "shown": 1,
         "hidden": 0,
-        "size": "236x121",
+        "size": "236x112",
         "text": "Gardeners· double-click opens×Nothing here yet, though Plots expect to connect to theseWel"
       }
     },
