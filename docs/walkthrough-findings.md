@@ -1423,3 +1423,38 @@ The shapes that came up again, and the new ones:
   keyboard (an act, a pin, an ask answered to the end), focus inside the
   pane after each. Verified failing without the fix: all three report
   `"where": "body"`.
+
+### W-054 · Following the next skill silently empties the page the last one wrote
+- stage: B · face: pages · width: any · scheme: both
+- expected: `graview-node-kind` says to declare a second kind and an edge to
+  it; the record page then says so, the way every derived surface does. The
+  scaffolded page's own comment promises it: "everything it shows still comes
+  from the same derivations, so a page you write cannot drift from what the
+  graph says."
+- actual: it drifts. The page the scaffolder writes reads one edge by name —
+  `store.graph.out(id, "depends-on")` — into a hand-written sentence, and
+  finds one act by name, `link-<kind>`. So after declaring `person` and a
+  `handled-by` edge and handing "Pay the deposit" to Ada Nowak exactly as the
+  skill describes, the item's own record page said "Still open. Depends on
+  nothing." and offered one form: no mention of Ada, no way to hand it to
+  anyone, and no way to take it back. The DERIVED page on the other end of
+  the same edge had it right ("What they are seeing to → Pay the deposit"),
+  which is the whole point: the one surface a project is invited to write
+  was the one that could not keep up. W-035 fixed the same page's ACT for
+  exactly this reason and left its TIES alone.
+- where it belongs: `packages/core/src/scaffold/index.ts` (`pagesTsx`)
+- harness that should have caught it: W-035's own criterion in
+  `packages/core/tests/unit/scaffold.test.ts` — "takes the act it offers from
+  the derivation" — asserted the affordance lookup and said nothing about
+  the graph read beside it; and nothing anywhere declares a second kind in a
+  scaffolded project, so no harness had ever grown one
+- status: fixed in "walkthrough: B · a page that grows with the declaration"
+  · the page renders `facts.links` — every edge, both directions, each with
+  the caption the declaration gives THAT end — and offers every affordance
+  with `ties`, prefilled from `affordance.args` rather than a subject name
+  written out by hand. Criteria: W-035's test extended to the filter and the
+  derived prefill, plus a new one, "reads its ties and its acts from the
+  declaration, naming neither by hand", which reads the generated file with
+  its comments stripped and refuses `"depends-on"`, `"link-item"` and
+  `graph.out(`. Verified failing against the old template: both tests fail,
+  naming `facts.links` and `facts.actions.affordances.filter(`.
