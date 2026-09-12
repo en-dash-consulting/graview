@@ -181,18 +181,39 @@ export function graphResponder<S extends AnySchema>(
     }
 
     // -------------------------------------------- a mutation, said in words
-    const phrased = store.allMutations().find((mutation) => {
-      const title = (mutation.title ?? mutation.name).toLowerCase();
-      return title.length > 3 && asked.includes(title);
-    });
+    /*
+     * A QUESTION IS NEVER A CHANGE. "what depends on Pay the deposit?"
+     * carries the title of an act ("Depends on") and the name of a record,
+     * and was answered with a proposal to RUN that act on the record — an
+     * apply button under a question, which is the graph answering wrongly
+     * rather than not at all. A sentence that asks is answered from the
+     * graph below; only a sentence that says does anything.
+     */
+    const question =
+      /\?\s*$/.test(text) ||
+      /^\s*(what|who|whom|whose|which|when|where|why|how|is|are|was|were|does|do|did|can|could|should|would|will|has|have)\b/.test(
+        asked,
+      );
+    const phrased = question
+      ? undefined
+      : store.allMutations().find((mutation) => {
+          const title = (mutation.title ?? mutation.name).toLowerCase();
+          return title.length > 3 && asked.includes(title);
+        });
     if (phrased) {
       const args: Record<string, unknown> = {};
       const missing: string[] = [];
       const quoted = text.match(/"([^"]+)"/)?.[1];
+      // Each thing named fills ONE blank: the same record in both ends of a
+      // tie is an act that cannot act, and never what was said.
+      const unused = [...referents];
       for (const field of formFields(phrased.input)) {
-        const value = answerFrom(field, referents, quoted, options.today);
-        if (value !== undefined) args[field.name] = value;
-        else if (!field.optional) missing.push(field.name);
+        const value = answerFrom(field, unused, quoted, options.today);
+        if (value !== undefined) {
+          args[field.name] = value;
+          const at = unused.findIndex((node) => node.id === value);
+          if (at >= 0) unused.splice(at, 1);
+        } else if (!field.optional) missing.push(field.name);
       }
       if (missing.length === 0) {
         return {
@@ -379,14 +400,23 @@ export function graphResponder<S extends AnySchema>(
         if (!other) continue;
         const key = `${edge.kind}|${direction}`;
         if (!groups.has(key)) {
+          /*
+           * Read from the end you are standing on. An edge is declared on
+           * the kind at its `from` end, so its `description` is the reading
+           * from there and its `inverse` the reading from the `to` end —
+           * whichever kind this node is. "What is Ada seeing to?" was
+           * answered "who is seeing to it: Pay the deposit", the item's
+           * words in the person's mouth, because the caption was chosen by
+           * which KIND declared the edge rather than by which END the node
+           * is at.
+           */
           let said: string | undefined;
           for (const definition of store.schema.definitions) {
             const spec = (definition.edges as Record<string, { description?: string; inverse?: string }>)[
               edge.kind
             ];
             if (!spec) continue;
-            const declaresOut = definition.kind === node.kind;
-            said = (direction === "out") === declaresOut ? spec.description : (spec.inverse ?? spec.description);
+            said = direction === "out" ? spec.description : (spec.inverse ?? spec.description);
             if (said) break;
           }
           groups.set(key, { sentence: said ?? edge.kind.replace(/-/g, " "), names: [] });

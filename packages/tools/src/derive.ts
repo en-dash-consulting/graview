@@ -241,8 +241,21 @@ export function applyAffordance<S extends AnySchema>(
     name: affordance.mutation,
     args: { ...affordance.args, ...args, ...extraArgs },
   }));
+  /*
+   * THE LOG SAYS WHAT HAPPENED, NOT WHAT THE BUTTON SAID.
+   *
+   * An act that declares `describe` has words for itself with its arguments
+   * in — "Pay the deposit is handled by Ada Nowak" — and the routed face
+   * has always logged those. The strip logged the BUTTON instead: "Hand it
+   * to someone", and for a repair answered through an ask, "Hand Pay the
+   * deposit to somebody" after Ada had been chosen — the question's words
+   * standing in the history for the answer. One act, one sentence, on
+   * every face; the label is only the fallback for an act with no words of
+   * its own, where the compiled intent would be `name(k=v)`.
+   */
+  const declared = store.allMutations().find((mutation) => mutation.name === affordance.mutation);
   return store.applyAll(calls, {
-    intent: affordance.label,
+    ...(declared?.describe ? {} : { intent: affordance.label }),
     ...(options.author ? { author: options.author } : {}),
   });
 }
