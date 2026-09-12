@@ -1333,6 +1333,44 @@ The shapes that came up again, and the new ones:
 
 ## The third walk (2026-09-11)
 
+Nineteen findings, W-051 to W-069, across the setup and all nine stages —
+every one fixed in a framework package and covered by a criterion verified
+to fail without the fix. So the third walk did NOT leave the log still
+either, and a fourth is owed.
+
+No stage added nothing. The two that had been quiet in the second walk —
+H, and the embed half of F — each produced one.
+
+The shapes, in the order of how much they cost:
+
+- **A criterion that could not fail.** Again the largest class, and worse
+  than it looked: `halfSaid` had never seen a lens (W-060), `small` had
+  never seen the activity rail (W-052), no audit state had ever had an ask
+  open (W-051), every one of `verify-remember`'s thirteen claims was about
+  a change made BEFORE the reload (W-059), `aGardenerIsRefusedInChapterSeven`
+  was at its happiest when the seat could do nothing at all (W-064), and
+  nothing anywhere rendered a page at a bigger root font (W-068) — which,
+  once it did, found a second defect in the framework's own pages (W-069).
+- **One engine's verdict taken for three.** Every keyboard assertion the
+  framework makes runs in Chromium, and `pnpm engines` — the only harness
+  that opens WebKit or Firefox — pressed no keys and was not in the
+  playbook's own end-of-stage list. WebKit stranded the keyboard entirely
+  (W-066) and undersized every picker on the routed face (W-067).
+- **A fix that landed on one surface.** `StartFreshLink` got a hit target in
+  the pages package and the scene's copy stayed 16px (W-052); `formFields`
+  names a picker by what it picks and the strip named it by the argument
+  (W-056); `recordFacts` reads every edge and the scaffold's own page read
+  one by name (W-054); the derived record page strikes withheld acts through
+  and the page the scaffolder WRITES dropped them (W-062); `PageMain`
+  renders an unnamed region inside an embed and the design a reader copies
+  named it (W-065).
+- **Asking permission as nobody.** The undo control (W-063) and seedbed's
+  whole scene from chapter seven on (W-064) — in both cases the principal
+  existed, was correct, and was not passed.
+- **A stop that outlived what it named.** A severed relation still selected,
+  a dropped record still selected, and — the only crash of the walk — a
+  dropped record still FOCUSED, which blanked the page (W-055).
+
 ### W-051 · The ask you open is drawn off the side of the pane, or below it
 - stage: A · face: scene · width: 1280 and 390 · scheme: both
 - expected: "the inspector, menu and strip stay inside the scene's box" — and
