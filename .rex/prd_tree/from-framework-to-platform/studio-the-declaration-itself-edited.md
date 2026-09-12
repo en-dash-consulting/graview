@@ -2,7 +2,7 @@
 id: "4a0045cc-f380-4618-9faa-3cbd340d7632"
 level: "feature"
 title: "Studio: the declaration itself, edited in the graph's own interface, with changes applied as mutations"
-status: "in_progress"
+status: "completed"
 priority: "high"
 tags:
   - "studio"
@@ -14,6 +14,10 @@ blockedBy:
   - "d5fff728-2b2d-446f-a036-d47227828bfa"
 source: "Nick, 2026-09-12 (/ndx-capture): \"there needs to be a studio/creator mode or something. basically a web ui for the schema/etc that comprise the context graph, and apply a mutation from changes and whatnot\""
 startedAt: "2026-09-12T16:10:47.669Z"
+completedAt: "2026-09-12T16:16:46.508Z"
+endedAt: "2026-09-12T16:16:46.508Z"
+resolutionType: "code-change"
+resolutionDetail: "@graview/studio: a meta-schema (kind, field, edge, act, rule, role, grant, lens, brand) declared with defineNode; declarationToGraph reads an app in with stable ids; the acts (add/rename/remove-kind, add/remove-field, add/remove-edge, add/remove-act, add/remove-rule, name/forget-repair, add-role, grant, revoke-grant, plus derived edits) change it as ops with author, intent and inverse, undone like any other; graphToDeclaration gives back a checkable, runnable app (the checkout's act bodies and rule judgements kept by name; a studio-declared act gets a body from create/connect/sever/write); createStudio.check() runs graview check and apply() refuses on errors, else returns the new app and migrationBetween's migration (remove-kind, remove-field, remove-edge, start-field); files() writes src/domain/schema|mutations|invariants|policy.ts and a test imports them as a checkout and checks and runs them; propose/proposals/decline for an agent seat; createStudioLens is the place \"What the checker says\". Seedbed chapter 15 \"The studio\" is live on the page with progression criterion theDeclarationIsAGraphInChapterFifteen; skill graview-studio. Limits stated in the skill: a rule the studio declares judges nothing until the checkout writes its evaluate; a hand-written act body is the checkout's to keep when the files are written back; applying to a running app on the page is by remount, not shown in the chapter."
 acceptanceCriteria:
   - "the declaration is a graph the scene and the pages can show: kinds, fields, edges, acts, rules, policy, brand and lenses as nodes with their relations"
   - "every change to the declaration is a mutation with an author, intent and inverse, and undo works on it"
@@ -22,6 +26,6 @@ acceptanceCriteria:
   - "the declaration can be written back as the same files graview create writes, and a checkout built from them passes its own verify"
   - "an agent seat can propose a declaration change and a person can accept it in the studio"
 description: "A creator mode where the context graph's own declaration — kinds, fields, edges with both readings, acts, rules and their repairs, the policy, the brand, the lenses — is a graph you can see and edit in Graview's own interface, in the browser. The meta-schema is declared with the same defineNode/defineMutation the apps use, so the studio is a Graview app over the declaration: adding a field is an act, renaming a kind is an act, every change is an op with an author, an intent and an inverse, and graview check runs on the result before it is applied. Changes are applied as mutations to the running declaration (a migration where the stored graph needs one), and the result can be written back as code (the scaffold's generator already produces the files) so the studio and the checkout never disagree. This is the seam graview-cloud's app-from-declaration needs, and the natural home for working the declaration with an agent: the seat proposes a kind, the studio shows it, the person accepts it."
-lastModified: "2026-09-12T16:10:47.680Z"
+lastModified: "2026-09-12T16:16:46.522Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
