@@ -53,6 +53,17 @@ export interface PageContext<S extends AnySchema> {
    * landmarks and the face's pages are plain regions of it.
    */
   readonly embedded?: boolean;
+  /**
+   * Whether a shell of the app's own is already around these pages.
+   *
+   * A design's shell owns the document's landmark — `graview-pages` says so
+   * in as many words — and the framework's own pages went on wrapping
+   * themselves in `PageMain` underneath it, so every route the design left
+   * derived had a main inside a main. Set by the router from the registry,
+   * never by an app: it is the same question `embedded` asks (does somebody
+   * above me own the landmark) with a different somebody.
+   */
+  readonly framed?: boolean;
 }
 
 /** The way back to the example, for a face whose browser remembers. */
@@ -1064,7 +1075,8 @@ export function PageMain<S extends AnySchema>({
   children,
   ...rest
 }: { context: PageContext<S>; style?: React.CSSProperties; children?: React.ReactNode } & Record<`data-${string}`, string>) {
-  const Tag = (context.embedded ? "section" : "main") as "main";
+  // Somebody above owns the landmark: the host page, or the app's own shell.
+  const Tag = (context.embedded || context.framed ? "section" : "main") as "main";
   return (
     <Tag style={{ ...column, ...style }} {...rest}>
       {children}

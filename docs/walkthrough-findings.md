@@ -1665,3 +1665,34 @@ The shapes that came up again, and the new ones:
   asked of the PICTURE rather than of the pill, because the pill is
   deliberately unpressed from altitude while the scaled picture still
   carries its name.
+
+### W-061 · A design's own shell gets a second main under it, on every route it did not replace
+- stage: E · face: pages · width: any · scheme: both
+- expected: "a custom page … uses `PageMain` so an embedded copy has one
+  main", and `graview-pages` on a product design: "Keep landmarks and targets
+  honest. One `main` (a `section` when `context.embedded`)."
+- actual: two. A design registers a `shell` surface and renders the
+  document's `main` in it, exactly as the skill says — and every page the
+  framework still supplies underneath goes on wrapping itself in `PageMain`,
+  which renders a `main` of its own. Measured on the walked app's own design
+  at `/pages/nowhere`: `mains=2`. It is not only the odd route: with a shell
+  registered, the DERIVED home is a main inside a main, and so is every kind
+  a design has not replaced yet — which is every design on its way to being
+  finished, and the not-found page in every finished one, because there is no
+  kind to register that page on.
+- where it belongs: `packages/pages/src/router.tsx` and
+  `packages/pages/src/pages.tsx` (`PageMain`)
+- harness that should have caught it: `apps/seedbed/tests/integration/
+  chapters.test.ts` renders chapter thirteen — a design with every surface
+  replaced — and asserts its own testids and the absence of the derived
+  face's `aria-label="Kinds"`, never how many landmarks came out; nothing
+  anywhere rendered a route a design had left alone
+- status: fixed in "walkthrough: E · a shell that owns its own landmark" ·
+  the registry already knows whether a shell was registered, so the router
+  marks the context `framed` and `PageMain` renders a region under it — the
+  same answer it already gives inside an embed, to the same question: does
+  somebody above me own the landmark. Criterion added:
+  `packages/pages/tests/unit/one-main-under-a-shell.test.tsx` — six routes
+  under a design that replaces one kind and leaves the other, the derived
+  face with no shell, an embedded face, and `PageMain` itself. Verified
+  failing without the fix: `/: expected 2 to be 1`.
