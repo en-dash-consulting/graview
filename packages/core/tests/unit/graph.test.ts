@@ -44,13 +44,27 @@ describe("Graph", () => {
     ).toThrow(GraphError);
   });
 
-  it("refuses a node that does not match its declared fields", () => {
+  /*
+   * A PERSON READS THIS. The refusal reaches the interface — a refused undo
+   * shows its reason in the activity rail — so it names the node the way the
+   * app names it, the field in the app's own words, and carries none of the
+   * validator's own JSON.
+   */
+  it("refuses a node that does not match its declared fields, in words", () => {
     const graph = seeded();
-    expect(() =>
-      graph.applyPrimitives([
-        { op: "add-node", node: { id: "d2", kind: "duty", label: "Late" } },
-      ]),
-    ).toThrow(/does not match its declared fields/);
+    let said = "";
+    try {
+      graph.applyPrimitives([{ op: "add-node", node: { id: "d2", kind: "duty", label: "Late" } }]);
+    } catch (error) {
+      said = (error as Error).message;
+    }
+    expect(said).toContain("Late");
+    expect(said).toContain("duty");
+    // The field, humanised, and the validator's sentence about it.
+    expect(said).toContain("At: ");
+    expect(said).toContain("expected number");
+    // And nothing of the dump: no issue objects, no codes, no paths.
+    expect(said).not.toMatch(/"code"|"path"|\[\s*\{/);
   });
 
   it("removes the edges that touch a removed node", () => {

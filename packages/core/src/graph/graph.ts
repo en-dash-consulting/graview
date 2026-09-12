@@ -1,3 +1,4 @@
+import { humaniseField, labelOf } from "../schema/define-node.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
 import { diffSnapshots, type GraphDiff } from "./diff.js";
@@ -12,6 +13,29 @@ export interface GraphOptions {
 export type GraphListener<S extends AnySchema> = (
   diff: GraphDiff<NodeOfSchema<S>>,
 ) => void;
+
+/**
+ * A validator's complaint, said in words.
+ *
+ * Zod's own `message` is the whole issue list as JSON. Each issue already
+ * carries a readable sentence and the path it is about, so the field is
+ * named the way the rest of the interface names it and the sentences are
+ * joined — nothing else in the object is for a person.
+ */
+function readably(error: unknown): string {
+  const issues = (error as { issues?: readonly { path?: readonly PropertyKey[]; message?: string }[] })
+    ?.issues;
+  if (!Array.isArray(issues) || issues.length === 0) {
+    return error instanceof Error ? error.message : String(error);
+  }
+  return issues
+    .map((issue) => {
+      const field = issue.path?.length ? humaniseField(String(issue.path.at(-1))) : null;
+      const said = issue.message ?? "is not what the declaration allows";
+      return field ? `${field}: ${said}` : said;
+    })
+    .join("; ");
+}
 
 export class GraphError extends Error {
   constructor(
@@ -225,9 +249,22 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       if (error instanceof SchemaError) throw error;
       const id = (node as { id?: string })?.id ?? "?";
       const kind = (node as { kind?: string })?.kind ?? "?";
+      /*
+       * A PERSON READS THIS. It is not only a developer's console message:
+       * a refused undo shows its reason in the activity rail, so the raw
+       * validator dump — `[ { "code": "invalid_value", "values": [ … ],
+       * "path": [ "urgency" ] … } ]` — went straight into the interface,
+       * beside a sentence about a thing called "Pay the deposit". The field
+       * is named in the app's own words and the node by its label.
+       */
+      const definition = this.schema.tryDefinition(kind);
+      const named =
+        definition && node && typeof node === "object"
+          ? labelOf(definition, node as never)
+          : id;
       throw new GraphError(
-        `Node "${id}" (${kind}) does not match its declared fields`,
-        error instanceof Error ? error.message : String(error),
+        `${named} does not match what ${kind} declares`,
+        readably(error),
       );
     }
   }
