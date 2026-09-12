@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-12T14:02:33.254Z",
-  "engine": "chromium",
+  "at": "2026-09-12T14:34:00.315Z",
+  "engine": "firefox",
   "checks": {
     "phoneHome": {
       "noSideScroll": true,
@@ -51,14 +51,10 @@
       "/pages/tasks/t-deposit": {
         "root": "32px",
         "body": "28px",
-        "scrollWidth": 404,
+        "scrollWidth": 390,
         "width": 390,
-        "widest": [
-          "header.",
-          "p.",
-          "h1."
-        ],
-        "ok": false
+        "widest": [],
+        "ok": true
       },
       "/pages/problems": {
         "root": "32px",
@@ -73,5 +69,5 @@
     "sceneOffersThePages": true,
     "recordLinksItsStop": true
   },
-  "passed": false
+  "passed": true
 }

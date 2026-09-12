@@ -130,6 +130,19 @@ const column: React.CSSProperties = {
   margin: "0 auto",
   padding: "40px 20px 96px",
   display: "grid",
+  /*
+   * A TRACK THAT MAY BE NARROWER THAN WHAT IS IN IT.
+   *
+   * An `auto` track is at least the min-content width of its item, and a
+   * grid item's own `min-width: auto` is the same measure — so a section
+   * whose min-content the engine puts above the column's width pushes the
+   * whole page sideways. The engines do not agree on that measure: at a
+   * 32px root on a 390 screen, WebKit and Firefox made the list page's
+   * header 388 in a 350 track and the document scrolled two ways, while
+   * Chromium fitted it. `minmax(0, 1fr)` says the column is the width it
+   * was given, and what is inside it wraps.
+   */
+  gridTemplateColumns: "minmax(0, 1fr)",
   gap: 40,
 };
 const h1: React.CSSProperties = {

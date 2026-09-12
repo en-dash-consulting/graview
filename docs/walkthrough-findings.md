@@ -1908,3 +1908,31 @@ The shapes that came up again, and the new ones:
   minimum is capped at the screen (`minmax(min(12rem, 100%), 1fr)`).
   Verified failing by giving the framework's own record page the same rem
   minimum: `scrollWidth: 404, width: 390, widest: [header, p, h1]`.
+
+### W-069 · The routed face scrolls two ways at 200% text, in two of the three engines
+- stage: I · face: pages · width: 390 · scheme: both
+- expected: no sideways scroll at a phone's width, at the text size the
+  reader asked for — WCAG 1.4.10, and stage I's own "text zoom to 200%"
+- actual: found by W-068's new criterion the moment it ran in every engine:
+  `/pages/tasks` at 390 with a 32px root is 408 CSS pixels wide in WebKit
+  and Firefox, and fits in Chromium. An `auto` grid track is at least the
+  min-content width of its item, and a grid item's own `min-width: auto` is
+  the same measure — and the engines do not agree on that measure. The list
+  page's `<header>` came out 388 in a 350 track; with that fixed, the
+  derived `<form>` under it did the same thing one level down. The framework
+  builds the whole routed face out of nested grids, so every one of them was
+  a place where somebody else's min-content arithmetic could push the page
+  sideways.
+- where it belongs: `packages/pages/src/pages.tsx` (the page column) and
+  `packages/pages/src/form.tsx` (the form and its fields)
+- harness that should have caught it: `verify-pages` measures `noSideScroll`
+  at phone width, at the default text size — where this is invisible — and
+  only `pnpm engines` runs it in WebKit and Firefox at all. It took both
+  gaps closing at once to see it.
+- status: fixed in "walkthrough: I · a column the width it was given" · the
+  page column, the derived form and its fields declare
+  `gridTemplateColumns: "minmax(0, 1fr)"` and `minWidth: 0`, so a track is
+  the width it was given and what is inside it wraps. Verified with
+  `readersOwnTextSize` across all three engines: 408 before in WebKit and
+  Firefox, 390 in all three after, and `pnpm engines` reports every engine
+  holding.
