@@ -740,6 +740,36 @@ at the end of every stage.
 
 ## The second walk (2026-09-11)
 
+Nineteen findings, W-032 to W-050, across the setup and all nine stages —
+every one fixed in a framework package and covered by a criterion verified to
+fail without the fix. So the second walk did NOT leave the log still, and the
+playbook's condition for done is not met: a third walk is owed.
+
+Two of the nine stages (H, and the embed half of F) added nothing.
+
+The shapes that came up again, and the new ones:
+
+- **A criterion that cannot fail.** The largest class this time. Stage I's
+  200% text passed for a year because no size in the framework was relative
+  (W-050); `survey`'s overflow count was noise on 20 of 26 screens so nothing
+  could be seen in it (W-044); `pnpm test` passed only because a stale
+  `apps/*/dist` was on the disk (W-032); `ranking.test.ts` measured five uses
+  of an act that had produced one op (W-036).
+- **The framework failing to follow its own rule.** The derived list page did
+  the mutation scan `graview-pages` forbids (W-045); the checker's own
+  messages said "a item" after W-001 fixed the scaffold's (W-033); the
+  `graview-agent-seat` example does not compile (W-048); `Chip` could not
+  make the claim `graview-lens` demands of an app's lens (W-042).
+- **Failing open where the store fails closed.** `deriveAffordances` skipped
+  the permission check when asked by nobody, so a face offered what the store
+  refused (W-047).
+- **A machine's words in front of a person.** The validator's issue JSON in
+  the activity rail (W-049), a bare list of candidate names with no question
+  over it (W-039), an act labelled from the wrong end of its tie (W-040).
+- **Chrome that does not fit.** The command bar off the edge of a phone with
+  undo inside it (W-037), and the ring collapsing onto itself in the shorter
+  scene that fix produced (W-038).
+
 ### W-032 · `pnpm test` fails in the checkout the playbook tells you to make
 - stage: Setup · face: neither — the repository
 - expected: `pnpm install && pnpm build && pnpm test`, the playbook's first
