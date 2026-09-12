@@ -94,6 +94,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
         migration,
       };
     },
-    files: (sourceOptions) => declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, ...sourceOptions }),
+    files: (sourceOptions) =>
+      declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base as unknown as GraviewApp<AnySchema>, ...sourceOptions }),
   };
 }

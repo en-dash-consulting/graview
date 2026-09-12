@@ -81,6 +81,13 @@ export const actNode = defineNode("act", {
     writes: z.array(z.string()).optional(),
     /** The argument that names the subject, when the act has one. */
     subjectArg: z.string().optional(),
+    /**
+     * The argument that names the far end of the tie an act makes or
+     * breaks — the checkout's own word for it (`dependsOn`, `handler`).
+     * Written back under an invented `to`, every caller of the act broke:
+     * the app's tests, its pages, its seat, all asking by the old name.
+     */
+    targetArg: z.string().optional(),
     /** Acts on any kind at all. */
     onAny: z.boolean(),
     /** Derived by the framework from a kind's fields; not written by hand. */
@@ -93,7 +100,7 @@ export const actNode = defineNode("act", {
     severs: { to: ["edge"], description: "the relation it breaks", inverse: "the acts that break it" },
   },
   label: (node) => node.title ?? node.label,
-  display: { labels: { label: "name", subjectArg: "subject argument", onAny: "on any kind" } },
+  display: { labels: { label: "name", subjectArg: "subject argument", targetArg: "far-end argument", onAny: "on any kind" } },
 });
 
 export const ruleNode = defineNode("rule", {
@@ -101,6 +108,8 @@ export const ruleNode = defineNode("rule", {
   plural: "rules",
   fields: z.object({
     label,
+    /** What the rule is called, in words — the checkout's `label`, kept apart from its name. */
+    title: z.string().optional(),
     description: z.string().optional(),
     judgesPast: z.boolean(),
     /** Judged over the whole graph rather than one kind's records. */

@@ -2167,3 +2167,68 @@ The shapes, in the order of how much they cost:
   Criteria added: conversation "never proposes an act in answer to a
   question" and "never fills two blanks of a tie with the one thing that
   was named". Both verified failing without the fix.
+
+### W-077 · The studio writes an act back with an argument the checkout never had
+- stage: B (the studio, once there were two kinds) · face: neither — the
+  declaration
+- expected: `graview-studio` step 4 — "an act the checkout wrote keeps the
+  checkout's body under the studio's declaration", and the written files
+  are "the files `graview create` writes"; the checkout's own verify passes
+  on them once the bodies it says to keep are kept
+- actual: `studio.files()` wrote every tie act with an invented far-end
+  argument, `to`, where Walk's declaration says `dependsOn` and `handler`
+  — so the app's own tests, its record page, its seed script and any agent
+  holding the old tool schema all failed on `Invalid arguments for mutation
+  "link-item": to: expected string, received undefined`. And every written
+  `describe` printed node ids into the history: `Depends on: item:x →
+  item:y`. The studio's own written-back test declares its tie act with
+  `dependsOn` and then never calls it.
+- where it belongs: `packages/studio/src/meta.ts` (the act node had a
+  `subjectArg` and no word for the far end), `packages/studio/src/from-declaration.ts`
+  (nothing read the input's other node argument), `packages/studio/src/source.ts`
+- harness that should have caught it: `packages/studio/tests/unit/written-back.test.ts`
+  asserted the written checkout adds and closes a thing and never linked one;
+  `packages/studio/tests/unit/studio.test.ts` asserted the invented `to`
+  by name, enshrining the defect
+- status: fixed in "walkthrough: B · the studio writes back what the
+  checkout wrote" · the act node carries `targetArg`, read from the
+  checkout's own input (`nodeRefArgs`), and the writer uses it — `to` only
+  for an act the studio itself declared; written describes name nodes
+  through a `nameOf` the file carries. Criterion: written-back "a checkout
+  built from the studio's files passes graview check and runs" now links
+  and unlinks through the checkout's own argument and reads the written
+  declaration for it. Verified failing without the fix.
+
+### W-078 · The studio disarms every rule the checkout wrote, and says it kept them
+- stage: B (the studio) · face: neither — the declaration
+- expected: a rule the checkout judges goes on judging, or the file says
+  plainly that it cannot write the judgement
+- actual: `invariants.ts` came back with `evaluate() { return []; }` for
+  `closed-in-order` and `every-item-handled` — both rules the checkout
+  wrote, both now holding on every graph — under a header comment reading
+  "a rule the checkout already judges keeps the checkout's evaluate". Each
+  rule's label was also replaced by its identifier (`label:
+  "closed-in-order"` for "Closed in order"). And the same for acts: Walk's
+  `close-item` closes unconditionally; the studio classified it as a write
+  and generated a body that patches only when a `status` is passed, so
+  `close-item` with `{ id }` did nothing at all. A written-back checkout
+  that passes `graview check` and silently holds is a lens that lies
+  (W-016's shape), and it is exactly what a person committing those files
+  would ship. The studio's written-back test had no base rule to lose and
+  passed `status: "closed"` by hand.
+- where it belongs: `packages/studio/src/source.ts` (and `meta.ts`,
+  `from-declaration.ts` for the rule's title)
+- harness that should have caught it: the same written-back test
+- status: fixed in the same commit · a rule or an act the checkout already
+  has keeps its declaration (with the checkout's own words for its label)
+  and gets a stub that THROWS naming what belongs there, and every
+  `WrittenFile` carries `kept` — the bodies the checkout must supply.
+  Generated bodies remain for what the studio itself declared. The store
+  judges every change, so the first act meets the loud failure — which is
+  where the skill sends a reader ("run the checkout's own verify on the
+  files it wrote"). Criterion: written-back asserts `kept` on both files,
+  the kept label, the loud failure before the bodies are back, and a
+  running checkout after. Verified failing without the fix (`expected
+  undefined to deeply equal ['labelled-things: evaluate']`). In Walk: the
+  regenerated copy fails loudly naming both rules and every act, and
+  verifies clean once their bodies are put back where the files say.
