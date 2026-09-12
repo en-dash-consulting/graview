@@ -162,9 +162,19 @@ try {
     await seven.goto("http://localhost:5194/?chapter=7&theme=light#overview=1", { waitUntil: "load" });
     await seven.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
     await seven.waitForTimeout(1400);
-    // An ordinary act this seat may take, from the strip.
-    await seven.click('[data-graview-view="kind:plot"]');
-    await seven.waitForTimeout(600);
+    /*
+     * An ordinary act this seat may take, from the strip — asked on a
+     * MEMBER. A district's own creating act is the coordinator's, and a
+     * gardener may legitimately not take it: standing there, everything is
+     * withheld whether or not the seat is reaching the interface at all.
+     */
+    await seven.click('[data-testid="overview"]');
+    await seven.waitForTimeout(900);
+    const member = await seven.$("[data-graview-pick]");
+    if (member) {
+      await member.click();
+      await seven.waitForTimeout(700);
+    }
     const took = await seven
       // The OFFERED list, not the withheld one beside it: those are
       // deliberately disabled buttons carrying the policy's reason.
