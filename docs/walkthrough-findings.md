@@ -2500,3 +2500,11 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
   layout "the relation band" ×2, primitives `what-it-finds-wrong`, audit-ui
   todo states `judged` and `crowd` (collisions at the same stop before: 12
   slots of 57px under 150px chips).
+
+### W-087 · Lines between two chips of a wrapped band cross the other chips and are left as pieces
+- stage: B · face: scene · width: 1280 · scheme: light · found by Nick in the todo app at `#focus=aggregate:task&relation=task`
+- expected: a relation between two members of the band is one visible line that crosses nothing
+- actual: an arc between two chips ran under whichever chips lay between and, clipped out under each, was left as dashes in the gaps — lines that belonged to nothing
+- where it belongs: `packages/react/src/scene.tsx` (the strands) and a router of its own, `packages/react/src/channels.ts`
+- harness that should have caught it: nothing measured a line's runs; `audit-ui`'s todo `crowd` state (W-086) draws the band but only counts card collisions
+- status: fixed in "a line between two chips of one band takes the gutters" · a strand whose both ends are chips of the relation band is routed through the band's gutters — out of a chip's edge, along the channel between rows, across rows through a gap between chips, into the far chip — staggered by lane so lines sharing a channel do not lie on each other; drawn whole, no clipping. Criterion: react `channels.test.ts` (same row, next row, two rows apart, upward: no segment crosses a third chip; ends on the chips' own edges).
