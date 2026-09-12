@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-12T00:58:51.228Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-V07e8X",
+  "at": "2026-09-12T01:22:49.119Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-rTYoun",
   "steps": {
     "packed": [
       "@graview/core",
@@ -28,7 +28,7 @@
     "affordances": 2,
     "tools": 8,
     "draws": 3,
-    "cssBytes": 22603,
+    "cssBytes": 23009,
     "palettes": [
       "#6fdcea",
       "#0c6e78"
