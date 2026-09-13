@@ -1,0 +1,27 @@
+---
+id: "15e9da87-17f5-4ebd-9d61-c2334ff8f481"
+level: "feature"
+title: "An agent in the studio: ask for a declaration change in words, see it checked, keep or discard it"
+status: "pending"
+priority: "high"
+tags:
+  - "studio"
+  - "agent"
+  - "chat"
+  - "intelligence"
+  - "declaration"
+  - "figure"
+  - "platform"
+source: "Nick, 2026-09-13 (/ndx-capture): \"should have inline Agent to help modify things in Studio mode\""
+acceptanceCriteria:
+  - "the studio mounts an agent panel beside the declaration; asking in words produces PROPOSED studio acts and never a direct write to the declaration"
+  - "proposals go through the same validateProposals gate and the same createStudio.propose / proposals / decline path the agent seat already has — no privileged backdoor to the meta-graph"
+  - "createStudio.check() runs on the proposed declaration and graview check's findings are shown before the person accepts or declines; a change that would fail the build is never offered as something to keep"
+  - "accepting applies as ordinary ops attributed to the agent seat, with an inverse, so undo takes the change back and the log says who proposed it"
+  - "\"draw a figure for this kind\" reaches drawFigure from the studio, the drawing judged by the checker's own function and proposed for the person to keep or redraw — the entry point the figure work recorded as missing"
+  - "with no key the graph-native responder still answers about the declaration (what kinds, what an act writes, what a rule judges, which kinds have no figure) and proposes template-filled studio acts; an LLM upgrades it through the existing Completion seam with history"
+  - "a browser-harness criterion drives the whole turn: ask, read the check's findings, accept, see the declaration change, and undo it — and the written-back files still pass the checkout's own verify"
+description: "Both halves of this already exist and nothing joins them. The studio has `propose` / `proposals` / `decline` for an agent seat — an agent CAN put a declaration change in front of a person — and `ChatPanel` is a primitive any app's bar mounts in one line, selection-aware, with proposals that travel the ordinary runtime. But the studio itself has no agent in it, so changing a declaration is entirely by hand: one act at a time, add-field then add-edge then add-rule, with the person holding the whole shape in their head. The one surface whose subject is the declaration is the one surface you cannot talk to.\n\nAn inline agent panel in the studio, over the same seam: \"add a due date to tasks\", \"every shift needs a volunteer\", \"who is allowed to invite people\", \"draw a figure for Volunteers\" — the agent answers in words and proposes STUDIO ACTS, which are ordinary mutations on the meta-graph with an author, an intent and an inverse. Nothing is applied by the agent: proposals go through the same `validateProposals` gate and the same `createStudio.propose` path the agent seat already uses, `createStudio.check()` runs `graview check` on the proposed declaration, and its findings are shown BEFORE the person accepts — a change that would fail the build never reaches them as something to keep. Accepting is an op like any other, attributed to the agent seat, undoable, and producing a migration where the stored graph needs one.\n\nThis is also where the `drawFigure` gap lands, recorded honestly when figures shipped: `drawFigure` carries the house style and judges its own answer with the checker's own function, and it is reachable from code and from `graview figure <entry> --kind <k>` and from nowhere a person sits. \"Draw a figure for this kind\" from the studio, with the result proposed to keep or redraw, is the entry point that was always meant to exist.\n\nKeyless first, like everything else on this seam: with no key the graph-native responder answers about the declaration itself (what kinds are there, what does this act write, what does this rule judge, what has no figure) and proposes template-filled studio acts. An LLM upgrades it through the same one-function `Completion` seam with history — same gate, same allowlists, nothing new to trust.\n\nSource: Nick, 2026-09-13: \"should have inline Agent to help modify things in Studio mode\"."
+lastModified: "2026-09-13T17:23:48.980Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
+---
