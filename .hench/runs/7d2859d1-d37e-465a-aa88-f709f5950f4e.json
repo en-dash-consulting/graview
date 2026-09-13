@@ -1,0 +1,28 @@
+{
+  "id": "7d2859d1-d37e-465a-aa88-f709f5950f4e",
+  "taskId": "5486c808-5b93-4dcd-9dea-fec4415a8ad5",
+  "taskTitle": "Longer horizons on the calendar lens: a quarter, a year, and a span of years the app names, with the demos scheduling across them",
+  "startedAt": "2026-09-13T17:51:36.313Z",
+  "finishedAt": "2026-09-13T17:51:36.313Z",
+  "status": "completed",
+  "turns": 186,
+  "summary": "Calendar cells coarsen to weeks, months and app-named multi-year horizons; seedbed rotation and rota quarter exercise them",
+  "tokenUsage": {
+    "input": 372,
+    "output": 147776,
+    "cacheCreationInput": 273778,
+    "cacheReadInput": 58401781
+  },
+  "toolCalls": [],
+  "model": "claude-opus-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "tokens": {
+    "input": 372,
+    "output": 147776,
+    "cached": 58675559,
+    "total": 58823707
+  }
+}
