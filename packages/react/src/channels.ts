@@ -13,7 +13,7 @@ import type { Box, Point } from "./routes.js";
  * nothing needs clipping, and the whole line is one visible thing.
  */
 
-const CLEAR = 8;
+const CLEAR = 12;
 
 export interface Row {
   readonly top: number;
@@ -71,7 +71,10 @@ function clearX(rows: readonly Row[], wanted: number): number {
   let distance = Infinity;
   for (const gap of free) {
     const x = Math.min(Math.max(wanted, gap.from), gap.to);
-    const d = Math.abs(x - wanted);
+    // A gap between chips over the band's margin, unless the margin is much nearer:
+    // a road down the outside edge, hugging the row's first chip, framed it.
+    const margin = gap.from === -Infinity || gap.to === Infinity;
+    const d = Math.abs(x - wanted) + (margin ? 60 : 0);
     if (d < distance) {
       distance = d;
       best = x;

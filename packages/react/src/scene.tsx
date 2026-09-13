@@ -48,7 +48,7 @@ import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context
 import { isDefaultView } from "./view-registry.js";
 import { pickedFrom, usePickTargets } from "./picking.js";
 import { kitConnector, useKit } from "./kit.js";
-import { clipPolyline, orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./routes.js";
+import { clipPolyline, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 import { channelRoute } from "./channels.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
@@ -2226,6 +2226,21 @@ export function connectorStrands(
         edge.from === connector.from ? [] : memberBoxes(stageEl, hostOf(connector.from), edge.from);
       const toCandidates =
         edge.to === connector.to ? [] : memberBoxes(stageEl, hostOf(connector.to), edge.to);
+      /*
+       * A VIEW THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION. The lists view
+       * draws every task inside its list; a line from each list column to
+       * the same task's chip in the band restated, twelve times over the
+       * panel, what the columns already said. Inside the stack a line is
+       * drawn only where it says something the picture does not.
+       */
+      if (
+        !overview &&
+        ((edge.from !== connector.from || edge.to !== connector.to) &&
+          (memberBoxes(stageEl, hostOf(connector.from), edge.to).length > 0 ||
+            memberBoxes(stageEl, hostOf(connector.to), edge.from).length > 0))
+      ) {
+        continue;
+      }
       const fromAnchor = fromCandidates.length > 0 ? edge.from : connector.from;
       const toAnchor = toCandidates.length > 0 ? edge.to : connector.to;
       const key = `${connector.id}|${fromAnchor}|${toAnchor}`;
@@ -2548,7 +2563,7 @@ function Connectors({
           // circle, so it closes cleanly at any size.
           `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
           ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`;
-        const d = self ? loopD : orthogonal || channelled ? polylineD(legs) : quad(runs);
+        const d = self ? loopD : channelled ? roundedPolylineD(channelled, 10) : orthogonal ? polylineD(legs) : quad(runs);
         // The hit stroke also keeps out of the cards an end is drawn inside.
         const hitD = self
           ? loopD

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clipPolyline, orthogonalPoints, polylineD, routePoint, routedQuadratic } from "../../src/routes.js";
+import { clipPolyline, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "../../src/routes.js";
 
 /*
  * A route is one case: the curve the scene always drew, its chord, and a
@@ -43,5 +43,18 @@ describe("routes", () => {
   it("a polyline under a card in the middle is drawn in two runs", () => {
     const runs = clipPolyline([{ x: 0, y: 0 }, { x: 100, y: 0 }], [{ x: 40, y: -5, width: 20, height: 10 }]);
     expect(runs).toHaveLength(2);
+  });
+});
+
+describe("a rounded polyline", () => {
+  it("turns each elbow into a short curve and keeps the ends where they were", () => {
+    const d = roundedPolylineD([{ x: 0, y: 0 }, { x: 0, y: 40 }, { x: 100, y: 40 }, { x: 100, y: 80 }], 10);
+    expect(d.startsWith("M 0 0 ")).toBe(true);
+    expect(d.endsWith("L 100 80")).toBe(true);
+    expect((d.match(/ Q /g) ?? []).length).toBe(2);
+    expect(d).toContain("L 0 30 Q 0 40 10 40");
+    // Two points are a straight line; a corner shorter than the radius is rounded to what it has.
+    expect(roundedPolylineD([{ x: 0, y: 0 }, { x: 5, y: 0 }], 10)).toBe("M 0 0 L 5 0");
+    expect(roundedPolylineD([{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 4 }], 10)).toContain("L 2 0 Q 4 0 4 2");
   });
 });
