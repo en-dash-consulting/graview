@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T19:35:20.918Z",
+  "at": "2026-09-13T08:15:02.923Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -38,7 +38,7 @@
         "districts": [
           "Plots2close ▴Plot 1Plot 2"
         ],
-        "trail": "GraviewGraview←→PagesThe garden keeps its agreements◆Ask☾",
+        "trail": "GraviewGraview←→StudioPagesThe garden keeps its agreements◆Ask☾NNobody in particular",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -88,7 +88,7 @@
           "Gardeners2open ▾",
           "Plots2open ▾"
         ],
-        "trail": "GraviewGraview←→Plot 1×PagesThe garden keeps its agreements◆Ask☾",
+        "trail": "GraviewGraview←→Plot 1×StudioPagesThe garden keeps its agreements◆Ask☾NNobody in particular",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -133,8 +133,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 848,
-        "height": 558
+        "width": 751,
+        "height": 556
       },
       "saw": {
         "standing": "1 problem",
@@ -143,7 +143,7 @@
           "Plots⚠ 2open ▾",
           "Rules1close ▴Every plot has a caretaker"
         ],
-        "trail": "GraviewGraview←→Pages1 problemNobody tends Plot 2Every plot has a caretaker · 2 ways to fix◆Ask☾",
+        "trail": "GraviewGraview←→StudioPages1 problemNobody tends Plot 2Every plot has a caretaker · 2 ways to fix◆Ask☾NNobody in particular",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -156,11 +156,11 @@
       "n": 4,
       "slug": "the-horizon",
       "title": "Plantings, and the horizon",
-      "claim": "A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted.",
+      "claim": "A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted — and the season calendar draws each planting across the days it was actually in the ground.",
       "adds": [
         "defineNode(\"planting\") with lifecycle: { field: \"status\", retired: [\"harvested\", \"failed\"] }",
         "an appendOnly edge \"grows-in\"",
-        "defineMutation(\"sow\"), defineMutation(\"harvest\") with writes: [\"status\"]"
+        "defineMutation(\"sow\"), defineMutation(\"harvest\") with writes: [\"status\", \"harvested\"]"
       ],
       "kinds": [
         "gardener",
@@ -198,11 +198,11 @@
         "standing": "The garden keeps its agreements",
         "districts": [
           "Gardeners2open ▾",
-          "Plantings1+1 pastopen ▾",
+          "Plantings1+1 past◆open ▾",
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→PagesThe garden keeps its agreements◆Ask☾",
+        "trail": "GraviewGraview←→The seasonStudioPagesThe garden keeps its agreements◆Ask☾NNobody in particular",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -249,8 +249,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 978,
-        "height": 654
+        "width": 856,
+        "height": 653
       },
       "saw": {
         "standing": "1 problem",
@@ -260,7 +260,7 @@
           "Plots⚠ 1open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→Pages1 problem◆Ask3 ActivityThe agent's seatThe garden is plantedchanged · Agree every plot has a caretakerchanged · Stake out a plotFirst plotc",
+        "trail": "GraviewGraview←→StudioPages1 problem◆Ask3 ActivityThe agent's seatThe garden is plantedchanged · Agree every plot has a caretakerchanged · Stake out a plotFirst",
         "withheld": null,
         "activity": [
           "starter Adopt: every plot has a caretakerundoEvery plot has a caretaker",
@@ -311,8 +311,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 978,
-        "height": 654
+        "width": 856,
+        "height": 653
       },
       "saw": {
         "standing": "The garden keeps its agreements",
@@ -322,7 +322,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→PagesThe garden keeps its agreements◆Ask ActivityThe agent's seatThe garden is plantedRemembered in this browserStart fresh☾",
+        "trail": "GraviewGraview←→StudioPagesThe garden keeps its agreements◆Ask ActivityThe agent's seatThe garden is plantedRemembered in this browserStart fresh☾NNobody in par",
         "withheld": null,
         "activity": [],
         "remembered": "Remembered in this browserStart fresh",
@@ -380,7 +380,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→PagesThe garden keeps its agreements◆Ask Activity☾",
+        "trail": "GraviewGraview←→StudioPagesThe garden keeps its agreements◆Ask Activity☾RRavi",
         "withheld": "Stake out a plotNot permitted: add-plot — coordinator can. The coordinator keeps the map.",
         "activity": [],
         "remembered": null,
@@ -443,7 +443,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→PagesThe garden keeps its agreements◆Ask Activity☾",
+        "trail": "SeedbedSeedbed←→StudioPagesThe garden keeps its agreements◆Ask Activity☾JJune",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -560,7 +560,7 @@
           "Plots⚠ 2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Who tends whatPages1 problem◆Ask Activity☾",
+        "trail": "SeedbedSeedbed←→Who tends whatStudioPages1 problem◆Ask Activity☾JJune",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -626,7 +626,7 @@
           "Plots3◆open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Who tends whatWhat grows wherePagesThe garden keeps its agreements◆Ask Activity☾",
+        "trail": "SeedbedSeedbed←→What grows whereWho tends whatStudioPagesThe garden keeps its agreements◆Ask Activity☾JJune",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -636,7 +636,7 @@
       },
       "seatSees": {
         "offered": [
-          "Harvest it",
+          "Harvest it …",
           "Change the planting …"
         ],
         "withheld": ""
@@ -680,8 +680,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 977,
-        "height": 654
+        "width": 887,
+        "height": 653
       },
       "saw": {
         "standing": "The garden keeps its agreements",
@@ -691,7 +691,7 @@
           "Plots2◆open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Who tends whatWhat grows wherePagesThe garden keeps its agreements◆Ask1 ActivityThe agent's seatThe garden is plantedship:migration migration 1→",
+        "trail": "SeedbedSeedbed←→What grows whereWho tends whatStudioPagesThe garden keeps its agreements◆Ask1 ActivityThe agent's seatThe garden is plantedship:migration migrat",
         "withheld": null,
         "activity": [
           "ship:migration migration 1→2: Every garden adopts the agreementundoEvery plot has a caretaker"
@@ -807,7 +807,7 @@
       "errors": [],
       "picture": {
         "width": 778,
-        "height": 575
+        "height": 557
       },
       "saw": {
         "standing": "The garden keeps its agreements",
@@ -819,7 +819,7 @@
           "Rules1open ▾",
           "People2◆open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Who tends whatWhat grows whereWho may do whatHide the installationPagesThe garden keeps its agreements◆Ask Activity☾",
+        "trail": "SeedbedSeedbed←→What grows whereWho may do whatWho tends whatHide the installationStudioPagesThe garden keeps its agreements◆Ask Activity☾JJune",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -896,14 +896,14 @@
           "acts12open ▾",
           "brands1open ▾",
           "edges3open ▾",
-          "fields18open ▾",
+          "fields19open ▾",
           "grants4open ▾",
           "kinds6◆open ▾",
           "lenses2open ▾",
           "roles9open ▾",
           "rules1open ▾"
         ],
-        "trail": "GraviewGraview←→What the checker saysPagesThe garden keeps its agreements◆Ask Activity☾",
+        "trail": "GraviewGraview←→What the checker saysStudioPagesThe garden keeps its agreements◆Ask Activity☾NNobody in particular",
         "withheld": null,
         "activity": [],
         "remembered": null,

@@ -331,6 +331,33 @@ export function registerDefaultViews<S extends AnySchema>(
        * tower the scene scrolls for.
        */
       const rise = nested ? 8 : Math.min(46, 10 + Math.round(Math.sqrt(members.length) * 8));
+      /*
+       * The district's NAME, lifted out of the markup because a figure stands
+       * beside it and a name written twice is a name that drifts.
+       */
+      const name = (
+        <span
+          style={{
+            fontSize: nested ? 10.5 : 13,
+            lineHeight: 1.25,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+            color: accent ? "var(--graview-accent)" : "var(--graview-ink-muted)",
+            /*
+             * A tucked card is a corner peeking out from behind its parent,
+             * so its name gets one line. "Unavailability" wrapped to two and
+             * pushed the count out of a card that has no spare rows — and
+             * the alternative, growing the tuck until it fits, makes it the
+             * same size as the thing it is meant to be behind.
+             */
+            ...(nested
+              ? { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+              : { overflowWrap: "anywhere" }),
+          }}
+        >
+          {props.label ?? plural}
+        </span>
+      );
       return (
         <div
           className="graview-kind-card"
@@ -467,40 +494,42 @@ export function registerDefaultViews<S extends AnySchema>(
               which is what a single flex row of title, badge, warning and
               count did at ninety pixels wide.
 
-              THE FIGURE GOES ABOVE THE NAME for the same reason: a drawing
-              beside a word that can wrap to two lines is a drawing that
-              moves. A district that declares one stands it here, at the size
-              a card can spare; a kind without one is drawn exactly as it
-              always was, because nothing about a figure is required. */}
+              THE FIGURE GOES BESIDE THE NAME, on the name's own line, because
+              the line it wanted for itself is a line this card does not have.
+              On the ground a district card is a glyph — seventy pixels holding
+              a name, a count, a trouble mark and a control — and a drawing
+              above the name pushed the content past the card's own edge on
+              every card in the strip: by six pixels where the name is short
+              and fourteen where the card is shortest, clipped rather than
+              visibly broken, which is why only a measurement caught it.
+              Beside the name it costs nothing, the line being already as tall
+              as the drawing.
+
+              It is pinned to the TOP of that line, so a name that wraps to two
+              grows downward past a drawing that stays where it was — the
+              worry that put it on its own row in the first place. A kind
+              without a figure is drawn exactly as it always was, because
+              nothing about a figure is required. */}
           {figure ? (
-            <KindFigure
-              kind={String(kind)}
-              schema={schema}
-              {...(brand ? { brand } : {})}
-              size={nested ? 16 : 26}
-            />
-          ) : null}
-          <span
-            style={{
-              fontSize: nested ? 10.5 : 13,
-              lineHeight: 1.25,
-              letterSpacing: "0.05em",
-              textTransform: "uppercase",
-              color: accent ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-              /*
-               * A tucked card is a corner peeking out from behind its parent,
-               * so its name gets one line. "Unavailability" wrapped to two and
-               * pushed the count out of a card that has no spare rows — and
-               * the alternative, growing the tuck until it fits, makes it the
-               * same size as the thing it is meant to be behind.
-               */
-              ...(nested
-                ? { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
-                : { overflowWrap: "anywhere" }),
-            }}
-          >
-            {props.label ?? plural}
-          </span>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: nested ? 4 : 6 }}>
+              <KindFigure
+                kind={String(kind)}
+                schema={schema}
+                {...(brand ? { brand } : {})}
+                /*
+                 * The size the LINE can carry, not the size the card looks
+                 * like it could: the name beside it sets the row's height, and
+                 * a drawing taller than that grows the row and puts the card's
+                 * content over its own edge again — which is what twenty-six
+                 * did on the shortest card in the strip.
+                 */
+                size={nested ? 14 : 18}
+              />
+              {name}
+            </div>
+          ) : (
+            name
+          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78125rem" }}>
             <span

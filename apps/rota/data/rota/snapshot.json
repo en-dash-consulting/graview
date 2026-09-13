@@ -224,6 +224,11 @@
       "kind": "covered-by",
       "from": "s-sat-market",
       "to": "v-cass"
+    },
+    {
+      "kind": "covered-by",
+      "from": "s-fri-repair",
+      "to": "v-ada"
     }
   ]
 }

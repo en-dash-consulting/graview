@@ -1,5 +1,5 @@
 import { humaniseField, labelOf, type Violation } from "@graview/core";
-import { KindFigure } from "@graview/primitives";
+import { KindFigure, useMarkup } from "@graview/primitives";
 import {
   createPageRegistry,
   DerivedForm,
@@ -155,6 +155,7 @@ const CSS = `
 function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   const { store, brand } = context;
   useStoreTick(store);
+  const logo = useMarkup(brand?.logo);
   const here = useLocation().pathname;
   const problems = store.violations(context.invariantContext).length;
   // Derived and narrowed by the seat: a viewer sees the roster, and the
@@ -167,7 +168,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
       <style>{CSS}</style>
       <aside className="ro-rail">
         <Link to="/" className="ro-mark" aria-label={`${brand?.name ?? "Rota"} — the week`}>
-          <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: brand?.logo ?? "" }} />
+          <span aria-hidden="true" dangerouslySetInnerHTML={logo} />
           {brand?.name ?? "Rota"}
         </Link>
         <nav className="ro-nav" aria-label="Kinds">

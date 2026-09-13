@@ -1,5 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import { useGraview } from "@graview/react";
+import { useMarkup } from "./markup.js";
 import { GRAVIEW_BRAND } from "./theme.js";
 
 /**
@@ -17,6 +18,7 @@ import { GRAVIEW_BRAND } from "./theme.js";
 export function Wordmark<S extends AnySchema>() {
   const { brand: declared, homeView, setView, setSelection, setMenuAt } = useGraview<S>();
   const brand = declared ?? GRAVIEW_BRAND;
+  const logo = useMarkup(brand.logo);
   return (
     <button
       type="button"
@@ -60,7 +62,7 @@ export function Wordmark<S extends AnySchema>() {
           // The logo is the brand's own markup. It is declared by the
           // installation, not supplied by a user, which is the difference
           // between this and rendering arbitrary HTML.
-          dangerouslySetInnerHTML={{ __html: brand.logo }}
+          dangerouslySetInnerHTML={logo}
         />
       ) : null}
       {brand.name}

@@ -84,6 +84,7 @@ export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 // Generic views for every cell, derived from the declaration.
 export { hueFor, registerDefaultViews } from "./default-views.js";
 export { hasFigure, KindFigure } from "./figure.js";
+export { useMarkup } from "./markup.js";
 
 // The worked example: one fully-built lens, from public primitives only.
 export {

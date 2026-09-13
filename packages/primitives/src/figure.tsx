@@ -1,4 +1,6 @@
 import { figureSvg, type AnySchema, type Brand, type Schema } from "@graview/core";
+
+import { useMarkup } from "./markup.js";
 import { hueFor } from "./default-views.js";
 
 /**
@@ -35,6 +37,12 @@ export function KindFigure<S extends AnySchema>({
   // person keeps the domain's declaration as the domain's.
   const art = figureSvg(brand?.figures?.[kind] ?? declared);
   const hue = Math.round(hueFor(kind, brand?.accents) * 360);
+  /*
+   * The same drawing must be the SAME OBJECT or React re-parses it on every
+   * render — and a node replaced between two clicks is a double-click that
+   * never happens. See `useMarkup`.
+   */
+  const drawing = useMarkup(art);
 
   if (!art) {
     return (
@@ -68,7 +76,7 @@ export function KindFigure<S extends AnySchema>({
        * already runs, and `graview check` has read it. A figure arriving
        * from a graph would be a different question with a different answer.
        */
-      dangerouslySetInnerHTML={{ __html: art }}
+      dangerouslySetInnerHTML={drawing}
       style={{
         display: "inline-flex",
         alignItems: "center",

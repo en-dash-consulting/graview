@@ -1,4 +1,4 @@
-import { KindFigure } from "@graview/primitives";
+import { KindFigure, useMarkup } from "@graview/primitives";
 import {
   describeNode,
   hueFor,
@@ -314,6 +314,7 @@ export function DefaultShell<S extends AnySchema>({
 }) {
   const { store, brand, sceneHref = "/", invariantContext } = context;
   useStoreTick(store);
+  const logo = useMarkup(brand?.logo);
   const location = useLocation();
   const problems = store.violations(invariantContext).length;
   const current = (path: string) =>
@@ -372,7 +373,7 @@ export function DefaultShell<S extends AnySchema>({
                   style={{ display: "inline-flex", color: "var(--graview-accent)" }}
                   // The logo is the brand's own markup, declared by the
                   // installation — not supplied by a user.
-                  dangerouslySetInnerHTML={{ __html: brand.logo }}
+                  dangerouslySetInnerHTML={logo}
                 />
               ) : null}
               {brand?.name ?? "Graview"}

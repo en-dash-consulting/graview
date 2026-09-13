@@ -1,5 +1,5 @@
 import { humaniseField, labelOf, type Principal, type Violation } from "@graview/core";
-import { KindFigure } from "@graview/primitives";
+import { KindFigure, useMarkup } from "@graview/primitives";
 import {
   createPageRegistry,
   DerivedForm,
@@ -214,6 +214,7 @@ const CSS = `
 function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   const { store, brand } = context;
   useStoreTick(store);
+  const logo = useMarkup(brand?.logo);
   const here = useLocation().pathname;
   const problems = store.violations(context.invariantContext).length;
   const open = (store.graph.nodesOfKind("task" as never) as unknown as { done: boolean }[]).filter(
@@ -236,7 +237,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
       <style>{CSS}</style>
       <aside className="th-rail">
         <Link to="/" className="th-mark" aria-label={`${brand?.name ?? "Things"} — home`}>
-          <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: brand?.logo ?? "" }} />
+          <span aria-hidden="true" dangerouslySetInnerHTML={logo} />
           {brand?.name ?? "Things"}
         </Link>
         <nav className="th-nav" aria-label="Kinds">
