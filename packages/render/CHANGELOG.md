@@ -1,5 +1,34 @@
 # @graview/render
 
+## 0.0.2
+
+### Patch Changes
+
+- a5a867e: A kit for the picture. Everything the scene draws that is not a view — the lines, their captions, the ground's grid and lattice, the kind tags, how far the unlit recedes, the mark a broken rule leaves — is declared on `brand.kit`, any part of it, the rest as shipped. A connector's route is a named strategy (`curve`, `straight`, `orthogonal`) and its stroke a named pattern; each is one case in one file, so the next is one more case and nothing in the scene moves. Colour and visibility are per edge kind under `connectors.byEdge` or for all under `connectors.all`; a kind kept quiet is not drawn and stays selectable from the inspector. `themeCss` emits the kit as `--graview-kit-*` custom properties that the ground and the tags read. `graview check` holds an explicit line colour to 3:1 against both grounds in both schemes (`kit-contrast-below-aa`, `kit-colour-unreadable`). An embed's handle gains `setBrand`, so a page can re-dress a running Graview.
+- Updated dependencies [e76d298]
+- Updated dependencies [a5a867e]
+- Updated dependencies [a10c8d0]
+- Updated dependencies [95fa221]
+- Updated dependencies [a9a6210]
+- Updated dependencies [60db3d0]
+- Updated dependencies [6ecf8ec]
+- Updated dependencies [3251440]
+- Updated dependencies [1f232bb]
+- Updated dependencies [4b96ddb]
+- Updated dependencies [08befa1]
+- Updated dependencies [99b4b27]
+- Updated dependencies [f579faa]
+- Updated dependencies [d7ea1a1]
+- Updated dependencies [ea93a35]
+- Updated dependencies [ced759d]
+- Updated dependencies [5123cf3]
+- Updated dependencies [a5a867e]
+- Updated dependencies [5410e86]
+- Updated dependencies [5ef7e9b]
+- Updated dependencies [992ac22]
+  - @graview/layout@0.0.2
+  - @graview/core@0.0.2
+
 ## 0.0.1
 
 ### Patch Changes

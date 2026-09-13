@@ -1,5 +1,29 @@
 # @graview/tools
 
+## 0.0.2
+
+### Patch Changes
+
+- 491c7b6: A gap nobody is waiting on is not an observation. The insight provider announced an empty kind whenever any declaration had an edge into it — including the kind's own. A scaffolded project starts with exactly that shape, so its one empty district read "Nothing here yet, though Items expect to connect to these", naming the absent kind as the party waiting for it. Only other kinds count now.
+- 38b0334: A line does not offer the act that would make it. Both ends of a selected relation prefill from the line itself, so a mutation that only connects that edge kind arrived with no question left and nothing to change — a one-press button that looked inert, and instead re-applied the mutation and wrote a second identical op into the history describing a change that never happened. A maker with a question still open, and a mutation that also severs the kind (a move), are both still offered.
+- 5ba437c: A one-press act must be able to act. The actions strip counted only required arguments as open, so a derived edit whose every field is optional looked like a single press and, pressed with just its subject, refused on the button: "Nothing to change — give at least one of label a value." An action with nothing required left is now rehearsed with what it has, and one that would refuse asks for its optional arguments instead, each of which can be skipped; only what was actually said is applied.
+- Updated dependencies [a5a867e]
+- Updated dependencies [a10c8d0]
+- Updated dependencies [60db3d0]
+- Updated dependencies [6ecf8ec]
+- Updated dependencies [3251440]
+- Updated dependencies [1f232bb]
+- Updated dependencies [4b96ddb]
+- Updated dependencies [08befa1]
+- Updated dependencies [99b4b27]
+- Updated dependencies [ea93a35]
+- Updated dependencies [ced759d]
+- Updated dependencies [a5a867e]
+- Updated dependencies [5410e86]
+- Updated dependencies [5ef7e9b]
+- Updated dependencies [992ac22]
+  - @graview/core@0.0.2
+
 ## 0.0.1
 
 ### Patch Changes
