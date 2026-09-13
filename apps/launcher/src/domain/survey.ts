@@ -1,4 +1,5 @@
 import type { GraviewApp } from "@graview/core";
+import { rotaApp } from "@graview/rota";
 import { seedbedApp } from "@graview/seedbed";
 import { todoApp } from "@graview/todo";
 
@@ -35,6 +36,14 @@ export const APPS: readonly AppEntry[] = [
     tagline: "The example: a todo list, because nobody has to be taught what one is.",
     port: 5193,
     command: "pnpm dev",
+  },
+  {
+    id: "rota",
+    app: rotaApp as unknown as GraviewApp,
+    label: "Rota",
+    tagline: "The product-grade one: a volunteer roster, branded, permissioned, remembered, embedded and open in its own studio.",
+    port: 5195,
+    command: "pnpm dev:rota",
   },
   {
     id: "seedbed",

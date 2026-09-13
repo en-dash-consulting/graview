@@ -33,6 +33,19 @@ export const seedbedApp = defineApp({
       requiredRoles: ["start"],
       bindings: { planting: { start: "sown", end: "harvested", label: "label" } },
     },
+    {
+      /*
+       * WHO TENDS WHAT — the coverage grid, which chapter ten binds and the
+       * base declaration had never said out loud. Declared here as well,
+       * because the desk reads declarations: a lens the garden genuinely
+       * uses but does not declare shows up as "only one app uses this",
+       * which is the rule being right about the wrong thing.
+       */
+      name: "coverage",
+      binds: "entities",
+      requiredRoles: ["rows", "columns", "link"],
+      bindings: { rows: { kind: "plot" }, columns: { kind: "gardener" }, link: { edge: "tended-by" } },
+    },
   ],
   /*
    * The intelligence, declared. The starter provider proposes from the

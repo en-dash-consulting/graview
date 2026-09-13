@@ -9,8 +9,7 @@
       "DOM.Iterable"
     ],
     "jsx": "react-jsx",
-    "resolveJsonModule": true,
-    "types": []
+    "resolveJsonModule": true
   },
   "include": [
     "src/**/*",
@@ -21,10 +20,10 @@
       "path": "../../packages/core"
     },
     {
-      "path": "../../packages/tools"
+      "path": "../../packages/layout"
     },
     {
-      "path": "../../packages/layout"
+      "path": "../../packages/tools"
     },
     {
       "path": "../../packages/render"
@@ -42,13 +41,10 @@
       "path": "../../packages/ship"
     },
     {
-      "path": "../todo"
+      "path": "../../packages/studio"
     },
     {
-      "path": "../seedbed"
-    },
-    {
-      "path": "../rota"
+      "path": "../../packages/embed"
     }
   ]
 }

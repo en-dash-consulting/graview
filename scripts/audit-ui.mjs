@@ -132,6 +132,41 @@ const APPS = {
       await p.locator('[data-testid="affordances"] button', { hasText: "Change the" }).first().click();
     },
   } },
+  /*
+   * ROTA, the product-grade one. Every screen here carries a brand with a
+   * KIT, a policy with three roles and an installation — so the generic
+   * battery is measuring a face that looks like something somebody shipped
+   * rather than the framework's own defaults.
+   */
+  rota: { port: 5195, ready: "__rotaReady", query: "&today=2026-09-14", states: {
+    week: async () => {},
+    fortnight: async (p) => {
+      await p.locator('nav[aria-label="Places"] button', { hasText: "The fortnight" }).click();
+      await p.waitForTimeout(900);
+    },
+    coverage: async (p) => {
+      await p.locator('nav[aria-label="Places"] button', { hasText: "Who is covering what" }).click();
+      await p.waitForTimeout(900);
+    },
+    /* A shift nobody has taken, selected: the repair asks WHO rather than
+       choosing, which is the one thing an organiser would never forgive. */
+    gap: async (p) => {
+      await p.goto("http://localhost:5195/?theme=light&today=2026-09-14&fresh=1#focus=aggregate:shift&sel=s-fri-repair", { waitUntil: "load" });
+      await p.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(900);
+    },
+    /* The seat that may do NOTHING: every act struck through with its own
+       sentence, which is what "withheld, not hidden" looks like. */
+    viewer: async (p) => {
+      await p.goto("http://localhost:5195/?theme=light&today=2026-09-14&fresh=1&as=user-sam#focus=aggregate:shift&sel=s-fri-repair", { waitUntil: "load" });
+      await p.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(900);
+    },
+    installation: async (p) => {
+      await p.click('[data-testid="show-installation"]');
+      await p.waitForTimeout(800);
+    },
+  } },
   seedbed: { port: 5194, ready: "__seedbedReady", states: {
     /*
      * A PHONE, and a Graview in a column of an article, are the same shape.

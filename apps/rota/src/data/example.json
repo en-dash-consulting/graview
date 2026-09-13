@@ -1,0 +1,229 @@
+{
+  "nodes": [
+    {
+      "id": "s-mon-open",
+      "kind": "shift",
+      "label": "Monday open up",
+      "on": "2026-09-14",
+      "day": "mon",
+      "from": 480,
+      "until": 660,
+      "place": "The hall"
+    },
+    {
+      "id": "s-mon-lunch",
+      "kind": "shift",
+      "label": "Monday lunch club",
+      "on": "2026-09-14",
+      "day": "mon",
+      "from": 660,
+      "until": 840,
+      "place": "The kitchen"
+    },
+    {
+      "id": "s-tue-craft",
+      "kind": "shift",
+      "label": "Tuesday craft group",
+      "on": "2026-09-15",
+      "day": "tue",
+      "from": 600,
+      "until": 780,
+      "place": "The hall"
+    },
+    {
+      "id": "s-wed-food",
+      "kind": "shift",
+      "label": "Wednesday food bank",
+      "on": "2026-09-16",
+      "day": "wed",
+      "from": 540,
+      "until": 780,
+      "place": "The store"
+    },
+    {
+      "id": "s-wed-close",
+      "kind": "shift",
+      "label": "Wednesday lock up",
+      "on": "2026-09-16",
+      "day": "wed",
+      "from": 1020,
+      "until": 1080,
+      "place": "The hall"
+    },
+    {
+      "id": "s-thu-baby",
+      "kind": "shift",
+      "label": "Thursday baby group",
+      "on": "2026-09-17",
+      "day": "thu",
+      "from": 570,
+      "until": 720,
+      "place": "The hall"
+    },
+    {
+      "id": "s-fri-repair",
+      "kind": "shift",
+      "label": "Friday repair cafe",
+      "on": "2026-09-18",
+      "day": "fri",
+      "from": 840,
+      "until": 1020,
+      "place": "The workshop"
+    },
+    {
+      "id": "s-sat-market",
+      "kind": "shift",
+      "label": "Saturday market",
+      "on": "2026-09-19",
+      "day": "sat",
+      "from": 420,
+      "until": 780,
+      "place": "The yard"
+    },
+    {
+      "id": "s-sun-clean",
+      "kind": "shift",
+      "label": "Sunday deep clean",
+      "on": "2026-09-20",
+      "day": "sun",
+      "from": 900,
+      "until": 1080,
+      "place": "The hall"
+    },
+    {
+      "id": "s-mon2-open",
+      "kind": "shift",
+      "label": "Monday open up",
+      "on": "2026-09-21",
+      "day": "mon",
+      "from": 480,
+      "until": 660,
+      "place": "The hall"
+    },
+    {
+      "id": "v-ada",
+      "kind": "volunteer",
+      "label": "Ada Nowak",
+      "phone": "07700 900101",
+      "limit": 3,
+      "status": "available"
+    },
+    {
+      "id": "v-bo",
+      "kind": "volunteer",
+      "label": "Bo Ferreira",
+      "phone": "07700 900102",
+      "limit": 2,
+      "status": "available"
+    },
+    {
+      "id": "v-cass",
+      "kind": "volunteer",
+      "label": "Cass Whitley",
+      "phone": "07700 900103",
+      "limit": 4,
+      "status": "available"
+    },
+    {
+      "id": "v-dev",
+      "kind": "volunteer",
+      "label": "Dev Ramanan",
+      "phone": "07700 900104",
+      "limit": 1,
+      "status": "away"
+    },
+    {
+      "id": "rule-covered",
+      "kind": "rule",
+      "label": "Every shift is covered",
+      "spec": {
+        "type": "every-shift-covered"
+      }
+    },
+    {
+      "id": "rule-limit",
+      "kind": "rule",
+      "label": "Nobody over what they said they could do",
+      "spec": {
+        "type": "nobody-over-their-limit"
+      }
+    },
+    {
+      "id": "user-jo",
+      "kind": "user",
+      "label": "Jo Harding",
+      "email": "jo@rota.test",
+      "roles": [
+        "coordinator"
+      ],
+      "status": "active"
+    },
+    {
+      "id": "user-ada",
+      "kind": "user",
+      "label": "Ada Nowak",
+      "email": "ada@rota.test",
+      "roles": [
+        "volunteer"
+      ],
+      "status": "active"
+    },
+    {
+      "id": "user-sam",
+      "kind": "user",
+      "label": "Sam Okafor",
+      "email": "sam@rota.test",
+      "roles": [
+        "viewer"
+      ],
+      "status": "active"
+    },
+    {
+      "id": "inv-lee",
+      "kind": "invitation",
+      "label": "lee@rota.test",
+      "email": "lee@rota.test",
+      "roles": [
+        "volunteer"
+      ],
+      "status": "pending"
+    }
+  ],
+  "edges": [
+    {
+      "kind": "covered-by",
+      "from": "s-mon-open",
+      "to": "v-ada"
+    },
+    {
+      "kind": "covered-by",
+      "from": "s-mon-lunch",
+      "to": "v-bo"
+    },
+    {
+      "kind": "covered-by",
+      "from": "s-tue-craft",
+      "to": "v-cass"
+    },
+    {
+      "kind": "covered-by",
+      "from": "s-wed-food",
+      "to": "v-bo"
+    },
+    {
+      "kind": "covered-by",
+      "from": "s-wed-close",
+      "to": "v-bo"
+    },
+    {
+      "kind": "covered-by",
+      "from": "s-thu-baby",
+      "to": "v-ada"
+    },
+    {
+      "kind": "covered-by",
+      "from": "s-sat-market",
+      "to": "v-cass"
+    }
+  ]
+}

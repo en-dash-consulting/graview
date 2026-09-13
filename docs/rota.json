@@ -1,0 +1,114 @@
+{
+  "at": "2026-09-13T07:06:31.704Z",
+  "engine": "chromium",
+  "checks": {
+    "threePicturesAndTheWayIn": {
+      "places": [
+        "The fortnight",
+        "The week",
+        "Who is covering what"
+      ],
+      "studio": true,
+      "installation": true,
+      "connector": "",
+      "ok": true
+    },
+    "aGradientRatherThanADifference": {
+      "coordinator": {
+        "offered": 5,
+        "withheld": [],
+        "installation": true,
+        "studio": true
+      },
+      "volunteer": {
+        "offered": 1,
+        "withheld": [
+          "coordinator",
+          "coordinator",
+          "coordinator"
+        ],
+        "installation": false,
+        "studio": false
+      },
+      "viewer": {
+        "offered": 0,
+        "withheld": [
+          "coordinator,volunteer",
+          "coordinator",
+          "coordinator"
+        ],
+        "installation": false,
+        "studio": false
+      },
+      "ok": true
+    },
+    "aStoredRosterIsCarriedForwardOnce": {
+      "carried": [
+        "migration 1→2: The roster adopts a limit"
+      ],
+      "again": [],
+      "ok": true
+    },
+    "theStudioOpensOverRotasOwnDeclaration": {
+      "verdict": "0",
+      "kinds": [
+        "kind:act",
+        "kind:brand",
+        "kind:edge",
+        "kind:field",
+        "kind:grant",
+        "kind:kind",
+        "kind:lens",
+        "kind:role",
+        "kind:rule"
+      ],
+      "ok": true
+    },
+    "theRosterOnSomebodyElsesPage": {
+      "labels": [
+        "The week",
+        "Who is covering what"
+      ],
+      "hostFont": "Georgia, \"Times New Roman\", serif",
+      "scoped": true,
+      "views": [
+        6,
+        6
+      ],
+      "ok": true
+    },
+    "everyRouteIsReachable": {
+      "ok": true
+    },
+    "theReadersOwnTextSize": {
+      "/pages": {
+        "scrollWidth": 390,
+        "width": 390,
+        "widest": []
+      },
+      "/pages/shifts": {
+        "scrollWidth": 390,
+        "width": 390,
+        "widest": []
+      },
+      "/pages/shifts/s-fri-repair": {
+        "scrollWidth": 390,
+        "width": 390,
+        "widest": []
+      },
+      "/pages/volunteers/v-bo": {
+        "scrollWidth": 390,
+        "width": 390,
+        "widest": []
+      },
+      "/pages/problems": {
+        "scrollWidth": 390,
+        "width": 390,
+        "widest": []
+      },
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

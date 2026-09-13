@@ -5,10 +5,10 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/create-graview",
-    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/create-graview apps/todo apps/launcher apps/seedbed",
+    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/create-graview apps/todo apps/launcher apps/seedbed apps/rota",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "node packages/core/dist/cli/index.js check apps/todo/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/launcher/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/seedbed/dist/domain/app.js",
+    "check": "node packages/core/dist/cli/index.js check apps/todo/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/launcher/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/seedbed/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/rota/dist/domain/app.js",
     "lint": "tsc -b --dry",
     "spike": "node apps/spike/scripts/run-spike.mjs",
     "shrunk": "node scripts/verify-shrunk.mjs",
@@ -32,7 +32,7 @@
     "dev": "pnpm --filter @graview/todo dev",
     "dev:seedbed": "pnpm --filter @graview/seedbed dev",
     "a11y": "node apps/todo/scripts/run-a11y.mjs",
-    "apps:all": "pnpm --parallel --filter @graview/launcher --filter @graview/todo --filter @graview/seedbed dev",
+    "apps:all": "pnpm --parallel --filter @graview/launcher --filter @graview/todo --filter @graview/seedbed --filter @graview/rota dev",
     "audit-ui": "node scripts/audit-ui.mjs",
     "elm": "node scripts/eval-elm.mjs",
     "smoke:create": "node scripts/smoke-create.mjs",
@@ -40,7 +40,9 @@
     "progression": "node scripts/progression.mjs",
     "site:build": "pnpm --filter @graview/seedbed exec vite build --config vite.site.config.ts",
     "studio": "node scripts/verify-studio.mjs",
-    "calendar": "node scripts/verify-calendar.mjs"
+    "calendar": "node scripts/verify-calendar.mjs",
+    "dev:rota": "pnpm --filter @graview/rota dev",
+    "rota": "node scripts/verify-rota.mjs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",

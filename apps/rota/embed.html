@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" />
+<title>The rota, on somebody else's page</title>
+<style>
+  /* THE HOST PAGE'S OWN STYLE, and deliberately nothing like Rota's.
+     An embed that only looks right inside a page that already matches it
+     has not proved anything: the point is that the app carries its own
+     theme scoped to its own element, and leaves this page alone. */
+  html, body { margin: 0; background: #fbfbf7; color: #1c1c1a; font: 16px/1.6 Georgia, "Times New Roman", serif; }
+  main { max-width: 42rem; margin: 0 auto; padding: 3rem 1.25rem 6rem; }
+  h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 1rem; }
+  h2 { font-size: 1.25rem; margin: 2.5rem 0 0.5rem; }
+  p { margin: 0 0 1rem; }
+  .frame { margin: 1.5rem 0 2rem; height: 26rem; }
+</style>
+<main>
+  <h1>How the hall gets covered</h1>
+  <p>
+    The committee keeps a rota. For years it was a sheet of A4 on the noticeboard, which
+    worked until somebody took it down to photocopy it. What follows is the same rota,
+    running here on this page — not a screenshot of one.
+  </p>
+
+  <h2>The week</h2>
+  <p>
+    Every slot, and who has it. A shift nobody has taken shows as a gap, because a rota
+    whose gaps look the same as its fills is a rota nobody reads twice.
+  </p>
+  <div class="frame" id="week"></div>
+
+  <h2>Who is covering what</h2>
+  <p>
+    The same roster, seen the other way up: volunteers down, shifts across. It is one graph
+    and two pictures, which is the whole reason the thing is a graph.
+  </p>
+  <div class="frame" id="coverage"></div>
+
+  <p>
+    Both of these are the live application, mounted twice at two stops. Everything you can
+    do in them is an act the roster judges, records and can take back — including the ones
+    this seat is not allowed, which say so rather than disappearing.
+  </p>
+</main>
+<script type="module" src="/src/embed.ts"></script>
