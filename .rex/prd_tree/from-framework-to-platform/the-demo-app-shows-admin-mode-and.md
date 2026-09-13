@@ -2,7 +2,7 @@
 id: "af069e84-aa59-4e65-9835-01b3e1ea6e8b"
 level: "feature"
 title: "The demo app shows admin mode and profiles: the installation in the todo app, with seats to feel it"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "admin"
@@ -12,6 +12,11 @@ tags:
   - "demo"
   - "platform"
 source: "Nick, 2026-09-13: \"/ndx-capture demo app need to show admin mode and profiles\""
+startedAt: "2026-09-13T05:34:05.758Z"
+completedAt: "2026-09-13T05:34:05.758Z"
+endedAt: "2026-09-13T05:34:05.758Z"
+resolutionType: "code-change"
+resolutionDetail: "Things declares declareInstallation (keeper/member, admin=keeper) with a policy, two seeded people and a pending invitation. Both seats on the bar via a new <Seats> primitive reading GraviewProvider's new seats/onSeat; sitting down re-derives every surface. Keeper gets \"Show the installation\", the People/Invitations districts, the reach lens as the place \"Who may do what\", and the installation acts in the strip, the menu and the pages; the member gets none of it — absent, not refused — and the routed face lists the kinds only for the keeper. A person's record is their profile via the self grant. Three framework fixes fell out: Places no longer draws a pill for a kind the seat cannot see; ArgShape gains {type:\"several\",of} so an act with a list argument (invite) is askable at all; reason.text declared fixed. 799 unit tests, graview check, verify-seat (17 criteria), audit-ui/survey keeper+member+reach states, and the menu/pages/navigation/chat/remember harnesses all green."
 acceptanceCriteria:
   - "the todo app declares the installation with a keeper and a member role, seeds a user for each and one pending invitation, and offers both seats on the bar"
   - "as the keeper, \"Show the installation\" is on the bar and raises People and Invitations beside the domain; as the member it is absent and the kinds are absent from the scene and the pages"
@@ -20,6 +25,6 @@ acceptanceCriteria:
   - "\"Who may do what\" is a place on the todo app's bar for the keeper, read from the same policy the store refuses with"
   - "graview check is clean; audit-ui, survey and verify-seat carry states for the keeper and the member with the installation shown"
 description: "The installation shipped in core (declareInstallation: users, invitations, roles, the admin-only module, the self grant for a profile, \"Show the installation\", the reach lens) and is demonstrated only in seedbed chapter 14. The todo app — the demo people open first, at localhost:5193 and in every harness — has no installation: no users, no admin mode, no profile, so the platform story is invisible where it would be looked for. This feature puts it in the todo app: declareInstallation on its declaration with roles (a keeper who administers, a member who does not), seed users for both and a pending invitation, seats on the app so a reader can sit down as either, \"Show the installation\" on the bar for the keeper and nowhere for the member, the people and invitations rising as districts beside lists and tasks, invite/welcome/revoke/grant/revoke as acts in the strip and on the pages, a person's own record as their profile — editable by them and read-only to the other seat — and the reach lens as a place (\"Who may do what\"). The pages face lists the installation's kinds only for the keeper. The same goes into the scaffold's guidance so a new app can follow it. Source: Nick, 2026-09-13: \"demo app need to show admin mode and profiles\"."
-lastModified: "2026-09-13T04:49:07.301Z"
+lastModified: "2026-09-13T05:34:05.770Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

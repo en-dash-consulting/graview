@@ -31,6 +31,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Persistence you can open: a demo that keeps its graph in JSON files or SQLite behind a small server, and the launcher shows it](./persistence-you-can-open-a-demo-that.md) | pending |
 | [Studio: the declaration itself, edited in the graph's own interface, with changes applied as mutations](./studio-the-declaration-itself-edited.md) | completed |
 | [Systems of record: two-way sync with the world](./systems-of-record-two-way-sync-with.md) | completed |
-| [The demo app shows admin mode and profiles: the installation in the todo app, with seats to feel it](./the-demo-app-shows-admin-mode-and.md) | pending |
+| [The demo app shows admin mode and profiles: the installation in the todo app, with seats to feel it](./the-demo-app-shows-admin-mode-and.md) | completed |
 | [The installation is in the graph: users, invitations and profiles as nodes, with an admin entrypoint in the app](./the-installation-is-in-the-graph-users.md) | completed |
 | [Who may do what, derived and enforced](./who-may-do-what-derived-and-enforced.md) | completed |
