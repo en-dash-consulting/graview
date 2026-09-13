@@ -25,6 +25,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
+| [A profile on the bar: who you are signed in as, and your settings, including your text size](./a-profile-on-the-bar-who-you-are.md) | pending |
 | [Branding an installation without forking it](./branding-an-installation-without.md) | completed |
 | [Creator mode from inside the app: the studio is a place on the bar, in every app the scaffold writes](./creator-mode-from-inside-the-app-the.md) | pending |
 | [Studio: the declaration itself, edited in the graph's own interface, with changes applied as mutations](./studio-the-declaration-itself-edited.md) | completed |
