@@ -8,6 +8,7 @@ import {
   type SceneProps,
 } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
+import { StudioPlace } from "@graview/studio";
 import type { Principal } from "@graview/core";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useState } from "react";
@@ -197,6 +198,13 @@ function TodoShell({
       // A person's own record on the routed face: the profile the self
       // grant already makes theirs to edit and nobody else's.
       profileHref={(userId) => `/pages/people/${userId}`}
+      /*
+       * THE APP'S OWN DECLARATION, one press away. The keeper who keeps
+       * who is here also keeps what the app IS — its kinds, fields, acts
+       * and rules — and changes it with the same gestures, checked before
+       * anything is written.
+       */
+      studio={<StudioPlace app={todoApp} />}
       seat={(onCall) => <TidyButton onCall={onCall} />}
       remembers={remembers}
       syncUrl={syncUrl}

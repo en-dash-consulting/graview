@@ -17,11 +17,16 @@
   },
   "dependencies": {
     "@graview/core": "workspace:*",
+    "@graview/layout": "workspace:*",
+    "@graview/pages": "workspace:*",
+    "@graview/primitives": "workspace:*",
     "@graview/react": "workspace:*",
+    "@graview/tools": "workspace:*",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=18",
+    "react-dom": ">=18"
   },
   "files": [
     "dist",

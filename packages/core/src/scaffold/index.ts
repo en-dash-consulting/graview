@@ -922,6 +922,7 @@ function uiAppTsx(ids: Ids): string {
   return `import { EMPTY_VIEW, type ViewState } from "@graview/layout";
 import { GraviewProvider, useGraph, useGraview, type Scheme } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
+import { StudioPlace } from "@graview/studio";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
 import { useMemo, useState } from "react";
 import { ${ids.appVar}, createStore, type ${ids.StoreType} } from "../domain/app.js";
@@ -976,6 +977,15 @@ export function ${ids.AppComponent}({
     >
       <Shell<S>
         standing="Everything is in order"
+        /*
+         * THE APP'S OWN DECLARATION, one press away and in place. The
+         * kinds, fields, edges, acts and rules of \`src/domain\` are a graph
+         * here: change one with the ordinary acts, watch the checker judge
+         * it, and apply to get the files to write back. Offered to the seat
+         * that administers where there is one, and to whoever is here where
+         * there is not — which is this project, today.
+         */
+        studio={<StudioPlace app={${ids.appVar}} />}
         seat={(onCall) => <Starter onCall={onCall} />}
         remembers={remembers}
         syncUrl={syncUrl}

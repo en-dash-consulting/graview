@@ -14,6 +14,7 @@ import {
   Standing,
   themeCss,
 } from "@graview/primitives";
+import { StudioPlace } from "@graview/studio";
 import {
   createViews,
   GraviewProvider,
@@ -232,7 +233,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         settings={app.settings ?? []}
       >
         <Faces face={face} stop={stop} kinds={kinds} />
-        {toggle ? <Strip face={face} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} /> : null}
+        {toggle ? <Strip app={app as unknown as GraviewApp<AnySchema>} face={face} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} /> : null}
         {face === "pages" ? (
           <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "auto" }}>
             <PagesApp<S>
@@ -285,6 +286,7 @@ function Faces({ face, stop, kinds }: { face: EmbedFace; stop: string | undefine
 }
 
 function Strip({
+  app,
   face,
   onFace,
   standing,
@@ -292,6 +294,8 @@ function Strip({
   principal,
   onSeat,
 }: {
+  /** The declaration this embed is running, for the way into the studio. */
+  app: GraviewApp<AnySchema>;
   face: EmbedFace;
   onFace?: ((face: EmbedFace) => void) | undefined;
   standing: string;
@@ -354,6 +358,10 @@ function Strip({
       {/* The named pictures over the graph — a lens is somewhere to go, by name. */}
       {face !== "pages" ? <Places /> : null}
       {face !== "pages" ? <ShowInstallation /> : null}
+      {/* And the app's own declaration, for the seat that keeps it — inside
+          the embed's box, because a studio that escaped onto somebody
+          else's page would be the rudest thing this package could do. */}
+      {face !== "pages" ? <StudioPlace app={app} within="box" /> : null}
       {/* Who is at the keyboard, and the reader's own settings. The seats
           keep their own control beside it, because the HOST owns which one
           is taken here — the pane says who that turned out to be. */}

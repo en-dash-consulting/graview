@@ -22,19 +22,19 @@
   },
   "dependencies": {
     "@graview/core": "workspace:*",
+    "@graview/embed": "workspace:*",
     "@graview/layout": "workspace:*",
+    "@graview/pages": "workspace:*",
     "@graview/primitives": "workspace:*",
     "@graview/react": "workspace:*",
     "@graview/render": "workspace:*",
+    "@graview/ship": "workspace:*",
+    "@graview/studio": "workspace:*",
     "@graview/tools": "workspace:*",
-    "zod": "^4.4.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@graview/pages": "workspace:*",
-    "@graview/ship": "workspace:*",
     "react-router-dom": "^7.1.1",
-    "@graview/embed": "workspace:*",
-    "@graview/studio": "workspace:*"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "vite": "^5.4.11",

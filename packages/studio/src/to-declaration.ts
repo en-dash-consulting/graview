@@ -103,6 +103,69 @@ export interface DeclarationOptions<S extends AnySchema = AnySchema> {
   readonly name?: string;
 }
 
+/**
+ * WHAT THE STUDIO DOES NOT MODEL, IT MUST NOT SILENTLY DESTROY.
+ *
+ * A kind carries decisions the studio has no act for: how a field READS
+ * (`display.labels`, `display.format`, `display.hide`), which fields are
+ * `fixed` because nothing may rewrite them, and which of them answer a
+ * lens's roles (`fieldRoles`). Rebuilding a kind from the graph alone threw
+ * all of it away — so applying the studio to Things would have turned
+ * "Blocked 09:00" back into `plannedAt: 540` on every task card, and
+ * brought back the `field-without-writer` warning on a rationale that is
+ * fixed on purpose. Neither is a change anyone asked for, and neither is
+ * visible in the studio, which makes it the worst kind of loss.
+ *
+ * Carried from the checkout's own declaration, narrowed to the fields that
+ * still exist — a label for a field somebody deleted is not preserved, it
+ * is meaningless.
+ */
+function kept(
+  base: GraviewApp<AnySchema> | undefined,
+  kind: string,
+  shape: Record<string, z.ZodType>,
+): Record<string, unknown> {
+  const was = base?.schema?.tryDefinition?.(kind) as
+    | {
+        display?: {
+          labels?: Record<string, string>;
+          format?: Record<string, unknown>;
+          hide?: readonly string[];
+        };
+        fixed?: Record<string, string>;
+        fieldRoles?: Record<string, string>;
+      }
+    | undefined;
+  if (!was) return {};
+  const here = (name: string) => name in shape;
+  const narrow = <T,>(record: Record<string, T> | undefined): Record<string, T> | undefined => {
+    if (!record) return undefined;
+    const left = Object.fromEntries(Object.entries(record).filter(([field]) => here(field)));
+    return Object.keys(left).length > 0 ? left : undefined;
+  };
+  const labels = narrow(was.display?.labels);
+  const format = narrow(was.display?.format);
+  const hide = was.display?.hide?.filter(here);
+  const display =
+    labels || format || (hide && hide.length > 0)
+      ? {
+          ...(labels ? { labels } : {}),
+          ...(format ? { format } : {}),
+          ...(hide && hide.length > 0 ? { hide } : {}),
+        }
+      : undefined;
+  const fixed = narrow(was.fixed);
+  // A role names a FIELD, so it survives only while its field does.
+  const roles = was.fieldRoles
+    ? Object.fromEntries(Object.entries(was.fieldRoles).filter(([, field]) => here(String(field))))
+    : undefined;
+  return {
+    ...(display ? { display } : {}),
+    ...(fixed ? { fixed } : {}),
+    ...(roles && Object.keys(roles).length > 0 ? { fieldRoles: roles } : {}),
+  };
+}
+
 /** The studio's graph as a checkable, runnable app. */
 export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: DeclarationOptions = {}): GraviewApp<AnySchema> {
   const read = new Read(snapshot as Reading);
@@ -152,6 +215,8 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(str(kind, "description") ? { description: str(kind, "description")! } : {}),
       ...(hasLabel ? { label: (node: { id: string } & Record<string, unknown>) => String(node["label"] ?? node.id) } : {}),
       ...(lifecycleField && retired ? { lifecycle: { field: lifecycleField, retired: retired[0] === "date" ? ("date" as const) : retired } } : {}),
+      // What the studio has no act for is CARRIED, not dropped.
+      ...kept(base, name(kind), shape),
     } as never);
   });
   const schema = createSchema(definitions as never) as AnySchema;

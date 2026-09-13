@@ -1,0 +1,76 @@
+{
+  "at": "2026-09-13T06:05:54.865Z",
+  "engine": "chromium",
+  "checks": {
+    "theDoorBelongsToWhoeverKeepsTheApp": {
+      "member": false,
+      "keeper": true,
+      "ok": true
+    },
+    "itOpensTheRunningAppsOwnDeclaration": {
+      "districts": [
+        "kind:act",
+        "kind:brand",
+        "kind:edge",
+        "kind:field",
+        "kind:grant",
+        "kind:kind",
+        "kind:lens",
+        "kind:role",
+        "kind:rule"
+      ],
+      "places": [
+        "What the checker says"
+      ],
+      "verdict": {
+        "text": "The checker finds nothing wrong",
+        "errors": 0,
+        "warnings": 0
+      },
+      "ok": true
+    },
+    "aFieldAddedIsAFieldWritten": {
+      "offered": [
+        "Rename the kind …",
+        "Change the kind …",
+        "lets …",
+        "Add an act …",
+        "Add an edge …",
+        "Add a rule …",
+        "Add a field …",
+        "Remove the kind"
+      ],
+      "verdict": {
+        "text": "The checker finds nothing wrong",
+        "errors": 0,
+        "warnings": 0
+      },
+      "inTheSchema": true,
+      "stillATask": true,
+      "keptHowItReads": true,
+      "ok": true
+    },
+    "everyChangeIsAnActWithUndo": {
+      "goneAgain": true,
+      "ok": true
+    },
+    "anAgentProposesAndTheTrailDecides": {
+      "seat": {
+        "label": "Every rule names what puts it right",
+        "disabled": true
+      },
+      "turns": [
+        "you Undo: Add the field urgency to taskundofield:task.urgencytasks",
+        "you Add the field urgency to taskfield:task.urgencytasks"
+      ],
+      "ok": true
+    },
+    "closingPutsYouBackWhereYouWere": {
+      "studioGone": true,
+      "stillTheApp": true,
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

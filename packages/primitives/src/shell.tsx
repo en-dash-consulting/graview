@@ -63,6 +63,16 @@ export interface ShellProps<S extends AnySchema> {
    * pretending there is somewhere to go.
    */
   readonly profileHref?: (userId: string) => string;
+  /**
+   * The way into the app's own declaration — `<StudioPlace app={...} />`
+   * from `@graview/studio`, which an app passes because only the app knows
+   * which declaration it is running.
+   *
+   * A slot rather than a direct import: the shell would otherwise depend on
+   * the studio, the studio already depends on the shell's own primitives,
+   * and the cycle would be real rather than a typing accident.
+   */
+  readonly studio?: ReactNode;
 }
 
 export function Shell<S extends AnySchema>({
@@ -80,6 +90,7 @@ export function Shell<S extends AnySchema>({
   onScheme,
   chat = true,
   profileHref,
+  studio,
 }: ShellProps<S>) {
   const { brand } = useGraview<S>();
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);
@@ -146,6 +157,9 @@ export function Shell<S extends AnySchema>({
         <Places<S> />
         {/* The way into the installation, for the seat that keeps it. */}
         <ShowInstallation<S> />
+        {/* And the way into the DECLARATION, for the same seat: the app's
+            own kinds, fields, acts and rules, one press away and in place. */}
+        {studio}
         {/* The right-hand group wraps for the same reason the bar does: as one
             unwrapping unit it carried the whole overflow across the edge by
             itself, so the bar wrapped and the controls were still gone. */}

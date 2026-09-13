@@ -58,6 +58,15 @@ export type ArgShape =
   | { readonly type: "number"; readonly min?: number; readonly max?: number }
   | { readonly type: "choice"; readonly options: readonly string[] }
   /**
+   * YES OR NO — an argument that takes a boolean.
+   *
+   * Undescribable until now, for the same reason a list was: an interface
+   * can only offer what it can ask for, so "Add a field" — whose `required`
+   * is a plain boolean — was derived NOWHERE. The studio's central act, in
+   * the studio, unreachable, because nothing could ask one question.
+   */
+  | { readonly type: "boolean" }
+  /**
    * SEVERAL OF A THING — an argument that takes a list.
    *
    * "Invite somebody as coordinator and gardener" is one act with two roles
@@ -91,6 +100,8 @@ export function describeArg(schema: unknown): ArgShape {
   const bag = field?._zod?.bag ?? {};
 
   if (type === "enum") return { type: "choice", options: Object.keys(field?._def?.entries ?? {}) };
+
+  if (type === "boolean") return { type: "boolean" };
 
   /*
    * A list describes itself through what it holds. An array of something

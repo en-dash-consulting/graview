@@ -220,7 +220,7 @@ export function AnswerArgs({
                 type="button"
                 // The question travels with the answer: a control read on its
                 // own says what choosing it would mean.
-                aria-label={`${asking}: ${nameOf(store, choice)}`}
+                aria-label={`${asking}: ${said(store, shape, choice)}`}
                 {...(several ? { "aria-pressed": held } : {})}
                 style={{
                   padding: "3px 9px",
@@ -236,10 +236,10 @@ export function AnswerArgs({
                           ? current.filter((other) => other !== choice)
                           : [...current, choice],
                       )
-                    : answer(choice)
+                    : answer(shape.type === "boolean" ? choice === "yes" : choice)
                 }
               >
-                {nameOf(store, choice)}
+                {said(store, shape, choice)}
               </button>
             );
           })}
@@ -322,7 +322,31 @@ function choicesFor(
   // SEVERAL OF A CHOICE is the same list of buttons; what differs is that
   // pressing one adds it rather than settling the question.
   if (shape.type === "several" && shape.of.type === "choice") return shape.of.options;
+  // Yes or no is a choice of two, and reads better as two buttons than as
+  // a text field somebody has to know to type "true" into.
+  if (shape.type === "boolean") return YES_NO;
   return [];
+}
+
+/** The two answers to a boolean, in the words a person would use. */
+const YES_NO = ["yes", "no"] as const;
+
+/**
+ * How one possible answer reads.
+ *
+ * A node reference reads as the node's own label; anything else reads as
+ * itself. `nameOf` would look "yes" up as a node id, fail to find one, and
+ * show the id — which is right for nodes and nonsense for a boolean or an
+ * enum value.
+ */
+function said(
+  store: Store<AnySchema>,
+  shape: NonNullable<OpenParameter["shape"]>,
+  choice: string,
+): string {
+  if (shape.type === "boolean" || shape.type === "choice") return choice;
+  if (shape.type === "several" && shape.of.type === "choice") return choice;
+  return nameOf(store, choice);
 }
 
 /** A node's own label where there is one, so a picker never offers raw ids. */

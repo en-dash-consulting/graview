@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.",
+  "description": "Mount a declared Graview app into any element \u2014 the scene, the Graview, or the routed pages \u2014 without the Shell, sized and themed within the element.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -21,6 +21,7 @@
     "@graview/pages": "workspace:*",
     "@graview/primitives": "workspace:*",
     "@graview/react": "workspace:*",
+    "@graview/studio": "workspace:*",
     "@graview/tools": "workspace:*"
   },
   "peerDependencies": {

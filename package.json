@@ -4,8 +4,8 @@
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/embed packages/studio packages/skills packages/create-graview",
-    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/embed packages/studio packages/skills packages/create-graview apps/todo apps/launcher apps/seedbed",
+    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/create-graview",
+    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/create-graview apps/todo apps/launcher apps/seedbed",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "node packages/core/dist/cli/index.js check apps/todo/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/launcher/dist/domain/app.js && node packages/core/dist/cli/index.js check apps/seedbed/dist/domain/app.js",
@@ -38,7 +38,8 @@
     "smoke:create": "node scripts/smoke-create.mjs",
     "graview": "node packages/core/dist/cli/index.js",
     "progression": "node scripts/progression.mjs",
-    "site:build": "pnpm --filter @graview/seedbed exec vite build --config vite.site.config.ts"
+    "site:build": "pnpm --filter @graview/seedbed exec vite build --config vite.site.config.ts",
+    "studio": "node scripts/verify-studio.mjs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",

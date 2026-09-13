@@ -225,6 +225,9 @@ importers:
       '@graview/ship':
         specifier: workspace:*
         version: link:../../packages/ship
+      '@graview/studio':
+        specifier: workspace:*
+        version: link:../../packages/studio
       '@graview/tools':
         specifier: workspace:*
         version: link:../../packages/tools
@@ -280,6 +283,9 @@ importers:
       '@graview/react':
         specifier: workspace:*
         version: link:../react
+      '@graview/studio':
+        specifier: workspace:*
+        version: link:../studio
       '@graview/tools':
         specifier: workspace:*
         version: link:../tools
@@ -405,12 +411,27 @@ importers:
       '@graview/core':
         specifier: workspace:*
         version: link:../core
+      '@graview/layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@graview/pages':
+        specifier: workspace:*
+        version: link:../pages
+      '@graview/primitives':
+        specifier: workspace:*
+        version: link:../primitives
       '@graview/react':
         specifier: workspace:*
         version: link:../react
+      '@graview/tools':
+        specifier: workspace:*
+        version: link:../tools
       react:
         specifier: '>=18'
         version: 19.2.8
+      react-dom:
+        specifier: '>=18'
+        version: 19.2.8(react@19.2.8)
       zod:
         specifier: ^4.4.3
         version: 4.4.3

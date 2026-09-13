@@ -2,6 +2,7 @@ import { EMPTY_VIEW, type ViewState } from "@graview/layout";
 import type { Brand, Principal, GraviewApp } from "@graview/core";
 import { GraviewProvider, useGraph, useGraview, type Scheme, type SceneProps } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
+import { StudioPlace } from "@graview/studio";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
 import { useMemo, useState } from "react";
 import { createSeedbedStore, seedbedApp, type SeedbedStore } from "../domain/app.js";
@@ -109,6 +110,13 @@ export function SeedbedApp({
     >
       <Shell<S>
         standing="The garden keeps its agreements"
+        /*
+         * The chapter's own declaration, one press away — the chapter the
+         * reader is standing in, not a fixed one. Chapter fifteen IS the
+         * studio; every chapter before it can now open one over itself,
+         * which is the point the chapter was making.
+         */
+        studio={<StudioPlace app={(studio ?? seedbedApp) as never} />}
         seat={seat ? (onCall) => <StarterGarden onCall={onCall} /> : undefined}
         remembers={remembers}
         syncUrl={syncUrl}

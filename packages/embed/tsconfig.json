@@ -3,17 +3,38 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "jsx": "react-jsx",
     "types": []
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*"
+  ],
   "references": [
-    { "path": "../core" },
-    { "path": "../layout" },
-    { "path": "../pages" },
-    { "path": "../primitives" },
-    { "path": "../react" },
-    { "path": "../tools" }
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../layout"
+    },
+    {
+      "path": "../pages"
+    },
+    {
+      "path": "../primitives"
+    },
+    {
+      "path": "../react"
+    },
+    {
+      "path": "../tools"
+    },
+    {
+      "path": "../studio"
+    }
   ]
 }

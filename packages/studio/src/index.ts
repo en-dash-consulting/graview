@@ -24,3 +24,4 @@ export type { SourceOptions, WrittenFile } from "./source.js";
 export { createStudio } from "./studio.js";
 export type { Studio, StudioOptions } from "./studio.js";
 export { createStudioLens } from "./lens.js";
+export { StudioPlace, maySeeTheStudio } from "./place.js";

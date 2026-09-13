@@ -84,6 +84,62 @@ function zodSource(type: FieldType, required: boolean, options?: readonly string
 const defaultSource = (type: FieldType, options?: readonly string[]): string =>
   type === "number" ? "0" : type === "boolean" ? "false" : type === "enum" ? q(options?.[0] ?? "") : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
 
+/**
+ * The lines of a `defineNode` the studio carries from the checkout rather
+ * than from its graph, narrowed to the fields that still exist — a label
+ * for a field somebody deleted is not preserved, it is meaningless.
+ */
+function carried(
+  base: GraviewApp<AnySchema> | undefined,
+  kind: string,
+  fields: ReadonlySet<string>,
+  keptFormats: string[],
+): string[] {
+  const was = base?.schema?.tryDefinition?.(kind) as
+    | {
+        display?: { labels?: Record<string, string>; format?: Record<string, unknown>; hide?: readonly string[] };
+        fixed?: Record<string, string>;
+        fieldRoles?: Record<string, string>;
+      }
+    | undefined;
+  if (!was) return [];
+  const lines: string[] = [];
+  const pairs = (record: Record<string, string> | undefined): string | undefined => {
+    const left = Object.entries(record ?? {}).filter(([field]) => fields.has(field));
+    return left.length === 0 ? undefined : `{ ${left.map(([at, value]) => `${q(at)}: ${q(value)}`).join(", ")} }`;
+  };
+  const labels = pairs(was.display?.labels);
+  const hide = was.display?.hide?.filter((field) => fields.has(field));
+  const formatted = Object.keys(was.display?.format ?? {}).filter((field) => fields.has(field));
+  if (labels || (hide && hide.length > 0)) {
+    lines.push(`  display: {`);
+    if (labels) lines.push(`    labels: ${labels},`);
+    if (hide && hide.length > 0) lines.push(`    hide: [${hide.map(q).join(", ")}],`);
+    if (formatted.length > 0) {
+      lines.push(
+        `    // The checkout also formats ${formatted.map(q).join(", ")}; a format is a`,
+        `    // FUNCTION and the studio cannot write one. Carry it over from`,
+        `    // the file you are replacing, or these fields read as raw values.`,
+      );
+    }
+    lines.push(`  },`);
+  } else if (formatted.length > 0) {
+    lines.push(
+      `  // The checkout formats ${formatted.map(q).join(", ")} with a function the`,
+      `  // studio cannot write. Carry display.format over from the file you`,
+      `  // are replacing, or these fields read as raw values.`,
+    );
+  }
+  for (const field of formatted) keptFormats.push(`${kind}.${field} (display.format)`);
+  const fixed = pairs(was.fixed);
+  if (fixed) lines.push(`  fixed: ${fixed},`);
+  const roles = Object.entries(was.fieldRoles ?? {}).filter(([, field]) => fields.has(String(field)));
+  if (roles.length > 0) {
+    lines.push(`  fieldRoles: { ${roles.map(([role, field]) => `${q(role)}: ${q(String(field))}`).join(", ")} },`);
+  }
+  return lines;
+}
+
 /** `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles, `policy.ts`. */
 export function declarationFiles(snapshot: GraphSnapshot | Reading, options: SourceOptions = {}): WrittenFile[] {
   const read = new Read(snapshot as Reading);
@@ -93,6 +149,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const baseRules = new Set((options.base?.invariants ?? []).map((rule) => rule.name));
   const keptActs: string[] = [];
   const keptRules: string[] = [];
+  const keptFormats: string[] = [];
   const kinds = read.ofKind("kind");
   const kindName = new Map(kinds.map((kind) => [kind.id, label(kind)]));
   const fieldsOf = (kind: Node) =>
@@ -133,6 +190,18 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
       if (str(kind, "plural")) lines.push(`  plural: ${q(str(kind, "plural")!)},`);
       if (fields.some((field) => field.name === "label")) lines.push(`  label: (node) => node.label,`);
       if (lifecycleField && retired) lines.push(`  lifecycle: { field: ${q(lifecycleField)}, retired: ${retired[0] === "date" ? '"date"' : `[${retired.map(q).join(", ")}]`} },`);
+      /*
+       * WHAT THE STUDIO DOES NOT MODEL, IT WRITES BACK ANYWAY.
+       *
+       * How a field reads, what is fixed and which fields answer a lens's
+       * roles are decisions in the checkout that the studio has no act for.
+       * Rebuilding a kind from the graph alone dropped all of them — so
+       * applying would have turned "Blocked 09:00" back into
+       * `plannedAt: 540` on every card. The one thing that genuinely cannot
+       * be written is a `format` function; the file SAYS SO where it finds
+       * one rather than losing it silently.
+       */
+      lines.push(...carried(options.base, label(kind), new Set(fields.map((field) => field.name)), keptFormats));
       lines.push(`});`);
       return lines;
     }),
@@ -299,7 +368,8 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const roles = read.ofKind("role").map(label);
   const grants = read.ofKind("grant");
   const files: WrittenFile[] = [
-    { path: "src/domain/schema.ts", contents: schemaTs, kept: [] },
+    // A format is a function; the file names the ones it could not write.
+    { path: "src/domain/schema.ts", contents: schemaTs, kept: keptFormats },
     { path: "src/domain/mutations.ts", contents: mutationsTs, kept: keptActs.map((act) => `${act}: apply`) },
     { path: "src/domain/invariants.ts", contents: invariantsTs, kept: keptRules.map((rule) => `${rule}: evaluate`) },
   ];
