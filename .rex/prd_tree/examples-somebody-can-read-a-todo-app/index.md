@@ -2,11 +2,12 @@
 id: "3aa26335-34a7-4030-9a1c-a049a0c8d385"
 level: "epic"
 title: "Examples somebody can read: a todo app, and the four demos out of the way"
-status: "pending"
+status: "completed"
 priority: "high"
 source: "Session: preparing Graview to be open-sourced as an SDK"
 startedAt: "2026-08-31T05:25:23.990Z"
-endedAt: "2026-08-31T05:25:23.990Z"
+completedAt: "2026-09-13T07:36:31.735Z"
+endedAt: "2026-09-13T07:36:31.735Z"
 resolutionType: "code-change"
 resolutionDetail: "apps/todo ships as the example the README points at first: four kinds, ten named mutations, three rules naming their own repairs, a borrowed lens, a declared brand and an agent seat. The other four are described as fixtures that prove specific claims. It found two framework bugs while being written."
 acceptanceCriteria:
@@ -16,7 +17,7 @@ acceptanceCriteria:
   - "graview check is clean on it, and it is covered by the same harnesses as everything else"
   - "Nothing about it is a special case: it goes through the same declarations, the same defaults and the same checks"
 description: "Graview will be open-sourced as an SDK. The four apps here were each built to prove something about the framework, and they are the wrong front door for a stranger: the household example is a household scheduling domain with temporal effectivity and recurrence, the bid desk is a tender-response coverage problem, the coaching example is a three-lens chain across a football club. Every one of them asks a reader to learn a domain before they can learn the framework.\n\nThe first example somebody meets should be a TODO APP — not because it is impressive but because nobody has to be taught what it is. A task, a list, done or not, maybe a due date. Small enough to read in one sitting, and still enough to show the whole shape: a kind, a mutation, an invariant that names its repair, a lens, an agent seat.\n\nThe four existing apps stay as fixtures — they drive the browser harnesses and they prove claims no toy can — but they should stop being what the README points at first, and the household example and the coaching example are being rebuilt in their own repositories anyway."
-lastModified: "2026-09-13T04:51:50.692Z"
+lastModified: "2026-09-13T07:36:31.744Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -24,6 +25,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [The launcher is the front door: the platform's real capabilities, in onboarding order, each shown by a demo at a stop](./the-launcher-is-the-front-door-the/index.md) | pending |
+| [The launcher is the front door: the platform's real capabilities, in onboarding order, each shown by a demo at a stop](./the-launcher-is-the-front-door-the/index.md) | completed |
 | [A third demo, the product-grade one: Rota — branded, permissioned, remembered, embedded, with the installation, a profile and the studio](./a-third-demo-the-product-grade-one.md) | completed |
 | [Product-grade routed faces: Things and Rota wear refined, interactive Pages that look shipped](./product-grade-routed-faces-things-and.md) | completed |
