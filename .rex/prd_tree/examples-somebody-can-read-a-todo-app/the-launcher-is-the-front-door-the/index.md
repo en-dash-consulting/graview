@@ -25,3 +25,9 @@ description: "The launcher (apps/launcher, \"the desk\") surveys two demos again
 lastModified: "2026-09-13T04:59:34.353Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
+
+## Children
+
+| Title | Status |
+|-------|--------|
+| [The launcher mounts each demo the way the demo opens itself: the remembered store, its seat, its brand](./the-launcher-mounts-each-demo-the-way.md) | pending |
