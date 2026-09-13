@@ -2,7 +2,7 @@
 id: "d6e98c63-c1ae-40dc-82bc-5eee85bab996"
 level: "feature"
 title: "A profile on the bar: who you are signed in as, and your settings, including your text size"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "profile"
@@ -14,6 +14,11 @@ tags:
 blockedBy:
   - "af069e84-aa59-4e65-9835-01b3e1ea6e8b"
 source: "Nick, 2026-09-13: \"/ndx-capture text-size modifier should be present in a profile type of area/view. representing who you're logged in as and settings. demo apps should have this present\""
+startedAt: "2026-09-13T05:48:20.776Z"
+completedAt: "2026-09-13T05:48:20.776Z"
+endedAt: "2026-09-13T05:48:20.776Z"
+resolutionType: "code-change"
+resolutionDetail: "&lt;Profile&gt; on the shell bar, the launcher bar and the embed strip: the seat's name and role, a link to the person's own record, the seat switcher (moved in from beside it), the declared settings, and the scheme. app.settings is a declaration the pane draws and the provider honours, with graview check refusing a setting nothing can apply / with one option / opening on an answer it does not offer / sharing a name / whose root font size is not a length. readerSettings() gives text size (four steps, largest = 32px = WCAG 200%) and motion; applySettings carries them at the edge so both faces agree. Two older bugs fixed on the way: the theme sized the ROOT (breaking rem as a reader-controlled unit and occupying the one place a text-size setting can live), and usePickTargets stamped role=\"button\" on landmark elements. verify-pages drives the size through the control and runs axe on the open pane at 390 and 1280 in both schemes — clean. 806 unit tests, graview check, smoke-create, audit-ui, verify-seat (17) and the rest of the harness suite green."
 acceptanceCriteria:
   - "the shell bar and the embed strip show who is signed in (name and role) and open a profile pane; with no seat the pane says so plainly"
   - "the pane holds the text size control (at least three steps, remembered per browser, applied to every surface via the root font size so rem sizing carries it), the colour scheme, and reduced motion where exposed"
@@ -22,6 +27,6 @@ acceptanceCriteria:
   - "todo, seedbed and launcher carry the profile; the scaffold writes it into a new project"
   - "axe is clean with the pane open at 390 and 1280 in both schemes; verify-pages readersOwnTextSize runs through the control rather than an injected style"
 description: "Every app needs one place that says who is at the keyboard and holds their settings. The bar (and the embed strip) gains a profile control — the seat's name and role, opening a small pane — that is the person's own place: their user record (the profile the installation already makes theirs to edit), the seat switcher where the app offers seats, and settings that are theirs rather than the app's: the text size (the framework already sizes every surface in rem, so a reader's chosen size is honoured everywhere — this gives it a control, remembered per browser), the colour scheme, and reduced motion where the app exposes it. Settings are declared, not hard-coded: the pane draws what the app declares as settings, so an app adds one the way it adds a field. The demo apps — todo, seedbed, launcher — and the scaffold carry it. Source: Nick, 2026-09-13: \"text-size modifier should be present in a profile type of area/view. representing who you're logged in as and settings. demo apps should have this present\"."
-lastModified: "2026-09-13T04:54:15.410Z"
+lastModified: "2026-09-13T05:48:20.789Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

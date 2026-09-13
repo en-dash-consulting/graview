@@ -25,7 +25,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [A profile on the bar: who you are signed in as, and your settings, including your text size](./a-profile-on-the-bar-who-you-are.md) | pending |
+| [A profile on the bar: who you are signed in as, and your settings, including your text size](./a-profile-on-the-bar-who-you-are.md) | completed |
 | [Branding an installation without forking it](./branding-an-installation-without.md) | completed |
 | [Creator mode from inside the app: the studio is a place on the bar, in every app the scaffold writes](./creator-mode-from-inside-the-app-the.md) | pending |
 | [Persistence you can open: a demo that keeps its graph in JSON files or SQLite behind a small server, and the launcher shows it](./persistence-you-can-open-a-demo-that.md) | pending |
