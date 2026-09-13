@@ -29,7 +29,9 @@ const HUMAN = { kind: "human" as const, id: "you" };
 
 describe("a todo list is enough to show the whole shape", () => {
   it("declares a kind, a mutation, a rule and a lens, and passes its own check", () => {
-    expect(todoApp.schema.kinds).toEqual(["list", "task", "rule", "reason"]);
+    // The domain's four, and the installation's two — who is here is in the
+    // graph, as ordinary kinds, drawn only for the seat that keeps them.
+    expect(todoApp.schema.kinds).toEqual(["list", "task", "rule", "reason", "user", "invitation"]);
     expect(todoApp.mutations?.length).toBeGreaterThan(5);
     expect(todoApp.invariants?.length).toBe(3);
     expect(todoApp.lenses?.[0]?.name).toBe("timeline");

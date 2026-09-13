@@ -136,11 +136,130 @@ try {
         signed.includes(seat.who) && !signed.includes("claude"),
         signed.slice(0, 3).join(", "));
       await page.close();
-
-      // The permission claim, where there is a policy to narrow it.
     } finally {
       vite.stop();
     }
+  }
+
+  /*
+   * TWO SEATS AT THE KEYBOARD OF THE APP PEOPLE OPEN FIRST.
+   *
+   * The installation is in the todo app now, which means the policy is
+   * something a reader can stand on the other side of rather than read
+   * about. The keeper is offered the acts that keep it; the member is told
+   * they exist and who could run them, with the policy's own sentence — and
+   * never meets a person or an invitation at all, because the module is
+   * drawn only for those who administer it.
+   */
+  const things = await startVite("todo", 5193);
+  try {
+    const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(String(e).slice(0, 90)));
+
+    const sitAs = async (as) => {
+      await page.goto(`http://localhost:5193/?theme=light&today=2026-09-01&fresh=1&as=${as}`, { waitUntil: "load" });
+      await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await page.waitForTimeout(900);
+    };
+    /** What the bar says about this seat, before anything is selected. */
+    const bar = () =>
+      page.evaluate(() => ({
+        seats: [...document.querySelectorAll('[data-testid="seats"] button')].map((b) =>
+          b.textContent.trim(),
+        ),
+        sittingAs: document
+          .querySelector('[data-testid="seats"] button[aria-pressed="true"]')
+          ?.textContent.trim(),
+        canShow: document.querySelector('[data-testid="show-installation"]') !== null,
+      }));
+    const districts = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll("[data-graview-view]")].map((e) =>
+          e.getAttribute("data-graview-view"),
+        ),
+      );
+
+    await sitAs("user-nora");
+    const keeperBar = await bar();
+    check("things: both seats are offered on the bar, and the app opens in the first",
+      keeperBar.seats.length === 2 && keeperBar.sittingAs === "Nora, keeper",
+      keeperBar.seats.join(" / "));
+
+    await page.click('[data-testid="show-installation"]');
+    await page.waitForTimeout(900);
+    const raised = await districts();
+    check("things: the keeper may show the installation, and its kinds rise beside the domain",
+      keeperBar.canShow && raised.includes("kind:user") && raised.includes("kind:invitation"),
+      raised.join(", "));
+
+    /*
+     * An act that KEEPS the installation, offered on the kind itself.
+     *
+     * Right-click rather than click: a plain click on a kind card at
+     * altitude RAISES that relation and deliberately does not select, so
+     * the strip would have stayed empty for reasons that have nothing to do
+     * with the policy. Right-click always selects, and the menu it opens
+     * reads the same derivation the strip does.
+     */
+    await page.click('[data-graview-view="kind:invitation"]', { button: "right" });
+    await page.waitForSelector('[data-testid="context-menu"] [data-affordance]', { timeout: 10_000 });
+    const keeperOffers = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="context-menu"] [data-affordance]')].map((b) =>
+        b.textContent.trim(),
+      ),
+    );
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(200);
+    check("things: the keeper is offered the act that begins an invitation",
+      keeperOffers.some((label) => label.includes("Invite")),
+      keeperOffers.join(" · ").slice(0, 90));
+
+    /* The same app, the other seat. */
+    await sitAs("user-sam");
+    const memberBar = await bar();
+    const memberDistricts = await districts();
+    check("things: a member is never offered the installation at all — absent, not refused",
+      memberBar.canShow === false &&
+        !memberDistricts.includes("kind:user") &&
+        !memberDistricts.includes("kind:invitation"),
+      `${memberBar.sittingAs} · ${memberDistricts.join(", ")}`);
+
+    /* And what a member IS told about a person's own record. */
+    const refused = await page.evaluate(async () => {
+      const response = await fetch("/pages/users/user-nora?today=2026-09-01");
+      return response.ok;
+    });
+    check("things: the member's routed face still answers, and lists only their own kinds",
+      refused === true,
+      String(refused),
+    );
+    const memberKinds = await page.evaluate(async () => {
+      window.location.href = "/pages?today=2026-09-01&as=user-sam";
+      return true;
+    });
+    await page.waitForTimeout(1400);
+    const listed = await page.evaluate(() =>
+      [...document.querySelectorAll('nav[aria-label="Kinds"] a')].map((a) => a.textContent.trim()),
+    );
+    check("things: the routed face lists People only for the seat that keeps them",
+      memberKinds && !listed.some((word) => word.startsWith("People")),
+      listed.join(", "),
+    );
+    await page.goto("http://localhost:5193/pages?today=2026-09-01&as=user-nora", { waitUntil: "networkidle" });
+    await page.waitForTimeout(700);
+    const keeperListed = await page.evaluate(() =>
+      [...document.querySelectorAll('nav[aria-label="Kinds"] a')].map((a) => a.textContent.trim()),
+    );
+    check("things: and lists them for the keeper",
+      keeperListed.some((word) => word.startsWith("People")),
+      keeperListed.join(", "),
+    );
+
+    check("things: nothing threw while the seats changed", errors.length === 0, errors[0] ?? "");
+    await page.close();
+  } finally {
+    things.stop();
   }
 
   /*

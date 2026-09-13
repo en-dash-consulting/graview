@@ -1,8 +1,13 @@
 import { defineApp, Store, type StoreOptions } from "@graview/core";
 import { thingsBrand } from "./brand.js";
+import { todoInstallation } from "./installation.js";
 import { todoInvariants } from "./invariants.js";
 import { todoMutations } from "./mutations.js";
+import { todoPolicy } from "./policy.js";
 import { todoSchema, type TodoSchema } from "./schema.js";
+
+/** The domain's acts and the installation's, which are acts like any other. */
+export const todoActs = [...todoMutations, ...todoInstallation.mutations] as typeof todoMutations;
 
 /**
  * The whole app, in one object.
@@ -15,8 +20,22 @@ import { todoSchema, type TodoSchema } from "./schema.js";
 export const todoApp = defineApp({
   name: "todo",
   schema: todoSchema,
-  mutations: todoMutations,
+  mutations: todoActs,
   invariants: todoInvariants,
+  /*
+   * WHO MAY DO WHAT, declared once and enforced by the store.
+   *
+   * Not a UI concern with a UI copy of the rules: the strip, the pages, the
+   * agent's tool list and the seat all narrow from this, and an act nobody
+   * may run is stated with the policy's own sentence rather than hidden.
+   */
+  policy: todoPolicy,
+  /*
+   * The installation's kinds are a MODULE drawn only for those who keep it.
+   * A member never meets a district of people, a record page for one, or an
+   * act on one — not refused, absent.
+   */
+  modules: todoInstallation.modules,
   brand: thingsBrand,
   lenses: [
     {
@@ -40,8 +59,10 @@ export type TodoStore = Store<TodoSchema>;
 export function createTodoStore(options: Partial<StoreOptions<TodoSchema>> = {}): TodoStore {
   return new Store<TodoSchema>({
     schema: todoSchema,
-    mutations: todoMutations,
+    mutations: todoActs,
     invariants: todoInvariants,
+    policy: todoPolicy,
+    modules: todoInstallation.modules,
     ...options,
   });
 }

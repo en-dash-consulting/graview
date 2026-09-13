@@ -15,6 +15,9 @@ describe("an argument says what sort of answer it wants", () => {
     at: z.number().int().min(0).max(1439),
     day: z.enum(["mon", "tue"]),
     note: z.string().optional(),
+    roles: z.array(z.enum(["keeper", "member"])).min(1),
+    tags: z.array(z.string()),
+    lumps: z.array(z.object({ a: z.string() })),
   });
 
   it("reads a plain string as free text", () => {
@@ -35,6 +38,24 @@ describe("an argument says what sort of answer it wants", () => {
 
   it("sees through optional, so a wrapped field still describes itself", () => {
     expect(argShape(input, "note")).toEqual({ type: "text" });
+  });
+
+  /*
+   * SEVERAL OF A THING. Without this an act whose argument takes a list —
+   * "invite somebody as coordinator and gardener" — described itself as
+   * unknown, and an interface can only offer what it can ask for: the act
+   * was derived NOWHERE, in every installation the framework ships.
+   */
+  it("describes a list by what it holds", () => {
+    expect(argShape(input, "roles")).toEqual({
+      type: "several",
+      of: { type: "choice", options: ["keeper", "member"] },
+    });
+    expect(argShape(input, "tags")).toEqual({ type: "several", of: { type: "text" } });
+  });
+
+  it("keeps a list of something undescribable undescribable, rather than looking askable", () => {
+    expect(argShape(input, "lumps")).toEqual({ type: "unknown" });
   });
 
   it("says so plainly when it cannot tell", () => {

@@ -48,6 +48,7 @@ export type { ChatPanelProps } from "./chat.js";
 export { Wordmark } from "./wordmark.js";
 export { Places } from "./places.js";
 export { ShowInstallation } from "./installation.js";
+export { Seats } from "./seats.js";
 export { buildReach, ReachView, reachLens } from "./lens/reach.js";
 export type { Reach, ReachCell } from "./lens/reach.js";
 export { Shell } from "./shell.js";

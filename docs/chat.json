@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T05:21:52.181Z",
+  "at": "2026-09-13T05:33:26.873Z",
   "engine": "chromium",
   "checks": {
     "closedByDefault": {
@@ -17,7 +17,7 @@
       "ok": true
     },
     "groundedOverview": {
-      "reply": "This graph holds 3 Lists, 12 Tasks, 3 Rules, 1 Reasons. Ask about anything by name, ask what's wrong, or say a change in",
+      "reply": "This graph holds 3 Lists, 12 Tasks, 3 Rules, 1 Reasons, 2 People, 1 Invitations. Ask about anything by name, ask what's ",
       "ok": true
     },
     "problemsProposeRepairs": {

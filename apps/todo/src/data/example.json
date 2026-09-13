@@ -154,6 +154,36 @@
       "id": "reason-deposit",
       "kind": "reason",
       "text": "The landlord holds the date for 48 hours once the deposit clears, so this one is not really about the money."
+    },
+    {
+      "id": "user-nora",
+      "kind": "user",
+      "label": "Nora",
+      "email": "nora@things.test",
+      "roles": [
+        "keeper"
+      ],
+      "status": "active"
+    },
+    {
+      "id": "user-sam",
+      "kind": "user",
+      "label": "Sam",
+      "email": "sam@things.test",
+      "roles": [
+        "member"
+      ],
+      "status": "active"
+    },
+    {
+      "id": "inv-jo",
+      "kind": "invitation",
+      "label": "jo@things.test",
+      "email": "jo@things.test",
+      "roles": [
+        "member"
+      ],
+      "status": "pending"
     }
   ],
   "edges": [

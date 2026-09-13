@@ -39,6 +39,29 @@ const APPS = {
       selected: async (page) => {
         await page.click('[data-graview-pick="t-deposit"]');
       },
+      /*
+       * THE INSTALLATION, SHOWN — and the same screen for the seat that may
+       * not see it. Who is here and who has been asked to are districts
+       * beside the lists for the keeper, and are not there at all for a
+       * member: the module is drawn only for those who administer it, so
+       * this is a pair of screens rather than one screen and a refusal.
+       */
+      keeper: async (page) => {
+        await page.click('[data-testid="show-installation"]');
+        await page.waitForTimeout(700);
+      },
+      member: async (page) => {
+        await page.goto("http://localhost:5193/?theme=light&today=2026-09-01&fresh=1&as=user-sam", { waitUntil: "load" });
+        await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+        await page.waitForTimeout(700);
+      },
+      /* What each role reaches, read from the policy the store refuses with. */
+      reach: async (page) => {
+        await page.click('[data-testid="show-installation"]');
+        await page.waitForTimeout(500);
+        await page.locator('nav[aria-label="Places"] button', { hasText: "Who may do what" }).click();
+        await page.waitForTimeout(700);
+      },
       // The screen you land on by DOUBLE CLICKING, which is the one nobody
       // designs and everybody meets.
       travelled: async (page) => {

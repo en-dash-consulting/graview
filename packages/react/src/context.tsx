@@ -45,6 +45,12 @@ export type Scheme = "light" | "dark";
  * name first. `on` is the thing under the pointer, and it reaches the
  * derivation as its focus so the menu opens on the press.
  */
+/** One person a reader may sit down as, for an app that declares roles. */
+export interface Seat {
+  readonly label: string;
+  readonly principal: Principal;
+}
+
 export interface PointerMenu {
   readonly x: number;
   readonly y: number;
@@ -81,6 +87,19 @@ export interface GraviewContextValue<S extends AnySchema> {
    */
   readonly menuAt: PointerMenu | null;
   setMenuAt(at: PointerMenu | null): void;
+  /**
+   * The seats a reader may sit in, and how to sit down in one.
+   *
+   * A policy nobody can feel is a policy nobody believes. An app that
+   * declares roles can offer the seats that hold them, and the bar draws a
+   * control for them — the same way an embed's strip already did, except
+   * that the demo people actually open is the app, not the embed.
+   *
+   * Empty when the app offers none, which is every app that has no policy.
+   */
+  readonly seats: readonly Seat[];
+  /** Sit down in one of `seats`. A no-op when the app offered none. */
+  takeSeat(principal: Principal): void;
   /**
    * A relation singled out for emphasis, by edge kind, or null for none.
    *
@@ -180,6 +199,7 @@ export function useViewMode(): ViewMode {
  * app pays before it has decided it has users.
  */
 const ANONYMOUS: Principal = { kind: "human" };
+const NO_SEATS: readonly Seat[] = [];
 
 /** One shared empty, so "nothing selected" is referentially stable. */
 const EMPTY_SELECTION: readonly string[] = [];
@@ -209,6 +229,14 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly initialSelection?: readonly string[];
   /** Defaults to an unroled human, which a store with no policy permits everything. */
   readonly principal?: Principal;
+  /**
+   * The seats a reader may take. The first is where they start unless
+   * `principal` says otherwise; the bar draws a control when there are two
+   * or more, and nothing at all when there are none.
+   */
+  readonly seats?: readonly Seat[];
+  /** Told when a seat is taken, for a host that keeps the choice (a URL, storage). */
+  readonly onSeat?: (principal: Principal) => void;
   readonly brand?: Brand;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
@@ -232,7 +260,9 @@ export function GraviewProvider<S extends AnySchema>({
   initialView,
   scheme = "dark",
   initialSelection,
-  principal = ANONYMOUS,
+  principal,
+  seats = NO_SEATS,
+  onSeat,
   brand,
   providers,
   view,
@@ -244,6 +274,25 @@ export function GraviewProvider<S extends AnySchema>({
   );
   const homeView = useRef<ViewState>(initialView ?? EMPTY_VIEW).current;
   const [menuAt, setMenuAt] = useState<PointerMenu | null>(null);
+  /*
+   * WHO IS AT THE KEYBOARD, and the reader's own answer to it.
+   *
+   * `principal` is the app's: a host that knows who signed in passes one and
+   * the seats never move it. Where the app instead offers seats — the demos,
+   * an embed on a page, anywhere the point is to FEEL the policy — sitting
+   * down is a state change here, so every surface (the strip's narrowing,
+   * the withheld sentence, "Show the installation", the pages, the agent's
+   * tools) re-derives from one principal rather than each reading its own.
+   */
+  const [seated, setSeated] = useState<Principal | null>(null);
+  const who = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
+  const takeSeat = useCallback(
+    (next: Principal) => {
+      setSeated(next);
+      onSeat?.(next);
+    },
+    [onSeat],
+  );
   const [emphasis, setEmphasis] = useState<string | null>(null);
   const { activity, noteAttention } = useActivityState(store);
 
@@ -294,7 +343,7 @@ export function GraviewProvider<S extends AnySchema>({
        * module is off — lands on home rather than on a void with its
        * name in the address bar.
        */
-      const disabled = hiddenFor(store, principal, resolved.shown);
+      const disabled = hiddenFor(store, who, resolved.shown);
       if (resolved.focusId !== null && disabled.size > 0) {
         const kinds = kindsOfAggregate(resolved.focusId);
         const node = store.graph.getNode(resolved.focusId);
@@ -330,7 +379,7 @@ export function GraviewProvider<S extends AnySchema>({
       }
       return resolved;
     },
-    [withoutWhatIsGone, store, homeView, principal],
+    [withoutWhatIsGone, store, homeView, who],
   );
 
   /*
@@ -340,11 +389,11 @@ export function GraviewProvider<S extends AnySchema>({
    * a node that is not there.
    */
   const current = resolveStop(view ?? internalView);
-  const hiddenKinds = useMemo(() => hiddenFor(store, principal, current.shown), [store, principal, current.shown]);
+  const hiddenKinds = useMemo(() => hiddenFor(store, who, current.shown), [store, who, current.shown]);
   const administered = useMemo<readonly AdministeredModule[]>(
     () =>
       [...store.modules.administered.entries()].map(([name, module]) => {
-        const canShow = store.mayAdminister(name, principal);
+        const canShow = store.mayAdminister(name, who);
         return {
           name,
           ...(module.description ? { description: module.description } : {}),
@@ -353,7 +402,7 @@ export function GraviewProvider<S extends AnySchema>({
           shown: canShow && (current.shown ?? []).includes(name),
         };
       }),
-    [store, principal, current.shown],
+    [store, who, current.shown],
   );
 
   const setView = useCallback(
@@ -430,7 +479,9 @@ export function GraviewProvider<S extends AnySchema>({
       setEmphasis,
       activity,
       noteAttention,
-      principal,
+      principal: who,
+      seats,
+      takeSeat,
       hiddenKinds,
       administered,
       ...(providers ? { providers } : {}),
@@ -448,7 +499,9 @@ export function GraviewProvider<S extends AnySchema>({
       emphasis,
       activity,
       noteAttention,
-      principal,
+      who,
+      seats,
+      takeSeat,
       hiddenKinds,
       administered,
       providers,

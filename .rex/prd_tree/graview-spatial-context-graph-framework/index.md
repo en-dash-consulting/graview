@@ -41,4 +41,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A calendar lens in the framework: month, week, day and agenda over real dates, with the demos scheduling through it](./a-calendar-lens-in-the-framework-month.md) | pending |
 | [A kind has a figure: a declared, blueprint-style 3D drawing of the thing, drawn wherever the kind is, and an agent can draw it](./a-kind-has-a-figure-a-declared.md) | pending |
 | [A UI kit for the picture: lines, boxes and marks are declared, customisable, and set up for styles nobody has asked for yet](./a-ui-kit-for-the-picture-lines-boxes.md) | completed |
-| [The pointer menu leads with the thing you clicked: its own repair first, then its acts, then the rest](./the-pointer-menu-leads-with-the-thing.md) | pending |
+| [The pointer menu leads with the thing you clicked: its own repair first, then its acts, then the rest](./the-pointer-menu-leads-with-the-thing.md) | completed |

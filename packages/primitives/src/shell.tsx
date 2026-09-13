@@ -5,6 +5,7 @@ import { useCallback, useState, type ReactNode } from "react";
 import { ChatPanel } from "./chat.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { ShowInstallation } from "./installation.js";
+import { Seats } from "./seats.js";
 import { Places } from "./places.js";
 import { QuickRelations } from "./quick-relations.js";
 import { RelationKey } from "./relation-key.js";
@@ -138,6 +139,8 @@ export function Shell<S extends AnySchema>({
         <Places<S> />
         {/* The way into the installation, for the seat that keeps it. */}
         <ShowInstallation<S> />
+        {/* And who you are sitting as, where the app offers a choice. */}
+        <Seats<S> />
         {/* The right-hand group wraps for the same reason the bar does: as one
             unwrapping unit it carried the whole overflow across the edge by
             itself, so the bar wrapped and the controls were still gone. */}

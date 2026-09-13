@@ -77,6 +77,8 @@ export function AnswerArgs({
   const { store } = useGraview<AnySchema>();
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [draft, setDraft] = useState("");
+  /** What has been chosen so far, for an argument that takes several. */
+  const [picked, setPicked] = useState<readonly string[]>(NOTHING_PICKED);
   // Stable across the walk's steps, so the group's label never dangles.
   const promptId = useId();
   const asked = useRef<HTMLDivElement>(null);
@@ -127,6 +129,17 @@ export function AnswerArgs({
 
   const shape = parameter.shape ?? { type: "unknown" as const };
   const choices = choicesFor(parameter, shape);
+  /*
+   * AN ARGUMENT THAT TAKES A LIST IS ANSWERED WITH A LIST.
+   *
+   * "Invite somebody as coordinator and gardener" is one act with several
+   * roles in one argument. Answered one press at a time it would be one
+   * role, silently — so the presses TOGGLE and a separate one settles the
+   * question. Nothing else about the walk changes: it is still one
+   * parameter, still skippable when optional, still applied when the last
+   * outstanding one is answered.
+   */
+  const several = shape.type === "several";
 
   /*
    * THE ASK SAYS WHAT IT IS ASKING, IN WORDS.
@@ -199,19 +212,51 @@ export function AnswerArgs({
           aria-labelledby={promptId}
           style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
         >
-          {choices.slice(0, 10).map((choice) => (
+          {choices.slice(0, 10).map((choice) => {
+            const held = picked.includes(choice);
+            return (
+              <button
+                key={choice}
+                type="button"
+                // The question travels with the answer: a control read on its
+                // own says what choosing it would mean.
+                aria-label={`${asking}: ${nameOf(store, choice)}`}
+                {...(several ? { "aria-pressed": held } : {})}
+                style={{
+                  padding: "3px 9px",
+                  fontSize: "0.75rem",
+                  ...(held
+                    ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
+                    : {}),
+                }}
+                onClick={() =>
+                  several
+                    ? setPicked((current) =>
+                        current.includes(choice)
+                          ? current.filter((other) => other !== choice)
+                          : [...current, choice],
+                      )
+                    : answer(choice)
+                }
+              >
+                {nameOf(store, choice)}
+              </button>
+            );
+          })}
+          {several ? (
             <button
-              key={choice}
               type="button"
-              // The question travels with the answer: a control read on its
-              // own says what choosing it would mean.
-              aria-label={`${asking}: ${nameOf(store, choice)}`}
-              style={{ padding: "3px 9px", fontSize: "0.75rem" }}
-              onClick={() => answer(choice)}
+              disabled={picked.length === 0}
+              style={{ fontSize: "0.75rem" }}
+              onClick={() => {
+                const chosen = picked;
+                setPicked(NOTHING_PICKED);
+                answer(chosen);
+              }}
             >
-              {nameOf(store, choice)}
+              {remaining.length > 1 ? "Next" : "Apply"}
             </button>
-          ))}
+          ) : null}
           {skip}
         </div>
       ) : (
@@ -266,12 +311,18 @@ export function AnswerArgs({
   );
 }
 
+const NOTHING_PICKED: readonly string[] = [];
+
 function choicesFor(
   parameter: OpenParameter,
   shape: NonNullable<OpenParameter["shape"]>,
 ): readonly string[] {
   if (parameter.candidates && parameter.candidates.length > 0) return parameter.candidates;
-  return shape.type === "choice" ? shape.options : [];
+  if (shape.type === "choice") return shape.options;
+  // SEVERAL OF A CHOICE is the same list of buttons; what differs is that
+  // pressing one adds it rather than settling the question.
+  if (shape.type === "several" && shape.of.type === "choice") return shape.of.options;
+  return [];
 }
 
 /** A node's own label where there is one, so a picker never offers raw ids. */

@@ -16,9 +16,19 @@ import { useGraview, useNavigation } from "@graview/react";
  * nothing on the screen to say it had ever been there.
  */
 export function Places<S extends AnySchema>() {
-  const { views } = useGraview<S>();
+  const { views, hiddenKinds } = useGraview<S>();
   const { view, go } = useNavigation();
-  const places = views.places();
+  /*
+   * A PLACE OVER A KIND THIS SEAT CANNOT SEE IS A DOOR TO AN EMPTY ROOM.
+   *
+   * The reach lens registered over the people is "Who may do what" — a
+   * picture of the installation, named on the bar. A member may not
+   * administer the installation, so its kinds are not drawn for them
+   * anywhere; the pill was drawn anyway, and pressing it focused a district
+   * that is not there. The kinds a seat is kept from are already worked out
+   * once, for the scene and the shelf; the bar reads the same answer.
+   */
+  const places = views.places().filter((place) => !hiddenKinds.has(place.kind));
   if (places.length === 0) return null;
   return (
     <nav aria-label="Places" data-testid="places" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>

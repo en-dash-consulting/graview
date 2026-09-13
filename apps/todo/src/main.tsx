@@ -10,7 +10,7 @@ import {
 import example from "./data/example.json";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
-import { today, TodoApp } from "./ui/app.js";
+import { openingSeat, today, TodoApp } from "./ui/app.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -80,6 +80,13 @@ if (window.location.pathname.startsWith("/pages")) {
         brand: thingsBrand,
         sceneHref: "/",
         invariantContext: { today: today() },
+        /*
+         * THE SAME SEAT ON BOTH FACES. The routed face lists the kinds this
+         * seat may see and withholds the acts it may not, from the same
+         * policy the scene narrows by — `?as=user-sam` sits somebody down
+         * here exactly as it does over there.
+         */
+        principal: openingSeat(),
         remembers,
       }}
     />,

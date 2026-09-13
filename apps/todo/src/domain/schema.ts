@@ -1,4 +1,5 @@
 import { createSchema, defineNode, effectivity, isoDate, summarise } from "@graview/core";
+import { todoInstallation } from "./installation.js";
 import { z } from "zod";
 
 /**
@@ -135,6 +136,18 @@ export const rule = defineNode("rule", {
 export const reason = defineNode("reason", {
   description: "Why something is here, in whoever's words.",
   fields: z.object({ text: z.string().min(1) }),
+  /*
+   * A NOTE THAT OUTLIVES WHOEVER WROTE IT DOES NOT GET REWRITTEN.
+   *
+   * `explain` makes one and no act changes it, which `graview check` reads
+   * as a field nobody can ever set — a hole — unless the declaration says
+   * the emptiness is the point. It is: the edge is append-only for the same
+   * reason, and a rationale you can quietly edit afterwards is not a
+   * rationale. (The warning only surfaced once this app had a policy: with
+   * no policy every derived edit is permitted, so "nobody may run it" was
+   * trivially false and the hole stayed hidden.)
+   */
+  fixed: { text: "the argument as it was made, kept in the words it was made in" },
   plural: "Reasons",
   // Shortened at a word boundary, and the full text is the heading on a page.
   label: (node) => summarise(node.text),
@@ -150,5 +163,22 @@ export const reason = defineNode("reason", {
   },
 });
 
-export const todoSchema = createSchema([list, task, rule, reason]);
+/*
+ * THE DOMAIN, AND WHO IS HERE.
+ *
+ * The installation's two kinds join the schema as ordinary kinds — there is
+ * no second registry for people, and every derived thing (a record page, an
+ * edit act, a district, a lens) works on them unasked. Whether they are
+ * DRAWN is a matter for the policy: the module they belong to is shown only
+ * to a seat that may administer it.
+ *
+ * They are spread in as an empty tuple so that `TodoSchema` keeps naming
+ * this app's own four kinds. `declareInstallation` widens its kinds to
+ * `AnyNodeDefinition[]`, and letting that widening into the schema type
+ * would cost every call site in the app its kind names to buy nothing —
+ * the two installation kinds are reached by name, through the framework's
+ * own surfaces, and never through this type.
+ */
+const whoIsHere = todoInstallation.kinds as unknown as readonly [];
+export const todoSchema = createSchema([list, task, rule, reason, ...whoIsHere]);
 export type TodoSchema = typeof todoSchema;

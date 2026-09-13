@@ -57,6 +57,16 @@ export type ArgShape =
   | { readonly type: "date" }
   | { readonly type: "number"; readonly min?: number; readonly max?: number }
   | { readonly type: "choice"; readonly options: readonly string[] }
+  /**
+   * SEVERAL OF A THING — an argument that takes a list.
+   *
+   * "Invite somebody as coordinator and gardener" is one act with two roles
+   * in one argument, and without this shape it described itself as `unknown`:
+   * an interface can only offer what it can ask for, so the act was offered
+   * NOWHERE. Not hidden behind a refusal — simply never derived, in every
+   * installation the framework ships.
+   */
+  | { readonly type: "several"; readonly of: ArgShape }
   | { readonly type: "unknown" };
 
 /** Unwraps optional/default/nullable so a wrapped field still describes itself. */
@@ -72,12 +82,26 @@ function unwrap(schema: unknown): unknown {
  */
 export function describeArg(schema: unknown): ArgShape {
   const field = unwrap(schema) as
-    | { _def?: { type?: string; entries?: Record<string, string> }; _zod?: { bag?: Record<string, unknown> } }
+    | {
+        _def?: { type?: string; entries?: Record<string, string>; element?: unknown };
+        _zod?: { bag?: Record<string, unknown> };
+      }
     | undefined;
   const type = field?._def?.type;
   const bag = field?._zod?.bag ?? {};
 
   if (type === "enum") return { type: "choice", options: Object.keys(field?._def?.entries ?? {}) };
+
+  /*
+   * A list describes itself through what it holds. An array of something
+   * nothing can describe is still unknown — saying "several unknowns" would
+   * make an unaskable argument look askable, which is the failure this whole
+   * shape exists to prevent.
+   */
+  if (type === "array") {
+    const of = describeArg((field as { _def?: { element?: unknown } })._def?.element);
+    return of.type === "unknown" ? { type: "unknown" } : { type: "several", of };
+  }
 
   if (type === "number") {
     const min = typeof bag["minimum"] === "number" ? (bag["minimum"] as number) : undefined;

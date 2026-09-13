@@ -8,6 +8,7 @@ import {
   type SceneProps,
 } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
+import type { Principal } from "@graview/core";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useState } from "react";
 import example from "../data/example.json";
@@ -27,6 +28,35 @@ type S = TodoSchema;
  * `@graview/primitives` already derived. An app supplies a name, a home view,
  * and whatever seat it wants to give an agent.
  */
+
+/**
+ * TWO SEATS AT THE KEYBOARD, so the policy can be felt rather than believed.
+ *
+ * A principal's id is its USER NODE's id — that is what a self grant
+ * compares, so Sam editing Sam's own profile is permitted and Sam editing
+ * Nora's is not, with no code out here deciding it. Sitting down in one
+ * re-derives every surface: the strip's acts and its withheld sentences,
+ * whether the people and invitations are drawn at all, whether "Show the
+ * installation" and "Who may do what" are on the bar, what the routed face
+ * lists, and the agent's tool list.
+ */
+export const SEATS = [
+  { label: "Nora, keeper", principal: { kind: "human", id: "user-nora", roles: ["keeper"] } },
+  { label: "Sam, member", principal: { kind: "human", id: "user-sam", roles: ["member"] } },
+] as const satisfies readonly { label: string; principal: Principal }[];
+
+/**
+ * Which seat the app opens in. `?as=user-sam` is how a harness, a
+ * screenshot or a link sits somebody down somewhere other than the front.
+ */
+export function openingSeat(): Principal {
+  if (typeof window !== "undefined") {
+    const asked = new URLSearchParams(window.location.search).get("as");
+    const found = SEATS.find((seat) => seat.principal.id === asked);
+    if (found) return found.principal;
+  }
+  return SEATS[0].principal;
+}
 
 /** The two places: the week, and the lists. One `focusId` apart. */
 export const PLACES = [
@@ -79,6 +109,10 @@ export interface TodoAppProps {
   readonly onSchemeChange?: (scheme: Scheme) => void;
   /** Whether the store behind this app is remembered in the browser (see main.tsx). */
   readonly remembers?: boolean;
+  /** Which seat the app opens in; the bar offers the other. */
+  readonly principal?: Principal;
+  /** Told when a seat is taken, for a host that keeps the choice in its address. */
+  readonly onSeat?: (principal: Principal) => void;
 }
 
 export function TodoApp({
@@ -90,6 +124,8 @@ export function TodoApp({
   initialScheme = "light",
   onSchemeChange,
   remembers = false,
+  principal,
+  onSeat,
 }: TodoAppProps) {
   const created = useMemo(() => store ?? createTodoUiStore(), [store]);
   const views = useMemo(() => todoViews(), []);
@@ -102,6 +138,9 @@ export function TodoApp({
       initialView={initialView}
       scheme={scheme}
       brand={thingsBrand}
+      principal={principal ?? openingSeat()}
+      seats={SEATS}
+      {...(onSeat ? { onSeat } : {})}
     >
       <TodoShell
         remembers={remembers}

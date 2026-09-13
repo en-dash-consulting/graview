@@ -24,6 +24,28 @@ const APPS = {
     lists: async () => {},
     week: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The week" }).click(); },
     selected: async (p) => { await p.click('[data-graview-pick="t-deposit"]'); },
+    /*
+     * THE INSTALLATION, SHOWN — and the same app for the seat that may not
+     * see it. Who is here and who has been asked to are districts beside
+     * the lists for the keeper and are not there at all for a member, so
+     * this is a pair of screens rather than one screen and a refusal.
+     */
+    keeper: async (p) => {
+      await p.click('[data-testid="show-installation"]');
+      await p.waitForTimeout(700);
+    },
+    member: async (p) => {
+      await p.goto("http://localhost:5193/?theme=light&today=2026-09-01&fresh=1&as=user-sam", { waitUntil: "load" });
+      await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(700);
+    },
+    /* What each role reaches, read from the policy the store refuses with. */
+    reach: async (p) => {
+      await p.click('[data-testid="show-installation"]');
+      await p.waitForTimeout(500);
+      await p.locator('nav[aria-label="Places"] button', { hasText: "Who may do what" }).click();
+      await p.waitForTimeout(700);
+    },
     // Every existing state left plane 1 empty, which is how minus-one-pixel
     // band arithmetic sat unseen: nothing ever measured a raised relation.
     raised: async (p) => { await p.click('[data-graview-view="kind:list"]'); },

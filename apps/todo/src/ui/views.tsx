@@ -8,6 +8,7 @@ import {
   Roster,
   createTimelineLens,
   hueFor,
+  reachLens,
   registerDefaultViews,
 } from "@graview/primitives";
 import { todoSchema, type TodoSchema } from "../domain/schema.js";
@@ -326,6 +327,17 @@ const WeekView = ((props: ViewProps<S>) => (
 export function todoViews() {
   const registry = registerDefaultViews(todoSchema, createViews(todoSchema));
   return registry
+    /*
+     * WHO MAY DO WHAT, as a picture of the people.
+     *
+     * The reach lens reads the policy the store refuses with — the same
+     * function, not a second copy — and draws what each role reaches. It
+     * arrives as an ordinary named view over the people, which makes it a
+     * PLACE: the bar lists it by name, and pressing it is a stop with a URL.
+     * A member never sees it, because a member never sees the people.
+     */
+    .register("user" as never, { cardinality: "many", fidelity: "full" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
+    .register("user" as never, { cardinality: "many", fidelity: "summary" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
     .register("task", { cardinality: "one", fidelity: "full" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "summary" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "glyph" }, TaskView)
