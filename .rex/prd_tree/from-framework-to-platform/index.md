@@ -29,5 +29,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Creator mode from inside the app: the studio is a place on the bar, in every app the scaffold writes](./creator-mode-from-inside-the-app-the.md) | pending |
 | [Studio: the declaration itself, edited in the graph's own interface, with changes applied as mutations](./studio-the-declaration-itself-edited.md) | completed |
 | [Systems of record: two-way sync with the world](./systems-of-record-two-way-sync-with.md) | completed |
+| [The demo app shows admin mode and profiles: the installation in the todo app, with seats to feel it](./the-demo-app-shows-admin-mode-and.md) | pending |
 | [The installation is in the graph: users, invitations and profiles as nodes, with an admin entrypoint in the app](./the-installation-is-in-the-graph-users.md) | completed |
 | [Who may do what, derived and enforced](./who-may-do-what-derived-and-enforced.md) | completed |
