@@ -19,6 +19,27 @@ Paste this to start a session:
 > PRD feature "A seamless app-creation flow: the walkthrough" carries one
 > task per stage; mark each in progress and completed as you go.
 
+## How a walk is run now
+
+The fourth walk was run as a fresh agent launched from the kick-off prompt
+by a session that then reviewed, ran the harness chain, rebuilt the page
+and pushed. That worked: the walker has no memory of the last walk's
+excuses, and the reviewer keeps the criteria honest. Do it that way:
+
+- The walker works in the framework checkout, commits each finding with its
+  criterion ("walkthrough: <stage> · <finding>") and does NOT push.
+- The walker does not run `pnpm progression`, `pnpm site` or the artifact
+  build; the reviewer runs the chain (typecheck, build, test, progression,
+  site-progression, site:build, verify-site, artifact) and pushes.
+- Browser harnesses run one at a time. An engines run beside another
+  browser session reported a Firefox audit failure that was not there.
+- Nothing runs on a port a `pnpm dev` already holds: the harnesses start
+  their own servers on 5193 (Things) and 5194 (Seedbed) and exit if they
+  cannot. Stop the dev servers first.
+- When a walk adds findings, the walk task is closed by acknowledgment (the
+  work was done) and the next walk task carries the "log gains nothing"
+  criterion. That is what the queue follows.
+
 ## The stance
 
 - **Pre-user.** Nobody depends on the current shapes. When a better shape is
@@ -35,11 +56,16 @@ Paste this to start a session:
 ## Setup
 
 ```sh
-# in the framework checkout - use walk2/walk3/etc for subsequent walks
+# in the framework checkout - the fifth walk is ../walk5; earlier walks stay put
 pnpm install && pnpm build && pnpm test
-pnpm graview create ../walk --link . --name "Walk" --kind item --plural items
-cd ../walk && pnpm verify && pnpm dev            # http://localhost:5170
+pnpm graview create ../walk5 --link . --name "Walk" --kind item --plural items
+cd ../walk5 && pnpm verify && pnpm dev           # http://localhost:5170
 ```
+
+Under webdriver the store starts fresh unless the address says
+`?remember=1`, and `?fresh=1` EMPTIES a remembered store — so seed inside
+the Playwright context you assert in, put `?remember=1` on every goto, and
+take any "empty app" state last or in a context of its own.
 
 The skills are installed into `../walk/.claude/skills`. Use them: the point
 of the walk is to find where following the skills produces something wrong.
@@ -100,6 +126,53 @@ package.
 - **Prose that rots.** Counts and words written by hand. Cousins: a caption
   that quotes a state the seed no longer produces.
 
+The fourth walk and the days after it added these:
+
+- **An act applied as nobody.** The routed face's forms and repairs called
+  `store.apply` with no author, so under a policy every permitted act was
+  refused on press while the derivation beside it had offered it. Cousins:
+  any surface that applies without threading the seat's principal — a lens,
+  a design's own form, a chat proposal.
+- **A rule about "drawn inside a host" that does not say which host.** A
+  line was silenced because its far end was drawn inside the near end's
+  host — which is right when the FOCUS restates the relation and wrong when
+  a band card merely lists its members as chips. Cousins: any rule keyed on
+  "is drawn somewhere" without asking by whom and at what plane.
+- **A crowd squeezed instead of wrapped.** Twelve neighbours in one row got
+  slots 57 pixels wide under chips 150 wide; the lines between them, clipped
+  under every chip, were confetti. Cousins: any band, row or grid that
+  divides its width by the count with no floor; any line drawn across a
+  grid instead of through its gutters.
+- **A relation restated.** A view that draws both ends of an edge has
+  drawn the relation; a line from it to the same node's chip says nothing.
+  Cousins: a line anchored on a panel for a member the panel does not draw.
+- **Focus that lands on the body.** After an in-place rename, after a
+  popover closed, after a design's form submitted, the keyboard was on
+  `<body>` or on a control nobody pressed. Cousins: any pane that goes away
+  while the keyboard is in it.
+- **One key doing two things.** Escape closed the popover AND dropped the
+  selection. Cousins: a click that selects and travels; a submit that saves
+  and navigates.
+- **The log says the button, not the act.** The strip logged its label
+  while the pages logged the act's `describe`, so one repair had two
+  histories. Cousins: any surface that names an act by its registered name.
+- **The seat's own turn under a policy.** The chat proposed an act the seat
+  may not take; the rail and the pages called the other seat's work "you".
+  Cousins: any surface that assumes the keyboard is the only author.
+- **A generic type that needs a cast to follow the skill.** A lens typed
+  `ViewComponent<S>` would not register on one kind without `as`, and the
+  framework's own apps carried fourteen casts. Cousins: any skill whose
+  example only typechecks with a cast the skill does not show.
+- **A write-back that invents or disarms.** The studio wrote `to` where the
+  checkout said `dependsOn`, and wrote every checkout rule as
+  `evaluate() { return []; }` under a comment claiming the opposite.
+  Cousins: any generator that writes a body it never saw, or a stub that
+  quietly holds.
+- **Example data that contradicts its words.** The "Today" list held tasks
+  on two days; the calendar showed times with no names. Cousins: a seed that
+  no rule fires on; a demo whose example never exercises the capability the
+  chapter is about.
+
 ## The stages
 
 Work them in order. Each stage's criteria must all be true, in both faces,
@@ -146,6 +219,16 @@ True when:
 - The district at altitude opens on double-click; a double-click on a chip
   inside it travels to the record; the district closes on a second
   double-click.
+- Raise the second kind on a focus that has no edge of it (a rule, or the
+  first kind's group): the band never squeezes a slot under a chip's width
+  and wraps past it; a line between two chips of the band runs through the
+  gutters, whole; a line from the focus to a member the focus already draws
+  is not drawn; the card's connections and the picture agree.
+- Open the declaration in the studio (`createStudio(app)` in a test): the
+  round trip passes `graview check` with no new warnings, and
+  `studio.files()` keeps the checkout's argument names, keeps a
+  hand-written body by name rather than replacing it, and says loudly where
+  a body must be supplied.
 
 ### C · A rule and its repair
 
@@ -204,6 +287,14 @@ True when:
 - The agent's tool list is exactly the narrower seat's acts; a call outside
   it is refused with the same sentence.
 - Changing seats on the embed keeps the store and its history.
+- The seat's own turn under the policy: the chat never proposes an act the
+  seat may not take; the rail and the pages name the other seat's work by
+  its author, never "you"; a form or repair on the routed face applies as
+  the person at the keyboard and the log says so.
+- Dress the app: declare `brand.kit` with a route and a per-edge colour the
+  checker refuses (`kit-contrast-below-aa`), then one it accepts; the lines
+  change and the relation key agrees; a kind kept quiet says "not drawn"
+  in the key and stays selectable from the inspector.
 
 ### G · Remembering and shipping
 
@@ -231,7 +322,13 @@ True when:
 Do, in the app as it now stands: a keyboard-only pass of every stage;
 reduced motion on; the app in WebKit and Firefox as well as Chromium; text
 zoom to 200% — the root font size, not page zoom, which is a scale factor
-and proves nothing about reflow; a window 320px wide.
+and proves nothing about reflow — on EVERY route of the design, not the
+four the criterion first covered; a window 320px wide.
+
+Press, in the keyboard pass, on where the keyboard IS after every in-place
+edit and every popover close, and on Escape doing exactly one thing. Press,
+in every face, on any surface that applies a mutation: is it the seat that
+applies, and does the log name it?
 
 There is no `?renderer=gpu` to try, and this used to ask for one: `auto`
 means the DOM path unless an app passes an `attachRenderer`, and the GPU
@@ -262,3 +359,13 @@ The walk is done when a second agent, starting from the kick-off prompt
 in a fresh checkout, works all nine stages and the findings log gains
 nothing. Until then, every commit is "walkthrough: <stage> · <finding>",
 with the criterion in the same commit as the fix.
+
+Four walks have been run (31, 19, 19 and 16 findings, every one fixed with
+a criterion); none kept the log still. The fifth is queued behind the demo
+work — the installation in Things, the profile pane, the studio entrypoint,
+the calendar lens, the routed faces, Rota, server-side persistence, the
+launcher, figures — so that it walks what those add rather than what they
+replace. When it runs, press first on the studio's write-back against a
+checkout with a policy and lenses, on any surface that applies without a
+principal, on what the chat proposes under a policy, and on keyboard focus
+after every edit and every popover.
