@@ -2227,17 +2227,37 @@ export function connectorStrands(
       const toCandidates =
         edge.to === connector.to ? [] : memberBoxes(stageEl, hostOf(connector.to), edge.to);
       /*
-       * A VIEW THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION. The lists view
-       * draws every task inside its list; a line from each list column to
-       * the same task's chip in the band restated, twelve times over the
-       * panel, what the columns already said. Inside the stack a line is
-       * drawn only where it says something the picture does not.
+       * THE FOCUS THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION. The lists
+       * view draws every task inside its list; a line from each list column
+       * to the same task's chip in the band restated, twelve times over the
+       * panel, what the columns already said. Only the FOCUS counts: a card
+       * in the band summarising its members as chips has not drawn the
+       * relation between the focus's spans and itself — those lines are the
+       * point of raising it, and silencing them left a calendar whose
+       * entries seemed to belong to no list until one was selected.
        */
+      const focusEnd = [connector.from, connector.to].find((id) => Math.round(byId.get(id)?.plane ?? -1) === 0);
       if (
         !overview &&
-        ((edge.from !== connector.from || edge.to !== connector.to) &&
-          (memberBoxes(stageEl, hostOf(connector.from), edge.to).length > 0 ||
-            memberBoxes(stageEl, hostOf(connector.to), edge.from).length > 0))
+        focusEnd !== undefined &&
+        (edge.from !== connector.from || edge.to !== connector.to) &&
+        memberBoxes(stageEl, hostOf(focusEnd), focusEnd === connector.from ? edge.to : edge.from).length > 0
+      ) {
+        continue;
+      }
+      /*
+       * A LINE LANDS ON A DRAWING OF THE THING, OR IS NOT DRAWN. A group in
+       * focus draws what its view draws — a calendar, the entries with a
+       * time — and an edge to a member it does not draw has no end here.
+       * Anchored on the panel instead, three someday tasks with no time
+       * became one line from their list into the middle of the week.
+       */
+      const focusNode = focusEnd !== undefined ? byId.get(focusEnd) : undefined;
+      if (
+        !overview &&
+        focusNode?.aggregate &&
+        stageEl &&
+        (focusEnd === connector.from ? edge.from !== connector.from && fromCandidates.length === 0 : edge.to !== connector.to && toCandidates.length === 0)
       ) {
         continue;
       }

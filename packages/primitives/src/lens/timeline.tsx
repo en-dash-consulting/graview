@@ -564,6 +564,9 @@ function Column({
             position: "absolute",
             top: `${pct(span.start)}%`,
             right: 0,
+            // The whole column at most: the name gives way before the time and the dot do.
+            maxWidth: "100%",
+            boxSizing: "border-box",
             transform: "translateY(-50%)",
             display: "flex",
             alignItems: "center",
@@ -590,6 +593,26 @@ function Column({
             }}
           >
             {format(span.start)}
+          </span>
+          {/*
+            * ITS NAME. A moment used to be a dot and a time, so a calendar of
+            * moments — which a list of things to do mostly is — read as a
+            * column of times with nothing to say what they were. The name
+            * sits between the time and the dot and gives way first: at a
+            * narrow column it is cut with an ellipsis, and the title still
+            * carries it whole.
+            */}
+          <span
+            style={{
+              fontSize: "0.6875rem",
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              color: emphasis === "dimmed" ? "var(--graview-ink-faint)" : "var(--graview-ink)",
+            }}
+          >
+            {span.label}
           </span>
           <span
             style={{
