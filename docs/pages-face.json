@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T06:27:19.936Z",
+  "at": "2026-09-13T06:55:18.315Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -70,6 +70,36 @@
         "ok": true
       }
     },
+    "aListYouArrangedIsALinkYouCanSend": {
+      "arranged": {
+        "url": "?today=2026-09-01&group=due&q=the",
+        "rows": 9
+      },
+      "reopened": {
+        "group": "due",
+        "query": "the",
+        "rows": 9
+      },
+      "ok": true
+    },
+    "anEmptyStateSaysWhatToDoNext": {
+      "said": "Nothing here is called “zzzz”.Clear the search",
+      "away": 1,
+      "ok": true
+    },
+    "aRecordEditsWhereItIsShown": {
+      "heading": "Pay the deposit today",
+      "stillAForm": false,
+      "ok": true
+    },
+    "theProblemsPageIsAnInbox": {
+      "before": 2,
+      "after": 1,
+      "ok": true
+    },
+    "everyRouteOfTheOwnFaceIsReachable": {
+      "ok": true
+    },
     "theCalendarIsReachable": {
       "390-light": [],
       "390-dark": [],
@@ -88,5 +118,6 @@
     "sceneOffersThePages": true,
     "recordLinksItsStop": true
   },
+  "failing": [],
   "passed": true
 }

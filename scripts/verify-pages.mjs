@@ -141,8 +141,25 @@ try {
       body: getComputedStyle(document.body).fontSize,
       scrollWidth: document.documentElement.scrollWidth,
       width: window.innerWidth,
+      /*
+       * OFF THE SIDE WITH NOWHERE TO SCROLL is the failure; off the side
+       * INSIDE something that scrolls is a row of navigation links you
+       * swipe, which is what a phone does with them. `audit-ui` has drawn
+       * this distinction since it existed; this one counted both, so a
+       * design whose nav scrolls sideways on purpose read as a page that
+       * scrolls sideways by accident.
+       */
       widest: [...document.querySelectorAll("*")]
-        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1)
+        .filter((el) => {
+          if (el.getBoundingClientRect().right <= window.innerWidth + 1) return false;
+          for (let at = el.parentElement; at; at = at.parentElement) {
+            const overflow = getComputedStyle(at).overflowX;
+            if ((overflow === "auto" || overflow === "scroll") && at.scrollWidth > at.clientWidth + 1) {
+              return false;
+            }
+          }
+          return true;
+        })
         .slice(0, 3)
         .map((el) => `${el.tagName.toLowerCase()}.${String(el.className || "").split(" ")[0]}`),
     }));
@@ -158,6 +175,125 @@ try {
     };
   }
   const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
+
+  /* ------------------------- the face behaves like something finished */
+  /*
+   * A DESIGN IS NOT A STYLESHEET. What makes Things' face read as shipped
+   * is not the type: it is that a list you arranged is a link you can send,
+   * a record edits where it is shown, and a problem is one press from being
+   * fixed. All three through the framework — the same acts, the same
+   * policy, the same op log.
+   */
+  const desk2 = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await desk2.goto("http://localhost:5193/pages/tasks?today=2026-09-01&fresh=1", { waitUntil: "networkidle" });
+  await desk2.waitForSelector('[data-testid="list-controls"]', { timeout: 20_000 });
+  await desk2.selectOption('[data-testid="list-group"]', "due");
+  await desk2.fill('[data-testid="list-filter"]', "the");
+  await desk2.waitForTimeout(400);
+  const arranged = await desk2.evaluate(() => ({
+    url: location.search,
+    rows: document.querySelectorAll('[data-testid="records"] li').length,
+  }));
+  // A link somebody could send: opened cold, the same arrangement.
+  await desk2.goto(`http://localhost:5193/pages/tasks${arranged.url}&today=2026-09-01`, { waitUntil: "networkidle" });
+  await desk2.waitForSelector('[data-testid="list-controls"]', { timeout: 20_000 });
+  await desk2.waitForTimeout(300);
+  const reopened = await desk2.evaluate(() => ({
+    group: document.querySelector('[data-testid="list-group"]')?.value,
+    query: document.querySelector('[data-testid="list-filter"]')?.value,
+    rows: document.querySelectorAll('[data-testid="records"] li').length,
+  }));
+  report.checks.aListYouArrangedIsALinkYouCanSend = {
+    arranged,
+    reopened,
+    ok:
+      arranged.url.includes("group=due") &&
+      arranged.url.includes("q=the") &&
+      reopened.group === "due" &&
+      reopened.query === "the" &&
+      reopened.rows === arranged.rows,
+  };
+
+  /* An empty state that says what to do next, rather than a blank page. */
+  await desk2.fill('[data-testid="list-filter"]', "zzzz");
+  await desk2.waitForTimeout(400);
+  const empty = await desk2.evaluate(() => ({
+    said: document.querySelector('[data-testid="empty"]')?.textContent?.trim() ?? null,
+    away: document.querySelectorAll('[data-testid="empty"] button, [data-testid="empty"] a').length,
+  }));
+  report.checks.anEmptyStateSaysWhatToDoNext = {
+    ...empty,
+    ok: empty.said !== null && empty.away > 0,
+  };
+
+  /* A record edits where it is shown, through the act the framework found. */
+  await desk2.goto("http://localhost:5193/pages/tasks/t-deposit?today=2026-09-01", { waitUntil: "networkidle" });
+  await desk2.waitForSelector('[data-testid="record-fields"]', { timeout: 20_000 });
+  // The HEADING is the name, so the heading is where the name is changed —
+  // `readableFields` leaves the label out of the facts because it is
+  // already the heading.
+  await desk2.locator('h1 [data-graview-editable="rename"]').first().click();
+  await desk2.waitForSelector('[data-testid="edit-label"] input', { timeout: 10_000 });
+  await desk2.fill('[data-testid="edit-label"] input', "Pay the deposit today");
+  await desk2.click('[data-testid="edit-label"] button[type="submit"]');
+  await desk2.waitForTimeout(600);
+  const edited = await desk2.evaluate(() => ({
+    heading: document.querySelector("h1")?.textContent?.trim() ?? null,
+    stillAForm: document.querySelector('[data-testid="edit-label"]') !== null,
+  }));
+  report.checks.aRecordEditsWhereItIsShown = {
+    ...edited,
+    ok: edited.heading === "Pay the deposit today" && !edited.stillAForm,
+  };
+
+  /* And the problems page is an inbox: one press puts a rule right. */
+  await desk2.goto("http://localhost:5193/pages/problems?today=2026-09-01", { waitUntil: "networkidle" });
+  await desk2.waitForSelector('[data-testid="problem"]', { timeout: 20_000 });
+  const before2 = await desk2.evaluate(() => document.querySelectorAll('[data-testid="problem"]').length);
+  await desk2.locator('[data-testid="repairs"] button:not([data-graview-asks])').first().click();
+  await desk2.waitForTimeout(700);
+  const after2 = await desk2.evaluate(() => document.querySelectorAll('[data-testid="problem"]').length);
+  report.checks.theProblemsPageIsAnInbox = {
+    before: before2,
+    after: after2,
+    ok: before2 > 0 && after2 < before2,
+  };
+  await desk2.close();
+
+  /* ------------------- every route of the app's own face, read by a machine */
+  /*
+   * A DESIGN IS NOT FINISHED UNTIL A MACHINE CAN READ IT.
+   *
+   * Things replaces every routed surface, so every one of them is its own
+   * chance to get contrast, names, landmarks or focus wrong. Both widths,
+   * both schemes, every route — including the not-found page, which no
+   * design can register and which therefore renders the framework's own
+   * inside somebody else's shell.
+   */
+  const routes = ["/pages", "/pages/tasks", "/pages/tasks/t-deposit", "/pages/lists", "/pages/problems", "/pages/nowhere"];
+  const faceFindings = {};
+  for (const width of [390, 1280]) {
+    for (const theme of ["light", "dark"]) {
+      const seen = await browser.newPage({ viewport: { width, height: 900 } });
+      for (const route of routes) {
+        await seen.goto(`http://localhost:5193${route}?today=2026-09-01&theme=${theme}`, {
+          waitUntil: "networkidle",
+        });
+        await seen.waitForTimeout(400);
+        await seen.addScriptTag({ content: axeSource });
+        const found = await seen.evaluate(async () => {
+          const result = await window.axe.run(document, { resultTypes: ["violations"] });
+          return result.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
+        });
+        if (found.length > 0) faceFindings[`${width}-${theme}${route}`] = found;
+      }
+      await seen.close();
+    }
+  }
+  report.checks.everyRouteOfTheOwnFaceIsReachable = {
+    ...faceFindings,
+    ok: Object.keys(faceFindings).length === 0,
+  };
 
   /* --------------------------- the profile pane, read by a machine */
   /*
@@ -272,9 +408,24 @@ try {
   }
 }
 
-const flat = JSON.stringify(report.checks);
+/*
+ * A CHECK THAT SAYS `ok` IS JUDGED BY IT; anything else is judged by having
+ * no `false` anywhere in it.
+ *
+ * The verdict used to be "the whole report contains no false", which cannot
+ * express a check whose correct answer IS false — "the editor closed after
+ * saving" reports `stillAForm: false` and could never pass. Every check
+ * either states its own verdict or is a bag of things that must all be
+ * true; both are now read as what they are.
+ */
+const stated = (check) =>
+  check && typeof check === "object" && Object.prototype.hasOwnProperty.call(check, "ok");
+const failing = Object.entries(report.checks).filter(([, check]) =>
+  stated(check) ? check.ok !== true : JSON.stringify(check).includes("false"),
+);
 const tooSmall = Object.values(report.checks).flatMap((check) => check?.bigEnoughToHit ?? []);
-report.passed = !report.error && !flat.includes("false") && tooSmall.length === 0;
+report.failing = failing.map(([name]) => name);
+report.passed = !report.error && failing.length === 0 && tooSmall.length === 0;
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/pages-face.json"), `${JSON.stringify(report, null, 2)}\n`);
 process.stdout.write(`${JSON.stringify(report.checks, null, 1)}\n\nwrote docs/pages-face.json\n`);

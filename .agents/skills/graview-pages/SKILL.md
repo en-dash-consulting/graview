@@ -24,19 +24,19 @@ if (location.pathname.startsWith("/pages")) {
 
 `PagesApp` from `@graview/pages` renders, with no registry at all:
 
-- `/` — a home that says what is here and, on an empty installation, which
-  act begins it.
-- `/<plural>` — a list per kind, marking trouble, with the acts that create
-  the kind as forms beneath it.
+- `/` — a home saying what is here, and on an empty installation which act
+  begins it.
+- `/<plural>` — a list per kind, marking trouble, with the creating acts
+  beneath it.
 - `/<plural>/<id>` — a record: its facts, its relations captioned in the
-  declaration's own words (read from the end you are standing on), what can
-  be done to it, and what has happened.
+  declaration's own words (from the end you stand on), what can be done, and
+  what has happened.
 - `/problems` — every broken rule with its repairs.
 
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
-or who may take it.** The list page strikes through a creating act the seat
-may not take and says why; a page you write does the same.
+or who may take it** — it strikes through what the seat may not take, and
+says why.
 
 ## Rung one: a page in the app's own words
 
@@ -51,7 +51,7 @@ function PlotPage({ context }: { context: PageContext<S> }) {
   const id = decodeURIComponent(useParams()["id"] ?? "");
   const facts = recordFacts(store, id, { principal });   // the same derivations
   return (
-    <PageMain context={context} data-testid="plot-page">
+    <PageMain context={context}>
       <h1 style={pageStyles.h1}>{facts.label}</h1>
       <a href={spatialHref(id)}>See it in the scene ↗</a>
       <DerivedForm store={store} mutation={sow} prefilled={{ plotId: id }} />
@@ -65,33 +65,27 @@ export const pages = createPageRegistry<S, PageComponent<S>>(schema)
 
 Rules for a page at this rung:
 
-1. **`PageMain`, not `<main>`.** Inside an embed the host page owns the one
-   `main`; `PageMain` renders a section there and a main on its own. A
-   hand-written `main` is a duplicate landmark the moment the app is embedded.
-2. **`useStoreTick(store)`** at the top of every page that reads the graph, or
-   it goes stale after the first act.
+1. **`PageMain`, not `<main>`** — inside an embed the host owns the one
+   `main`, and a hand-written one is a duplicate landmark.
+2. **`useStoreTick(store)`** at the top of every page that reads the graph,
+   or it goes stale after the first act.
 3. **`pageStyles`** for the parts you did not design, so one custom page
    still reads as the same face as the derived ones.
 4. **Prefill, never wire.** `DerivedForm` with `prefilled` is how a record
-   page offers an act about itself. The form asks for the rest.
+   offers an act about itself; the form asks for the rest.
 5. **Read permission before drawing an act.** `store.permits({ name, args },
-   principal)` — draw the act struck through with `verdict.refusal.message`
-   when it is not ok. A form that refuses on submit is the bug this prevents.
+   principal)`, struck through with `verdict.refusal.message` when not ok. A
+   form that refuses on submit is the bug this prevents.
 6. **Take the act LIST from the derivation, not from the mutations.**
    `recordFacts(store, id, { principal }).actions` is the same `AffordanceSet`
    the scene's strip reads: `affordances` are the acts that can actually act
    here, each with its `args` already decided and its `open` questions left,
    and `withheld` are the ones this seat may not take, with the reason.
-   Filtering `store.allMutations()` by `subject.kinds` yourself looks
-   equivalent and is not — it offers "Take it back" on a record with nothing
-   attached, and a picker with no candidates in it.
-
-   A **list** page is about a kind rather than a node, so its question is
-   `kindFacts(store, kind, { principal }).actions` — the acts that can BEGIN
-   this kind. Same rule, same reason: filtering by `creates` and checking
-   `store.permits` answers the permission question and not the askability
-   one, so "add an item for someone" is offered with nobody to hand it to,
-   as a form whose picker is empty and whose submit can only refuse.
+   Filtering `store.allMutations()` yourself looks equivalent and is not: it
+   offers "Take it back" on a record with nothing attached, and a picker
+   with no candidates. A **list** page asks the same question of a kind —
+   `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN
+   it — for the same reason.
 
 ## Rung two: a product design
 
@@ -109,9 +103,19 @@ createPageRegistry<S, PageComponent<S>>(schema)
 ```
 
 The shell surface receives `{ context, children }` and frames the routes.
-`apps/seedbed/src/ui/design.tsx` is the worked example: an almanac with a
-rail, cards, an illustrated map, and the acts as buttons that open their
-forms in place. What a design must keep doing:
+
+Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, and
+what makes it finished is not the type — it is that everything a person
+tries there works: the grouping, sort and filter live in `useSearchParams`
+(a list you arranged is a link you can send); a record edits where it is
+shown, heading included, through `editableFields(store, id)`; an act's form
+opens where the act is, prefilled, with the store's own refusal said at the
+press; the problems page is an inbox, its repairs ordered by
+`rankedRepairs`; and every empty state offers the way out of itself.
+`apps/seedbed/src/ui/design.tsx` is the other end — an almanac whose own
+drawing has two homes, the page and the scene's lens reading one model.
+
+What every design must keep doing:
 
 - **Read the graph through one model.** `readGarden(store)` turns nodes,
   edges and violations into the design's words; every page reads it and none
@@ -126,14 +130,17 @@ forms in place. What a design must keep doing:
   region carrying the name the page gave it, so naming this one as well puts
   two regions with the same name on any page holding two embeds of the
   design). Controls at least 24px tall, AA contrast on the tinted ground.
-  Run `apps/todo/scripts/run-a11y.mjs`.
-- **Withhold, do not hide.** `facts.actions.withheld` is the list, each entry
-  carrying the policy's own sentence; draw them struck through rather than
-  dropping them.
-- **Offer what can act.** `facts.actions.affordances`, never your own scan of
-  the mutations: the derivation drops an act whose every candidate is already
-  taken and prefills the arguments the record itself decides. On a list page
-  that is `kindFacts(store, kind).actions`.
+  Every size in `rem`: at 200% text a flex or grid item's automatic minimum
+  is its CONTENT's, so one un-wrappable row pushes the whole column off the
+  screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on
+  the row. Measure rather than trust: `-ink-faint` fails AA on an 11px
+  label, and the accent fails on the warning ground. `node
+  scripts/verify-pages.mjs` runs axe over every route at both widths in both
+  schemes; `apps/todo/scripts/run-a11y.mjs` reads the tree.
+- **Withhold, do not hide, and offer only what can act.**
+  `facts.actions.affordances` and `facts.actions.withheld` — never your own
+  scan of the mutations. Struck through with the policy's own sentence, not
+  dropped.
 
 ## The embed
 
@@ -147,11 +154,10 @@ const handle = mount(el, { app, seed, stop: "#focus=agg:plot", principal, views,
 handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
 ```
 
-- `face` is inferred from the stop and `scheme` from the host page; pass
-  either to override. `label` names the landmarks, so two embeds are two
-  regions with two names.
-- `mountWhenNear(elements, mountOne)` mounts many embeds as a reader scrolls
-  near them. The strip shows the app's named places (`graview-lens`, step 7).
+- `face` is inferred from the stop and `scheme` from the host page; `label`
+  names the landmarks, so two embeds are two regions with two names.
+- `mountWhenNear(elements, mountOne)` mounts many as a reader scrolls near
+  them. The strip shows the app's named places (`graview-lens`, step 7).
 
 ## Then find out whether it worked
 
@@ -161,18 +167,17 @@ pnpm test                                               # render every page you 
 ```
 
 Render each registered page with `PagesApp` and `initialPath` in a test, as
-`apps/seedbed/tests/integration/chapters.test.ts` does for chapter thirteen:
-assert your own `data-testid`s are there and the derived face's
-`aria-label="Kinds"` is not. Then open it: a design that passes its tests
-and reads like an admin panel has not replaced anything.
+`apps/seedbed/tests/integration/chapters.test.ts` does for chapter thirteen,
+asserting your own `data-testid`s are there. Then open it: a design that
+passes its tests and reads like an admin panel has not replaced anything.
 
 ## What the check cannot see
 
 - Whether the design's words are the domain's. The derived pages use the
   declaration's `description` and `inverse`; a design that writes its own
   sentences must keep them true as the declaration changes.
-- Whether a page still offers everything the seat may do. A design that lists
-  acts by NAME will miss the one declared after it was written, and one that
-  lists them by scanning the mutations will offer acts that cannot act.
-  `facts.actions` is neither, and is the only list that stays right on its
-  own — but only a person can see whether the page gives them room.
+- Whether a page still offers everything the seat may do. Listing acts by
+  NAME misses the one declared after it was written; scanning the mutations
+  offers acts that cannot act. `facts.actions` is neither, and is the only
+  list that stays right on its own — but only a person can see whether the
+  page gives them room.

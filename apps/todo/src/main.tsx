@@ -12,6 +12,7 @@ import example from "./data/example.json";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
 import { openingSeat, today, TodoApp } from "./ui/app.js";
+import { thingsDesign } from "./ui/design.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -100,6 +101,13 @@ if (window.location.pathname.startsWith("/pages")) {
         principal: openingSeat(),
         remembers,
       }}
+      /*
+       * THE APP'S OWN FACE, over the same derivations. Every surface is
+       * replaced; nothing here reaches past the framework. The routes it
+       * does not register — the not-found page, which has no kind to
+       * register on — render the framework's own inside this shell.
+       */
+      registry={thingsDesign(todoApp.schema)}
     />,
   );
 } else {

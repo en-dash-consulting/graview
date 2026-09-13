@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T06:26:51.178Z",
+  "at": "2026-09-13T06:50:03.250Z",
   "engine": "chromium",
   "checks": {
     "filterOnlyPastTheFold": {
@@ -79,12 +79,22 @@
       "record": {
         "firstRepair": "A new date for \"Redirect the post\" …",
         "ranks": [
+          0,
+          1,
           2,
           3,
           4,
           5,
           6,
           7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
           16
         ]
       },
