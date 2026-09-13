@@ -24,7 +24,7 @@
       "label": "Pay the deposit",
       "done": false,
       "due": "2026-08-28",
-      "day": "mon",
+      "day": "tue",
       "plannedAt": 540,
       "plannedUntil": 555
     },
@@ -34,7 +34,7 @@
       "label": "Get the second quote",
       "done": true,
       "due": "2026-08-26",
-      "day": "mon",
+      "day": "tue",
       "plannedAt": 600,
       "plannedUntil": 630
     },
@@ -54,7 +54,7 @@
       "label": "Order boxes",
       "done": true,
       "due": "2026-08-27",
-      "day": "tue",
+      "day": "mon",
       "plannedAt": 630,
       "plannedUntil": 640
     },

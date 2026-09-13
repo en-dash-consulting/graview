@@ -144,6 +144,19 @@ try {
   }));
   await note(page, "lists with every task raised");
 
+  // The other way round: the week in focus, the lists raised as cards. A card
+  // summarising its members as chips has not drawn the relation between the
+  // week's entries and itself; every entry keeps its line to its list.
+  await page.goto("http://localhost:5193/?today=2026-09-01#focus=aggregate%3Atask&relation=list", { waitUntil: "load" });
+  await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await page.waitForTimeout(1200);
+  report.restated = {
+    ...report.restated,
+    entries: await page.evaluate(() => document.querySelectorAll('[data-graview-view="aggregate:task"] [data-graview-pick^="t-"]').length),
+    weekLines: await page.evaluate(() => document.querySelectorAll('[data-graview-connector="holds"]').length),
+  };
+  await note(page, "the week with the lists raised");
+
   /*
    * The altitude control is a TOGGLE, and says which way it goes.
    *
@@ -411,6 +424,8 @@ report.verdict = {
   forwardIsOfferedOnceThereIsSomewhere: step("back twice")?.forward === true,
   // The lists draw their tasks, the band draws them again, and no line restates it.
   aViewThatDrawsBothEndsDrawsTheRelation: (report.restated?.inside ?? 0) >= 12 && (report.restated?.chips ?? 0) >= 12 && report.restated?.holds === 0,
+  // Nine entries on the week, nine lines to the lists that hold them.
+  aCardsChipsDoNotSilenceItsLines: (report.restated?.entries ?? 0) >= 9 && (report.restated?.weekLines ?? 0) >= (report.restated?.entries ?? 0),
   // Forward is ONE step, not all the way back to where you had got to.
   forwardActuallyGoesForward: placeOf(step("forward once")?.url) === placeOf(step("travelled")?.url),
   // And the breadcrumb still names where you are, and gets you out in one.

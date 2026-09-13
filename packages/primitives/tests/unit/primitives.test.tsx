@@ -226,6 +226,11 @@ describe("the timeline lens", () => {
     expect(html).toContain('data-graview-span="morning"');
     expect(html).toContain('data-graview-moment=""');
     expect(html).toContain("08:10");
+    // A moment carries its NAME, not only its time: a calendar of moments
+    // read as a column of times with nothing to say what they were.
+    const moment = /<div[^>]*data-graview-moment=""[^>]*>[\s\S]*?<\/div>/.exec(html)?.[0] ?? "";
+    expect(moment).toMatch(/08:10/);
+    expect(moment).toContain("Morning run");
   });
 
   it("switches to a denser summary rather than scaling down", () => {
