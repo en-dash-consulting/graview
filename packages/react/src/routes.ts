@@ -84,6 +84,30 @@ const at = (n: number): number => Math.round(n * 100) / 100;
 export const polylineD = (runs: readonly (readonly Point[])[]): string =>
   runs.map((run) => run.map((p, i) => `${i === 0 ? "M" : "L"} ${at(p.x)} ${at(p.y)}`).join(" ")).join(" ");
 
+/**
+ * A polyline with its corners rounded: each elbow becomes a short quadratic,
+ * so a road through the gutters reads as a road and not as a box drawn
+ * around whatever it went round.
+ */
+export function roundedPolylineD(points: readonly Point[], radius: number): string {
+  if (points.length < 3) return polylineD([points]);
+  const parts: string[] = [`M ${at(points[0]!.x)} ${at(points[0]!.y)}`];
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = points[i - 1]!;
+    const corner = points[i]!;
+    const next = points[i + 1]!;
+    const inLen = Math.hypot(corner.x - prev.x, corner.y - prev.y);
+    const outLen = Math.hypot(next.x - corner.x, next.y - corner.y);
+    const r = Math.min(radius, inLen / 2, outLen / 2);
+    const a = { x: corner.x + ((prev.x - corner.x) / (inLen || 1)) * r, y: corner.y + ((prev.y - corner.y) / (inLen || 1)) * r };
+    const b = { x: corner.x + ((next.x - corner.x) / (outLen || 1)) * r, y: corner.y + ((next.y - corner.y) / (outLen || 1)) * r };
+    parts.push(`L ${at(a.x)} ${at(a.y)} Q ${at(corner.x)} ${at(corner.y)} ${at(b.x)} ${at(b.y)}`);
+  }
+  const last = points[points.length - 1]!;
+  parts.push(`L ${at(last.x)} ${at(last.y)}`);
+  return parts.join(" ");
+}
+
 /** Where a route is at parameter t, for sampling a hit corridor. */
 export function routePoint(route: ConnectorRoute, q: Quadratic, t: number): Point {
   if (route === "orthogonal") {

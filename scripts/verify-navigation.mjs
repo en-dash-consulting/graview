@@ -129,6 +129,22 @@ try {
   await note(page, "home by breadcrumb");
 
   /*
+   * A VIEW THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION. With the lists in
+   * focus and every task raised, each task is drawn inside its list; a line
+   * from the list column to the same task's chip says nothing the column
+   * does not. Twelve of them over the panel were the picture Nick sent.
+   */
+  await page.goto("http://localhost:5193/?today=2026-09-01#focus=aggregate%3Alist&relation=task", { waitUntil: "load" });
+  await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await page.waitForTimeout(1200);
+  report.restated = await page.evaluate(() => ({
+    holds: document.querySelectorAll('[data-graview-connector="holds"]').length,
+    chips: document.querySelectorAll('[data-graview-plane="1"]').length,
+    inside: document.querySelectorAll('[data-graview-view="aggregate:list"] [data-graview-pick^="t-"]').length,
+  }));
+  await note(page, "lists with every task raised");
+
+  /*
    * The altitude control is a TOGGLE, and says which way it goes.
    *
    * "Graview" from the ground, "Focus" from altitude, aria state agreeing
@@ -393,6 +409,8 @@ report.verdict = {
   // Two stops back from two stops in is where you started.
   backAgainReachesTheStart: placeOf(step("back twice")?.url) === placeOf(step("landed")?.url),
   forwardIsOfferedOnceThereIsSomewhere: step("back twice")?.forward === true,
+  // The lists draw their tasks, the band draws them again, and no line restates it.
+  aViewThatDrawsBothEndsDrawsTheRelation: (report.restated?.inside ?? 0) >= 12 && (report.restated?.chips ?? 0) >= 12 && report.restated?.holds === 0,
   // Forward is ONE step, not all the way back to where you had got to.
   forwardActuallyGoesForward: placeOf(step("forward once")?.url) === placeOf(step("travelled")?.url),
   // And the breadcrumb still names where you are, and gets you out in one.
