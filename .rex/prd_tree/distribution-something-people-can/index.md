@@ -25,7 +25,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [A seamless app-creation flow: the walkthrough](./a-seamless-app-creation-flow-the/index.md) | in_progress |
+| [A seamless app-creation flow: the walkthrough](./a-seamless-app-creation-flow-the/index.md) | completed |
 | [Live, embeddable chapters: mount a Graview app into any element, with a face toggle](./live-embeddable-chapters-mount-a/index.md) | completed |
 | [A skills package for building with Graview](./a-skills-package-for-building-with.md) | completed |
 | [Deployment is a framework concern: the ship subpackage](./deployment-is-a-framework-concern-the.md) | completed |
