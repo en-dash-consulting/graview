@@ -2,7 +2,7 @@
 id: "d1e36350-e5ba-4c82-843d-87b32aac15b2"
 level: "feature"
 title: "Creator mode from inside the app: the studio is a place on the bar, in every app the scaffold writes"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "studio"
@@ -13,6 +13,11 @@ tags:
 blockedBy:
   - "d6e98c63-c1ae-40dc-82bc-5eee85bab996"
 source: "Nick, 2026-09-13: \"where the app builder construct? you worked that task, no?\" and \"/ndx-capture that instead\""
+startedAt: "2026-09-13T06:06:19.548Z"
+completedAt: "2026-09-13T06:06:19.548Z"
+endedAt: "2026-09-13T06:06:19.548Z"
+resolutionType: "code-change"
+resolutionDetail: "&lt;StudioPlace app={...}/&gt; on the shell bar (as a slot, since studio depends on primitives), the embed strip (boxed) and the scaffold. Gated to the seat that administers where an app declares something administered, offered to whoever is here where it does not — so a scaffolded project has it on day one. The overlay shows the meta-districts, \"What the checker says\" as a place, the studio's own activity rail and undo, an agent seat that proposes a repair for a rule naming none, and Apply that runs graview check, refuses on errors, and offers the written files as downloads. Three fixes fell out: ArgShape gains {type:\"boolean\"} (without it \"Add a field\" was derived nowhere); the studio was destroying display.labels/hide, fixed and fieldRoles on every round trip (now carried through both the declaration and the written schema, with display.format named as unwritable); and the overlay had to be portalled because the bar's backdrop-filter is a containing block even for fixed. verify-studio (6 criteria), 810 unit tests, graview check, smoke-create and the whole harness suite green."
 acceptanceCriteria:
   - "the shell bar and the embed strip offer \"Studio\" to the seat that may administer the installation and to nobody else; pressing it opens the running app's declaration in the studio without leaving the app"
   - "the studio over the running app shows the same districts chapter fifteen shows, \"What the checker says\" is a place on its bar, and every change is an act with undo"
@@ -21,6 +26,6 @@ acceptanceCriteria:
   - "an agent seat in the studio proposes a change and the person keeps or declines it from the trail"
   - "a harness criterion opens the studio from the todo app's bar, adds a field, reads the checker's verdict and the written schema, and undoes"
 description: "@graview/studio shipped as a package and as seedbed chapter 15, but there is no way into it from the app you are looking at: the todo app and a scaffolded project have no Studio on their bars, so the only way to open one is to mount it by hand. This feature puts the studio one press away in every app. The shell bar (and the embed strip) gains a \"Studio\" place, gated the way \"Show the installation\" is — offered to the seat that may administer, never to anyone else — that opens the running app's own declaration as a graph in the studio: kinds, fields, edges, acts, rules, roles and grants as districts, \"What the checker says\" as a place beside it, the ordinary acts to change it, undo on every change. Applying runs graview check first, refuses on errors, and hands the person the files the studio would write (src/domain/schema.ts, mutations.ts, invariants.ts, policy.ts) and the migration a stored graph needs, with a way to save them where a browser can (download or copy) since a browser cannot write the checkout. The scaffold writes the entrypoint into every new project, the todo app and the seedbed carry it, and an agent seat in the studio proposes for the person to keep or decline. Source: Nick, 2026-09-13: \"where the app builder construct?\" — the studio must be reachable from inside the app, not only from the page and the package."
-lastModified: "2026-09-13T04:54:17.310Z"
+lastModified: "2026-09-13T06:06:19.556Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
