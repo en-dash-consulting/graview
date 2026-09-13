@@ -362,6 +362,13 @@ export function registerDefaultViews<S extends AnySchema>(
         <div
           className="graview-kind-card"
           data-graview-rank={props.rank}
+          /*
+           * A district whose building is its own drawing rather than a box:
+           * the nameplate floats clear above it instead of sitting on a roof,
+           * because a drawing's top is a head or a lid and a label across it
+           * hides the one thing the drawing had to say.
+           */
+          data-graview-landmark={figure || undefined}
           data-graview-nested={nested || undefined}
           data-graview-tied={tied || undefined}
           /*
@@ -389,21 +396,44 @@ export function registerDefaultViews<S extends AnySchema>(
         >
           {/*
             * The DISTRICT, drawn only from altitude (the stylesheet keeps it
-            * hidden inside the stack): an isometric block — a roof and two
-            * shaded walls — whose height is the kind's population. This is
-            * the city: the ground is an iso lattice, and each kind stands on
-            * it as a building rather than lying on it as a card.
+            * hidden inside the stack). This is the city: the ground is an iso
+            * lattice, and each kind stands on it as a building rather than
+            * lying on it as a card.
+            *
+            * WHAT IT STANDS AS is the kind's own drawing, where it has one.
+            * A figure reduced to an eighteen-pixel chip on the nameplate
+            * while an anonymous box carried the whole landmark had the
+            * emphasis exactly backwards: the box is what every kind looks
+            * like, and the figure is the only thing on the screen that says
+            * which kind this is. From altitude the drawing IS the building.
+            *
+            * The population still reads, in the drawing's SIZE rather than a
+            * box's height — same fact, same square root, a channel that does
+            * not need the thing to be a box. A kind with no figure keeps the
+            * block it always had: a roof and two shaded walls, the height its
+            * population.
             */}
-          <svg
-            className="graview-kind-block"
-            data-graview-opened={props.opened || undefined}
-            viewBox={`0 0 100 ${45 + rise}`}
-            aria-hidden="true"
-          >
-            <polygon className="graview-iso-left" points={`1,22 50,43 50,${43 + rise} 1,${22 + rise}`} />
-            <polygon className="graview-iso-right" points={`99,22 50,43 50,${43 + rise} 99,${22 + rise}`} />
-            <polygon className="graview-iso-roof" points="50,1 99,22 50,43 1,22" />
-          </svg>
+          {figure ? (
+            <span
+              className="graview-kind-block graview-kind-landmark"
+              data-graview-opened={props.opened || undefined}
+              aria-hidden="true"
+              style={{ ["--graview-rise" as string]: rise }}
+            >
+              <KindFigure kind={String(kind)} schema={schema} {...(brand ? { brand } : {})} size={96} />
+            </span>
+          ) : (
+            <svg
+              className="graview-kind-block"
+              data-graview-opened={props.opened || undefined}
+              viewBox={`0 0 100 ${45 + rise}`}
+              aria-hidden="true"
+            >
+              <polygon className="graview-iso-left" points={`1,22 50,43 50,${43 + rise} 1,${22 + rise}`} />
+              <polygon className="graview-iso-right" points={`99,22 50,43 50,${43 + rise} 99,${22 + rise}`} />
+              <polygon className="graview-iso-roof" points="50,1 99,22 50,43 1,22" />
+            </svg>
+          )}
           <div
           className="graview-kind-face"
           data-graview-opened={props.opened || undefined}

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T08:07:53.904Z",
+  "at": "2026-09-13T14:11:00.909Z",
   "engine": "chromium",
   "screens": [
     {
@@ -581,12 +581,12 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 5,
+      "fill": 15,
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "370x123",
-        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
+        "size": "370x131",
+        "text": "×Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆"
       },
       "led": null,
       "figures": []

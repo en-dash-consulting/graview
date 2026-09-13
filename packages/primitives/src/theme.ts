@@ -539,6 +539,65 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "34% 55%" : "38% 13%"});
 }
 
+/* WHERE THE KIND HAS ITS OWN DRAWING, the drawing is the building.
+   Same footprint as the block, same ground line, same cast shadow — the
+   difference is that the district is now a person, a plot or a vehicle
+   rather than one more box. Size carries the population the box's height
+   used to: the rise the card computed, in a channel a drawing can use.
+
+   Stroke weight is set HERE rather than in the art, because the art is
+   drawn to read at twenty pixels and a 1.4-unit stroke on a 24-unit box
+   becomes a six-pixel marker line at a hundred. Thinned to a drafting
+   line, which is what a blueprint of a thing looks like. */
+.graview-kind-landmark {
+  display: block;
+  left: 50%;
+  /* The block's own two pixels of ground clearance, kept: at altitude zero
+     every block is pushed eighteen pixels down as part of the morph, and
+     without them the drawing hangs two pixels past the bottom of the scene
+     and gives the whole page a scrollbar's worth of overflow. */
+  bottom: 2px;
+  aspect-ratio: 1;
+  /* Sized by the card's HEIGHT, not its width: a district card is wider
+     than it is tall, and a square drawing at 96% of the width stood a third
+     of itself above the card and back through the nameplate. Population is
+     in the drawing's size either way — the same rise the box's height
+     carried, 10 for a district of one and 46 for the largest. */
+  height: calc((72 + var(--graview-rise, 24) * 0.8) * 1%);
+  width: auto;
+  /* The morph is a GROWTH from the ground line, not a drop: a block slides
+     eighteen pixels down at altitude zero and grows up out of the card, and
+     a drawing given the same treatment hangs below the card it belongs to —
+     two pixels past the bottom of the scene on the lowest row, which is a
+     scrollbar on every ground-level screen in the app. Scaling from the
+     drawing's own feet is the same reading and costs nothing below. */
+  transform-origin: bottom center;
+  transform: translateX(-50%) scale(calc(0.55 + var(--graview-altitude) * 0.45));
+  /* A cast shadow belongs to a solid; on a line drawing it is a blurred
+     second copy of every stroke. The drawing keeps a hint of one so it
+     still stands on the lattice rather than floating over it. */
+  filter: drop-shadow(${
+    scheme === "light" ? "6px 5px 7px rgba(20,30,32,0.16)" : "7px 6px 9px rgba(0,0,0,0.45)"
+  });
+}
+/* The nameplate floats ABOVE a drawing rather than standing on it. On a box
+   the pill sits on the roof, which is what a label does over a building; on
+   a figure the same 2% put it across the head. */
+[data-graview-altitude] [data-graview-landmark] .graview-kind-face {
+  top: 0 !important;
+  transform: translate(-50%, calc(-100% - 7px));
+}
+.graview-kind-landmark [data-graview-figure] {
+  width: 100% !important;
+  height: 100% !important;
+  color: hsl(var(--graview-hue, 200) ${scheme === "light" ? "42% 44%" : "45% 62%"}) !important;
+}
+.graview-kind-landmark svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 0.85;
+}
+
 /* From altitude the card's face becomes the district's NAMEPLATE: an
    upright pill standing on the roof, the way a label floats over a building
    in any city view — the block carries the architecture, the pill carries
