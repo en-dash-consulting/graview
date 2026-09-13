@@ -1,0 +1,32 @@
+---
+id: "a4b680fd-970c-4590-acba-ab085b5d0717"
+level: "feature"
+title: "A third demo, the product-grade one: Rota — branded, permissioned, remembered, embedded, with the installation, a profile and the studio"
+status: "pending"
+priority: "high"
+tags:
+  - "demo"
+  - "rota"
+  - "brand"
+  - "kit"
+  - "installation"
+  - "policy"
+  - "ship"
+  - "embed"
+  - "studio"
+blockedBy:
+  - "d6e98c63-c1ae-40dc-82bc-5eee85bab996"
+  - "d1e36350-e5ba-4c82-843d-87b32aac15b2"
+source: "Nick, 2026-09-13: \"/ndx-capture changes we need to make for our demo apps (or adding another one or two or whatever) to properly illustrate all those capabilities\""
+acceptanceCriteria:
+  - "apps/rota declares shifts, volunteers, a covered-by edge with both readings, cover and uncover, and every-shift-covered with a repair that asks for the person; graview check is clean"
+  - "Rota is branded with a kit — a declared route and per-edge colours — and the checker has judged the kit's colours against both grounds"
+  - "three roles with seats on the bar; the coordinator administers the installation, sees \"Show the installation\", invites and grants; the volunteer edits their own profile and nothing else's; the viewer takes no act and every withheld act says why"
+  - "Rota remembers in the browser at version 2 and opens a stored version 1 through its migration, once, in the log"
+  - "a custom design over shell, home, problems, list and record; the coverage lens and the timeline lens are places; an embed page mounts Rota twice at two stops"
+  - "the studio opens from Rota's bar for the coordinator over Rota's own declaration"
+  - "the launcher lists Rota with liveness; audit-ui, survey, verify-seat, verify-remember, verify-pages, verify-navigation and progression carry Rota states, and pnpm engines holds"
+description: "Things is the example nobody has to be taught and Seedbed is the one that grows chapter by chapter; neither is what a person would ship. The capabilities the platform now leads with — the installation and profiles, brand and kit, policy with real roles and seats, remembering and a migration, the embed, the studio entrypoint, a custom design over the routed face — are shown only in seedbed chapters reached by ?chapter=N, or only on the marketing page. Add a third demo that is the product-grade one: Rota, a volunteer shift roster (the shape the earlier ../roster rehearsal proved: shifts, volunteers, a covered-by edge with both readings, cover and uncover, every-shift-covered with a repair that asks for the person, a coverage lens titled as a place). Rota ships branded with its own kit (a route and per-edge colours the checker has judged), a policy with three roles (a coordinator who administers, a volunteer, a viewer) and seats for each on the bar, the installation with seeded users, invitations and profiles, the profile pane with text size, remembering in the browser at version 2 with a migration from a stored version 1, a custom design over every routed surface, the timeline lens beside coverage, an embed page beside a paragraph at two stops, and the studio one press from the bar for the coordinator. It lives in apps/rota, is listed by the launcher, runs on its own port, and every harness that walks the todo app walks it too. Not in scope: a fourth demo — three is the set: taught by nobody, grown, shipped."
+lastModified: "2026-09-13T04:52:15.439Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
+---
