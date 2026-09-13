@@ -2,13 +2,7 @@ import { themeCss, type Scheme } from "@graview/primitives";
 import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
 import { PagesApp } from "@graview/pages";
-import {
-  browserStartsFresh,
-  createBrowserAdapter,
-  forgetFreshParam,
-  openStore,
-} from "@graview/ship/browser";
-import example from "./data/example.json";
+import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
 import { openingSeat, today, TodoApp } from "./ui/app.js";
@@ -67,15 +61,12 @@ if (!root) throw new Error("no #root");
  * remember, so the harnesses keep specifying the example rather than their
  * own residue.
  */
-const opened = await openStore({
-  app: todoApp,
-  adapter: createBrowserAdapter(),
-  seed: example as never,
-  fresh: browserStartsFresh(),
-  storeOptions: { invariantOptions: { context: { today: today() } } },
-});
-forgetFreshParam();
-const remembers = true;
+/*
+ * THE SAME WAY IT OPENS ANYWHERE. `open()` is what the launcher mounts
+ * through too, so "Things remembers" is one fact rather than one fact here
+ * and a different one on the desk.
+ */
+const { opened, principal, remembers } = await open();
 
 /*
  * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
@@ -98,7 +89,7 @@ if (window.location.pathname.startsWith("/pages")) {
          * policy the scene narrows by — `?as=user-sam` sits somebody down
          * here exactly as it does over there.
          */
-        principal: openingSeat(),
+        principal,
         remembers,
       }}
       /*
@@ -114,6 +105,7 @@ if (window.location.pathname.startsWith("/pages")) {
   createRoot(root).render(
     <TodoApp
       store={opened.store}
+      principal={principal}
       remembers={remembers}
       syncUrl
       renderer="dom"

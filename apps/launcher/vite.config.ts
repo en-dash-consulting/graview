@@ -15,6 +15,13 @@ const app = (name: string) =>
  */
 const ui = (name: string) =>
   fileURLToPath(new URL(`../${name}/src/ui/app.tsx`, import.meta.url));
+/**
+ * And how each app OPENS itself: its adapter, its scope, its seat. The desk
+ * mounts through this so an edit made here is the same edit the app has at
+ * its own port — see `open.ts` in any of them.
+ */
+const opens = (name: string) =>
+  fileURLToPath(new URL(`../${name}/src/open.ts`, import.meta.url));
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
@@ -36,12 +43,20 @@ export default defineConfig({
       "@graview/ship/browser": fileURLToPath(
         new URL("../../packages/ship/src/browser.ts", import.meta.url),
       ),
+      "@graview/ship": pkg("ship"),
+      "@graview/studio": pkg("studio"),
+      "@graview/embed": pkg("embed"),
       // Longest first: Vite matches an alias as a prefix, so the bare package
-      // name would otherwise swallow the `/ui` sub-path.
+      // name would otherwise swallow the `/ui` and `/open` sub-paths.
+      "@graview/todo/open": opens("todo"),
+      "@graview/seedbed/open": opens("seedbed"),
+      "@graview/rota/open": opens("rota"),
       "@graview/todo/ui": ui("todo"),
       "@graview/seedbed/ui": ui("seedbed"),
+      "@graview/rota/ui": ui("rota"),
       "@graview/todo": app("todo"),
       "@graview/seedbed": app("seedbed"),
+      "@graview/rota": app("rota"),
     },
   },
   server: { port: 5199, strictPort: true },

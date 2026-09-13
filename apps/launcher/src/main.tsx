@@ -23,6 +23,10 @@ import {
 import { createInAppAdapter, createToolRuntime, type ToolCall } from "@graview/tools";
 import { SeedbedApp } from "@graview/seedbed/ui";
 import { TodoApp } from "@graview/todo/ui";
+import { open as openTodo } from "@graview/todo/open";
+import { open as openSeedbed } from "@graview/seedbed/open";
+import { RotaApp } from "@graview/rota/ui";
+import { open as openRota } from "@graview/rota/open";
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import { createRoot } from "react-dom/client";
 import { createLauncherStore, launcherApp, type LauncherStore } from "./domain/app.js";
@@ -51,7 +55,54 @@ const HOME: ViewState = { ...EMPTY_VIEW, focusId: MATRIX };
 const MOUNTS: Record<string, (props: Record<string, unknown>) => ReactElement> = {
   todo: TodoApp,
   seedbed: SeedbedApp,
+  rota: RotaApp,
 };
+
+/**
+ * HOW EACH DEMO OPENS ITSELF — the same function its own `main.tsx` runs.
+ *
+ * Mounted with no store, an app builds an in-memory one from its example
+ * and forgets on reload. So the desk — the first thing anybody opens —
+ * hid the one persistence capability every demo already had, and there was
+ * no way to tell from inside it whether Things persisted anything at all.
+ * Each app exports `open()` now: its adapter, its scope, its seat, its
+ * brand. Two demos mounted here keep two stores, because each names its own
+ * scope, and an edit made on the desk is there at the app's own port.
+ */
+const OPENS: Record<string, () => Promise<OpenedDemo>> = {
+  todo: openTodo,
+  seedbed: openSeedbed,
+  rota: openRota,
+};
+
+interface OpenedDemo {
+  readonly store?: unknown;
+  readonly opened?: { readonly store: unknown };
+  readonly principal?: unknown;
+  readonly remembers: boolean;
+}
+
+/**
+ * The demo, opened once and kept while it is on screen.
+ *
+ * `null` while it is opening — reading a store from disk is asynchronous
+ * and a mount that rendered before it finished would show the example and
+ * then jump, which looks exactly like losing your edits.
+ */
+function useOpened(id: string | null): OpenedDemo | null {
+  const [held, setHeld] = useState<{ id: string; demo: OpenedDemo } | null>(null);
+  useEffect(() => {
+    if (!id || !OPENS[id]) return;
+    let live = true;
+    void OPENS[id]!().then((demo) => {
+      if (live) setHeld({ id, demo });
+    });
+    return () => {
+      live = false;
+    };
+  }, [id]);
+  return held?.id === id ? held.demo : null;
+}
 
 /* ------------------------------------------------------------------- theme */
 
@@ -120,6 +171,7 @@ function Desk({
   onScheme: (scheme: Scheme) => void;
 }) {
   const showing = useShowing();
+  const demo = useOpened(showing);
   const desk = useDesk();
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);
   const onCall = useCallback((call: ToolCall) => {
@@ -153,13 +205,27 @@ function Desk({
     if (Mounted && entry) {
       return (
         <>
-          <Mounted
-            key={entry.id}
-            syncUrl
-            renderer="dom"
-            initialScheme={scheme}
-            onSchemeChange={onScheme}
-          />
+          {demo ? (
+            <Mounted
+              key={entry.id}
+              /* The demo's own store, its own seat, and the fact that it
+                 remembers — the same three the app gets at its own port. */
+              store={demo.store ?? demo.opened?.store}
+              {...(demo.principal ? { principal: demo.principal } : {})}
+              remembers={demo.remembers}
+              syncUrl
+              renderer="dom"
+              initialScheme={scheme}
+              onSchemeChange={onScheme}
+            />
+          ) : (
+            <p
+              data-testid="opening"
+              style={{ padding: "2rem", fontSize: "0.875rem", color: "var(--graview-ink-muted)" }}
+            >
+              Opening {entry.label}…
+            </p>
+          )}
           <Switcher current={entry.id} onShow={desk.show} onClose={desk.close} />
         </>
       );

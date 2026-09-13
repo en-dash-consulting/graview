@@ -1,5 +1,0 @@
-# The served roster's own data. Written by `pnpm serve:rota`, and
-# deliberately not checked in: the whole point of this folder is that it is
-# YOURS, and a repository that shipped one would be shipping somebody's.
-*
-!.gitignore

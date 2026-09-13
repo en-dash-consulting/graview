@@ -186,6 +186,87 @@ try {
   await ready(stranger);
   report.steps.stranger = { deposit: await labelOf(stranger, "t-deposit") };
   await other.close();
+
+  /* -------------------------------------- and the same is true on the desk */
+  /*
+   * THE LAUNCHER MOUNTS EACH DEMO THE WAY THE DEMO OPENS ITSELF.
+   *
+   * Mounted with no store, an app built an in-memory one from its example and
+   * forgot on reload — so the desk, which is the first thing anybody opens,
+   * hid the one persistence capability every demo already had. There was no
+   * way to tell from inside it whether Things persisted anything at all.
+   *
+   * Driven here end to end: an edit made on the desk survives a reload of the
+   * desk, and is there at the app's OWN port in the same browser, because
+   * both go through `open()` with the same scope. And the two demos keep two
+   * stores, because each names its own.
+   */
+  const desk = await serving("launcher", 5199, repoRoot);
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage({ viewport: { width: 1400, height: 900 } });
+    const deskErrors = [];
+    page.on("pageerror", (error) => deskErrors.push(String(error).slice(0, 90)));
+    const onTheDesk = async (app) => {
+      // `remember=1` because a driven browser starts fresh unless it asks to,
+      // which is what keeps every other harness from inheriting the last one's.
+      await page.goto(`http://localhost:5199/?theme=light&remember=1&app=${app}`, { waitUntil: "load" });
+      /*
+       * For the MOUNT, not for a card: the garden starts empty on purpose,
+       * and waiting for something pickable there waits for ever. A district
+       * exists whether or not anything is in it — which is the seedbed's
+       * whole first screen.
+       */
+      await page.waitForFunction(
+        () => document.querySelector("[data-graview-view]") !== null,
+        null,
+        { timeout: 40_000 },
+      );
+      await page.waitForTimeout(1000);
+    };
+    const offeredOn = async (target, id, label) => {
+      await target.click(`[data-graview-pick="${id}"]`);
+      await target.waitForSelector('[data-testid="inspector-strip"] [data-affordance]', { timeout: 20_000 });
+      return target.evaluate(
+        (wanted) =>
+          [...document.querySelectorAll('[data-testid="inspector-strip"] [data-affordance]')].some((button) =>
+            (button.textContent ?? "").includes(wanted),
+          ),
+        label,
+      );
+    };
+
+    await onTheDesk("todo");
+    const FINISH = 'Finish "Pay the deposit"';
+    const beforeEdit = await offeredOn(page, "t-deposit", FINISH);
+    await page.locator('[data-testid="inspector-strip"] [data-affordance]', { hasText: FINISH }).first().click();
+    await page.waitForTimeout(1000);
+    const afterEdit = await offeredOn(page, "t-deposit", FINISH);
+
+    await onTheDesk("todo");
+    const afterReload = await offeredOn(page, "t-deposit", FINISH);
+
+    // The same browser, at the app's own port: one store, two doors.
+    const own = await serving("todo", 5193, repoRoot);
+    const alone = await context.newPage({ viewport: { width: 1400, height: 900 } });
+    await alone.goto("http://localhost:5193/?today=2026-09-01&remember=1", { waitUntil: "load" });
+    await alone.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+    await alone.waitForTimeout(1000);
+    const atItsOwnPort = await offeredOn(alone, "t-deposit", FINISH);
+    await alone.close();
+    own.stop();
+
+    // And the garden, which starts empty and has nothing of Things' in it.
+    await onTheDesk("seedbed");
+    const separate = await page.evaluate(() => document.querySelector('[data-graview-pick="t-deposit"]') === null);
+
+    report.steps.onTheDesk = { beforeEdit, afterEdit, afterReload, atItsOwnPort, separate };
+    report.steps.deskErrors = deskErrors;
+    await page.close();
+    await context.close();
+  } finally {
+    desk.stop();
+  }
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
@@ -227,6 +308,18 @@ report.verdict = {
     s.pages?.title === "Pay the deposit, after fresh" && s.pages?.startFresh === true,
   aDrivenBrowserStartsFromTheSeed: isSeed(s.driven) && (s.driven?.log ?? []).length === 0,
   aFreshContextStartsFromTheSeed: isSeed(s.stranger),
+  /*
+   * An edit made on the DESK is the app's own edit: still there after the
+   * desk reloads, and there at the app's own port in the same browser.
+   */
+  theLauncherMountsTheDemoTheWayItOpensItself:
+    s.onTheDesk?.beforeEdit === true &&
+    s.onTheDesk?.afterEdit === false &&
+    s.onTheDesk?.afterReload === false &&
+    s.onTheDesk?.atItsOwnPort === false,
+  // Two demos on one desk keep two stores, because each names its own scope.
+  eachDemoKeepsItsOwnStore: s.onTheDesk?.separate === true,
+  nothingThrewOnTheDesk: (s.deskErrors ?? []).length === 0,
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
 

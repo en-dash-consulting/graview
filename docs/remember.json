@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T07:17:52.138Z",
+  "at": "2026-09-13T07:25:15.666Z",
   "engine": "chromium",
   "steps": {
     "seed": {
@@ -60,7 +60,15 @@
     },
     "stranger": {
       "deposit": "Pay the deposit08-28"
-    }
+    },
+    "onTheDesk": {
+      "beforeEdit": true,
+      "afterEdit": false,
+      "afterReload": false,
+      "atItsOwnPort": false,
+      "separate": true
+    },
+    "deskErrors": []
   },
   "verdict": {
     "theSeedLoadsFirst": true,
@@ -76,7 +84,10 @@
     "rememberingResumesAfterFresh": true,
     "thePagesFaceSharesTheStore": true,
     "aDrivenBrowserStartsFromTheSeed": true,
-    "aFreshContextStartsFromTheSeed": true
+    "aFreshContextStartsFromTheSeed": true,
+    "theLauncherMountsTheDemoTheWayItOpensItself": true,
+    "eachDemoKeepsItsOwnStore": true,
+    "nothingThrewOnTheDesk": true
   },
   "passed": true
 }
