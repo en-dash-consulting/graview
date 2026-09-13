@@ -1,0 +1,25 @@
+---
+id: "af069e84-aa59-4e65-9835-01b3e1ea6e8b"
+level: "feature"
+title: "The demo app shows admin mode and profiles: the installation in the todo app, with seats to feel it"
+status: "pending"
+priority: "high"
+tags:
+  - "admin"
+  - "users"
+  - "profile"
+  - "todo"
+  - "demo"
+  - "platform"
+source: "Nick, 2026-09-13: \"/ndx-capture demo app need to show admin mode and profiles\""
+acceptanceCriteria:
+  - "the todo app declares the installation with a keeper and a member role, seeds a user for each and one pending invitation, and offers both seats on the bar"
+  - "as the keeper, \"Show the installation\" is on the bar and raises People and Invitations beside the domain; as the member it is absent and the kinds are absent from the scene and the pages"
+  - "invite, welcome, revoke the invitation, grant and revoke are taken from the strip and the pages by the keeper and refused for the member with the policy's own sentence"
+  - "a person's record is their profile: editable in place by its own seat, read-only to the other, with the self grant visible in the reach lens"
+  - "\"Who may do what\" is a place on the todo app's bar for the keeper, read from the same policy the store refuses with"
+  - "graview check is clean; audit-ui, survey and verify-seat carry states for the keeper and the member with the installation shown"
+description: "The installation shipped in core (declareInstallation: users, invitations, roles, the admin-only module, the self grant for a profile, \"Show the installation\", the reach lens) and is demonstrated only in seedbed chapter 14. The todo app — the demo people open first, at localhost:5193 and in every harness — has no installation: no users, no admin mode, no profile, so the platform story is invisible where it would be looked for. This feature puts it in the todo app: declareInstallation on its declaration with roles (a keeper who administers, a member who does not), seed users for both and a pending invitation, seats on the app so a reader can sit down as either, \"Show the installation\" on the bar for the keeper and nowhere for the member, the people and invitations rising as districts beside lists and tasks, invite/welcome/revoke/grant/revoke as acts in the strip and on the pages, a person's own record as their profile — editable by them and read-only to the other seat — and the reach lens as a place (\"Who may do what\"). The pages face lists the installation's kinds only for the keeper. The same goes into the scaffold's guidance so a new app can follow it. Source: Nick, 2026-09-13: \"demo app need to show admin mode and profiles\"."
+lastModified: "2026-09-13T04:49:07.301Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
+---
