@@ -1,0 +1,27 @@
+---
+id: "5486c808-5b93-4dcd-9dea-fec4415a8ad5"
+level: "feature"
+title: "Longer horizons on the calendar lens: a quarter, a year, and a span of years the app names, with the demos scheduling across them"
+status: "pending"
+priority: "medium"
+tags:
+  - "lens"
+  - "calendar"
+  - "dates"
+  - "primitives"
+  - "demo"
+  - "scheduling"
+  - "horizon"
+source: "Nick, 2026-09-13 (/ndx-capture): \"add default lenses for monthly/quarterly/yearly/5yr too. ideally getting exercised in demo app(s)\" — and, on how far out to go: \"some apps will be looking for a several year horizon\""
+acceptanceCriteria:
+  - "createCalendarLens gains quarter and year ranges beside month, week, day and agenda, plus a multi-year horizon whose span the app names (three years, five, ten) rather than a fixed five the framework guessed"
+  - "one binding and no new declaration: a lens declared once draws at every horizon, and graview check reads the same binding it already reads (lens-binding-* findings still apply)"
+  - "the cell coarsens with the horizon — a week per cell at a quarter, a month per cell at a year and beyond — and an entry spanning cells is drawn across them, the way a multi-day span already is"
+  - "the lens contract's two fidelities carry the density: spans at full fidelity where they fit, counts and the rules' flags as the summary, so a several-year horizon over a busy graph stays a picture rather than a wall"
+  - "each range is a titled place with its own as slug: places() lists them, the URL names which one you are in, going down a level (years → year → quarter → month → day) is an ordinary stop, and Back returns to the year you left"
+  - "rescheduling still applies the act through store.permits and is refused with the policy's sentence; where the cell is coarser than the act can write, the lens says what the drop will mean rather than rounding silently, and undo takes it back"
+  - "the demos exercise them: Seedbed a year over plantings and a multi-year rotation over plots, Rota a quarter over shifts; audit-ui and survey carry a state for each, the launcher lists them, axe is clean at 390 and 1280 in both schemes, and the reader's text size and reduced motion are honoured"
+description: "The calendar lens tops out at a month. Anything further out than four weeks is off the end of every picture the framework can draw: a planting sown in March and lifted in July, a plot on a rotation, a quarter's coverage, a lease or a warranty or a review cycle. An app whose subject is years has no lens at all — it has a month grid it can page through twelve times.\n\nSo the same lens gains longer ranges: a quarter, a year, and a multi-year horizon whose SPAN THE APP NAMES rather than a fixed five — some domains think in three years, some in ten, and a framework that ships a \"5yr\" button has guessed. One binding, no new declaration: a lens declared once draws at every horizon and `graview check` reads the one binding it already reads.\n\nThe cell coarsens as the horizon lengthens — a week per cell at a quarter, a month per cell at a year and beyond — and an entry that spans cells is drawn across them, the way a multi-day span is already drawn across days. Above a month, listing every entry stops being a picture and becomes a wall, so the two fidelities the lens contract already has do the work: spans at full fidelity where they fit, counts and the rules' flags as the summary. Going down a level is an ordinary stop — years to a year to a quarter to a month to a day — each range a titled place with its own `as` slug, so `places()` lists them, the URL names which one you are in, and Back returns to the year you left, exactly as it already returns to the month.\n\nRescheduling keeps its existing shape: an act applied through `store.permits`, refused with the policy's own sentence where a seat may not, undone like any other op. The one new question a coarse cell asks is what a drop onto it MEANS — dropping an entry on a month when the act writes a day is a rounding the lens must say out loud rather than perform silently.\n\nThen the demos exercise them, which is the only way anyone finds out whether they are any good: Seedbed a year over plantings and a multi-year rotation over plots, Rota a quarter over shifts. Source: Nick, 2026-09-13: \"add default lenses for monthly/quarterly/yearly/5yr too. ideally getting exercised in demo app(s)\"."
+lastModified: "2026-09-13T17:25:27.493Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
+---
