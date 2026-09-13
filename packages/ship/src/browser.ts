@@ -20,3 +20,5 @@ export { assertBundle, exportBundle } from "./export.js";
 export type { AppBundle } from "./export.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
+export { openRemote } from "./remote.js";
+export type { RemoteOptions, RemoteStore } from "./remote.js";

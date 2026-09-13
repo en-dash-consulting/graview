@@ -175,6 +175,14 @@ export type {
 
 // Persistence — pluggable underneath the framework-owned graph.
 export { createMemoryAdapter } from "./persistence/memory.js";
+/*
+ * The sqlite adapter, exported so `graview serve --sqlite` can reach it.
+ * It takes a database OBJECT rather than opening one, so `better-sqlite3`
+ * is the caller's dependency and never this package's — nothing here is a
+ * native module and nothing here needs building.
+ */
+export { createSqliteAdapter, SQLITE_TABLE_SHAPE } from "./persistence/sqlite.js";
+export type { SqliteAdapterOptions, SqliteDatabase, SqliteStatement } from "./persistence/sqlite.js";
 export type { PersistenceAdapter } from "./persistence/types.js";
 
 // Extending a schema without rewriting what was written against the base.

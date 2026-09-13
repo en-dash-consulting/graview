@@ -6,6 +6,7 @@ import {
   browserStartsFresh,
   createBrowserAdapter,
   forgetFreshParam,
+  openRemote,
   openStore,
 } from "@graview/ship/browser";
 import example from "./data/example.json";
@@ -66,16 +67,58 @@ if (stored) {
   adapter.saveMeta(rotaApp.name, { version: 1 });
 }
 
-const opened = await openStore({
-  app: rotaApp,
-  adapter,
-  seed: example as never,
-  // A browser deliberately holding a version-1 roster is not a fresh one.
-  fresh: stored ? false : browserStartsFresh(),
-  storeOptions: { invariantOptions: { context: { today: today() } } },
-});
+/*
+ * WHERE THE ROSTER LIVES, and it is a choice a reader can make.
+ *
+ * `?server=http://localhost:5196` opens the store from a server instead of
+ * from this browser: the graph is a folder of readable JSON on somebody's
+ * machine, every call is judged there under this seat's own principal, and
+ * everybody else's changes arrive on a poll. Two browsers on the same
+ * address see each other.
+ *
+ * Without it the browser adapter, exactly as before — because the point of
+ * showing both is that the app does not change between them.
+ */
+const server = new URLSearchParams(window.location.search).get("server");
+const remote = server ? await openRemote({ app: rotaApp, url: server, principal: openingSeat() }) : null;
+
+const opened = remote
+  ? { store: remote.store, migrated: [] as readonly { intent: string }[] }
+  : await openStore({
+      app: rotaApp,
+      adapter,
+      seed: example as never,
+      // A browser deliberately holding a version-1 roster is not a fresh one.
+      fresh: stored ? false : browserStartsFresh(),
+      storeOptions: { invariantOptions: { context: { today: today() } } },
+    });
 forgetFreshParam();
-const remembers = true;
+const remembers = remote === null;
+
+/*
+ * A REFUSAL THE SERVER MADE IS SAID OUT LOUD.
+ *
+ * `openRemote` has already taken the hopeful change back by the time this
+ * runs; what is left is telling somebody, in the policy's own words. An
+ * alert is blunt and it is honest — a demo that swallowed the sentence
+ * would be hiding the one thing this whole arrangement exists to show.
+ */
+/*
+ * WHAT THIS BROWSER HAS, askable from outside it.
+ *
+ * A harness can read the server and it can read the folder, and neither
+ * answers the question that matters: did the OTHER browser find out. This
+ * is the only honest way to ask it.
+ */
+if (remote) {
+  (window as unknown as Record<string, unknown>)["__rotaOps"] = () =>
+    remote.store.log.all().map((operation) => operation.intent);
+}
+
+remote?.onRefusal((reason) => {
+  (window as unknown as Record<string, unknown>)["__rotaRefused"] = reason;
+  window.alert(reason);
+});
 
 applySettings(rotaApp.settings ?? []);
 
@@ -117,4 +160,6 @@ if (window.location.pathname.startsWith("/pages")) {
   // What the opening had to run to get here: empty on an ordinary visit, one
   // operation on a browser that was holding a roster from before the rule.
   migrated: opened.migrated.map((operation) => operation.intent),
+  // Where the roster lives: this browser, or a folder on a server.
+  where: remote ? server : "browser",
 };

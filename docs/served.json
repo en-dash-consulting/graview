@@ -1,0 +1,46 @@
+{
+  "at": "2026-09-13T07:15:44.961Z",
+  "engine": "chromium",
+  "checks": {
+    "theDataIsAFolderYouCanOpen": {
+      "files": [
+        "snapshot.json",
+        "meta.json"
+      ],
+      "version": 2,
+      "nodes": 20,
+      "ok": true
+    },
+    "aChangeMadeInABrowserLandsOnDisk": {
+      "lines": 1,
+      "intent": "Ada Nowak covers \"Friday repair cafe\"",
+      "author": "user-jo",
+      "ok": true
+    },
+    "theOtherBrowserSeesIt": {
+      "heard": [
+        "Ada Nowak covers \"Friday repair cafe\""
+      ],
+      "ok": true
+    },
+    "stopItStartItAndItIsAllThere": {
+      "nodes": 20,
+      "edges": 8,
+      "log": 1,
+      "version": 2,
+      "ok": true
+    },
+    "theSamePolicyJudgesOnTheServer": {
+      "status": 409,
+      "said": "Not permitted: cover on a shift — one of coordinator, volunteer can. Anybody who turns up may take a shift on, hand one back, and say what they can manage.",
+      "ok": true
+    },
+    "itSaysWhereTheDataIs": {
+      "adapter": "file",
+      "where": "visual-system-design/apps/rota/data",
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

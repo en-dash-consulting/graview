@@ -149,10 +149,24 @@ export const CAPABILITIES: readonly Capability[] = [
     id: "cap-remote-adapter",
     label: "A persistence adapter",
     area: "behaviour",
-    // Both examples remember through ship's browser adapter — the
-    // declaration does not say so, and the desk reads declarations, which is
-    // why this is true by assertion rather than by looking.
+    // Every app remembers through ship's browser adapter — the declaration
+    // does not say so, and the desk reads declarations, which is why this
+    // one is still true by assertion rather than by looking.
     holds: () => true,
+  },
+  {
+    id: "cap-server-persistence",
+    label: "Data in a folder you can open",
+    area: "behaviour",
+    /*
+     * SERVER-SIDE PERSISTENCE, and answered from the declaration rather
+     * than asserted: an app that declares a `version` and its migrations is
+     * an app whose stored graph outlives the browser it was made in, which
+     * is the thing this capability is actually about. `graview serve` keeps
+     * it as `snapshot.json`, a `log.jsonl` a person can grep, and a
+     * `meta.json` holding that version — or in SQLite behind one flag.
+     */
+    holds: (app) => app.version !== undefined && (app.migrations ?? []).length > 0,
   },
 ];
 

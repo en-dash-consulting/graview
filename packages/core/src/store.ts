@@ -519,6 +519,50 @@ export class Store<S extends AnySchema> {
     };
   }
 
+  /**
+   * OPERATIONS SOMEBODY ELSE ALREADY MADE, taken into this store.
+   *
+   * The one thing a store could not do, and the reason "where is my data"
+   * could only ever be answered with "in your browser": an op that a server
+   * has already judged and compiled has no business being judged and
+   * compiled again. Re-running it through `apply` would ask the policy
+   * about the wrong principal (whoever is at THIS keyboard, not whoever
+   * made the change), recompile against a graph that has moved, and mint a
+   * second op with a different id for the same event — so two browsers
+   * would diverge rather than converge.
+   *
+   * So: the primitives land, the op is appended with its own id, author and
+   * sequence intact, and the subscribers hear about it exactly as they hear
+   * about a local change. Undo still works on it, because an op carries its
+   * own inverse.
+   *
+   * Ops already in the log are skipped by id, so receiving the same batch
+   * twice — a poll that overlaps, a reconnect — is not a second change.
+   *
+   * `seq` is the position in THIS log and is renumbered on the way in; the
+   * op keeps everything that identifies it (its id, its author, its intent,
+   * its primitives and its inverse). A log is contiguous by construction —
+   * that is what makes undo and replay work — and an incoming op carries
+   * the sender's numbering, which cannot be this one's the moment this
+   * store has applied anything of its own. Whoever is tracking the sender's
+   * sequence must keep it themselves; `openRemote` does.
+   */
+  receive(ops: readonly Operation[]): readonly Operation[] {
+    const known = new Set(this.log.all().map((op) => op.id));
+    const fresh = ops.filter((op) => !known.has(op.id));
+    if (fresh.length === 0) return [];
+    const before = this.graph.snapshot();
+    const landed: Operation[] = [];
+    for (const op of fresh) {
+      const here = { ...op, seq: this.log.all().length };
+      this.graph.applyPrimitives(here.primitives);
+      this.log.append(here);
+      landed.push(here);
+    }
+    this.notify(diffSnapshots(before, this.graph.snapshot()), landed);
+    return landed;
+  }
+
   batches(): Batch[] {
     return this.log.batches();
   }

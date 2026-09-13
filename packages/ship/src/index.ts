@@ -17,3 +17,8 @@ export { assertBundle, exportBundle } from "./export.js";
 export type { AppBundle } from "./export.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
+export { openRemote } from "./remote.js";
+export type { RemoteOptions, RemoteStore } from "./remote.js";
+export { serveStore } from "./serve.js";
+export type { ServeOptions, ServedStore } from "./serve.js";
+export { serve, SERVE_USAGE } from "./cli.js";

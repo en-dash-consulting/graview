@@ -15,6 +15,14 @@ import type { GraphSnapshot } from "./snapshot.js";
 export interface FileAdapter extends PersistenceAdapter<string> {
   loadMeta(scope: string): { version: number } | null;
   saveMeta(scope: string, meta: { version: number }): void;
+  /**
+   * The directory it writes into.
+   *
+   * Said out loud because "where is my data" is the question this adapter
+   * exists to answer, and a health report that could only repeat the scope
+   * name was answering a different one.
+   */
+  readonly root: string;
 }
 
 export function createFileAdapter(root: string): FileAdapter {
@@ -30,6 +38,7 @@ export function createFileAdapter(root: string): FileAdapter {
 
   return {
     name: "file",
+    root,
     async load(scope) {
       return read<GraphSnapshot>(place(scope, "snapshot.json"));
     },

@@ -25,12 +25,20 @@
     "zod": "^4.4.3"
   },
   "description": "What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.",
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/endash/graview.git",
     "directory": "packages/ship"
   },
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "graview-serve": "./dist/cli.js"
+  }
 }
