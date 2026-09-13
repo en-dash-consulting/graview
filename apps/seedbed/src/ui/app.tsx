@@ -52,6 +52,8 @@ export interface SeedbedAppProps {
   readonly studio?: GraviewApp;
   /** Whether the season calendar is registered over the plantings. */
   readonly season?: boolean;
+  /** Whether the rotation — the years a bed turns through — is registered over the rotations. */
+  readonly rotation?: boolean;
   /**
    * WHO IS AT THE KEYBOARD, once a chapter declares a policy. The store
    * enforces against it, this face decides what to OFFER by it and the log
@@ -86,10 +88,14 @@ export function SeedbedApp({
   reach = false,
   studio,
   season = false,
+  rotation = false,
   principal,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
-  const views = useMemo(() => seedbedViews(created.schema as never, { lens, board, map, reach, season, ...(studio ? { studio } : {}) }), [created, lens, board, map, reach, season, studio]);
+  const views = useMemo(
+    () => seedbedViews(created.schema as never, { lens, board, map, reach, season, rotation, ...(studio ? { studio } : {}) }),
+    [created, lens, board, map, reach, season, rotation, studio],
+  );
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
 
   return (

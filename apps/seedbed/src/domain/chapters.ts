@@ -12,8 +12,8 @@ import { z } from "zod";
 import { declarationToGraph, studioApp } from "@graview/studio";
 import { seedbedBrand } from "./brand.js";
 import { everyPlotTended } from "./invariants.js";
-import { addGardener, addPlot, adoptRule, harvest, sow, tend } from "./mutations.js";
-import { gardener, planting, plot, rule } from "./schema.js";
+import { addGardener, addPlot, adoptRule, harvest, rotate, sow, tend } from "./mutations.js";
+import { gardener, planting, plot, rotation, rule } from "./schema.js";
 
 /**
  * THE GARDEN, GROWN A CHAPTER AT A TIME.
@@ -72,6 +72,8 @@ export interface Chapter {
   readonly reach?: boolean;
   /** Whether the season calendar — what was in the ground, and when — is over the plantings. */
   readonly season?: boolean;
+  /** Whether the rotation — the years a bed turns through — is over the rotations (chapter 16). */
+  readonly rotation?: boolean;
   /** Which face the picture is of: the scene (default) or the routed pages at phone width. */
   readonly face?: "scene" | "pages";
   /** For the pages face: the path to photograph. */
@@ -618,6 +620,111 @@ const chapterFifteen: Chapter = {
   studioOf: chapterFourteen.app,
 };
 
+/* ------------------------------------------- 16 · the years it turns through */
+
+/**
+ * THE GARDEN LOOKS OUT OVER YEARS.
+ *
+ * Everything so far happens inside one season, because until now the
+ * furthest the framework could draw was a month: a planting, a rule, a
+ * caretaker, a harvest. But a bed is turned through four families and comes
+ * back to the first four years later, and that is a fact no month grid can
+ * hold — an app whose subject is years had a month grid it could page
+ * through forty-eight times.
+ *
+ * One kind, one act, one binding. The calendar lens that drew the season
+ * draws the rotation too, a month per cell across as many years as THE
+ * GARDEN says it turns through — four, because it grows four families, and
+ * the framework has no opinion about that.
+ */
+const sixteen = createSchema([gardener, plot, planting, rotation, rule, ...installation.kinds] as never);
+const turning = [...grown, rotate, ...installation.mutations] as never;
+const turns: readonly { plot: string; family: string; year: number }[] = [
+  { plot: "plot-1", family: "brassicas", year: 2026 },
+  { plot: "plot-1", family: "legumes", year: 2027 },
+  { plot: "plot-1", family: "roots", year: 2028 },
+  { plot: "plot-1", family: "resting", year: 2029 },
+  { plot: "plot-2", family: "legumes", year: 2026 },
+  { plot: "plot-2", family: "roots", year: 2027 },
+  { plot: "plot-2", family: "resting", year: 2028 },
+  { plot: "plot-2", family: "brassicas", year: 2029 },
+];
+const said = (family: string): string => `${family[0]!.toUpperCase()}${family.slice(1)}`;
+const chapterSixteen: Chapter = {
+  n: 16,
+  slug: "the-rotation",
+  title: "The years it turns through",
+  claim:
+    "A bed is turned through four families and comes back to the first four years later. The same calendar lens that drew the season draws the rotation, a month per cell over as many years as the garden says it turns through — and how far out that is is the garden's word, not the framework's.",
+  adds: [
+    'defineNode("rotation") with an appendOnly edge "turns-over" to the plot it turns',
+    'defineMutation("rotate") — which family a plot grows, and until when',
+    'the same calendar binding at range: "years" with horizon: { years: 4, title: "The rotation" }',
+  ],
+  app: asApp(
+    defineApp({
+      name: "Seedbed",
+      schema: sixteen as never,
+      mutations: turning,
+      invariants: [everyPlotTended as never],
+      intelligence,
+      policy: installation.withPolicy(policy),
+      modules: installation.modules,
+      brand: seedbedBrand,
+      lenses: [
+        coverage,
+        board,
+        /*
+         * ONE BINDING, EVERY HORIZON. The season and the rotation are the
+         * same lens with different fields answering the same roles — so
+         * `graview check` reads exactly the binding it already read, and a
+         * horizon four years long needed no new declaration at all.
+         */
+        {
+          name: "calendar",
+          requiredRoles: ["start"],
+          bindings: {
+            planting: { start: "sown", end: "harvested", label: "label" },
+            rotation: { start: "from", end: "to", label: "label" },
+          },
+        },
+      ],
+      version: 2,
+      migrations: chapterTwelve.app.migrations as never,
+    }),
+  ),
+  seed: {
+    nodes: [
+      ...chapterFourteen.seed.nodes,
+      ...turns.map(({ plot: where, family, year }) => ({
+        id: `rot-${where}-${year}`,
+        kind: "rotation",
+        label: `${said(family)} · ${where === "plot-1" ? "Plot 1" : "Plot 2"}`,
+        family,
+        from: `${year}-03-01`,
+        // Through to the end of the growing year, so the span crosses cells
+        // rather than sitting in one: a rotation IS a stretch of time.
+        to: `${year}-10-31`,
+      })),
+    ],
+    edges: [
+      ...chapterFourteen.seed.edges,
+      ...turns.map(({ plot: where, year }) => ({ kind: "turns-over", from: `rot-${where}-${year}`, to: where })),
+    ],
+  },
+  stop: "#focus=agg:rotation&in.view=the-rotation",
+  remembers: false,
+  seat: true,
+  pages: true,
+  lens: true,
+  board: true,
+  reach: true,
+  season: true,
+  rotation: true,
+  principal: juneUser,
+  seats: seatsWhoIsHere,
+};
+
 export const CHAPTERS: readonly Chapter[] = [
   chapterOne,
   chapterTwo,
@@ -634,6 +741,7 @@ export const CHAPTERS: readonly Chapter[] = [
   chapterThirteen,
   chapterFourteen,
   chapterFifteen,
+  chapterSixteen,
 ];
 
 /** The chapter a URL asks for, or none: the finished example is the default. */

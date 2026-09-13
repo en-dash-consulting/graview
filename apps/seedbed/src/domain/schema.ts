@@ -76,6 +76,37 @@ export const planting = defineNode("planting", {
   lifecycle: { field: "status", retired: ["harvested", "failed"] },
 });
 
+export const rotation = defineNode("rotation", {
+  description: "What a plot grows through a season, before it moves on to the next family.",
+  fields: z.object({
+    label: z.string().min(1),
+    /*
+     * The four families a bed turns through, and the year it rests. This is
+     * the whole reason a garden thinks in years rather than in months: the
+     * brassicas that went in this spring say where the legumes go in three
+     * springs' time, and no month grid can show that.
+     */
+    family: z.enum(["brassicas", "legumes", "roots", "alliums", "resting"]),
+    from: isoDate,
+    to: isoDate,
+  }),
+  edges: {
+    "turns-over": {
+      to: ["plot"],
+      cardinality: "one",
+      description: "the plot it turns over",
+      inverse: "what it grows, year by year",
+      // Which plot grew what is a fact about the past, like where a planting
+      // went into the ground: a rotation is the record, never a pointer that
+      // moves.
+      appendOnly: true,
+    },
+  },
+  plural: "Rotations",
+  label: (node) => node.label,
+  figure: "plot",
+});
+
 // One rule type today; the second becomes a union member here rather than a
 // schema redesign — the same shape the other apps grew along.
 const ruleSpec = z.object({ type: z.literal("every-plot-tended") });
@@ -91,5 +122,5 @@ export const rule = defineNode("rule", {
   requiresInvariant: (node) => node.spec.type,
 });
 
-export const seedbedSchema = createSchema([gardener, plot, planting, rule]);
+export const seedbedSchema = createSchema([gardener, plot, planting, rotation, rule]);
 export type SeedbedSchema = typeof seedbedSchema;

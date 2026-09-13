@@ -116,6 +116,28 @@ export const harvest = defineMutation("harvest", {
   },
 }) as M;
 
+export const rotate = defineMutation("rotate", {
+  title: "Put a plot on the rotation",
+  description: "Say which family a plot grows, and for how long, before it turns over.",
+  creates: ["rotation"],
+  connects: ["turns-over"],
+  fromTheOtherEnd: "Take a turn of the rotation",
+  input: z.object({
+    plotId: nodeRef(["plot"]),
+    family: z.enum(["brassicas", "legumes", "roots", "alliums", "resting"]),
+    from: isoDate,
+    to: isoDate,
+  }),
+  describe: (args, graph) => `${args.family} in ${nameOf(graph as Reader, args.plotId)}`,
+  apply(ctx, args) {
+    const plot = nameOf(ctx.graph as Reader, args.plotId);
+    const label = `${args.family[0]!.toUpperCase()}${args.family.slice(1)} · ${plot}`;
+    const id = ctx.freshId(label, "rotation");
+    ctx.addNode({ id, kind: "rotation", label, family: args.family, from: args.from, to: args.to } as never);
+    ctx.addEdge({ kind: "turns-over", from: id, to: args.plotId });
+  },
+}) as M;
+
 export const adoptRule = defineMutation("adopt-rule", {
   title: "Agree every plot has a caretaker",
   description: "Adopt the garden's first rule, as a thing on the map.",
@@ -132,4 +154,4 @@ export const adoptRule = defineMutation("adopt-rule", {
   },
 }) as M;
 
-export const seedbedMutations = [addGardener, addPlot, sow, tend, harvest, adoptRule];
+export const seedbedMutations = [addGardener, addPlot, sow, tend, harvest, rotate, adoptRule];

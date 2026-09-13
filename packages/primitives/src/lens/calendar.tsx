@@ -6,7 +6,7 @@ import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster } from "../primitives/index.js";
 
 /**
- * THE CALENDAR LENS: month, week, day and agenda over real dates.
+ * THE CALENDAR LENS: day, week, month, quarter, year and a named horizon.
  *
  * The timeline binds a start and an end in minutes of a day and a named
  * column, which is a week grid and nothing more: it cannot show a due date
@@ -17,9 +17,22 @@ import { Chip, Panel, Roster } from "../primitives/index.js";
  * Bound by ROLES, like every other starter. This lens has never heard of a
  * task, a shift or a planting; an app says which of its own fields is the
  * start, which the end, which says a thing takes the whole day and which
- * names it — and gets four ranges, multi-day spans drawn across the days
- * they cover, overflow that opens the day rather than hiding it, and every
- * entry a real node the scene can select and a rule can flag.
+ * names it — and gets every range, spans drawn across the cells they cover,
+ * overflow that opens the cell rather than hiding it, and every entry a real
+ * node the scene can select and a rule can flag.
+ *
+ * THE CELL COARSENS WITH THE HORIZON. It topped out at a month, so anything
+ * further out than four weeks was off the end of every picture the framework
+ * could draw: a planting sown in March and lifted in July, a plot on a
+ * rotation, a quarter's coverage, a lease, a review cycle. An app whose
+ * subject is years had no lens at all — it had a month grid it could page
+ * through twelve times. So a quarter draws a week per cell, a year and
+ * anything beyond it a month per cell, and an entry that spans cells is
+ * drawn across them exactly as a fortnight is already drawn across days.
+ *
+ * HOW FAR OUT IS THE APP'S TO SAY. Some domains think in three years and
+ * some in ten; a framework shipping a "5yr" button has guessed. The horizon
+ * is declared with its own span and its own name, or there is no horizon.
  *
  * Dates are ISO strings, because that is what an app's declaration holds and
  * what `isoDate` already validates. A date-time ("2026-09-14T09:30") places
@@ -47,9 +60,35 @@ export const CALENDAR_REQUIRED_ROLES = ["start"] as const;
 export type CalendarBindings = Readonly<Record<string, CalendarRoles>>;
 
 /** Which stretch of time the calendar is showing. */
-export type CalendarRange = "month" | "week" | "day" | "agenda";
+export type CalendarRange = "day" | "week" | "month" | "quarter" | "year" | "years" | "agenda";
 
-export const CALENDAR_RANGES: readonly CalendarRange[] = ["month", "week", "day", "agenda"];
+/** How coarse one cell of the grid is. */
+export type CalendarGrain = "day" | "week" | "month";
+
+/**
+ * A SPAN OF YEARS THE APP NAMES.
+ *
+ * Three years, five, ten — the number is a domain fact, and so is what to
+ * call it on a button. A framework that picked either would be answering a
+ * question it was never asked.
+ */
+export interface CalendarHorizon {
+  readonly years: number;
+  /** What the app calls it: "Five years", "The rotation", "The decade". */
+  readonly title: string;
+}
+
+export const CALENDAR_RANGES: readonly CalendarRange[] = ["day", "week", "month", "quarter", "year", "agenda"];
+
+/** The ranges this lens offers: every one, plus the horizon where the app named one. */
+export function rangesOf(options: { readonly horizon?: CalendarHorizon }): readonly CalendarRange[] {
+  return options.horizon ? ["day", "week", "month", "quarter", "year", "years", "agenda"] : CALENDAR_RANGES;
+}
+
+/** What a range is called where a person reads it — a button, a place, a title. */
+export function titleOf(range: CalendarRange, horizon?: CalendarHorizon): string {
+  return range === "years" ? (horizon?.title ?? "Years") : `The ${range}`;
+}
 
 export interface CalendarOptions {
   readonly bindings: CalendarBindings;
@@ -63,11 +102,17 @@ export interface CalendarOptions {
   readonly today: string;
   /** Which range it opens in. Month, unless an app knows better. */
   readonly range?: CalendarRange;
+  /**
+   * How far out this app ever looks, and what it calls that. Absent means
+   * the lens stops at a year, which is the honest answer for an app whose
+   * subject never runs longer than one.
+   */
+  readonly horizon?: CalendarHorizon;
   /** The day a week starts on, 0 = Sunday. Monday, unless an app says otherwise. */
   readonly weekStartsOn?: number;
   /** Hue for an entry, 0..1. Defaults to the node's kind. */
   readonly hueOf?: (entry: PlacedEntry) => number;
-  /** How many entries a month cell shows before it says "+N more". */
+  /** How many entries a cell shows before the rest become a count. Per grain, by default. */
   readonly perCell?: number;
 }
 
@@ -285,19 +330,44 @@ export interface CalendarLens<S extends AnySchema> {
   View(props: ViewProps<S>): ReactElement | null;
   /** Which of these nodes the lens can place. */
   place(nodes: readonly NodeOfSchema<S>[], schema?: S): PlacedEntry[];
+  /**
+   * THE SAME LENS, OPENING AT ONE RANGE — a titled place of its own.
+   *
+   * One binding and one declaration still: the horizons are not separate
+   * lenses, they are the same picture at a different grain. Registering
+   * them gives each its own `as` slug, so `places()` lists them, the URL
+   * names which one you are in, and Back returns to the year you left.
+   *
+   * The range is the DEFAULT rather than a pin: drilling from a year into
+   * a month is an ordinary stop that the address carries, and a place that
+   * refused to be navigated within would be a dead end with a name.
+   */
+  at(range: CalendarRange): (props: ViewProps<S>) => ReactElement | null;
+  /** The ranges it offers, each with the title its place takes. */
+  ranges(): readonly { readonly range: CalendarRange; readonly title: string }[];
 }
 
 export function createCalendarLens<S extends AnySchema>(options: CalendarOptions): CalendarLens<S> {
-  function Bound(props: ViewProps<S>) {
-    const { store } = useGraview<S>();
-    return <CalendarView<S> schema={store.schema} {...props} options={options} />;
-  }
+  const bound = (opening?: CalendarRange) =>
+    function Bound(props: ViewProps<S>) {
+      const { store } = useGraview<S>();
+      return (
+        <CalendarView<S>
+          schema={store.schema}
+          {...props}
+          options={opening ? { ...options, range: opening } : options}
+        />
+      );
+    };
   return {
     name: "calendar",
     requiredRoles: [...CALENDAR_REQUIRED_ROLES],
     bindings: options.bindings,
     options,
-    View: Bound,
+    View: bound(),
+    at: (range) => bound(range),
+    ranges: () =>
+      rangesOf(options).map((range) => ({ range, title: titleOf(range, options.horizon) })),
     place: (nodes, schema) =>
       nodes
         .map((node) => placeOnCalendar<S>(node, options.bindings, schema))
@@ -371,7 +441,7 @@ function CalendarView<S extends AnySchema>({
   }
 
   const page = mode === "fullscreen";
-  const span = spanOf(range, at, weekStartsOn);
+  const span = spanOf(range, at, { weekStartsOn, ...(options.horizon ? { horizon: options.horizon } : {}) });
 
   /*
    * DRAGGING AN ENTRY TO A DAY IS AN ACT, not a special case.
@@ -383,17 +453,18 @@ function CalendarView<S extends AnySchema>({
    * snapping back — a drag that appears to work and does not is worse than
    * one that refuses.
    */
-  const [refused, setRefused] = useState<string | null>(null);
-  const moveTo = (id: string, day: string) => {
+  const [said, setSaid] = useState<{ readonly text: string; readonly tone: "refused" | "rounded" } | null>(null);
+  const moveTo = (id: string, cell: CalendarCell, grain: CalendarGrain) => {
     const node = store.graph.getNode(id);
     if (!node) return;
     const roles = options.bindings[node.kind as string];
     if (!roles) return;
     const act = actThatMoves(store, node.kind as string, roles.start);
     if (!act) {
-      setRefused(`Nothing declared writes ${roles.start}, so this cannot be moved from here.`);
+      setSaid({ text: `Nothing declared writes ${roles.start}, so this cannot be moved from here.`, tone: "refused" });
       return;
     }
+    const day = cell.from;
     // A date-time keeps its time: moving "Tuesday at 09:30" to Thursday
     // means Thursday at 09:30, not Thursday at midnight.
     const was = (node as unknown as Record<string, unknown>)[roles.start];
@@ -402,19 +473,45 @@ function CalendarView<S extends AnySchema>({
     const call = { name: act.name, args: { [act.arg]: id, [roles.start]: value } };
     const verdict = store.permits(call, principal);
     if (!verdict.ok) {
-      setRefused(verdict.refusal.message);
+      setSaid({ text: verdict.refusal.message, tone: "refused" });
       return;
     }
     try {
       store.apply(call, { author: principal });
-      setRefused(null);
+      /*
+       * A COARSE CELL ROUNDS, AND SAYS SO.
+       *
+       * The act writes a DAY; a month cell is thirty of them. Dropping a
+       * planting on "March" and silently writing the first was the lens
+       * making a decision on the person's behalf and hiding it — so the
+       * drop lands, the trail carries it, undo takes it back, and the lens
+       * says exactly which date it wrote.
+       */
+      setSaid(
+        grain === "day"
+          ? null
+          : {
+              text: `Moved to ${longDay(day)} — a ${grain} is coarser than ${roles.start} holds, so it takes the first day of the cell. Undo puts it back.`,
+              tone: "rounded",
+            },
+      );
     } catch (error) {
-      setRefused(error instanceof Error ? error.message : String(error));
+      setSaid({ text: error instanceof Error ? error.message : String(error), tone: "refused" });
     }
   };
   const move = (step: number) => {
     const next =
-      range === "month" ? addMonths(at, step) : range === "week" ? addDays(at, step * 7) : addDays(at, step);
+      range === "years"
+        ? addMonths(at, step * 12 * Math.max(1, options.horizon?.years ?? 1))
+        : range === "year"
+          ? addMonths(at, step * 12)
+          : range === "quarter"
+            ? addMonths(at, step * 3)
+            : range === "month"
+              ? addMonths(at, step)
+              : range === "week"
+                ? addDays(at, step * 7)
+                : addDays(at, step);
     go(withWithin(view, "at", next));
   };
   const show = (nextRange: CalendarRange, day?: string) => {
@@ -448,8 +545,8 @@ function CalendarView<S extends AnySchema>({
             </button>
             <Step label="Next" glyph="›" onPress={() => move(1)} />
           </nav>
-          <div role="group" aria-label="Range" data-testid="calendar-ranges" style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
-            {CALENDAR_RANGES.map((candidate) => (
+          <div role="group" aria-label="Range" data-testid="calendar-ranges" style={{ display: "flex", flexWrap: "wrap", gap: 4, marginLeft: "auto" }}>
+            {rangesOf(options).map((candidate) => (
               <button
                 key={candidate}
                 type="button"
@@ -458,51 +555,78 @@ function CalendarView<S extends AnySchema>({
                 onClick={() => show(candidate)}
                 style={{
                   ...stepStyle,
-                  textTransform: "capitalize",
+                  // The range names are the framework's own words and read as
+                  // buttons capitalised; the horizon's name is the APP's, and
+                  // "The rotation" is not "The Rotation".
+                  ...(candidate === "years" ? {} : { textTransform: "capitalize" as const }),
                   ...(candidate === range
                     ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)", background: "var(--graview-panel)" }
                     : {}),
                 }}
               >
-                {candidate}
+                {candidate === "years" ? (options.horizon?.title ?? "years") : candidate}
               </button>
             ))}
           </div>
         </div>
 
-        {refused ? (
+        {said ? (
           <p
-            data-testid="calendar-refused"
+            data-testid={said.tone === "refused" ? "calendar-refused" : "calendar-rounded"}
             role="status"
-            style={{ margin: 0, fontSize: "0.75rem", color: "var(--graview-warn)" }}
+            style={{
+              margin: 0,
+              fontSize: "0.75rem",
+              color: said.tone === "refused" ? "var(--graview-warn)" : "var(--graview-ink-muted)",
+            }}
           >
-            {refused}
+            {said.text}
           </p>
+        ) : null}
+
+        {/*
+          * THE WAY DOWN FROM A HORIZON, as ordinary stops. Each year is a
+          * press that goes there, and Back returns to the span you left.
+          */}
+        {span.years ? (
+          <nav aria-label="Years" data-testid="calendar-years" style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {span.years.map((year) => (
+              <button
+                key={year}
+                type="button"
+                data-testid={`calendar-year-${year}`}
+                onClick={() => show("year", `${year}-01-01`)}
+                style={stepStyle}
+              >
+                {year}
+              </button>
+            ))}
+          </nav>
         ) : null}
 
         {range === "agenda" ? (
           <Agenda
-            days={span.days}
+            days={span.cells.map((cell) => cell.from)}
             entries={entries}
             today={options.today}
             emphasisOf={emphasisOf}
             broken={broken}
             hue={hue}
-            onMove={moveTo}
+            onMove={(id, day) => moveTo(id, { from: day, to: day, label: day }, "day")}
           />
         ) : (
           <Grid
-            days={span.days}
-            columns={range === "day" ? 1 : 7}
+            span={span}
             weekStartsOn={weekStartsOn}
             entries={entries}
             today={options.today}
-            month={range === "month" ? at.slice(0, 7) : null}
-            perCell={options.perCell ?? (range === "month" ? 3 : 12)}
+            perCell={options.perCell ?? PER_CELL[span.grain]}
             emphasisOf={emphasisOf}
             broken={broken}
             hue={hue}
-            onOverflow={(day) => show("day", day)}
+            /* A press on a cell is a stop one level finer: a month opens a
+               month, a week opens a week, a day opens the day. */
+            onOpen={(cell) => show(finerThan(span.grain), cell.from)}
             onMove={moveTo}
           />
         )}
@@ -511,26 +635,171 @@ function CalendarView<S extends AnySchema>({
   );
 }
 
-/** The days a range covers, and what to call it. */
+/**
+ * ONE CELL OF THE GRID — a day, a week or a month, whichever the range's
+ * grain is, with what to write in its corner.
+ */
+export interface CalendarCell {
+  readonly from: string;
+  /** The last day the cell covers. Equal to `from` for a day cell. */
+  readonly to: string;
+  /** What the cell says in its corner: "14", "6 Apr", "Jan", "Jan 27". */
+  readonly label: string;
+  /** Outside the stretch the range is about — a day of the next month in a month grid. */
+  readonly outside?: boolean;
+}
+
+export interface CalendarSpan {
+  readonly title: string;
+  readonly grain: CalendarGrain;
+  readonly cells: readonly CalendarCell[];
+  readonly columns: number;
+  /**
+   * The years a multi-year horizon covers, each somewhere to go. A grid of
+   * thirty-six month cells is a picture; the way DOWN from it to one year
+   * is a button, not a guess about which cell you meant.
+   */
+  readonly years?: readonly string[];
+}
+
+const monthCell = (day: string, withYear: boolean): CalendarCell => ({
+  from: startOfMonth(day),
+  to: endOfMonth(day),
+  label: `${MONTHS[Number(day.slice(5, 7)) - 1]!.slice(0, 3)}${withYear ? ` ${day.slice(2, 4)}` : ""}`,
+});
+
+/** The last day of the month a day falls in. */
+export function endOfMonth(day: string): string {
+  return iso(Date.UTC(Number(day.slice(0, 4)), Number(day.slice(5, 7)), 0));
+}
+
+/** The first day of the quarter a day falls in. */
+export function startOfQuarter(day: string): string {
+  const quarter = Math.floor((Number(day.slice(5, 7)) - 1) / 3);
+  return `${day.slice(0, 4)}-${String(quarter * 3 + 1).padStart(2, "0")}-01`;
+}
+
+/**
+ * The cells a range covers, how coarse they are, and what to call the whole.
+ *
+ * One function for every range, because the grid draws whatever it is given:
+ * a day cell and a month cell differ in how much ground they cover and in
+ * nothing else, which is why a span can be drawn across either.
+ */
 export function spanOf(
   range: CalendarRange,
   at: string,
-  weekStartsOn = 1,
-): { readonly days: readonly string[]; readonly title: string } {
-  if (range === "day") return { days: [at], title: longDay(at) };
+  options: { readonly weekStartsOn?: number; readonly horizon?: CalendarHorizon } = {},
+): CalendarSpan {
+  const weekStartsOn = options.weekStartsOn ?? 1;
+  const day = (one: string, outside?: boolean): CalendarCell => ({
+    from: one,
+    to: one,
+    label: String(Number(one.slice(8, 10))),
+    ...(outside ? { outside: true } : {}),
+  });
+
+  if (range === "day") return { title: longDay(at), grain: "day", columns: 1, cells: [day(at)] };
+
   if (range === "week") {
     const from = startOfWeek(at, weekStartsOn);
-    return { days: daysFrom(from, 7), title: `${longDay(from)} – ${longDay(addDays(from, 6))}` };
+    return {
+      title: `${longDay(from)} – ${longDay(addDays(from, 6))}`,
+      grain: "day",
+      columns: 7,
+      cells: daysFrom(from, 7).map((one) => day(one)),
+    };
   }
+
   if (range === "agenda") {
     // Six weeks forward, which is the horizon a person means by "what is
     // coming up" — and the same number of days a month grid draws, so the
     // two ranges cover comparable ground.
-    return { days: daysFrom(at, 42), title: `From ${longDay(at)}` };
+    return { title: `From ${longDay(at)}`, grain: "day", columns: 1, cells: daysFrom(at, 42).map((one) => day(one)) };
   }
+
+  if (range === "quarter") {
+    /*
+     * A WEEK PER CELL. Thirteen of them, four to a row: a quarter drawn a
+     * day at a time is ninety cells nobody can read, and drawn a month at a
+     * time is three, which says less than the month grid it replaced.
+     */
+    const first = startOfQuarter(at);
+    const last = endOfMonth(addMonths(first, 2));
+    const cells: CalendarCell[] = [];
+    for (let from = startOfWeek(first, weekStartsOn); daysBetween(from, last) >= 0; from = addDays(from, 7)) {
+      cells.push({
+        from,
+        to: addDays(from, 6),
+        label: `${Number(from.slice(8, 10))} ${MONTHS[Number(from.slice(5, 7)) - 1]!.slice(0, 3)}`,
+        ...(daysBetween(from, first) > 0 && daysBetween(addDays(from, 6), first) > 0 ? { outside: true } : {}),
+      });
+    }
+    return {
+      title: `Q${Math.floor((Number(at.slice(5, 7)) - 1) / 3) + 1} ${at.slice(0, 4)}`,
+      grain: "week",
+      columns: 4,
+      cells,
+    };
+  }
+
+  if (range === "year") {
+    const year = at.slice(0, 4);
+    return {
+      title: year,
+      grain: "month",
+      columns: 4,
+      cells: Array.from({ length: 12 }, (_, month) => monthCell(`${year}-${String(month + 1).padStart(2, "0")}-01`, false)),
+    };
+  }
+
+  if (range === "years") {
+    /*
+     * A MONTH PER CELL, for as many years as the app says it looks out —
+     * and the years themselves listed as stops, because the way down from
+     * thirty-six cells to one year must not be a guess about which cell was
+     * meant.
+     */
+    const span = Math.max(1, options.horizon?.years ?? 1);
+    const first = Number(at.slice(0, 4));
+    const years = Array.from({ length: span }, (_, step) => String(first + step));
+    return {
+      title: `${options.horizon?.title ?? "Years"} · ${years[0]}–${years[years.length - 1]}`,
+      grain: "month",
+      columns: 4,
+      years,
+      cells: years.flatMap((year) =>
+        Array.from({ length: 12 }, (_, month) => monthCell(`${year}-${String(month + 1).padStart(2, "0")}-01`, true)),
+      ),
+    };
+  }
+
   const first = startOfMonth(at);
   const from = startOfWeek(first, weekStartsOn);
-  return { days: daysFrom(from, 42), title: `${MONTHS[Number(at.slice(5, 7)) - 1]} ${at.slice(0, 4)}` };
+  const month = at.slice(0, 7);
+  return {
+    title: `${MONTHS[Number(at.slice(5, 7)) - 1]} ${at.slice(0, 4)}`,
+    grain: "day",
+    columns: 7,
+    cells: daysFrom(from, 42).map((one) => day(one, one.slice(0, 7) !== month)),
+  };
+}
+
+/** The entries touching a stretch of days, in the order a person reads them. */
+export function entriesIn(entries: readonly PlacedEntry[], from: string, to: string): PlacedEntry[] {
+  return entries
+    .filter((entry) => daysBetween(entry.from, to) >= 0 && daysBetween(from, entry.to) >= 0)
+    .sort((a, b) => {
+      if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
+      if (a.from !== b.from) return a.from.localeCompare(b.from);
+      if (a.at !== b.at) return (a.at ?? 0) - (b.at ?? 0);
+      return a.label.localeCompare(b.label);
+    });
+}
+
+/** The range one level finer than a cell of this grain, and what a press on it opens. */
+export function finerThan(grain: CalendarGrain): CalendarRange {
+  return grain === "month" ? "month" : grain === "week" ? "week" : "day";
 }
 
 const longDay = (day: string): string =>
@@ -558,81 +827,98 @@ const stepStyle = {
 };
 
 /**
- * The month, week or single day, as a grid of day cells.
+ * WHATEVER THE RANGE IS, AS A GRID OF CELLS.
  *
- * A MULTI-DAY ENTRY IS DRAWN ON EVERY DAY IT COVERS, and says which piece
- * it is — a planting sown in March and harvested in July is one thing that
- * happens over four months, and a calendar that showed it only on the day
- * it began would be answering a different question than the one anybody
- * asked it.
+ * A cell is a day, a week or a month — they differ in how much ground they
+ * cover and in nothing else. AN ENTRY IS DRAWN ON EVERY CELL IT TOUCHES and
+ * says which piece it is, so a planting sown in March and lifted in July is
+ * one thing running across four cells of a year exactly as a fortnight runs
+ * across four cells of a week.
+ *
+ * ABOVE A MONTH, LISTING EVERYTHING STOPS BEING A PICTURE. So the cell
+ * carries what fits at full fidelity and the rest as a count, with the
+ * rules' own flag on it where something in the remainder is broken — the
+ * lens contract's two fidelities doing the work a scroll bar would not.
  */
+const PER_CELL: Readonly<Record<CalendarGrain, number>> = { day: 12, week: 4, month: 3 };
+
 function Grid({
-  days,
-  columns,
+  span,
   weekStartsOn,
   entries,
   today,
-  month,
   perCell,
   emphasisOf,
   broken,
   hue,
-  onOverflow,
+  onOpen,
   onMove,
 }: {
-  days: readonly string[];
-  columns: number;
+  span: CalendarSpan;
   weekStartsOn: number;
   entries: readonly PlacedEntry[];
   today: string;
-  month: string | null;
   perCell: number;
   emphasisOf: (id: string) => Emphasis;
   broken: ReadonlySet<string>;
   hue: (entry: PlacedEntry) => number;
-  onOverflow: (day: string) => void;
-  onMove: (id: string, day: string) => void;
+  onOpen: (cell: CalendarCell) => void;
+  onMove: (id: string, cell: CalendarCell, grain: CalendarGrain) => void;
 }) {
-  const headers = columns === 7 ? daysFrom(startOfWeek(days[0] ?? today, weekStartsOn), 7) : days;
+  // Weekday headings belong to a week of days and to nothing else: a row of
+  // four week-cells under "Mon Tue Wed Thu" would be a caption for a
+  // different picture.
+  const headers =
+    span.grain === "day" && span.columns === 7
+      ? daysFrom(startOfWeek(span.cells[0]?.from ?? today, weekStartsOn), 7)
+      : span.grain === "day" && span.columns === 1
+        ? span.cells.map((cell) => cell.from)
+        : null;
   return (
-    <div style={{ display: "grid", gap: 4, gridTemplateRows: "auto 1fr", minHeight: 0, flex: 1 }}>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 4 }}>
-        {headers.map((day) => (
-          <span
-            key={day}
-            style={{
-              fontSize: "0.625rem",
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "var(--graview-ink-muted)",
-              textAlign: "center",
-            }}
-          >
-            {columns === 7 ? WEEKDAYS[weekdayOf(day)] : longDay(day)}
-          </span>
-        ))}
-      </div>
+    <div style={{ display: "grid", gap: 4, gridTemplateRows: headers ? "auto 1fr" : "1fr", minHeight: 0, flex: 1 }}>
+      {headers ? (
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${span.columns}, minmax(0, 1fr))`, gap: 4 }}>
+          {headers.map((day) => (
+            <span
+              key={day}
+              style={{
+                fontSize: "0.625rem",
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                color: "var(--graview-ink-muted)",
+                textAlign: "center",
+              }}
+            >
+              {span.columns === 7 ? WEEKDAYS[weekdayOf(day)] : longDay(day)}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          gridTemplateColumns: `repeat(${span.columns}, minmax(0, 1fr))`,
           gap: 4,
           minHeight: 0,
           overflow: "auto",
         }}
       >
-        {days.map((day) => {
-          const here = entriesOn(entries, day);
-          const outside = month !== null && day.slice(0, 7) !== month;
+        {span.cells.map((cell, at) => {
+          const here = entriesIn(entries, cell.from, cell.to);
           const shown = here.slice(0, perCell);
-          const hidden = here.length - shown.length;
+          const hidden = here.slice(perCell);
+          const flaggedHidden = hidden.filter((entry) => broken.has(entry.id)).length;
+          const now = daysBetween(cell.from, today) >= 0 && daysBetween(today, cell.to) >= 0;
           return (
             <div
-              key={day}
-              data-calendar-day={day}
-              data-calendar-outside={outside || undefined}
+              key={cell.from}
+              data-calendar-day={span.grain === "day" ? cell.from : undefined}
+              data-calendar-cell={cell.from}
+              data-calendar-grain={span.grain}
+              data-calendar-count={here.length}
+              data-calendar-outside={cell.outside || undefined}
               /*
-               * A DAY IS SOMEWHERE TO DROP A THING.
+               * A CELL IS SOMEWHERE TO DROP A THING.
                *
                * The browser's own drag rather than pointer events, because
                * the scene's card drag is on pointerdown and would otherwise
@@ -649,7 +935,7 @@ function Grid({
                 if (!id) return;
                 event.preventDefault();
                 event.stopPropagation();
-                onMove(id, day);
+                onMove(id, cell, span.grain);
               }}
               style={{
                 minHeight: 62,
@@ -659,34 +945,50 @@ function Grid({
                 padding: 4,
                 borderRadius: 7,
                 border: "1px solid var(--graview-edge)",
-                background: day === today ? "var(--graview-panel)" : "transparent",
-                opacity: outside ? 0.45 : 1,
+                background: now ? "var(--graview-panel)" : "transparent",
+                opacity: cell.outside ? 0.45 : 1,
               }}
             >
-              <span
-                style={{
-                  fontSize: "0.65625rem",
-                  fontVariantNumeric: "tabular-nums",
-                  color: day === today ? "var(--graview-accent)" : "var(--graview-ink-faint)",
-                }}
-              >
-                {Number(day.slice(8, 10))}
+              <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <span
+                  style={{
+                    fontSize: "0.65625rem",
+                    fontVariantNumeric: "tabular-nums",
+                    color: now ? "var(--graview-accent)" : "var(--graview-ink-faint)",
+                  }}
+                >
+                  {cell.label}
+                </span>
+                {/* The count is the coarse cell's summary — at a year it is
+                    the only honest thing a cell that holds forty entries
+                    can say about all of them. */}
+                {span.grain !== "day" && here.length > 0 ? (
+                  <span style={{ fontSize: "0.625rem", color: "var(--graview-ink-faint)", marginLeft: "auto" }}>
+                    {here.length}
+                  </span>
+                ) : null}
               </span>
               {shown.map((entry) => (
                 <Entry
-                  key={`${entry.id}:${day}`}
+                  key={`${entry.id}:${cell.from}`}
                   entry={entry}
-                  day={day}
+                  cell={cell}
+                  /* A span keeps its name where it begins and again wherever a
+                     ROW does: a rotation running March to October covers two
+                     rows of a year, and the second row was four nameless bars.
+                     This is what a wall calendar does with a fortnight. */
+                  rowStart={at % span.columns === 0}
                   emphasis={emphasisOf(entry.id)}
                   flagged={broken.has(entry.id)}
                   hue={hue(entry)}
                 />
               ))}
-              {hidden > 0 ? (
+              {hidden.length > 0 ? (
                 <button
                   type="button"
-                  data-testid={`calendar-more-${day}`}
-                  onClick={() => onOverflow(day)}
+                  data-testid={`calendar-more-${cell.from}`}
+                  onClick={() => onOpen(cell)}
+                  title={`Open ${cell.label}`}
                   style={{
                     minHeight: 24,
                     padding: "1px 5px",
@@ -694,11 +996,11 @@ function Grid({
                     borderRadius: 5,
                     border: "1px dashed var(--graview-edge)",
                     background: "transparent",
-                    color: "var(--graview-ink-muted)",
+                    color: flaggedHidden > 0 ? "var(--graview-warn)" : "var(--graview-ink-muted)",
                     textAlign: "left",
                   }}
                 >
-                  +{hidden} more
+                  +{hidden.length} more{flaggedHidden > 0 ? ` · ${flaggedHidden} flagged` : ""}
                 </button>
               ) : null}
             </div>
@@ -772,7 +1074,7 @@ function Agenda({
             <Entry
               key={`${entry.id}:${day}`}
               entry={entry}
-              day={day}
+              cell={{ from: day, to: day, label: day }}
               emphasis={emphasisOf(entry.id)}
               flagged={broken.has(entry.id)}
               hue={hue(entry)}
@@ -798,21 +1100,30 @@ function Agenda({
  */
 function Entry({
   entry,
-  day,
+  cell,
   emphasis,
   flagged,
   hue,
+  rowStart = false,
 }: {
   entry: PlacedEntry;
-  day: string;
+  cell: CalendarCell;
   emphasis: Emphasis;
   flagged: boolean;
   hue: number;
+  /** This cell begins a row, so a span running through it says its name again. */
+  rowStart?: boolean;
 }) {
-  const opens = entry.from === day;
-  const closes = entry.to === day;
-  const spanning = entry.from !== entry.to;
-  const said = entry.at !== null && opens ? `${clock(entry.at)} ${entry.label}` : entry.label;
+  /*
+   * WHICH PIECE OF ITSELF THIS IS, read against the CELL rather than a day:
+   * a planting sown in March and lifted in July opens in the March cell of
+   * a year and closes in the July one, and the four between are the middle
+   * of one thing rather than four things.
+   */
+  const opens = daysBetween(cell.from, entry.from) >= 0;
+  const closes = daysBetween(entry.to, cell.to) >= 0;
+  const spanning = !(opens && closes);
+  const said = entry.at !== null && opens && entry.from === cell.from ? `${clock(entry.at)} ${entry.label}` : entry.label;
   return (
     <span
       data-graview-pick={entry.id}
@@ -827,6 +1138,7 @@ function Entry({
       }}
       data-graview-emphasis={emphasis}
       data-calendar-part={spanning ? (opens ? "opens" : closes ? "closes" : "through") : undefined}
+      data-calendar-in={cell.from}
       title={
         spanning
           ? `${entry.label} · ${entry.from} – ${entry.to}`
@@ -853,10 +1165,10 @@ function Entry({
         ...(flagged ? { borderLeft: "3px solid var(--graview-warn)", paddingLeft: 4 } : {}),
       }}
     >
-      {/* A day in the middle of a span keeps the name once, at the start —
+      {/* A cell in the middle of a span keeps the name once, at the start —
           repeating it on every cell of a fortnight is five lies about how
           many things are happening. */}
-      {opens || !spanning ? said : " "}
+      {opens || rowStart ? said : " "}
     </span>
   );
 }

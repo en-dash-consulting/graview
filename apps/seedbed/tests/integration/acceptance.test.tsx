@@ -26,7 +26,7 @@ describe("a declared schema with nothing in it", () => {
     const result = layout(store.graph, seedbedSchema, { ...EMPTY_VIEW, overview: true });
     const cards = result.nodes.filter((node) => node.aggregate).map((node) => node.id);
     expect(cards.sort()).toEqual(
-      ["gardener", "planting", "plot", "rule"].map((kind) => kindCardId(kind)).sort(),
+      ["gardener", "planting", "plot", "rotation", "rule"].map((kind) => kindCardId(kind)).sort(),
     );
     for (const node of result.nodes) {
       expect(node.aggregate?.memberIds ?? []).toEqual([]);

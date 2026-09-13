@@ -119,6 +119,17 @@ const APPS = {
   seedbed: { port: 5194, ready: "__seedbedReady", states: {
     // The empty app's own first screen: a city of districts saying "none yet".
     empty: async () => {},
+    /*
+     * THE ROTATION, four years out. Everything else in the garden happens
+     * inside one season; this is the picture that only exists because the
+     * cell can coarsen to a month.
+     */
+    rotation: async (page) => {
+      const scheme = new URL(page.url()).searchParams.get("theme");
+      await page.goto(`http://localhost:5194/?chapter=16&theme=${scheme}#focus=agg:rotation&in.view=the-rotation`, { waitUntil: "load" });
+      await page.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
+      await page.waitForTimeout(1100);
+    },
     invited: async (p) => { await p.click('[data-graview-view="kind:gardener"]'); },
     planted: async (p) => {
       await p.click('[data-testid="activity-button"]');

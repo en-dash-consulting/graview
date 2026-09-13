@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T14:13:15.598Z",
+  "at": "2026-09-13T17:48:33.895Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -202,7 +202,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→The seasonStudioPagesThe garden keeps its agreements◆Ask☾NNobody in particular",
+        "trail": "GraviewGraview←→The yearThe seasonStudioPagesThe garden keeps its agreements◆Ask☾NNobody in particular",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -870,6 +870,7 @@
         "remove-rule",
         "name-repair",
         "forget-repair",
+        "set-figure",
         "add-role",
         "grant",
         "revoke-grant"
@@ -910,6 +911,82 @@
         "problems": null,
         "wordmark": "Graview",
         "focused": null
+      }
+    },
+    {
+      "n": 16,
+      "slug": "the-rotation",
+      "title": "The years it turns through",
+      "claim": "A bed is turned through four families and comes back to the first four years later. The same calendar lens that drew the season draws the rotation, a month per cell over as many years as the garden says it turns through — and how far out that is is the garden's word, not the framework's.",
+      "adds": [
+        "defineNode(\"rotation\") with an appendOnly edge \"turns-over\" to the plot it turns",
+        "defineMutation(\"rotate\") — which family a plot grows, and until when",
+        "the same calendar binding at range: \"years\" with horizon: { years: 4, title: \"The rotation\" }"
+      ],
+      "kinds": [
+        "gardener",
+        "plot",
+        "planting",
+        "rotation",
+        "rule",
+        "user",
+        "invitation"
+      ],
+      "mutations": [
+        "add-gardener",
+        "add-plot",
+        "sow",
+        "tend",
+        "harvest",
+        "adopt-rule",
+        "rotate",
+        "invite",
+        "welcome",
+        "revoke-invitation",
+        "remove-user",
+        "grant",
+        "revoke"
+      ],
+      "invariants": [
+        "every-plot-tended"
+      ],
+      "check": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 0,
+        "findings": []
+      },
+      "pictures": {
+        "light": "docs/progression/16-the-rotation-light.png",
+        "dark": "docs/progression/16-the-rotation-dark.png"
+      },
+      "errors": [],
+      "picture": {
+        "width": 888,
+        "height": 603
+      },
+      "saw": {
+        "standing": "The garden keeps its agreements",
+        "districts": [
+          "Gardeners2◆",
+          "Plantings1+1 past◆",
+          "Plots3◆open ▾",
+          "The rotation · 8",
+          "Rules1open ▾"
+        ],
+        "trail": "SeedbedSeedbed←→What grows whereThe yearThe seasonThe rotationWho tends whatShow the installationStudioPagesThe garden keeps its agreements◆Ask Activity☾JJune",
+        "withheld": null,
+        "activity": [],
+        "remembered": null,
+        "problems": null,
+        "wordmark": "Seedbed",
+        "focused": "The rotationThe rotation · 2026–2029‹Today›dayweekmonthquarteryearThe rotationagenda2026202720282029Jan 26Feb 26Mar 262Brassicas · Plot 1Legumes · Plot 2Apr 262 May 262Brassicas · Plot 1Legumes · Plot 2Jun 262 Jul 262 Aug 262 Sep 262Brassicas · Plot 1Legumes · Plot 2Oct 262 Nov 26Dec 26Jan 27Feb 27Mar 272Legumes · Plot 1Roots · Plot 2Apr 272 May 272Legumes · Plot 1Roots · Plot 2Jun 272 Jul 272 Aug"
+      },
+      "seatSees": {
+        "offered": [
+          "Change the rotation …"
+        ],
+        "withheld": ""
       }
     }
   ],

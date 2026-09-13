@@ -62,16 +62,30 @@ const WeekView = ((props: ViewProps<S>) => (
 const MonthView = ((props: ViewProps<S>) => (
   <month.View {...props} label="The fortnight" />
 )) as ViewComponent<S>;
+/*
+ * AND THE QUARTER, which is how a rota is actually planned.
+ *
+ * Nobody schedules volunteers a fortnight at a time: cover is worked out a
+ * season ahead, and a month grid you page through three times cannot show
+ * whether March is thinner than April. The same lens, the same binding, one
+ * grain coarser — a week per cell, thirteen of them.
+ */
+const QuarterCalendar = month.at("quarter");
+const QuarterView = ((props: ViewProps<S>) => (
+  <QuarterCalendar {...props} label="The quarter" />
+)) as ViewComponent<S>;
 
 export function rotaViews() {
   return (
     registerDefaultViews(rotaSchema, createViews(rotaSchema))
       /*
-       * THREE PLACES OVER TWO GROUPS. The week is registered last over the
+       * FOUR PLACES OVER TWO GROUPS. The week is registered last over the
        * shifts, so it is what the district draws when the address names no
-       * picture — the month and the coverage grid are one press away and
-       * say so on the bar.
+       * picture — the quarter, the month and the coverage grid are one press
+       * away and say so on the bar.
        */
+      .register("shift", { cardinality: "many", fidelity: "full" }, QuarterView, { title: "The quarter" })
+      .register("shift", { cardinality: "many", fidelity: "summary" }, QuarterView, { title: "The quarter" })
       .register("shift", { cardinality: "many", fidelity: "full" }, MonthView, { title: "The fortnight" })
       .register("shift", { cardinality: "many", fidelity: "summary" }, MonthView, { title: "The fortnight" })
       .register("shift", { cardinality: "many", fidelity: "full" }, WeekView, { title: "The week" })

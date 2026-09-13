@@ -69,7 +69,17 @@ const beds = createBoardLens<S>({
 /** The views for the garden — or for a chapter of it, which may not have plots yet. */
 export function seedbedViews(
   schema: SeedbedSchema = seedbedSchema,
-  options: { lens?: boolean; board?: boolean; map?: boolean; reach?: boolean; season?: boolean; today?: string; studio?: GraviewApp } = {},
+  options: {
+    lens?: boolean;
+    board?: boolean;
+    map?: boolean;
+    reach?: boolean;
+    season?: boolean;
+    /** Whether the garden looks out over the years it turns its beds through. */
+    rotation?: boolean;
+    today?: string;
+    studio?: GraviewApp;
+  } = {},
 ) {
   let registry = registerDefaultViews(schema, createViews(schema));
   const kinds = schema.kinds as readonly string[];
@@ -111,9 +121,42 @@ export function seedbedViews(
       today: options.today ?? SEEDBED_TODAY,
       range: "month",
     });
+    /*
+     * AND THE YEAR, which is the unit a garden is actually planned in.
+     *
+     * One binding, no second declaration: the same lens, one grain coarser.
+     * A month per cell, and a planting sown in March and lifted in July
+     * drawn across the five cells it was in the ground for — which is the
+     * sentence a gardener says about it and the one a month grid could only
+     * answer four times in a row.
+     */
+    const Year = season.at("year");
+    const YearView = ((props: ViewProps<S>) => <Year {...props} label="The year" />) as ViewComponent<S>;
     registry = registry
+      .register("planting" as never, { cardinality: "many", fidelity: "full" }, YearView, { title: "The year" })
+      .register("planting" as never, { cardinality: "many", fidelity: "summary" }, YearView, { title: "The year" })
       .register("planting" as never, { cardinality: "many", fidelity: "full" }, season.View as ViewComponent<S>, { title: "The season" })
       .register("planting" as never, { cardinality: "many", fidelity: "summary" }, season.View as ViewComponent<S>, { title: "The season" });
+  }
+  if (options.rotation && kinds.includes("rotation")) {
+    /*
+     * THE ROTATION, over as many years as this garden turns its beds
+     * through — which is four, because that is how many families it grows,
+     * and the framework has no opinion about it.
+     *
+     * The same calendar lens again, bound to the rotation's own fields. A
+     * garden whose subject is years had no lens at all before this: it had
+     * a month grid it could page through forty-eight times.
+     */
+    const turning = createCalendarLens<S>({
+      bindings: { rotation: { start: "from", end: "to", label: "label" } },
+      today: options.today ?? SEEDBED_TODAY,
+      range: "years",
+      horizon: { years: 4, title: "The rotation" },
+    });
+    registry = registry
+      .register("rotation" as never, { cardinality: "many", fidelity: "full" }, turning.View as ViewComponent<S>, { title: "The rotation" })
+      .register("rotation" as never, { cardinality: "many", fidelity: "summary" }, turning.View as ViewComponent<S>, { title: "The rotation" });
   }
   if (options.studio && kinds.includes("kind")) {
     // The studio over a declaration: what the checker says about it as it

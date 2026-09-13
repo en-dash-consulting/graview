@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T14:04:46.724Z",
+  "at": "2026-09-13T17:49:57.934Z",
   "engine": "chromium",
   "checks": {
     "aSecondPictureOfOneGroupIsASecondPlace": {
@@ -60,6 +60,77 @@
       "landed": "2026-09-23",
       "returned": "2026-09-01",
       "refused": null,
+      "ok": true
+    },
+    "aHorizonTheAppNamesDrawsAMonthPerCell": {
+      "range": "years",
+      "grain": "month",
+      "cells": 48,
+      "years": [
+        "2026",
+        "2027",
+        "2028",
+        "2029"
+      ],
+      "named": [
+        "day",
+        "week",
+        "month",
+        "quarter",
+        "year",
+        "The rotation",
+        "agenda"
+      ],
+      "across": 8,
+      "parts": [
+        "opens",
+        "through",
+        "through",
+        "through",
+        "through",
+        "through",
+        "through",
+        "closes"
+      ],
+      "ok": true
+    },
+    "goingDownALevelIsAnOrdinaryStop": {
+      "range": "year",
+      "at": "2028-01-01",
+      "cells": 12,
+      "hash": "#focus=aggregate%3Arotation&in.at=2028-01-01&in.range=year&in.view=the-rotation",
+      "returnedToHorizon": "years",
+      "ok": true
+    },
+    "aCoarseCellSaysWhatTheDropMeant": {
+      "id": "rot-plot-1-2026",
+      "moved": true,
+      "rounded": "Moved to Thu 1 Jun — a month is coarser than from holds, so it takes the first day of the cell. Undo puts it back.",
+      "refused": null,
+      "ok": true
+    },
+    "theRotaPlansByTheQuarter": {
+      "range": "quarter",
+      "grain": "week",
+      "cells": 14,
+      "withEntries": 2,
+      "places": [
+        "The quarter",
+        "The fortnight",
+        "The week",
+        "Who is covering what"
+      ],
+      "ok": true
+    },
+    "theHorizonsReadCleanAtBothWidths": {
+      "ok": true
+    },
+    "theReaderSSettingsAreHonoured": {
+      "scrollWidth": 390,
+      "width": 390,
+      "spilling": [],
+      "transition": 0,
+      "scroll": "auto",
       "ok": true
     }
   },

@@ -32,15 +32,19 @@ describe("the garden, grown a chapter at a time", () => {
 
   it("only ever grows: no chapter loses a kind, an act or a rule the last one had", () => {
     for (let i = 1; i < CHAPTERS.length; i++) {
-      // The studio is a chapter OVER the garden, not a chapter of it.
+      // The studio is a chapter OVER the garden, not a chapter of it — so it
+      // is skipped from BOTH sides. Comparing the chapter after it against
+      // the meta-schema asked the garden to keep "kind", "field" and "act".
       if (CHAPTERS[i]!.studioOf) continue;
-      const before = CHAPTERS[i - 1]!.app;
+      const previous = CHAPTERS.slice(0, i).findLast((chapter) => !chapter.studioOf);
+      if (!previous) continue;
+      const before = previous.app;
       const after = CHAPTERS[i]!.app;
       for (const kind of before.schema.kinds) expect(after.schema.kinds, `${CHAPTERS[i]!.slug} keeps ${kind}`).toContain(kind);
       for (const m of before.mutations ?? []) expect((after.mutations ?? []).map((x) => x.name)).toContain(m.name);
       for (const inv of before.invariants ?? []) expect((after.invariants ?? []).map((x) => x.name)).toContain(inv.name);
     }
-    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
   });
 
   it("1 · a single kind already has a city, a district and a derived beginning", () => {
@@ -268,6 +272,46 @@ describe("the garden, grown a chapter at a time", () => {
     const { seedbedViews } = await import("../../src/ui/views.js");
     const views = seedbedViews(store.schema as never, { studio: chapter.studioOf! });
     expect(views.places().map((place) => place.title)).toEqual(["What the checker says"]);
+  });
+
+  it("16 · the rotation: one binding draws four years, a month per cell, with the span across them", async () => {
+    const chapter = CHAPTERS[15]!;
+    expect(checkApp(chapter.app).findings.filter((f) => f.severity === "error")).toEqual([]);
+    const store = storeOf(16);
+    const rotations = store.graph.nodesOfKind("rotation" as never);
+    expect(rotations).toHaveLength(8);
+    // A bed turns through four families and comes back: plot 1 is on
+    // brassicas in 2026 and plot 2 is on them in 2029.
+    expect((store.graph.getNode("rot-plot-1-2026") as { family: string }).family).toBe("brassicas");
+    expect((store.graph.getNode("rot-plot-2-2029") as { family: string }).family).toBe("brassicas");
+    expect(store.graph.out("rot-plot-1-2026", "turns-over").map((node) => node.id)).toEqual(["plot-1"]);
+
+    /*
+     * ONE BINDING, EVERY HORIZON. The declaration names the same roles the
+     * season already named — a start, an end, a label — and the lens draws
+     * four years from it with no second declaration anywhere.
+     */
+    const calendar = chapter.app.lenses?.find((lens) => lens.name === "calendar");
+    expect(calendar?.requiredRoles).toEqual(["start"]);
+    expect(calendar?.bindings).toMatchObject({ rotation: { start: "from", end: "to", label: "label" } });
+
+    const { entriesIn, placeOnCalendar, spanOf } = await import("@graview/primitives");
+    const entries = rotations.map((node) =>
+      placeOnCalendar(node as never, { rotation: { start: "from", end: "to", label: "label" } }, store.schema as never),
+    );
+    const horizon = spanOf("years", "2026-01-01", { horizon: { years: 4, title: "The rotation" } });
+    expect(horizon.cells).toHaveLength(48);
+    expect(horizon.years).toEqual(["2026", "2027", "2028", "2029"]);
+    // March to October is eight months of cells, not one dot on the day it began.
+    const first = entries.find((entry) => entry?.id === "rot-plot-1-2026")!;
+    const across = horizon.cells.filter((cell) => entriesIn([first], cell.from, cell.to).length > 0);
+    expect(across).toHaveLength(8);
+    expect(across[0]?.label).toBe("Mar 26");
+    expect(across[7]?.label).toBe("Oct 26");
+
+    const { seedbedViews } = await import("../../src/ui/views.js");
+    const views = seedbedViews(store.schema as never, { season: true, rotation: true });
+    expect(views.places().map((place) => place.title)).toEqual(expect.arrayContaining(["The year", "The season", "The rotation"]));
   });
 
   it("is reached by ?chapter=N, and the finished example is the default", () => {

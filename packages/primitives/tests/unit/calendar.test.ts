@@ -9,11 +9,16 @@ import {
   createCalendarLens,
   dayOf,
   daysBetween,
+  entriesIn,
   entriesOn,
+  finerThan,
   minutesOf,
   placeOnCalendar,
+  rangesOf,
   spanOf,
   startOfWeek,
+  titleOf,
+  type PlacedEntry,
 } from "../../src/index.js";
 
 /**
@@ -146,15 +151,18 @@ describe("what is on a day", () => {
 });
 
 describe("the range a stop names", () => {
+  const days = (span: { cells: readonly { from: string }[] }) => span.cells.map((cell) => cell.from);
+
   it("covers six weeks of a month grid, starting on the app's own first day", () => {
-    const month = spanOf("month", "2026-09-14", 1);
-    expect(month.days).toHaveLength(42);
-    expect(month.days[0]).toBe("2026-08-31");
+    const month = spanOf("month", "2026-09-14");
+    expect(month.cells).toHaveLength(42);
+    expect(month.grain).toBe("day");
+    expect(month.cells[0]?.from).toBe("2026-08-31");
     expect(month.title).toBe("September 2026");
   });
 
   it("covers exactly the week, the day, and six weeks forward for an agenda", () => {
-    expect(spanOf("week", "2026-09-16", 1).days).toEqual([
+    expect(days(spanOf("week", "2026-09-16"))).toEqual([
       "2026-09-14",
       "2026-09-15",
       "2026-09-16",
@@ -163,8 +171,94 @@ describe("the range a stop names", () => {
       "2026-09-19",
       "2026-09-20",
     ]);
-    expect(spanOf("day", "2026-09-16").days).toEqual(["2026-09-16"]);
-    expect(spanOf("agenda", "2026-09-16").days).toHaveLength(42);
+    expect(days(spanOf("day", "2026-09-16"))).toEqual(["2026-09-16"]);
+    expect(spanOf("agenda", "2026-09-16").cells).toHaveLength(42);
+  });
+});
+
+/**
+ * THE CELL COARSENS WITH THE HORIZON — a week per cell at a quarter, a month
+ * per cell at a year and beyond. A range that drew a day per cell at a year
+ * would be three hundred and sixty-five cells nobody can read, and one that
+ * drew a month per cell at a quarter would say less than the month grid it
+ * replaced.
+ */
+describe("the longer horizons", () => {
+  it("draws a quarter as weeks, covering every day of its three months", () => {
+    const quarter = spanOf("quarter", "2026-05-14");
+    expect(quarter.grain).toBe("week");
+    expect(quarter.title).toBe("Q2 2026");
+    expect(quarter.cells[0]?.from).toBe("2026-03-30");
+    // Every day from 1 April to 30 June falls inside some cell.
+    expect(quarter.cells[0]!.from <= "2026-04-01").toBe(true);
+    expect(quarter.cells[quarter.cells.length - 1]!.to >= "2026-06-30").toBe(true);
+    for (const cell of quarter.cells) expect(daysBetween(cell.from, cell.to)).toBe(6);
+  });
+
+  it("draws a year as its twelve months", () => {
+    const year = spanOf("year", "2026-09-14");
+    expect(year.grain).toBe("month");
+    expect(year.title).toBe("2026");
+    expect(year.cells).toHaveLength(12);
+    expect(year.cells[0]).toMatchObject({ from: "2026-01-01", to: "2026-01-31", label: "Jan" });
+    // February knows how long it is, and 2028 knows it is a leap year.
+    expect(year.cells[1]?.to).toBe("2026-02-28");
+    expect(spanOf("year", "2028-01-01").cells[1]?.to).toBe("2028-02-29");
+  });
+
+  it("draws a horizon as many years of months, and says how far it looks", () => {
+    const horizon = { years: 3, title: "Three years" };
+    const span = spanOf("years", "2026-04-01", { horizon });
+    expect(span.grain).toBe("month");
+    expect(span.cells).toHaveLength(36);
+    expect(span.years).toEqual(["2026", "2027", "2028"]);
+    expect(span.title).toBe("Three years · 2026–2028");
+    // The cells carry their year, because a grid of thirty-six months that
+    // only said "Jan" would be three pictures pretending to be one.
+    expect(span.cells[12]?.label).toBe("Jan 27");
+  });
+
+  it("has no horizon unless the app names one", () => {
+    expect(rangesOf({})).not.toContain("years");
+    expect(rangesOf({ horizon: { years: 5, title: "Five years" } })).toContain("years");
+    // And what it is called on the button is the app's word, not ours.
+    expect(titleOf("years", { years: 5, title: "Five years" })).toBe("Five years");
+    expect(titleOf("quarter")).toBe("The quarter");
+  });
+
+  it("opens one level finer when a cell is pressed", () => {
+    expect(finerThan("month")).toBe("month");
+    expect(finerThan("week")).toBe("week");
+    expect(finerThan("day")).toBe("day");
+  });
+});
+
+/**
+ * A SPAN IS DRAWN ACROSS THE CELLS IT COVERS, whatever the cells are. A
+ * planting sown in March and lifted in July is one thing running across five
+ * cells of a year, exactly as a fortnight runs across cells of a week.
+ */
+describe("an entry that spans cells", () => {
+  const planting: PlacedEntry = {
+    id: "p1",
+    kind: "planting",
+    label: "Leeks",
+    from: "2026-03-12",
+    to: "2026-07-04",
+    at: null,
+    allDay: true,
+    done: false,
+  };
+
+  it("is in every month cell it touches, and in none it does not", () => {
+    const year = spanOf("year", "2026-01-01");
+    const touched = year.cells.filter((cell) => entriesIn([planting], cell.from, cell.to).length > 0);
+    expect(touched.map((cell) => cell.label)).toEqual(["Mar", "Apr", "May", "Jun", "Jul"]);
+  });
+
+  it("is in the weeks of a quarter it runs through", () => {
+    const quarter = spanOf("quarter", "2026-04-01");
+    expect(quarter.cells.every((cell) => entriesIn([planting], cell.from, cell.to).length === 1)).toBe(true);
   });
 });
 

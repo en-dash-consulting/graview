@@ -163,6 +163,12 @@ const APPS = {
       await p.locator('nav[aria-label="Places"] button', { hasText: "The fortnight" }).click();
       await p.waitForTimeout(900);
     },
+    /* THE QUARTER, which is how a rota is actually planned: a week per cell,
+       thirteen of them, where the fortnight is one page of three. */
+    quarter: async (p) => {
+      await p.locator('nav[aria-label="Places"] button', { hasText: "The quarter" }).click();
+      await p.waitForTimeout(900);
+    },
     coverage: async (p) => {
       await p.locator('nav[aria-label="Places"] button', { hasText: "Who is covering what" }).click();
       await p.waitForTimeout(900);
@@ -216,6 +222,25 @@ const APPS = {
       await p.waitForTimeout(700);
       await p.locator('nav[aria-label="Places"] button', { hasText: "The season" }).click();
       await p.waitForTimeout(900);
+    },
+    /* THE YEAR: the same season, a month per cell, with each planting drawn
+       across every month it was actually in the ground. */
+    year: async (p) => {
+      await p.goto("http://localhost:5194/?chapter=4&theme=light#overview=1", { waitUntil: "load" });
+      await p.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(700);
+      await p.locator('nav[aria-label="Places"] button', { hasText: "The year" }).click();
+      await p.waitForTimeout(900);
+    },
+    /*
+     * THE ROTATION: four years of a bed turning through four families,
+     * which is the densest picture the framework draws and the one a phone
+     * has the least room for.
+     */
+    rotation: async (p) => {
+      await p.goto("http://localhost:5194/?chapter=16&theme=light#focus=agg:rotation&in.view=the-rotation", { waitUntil: "load" });
+      await p.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(1100);
     },
     invited: async (p) => { await p.click('[data-graview-view="kind:gardener"]'); },
     planted: async (p) => {

@@ -169,13 +169,21 @@ export const CAPABILITIES: readonly Capability[] = [
   },
   {
     id: "cap-calendar",
-    label: "Calendar lens",
+    label: "Calendar lens, day to a named horizon",
     area: "lens",
-    // Month, week, day and agenda over real dates — the question the
-    // timeline cannot answer, because it binds minutes of a day.
+    /*
+     * Day, week, month, quarter, year and a span of years the app names,
+     * over real dates — the question the timeline cannot answer, because it
+     * binds minutes of a day.
+     *
+     * Shown at the FURTHEST one it draws. Every app here has a month; only
+     * the garden has something whose subject is years, and a row whose job
+     * is "where to see this" should open on the thing you cannot see
+     * anywhere else.
+     */
     holds: usesLens("calendar"),
-    shownIn: "todo",
-    stop: "#focus=aggregate:task&in.view=the-month",
+    shownIn: "seedbed",
+    stop: "?chapter=16#focus=agg:rotation&in.view=the-rotation",
   },
   {
     id: "cap-coverage",

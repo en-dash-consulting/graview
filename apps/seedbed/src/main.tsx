@@ -123,6 +123,7 @@ if (window.location.pathname.startsWith("/pages")) {
       reach={chapter ? (chapter.reach ?? false) : true}
       {...(chapter?.studioOf ? { studio: chapter.studioOf } : {})}
       {...(chapter?.season ? { season: true } : {})}
+      {...(chapter?.rotation ? { rotation: true } : {})}
       brand={brand}
       syncUrl
       renderer="dom"

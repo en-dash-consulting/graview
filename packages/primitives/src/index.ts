@@ -107,8 +107,9 @@ export type {
   TimelineViewProps,
 } from "./lens/timeline.js";
 
-// The calendar: month, week, day and agenda over real dates. Bound by roles
-// like every other starter, and it has never heard of a task or a shift.
+// The calendar: day, week, month, quarter, year and a horizon the app names,
+// over real dates. Bound by roles like every other starter, and it has never
+// heard of a task, a shift or a planting.
 export {
   actThatMoves,
   addDays,
@@ -120,19 +121,29 @@ export {
   dayOf,
   daysBetween,
   daysFrom,
+  endOfMonth,
+  entriesIn,
   entriesOn,
+  finerThan,
   minutesOf,
   placeOnCalendar,
+  rangesOf,
   spanOf,
   startOfMonth,
+  startOfQuarter,
   startOfWeek,
+  titleOf,
   weekdayOf,
 } from "./lens/calendar.js";
 export type {
   CalendarBindings,
+  CalendarCell,
+  CalendarGrain,
+  CalendarHorizon,
   CalendarLens,
   CalendarOptions,
   CalendarRange,
   CalendarRoles,
+  CalendarSpan,
   PlacedEntry,
 } from "./lens/calendar.js";
