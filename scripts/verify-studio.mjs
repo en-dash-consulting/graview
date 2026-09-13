@@ -12,7 +12,8 @@
  * strip, read what the checker makes of the declaration as it now stands,
  * see the field in the schema the studio would write, take the change back,
  * and check that the seat that may not administer is never offered the door
- * at all.
+ * at all — then ASK FOR A CHANGE IN WORDS, read what the checker makes of it
+ * before keeping it, keep it, and undo it.
  *
  *   node scripts/verify-studio.mjs [--engine=chromium|webkit|firefox]
  */
@@ -36,6 +37,16 @@ const writtenSchema = (page) =>
     const href = link?.getAttribute("href") ?? "";
     return decodeURIComponent(href.slice(href.indexOf(",") + 1));
   });
+
+/** Apply, read the schema the studio would write, and dismiss what it said. */
+const writtenSchemaNow = async (page) => {
+  await page.click('[data-testid="studio-apply"]');
+  await page.waitForSelector('[data-testid="studio-applied"]', { timeout: 10_000 });
+  const written = await writtenSchema(page);
+  await page.locator('[data-testid="studio-applied"] button', { hasText: "Dismiss" }).first().click();
+  await page.waitForTimeout(200);
+  return written;
+};
 
 const verdict = (page) =>
   page.evaluate(() => {
@@ -208,6 +219,76 @@ try {
   };
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
+
+  /* ------------- asked for in words, checked, kept, and taken back again */
+  /*
+   * THE WHOLE TURN, as a person does it. The one surface whose subject is
+   * the declaration was the one surface you could not talk to: ask for a
+   * field, read what the checker makes of the change BEFORE keeping it,
+   * keep it, see it in the schema the studio would write, and undo it.
+   * Keyless — the declaration answers for itself — so this runs anywhere.
+   */
+  await page.click('[data-testid="studio-agent"]');
+  await page.waitForSelector('[data-testid="studio-agent-panel"]', { timeout: 10_000 });
+  const asked = async (words) => {
+    await page.fill('[data-testid="studio-agent-draft"]', words);
+    await page.click('[data-testid="studio-agent-send"]');
+    await page.waitForTimeout(900);
+  };
+
+  await asked("what kinds are there?");
+  const answered = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="studio-agent-panel"] li p')].map((p) => p.textContent?.trim() ?? ""),
+  );
+  report.checks.theDeclarationAnswersForItself = {
+    answered: answered.slice(-1),
+    /* It knows its own subject: the meta-graph's kinds, not the app's data. */
+    ok: answered.some((said) => /kind/i.test(said) && /act|rule/i.test(said)),
+  };
+
+  await asked("add a due date to tasks");
+  const theOffer = await page.evaluate(() => ({
+    keep: document.querySelector('[data-testid="studio-agent-keep"]')?.textContent?.trim() ?? null,
+    check: document.querySelector('[data-testid="studio-agent-check"]')?.textContent?.trim() ?? null,
+    errors: document.querySelector('[data-testid="studio-agent-check"]')?.getAttribute("data-errors") ?? null,
+    refused: document.querySelector('[data-testid="studio-agent-refused"]')?.textContent?.trim() ?? null,
+  }));
+  const beforeKeeping = await writtenSchemaNow(page);
+  report.checks.theCheckerSpeaksBeforeYouKeepAnything = {
+    ...theOffer,
+    /* Nothing is applied by asking: the declaration is untouched until Keep. */
+    untouchedUntilKept: !beforeKeeping.includes("due-date"),
+    ok: theOffer.keep !== null && theOffer.check !== null && theOffer.errors === "0" && !beforeKeeping.includes("due-date"),
+  };
+
+  await page.click('[data-testid="studio-agent-keep"]');
+  await page.waitForTimeout(700);
+  const afterKeeping = await writtenSchemaNow(page);
+  const kept = await verdict(page);
+  report.checks.keepingIsAnOrdinaryOp = {
+    inTheSchema: afterKeeping.includes("due-date"),
+    verdict: kept,
+    ok: afterKeeping.includes("due-date") && kept.errors === 0,
+  };
+
+  /* And it is an op like any other: the trail names the agent, undo takes it back. */
+  await page.click('[data-testid="studio"] [data-testid="activity-button"]');
+  await page.waitForTimeout(500);
+  const trail = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="studio"] [data-testid="diff-log"] li')].map((li) =>
+      (li.textContent ?? "").replace(/\s+/g, " ").slice(0, 100),
+    ),
+  );
+  await page.locator('[data-testid="studio"] [data-testid="undo-turn"]').first().click();
+  await page.waitForTimeout(700);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+  const afterUndo = await writtenSchemaNow(page);
+  report.checks.whatTheAgentProposesIsUndone = {
+    trail: trail.slice(0, 3),
+    goneAgain: !afterUndo.includes("due-date"),
+    ok: !afterUndo.includes("due-date") && afterUndo.includes('defineNode("task"'),
+  };
 
   /* ------------------------------------ and closing puts you back in the app */
   await page.click('[data-testid="studio-close"]');

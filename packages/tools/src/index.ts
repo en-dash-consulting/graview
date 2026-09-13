@@ -55,6 +55,7 @@ export type { Completion, Intelligence, ProposedCall } from "./intelligence.js";
 export { graphResponder, llmResponder } from "./conversation.js";
 export type { ChatContext, ChatReply, Responder } from "./conversation.js";
 export {
+  completionFor,
   configuredResponder,
   DEFAULT_INTELLIGENCE,
   describeIntelligence,

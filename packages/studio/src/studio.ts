@@ -32,6 +32,17 @@ export interface Studio<S extends AnySchema = AnySchema> {
   propose(call: MutationCall, agent: Principal, intent?: string): { readonly batch: string; readonly ok: true } | { readonly ok: false; readonly reason: string };
   /** Take a proposal back. */
   decline(batch: string): boolean;
+  /**
+   * WHAT THE CHECKER WOULD SAY IF THIS CALL WERE MADE — without making it.
+   *
+   * A proposal a person is shown has to be judged BEFORE they are asked to
+   * keep it: a change that would fail the build is not a choice, it is a
+   * trap. The call is applied to a copy of the store and the copy's
+   * declaration is checked, so the real declaration is untouched whatever
+   * the answer is — and a call the store itself refuses comes back as a
+   * refusal in the store's own words rather than as a thrown error.
+   */
+  would(call: MutationCall): { readonly ok: true; readonly check: CheckResult } | { readonly ok: false; readonly reason: string };
   /** The new app and, where a stored graph needs one, the migration to it. Refused while the checker finds errors. */
   apply(): { readonly ok: true; readonly app: GraviewApp<AnySchema>; readonly migration: MigrationDeclaration | null } | { readonly ok: false; readonly check: CheckResult };
   /** The declaration as the files `graview create` writes. */
@@ -77,6 +88,26 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       if (!store.canUndo(batch).ok) return false;
       store.undo(batch);
       return true;
+    },
+    would(call) {
+      const trial = new Store<StudioSchema>({
+        schema: app.schema,
+        mutations: app.mutations ?? [],
+        invariants: app.invariants ?? [],
+        snapshot: store.snapshot() as never,
+        ...(options.principal ? { principal: options.principal } : {}),
+      } as never);
+      try {
+        trial.apply(call, { intent: `Would: ${call.name}` });
+      } catch (error) {
+        return { ok: false, reason: error instanceof Error ? error.message : String(error) };
+      }
+      return {
+        ok: true,
+        check: checkApp(
+          graphToDeclaration(trial.snapshot() as GraphSnapshot, { base: base as unknown as GraviewApp<AnySchema>, name: base.name }),
+        ),
+      };
     },
     apply() {
       const next = declaration();

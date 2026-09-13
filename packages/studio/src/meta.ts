@@ -28,6 +28,18 @@ export const kindNode = defineNode("kind", {
     /** The field the horizon reads, and the values that put a record behind it. */
     lifecycleField: z.string().optional(),
     retired: z.array(z.string()).optional(),
+    /**
+     * THE DRAWING OF THE THING, carried in the graph like anything else.
+     *
+     * Inline SVG or the name of a shipped figure. A figure was a decision
+     * only a checkout could make: `drawFigure` could draw one and the CLI
+     * could print one, but the studio read declarations that had figures
+     * and gave back declarations that did not — so opening the studio on a
+     * drawn app and applying would have rubbed every drawing out. Modelled
+     * here, it survives the round trip and becomes something an agent may
+     * propose.
+     */
+    figure: z.string().optional(),
   }),
   label: (node) => node.label,
   display: { labels: { label: "name", lifecycleField: "lifecycle field", retired: "retired when" } },
@@ -461,6 +473,20 @@ export const forgetRepair = act("forget-repair", {
   },
 });
 
+export const setFigure = act("set-figure", {
+  title: "Draw the kind",
+  description:
+    "Give a kind its figure: line art of the thing, in the house style, wherever the kind is drawn.",
+  subject: { kinds: ["kind"], arg: "id" },
+  writes: ["figure"],
+  input: z.object({ id: nodeRef(["kind"]), figure: z.string().min(1) }),
+  describe: (args, graph) =>
+    `Draw ${(graph.getNode(args.id) as { label?: string } | undefined)?.label ?? args.id}`,
+  apply(ctx, args) {
+    ctx.patchNode(args.id, { figure: args.figure });
+  },
+});
+
 export const addRole = act("add-role", {
   title: "Add a role",
   description: "Declare a role a seat may hold.",
@@ -521,6 +547,7 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   removeRule,
   nameRepair,
   forgetRepair,
+  setFigure,
   addRole,
   grant,
   revokeGrant,

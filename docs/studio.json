@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T14:15:22.832Z",
+  "at": "2026-09-13T17:33:26.003Z",
   "engine": "chromium",
   "checks": {
     "theDoorBelongsToWhoeverKeepsTheApp": {
@@ -32,6 +32,7 @@
     "aFieldAddedIsAFieldWritten": {
       "offered": [
         "Rename the kind …",
+        "Draw the kind …",
         "Change the kind …",
         "lets …",
         "Add an act …",
@@ -63,6 +64,38 @@
         "you Undo: Add the field urgency to taskundofield:task.urgencytasks",
         "you Add the field urgency to taskfield:task.urgencytasks"
       ],
+      "ok": true
+    },
+    "theDeclarationAnswersForItself": {
+      "answered": [
+        "6 kinds: list (2 fields, 1 relation), task (7 fields, 1 relation), rule (4 fields, 0 relations), reason (1 field, 1 relation), user (4 fields, 0 relations) and invitation (4 fields, 1 relation). There are 17 acts and 3 rules."
+      ],
+      "ok": true
+    },
+    "theCheckerSpeaksBeforeYouKeepAnything": {
+      "keep": "Keep Add a field — task",
+      "check": "The checker finds nothing wrong with it.",
+      "errors": "0",
+      "refused": null,
+      "untouchedUntilKept": true,
+      "ok": true
+    },
+    "keepingIsAnOrdinaryOp": {
+      "inTheSchema": true,
+      "verdict": {
+        "text": "The checker finds nothing wrong",
+        "errors": 0,
+        "warnings": 0
+      },
+      "ok": true
+    },
+    "whatTheAgentProposesIsUndone": {
+      "trail": [
+        "studio-agent you asked for \"due date\" on taskundodue-datetasks",
+        "you Undo: Add the field urgency to taskundo +1field:task.urgencytasks",
+        "you Add the field urgency to taskfield:task.urgencytasks"
+      ],
+      "goneAgain": true,
       "ok": true
     },
     "closingPutsYouBackWhereYouWere": {

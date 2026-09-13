@@ -215,6 +215,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(str(kind, "description") ? { description: str(kind, "description")! } : {}),
       ...(hasLabel ? { label: (node: { id: string } & Record<string, unknown>) => String(node["label"] ?? node.id) } : {}),
       ...(lifecycleField && retired ? { lifecycle: { field: lifecycleField, retired: retired[0] === "date" ? ("date" as const) : retired } } : {}),
+      ...(str(kind, "figure") ? { figure: str(kind, "figure")! } : {}),
       // What the studio has no act for is CARRIED, not dropped.
       ...kept(base, name(kind), shape),
     } as never);

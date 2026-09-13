@@ -262,6 +262,44 @@ export function localCompletion(
 /* ------------------------------------------------------ the whole ladder */
 
 /**
+ * THE MODEL BEHIND A RUNG, when the person has chosen one.
+ *
+ * A conversation is not the only thing a model is good for: drawing a
+ * kind's figure is one prompt and one answer, judged by the checker's own
+ * function. Both reach the same configured provider through this, so there
+ * is one place a key is read and one place a rung is honoured — and a
+ * keyless config answers `undefined` rather than a completion that throws,
+ * so a caller can say what it will do INSTEAD of drawing.
+ */
+export function completionFor(
+  config: IntelligenceConfig,
+  hooks: { readonly onStatus?: (status: LocalStatus) => void } = {},
+): Completion | undefined {
+  if (config.source === "remote" && config.remote?.apiKey) {
+    const model =
+      config.remote.model ?? (config.remote.preset === "custom" ? "a model" : XAI_DEFAULT_MODEL);
+    return config.remote.preset === "custom" && config.remote.baseUrl
+      ? openAiCompatibleCompletion({ baseUrl: config.remote.baseUrl, apiKey: config.remote.apiKey, model })
+      : xaiCompletion({ apiKey: config.remote.apiKey, ...(config.remote.model ? { model: config.remote.model } : {}) });
+  }
+  if (config.source === "local") {
+    const local = localCompletion({
+      ...(config.local?.model ? { model: config.local.model } : {}),
+      ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}),
+    });
+    /*
+     * A cold engine is warmed rather than refused: the first ask pays for
+     * the bring-up, and `complete` throws while it is cold — which the
+     * callers already treat as "say what happened instead", never as a
+     * silent failure.
+     */
+    if (!local.ready()) local.warm();
+    return local.complete;
+  }
+  return undefined;
+}
+
+/**
  * One Responder from one config. The graph is always the floor: a remote
  * failure or a cold local model answers from the graph WITH A NOTE rather
  * than failing the conversation — a chat that errors where it could have
@@ -269,9 +307,19 @@ export function localCompletion(
  */
 export function configuredResponder<S extends AnySchema>(
   config: IntelligenceConfig,
-  hooks: { readonly onStatus?: (status: LocalStatus) => void } = {},
+  hooks: {
+    readonly onStatus?: (status: LocalStatus) => void;
+    /**
+     * The rung below every model, when a surface has one of its own. The
+     * studio's floor answers about the DECLARATION — what kinds there are,
+     * what an act writes — which the ordinary graph responder cannot know
+     * to say; passing it here means the studio climbs the same ladder
+     * rather than growing a second one beside it.
+     */
+    readonly floor?: Responder<S>;
+  } = {},
 ): Responder<S> {
-  const floor = graphResponder<S>();
+  const floor = hooks.floor ?? graphResponder<S>();
 
   /*
    * GROUNDED FACTS OUTRANK ANY MODEL. Whatever rung is chosen, a question
@@ -299,15 +347,8 @@ export function configuredResponder<S extends AnySchema>(
   if (config.source === "remote" && config.remote?.apiKey) {
     const model =
       config.remote.model ?? (config.remote.preset === "custom" ? "a model" : XAI_DEFAULT_MODEL);
-    const complete =
-      config.remote.preset === "custom" && config.remote.baseUrl
-        ? openAiCompatibleCompletion({
-            baseUrl: config.remote.baseUrl,
-            apiKey: config.remote.apiKey,
-            model,
-          })
-        : xaiCompletion({ apiKey: config.remote.apiKey, ...(config.remote.model ? { model: config.remote.model } : {}) });
-    return groundedFirst(llmResponder<S>({ complete }), model);
+    const complete = completionFor(config);
+    if (complete) return groundedFirst(llmResponder<S>({ complete }), model);
   }
 
   if (config.source === "local") {

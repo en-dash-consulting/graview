@@ -252,7 +252,7 @@ export function ChatPanel<S extends AnySchema>({
             )}
           </div>
           {settings ? (
-            <ChatSettings
+            <IntelligenceSettings
               config={config}
               onDone={(next) => {
                 saveIntelligenceConfig(next);
@@ -374,8 +374,13 @@ export function ChatPanel<S extends AnySchema>({
  * The rung picker. Three honest choices, stated costs, one Save — and the
  * key field says exactly where the key lives: this browser's storage, sent
  * only to the provider chosen, never to a server of ours, never in a repo.
+ *
+ * Exported because the studio's own agent panel climbs the same ladder: a
+ * second picker beside this one would be a second place a person's key
+ * could be asked for, and two surfaces that could disagree about which
+ * rung is chosen.
  */
-function ChatSettings({
+export function IntelligenceSettings({
   config,
   onDone,
 }: {

@@ -121,13 +121,39 @@ export function figureSvg(figure: Figure | undefined): string | undefined {
 }
 
 /**
+ * A FIGURE IS LINE ART, and these are the only things line art is made of.
+ *
+ * Everything drawn here is declared in code the bundle already runs — until
+ * a figure arrives from somewhere else. A model asked to draw a kind can
+ * answer with an `<svg>` carrying a `<script>`, an `onload`, or a remote
+ * `href`, and a drawing is inserted as markup wherever it is shown; a check
+ * of the house style alone would have passed all three, because none of
+ * them is a colour or a viewBox. So the vocabulary is closed: these
+ * elements, these attributes, and anything else is a fault with a name.
+ *
+ * It is one judgement rather than a second sanitiser beside the first,
+ * because the surfaces that draw a figure already ask this function's
+ * caller — `graview check`, `graview figure`, the agent that draws one —
+ * whether the drawing is any good.
+ */
+const DRAWING_ELEMENTS: ReadonlySet<string> = new Set([
+  "svg", "g", "title", "desc", "path", "circle", "ellipse", "rect", "line", "polyline", "polygon",
+]);
+const DRAWING_ATTRIBUTES: ReadonlySet<string> = new Set([
+  "viewbox", "xmlns", "width", "height", "fill", "fill-rule", "clip-rule", "stroke", "stroke-width",
+  "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "stroke-miterlimit",
+  "opacity", "fill-opacity", "stroke-opacity", "vector-effect", "transform", "d", "cx", "cy", "r",
+  "rx", "ry", "x", "y", "x1", "y1", "x2", "y2", "points", "role", "aria-hidden", "focusable",
+]);
+
+/**
  * What is wrong with a figure, in the words of somebody about to fix it.
  *
- * Four things, and every one of them is a thing that looks fine in the file
- * and fails on a screen: art with no `viewBox` cannot be sized by anything
- * that draws it, a literal colour ignores the scheme and the kind's hue, a
- * `fill` that is not `none` turns a line drawing into a blob at chip size,
- * and a name that is not in the shipped set is a silent blank.
+ * Art with no `viewBox` cannot be sized by anything that draws it, a
+ * literal colour ignores the scheme and the kind's hue, a `fill` that is
+ * not `none` turns a line drawing into a blob at chip size, a name that is
+ * not in the shipped set is a silent blank — and anything in the markup
+ * that is not a drawing is not a figure at all.
  */
 export function figureFaults(figure: Figure): readonly string[] {
   if (!figure.trimStart().startsWith("<svg")) {
@@ -154,5 +180,18 @@ export function figureFaults(figure: Figure): readonly string[] {
   if (!/stroke\s*=\s*"currentColor"/.test(figure)) {
     faults.push('nothing in it is stroked with currentColor, so it will not be drawn in the kind\'s ink.');
   }
-  return faults;
+  /*
+   * THE VOCABULARY IS CLOSED. Named rather than stripped: a drawing with a
+   * script in it is not a drawing with a fixable blemish, and whoever is
+   * about to keep it should be told what was in it.
+   */
+  for (const [, element] of figure.matchAll(/<\s*\/?\s*([a-zA-Z][\w:-]*)/g)) {
+    const name = (element ?? "").toLowerCase();
+    if (!DRAWING_ELEMENTS.has(name)) faults.push(`it contains <${element}>, which is not something a line drawing is made of.`);
+  }
+  for (const [, attribute] of figure.matchAll(/[\s"']([a-zA-Z][\w:-]*)\s*=/g)) {
+    const name = (attribute ?? "").toLowerCase();
+    if (!DRAWING_ATTRIBUTES.has(name)) faults.push(`it carries ${attribute}, which is not a drawing attribute.`);
+  }
+  return [...new Set(faults)];
 }

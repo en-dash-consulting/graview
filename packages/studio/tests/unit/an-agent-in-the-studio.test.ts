@@ -1,0 +1,259 @@
+import {
+  createSchema,
+  defineInvariant,
+  defineMutation,
+  defineNode,
+  figureFaults,
+  nodeRef,
+  type GraviewApp,
+  type Principal,
+} from "@graview/core";
+import { describe, expect, it } from "vitest";
+import { z } from "zod";
+import { createStudio, declarationFiles, declarationToGraph, graphToDeclaration, studioResponder, typeFromName } from "../../src/index.js";
+
+/*
+ * A ROTA, declared the way a checkout declares one — with a drawn kind and
+ * an undrawn one, so the seat has something honest to say about figures.
+ */
+const volunteer = defineNode("volunteer", {
+  description: "Somebody who turns up.",
+  fields: z.object({ label: z.string().min(1) }),
+  plural: "volunteers",
+  label: (node) => node.label,
+  figure: "person",
+});
+const shift = defineNode("shift", {
+  description: "A stretch of time somebody covers.",
+  fields: z.object({ label: z.string().min(1), day: z.string() }),
+  edges: {
+    "covered-by": { to: ["volunteer"], description: "who covers it", inverse: "what they cover" },
+  },
+  plural: "shifts",
+  label: (node) => node.label,
+});
+const schema = createSchema([volunteer, shift]);
+
+const cover = defineMutation("cover", {
+  title: "Cover the shift",
+  fromTheOtherEnd: "Take a shift",
+  description: "Put a volunteer on a shift.",
+  subject: { kinds: ["shift"], arg: "shift" },
+  connects: ["covered-by"],
+  input: z.object({ shift: nodeRef(["shift"]), volunteer: nodeRef(["volunteer"]) }),
+  describe: (args) => `${args.shift} covered by ${args.volunteer}`,
+  apply(ctx, args) {
+    ctx.addEdge({ kind: "covered-by", from: args.shift, to: args.volunteer });
+  },
+});
+const addShift = defineMutation("add-shift", {
+  title: "Add a shift",
+  description: "Put a stretch of time on the rota.",
+  creates: ["shift"],
+  input: z.object({ label: z.string().min(1), day: z.string() }),
+  describe: (args) => `Add ${args.label}`,
+  apply(ctx, args) {
+    ctx.addNode({ id: ctx.freshId(args.label, "shift"), kind: "shift", label: args.label, day: args.day });
+  },
+});
+const covered = defineInvariant("shift-is-covered", {
+  label: "Every shift is covered",
+  description: "A shift nobody covers is a shift nobody turns up to.",
+  scope: { kind: "shift" },
+  repairs: ["cover"],
+  evaluate: () => [],
+});
+
+const rota: GraviewApp<typeof schema> = {
+  name: "Rota",
+  schema,
+  mutations: [cover, addShift],
+  invariants: [covered],
+  policy: {
+    roles: ["keeper", "helper"],
+    grants: [
+      { roles: ["keeper"], mutations: "*", describe: "the keeper may do anything" },
+      { roles: ["helper"], mutations: ["cover"], describe: "a helper may cover a shift" },
+    ],
+  },
+};
+
+const agent: Principal = { kind: "agent", id: "studio-agent", session: "test" };
+const ask = async (text: string) => {
+  const studio = createStudio(rota);
+  const reply = await studioResponder()(studio.store as never, text);
+  return { studio, reply };
+};
+
+describe("the declaration answers for itself", () => {
+  it("says what kinds there are, and never proposes a change to a question", async () => {
+    const { reply } = await ask("what kinds are there?");
+    expect(reply.say).toContain("volunteer");
+    expect(reply.say).toContain("shift");
+    expect(reply.grounded).toBe(true);
+    expect(reply.proposals).toEqual([]);
+  });
+
+  it("says what an act writes, and what it acts on", async () => {
+    const { reply } = await ask("what does cover the shift do?");
+    expect(reply.say).toContain("covered-by");
+    expect(reply.say).toContain("shift");
+    expect(reply.proposals).toEqual([]);
+  });
+
+  it("says what a rule judges and what puts it right", async () => {
+    const { reply } = await ask("what does shift-is-covered judge?");
+    expect(reply.say).toContain("shift");
+    expect(reply.say.toLowerCase()).toContain("cover");
+  });
+
+  it("says who is allowed to take an act", async () => {
+    const { reply } = await ask("who is allowed to cover a shift?");
+    expect(reply.say).toContain("helper");
+  });
+
+  it("names the kinds nobody has drawn", async () => {
+    const { reply } = await ask("which kinds have no figure?");
+    expect(reply.say).toContain("shift");
+    expect(reply.say).not.toContain("volunteer,");
+  });
+});
+
+describe("words become proposed acts, never writes", () => {
+  it("fills a field act from a sentence, reading the type off the name", async () => {
+    const { studio, reply } = await ask("add a due date to shifts");
+    expect(reply.proposals).toHaveLength(1);
+    const proposal = reply.proposals[0]!;
+    expect(proposal.mutation).toBe("add-field");
+    expect(proposal.args["kind"]).toBe("kind:shift");
+    expect(proposal.args["type"]).toBe("date");
+    // Optional by default: a required field on records that already exist
+    // is a migration nobody asked for.
+    expect(proposal.args["required"]).toBe(false);
+    // And the declaration has not moved.
+    expect(studio.changes()).toHaveLength(0);
+    expect(studio.declaration().schema.tryDefinition("shift")).toBeDefined();
+  });
+
+  it("proposes a rule when somebody says every X needs a Y", async () => {
+    const { reply } = await ask("every shift needs a volunteer");
+    expect(reply.proposals[0]?.mutation).toBe("add-rule");
+    expect(reply.proposals[0]?.args["kind"]).toBe("kind:shift");
+  });
+
+  it("reads a type off a name rather than guessing cleverly", () => {
+    expect(typeFromName("due date")).toBe("date");
+    expect(typeFromName("how many hours")).toBe("number");
+    expect(typeFromName("is urgent")).toBe("boolean");
+    expect(typeFromName("notes")).toBe("text");
+    expect(typeFromName("nickname")).toBe("string");
+  });
+});
+
+describe("the checker speaks before the person keeps anything", () => {
+  it("says what the declaration would become, without changing it", async () => {
+    const studio = createStudio(rota);
+    const before = studio.check();
+    const would = studio.would({ name: "add-field", args: { kind: "kind:shift", label: "note", type: "string", required: false } });
+    expect(would.ok).toBe(true);
+    if (!would.ok) return;
+    expect(would.check.errors).toBe(before.errors);
+    // The real declaration is untouched: `would` is a copy, not a rehearsal
+    // the person has to undo.
+    expect(studio.changes()).toHaveLength(0);
+    expect(studio.declaration().schema.tryDefinition("shift")?.fields).toBeDefined();
+  });
+
+  it("gives back the store's own refusal rather than throwing", () => {
+    const studio = createStudio(rota);
+    const would = studio.would({ name: "add-field", args: { kind: "kind:nothing-here", label: "x", type: "string", required: false } });
+    expect(would.ok).toBe(false);
+    if (would.ok) return;
+    expect(would.reason.length).toBeGreaterThan(0);
+  });
+
+  it("condemns a change that would fail the build", () => {
+    const studio = createStudio(rota);
+    /*
+     * Removing the act that repairs the rule leaves a rule naming a repair
+     * that is not there — which is exactly what the checker is for, and
+     * exactly the sort of change nobody should be offered as a keep.
+     */
+    const would = studio.would({ name: "remove-act", args: { id: "act:cover" } });
+    expect(would.ok).toBe(true);
+    if (!would.ok) return;
+    expect(would.check.errors).toBeGreaterThan(studio.check().errors);
+  });
+});
+
+describe("keeping is an ordinary op under the agent's name", () => {
+  it("applies as the agent, and undo takes it back", async () => {
+    const { studio, reply } = await ask("add a due date to shifts");
+    const proposal = reply.proposals[0]!;
+    const kept = studio.propose({ name: proposal.mutation, args: { ...proposal.args } }, agent, proposal.why);
+    expect(kept.ok).toBe(true);
+    if (!kept.ok) return;
+
+    const fields = studio.declaration().schema.tryDefinition("shift")?.fields as { shape: Record<string, unknown> };
+    expect(Object.keys(fields.shape)).toContain("due-date");
+    expect(studio.proposals()).toHaveLength(1);
+    expect(studio.proposals()[0]?.author.kind).toBe("agent");
+
+    expect(studio.decline(kept.batch)).toBe(true);
+    const after = studio.declaration().schema.tryDefinition("shift")?.fields as { shape: Record<string, unknown> };
+    expect(Object.keys(after.shape)).not.toContain("due-date");
+    expect(studio.proposals()).toHaveLength(0);
+  });
+});
+
+describe("a figure is a change like any other", () => {
+  it("proposes the nearest shipped figure when nothing is behind the seat", async () => {
+    const { reply } = await ask("draw a figure for volunteer");
+    expect(reply.proposals[0]?.mutation).toBe("set-figure");
+    expect(reply.proposals[0]?.args["id"]).toBe("kind:volunteer");
+    expect(figureFaults(String(reply.proposals[0]?.args["figure"]))).toEqual([]);
+    // And it says which it was, rather than passing a placeholder off as a drawing.
+    expect(reply.say).toContain("nearest shipped figure");
+  });
+
+  it("draws through the completion seam, and keeps the drawing", async () => {
+    const drawn =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M4 18 12 6l8 12z"/></svg>';
+    const studio = createStudio(rota);
+    const reply = await studioResponder({ complete: async () => `Here you go:\n${drawn}` })(studio.store as never, "draw a figure for shift");
+    expect(reply.proposals[0]?.args["figure"]).toBe(drawn);
+    const kept = studio.propose({ name: "set-figure", args: { ...reply.proposals[0]!.args } }, agent);
+    expect(kept.ok).toBe(true);
+    expect(studio.declaration().schema.tryDefinition("shift")?.figure).toBe(drawn);
+    expect(studio.check().errors).toBe(0);
+  });
+
+  it("carries a figure through the graph, the declaration and the file", () => {
+    const graph = declarationToGraph(rota as never);
+    const back = graphToDeclaration(graph, { base: rota as never, name: rota.name });
+    expect(back.schema.tryDefinition("volunteer")?.figure).toBe("person");
+
+    const written = declarationFiles(graph, { name: rota.name, base: rota as never });
+    const schemaFile = written.find((file) => file.path.endsWith("schema.ts"));
+    expect(schemaFile?.contents).toContain('figure: "person"');
+  });
+});
+
+describe("a studio store is still a store", () => {
+  it("hands anything it cannot answer to the graph's own responder", async () => {
+    const { reply } = await ask("what is wrong?");
+    // The meta-graph holds no violations, and the floor says so in its own words.
+    expect(reply.say.toLowerCase()).toContain("nothing is broken");
+  });
+
+  it("never proposes an act the studio does not declare", async () => {
+    const studio = createStudio(rota);
+    const names = new Set((studio.store.allMutations() as readonly { name: string }[]).map((one) => one.name));
+    for (const text of ["add a due date to shifts", "every shift needs a volunteer", "draw a figure for shift"]) {
+      const reply = await studioResponder()(studio.store as never, text);
+      for (const proposal of reply.proposals) expect(names.has(proposal.mutation)).toBe(true);
+    }
+  });
+});
+

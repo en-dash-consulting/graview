@@ -69,6 +69,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       ...(def.plural ? { plural: def.plural } : {}),
       ...(def.description ? { description: def.description } : {}),
       ...(def.lifecycle ? { lifecycleField: def.lifecycle.field, retired: def.lifecycle.retired === "date" ? ["date"] : def.lifecycle.retired.map(String) } : {}),
+      ...(def.figure ? { figure: def.figure } : {}),
     });
     for (const [name, type] of Object.entries(shapeOf(def.fields))) {
       const id = `field:${def.kind}.${name}`;

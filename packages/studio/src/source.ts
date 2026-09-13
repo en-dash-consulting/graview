@@ -190,6 +190,8 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
       if (str(kind, "plural")) lines.push(`  plural: ${q(str(kind, "plural")!)},`);
       if (fields.some((field) => field.name === "label")) lines.push(`  label: (node) => node.label,`);
       if (lifecycleField && retired) lines.push(`  lifecycle: { field: ${q(lifecycleField)}, retired: ${retired[0] === "date" ? '"date"' : `[${retired.map(q).join(", ")}]`} },`);
+      // The drawing is part of the declaration, so it is part of the file.
+      if (str(kind, "figure")) lines.push(`  figure: ${q(str(kind, "figure")!)},`);
       /*
        * WHAT THE STUDIO DOES NOT MODEL, IT WRITES BACK ANYWAY.
        *

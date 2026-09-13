@@ -6,6 +6,7 @@ import type { ToolCall } from "@graview/tools";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useStoreTick } from "@graview/pages";
+import { StudioAgentPanel } from "./agent-panel.js";
 import { createStudioLens } from "./lens.js";
 import { studioApp, type StudioSchema } from "./meta.js";
 import { createStudio, type Studio } from "./studio.js";
@@ -236,6 +237,15 @@ function StudioOverlay<S extends AnySchema>({
           * studio and is about the app's data; reaching for it from in here
           * would be reaching past the thing you are editing.
           */}
+        {/*
+          * AND A SEAT YOU CAN TALK TO, beside the declaration it is about.
+          *
+          * The rail's seat runs one derived turn when pressed; this one
+          * takes words. Both propose rather than write, both are attributed,
+          * both are undone from the same rail — the difference is only that
+          * one of them had to be asked.
+          */}
+        <StudioAgentPanel studio={studio as unknown as Studio<AnySchema>} />
         <ActivityRail calls={calls} seat={<StudioSeat studio={studio as unknown as Studio<AnySchema>} onCall={noteCall} />} />
         <button
           type="button"
