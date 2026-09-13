@@ -4,7 +4,7 @@ import { GraviewProvider, useGraph, useGraview, type Scheme, type SceneProps } f
 import { AgentSeat, Shell } from "@graview/primitives";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
 import { useMemo, useState } from "react";
-import { createSeedbedStore, type SeedbedStore } from "../domain/app.js";
+import { createSeedbedStore, seedbedApp, type SeedbedStore } from "../domain/app.js";
 import type { SeedbedSchema } from "../domain/schema.js";
 import { seedbedViews } from "./views.js";
 
@@ -105,6 +105,7 @@ export function SeedbedApp({
        * permitted: tend — one of coordinator, gardener can" to a gardener.
        */
       {...(principal ? { principal } : {})}
+      settings={seedbedApp.settings ?? []}
     >
       <Shell<S>
         standing="The garden keeps its agreements"

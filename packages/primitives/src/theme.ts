@@ -109,6 +109,30 @@ export interface ThemeCssOptions {
   readonly scope?: string;
 }
 
+/**
+ * Everything that stops moving when motion is not wanted — as rules under
+ * whichever root selector is asking for them.
+ *
+ * Motion is removed; the INFORMATION is not. A steady ring in the mover's
+ * colour says the same thing the pulse did, and someone who cannot take the
+ * animation still gets to watch the system work.
+ */
+function stillness(asking: string, within: string): string {
+  // The asking element and the element the rules live under are the same
+  // thing for a whole page and two different things for an embed, where the
+  // reader's answer is on the document and the rules must not escape the box.
+  const at = asking === within ? asking : `${asking} ${within}`;
+  return `  ${at} [data-graview-view] { transition: none; }
+  ${at} [data-graview-touched] > * { animation: none; }
+  ${at} [data-graview-view][data-graview-wrote] > *,
+  ${at} [data-graview-view][data-graview-read] > * {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--graview-activity);
+  }
+  ${at} [data-graview-view][data-graview-read] > * { box-shadow: 0 0 0 1px var(--graview-activity); }
+  ${at} [data-graview-connector][data-graview-activity] { animation: none; stroke-opacity: 1; }`;
+}
+
 export function themeCss(
   scheme: Scheme = "dark",
   brand: Brand = GRAVIEW_BRAND,
@@ -117,6 +141,30 @@ export function themeCss(
   const tokens = brand.schemes[scheme];
   const root = options.scope ?? ":root";
   const surface = options.scope ?? "html, body";
+  /*
+   * THE ROOT IS THE READER'S; ONLY THE BODY IS OURS TO SIZE.
+   *
+   * `font: 0.875rem` was set on `html, body` together, which means it was
+   * set on the ROOT — so the root's own font-size became 0.875 of the
+   * browser's, and every `rem` in the framework then resolved against 14px
+   * instead of 16. A 0.78125rem label was 10.9px, not the 12.5 it was
+   * written as, and a reader who had set their browser to 20px got 17.5.
+   * Worse, it made the root font size unusable as the one place a text-size
+   * setting can be honoured, because the stylesheet was already occupying
+   * it. The body is sized; the root is left exactly as the person has it.
+   */
+  const text = options.scope ?? "body";
+  /*
+   * WHERE THE READER'S MOTION ANSWER IS WRITTEN.
+   *
+   * On the document element, always — it is a fact about the person, not
+   * about one embed. A scoped stylesheet therefore asks about the document
+   * and applies WITHIN its own box, so an embed on somebody else's page
+   * still honours a Graview host's setting without restyling anything of
+   * the host's. Nothing is emitted at `:root { ... }` in a scoped
+   * stylesheet, which is the rule an embed must not break.
+   */
+  const motionRoot = ":root";
   const radius = brand.shape?.radius ?? 12;
   const density = brand.shape?.density ?? 1;
   const body =
@@ -142,15 +190,18 @@ ${surface} {
   margin: 0;
   background: var(--graview-ground-deep);
   color: var(--graview-ink);
-  /*
-   * THE READER'S OWN TEXT SIZE.
-   *
-   * This was 14px, and every size in the framework was an absolute pixel
-   * count under it, so somebody who sets a larger default font in their
-   * browser — the setting WCAG 1.4.4 is about — got a Graview that ignored
-   * them completely. 0.875rem is 14px at the default 16px root, so nothing
-   * moves for anyone who has not asked for anything.
-   */
+}
+
+/*
+ * THE READER'S OWN TEXT SIZE.
+ *
+ * Every size in the framework was once an absolute pixel count, so somebody
+ * who sets a larger default font in their browser — the setting WCAG 1.4.4
+ * is about — got a Graview that ignored them completely. 0.875rem is 14px
+ * at the default 16px root, so nothing moves for anyone who has not asked
+ * for anything, and everything moves together for anyone who has.
+ */
+${text} {
   font: 0.875rem/1.55 var(--graview-font-body);
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
@@ -695,21 +746,24 @@ code { color: var(--graview-ink-muted); font-size: 12px; letter-spacing: 0.02em;
   animation: graview-relation 1200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/*
+ * MOTION, ASKED OF THE SYSTEM AND OVERRIDABLE BY THE PERSON.
+ *
+ * The system's own preference is the default and always was. The "motion"
+ * setting (see readerSettings) stamps data-graview-motion on the root
+ * element when — and only when — a reader overrides it: "reduce" turns the same
+ * rules on for somebody whose system says otherwise, and "full" turns them
+ * off for somebody whose system says reduce and who wants the movement
+ * here anyway. Choosing "as your system has it" removes the attribute, so
+ * the media query is what answers again.
+ *
+ * Written as one rule list under two selectors rather than duplicated,
+ * because a stylesheet where the two copies can drift is a stylesheet where
+ * they will.
+ */
 @media (prefers-reduced-motion: reduce) {
-  [data-graview-view] { transition: none; }
-  [data-graview-touched] > * { animation: none; }
-  /*
-   * Motion is removed; the INFORMATION is not. A steady ring in the mover's
-   * colour says the same thing the pulse did, and someone who cannot take
-   * the animation still gets to watch the system work.
-   */
-  [data-graview-view][data-graview-wrote] > *,
-  [data-graview-view][data-graview-read] > * {
-    animation: none;
-    box-shadow: 0 0 0 2px var(--graview-activity);
-  }
-  [data-graview-view][data-graview-read] > * { box-shadow: 0 0 0 1px var(--graview-activity); }
-  [data-graview-connector][data-graview-activity] { animation: none; stroke-opacity: 1; }
+${stillness(`${motionRoot}:not([data-graview-motion='full'])`, text)}
 }
+${stillness(`${motionRoot}[data-graview-motion='reduce']`, text)}
 `;
 }

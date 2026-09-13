@@ -1,5 +1,6 @@
 export { GraviewProvider, useGraph, useGraview, useNode, useViewMode, ViewModeProvider } from "./context.js";
-export type { AdministeredModule, GraviewContextValue, GraviewProviderProps, PointerMenu, Scheme, ViewMode } from "./context.js";
+export type { AdministeredModule, GraviewContextValue, GraviewProviderProps, PointerMenu, Scheme, Seat, ViewMode } from "./context.js";
+export { applySettings, honourSetting, loadSetting, rememberSetting } from "./settings.js";
 
 export { createViews, DEFAULT_VIEW, isDefaultView, markDefaultView } from "./view-registry.js";
 export type {

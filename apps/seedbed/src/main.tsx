@@ -1,4 +1,5 @@
 import { themeCss, type Scheme } from "@graview/primitives";
+import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
 import { seedbedBrand } from "./domain/brand.js";
 import { PagesApp } from "@graview/pages";
@@ -8,7 +9,7 @@ import {
   forgetFreshParam,
   openStore,
 } from "@graview/ship/browser";
-import { createMemoryAdapter } from "@graview/core";
+import { createMemoryAdapter, type SettingDeclaration } from "@graview/core";
 import { seedbedApp } from "./domain/app.js";
 import type { SeedbedSchema } from "./domain/schema.js";
 import { chapterFromSearch } from "./domain/chapters.js";
@@ -84,6 +85,12 @@ const opened: Opened = chapter
   : await openStore({ app: seedbedApp, adapter, fresh: browserStartsFresh() });
 forgetFreshParam();
 const remembers = chapter ? chapter.remembers : true;
+
+/*
+ * THE READER'S OWN SETTINGS, APPLIED BEFORE ANYTHING RENDERS — a fact about
+ * the person and their browser, not about which chapter or which face.
+ */
+applySettings(((chapter?.app ?? seedbedApp) as { settings?: readonly SettingDeclaration[] }).settings ?? []);
 
 if (window.location.pathname.startsWith("/pages")) {
   // The routed, responsive face: same store, same ids, one app.

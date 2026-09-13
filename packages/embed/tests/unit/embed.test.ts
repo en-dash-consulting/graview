@@ -7,7 +7,16 @@ describe("an embed's theme and fonts", () => {
   it("scopes the theme to the element rather than the document", () => {
     const css = themeCss("dark", undefined, { scope: ".graview-embed-7" });
     expect(css).toContain(".graview-embed-7 {");
-    expect(css).not.toContain(":root");
+    /*
+     * No RULE of the host's is written — which is the actual claim, and is
+     * narrower than "the string `:root` never appears". The reader's motion
+     * answer lives on the document element for the whole browser, so a
+     * scoped stylesheet asks about it and applies inside its own box:
+     * `:root[data-graview-motion='reduce'] .graview-embed-7 …` restyles
+     * nothing the embed does not own.
+     */
+    expect(css).not.toContain(":root {");
+    expect(css).not.toMatch(/:root(?!\[data-graview-motion)[^ ]*\s*\{/);
     expect(css).not.toMatch(/^html, body/m);
     // The document's own theme is untouched by default.
     expect(themeCss("dark")).toContain(":root {");

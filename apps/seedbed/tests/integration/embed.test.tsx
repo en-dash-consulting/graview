@@ -49,7 +49,10 @@ describe("a chapter, embedded", () => {
     expect(element.querySelectorAll('[data-graview-view^="kind:"]').length).toBe(4);
     const style = element.querySelector("style")?.textContent ?? "";
     expect(style).toContain(".graview-embed-");
-    expect(style).not.toContain(":root");
+    // Nothing of the HOST's is restyled. The reader's motion answer lives on
+    // the document element for the whole browser, so a scoped stylesheet asks
+    // about it and applies inside its own box — which owns nothing outside.
+    expect(style).not.toContain(":root {");
     expect(element.querySelector('[data-testid="embed-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
     expect(element.querySelector('[data-testid="embed-face-graview"]')).toBeNull();
     expect(element.querySelector('[data-testid="standing"]')?.textContent).toContain("Everything is in order");

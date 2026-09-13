@@ -12,7 +12,7 @@
  *
  * Writes docs/pages-face.json.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
@@ -106,9 +106,34 @@ try {
    * sideways — `minmax(12rem, 1fr)` is 384px once a reader asks for 32, and
    * a column that cannot shrink is a page that scrolls two ways.
    */
+  /*
+   * AND THE SIZE IS SET THROUGH THE CONTROL, not injected.
+   *
+   * Every run of this check used to write `document.documentElement.style
+   * .fontSize = "32px"` itself, which tests the CSS and says nothing about
+   * whether a reader can get there. The profile pane on the scene's bar now
+   * offers it; "Largest" is 32px precisely because that is the 200% WCAG
+   * 1.4.4 asks for, so the promise the app makes and the size the harness
+   * checks are one number. Set once, on the scene, and carried to the
+   * routed face by the browser rather than by this script.
+   */
+  await phone.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await phone.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+  await phone.waitForTimeout(600);
+  await phone.click('[data-testid="profile-button"]');
+  await phone.waitForSelector('[data-testid="setting-text-size-32px"]', { timeout: 10_000 });
+  await phone.click('[data-testid="setting-text-size-32px"]');
+  await phone.waitForTimeout(400);
+  report.checks.theControlSetsIt = await phone.evaluate(() => ({
+    root: getComputedStyle(document.documentElement).fontSize,
+    pressed:
+      document.querySelector('[data-testid="setting-text-size-32px"]')?.getAttribute("aria-pressed") ===
+      "true",
+    ok: getComputedStyle(document.documentElement).fontSize === "32px",
+  }));
+
   for (const path of ["/pages", "/pages/tasks", "/pages/tasks/t-deposit", "/pages/problems"]) {
     await phone.goto(`http://localhost:5193${path}?today=2026-09-01`, { waitUntil: "networkidle" });
-    await phone.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
     await phone.waitForTimeout(400);
     const reflow = await phone.evaluate(() => ({
       root: getComputedStyle(document.documentElement).fontSize,
@@ -132,7 +157,49 @@ try {
       },
     };
   }
-  await phone.evaluate(() => { document.documentElement.style.fontSize = ""; });
+  /* --------------------------- the profile pane, read by a machine */
+  /*
+   * A PANE HOLDING THE ACCESSIBILITY CONTROLS HAS TO BE ACCESSIBLE.
+   *
+   * Text size and motion are settings people who need them come looking for,
+   * so a pane that offers them and fails a contrast or a name rule is worse
+   * than one that offers nothing. Both widths and both schemes, with the
+   * pane OPEN — closed, it is one button and proves nothing.
+   */
+  const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
+  const axeOnThePane = async (page) => {
+    await page.click('[data-testid="profile-button"]');
+    await page.waitForSelector('[data-testid="profile"]', { timeout: 10_000 });
+    await page.addScriptTag({ content: axeSource });
+    return page.evaluate(async () => {
+      const result = await window.axe.run(document, { resultTypes: ["violations"] });
+      return result.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
+    });
+  };
+  const paneFindings = {};
+  for (const width of [390, 1280]) {
+    for (const theme of ["light", "dark"]) {
+      const seen = await browser.newPage({ viewport: { width, height: 900 } });
+      await seen.goto(`http://localhost:5193/?today=2026-09-01&theme=${theme}`, { waitUntil: "load" });
+      await seen.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await seen.waitForTimeout(700);
+      paneFindings[`${width}-${theme}`] = await axeOnThePane(seen);
+      await seen.close();
+    }
+  }
+  report.checks.theProfilePaneIsReachable = {
+    ...paneFindings,
+    ok: Object.values(paneFindings).every((found) => found.length === 0),
+  };
+
+  /* Back to the reader's own size, through the same control. */
+  await phone.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+  await phone.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+  await phone.waitForTimeout(500);
+  await phone.click('[data-testid="profile-button"]');
+  await phone.waitForSelector('[data-testid="setting-text-size-browser"]', { timeout: 10_000 });
+  await phone.click('[data-testid="setting-text-size-browser"]');
+  await phone.waitForTimeout(300);
 
   /* ------------------------------------- a derived form actually applies */
   await phone.goto("http://localhost:5193/pages/tasks?today=2026-09-01", { waitUntil: "networkidle" });

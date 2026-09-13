@@ -190,7 +190,15 @@ const ListsView = ((props: ViewProps<S>) => {
           const done = tasks.length - open.length;
           return (
             <section key={list.id} style={{ display: "grid", gap: 8, minWidth: 0 }}>
-              <header
+              {/*
+                * A DIV, not a `<header>`. It is a control — clicking it
+                * selects the list — and a landmark may not be one: the
+                * framework stamps `role="button"` on a pick target, ARIA
+                * forbids that role on a sectioning header, and axe reported
+                * three of them on this app's first screen. A heading that
+                * you press is a button that contains a heading.
+                */}
+              <div
                 data-graview-pick={list.id}
                 /*
                  * The tasks under it said what a selection lit; the list's own
@@ -221,7 +229,7 @@ const ListsView = ((props: ViewProps<S>) => {
                 >
                   {open.length === 0 ? "clear" : `${open.length} left`}
                 </span>
-              </header>
+              </div>
 
               {tasks.length === 0 ? (
                 <span style={{ fontSize: 12, color: "var(--graview-ink-faint)" }}>

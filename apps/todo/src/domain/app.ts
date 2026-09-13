@@ -1,4 +1,4 @@
-import { defineApp, Store, type StoreOptions } from "@graview/core";
+import { defineApp, readerSettings, Store, type StoreOptions } from "@graview/core";
 import { thingsBrand } from "./brand.js";
 import { todoInstallation } from "./installation.js";
 import { todoInvariants } from "./invariants.js";
@@ -36,6 +36,13 @@ export const todoApp = defineApp({
    * act on one — not refused, absent.
    */
   modules: todoInstallation.modules,
+  /*
+   * What belongs to the READER rather than to the installation: how big the
+   * words are, and whether things move. The profile pane draws exactly
+   * these, and the shell has already carried the answer to the root
+   * element — no component here hears about either.
+   */
+  settings: readerSettings(),
   brand: thingsBrand,
   lenses: [
     {

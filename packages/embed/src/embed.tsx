@@ -7,6 +7,7 @@ import {
   OverviewButton,
   Places,
   QuickRelations,
+  Profile,
   ShowInstallation,
   registerDefaultViews,
   RelationKey,
@@ -226,6 +227,9 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         scheme={scheme}
         {...(brand ? { brand } : {})}
         {...(principal ? { principal } : {})}
+        /* The reader's own text size and motion, on somebody else's page
+           too: the answer lives on the browser, not on the installation. */
+        settings={app.settings ?? []}
       >
         <Faces face={face} stop={stop} kinds={kinds} />
         {toggle ? <Strip face={face} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} /> : null}
@@ -350,6 +354,10 @@ function Strip({
       {/* The named pictures over the graph — a lens is somewhere to go, by name. */}
       {face !== "pages" ? <Places /> : null}
       {face !== "pages" ? <ShowInstallation /> : null}
+      {/* Who is at the keyboard, and the reader's own settings. The seats
+          keep their own control beside it, because the HOST owns which one
+          is taken here — the pane says who that turned out to be. */}
+      <Profile />
       {seats && seats.length > 1 ? (
         <div role="group" aria-label="Seat" data-testid="embed-seats" style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 6 }}>
           <span style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>As</span>

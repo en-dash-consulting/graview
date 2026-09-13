@@ -12,7 +12,7 @@ import type { Principal } from "@graview/core";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useState } from "react";
 import example from "../data/example.json";
-import { createTodoStore, type TodoStore } from "../domain/app.js";
+import { createTodoStore, todoApp, type TodoStore } from "../domain/app.js";
 import { thingsBrand } from "../domain/brand.js";
 import type { TodoSchema } from "../domain/schema.js";
 import { todoViews } from "./views.js";
@@ -140,6 +140,7 @@ export function TodoApp({
       brand={thingsBrand}
       principal={principal ?? openingSeat()}
       seats={SEATS}
+      settings={todoApp.settings ?? []}
       {...(onSeat ? { onSeat } : {})}
     >
       <TodoShell
@@ -193,6 +194,9 @@ function TodoShell({
       home={place.id}
       standing="Nothing is out of order"
       nav={<Places />}
+      // A person's own record on the routed face: the profile the self
+      // grant already makes theirs to edit and nobody else's.
+      profileHref={(userId) => `/pages/people/${userId}`}
       seat={(onCall) => <TidyButton onCall={onCall} />}
       remembers={remembers}
       syncUrl={syncUrl}

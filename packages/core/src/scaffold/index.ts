@@ -845,7 +845,7 @@ export const ${ids.brandVar}: Brand = {
 }
 
 function appTs(ids: Ids): string {
-  return `import { defineApp, Store, type StoreOptions } from "@graview/core";
+  return `import { defineApp, readerSettings, Store, type StoreOptions } from "@graview/core";
 import { ${ids.brandVar} } from "./brand.js";
 import { invariants } from "./invariants.js";
 import { mutations } from "./mutations.js";
@@ -863,6 +863,14 @@ export const ${ids.appVar} = defineApp({
   mutations,
   invariants,
   brand: ${ids.brandVar},
+  /*
+   * What belongs to the READER rather than to this installation: how big
+   * the words are, and whether things move. The profile pane on the bar
+   * draws exactly what is declared here, and the shell has already carried
+   * the answer to the root element — every surface is sized in \`rem\`, so
+   * one answer resizes the picture, the panes and the pages together.
+   */
+  settings: readerSettings(),
   /*
    * The intelligence, declared. The starter provider proposes first data
    * from the schema alone (no key, no model); a real model plugs the same
@@ -916,7 +924,7 @@ import { GraviewProvider, useGraph, useGraview, type Scheme } from "@graview/rea
 import { AgentSeat, Shell } from "@graview/primitives";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
 import { useMemo, useState } from "react";
-import { createStore, type ${ids.StoreType} } from "../domain/app.js";
+import { ${ids.appVar}, createStore, type ${ids.StoreType} } from "../domain/app.js";
 import { ${ids.brandVar} } from "../domain/brand.js";
 import type { ${ids.SchemaType} } from "../domain/schema.js";
 import { views } from "./views.js";
@@ -958,7 +966,14 @@ export function ${ids.AppComponent}({
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
 
   return (
-    <GraviewProvider store={created} views={registry} initialView={initialView} scheme={scheme} brand={${ids.brandVar}}>
+    <GraviewProvider
+      store={created}
+      views={registry}
+      initialView={initialView}
+      scheme={scheme}
+      brand={${ids.brandVar}}
+      settings={${ids.appVar}.settings ?? []}
+    >
       <Shell<S>
         standing="Everything is in order"
         seat={(onCall) => <Starter onCall={onCall} />}

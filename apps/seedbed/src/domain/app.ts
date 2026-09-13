@@ -1,4 +1,4 @@
-import { defineApp, Store, type StoreOptions } from "@graview/core";
+import { defineApp, Store, type StoreOptions, readerSettings } from "@graview/core";
 import { seedbedBrand } from "./brand.js";
 import { seedbedInvariants } from "./invariants.js";
 import { seedbedMutations } from "./mutations.js";
@@ -15,6 +15,8 @@ export const seedbedApp = defineApp({
   mutations: seedbedMutations,
   invariants: seedbedInvariants,
   brand: seedbedBrand,
+  /** What belongs to the reader: how big the words are, and whether things move. */
+  settings: readerSettings(),
   /*
    * The intelligence, declared. The starter provider proposes from the
    * schema alone (no key, no model); a real model plugs the same seam with

@@ -40,7 +40,46 @@ export function usePickTargets(ref: { current: HTMLElement | null }): void {
     if (!host) return;
     for (const target of host.querySelectorAll<HTMLElement>("[data-graview-pick]")) {
       if (target.getAttribute("tabindex") === null) target.setAttribute("tabindex", "0");
-      if (target.getAttribute("role") === null) target.setAttribute("role", "button");
+      if (target.getAttribute("role") === null && takesButton(target)) {
+        target.setAttribute("role", "button");
+      }
     }
   });
+}
+
+/**
+ * Whether `role="button"` is a legal thing to say about this element.
+ *
+ * It was said about EVERY pick target, and a view is free to mark whatever
+ * it drew — so a list whose heading was a `<header>` got
+ * `<header role="button">`, which ARIA forbids and axe reports
+ * (`aria-allowed-role`). Three of them on the first screen of the app this
+ * repository shows people first, unnoticed because nothing had ever run axe
+ * over the scene.
+ *
+ * An allowlist rather than a list of forbidden tags: the elements that carry
+ * no semantics of their own are a short, closed set, and everything else —
+ * landmarks, headings, lists, form controls, links — either already means
+ * something or is somewhere a button may not be. A target that is not on it
+ * still gets `tabindex`, so the keyboard reaches it; what it does not get is
+ * a role that is a lie about the markup.
+ */
+const GENERIC = new Set([
+  "div",
+  "span",
+  "p",
+  "figure",
+  "img",
+  "td",
+  "output",
+  "b",
+  "i",
+  "em",
+  "strong",
+  "small",
+  "canvas",
+]);
+
+function takesButton(element: HTMLElement): boolean {
+  return GENERIC.has(element.tagName.toLowerCase());
 }

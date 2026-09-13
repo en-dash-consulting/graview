@@ -3,10 +3,12 @@ import type {
   Brand,
   NodeOfSchema,
   Principal,
+  SettingDeclaration,
   Store,
   ViewRegistry,
 } from "@graview/core";
 import type { AffordanceProvider } from "@graview/tools";
+import { honourSetting, loadSetting, rememberSetting } from "./settings.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
 import { EMPTY_VIEW, edgeOfSelection, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout";
@@ -100,6 +102,15 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly seats: readonly Seat[];
   /** Sit down in one of `seats`. A no-op when the app offered none. */
   takeSeat(principal: Principal): void;
+  /**
+   * The settings this app declares as the READER's, and what this reader
+   * has them set to. The profile pane draws exactly these; nothing else
+   * needs to know a setting exists, because the shell has already carried
+   * the answer to the root element that every surface is sized against.
+   */
+  readonly settings: readonly SettingDeclaration[];
+  readonly settingValues: Readonly<Record<string, string>>;
+  chooseSetting(name: string, value: string): void;
   /**
    * A relation singled out for emphasis, by edge kind, or null for none.
    *
@@ -200,6 +211,7 @@ export function useViewMode(): ViewMode {
  */
 const ANONYMOUS: Principal = { kind: "human" };
 const NO_SEATS: readonly Seat[] = [];
+const NO_SETTINGS: readonly SettingDeclaration[] = [];
 
 /** One shared empty, so "nothing selected" is referentially stable. */
 const EMPTY_SELECTION: readonly string[] = [];
@@ -237,6 +249,8 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly seats?: readonly Seat[];
   /** Told when a seat is taken, for a host that keeps the choice (a URL, storage). */
   readonly onSeat?: (principal: Principal) => void;
+  /** The app's declared reader settings — `app.settings`, passed straight through. */
+  readonly settings?: readonly SettingDeclaration[];
   readonly brand?: Brand;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
@@ -263,6 +277,7 @@ export function GraviewProvider<S extends AnySchema>({
   principal,
   seats = NO_SEATS,
   onSeat,
+  settings = NO_SETTINGS,
   brand,
   providers,
   view,
@@ -292,6 +307,33 @@ export function GraviewProvider<S extends AnySchema>({
       onSeat?.(next);
     },
     [onSeat],
+  );
+
+  /*
+   * WHAT THE READER SET FOR THEMSELVES, read once and applied to the root.
+   *
+   * Read lazily so a browser that cannot remember still opens on the
+   * declaration's own values, and applied in an effect rather than during
+   * render — writing to `document.documentElement` while React is
+   * rendering is a side effect in the wrong place, and would also run on a
+   * server where there is no document at all.
+   */
+  const [settingValues, setSettingValues] = useState<Readonly<Record<string, string>>>(() =>
+    Object.fromEntries(settings.map((setting) => [setting.name, loadSetting(setting)])),
+  );
+  useEffect(() => {
+    for (const setting of settings) {
+      honourSetting(setting, settingValues[setting.name] ?? setting.initial);
+    }
+  }, [settings, settingValues]);
+  const chooseSetting = useCallback(
+    (name: string, value: string) => {
+      const setting = settings.find((candidate) => candidate.name === name);
+      if (!setting || !setting.options.some((option) => option.value === value)) return;
+      rememberSetting(setting, value);
+      setSettingValues((current) => ({ ...current, [name]: value }));
+    },
+    [settings],
   );
   const [emphasis, setEmphasis] = useState<string | null>(null);
   const { activity, noteAttention } = useActivityState(store);
@@ -482,6 +524,9 @@ export function GraviewProvider<S extends AnySchema>({
       principal: who,
       seats,
       takeSeat,
+      settings,
+      settingValues,
+      chooseSetting,
       hiddenKinds,
       administered,
       ...(providers ? { providers } : {}),
@@ -502,6 +547,9 @@ export function GraviewProvider<S extends AnySchema>({
       who,
       seats,
       takeSeat,
+      settings,
+      settingValues,
+      chooseSetting,
       hiddenKinds,
       administered,
       providers,

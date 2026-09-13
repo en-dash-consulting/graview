@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T05:31:01.612Z",
+  "at": "2026-09-13T05:44:46.204Z",
   "engine": "chromium",
   "screens": [
     {
@@ -65,7 +65,7 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x405",
+        "size": "236x435",
         "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Give it a new date …☆Finish it"
       },
       "led": null
@@ -192,7 +192,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 42,
+      "fill": 41,
       "inspector": null,
       "led": null
     },
@@ -242,7 +242,7 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x369",
+        "size": "236x395",
         "text": "×⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time "
       },
       "led": null
@@ -289,7 +289,7 @@
       "inspector": {
         "shown": 11,
         "hidden": 0,
-        "size": "236x374",
+        "size": "236x402",
         "text": "Pay the deposittask· double-click opens×Put it back☆Rename …☆Move the date …☆Change the ta"
       },
       "led": null
@@ -315,8 +315,175 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x469",
+        "size": "236x504",
         "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Give it a new date …☆Finish it"
+      },
+      "led": null
+    },
+    {
+      "app": "seedbed",
+      "state": "narrow",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 5,
+      "inspector": {
+        "shown": 3,
+        "hidden": 0,
+        "size": "370x123",
+        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
+      },
+      "led": null
+    },
+    {
+      "app": "seedbed",
+      "state": "empty",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 4,
+      "inspector": null,
+      "led": null
+    },
+    {
+      "app": "seedbed",
+      "state": "invited",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 4,
+      "inspector": {
+        "shown": 1,
+        "hidden": 0,
+        "size": "236x121",
+        "text": "Gardeners· double-click opens×Nothing here yet, though Plots expect to connect to theseWel"
+      },
+      "led": null
+    },
+    {
+      "app": "seedbed",
+      "state": "planted",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 4,
+      "inspector": null,
+      "led": null
+    },
+    {
+      "app": "seedbed",
+      "state": "asked",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 4,
+      "inspector": {
+        "shown": 3,
+        "hidden": 0,
+        "size": "236x230",
+        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
+      },
+      "led": null
+    },
+    {
+      "app": "seedbed",
+      "state": "lens",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 59,
+      "inspector": null,
+      "led": null
+    },
+    {
+      "app": "seedbed",
+      "state": "askedNarrow",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 6,
+      "inspector": {
+        "shown": 3,
+        "hidden": 0,
+        "size": "370x107",
+        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       },
       "led": null
     }

@@ -162,17 +162,29 @@ try {
       await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await page.waitForTimeout(900);
     };
-    /** What the bar says about this seat, before anything is selected. */
-    const bar = () =>
-      page.evaluate(() => ({
-        seats: [...document.querySelectorAll('[data-testid="seats"] button')].map((b) =>
-          b.textContent.trim(),
+    /*
+     * What the bar says about this seat. The seats live INSIDE the profile
+     * pane — "who am I" and "be somebody else" are one question — so the
+     * pane is opened to read them, and closed again so the next gesture
+     * lands on the picture rather than on a popover.
+     */
+    const bar = async () => {
+      await page.click('[data-testid="profile-button"]');
+      await page.waitForSelector('[data-testid="profile"]', { timeout: 10_000 });
+      const said = await page.evaluate(() => ({
+        signedInAs: document.querySelector('[data-testid="profile-button"]')?.textContent.trim(),
+        seats: [...document.querySelectorAll('[data-testid="profile"] [data-testid="seats"] button')].map(
+          (b) => b.textContent.trim(),
         ),
         sittingAs: document
-          .querySelector('[data-testid="seats"] button[aria-pressed="true"]')
+          .querySelector('[data-testid="profile"] [data-testid="seats"] button[aria-pressed="true"]')
           ?.textContent.trim(),
         canShow: document.querySelector('[data-testid="show-installation"]') !== null,
       }));
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(200);
+      return said;
+    };
     const districts = () =>
       page.evaluate(() =>
         [...document.querySelectorAll("[data-graview-view]")].map((e) =>
@@ -182,9 +194,11 @@ try {
 
     await sitAs("user-nora");
     const keeperBar = await bar();
-    check("things: both seats are offered on the bar, and the app opens in the first",
-      keeperBar.seats.length === 2 && keeperBar.sittingAs === "Nora, keeper",
-      keeperBar.seats.join(" / "));
+    check("things: the bar says who is signed in, and the pane offers the other seat",
+      keeperBar.signedInAs?.includes("Nora") === true &&
+        keeperBar.seats.length === 2 &&
+        keeperBar.sittingAs === "Nora, keeper",
+      `${keeperBar.signedInAs} · ${keeperBar.seats.join(" / ")}`);
 
     await page.click('[data-testid="show-installation"]');
     await page.waitForTimeout(900);

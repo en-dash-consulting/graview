@@ -5,7 +5,7 @@ import { useCallback, useState, type ReactNode } from "react";
 import { ChatPanel } from "./chat.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { ShowInstallation } from "./installation.js";
-import { Seats } from "./seats.js";
+import { Profile } from "./profile.js";
 import { Places } from "./places.js";
 import { QuickRelations } from "./quick-relations.js";
 import { RelationKey } from "./relation-key.js";
@@ -57,6 +57,12 @@ export interface ShellProps<S extends AnySchema> {
   readonly onScheme: (scheme: Scheme) => void;
   /** The chat seat, on by default: it answers from the graph with no key. */
   readonly chat?: boolean;
+  /**
+   * Where a person's own record lives on the routed face. Given, the
+   * profile pane links to it; absent, the pane says who you are without
+   * pretending there is somewhere to go.
+   */
+  readonly profileHref?: (userId: string) => string;
 }
 
 export function Shell<S extends AnySchema>({
@@ -73,6 +79,7 @@ export function Shell<S extends AnySchema>({
   scheme,
   onScheme,
   chat = true,
+  profileHref,
 }: ShellProps<S>) {
   const { brand } = useGraview<S>();
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);
@@ -139,8 +146,6 @@ export function Shell<S extends AnySchema>({
         <Places<S> />
         {/* The way into the installation, for the seat that keeps it. */}
         <ShowInstallation<S> />
-        {/* And who you are sitting as, where the app offers a choice. */}
-        <Seats<S> />
         {/* The right-hand group wraps for the same reason the bar does: as one
             unwrapping unit it carried the whole overflow across the edge by
             itself, so the bar wrapped and the controls were still gone. */}
@@ -188,6 +193,18 @@ export function Shell<S extends AnySchema>({
           >
             {scheme === "dark" ? "☀" : "☾"}
           </button>
+          {/*
+            * WHO YOU ARE, AND WHAT YOU SET FOR YOURSELF — last on the bar,
+            * where every application in the world puts it. The seat
+            * switcher lives inside it now: "who am I" and "be somebody
+            * else" are one question, and two separate controls for them
+            * was the bar answering it twice.
+            */}
+          <Profile<S>
+            scheme={scheme}
+            onScheme={onScheme}
+            {...(profileHref ? { profileHref } : {})}
+          />
         </div>
       </header>
       {/* Escape backs out to home, whatever the app says home is. */}

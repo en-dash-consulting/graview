@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T05:32:53.743Z",
+  "at": "2026-09-13T05:44:14.759Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -30,6 +30,11 @@
       "linksToList": true,
       "actions": true,
       "spatialLink": true
+    },
+    "theControlSetsIt": {
+      "root": "32px",
+      "pressed": true,
+      "ok": true
     },
     "readersOwnTextSize": {
       "/pages": {
@@ -64,6 +69,13 @@
         "widest": [],
         "ok": true
       }
+    },
+    "theProfilePaneIsReachable": {
+      "390-light": [],
+      "390-dark": [],
+      "1280-light": [],
+      "1280-dark": [],
+      "ok": true
     },
     "derivedFormApplies": true,
     "sceneOffersThePages": true,

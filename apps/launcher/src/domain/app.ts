@@ -1,4 +1,4 @@
-import { defineApp, Store, type StoreOptions } from "@graview/core";
+import { defineApp, readerSettings, Store, type StoreOptions } from "@graview/core";
 import { launcherInvariants } from "./invariants.js";
 import { launcherMutations } from "./mutations.js";
 import { launcherSchema, type LauncherSchema } from "./schema.js";
@@ -13,6 +13,8 @@ export const launcherApp = defineApp({
   schema: launcherSchema,
   mutations: launcherMutations,
   invariants: launcherInvariants,
+  /** What belongs to the reader: how big the words are, and whether things move. */
+  settings: readerSettings(),
   lenses: [
     {
       name: "coverage",

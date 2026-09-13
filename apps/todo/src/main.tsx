@@ -1,4 +1,5 @@
 import { themeCss, type Scheme } from "@graview/primitives";
+import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
 import { PagesApp } from "@graview/pages";
 import {
@@ -42,6 +43,16 @@ export function applyScheme(scheme: Scheme): void {
 
 const scheme = initialScheme();
 applyScheme(scheme);
+
+/*
+ * THE READER'S OWN SETTINGS, APPLIED BEFORE ANYTHING RENDERS.
+ *
+ * Here rather than in a component, for the same reason the scheme is here:
+ * it is a fact about the person and their browser, it belongs to the
+ * document, and this app has two faces on two paths that must not disagree
+ * about how big the words are.
+ */
+applySettings(todoApp.settings ?? []);
 
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");

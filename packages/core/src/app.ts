@@ -106,6 +106,47 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    */
   readonly version?: number;
   readonly migrations?: readonly MigrationDeclaration[];
+  /**
+   * Settings that belong to the READER rather than to the installation.
+   *
+   * Text size, motion, anything else a person sets for themselves and keeps
+   * in their own browser. Declared here for the same reason everything else
+   * is: the profile pane draws exactly what the app declares, so adding a
+   * setting is a line in the declaration rather than a control somebody
+   * wires into a shell — and `graview check` can refuse one nothing could
+   * ever honour, which is a control that does nothing.
+   */
+  readonly settings?: readonly SettingDeclaration[];
+}
+
+/**
+ * One thing a reader may set for themselves.
+ *
+ * `honoured` is a CLOSED SET, and that is the point of declaring settings
+ * at all: the shell knows two ways to carry a person's answer to every
+ * surface at once, and a setting that names neither is a control nobody
+ * could act on. The checker says so before anybody meets it.
+ *
+ *   "root-font-size"  — a CSS length set on <html>. Every surface the
+ *                       framework draws is sized in `rem`, so one answer
+ *                       resizes the whole app, the routed face included,
+ *                       without a single component hearing about it.
+ *   "root-attribute"  — `data-graview-<name>` on <html>, for the theme's
+ *                       own CSS (and an app's) to read. How motion is
+ *                       carried: the stylesheet already honours the
+ *                       system's preference; this lets a person override it.
+ */
+export interface SettingDeclaration {
+  /** Kebab-case, unique in the app; becomes the storage key and the attribute. */
+  readonly name: string;
+  /** What a person is choosing, in their words. */
+  readonly title: string;
+  readonly description?: string;
+  readonly honoured: "root-font-size" | "root-attribute";
+  /** The answers, in order. At least two — one choice is not a setting. */
+  readonly options: readonly { readonly value: string; readonly label: string }[];
+  /** Where a reader who has never chosen starts. Must be one of the options. */
+  readonly initial: string;
 }
 
 export interface MigrationDeclaration {

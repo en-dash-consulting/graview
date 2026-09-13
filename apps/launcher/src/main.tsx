@@ -4,6 +4,7 @@ import {
   BackOut,
   Inspector,
   OverviewButton,
+  Profile,
   RelationKey,
   Standing,
   themeCss,
@@ -11,6 +12,7 @@ import {
   type Scheme,
 } from "@graview/primitives";
 import {
+  applySettings,
   GraviewProvider,
   Scene,
   useAttention,
@@ -23,7 +25,7 @@ import { SeedbedApp } from "@graview/seedbed/ui";
 import { TodoApp } from "@graview/todo/ui";
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import { createRoot } from "react-dom/client";
-import { createLauncherStore, type LauncherStore } from "./domain/app.js";
+import { createLauncherStore, launcherApp, type LauncherStore } from "./domain/app.js";
 import { APPS } from "./domain/survey.js";
 import type { LauncherSchema } from "./domain/schema.js";
 import { LivenessProvider, useLiveness } from "./ui/liveness.js";
@@ -269,6 +271,10 @@ function CommandBar({
         >
           {scheme === "dark" ? "☀" : "☾"}
         </button>
+        {/* The desk has no sign-in, and says so rather than pretending —
+            what it does have is the reader's own text size and motion,
+            which belong on every app in the repository including this one. */}
+        <Profile<S> scheme={scheme} onScheme={onScheme} />
       </div>
     </header>
   );
@@ -431,7 +437,13 @@ function Launcher() {
   };
 
   return (
-    <GraviewProvider store={store} views={views} initialView={HOME} scheme={scheme}>
+    <GraviewProvider
+      store={store}
+      views={views}
+      initialView={HOME}
+      scheme={scheme}
+      settings={launcherApp.settings ?? []}
+    >
       <LivenessProvider>
         <Desk scheme={scheme} onScheme={changeScheme} />
       </LivenessProvider>
@@ -440,6 +452,16 @@ function Launcher() {
 }
 
 applyScheme(initialScheme());
+/*
+ * THE READER'S OWN SETTINGS, APPLIED BEFORE ANYTHING RENDERS.
+ *
+ * Here rather than in a component, for the same reason the scheme is here:
+ * it is a fact about the person and their browser, it belongs to the
+ * document, and this app has two faces on two paths that must not disagree
+ * about how big the words are.
+ */
+applySettings(launcherApp.settings ?? []);
+
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
 createRoot(root).render(<Launcher />);
