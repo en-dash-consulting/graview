@@ -38,5 +38,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The constellation: the graph seen from outside, and jacking in from it](./the-constellation-the-graph-seen-from/index.md) | completed |
 | [The declaration grows: modules, horizon, derived edits and theming](./the-declaration-grows-modules-horizon/index.md) | completed |
 | [The packages: layout, render, react, primitives and tools](./the-packages-layout-render-react/index.md) | completed |
+| [A calendar lens in the framework: month, week, day and agenda over real dates, with the demos scheduling through it](./a-calendar-lens-in-the-framework-month.md) | pending |
 | [A kind has a figure: a declared, blueprint-style 3D drawing of the thing, drawn wherever the kind is, and an agent can draw it](./a-kind-has-a-figure-a-declared.md) | pending |
 | [A UI kit for the picture: lines, boxes and marks are declared, customisable, and set up for styles nobody has asked for yet](./a-ui-kit-for-the-picture-lines-boxes.md) | completed |
