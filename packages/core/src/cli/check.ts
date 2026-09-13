@@ -7,6 +7,7 @@ import {
   unwrittenFields,
 } from "../mutations/derive-edits.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
+import { figureFaults, FIGURE_NAMES } from "../schema/figures.js";
 import { withArticle } from "../schema/define-node.js";
 import { permits, rolesOf } from "../permissions/policy.js";
 import { checkBrandContrast } from "../theme/derive.js";
@@ -101,6 +102,44 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
         });
       }
     }
+  }
+
+  /*
+   * A FIGURE THAT CANNOT BE DRAWN IS A BLANK NOBODY EXPLAINS.
+   *
+   * Every fault here looks fine in the file and fails on a screen: art with
+   * no `viewBox` cannot be sized by anything that draws it, a literal
+   * colour ignores the scheme and the kind's hue — and is therefore
+   * invisible in one of the two, which nobody notices until somebody
+   * switches — and a name that is not in the shipped set is a silent gap
+   * where a drawing should be.
+   */
+  for (const definition of app.schema.definitions) {
+    for (const [where, figure] of [
+      [`defineNode("${definition.kind}").figure`, definition.figure],
+      [`brand.figures["${definition.kind}"]`, app.brand?.figures?.[definition.kind]],
+    ] as const) {
+      if (!figure) continue;
+      for (const fault of figureFaults(figure)) {
+        add({
+          severity: "error",
+          code: "figure-undrawable",
+          where,
+          message: `The figure for "${definition.kind}" cannot be drawn: ${fault}`,
+          fix: `Give it one viewBox and currentColor strokes with no fill, or name one of: ${FIGURE_NAMES.join(", ")}.`,
+        });
+      }
+    }
+  }
+  for (const kind of Object.keys(app.brand?.figures ?? {})) {
+    if (kinds.has(kind)) continue;
+    add({
+      severity: "error",
+      code: "figure-unknown-kind",
+      where: `brand.figures["${kind}"]`,
+      message: `The brand draws a figure for "${kind}", which this app does not declare.`,
+      fix: `Remove it, or declare the kind.`,
+    });
   }
 
   /*

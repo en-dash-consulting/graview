@@ -30,6 +30,8 @@ export const list = defineNode("list", {
   }),
   plural: "Lists",
   label: (node) => node.label,
+  // A tray, open at the front: what a list actually looks like as a thing.
+  figure: "list",
   edges: {
     holds: {
       to: ["task"],
@@ -71,6 +73,7 @@ export const task = defineNode("task", {
   }),
   plural: "Tasks",
   label: (node) => node.label,
+  figure: "task",
   // A lens asks for roles, not for field names. These are this app's words.
   fieldRoles: { start: "plannedAt", end: "plannedUntil", day: "day" },
   edges: {
@@ -124,6 +127,8 @@ export const rule = defineNode("rule", {
   }),
   plural: "Rules",
   label: (node) => node.label,
+  // A set square, which is what a standard looks like.
+  figure: "rule",
 });
 
 /**
@@ -151,6 +156,7 @@ export const reason = defineNode("reason", {
   plural: "Reasons",
   // Shortened at a word boundary, and the full text is the heading on a page.
   label: (node) => summarise(node.text),
+  figure: "note",
   edges: {
     explains: {
       to: ["task", "list"],

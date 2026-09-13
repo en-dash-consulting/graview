@@ -101,6 +101,15 @@ export interface Brand {
    * as shipped. See `resolveKit`.
    */
   readonly kit?: KitOverrides;
+  /**
+   * A FIGURE PER KIND, the way a brand already overrides a kind's hue.
+   *
+   * An installation that has its own drawing of a person, or of the thing
+   * its domain calls a plot, says so here and the declaration stays the
+   * domain's. Same rules as a declared figure, and `graview check` holds
+   * both to them.
+   */
+  readonly figures?: Readonly<Record<string, string>>;
 }
 
 /**

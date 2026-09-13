@@ -17,6 +17,7 @@
   "dependencies": {
     "@graview/core": "workspace:*",
     "@graview/layout": "workspace:*",
+    "@graview/primitives": "workspace:*",
     "@graview/tools": "workspace:*",
     "react-router-dom": "^7.1.1"
   },

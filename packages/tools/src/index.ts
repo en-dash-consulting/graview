@@ -65,3 +65,5 @@ export {
   xaiCompletion,
 } from "./local.js";
 export type { IntelligenceConfig, LocalStatus } from "./local.js";
+export { drawFigure, FIGURE_STYLE, nearestFigure, onlyTheSvg } from "./figure.js";
+export type { DrawnFigure } from "./figure.js";

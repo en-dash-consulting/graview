@@ -213,6 +213,22 @@ ${text} {
 h1, h2, h3, h4, .graview-wordmark { font-family: var(--graview-font-display); }
 code, kbd, samp { font-family: var(--graview-font-mono); }
 
+/*
+ * A KIND'S FIGURE fills the box it is given.
+ *
+ * The art declares its own viewBox and knows nothing about where it is
+ * drawn — a chip at twelve pixels, a district's heading at eighteen, a kind
+ * card's landmark at forty — so the SIZE is the container's and the drawing
+ * scales into it. currentColor on the strokes means the kind's own hue
+ * arrives through the cascade without the art being redrawn.
+ */
+[data-graview-figure] > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
 /* How far above the stack the camera is, 0..1 — REGISTERED so it can
    transition. Rising to the Graview morphs the scene instead of cutting:
    the square grid dissolves into the iso lattice and the districts grow up

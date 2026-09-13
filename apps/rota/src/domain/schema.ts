@@ -36,6 +36,8 @@ export const shift = defineNode("shift", {
   }),
   plural: "Shifts",
   label: (node) => node.label,
+  // A block of time with its hours ruled across it.
+  figure: "shift",
   // A lens asks for roles, not for field names. These are this app's words.
   fieldRoles: { start: "from", end: "until", day: "day" },
   edges: {
@@ -74,6 +76,7 @@ export const volunteer = defineNode("volunteer", {
   }),
   plural: "Volunteers",
   label: (node) => node.label,
+  figure: "person",
   // Somebody who has left keeps everything they did and leaves the picture.
   lifecycle: { field: "status", retired: ["left"] },
   display: { labels: { limit: "Most per week", phone: "Phone" } },
@@ -94,6 +97,7 @@ export const rule = defineNode("rule", {
   }),
   plural: "Rules",
   label: (node) => node.label,
+  figure: "rule",
 });
 
 function clock(minutes: number): string {

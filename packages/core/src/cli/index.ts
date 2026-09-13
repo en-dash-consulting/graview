@@ -7,6 +7,7 @@ import type { GraviewApp } from "../app.js";
 import { checkApp, formatFindings } from "./check.js";
 import { create, CREATE_USAGE } from "./create.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
+import { figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
 
 const USAGE = `graview — start a product, check its declaration, write its agent docs
 
@@ -18,6 +19,12 @@ ${CREATE_USAGE}
 
   graview docs <entry> [--out <dir>]
       Writes llms.txt and agents.md next to the entry, or into <dir>.
+
+  graview figure <entry> --kind <kind> [--name <shipped>]
+      Prints the figure line to paste into defineNode. With --name it is one
+      of the shipped drawings; without a model to ask, it suggests the
+      nearest one by name and says so. Whatever it prints, it has already
+      been judged by the same rules graview check holds a figure to.
 `;
 
 async function loadApp(entry: string): Promise<GraviewApp> {
@@ -30,6 +37,17 @@ async function loadApp(entry: string): Promise<GraviewApp> {
     );
   }
   return app;
+}
+
+/**
+ * The shipped figure whose NAME is closest to a kind's — never a guess
+ * about what a thing is. A cleat is not a box, and the framework has never
+ * met this domain.
+ */
+function nearest(kind: string): string {
+  const said = kind.toLowerCase();
+  if (FIGURES[said]) return said;
+  return FIGURE_NAMES.find((name) => said.includes(name) || name.includes(said)) ?? "note";
 }
 
 function flag(argv: string[], name: string): string | undefined {
@@ -71,6 +89,43 @@ export async function main(argv: string[]): Promise<number> {
       await writeFile(`${outDir}/llms.txt`, generateLlmsTxt(app), "utf8");
       await writeFile(`${outDir}/agents.md`, generateAgentsMd(app), "utf8");
       process.stdout.write(`graview docs: wrote llms.txt and agents.md to ${outDir}\n`);
+      return 0;
+    }
+    case "figure": {
+      /*
+       * A DRAWING YOU CAN PASTE, judged before it is printed.
+       *
+       * No model here: reaching a vendor is `@graview/tools`' job and the
+       * CLI has no key, no seam and no business holding one. What this
+       * does is the other half — name a figure, judge it against the rules
+       * `graview check` will judge it against, and print the line. An
+       * agent that HAS a model calls `drawFigure` and lands here anyway,
+       * because the judging is the same judging.
+       */
+      const app = await loadApp(entry);
+      const kind = flag(argv, "--kind");
+      if (!kind) {
+        process.stderr.write(`graview figure: --kind <kind> is required\n\n${USAGE}`);
+        return 2;
+      }
+      if (!(app.schema.kinds as readonly string[]).includes(kind)) {
+        process.stderr.write(
+          `graview figure: "${kind}" is not a kind of ${app.name}. It declares: ${(app.schema.kinds as readonly string[]).join(", ")}\n`,
+        );
+        return 1;
+      }
+      const named = flag(argv, "--name");
+      const figure = named || nearest(kind);
+      const faults = figureFaults(figure);
+      if (faults.length > 0) {
+        process.stderr.write(`graview figure: that figure cannot be drawn — ${faults.join(" ")}\n`);
+        return 1;
+      }
+      process.stdout.write(
+        `${named ? "" : `graview figure: nothing was asked to draw one, so this is the nearest shipped figure by name.\n`}` +
+          `  figure: ${JSON.stringify(figure)},\n` +
+          `Paste it into defineNode("${kind}", { ... }). The shipped set: ${FIGURE_NAMES.join(", ")}.\n`,
+      );
       return 0;
     }
     default:

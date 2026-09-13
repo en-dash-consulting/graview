@@ -369,6 +369,9 @@ importers:
       '@graview/layout':
         specifier: workspace:*
         version: link:../layout
+      '@graview/primitives':
+        specifier: workspace:*
+        version: link:../primitives
       '@graview/tools':
         specifier: workspace:*
         version: link:../tools

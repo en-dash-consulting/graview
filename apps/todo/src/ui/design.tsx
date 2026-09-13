@@ -1,4 +1,5 @@
 import { humaniseField, labelOf, type Principal, type Violation } from "@graview/core";
+import { KindFigure } from "@graview/primitives";
 import {
   createPageRegistry,
   DerivedForm,
@@ -246,6 +247,9 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
               to={`/${pluralSlugOf(store, kind)}`}
               here={here}
               label={plural(store, kind)}
+              /* A kind's own drawing beside its name — the same one the
+                 scene stands on its block, from the same declaration. */
+              figure={<KindFigure kind={kind} schema={store.schema} {...(brand ? { brand } : {})} size={15} />}
               // Open tasks rather than all of them: a to-do list counting
               // what is finished is counting the wrong thing.
               count={kind === "task" ? open : store.graph.nodesOfKind(kind as never).length}
@@ -286,18 +290,22 @@ function Rail({
   to,
   here,
   label,
+  figure,
   count,
   warn,
 }: {
   to: string;
   here: string;
   label: string;
+  /** The kind's own drawing, where it declares one. */
+  figure?: ReactNode;
   count?: number;
   warn?: boolean;
 }) {
   const current = to === "/" ? here === "/" : here === to || here.startsWith(`${to}/`);
   return (
     <Link to={to} className={warn ? "warn" : undefined} {...(current ? { "aria-current": "page" as const } : {})}>
+      {figure}
       {label}
       {count === undefined ? null : <span className="n">{count}</span>}
     </Link>
@@ -515,7 +523,7 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
 /* ---------------------------------------------------------- the record */
 
 function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
-  const { store, principal } = context;
+  const { store, principal, brand } = context;
   useStoreTick(store);
   const id = decodeURIComponent(useParams()["id"] ?? "");
   const facts = recordFacts(store, id, {
@@ -536,7 +544,10 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
     <>
       <header>
         <p className="th-eyebrow">
-          <Link to={`/${pluralSlugOf(store, kind)}`}>{plural(store, kind)}</Link>
+          <Link to={`/${pluralSlugOf(store, kind)}`}>
+            <KindFigure kind={kind} schema={store.schema} {...(brand ? { brand } : {})} size={14} />
+            {plural(store, kind)}
+          </Link>
         </p>
         {/*
           * THE HEADING IS THE NAME, so the heading is where the name is

@@ -34,6 +34,7 @@ import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
 // The canonical hue lives beside the other colour logic in @graview/render;
 // re-exported here because every view author already imports it from views.
 import { hueFor } from "@graview/render";
+import { hasFigure, KindFigure } from "./figure.js";
 export { hueFor };
 
 /** The declared accent when the installation named one, else the hash. */
@@ -283,6 +284,16 @@ export function registerDefaultViews<S extends AnySchema>(
     const GroupGlyph = (props: ViewProps<S>) => {
       const members = props.nodes ?? [];
       const hue = useHue(kind as string);
+      /*
+       * THE KIND'S OWN DRAWING, where it has one.
+       *
+       * The isometric city gives every kind the same block; a figure is
+       * what makes one of them a person and another a plot of ground. The
+       * brand's say comes first, so an installation with its own drawing
+       * keeps the domain's declaration as the domain's.
+       */
+      const { brand } = useGraview();
+      const figure = hasFigure(String(kind), schema as never, brand);
       const flag = useKit().marks.flag;
       const { selection } = useSelection();
       const { toggle, view, go } = useNavigation();
@@ -454,7 +465,21 @@ export function registerDefaultViews<S extends AnySchema>(
           {/* Title on its own line, marks on the next. Nothing shares a line
               with anything that could grow, so nothing can ever collide —
               which is what a single flex row of title, badge, warning and
-              count did at ninety pixels wide. */}
+              count did at ninety pixels wide.
+
+              THE FIGURE GOES ABOVE THE NAME for the same reason: a drawing
+              beside a word that can wrap to two lines is a drawing that
+              moves. A district that declares one stands it here, at the size
+              a card can spare; a kind without one is drawn exactly as it
+              always was, because nothing about a figure is required. */}
+          {figure ? (
+            <KindFigure
+              kind={String(kind)}
+              schema={schema}
+              {...(brand ? { brand } : {})}
+              size={nested ? 16 : 26}
+            />
+          ) : null}
           <span
             style={{
               fontSize: nested ? 10.5 : 13,

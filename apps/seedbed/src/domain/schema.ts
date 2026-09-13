@@ -16,6 +16,7 @@ export const gardener = defineNode("gardener", {
   fields: z.object({ label: z.string().min(1) }),
   plural: "Gardeners",
   label: (node) => node.label,
+  figure: "person",
 });
 
 export const plot = defineNode("plot", {
@@ -36,6 +37,7 @@ export const plot = defineNode("plot", {
   },
   plural: "Plots",
   label: (node) => node.label,
+  figure: "plot",
 });
 
 export const planting = defineNode("planting", {
@@ -66,6 +68,7 @@ export const planting = defineNode("planting", {
   },
   plural: "Plantings",
   label: (node) => node.label,
+  figure: "box",
   /*
    * The HORIZON, in the app people meet first: a harvested bed leaves the
    * counts but never the graph, and last season is one `past=1` stop away.
@@ -82,6 +85,7 @@ export const rule = defineNode("rule", {
   fields: z.object({ spec: ruleSpec, label: z.string().min(1) }),
   plural: "Rules",
   label: (node) => node.label,
+  figure: "rule",
   // The dispatch key: a rule whose spec type has no registered invariant is
   // a rule nobody wrote, and `graview check` says so at build time.
   requiresInvariant: (node) => node.spec.type,

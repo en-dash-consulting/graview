@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import type { Figure } from "./figures.js";
 
 /** How many edges of a kind may leave one node. */
 export type EdgeCardinality = "one" | "many";
@@ -124,6 +125,20 @@ export interface NodeDefinitionSpec<
    * purpose, and `graview check` stops asking who writes it.
    */
   readonly fixed?: Readonly<Record<string, string>>;
+  /**
+   * A DRAWING OF THE THING, wherever the kind is drawn.
+   *
+   * Inline SVG — one `viewBox`, `currentColor` strokes, no fill — or the
+   * name of one from the shipped set (`FIGURES`). The kind card stands it
+   * on its block at altitude, the district carries it beside the plural, a
+   * chip draws it where it stays legible, the record and list pages carry
+   * it, and the relation key uses it. All from here.
+   *
+   * A kind without one is drawn exactly as it was. Nothing about a figure
+   * is required, and a figure is never decoration: it is line art of the
+   * thing, at the isometric city's own angle, or it should not be there.
+   */
+  readonly figure?: Figure;
 }
 
 export interface LifecycleDeclaration {

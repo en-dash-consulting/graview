@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T07:33:27.063Z",
+  "at": "2026-09-13T07:42:39.478Z",
   "engine": "chromium",
   "screens": [
     {
@@ -21,7 +21,8 @@
       "board": [],
       "fill": 59,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -42,7 +43,8 @@
       "board": [],
       "fill": 59,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -68,7 +70,8 @@
         "size": "236x435",
         "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Give it a new date …☆Finish it"
       },
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -89,7 +92,8 @@
       "board": [],
       "fill": 58,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -110,7 +114,8 @@
       "board": [],
       "fill": 59,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -131,7 +136,8 @@
       "board": [],
       "fill": 58,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -152,7 +158,8 @@
       "board": [],
       "fill": 59,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -173,7 +180,8 @@
       "board": [],
       "fill": 59,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -194,7 +202,8 @@
       "board": [],
       "fill": 51,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -215,7 +224,8 @@
       "board": [],
       "fill": 41,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -236,7 +246,8 @@
       "board": [],
       "fill": 41,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -261,7 +272,8 @@
         "first": "A new date for \"Redirect the post\" …",
         "on": "Redirect the post",
         "names": true
-      }
+      },
+      "figures": []
     },
     {
       "app": "todo",
@@ -287,7 +299,52 @@
         "size": "236x395",
         "text": "×⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time "
       },
-      "led": null
+      "led": null,
+      "figures": []
+    },
+    {
+      "app": "todo",
+      "state": "figures",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 4,
+      "inspector": null,
+      "led": null,
+      "figures": []
+    },
+    {
+      "app": "todo",
+      "state": "figuresDark",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 4,
+      "inspector": null,
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -308,7 +365,8 @@
       "board": [],
       "fill": 19,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -334,7 +392,8 @@
         "size": "236x402",
         "text": "Pay the deposittask· double-click opens×Put it back☆Rename …☆Move the date …☆Change the ta"
       },
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "todo",
@@ -360,7 +419,8 @@
         "size": "236x504",
         "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Give it a new date …☆Finish it"
       },
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "rota",
@@ -381,7 +441,8 @@
       "board": [],
       "fill": 58,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "rota",
@@ -402,7 +463,8 @@
       "board": [],
       "fill": 58,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "rota",
@@ -423,7 +485,8 @@
       "board": [],
       "fill": 58,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "rota",
@@ -449,7 +512,8 @@
         "size": "236x343",
         "text": "Friday repair cafeshift· double-click opens×Is connected to nothing yet⚠ Nobody is coverin"
       },
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "rota",
@@ -475,7 +539,8 @@
         "size": "236x506",
         "text": "Friday repair cafeshift· double-click opens×Nobody is covering \"Friday repair cafe\" on 202"
       },
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "rota",
@@ -496,7 +561,8 @@
       "board": [],
       "fill": 58,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "seedbed",
@@ -522,7 +588,8 @@
         "size": "370x123",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       },
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "seedbed",
@@ -543,7 +610,8 @@
       "board": [],
       "fill": 4,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "seedbed",
@@ -564,7 +632,8 @@
       "board": [],
       "fill": 59,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "seedbed",
@@ -590,7 +659,8 @@
         "size": "236x121",
         "text": "Gardeners· double-click opens×Nothing here yet, though Plots expect to connect to theseWel"
       },
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "seedbed",
@@ -611,7 +681,8 @@
       "board": [],
       "fill": 4,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "seedbed",
@@ -637,7 +708,8 @@
         "size": "236x230",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       },
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "seedbed",
@@ -658,7 +730,8 @@
       "board": [],
       "fill": 59,
       "inspector": null,
-      "led": null
+      "led": null,
+      "figures": []
     },
     {
       "app": "seedbed",
@@ -684,7 +757,8 @@
         "size": "370x107",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       },
-      "led": null
+      "led": null,
+      "figures": []
     }
   ]
 }

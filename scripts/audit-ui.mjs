@@ -102,6 +102,25 @@ const APPS = {
       });
     },
     travelled: async (p) => { await p.dblclick('[data-graview-pick="t-deposit"]'); },
+    /*
+     * THE CITY WITH ITS FIGURES, at altitude. Every kind is drawn the same
+     * way without one — a coloured dot, a plural, an iso block — and a
+     * figure is what makes one of them a person and another a plot of
+     * ground. Counted at both schemes, because the art is `currentColor`
+     * and takes the scheme: a drawing that only reads in one is the fault
+     * this state exists to catch.
+     */
+    figures: async (p) => {
+      await p.goto("http://localhost:5193/?theme=light&today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
+      await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(900);
+    },
+    figuresDark: async (p) => {
+      await p.goto("http://localhost:5193/?theme=dark&today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
+      await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(900);
+    },
+
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
     /*
      * THE RAIL, OPEN. Two states here opened it and pressed Escape on the
@@ -707,6 +726,16 @@ const audit = () => {
     };
   }
 
+  /* A FIGURE THAT DID NOT DRAW is a blank where a drawing should be.
+     The art is inline SVG with a viewBox and no size of its own, so it
+     fills the box it is given — which means a figure with no box is a
+     figure nobody sees, and it looks exactly like a kind that declared
+     none. Counted rather than assumed. */
+  const figures = [...document.querySelectorAll("[data-graview-figure-kind=figure]")]
+    .map((el) => ({ kind: el.getAttribute("data-graview-figure"), b: box(el), svg: el.querySelector("svg") }))
+    .filter(({ b, svg }) => svg === null || b.width < 8 || b.height < 8)
+    .map(({ kind, b }) => `${kind} at ${Math.round(b.width)}x${Math.round(b.height)}`);
+
   /* A MENU OPENED AT A POINTER LEADS WITH THE THING IT WAS OPENED ON.
      The state that opens one leaves the thing's name on the window, because
      the menu itself is the thing under test and must not be asked to
@@ -719,7 +748,7 @@ const audit = () => {
     led = { first: first.slice(0, 60), on, names: on === null ? null : first.includes(on) };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, painted, repeats, articles: [...new Set(articles)].slice(0, 8), covered, offscreen, asking: asking.slice(0, 6), board, fill, inspector, led };
+  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, painted, repeats, articles: [...new Set(articles)].slice(0, 8), covered, offscreen, asking: asking.slice(0, 6), board, fill, inspector, led, figures };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -781,6 +810,7 @@ for (const s of report.screens) {
     s.offscreen?.length ? `${s.offscreen.length} off the edge with nowhere to scroll: ${s.offscreen[0]}` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",
     s.led?.names === false ? `the menu leads with "${s.led.first}", not the ${s.led.on} it was opened on` : "",
+    s.figures?.length ? `${s.figures.length} figures drew nothing: ${s.figures[0]}` : "",
   ].filter(Boolean);
   if (notes.length) bad++;
   process.stdout.write(`${notes.length ? "??" : "ok"} ${where} ${notes.join("; ")}\n`);

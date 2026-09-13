@@ -1,4 +1,5 @@
 import { humaniseField, labelOf, type Violation } from "@graview/core";
+import { KindFigure } from "@graview/primitives";
 import {
   createPageRegistry,
   DerivedForm,
@@ -177,6 +178,9 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
               to={`/${slugOf(store, kind)}`}
               here={here}
               label={plural(store, kind)}
+              /* A kind's own drawing beside its name — the same one the
+                 scene stands on its block, from the same declaration. */
+              figure={<KindFigure kind={kind} schema={store.schema} {...(brand ? { brand } : {})} size={15} />}
               count={store.graph.nodesOfKind(kind as never).length}
             />
           ))}
@@ -204,10 +208,24 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   );
 }
 
-function Rail({ to, here, label, count }: { to: string; here: string; label: string; count?: number }) {
+function Rail({
+  to,
+  here,
+  label,
+  figure,
+  count,
+}: {
+  to: string;
+  here: string;
+  label: string;
+  /** The kind's own drawing, where it declares one. */
+  figure?: ReactNode;
+  count?: number;
+}) {
   const current = to === "/" ? here === "/" : here === to || here.startsWith(`${to}/`);
   return (
     <Link to={to} {...(current ? { "aria-current": "page" as const } : {})}>
+      {figure}
       {label}
       {count === undefined ? null : <span className="n">{count}</span>}
     </Link>
@@ -469,7 +487,7 @@ function said(store: Ctx["store"], kind: string, node: AnyNode): string {
 /* ------------------------------------------------------------ the record */
 
 function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
-  const { store, principal } = context;
+  const { store, principal, brand } = context;
   useStoreTick(store);
   const id = decodeURIComponent(useParams()["id"] ?? "");
   const facts = recordFacts(store, id, {
@@ -490,7 +508,10 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
     <>
       <header>
         <p className="ro-eyebrow">
-          <Link to={`/${slugOf(store, kind)}`}>{plural(store, kind)}</Link>
+          <Link to={`/${slugOf(store, kind)}`}>
+            <KindFigure kind={kind} schema={store.schema} {...(brand ? { brand } : {})} size={14} />
+            {plural(store, kind)}
+          </Link>
         </p>
         <h1 className="ro-h1">
           <InPlace context={context} nodeId={id} field="label" value={facts.label} plain />

@@ -163,6 +163,8 @@ export type {
 
 // Views — the cardinality x fidelity matrix.
 export { createViewRegistry, FIDELITIES, placeSlug } from "./views/types.js";
+export { FIGURES, FIGURE_NAMES, figureFaults, figureSvg } from "./schema/figures.js";
+export type { Figure } from "./schema/figures.js";
 export type {
   Cardinality,
   Fidelity,

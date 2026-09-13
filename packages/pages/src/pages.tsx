@@ -1,3 +1,4 @@
+import { KindFigure } from "@graview/primitives";
 import {
   describeNode,
   hueFor,
@@ -215,22 +216,28 @@ const button: React.CSSProperties = {
 };
 
 /** The kind's own colour, as a small mark — the thread the scene wears too. */
-function KindMark({ kind, brand, size = 10 }: { kind: string; brand?: Brand; size?: number }) {
-  const hue = Math.round(hueFor(kind, brand?.accents) * 360);
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        display: "inline-block",
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        flex: "0 0 auto",
-        background: `hsl(${hue} 55% 52%)`,
-        boxShadow: `0 0 0 3px hsl(${hue} 55% 52% / 0.18)`,
-      }}
-    />
-  );
+/**
+ * The mark beside a kind's name — its FIGURE where it has one, and the dot
+ * it has always had where it does not.
+ *
+ * One component in `@graview/primitives`, so the routed face, the scene and
+ * the relation key draw the same thing from the same declaration. A second
+ * rendering here would be a second place for a kind's picture to be wrong.
+ */
+function KindMark({
+  kind,
+  brand,
+  size = 10,
+  schema,
+}: {
+  kind: string;
+  brand?: Brand;
+  size?: number;
+  schema?: AnySchema;
+}) {
+  // A figure wants more room than a dot: the dot is the figure's own inner
+  // circle, so passing the dot's size straight through would draw a stamp.
+  return <KindFigure kind={kind} {...(schema ? { schema } : {})} {...(brand ? { brand } : {})} size={Math.round(size * 1.6)} />;
 }
 
 /**
@@ -522,7 +529,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         return (
           <section key={kind} style={{ ...rule, display: "grid", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-              <KindMark kind={kind} brand={brand} />
+              <KindMark kind={kind} brand={brand} schema={store.schema} />
               <h2 style={h2}>
                 <Link to={path} style={plain}>
                   {pluralOf(store, kind)}
@@ -639,7 +646,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
     <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={{ ...eyebrow, display: "flex", alignItems: "center", gap: 8 }}>
-          <KindMark kind={kind} brand={brand} size={8} />
+          <KindMark kind={kind} brand={brand} schema={store.schema} size={8} />
           {members.length === 0
             ? "None yet"
             : `${members.length} ${members.length === 1 ? kind : plural.toLowerCase()}`}
@@ -761,7 +768,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
     <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={{ ...eyebrow, display: "flex", alignItems: "center", gap: 8 }}>
-          <KindMark kind={facts.kind} brand={brand} size={8} />
+          <KindMark kind={facts.kind} brand={brand} schema={store.schema} size={8} />
           <Link to={`/${pluralSlug(store.schema, facts.kind)}`} style={plain}>
             {pluralOf(store, facts.kind)}
           </Link>
@@ -844,7 +851,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "6px 18px" }}>
             {group.targets.map((target) => (
               <li key={target.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <KindMark kind={target.kind} brand={brand} size={7} />
+                <KindMark kind={target.kind} brand={brand} schema={store.schema} size={7} />
                 <Link to={recordPath(store.schema, target.kind, target.id)} style={{ ...link, fontSize: "1.0625rem" }}>
                   {target.label}
                 </Link>
@@ -984,7 +991,7 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
             <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>
             {node ? (
               <p style={{ margin: 0, display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <KindMark kind={node.kind as string} brand={brand} size={7} />
+                <KindMark kind={node.kind as string} brand={brand} schema={store.schema} size={7} />
                 <Link to={recordPath(store.schema, node.kind as string, node.id)} style={link}>
                   {labelOf(store.schema.tryDefinition(node.kind), node as never)}
                 </Link>
