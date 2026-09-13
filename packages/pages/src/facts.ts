@@ -5,6 +5,7 @@ import {
   type AnySchema,
   type Principal,
   type ReadableField,
+  type Repair,
   type Store,
   type Violation,
 } from "@graview/core";
@@ -110,7 +111,13 @@ export function recordFacts<S extends AnySchema>(
     label: name(node),
     fields: readableFields(node as Record<string, unknown>, definition),
     violations: violationsTouching(store.violations(options.context), [id]),
+    /*
+     * The record IS the focus: a page about one task leads with that task's
+     * own repair, not with the first repair a rule implicating six of them
+     * happened to list. Same rank the strip and the pointer menu read.
+     */
     actions: deriveAffordances(store, [id], {
+      focus: id,
       ...(options.principal ? { principal: options.principal } : {}),
       ...(options.context ? { context: options.context } : {}),
     }),
@@ -161,4 +168,40 @@ export function kindFacts<S extends AnySchema>(
       ...(options.context ? { context: options.context } : {}),
     }),
   };
+}
+
+/**
+ * A RULE'S REPAIRS IN THE ONE ORDER THE DERIVATION RANKED THEM.
+ *
+ * A rule that implicates five late tasks names ten repairs in a single
+ * violation, in whatever order it walked its subjects — so a record page
+ * rendering `violation.repairs` straight led the page about the fifth task
+ * with the first task's repair. The derivation already knows better: asked
+ * with this record as its focus, it puts the record's own repairs at the
+ * front. This reads that answer back rather than sorting again, so the page,
+ * the strip and the pointer menu cannot arrive at different firsts.
+ *
+ * Repairs the derivation did not produce — withheld for reasons other than
+ * permission, or named by a violation this set was not derived from — keep
+ * their declared order at the end rather than being dropped.
+ */
+export function rankedRepairs(actions: AffordanceSet, repairs: readonly Repair[]): readonly Repair[] {
+  const key = (mutation: string, args: Readonly<Record<string, unknown>>): string =>
+    `${mutation}|${JSON.stringify(args)}`;
+  const ranks = new Map<string, number>();
+  for (const affordance of [...actions.affordances, ...actions.withheld]) {
+    if (affordance.provider !== "invariant") continue;
+    const at = key(affordance.mutation, affordance.args);
+    if (!ranks.has(at)) ranks.set(at, affordance.rank ?? Number.MAX_SAFE_INTEGER);
+  }
+  const unranked = Number.MAX_SAFE_INTEGER;
+  return [...repairs]
+    .map((repair, declared) => ({ repair, declared }))
+    .sort(
+      (a, b) =>
+        (ranks.get(key(a.repair.mutation, a.repair.args ?? {})) ?? unranked) -
+          (ranks.get(key(b.repair.mutation, b.repair.args ?? {})) ?? unranked) ||
+        a.declared - b.declared,
+    )
+    .map((entry) => entry.repair);
 }

@@ -11,38 +11,17 @@
  *
  *   node scripts/verify-menu.mjs [--engine=chromium|webkit|firefox]
  */
-import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { serving } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 
-function startVite() {
-  const child = spawn("npx", ["vite"], {
-    cwd: resolve(repoRoot, "apps/todo"),
-    stdio: ["ignore", "pipe", "pipe"],
-    detached: true,
-  });
-  return new Promise((ready, fail) => {
-    const timer = setTimeout(() => fail(new Error("vite did not start")), 60_000);
-    child.stdout.on("data", (chunk) => {
-      if (String(chunk).includes("5193")) {
-        clearTimeout(timer);
-        ready(child);
-      }
-    });
-    child.on("exit", (code) => {
-      clearTimeout(timer);
-      fail(new Error(`vite exited with ${code}`));
-    });
-  });
-}
-
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
-const vite = await startVite();
+const app = await serving("todo", 5193, repoRoot);
 let browser;
 
 /** The strip's offered mutations, in document order, via each row's pin. */
@@ -174,6 +153,13 @@ try {
    * not there makes `indexOf` return -1, and a comparison against -1 passes
    * or fails for reasons that have nothing to do with pinning — so the peer
    * is asserted to be present before it is compared against.
+   *
+   * Which repair leads is the RULE'S order, not the app's pin. `finish` is
+   * pinned by the declaration and used to head the band for that reason;
+   * `nothing-overdue` names a new date before finishing, and a rule that
+   * says how to fix itself is saying which way out it prefers. A pin still
+   * moves everything below the repairs — that is what the rest of this
+   * check measures.
    */
   report.checks.pinThenReorder = {
     before,
@@ -185,7 +171,8 @@ try {
       before.includes("edit-task") &&
       before.indexOf("edit-task") > before.indexOf("rename") &&
       after.indexOf("edit-task") < after.indexOf("rename") &&
-      after.indexOf("finish") === 0 &&
+      after.indexOf("reschedule") === 0 &&
+      after.indexOf("finish") === 1 &&
       headings.includes("pinned") &&
       headings.some((heading) => heading?.includes("⚠")),
   };
@@ -244,7 +231,124 @@ try {
     ok: declaredShown && demotedNow && restoredNow,
   };
 
+  /* --------------------------- the list leads with the thing you clicked */
+  /*
+   * ONE RULE, FIVE LATE TASKS, TEN REPAIRS — and until the derivation knew
+   * which node the gesture landed on, it offered them in the order the rule
+   * happened to name its subjects. Right-clicking the fourth late task met
+   * the FIRST task's "give it a new date" at the top of the menu, so the
+   * obvious press fixed somebody else's problem.
+   *
+   * Driven on three surfaces, because the claim is that they share one
+   * rank: the scene's pointer menu, the routed record, and the problems
+   * inbox, where pressing a repair must change the task it names.
+   */
+  const firstOffered = (page, testid) =>
+    page.evaluate((id) => {
+      const first = document
+        .querySelector(`[data-testid="${id}"]`)
+        ?.querySelector("[data-affordance]");
+      return { label: (first?.textContent ?? "").trim(), rank: first?.getAttribute("data-rank") };
+    }, testid);
+
+  // 2026-09-04 leaves five tasks past their date; 2026-09-01 leaves one,
+  // and one subject cannot show an order problem between subjects.
+  const LATE = "today=2026-09-04";
+  await page.goto(`http://localhost:5193/?${LATE}&fresh=1`, { waitUntil: "load" });
+  await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+  const led = {};
+  for (const [id, label] of [
+    ["t-post", "Redirect the post"],
+    ["t-meter", "Read the meters"],
+  ]) {
+    await page.click(`[data-graview-pick="${id}"]`, { button: "right" });
+    await page.waitForSelector('[data-testid="context-menu"] [data-affordance]', { timeout: 10_000 });
+    const first = await firstOffered(page, "context-menu");
+    led[id] = { label, ...first, names: first.label.includes(label) };
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(150);
+  }
+
+  /* --------------------------------- the same rank on the routed record */
+  /*
+   * The record renders a rule's repairs beside the rule rather than in
+   * "what can be done", so the claim there is about the REPAIR list: the
+   * page about the post leads with the post's own repair, not with the
+   * first subject the rule happened to walk. And the acts it does list
+   * carry the derivation's rank, ascending — one order, two renderings.
+   */
+  await page.goto(`http://localhost:5193/pages/tasks/t-post?${LATE}`, { waitUntil: "networkidle" });
+  await page.waitForSelector('[data-testid="record-violations"] [data-graview-repair]', {
+    timeout: 20_000,
+  });
+  const record = {
+    firstRepair: await page.evaluate(
+      () =>
+        (
+          document
+            .querySelector('[data-testid="record-violations"]')
+            ?.querySelector("[data-graview-repair]")?.textContent ?? ""
+        ).trim(),
+    ),
+    ranks: await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="record-actions"] [data-affordance]')].map(
+        (button) => Number(button.getAttribute("data-rank")),
+      ),
+    ),
+  };
+  const recordLeads =
+    record.firstRepair.includes("Redirect the post") &&
+    record.ranks.length > 0 &&
+    record.ranks.every((rank, at) => at === 0 || rank > record.ranks[at - 1]);
+
+  /* ------------------------- the inbox's repair changes what it names */
+  await page.goto(`http://localhost:5193/pages/problems?${LATE}`, { waitUntil: "networkidle" });
+  await page.waitForSelector('[data-testid="repairs"] [data-graview-repair]', { timeout: 20_000 });
+  const finishPost = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="repairs"] [data-graview-repair="finish"]')].findIndex(
+      (button) => (button.textContent ?? "").includes("Redirect the post"),
+    ),
+  );
+  await page.evaluate(() => {
+    const button = [
+      ...document.querySelectorAll('[data-testid="repairs"] [data-graview-repair="finish"]'),
+    ].find((candidate) => (candidate.textContent ?? "").includes("Redirect the post"));
+    button?.click();
+  });
+  await page.waitForTimeout(500);
+  // The one it named is done; the one listed above it is untouched.
+  const inbox = await page.evaluate(() => {
+    const said = [...document.querySelectorAll('[data-testid="repairs"] [data-graview-repair]')].map(
+      (button) => (button.textContent ?? "").trim(),
+    );
+    return {
+      postGone: !said.some((label) => label.includes("Redirect the post")),
+      othersKept: said.some((label) => label.includes("Pay the deposit")),
+    };
+  });
+
+  report.checks.leadsWithWhatYouClicked = {
+    menu: led,
+    record,
+    inbox,
+    namedItsOwn: finishPost > 0,
+    ok:
+      led["t-post"].names &&
+      led["t-meter"].names &&
+      led["t-post"].rank === "0" &&
+      led["t-meter"].rank === "0" &&
+      recordLeads &&
+      inbox.postGone &&
+      inbox.othersKept,
+  };
+
   /* ------------------------------------ the keyboard keeps its place */
+  // Back to the scene the rest of this file drives, at its own date — and
+  // holding a selection, because what follows begins by putting one down.
+  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+  await page.click('[data-graview-pick="t-book"]');
+  await page.waitForSelector('[aria-label="Clear selection"]', { timeout: 10_000 });
   /*
    * EVERY ACT TAKEN FROM THE KEYBOARD used to end at the top of the
    * document. The pane is a live list — an act applies and leaves the list,
@@ -323,11 +427,7 @@ try {
   report.passed = false;
 } finally {
   await browser?.close();
-  try {
-    process.kill(-vite.pid, "SIGTERM");
-  } catch {
-    vite.kill("SIGTERM");
-  }
+  app.stop();
 }
 
 writeFileSync(resolve(repoRoot, "docs/menu.json"), `${JSON.stringify(report, null, 2)}\n`);

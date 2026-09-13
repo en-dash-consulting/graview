@@ -686,7 +686,7 @@ export function Scene<S extends AnySchema>({
           // A pan that happened to start on a line is a pan, not a pick.
           if (swallow.current) return;
           setSelection([edgeId]);
-          setMenuAt(at ?? null);
+          setMenuAt(at ? { ...at, on: edgeId } : null);
         }}
         liveOf={(connector) => {
           /*
@@ -1404,8 +1404,11 @@ interface HostProps {
   onPick(id: string, additive: boolean): void;
   /** The deliberate second gesture: go into the thing that was picked. */
   onTravel(id: string): void;
-  /** Ask for the actions at a point, in viewport coordinates. */
-  onMenu(at: { x: number; y: number }): void;
+  /**
+   * Ask for the actions at a point, in viewport coordinates, naming what the
+   * gesture landed on so the list can lead with it.
+   */
+  onMenu(at: { x: number; y: number; on?: string }): void;
   /** The whole selection, so the keyboard can tell a first press from a second. */
   readonly selection: readonly string[];
   onJackIn(): void;
@@ -1716,8 +1719,15 @@ function SceneViewHost({
          * and returns without selecting, which opened a menu about nothing
          * (and quietly raised People on the way).
          */
-        onPick(picked && picked !== node.id ? picked : node.id, false);
-        onMenu({ x: event.clientX, y: event.clientY });
+        const on = picked && picked !== node.id ? picked : node.id;
+        onPick(on, false);
+        /*
+         * The menu is about THIS, and says so. Without the name the
+         * derivation could only rank by the selection, and a rule that
+         * implicates several nodes in one violation put somebody else's
+         * repair at the top of the menu you opened on yours.
+         */
+        onMenu({ x: event.clientX, y: event.clientY, on });
       }}
       onDoubleClick={(event) => {
         const picked = pickedFrom(event.target);

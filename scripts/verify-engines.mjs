@@ -28,6 +28,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { firefox } from "playwright";
 import { ENGINES, launchEngine } from "./lib/engine.mjs";
+import { serving } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const chosen =
@@ -65,33 +66,18 @@ const readReport = (file) =>
     ? JSON.parse(readFileSync(resolve(repoRoot, file), "utf8"))
     : null;
 
+/**
+ * The app this harness drives — borrowed if a dev server is already holding
+ * the port, started and owned otherwise. See `lib/serve.mjs`: spawning a
+ * second vite blindly meant every harness died with "vite did not start"
+ * whenever anyone had the app open.
+ */
 function startVite(name, port) {
-  const child = spawn("npx", ["vite"], {
-    cwd: resolve(repoRoot, `apps/${name}`),
-    stdio: ["ignore", "pipe", "pipe"],
-    detached: true,
-  });
-  return new Promise((ready, fail) => {
-    const timer = setTimeout(() => fail(new Error("vite did not start")), 60_000);
-    child.stdout.on("data", (c) => {
-      if (String(c).includes(String(port))) {
-        clearTimeout(timer);
-        ready(child);
-      }
-    });
-    child.on("exit", (code) => {
-      clearTimeout(timer);
-      fail(new Error(`vite exited with ${code}`));
-    });
-  });
+  return serving(name, port, repoRoot);
 }
 
 const stopVite = (child) => {
-  try {
-    process.kill(-child.pid, "SIGTERM");
-  } catch {
-    child.kill("SIGTERM");
-  }
+  child.stop();
 };
 
 /* ------------------------------------------------- the per-engine matrix */

@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-12T19:30:39.035Z",
-  "engine": "firefox",
+  "at": "2026-09-13T05:19:37.080Z",
+  "engine": "chromium",
   "screens": [
     {
       "app": "todo",
@@ -20,7 +20,8 @@
       "asking": [],
       "board": [],
       "fill": 59,
-      "inspector": null
+      "inspector": null,
+      "led": null
     },
     {
       "app": "todo",
@@ -40,7 +41,8 @@
       "asking": [],
       "board": [],
       "fill": 59,
-      "inspector": null
+      "inspector": null,
+      "led": null
     },
     {
       "app": "todo",
@@ -64,8 +66,9 @@
         "shown": 13,
         "hidden": 0,
         "size": "236x405",
-        "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Finish it★Give it a new date …"
-      }
+        "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Give it a new date …☆Finish it"
+      },
+      "led": null
     },
     {
       "app": "todo",
@@ -85,7 +88,75 @@
       "asking": [],
       "board": [],
       "fill": 51,
-      "inspector": null
+      "inspector": null,
+      "led": null
+    },
+    {
+      "app": "todo",
+      "state": "judged",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 41,
+      "inspector": null,
+      "led": null
+    },
+    {
+      "app": "todo",
+      "state": "crowd",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 41,
+      "inspector": null,
+      "led": null
+    },
+    {
+      "app": "todo",
+      "state": "menu",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 59,
+      "inspector": null,
+      "led": {
+        "first": "A new date for \"Redirect the post\" …",
+        "on": "Redirect the post",
+        "names": true
+      }
     },
     {
       "app": "todo",
@@ -109,8 +180,9 @@
         "shown": 13,
         "hidden": 0,
         "size": "236x369",
-        "text": "×⚠ Was due 2026-08-28Finish it★Give it a new date …☆Rename …☆Change the task …☆Block time "
-      }
+        "text": "×⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time "
+      },
+      "led": null
     },
     {
       "app": "todo",
@@ -130,7 +202,8 @@
       "asking": [],
       "board": [],
       "fill": 19,
-      "inspector": null
+      "inspector": null,
+      "led": null
     },
     {
       "app": "todo",
@@ -155,7 +228,8 @@
         "hidden": 0,
         "size": "236x374",
         "text": "Pay the deposittask· double-click opens×Put it back☆Rename …☆Move the date …☆Change the ta"
-      }
+      },
+      "led": null
     },
     {
       "app": "todo",
@@ -179,168 +253,9 @@
         "shown": 13,
         "hidden": 0,
         "size": "236x469",
-        "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Finish it★Give it a new date …"
-      }
-    },
-    {
-      "app": "seedbed",
-      "state": "narrow",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 5,
-      "inspector": {
-        "shown": 3,
-        "hidden": 0,
-        "size": "370x151",
-        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
-      }
-    },
-    {
-      "app": "seedbed",
-      "state": "empty",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 4,
-      "inspector": null
-    },
-    {
-      "app": "seedbed",
-      "state": "invited",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 4,
-      "inspector": {
-        "shown": 1,
-        "hidden": 0,
-        "size": "236x112",
-        "text": "Gardeners· double-click opens×Nothing here yet, though Plots expect to connect to theseWel"
-      }
-    },
-    {
-      "app": "seedbed",
-      "state": "planted",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 4,
-      "inspector": null
-    },
-    {
-      "app": "seedbed",
-      "state": "asked",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 4,
-      "inspector": {
-        "shown": 3,
-        "hidden": 0,
-        "size": "236x214",
-        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
-      }
-    },
-    {
-      "app": "seedbed",
-      "state": "lens",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 59,
-      "inspector": null
-    },
-    {
-      "app": "seedbed",
-      "state": "askedNarrow",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 6,
-      "inspector": {
-        "shown": 3,
-        "hidden": 0,
-        "size": "370x197",
-        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
-      }
+        "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Give it a new date …☆Finish it"
+      },
+      "led": null
     }
   ]
 }

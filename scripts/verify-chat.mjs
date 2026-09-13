@@ -12,42 +12,27 @@
  *
  *   node scripts/verify-chat.mjs [--engine=chromium|webkit|firefox]
  */
-import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { serving } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 
+/**
+ * The app this harness drives — borrowed if a dev server is already holding
+ * the port, started and owned otherwise. See `lib/serve.mjs`: spawning a
+ * second vite blindly meant every harness died with "vite did not start"
+ * whenever anyone had the app open.
+ */
 function startVite(app, port) {
-  const child = spawn("npx", ["vite"], {
-    cwd: resolve(repoRoot, `apps/${app}`),
-    stdio: ["ignore", "pipe", "pipe"],
-    detached: true,
-  });
-  return new Promise((ready, fail) => {
-    const timer = setTimeout(() => fail(new Error("vite did not start")), 60_000);
-    child.stdout.on("data", (chunk) => {
-      if (String(chunk).includes(String(port))) {
-        clearTimeout(timer);
-        ready(child);
-      }
-    });
-    child.on("exit", (code) => {
-      clearTimeout(timer);
-      fail(new Error(`vite exited with ${code}`));
-    });
-  });
+  return serving(app, port, repoRoot);
 }
 
 const stopVite = (child) => {
-  try {
-    process.kill(-child.pid, "SIGTERM");
-  } catch {
-    child.kill("SIGTERM");
-  }
+  child.stop();
 };
 
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };

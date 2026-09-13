@@ -76,6 +76,9 @@ export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> 
             score: REPAIR_SCORE - repairIndex - (repair.missing?.length ?? 0),
             why: violation.message,
             nodeIds: violation.nodeIds,
+            // Carried so the ranking can lead with the repairs of the RULE
+            // you clicked, the same way it leads with a task's own.
+            ...(violation.subjectId === undefined ? {} : { subjectId: violation.subjectId }),
           });
         });
       });

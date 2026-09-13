@@ -18,11 +18,11 @@
  *
  * Writes docs/shrunk-interface.json.
  */
-import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { launchCanaryGpu } from "./lib/engine.mjs";
+import { serving } from "./lib/serve.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -55,25 +55,14 @@ const APPS = [
  * and the next app in the loop then fails to start for a reason that has
  * nothing to do with what is being tested.
  */
+/**
+ * The app this harness drives — borrowed if a dev server is already holding
+ * the port, started and owned otherwise. See `lib/serve.mjs`: spawning a
+ * second vite blindly meant every harness died with "vite did not start"
+ * whenever anyone had the app open.
+ */
 function startVite(app) {
-  const child = spawn("npx", ["vite"], {
-    cwd: resolve(repoRoot, `apps/${app.name}`),
-    stdio: ["ignore", "pipe", "pipe"],
-    detached: true,
-  });
-  return new Promise((ready, fail) => {
-    const timer = setTimeout(() => fail(new Error("vite did not start in 40s")), 40_000);
-    child.stdout.on("data", (chunk) => {
-      if (String(chunk).includes(String(app.port))) {
-        clearTimeout(timer);
-        ready(child);
-      }
-    });
-    child.on("exit", (code) => {
-      clearTimeout(timer);
-      fail(new Error(`vite exited with ${code}`));
-    });
-  });
+  return serving(app.name, app.port, repoRoot);
 }
 
 /**
@@ -195,11 +184,7 @@ try {
         await page.close();
       }
     } finally {
-      try {
-        process.kill(-vite.pid, "SIGKILL");
-      } catch {
-        vite.kill("SIGKILL");
-      }
+      vite.stop();
     }
   }
 } catch (error) {

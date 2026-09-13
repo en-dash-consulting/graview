@@ -1,4 +1,4 @@
-import type { AnySchema, NodeOfSchema, Principal, Store } from "@graview/core";
+import { nodeRefArgs, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
 import { insightProvider } from "./providers/insight.js";
 import { usageBoost, usageWeights } from "./usage.js";
 import { invariantProvider } from "./providers/invariant.js";
@@ -48,6 +48,22 @@ export interface DeriveOptions<S extends AnySchema> {
     readonly pinned?: readonly string[];
     readonly unpinned?: readonly string[];
   };
+  /**
+   * THE THING UNDER THE POINTER — the node right-clicked, the node the
+   * strip's last press selected, the record a page is about.
+   *
+   * The selection says what the acts are DERIVED from; this says which one
+   * of them you just touched, and the ranking leads with it: that node's own
+   * repair, then its own acts, then everything else. Without it a rule that
+   * implicates six late tasks in ONE violation offered the six repairs in
+   * the order it happened to list them, so right-clicking the fourth task
+   * met the first task's repair at the top — asking to fix a different
+   * thing than the one you pressed on.
+   *
+   * Optional, and omitting it changes nothing: with no focus every act is
+   * equally about the selection and the older bands decide alone.
+   */
+  readonly focus?: string;
 }
 
 /**
@@ -103,14 +119,19 @@ export function deriveAffordances<S extends AnySchema>(
    *
    * Destructive actions come LAST, whatever their score — "Remove" sorting
    * first on an ordinary selection is an interface leading with the one
-   * thing that cannot be taken back. Repairs come FIRST within their half:
-   * a broken rule outranks any preference. Between those walls, pins rank
-   * before the rest (a person's own pin before the app's declared one),
-   * and a deterministic usage boost — decayed recency and frequency read
-   * off the op log, no model — lets what this workspace actually does rank
-   * ahead of what it never touches. The same order reaches the strip, the
-   * pointer menu and an agent's tool list, so no surface contradicts
-   * another.
+   * thing that cannot be taken back. Then the PRESS decides: the thing you
+   * clicked gets its own repairs, then its own acts, before anything the
+   * rest of the selection offers (see `focusRank`). Repairs come FIRST
+   * within each of those halves: a broken rule outranks any preference,
+   * and between two of a rule's own repairs the RULE's order stands —
+   * naming "give it a new date" before "finish it" is a judgement, and a
+   * pin is not entitled to overrule it. Below the repairs, pins rank before
+   * the rest (a person's own pin before the app's declared one), and a
+   * deterministic usage boost — decayed recency and frequency read off the
+   * op log, no model — lets what this workspace actually does rank ahead of
+   * what it never touches. The same order reaches the strip, the pointer
+   * menu, the record page and an agent's tool list, so no surface
+   * contradicts another.
    */
   const declaredPins = new Set(
     store
@@ -138,16 +159,101 @@ export function deriveAffordances<S extends AnySchema>(
     affordance.pinned === "user" ? 0 : affordance.pinned === "declared" ? 1 : 2;
   const boosted = (affordance: Affordance): number =>
     affordance.score + (boost.get(affordance.mutation) ?? 0);
-  const ranked = dedupe(affordances)
-    .map(pinnedAs)
-    .sort(
-      (a, b) =>
-        Number(a.destructive ?? false) - Number(b.destructive ?? false) ||
-        Number(b.provider === "invariant") - Number(a.provider === "invariant") ||
-        pinRank(a) - pinRank(b) ||
-        boosted(b) - boosted(a) ||
-        a.id.localeCompare(b.id),
+
+  /*
+   * WHICH NODES AN ACT WOULD ACTUALLY CHANGE, read off the mutation's own
+   * input rather than declared per act.
+   *
+   * `nodeIds` is what an act is ABOUT — a violation hands its repairs the
+   * whole set of nodes it implicates — and that is right for highlighting
+   * and wrong for "is this the thing I clicked". The arguments are precise:
+   * a repair carrying `taskId: "t-book"` acts on that task and no other,
+   * whichever six the rule mentioned in passing.
+   */
+  const declaredMutations = new Map(store.allMutations().map((mutation) => [mutation.name, mutation]));
+  const refNames = new Map<string, readonly string[]>();
+  const targetsOf = (affordance: Affordance): readonly string[] => {
+    const declared = declaredMutations.get(affordance.mutation);
+    if (!declared) return [];
+    let names = refNames.get(affordance.mutation);
+    if (!names) {
+      names = nodeRefArgs(declared.input).map((arg) => arg.name);
+      refNames.set(affordance.mutation, names);
+    }
+    const found: string[] = [];
+    for (const call of affordance.batch ?? [affordance.args]) {
+      for (const name of names) {
+        const value = call[name] ?? affordance.args[name];
+        if (typeof value === "string") found.push(value);
+      }
+    }
+    return found;
+  };
+
+  /*
+   * THE PRESS LEADS THE LIST.
+   *
+   * Five bands, and the focus decides the first four: the clicked thing's
+   * own repair, then a repair that merely implicates it, then its own acts
+   * — the ones already settled to a single press ahead of the ones that
+   * still ask — and finally everything the rest of the selection offers,
+   * where the older bands (repairs first, pins, usage) decide as they
+   * always did. The destructive tail is untouched and still outermost: a
+   * "Delete" for the thing you clicked is still not the first thing an
+   * interface should offer you.
+   *
+   * With no focus every act lands in the last band, which is the order this
+   * function returned before there was a focus at all.
+   */
+  const focus = options.focus;
+  const REST = 4;
+  /*
+   * SETTLED, OR STILL ASKING — and an optional argument is still a question.
+   *
+   * Asking only about the required ones put "Change the task", whose fields
+   * are every one of them optional, ahead of "Rename", which needs a name.
+   * Both open a form; neither is one press. What the band is for is the act
+   * the derivation already worked out in full, which is the act with nothing
+   * left open at all.
+   */
+  const asks = (affordance: Affordance): number => (affordance.open.length > 0 ? 1 : 0);
+  const focusRank = (affordance: Affordance): number => {
+    if (focus === undefined) return REST;
+    const targets = targetsOf(affordance);
+    /*
+     * AN ACT THAT NAMES A NODE NAMES WHOSE ACT IT IS, whatever the rule it
+     * came from was about. "A new date for Book the hall" arrived from the
+     * same violation as yours and implicates your task in passing; it is
+     * still somebody else's repair and belongs with the rest.
+     */
+    if (targets.length > 0) return targets.includes(focus) ? bandFor(affordance, 0) : REST;
+    // Nothing named: it is yours if the rule implicates you, or judges you.
+    if (affordance.nodeIds.includes(focus) || affordance.subjectId === focus) {
+      return bandFor(affordance, 1);
+    }
+    return REST;
+  };
+  /** A repair leads; an act follows, settled before asking. */
+  const bandFor = (affordance: Affordance, repairBand: 0 | 1): number =>
+    affordance.provider === "invariant" ? repairBand : 2 + asks(affordance);
+
+  const candidates = dedupe(affordances).map(pinnedAs);
+  // The order the rules listed them in, kept for the two repair bands: a
+  // rule that names "finish it" before "put it back" meant that.
+  const listed = new Map<Affordance, number>(candidates.map((affordance, at) => [affordance, at]));
+  const ranked = candidates.sort((a, b) => {
+    const destructive = Number(a.destructive ?? false) - Number(b.destructive ?? false);
+    if (destructive !== 0) return destructive;
+    const band = focusRank(a) - focusRank(b);
+    if (band !== 0) return band;
+    if (focusRank(a) < 2) return listed.get(a)! - listed.get(b)!;
+    return (
+      Number(b.provider === "invariant") - Number(a.provider === "invariant") ||
+      pinRank(a) - pinRank(b) ||
+      boosted(b) - boosted(a) ||
+      a.id.localeCompare(b.id)
     );
+  });
 
   /*
    * An action you may not take SAYS SO rather than vanishing.
@@ -184,9 +290,20 @@ export function deriveAffordances<S extends AnySchema>(
     else withheld.push({ ...affordance, refusal: verdict.refusal });
   }
 
+  /*
+   * ONE RANK, STAMPED ONCE. The strip, the pointer menu, the record page's
+   * acts and an agent's tool list all read these arrays; a surface that
+   * regroups them can still say which entry the derivation put first rather
+   * than deciding for itself and contradicting its neighbour. Withheld acts
+   * continue the same numbering, because "last, and still shown" is where
+   * the order puts them.
+   */
+  const offered = allowed.map((affordance, at) => ({ ...affordance, rank: at }));
+  const stated = withheld.map((affordance, at) => ({ ...affordance, rank: allowed.length + at }));
+
   return {
-    affordances: options.limit === undefined ? allowed : allowed.slice(0, options.limit),
-    withheld,
+    affordances: options.limit === undefined ? offered : offered.slice(0, options.limit),
+    withheld: stated,
     observations: dedupeObservations(observations),
     ms: now() - started,
   };

@@ -13,11 +13,11 @@
  *
  * Writes docs/progression/NN-slug-{light,dark}.png and docs/progression.json.
  */
-import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { serving } from "./lib/serve.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -30,13 +30,14 @@ const { CHAPTERS } = await import(pathToFileURL(resolve(repoRoot, "apps/seedbed/
 const { checkApp } = await import(pathToFileURL(resolve(repoRoot, "packages/core/dist/index.js")).href);
 const { aggregateId } = await import(pathToFileURL(resolve(repoRoot, "packages/layout/dist/index.js")).href);
 
+/**
+ * The app this harness drives — borrowed if a dev server is already holding
+ * the port, started and owned otherwise. See `lib/serve.mjs`: spawning a
+ * second vite blindly meant every harness died with "vite did not start"
+ * whenever anyone had the app open.
+ */
 function startVite() {
-  const child = spawn("npx", ["vite"], { cwd: resolve(repoRoot, "apps/seedbed"), stdio: ["ignore", "pipe", "pipe"], detached: true });
-  return new Promise((ready, fail) => {
-    const timer = setTimeout(() => fail(new Error("vite did not start")), 60_000);
-    child.stdout.on("data", (chunk) => { if (String(chunk).includes(String(port))) { clearTimeout(timer); ready(child); } });
-    child.on("exit", (code) => { clearTimeout(timer); fail(new Error(`vite exited with ${code}`)); });
-  });
+  return serving("todo", 5193, repoRoot);
 }
 
 const report = { at: new Date().toISOString(), engine: engineName(), chapters: [] };
@@ -201,7 +202,7 @@ try {
   process.stdout.write(`${report.error}\n`);
 } finally {
   if (browser) await browser.close().catch(() => {});
-  if (vite && !process.argv.includes("--keep-vite")) { try { process.kill(-vite.pid, "SIGTERM"); } catch {} }
+  if (vite && !process.argv.includes("--keep-vite")) { vite.stop(); }
 }
 report.verdict = {
   everyChapterChecksClean: report.chapters.length === CHAPTERS.length && report.chapters.every((c) => c.check.ok),

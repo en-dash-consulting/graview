@@ -414,7 +414,22 @@ export function Inspector() {
    * the pointer menu and nothing else invents a second action system.
    */
   const [pins, setPins] = useState<PinOverrides>(() => loadPins());
-  const deriveOptions = useMemo(() => ({ pins }), [pins]);
+  /*
+   * THE THING YOU PRESSED ON leads the list, in the strip as well as the
+   * menu — one rank, derived once, so the two surfaces cannot disagree
+   * about what comes first.
+   *
+   * The menu names what its gesture landed on. The strip has no gesture of
+   * its own, so it takes the most recent addition to the selection, which
+   * is the same thing: the card you just clicked. With a single selection
+   * that is simply the selected node, which is what "resolve THIS item's
+   * problem" means when only one item is in hand.
+   */
+  const focus = menuAt?.on ?? selection[selection.length - 1];
+  const deriveOptions = useMemo(
+    () => ({ pins, ...(focus === undefined ? {} : { focus }) }),
+    [pins, focus],
+  );
   // Which acts the app itself pinned — the star on those demotes rather
   // than doubling up, so pressing it always visibly does something.
   const declaredPins = useMemo(
@@ -1101,6 +1116,14 @@ export function Inspector() {
                   <button
                     type="button"
                     data-affordance={affordance.id}
+                    /*
+                     * Where the derivation put it. The sections regroup the
+                     * list — pinned, its ties, the broken rule's own — so
+                     * the row's place on screen is not the rank, and only
+                     * the rank can say whether this pane and the record
+                     * page agree about what leads.
+                     */
+                    data-rank={affordance.rank}
                     data-graview-destructive={affordance.destructive || undefined}
                     aria-pressed={pending === affordance.id}
                     title={affordance.why}
@@ -1266,6 +1289,7 @@ export function Inspector() {
                 type="button"
                 disabled
                 data-affordance={action.id}
+                data-rank={action.rank}
                 data-withheld={action.refusal.wouldNeed.join(",") || "nobody"}
                 style={{
                   padding: "4px 10px",

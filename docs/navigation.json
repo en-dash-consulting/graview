@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T19:21:56.097Z",
+  "at": "2026-09-13T05:21:28.282Z",
   "engine": "chromium",
   "steps": [
     {
@@ -50,10 +50,31 @@
       "back": true,
       "forward": false,
       "trail": ""
+    },
+    {
+      "step": "lists with every task raised",
+      "url": "#focus=aggregate%3Alist&relation=task",
+      "back": false,
+      "forward": true,
+      "trail": "Tasks×"
+    },
+    {
+      "step": "the week with the lists raised",
+      "url": "#focus=aggregate%3Atask&relation=list",
+      "back": false,
+      "forward": true,
+      "trail": "Lists×"
     }
   ],
   "pageErrors": [],
   "wentDeeper": true,
+  "restated": {
+    "holds": 0,
+    "chips": 12,
+    "inside": 12,
+    "entries": 9,
+    "weekLines": 9
+  },
   "control": {
     "ground": {
       "label": "Graview",
@@ -73,7 +94,7 @@
       "label": "Graview",
       "pressed": "false",
       "name": "Graview",
-      "wingOpacity": 0.539254,
+      "wingOpacity": 0.539202,
       "registered": true
     },
     "groundAgain": {
@@ -136,6 +157,8 @@
     "eachTravelIsItsOwnStop": true,
     "backAgainReachesTheStart": true,
     "forwardIsOfferedOnceThereIsSomewhere": true,
+    "aViewThatDrawsBothEndsDrawsTheRelation": true,
+    "aCardsChipsDoNotSilenceItsLines": true,
     "forwardActuallyGoesForward": true,
     "theTrailNamesWhereYouAre": true,
     "theTrailGetsYouHome": true,

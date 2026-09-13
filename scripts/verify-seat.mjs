@@ -8,10 +8,10 @@
  *
  *   node scripts/verify-seat.mjs
  */
-import { spawn } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { serving } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -20,13 +20,14 @@ const SEATS = {
   todo: { port: 5193, ready: "__todoReady", testId: "agent-tidy", who: "tidy", query: "&today=2026-09-01" },
 };
 
+/**
+ * The app this harness drives — borrowed if a dev server is already holding
+ * the port, started and owned otherwise. See `lib/serve.mjs`: spawning a
+ * second vite blindly meant every harness died with "vite did not start"
+ * whenever anyone had the app open.
+ */
 function startVite(name, port) {
-  const child = spawn("npx", ["vite"], { cwd: resolve(repoRoot, `apps/${name}`), stdio: ["ignore", "pipe", "pipe"], detached: true });
-  return new Promise((ok, no) => {
-    const timer = setTimeout(() => no(new Error("vite did not start")), 60_000);
-    child.stdout.on("data", (d) => { if (String(d).includes(String(port))) { clearTimeout(timer); ok(child); } });
-    child.on("exit", (code) => { clearTimeout(timer); no(new Error(`vite exited with ${code}`)); });
-  });
+  return serving(name, port, repoRoot);
 }
 
 const criteria = [];
@@ -138,7 +139,7 @@ try {
 
       // The permission claim, where there is a policy to narrow it.
     } finally {
-      try { process.kill(-vite.pid, "SIGKILL"); } catch { vite.kill("SIGKILL"); }
+      vite.stop();
     }
   }
 
@@ -208,7 +209,7 @@ try {
     check("seedbed: nothing threw on the way", seatErrors.length === 0, seatErrors[0] ?? "");
     await seven.close();
   } finally {
-    try { process.kill(-seedbed.pid, "SIGKILL"); } catch { seedbed.kill("SIGKILL"); }
+    seedbed.stop();
   }
 } finally {
   await browser.close();

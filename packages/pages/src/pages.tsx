@@ -16,7 +16,7 @@ import {
 } from "@graview/core";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useCallback, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { kindFacts, recordFacts } from "./facts.js";
+import { kindFacts, rankedRepairs, recordFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { kindOfSlug, pluralSlug, recordPath, spatialHref } from "./registry.js";
 
@@ -788,7 +788,14 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           {facts.violations.map((violation, index) => (
             <div key={index} style={{ display: "grid", gap: 8 }}>
               <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>
-              <Repairs<S> store={store} repairs={violation.repairs} {...(principal ? { principal } : {})} />
+              {/* Ranked by the same derivation the strip reads: this
+                  record's own repair leads, whichever subject the rule
+                  happened to walk first. */}
+              <Repairs<S>
+                store={store}
+                repairs={rankedRepairs(facts.actions, violation.repairs)}
+                {...(principal ? { principal } : {})}
+              />
             </div>
           ))}
         </section>
@@ -857,6 +864,15 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                 <button
                   key={affordance.id}
                   type="button"
+                  /*
+                   * The derivation's own name and place, carried onto the
+                   * page. The strip and the pointer menu already marked
+                   * their rows this way; this face rendered the same
+                   * ranked list anonymously, so nothing could check that
+                   * the three agree about what comes first.
+                   */
+                  data-affordance={affordance.id}
+                  data-rank={affordance.rank}
                   aria-expanded={opened}
                   onClick={() => setOpen(opened ? null : affordance.id)}
                   style={{

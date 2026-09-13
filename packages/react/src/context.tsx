@@ -35,6 +35,23 @@ export type ViewMode = "scene" | "fullscreen";
 /** Which visual scheme the scene is drawn in. */
 export type Scheme = "light" | "dark";
 
+/**
+ * A menu asked for at a point — and, when the gesture landed on something,
+ * WHAT it landed on.
+ *
+ * The point alone was enough to draw the menu and not enough to order it: a
+ * right-click on the fourth of six late tasks produced the same list as a
+ * right-click on the first, led by whichever repair the rule happened to
+ * name first. `on` is the thing under the pointer, and it reaches the
+ * derivation as its focus so the menu opens on the press.
+ */
+export interface PointerMenu {
+  readonly x: number;
+  readonly y: number;
+  /** The node or edge the gesture landed on, when it landed on one. */
+  readonly on?: string;
+}
+
 export interface GraviewContextValue<S extends AnySchema> {
   readonly store: Store<S>;
   /**
@@ -62,8 +79,8 @@ export interface GraviewContextValue<S extends AnySchema> {
    * workbench draws the same derived affordances there that it draws in the
    * strip, because there must not be two renderings of an action.
    */
-  readonly menuAt: { readonly x: number; readonly y: number } | null;
-  setMenuAt(at: { x: number; y: number } | null): void;
+  readonly menuAt: PointerMenu | null;
+  setMenuAt(at: PointerMenu | null): void;
   /**
    * A relation singled out for emphasis, by edge kind, or null for none.
    *
@@ -226,7 +243,7 @@ export function GraviewProvider<S extends AnySchema>({
     withSelection(initialView ?? EMPTY_VIEW, initialSelection ?? initialView?.selection ?? []),
   );
   const homeView = useRef<ViewState>(initialView ?? EMPTY_VIEW).current;
-  const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
+  const [menuAt, setMenuAt] = useState<PointerMenu | null>(null);
   const [emphasis, setEmphasis] = useState<string | null>(null);
   const { activity, noteAttention } = useActivityState(store);
 

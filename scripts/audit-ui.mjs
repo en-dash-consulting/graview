@@ -10,11 +10,11 @@
  *
  *   node scripts/audit-ui.mjs [app]
  */
-import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { serving } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -43,6 +43,24 @@ const APPS = {
       await p.goto("http://localhost:5193/?theme=light&today=2026-09-01#focus=reason-deposit&relation=task&zoom=1", { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
+    },
+    /*
+     * THE POINTER MENU, opened on a task a rule implicates alongside four
+     * others. Until the derivation knew which node the gesture landed on,
+     * the first entry was whichever subject the rule happened to walk
+     * first — so the obvious press fixed somebody else's problem. The date
+     * is moved forward because one late task cannot show an order problem
+     * between late tasks.
+     */
+    menu: async (p) => {
+      await p.goto("http://localhost:5193/?theme=light&today=2026-09-04&fresh=1", { waitUntil: "load" });
+      await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(600);
+      await p.click('[data-graview-pick="t-post"]', { button: "right" });
+      await p.waitForSelector('[data-testid="context-menu"] [data-affordance]', { timeout: 20_000 });
+      await p.evaluate(() => {
+        window.__menuOpenedOn = "Redirect the post";
+      });
     },
     travelled: async (p) => { await p.dblclick('[data-graview-pick="t-deposit"]'); },
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
@@ -159,15 +177,6 @@ const APPS = {
     } },
   } },
 };
-
-function startVite(name, port) {
-  const child = spawn("npx", ["vite"], { cwd: resolve(repoRoot, `apps/${name}`), stdio: ["ignore", "pipe", "pipe"], detached: true });
-  return new Promise((ready, fail) => {
-    const timer = setTimeout(() => fail(new Error("vite did not start")), 60_000);
-    child.stdout.on("data", (c) => { if (String(c).includes(String(port))) { clearTimeout(timer); ready(child); } });
-    child.on("exit", (code) => { clearTimeout(timer); fail(new Error(`vite exited with ${code}`)); });
-  });
-}
 
 const audit = () => {
   const box = (el) => el.getBoundingClientRect();
@@ -614,7 +623,19 @@ const audit = () => {
     };
   }
 
-  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, painted, repeats, articles: [...new Set(articles)].slice(0, 8), covered, offscreen, asking: asking.slice(0, 6), board, fill, inspector };
+  /* A MENU OPENED AT A POINTER LEADS WITH THE THING IT WAS OPENED ON.
+     The state that opens one leaves the thing's name on the window, because
+     the menu itself is the thing under test and must not be asked to
+     confirm its own claim. */
+  const menu = document.querySelector('[data-testid="context-menu"]');
+  let led = null;
+  if (menu) {
+    const first = (menu.querySelector("[data-affordance]")?.textContent ?? "").trim();
+    const on = window.__menuOpenedOn ?? null;
+    led = { first: first.slice(0, 60), on, names: on === null ? null : first.includes(on) };
+  }
+
+  return { collisions: collisions.slice(0, 8), small, cut, unnamed, keyed, headings, halfSaid, painted, repeats, articles: [...new Set(articles)].slice(0, 8), covered, offscreen, asking: asking.slice(0, 6), board, fill, inspector, led };
 };
 
 const only = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : null;
@@ -625,7 +646,7 @@ try {
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
   for (const [name, app] of Object.entries(APPS)) {
     if (only && only !== name) continue;
-    const vite = await startVite(name, app.port);
+    const served = await serving(name, app.port, repoRoot);
     try {
       for (const [state, entry] of Object.entries(app.states)) {
         // A state may ask for its own window; the rest get the surveyed one.
@@ -646,7 +667,7 @@ try {
         }
       }
     } finally {
-      try { process.kill(-vite.pid, "SIGKILL"); } catch { vite.kill("SIGKILL"); }
+      served.stop();
     }
   }
 } finally {
@@ -675,6 +696,7 @@ for (const s of report.screens) {
     s.asking?.length ? `an ask drawn outside its pane: ${s.asking.join("; ")}` : "",
     s.offscreen?.length ? `${s.offscreen.length} off the edge with nowhere to scroll: ${s.offscreen[0]}` : "",
     s.inspector?.hidden ? `strip hides ${s.inspector.hidden} of ${s.inspector.hidden + s.inspector.shown} actions` : "",
+    s.led?.names === false ? `the menu leads with "${s.led.first}", not the ${s.led.on} it was opened on` : "",
   ].filter(Boolean);
   if (notes.length) bad++;
   process.stdout.write(`${notes.length ? "??" : "ok"} ${where} ${notes.join("; ")}\n`);

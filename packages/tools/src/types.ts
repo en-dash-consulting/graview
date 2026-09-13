@@ -61,6 +61,22 @@ export interface Affordance {
   readonly why: string;
   /** Nodes this acts on, for highlighting across planes. */
   readonly nodeIds: readonly string[];
+  /**
+   * For a repair, the node whose declaration produced the broken check —
+   * the violation's own subject. Read by the ranking so that clicking a
+   * rule leads with the rule's repairs.
+   */
+  readonly subjectId?: string;
+  /**
+   * Where this sits in the ONE order every surface reads, stamped by the
+   * derivation after ranking: allowed acts from 0, then the withheld ones.
+   *
+   * Nothing needs it to render a list in order — the arrays are already in
+   * it — but a surface that regroups (the record page's acts beside its
+   * fields, the menu's fold) can say which entry the derivation put first
+   * instead of deciding for itself and disagreeing with the strip.
+   */
+  readonly rank?: number;
 }
 
 /** Something true about the selection that no rule was written to notice. */

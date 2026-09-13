@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-12T19:31:38.619Z",
-  "engine": "firefox",
+  "at": "2026-09-13T05:21:15.743Z",
+  "engine": "chromium",
   "checks": {
     "phoneHome": {
       "noSideScroll": true,
