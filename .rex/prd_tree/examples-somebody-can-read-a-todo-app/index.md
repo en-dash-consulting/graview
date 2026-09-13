@@ -25,5 +25,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [The launcher is the front door: the platform's real capabilities, in onboarding order, each shown by a demo at a stop](./the-launcher-is-the-front-door-the/index.md) | pending |
-| [A third demo, the product-grade one: Rota — branded, permissioned, remembered, embedded, with the installation, a profile and the studio](./a-third-demo-the-product-grade-one.md) | pending |
+| [A third demo, the product-grade one: Rota — branded, permissioned, remembered, embedded, with the installation, a profile and the studio](./a-third-demo-the-product-grade-one.md) | completed |
 | [Product-grade routed faces: Things and Rota wear refined, interactive Pages that look shipped](./product-grade-routed-faces-things-and.md) | completed |
