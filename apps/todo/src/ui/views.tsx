@@ -6,12 +6,14 @@ import {
   Fields,
   Panel,
   Roster,
+  createCalendarLens,
   createTimelineLens,
   hueFor,
   reachLens,
   registerDefaultViews,
 } from "@graview/primitives";
 import { todoSchema, type TodoSchema } from "../domain/schema.js";
+import { EXAMPLE_TODAY } from "./when.js";
 
 type S = TodoSchema;
 type ListNode = { id: string; label: string; order: number };
@@ -43,6 +45,22 @@ export const weekLens = createTimelineLens<S>({
   columns: DAYS.map((id) => ({ id, label: id.toUpperCase() })),
   extent: 1440,
   format: (at) => `${String(Math.floor(at / 60)).padStart(2, "0")}:${String(at % 60).padStart(2, "0")}`,
+});
+
+/**
+ * THE MONTH, through the framework's calendar lens — over real dates.
+ *
+ * The week is minutes of a day in named columns, which cannot say "this is
+ * due on the 14th of next month". Same app, same tasks, a second question:
+ * what is coming up, and when. The lens has never heard of a task; this app
+ * says which of its fields is the date and which says the thing is finished.
+ */
+export const monthLens = createCalendarLens<S>({
+  bindings: { task: { start: "due", done: "done" } },
+  // The day the example is written around — read at the edge and threaded
+  // in, never from the clock, so a harness photographs the same month twice.
+  today: EXAMPLE_TODAY,
+  range: "month",
 });
 
 /** A task: the one card where "done" has to be visible without reading. */
@@ -332,6 +350,11 @@ const WeekView = ((props: ViewProps<S>) => (
   <weekLens.View {...props} label="The week ahead" />
 )) as ViewComponent<S>;
 
+/** The same tasks, by the date they are due rather than the hour they fill. */
+const MonthView = ((props: ViewProps<S>) => (
+  <monthLens.View {...props} label="What is coming up" />
+)) as ViewComponent<S>;
+
 export function todoViews() {
   const registry = registerDefaultViews(todoSchema, createViews(todoSchema));
   return registry
@@ -352,10 +375,23 @@ export function todoViews() {
     .register("list", { cardinality: "one", fidelity: "full" }, OneListView)
     .register("list", { cardinality: "one", fidelity: "summary" }, OneListView)
     .register("list", { cardinality: "one", fidelity: "glyph" }, OneListView)
-    .register("list", { cardinality: "many", fidelity: "full" }, ListsView)
-    .register("list", { cardinality: "many", fidelity: "summary" }, ListsView)
-    // The week, for a group of tasks. The lens supplies the picture.
-    .register("task", { cardinality: "many", fidelity: "full" }, WeekView)
-    .register("task", { cardinality: "many", fidelity: "summary" }, WeekView);
+    // Titled, so "The lists" is a place on the bar like the week and the
+    // month — three pictures, one switcher, and it is the framework's.
+    .register("list", { cardinality: "many", fidelity: "full" }, ListsView, { title: "The lists" })
+    .register("list", { cardinality: "many", fidelity: "summary" }, ListsView, { title: "The lists" })
+    /*
+     * TWO PICTURES OF ONE PILE OF TASKS, each a place with its own name.
+     *
+     * The week says what today looks like, in minutes of a day. The month
+     * says what is coming, over real dates. Neither can answer the other's
+     * question, and until a kind could have more than one place the app had
+     * to choose. The week is registered LAST, so it is what the district
+     * draws when the address names no picture — the month is one press away
+     * and says so on the bar.
+     */
+    .register("task", { cardinality: "many", fidelity: "full" }, MonthView, { title: "The month" })
+    .register("task", { cardinality: "many", fidelity: "summary" }, MonthView, { title: "The month" })
+    .register("task", { cardinality: "many", fidelity: "full" }, WeekView, { title: "The week" })
+    .register("task", { cardinality: "many", fidelity: "summary" }, WeekView, { title: "The week" });
 }
 

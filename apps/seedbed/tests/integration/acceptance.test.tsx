@@ -136,7 +136,10 @@ describe("populating the graph IS the onboarding", () => {
     const plot = store.graph.nodesOfKind("plot")[0]!;
     store.apply({ name: "sow", args: { label: "Beans", plotId: plot.id, sown: "2026-04-04" } });
     const planting = store.graph.nodesOfKind("planting")[0]!;
-    store.apply({ name: "harvest", args: { plantingId: planting.id } });
+    // Harvesting says WHEN, so the season calendar can draw the planting
+    // across the days it was in the ground rather than a dot on the day it
+    // went in.
+    store.apply({ name: "harvest", args: { plantingId: planting.id, on: "2026-07-20" } });
     const scene = layout(store.graph, seedbedSchema, EMPTY_VIEW);
     const card = scene.nodes.find((node) => node.id === kindCardId("planting"));
     expect(card?.aggregate?.memberIds).toEqual([]);

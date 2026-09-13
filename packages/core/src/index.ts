@@ -162,7 +162,7 @@ export type {
 } from "./store.js";
 
 // Views — the cardinality x fidelity matrix.
-export { createViewRegistry, FIDELITIES } from "./views/types.js";
+export { createViewRegistry, FIDELITIES, placeSlug } from "./views/types.js";
 export type {
   Cardinality,
   Fidelity,

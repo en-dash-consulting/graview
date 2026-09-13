@@ -1,0 +1,59 @@
+{
+  "at": "2026-09-13T06:22:28.868Z",
+  "engine": "chromium",
+  "checks": {
+    "aSecondPictureOfOneGroupIsASecondPlace": {
+      "places": [
+        "The lists",
+        "The month",
+        "The week"
+      ],
+      "opened": {
+        "range": "month",
+        "at": "2026-09-01",
+        "days": 42,
+        "entries": 6,
+        "hash": "#focus=aggregate%3Atask&in.view=the-month"
+      },
+      "ok": true
+    },
+    "theMonthYouLeftIsWhereBackGoes": {
+      "next": "2026-10-01",
+      "back": "2026-09-01",
+      "ok": true
+    },
+    "fourRangesOverTheSameEntries": {
+      "week": 7,
+      "day": 1,
+      "agenda": 5,
+      "month": 42,
+      "ok": true
+    },
+    "anEntryIsANodeAndTheStripKnowsIt": {
+      "entry": "t-book",
+      "strip": [
+        "Mark it done",
+        "Rename …",
+        "Move the date …",
+        "Change the task …",
+        "Block time for it …",
+        "Note why this is here …",
+        "Move it to another list …",
+        "It no longer has to wait …",
+        "This has to happen first …"
+      ],
+      "lit": "lit",
+      "ok": true
+    },
+    "aRangeInTheAddressOpensThere": {
+      "range": "day",
+      "at": "2026-09-03",
+      "days": 1,
+      "entries": 2,
+      "hash": "#focus=aggregate%3Atask&in.at=2026-09-03&in.range=day&in.view=the-month",
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

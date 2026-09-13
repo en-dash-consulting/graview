@@ -75,6 +75,22 @@ export interface ViewState {
    * as zooming in and leaving as zooming out, and the back button knows it.
    */
   readonly zoom?: boolean;
+  /**
+   * WHERE A VIEW IS INSIDE ITSELF.
+   *
+   * A calendar showing October is somewhere, and it is somewhere a person
+   * can be sent, come back to and press Back out of. Everything else about
+   * a stop is the framework's own vocabulary — a focus, a relation, an
+   * altitude — and a view that arranges its own dimension has nowhere to
+   * say so, which is why the week grid could only ever show one week.
+   *
+   * A flat map of short keys, written into the fragment as `in.<key>`,
+   * owned by whichever view is drawing. The framework never reads a key; it
+   * only carries it, so that "the month I was looking at" is a URL like
+   * every other place in this system rather than component state that the
+   * back button silently loses.
+   */
+  readonly within?: Readonly<Record<string, string>>;
 }
 
 export const EMPTY_VIEW: ViewState = {
@@ -115,6 +131,10 @@ export function toUrl(state: ViewState): string {
   if (state.pan && (state.pan.x !== 0 || state.pan.y !== 0)) {
     params.set("pan", `${round(state.pan.x)},${round(state.pan.y)}`);
   }
+  for (const key of Object.keys(state.within ?? {}).sort()) {
+    const value = state.within![key]!;
+    if (value.length > 0) params.set(`in.${key}`, value);
+  }
   const query = params.toString();
   return query ? `#${query}` : "#";
 }
@@ -140,6 +160,11 @@ export function fromUrl(url: string): ViewState {
     const y = rawY === undefined ? null : num(rawY);
     if (x === null || y === null) continue;
     pins[key.slice(4)] = { x, y };
+  }
+  const within: Record<string, string> = {};
+  for (const [key, value] of params) {
+    if (!key.startsWith("in.") || value.length === 0) continue;
+    within[key.slice(3)] = value;
   }
   const rawPan = params.get("pan")?.split(",") ?? [];
   const panX = rawPan[0] === undefined ? null : num(rawPan[0]);
@@ -169,6 +194,7 @@ export function fromUrl(url: string): ViewState {
       ? { shown: [...new Set(params.get("show")!.split(",").filter(Boolean))].sort() }
       : {}),
     ...(panX !== null && panY !== null ? { pan: { x: panX, y: panY } } : {}),
+    ...(Object.keys(within).length > 0 ? { within } : {}),
     focusId: unabbreviated(params.get("focus")),
     relation: params.get("relation"),
     expanded: (params.get("expand") ?? "")
@@ -256,6 +282,25 @@ export function withFocus(state: ViewState, focusId: string | null): ViewState {
 
 export function withRelation(state: ViewState, relation: string | null): ViewState {
   return { ...state, relation };
+}
+
+/**
+ * Moves a view along its own dimension — the month a calendar is showing,
+ * the range it is showing it in.
+ *
+ * A stop like any other: it goes in the address, Back returns to it, and a
+ * link carries it. `null` clears the key rather than writing an empty one,
+ * so "no answer" and "the answer is empty" stay different things.
+ */
+export function withWithin(state: ViewState, key: string, value: string | null): ViewState {
+  const within = { ...(state.within ?? {}) };
+  if (value === null) delete within[key];
+  else within[key] = value;
+  if (Object.keys(within).length === 0) {
+    const { within: _gone, ...rest } = state;
+    return rest;
+  }
+  return { ...state, within };
 }
 
 export function withOverview(state: ViewState, overview: boolean): ViewState {

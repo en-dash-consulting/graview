@@ -46,6 +46,23 @@ const APPS = {
       await p.locator('nav[aria-label="Places"] button', { hasText: "Who may do what" }).click();
       await p.waitForTimeout(700);
     },
+    /*
+     * THE MONTH. A second picture of one pile of tasks, over real dates —
+     * six weeks of cells, multi-day spans, and the overflow a busy day
+     * needs. The week grid could never draw any of it.
+     */
+    calendar: async (p) => {
+      await p.locator('nav[aria-label="Places"] button', { hasText: "The month" }).click();
+      await p.waitForTimeout(900);
+    },
+    /* And the agenda: the same entries as a list, which is the range a
+       phone actually wants and the one a grid cannot shrink into. */
+    agenda: async (p) => {
+      await p.locator('nav[aria-label="Places"] button', { hasText: "The month" }).click();
+      await p.waitForTimeout(600);
+      await p.click('[data-testid="calendar-range-agenda"]');
+      await p.waitForTimeout(700);
+    },
     // Every existing state left plane 1 empty, which is how minus-one-pixel
     // band arithmetic sat unseen: nothing ever measured a raised relation.
     raised: async (p) => { await p.click('[data-graview-view="kind:list"]'); },
@@ -138,6 +155,14 @@ const APPS = {
     } },
     // The empty app's own first screen: a city of districts saying "none yet".
     empty: async () => {},
+    /* THE SEASON: plantings drawn across the days they were in the ground. */
+    season: async (p) => {
+      await p.goto("http://localhost:5194/?chapter=4&theme=light#overview=1", { waitUntil: "load" });
+      await p.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
+      await p.waitForTimeout(700);
+      await p.locator('nav[aria-label="Places"] button', { hasText: "The season" }).click();
+      await p.waitForTimeout(900);
+    },
     invited: async (p) => { await p.click('[data-graview-view="kind:gardener"]'); },
     planted: async (p) => {
       await p.click('[data-testid="activity-button"]');
@@ -514,9 +539,11 @@ const audit = () => {
    * place whose picture is NOT on the screen is still the smell this looks
    * for.
    */
-  const atThisPlace = [...document.querySelectorAll("[data-testid^=place-]")]
+  const atThisPlace = [...document.querySelectorAll("[data-place-kind]")]
     .filter((el) => {
-      const kind = (el.getAttribute("data-testid") ?? "").slice("place-".length);
+      // The testid names the PICTURE now that a kind may have several, so
+      // the kind is read off its own attribute rather than out of a slug.
+      const kind = el.getAttribute("data-place-kind") ?? "";
       return (
         document.querySelector(`[data-graview-view="aggregate:${kind}"][data-graview-plane="0"]`) !==
         null

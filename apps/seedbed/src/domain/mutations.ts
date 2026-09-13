@@ -105,12 +105,14 @@ export const harvest = defineMutation("harvest", {
   subject: { kinds: ["planting"], arg: "plantingId" },
   // Harvesting writes the status without asking for it; said, so the
   // status is offered as this act where it is shown.
-  writes: ["status"],
-  input: z.object({ plantingId: nodeRef(["planting"]) }),
+  writes: ["status", "harvested"],
+  input: z.object({ plantingId: nodeRef(["planting"]), on: isoDate }),
   describe: (args, graph) => `Harvest ${nameOf(graph as Reader, args.plantingId)}`,
   apply(ctx, args) {
-    // The horizon at work: an ordinary field write is the whole archive.
-    ctx.patchNode(args.plantingId, { status: "harvested" });
+    // The horizon at work: an ordinary field write is the whole archive —
+    // and the DAY it happened, so the season calendar can draw the span
+    // from sowing to harvest rather than a dot on the day it went in.
+    ctx.patchNode(args.plantingId, { status: "harvested", harvested: args.on });
   },
 }) as M;
 

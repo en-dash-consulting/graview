@@ -18,6 +18,23 @@ export const seedbedApp = defineApp({
   /** What belongs to the reader: how big the words are, and whether things move. */
   settings: readerSettings(),
   /*
+   * THE SEASON, through the framework's own calendar lens.
+   *
+   * A planting is a span — sown in March, brought in in July — which is the
+   * shape a garden is actually planned around and the one thing the week
+   * grid cannot draw. Declared here as well as registered, so `graview
+   * check` reads the binding the way it reads every other starter's, and so
+   * the desk can see that the calendar has a second user: a lens proven by
+   * one app is a lens that may only fit the app it was written beside.
+   */
+  lenses: [
+    {
+      name: "calendar",
+      requiredRoles: ["start"],
+      bindings: { planting: { start: "sown", end: "harvested", label: "label" } },
+    },
+  ],
+  /*
    * The intelligence, declared. The starter provider proposes from the
    * schema alone (no key, no model); a real model plugs the same seam with
    * one completion function. Both may only call what is listed — the

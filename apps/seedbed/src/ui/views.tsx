@@ -1,7 +1,16 @@
 import type { GraviewApp } from "@graview/core";
 import { createViews, type ViewProps, type ViewComponent } from "@graview/react";
 import { createStudioLens } from "@graview/studio";
-import { Chip, createBoardLens, createCoverageLens, hueFor, Panel, reachLens, registerDefaultViews } from "@graview/primitives";
+
+/**
+ * The day the garden is judged and drawn against.
+ *
+ * The seedbed seeds its plantings around a season; a calendar reading the
+ * clock would open on an empty month for anyone visiting out of season, and
+ * no harness could photograph it twice.
+ */
+export const SEEDBED_TODAY = "2026-04-01";
+import { Chip, createBoardLens, createCalendarLens, createCoverageLens, hueFor, Panel, reachLens, registerDefaultViews } from "@graview/primitives";
 import { seedbedSchema, type SeedbedSchema } from "../domain/schema.js";
 import { GardenMapView } from "./garden-map.js";
 
@@ -60,7 +69,7 @@ const beds = createBoardLens<S>({
 /** The views for the garden — or for a chapter of it, which may not have plots yet. */
 export function seedbedViews(
   schema: SeedbedSchema = seedbedSchema,
-  options: { lens?: boolean; board?: boolean; map?: boolean; reach?: boolean; studio?: GraviewApp } = {},
+  options: { lens?: boolean; board?: boolean; map?: boolean; reach?: boolean; season?: boolean; today?: string; studio?: GraviewApp } = {},
 ) {
   let registry = registerDefaultViews(schema, createViews(schema));
   const kinds = schema.kinds as readonly string[];
@@ -87,6 +96,24 @@ export function seedbedViews(
     registry = registry
       .register("plot", { cardinality: "many", fidelity: "full" }, GardenMapView, { title: "The garden map" })
       .register("plot", { cardinality: "many", fidelity: "summary" }, GardenMapView, { title: "The garden map" });
+  }
+  if (options.season && kinds.includes("planting")) {
+    /*
+     * THE SEASON: what was in the ground, and when.
+     *
+     * The framework's calendar lens, bound to the garden's own fields —
+     * sown, harvested, and the label. A planting is a SPAN, so the month
+     * draws it across every day between the two, which is the shape of a
+     * growing season and the thing a garden is actually planned around.
+     */
+    const season = createCalendarLens<S>({
+      bindings: { planting: { start: "sown", end: "harvested", label: "label" } },
+      today: options.today ?? SEEDBED_TODAY,
+      range: "month",
+    });
+    registry = registry
+      .register("planting" as never, { cardinality: "many", fidelity: "full" }, season.View as ViewComponent<S>, { title: "The season" })
+      .register("planting" as never, { cardinality: "many", fidelity: "summary" }, season.View as ViewComponent<S>, { title: "The season" });
   }
   if (options.studio && kinds.includes("kind")) {
     // The studio over a declaration: what the checker says about it as it

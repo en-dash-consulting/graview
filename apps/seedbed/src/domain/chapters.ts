@@ -70,6 +70,8 @@ export interface Chapter {
   readonly wide?: boolean;
   /** Whether the reach lens — what each role may do — is registered over the people (chapter 14). */
   readonly reach?: boolean;
+  /** Whether the season calendar — what was in the ground, and when — is over the plantings. */
+  readonly season?: boolean;
   /** Which face the picture is of: the scene (default) or the routed pages at phone width. */
   readonly face?: "scene" | "pages";
   /** For the pages face: the path to photograph. */
@@ -189,7 +191,9 @@ const seedFour: GraphSnapshot = {
   nodes: [
     ...chapterThree.seed.nodes,
     { id: "beans", kind: "planting", label: "Beans", sown: "2026-04-04", status: "growing" },
-    { id: "tomatoes", kind: "planting", label: "Tomatoes", sown: "2026-03-20", status: "harvested" },
+    // Sown in March and brought in in April: a span, which is what a
+    // planting is and what the season calendar draws it as.
+    { id: "tomatoes", kind: "planting", label: "Tomatoes", sown: "2026-03-20", harvested: "2026-04-12", status: "harvested" },
   ],
   edges: [
     ...chapterThree.seed.edges,
@@ -202,8 +206,8 @@ const chapterFour: Chapter = {
   n: 4,
   slug: "the-horizon",
   title: "Plantings, and the horizon",
-  claim: "A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted.",
-  adds: ['defineNode("planting") with lifecycle: { field: "status", retired: ["harvested", "failed"] }', 'an appendOnly edge "grows-in"', 'defineMutation("sow"), defineMutation("harvest") with writes: ["status"]'],
+  claim: "A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted — and the season calendar draws each planting across the days it was actually in the ground.",
+  adds: ['defineNode("planting") with lifecycle: { field: "status", retired: ["harvested", "failed"] }', 'an appendOnly edge "grows-in"', 'defineMutation("sow"), defineMutation("harvest") with writes: ["status", "harvested"]'],
   app: asApp(defineApp({ name: "Seedbed", schema: four, mutations: grown, invariants: [everyPlotTended as never] })),
   seed: seedFour,
   stop: "#overview=1",
@@ -212,6 +216,7 @@ const chapterFour: Chapter = {
   pages: false,
   lens: false,
   board: false,
+  season: true,
 };
 
 /* ----------------------------------------------- 5 · a seat for an agent */

@@ -104,3 +104,32 @@ export type {
   TimelineRoles,
   TimelineViewProps,
 } from "./lens/timeline.js";
+
+// The calendar: month, week, day and agenda over real dates. Bound by roles
+// like every other starter, and it has never heard of a task or a shift.
+export {
+  addDays,
+  addMonths,
+  CalendarBindingError,
+  CALENDAR_RANGES,
+  CALENDAR_REQUIRED_ROLES,
+  createCalendarLens,
+  dayOf,
+  daysBetween,
+  daysFrom,
+  entriesOn,
+  minutesOf,
+  placeOnCalendar,
+  spanOf,
+  startOfMonth,
+  startOfWeek,
+  weekdayOf,
+} from "./lens/calendar.js";
+export type {
+  CalendarBindings,
+  CalendarLens,
+  CalendarOptions,
+  CalendarRange,
+  CalendarRoles,
+  PlacedEntry,
+} from "./lens/calendar.js";

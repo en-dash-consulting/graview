@@ -157,6 +157,8 @@ try {
       },
     };
   }
+  const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
+
   /* --------------------------- the profile pane, read by a machine */
   /*
    * A PANE HOLDING THE ACCESSIBILITY CONTROLS HAS TO BE ACCESSIBLE.
@@ -166,7 +168,6 @@ try {
    * than one that offers nothing. Both widths and both schemes, with the
    * pane OPEN — closed, it is one button and proves nothing.
    */
-  const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
   const axeOnThePane = async (page) => {
     await page.click('[data-testid="profile-button"]');
     await page.waitForSelector('[data-testid="profile"]', { timeout: 10_000 });
@@ -176,6 +177,35 @@ try {
       return result.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
     });
   };
+  /*
+   * AND THE CALENDAR, which is a grid of controls a person navigates: six
+   * weeks of day cells, an overflow button per busy day, four ranges and
+   * three steps. Every one of them has to be reachable and named, at a
+   * phone's width as well as a desk's, in both schemes.
+   */
+  const calendarFindings = {};
+  for (const width of [390, 1280]) {
+    for (const theme of ["light", "dark"]) {
+      const seen = await browser.newPage({ viewport: { width, height: 900 } });
+      await seen.goto(`http://localhost:5193/?today=2026-09-01&theme=${theme}#focus=aggregate:task&in.view=the-month`, {
+        waitUntil: "load",
+      });
+      await seen.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await seen.waitForSelector('[data-testid="calendar"]', { timeout: 20_000 });
+      await seen.waitForTimeout(600);
+      await seen.addScriptTag({ content: axeSource });
+      calendarFindings[`${width}-${theme}`] = await seen.evaluate(async () => {
+        const result = await window.axe.run(document, { resultTypes: ["violations"] });
+        return result.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
+      });
+      await seen.close();
+    }
+  }
+  report.checks.theCalendarIsReachable = {
+    ...calendarFindings,
+    ok: Object.values(calendarFindings).every((found) => found.length === 0),
+  };
+
   const paneFindings = {};
   for (const width of [390, 1280]) {
     for (const theme of ["light", "dark"]) {

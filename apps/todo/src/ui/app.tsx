@@ -16,6 +16,7 @@ import example from "../data/example.json";
 import { createTodoStore, todoApp, type TodoStore } from "../domain/app.js";
 import { thingsBrand } from "../domain/brand.js";
 import type { TodoSchema } from "../domain/schema.js";
+import { today } from "./when.js";
 import { todoViews } from "./views.js";
 
 type S = TodoSchema;
@@ -68,30 +69,12 @@ export const PLACES = [
 export const HOME = PLACES[1].id;
 export const INITIAL_VIEW: ViewState = { ...EMPTY_VIEW, focusId: HOME };
 
-/**
- * The day the rules are judged against.
- *
- * Read HERE, at the edge, and threaded through the invariant context — never
- * inside a rule. An invariant that read the clock would give a different
- * answer every morning, could not be tested, and would stop `preview` being
- * able to say what a change would break before it happened. Purity is not
- * fussiness; it is what makes the whole tier answerable.
- *
- * The example data is dated, so a fixed day is what makes its rules fire for
- * a reader who opens it — but freezing the app in September is the sort of
- * thing somebody notices and mistrusts. So the real clock is the default, and
- * `?today=` overrides it for the tests and for the screenshots.
+/*
+ * The day, from its own module — the views need it too, and reaching back
+ * into the shell for it would close a cycle. Re-exported because every test
+ * and harness in the repository imports it from here.
  */
-export function today(): string {
-  if (typeof window !== "undefined") {
-    const asked = new URLSearchParams(window.location.search).get("today");
-    if (asked && /^\d{4}-\d{2}-\d{2}$/.test(asked)) return asked;
-  }
-  return new Date().toISOString().slice(0, 10);
-}
-
-/** The day the shipped example is written around, for tests and harnesses. */
-export const EXAMPLE_TODAY = "2026-09-01";
+export { EXAMPLE_TODAY, today } from "./when.js";
 
 export function createTodoUiStore(when: string = today()): TodoStore {
   return createTodoStore({
@@ -194,7 +177,12 @@ function TodoShell({
     <Shell<S>
       home={place.id}
       standing="Nothing is out of order"
-      nav={<Places />}
+      /*
+       * NO SWITCHER OF ITS OWN. The framework's named places are the same
+       * machinery — three pictures over two groups, each a pill with a URL
+       * — and running a second one beside it put "The week" on the bar
+       * twice, which `audit-ui` reports as the duplication it is.
+       */
       // A person's own record on the routed face: the profile the self
       // grant already makes theirs to edit and nobody else's.
       profileHref={(userId) => `/pages/people/${userId}`}
@@ -213,51 +201,6 @@ function TodoShell({
       onScheme={onScheme}
       {...(attachRenderer ? { attachRenderer } : {})}
     />
-  );
-}
-
-/** Switching place is switching `focusId`, so history and the URL come free. */
-function Places() {
-  const { focus } = useNavigation();
-  const place = usePlace();
-  return (
-    <div
-      role="group"
-      aria-label="View"
-      data-testid="places"
-      style={{
-        display: "flex",
-        gap: 2,
-        padding: 2,
-        borderRadius: 999,
-        border: "1px solid var(--graview-edge)",
-        background: "var(--graview-panel-muted)",
-      }}
-    >
-      {PLACES.map((candidate) => {
-        const here = candidate.id === place.id;
-        return (
-          <button
-            key={candidate.id}
-            type="button"
-            aria-pressed={here}
-            onClick={() => focus(candidate.id)}
-            style={{
-              padding: "3px 11px",
-              fontSize: 12.5,
-              borderRadius: 999,
-              whiteSpace: "nowrap",
-              border: "1px solid transparent",
-              background: here ? "var(--graview-panel)" : "transparent",
-              color: here ? "var(--graview-ink)" : "var(--graview-ink-muted)",
-              boxShadow: here ? "var(--graview-lift-low)" : "none",
-            }}
-          >
-            {candidate.label}
-          </button>
-        );
-      })}
-    </div>
   );
 }
 

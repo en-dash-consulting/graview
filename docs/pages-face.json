@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T06:04:50.436Z",
+  "at": "2026-09-13T06:18:48.526Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -69,6 +69,13 @@
         "widest": [],
         "ok": true
       }
+    },
+    "theCalendarIsReachable": {
+      "390-light": [],
+      "390-dark": [],
+      "1280-light": [],
+      "1280-dark": [],
+      "ok": true
     },
     "theProfilePaneIsReachable": {
       "390-light": [],

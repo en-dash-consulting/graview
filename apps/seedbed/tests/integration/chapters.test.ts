@@ -219,7 +219,15 @@ describe("the garden, grown a chapter at a time", () => {
     expect(alone).not.toContain('data-testid="form-tend"');
     // The scene's lens is the garden's own, and it is a named place.
     const views = seedbedViews(store.schema as never, { lens: true, map: true });
-    expect(views.places().map((place) => place.title)).toEqual(["Who tends what", "The garden map"]);
+    /*
+     * In the order the app REGISTERED them, which is what it now is: the
+     * old order was the order `registerDefaultViews` happened to fill the
+     * cells in, because a titled registration only updated a value already
+     * sitting in the map. A kind may have several pictures now, so the list
+     * is kept deliberately rather than falling out of a map's insertion
+     * order.
+     */
+    expect(views.places().map((place) => place.title)).toEqual(["The garden map", "Who tends what"]);
   });
 
   it("14 · the installation is in the graph: drawn for the keeper, refused for the rest, a profile is yours", () => {

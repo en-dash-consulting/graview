@@ -76,6 +76,14 @@ export const CAPABILITIES: readonly Capability[] = [
     area: "lens",
     holds: usesLens("timeline"),
   },
+  {
+    id: "cap-calendar",
+    label: "Calendar lens",
+    area: "lens",
+    // Month, week, day and agenda over real dates — the question the
+    // timeline cannot answer, because it binds minutes of a day.
+    holds: usesLens("calendar"),
+  },
   { id: "cap-coverage", label: "Coverage lens", area: "lens", holds: usesLens("coverage") },
   { id: "cap-board", label: "Board lens", area: "lens", holds: usesLens("board") },
   {

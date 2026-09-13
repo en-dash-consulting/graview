@@ -43,6 +43,15 @@ export const planting = defineNode("planting", {
   fields: z.object({
     label: z.string().min(1),
     sown: isoDate,
+    /*
+     * WHEN IT CAME IN, which is what makes a planting a SPAN rather than a
+     * moment. Sown in March and harvested in July is one thing that happens
+     * over four months, and a calendar that could only show the day it
+     * began would answer a different question than the one anybody asks a
+     * garden. Optional because a growing planting has no answer yet, which
+     * is exactly the case the horizon is about.
+     */
+    harvested: isoDate.optional(),
     status: z.enum(["growing", "harvested", "failed"]),
   }),
   edges: {

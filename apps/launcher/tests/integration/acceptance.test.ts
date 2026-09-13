@@ -108,12 +108,17 @@ describe("the desk can say the framework is wrong", () => {
     expect(after.some((v) => v.invariant === "a-lens-needs-two-users")).toBe(false);
   });
 
-  it("names the app whose main picture is bespoke, because it declares no lens", () => {
-    // The empty example draws its garden itself, and the desk says so
-    // rather than letting a rule pass by omission.
+  it("holds once every app it ships declares a lens", () => {
+    /*
+     * The garden drew its own picture and declared no lens, and the desk
+     * said so rather than letting a rule pass by omission. It declares the
+     * calendar now — a planting is a span, sown in March and brought in in
+     * July, which is the shape a garden is planned around — so the rule
+     * holds for the reason it exists to check rather than because anybody
+     * softened it.
+     */
     const store = createLauncherStore();
-    const bespoke = store.violations().find((v) => v.invariant === "every-app-uses-a-lens")!;
-    expect(bespoke.message).toContain("Seedbed");
+    expect(store.violations().find((v) => v.invariant === "every-app-uses-a-lens")).toBeUndefined();
     expect(APPS).toHaveLength(2);
   });
 });

@@ -39,7 +39,7 @@ describe("the named places", () => {
     const html = render(true);
     expect(html).toContain('aria-label="Places"');
     expect(html).toContain("Who does what");
-    expect(html).toContain('data-testid="place-person"');
+    expect(html).toContain('data-testid="place-who-does-what"');
     expect(html).toContain('aria-pressed="false"');
   });
 
@@ -54,6 +54,6 @@ describe("the named places", () => {
         <Shell<typeof schema> scheme="light" onScheme={() => {}} />
       </GraviewProvider>,
     );
-    expect(html).toContain('data-testid="place-person"');
+    expect(html).toContain('data-testid="place-who-does-what"');
   });
 });

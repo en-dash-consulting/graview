@@ -48,6 +48,20 @@ export interface ViewMeta {
 export interface Place {
   readonly kind: string;
   readonly title: string;
+  /**
+   * The short name this place answers to in a stop, from its title.
+   *
+   * A kind may have SEVERAL pictures — the week and the month are two
+   * questions about one pile of tasks — and a stop that could only say
+   * which GROUP you were looking at could not say which of them. So a place
+   * is addressable: `focus=aggregate:task&in.view=the-month`.
+   */
+  readonly as: string;
+}
+
+/** A place's own name in an address: its title, lower-cased and hyphenated. */
+export function placeSlug(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 export interface ViewRegistry<S extends AnySchema, V = unknown> {
@@ -64,19 +78,24 @@ export interface ViewRegistry<S extends AnySchema, V = unknown> {
   ): ViewRegistry<S, V>;
   /** The exact cell, with no fallback. */
   lookup(kind: string, cell: ViewCell): V | undefined;
-  /** The named group views, one per kind, in registration order. */
+  /** Every named group view, in registration order. */
   places(): readonly Place[];
   /**
    * The best available view for a cell: exact match, then a coarser fidelity,
    * then the primitive fallback the caller supplies.
+   *
+   * `as` asks for one PLACE in particular — the month rather than the week
+   * over the same tasks. A name nothing was registered under falls through
+   * to the cell's own view rather than drawing nothing, because an address
+   * naming a place that has since been renamed should land you somewhere.
    */
-  resolve(kind: string, cell: ViewCell): ViewRegistration<V> | undefined;
+  resolve(kind: string, cell: ViewCell, as?: string): ViewRegistration<V> | undefined;
   all(): readonly ViewRegistration<V>[];
   kindsWithViews(): readonly string[];
 }
 
-const key = (kind: string, cell: ViewCell) =>
-  `${kind}|${cell.cardinality}|${cell.fidelity}`;
+const key = (kind: string, cell: ViewCell, as = "") =>
+  `${kind}|${cell.cardinality}|${cell.fidelity}|${as}`;
 
 /** Fidelity fallback order, coarsest-first from a given starting point. */
 function fallbacks(fidelity: Fidelity): Fidelity[] {
@@ -94,31 +113,49 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
   _schema: S,
 ): ViewRegistry<S, V> {
   const entries = new Map<string, ViewRegistration<V>>();
+  /** Every named place, in the order it was registered. */
+  const named: Place[] = [];
 
   const registry: ViewRegistry<S, V> = {
     register(kind, cell, view, meta) {
-      entries.set(key(kind, cell), {
+      const registration: ViewRegistration<V> = {
         kind,
         cardinality: cell.cardinality,
         fidelity: cell.fidelity,
         view,
         ...(meta?.title ? { title: meta.title } : {}),
-      });
+      };
+      /*
+       * A titled registration fills its cell AND stands on its own.
+       *
+       * The cell is what a group draws by default and the last registration
+       * wins it, as it always has — an app replacing the framework's own
+       * view is the whole point of the registry. The named copy is what
+       * makes a SECOND picture of one group reachable: the week and the
+       * month are two questions about one pile of tasks, and before this a
+       * kind could only ever have one answer.
+       */
+      entries.set(key(kind, cell), registration);
+      if (meta?.title) {
+        const as = placeSlug(meta.title);
+        entries.set(key(kind, cell, as), registration);
+        if (cell.cardinality === "many" && !named.some((place) => place.kind === kind && place.as === as)) {
+          named.push({ kind, title: meta.title, as });
+        }
+      }
       return registry;
     },
-    places() {
-      const found: Place[] = [];
-      for (const entry of entries.values()) {
-        if (entry.cardinality !== "many" || !entry.title) continue;
-        if (found.some((place) => place.kind === entry.kind)) continue;
-        found.push({ kind: entry.kind, title: entry.title });
-      }
-      return found;
-    },
+    places: () => named,
     lookup(kind, cell) {
       return entries.get(key(kind, cell))?.view;
     },
-    resolve(kind, cell) {
+    resolve(kind, cell, as) {
+      if (as) {
+        for (const fidelity of fallbacks(cell.fidelity)) {
+          const found = entries.get(key(kind, { cardinality: cell.cardinality, fidelity }, as));
+          if (found) return found;
+        }
+      }
       for (const fidelity of fallbacks(cell.fidelity)) {
         const found = entries.get(key(kind, { cardinality: cell.cardinality, fidelity }));
         if (found) return found;

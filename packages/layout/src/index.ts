@@ -42,6 +42,7 @@ export {
   withPin,
   withoutMoves,
   withRelation,
+  withWithin,
   withSelection,
   withZoom,
 } from "./view-state.js";

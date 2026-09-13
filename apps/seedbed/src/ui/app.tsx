@@ -50,6 +50,8 @@ export interface SeedbedAppProps {
   readonly reach?: boolean;
   /** The declaration this store is a studio over, when it is one. */
   readonly studio?: GraviewApp;
+  /** Whether the season calendar is registered over the plantings. */
+  readonly season?: boolean;
   /**
    * WHO IS AT THE KEYBOARD, once a chapter declares a policy. The store
    * enforces against it, this face decides what to OFFER by it and the log
@@ -83,10 +85,11 @@ export function SeedbedApp({
   map = false,
   reach = false,
   studio,
+  season = false,
   principal,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
-  const views = useMemo(() => seedbedViews(created.schema as never, { lens, board, map, reach, ...(studio ? { studio } : {}) }), [created, lens, board, map, reach, studio]);
+  const views = useMemo(() => seedbedViews(created.schema as never, { lens, board, map, reach, season, ...(studio ? { studio } : {}) }), [created, lens, board, map, reach, season, studio]);
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
 
   return (

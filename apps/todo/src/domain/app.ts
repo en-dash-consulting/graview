@@ -58,6 +58,20 @@ export const todoApp = defineApp({
       requiredRoles: ["start", "end"],
       bindings: { task: { start: "plannedAt", end: "plannedUntil", column: "day" } },
     },
+    {
+      /*
+       * The calendar, over the same tasks, answering the other question.
+       *
+       * The week is minutes of a day in named columns and cannot say "due
+       * on the 14th of next month". Declared here as well as bound in the
+       * view, so `graview check` reads the binding the way it reads every
+       * other starter's: a role bound to a field this kind does not declare
+       * is a finding rather than an empty calendar nobody can explain.
+       */
+      name: "calendar",
+      requiredRoles: ["start"],
+      bindings: { task: { start: "due", done: "done" } },
+    },
   ],
 });
 

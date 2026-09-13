@@ -316,8 +316,31 @@ function adjustment(before: ViewState | null, after: ViewState): boolean {
     (before.overview ?? false) === (after.overview ?? false) &&
     (before.zoom ?? false) === (after.zoom ?? false) &&
     (before.past ?? false) === (after.past ?? false) &&
-    before.expanded.join(",") === after.expanded.join(",")
+    before.expanded.join(",") === after.expanded.join(",") &&
+    /*
+     * A VIEW MOVING ALONG ITS OWN DIMENSION IS TRAVELLING.
+     *
+     * Turning the calendar to October is going somewhere: a URL to send
+     * somebody, a place to come back to, a Back that means "the month I was
+     * looking at". Left out of this comparison it read as an adjustment of
+     * the stop — the address updated, no entry was pushed, and one Back
+     * from October landed past the calendar entirely, at the place before
+     * anyone opened it. That is the exact failure `within` exists to fix.
+     */
+    sameWithin(before.within, after.within)
   );
+}
+
+function sameWithin(
+  before: Readonly<Record<string, string>> | undefined,
+  after: Readonly<Record<string, string>> | undefined,
+): boolean {
+  const say = (held: Readonly<Record<string, string>> | undefined): string =>
+    Object.entries(held ?? {})
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join("&");
+  return say(before) === say(after);
 }
 
 const trail = {

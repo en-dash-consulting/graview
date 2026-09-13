@@ -86,9 +86,9 @@ describe("a chapter, embedded", () => {
       principal: chapter.principal,
       views: (schema) => seedbedViews(schema, { lens: true, board: true }),
     });
-    const place = () => element.querySelector<HTMLButtonElement>('[data-testid="place-gardener"]');
+    const place = () => element.querySelector<HTMLButtonElement>('[data-testid="place-who-tends-what"]');
     expect(place()?.textContent).toBe("Who tends what");
-    expect(element.querySelector('[data-testid="place-plot"]')?.textContent).toBe("What grows where");
+    expect(element.querySelector('[data-testid="place-what-grows-where"]')?.textContent).toBe("What grows where");
     expect(place()?.getAttribute("aria-pressed")).toBe("true");
     // Into a gardener: the grid is gone, and the strip still says where it is.
     handle.setStop("#focus=ravi");

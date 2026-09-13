@@ -1640,6 +1640,21 @@ function SceneViewHost({
       onClick={(event) => {
         // A drag that ends on a card must not also select it.
         if (swallowClick.current) return;
+        /*
+         * A CONTROL INSIDE A VIEW HAS ITS OWN MEANING, and selecting the
+         * card it sits on is not it.
+         *
+         * The keyboard path below has said so since it was written; the
+         * pointer path had not, because until a view drew a real control
+         * nothing noticed. The calendar draws several — previous, next,
+         * today, the range, "+3 more" — and pressing any of them also
+         * selected every task in the district the calendar was drawing, so
+         * changing the month lit up the whole month.
+         */
+        const inControl = (event.target as HTMLElement | null)?.closest(
+          "input, textarea, select, button, a[href], [contenteditable='true']",
+        );
+        if (inControl && !inControl.hasAttribute("data-graview-pick")) return;
         const additive = event.metaKey || event.shiftKey;
         /*
          * A view may nominate its own inner targets.
@@ -2807,7 +2822,7 @@ export function ResolvedView<S extends AnySchema>({
   selected,
   fidelity,
 }: ResolvedViewProps<S>) {
-  const { store, views } = useGraview<S>();
+  const { store, views, view } = useGraview<S>();
   const implicated = useImplicated();
   const flagged = useFlagged();
   const cardinality =
@@ -2817,7 +2832,16 @@ export function ResolvedView<S extends AnySchema>({
     fidelity: fidelity ?? PLANE_STYLES[clampPlane(node.plane)].fidelity,
   } as const;
 
-  const registration = views.resolve(node.kind, cell);
+  /*
+   * WHICH PICTURE, when a group has more than one.
+   *
+   * The week and the month are two questions about the same pile of tasks,
+   * and the stop says which one is being asked — `in.view=the-month`. A
+   * node that is not the group the address names keeps its own view, so a
+   * calendar chosen over the tasks does not try to draw a list.
+   */
+  const asked = cardinality === "many" ? view.within?.["view"] : undefined;
+  const registration = views.resolve(node.kind, cell, asked);
   const Component = registration?.view as ViewComponent<S> | undefined;
   // Whether this kind has a picture of its own to travel into.
   const own = views.resolve(node.kind, { cardinality: "many", fidelity: "full" })?.view as

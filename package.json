@@ -39,7 +39,8 @@
     "graview": "node packages/core/dist/cli/index.js",
     "progression": "node scripts/progression.mjs",
     "site:build": "pnpm --filter @graview/seedbed exec vite build --config vite.site.config.ts",
-    "studio": "node scripts/verify-studio.mjs"
+    "studio": "node scripts/verify-studio.mjs",
+    "calendar": "node scripts/verify-calendar.mjs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",
