@@ -1,0 +1,51 @@
+{
+  "at": "2026-09-13T07:32:54.011Z",
+  "engine": "chromium",
+  "checks": {
+    "theListIsThePlatforms": {
+      "listed": 26,
+      "missing": [],
+      "order": [
+        "cap-rules-as-nodes",
+        "cap-repairs",
+        "cap-universal-edge",
+        "cap-wildcard-mutation",
+        "cap-field-roles"
+      ],
+      "ok": true
+    },
+    "everyCapabilityNamesWhereItIsShown": {
+      "homeless": [],
+      "unknown": [],
+      "ok": true
+    },
+    "pressingACapabilityOpensTheDemoThere": {
+      "walked": 26,
+      "broken": [],
+      "ok": true
+    },
+    "aCapabilityNobodyShowsIsAProblem": {
+      "open": [
+        "No app uses An edge to any kind — it is being maintained for nobody",
+        "No app uses Board lens — it is being maintained for nobody"
+      ],
+      "repairs": [
+        "justify",
+        "retire-capability",
+        "justify",
+        "retire-capability"
+      ],
+      "ok": true
+    },
+    "everyDemoIsListedWithItsCommand": {
+      "apps": [
+        "Things :5193 (pnpm dev)",
+        "Rota :5195 (pnpm dev:rota)",
+        "Seedbed :5194 (pnpm dev:seedbed)"
+      ],
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

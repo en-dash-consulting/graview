@@ -61,14 +61,29 @@ export const app = defineNode("app", {
 export const CAPABILITY_AREAS = ["lens", "declaration", "behaviour"] as const;
 
 export const capability = defineNode("capability", {
-  description: "Something the framework offers that an app may or may not use.",
+  description: "Something the platform offers that an app may or may not use.",
   fields: z.object({
     label: z.string().min(1),
     area: z.enum(CAPABILITY_AREAS),
     note: z.string().optional(),
+    /**
+     * WHERE IT IS SHOWN: a demo, and a stop inside it.
+     *
+     * A list of capabilities with no way to see one is a brochure. Every
+     * entry names the app that demonstrates it and the address that opens
+     * it there — `#focus=aggregate:shift&in.view=the-fortnight`, `?chapter=14`
+     * — so pressing it is going to look at the thing rather than reading
+     * about it.
+     */
+    shownIn: z.string().optional(),
+    stop: z.string().optional(),
+    /** Where it sits in the order a person meets it. */
+    at: z.number().int().min(0),
   }),
   plural: "Capabilities",
   label: (node) => node.label,
+  // The matrix reads them in onboarding order rather than alphabetically.
+  fieldRoles: { order: "at" },
 });
 
 const ruleSpec = z.union([

@@ -44,7 +44,8 @@
     "dev:rota": "pnpm --filter @graview/rota dev",
     "rota": "node scripts/verify-rota.mjs",
     "serve:rota": "node packages/ship/dist/cli.js serve apps/rota/dist/domain/app.js --data apps/rota/data --seed apps/rota/src/data/example.json --port 5196",
-    "served": "node scripts/verify-served.mjs"
+    "served": "node scripts/verify-served.mjs",
+    "desk": "node scripts/verify-desk.mjs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",

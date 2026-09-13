@@ -17,6 +17,7 @@ import {
   type ViewComponent,
   type ViewProps,
 } from "@graview/react";
+import { APPS } from "../domain/survey.js";
 import { launcherSchema, type LauncherSchema } from "../domain/schema.js";
 import { useLiveness } from "./liveness.js";
 
@@ -33,8 +34,16 @@ export const capabilityLens = createCoverageLens<S>({
   rows: "capability",
   columns: "app",
   link: "uses",
-  rowGroup: "area",
-  groupOrder: ["lens", "declaration", "behaviour"],
+  /*
+   * IN THE ORDER A PERSON MEETS THEM, not in the order a taxonomy would
+   * put them. The list is an onboarding — declare it, look at it, lenses
+   * and places, the routed face, who may do what, brand and embed,
+   * remember and ship, the agent and the studio — and grouping it by
+   * whether a thing is "a lens" or "a declaration" was answering a
+   * question about the framework's own filing rather than about what
+   * somebody needs to be shown next.
+   */
+  rowGroup: "at",
 });
 
 const MatrixView = ((props: ViewProps<S>) => (
@@ -146,12 +155,65 @@ function CapabilityView({ node, fidelity, selected, flagged }: ViewProps<S, "cap
       fit
     >
       {node.note ? (
-        <p style={{ margin: 0, fontSize: 12.5, ...MUTED_TEXT }}>{node.note}</p>
+        <p style={{ margin: 0, fontSize: "0.78125rem", ...MUTED_TEXT }}>{node.note}</p>
+      ) : null}
+      {/*
+        * WHERE TO SEE IT. A list of capabilities you cannot press is a
+        * brochure; this opens the demo on the thing. The stop is the
+        * address the app itself understands — a focus, a picture, a
+        * chapter, a routed path — so the desk needs to know nothing about
+        * what any of them mean.
+        */}
+      {fidelity === "full" && node.shownIn && node.stop ? (
+        <ShowMe app={node.shownIn} stop={node.stop} />
       ) : null}
       {fidelity === "full" ? (
         <Connections id={node.id} empty="Nothing uses this." />
       ) : null}
     </Panel>
+  );
+}
+
+/**
+ * The way to the demo that shows it.
+ *
+ * A link rather than a mount: the stop may be a routed path (`/pages`,
+ * `/embed.html`) or a query the app reads on load (`?chapter=14`,
+ * `?server=…`), and only the app at its own port understands all of them.
+ * The desk says where and gets out of the way.
+ */
+function ShowMe({ app, stop }: { app: string; stop: string }) {
+  const live = useLiveness();
+  const entry = APPS.find((candidate) => candidate.id === app);
+  if (!entry) return null;
+  const serving = live[app] === true;
+  const where = `http://localhost:${entry.port}${stop.startsWith("/") || stop.startsWith("?") ? stop : `/${stop}`}`;
+  return serving ? (
+    <a
+      href={where}
+      target="_blank"
+      rel="noreferrer"
+      data-testid={`show-me-${app}`}
+      title={`Open ${entry.label} at ${stop}`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        minHeight: 24,
+        padding: "2px 9px",
+        borderRadius: 999,
+        fontSize: "0.78125rem",
+        border: "1px solid var(--graview-edge)",
+        color: "var(--graview-accent)",
+        textDecoration: "none",
+        justifySelf: "start",
+      }}
+    >
+      See it in {entry.label} ↗
+    </a>
+  ) : (
+    <span style={{ fontSize: "0.78125rem", ...MUTED_TEXT }} data-testid={`show-me-${app}`}>
+      {entry.label} shows it — <code>{entry.command}</code> serves it on :{entry.port}.
+    </span>
   );
 }
 

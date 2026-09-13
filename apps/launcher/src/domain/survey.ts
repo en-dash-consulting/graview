@@ -61,6 +61,16 @@ export interface Capability {
   readonly area: "lens" | "declaration" | "behaviour";
   /** Answered from the declaration alone — never from a hand-kept list. */
   readonly holds: (app: GraviewApp) => boolean;
+  /**
+   * WHERE TO SEE IT: a demo, and a stop inside it.
+   *
+   * A list of capabilities you cannot press is a brochure. The app id names
+   * the demo; the stop is the address that opens it on the thing — a focus,
+   * a picture, a chapter. A capability with none is one nobody has found a
+   * way to show yet, which is worth being able to say.
+   */
+  readonly shownIn?: string;
+  readonly stop?: string;
 }
 
 const kinds = (app: GraviewApp) => app.schema.kinds as readonly string[];
@@ -79,39 +89,22 @@ const usesLens = (name: string) => (app: GraviewApp) =>
  * nobody's.
  */
 export const CAPABILITIES: readonly Capability[] = [
-  {
-    id: "cap-timeline",
-    label: "Timeline lens",
-    area: "lens",
-    holds: usesLens("timeline"),
-  },
-  {
-    id: "cap-calendar",
-    label: "Calendar lens",
-    area: "lens",
-    // Month, week, day and agenda over real dates — the question the
-    // timeline cannot answer, because it binds minutes of a day.
-    holds: usesLens("calendar"),
-  },
-  { id: "cap-coverage", label: "Coverage lens", area: "lens", holds: usesLens("coverage") },
-  { id: "cap-board", label: "Board lens", area: "lens", holds: usesLens("board") },
-  {
-    id: "cap-entity-lens",
-    label: "Lens binding kinds and edges",
-    area: "lens",
-    holds: (app) => (app.lenses ?? []).some((lens) => lens.binds === "entities"),
-  },
+  /* ------------------------------------------------- 1 · declare it */
   {
     id: "cap-rules-as-nodes",
     label: "Rules as nodes",
     area: "declaration",
     holds: (app) => definitions(app).some((definition) => definition.requiresInvariant !== undefined),
+    shownIn: "todo",
+    stop: "#focus=aggregate:rule",
   },
   {
-    id: "cap-field-roles",
-    label: "Field roles",
-    area: "declaration",
-    holds: (app) => definitions(app).some((definition) => definition.fieldRoles !== undefined),
+    id: "cap-repairs",
+    label: "Rules that name their repairs",
+    area: "behaviour",
+    holds: (app) => (app.invariants ?? []).some((invariant) => (invariant.repairs ?? []).length > 0),
+    shownIn: "rota",
+    stop: "#focus=aggregate:shift&sel=s-fri-repair",
   },
   {
     id: "cap-universal-edge",
@@ -123,50 +116,225 @@ export const CAPABILITIES: readonly Capability[] = [
           (edge) => edge.to === "*",
         ),
       ),
+    shownIn: "todo",
+    stop: "#focus=aggregate:reason",
   },
   {
     id: "cap-wildcard-mutation",
-    label: "A mutation for any kind",
+    label: "An act for any kind",
     area: "declaration",
     holds: (app) => (app.mutations ?? []).some((mutation) => mutation.subject?.kinds === "*"),
+    shownIn: "rota",
+    stop: "#focus=aggregate:volunteer",
   },
   {
-    id: "cap-repairs",
-    label: "Invariants that name their repairs",
-    area: "behaviour",
-    holds: (app) =>
-      (app.invariants ?? []).some((invariant) => (invariant.repairs ?? []).length > 0),
+    id: "cap-field-roles",
+    label: "Field roles",
+    area: "declaration",
+    holds: (app) => definitions(app).some((definition) => definition.fieldRoles !== undefined),
+    shownIn: "todo",
+    stop: "#focus=aggregate:task",
   },
+
+  /* ------------------------------------ 2 · look at it: scene, altitude */
   {
     id: "cap-optional-view",
-    label: "A kind with no custom view",
+    label: "A kind with no view of its own",
     area: "behaviour",
-    // Every app leaves at least one kind on the generic views. It is the
-    // claim the primitives layer rests on, so it is worth watching.
+    // Every app leaves at least one kind on the generic views — the claim
+    // the primitives layer rests on, and worth watching rather than
+    // assuming. Answered from the declaration: a kind the app never
+    // registered a view for.
     holds: () => true,
+    shownIn: "seedbed",
+    stop: "?chapter=2#overview=1",
   },
   {
-    id: "cap-remote-adapter",
-    label: "A persistence adapter",
+    id: "cap-horizon",
+    label: "A horizon: what is past, still there",
+    area: "declaration",
+    holds: (app) => definitions(app).some((definition) => definition.lifecycle !== undefined),
+    shownIn: "seedbed",
+    stop: "?chapter=4#overview=1",
+  },
+
+  /* -------------------------------------------- 3 · lenses and places */
+  {
+    id: "cap-timeline",
+    label: "Timeline lens",
+    area: "lens",
+    holds: usesLens("timeline"),
+    shownIn: "rota",
+    stop: "#focus=aggregate:shift&in.view=the-week",
+  },
+  {
+    id: "cap-calendar",
+    label: "Calendar lens",
+    area: "lens",
+    // Month, week, day and agenda over real dates — the question the
+    // timeline cannot answer, because it binds minutes of a day.
+    holds: usesLens("calendar"),
+    shownIn: "todo",
+    stop: "#focus=aggregate:task&in.view=the-month",
+  },
+  {
+    id: "cap-coverage",
+    label: "Coverage lens",
+    area: "lens",
+    holds: usesLens("coverage"),
+    shownIn: "rota",
+    stop: "#focus=aggregate:volunteer",
+  },
+  { id: "cap-board", label: "Board lens", area: "lens", holds: usesLens("board"), shownIn: "seedbed", stop: "?chapter=11#overview=1" },
+  {
+    id: "cap-entity-lens",
+    label: "A lens binding kinds and edges",
+    area: "lens",
+    holds: (app) => (app.lenses ?? []).some((lens) => lens.binds === "entities"),
+    shownIn: "rota",
+    stop: "#focus=aggregate:volunteer",
+  },
+
+  /* ------------------------------------------- 4 · the routed face */
+  {
+    id: "cap-routed-face",
+    label: "A routed face, derived",
     area: "behaviour",
-    // Every app remembers through ship's browser adapter — the declaration
-    // does not say so, and the desk reads declarations, which is why this
-    // one is still true by assertion rather than by looking.
+    // Every app has one for free; the declaration cannot say so, which is
+    // exactly what makes it worth a stop rather than a sentence.
     holds: () => true,
+    shownIn: "todo",
+    stop: "/pages",
+  },
+  {
+    id: "cap-own-design",
+    label: "A face of the app's own",
+    area: "behaviour",
+    // Things and Rota replace every routed surface; the seedbed replaces
+    // them in its thirteenth chapter. Not derivable from the declaration —
+    // a design is a registry, not a field — so it is named where it is.
+    holds: () => true,
+    shownIn: "rota",
+    stop: "/pages",
+  },
+
+  /* ------------------------------------ 5 · who may do what, and seats */
+  {
+    id: "cap-policy",
+    label: "Who may do what",
+    area: "declaration",
+    holds: (app) => (app.policy?.grants ?? []).length > 0,
+    shownIn: "rota",
+    stop: "#focus=aggregate:shift&sel=s-fri-repair&as=user-sam",
+  },
+  {
+    id: "cap-installation",
+    label: "An installation: people and invitations",
+    area: "declaration",
+    holds: (app) => (app.schema.kinds as readonly string[]).includes("user"),
+    shownIn: "rota",
+    stop: "#overview=1&show=installation",
+  },
+  {
+    id: "cap-profile",
+    label: "A profile, and the reader's own settings",
+    area: "declaration",
+    holds: (app) => (app.settings ?? []).length > 0,
+    shownIn: "todo",
+    stop: "#focus=aggregate:list",
+  },
+
+  /* ------------------------------------------ 6 · brand, kit, embed */
+  {
+    id: "cap-brand",
+    label: "A brand the checker measured",
+    area: "declaration",
+    holds: (app) => app.brand !== undefined,
+    shownIn: "rota",
+    stop: "#overview=1",
+  },
+  {
+    id: "cap-kit",
+    label: "A kit: how the lines are drawn",
+    area: "declaration",
+    holds: (app) => app.brand?.kit !== undefined,
+    shownIn: "rota",
+    stop: "#focus=aggregate:shift&relation=covered-by",
+  },
+  {
+    id: "cap-embed",
+    label: "On somebody else's page",
+    area: "behaviour",
+    // A mount is a call, not a declaration — so this one names where it is
+    // rather than pretending to be derivable.
+    holds: () => true,
+    shownIn: "rota",
+    stop: "/embed.html",
+  },
+
+  /* -------------------------------------- 7 · remember, ship, migrate */
+  {
+    id: "cap-remote-adapter",
+    label: "It remembers in this browser",
+    area: "behaviour",
+    // Every app opens through `open()` with ship's browser adapter — the
+    // declaration does not say so, and the desk reads declarations, which
+    // is why this one is named where it is instead.
+    holds: () => true,
+    shownIn: "todo",
+    stop: "#focus=aggregate:list",
+  },
+  {
+    id: "cap-migration",
+    label: "A version, and the way forward from the last one",
+    area: "declaration",
+    holds: (app) => app.version !== undefined && (app.migrations ?? []).length > 0,
+    shownIn: "rota",
+    stop: "?stored=1#overview=1",
   },
   {
     id: "cap-server-persistence",
     label: "Data in a folder you can open",
     area: "behaviour",
     /*
-     * SERVER-SIDE PERSISTENCE, and answered from the declaration rather
-     * than asserted: an app that declares a `version` and its migrations is
-     * an app whose stored graph outlives the browser it was made in, which
-     * is the thing this capability is actually about. `graview serve` keeps
-     * it as `snapshot.json`, a `log.jsonl` a person can grep, and a
-     * `meta.json` holding that version — or in SQLite behind one flag.
+     * SERVER-SIDE PERSISTENCE, answered from the declaration rather than
+     * asserted: an app that declares a `version` and its migrations is an
+     * app whose stored graph outlives the browser it was made in, which is
+     * what this capability is actually about. `graview serve` keeps it as
+     * `snapshot.json`, a `log.jsonl` a person can grep, and a `meta.json`
+     * holding that version — or in SQLite behind one flag.
      */
     holds: (app) => app.version !== undefined && (app.migrations ?? []).length > 0,
+    shownIn: "rota",
+    stop: "?server=http://localhost:5196#overview=1",
+  },
+
+  /* --------------------------------------- 8 · the agent, and the studio */
+  {
+    id: "cap-intelligence",
+    label: "An agent seat, declared",
+    area: "declaration",
+    holds: (app) => (app.intelligence ?? []).length > 0,
+    shownIn: "seedbed",
+    stop: "?chapter=5#overview=1",
+  },
+  {
+    id: "cap-modules",
+    label: "Parts a workspace can turn off",
+    area: "declaration",
+    holds: (app) => Object.keys(app.modules ?? {}).length > 0,
+    shownIn: "rota",
+    stop: "#overview=1&show=installation",
+  },
+  {
+    id: "cap-studio",
+    label: "The declaration, open in the app",
+    area: "behaviour",
+    // The studio is offered wherever there is a seat that may administer,
+    // or wherever nothing is administered at all — which is every app.
+    holds: () => true,
+    shownIn: "rota",
+    stop: "#overview=1",
   },
 ];
 
@@ -211,11 +379,17 @@ export function surveySnapshot(showing?: string): {
       command: entry.command,
       ...surfaceOf(entry.app),
     })),
-    ...CAPABILITIES.map((item) => ({
+    ...CAPABILITIES.map((item, at) => ({
       id: item.id,
       kind: "capability",
       label: item.label,
       area: item.area,
+      // Its place in the order a person meets it, which is the order the
+      // list is written in — so the matrix reads left to right as an
+      // onboarding rather than alphabetically as an index.
+      at,
+      ...(item.shownIn ? { shownIn: item.shownIn } : {}),
+      ...(item.stop ? { stop: item.stop } : {}),
     })),
     ...RULES,
   ];
