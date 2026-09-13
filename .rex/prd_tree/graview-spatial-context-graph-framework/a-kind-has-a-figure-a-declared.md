@@ -2,7 +2,7 @@
 id: "2bf56741-2946-4cc5-adf9-75cd4190579a"
 level: "feature"
 title: "A kind has a figure: a declared, blueprint-style 3D drawing of the thing, drawn wherever the kind is, and an agent can draw it"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "figure"
@@ -16,6 +16,11 @@ tags:
 blockedBy:
   - "1a29787c-f09c-4e94-8f77-ec22e33d5c80"
 source: "Nick, 2026-09-13: \"/ndx-capture the ability to change the visual representing a Kind, in Graview and Scene views, and where relevant in Pages. I want the agent to be able to generate a 3d-looking image of the thing it represents. like a blueprint-esque 3d model of a Persons silhouette, or a Cleat, or a vehicle\""
+startedAt: "2026-09-13T07:46:29.348Z"
+completedAt: "2026-09-13T07:46:29.348Z"
+endedAt: "2026-09-13T07:46:29.348Z"
+resolutionType: "code-change"
+resolutionDetail: "defineNode takes a `figure` (inline SVG with one viewBox and currentColor strokes, or a name from a shipped set of nine), and a brand may override any kind's. One &lt;KindFigure&gt; draws it at altitude (standing above the district's plural), in the routed faces' rails and on record eyebrows; a kind without one keeps its dot. graview check refuses a figure with no viewBox, a literal colour, nothing stroked with currentColor, an unshipped name, or a brand figure for an undeclared kind. drawFigure in @graview/tools carries the house style as the prompt and judges the answer with the same function the checker runs, falling back to the nearest shipped figure BY NAME (never by guessing what a thing is) and saying so; `graview figure <entry> --kind <k>` prints the line to paste. Things, Rota and Seedbed carry figures; audit-ui photographs the city with them at altitude in both schemes and counts a figure that drew nothing. 865 tests, graview check and the harness suite green. Not done: the chip at glyph size and the relation key still use the dot (the figure is legible at 15px but a glyph chip is smaller than that), and there is no studio/chat entry point for drawing one — drawFigure is reachable from code and the CLI."
 acceptanceCriteria:
   - "defineNode accepts a figure (SVG with one viewBox and currentColor strokes, or a named one from the shipped set) and a brand may override a kind's figure; graview check refuses a figure that does not parse, has no viewBox, paints with literal colours, or cannot hold 3:1 on either ground"
   - "the kind card at altitude stands the figure on its block, the district card carries it beside the plural, a chip shows it at glyph size where legible, the record and list pages carry it, and the relation key uses it — all from the one declaration"
@@ -24,6 +29,6 @@ acceptanceCriteria:
   - "the demo apps carry figures for their kinds — a person, a plot, a task, a shift, a vehicle or a cleat where a demo has one — drawn by the provider and kept in the declaration"
   - "audit-ui and the progression photograph a scene with figures at altitude and on the ground in both schemes, and axe stays clean"
 description: "Every kind is drawn the same way today: a coloured dot on its chips, a plural on its district, an iso block at altitude, a heading on its page. The picture would say far more if a kind carried a FIGURE of the thing it represents — a blueprint-style, three-dimensional-looking line drawing in the brand's own ink: a person's silhouette, a cleat, a vehicle, a plot of ground — and the scene, the Graview and, where it fits, the pages drew it wherever the kind is drawn. The figure is declared, like everything else: `defineNode(kind, { figure })` where a figure is vector art (SVG, one viewBox, currentColor strokes so it takes the scheme and the kind's hue), or a reference to one from a small shipped set; the brand may override any kind's figure the way it overrides a kind's hue. Where it is drawn: the kind card at altitude stands its figure on the block as the isometric city's landmark; the district's card carries it small beside the plural; a chip's dot becomes the figure at glyph size where it stays legible; the record page's eyebrow and the list page's heading carry it; the relation key uses it beside the kind's name. The AGENT DRAWS IT: an intelligence provider `figure` takes a kind's name and description and returns a figure in the house style (isometric, single-weight line, no fill but the ground's, in the brand's ink) — `graview figure <kind>` from the terminal and \"Draw a figure for this kind\" from the studio and the chat, the result proposed for the person to keep or redraw. `graview check` judges a figure: it parses, it has one viewBox, it uses currentColor, it reads at 20 pixels (a bounds check), and its ink holds contrast on both grounds. Honest geometry: the figure is line art of the thing, never a decorative emblem; the isometric city's feel is the reference. Source: Nick, 2026-09-13: \"the ability to change the visual representing a Kind, in Graview and Scene views, and where relevant in Pages. I want the agent to be able to generate a 3d-looking image of the thing it represents. like a blueprint-esque 3d model of a Persons silhouette, or a Cleat, or a vehicle\"."
-lastModified: "2026-09-13T04:54:21.137Z"
+lastModified: "2026-09-13T07:46:29.360Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
