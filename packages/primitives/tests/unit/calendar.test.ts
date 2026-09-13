@@ -1,7 +1,8 @@
-import { createSchema, defineNode } from "@graview/core";
+import { createSchema, defineMutation, defineNode, nodeRef, Store } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  actThatMoves,
   addDays,
   addMonths,
   CalendarBindingError,
@@ -164,5 +165,60 @@ describe("the range a stop names", () => {
     ]);
     expect(spanOf("day", "2026-09-16").days).toEqual(["2026-09-16"]);
     expect(spanOf("agenda", "2026-09-16").days).toHaveLength(42);
+  });
+});
+
+/**
+ * MOVING A DATE IS AN ACT, found in the declaration rather than named in
+ * the lens. A calendar you cannot drag in is a picture of a schedule; a
+ * calendar that invented its own edit would be a second way of changing the
+ * graph, which is the one thing this framework does not have.
+ */
+describe("the act that moves a date", () => {
+  const moved = defineNode("job", {
+    fields: z.object({ label: z.string().min(1), on: z.string(), done: z.boolean() }),
+    plural: "Jobs",
+    label: (node) => node.label,
+  });
+  const jobs = createSchema([moved]);
+  const reschedule = defineMutation("reschedule", {
+    title: "Move the date",
+    description: "Change when a job is due.",
+    subject: { kinds: ["job"], arg: "jobId" },
+    writes: ["on"],
+    input: z.object({ jobId: nodeRef(["job"]), on: z.string().min(1) }),
+    apply(ctx, args) {
+      ctx.patchNode(args.jobId, { on: args.on });
+    },
+  });
+  const finish = defineMutation("finish", {
+    title: "Finish it",
+    description: "Marks a job done.",
+    subject: { kinds: ["job"], arg: "jobId" },
+    writes: ["done"],
+    input: z.object({ jobId: nodeRef(["job"]) }),
+    apply(ctx, args) {
+      ctx.patchNode(args.jobId, { done: true });
+    },
+  });
+
+  const store = (mutations: Parameters<typeof Store<typeof jobs>>[0]["mutations"]) =>
+    new Store<typeof jobs>({ schema: jobs, mutations });
+
+  it("finds the declared act that writes the bound field and can be told the answer", () => {
+    expect(actThatMoves(store([reschedule, finish]), "job", "on")).toEqual({
+      name: "reschedule",
+      arg: "jobId",
+    });
+  });
+
+  it("passes over an act that writes the field but cannot be told it", () => {
+    // "Finish it" writes `done` and has no opinion you can hand it; asked
+    // about `done`, the answer is the derived edit, not finish.
+    expect(actThatMoves(store([finish]), "job", "done")?.name).toBe("edit-job");
+  });
+
+  it("falls back to the derived edit, which every kind has", () => {
+    expect(actThatMoves(store([finish]), "job", "on")).toEqual({ name: "edit-job", arg: "id" });
   });
 });

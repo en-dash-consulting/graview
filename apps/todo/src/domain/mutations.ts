@@ -79,6 +79,11 @@ export const reschedule = defineMutation("reschedule", {
   title: "Move the date",
   description: "Change when something is due, or give it a date for the first time.",
   subject: { kinds: ["task"], arg: "taskId" },
+  // Said, because a declaration that is true about itself is the whole
+  // point: the calendar asks which act writes the date it is bound to, and
+  // an act that patches a field without saying so is only found by a
+  // name-match the next rename would break.
+  writes: ["due"],
   input: z.object({ taskId: nodeRef(["task"]), due: isoDate }),
   describe: (args, graph) => `Move "${nameOf(graph as Reader, args.taskId)}" to ${args.due}`,
   apply(ctx, args) {

@@ -108,6 +108,7 @@ export type {
 // The calendar: month, week, day and agenda over real dates. Bound by roles
 // like every other starter, and it has never heard of a task or a shift.
 export {
+  actThatMoves,
   addDays,
   addMonths,
   CalendarBindingError,

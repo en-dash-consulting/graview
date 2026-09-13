@@ -1,7 +1,7 @@
-import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { fieldWriters, labelOf, type AnySchema, type NodeOfSchema, type Store } from "@graview/core";
 import { withWithin } from "@graview/layout";
 import { useGraview, useNavigation, type ViewProps } from "@graview/react";
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster } from "../primitives/index.js";
 
@@ -228,6 +228,51 @@ export function entriesOn(entries: readonly PlacedEntry[], day: string): PlacedE
     });
 }
 
+/* ------------------------------------------------------- moving a date */
+
+/**
+ * THE ACT THAT WRITES THE DATE, found in the declaration rather than named
+ * in the lens.
+ *
+ * A calendar you cannot drag in is a picture of a schedule rather than a
+ * schedule. But the lens must not invent an edit: it looks for a declared
+ * act whose subject accepts this kind and that SAYS it writes the field the
+ * start role is bound to, and falls back to the derived edit of the kind,
+ * which every kind has. Either way the store judges it, the log records it
+ * with an author, and undo takes it back — exactly as if the same act had
+ * been pressed in the strip.
+ */
+export function actThatMoves<S extends AnySchema>(
+  store: Store<S>,
+  kind: string,
+  field: string,
+): { readonly name: string; readonly arg: string } | null {
+  /*
+   * Which acts write this field, asked of the framework's own answer
+   * (`fieldWriters`) rather than of `mutation.writes` alone. That is the
+   * function the checker uses for `field-without-writer`, and it also reads
+   * an act that patches a field it happens to be named for — so a
+   * `reschedule` whose declaration forgot `writes: ["due"]` is still found,
+   * and the lens does not disagree with the checker about who writes what.
+   */
+  const writers = fieldWriters(store.schema, store.allMutations()).get(kind)?.get(field) ?? [];
+  const declared = new Map(store.allMutations().map((mutation) => [mutation.name, mutation]));
+  for (const name of writers) {
+    const mutation = declared.get(name);
+    const subject = mutation?.subject;
+    if (!mutation || !subject) continue;
+    // It must also be able to be TOLD the new date, or it writes its own —
+    // "finish it" writes `done` and has no opinion you can hand it.
+    const shape = (mutation.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {};
+    if (!(field in shape)) continue;
+    return { name: mutation.name, arg: subject.arg };
+  }
+  // Every kind has a derived edit; it is the honest fallback, and the policy
+  // reads it through whatever declared acts it rides.
+  const edit = store.allMutations().find((mutation) => mutation.derived?.edit === kind);
+  return edit?.subject ? { name: edit.name, arg: edit.subject.arg } : null;
+}
+
 /* ----------------------------------------------------------------- view */
 
 type Emphasis = "plain" | "lit" | "dimmed";
@@ -287,6 +332,7 @@ function CalendarView<S extends AnySchema>({
    * interface you could not link to.
    */
   const { view, go } = useNavigation();
+  const { store, principal } = useGraview<S>();
   const at = view.within?.["at"] ?? options.today;
   const range = (view.within?.["range"] as CalendarRange | undefined) ?? options.range ?? "month";
   const weekStartsOn = options.weekStartsOn ?? 1;
@@ -326,6 +372,46 @@ function CalendarView<S extends AnySchema>({
 
   const page = mode === "fullscreen";
   const span = spanOf(range, at, weekStartsOn);
+
+  /*
+   * DRAGGING AN ENTRY TO A DAY IS AN ACT, not a special case.
+   *
+   * The declaration is asked which act writes the bound date; the store
+   * judges whether this seat may run it; the log records it with an author
+   * and an inverse, so one undo puts it back. A seat that may not is told
+   * so in the policy's own words rather than finding the entry silently
+   * snapping back — a drag that appears to work and does not is worse than
+   * one that refuses.
+   */
+  const [refused, setRefused] = useState<string | null>(null);
+  const moveTo = (id: string, day: string) => {
+    const node = store.graph.getNode(id);
+    if (!node) return;
+    const roles = options.bindings[node.kind as string];
+    if (!roles) return;
+    const act = actThatMoves(store, node.kind as string, roles.start);
+    if (!act) {
+      setRefused(`Nothing declared writes ${roles.start}, so this cannot be moved from here.`);
+      return;
+    }
+    // A date-time keeps its time: moving "Tuesday at 09:30" to Thursday
+    // means Thursday at 09:30, not Thursday at midnight.
+    const was = (node as unknown as Record<string, unknown>)[roles.start];
+    const minutes = minutesOf(was);
+    const value = minutes === null ? day : `${day}${String(was).slice(10)}`;
+    const call = { name: act.name, args: { [act.arg]: id, [roles.start]: value } };
+    const verdict = store.permits(call, principal);
+    if (!verdict.ok) {
+      setRefused(verdict.refusal.message);
+      return;
+    }
+    try {
+      store.apply(call, { author: principal });
+      setRefused(null);
+    } catch (error) {
+      setRefused(error instanceof Error ? error.message : String(error));
+    }
+  };
   const move = (step: number) => {
     const next =
       range === "month" ? addMonths(at, step) : range === "week" ? addDays(at, step * 7) : addDays(at, step);
@@ -384,6 +470,16 @@ function CalendarView<S extends AnySchema>({
           </div>
         </div>
 
+        {refused ? (
+          <p
+            data-testid="calendar-refused"
+            role="status"
+            style={{ margin: 0, fontSize: "0.75rem", color: "var(--graview-warn)" }}
+          >
+            {refused}
+          </p>
+        ) : null}
+
         {range === "agenda" ? (
           <Agenda
             days={span.days}
@@ -392,6 +488,7 @@ function CalendarView<S extends AnySchema>({
             emphasisOf={emphasisOf}
             broken={broken}
             hue={hue}
+            onMove={moveTo}
           />
         ) : (
           <Grid
@@ -406,6 +503,7 @@ function CalendarView<S extends AnySchema>({
             broken={broken}
             hue={hue}
             onOverflow={(day) => show("day", day)}
+            onMove={moveTo}
           />
         )}
       </div>
@@ -480,6 +578,7 @@ function Grid({
   broken,
   hue,
   onOverflow,
+  onMove,
 }: {
   days: readonly string[];
   columns: number;
@@ -492,6 +591,7 @@ function Grid({
   broken: ReadonlySet<string>;
   hue: (entry: PlacedEntry) => number;
   onOverflow: (day: string) => void;
+  onMove: (id: string, day: string) => void;
 }) {
   const headers = columns === 7 ? daysFrom(startOfWeek(days[0] ?? today, weekStartsOn), 7) : days;
   return (
@@ -531,6 +631,26 @@ function Grid({
               key={day}
               data-calendar-day={day}
               data-calendar-outside={outside || undefined}
+              /*
+               * A DAY IS SOMEWHERE TO DROP A THING.
+               *
+               * The browser's own drag rather than pointer events, because
+               * the scene's card drag is on pointerdown and would otherwise
+               * win — and because `draggable` gives the keyboard-free
+               * gesture a native affordance instead of a hand-rolled one.
+               */
+              onDragOver={(event) => {
+                if (!event.dataTransfer.types.includes("text/graview-node")) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+              }}
+              onDrop={(event) => {
+                const id = event.dataTransfer.getData("text/graview-node");
+                if (!id) return;
+                event.preventDefault();
+                event.stopPropagation();
+                onMove(id, day);
+              }}
               style={{
                 minHeight: 62,
                 display: "flex",
@@ -597,6 +717,7 @@ function Agenda({
   emphasisOf,
   broken,
   hue,
+  onMove,
 }: {
   days: readonly string[];
   entries: readonly PlacedEntry[];
@@ -604,6 +725,7 @@ function Agenda({
   emphasisOf: (id: string) => Emphasis;
   broken: ReadonlySet<string>;
   hue: (entry: PlacedEntry) => number;
+  onMove: (id: string, day: string) => void;
 }) {
   const withSomething = days
     .map((day) => ({ day, here: entriesOn(entries, day) }))
@@ -618,7 +740,23 @@ function Agenda({
   return (
     <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 10, overflow: "auto", minHeight: 0 }}>
       {withSomething.map(({ day, here }) => (
-        <li key={day} data-calendar-day={day} style={{ display: "grid", gap: 4 }}>
+        <li
+          key={day}
+          data-calendar-day={day}
+          onDragOver={(event) => {
+            if (!event.dataTransfer.types.includes("text/graview-node")) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+          }}
+          onDrop={(event) => {
+            const id = event.dataTransfer.getData("text/graview-node");
+            if (!id) return;
+            event.preventDefault();
+            event.stopPropagation();
+            onMove(id, day);
+          }}
+          style={{ display: "grid", gap: 4 }}
+        >
           <span
             style={{
               fontSize: "0.65625rem",
@@ -679,6 +817,14 @@ function Entry({
     <span
       data-graview-pick={entry.id}
       data-calendar-entry={entry.id}
+      draggable
+      onDragStart={(event) => {
+        // A node, named in a type only this lens reads — so dragging an
+        // entry onto somebody else's page drops nothing, and dropping a
+        // file onto the calendar moves nothing.
+        event.dataTransfer.setData("text/graview-node", entry.id);
+        event.dataTransfer.effectAllowed = "move";
+      }}
       data-graview-emphasis={emphasis}
       data-calendar-part={spanning ? (opens ? "opens" : closes ? "closes" : "through") : undefined}
       title={

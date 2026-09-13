@@ -132,6 +132,74 @@ try {
     ok: oneDay.range === "day" && oneDay.at === "2026-09-03" && oneDay.days === 1,
   };
 
+  /* ---------------- dragging an entry to a day is an act, and undoes */
+  /*
+   * A calendar you cannot drag in is a picture of a schedule rather than a
+   * schedule. The lens asks the DECLARATION which act writes the bound
+   * date, the store judges it, and the log records it — so one undo puts
+   * the entry back on the day it came from.
+   */
+  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1#focus=aggregate:task&in.view=the-month", {
+    waitUntil: "load",
+  });
+  await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+  await page.waitForSelector('[data-testid="calendar"]', { timeout: 20_000 });
+  await page.waitForTimeout(700);
+  const dragged = await page.evaluate(() => {
+    const entry = document.querySelector('[data-calendar-entry]');
+    const id = entry?.getAttribute("data-calendar-entry");
+    const was = entry?.closest("[data-calendar-day]")?.getAttribute("data-calendar-day");
+    const onto = [...document.querySelectorAll("[data-calendar-day]")].find(
+      (cell) => cell.getAttribute("data-calendar-day") === "2026-09-23",
+    );
+    if (!entry || !id || !onto) return { id, was, moved: false };
+    /*
+     * The browser's own drag, driven by hand: Playwright's dragTo needs a
+     * real pointer sequence that the scene's card drag would intercept
+     * first, and what is under test here is the DROP contract, not the
+     * pointer emulation.
+     */
+    const data = new DataTransfer();
+    entry.dispatchEvent(new DragEvent("dragstart", { bubbles: true, dataTransfer: data }));
+    onto.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: data }));
+    onto.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: data }));
+    return { id, was, moved: true };
+  });
+  await page.waitForTimeout(700);
+  const landed = await page.evaluate(
+    (id) =>
+      document
+        .querySelector(`[data-calendar-entry="${id}"]`)
+        ?.closest("[data-calendar-day]")
+        ?.getAttribute("data-calendar-day") ?? null,
+    dragged.id,
+  );
+  // The rail only offers a turn to take back once there IS one, so it is
+  // opened after the drop rather than before.
+  await page.click('[data-testid="activity-button"]');
+  await page.waitForSelector('[data-testid="undo-turn"]', { timeout: 20_000 });
+  await page.locator('[data-testid="undo-turn"]').first().click();
+  await page.waitForTimeout(900);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
+  const returned = await page.evaluate(
+    (id) =>
+      document
+        .querySelector(`[data-calendar-entry="${id}"]`)
+        ?.closest("[data-calendar-day]")
+        ?.getAttribute("data-calendar-day") ?? null,
+    dragged.id,
+  );
+  report.checks.draggingAnEntryIsAnActWithUndo = {
+    ...dragged,
+    landed,
+    returned,
+    refused: await page.evaluate(
+      () => document.querySelector('[data-testid="calendar-refused"]')?.textContent ?? null,
+    ),
+    ok: dragged.moved && landed === "2026-09-23" && returned === dragged.was,
+  };
+
   report.pageErrors = errors;
   report.passed = Object.values(report.checks).every((check) => check.ok) && errors.length === 0;
 } catch (error) {
