@@ -291,11 +291,67 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
   });
   const policy: Policy | undefined = roles.length > 0 || grants.length > 0 ? { grants, ...(roles.length > 0 ? { roles } : {}) } : undefined;
 
+  /*
+   * A LENS'S BINDINGS FOLLOW THE KINDS THEY NAME — and let go of the ones
+   * that are gone.
+   *
+   * The bindings are carried from the checkout, because the studio has no
+   * act that writes one. Carried VERBATIM, renaming `plot` to `bed` left the
+   * coverage grid bound to a kind that no longer exists, and `graview check`
+   * refused to apply the rename with an error about a lens nobody had
+   * touched. Removing a kind left the same wreckage.
+   *
+   * So renames are followed, the same way an act's subject follows one; and
+   * a lens that named something now deleted is dropped whole rather than
+   * half-bound, on the principle this file already keeps for display labels
+   * — what refers to something that is gone is not preserved, it is
+   * meaningless.
+   */
+  const liveKinds = new Set(kindName.values());
+  const liveEdges = new Set(edgeName.values());
+  type Bound = Record<string, unknown>;
+  const followBindings = (
+    bindings: LensDeclaration["bindings"] | undefined,
+    binds: "fields" | "entities",
+  ): { readonly ok: true; readonly bindings?: LensDeclaration["bindings"] } | { readonly ok: false } => {
+    if (!bindings) return { ok: true };
+    if (binds === "entities") {
+      const out: Bound = {};
+      for (const [role, bound] of Object.entries(bindings as Record<string, Bound>)) {
+        const kind = typeof bound?.["kind"] === "string" ? follow(bound["kind"] as string) : undefined;
+        const edge = typeof bound?.["edge"] === "string" ? (bound["edge"] as string) : undefined;
+        if (kind !== undefined && !liveKinds.has(kind)) return { ok: false };
+        if (edge !== undefined && !liveEdges.has(edge)) return { ok: false };
+        out[role] = kind !== undefined ? { ...bound, kind } : bound;
+      }
+      return { ok: true, bindings: out as LensDeclaration["bindings"] };
+    }
+    // A `fields` lens is keyed BY KIND, so a rename rekeys it.
+    const out: Bound = {};
+    for (const [kind, roles] of Object.entries(bindings as Record<string, Bound>)) {
+      const now = follow(kind);
+      if (!liveKinds.has(now)) return { ok: false };
+      out[now] = roles;
+    }
+    return { ok: true, bindings: out as LensDeclaration["bindings"] };
+  };
+
   const baseLenses = new Map((base?.lenses ?? []).map((lens) => [lens.name, lens]));
-  const lenses: LensDeclaration[] = read.ofKind("lens").map((lens) => {
+  const lenses: LensDeclaration[] = read.ofKind("lens").flatMap((lens) => {
     const kept = baseLenses.get(name(lens));
-    const requiredRoles = read.out(lens.id, "requires").map(name);
-    return { ...(kept ?? {}), name: name(lens), requiredRoles, ...(str(lens, "binds") ? { binds: str(lens, "binds") as "fields" | "entities" } : {}) };
+    const requiredRoles = list(lens, "requires") ?? [];
+    const binds = (str(lens, "binds") as "fields" | "entities" | undefined) ?? kept?.binds ?? "fields";
+    const followed = followBindings(kept?.bindings, binds);
+    if (!followed.ok) return [];
+    return [
+      {
+        ...(kept ?? {}),
+        name: name(lens),
+        requiredRoles,
+        ...(str(lens, "binds") ? { binds: str(lens, "binds") as "fields" | "entities" } : {}),
+        ...(followed.bindings ? { bindings: followed.bindings } : {}),
+      },
+    ];
   });
 
   const brandNode = read.ofKind("brand")[0];

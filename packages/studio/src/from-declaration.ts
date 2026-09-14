@@ -154,9 +154,14 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
   }
 
   const roleId = (role: string) => `role:${role}`;
+  /*
+   * SEATS ONLY. A lens's `requiredRoles` are binding SLOTS it asks the app
+   * to answer — `start`, `rows`, `link` — and reading them in here put them
+   * in the ROLES district beside "coordinator" and wrote them back into the
+   * policy as roles a person could be granted. They belong to the lens.
+   */
   const roles = new Set<string>(app.policy?.roles ?? []);
   for (const g of app.policy?.grants ?? []) if (g.roles !== "*") for (const role of g.roles) roles.add(role);
-  for (const lens of app.lenses ?? []) for (const role of lens.requiredRoles) roles.add(role);
   for (const role of roles) nodes.push({ id: roleId(role), kind: "role", label: role });
 
   (app.policy?.grants ?? []).forEach((g, index) => {
@@ -180,8 +185,13 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
 
   for (const lens of app.lenses ?? []) {
     const id = `lens:${lens.name}`;
-    nodes.push({ id, kind: "lens", label: lens.name, ...(lens.binds ? { binds: lens.binds } : {}) });
-    for (const role of lens.requiredRoles) edges.push({ kind: "requires", from: id, to: roleId(role) });
+    nodes.push({
+      id,
+      kind: "lens",
+      label: lens.name,
+      ...(lens.binds ? { binds: lens.binds } : {}),
+      ...(lens.requiredRoles.length > 0 ? { requires: [...lens.requiredRoles] } : {}),
+    });
   }
 
   if (app.brand) {

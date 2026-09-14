@@ -138,6 +138,17 @@ export const ruleNode = defineNode("rule", {
 });
 
 export const roleNode = defineNode("role", {
+  /*
+   * A SEAT'S STANDING, and nothing else that happens to be called a role.
+   *
+   * A lens also has "required roles" — `start`, `end`, `rows`, `columns`,
+   * `link` — but those are BINDING SLOTS it asks an app to answer with its
+   * own fields and kinds, not something a person can hold. Reading both into
+   * this kind put "columns" and "start" in the studio's ROLES district
+   * beside "coordinator", and wrote them into the policy the studio hands
+   * back — so `permits` would have recognised "columns" as a seat somebody
+   * could be granted. They are the lens's own field now.
+   */
   description: "A role a seat may hold.",
   plural: "roles",
   fields: z.object({ label }),
@@ -166,14 +177,23 @@ export const grantNode = defineNode("grant", {
 });
 
 export const lensNode = defineNode("lens", {
-  description: "A named way of looking at the graph, and who may look through it.",
+  description: "A named way of looking at the graph, and the slots it asks an app to fill.",
   plural: "lenses",
-  fields: z.object({ label, binds: z.enum(["fields", "entities"]).optional() }),
-  edges: {
-    requires: { to: ["role"], description: "the roles it needs", inverse: "the lenses they open" },
-  },
+  fields: z.object({
+    label,
+    binds: z.enum(["fields", "entities"]).optional(),
+    /**
+     * The slots the lens asks an app to bind — `start` and `end` for a
+     * timeline, `rows`, `columns` and `link` for a coverage grid. A field
+     * rather than an edge to `role`, because a slot is part of the lens's
+     * own contract and a seat's role is a person's standing; one district
+     * holding both said the roster had eight roles, five of which nobody
+     * could ever be.
+     */
+    requires: z.array(z.string()).optional(),
+  }),
   label: (node) => node.label,
-  display: { labels: { label: "name" } },
+  display: { labels: { label: "name", requires: "the slots it asks an app to bind" } },
 });
 
 export const brandNode = defineNode("brand", {

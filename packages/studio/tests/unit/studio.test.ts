@@ -77,7 +77,17 @@ const garden = defineApp({
   mutations: [tend, untend, addPlot],
   invariants: [everyPlotTended],
   policy: { roles: ["coordinator", "gardener"], grants: [{ roles: ["coordinator"], mutations: "*" }, { roles: ["gardener"], mutations: ["tend", "untend"], kinds: ["plot"], describe: "a gardener may tend" }] },
-  lenses: [{ name: "coverage", requiredRoles: ["coordinator"] }],
+  // A coverage grid asks for rows, columns and the edge between — SLOTS,
+  // not seats. The fixture used to ask it for "coordinator", which made the
+  // studio's own conflation of the two look correct.
+  lenses: [
+    {
+      name: "coverage",
+      binds: "entities",
+      requiredRoles: ["rows", "columns", "link"],
+      bindings: { rows: { kind: "plot" }, columns: { kind: "gardener" }, link: { edge: "tended-by" } },
+    },
+  ],
   brand: { name: "Garden", schemes: { dark: DARK, light: LIGHT } },
   version: 1,
 });
@@ -115,10 +125,33 @@ describe("the declaration is a graph", () => {
         { kind: "lets", from: "grant:2", to: "role:gardener" },
         { kind: "may", from: "grant:2", to: "act:tend" },
         { kind: "over", from: "grant:2", to: "kind:plot" },
-        { kind: "requires", from: "lens:coverage", to: "role:coordinator" },
       ]),
     );
     expect(graph.nodes.find((node) => node.id === "grant:1")).toMatchObject({ allActs: true, everyone: false, allKinds: true });
+  });
+
+  it("a lens's binding slots are not seats: the roles are who may act, and only that", () => {
+    const graph = declarationToGraph(garden);
+    const roles = graph.nodes.filter((node) => node.kind === "role").map((node) => (node as { label: string }).label);
+    /*
+     * The garden declares two seats and a lens that asks for three slots.
+     * Reading both into `role` said the garden had five roles, three of
+     * which nobody could ever hold — and wrote them into the policy it
+     * handed back, where `permits` would have treated "columns" as a seat
+     * somebody could be granted.
+     */
+    expect(roles.sort()).toEqual(["coordinator", "gardener"]);
+    expect(graph.edges.filter((edge) => edge.kind === "requires")).toEqual([]);
+    expect(graph.nodes.find((node) => node.id === "lens:coverage")).toMatchObject({
+      requires: ["rows", "columns", "link"],
+    });
+
+    // And it survives the trip back, on the lens rather than in the policy.
+    const back = graphToDeclaration(graph, { base: garden });
+    expect(back.policy?.roles).toEqual(["coordinator", "gardener"]);
+    expect(back.lenses?.[0]?.requiredRoles).toEqual(["rows", "columns", "link"]);
+    const written = declarationFiles(graph, { base: garden, name: garden.name }).find((file) => file.path.endsWith("policy.ts"));
+    expect(written?.contents).toContain('roles: ["coordinator", "gardener"]');
   });
 
   it("is itself an app graview check passes: the studio is held to what it holds everyone to", () => {
@@ -136,7 +169,14 @@ describe("the declaration is a graph", () => {
     expect(back.policy).toEqual(garden.policy);
     expect(back.mutations?.find((m) => m.name === "tend")?.fromTheOtherEnd).toBe("Take on a plot");
     expect(checkApp(back).findings.map((f) => f.code)).not.toContain("act-without-far-end-reading");
-    expect(back.lenses).toEqual([{ name: "coverage", requiredRoles: ["coordinator"] }]);
+    expect(back.lenses).toEqual([
+      {
+        name: "coverage",
+        binds: "entities",
+        requiredRoles: ["rows", "columns", "link"],
+        bindings: { rows: { kind: "plot" }, columns: { kind: "gardener" }, link: { edge: "tended-by" } },
+      },
+    ]);
     expect(back.version).toBe(1);
     // The kept body runs: tending plot-2 makes the edge the checkout's act makes.
     const store = new Store({ schema: back.schema, mutations: back.mutations ?? [], invariants: back.invariants ?? [], snapshot: seed } as never);
@@ -250,6 +290,20 @@ describe("the declaration is written back as the files graview create writes", (
 });
 
 describe("renaming a kind", () => {
+  it("carries the lenses bound to it, rather than leaving them pointed at a name nobody declares", () => {
+    const studio = createStudio(garden);
+    studio.store.apply({ name: "rename-kind", args: { id: "kind:plot", label: "bed" } });
+    const back = studio.declaration();
+    /*
+     * The bindings come from the checkout, because no act writes one —
+     * carried verbatim, this left the coverage grid bound to "plot" after
+     * the rename, and the checker refused to apply it with an error about
+     * a lens nobody had touched.
+     */
+    expect(back.lenses?.[0]?.bindings).toMatchObject({ rows: { kind: "bed" }, columns: { kind: "gardener" } });
+    expect(checkApp(back).errors).toBe(0);
+  });
+
   it("is a migration that carries every record and its edges under the new name", () => {
     const studio = createStudio(garden);
     studio.store.apply({ name: "rename-kind", args: { id: "kind:plot", label: "bed" } });
