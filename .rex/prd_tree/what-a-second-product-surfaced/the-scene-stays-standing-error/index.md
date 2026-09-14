@@ -24,7 +24,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 |-------|--------|
 | [F-016 · Observation: the relation key overlaps a full-fidelity group view in a 700x520 embed](./f-016-observation-the-relation-key.md) | pending |
 | [F-018 · The district row breaks down past about six kinds in a narrow host](./f-018-the-district-row-breaks-down.md) | pending |
-| [F-022 · The scene's own district controls are 22px tall](./f-022-the-scene-s-own-district.md) | pending |
+| [F-022 · The scene's own district controls are 22px tall](./f-022-the-scene-s-own-district.md) | completed |
 | [F-023 · The scene draws past the right edge at 390px](./f-023-the-scene-draws-past-the-right.md) | pending |
 | [F-024 · A scrolling panel has no tab stop](./f-024-a-scrolling-panel-has-no-tab-stop.md) | pending |
 | [F-026 · A view that throws takes the whole scene down](./f-026-a-view-that-throws-takes-the.md) | completed |

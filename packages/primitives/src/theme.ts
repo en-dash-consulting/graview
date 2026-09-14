@@ -391,7 +391,13 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  min-height: 24px;
+  /* A FINGERTIP, AND THE READER'S FINGERTIP IF IT IS BIGGER. 24px is the
+     floor audit-ui holds every control to; 1.5rem is the same 24 at the
+     default text size and grows with a reader who asked for more, so the
+     control never drifts under the words it sits beside. A max() rather than
+     either one alone: rem alone drops below the fingertip at a smaller
+     setting, px alone ignores the setting altogether. */
+  min-height: max(1.5rem, 24px);
   padding: 1px 9px;
   margin: -3px 0;
   border-radius: 999px;
@@ -498,7 +504,8 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
-  min-height: 24px;
+  /* The same floor as the disclosure beside it — see .graview-kind-open. */
+  min-height: max(1.5rem, 24px);
   padding: 1px 8px;
   margin: -3px 0;
   border-radius: 999px;
