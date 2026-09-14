@@ -308,7 +308,7 @@ export const VISUALLY_HIDDEN = {
 
 export interface ChipProps {
   readonly label: ReactNode;
-  /** 0..1 around the colour wheel. Kind-derived, so it is stable per kind. */
+  /** Degrees around the colour wheel, as `hueFor` gives them. Kind-derived, so it is stable per kind. */
   readonly hue?: number;
   readonly selected?: boolean;
   readonly title?: string;
@@ -341,7 +341,7 @@ export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProp
   // Hue identifies the kind; luminance carries the reading. A chip is an
   // outline with a trace of its hue behind it, so a dozen of them together
   // stay a list rather than becoming confetti.
-  const tint = hue === undefined ? undefined : Math.round(hue * 360);
+  const tint = hue === undefined ? undefined : Math.round(hue);
   return (
     <span
       data-graview-primitive="chip"
@@ -631,7 +631,7 @@ export function Connector({
       y1={y1}
       x2={x2}
       y2={y2}
-      stroke={hue === undefined ? "currentColor" : `hsl(${Math.round(hue * 360)} 40% 40%)`}
+      stroke={hue === undefined ? "currentColor" : `hsl(${Math.round(hue)} 40% 40%)`}
       strokeWidth={width}
       strokeDasharray={DASHES[pattern]}
       strokeLinecap="round"

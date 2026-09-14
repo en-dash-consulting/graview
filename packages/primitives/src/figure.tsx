@@ -36,7 +36,7 @@ export function KindFigure<S extends AnySchema>({
   // The brand's say comes first: an installation with its own drawing of a
   // person keeps the domain's declaration as the domain's.
   const art = figureSvg(brand?.figures?.[kind] ?? declared);
-  const hue = Math.round(hueFor(kind, brand?.accents) * 360);
+  const hue = Math.round(hueFor(kind, brand?.accents));
   /*
    * The same drawing must be the SAME OBJECT or React re-parses it on every
    * render — and a node replaced between two clicks is a double-click that

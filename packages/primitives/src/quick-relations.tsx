@@ -137,7 +137,7 @@ export function QuickRelations<S extends AnySchema>() {
           {row.members.map((member) => {
             const node = store.graph.getNode(member.id);
             if (!node) return null;
-            const hue = Math.round(hueFor(member.kind, brand?.accents) * 360);
+            const hue = Math.round(hueFor(member.kind, brand?.accents));
             const full = labelOf(store.schema.tryDefinition(member.kind), node as never);
             const shown = full.length > MOST_LABEL ? `${full.slice(0, MOST_LABEL - 1).trimEnd()}…` : full;
             return (

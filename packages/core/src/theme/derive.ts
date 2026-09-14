@@ -230,16 +230,29 @@ export function checkBrandContrast(
  * Stable hue per kind — THE thread of kind identity across every surface:
  * chip dots, legend swatches, district roofs, the focus tag, a page's
  * kind mark. A brand that declares a kind's hue (`accents`) wins over the
- * hash. Returned as a fraction of a turn (0..1), as every renderer here
- * consumes it. Lives beside the brand because the brand is what overrides it.
+ * hash. Lives beside the brand because the brand is what overrides it.
+ *
+ * IN DEGREES, 0–360, which is what a hue is in CSS, in every design tool,
+ * and in `brand.accents` itself — the checker already validates an accent as
+ * "a number 0–360". It used to divide by 360 on the way out, because every
+ * consumer in this repository wanted a fraction, and the name said nothing
+ * about that. So an app author read the name, wrote
+ * `hsl(${hueFor(kind)} 58% 50%)`, which is valid CSS that renders, and got a
+ * hue between 0 and 1 for every kind — which is red. A map with four
+ * surfaces came out four shades of the same pink. Nothing failed: not tsc,
+ * not graview check, not a test. It was only wrong to look at, and only if
+ * you knew what it should have looked like.
+ *
+ * The consumers divide now, where dividing is a local detail rather than a
+ * surprise in a public name.
  */
 export function hueFor(kind: string, accents?: Readonly<Record<string, number>>): number {
   const declared = accents?.[kind];
-  if (declared !== undefined) return (((declared % 360) + 360) % 360) / 360;
+  if (declared !== undefined) return ((declared % 360) + 360) % 360;
   let h = 2166136261;
   for (let i = 0; i < kind.length; i++) {
     h ^= kind.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
-  return ((h >>> 0) % 360) / 360;
+  return (h >>> 0) % 360;
 }

@@ -154,7 +154,7 @@ export function checkKitContrast(kit: Kit, tokens: ThemeTokens): readonly KitCon
   return findings;
 }
 
-/** The kind's own hue as the theme paints a connector, for callers that want the same colour elsewhere. */
+/** The kind's own hue (degrees) as the theme paints a connector, for callers that want the same colour elsewhere. */
 export function connectorHueColour(hue: number): Rgba {
-  return hsl(hue * 360, 55, 62);
+  return hsl(hue, 55, 62);
 }

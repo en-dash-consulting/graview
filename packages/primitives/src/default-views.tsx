@@ -398,7 +398,7 @@ export function registerDefaultViews<S extends AnySchema>(
           style={{
             position: "relative",
             height: "100%",
-            ["--graview-hue" as string]: Math.round(hue * 360),
+            ["--graview-hue" as string]: Math.round(hue),
           }}
         >
           {/*
@@ -466,7 +466,7 @@ export function registerDefaultViews<S extends AnySchema>(
               ? "1px solid var(--graview-accent)"
               : tied > 0
                 ? "1px solid var(--graview-accent-dim)"
-                : `1px solid hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.34)`,
+                : `1px solid hsl(${Math.round(hue)} 55% var(--graview-tint-lightness) / 0.34)`,
             // The kind you are looking at is brighter and lit, not labelled:
             // a ninety-pixel card has no room for a word that says so.
             /*
@@ -476,9 +476,9 @@ export function registerDefaultViews<S extends AnySchema>(
              * wash alone read as a pastel sticky note.
              */
             backgroundColor: "var(--graview-panel)",
-            backgroundImage: `linear-gradient(hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * ${
+            backgroundImage: `linear-gradient(hsl(${Math.round(hue)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * ${
               accent ? 1.1 : secondary ? 0.28 : 0.5
-            })), hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * ${
+            })), hsl(${Math.round(hue)} 55% var(--graview-tint-lightness) / calc(var(--graview-tint-alpha) * ${
               accent ? 1.1 : secondary ? 0.28 : 0.5
             })))`,
             boxShadow: accent ? "0 0 0 1px var(--graview-accent-dim)" : undefined,
@@ -512,7 +512,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 top: 0,
                 display: "flex",
                 height: 3,
-                background: `hsl(${Math.round(hue * 360)} 55% var(--graview-tint-lightness) / 0.4)`,
+                background: `hsl(${Math.round(hue)} 55% var(--graview-tint-lightness) / 0.4)`,
               }}
             >
               {broken > 0 ? (

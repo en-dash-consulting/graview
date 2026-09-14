@@ -46,7 +46,7 @@ export interface TimelineOptions {
   /** Spacing of axis rules, in axis units. Derived from the window if absent. */
   readonly tick?: number;
   /**
-   * Hue for a span, 0..1. Defaults to the node's KIND, which is right for a
+   * Hue for a span, in degrees. Defaults to the node's KIND, which is right for a
    * graph and wrong for a calendar: every block is the same kind, so a week
    * of school, naps and shifts came out one shade of maroon. An app that has
    * a category of its own — the household example has `blockType` — says so here.
@@ -254,7 +254,7 @@ type Emphasis = "plain" | "lit" | "dimmed";
  * label keeps its ink in all three states.
  */
 function spanEmphasis(emphasis: Emphasis, hue: number): CSSProperties {
-  const tint = Math.round(hue * 360);
+  const tint = Math.round(hue);
   // Opaque, over a hue wash, with both drawn from the theme: a cascaded bar
   // has to OCCLUDE the one behind it, and the same wash has to read on paper
   // and in the dark.
@@ -624,14 +624,14 @@ function Column({
                 ? "var(--graview-warn)"
                 : emphasis === "dimmed"
                   ? "var(--graview-edge)"
-                  : `hsl(${Math.round(hue(span) * 360)} 60% var(--graview-tint-lightness))`,
+                  : `hsl(${Math.round(hue(span))} 60% var(--graview-tint-lightness))`,
               boxShadow: brokenIds.has(span.id)
                 ? "0 0 0 3px var(--graview-warn)"
                 : emphasis === "lit"
                   ? "0 0 0 3px var(--graview-accent-dim)"
                   : emphasis === "dimmed"
                     ? undefined
-                    : `0 0 8px hsl(${Math.round(hue(span) * 360)} 60% var(--graview-tint-lightness) / 0.45)`,
+                    : `0 0 8px hsl(${Math.round(hue(span))} 60% var(--graview-tint-lightness) / 0.45)`,
             }}
           />
         </div>

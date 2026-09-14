@@ -110,7 +110,7 @@ export interface CalendarOptions {
   readonly horizon?: CalendarHorizon;
   /** The day a week starts on, 0 = Sunday. Monday, unless an app says otherwise. */
   readonly weekStartsOn?: number;
-  /** Hue for an entry, 0..1. Defaults to the node's kind. */
+  /** Hue for an entry, in degrees. Defaults to the node's kind. */
   readonly hueOf?: (entry: PlacedEntry) => number;
   /** How many entries a cell shows before the rest become a count. Per grain, by default. */
   readonly perCell?: number;
@@ -1159,7 +1159,7 @@ function Entry({
         // selectable. Removing it would be answering a different question.
         textDecoration: entry.done ? "line-through" : "none",
         opacity: emphasis === "dimmed" ? 0.35 : entry.done ? 0.6 : 1,
-        background: `color-mix(in oklab, hsl(${Math.round(hue * 360)} 70% 55%) ${emphasis === "lit" ? 38 : 20}%, transparent)`,
+        background: `color-mix(in oklab, hsl(${Math.round(hue)} 70% 55%) ${emphasis === "lit" ? 38 : 20}%, transparent)`,
         color: "var(--graview-ink)",
         ...(emphasis === "lit" ? { outline: "1px solid var(--graview-accent)" } : {}),
         ...(flagged ? { borderLeft: "3px solid var(--graview-warn)", paddingLeft: 4 } : {}),

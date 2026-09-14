@@ -1901,7 +1901,7 @@ function SceneViewHost({
           style={{
             ...(tagAt ?? {}),
             ["--graview-hue" as string]: Math.round(
-              hueFor(node.kind, hostBrand?.accents) * 360,
+              hueFor(node.kind, hostBrand?.accents),
             ),
           }}
         >
@@ -1911,7 +1911,7 @@ function SceneViewHost({
               height: 6,
               borderRadius: 999,
               flex: "0 0 auto",
-              background: `hsl(${Math.round(hueFor(node.kind, hostBrand?.accents) * 360)} 55% var(--graview-tint-lightness) / 0.9)`,
+              background: `hsl(${Math.round(hueFor(node.kind, hostBrand?.accents))} 55% var(--graview-tint-lightness) / 0.9)`,
             }}
           />
           {node.kind}
