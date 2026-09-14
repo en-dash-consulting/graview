@@ -76,6 +76,15 @@ export function PagesRoutes<S extends AnySchema>({
   return (
     <Shell context={context}>
       <Routes>
+        {/*
+          * THE APP'S OWN ROUTES FIRST — a survey desk, an onboarding, a
+          * settings page — because `/:slug` would otherwise swallow every
+          * one of them and hand the address to the kind switch.
+          */}
+        {(registry?.routes() ?? []).map(({ path, component }) => {
+          const Page = component as PageComponent<S>;
+          return <Route key={path} path={path} element={<Page context={inside} />} />;
+        })}
         <Route path="/" element={<Home context={inside} />} />
         <Route path="/problems" element={<Problems context={inside} />} />
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />

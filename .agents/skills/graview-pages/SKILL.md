@@ -9,9 +9,8 @@ A Graview app has two faces over one store. The scene is the picture. The
 pages face is the same declaration routed as an ordinary web application:
 a home, a list per kind, a record per node, forms for every act, and a
 problems page — derived, then replaceable one surface at a time, all the way
-to a product design of the app's own. The ladder ends where the framework's
-own example does: `apps/seedbed`, chapter nine (one page replaced) and
-chapter thirteen (every surface).
+to a product design of its own. The ladder ends where the framework's own
+example does: `apps/seedbed`, chapters nine and thirteen.
 
 ## What comes for free
 
@@ -22,21 +21,20 @@ if (location.pathname.startsWith("/pages")) {
 }
 ```
 
-`PagesApp` from `@graview/pages` renders, with no registry at all:
+`PagesApp` renders, with no registry at all:
 
 - `/` — a home saying what is here, and on an empty installation which act
   begins it.
 - `/<plural>` — a list per kind, marking trouble, with the creating acts
   beneath it.
 - `/<plural>/<id>` — a record: its facts, its relations captioned in the
-  declaration's own words (from the end you stand on), what can be done, and
-  what has happened.
+  declaration's words (from the end you stand on), what can be done, what has
+  happened.
 - `/problems` — every broken rule with its repairs.
 
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
-or who may take it** — it strikes through what the seat may not take, and
-says why.
+or who may take it** — it strikes through what the seat may not, and says why.
 
 ## Rung one: a page in the app's own words
 
@@ -60,8 +58,13 @@ function PlotPage({ context }: { context: PageContext<S> }) {
 }
 
 export const pages = createPageRegistry<S, PageComponent<S>>(schema)
-  .register("plot", "record", PlotPage);
+  .register("plot", "record", PlotPage)
+  .route("/survey", SurveyDesk);   // about nothing in the schema
 ```
+
+`.route(path, Component)` gives a page that is NOT about a kind an address —
+onboarding, settings, import. It matches before `/:plural`, so nothing
+swallows it.
 
 Rules for a page at this rung:
 
@@ -121,17 +124,15 @@ What every design must keep doing:
 
 - **Read the graph through one model.** `readGarden(store)` turns nodes,
   edges and violations into the design's words; every page reads it and none
-  reaches for `store.graph` alone. The scene's lens reads the same model —
-  chapter thirteen's map is one drawing with two homes.
+  reaches for `store.graph`. The scene's lens reads the same model.
 - **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`,
   `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with
   `color-mix` for the design's own paper. Never a colour that works in one
   scheme only; the design then wears both schemes and the brand's typefaces.
 - **Keep landmarks and targets honest.** One `main` (a `section` when
-  `context.embedded`, and an UNNAMED one — the embed has already made a
-  region carrying the name the page gave it, so naming this one as well puts
-  two regions with the same name on any page holding two embeds of the
-  design). Controls at least 24px tall, AA contrast on the tinted ground.
+  `context.embedded`, and an UNNAMED one — the embed already made a region
+  carrying the page's name, so naming this one too puts two regions with one
+  name on a page holding two embeds). Controls at least 24px, AA contrast.
   Every size in `rem`: at 200% text a flex or grid item's automatic minimum
   is its CONTENT's, so one un-wrappable row pushes the whole column off the
   screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on
@@ -154,7 +155,7 @@ const handle = mount(el, { app, seed, stop: "#focus=agg:plot", principal, views,
 handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
 ```
 
-- `face` is inferred from the stop and `scheme` from the host page; `label`
+- `face` is inferred from the stop, `scheme` from the host page; `label`
   names the landmarks, so two embeds are two regions with two names.
 - `mountWhenNear(elements, mountOne)` mounts many as a reader scrolls near
   them. The strip shows the app's named places (`graview-lens`, step 7).
