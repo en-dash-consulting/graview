@@ -119,6 +119,35 @@ function byStableKey(a: { id: string }, b: { id: string }): number {
  * Ordered the way the shelf is ordered, so a card keeps its neighbours when
  * the shelf becomes a ring and the eye can follow it round.
  */
+/** Two drawn boxes sharing ground, with a little air required between them. */
+function collides(
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number },
+  air = 6,
+): boolean {
+  return (
+    a.x < b.x + b.width + air &&
+    b.x < a.x + a.width + air &&
+    a.y < b.y + b.height + air &&
+    b.y < a.y + a.height + air
+  );
+}
+
+/**
+ * THE CITY GROWS WITH THE READER UNTIL THE RING IS FULL.
+ *
+ * A district card holds a name and a count, both sized in `rem`, and the
+ * card was sized in pixels off the stage — so a reader on Largest doubled
+ * every name in the city inside cards that had not moved, and the picture
+ * came apart. The cards take the reader's unit now.
+ *
+ * They cannot simply take it, though: a ring is a fixed amount of ground,
+ * and cards twice the size on the same ellipse are districts standing in
+ * each other. So the scale asked for is the MOST it will use, and it gives
+ * back whatever it must to keep the ring a ring — down to the size it has
+ * always been and never below. A person who asks for bigger words gets them
+ * everywhere, and gets as much bigger a city as there is room for.
+ */
 function ring(
   count: number,
   size: { width: number; height: number },
@@ -127,7 +156,30 @@ function ring(
   inset: { readonly left?: number; readonly right?: number } = {},
   /** Extra height the nearest card may take: a district opened in place lists its members. */
   opened = 0,
+  /** How much bigger the reader's own text size asks these cards to be. */
+  scale = 1,
 ): { x: number; y: number; depth: number; width: number; height: number }[] {
+  let placed = ringAt(count, size, canvasWidth, canvasHeight, inset, opened, scale);
+  for (let asked = scale; asked > 1.001; asked = Math.max(1, asked - 0.05)) {
+    const crowded = placed.some((one, index) =>
+      placed.some((other, at) => at !== index && collides(one, other)),
+    );
+    if (!crowded) return placed;
+    placed = ringAt(count, size, canvasWidth, canvasHeight, inset, opened, Math.max(1, asked - 0.05));
+  }
+  return placed;
+}
+
+function ringAt(
+  count: number,
+  base: { width: number; height: number },
+  canvasWidth: number,
+  canvasHeight: number,
+  inset: { readonly left?: number; readonly right?: number },
+  opened: number,
+  scale: number,
+): { x: number; y: number; depth: number; width: number; height: number }[] {
+  const size = { width: base.width * scale, height: base.height * scale };
   // The span the ring may use: the canvas, less any rail reserved for chrome.
   const left = inset.left ?? 0;
   const span = canvasWidth - left - (inset.right ?? 0);
@@ -268,6 +320,13 @@ export function layout<S extends AnySchema>(
    * domain or one thing, and a lens that takes the full focus width was
    * drawn under them. The reported width stays the canvas's own.
    */
+  /*
+   * WHAT ONE `rem` IS WORTH. Every card here holds text sized in `rem`, so
+   * the cards follow the same number the text does — the whole city grows
+   * when a reader asks for bigger words. 16 is the browser's own default,
+   * so an app that says nothing lays out exactly as it always has.
+   */
+  const unit = Math.max(8, opts.unit ?? 16) / 16;
   const railLeft = opts.inset?.left ?? 0;
   const spanW = opts.width - railLeft - (opts.inset?.right ?? 0);
   const nodes: LayoutNode[] = [];
@@ -835,8 +894,11 @@ export function layout<S extends AnySchema>(
     ? // Squat cards: a kind card holds a name, a count and a bar, and a tall
       // one from altitude was mostly empty tint — a sticky note, not a
       // building face.
+      // The base a district card has always been. The ring applies the
+      // reader's unit itself, because only the ring knows how much room is
+      // left to grow into.
       { width: Math.min(220, spanW / 6.5), height: Math.min(92, opts.height * 0.125) }
-    : fit(slotted.length, zoomed ? 240 : opts.contextSize.width, band.contextH);
+    : fit(slotted.length, (zoomed ? 240 : opts.contextSize.width) * unit, band.contextH);
   const contextPositions: {
     x: number;
     y: number;
@@ -850,8 +912,10 @@ export function layout<S extends AnySchema>(
         opts.width,
         opts.height,
         opts.inset ?? {},
-        // An opened district lists its members below its name: room for a few.
-        slotted.some((item) => expanded.has(item.id)) ? 96 : 0,
+        // An opened district lists its members below its name: room for a
+        // few, in rows of text, so the room is the reader's unit too.
+        slotted.some((item) => expanded.has(item.id)) ? 96 * unit : 0,
+        unit,
       )
     : shelf(
         slotted.length,
@@ -885,8 +949,8 @@ export function layout<S extends AnySchema>(
    * glyph-sized band the multiplications land under the content and the card
    * clips. Proportion is right until it crosses the floor.
    */
-  const TUCK_MIN_HEIGHT = 52;
-  const TUCK_MIN_WIDTH = 86;
+  const TUCK_MIN_HEIGHT = 52 * unit;
+  const TUCK_MIN_WIDTH = 86 * unit;
   /** Further back within the plane. 1 is the plane's own depth. */
   const recede = (depth: number, by: number) => Math.min(1, depth + (1 - depth) * by);
 
@@ -906,7 +970,7 @@ export function layout<S extends AnySchema>(
     const slotH = position.height ?? contextSize.height;
     const shrink = item.rank === "secondary" ? SECONDARY : 1;
     const width = slotW * shrink;
-    const height = Math.max(CARD_MIN_HEIGHT, slotH * shrink);
+    const height = Math.max(CARD_MIN_HEIGHT * unit, slotH * shrink);
     slotOf.set(item.id, {
       // Centred across the slot it was allotted, sitting on its baseline.
       x: position.x + (slotW - width) / 2,

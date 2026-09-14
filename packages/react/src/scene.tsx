@@ -142,6 +142,7 @@ export function Scene<S extends AnySchema>({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
+  const unit = useRootUnit();
 
   /*
    * PINCH IS ALTITUDE. The camera has one axis, so the universal zoom
@@ -230,6 +231,9 @@ export function Scene<S extends AnySchema>({
         left: Math.round(Math.min(264, (size?.width ?? 1200) * 0.22)),
         right: Math.round(Math.min(128, (size?.width ?? 1200) * 0.107)),
       },
+      // The reader's own text size, which the cards are sized in: the city
+      // grows with the words rather than holding them at a fixed 230×97.
+      unit,
       // Groups the framework's own list shows: from altitude those are
       // districts, not scaled cards. A group with an app's view keeps its card.
       plainGroups: (store.schema.kinds as readonly string[]).filter((kind) =>
@@ -249,7 +253,7 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size, store, views, hiddenKinds, judged],
+    [options, size, unit, store, views, hiddenKinds, judged],
   );
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, view, sized),
@@ -1332,6 +1336,46 @@ export function selectionFor(
   return alreadyIn
     ? current.filter((id) => !ids.includes(id))
     : [...current, ...ids.filter((id) => !current.includes(id))];
+}
+
+/**
+ * WHAT ONE `rem` IS WORTH RIGHT NOW — the reader's own text size, watched.
+ *
+ * The scene's cards hold text sized in `rem` and were laid out in pixels,
+ * so a reader who asked for bigger words got them inside a city that had
+ * not moved: a headline in a glyph. The layout takes this as its unit, so
+ * the picture grows with the words.
+ *
+ * Read from the root rather than from a setting's name, because the scene
+ * has no business knowing what an app called its text-size control — the
+ * root font size is where every such control lands, including the browser's
+ * own, which no app declares at all.
+ */
+function useRootUnit(): number {
+  const [unit, setUnit] = useState(16);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const root = document.documentElement;
+    const read = () => {
+      const now = parseFloat(getComputedStyle(root).fontSize);
+      if (Number.isFinite(now)) setUnit((held) => (Math.abs(held - now) < 0.5 ? held : now));
+    };
+    read();
+    /*
+     * The setting writes the root's own `style`, and a reader changing the
+     * browser's default changes the computed size without touching it — so
+     * both are watched: the attribute for the app's control, and a resize
+     * for the browser's.
+     */
+    const observer = new MutationObserver(read);
+    observer.observe(root, { attributes: true, attributeFilter: ["style"] });
+    window.addEventListener("resize", read);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", read);
+    };
+  }, []);
+  return unit;
 }
 
 /**

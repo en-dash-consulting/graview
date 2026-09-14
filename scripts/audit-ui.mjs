@@ -41,6 +41,21 @@ const openProfile = async (page) => {
 const APPS = {
   todo: { port: 5193, ready: "__todoReady", query: "&today=2026-09-01", states: {
     lists: async () => {},
+    /*
+     * AT THE READER'S LARGEST TEXT, which is 200% of the browser's own and
+     * the size WCAG 1.4.4 asks an interface to survive. Every count in this
+     * file ran at one text size only — so cards laid out in pixels around
+     * text sized in rem were never once measured against each other, and
+     * the city came apart at the setting its own profile pane offers.
+     */
+    largest: async (p) => {
+      await openProfile(p);
+      await p.click('[data-testid="setting-text-size-32px"]');
+      await p.waitForTimeout(500);
+      await p.keyboard.press("Escape");
+      await p.waitForTimeout(1200);
+    },
+
     week: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The week" }).click(); },
     selected: async (p) => { await p.click('[data-graview-pick="t-deposit"]'); },
     /*
@@ -215,6 +230,21 @@ const APPS = {
     },
   } },
   seedbed: { port: 5194, ready: "__seedbedReady", states: {
+    /*
+     * AT THE READER'S LARGEST TEXT, which is 200% of the browser's own and
+     * the size WCAG 1.4.4 asks an interface to survive. Every count in this
+     * file ran at one text size only — so cards laid out in pixels around
+     * text sized in rem were never once measured against each other, and
+     * the city came apart at the setting its own profile pane offers.
+     */
+    largest: async (p) => {
+      await openProfile(p);
+      await p.click('[data-testid="setting-text-size-32px"]');
+      await p.waitForTimeout(500);
+      await p.keyboard.press("Escape");
+      await p.waitForTimeout(1200);
+    },
+
     /*
      * A PHONE, and a Graview in a column of an article, are the same shape.
      * Every count in this file ran at 1560 only — so a rail 236 wide sitting

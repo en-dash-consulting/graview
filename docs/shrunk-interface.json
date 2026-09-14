@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-12T19:22:53.374Z",
+  "at": "2026-09-14T04:33:16.630Z",
   "engine": "canary-gpu",
   "flags": [
     "--enable-unsafe-webgpu",
@@ -45,7 +45,7 @@
         {
           "id": "t-book",
           "x": 684,
-          "y": 375,
+          "y": 376,
           "inside": true
         },
         {
@@ -69,7 +69,7 @@
         {
           "id": "t-meter",
           "x": 848,
-          "y": 375,
+          "y": 376,
           "inside": true
         },
         {
@@ -111,7 +111,7 @@
         {
           "id": "t-paint",
           "x": 1012,
-          "y": 375,
+          "y": 376,
           "inside": true
         },
         {
@@ -150,61 +150,61 @@
       "clipped": null,
       "picks": [
         {
+          "id": "t-boxes",
+          "x": 667,
+          "y": 489,
+          "inside": true
+        },
+        {
           "id": "t-quote",
-          "x": 663,
-          "y": 477,
+          "x": 729,
+          "y": 478,
           "inside": true
         },
         {
           "id": "t-deposit",
-          "x": 683,
-          "y": 423,
+          "x": 729,
+          "y": 424,
           "inside": true
         },
         {
           "id": "t-book",
-          "x": 749,
+          "x": 732,
           "y": 445,
-          "inside": true
-        },
-        {
-          "id": "t-boxes",
-          "x": 749,
-          "y": 488,
           "inside": true
         },
         {
           "id": "t-notice",
           "x": 795,
-          "y": 439,
+          "y": 440,
           "inside": true
         },
         {
           "id": "t-broadband",
           "x": 860,
-          "y": 475,
+          "y": 476,
           "inside": true
         },
         {
           "id": "t-meter",
-          "x": 881,
-          "y": 380,
+          "x": 860,
+          "y": 381,
           "inside": true
         },
         {
           "id": "t-post",
-          "x": 881,
-          "y": 401,
+          "x": 860,
+          "y": 402,
           "inside": true
         },
         {
           "id": "t-keys",
-          "x": 947,
-          "y": 682,
+          "x": 926,
+          "y": 683,
           "inside": true
         }
       ],
-      "clickedInside": "t-quote",
+      "clickedInside": "t-boxes",
       "stillLive": true,
       "stayedInGraview": true
     },
@@ -247,7 +247,7 @@
         {
           "id": "t-book",
           "x": 684,
-          "y": 375,
+          "y": 376,
           "inside": true
         },
         {
@@ -271,7 +271,7 @@
         {
           "id": "t-meter",
           "x": 848,
-          "y": 375,
+          "y": 376,
           "inside": true
         },
         {
@@ -313,7 +313,7 @@
         {
           "id": "t-paint",
           "x": 1012,
-          "y": 375,
+          "y": 376,
           "inside": true
         },
         {
@@ -352,61 +352,61 @@
       "clipped": null,
       "picks": [
         {
+          "id": "t-boxes",
+          "x": 667,
+          "y": 489,
+          "inside": true
+        },
+        {
           "id": "t-quote",
-          "x": 663,
-          "y": 477,
+          "x": 729,
+          "y": 478,
           "inside": true
         },
         {
           "id": "t-deposit",
-          "x": 683,
-          "y": 423,
+          "x": 729,
+          "y": 424,
           "inside": true
         },
         {
           "id": "t-book",
-          "x": 749,
+          "x": 732,
           "y": 445,
-          "inside": true
-        },
-        {
-          "id": "t-boxes",
-          "x": 749,
-          "y": 488,
           "inside": true
         },
         {
           "id": "t-notice",
           "x": 795,
-          "y": 439,
+          "y": 440,
           "inside": true
         },
         {
           "id": "t-broadband",
           "x": 860,
-          "y": 475,
+          "y": 476,
           "inside": true
         },
         {
           "id": "t-meter",
-          "x": 881,
-          "y": 380,
+          "x": 860,
+          "y": 381,
           "inside": true
         },
         {
           "id": "t-post",
-          "x": 881,
-          "y": 401,
+          "x": 860,
+          "y": 402,
           "inside": true
         },
         {
           "id": "t-keys",
-          "x": 947,
-          "y": 682,
+          "x": 926,
+          "y": 683,
           "inside": true
         }
       ],
-      "clickedInside": "t-quote",
+      "clickedInside": "t-boxes",
       "stillLive": true,
       "stayedInGraview": true
     }

@@ -551,6 +551,71 @@ describe("a focused group, from altitude", () => {
   });
 });
 
+/**
+ * THE CITY GROWS WITH THE READER, UNTIL THE RING IS FULL.
+ *
+ * A district card holds a name and a count, both sized in `rem`, and the
+ * card was sized in pixels off the stage — so a reader on Largest doubled
+ * every name in the city inside cards that had not moved at all. The cards
+ * take the reader's unit now, and give ground back rather than standing in
+ * each other when there is no more room.
+ */
+describe("a card is the size of the words in it", () => {
+  const cards = (unit?: number) =>
+    layout(graph(), schema, view({ overview: true }), {
+      width: 1600,
+      height: 900,
+      ...(unit === undefined ? {} : { unit }),
+    }).nodes.filter((node) => node.aggregate);
+
+  it("lays out exactly as it always did when nothing says otherwise", () => {
+    const said = cards(16).map((node) => [node.id, Math.round(node.width), Math.round(node.height)]);
+    const silent = cards().map((node) => [node.id, Math.round(node.width), Math.round(node.height)]);
+    expect(silent).toEqual(said);
+  });
+
+  it("grows the cards when the reader asks for bigger words", () => {
+    const before = cards(16);
+    const after = cards(32);
+    expect(after).toHaveLength(before.length);
+    for (const [index, card] of after.entries()) {
+      expect(card.width, card.id).toBeGreaterThan(before[index]!.width);
+      expect(card.height, card.id).toBeGreaterThan(before[index]!.height);
+    }
+  });
+
+  it("keeps the ring a ring: no district ever stands in another", () => {
+    for (const unit of [16, 20, 32, 64]) {
+      const placed = cards(unit);
+      for (const [index, one] of placed.entries()) {
+        for (const other of placed.slice(index + 1)) {
+          const apart =
+            one.x + one.width <= other.x ||
+            other.x + other.width <= one.x ||
+            one.y + one.height <= other.y ||
+            other.y + other.height <= one.y;
+          expect(apart, `${unit}: ${one.id} and ${other.id}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("gives ground back rather than growing past the room it has", () => {
+    /*
+     * Sixty-four pixels to the rem is four times the browser's own — far
+     * more than the ring can honour with this many districts — so the cards
+     * take what is left and stop. Bigger than they were, and never so big
+     * that the picture stops being a picture.
+     */
+    const asked = cards(64);
+    const base = cards(16);
+    for (const [index, card] of asked.entries()) {
+      expect(card.width).toBeGreaterThanOrEqual(base[index]!.width);
+      expect(card.width).toBeLessThan(base[index]!.width * 4);
+    }
+  });
+});
+
 describe("the overview is the same cards, on a ring", () => {
   it("keeps your interface, live and shrunk, in the middle of the ring", () => {
     /*

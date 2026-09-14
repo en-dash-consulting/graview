@@ -1,7 +1,29 @@
 {
-  "at": "2026-09-14T03:59:10.968Z",
+  "at": "2026-09-14T04:32:26.611Z",
   "engine": "chromium",
   "screens": [
+    {
+      "app": "seedbed",
+      "state": "largest",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 17,
+      "inspector": null,
+      "led": null,
+      "figures": []
+    },
     {
       "app": "seedbed",
       "state": "narrow",

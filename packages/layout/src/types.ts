@@ -172,6 +172,23 @@ export interface LayoutOptions {
   readonly relationSize?: { width: number; height: number };
   readonly contextSize?: { width: number; height: number };
   readonly gap?: number;
+  /**
+   * WHAT ONE `rem` IS WORTH, IN PIXELS — the reader's own text size.
+   *
+   * The cards in this layout hold text, and that text is sized in `rem` so
+   * a reader who asks for bigger words gets them everywhere. The cards were
+   * sized in pixels off the stage, so they did not hear about it: at 200%
+   * every name in the city doubled inside a district card that stayed
+   * exactly 230×97, and the picture came apart — a headline in a glyph.
+   *
+   * Sizing them in this unit instead makes the city grow WITH the reader.
+   * It grows until the ring is full and then stops, because a card is only
+   * worth making bigger while it still has somewhere to stand.
+   *
+   * 16 is the browser's own default and therefore the no-op: every existing
+   * caller lays out exactly as it did.
+   */
+  readonly unit?: number;
   /** Plural labels by kind, from the schema. */
   readonly plurals?: Readonly<Record<string, string>>;
   /**
@@ -237,4 +254,5 @@ export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" |
    */
   contextSize: { width: 300, height: 96 },
   gap: 16,
+  unit: 16,
 };
