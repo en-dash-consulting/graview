@@ -84,6 +84,19 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
     const question =
       /\?\s*$/.test(text) ||
       /^\s*(what|who|whom|whose|which|when|where|why|how|is|are|was|were|does|do|did|can|could|should|would|will|has|have)\b/.test(asked);
+    /*
+     * A SENTENCE THAT OPENS WITH AN INSTRUCTION IS NOT A QUESTION.
+     *
+     * The branches below answer questions about the declaration, and they
+     * recognised them by the words they contained rather than by what the
+     * sentence was doing. "Add a Meal kind, with the name of the food and
+     * how many people it feeds" contains "kind" and "how many", so it was
+     * answered with an inventory of the kinds — and answered as a FACT,
+     * which takes the turn away from the model entirely. The one sentence
+     * most needing a model's help was the one guaranteed not to reach it.
+     */
+    const imperative =
+      /^\s*(add|give|put|attach|link|connect|tie|relate|make|create|draw|declare|rename|remove|delete|set|call)\b/.test(asked);
     /**
      * A FACT the declaration holds: what kinds there are, what an act
      * writes, who may take it. No model may replace one of these.
@@ -103,6 +116,12 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
       say,
       proposals: validateProposals(store as Store<StudioSchema>, proposals),
     });
+    /**
+     * A sentence this rung could not read. Honest, and a dead end on its
+     * own — so it is marked, and a surface with no model chosen can offer
+     * the one that reads any phrasing.
+     */
+    const unsure = (say: string): ChatReply => ({ say, proposals: [], unsure: true });
 
     const all = (kind: string): Node[] => [...store.graph.allNodes()].filter((node) => node.kind === kind) as Node[];
     const label = (node: Node | undefined): string => String(node?.["label"] ?? node?.id ?? "");
@@ -159,7 +178,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
      * from nowhere a person sits. This is where a person sits.
      */
     const aboutFigures = /\b(figure|figures|drawing|drawn|draw|icon|picture)\b/.test(asked);
-    if (aboutFigures && /\b(no|without|missing|which|what|any|lack|lacks|lacking)\b/.test(asked) && !/\bfor\b/.test(asked)) {
+    if (aboutFigures && !imperative && /\b(no|without|missing|which|what|any|lack|lacks|lacking)\b/.test(asked) && !/\bfor\b/.test(asked)) {
       const kinds = all("kind");
       const undrawn = kinds.filter((kind) => typeof kind["figure"] !== "string" || kind["figure"] === "");
       return grounded(
@@ -171,7 +190,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
     if (aboutFigures) {
       const kind = named("kind");
       if (!kind) {
-        return reading(
+        return unsure(
           `Say which kind to draw — ${list(all("kind").map((one) => label(one)))} — and I will draw it in the house style.`,
         );
       }
@@ -194,7 +213,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
     }
 
     // ----------------------------------------------------- who may what
-    if (/\bwho\b/.test(asked) && /\b(may|can|allowed|permitted|able)\b/.test(asked)) {
+    if (!imperative && /\bwho\b/.test(asked) && /\b(may|can|allowed|permitted|able)\b/.test(asked)) {
       const act = named("act");
       const grants = all("grant").filter((g) => (act ? out(g.id, "may").some((one) => one.id === act.id) || g["allActs"] === true : true));
       if (grants.length === 0) {
@@ -215,7 +234,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
 
     // ------------------------------------------- what an act does, exactly
     const act = named("act");
-    if (act && /\b(write|writes|do|does|change|changes|act|touch)\b/.test(asked)) {
+    if (act && !imperative && /\b(write|writes|do|does|change|changes|act|touch)\b/.test(asked)) {
       const writes = Array.isArray(act["writes"]) ? (act["writes"] as unknown[]).map(String) : [];
       const parts = [
         writes.length > 0 ? `writes ${list(writes)}` : null,
@@ -232,7 +251,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
 
     // --------------------------------------------- what a rule judges
     const rule = named("rule");
-    if (rule && /\b(judge|judges|rule|hold|holds|check|checks|mean|means)\b/.test(asked)) {
+    if (rule && !imperative && /\b(judge|judges|rule|hold|holds|check|checks|mean|means)\b/.test(asked)) {
       const over = out(rule.id, "over").map((one) => label(one));
       const repairs = out(rule.id, "repairs").map((one) => String(one["title"] ?? label(one)));
       return grounded(
@@ -241,7 +260,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
     }
 
     // ------------------------------------------------------ what is here
-    if (/\b(kind|kinds|shape|declare|declares|declared|model|models|track)\b/.test(asked) && /\b(what|which|list|show|how many|any)\b/.test(asked)) {
+    if (!imperative && /\b(kind|kinds|shape|declare|declares|declared|model|models|track)\b/.test(asked) && /\b(what|which|list|show|how many|any)\b/.test(asked)) {
       const kinds = all("kind");
       const lines = kinds.map((kind) => {
         const fields = into(kind.id, "of").length;
@@ -282,7 +301,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
           new RegExp(`\\b([A-Za-z][\\w-]*)\\s+${what}s?\\b`, "i").exec(text)?.[1];
         const called = given?.trim().replace(/^(a|an|the|new)\s+/i, "").trim();
         if (!called || /^(new|a|an|the)$/i.test(called)) {
-          return reading(
+          return unsure(
             `What should the ${what} be called? Say it in quotes, or "add a ${what} called …", and I will propose it.`,
           );
         }
@@ -344,7 +363,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
         );
       }
       if (joined || owning) {
-        return reading(
+        return unsure(
           `Say both kinds by name and I will propose the tie — there ${all("kind").length === 1 ? "is" : "are"} ${list(all("kind").map((one) => label(one)))}.`,
         );
       }
@@ -380,7 +399,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
          * Guessing a subject from a description of something else is worse
          * than asking.
          */
-        return reading(
+        return unsure(
           `There is no kind called "${clause(between[2]).trim()}". There ${all("kind").length === 1 ? "is" : "are"} ${list(all("kind").map((one) => label(one)))} — or ask me to add it first.`,
         );
       }
@@ -427,6 +446,17 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
     }
 
     // ------------------------------------ everything else the graph can say
-    return floor(store, text, context);
+    /*
+     * AND WHEN NOTHING HERE COULD READ IT, that is worth saying rather than
+     * answering a different question. The graph responder's last resort is
+     * a description of the shape — true, and not what was asked — so an
+     * answer with nothing under it from a sentence that was plainly asking
+     * for a CHANGE is marked as unread, and a surface with no model chosen
+     * can offer the rung that reads any phrasing.
+     */
+    const fallback = await floor(store, text, context);
+    return fallback.grounded || fallback.proposals.length > 0 || question
+      ? fallback
+      : { ...fallback, unsure: true };
   };
 }

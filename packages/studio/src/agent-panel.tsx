@@ -63,6 +63,11 @@ interface Turn {
   readonly role: "person" | "seat";
   readonly text: string;
   readonly offers?: readonly Offer[];
+  /**
+   * The rung that answered could not read the sentence — and no model is
+   * chosen. The way out is one press, so the turn carries it.
+   */
+  readonly offerModel?: boolean;
 }
 
 export function StudioAgentPanel({
@@ -137,7 +142,22 @@ export function StudioAgentPanel({
       const args = { ...resolved.args };
       return { proposal: resolved, args, verdict: judge(args, resolved), said: describeProposal(studio.store as never, resolved), state: "open" };
     });
-    setTurns((current) => [...current, { role: "seat", text: reply.say, offers }]);
+    setTurns((current) => [
+      ...current,
+      {
+        role: "seat",
+        text: reply.say,
+        offers,
+        /*
+         * "I could not read that" is honest and, on its own, a dead end:
+         * the person is left guessing which phrasing the pattern-matcher
+         * wants, when the rung that reads any phrasing is one press away
+         * behind the gear. Only when none is chosen — a surface that
+         * already has a model has nothing to offer.
+         */
+        ...(reply.unsure && config.source === "graph" ? { offerModel: true } : {}),
+      },
+    ]);
     setBusy(false);
   };
 
@@ -381,6 +401,17 @@ export function StudioAgentPanel({
                   >
                     {turn.text}
                   </p>
+                  {turn.offerModel ? (
+                    <button
+                      type="button"
+                      data-testid={`${testId}-offer-model`}
+                      onClick={() => setSettings(true)}
+                      title="A model reads a sentence however it is phrased, and proposes the acts it describes"
+                      style={{ fontSize: "0.75rem", justifySelf: "start" }}
+                    >
+                      Let a model read it →
+                    </button>
+                  ) : null}
                   {(turn.offers ?? []).map((offer, offerAt) => (
                     <Offered
                       key={offerAt}
@@ -492,6 +523,22 @@ function Offered<S extends AnySchema>({
         .filter((field) => !field.optional && (offer.args[field.name] === undefined || offer.args[field.name] === ""))
         .map((field) => humaniseField(field.name).toLowerCase())
     : [];
+  /*
+   * AND AN ARGUMENT THAT NAMES SOMETHING NOT THERE YET SAYS THAT.
+   *
+   * A sentence split into several acts usually splits into acts that wait
+   * on each other: the field cannot be added until the kind exists. The
+   * store's own refusal for that is `Edge "of" references missing node`,
+   * which is true, internal, and no use at all to somebody looking at a
+   * form with an empty picker in it.
+   */
+  const awaiting = refused
+    ? fields
+        .filter((field) => field.control === "node")
+        .map((field) => ({ field, value: offer.args[field.name] }))
+        .filter(({ value }) => typeof value === "string" && value.length > 0 && !store.graph.getNode(value))
+        .map(({ field, value }) => `${humaniseField(field.name).toLowerCase()} "${String(value)}"`)
+    : [];
 
   return (
     <span
@@ -525,9 +572,11 @@ function Offered<S extends AnySchema>({
 
       <span data-testid={`${testId}-check`} data-errors={offer.verdict.ok ? offer.verdict.errors : -1} data-warnings={offer.verdict.ok ? offer.verdict.warnings : -1} style={faint}>
         {refused
-          ? wanted.length > 0
-            ? `It still needs ${wanted.join(" and ")}.`
-            : `The store will not take it: ${offer.verdict.reason}`
+          ? awaiting.length > 0
+            ? `Waiting on ${awaiting.join(" and ")} — keep the one that makes it first, or choose something that is already here.`
+            : wanted.length > 0
+              ? `It still needs ${wanted.join(" and ")}.`
+              : `The store will not take it: ${offer.verdict.reason}`
           : breaks
             ? `That would fail the build: ${offer.verdict.findings.find((finding) => finding.severity === "error")?.message ?? `${offer.verdict.errors} errors`}`
             : offer.verdict.findings.length === 0

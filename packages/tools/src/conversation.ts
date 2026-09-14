@@ -48,6 +48,18 @@ export interface ChatReply {
    * a model may improve on and must never be quietly worse than.
    */
   readonly grounded?: boolean;
+  /**
+   * The answer is "I could not read that", rather than an answer.
+   *
+   * The keyless rung reads a handful of sentence shapes, and says so when a
+   * sentence is not one of them. That is honest, and on its own it is a dead
+   * end: the person is left to guess which phrasing the pattern-matcher
+   * wants, when the thing that reads any phrasing is one press away behind
+   * the gear. A surface that knows no model is chosen can offer to choose
+   * one — and a surface where one already is has nothing to offer, so this
+   * is a fact about the ANSWER, not an instruction to the interface.
+   */
+  readonly unsure?: boolean;
 }
 
 export interface ChatContext {

@@ -17,6 +17,7 @@
  *
  *   node scripts/verify-studio.mjs [--engine=chromium|webkit|firefox]
  */
+import { createServer } from "node:http";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -353,6 +354,157 @@ try {
     goneAgain: !afterUndo.includes("wanted-by"),
     ok: !afterUndo.includes("wanted-by") && afterUndo.includes('defineNode("task"'),
   };
+
+  /* -------------- what the keyless rung cannot read, it offers a way out of */
+  await asked("sort the tasks out a bit, they are a mess");
+  const stuck = await page.evaluate(() => ({
+    said: [...document.querySelectorAll('[data-testid="studio-agent-panel"] li p')].at(-1)?.textContent?.trim().slice(0, 80) ?? null,
+    offered: document.querySelector('[data-testid="studio-agent-offer-model"]') !== null,
+  }));
+  await page.click('[data-testid="studio-agent-offer-model"]');
+  await page.waitForTimeout(400);
+  const gear = await page.evaluate(() => document.querySelector('[data-testid="chat-settings-form"], [data-testid="studio-agent-panel"] form input[type="radio"]') !== null);
+  report.checks.whatTheKeylessRungCannotReadItOffersAWayOutOf = {
+    ...stuck,
+    opensThePicker: gear,
+    ok: stuck.offered === true && gear === true,
+  };
+  await page.click('[data-testid="studio-agent-settings"]');
+  await page.waitForTimeout(300);
+
+  /* ------------------- a model on the ladder, driven against a real provider */
+  /*
+   * THE MODEL PATH, END TO END, WITHOUT A MODEL.
+   *
+   * The on-device rung needs WebGPU, which a harness machine may not have —
+   * but "we cannot run Gemini Nano here" is no reason to leave the whole
+   * model path untested, and it was: every test of it stubbed the responder
+   * itself, so nothing had ever checked that a provider's answer reaches
+   * the panel, that several proposals become several forms, or that one
+   * waiting on another comes alive when it is kept.
+   *
+   * So the provider is a real OpenAI-compatible endpoint on localhost that
+   * answers what we tell it to. Everything between the person and it is the
+   * shipping path: the config, the adapter, the prompt, the gate, the forms.
+   */
+  const prompts = [];
+  let answer = "{}";
+  const provider = createServer((request, response) => {
+    let body = "";
+    request.on("data", (chunk) => (body += chunk));
+    request.on("end", () => {
+      /* A key in the headers makes this a cross-origin request the browser
+         asks permission for first, so the preflight has to be answered. */
+      const cors = {
+        "access-control-allow-origin": "*",
+        "access-control-allow-headers": "*",
+        "access-control-allow-methods": "POST, OPTIONS",
+      };
+      if (request.method === "OPTIONS") {
+        response.writeHead(204, cors);
+        response.end();
+        return;
+      }
+      try {
+        prompts.push(JSON.parse(body).messages[0].content);
+      } catch {
+        prompts.push(body.slice(0, 200));
+      }
+      response.writeHead(200, { "content-type": "application/json", ...cors });
+      response.end(JSON.stringify({ choices: [{ message: { content: answer } }] }));
+    });
+  });
+  await new Promise((ready) => provider.listen(5399, ready));
+
+  try {
+    /*
+     * One loose sentence, three acts, and two of them wait for the first —
+     * which is what a person actually types and what a pattern-matcher can
+     * never split. The model names the kind the way a person does.
+     */
+    answer = JSON.stringify({
+      say: "Three changes.",
+      proposals: [
+        { mutation: "add-kind", args: { label: "Meal" }, why: "you asked for a Meal" },
+        { mutation: "add-field", args: { kind: "Meal", label: "name", type: "string", required: false }, why: "the name of the food" },
+        { mutation: "add-field", args: { kind: "Meal", label: "serves", type: "number", required: false }, why: "how many it feeds" },
+      ],
+    });
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        "graview:intelligence",
+        JSON.stringify({ source: "remote", remote: { preset: "custom", baseUrl: "http://localhost:5399/v1", apiKey: "harness", model: "stub" } }),
+      );
+    });
+    await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1&as=user-nora", { waitUntil: "load" });
+    await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+    await page.waitForTimeout(900);
+    await profile();
+    await page.click('[data-testid="studio-place"]');
+    await page.waitForSelector('[data-testid="studio"]', { timeout: 20_000 });
+    await page.waitForTimeout(900);
+    await page.click('[data-testid="studio-agent"]');
+    await page.waitForSelector('[data-testid="studio-agent-panel"]', { timeout: 10_000 });
+    await page.fill('[data-testid="studio-agent-draft"]', "add a Meal kind, with the name of the food and how many people it feeds");
+    await page.click('[data-testid="studio-agent-send"]');
+    await page.waitForTimeout(1500);
+
+    const spoken = await page.evaluate(() => {
+      const offers = [...document.querySelectorAll('[data-testid="studio-agent-offer"]')];
+      return {
+        acts: offers.map((offer) => offer.getAttribute("data-mutation")),
+        keepable: offers.map((offer) => offer.querySelector('[data-testid="studio-agent-keep"]')?.disabled === false),
+        checks: offers.map((offer) => offer.querySelector('[data-testid="studio-agent-check"]')?.textContent?.trim().slice(0, 60)),
+      };
+    });
+    report.checks.aModelsAnswerBecomesSeveralFormsYouCanCorrect = {
+      ...spoken,
+      /* The prompt carried what is in the graph, so a model can name it. */
+      /* The studio's own graph is the DECLARATION, so its names are the
+         app's kinds — which is exactly what a model needs to name one. */
+      promptNamedTheGraph: prompts.some((prompt) => prompt.includes("task") && prompt.includes("What is in the graph now")),
+      promptOfferedTheReading: prompts.some((prompt) => prompt.includes("split it into several")),
+      ok:
+        spoken.acts.join(",") === "add-kind,add-field,add-field" &&
+        /* The kind can be kept; the two fields on it cannot, yet. */
+        spoken.keepable[0] === true &&
+        spoken.keepable[1] === false &&
+        spoken.checks[1]?.startsWith("Waiting on") === true &&
+        prompts.length > 0 &&
+        prompts.some((prompt) => prompt.includes("What is in the graph now")) &&
+        prompts.some((prompt) => prompt.includes("split it into several")),
+    };
+
+    /* ---- and the ones that were waiting come alive when the first is kept */
+    await page.locator('[data-testid="studio-agent-keep"]').first().click();
+    await page.waitForTimeout(900);
+    const afterFirst = await page.evaluate(() => {
+      const offers = [...document.querySelectorAll('[data-testid="studio-agent-offer"]')];
+      return {
+        open: offers.length,
+        keepable: offers.map((offer) => offer.querySelector('[data-testid="studio-agent-keep"]')?.disabled === false),
+        kinds: offers.map((offer) => offer.querySelector('[data-testid="studio-agent-arg-kind"]')?.value ?? null),
+      };
+    });
+    await page.locator('[data-testid="studio-agent-keep"]').first().click();
+    await page.waitForTimeout(600);
+    await page.locator('[data-testid="studio-agent-keep"]').first().click();
+    await page.waitForTimeout(900);
+    const written = await writtenSchemaNow(page);
+    report.checks.aProposalWaitingOnAnotherComesAliveWhenItIsKept = {
+      ...afterFirst,
+      inTheSchema: written.includes('defineNode("meal"'),
+      bothFields: written.includes("name:") && written.includes("serves:"),
+      ok:
+        /* The name the model used resolved the moment the kind existed. */
+        afterFirst.kinds.every((kind) => kind === "declared:meal") &&
+        afterFirst.keepable.every(Boolean) &&
+        written.includes('defineNode("meal"') &&
+        written.includes("serves:"),
+    };
+  } finally {
+    provider.close();
+  }
 
   /* ------------------------------------ and closing puts you back in the app */
   await page.click('[data-testid="studio-close"]');

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-14T02:28:30.041Z",
+  "at": "2026-09-14T02:36:55.130Z",
   "engine": "chromium",
   "checks": {
     "theDoorBelongsToWhoeverKeepsTheApp": {
@@ -107,6 +107,46 @@
         "you Add the field urgency to taskfield:task.urgencytask"
       ],
       "goneAgain": true,
+      "ok": true
+    },
+    "whatTheKeylessRungCannotReadItOffersAWayOutOf": {
+      "said": "This graph holds 6 kinds, 22 fields, 4 edges, 17 acts, 3 rules, 2 roles, 3 grant",
+      "offered": true,
+      "opensThePicker": true,
+      "ok": true
+    },
+    "aModelsAnswerBecomesSeveralFormsYouCanCorrect": {
+      "acts": [
+        "add-kind",
+        "add-field",
+        "add-field"
+      ],
+      "keepable": [
+        true,
+        false,
+        false
+      ],
+      "checks": [
+        "It would add a warning: \"label\" is set when a meal is made a",
+        "Waiting on kind \"Meal\" — keep the one that makes it first, o",
+        "Waiting on kind \"Meal\" — keep the one that makes it first, o"
+      ],
+      "promptNamedTheGraph": true,
+      "promptOfferedTheReading": true,
+      "ok": true
+    },
+    "aProposalWaitingOnAnotherComesAliveWhenItIsKept": {
+      "open": 2,
+      "keepable": [
+        true,
+        true
+      ],
+      "kinds": [
+        "declared:meal",
+        "declared:meal"
+      ],
+      "inTheSchema": true,
+      "bothFields": true,
       "ok": true
     },
     "closingPutsYouBackWhereYouWere": {

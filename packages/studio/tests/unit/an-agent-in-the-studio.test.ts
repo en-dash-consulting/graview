@@ -291,6 +291,35 @@ describe("keeping is an ordinary op under the agent's name", () => {
  * model to split a sentence, without re-judging what it split it into,
  * would have produced a pile of dead proposals under a live one.
  */
+/**
+ * WHAT THE KEYLESS RUNG CANNOT READ, IT SAYS — AND OFFERS THE WAY OUT.
+ *
+ * The graph-native rung reads a handful of sentence shapes. Saying "I could
+ * not read that" is honest and, on its own, a dead end: a person is left
+ * guessing which phrasing a pattern-matcher wants, when the rung that reads
+ * any phrasing is one press away behind the gear.
+ */
+describe("a sentence this rung cannot read", () => {
+  it("marks itself unsure, so a surface can offer the model", async () => {
+    const { reply } = await ask("sort the shifts out a bit, they are a mess");
+    expect(reply.unsure).toBe(true);
+    expect(reply.proposals).toEqual([]);
+  });
+
+  it("is never unsure about something it answered", async () => {
+    expect((await ask("what kinds are there?")).reply.unsure).toBeUndefined();
+    expect((await ask("add a due date to shifts")).reply.unsure).toBeUndefined();
+    expect((await ask("Attach volunteers to shifts")).reply.unsure).toBeUndefined();
+  });
+
+  it("is unsure when it knows the shape but not the thing", async () => {
+    // It understood "add a field to X" and X is not a kind: a model may do
+    // better with the same words, so this is not a dead end either.
+    expect((await ask("Add details to Meal. The name of the food")).reply.unsure).toBe(true);
+    expect((await ask("add a new role")).reply.unsure).toBe(true);
+  });
+});
+
 describe("proposals that wait for each other", () => {
   const field = (kind: string) => ({ name: "add-field", args: { kind, label: "serves", type: "number", required: false } });
 
