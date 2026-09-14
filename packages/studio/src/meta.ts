@@ -15,6 +15,16 @@ import { z } from "zod";
 
 const label = z.string().min(1);
 
+/**
+ * The id namespace for a kind the app declares.
+ *
+ * Deliberately NOT `kind:`, which `@graview/layout` mints its district card
+ * ids in (`KIND_PREFIX`). A node and a card sharing an id is a node the
+ * scene cannot place, an edge drawn to the wrong district, and a `#sel=`
+ * that names two different things.
+ */
+export const DECLARED_KIND = "declared:";
+
 export const FIELD_TYPES = ["string", "text", "number", "boolean", "date", "enum", "list"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
@@ -243,7 +253,7 @@ export const addKind = act("add-kind", {
   apply(ctx, args) {
     const name = slug(args.label);
     ctx.addNode({
-      id: `kind:${name}`,
+      id: `${DECLARED_KIND}${name}`,
       kind: "kind",
       label: name,
       ...(args.plural ? { plural: args.plural } : {}),
@@ -251,7 +261,7 @@ export const addKind = act("add-kind", {
     });
     // Every kind has a name to be called by: the field the views read first.
     ctx.addNode({ id: `field:${name}.label`, kind: "field", label: "label", type: "string", required: true });
-    ctx.addEdge({ kind: "of", from: `field:${name}.label`, to: `kind:${name}` });
+    ctx.addEdge({ kind: "of", from: `field:${name}.label`, to: `${DECLARED_KIND}${name}` });
   },
 });
 

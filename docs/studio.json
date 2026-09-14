@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-14T01:09:25.279Z",
+  "at": "2026-09-14T01:19:38.521Z",
   "engine": "chromium",
   "checks": {
     "theDoorBelongsToWhoeverKeepsTheApp": {
@@ -61,8 +61,8 @@
         "disabled": true
       },
       "turns": [
-        "you Undo: Add the field urgency to taskundofield:task.urgencytasks",
-        "you Add the field urgency to taskfield:task.urgencytasks"
+        "you Undo: Add the field urgency to taskundofield:task.urgencytask",
+        "you Add the field urgency to taskfield:task.urgencytask"
       ],
       "ok": true
     },
@@ -91,9 +91,9 @@
     },
     "whatTheAgentProposesIsUndone": {
       "trail": [
-        "studio-agent you asked for \"due date\" on taskundodue-datetasks",
-        "you Undo: Add the field urgency to taskundo +1field:task.urgencytasks",
-        "you Add the field urgency to taskfield:task.urgencytasks"
+        "studio-agent you asked for \"due date\" on taskundodue-datetask",
+        "you Undo: Add the field urgency to taskundo +1field:task.urgencytask",
+        "you Add the field urgency to taskfield:task.urgencytask"
       ],
       "goneAgain": true,
       "ok": true

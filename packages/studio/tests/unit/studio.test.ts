@@ -1,4 +1,5 @@
 import { checkApp, createSchema, DARK, defineApp, defineInvariant, defineMutation, defineNode, LIGHT, nodeRef, Store, type GraphSnapshot, type Principal, type Violation } from "@graview/core";
+import { EMPTY_VIEW, KIND_PREFIX, kindCardId, layout } from "@graview/layout";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStudio, declarationFiles, declarationToGraph, graphToDeclaration, migrationBetween, studioApp } from "../../src/index.js";
@@ -106,25 +107,25 @@ describe("the declaration is a graph", () => {
   it("reads every kind, field, edge, act, rule, role, grant, lens and brand in as a node with a stable id", () => {
     const graph = declarationToGraph(garden);
     const ids = graph.nodes.map((node) => node.id);
-    expect(ids).toEqual(expect.arrayContaining(["kind:gardener", "kind:plot", "field:plot.label", "field:plot.size", "field:plot.status", "edge:plot.tended-by", "act:tend", "act:untend", "act:add-plot", "rule:every-plot-tended", "role:coordinator", "role:gardener", "grant:1", "grant:2", "lens:coverage", "brand"]));
+    expect(ids).toEqual(expect.arrayContaining(["declared:gardener", "declared:plot", "field:plot.label", "field:plot.size", "field:plot.status", "edge:plot.tended-by", "act:tend", "act:untend", "act:add-plot", "rule:every-plot-tended", "role:coordinator", "role:gardener", "grant:1", "grant:2", "lens:coverage", "brand"]));
     expect(graph.nodes.find((node) => node.id === "field:plot.status")).toMatchObject({ type: "enum", required: true, options: ["open", "retired"] });
     expect(graph.nodes.find((node) => node.id === "act:tend")).toMatchObject({ fromTheOtherEnd: "Take on a plot", targetArg: "gardener" });
     expect(graph.nodes.find((node) => node.id === "field:gardener.phone")).toMatchObject({ type: "string", required: false });
-    expect(graph.nodes.find((node) => node.id === "kind:plot")).toMatchObject({ lifecycleField: "status", retired: ["retired"] });
+    expect(graph.nodes.find((node) => node.id === "declared:plot")).toMatchObject({ lifecycleField: "status", retired: ["retired"] });
     expect(graph.edges).toEqual(
       expect.arrayContaining([
-        { kind: "of", from: "field:plot.size", to: "kind:plot" },
-        { kind: "from-kind", from: "edge:plot.tended-by", to: "kind:plot" },
-        { kind: "to-kind", from: "edge:plot.tended-by", to: "kind:gardener" },
-        { kind: "on", from: "act:tend", to: "kind:plot" },
+        { kind: "of", from: "field:plot.size", to: "declared:plot" },
+        { kind: "from-kind", from: "edge:plot.tended-by", to: "declared:plot" },
+        { kind: "to-kind", from: "edge:plot.tended-by", to: "declared:gardener" },
+        { kind: "on", from: "act:tend", to: "declared:plot" },
         { kind: "connects", from: "act:tend", to: "edge:plot.tended-by" },
         { kind: "severs", from: "act:untend", to: "edge:plot.tended-by" },
-        { kind: "creates", from: "act:add-plot", to: "kind:plot" },
-        { kind: "over", from: "rule:every-plot-tended", to: "kind:plot" },
+        { kind: "creates", from: "act:add-plot", to: "declared:plot" },
+        { kind: "over", from: "rule:every-plot-tended", to: "declared:plot" },
         { kind: "repairs", from: "rule:every-plot-tended", to: "act:tend" },
         { kind: "lets", from: "grant:2", to: "role:gardener" },
         { kind: "may", from: "grant:2", to: "act:tend" },
-        { kind: "over", from: "grant:2", to: "kind:plot" },
+        { kind: "over", from: "grant:2", to: "declared:plot" },
       ]),
     );
     expect(graph.nodes.find((node) => node.id === "grant:1")).toMatchObject({ allActs: true, everyone: false, allKinds: true });
@@ -152,6 +153,53 @@ describe("the declaration is a graph", () => {
     expect(back.lenses?.[0]?.requiredRoles).toEqual(["rows", "columns", "link"]);
     const written = declarationFiles(graph, { base: garden, name: garden.name }).find((file) => file.path.endsWith("policy.ts"));
     expect(written?.contents).toContain('roles: ["coordinator", "gardener"]');
+  });
+
+  it("mints its ids outside the layout's own namespace, so a kind is never its own district", () => {
+    /*
+     * `kind:` belongs to the LAYOUT: it is where a district card's id comes
+     * from. The studio minted `kind:rule` for an app's own kind called
+     * "rule", which is the same string as the RULES district's card — and
+     * every app in this repository declares a kind called "rule".
+     *
+     * So the edge from a rule to the kind it judges resolved to the district
+     * it started from, and the scene drew it as a loop: a dotted circle
+     * labelled OVER, saying a rule judges a rule.
+     */
+    const ruleKind = defineNode("rule", {
+      fields: z.object({ label: z.string().min(1), spec: z.object({ type: z.literal("all-tended") }) }),
+      plural: "Rules",
+      label: (node) => node.label,
+      requiresInvariant: (node) => node.spec.type,
+    });
+    const judged = defineInvariant<ReturnType<typeof createSchema>, "rule">("all-tended", {
+      scope: { kind: "rule" },
+      label: "Everything is tended",
+      repairs: [],
+      evaluate: () => [],
+    } as never);
+    const rulesAsNodes = defineApp({
+      name: "Rules as nodes",
+      schema: createSchema([gardener, ruleKind]) as never,
+      mutations: [],
+      invariants: [judged as never],
+    });
+
+    const graph = declarationToGraph(rulesAsNodes as never);
+    const ids = graph.nodes.map((node) => node.id);
+    expect(ids).toContain("declared:rule");
+    expect(ids.some((id) => id.startsWith(KIND_PREFIX))).toBe(false);
+
+    // And the edge lands on the kinds, not back on the rules.
+    const scene = layout(
+      new Store({ schema: studioApp().schema, mutations: [], invariants: [], snapshot: graph as never } as never).graph as never,
+      studioApp().schema as never,
+      { ...EMPTY_VIEW, overview: true },
+    );
+    expect(scene.connectors.filter((connector) => connector.loop)).toEqual([]);
+    expect(scene.connectors.filter((connector) => connector.kind === "over").map((c) => [c.from, c.to])).toEqual([
+      [kindCardId("rule"), kindCardId("kind")],
+    ]);
   });
 
   it("is itself an app graview check passes: the studio is held to what it holds everyone to", () => {
@@ -189,7 +237,7 @@ describe("the declaration is a graph", () => {
 describe("a change to the declaration is a mutation", () => {
   it("has an author, an intent and an inverse, and undo takes it back", () => {
     const studio = createStudio(garden);
-    studio.store.apply({ name: "add-field", args: { kind: "kind:plot", label: "soil", type: "enum", required: true, options: ["clay", "loam"] } }, { author: june, intent: "Plots have soil" });
+    studio.store.apply({ name: "add-field", args: { kind: "declared:plot", label: "soil", type: "enum", required: true, options: ["clay", "loam"] } }, { author: june, intent: "Plots have soil" });
     const [change] = studio.changes();
     expect(change).toMatchObject({ author: june, intent: "Plots have soil", undone: false });
     expect(studio.store.graph.getNode("field:plot.soil")).toMatchObject({ type: "enum", options: ["clay", "loam"] });
@@ -201,9 +249,9 @@ describe("a change to the declaration is a mutation", () => {
 
   it("an act the studio declares gets a body from what it says, and the interface can run it", () => {
     const studio = createStudio(garden);
-    studio.store.apply({ name: "add-act", args: { kind: "kind:plot", label: "resize", title: "Resize", description: "Change the plot's size.", writes: ["size"] } });
+    studio.store.apply({ name: "add-act", args: { kind: "declared:plot", label: "resize", title: "Resize", description: "Change the plot's size.", writes: ["size"] } });
     studio.store.apply({ name: "add-kind", args: { label: "shed", plural: "sheds", description: "Where the tools live." } });
-    studio.store.apply({ name: "add-act", args: { kind: "kind:shed", label: "build-shed", title: "Build a shed" } });
+    studio.store.apply({ name: "add-act", args: { kind: "declared:shed", label: "build-shed", title: "Build a shed" } });
     studio.store.apply({ name: "edit-act", args: { id: "act:build-shed", description: "Put up a shed." } });
     const declared = studio.declaration();
     const store = new Store({ schema: declared.schema, mutations: declared.mutations ?? [], invariants: declared.invariants ?? [], snapshot: seed } as never);
@@ -215,12 +263,12 @@ describe("a change to the declaration is a mutation", () => {
   it("is checked before it is applied: an error refuses, the fix goes through, and a stored graph gets its migration", () => {
     const studio = createStudio(garden);
     // The horizon reads a field that is not there.
-    studio.store.apply({ name: "edit-kind", args: { id: "kind:gardener", lifecycleField: "status", retired: ["gone"] } });
+    studio.store.apply({ name: "edit-kind", args: { id: "declared:gardener", lifecycleField: "status", retired: ["gone"] } });
     const refused = studio.apply();
     expect(refused.ok).toBe(false);
     if (!refused.ok) expect(refused.check.findings.some((f) => f.code === "lifecycle-missing-field")).toBe(true);
     // Give gardeners the field, required, so every stored gardener needs a start.
-    studio.store.apply({ name: "add-field", args: { kind: "kind:gardener", label: "status", type: "enum", required: true, options: ["here", "gone"] } });
+    studio.store.apply({ name: "add-field", args: { kind: "declared:gardener", label: "status", type: "enum", required: true, options: ["here", "gone"] } });
     const applied = studio.apply();
     expect(applied.ok).toBe(true);
     if (!applied.ok) return;
@@ -240,7 +288,7 @@ describe("a change to the declaration is a mutation", () => {
 
   it("removing a kind is a migration that takes its records and their edges", () => {
     const studio = createStudio(garden);
-    studio.store.apply({ name: "remove-kind", args: { id: "kind:gardener" } });
+    studio.store.apply({ name: "remove-kind", args: { id: "declared:gardener" } });
     studio.store.apply({ name: "remove-edge", args: { id: "edge:plot.tended-by" } });
     studio.store.apply({ name: "remove-act", args: { id: "act:tend" } });
     studio.store.apply({ name: "remove-act", args: { id: "act:untend" } });
@@ -259,12 +307,12 @@ describe("an agent proposes and a person decides", () => {
     expect(proposed.ok).toBe(true);
     expect(studio.proposals()).toHaveLength(1);
     expect(studio.proposals()[0]).toMatchObject({ author: planner, intent: "The planner wants beds" });
-    expect(studio.store.graph.getNode("kind:bed")).toBeDefined();
+    expect(studio.store.graph.getNode("declared:bed")).toBeDefined();
     expect(studio.declaration().schema.kinds).toContain("bed");
     expect(studio.decline(studio.proposals()[0]!.id)).toBe(true);
     expect(studio.proposals()).toHaveLength(0);
-    expect(studio.store.graph.getNode("kind:bed")).toBeUndefined();
-    const refused = studio.propose({ name: "add-field", args: { kind: "kind:nowhere", label: "x", type: "string", required: true } }, planner);
+    expect(studio.store.graph.getNode("declared:bed")).toBeUndefined();
+    const refused = studio.propose({ name: "add-field", args: { kind: "declared:nowhere", label: "x", type: "string", required: true } }, planner);
     expect(refused.ok).toBe(false);
   });
 });
@@ -272,7 +320,7 @@ describe("an agent proposes and a person decides", () => {
 describe("the declaration is written back as the files graview create writes", () => {
   it("writes schema, mutations, invariants and policy in the checkout's own shape", () => {
     const studio = createStudio(garden);
-    studio.store.apply({ name: "add-field", args: { kind: "kind:plot", label: "soil", type: "enum", required: false, options: ["clay", "loam"] } });
+    studio.store.apply({ name: "add-field", args: { kind: "declared:plot", label: "soil", type: "enum", required: false, options: ["clay", "loam"] } });
     const files = Object.fromEntries(declarationFiles(studio.store.snapshot(), { name: "Garden", schemaVar: "gardenSchema" }).map((file) => [file.path, file.contents]));
     expect(Object.keys(files)).toEqual(["src/domain/schema.ts", "src/domain/mutations.ts", "src/domain/invariants.ts", "src/domain/policy.ts"]);
     expect(files["src/domain/schema.ts"]).toContain('export const plot = defineNode("plot", {');
@@ -292,7 +340,7 @@ describe("the declaration is written back as the files graview create writes", (
 describe("renaming a kind", () => {
   it("carries the lenses bound to it, rather than leaving them pointed at a name nobody declares", () => {
     const studio = createStudio(garden);
-    studio.store.apply({ name: "rename-kind", args: { id: "kind:plot", label: "bed" } });
+    studio.store.apply({ name: "rename-kind", args: { id: "declared:plot", label: "bed" } });
     const back = studio.declaration();
     /*
      * The bindings come from the checkout, because no act writes one —
@@ -306,7 +354,7 @@ describe("renaming a kind", () => {
 
   it("is a migration that carries every record and its edges under the new name", () => {
     const studio = createStudio(garden);
-    studio.store.apply({ name: "rename-kind", args: { id: "kind:plot", label: "bed" } });
+    studio.store.apply({ name: "rename-kind", args: { id: "declared:plot", label: "bed" } });
     const applied = studio.apply();
     expect(applied.ok).toBe(true);
     if (!applied.ok) return;

@@ -75,9 +75,9 @@ afterAll(() => rmSync(out, { recursive: true, force: true }));
 describe("written back", () => {
   it("a checkout built from the studio's files passes graview check and runs", async () => {
     const studio = createStudio(app);
-    studio.store.apply({ name: "add-field", args: { kind: "kind:thing", label: "due", type: "date", required: false } });
-    studio.store.apply({ name: "add-act", args: { kind: "kind:thing", label: "close-thing", title: "Close it", description: "Mark a thing closed.", writes: ["status"] } });
-    studio.store.apply({ name: "add-rule", args: { kind: "kind:thing", label: "closed-in-order", description: "Nothing closed may still depend on an open thing." } });
+    studio.store.apply({ name: "add-field", args: { kind: "declared:thing", label: "due", type: "date", required: false } });
+    studio.store.apply({ name: "add-act", args: { kind: "declared:thing", label: "close-thing", title: "Close it", description: "Mark a thing closed.", writes: ["status"] } });
+    studio.store.apply({ name: "add-rule", args: { kind: "declared:thing", label: "closed-in-order", description: "Nothing closed may still depend on an open thing." } });
     studio.store.apply({ name: "name-repair", args: { rule: "rule:closed-in-order", act: "act:close-thing" } });
     expect(studio.check().errors).toBe(0);
 

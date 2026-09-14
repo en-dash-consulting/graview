@@ -112,7 +112,7 @@ try {
    * any other node — which is the whole claim: there is no second editor.
    */
   await page.locator('[data-graview-view="kind:kind"] button', { hasText: "open" }).first().click();
-  await page.waitForSelector('[data-graview-pick="kind:task"]', { timeout: 10_000 });
+  await page.waitForSelector('[data-graview-pick="declared:task"]', { timeout: 10_000 });
   await page.waitForTimeout(600);
   /*
    * Selected FROM THE KEYBOARD. A chip in an opened district can sit under
@@ -121,7 +121,7 @@ try {
    * every pick target focusable precisely so that the primary way through
    * the graph is not mouse-only.
    */
-  await page.focus('[data-graview-pick="kind:task"]');
+  await page.focus('[data-graview-pick="declared:task"]');
   await page.keyboard.press("Enter");
   await page.waitForSelector('[data-testid="inspector-strip"] [data-affordance]', { timeout: 10_000 });
   const offered = await page.evaluate(() =>

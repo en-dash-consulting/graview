@@ -16,7 +16,7 @@ import {
   type Policy,
 } from "@graview/core";
 import { z } from "zod";
-import type { FieldType } from "./meta.js";
+import { DECLARED_KIND, type FieldType } from "./meta.js";
 
 /*
  * THE GRAPH READ BACK AS A DECLARATION. Kinds become `defineNode`, fields
@@ -172,11 +172,12 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
   const base = options.base;
   const kindName = new Map<string, string>();
   for (const kind of read.ofKind("kind")) kindName.set(kind.id, name(kind));
-  // A kind called something else: `kind:plot` whose name is now "bed". The
-  // checkout's acts still ask for a plot by name, so their references follow.
+  // A kind called something else: `declared:plot` whose name is now "bed".
+  // The checkout's acts still ask for a plot by name, so their references
+  // follow.
   const renamed = new Map<string, string>();
   for (const [id, now] of kindName) {
-    const was = id.slice("kind:".length);
+    const was = id.slice(DECLARED_KIND.length);
     if (was !== now) renamed.set(was, now);
   }
   const follow = (kind: string) => renamed.get(kind) ?? kind;

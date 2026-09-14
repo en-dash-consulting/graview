@@ -125,7 +125,7 @@ describe("words become proposed acts, never writes", () => {
     expect(reply.proposals).toHaveLength(1);
     const proposal = reply.proposals[0]!;
     expect(proposal.mutation).toBe("add-field");
-    expect(proposal.args["kind"]).toBe("kind:shift");
+    expect(proposal.args["kind"]).toBe("declared:shift");
     expect(proposal.args["type"]).toBe("date");
     // Optional by default: a required field on records that already exist
     // is a migration nobody asked for.
@@ -135,10 +135,46 @@ describe("words become proposed acts, never writes", () => {
     expect(studio.declaration().schema.tryDefinition("shift")).toBeDefined();
   });
 
+  it("names a new role from the sentence, rather than proposing an act with no name", async () => {
+    /*
+     * The exact sentence that failed: the floor did not recognise it, an
+     * on-device model took the turn and proposed `add-role` with no label,
+     * and the store refused it for the arguments.
+     */
+    const { studio, reply } = await ask("add a new Role for Participant");
+    expect(reply.proposals).toHaveLength(1);
+    expect(reply.proposals[0]).toMatchObject({ mutation: "add-role", args: { label: "Participant" } });
+    // And it is a call the store actually accepts.
+    const would = studio.would({ name: "add-role", args: { ...reply.proposals[0]!.args } });
+    expect(would.ok).toBe(true);
+  });
+
+  it("takes a name however it is said, and asks when there is none", async () => {
+    expect((await ask('add a role called "Shift lead"')).reply.proposals[0]?.args["label"]).toBe("Shift lead");
+    expect((await ask("add a treasurer role")).reply.proposals[0]?.args["label"]).toBe("treasurer");
+    expect((await ask("add a kind called Session")).reply.proposals[0]).toMatchObject({
+      mutation: "add-kind",
+      args: { label: "Session" },
+    });
+    // No name is a question back, never an act that cannot apply.
+    const nameless = await ask("add a new role");
+    expect(nameless.reply.proposals).toEqual([]);
+    expect(nameless.reply.say).toContain("called");
+    // And a question about roles is not a change to them.
+    const asking = await ask("what roles are there?");
+    expect(asking.reply.proposals).toEqual([]);
+  });
+
+  it("says so rather than proposing a duplicate", async () => {
+    const { reply } = await ask("add a role called keeper");
+    expect(reply.proposals).toEqual([]);
+    expect(reply.say).toContain("already");
+  });
+
   it("proposes a rule when somebody says every X needs a Y", async () => {
     const { reply } = await ask("every shift needs a volunteer");
     expect(reply.proposals[0]?.mutation).toBe("add-rule");
-    expect(reply.proposals[0]?.args["kind"]).toBe("kind:shift");
+    expect(reply.proposals[0]?.args["kind"]).toBe("declared:shift");
   });
 
   it("reads a type off a name rather than guessing cleverly", () => {
@@ -154,7 +190,7 @@ describe("the checker speaks before the person keeps anything", () => {
   it("says what the declaration would become, without changing it", async () => {
     const studio = createStudio(rota);
     const before = studio.check();
-    const would = studio.would({ name: "add-field", args: { kind: "kind:shift", label: "note", type: "string", required: false } });
+    const would = studio.would({ name: "add-field", args: { kind: "declared:shift", label: "note", type: "string", required: false } });
     expect(would.ok).toBe(true);
     if (!would.ok) return;
     expect(would.check.errors).toBe(before.errors);
@@ -166,7 +202,7 @@ describe("the checker speaks before the person keeps anything", () => {
 
   it("gives back the store's own refusal rather than throwing", () => {
     const studio = createStudio(rota);
-    const would = studio.would({ name: "add-field", args: { kind: "kind:nothing-here", label: "x", type: "string", required: false } });
+    const would = studio.would({ name: "add-field", args: { kind: "declared:nothing-here", label: "x", type: "string", required: false } });
     expect(would.ok).toBe(false);
     if (would.ok) return;
     expect(would.reason.length).toBeGreaterThan(0);
@@ -210,7 +246,7 @@ describe("a figure is a change like any other", () => {
   it("proposes the nearest shipped figure when nothing is behind the seat", async () => {
     const { reply } = await ask("draw a figure for volunteer");
     expect(reply.proposals[0]?.mutation).toBe("set-figure");
-    expect(reply.proposals[0]?.args["id"]).toBe("kind:volunteer");
+    expect(reply.proposals[0]?.args["id"]).toBe("declared:volunteer");
     expect(figureFaults(String(reply.proposals[0]?.args["figure"]))).toEqual([]);
     // And it says which it was, rather than passing a placeholder off as a drawing.
     expect(reply.say).toContain("nearest shipped figure");

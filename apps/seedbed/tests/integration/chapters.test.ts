@@ -260,10 +260,10 @@ describe("the garden, grown a chapter at a time", () => {
     const kinds = store.graph.nodesOfKind("kind" as never).map((node) => (node as { label: string }).label);
     expect(kinds).toEqual(expect.arrayContaining(["gardener", "plot", "planting", "rule", "user", "invitation"]));
     expect(store.graph.getNode("act:tend")).toMatchObject({ title: expect.any(String) });
-    expect(store.graph.out("edge:plot.tended-by", "to-kind").map((n) => n.id)).toEqual(["kind:gardener"]);
+    expect(store.graph.out("edge:plot.tended-by", "to-kind").map((n) => n.id)).toEqual(["declared:gardener"]);
     // A change is an act with an inverse; the checker judges the result; it writes back.
     const studio = createStudio(chapter.studioOf!);
-    studio.store.apply({ name: "add-field", args: { kind: "kind:plot", label: "soil", type: "enum", required: false, options: ["clay", "loam"] } });
+    studio.store.apply({ name: "add-field", args: { kind: "declared:plot", label: "soil", type: "enum", required: false, options: ["clay", "loam"] } });
     expect(studio.check().errors).toBe(0);
     const applied = studio.apply();
     expect(applied.ok).toBe(true);

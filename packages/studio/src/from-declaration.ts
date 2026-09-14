@@ -1,14 +1,22 @@
 import { nodeRefArgs } from "@graview/core";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
-import type { FieldType } from "./meta.js";
+import { DECLARED_KIND, type FieldType } from "./meta.js";
 
 /*
  * A DECLARATION READ INTO THE GRAPH. Every kind, field, edge, act, rule,
  * role, grant and lens the app declares becomes a node with a stable id —
- * `kind:plot`, `field:plot.label`, `edge:plot.tended-by`, `act:tend` — so
- * the same declaration read twice is the same graph, and a change is a
+ * `declared:plot`, `field:plot.label`, `edge:plot.tended-by`, `act:tend` —
+ * so the same declaration read twice is the same graph, and a change is a
  * difference between two of them.
+ *
+ * NOT `kind:plot`, which is the trap this walked into. `kind:` is the
+ * LAYOUT's own namespace for the district card of a kind, so a studio node
+ * called `kind:rule` and the RULES district's card were the same id. Every
+ * app here declares a kind called "rule", so in every one of their studios
+ * the edge from a rule to the kind it judges resolved to the district it
+ * started from and was drawn as a loop: a dotted circle labelled OVER,
+ * saying a rule judges a rule.
  */
 
 type Node = { readonly id: string; readonly kind: string } & Record<string, unknown>;
@@ -58,7 +66,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
   const nodes: Node[] = [];
   const edges: GraphEdge[] = [];
   const kinds = app.schema.definitions;
-  const kindId = (kind: string) => `kind:${kind}`;
+  const kindId = (kind: string) => `${DECLARED_KIND}${kind}`;
   const edgeIds = new Map<string, string>();
 
   for (const def of kinds) {

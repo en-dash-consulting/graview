@@ -77,6 +77,13 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
   return async (store, text, context) => {
     const asked = text.toLowerCase();
     const said = squeeze(text);
+    /*
+     * A QUESTION IS NEVER A CHANGE — the same rule the graph responder
+     * keeps. "what roles are there?" must not propose adding one.
+     */
+    const question =
+      /\?\s*$/.test(text) ||
+      /^\s*(what|who|whom|whose|which|when|where|why|how|is|are|was|were|does|do|did|can|could|should|would|will|has|have)\b/.test(asked);
     const grounded = (say: string, proposals: readonly ProposedCall[] = []): ChatReply => ({
       say,
       proposals: validateProposals(store as Store<StudioSchema>, proposals),
@@ -244,6 +251,56 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
               why: `you asked for "${field}" on ${label(kind)}`,
             },
           ],
+        );
+      }
+    }
+
+    // --------------------------------- a role or a kind, named in words
+    /*
+     * "add a new Role for Participant" — and it must be THE FLOOR that
+     * answers it, not a model.
+     *
+     * The graph responder only recognises an act when the message contains
+     * its title exactly, so "add a new role" missed "Add a role", the floor
+     * returned an ungrounded answer, and the on-device model got the turn.
+     * It proposed `add-role` with no label at all, which the store then
+     * refused for the arguments — a dead end with the person's own sentence
+     * on one side of it and a zod error on the other.
+     */
+    const naming = /^\s*(?:add|create|make|declare)\b/.test(asked) || /\bnew\b/.test(asked);
+    if (naming && !question) {
+      const what = /\brole\b/.test(asked) ? "role" : /\bkind\b/.test(asked) ? "kind" : null;
+      if (what) {
+        /*
+         * What it is to be CALLED, from the ways people actually say it:
+         * in quotes, after "called"/"named"/"for", or in front of the word
+         * itself ("add a participant role"). Never guessed — with no name
+         * the seat asks for one rather than proposing an act that cannot
+         * apply.
+         */
+        const given =
+          text.match(/["'“”']([^"'“”']+)["'“”']/)?.[1] ??
+          new RegExp(`\\b(?:called|named|for)\\s+(?:an?\\s+|the\\s+)?([A-Za-z][A-Za-z0-9 _-]*?)\\s*$`, "i").exec(text)?.[1] ??
+          new RegExp(`\\b([A-Za-z][\\w-]*)\\s+${what}s?\\b`, "i").exec(text)?.[1];
+        const called = given?.trim().replace(/^(a|an|the|new)\s+/i, "").trim();
+        if (!called || /^(new|a|an|the)$/i.test(called)) {
+          return grounded(
+            `What should the ${what} be called? Say it in quotes, or "add a ${what} called …", and I will propose it.`,
+          );
+        }
+        if (what === "role") {
+          const already = all("role").find((role) => squeeze(label(role)) === squeeze(called));
+          if (already) return grounded(`There is already a role called ${label(already)}.`);
+          return grounded(
+            `A new role, "${called}". It is a seat somebody can hold — grants are what let it do anything, so it can take no act until one says so.`,
+            [{ mutation: "add-role", args: { label: called }, why: `you asked for a ${called} role` }],
+          );
+        }
+        const already = all("kind").find((kind) => squeeze(label(kind)) === squeeze(called));
+        if (already) return grounded(`There is already a kind called ${label(already)}.`);
+        return grounded(
+          `A new kind, "${called}", with a name to be called by. Check it below before you keep it.`,
+          [{ mutation: "add-kind", args: { label: called }, why: `you asked for a ${called} kind` }],
         );
       }
     }

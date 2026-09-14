@@ -1,9 +1,10 @@
 {
-  "at": "2026-09-13T14:14:21.816Z",
+  "at": "2026-09-14T01:14:42.929Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
       "places": [
+        "The quarter",
         "The fortnight",
         "The week",
         "Who is covering what"

@@ -2839,8 +2839,20 @@ export function ResolvedView<S extends AnySchema>({
    * and the stop says which one is being asked — `in.view=the-month`. A
    * node that is not the group the address names keeps its own view, so a
    * calendar chosen over the tasks does not try to draw a list.
+   *
+   * THE GROUP THE ADDRESS NAMES IS THE ONE IT FOCUSES, and that had to be
+   * said rather than assumed. The slug was handed to every group in the
+   * scene, so pressing "Who may do what" and then looking at something else
+   * left `in.view=who-may-do-what` in the stop, where the PEOPLE district —
+   * which is not what you are looking at — drew the policy lens instead of
+   * itself: no name, no count, no figure, no way in, just the words "Who may
+   * do what · 3 roles" floating where a district used to be. The same thing
+   * turned the Shifts card into "The week · 10".
+   *
+   * A place is a picture OF a group. A district card is the group's own
+   * mark in the city, and it stays that whatever picture the address names.
    */
-  const asked = cardinality === "many" ? view.within?.["view"] : undefined;
+  const asked = cardinality === "many" && node.id === view.focusId ? view.within?.["view"] : undefined;
   const registration = views.resolve(node.kind, cell, asked);
   const Component = registration?.view as ViewComponent<S> | undefined;
   // Whether this kind has a picture of its own to travel into.

@@ -1,6 +1,8 @@
 import { permits, withArticle, type AnySchema, type Policy, type Principal } from "@graview/core";
 import { useGraview, type ViewComponent, type ViewProps } from "@graview/react";
 import type { ReactElement } from "react";
+import { hueFor } from "../default-views.js";
+import { Chip } from "../primitives/index.js";
 
 /**
  * WHAT EACH ROLE REACHES, drawn from the policy the store enforces.
@@ -71,11 +73,11 @@ export function ReachView<S extends AnySchema>({ label, fidelity, mode }: ViewPr
     );
   }
   if (fidelity === "glyph") {
-    return (
-      <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
-        {title} · {roles.length} {roles.length === 1 ? "role" : "roles"}
-      </span>
-    );
+    /*
+     * A Chip, like every other lens's glyph — a bare span is not a mark on a
+     * map, it is a caption floating in the middle of one.
+     */
+    return <Chip label={`${title} · ${roles.length} ${roles.length === 1 ? "role" : "roles"}`} hue={hueFor("role")} />;
   }
   const page = mode === "fullscreen";
   const mark = (may: ReachCell["may"]) =>
