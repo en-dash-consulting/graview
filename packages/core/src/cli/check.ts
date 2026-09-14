@@ -1127,7 +1127,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
     }
 
     for (const [kind, rawBindings] of Object.entries(lens.bindings ?? {})) {
-      const bindings = rawBindings as Record<string, string>;
+      const bindings = rawBindings as Record<string, unknown>;
       if (!kinds.has(kind)) {
         add({
           severity: "error",
@@ -1141,7 +1141,26 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
       const definition = app.schema.tryDefinition(kind);
       if (!definition) continue;
       const shape = definition.fields.shape as Record<string, unknown>;
-      for (const [role, field] of Object.entries(bindings)) {
+      for (const [role, bound] of Object.entries(bindings)) {
+        /*
+         * A ROLE IS A FIELD NAME, OR A FIELD AND THE VALUES THAT MAKE IT
+         * TRUE. The second shape — `{ field: "status", is: ["done"] }` — is
+         * how `lifecycle` already reads a state, and a role that reads
+         * completion has to accept it or most domains cannot bind it at all.
+         * The checker asks the same question of both: is that a field this
+         * kind declares?
+         */
+        const field = fieldOf(bound);
+        if (field === undefined) {
+          add({
+            severity: "error",
+            code: "lens-binding-not-a-field",
+            where: `lens "${lens.name}" bindings.${kind}.${role}`,
+            message: `Role "${role}" is bound to ${JSON.stringify(bound)}, which is neither a field name nor { field, is }.`,
+            fix: `Use a field name, or { field: "<field>", is: ["<value>", …] }.`,
+          });
+          continue;
+        }
         if (!(field in shape)) {
           add({
             severity: "error",
@@ -1169,6 +1188,21 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.length - errors;
   return { app: app.name, findings, errors, warnings, ok: errors === 0 };
+}
+
+/**
+ * The field a role is bound to, whichever of the two shapes was written: a
+ * bare field name, or `{ field, is }` — a field and the values that make the
+ * role true, the same shape `lifecycle` takes. Undefined when it is neither.
+ */
+function fieldOf(bound: unknown): string | undefined {
+  if (typeof bound === "string") return bound;
+  if (bound !== null && typeof bound === "object") {
+    const field = (bound as { field?: unknown }).field;
+    const is = (bound as { is?: unknown }).is;
+    if (typeof field === "string" && Array.isArray(is) && is.length > 0) return field;
+  }
+  return undefined;
 }
 
 export function formatFindings(result: CheckResult): string {

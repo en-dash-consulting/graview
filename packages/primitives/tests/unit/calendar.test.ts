@@ -7,6 +7,8 @@ import {
   addMonths,
   CalendarBindingError,
   createCalendarLens,
+  placeOnCalendar,
+  type CalendarRoles,
   dayOf,
   daysBetween,
   entriesIn,
@@ -314,5 +316,52 @@ describe("the act that moves a date", () => {
 
   it("falls back to the derived edit, which every kind has", () => {
     expect(actThatMoves(store([finish]), "job", "on")).toEqual({ name: "edit-job", arg: "id" });
+  });
+});
+
+/**
+ * A DOMAIN WHOSE COMPLETION IS A STATE CAN STILL SAY SO.
+ *
+ * `done` draws an entry struck and receded, which is the one thing that
+ * makes a calendar of past work readable — and it accepted a field only when
+ * that field held literally `true`. Meanwhile the framework pushes every app
+ * away from booleans: `lifecycle: { field: "status", retired: ["done"] }` is
+ * the documented way to express completion, and every worked example uses an
+ * enum. None of them could bind it. The choices were a boolean duplicating
+ * the status and free to drift out of step with it, or no struck-through
+ * past at all.
+ */
+const job = defineNode("job", {
+  fields: z.object({ label: z.string(), on: z.string(), status: z.string() }),
+  plural: "Jobs",
+  label: (node) => node.label,
+  lifecycle: { field: "status", retired: ["done", "skipped"] },
+});
+const jobs = createSchema([job]);
+const placeJob = (status: string, done: CalendarRoles["done"]) =>
+  placeOnCalendar(
+    { id: "j1", kind: "job", label: "Cut the back lawn", on: "2026-09-14", status } as never,
+    { job: { start: "on", ...(done === undefined ? {} : { done }) } },
+    jobs,
+  );
+
+describe("the done role", () => {
+  it("still reads a boolean field, which is what it always did", () => {
+    const entries = [
+      node("t1", { label: "Post", due: "2026-09-14", done: true }),
+      node("t2", { label: "Pack", due: "2026-09-14", done: false }),
+    ].map((n) => placeOnCalendar(n, bindings, schema));
+    expect(entries.map((entry) => entry?.done)).toEqual([true, false]);
+  });
+
+  it("reads a state the way lifecycle does — a field and the values that finish it", () => {
+    const finished = ["done", "skipped"];
+    expect(placeJob("done", { field: "status", is: finished })?.done).toBe(true);
+    expect(placeJob("skipped", { field: "status", is: finished })?.done).toBe(true);
+    expect(placeJob("open", { field: "status", is: finished })?.done).toBe(false);
+  });
+
+  it("is simply false when the app binds nothing, rather than guessing", () => {
+    expect(placeJob("done", undefined)?.done).toBe(false);
   });
 });

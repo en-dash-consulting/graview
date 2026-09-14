@@ -104,6 +104,69 @@ describe("checkApp", () => {
     expect(findings(app)).toContain("error:lens-role-unbound");
   });
 
+  /*
+   * A ROLE IS A FIELD NAME, OR A FIELD AND THE VALUES THAT MAKE IT TRUE.
+   *
+   * The second shape is how `lifecycle` already reads a state, and a lens
+   * role that reads completion has to accept it: the framework argues
+   * everywhere that states are enums with names rather than flags, so a role
+   * only a boolean can fill is a role most domains cannot bind. The checker
+   * asks the same question of both shapes — is that a field this kind
+   * declares? — and says so plainly when it is neither.
+   */
+  it("reads a role bound to a field, or to a field and the values that fill it", () => {
+    const withField = defineApp({
+      name: "test",
+      schema,
+      lenses: [{ name: "calendar", requiredRoles: ["start"], bindings: { duty: { start: "at" } } }],
+    });
+    expect(findings(withField)).not.toContain("error:lens-binding-missing-field");
+
+    const withPredicate = defineApp({
+      name: "test",
+      schema,
+      lenses: [
+        {
+          name: "calendar",
+          requiredRoles: ["start"],
+          bindings: { duty: { start: "at", done: { field: "until", is: [0] } } },
+        },
+      ],
+    });
+    expect(findings(withPredicate)).not.toContain("error:lens-binding-missing-field");
+    expect(findings(withPredicate)).not.toContain("error:lens-binding-not-a-field");
+  });
+
+  it("still names a predicate pointing at a field the kind does not declare", () => {
+    const app = defineApp({
+      name: "test",
+      schema,
+      lenses: [
+        {
+          name: "calendar",
+          requiredRoles: ["start"],
+          bindings: { duty: { start: "at", done: { field: "status", is: ["done"] } } },
+        },
+      ],
+    });
+    expect(findings(app)).toContain("error:lens-binding-missing-field");
+  });
+
+  it("says so when a binding is neither shape", () => {
+    const app = defineApp({
+      name: "test",
+      schema,
+      lenses: [
+        {
+          name: "calendar",
+          requiredRoles: ["start"],
+          bindings: { duty: { start: "at", done: { field: "until" } } },
+        },
+      ],
+    });
+    expect(findings(app)).toContain("error:lens-binding-not-a-field");
+  });
+
   it("warns about a kind with no view, and errors on a view for no kind", () => {
     const views = bound.createViews<string>();
     views.register("person", { cardinality: "one", fidelity: "full" }, "PersonFull");

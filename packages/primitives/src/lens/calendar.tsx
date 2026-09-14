@@ -51,8 +51,37 @@ export interface CalendarRoles {
   readonly allDay?: string;
   /** Field holding the entry's own name, where the kind's label is not it. */
   readonly label?: string;
-  /** Field that is true when the entry is finished, so it can read as done. */
-  readonly done?: string;
+  /**
+   * When the entry is finished, so it can read as done — struck and receded.
+   *
+   * A bare field name means "true when this field is `true`". A predicate —
+   * `{ field: "status", is: ["done", "skipped"] }` — means "true when this
+   * field holds one of these", which is the shape `lifecycle` already takes
+   * and the shape most domains are actually in: the framework spends its
+   * whole design arguing that states are enums with names rather than flags,
+   * and then the one role that reads completion accepted only a boolean. An
+   * app whose task is `open | done | skipped` had to add a second field that
+   * duplicates the first and can drift out of step with it, or give up the
+   * lens. Both were worse than the lens.
+   */
+  readonly done?: string | FieldIs;
+}
+
+/**
+ * A field and the values that make it true — the same shape `lifecycle`
+ * takes, so a role that reads a state reads it the way the declaration
+ * already writes it.
+ */
+export interface FieldIs {
+  readonly field: string;
+  readonly is: readonly unknown[];
+}
+
+/** Whether a record satisfies a role bound as a boolean field or a predicate. */
+function holds(record: Readonly<Record<string, unknown>>, role: string | FieldIs | undefined): boolean {
+  if (role === undefined) return false;
+  if (typeof role === "string") return record[role] === true;
+  return role.is.includes(record[role.field]);
 }
 
 export const CALENDAR_REQUIRED_ROLES = ["start"] as const;
@@ -256,7 +285,7 @@ export function placeOnCalendar<S extends AnySchema>(
     to: daysBetween(from, to) < 0 ? from : to,
     at: roles.allDay && record[roles.allDay] === true ? null : at,
     allDay: roles.allDay ? record[roles.allDay] === true || at === null : at === null,
-    done: roles.done ? record[roles.done] === true : false,
+    done: holds(record, roles.done),
   };
 }
 
