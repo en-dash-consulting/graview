@@ -74,13 +74,24 @@ export const FAINT_TEXT: CSSProperties = { color: "var(--graview-ink-faint, #625
  * it is unreachable by keyboard — but making every panel focusable would put
  * a stop in front of every card whether or not there is anything to scroll
  * to, which is the same mistake as the matrix's empty cells.
+ *
+ * BOTH AXES. The scroller is `overflow: auto`, which scrolls sideways as
+ * readily as down, and this asked about height alone — so at a phone's width,
+ * where a panel overflows across rather than below, the region scrolled and
+ * never became a stop. axe found it (`scrollable-region-focusable`) at 390px
+ * on two screens of a real product; nothing found it at desk width because
+ * at desk width the question never comes up.
  */
 function useOverflowing(ref: { current: HTMLElement | null }): boolean {
   const [overflowing, setOverflowing] = useState(false);
   useEffect(() => {
     const element = ref.current;
     if (!element || typeof ResizeObserver === "undefined") return;
-    const check = () => setOverflowing(element.scrollHeight > element.clientHeight + 1);
+    const check = () =>
+      setOverflowing(
+        element.scrollHeight > element.clientHeight + 1 ||
+          element.scrollWidth > element.clientWidth + 1,
+      );
     check();
     const observer = new ResizeObserver(check);
     observer.observe(element);
