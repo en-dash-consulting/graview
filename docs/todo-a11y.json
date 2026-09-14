@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-02T15:03:22.530Z",
+  "at": "2026-09-14T22:47:27.715Z",
   "browser": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
   "flags": [
     "--enable-blink-features=CanvasDrawElement",
@@ -9,7 +9,7 @@
   ],
   "scheme": "dark",
   "renderer": "dom",
-  "axNodeCount": 336,
+  "axNodeCount": 340,
   "drawnViews": 8,
   "viewsInAxTree": [
     {
@@ -45,54 +45,54 @@
     {
       "id": "reason-deposit",
       "plane": "1",
-      "label": "reason-deposit",
+      "label": "The landlord holds the date for 48 hours once the deposit…",
       "inTree": true
     },
     {
       "id": "t-deposit",
       "plane": "0",
-      "label": "t-deposit",
+      "label": "Pay the deposit",
       "inTree": true
     },
     {
       "id": "today",
       "plane": "1",
-      "label": "today",
+      "label": "Today",
       "inTree": true
     }
   ],
   "everyViewExposed": true,
   "sampleNamesInTree": [
     "RootWebArea: Things — a Graview example",
+    "heading: Things",
     "button: THINGS",
     "button: Back",
     "button: Forward",
-    "group: View",
     "navigation: View",
+    "navigation: Places",
     "link: Pages",
-    "button: Switch to light mode",
     "button: Graview",
     "complementary: Inspector",
+    "StaticText: Things",
     "StaticText: THINGS",
-    "button: The week",
-    "button: The lists",
     "button: Pay the deposit",
+    "button: The lists",
+    "button: The month",
+    "button: The week",
     "StaticText: Pages",
     "button: 2 problems",
     "button: Ask",
     "button: Activity",
+    "button: Nora",
     "StaticText: Graview",
     "button: Clear selection",
-    "textbox: Filter actions",
+    "InlineTextBox: Things",
     "InlineTextBox: THINGS",
-    "StaticText: The week",
-    "StaticText: The lists",
     "StaticText: Pay the deposit",
-    "InlineTextBox: Pages",
-    "StaticText: 2 problems",
-    "StaticText: Ask",
-    "StaticText: Activity",
-    "group: Lists"
+    "StaticText: The lists",
+    "StaticText: The month",
+    "StaticText: The week",
+    "InlineTextBox: Pages"
   ],
   "listContentExposed": true,
   "tasksExposed": [
@@ -114,7 +114,7 @@
       "label": "Get the second quote"
     },
     {
-      "tag": "header",
+      "tag": "div",
       "view": "aggregate:list",
       "plane": "0",
       "label": "This week5 left"
@@ -156,7 +156,7 @@
       "label": "Order boxes"
     },
     {
-      "tag": "header",
+      "tag": "div",
       "view": "aggregate:list",
       "plane": "0",
       "label": "Someday3 left"
@@ -207,13 +207,13 @@
       "tag": "div",
       "view": "reason-deposit",
       "plane": "1",
-      "label": "reason-deposit"
+      "label": "The landlord holds the date for 48 hours once the deposit…"
     },
     {
       "tag": "div",
       "view": "t-deposit",
       "plane": "0",
-      "label": "t-deposit"
+      "label": "Pay the deposit"
     },
     {
       "tag": "button",
@@ -231,7 +231,7 @@
       "tag": "button",
       "view": "t-deposit",
       "plane": "0",
-      "label": "MON"
+      "label": "TUE"
     },
     {
       "tag": "button",
