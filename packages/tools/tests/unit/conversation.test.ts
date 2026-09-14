@@ -379,15 +379,30 @@ describe("a model holds the conversation through the same gate", () => {
       selection: ["school"],
       history: [{ role: "person", text: "earlier words" }],
     });
-    expect(reply.say).toBe("Cutting it.");
+    expect(reply.say).toContain("Cutting it.");
     // The allowlist filtered the second proposal — same gate as everywhere.
     expect(reply.proposals).toHaveLength(1);
     expect(reply.proposals[0]?.mutation).toBe("shorten");
+    /*
+     * AND THE FILTERING IS SAID OUT LOUD. It used to be silent, which reads
+     * as the seat having quietly agreed to something it then did not offer:
+     * a sentence with fewer proposals under it than it promised, and no way
+     * to tell whether the gate or the model was the reason.
+     */
+    expect(reply.say).toContain("reassign");
+    expect(reply.say).toContain("not something this seat may run");
   });
 
   it("degrades an unparseable answer to words, never to guesses", async () => {
     const model = llmResponder({ complete: async () => "I would rather chat." });
     const reply = await model(store(), "hm");
     expect(reply).toEqual({ say: "I would rather chat.", proposals: [] });
+  });
+
+  it("never hands the person the plumbing when the answer is a shape it cannot read", async () => {
+    const model = llmResponder({ complete: async () => '{"say": "half an answer' });
+    const reply = await model(store(), "hm");
+    expect(reply.say).not.toContain("{");
+    expect(reply.proposals).toEqual([]);
   });
 });

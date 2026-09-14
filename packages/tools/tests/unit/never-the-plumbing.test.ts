@@ -61,6 +61,14 @@ describe("reading a model's answer", () => {
     });
   });
 
+  it("reads a bare ARRAY as the list of proposals, which is the other shape models use", () => {
+    // Reading from the first `{` found the first PROPOSAL and returned it as
+    // the whole answer: the person saw "…" and the list was thrown away.
+    expect(firstJsonObject('[{"mutation":"serve","args":{}}]')).toEqual([{ mutation: "serve", args: {} }]);
+    // And the object still wins when it opens first.
+    expect(firstJsonObject('{"say":"ok","proposals":[]}')).toMatchObject({ say: "ok" });
+  });
+
   it("answers nothing when there is no object, rather than half of one", () => {
     expect(firstJsonObject("I think you should add a field.")).toBeUndefined();
     expect(firstJsonObject('{"say": ')).toBeUndefined();
@@ -86,6 +94,40 @@ describe("a person never sees the plumbing", () => {
     })(store(), "serve the soup");
     expect(reply.say).toBe("Done");
     expect(reply.proposals).toHaveLength(1);
+  });
+});
+
+describe("nothing the gate takes out disappears in silence", () => {
+  it("takes a bare array of proposals as the answer", async () => {
+    const reply = await llmResponder({
+      complete: async () => '[{"mutation":"serve","args":{"shift":"s-mon","meal":"m-soup"}}]',
+    })(store(), "serve the soup on monday");
+    expect(reply.proposals).toHaveLength(1);
+  });
+
+  it("says when a model named an act this app has no such thing for", async () => {
+    const reply = await llmResponder({
+      complete: async () => '{"say":"Sure.","proposals":[{"mutation":"add_field","args":{}}]}',
+    })(store(), "add a field");
+    expect(reply.proposals).toEqual([]);
+    expect(reply.say).toContain("add_field");
+    expect(reply.say).toContain("no act for");
+  });
+
+  it("says when a seat may not run what was suggested", async () => {
+    const reply = await llmResponder({
+      may: ["nothing-at-all"],
+      complete: async () => '{"say":"Sure.","proposals":[{"mutation":"serve","args":{}}]}',
+    })(store(), "serve it");
+    expect(reply.proposals).toEqual([]);
+    expect(reply.say).toContain("not something this seat may run");
+  });
+
+  it("keeps quiet when there was nothing to drop", async () => {
+    const reply = await llmResponder({
+      complete: async () => '{"say":"Done.","proposals":[{"mutation":"serve","args":{"shift":"s-mon","meal":"m-soup"}}]}',
+    })(store(), "serve it");
+    expect(reply.say).toBe("Done.");
   });
 });
 

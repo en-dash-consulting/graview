@@ -43,8 +43,22 @@ export interface ProposedCall {
  * respected, or a brace inside a description ends the object early.
  */
 export function firstJsonObject(answer: string): unknown {
-  const start = answer.indexOf("{");
+  /*
+   * EITHER SHAPE THE MODEL ACTUALLY USES.
+   *
+   * Asked for `{"say", "proposals"}`, a model answers with the bare ARRAY
+   * of proposals often enough to matter — the sibling seam on this very
+   * contract asks for exactly that — and reading from the first `{` found
+   * the first PROPOSAL inside the array, returned it as the whole answer,
+   * and left the person looking at "…" with a perfectly good list thrown
+   * away. Whichever bracket opens first is the value the model meant.
+   */
+  const object = answer.indexOf("{");
+  const array = answer.indexOf("[");
+  const start = array !== -1 && (object === -1 || array < object) ? array : object;
   if (start === -1) return undefined;
+  const opener = answer[start];
+  const closer = opener === "[" ? "]" : "}";
   let depth = 0;
   let inString = false;
   let escaped = false;
@@ -57,8 +71,8 @@ export function firstJsonObject(answer: string): unknown {
       continue;
     }
     if (char === '"') inString = true;
-    else if (char === "{") depth += 1;
-    else if (char === "}") {
+    else if (char === opener) depth += 1;
+    else if (char === closer) {
       depth -= 1;
       if (depth === 0) {
         try {
@@ -127,6 +141,36 @@ export interface Intelligence<S extends AnySchema = AnySchema> {
 
 /** The whole vendor surface: one prompt in, one string out. */
 export type Completion = (prompt: string) => Promise<string>;
+
+/**
+ * WHAT THE GATE TOOK OUT, AND WHY — so a seat can say so.
+ *
+ * `validateProposals` drops silently, which is right for a provider filling
+ * the inspector and wrong for a conversation: a model that answers "Sure"
+ * and names `add_field` on an app whose act is `add-field` left a person
+ * looking at a sentence with nothing under it and no way to know why. The
+ * seat can only say what it is told.
+ */
+export function droppedProposals<S extends AnySchema>(
+  store: Store<S>,
+  proposals: readonly ProposedCall[],
+  may?: readonly string[],
+): readonly { readonly proposal: ProposedCall; readonly why: "unknown" | "not-allowed" }[] {
+  const allowed = may === undefined ? null : new Set(may);
+  const out: { proposal: ProposedCall; why: "unknown" | "not-allowed" }[] = [];
+  for (const proposal of proposals) {
+    if (typeof proposal.mutation !== "string") continue;
+    let known = true;
+    try {
+      store.mutation(proposal.mutation);
+    } catch {
+      known = false;
+    }
+    if (!known) out.push({ proposal, why: "unknown" });
+    else if (allowed && !allowed.has(proposal.mutation)) out.push({ proposal, why: "not-allowed" });
+  }
+  return out;
+}
 
 /** Drops proposals naming unknown or disallowed mutations, with no guessing. */
 export function validateProposals<S extends AnySchema>(

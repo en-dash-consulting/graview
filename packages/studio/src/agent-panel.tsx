@@ -16,6 +16,7 @@ import {
   type Responder,
 } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useStoreTick } from "@graview/pages";
 import { studioResponder } from "./agent.js";
 import type { StudioSchema } from "./meta.js";
 import type { Studio } from "./studio.js";
@@ -167,6 +168,48 @@ export function StudioAgentPanel({
       breaks: would.check.errors > before,
     };
   };
+
+  /*
+   * EVERY OPEN PROPOSAL IS ABOUT THE DECLARATION AS IT NOW STANDS.
+   *
+   * A loose sentence describes several changes and several of them depend
+   * on each other: "a Meal kind, with a name and how many it feeds" is one
+   * act that creates the kind and two that need it to exist. Judged once on
+   * arrival, the two fields refuse — they name a kind that is not there yet
+   * — and keeping the first one changed nothing about them, so a person saw
+   * two dead proposals under a live one and no way to tell they were only
+   * waiting.
+   *
+   * So they are re-read and re-judged whenever the declaration changes: the
+   * name the model used resolves the moment the thing it names exists, and
+   * an undo puts them back where they were. The verdict on screen is never
+   * about a declaration that has moved on.
+   */
+  const tick = useStoreTick(studio.store);
+  useEffect(() => {
+    setTurns((current) =>
+      current.map((turn) =>
+        turn.offers === undefined
+          ? turn
+          : {
+              ...turn,
+              offers: turn.offers.map((offer) => {
+                if (offer.state !== "open") return offer;
+                const resolved = resolveProposal(studio.store as never, { ...offer.proposal, args: offer.args });
+                const args = { ...resolved.args };
+                return {
+                  ...offer,
+                  args,
+                  verdict: judge(args, offer.proposal),
+                  said: describeProposal(studio.store as never, { ...offer.proposal, args }),
+                };
+              }),
+            },
+      ),
+    );
+    // Only when the declaration moved: `judge` reads the store as it is, so
+    // the tick is the whole dependency.
+  }, [tick]);
 
   const edit = (at: number, offerAt: number, name: string, value: unknown) => {
     setTurns((current) =>

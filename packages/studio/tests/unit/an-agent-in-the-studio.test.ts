@@ -10,6 +10,7 @@ import {
 } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+import { resolveProposal } from "@graview/tools";
 import { createStudio, declarationFiles, declarationToGraph, graphToDeclaration, studioResponder, typeFromName } from "../../src/index.js";
 
 /*
@@ -278,6 +279,35 @@ describe("keeping is an ordinary op under the agent's name", () => {
     const after = studio.declaration().schema.tryDefinition("shift")?.fields as { shape: Record<string, unknown> };
     expect(Object.keys(after.shape)).not.toContain("due-date");
     expect(studio.proposals()).toHaveLength(0);
+  });
+});
+
+/**
+ * ONE LOOSE SENTENCE IS SEVERAL ACTS, AND SOME OF THEM WAIT FOR THE OTHERS.
+ *
+ * "A Meal kind, with a name and how many it feeds" is one act that creates
+ * the kind and two that need it to exist. Judged once on arrival the two
+ * fields refuse — they name a kind that is not there yet — so encouraging a
+ * model to split a sentence, without re-judging what it split it into,
+ * would have produced a pile of dead proposals under a live one.
+ */
+describe("proposals that wait for each other", () => {
+  const field = (kind: string) => ({ name: "add-field", args: { kind, label: "serves", type: "number", required: false } });
+
+  it("refuses a field on a kind that does not exist yet, and takes it the moment it does", () => {
+    const studio = createStudio(rota);
+    // The model names things the way a person does.
+    expect(resolveProposal(studio.store as never, { mutation: "add-field", args: { kind: "Meal" } }).args["kind"]).toBe("Meal");
+    expect(studio.would(field("Meal")).ok).toBe(false);
+
+    studio.propose({ name: "add-kind", args: { label: "Meal" } }, agent, "you asked for a Meal kind");
+
+    // The same words now mean a node, and the same call now applies.
+    const resolved = resolveProposal(studio.store as never, { mutation: "add-field", args: { kind: "Meal" } });
+    expect(resolved.args["kind"]).toBe("declared:meal");
+    const would = studio.would(field(String(resolved.args["kind"])));
+    expect(would.ok).toBe(true);
+    if (would.ok) expect(would.check.errors).toBe(0);
   });
 });
 

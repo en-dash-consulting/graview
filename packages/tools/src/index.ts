@@ -45,6 +45,7 @@ export { loadPins, savePins, togglePin, NO_PINS } from "./pins.js";
 export type { PinOverrides } from "./pins.js";
 export {
   describeProposal,
+  droppedProposals,
   firstJsonObject,
   resolveProposal,
   intelligenceProvider,

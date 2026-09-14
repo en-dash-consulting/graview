@@ -10,6 +10,7 @@ import {
   type Store,
 } from "@graview/core";
 import {
+  droppedProposals,
   firstJsonObject,
   resolveProposal,
   validateProposals,
@@ -588,7 +589,14 @@ export function llmResponder<S extends AnySchema>(options: {
       .filter(Boolean)
       .join("\n\n");
     const answer = await options.complete(prompt);
-    const parsed = firstJsonObject(answer) as { say?: string; proposals?: ProposedCall[] } | undefined;
+    const read = firstJsonObject(answer);
+    /*
+     * A bare array IS the list of proposals — the shape a model reaches for
+     * about as often as the one it was asked for.
+     */
+    const parsed = (Array.isArray(read) ? { proposals: read as ProposedCall[] } : read) as
+      | { say?: string; proposals?: ProposedCall[] }
+      | undefined;
     /*
      * A PERSON IS NEVER SHOWN THE PLUMBING.
      *
@@ -611,18 +619,38 @@ export function llmResponder<S extends AnySchema>(options: {
         proposals: [],
       };
     }
+    /*
+     * And a model names things the way a person does — "Meal", not
+     * `declared:meal` — so a label that means exactly one node is read as
+     * that node before the gate sees it.
+     */
+    const offered = (parsed.proposals ?? []).map((proposal) => resolveProposal(store, proposal));
+    const kept = validateProposals(store, offered, options.may);
+    /*
+     * WHAT THE GATE TOOK OUT IS SAID OUT LOUD. A model that answers "Sure"
+     * and names an act this app does not have used to leave a sentence with
+     * nothing under it: no proposal, no refusal, no way to tell whether the
+     * seat had understood. Silence is the one answer that cannot be acted
+     * on.
+     */
+    const dropped = droppedProposals(store, offered, options.may);
+    const unknown = dropped.filter((one) => one.why === "unknown").map((one) => one.proposal.mutation);
+    const barred = dropped.filter((one) => one.why === "not-allowed").map((one) => one.proposal.mutation);
+    const aside = [
+      unknown.length > 0
+        ? `It also suggested ${unknown.map((name) => `"${name}"`).join(", ")}, which this app has no act for.`
+        : "",
+      barred.length > 0
+        ? `${barred.map((name) => `"${name}"`).join(", ")} is not something this seat may run.`
+        : "",
+      kept.length === 0 && offered.length > 0 ? "Nothing it suggested can be applied here." : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const said = typeof parsed.say === "string" && parsed.say.length > 0 ? parsed.say : "";
     return {
-      say: typeof parsed.say === "string" && parsed.say.length > 0 ? parsed.say : "…",
-      /*
-       * And a model names things the way a person does — "Meal", not
-       * `declared:meal` — so a label that means exactly one node is read as
-       * that node before the gate sees it.
-       */
-      proposals: validateProposals(
-        store,
-        (parsed.proposals ?? []).map((proposal) => resolveProposal(store, proposal)),
-        options.may,
-      ),
+      say: [said, aside].filter(Boolean).join(" ") || "…",
+      proposals: kept,
     };
   };
 }
