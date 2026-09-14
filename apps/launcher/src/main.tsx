@@ -280,7 +280,7 @@ function CommandBar({
     >
       <span
         style={{
-          fontSize: 11,
+          fontSize: "0.6875rem",
           letterSpacing: "0.3em",
           textTransform: "uppercase",
           color: "var(--graview-ink-muted)",
@@ -311,7 +311,7 @@ function CommandBar({
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              fontSize: 12.5,
+              fontSize: "0.78125rem",
               whiteSpace: "nowrap",
             }}
           >
@@ -437,12 +437,12 @@ function Switcher({
           gap: 8,
           padding: "6px 12px",
           borderRadius: 999,
-          fontSize: 12.5,
+          fontSize: "0.78125rem",
           background: "var(--graview-float)",
           boxShadow: "var(--graview-lift-high)",
         }}
       >
-        <span aria-hidden="true" style={{ letterSpacing: "0.2em", fontSize: 9 }}>
+        <span aria-hidden="true" style={{ letterSpacing: "0.2em", fontSize: "0.5625rem" }}>
           GV
         </span>
         {APPS.find((entry) => entry.id === current)?.label ?? current}
@@ -468,7 +468,7 @@ function Switcher({
                 setOpen(false);
                 onShow(entry.id);
               }}
-              style={{ fontSize: 12.5, textAlign: "left", whiteSpace: "nowrap" }}
+              style={{ fontSize: "0.78125rem", textAlign: "left", whiteSpace: "nowrap" }}
             >
               {entry.label}
             </button>
@@ -480,7 +480,7 @@ function Switcher({
               setOpen(false);
               onClose();
             }}
-            style={{ fontSize: 12.5, textAlign: "left" }}
+            style={{ fontSize: "0.78125rem", textAlign: "left" }}
           >
             All apps
           </button>

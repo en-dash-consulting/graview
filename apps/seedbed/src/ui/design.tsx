@@ -42,60 +42,60 @@ const CSS = `
       --sb-sky: hsl(${HUE.rule} 45% 48%);
       min-height: 100%; display: grid; grid-template-columns: 236px minmax(0, 1fr);
       background: var(--sb-paper); color: var(--graview-ink);
-      font-family: var(--graview-font-body, system-ui); font-size: 15.5px; line-height: 1.55; }
+      font-family: var(--graview-font-body, system-ui); font-size: 0.96875rem; line-height: 1.55; }
 .sb a { color: inherit; text-decoration: none; }
 .sb-rail { position: sticky; top: 0; align-self: start; height: 100%; min-height: 100vh; padding: 26px 22px;
       border-right: 1px solid var(--sb-line); display: grid; align-content: start; gap: 26px;
       background: color-mix(in oklab, var(--sb-paper) 70%, var(--graview-panel) 30%); }
-.sb-mark { display: flex; align-items: center; gap: 9px; font-family: var(--graview-font-display); font-size: 21px; font-weight: 600; letter-spacing: -0.01em; color: var(--sb-leaf); }
+.sb-mark { display: flex; align-items: center; gap: 9px; font-family: var(--graview-font-display); font-size: 1.3125rem; font-weight: 600; letter-spacing: -0.01em; color: var(--sb-leaf); }
 .sb-nav { display: grid; gap: 2px; }
-.sb-nav a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 14.5px; color: var(--graview-ink-muted); min-height: 32px; }
+.sb-nav a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 0.90625rem; color: var(--graview-ink-muted); min-height: 32px; }
 .sb-nav a[aria-current="page"] { background: var(--sb-card); color: var(--graview-ink); box-shadow: inset 0 0 0 1px var(--sb-line); }
-.sb-nav a .n { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--graview-ink-faint); }
+.sb-nav a .n { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 0.75rem; color: var(--graview-ink-faint); }
 .sb-nav a .dot { width: 8px; height: 8px; border-radius: 999px; }
-.sb-rail .sb-standing { font-size: 13px; line-height: 1.5; color: var(--graview-ink-muted); padding-top: 18px; border-top: 1px solid var(--sb-line); }
+.sb-rail .sb-standing { font-size: 0.8125rem; line-height: 1.5; color: var(--graview-ink-muted); padding-top: 18px; border-top: 1px solid var(--sb-line); }
 .sb-rail .sb-standing b { display: block; color: var(--graview-ink); font-weight: 600; }
 .sb-rail .sb-standing.bad b { color: var(--graview-warn); }
 .sb-main { padding: 38px 48px 80px; max-width: 1040px; min-width: 0; }
-.sb-eyebrow { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graview-ink-muted); margin: 0 0 8px; }
-.sb-h1 { font-family: var(--graview-font-display); font-size: 40px; line-height: 1.08; font-weight: 600; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
-.sb-h2 { font-family: var(--graview-font-display); font-size: 22px; line-height: 1.2; font-weight: 600; margin: 0; }
-.sb-lede { font-size: 17.5px; line-height: 1.55; color: var(--graview-ink-muted); max-width: 58ch; margin: 12px 0 0; }
+.sb-eyebrow { font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graview-ink-muted); margin: 0 0 8px; }
+.sb-h1 { font-family: var(--graview-font-display); font-size: 2.5rem; line-height: 1.08; font-weight: 600; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.sb-h2 { font-family: var(--graview-font-display); font-size: 1.375rem; line-height: 1.2; font-weight: 600; margin: 0; }
+.sb-lede { font-size: 1.09375rem; line-height: 1.55; color: var(--graview-ink-muted); max-width: 58ch; margin: 12px 0 0; }
 .sb-section { margin-top: 40px; display: grid; gap: 16px; }
 .sb-section > header { display: flex; align-items: baseline; gap: 14px; }
-.sb-section > header .more { margin-left: auto; font-size: 13px; color: var(--graview-ink-muted); display: inline-flex; align-items: center; min-height: 24px; }
+.sb-section > header .more { margin-left: auto; font-size: 0.8125rem; color: var(--graview-ink-muted); display: inline-flex; align-items: center; min-height: 24px; }
 .sb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
 .sb-card { display: grid; gap: 10px; padding: 16px 18px; border-radius: 12px; background: var(--sb-card); border: 1px solid var(--sb-line); box-shadow: var(--graview-lift-low); min-width: 0; }
 .sb-card.bad { border-color: var(--graview-warn); }
-.sb-card h3 { font-family: var(--graview-font-display); font-size: 19px; font-weight: 600; margin: 0; }
-.sb-card .meta { font-size: 13px; color: var(--graview-ink-muted); }
+.sb-card h3 { font-family: var(--graview-font-display); font-size: 1.1875rem; font-weight: 600; margin: 0; }
+.sb-card .meta { font-size: 0.8125rem; color: var(--graview-ink-muted); }
 .sb-beds { display: flex; gap: 5px; }
 .sb-bed { width: 22px; height: 26px; border-radius: 4px; background: var(--sb-soil); display: grid; place-items: end center; color: hsl(${HUE.planting} 55% 62%); padding-bottom: 3px; box-sizing: border-box; }
 .sb-bed.empty { background: color-mix(in oklab, var(--sb-soil) 40%, transparent); border: 1px dashed color-mix(in oklab, var(--sb-soil) 60%, transparent); }
-.sb-avatar { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: white; background: var(--sb-clay); flex: none; }
+.sb-avatar { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: white; background: var(--sb-clay); flex: none; }
 .sb-avatar.none { background: transparent; border: 1.5px dashed var(--graview-warn); color: var(--graview-warn); }
 .sb-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--sb-line); min-width: 0; }
 .sb-row:first-of-type { border-top: none; }
 .sb-row .grow { flex: 1 1 auto; min-width: 0; }
-.sb-row .k { font-size: 13px; color: var(--graview-ink-muted); }
-.sb-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; border: 1px solid var(--sb-line); background: var(--sb-card); white-space: nowrap; min-height: 24px; }
+.sb-row .k { font-size: 0.8125rem; color: var(--graview-ink-muted); }
+.sb-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.78125rem; border: 1px solid var(--sb-line); background: var(--sb-card); white-space: nowrap; min-height: 24px; }
 .sb-pill.warn { border-color: var(--graview-warn); color: var(--graview-warn); }
 .sb-pill.leaf { color: var(--sb-leaf); }
 .sb-acts { display: flex; flex-wrap: wrap; gap: 8px; }
-.sb-act { font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--sb-leaf); background: transparent; color: var(--sb-leaf); cursor: pointer; min-height: 36px; }
+.sb-act { font: inherit; font-size: 0.875rem; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--sb-leaf); background: transparent; color: var(--sb-leaf); cursor: pointer; min-height: 36px; }
 .sb-act[aria-expanded="true"], .sb-act:hover { background: var(--sb-leaf); color: white; }
 .sb-act:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 2px; }
-.sb-withheld { font-size: 13px; color: var(--graview-ink-faint); }
+.sb-withheld { font-size: 0.8125rem; color: var(--graview-ink-faint); }
 .sb-withheld s { color: var(--graview-ink-muted); }
 .sb-form { padding: 18px 20px; border-radius: 12px; background: var(--sb-card); border: 1px solid var(--sb-line); display: grid; gap: 12px; }
 .sb-trouble { display: grid; gap: 10px; padding: 16px 18px; border-radius: 12px; border: 1px solid var(--graview-warn); background: color-mix(in oklab, var(--sb-card) 88%, var(--graview-warn) 12%); }
 .sb-trouble p { margin: 0; font-weight: 550; color: var(--graview-warn); }
-.sb-scene { font-size: 13px; color: var(--graview-ink-muted); display: inline-flex; align-items: center; min-height: 24px; }
-.sb-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
-.sb-table th { text-align: left; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--graview-ink-faint); font-weight: 500; padding: 0 12px 8px 0; }
+.sb-scene { font-size: 0.8125rem; color: var(--graview-ink-muted); display: inline-flex; align-items: center; min-height: 24px; }
+.sb-table { width: 100%; border-collapse: collapse; font-size: 0.90625rem; }
+.sb-table th { text-align: left; font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--graview-ink-faint); font-weight: 500; padding: 0 12px 8px 0; }
 .sb-table td { padding: 10px 12px 10px 0; border-top: 1px solid var(--sb-line); vertical-align: top; }
-.sb-table td:first-child { font-family: var(--graview-font-display); font-weight: 600; font-size: 16px; }
-.sb-tag { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--graview-ink-faint); }
+.sb-table td:first-child { font-family: var(--graview-font-display); font-weight: 600; font-size: 1rem; }
+.sb-tag { font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--graview-ink-faint); }
 @media (max-width: 760px) {
   .sb { grid-template-columns: minmax(0, 1fr); }
   .sb-rail { position: static; min-height: 0; border-right: none; border-bottom: 1px solid var(--sb-line); padding: 18px 20px; gap: 14px; }
@@ -103,7 +103,7 @@ const CSS = `
   .sb-nav a .n { margin-left: 4px; }
   .sb-rail .sb-standing { display: none; }
   .sb-main { padding: 26px 20px 60px; }
-  .sb-h1 { font-size: 30px; }
+  .sb-h1 { font-size: 1.875rem; }
 }
 @media (prefers-reduced-motion: reduce) { .sb * { transition: none !important; } }
 `;
@@ -272,7 +272,7 @@ function Acts({ context, actions, only }: { context: Ctx; actions: AffordanceSet
       {opened && mutation ? (
         <div className="sb-form">
           <span className="sb-tag">{opened.label}</span>
-          {mutation.description ? <p style={{ margin: 0, color: "var(--graview-ink-muted)", fontSize: 14 }}>{mutation.description}</p> : null}
+          {mutation.description ? <p style={{ margin: 0, color: "var(--graview-ink-muted)", fontSize: "0.875rem" }}>{mutation.description}</p> : null}
           <DerivedForm<S> store={store} mutation={mutation} prefilled={opened.args} {...(context.principal ? { principal: context.principal as Principal } : {})} open={opened.open} onDone={() => done(opened.id)} />
         </div>
       ) : null}
@@ -321,7 +321,7 @@ function PlotCard({ plot, schema }: { plot: GardenPlot; schema: AnySchema }) {
     <Link to={recordPath(schema, "plot", plot.id)} className={`sb-card${untended ? " bad" : ""}`} data-testid={`plot-card-${plot.id}`}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <h3>{plot.label}</h3>
-        <span className={`sb-avatar${untended ? " none" : ""}`} style={{ marginLeft: "auto", width: 28, height: 28, fontSize: 10 }} title={plot.caretaker?.label ?? "nobody looks after it"}>
+        <span className={`sb-avatar${untended ? " none" : ""}`} style={{ marginLeft: "auto", width: 28, height: 28, fontSize: "0.625rem" }} title={plot.caretaker?.label ?? "nobody looks after it"}>
           {plot.caretaker ? initials(plot.caretaker.label) : "?"}
         </span>
       </div>
@@ -474,7 +474,7 @@ function Gardeners({ context }: { context: Ctx }) {
           {garden.gardeners.map((gardener) => (
             <div className="sb-row" key={gardener.id}>
               <span className="sb-avatar">{initials(gardener.label)}</span>
-              <Link to={recordPath(store.schema, "gardener", gardener.id)} className="grow" style={{ fontWeight: 600, fontSize: 17 }}>{gardener.label}</Link>
+              <Link to={recordPath(store.schema, "gardener", gardener.id)} className="grow" style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{gardener.label}</Link>
               {gardener.plots.length === 0 ? <span className="k">looks after nothing yet</span> : gardener.plots.map((plot) => (
                 <Link key={plot.id} to={recordPath(store.schema, "plot", plot.id)} className="sb-pill">{plot.label}</Link>
               ))}
@@ -534,7 +534,7 @@ function Rules({ context }: { context: Ctx }) {
         <div>
           {garden.rules.map((rule) => (
             <div className="sb-row" key={rule.id}>
-              <Link to={recordPath(store.schema, "rule", rule.id)} className="grow" style={{ fontWeight: 600, fontSize: 17 }}>{rule.label}</Link>
+              <Link to={recordPath(store.schema, "rule", rule.id)} className="grow" style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{rule.label}</Link>
               <span className={`sb-pill${rule.broken.length > 0 ? " warn" : " leaf"}`}>{rule.broken.length > 0 ? `${rule.broken.length} not kept` : "kept"}</span>
             </div>
           ))}
@@ -635,7 +635,7 @@ function GardenerRecord({ context }: { context: Ctx }) {
   return (
     <div data-testid="gardener-page">
       <header style={{ display: "flex", gap: 18, alignItems: "center" }}>
-        <span className="sb-avatar" style={{ width: 64, height: 64, fontSize: 20 }}>{initials(gardener.label)}</span>
+        <span className="sb-avatar" style={{ width: 64, height: 64, fontSize: "1.25rem" }}>{initials(gardener.label)}</span>
         <div>
           <p className="sb-eyebrow">A gardener</p>
           <h1 className="sb-h1">{gardener.label}</h1>

@@ -400,7 +400,13 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   box-shadow: none;
   color: var(--graview-ink-muted);
   cursor: pointer;
-  font-size: 10px;
+  /* IN REM, LIKE EVERY OTHER SIZE HERE. At 10px this control's words were
+     the one piece of text in the framework that ignored the reader's text
+     size completely: set to Largest, every name on the screen doubled and
+     "open" stayed ten pixels tall. A size a person chose and a control that
+     will not take it is the accessibility setting failing on its own
+     surface. */
+  font-size: 0.625rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1;
@@ -471,7 +477,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   color: hsl(var(--graview-hue, 200) 45% calc(var(--graview-tint-lightness) + ${scheme === "light" ? "-32%" : "28%"}));
   background: var(--graview-float);
   box-shadow: var(--graview-lift-low);
-  font-size: 9.5px;
+  font-size: 0.59375rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--graview-ink-faint);
@@ -501,7 +507,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   box-shadow: none;
   color: var(--graview-ink-faint);
   cursor: pointer;
-  font-size: 10.5px;
+  font-size: 0.65625rem;
   white-space: nowrap;
 }
 .graview-kind-past:hover {
@@ -573,6 +579,22 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
      carried, 10 for a district of one and 46 for the largest. */
   height: calc((72 + var(--graview-rise, 24) * 0.8) * 1%);
   width: auto;
+  /* AND IT KEEPS UP WITH THE WORDS. The card is laid out in pixels off the
+     stage and the nameplate is sized in rem, so a reader on Largest doubled
+     every name in the city while every drawing under one stayed exactly the
+     size it was — a postage stamp under a headline. A floor in em ties the
+     drawing to the same number the names follow; at the browser's own size
+     it is below what the card already gives and nothing moves.
+
+     Capped at the card, because a floor alone overflowed it: the drawings
+     grew past the box they stand in and were sliced off at the bottom
+     edge — a plot that reads as a V rather than a bed. The card's own
+     height is what the picture can actually show, and the CARD is the thing
+     that still does not follow the reader's size (see below).
+
+     (No back ticks in here: this whole stylesheet is a template literal,
+     and one of them ends it.) */
+  min-height: min(5em, 96%);
   /* The morph is a GROWTH from the ground line, not a drop: a block slides
      eighteen pixels down at altitude zero and grows up out of the card, and
      a drawing given the same treatment hangs below the card it belongs to —
@@ -713,7 +735,7 @@ button:focus-visible {
 }
 button:disabled { opacity: 0.45; cursor: default; }
 
-code { color: var(--graview-ink-muted); font-size: 12px; letter-spacing: 0.02em; }
+code { color: var(--graview-ink-muted); font-size: 0.75rem; letter-spacing: 0.02em; }
 
 /* A view host, once the scene has placed it. The transition is on filter
    only — never on layout properties, which would make every navigation

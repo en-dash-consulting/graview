@@ -131,7 +131,11 @@ export function Profile<S extends AnySchema>({
           borderRadius: 999,
           fontSize: "0.78125rem",
           whiteSpace: "nowrap",
-          maxWidth: 220,
+          /* In em, so the room for a name grows with the name. At 220px a
+             reader on Largest got "Nobody in p…" — the setting made the
+             words bigger and the box they live in stayed exactly where it
+             was, which is the clipping the setting exists to prevent. */
+          maxWidth: "14em",
         }}
       >
         <span
@@ -141,8 +145,11 @@ export function Profile<S extends AnySchema>({
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            width: 18,
-            height: 18,
+            /* The mark is a letter in a circle: sized in em it stays a
+               circle around the letter at every text size, where 18px at
+               2rem was a letter standing outside its own badge. */
+            width: "1.35em",
+            height: "1.35em",
             borderRadius: 999,
             fontSize: "0.625rem",
             background: "var(--graview-panel-muted)",

@@ -293,7 +293,7 @@ export const GardenMapView = ((props: ViewProps<S>) => {
           padding: "3px 9px",
           borderRadius: 999,
           border: "1px solid var(--graview-edge)",
-          fontSize: 12,
+          fontSize: "0.75rem",
           color: `hsl(${HUE.planting} 45% 40%)`,
         }}
       >
@@ -317,8 +317,8 @@ export const GardenMapView = ((props: ViewProps<S>) => {
       }}
     >
       <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-        <span style={{ fontFamily: "var(--graview-font-display)", fontSize: 17, fontWeight: 600 }}>{label}</span>
-        <span style={{ marginLeft: "auto", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: untended > 0 ? "var(--graview-warn)" : "var(--graview-ink-faint)" }}>
+        <span style={{ fontFamily: "var(--graview-font-display)", fontSize: "1.0625rem", fontWeight: 600 }}>{label}</span>
+        <span style={{ marginLeft: "auto", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: untended > 0 ? "var(--graview-warn)" : "var(--graview-ink-faint)" }}>
           {meta}
         </span>
       </div>
@@ -350,12 +350,12 @@ export const GardenMapView = ((props: ViewProps<S>) => {
                 padding: "3px 10px 3px 4px",
                 borderRadius: 999,
                 border: "1px solid var(--graview-edge)",
-                fontSize: 12,
+                fontSize: "0.75rem",
                 opacity: lit.size > 0 && !lit.has(gardener.id) ? 0.5 : 1,
                 cursor: "pointer",
               }}
             >
-              <span style={{ width: 20, height: 20, borderRadius: 999, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, background: `hsl(${HUE.gardener} 55% 45%)`, color: "white" }}>
+              <span style={{ width: 20, height: 20, borderRadius: 999, display: "grid", placeItems: "center", fontSize: "0.5625rem", fontWeight: 700, background: `hsl(${HUE.gardener} 55% 45%)`, color: "white" }}>
                 {initials(gardener.label)}
               </span>
               {gardener.label}

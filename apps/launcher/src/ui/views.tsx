@@ -69,7 +69,7 @@ function AppView({ node, fidelity, selected, flagged }: ViewProps<S, "app">) {
       tone={broken ? "warning" : fidelity === "summary" ? "muted" : "default"}
       fit
     >
-      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, ...MUTED_TEXT }}>{node.tagline}</p>
+      <p style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.5, ...MUTED_TEXT }}>{node.tagline}</p>
       <Roster
         max={4}
         items={[
@@ -105,7 +105,7 @@ function AppView({ node, fidelity, selected, flagged }: ViewProps<S, "app">) {
                 {},
               )
             }
-            style={{ alignSelf: "flex-start", fontSize: 13 }}
+            style={{ alignSelf: "flex-start", fontSize: "0.8125rem" }}
           >
             Open {node.label}
           </button>
@@ -119,12 +119,12 @@ function AppView({ node, fidelity, selected, flagged }: ViewProps<S, "app">) {
             <a
               data-testid={`visit-${node.id}`}
               href={`http://localhost:${node.port}/`}
-              style={{ fontSize: 12, color: "var(--graview-accent)" }}
+              style={{ fontSize: "0.75rem", color: "var(--graview-accent)" }}
             >
               Or open it on its own port ↗
             </a>
           ) : (
-            <p style={{ margin: 0, fontSize: 11.5, ...FAINT_TEXT }}>
+            <p style={{ margin: 0, fontSize: "0.71875rem", ...FAINT_TEXT }}>
               Not serving. <code>{node.command}</code> to run it on :{node.port}.
             </p>
           )}
@@ -225,7 +225,7 @@ function RuleView({ node, fidelity, selected }: ViewProps<S, "rule">) {
   return (
     <Panel title={node.label} subtitle={node.spec.type} selected={selected} tone="warning" fit>
       {node.rationale ? (
-        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, ...MUTED_TEXT }}>{node.rationale}</p>
+        <p style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.5, ...MUTED_TEXT }}>{node.rationale}</p>
       ) : null}
     </Panel>
   );

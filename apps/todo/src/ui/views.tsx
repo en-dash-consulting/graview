@@ -150,7 +150,7 @@ const OneListView = ((props: ViewProps<S>) => {
       fit
     >
       {open.length === 0 ? (
-        <span style={{ fontSize: 12.5, color: "var(--graview-ink-faint)" }}>
+        <span style={{ fontSize: "0.78125rem", color: "var(--graview-ink-faint)" }}>
           Nothing left on this one.
         </span>
       ) : (
@@ -236,11 +236,11 @@ const ListsView = ((props: ViewProps<S>) => {
                   cursor: "pointer",
                 }}
               >
-                <strong style={{ fontSize: 13.5, fontWeight: 580 }}>{list.label}</strong>
+                <strong style={{ fontSize: "0.84375rem", fontWeight: 580 }}>{list.label}</strong>
                 <span
                   style={{
                     marginLeft: "auto",
-                    fontSize: 11,
+                    fontSize: "0.6875rem",
                     color: "var(--graview-ink-faint)",
                     fontVariantNumeric: "tabular-nums",
                   }}
@@ -250,7 +250,7 @@ const ListsView = ((props: ViewProps<S>) => {
               </div>
 
               {tasks.length === 0 ? (
-                <span style={{ fontSize: 12, color: "var(--graview-ink-faint)" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
                   Nothing on this one yet.
                 </span>
               ) : null}
@@ -271,7 +271,7 @@ const ListsView = ((props: ViewProps<S>) => {
                         padding: "5px 9px",
                         borderRadius: 8,
                         cursor: "pointer",
-                        fontSize: 12.5,
+                        fontSize: "0.78125rem",
                         border: `1px solid ${
                           broken.has(task.id) ? "var(--graview-warn)" : "var(--graview-edge)"
                         }`,
@@ -312,7 +312,7 @@ const ListsView = ((props: ViewProps<S>) => {
                         <span
                           style={{
                             marginLeft: "auto",
-                            fontSize: 11,
+                            fontSize: "0.6875rem",
                             whiteSpace: "nowrap",
                             color: broken.has(task.id)
                               ? "var(--graview-warn)"
@@ -328,7 +328,7 @@ const ListsView = ((props: ViewProps<S>) => {
               </ul>
 
               {done > 0 ? (
-                <span style={{ fontSize: 11, color: "var(--graview-ink-faint)" }}>
+                <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
                   {done} done
                 </span>
               ) : null}
