@@ -1916,6 +1916,51 @@ export function onScreen(
   return chosen;
 }
 
+/**
+ * HOW STRONGLY A LINE IS DRAWN AT ALTITUDE.
+ *
+ * Pulled out because it is a rule rather than a detail, and because the
+ * thing it gets wrong is invisible in a screenshot until you know to look:
+ * up here a selection is resolved to the CARD that stands for it, which is
+ * right for asking which cards a line touches and wrong for asking which
+ * LINE. With a district opened, every line into it touches that card — so
+ * choosing one name lit every name's lines, and clicking a member changed
+ * nothing about the picture.
+ *
+ * When the selection names something the strands actually mention, that
+ * finer answer wins. When it names none of them — a district chosen as a
+ * district — the card rule stands.
+ */
+export function altitudeOpacity(state: {
+  /** A relation kind is being stressed (hovered in the key). */
+  readonly emphasised: boolean;
+  /** This line is of that kind, or is itself chosen. */
+  readonly stressed: boolean;
+  /** Some strand on screen is touched by the chosen members. */
+  readonly anyChosen: boolean;
+  /** This strand is one of them. */
+  readonly mine: boolean;
+  /** This line touches the selection once resolved to cards. */
+  readonly touches: boolean;
+  /**
+   * How many lines this one relation is drawing at once.
+   *
+   * A bundle is unpicked so each line can START at the thing it is about —
+   * the week draws every shift as its own span, and a line leaving the span
+   * says WHICH shifts are covered, which is worth having. But seven of them
+   * arriving at one closed district is a starburst across the whole picture
+   * at the same weight as a single fact. So a relation drawing many lines
+   * draws each of them quieter: the shape stays legible, and choosing one
+   * still brings it fully forward.
+   */
+  readonly siblings?: number;
+}): number {
+  if (state.emphasised) return state.stressed ? 0.95 : 0.08;
+  if (state.anyChosen) return state.mine ? 0.9 : 0.12;
+  if (!state.touches) return 0.12;
+  return Math.max(0.34, 0.9 - 0.09 * Math.max(0, (state.siblings ?? 1) - 1));
+}
+
 /** A node's box as DRAWN, after its plane's scale — anchored at its top-left. */
 function drawnBox(
   node: SceneNode | undefined,
@@ -2491,6 +2536,29 @@ function Connectors({
     ? (measureVisible(stageRef.current, stampNode.id, false) ?? drawnBox(stampNode, scheme))
     : null;
   if (strands.length === 0) return null;
+  /*
+   * A CHOSEN MEMBER IS NOT ITS WHOLE DISTRICT.
+   *
+   * Up at altitude a selection is resolved to the card that stands for it,
+   * because that is what a connector actually points at — and that is right
+   * for deciding WHICH CARDS a line touches. It is wrong for deciding which
+   * LINE: with the volunteers opened, every one of the seven covered-by
+   * strands ends at the volunteers card, so choosing Ada lit Bo's shifts,
+   * and Cass's, and Dev's. Clicking a name in an opened district changed
+   * nothing about the picture, which is the one thing clicking a name is for.
+   *
+   * A strand knows the real edges it stands for. When the selection names
+   * something those edges actually mention, that is the finer and truer
+   * answer and it wins; when it names none of them — a district chosen as a
+   * district, a stop carried in from elsewhere — the card rule stands.
+   */
+  const touchesChosen = (strand: Strand) =>
+    strand.edges.some((edge) => chosenReal.has(edge.from) || chosenReal.has(edge.to));
+  const anyStrandChosen = chosenReal.size > 0 && strands.some(touchesChosen);
+  /** How many lines each relation is drawing at once, for the crowd rule. */
+  const siblings = new Map<string, number>();
+  for (const strand of strands) siblings.set(strand.connector.id, (siblings.get(strand.connector.id) ?? 0) + 1);
+
   const drawn = strands.map((strand, lane) => {
         const { connector, fromBox, toBox } = strand;
         const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
@@ -2620,19 +2688,18 @@ function Connectors({
         const only = strand.edges.length === 1 ? strand.edges[0]! : null;
         const edgeId = only ? edgeSelectionId(connector.kind, only.from, only.to) : null;
         const edgeChosen = edgeId !== null && selection.includes(edgeId);
-        const lit =
-          !overview &&
-          chosenReal.size > 0 &&
-          strand.edges.some((edge) => chosenReal.has(edge.from) || chosenReal.has(edge.to));
+        const mine = strand.edges.some((edge) => chosenReal.has(edge.from) || chosenReal.has(edge.to));
+        const lit = !overview && chosenReal.size > 0 && mine;
         const stressed = (emphasis !== null && connector.kind === emphasis) || edgeChosen;
         const opacity = overview
-          ? emphasis !== null
-            ? stressed
-              ? 0.95
-              : 0.08
-            : touches(connector)
-              ? 0.9
-              : 0.12
+          ? altitudeOpacity({
+              emphasised: emphasis !== null,
+              stressed,
+              anyChosen: anyStrandChosen,
+              mine,
+              touches: touches(connector),
+              siblings: siblings.get(connector.id) ?? 1,
+            })
           : edgeChosen
             ? 0.9
             : lit

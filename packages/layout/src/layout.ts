@@ -531,6 +531,18 @@ export function layout<S extends AnySchema>(
   const groupFocus = state.overview && !focus && focusKinds.length > 0 && state.focusId !== null;
   const groupIsPlain = groupFocus && focusKinds.length > 0 && focusKinds.every((kind) => plain.has(kind));
   if (groupFocus) {
+    /*
+     * THE DISTRICT OF THE KIND IN FOCUS IS NOT THE PERSON'S TO OPEN, and
+     * that is deliberate: its members are already the picture above, and
+     * drawing the same ten names twice is the one thing this layout will
+     * not do. A plain group opens in place INSTEAD of the framework's list;
+     * a group with a view of its own keeps its card shut.
+     *
+     * Which means the card must not OFFER to open it. It did — the control
+     * wrote `expand=kind:shift` into the stop, this threw it away on the
+     * next frame, and nothing moved. See the district card in
+     * `@graview/primitives`, which now says where the members are instead.
+     */
     for (const kind of focusKinds) {
       if (groupIsPlain) expanded.add(kindCardId(kind));
       else expanded.delete(kindCardId(kind));

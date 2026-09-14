@@ -626,7 +626,28 @@ export function registerDefaultViews<S extends AnySchema>(
               * back button knows. The stylesheet hides this control inside
               * the stack, where expanding dissolves the card instead.
               */}
-            {!nested && members.length > 0 ? (
+            {/*
+              * A DISTRICT WHOSE MEMBERS ARE THE PICTURE ABOVE CANNOT BE
+              * OPENED, so it must not offer to be.
+              *
+              * The layout refuses to open the district of the kind in focus
+              * — its members are already drawn, at size, and the same names
+              * twice is what the ring exists to avoid. The control was
+              * offered anyway: pressing it wrote `expand=` into the stop,
+              * the next frame dropped it, the card still read "open ▾" and
+              * nothing moved. Saying where they are is the honest answer;
+              * a button that cannot do its own job is not.
+              */}
+            {!nested && members.length > 0 && props.focused && !props.opened ? (
+              <span
+                data-testid={`shown-above-${String(kind)}`}
+                title={`The ${plural} are the picture above`}
+                style={{ fontSize: "0.71875rem", color: "var(--graview-ink-faint)" }}
+              >
+                shown above
+              </span>
+            ) : null}
+            {!nested && members.length > 0 && !props.focused ? (
               <button
                 type="button"
                 className="graview-kind-open"

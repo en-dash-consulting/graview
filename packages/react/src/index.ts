@@ -15,6 +15,7 @@ export type {
 export {
   clipQuadratic,
   connectorStrands,
+  altitudeOpacity,
   onScreen,
   ResolvedView,
   Scene,
