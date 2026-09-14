@@ -84,10 +84,24 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
     const question =
       /\?\s*$/.test(text) ||
       /^\s*(what|who|whom|whose|which|when|where|why|how|is|are|was|were|does|do|did|can|could|should|would|will|has|have)\b/.test(asked);
+    /**
+     * A FACT the declaration holds: what kinds there are, what an act
+     * writes, who may take it. No model may replace one of these.
+     */
     const grounded = (say: string, proposals: readonly ProposedCall[] = []): ChatReply => ({
       say,
       proposals: validateProposals(store as Store<StudioSchema>, proposals),
       grounded: true,
+    });
+    /**
+     * A READING of what somebody wants changed — right often enough to be
+     * the floor, and never so right that a model should be kept out of it.
+     * Where a model is on the ladder this goes up as a starting point; where
+     * none is, it is the answer.
+     */
+    const reading = (say: string, proposals: readonly ProposedCall[] = []): ChatReply => ({
+      say,
+      proposals: validateProposals(store as Store<StudioSchema>, proposals),
     });
 
     const all = (kind: string): Node[] => [...store.graph.allNodes()].filter((node) => node.kind === kind) as Node[];
@@ -157,7 +171,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
     if (aboutFigures) {
       const kind = named("kind");
       if (!kind) {
-        return grounded(
+        return reading(
           `Say which kind to draw — ${list(all("kind").map((one) => label(one)))} — and I will draw it in the house style.`,
         );
       }
@@ -171,7 +185,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
           why: drawn.from === "model" ? "drawn in the house style and passed the checker's own figure test" : "the nearest shipped figure",
         },
       ];
-      return grounded(
+      return reading(
         drawn.from === "model"
           ? `Drawn for ${label(kind)}, in the house style — the checker's own figure test passed it. Keep it or ask again for another.`
           : `I did not draw it: ${list(drawn.refused ?? [])}. The nearest shipped figure is "${drawn.figure}", which is an honest placeholder rather than a drawing of ${label(kind)}.`,
@@ -268,21 +282,21 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
           new RegExp(`\\b([A-Za-z][\\w-]*)\\s+${what}s?\\b`, "i").exec(text)?.[1];
         const called = given?.trim().replace(/^(a|an|the|new)\s+/i, "").trim();
         if (!called || /^(new|a|an|the)$/i.test(called)) {
-          return grounded(
+          return reading(
             `What should the ${what} be called? Say it in quotes, or "add a ${what} called …", and I will propose it.`,
           );
         }
         if (what === "role") {
           const already = all("role").find((role) => squeeze(label(role)) === squeeze(called));
           if (already) return grounded(`There is already a role called ${label(already)}.`);
-          return grounded(
+          return reading(
             `A new role, "${called}". It is a seat somebody can hold — grants are what let it do anything, so it can take no act until one says so.`,
             [{ mutation: "add-role", args: { label: called }, why: `you asked for a ${called} role` }],
           );
         }
         const already = all("kind").find((kind) => squeeze(label(kind)) === squeeze(called));
         if (already) return grounded(`There is already a kind called ${label(already)}.`);
-        return grounded(
+        return reading(
           `A new kind, "${called}", with a name to be called by. Check it below before you keep it.`,
           [{ mutation: "add-kind", args: { label: called }, why: `you asked for a ${called} kind` }],
         );
@@ -311,7 +325,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
       const to = joined ? named("kind", clause(joined[1])) : owning ? named("kind", clause(owning[2])) : undefined;
       if (from && to) {
         const plural = String(to["plural"] ?? "") || `${label(to)}s`;
-        return grounded(
+        return reading(
           `A tie declared on ${label(from)}, pointing at ${label(to)} — a ${label(from)} has ${plural.toLowerCase()}. Change any of it below before you keep it.`,
           [
             {
@@ -330,7 +344,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
         );
       }
       if (joined || owning) {
-        return grounded(
+        return reading(
           `Say both kinds by name and I will propose the tie — there ${all("kind").length === 1 ? "is" : "are"} ${list(all("kind").map((one) => label(one)))}.`,
         );
       }
@@ -366,14 +380,14 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
          * Guessing a subject from a description of something else is worse
          * than asking.
          */
-        return grounded(
+        return reading(
           `There is no kind called "${clause(between[2]).trim()}". There ${all("kind").length === 1 ? "is" : "are"} ${list(all("kind").map((one) => label(one)))} — or ask me to add it first.`,
         );
       }
       if (kind && field && !/\b(edge|relation|tie|act|rule|role)\b/i.test(field)) {
         const type = typeFromName(field);
         const required = /\brequired\b|\bmust\b|\balways\b/.test(asked);
-        return grounded(
+        return reading(
           `"${field}" reads as ${type === "text" ? "a long text" : `a ${type}`}, on ${label(kind)}${required ? ", required" : ", optional so the records that already exist stay valid"}. Check it below before you keep it.`,
           [
             {
@@ -399,7 +413,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-+|-+$/g, "")
           .slice(0, 60);
-        return grounded(
+        return reading(
           `A rule over ${label(kind)}. The judgement itself is code — the studio declares the rule and names where its body goes; the file it writes says so where the checkout must fill it in.`,
           [
             {

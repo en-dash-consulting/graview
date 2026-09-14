@@ -327,7 +327,15 @@ export function configuredResponder<S extends AnySchema>(
    * thing, a who or a when — is answered by the graph: a small local model
    * asked "who can play left back" will fluently invent a goalkeeper, and
    * no rung is allowed to replace a fact with a guess about the same fact.
-   * The model earns the questions the graph cannot answer specifically.
+   *
+   * A READING OF A CHANGE IS NOT A FACT, and treating it as one was the
+   * ladder shutting the model out of the only thing it is better at.
+   * Speaking a change loosely — "add details to Meal, the name of the food
+   * and the number of people it can feed" — is two fields in one sentence,
+   * and a pattern-matcher can only ever see one of them. So the floor's
+   * reading goes UP to the model as a starting point: keep it, correct it,
+   * or split it. What the model may not do is come back with less: an
+   * answer with no proposals never replaces a reading that had them.
    */
   const groundedFirst =
     (modelled: Responder<S>, name: string): Responder<S> =>
@@ -335,7 +343,14 @@ export function configuredResponder<S extends AnySchema>(
       const known = await floor(store, text, context);
       if (known.grounded) return note(known, "(from the graph)");
       try {
-        return await modelled(store, text, context);
+        const answered = await modelled(store, text, {
+          ...context,
+          ...(known.proposals.length > 0 ? { reading: known.proposals } : {}),
+        });
+        if (answered.proposals.length === 0 && known.proposals.length > 0) {
+          return note(known, "(from the graph)");
+        }
+        return answered;
       } catch (error) {
         return note(
           known,

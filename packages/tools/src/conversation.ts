@@ -32,10 +32,19 @@ export interface ChatReply {
   readonly say: string;
   readonly proposals: readonly ProposedCall[];
   /**
-   * True when the answer came from a branch that READ THE GRAPH — the
-   * standing, a named thing, a when/who, a phrased mutation. A grounded
-   * answer outranks any model on the ladder: a fact the graph holds must
-   * never be replaced by a fluent guess about the same fact.
+   * True when the answer is a FACT the graph holds — the standing, a named
+   * thing, a when, a who, a rule's own repairs. A grounded answer outranks
+   * any model on the ladder: a small local model asked who can play left
+   * back will fluently invent a goalkeeper, and no rung may replace a fact
+   * with a guess about the same fact.
+   *
+   * NOT for a reading of what somebody wants CHANGED. That is an
+   * interpretation, and interpretation is the whole reason a model is on
+   * the ladder at all: "add details to Meal, the name of the food and the
+   * number of people it can feed" is two fields and a pattern-matcher can
+   * only ever see one. Marking those answers grounded shut the model out of
+   * exactly the turns it was there for — so a change is a `reading`, which
+   * a model may improve on and must never be quietly worse than.
    */
   readonly grounded?: boolean;
 }
@@ -45,6 +54,16 @@ export interface ChatContext {
   readonly selection?: readonly string[];
   /** Prior turns, oldest first, for responders that use them. */
   readonly history?: readonly { readonly role: "person" | "seat"; readonly text: string }[];
+  /**
+   * WHAT THE FLOOR ALREADY WORKED OUT, handed up the ladder.
+   *
+   * The graph-native reading of a change is usually right and always cheap,
+   * and a model that starts from it does better than one starting from
+   * nothing: it can keep it, correct the one argument it can see is wrong,
+   * or split it into the several acts the sentence actually described. A
+   * model that answers with nothing does not get to replace it.
+   */
+  readonly reading?: readonly ProposedCall[];
 }
 
 export type Responder<S extends AnySchema = AnySchema> = (
@@ -221,19 +240,25 @@ export function graphResponder<S extends AnySchema>(
           if (at >= 0) unused.splice(at, 1);
         } else if (!field.optional) missing.push(field.name);
       }
+      /*
+       * A READING, NOT A FACT. This branch matched an act's title in a
+       * sentence and filled what it honestly could — right often enough to
+       * be the floor, and not so right that a model should be kept out of
+       * it. Marked grounded, it stopped the ladder dead: a person with a
+       * model chosen still got the pattern-matcher's single act out of a
+       * sentence that described three.
+       */
       if (missing.length === 0) {
         return {
           say: `I can do that. Review it below — it applies like any other change, and undo works.`,
           proposals: validateProposals(store, [
             { mutation: phrased.name, args, why: `you asked in words` },
           ]),
-          grounded: true,
         };
       }
       return {
         say: `"${phrased.title ?? phrased.name}" needs ${missing.join(", ")} — name the ${missing.length === 1 ? "thing" : "things"} (or select ${missing.length === 1 ? "it" : "them"}) and ask again.`,
         proposals: [],
-        grounded: true,
       };
     }
 
@@ -504,6 +529,27 @@ export function llmResponder<S extends AnySchema>(options: {
       .allMutations()
       .map((mutation) => `- ${mutation.name}: ${mutation.description ?? mutation.title ?? ""}`)
       .join("\n");
+    /*
+     * WHAT IS ACTUALLY IN HERE, BY NAME.
+     *
+     * A model that cannot see the names cannot use them: asked to add a
+     * field to Meal it answers `{"kind": "Meal"}` and hopes, because the
+     * prompt listed the acts and never the things. A bounded sample per
+     * kind is enough to name anything a sentence is likely to mention, and
+     * `resolveProposal` turns whichever name it picks into the id.
+     */
+    const shape = (store.schema.kinds as readonly string[])
+      .filter((kind) => !store.modules.disabledKinds.has(kind))
+      .map((kind) => {
+        const definition = store.schema.tryDefinition(kind);
+        const members = store.graph.nodesOfKind(kind as never);
+        const names = members
+          .slice(0, 12)
+          .map((node) => labelOf(definition, node as never))
+          .join(", ");
+        return `- ${kind} (${definition?.plural ?? `${kind}s`}, ${members.length}): ${names}${members.length > 12 ? ", …" : ""}`;
+      })
+      .join("\n");
     const selected = (context.selection ?? [])
       .map((id) => {
         const node = store.graph.getNode(id);
@@ -518,9 +564,21 @@ export function llmResponder<S extends AnySchema>(options: {
       .violations()
       .map((violation) => `- ${violation.message}`)
       .join("\n");
+    /*
+     * The floor's reading, offered as a starting point rather than a rule.
+     * "Keep it, correct it, or split it" is the instruction that turns one
+     * loose sentence into the two or three acts it actually described.
+     */
+    const reading = (context.reading ?? [])
+      .map((proposal) => `- ${proposal.mutation} ${JSON.stringify(proposal.args)}`)
+      .join("\n");
     const prompt = [
       "You are the seat of a typed context graph. Answer briefly and propose only declared mutations.",
       `Mutations:\n${mutations}`,
+      shape ? `What is in the graph now:\n${shape}` : "",
+      reading
+        ? `A first reading of this request, worked out from the graph:\n${reading}\nKeep it, correct it, or split it into several — one proposal per distinct change the person described.`
+        : "Where a request describes several changes, answer with several proposals — one per distinct change.",
       trouble ? `Currently broken:\n${trouble}` : "Nothing is broken.",
       selected ? `Selected right now (what "this" means): ${selected}` : "Nothing is selected.",
       history ? `Conversation so far:\n${history}` : "",
