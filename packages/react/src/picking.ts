@@ -38,7 +38,7 @@ export function usePickTargets(ref: { current: HTMLElement | null }): void {
   useEffect(() => {
     const host = ref.current;
     if (!host) return;
-    for (const target of host.querySelectorAll<HTMLElement>("[data-graview-pick]")) {
+    for (const target of host.querySelectorAll<Element>("[data-graview-pick]")) {
       if (target.getAttribute("tabindex") === null) target.setAttribute("tabindex", "0");
       if (target.getAttribute("role") === null && takesButton(target)) {
         target.setAttribute("role", "button");
@@ -78,8 +78,39 @@ const GENERIC = new Set([
   "strong",
   "small",
   "canvas",
+  /*
+   * AND THE SHAPES, because any lens that draws a picture draws it in SVG.
+   *
+   * The allowlist was HTML only, so a map, a chart, a floor plan or a
+   * network diagram marked its regions with `data-graview-pick`, got the tab
+   * stop, and got no role at all — every target announced as nothing, which
+   * is a worse outcome than not being focusable, because a keyboard user now
+   * tabs through silent stops. ARIA permits `role="button"` on all of these,
+   * and `takesButton` still keeps `<header>`, headings and form controls
+   * safe, because the guard is an allowlist rather than a list of things to
+   * avoid.
+   *
+   * The role is the framework's half. The NAME is the view's: a shape has no
+   * text inside it, so a lens drawing in SVG sets `aria-label` on what it
+   * marks. `graview-lens` says so.
+   */
+  "g",
+  "polygon",
+  "circle",
+  "rect",
+  "path",
+  "ellipse",
+  "polyline",
+  "line",
+  "use",
 ]);
 
-function takesButton(element: HTMLElement): boolean {
-  return GENERIC.has(element.tagName.toLowerCase());
+function takesButton(element: Element): boolean {
+  /*
+   * `tagName` is upper-case on an HTML element and EXACTLY AS WRITTEN on an
+   * SVG one, so the comparison is lower-cased on both sides. `localName` is
+   * already lower-case for HTML and correct-case for SVG; these tags are all
+   * lower-case in the SVG namespace, so either answer agrees.
+   */
+  return GENERIC.has(element.localName.toLowerCase());
 }

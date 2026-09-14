@@ -47,6 +47,14 @@ Read one before writing your own:
    single click selects it in place while a double click travels. A span you
    cannot click is the bug this prevents.
 
+   **Drawing in SVG? The framework sets the role; you set the `aria-label`.**
+   A `<g>`, `<polygon>`, `<circle>`, `<rect>`, `<path>`, `<ellipse>`,
+   `<polyline>`, `<line>` or `<use>` carrying the mark becomes a button like
+   any `<span>` — but a shape has no text inside it to be named by, so
+   without a label it is a stop that announces nothing, which is worse for a
+   keyboard than not being reachable at all. Name it after the thing it
+   stands for.
+
 5. **Read `implicated` and `flagged`.** Empty means "no emphasis", NOT "nothing
    is related". Expose what you decide as `data-graview-emphasis` so it can be
    checked — a claim about a picture that exists only as a colour cannot be
