@@ -199,7 +199,7 @@ export { formField, formFields, formComplete } from "./mutations/form.js";
 export type { FormField, ScalarField } from "./mutations/form.js";
 export { resolveModules } from "./modules.js";
 export { declareInstallation, INSTALLATION_MODULE } from "./installation.js";
-export type { Installation, InstallationOptions } from "./installation.js";
+export type { Installation, InstallationOf, InstallationOptions } from "./installation.js";
 export type { ModuleDeclaration, ModuleMap, ModuleProjection } from "./modules.js";
 export type { IntelligenceProviderDeclaration, MigrationDeclaration, SettingDeclaration } from "./app.js";
 export { motion, readerSettings, textSize } from "./settings.js";

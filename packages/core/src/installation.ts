@@ -34,9 +34,25 @@ export interface InstallationOptions<R extends string = string> {
   readonly plurals?: { readonly user?: string; readonly invitation?: string };
 }
 
-export interface Installation {
-  /** The two kinds, ready for `createSchema([...yours, ...installation.kinds])`. */
-  readonly kinds: readonly AnyNodeDefinition[];
+export interface InstallationOf<
+  U extends AnyNodeDefinition = AnyNodeDefinition,
+  I extends AnyNodeDefinition = AnyNodeDefinition,
+> {
+  /**
+   * The two kinds, ready for `createSchema([...yours, ...installation.kinds])`.
+   *
+   * WITH THEIR OWN TYPES, as a tuple, because they are statically known —
+   * they are built a few lines down from here. They used to be widened to
+   * `AnyNodeDefinition[]`, and an app that spread them lost every kind name
+   * in its schema type, so every app spread them as an empty tuple instead
+   * and `user` ended up in the graph and not in the type. That is fine until
+   * the domain wants to point at a person — "who looks after this ground",
+   * "whose round is this", "who reported it" — because `ValidateEdgeTargets`
+   * is a TYPE-level check: the runtime resolved the edge perfectly and tsc
+   * refused to compile it. No first-party app had ever pointed at a person,
+   * which is why it survived this long.
+   */
+  readonly kinds: readonly [U, I];
   /** The acts, ready for `mutations: [...yours, ...installation.mutations]`. */
   readonly mutations: readonly AnyMutationDefinition<never>[];
   /** The module, drawn only for those who administer it. */
@@ -50,14 +66,22 @@ export interface Installation {
 export const INSTALLATION_MODULE = "installation";
 
 /**
+ * What `declareInstallation` gives back, with the two kinds' own types.
+ *
+ * Inferred rather than annotated: the shapes are built inside the function
+ * from the roles it was handed, so writing them out by hand would be a
+ * second copy of the declaration that could disagree with the first.
+ */
+export type Installation<R extends string = string> = ReturnType<typeof declareInstallation<R>>;
+
+
+/**
  * Declares the installation's kinds and acts for a set of roles.
  *
  * `admin` names the role that runs the acts. Every other role may edit its
  * own profile and nothing else here; the app's own policy says the rest.
  */
-export function declareInstallation<const R extends string>(
-  options: InstallationOptions<R>,
-): Installation {
+export function declareInstallation<const R extends string>(options: InstallationOptions<R>) {
   const roles = options.roles as readonly [R, ...R[]];
   if (roles.length === 0) throw new Error("declareInstallation needs at least one role.");
   if (!roles.includes(options.admin)) {
@@ -222,7 +246,7 @@ export function declareInstallation<const R extends string>(
   ];
 
   return {
-    kinds: [user, invitation] as unknown as readonly AnyNodeDefinition[],
+    kinds: [user, invitation] as const,
     mutations: acts as unknown as readonly AnyMutationDefinition<never>[],
     modules: {
       [INSTALLATION_MODULE]: {
@@ -239,5 +263,10 @@ export function declareInstallation<const R extends string>(
         grants: [...(policy?.grants ?? []), ...grants],
       };
     },
-  };
+    /*
+     * INFERRED, AND STILL HELD TO THE SHAPE. `satisfies` keeps the two
+     * kinds' own types — which is the whole point — while the interface goes
+     * on being a contract the compiler checks rather than a comment.
+     */
+  } satisfies InstallationOf<typeof user, typeof invitation>;
 }

@@ -105,10 +105,9 @@ function clock(minutes: number): string {
 }
 
 /*
- * The domain, and WHO IS HERE. The installation's kinds are ordinary kinds,
- * spread in as an empty tuple so `RotaSchema` keeps naming this app's own
- * three — see the same note in Things.
+ * The domain, and WHO IS HERE. The installation's kinds are ordinary kinds
+ * and carry their own types, so `RotaSchema` names all five — see the same
+ * note in Things.
  */
-const whoIsHere = rotaInstallation.kinds as unknown as readonly [];
-export const rotaSchema = createSchema([shift, volunteer, rule, ...whoIsHere]);
+export const rotaSchema = createSchema([shift, volunteer, rule, ...rotaInstallation.kinds]);
 export type RotaSchema = typeof rotaSchema;

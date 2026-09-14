@@ -178,13 +178,11 @@ export const reason = defineNode("reason", {
  * DRAWN is a matter for the policy: the module they belong to is shown only
  * to a seat that may administer it.
  *
- * They are spread in as an empty tuple so that `TodoSchema` keeps naming
- * this app's own four kinds. `declareInstallation` widens its kinds to
- * `AnyNodeDefinition[]`, and letting that widening into the schema type
- * would cost every call site in the app its kind names to buy nothing —
- * the two installation kinds are reached by name, through the framework's
- * own surfaces, and never through this type.
+ * They are spread in as they come. `declareInstallation` used to widen its
+ * kinds to `AnyNodeDefinition[]`, so spreading them cost every call site in
+ * this app its kind names — the reason this line used to cast them to an
+ * empty tuple and leave `user` in the graph and not in the type. They carry
+ * their own types now, so `TodoSchema` names all six.
  */
-const whoIsHere = todoInstallation.kinds as unknown as readonly [];
-export const todoSchema = createSchema([list, task, rule, reason, ...whoIsHere]);
+export const todoSchema = createSchema([list, task, rule, reason, ...todoInstallation.kinds]);
 export type TodoSchema = typeof todoSchema;

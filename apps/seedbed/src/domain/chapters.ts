@@ -533,7 +533,7 @@ const chapterThirteen: Chapter = {
  * function the store refuses with.
  */
 const installation = declareInstallation({ roles: ["coordinator", "gardener"], admin: "coordinator" });
-const fourAndWhoIsHere = createSchema([gardener, plot, planting, rule, ...installation.kinds] as never);
+const fourAndWhoIsHere = createSchema([gardener, plot, planting, rule, ...installation.kinds]);
 /*
  * The people at the keyboard ARE nodes now: a seat's principal id is its
  * user node's id, which is what a self grant compares. The gardener nodes
@@ -637,7 +637,7 @@ const chapterFifteen: Chapter = {
  * GARDEN says it turns through — four, because it grows four families, and
  * the framework has no opinion about that.
  */
-const sixteen = createSchema([gardener, plot, planting, rotation, rule, ...installation.kinds] as never);
+const sixteen = createSchema([gardener, plot, planting, rotation, rule, ...installation.kinds]);
 const turning = [...grown, rotate, ...installation.mutations] as never;
 const turns: readonly { plot: string; family: string; year: number }[] = [
   { plot: "plot-1", family: "brassicas", year: 2026 },

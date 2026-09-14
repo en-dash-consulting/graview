@@ -70,7 +70,8 @@ yesterday and now the button is gone.
 
    ```ts
    const installation = declareInstallation({ roles: ["coach", "analyst", "player"], admin: "coach" });
-   createSchema([...yours, ...installation.kinds]);        // user, invitation
+   createSchema([...yours, ...installation.kinds]);        // user, invitation — typed, so
+                                                          // an edge may say to: ["user"]
    mutations: [...yours, ...installation.mutations];        // invite, welcome, remove-user, grant, revoke, revoke-invitation
    modules: installation.modules;                           // drawn only for those who administer it
    policy: installation.withPolicy(policy);                 // the admin's grants, and "you, on yours" for a profile
