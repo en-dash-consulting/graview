@@ -361,6 +361,16 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
         for (const target of edge.to) {
           const targetOwners = owners.get(target);
           if (!targetOwners) continue; // core is always on
+          /*
+           * A module that declares itself required is never off, so no line
+           * into it can dangle — the same reason core is skipped one line
+           * up. Without this the only answers an app has are to drop the
+           * module, losing the thing it is for, or to carry a permanent
+           * warning per edge; and a warning that can only ever be
+           * acknowledged is one people learn to scroll past, which costs
+           * the checker its authority on the warnings that matter.
+           */
+          if ([...targetOwners].every((owner) => app.modules?.[owner]?.required === true)) continue;
           const safe =
             fromReach === null
               ? false // an always-on kind reaching into a module

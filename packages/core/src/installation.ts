@@ -32,6 +32,18 @@ export interface InstallationOptions<R extends string = string> {
   readonly admin: R;
   /** Plural nouns for the two kinds, if "People" and "Invitations" are wrong here. */
   readonly plurals?: { readonly user?: string; readonly invitation?: string };
+  /**
+   * People are not optional in this app.
+   *
+   * An installation without people is a household of one — a graph with no
+   * user nodes, not a disabled module — and an app whose domain points at a
+   * person ("who looks after this ground") has no way to say so otherwise:
+   * it either drops the module, drawing the installation for everybody, or
+   * carries a `module-edge-leak` warning per edge forever. Declared
+   * required, the module is never off, and the checker stops asking a
+   * question with only one answer.
+   */
+  readonly required?: boolean;
 }
 
 export interface InstallationOf<
@@ -254,6 +266,7 @@ export function declareInstallation<const R extends string>(options: Installatio
         kinds: ["user", "invitation"],
         mutations: acts.map((act) => act.name),
         visibility: "admin",
+        ...(options.required ? { required: true } : {}),
       },
     },
     grants,

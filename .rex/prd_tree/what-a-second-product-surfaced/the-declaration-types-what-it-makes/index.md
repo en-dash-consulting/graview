@@ -24,4 +24,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [F-010 · fieldRoles vs lens bindings — two places, one job, unclear which wins](./f-010-fieldroles-vs-lens-bindings-two.md) | pending |
 | [F-012 · creates onboards a blank graph only for the FIRST kind in a chain](./f-012-creates-onboards-a-blank-graph.md) | pending |
 | [F-019 · An app cannot declare an edge to a person without losing its own kind names](./f-019-an-app-cannot-declare-an-edge-to.md) | completed |
-| [F-020 · A module you can never turn off is still warned about](./f-020-a-module-you-can-never-turn-off.md) | pending |
+| [F-020 · A module you can never turn off is still warned about](./f-020-a-module-you-can-never-turn-off.md) | completed |

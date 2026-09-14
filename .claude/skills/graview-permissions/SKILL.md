@@ -85,6 +85,12 @@ yesterday and now the button is gone.
    roles down the side, acts across the top, a mark where the store would
    say yes. Chapter 14 of `apps/seedbed` is the worked example.
 
+   **Pointing at a person?** `declareInstallation({ …, required: true })`.
+   An edge into a module the app can turn off earns a `module-edge-leak`
+   warning, and for people the only answer is "it is never off" — an
+   installation without people is a household of one, not a disabled module.
+   Say it once and the checker stops asking.
+
 ## Worked examples
 
 - `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation

@@ -25,6 +25,24 @@ export interface ModuleDeclaration {
   /** Modules this one cannot stand without. */
   readonly requires?: readonly string[];
   /**
+   * A module that is never off.
+   *
+   * People are not a bolt-on for a grounds app, or a rota, or anything else
+   * several people use: an installation without people is a household of one,
+   * which is a graph with no user NODES rather than a disabled module. An app
+   * in that position had two options, both bad — drop the module, which draws
+   * the installation for everybody and loses the thing the module is for, or
+   * carry a permanent `module-edge-leak` warning for every edge the domain
+   * points at a person and hope nobody stops reading them.
+   *
+   * A warning that can only ever be acknowledged costs the checker its
+   * authority on the warnings that matter, so the declaration can say the
+   * thing that makes the question moot: this cannot be off, so no line
+   * dangles. `resolveModules` keeps it on whatever the enabled set says, and
+   * `graview check` skips the leak warning for edges reaching into it.
+   */
+  readonly required?: boolean;
+  /**
    * Who the module's kinds are drawn for. `always` (the default) is every
    * seat; `admin` keeps them out of the picture until a seat that may run
    * one of the module's acts asks to see them — the installation's own
@@ -80,6 +98,8 @@ export function resolveModules(
     for (const required of modules[name]?.requires ?? []) turnOn(required);
   };
   for (const name of enabled) turnOn(name);
+  /* A module that declares itself required is on whatever the config says. */
+  for (const [name, module] of Object.entries(modules)) if (module.required) turnOn(name);
 
   const disabledKinds = new Set<string>();
   const disabledMutations = new Set<string>();
