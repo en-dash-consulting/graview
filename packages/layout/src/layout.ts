@@ -1032,7 +1032,18 @@ export function layout<S extends AnySchema>(
        * and "PLAYERS" drawn as "FIXTURESPLAYERS". The offset is a depth cue;
        * it does not have to cost the thing it is a cue about.
        */
-      const step = 0.86;
+      /*
+       * AND THE STEP HAS TO CLEAR THE PLANE'S OWN SHRINK.
+       *
+       * A fan is laid out in layout units and DRAWN at the kinds plane's
+       * scale, about each card's centre — so the drawn gap between two
+       * tucks is `step − scale` of a card. At 0.86 against a plane drawn at
+       * 0.78 that was eight per cent of air; drawn at 0.9 so the words can
+       * be read, the same 0.86 became six pixels of one card sitting on the
+       * next, and a pile that covers its neighbour's label is the thing
+       * this number was lowered to stop.
+       */
+      const step = 0.98;
       const roomy = contextSize.width * NESTED;
       /*
        * Never smaller than the card's own content.
@@ -1052,9 +1063,19 @@ export function layout<S extends AnySchema>(
        * check counted the pile as deliberate. A tuck that leaves its
        * parent's ground is not tucked behind anything.
        */
+      /*
+       * The parent's own ground, and not the air beside it.
+       *
+       * This allowed the fan `parent.width + gap`, and the gap is not spare
+       * room — it is the space that keeps one district off the next. With
+       * the kinds plane drawn at 78% the spill fitted anyway; drawn at 90%
+       * so its words can be read, the outermost tuck reached into the
+       * neighbour and the audit counted the two as one pile. A tuck that
+       * leaves its parent's ground is not tucked behind anything.
+       */
       const width = Math.max(
         TUCK_MIN_WIDTH,
-        Math.min(roomy, (parent.width + opts.gap) / (step * (count - 1) + 1)),
+        Math.min(roomy, parent.width / (step * (count - 1) + 1)),
       );
       const height = Math.max(
         TUCK_MIN_HEIGHT,

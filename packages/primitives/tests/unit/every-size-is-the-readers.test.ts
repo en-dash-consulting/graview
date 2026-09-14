@@ -58,7 +58,18 @@ describe("every size is the reader's to change", () => {
          * Both spellings: the stylesheet's `font-size: 10px` and a
          * component's `fontSize: 12.5`, which React writes as pixels.
          */
-        if (/font-size:\s*[0-9.]+px/.test(line) || /fontSize:\s*[0-9]/.test(line)) {
+        /*
+         * A number ANYWHERE in the value, not only straight after the
+         * colon: `fontSize: nested ? 10.5 : 13` is two pixel sizes and the
+         * first spelling of this test walked straight past it, which is how
+         * a district's own name in the shelf stayed thirteen pixels while
+         * everything around it doubled. Quoted values are the answer, so
+         * they are removed before looking.
+         */
+        const said = line.includes("fontSize:")
+          ? line.slice(line.indexOf("fontSize:")).replace(/"[^"]*"|'[^']*'|`[^`]*`/g, "")
+          : "";
+        if (/font-size:\s*[0-9.]+px/.test(line) || /^fontSize:[^,}]*[0-9]/.test(said)) {
           offenders.push(`${relative(packages, path)}:${index + 1} ${line.trim().slice(0, 70)}`);
         }
       }

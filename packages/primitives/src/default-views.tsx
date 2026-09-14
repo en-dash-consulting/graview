@@ -338,7 +338,14 @@ export function registerDefaultViews<S extends AnySchema>(
       const name = (
         <span
           style={{
-            fontSize: nested ? 10.5 : 13,
+            /*
+             * A DISTRICT'S NAME IS READ, not glanced at. Thirteen pixels
+             * before the kinds plane's own recession put it on the screen at
+             * ten, and the kind above it at under eight — small enough that
+             * the bottom of the picture was a row of grey marks rather than
+             * a map of the domain.
+             */
+            fontSize: nested ? "0.75rem" : "0.9375rem",
             lineHeight: 1.25,
             letterSpacing: "0.05em",
             textTransform: "uppercase",

@@ -140,7 +140,7 @@ export function ReachView<S extends AnySchema>({ label, fidelity, mode }: ViewPr
                         textAlign: "center",
                         borderTop: "1px solid var(--graview-edge)",
                         color: cell.may === "no" ? "var(--graview-ink-faint)" : "var(--graview-accent)",
-                        fontSize: cell.may === "no" ? 14 : 13,
+                        fontSize: cell.may === "no" ? "0.875rem" : "0.8125rem",
                       }}
                     >
                       {mark(cell.may)}

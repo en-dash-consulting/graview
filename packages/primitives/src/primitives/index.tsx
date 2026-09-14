@@ -173,7 +173,17 @@ export function Panel({
         </span>
       ) : null}
       {title === undefined ? null : (
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+        /*
+          * THE HEADING WRAPS RATHER THAN RUNNING OFF THE EDGE.
+          *
+          * Both halves of this row are sized in `rem` — as everything here
+          * now is — so a reader on Largest doubles them, and on a phone
+          * "The rotation · 2026–2029" reached eight pixels past the screen.
+          * A row that cannot fit its own words on one line puts the second
+          * half on the next one; nothing is lost and nothing hangs off the
+          * side. The same answer the bar gives at the same width.
+          */
+        <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: 8, minWidth: 0 }}>
           {tone === "warning" ? (
             <span aria-hidden="true" title="Implicated in a problem" style={{ color: "var(--graview-warn)", flex: "0 0 auto" }}>
               ⚠
@@ -192,10 +202,13 @@ export function Panel({
                */
               fontFamily: "var(--graview-font-display, inherit)",
               // A document's heading, not a card's label.
-              fontSize: page ? 25 : 15,
+              fontSize: page ? "1.5625rem" : "0.9375rem",
               lineHeight: page ? 1.15 : 1.25,
               fontWeight: page ? 600 : 560,
               letterSpacing: page ? "-0.012em" : "0.005em",
+              // A long title gives ground before the row does.
+              minWidth: 0,
+              overflowWrap: "anywhere",
             }}
           >
             {title}
@@ -207,6 +220,8 @@ export function Panel({
                 fontSize: "0.6875rem",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
+                minWidth: 0,
+                overflowWrap: "anywhere",
                 ...FAINT_TEXT,
               }}
             >
@@ -216,7 +231,7 @@ export function Panel({
         </div>
       )}
       {subtitle === undefined ? null : (
-        <div style={{ fontSize: page ? 14.5 : 13, lineHeight: 1.5, ...MUTED_TEXT }}>
+        <div style={{ fontSize: page ? "0.90625rem" : "0.8125rem", lineHeight: 1.5, ...MUTED_TEXT }}>
           {subtitle}
         </div>
       )}

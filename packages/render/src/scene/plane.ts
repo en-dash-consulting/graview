@@ -49,15 +49,23 @@ export type Scheme = "light" | "dark";
  */
 export const LIGHT_PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
   0: { scale: 1, blur: 0, falloff: 0, shadow: 0.16, fidelity: "full" },
-  1: { scale: 0.85, blur: 0.3, falloff: 0.26, shadow: 0.12, fidelity: "summary" },
+  1: { scale: 0.95, blur: 0.3, falloff: 0.26, shadow: 0.12, fidelity: "summary" },
   /*
    * Depth comes from BLUR AND FALLOFF, not from shrinking.
    *
    * Pushing the scale to 0.6 did separate the planes and made the strip
    * illegible — ten cards reading "P…", "REA…", "S…". A map you cannot read
    * is not a map. The recession is carried by the atmosphere instead.
+   *
+   * 0.78 was still shrinking, and still too much: the layout allots each
+   * district a slot and the renderer drew it at 78% of it, so a name set at
+   * thirteen pixels reached the screen at ten and its kind at under eight.
+   * That is under every floor this project holds a control to, and it is a
+   * floor the reader's own text size could not lift either — the shrink
+   * came after it. The planes keep a shrink small enough to read as depth
+   * and no longer small enough to cost a word its legibility.
    */
-  2: { scale: 0.78, blur: 0.3, falloff: 0.34, shadow: 0.07, fidelity: "glyph" },
+  2: { scale: 0.9, blur: 0.3, falloff: 0.34, shadow: 0.07, fidelity: "glyph" },
 };
 
 export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
@@ -67,14 +75,14 @@ export const PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
   // Plane 1 recedes but stays READABLE — its job is to be looked at next,
   // not to be atmosphere. Enough separation to read as further away, little
   // enough that a summary view can still be read.
-  1: { scale: 0.85, blur: 0.45, falloff: 0.18, shadow: 0.24, fidelity: "summary" },
+  1: { scale: 0.95, blur: 0.45, falloff: 0.18, shadow: 0.24, fidelity: "summary" },
   // Plane 2 is context, not content. It should register as presence and
   // count, and reward a glance rather than a read.
   //
   // Blurrier than plane 1, necessarily: recession has to be monotonic or the
   // depth cue inverts and the furthest plane reads as the nearest. This was
   // briefly 0.6 against plane 1's 0.7, which `frame-plan.test.ts` caught.
-  2: { scale: 0.78, blur: 0.45, falloff: 0.26, shadow: 0.14, fidelity: "glyph" },
+  2: { scale: 0.9, blur: 0.45, falloff: 0.26, shadow: 0.14, fidelity: "glyph" },
 };
 
 export function styleFor(plane: number, scheme: Scheme = "dark"): PlaneStyle {
