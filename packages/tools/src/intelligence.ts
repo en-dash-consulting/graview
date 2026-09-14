@@ -28,6 +28,91 @@ export interface ProposedCall {
   readonly why?: string;
 }
 
+/**
+ * THE FIRST WHOLE JSON OBJECT IN AN ANSWER, or nothing.
+ *
+ * Models fence code, apologise first, explain afterwards and — often
+ * enough to matter — close one brace too many. Taking everything between
+ * the first `{` and the last `}` swallowed the extra, `JSON.parse` threw,
+ * and the caller fell back to showing the person the raw answer: a chat
+ * bubble containing `{"say": "Yes", "proposals": [...]}}`, which is the
+ * seat handing over its own plumbing.
+ *
+ * Scanning for the BALANCED close instead reads the object the model meant
+ * and ignores whatever it typed after it. Strings and their escapes are
+ * respected, or a brace inside a description ends the object early.
+ */
+export function firstJsonObject(answer: string): unknown {
+  const start = answer.indexOf("{");
+  if (start === -1) return undefined;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let at = start; at < answer.length; at++) {
+    const char = answer[at]!;
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === "{") depth += 1;
+    else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        try {
+          return JSON.parse(answer.slice(start, at + 1));
+        } catch {
+          return undefined;
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * A NAME IS NOT AN ID, and a model will hand you a name.
+ *
+ * Asked to add a field to Meal, a model answers `{"kind": "Meal"}` — the
+ * word on the screen rather than the node's id — and the store refuses it
+ * for the arguments, in zod's words, under a struck-through line. That is
+ * a lookup, not a guess: where EXACTLY ONE node of a kind the argument
+ * accepts carries that label, the label means that node. Where two do, or
+ * none, the value is left exactly as it came and the form asks.
+ */
+export function resolveProposal<S extends AnySchema>(
+  store: Store<S>,
+  proposal: ProposedCall,
+): ProposedCall {
+  let mutation;
+  try {
+    mutation = store.mutation(proposal.mutation);
+  } catch {
+    return proposal;
+  }
+  const args: Record<string, unknown> = { ...proposal.args };
+  let moved = false;
+  for (const field of formFields((mutation as { input?: unknown }).input)) {
+    if (field.control !== "node") continue;
+    const said = args[field.name];
+    if (typeof said !== "string" || said.length === 0) continue;
+    if (store.graph.getNode(said)) continue;
+    const wanted = said.trim().toLowerCase();
+    const found = [...store.graph.allNodes()].filter(
+      (node) =>
+        (field.kinds.includes("*") || field.kinds.includes(node.kind as string)) &&
+        labelOf(store.schema.tryDefinition(node.kind as string), node as never).trim().toLowerCase() === wanted,
+    );
+    if (found.length === 1) {
+      args[field.name] = found[0]!.id;
+      moved = true;
+    }
+  }
+  return moved ? { ...proposal, args } : proposal;
+}
+
 /** A proposal as the store's own call shape, ready for apply/preview. */
 export function toCall(proposal: ProposedCall): MutationCall {
   return { name: proposal.mutation, args: { ...proposal.args } };

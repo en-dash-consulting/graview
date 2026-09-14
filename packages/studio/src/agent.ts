@@ -109,18 +109,33 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
      */
     const named = (kind: string, within: string = said): Node | undefined => {
       const hay = squeeze(within);
-      return all(kind)
-        .map((node) => ({
-          node,
-          hit: [label(node), String(node["plural"] ?? ""), String(node["title"] ?? "")]
-            .filter(Boolean)
-            .flatMap(forms)
-            .filter((form) => form.length >= 3 && hay.includes(form))
-            .sort((a, b) => b.length - a.length)[0],
-        }))
-        .filter((found): found is { node: Node; hit: string } => found.hit !== undefined)
-        .sort((a, b) => b.hit.length - a.hit.length)[0]?.node;
+      /*
+       * THE EARLIEST NAME WINS, AND ITS OWN NAME BEATS ITS PLURAL.
+       *
+       * Longest-match alone read "Add details to Meal. The name of the food
+       * and the number of people it can feed" as a field on USER — because
+       * the user kind's plural is "People", "people" is inside "number of
+       * people", and six letters beat four. The kind this sentence is about
+       * is the one it says FIRST after pointing at it; a plural buried in a
+       * description of something else is not a subject.
+       */
+      const hits = all(kind).flatMap((node) => {
+        const said = [
+          { text: label(node), rank: 0 },
+          { text: String(node["title"] ?? ""), rank: 0 },
+          { text: String(node["plural"] ?? ""), rank: 1 },
+        ].filter((one) => one.text.length > 0);
+        const found = said
+          .flatMap((one) => forms(one.text).map((form) => ({ form, rank: one.rank })))
+          .filter(({ form }) => form.length >= 3 && hay.includes(form))
+          .map(({ form, rank }) => ({ node, at: hay.indexOf(form), length: form.length, rank }))
+          .sort((a, b) => a.at - b.at || a.rank - b.rank || b.length - a.length);
+        return found.length > 0 ? [found[0]!] : [];
+      });
+      return hits.sort((a, b) => a.at - b.at || a.rank - b.rank || b.length - a.length)[0]?.node;
     };
+    /** The clause a phrase points at, cut at the first sentence end. */
+    const clause = (phrase: string | undefined): string => (phrase ?? "").split(/[.;\n]/)[0] ?? "";
 
     // ------------------------------------------------------------ figures
     /*
@@ -224,37 +239,6 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
       );
     }
 
-    // ----------------------------------------------- a field, said in words
-    /*
-     * "add a due date to tasks" — the shape a person actually says. The
-     * kind is named at the end, the field in the middle, and the type is
-     * whatever the name implies. Optional unless the person says otherwise:
-     * a required field added to a kind that already has records is a
-     * migration nobody asked for.
-     */
-    const adding = /^\s*(add|give|put)\b/.test(asked) && /\b(to|on|for)\b/.test(asked);
-    if (adding) {
-      const between = /\b(?:add|give|put)\b\s+(?:an?\s+|the\s+)?(.+?)\s+\b(?:to|on|for)\b\s*(.*)$/i.exec(text);
-      const field = between?.[1]?.trim();
-      // The kind is what comes AFTER "to", so a field whose own name says a
-      // kind ("a volunteer count") does not move the field onto it.
-      const kind = named("kind", between?.[2] ?? said) ?? named("kind");
-      if (kind && field && !/\b(edge|relation|tie|act|rule|role)\b/i.test(field)) {
-        const type = typeFromName(field);
-        const required = /\brequired\b|\bmust\b|\balways\b/.test(asked);
-        return grounded(
-          `"${field}" reads as ${type === "text" ? "a long text" : `a ${type}`}, on ${label(kind)}${required ? ", required" : ", optional so the records that already exist stay valid"}. Check it below before you keep it.`,
-          [
-            {
-              mutation: "add-field",
-              args: { kind: kind.id, label: field, type, required },
-              why: `you asked for "${field}" on ${label(kind)}`,
-            },
-          ],
-        );
-      }
-    }
-
     // --------------------------------- a role or a kind, named in words
     /*
      * "add a new Role for Participant" — and it must be THE FLOOR that
@@ -301,6 +285,103 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
         return grounded(
           `A new kind, "${called}", with a name to be called by. Check it below before you keep it.`,
           [{ mutation: "add-kind", args: { label: called }, why: `you asked for a ${called} kind` }],
+        );
+      }
+    }
+
+    // ------------------------------------------------- a tie, said in words
+    /*
+     * "Attach Meals to Shifts" — which the floor did not know at all, so the
+     * turn fell through to a model, which proposed `add-edge` with no kind
+     * and no label and earned a validation refusal in zod's own words.
+     *
+     * Which end declares it is a real decision and the seat must not hide
+     * that it made one: a shift HAS meals, so the tie is declared on the
+     * shift and points at the meal. The reply says so, and the proposal is
+     * editable before it is kept.
+     */
+    const tying =
+      /\b(attach|link|connect|relate|tie)\b.*\b(to|onto|with)\b/.test(asked) ||
+      /\b(has|have|holds?|carr(?:y|ies))\b\s+(?:many\s+|some\s+|a\s+|an\s+)?/.test(asked);
+    if (tying && !question) {
+      const joined = /\b(?:attach|link|connect|relate|tie)\b\s+(.+?)\s+\b(?:to|onto|with)\b\s*(.*)$/i.exec(text);
+      const owning = /^\s*(?:a|an|each|every|the)?\s*(.+?)\s+\b(?:has|have|holds|hold|carries|carry)\b\s+(?:many\s+|some\s+|a\s+|an\s+)?(.*)$/i.exec(text);
+      // "attach A to B" hangs the tie on B; "a B has A" already says B first.
+      const from = joined ? named("kind", clause(joined[2])) : owning ? named("kind", clause(owning[1])) : undefined;
+      const to = joined ? named("kind", clause(joined[1])) : owning ? named("kind", clause(owning[2])) : undefined;
+      if (from && to) {
+        const plural = String(to["plural"] ?? "") || `${label(to)}s`;
+        return grounded(
+          `A tie declared on ${label(from)}, pointing at ${label(to)} — a ${label(from)} has ${plural.toLowerCase()}. Change any of it below before you keep it.`,
+          [
+            {
+              mutation: "add-edge",
+              args: {
+                kind: from.id,
+                to: to.id,
+                label: plural.toLowerCase(),
+                description: `its ${plural.toLowerCase()}`,
+                inverse: `the ${label(from)} it is on`,
+                cardinality: "many",
+              },
+              why: `you asked to tie ${label(to)} to ${label(from)}`,
+            },
+          ],
+        );
+      }
+      if (joined || owning) {
+        return grounded(
+          `Say both kinds by name and I will propose the tie — there ${all("kind").length === 1 ? "is" : "are"} ${list(all("kind").map((one) => label(one)))}.`,
+        );
+      }
+    }
+
+    // ----------------------------------------------- a field, said in words
+    /*
+     * "add a due date to tasks" — the shape a person actually says. The
+     * kind is named at the end, the field in the middle, and the type is
+     * whatever the name implies. Optional unless the person says otherwise:
+     * a required field added to a kind that already has records is a
+     * migration nobody asked for.
+     */
+    const adding = /^\s*(add|give|put)\b/.test(asked) && /\b(to|on|for)\b/.test(asked);
+    if (adding) {
+      const between = /\b(?:add|give|put)\b\s+(?:an?\s+|the\s+)?(.+?)\s+\b(?:to|on|for)\b\s*(.*)$/i.exec(text);
+      const field = between?.[1]?.trim();
+      /*
+       * The kind is what comes AFTER "to", read no further than the end of
+       * that sentence: everything after the full stop is a description of
+       * the FIELD, and letting it name the kind put "details" on the wrong
+       * one entirely.
+       */
+      const kind = named("kind", clause(between?.[2]));
+      if (!kind && field && between?.[2]) {
+        /*
+         * AND WHEN THE KIND IT POINTS AT IS NOT ONE, IT SAYS SO.
+         *
+         * Reaching past the clause for any kind name anywhere in the
+         * sentence is how "add details to Meal. The name of the food and
+         * the number of people it can feed" put a field on USER: no kind
+         * called Meal existed, and "people" is the user kind's plural.
+         * Guessing a subject from a description of something else is worse
+         * than asking.
+         */
+        return grounded(
+          `There is no kind called "${clause(between[2]).trim()}". There ${all("kind").length === 1 ? "is" : "are"} ${list(all("kind").map((one) => label(one)))} — or ask me to add it first.`,
+        );
+      }
+      if (kind && field && !/\b(edge|relation|tie|act|rule|role)\b/i.test(field)) {
+        const type = typeFromName(field);
+        const required = /\brequired\b|\bmust\b|\balways\b/.test(asked);
+        return grounded(
+          `"${field}" reads as ${type === "text" ? "a long text" : `a ${type}`}, on ${label(kind)}${required ? ", required" : ", optional so the records that already exist stay valid"}. Check it below before you keep it.`,
+          [
+            {
+              mutation: "add-field",
+              args: { kind: kind.id, label: field, type, required },
+              why: `you asked for "${field}" on ${label(kind)}`,
+            },
+          ],
         );
       }
     }

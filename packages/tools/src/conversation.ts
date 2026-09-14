@@ -9,7 +9,13 @@ import {
   type FormField,
   type Store,
 } from "@graview/core";
-import { validateProposals, type Completion, type ProposedCall } from "./intelligence.js";
+import {
+  firstJsonObject,
+  resolveProposal,
+  validateProposals,
+  type Completion,
+  type ProposedCall,
+} from "./intelligence.js";
 
 /**
  * A CONVERSATION over the same seam everything else uses.
@@ -524,16 +530,41 @@ export function llmResponder<S extends AnySchema>(options: {
       .filter(Boolean)
       .join("\n\n");
     const answer = await options.complete(prompt);
-    const match = answer.match(/\{[\s\S]*\}/);
-    if (!match) return { say: answer.trim() || "…", proposals: [] };
-    try {
-      const parsed = JSON.parse(match[0]) as { say?: string; proposals?: ProposedCall[] };
+    const parsed = firstJsonObject(answer) as { say?: string; proposals?: ProposedCall[] } | undefined;
+    /*
+     * A PERSON IS NEVER SHOWN THE PLUMBING.
+     *
+     * The contract is JSON, and the old fallback put the raw answer in the
+     * bubble when it would not parse — so a model that closed one brace too
+     * many produced a chat message reading `{"say": "Yes", "proposals":
+     * [{"mutation": "add-field", …}]}}`. `firstJsonObject` reads the object
+     * the model meant; where there is no object at all, a model that was
+     * asked for JSON and wrote prose is answering in the wrong shape, and
+     * saying so is better than pasting it.
+     */
+    if (!parsed || typeof parsed !== "object") {
+      const prose = answer.trim();
+      const looksLikeJson = prose.startsWith("{") || prose.startsWith("[");
       return {
-        say: typeof parsed.say === "string" && parsed.say.length > 0 ? parsed.say : "…",
-        proposals: validateProposals(store, parsed.proposals ?? [], options.may),
+        say:
+          prose.length > 0 && !looksLikeJson
+            ? prose
+            : "The model answered in a shape I could not read. Ask again, or try a different one from the gear.",
+        proposals: [],
       };
-    } catch {
-      return { say: answer.trim(), proposals: [] };
     }
+    return {
+      say: typeof parsed.say === "string" && parsed.say.length > 0 ? parsed.say : "…",
+      /*
+       * And a model names things the way a person does — "Meal", not
+       * `declared:meal` — so a label that means exactly one node is read as
+       * that node before the gate sees it.
+       */
+      proposals: validateProposals(
+        store,
+        (parsed.proposals ?? []).map((proposal) => resolveProposal(store, proposal)),
+        options.may,
+      ),
+    };
   };
 }

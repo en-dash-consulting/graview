@@ -1,4 +1,4 @@
-import { figureSvg, type AnySchema, type Finding, type MutationCall } from "@graview/core";
+import { figureSvg, formFields, humaniseField, labelOf, type AnySchema, type Finding, type FormField, type Store } from "@graview/core";
 import { useGraview } from "@graview/react";
 import { IntelligenceSettings } from "@graview/primitives";
 import {
@@ -7,15 +7,15 @@ import {
   describeIntelligence,
   describeProposal,
   loadIntelligenceConfig,
+  resolveProposal,
   saveIntelligenceConfig,
-  toCall,
   type ChatReply,
   type IntelligenceConfig,
   type LocalStatus,
   type ProposedCall,
   type Responder,
 } from "@graview/tools";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { studioResponder } from "./agent.js";
 import type { StudioSchema } from "./meta.js";
 import type { Studio } from "./studio.js";
@@ -51,7 +51,8 @@ type Verdict =
 
 interface Offer {
   readonly proposal: ProposedCall;
-  readonly call: MutationCall;
+  /** What would actually be applied — the person's to correct before it is. */
+  readonly args: Record<string, unknown>;
   readonly verdict: Verdict;
   readonly said: string;
   state: "open" | "kept" | "discarded";
@@ -125,39 +126,89 @@ export function StudioAgentPanel({
      * declaration that is already failing must not make every proposal
      * unkeepable, so what condemns a change is the errors it ADDS.
      */
-    const before = studio.check().errors;
     const offers: Offer[] = reply.proposals.map((proposal) => {
-      const call = toCall(proposal);
-      const would = studio.would(call);
-      const verdict: Verdict = would.ok
-        ? {
-            ok: true,
-            errors: would.check.errors,
-            warnings: would.check.warnings,
-            findings: would.check.findings.slice(0, 4),
-            breaks: would.check.errors > before,
-          }
-        : { ok: false, reason: would.reason };
-      return { proposal, call, verdict, said: describeProposal(studio.store as never, proposal), state: "open" };
+      /*
+       * A model names things the way a person does — "Meal", not
+       * `declared:meal`. Reading a label that means exactly one node as that
+       * node is what turns a validation refusal into a working proposal.
+       */
+      const resolved = resolveProposal(studio.store as never, proposal);
+      const args = { ...resolved.args };
+      return { proposal: resolved, args, verdict: judge(args, resolved), said: describeProposal(studio.store as never, resolved), state: "open" };
     });
     setTurns((current) => [...current, { role: "seat", text: reply.say, offers }]);
     setBusy(false);
   };
 
-  const settle = (at: number, offerAt: number, state: Offer["state"], say: string) => {
+  /*
+   * WHAT THE CHECKER WOULD SAY, for the arguments as they now stand.
+   *
+   * Recomputed on every edit rather than once on arrival: the whole point
+   * of letting a person correct a proposal is that the verdict has to be
+   * about what they corrected it to.
+   */
+  const judge = (args: Record<string, unknown>, proposal: ProposedCall): Verdict => {
+    const before = studio.check().errors;
+    const would = studio.would({ name: proposal.mutation, args: { ...args } });
+    if (!would.ok) return { ok: false, reason: would.reason };
+    /*
+     * ONLY WHAT THIS CHANGE BROUGHT. The declaration has its own standing
+     * findings — rota ships one about a role that may run nothing — and
+     * showing the first of them under a proposal reads as a verdict ON the
+     * proposal. What a person needs to know is what they are ADDING.
+     */
+    const standing = new Set(studio.check().findings.map((finding) => `${finding.code}:${finding.where}`));
+    const added = would.check.findings.filter((finding) => !standing.has(`${finding.code}:${finding.where}`));
+    return {
+      ok: true,
+      errors: would.check.errors,
+      warnings: would.check.warnings,
+      findings: added.slice(0, 4),
+      breaks: would.check.errors > before,
+    };
+  };
+
+  const edit = (at: number, offerAt: number, name: string, value: unknown) => {
+    setTurns((current) =>
+      current.map((turn, index) =>
+        index === at && turn.offers
+          ? {
+              ...turn,
+              offers: turn.offers.map((offer, o) => {
+                if (o !== offerAt) return offer;
+                const args = { ...offer.args, [name]: value };
+                return {
+                  ...offer,
+                  args,
+                  verdict: judge(args, offer.proposal),
+                  said: describeProposal(studio.store as never, { ...offer.proposal, args }),
+                };
+              }),
+            }
+          : turn,
+      ),
+    );
+  };
+
+  /*
+   * ONE LINE PER DECISION. Settling used to mark the offer AND append a
+   * turn saying the same thing, so keeping a field wrote "Kept — Add a
+   * field" twice, one above the other, in two different voices.
+   */
+  const settle = (at: number, offerAt: number, state: Offer["state"], say?: string) => {
     setTurns((current) => [
       ...current.map((turn, index) =>
         index === at && turn.offers
           ? { ...turn, offers: turn.offers.map((offer, o) => (o === offerAt ? { ...offer, state } : offer)) }
           : turn,
       ),
-      { role: "seat" as const, text: say },
+      ...(say ? [{ role: "seat" as const, text: say }] : []),
     ]);
   };
 
   const keep = (at: number, offerAt: number, offer: Offer) => {
     const result = studio.propose(
-      offer.call,
+      { name: offer.proposal.mutation, args: { ...offer.args } },
       { kind: "agent", id: "studio-agent", session: "ui", ...(principal.roles ? { roles: principal.roles } : {}) },
       offer.proposal.why ?? `you asked for it in words`,
     );
@@ -165,7 +216,7 @@ export function StudioAgentPanel({
       settle(at, offerAt, "open", `Refused: ${result.reason}`);
       return;
     }
-    settle(at, offerAt, "kept", `Kept — ${offer.said}. It is an op under the agent's name; undo takes it back.`);
+    settle(at, offerAt, "kept");
   };
 
   return (
@@ -292,8 +343,10 @@ export function StudioAgentPanel({
                       key={offerAt}
                       offer={offer}
                       testId={testId}
+                      store={studio.store}
+                      onEdit={(name, value) => edit(at, offerAt, name, value)}
                       onKeep={() => keep(at, offerAt, offer)}
-                      onDiscard={() => settle(at, offerAt, "discarded", `Discarded — ${offer.said}. The declaration is as it was.`)}
+                      onDiscard={() => settle(at, offerAt, "discarded")}
                     />
                   ))}
                 </li>
@@ -337,22 +390,36 @@ export function StudioAgentPanel({
 }
 
 /**
- * ONE PROPOSAL, WITH THE CHECKER'S VERDICT ON IT.
+ * ONE PROPOSAL, AS THE ACT'S OWN FORM, WITH THE CHECKER ON IT.
  *
- * A change that would break the build is a struck line and a sentence, not
- * a button: the whole point of checking before offering is that nobody is
- * asked to keep something that cannot work. Everything else says what the
- * checker found — including warnings, which are a reason to think rather
- * than a reason to refuse — and offers both answers.
+ * It was a sentence and a button, and that made the conversation the only
+ * way to correct anything: asked to add a field to Meal and told the field
+ * would land on "user", a person's only move was to argue with a chat and
+ * hope. Hoping is not an interface.
+ *
+ * So a proposal is the act's own arguments, drawn from the same
+ * `formFields` the actions strip draws — a picker for a kind, a choice for
+ * a type, a box for a name — filled with what was proposed and editable
+ * before it is kept. The checker re-runs on every edit, so the verdict is
+ * about what you are actually about to do; a change that would add an error
+ * says so and cannot be kept.
+ *
+ * This is also what makes a half-right answer USEFUL. A model that names
+ * the wrong kind, or leaves an argument out, now costs one press to fix
+ * rather than a fresh sentence and another turn.
  */
-function Offered({
+function Offered<S extends AnySchema>({
   offer,
+  store,
   testId,
+  onEdit,
   onKeep,
   onDiscard,
 }: {
   readonly offer: Offer;
+  readonly store: Store<S>;
   readonly testId: string;
+  readonly onEdit: (name: string, value: unknown) => void;
   readonly onKeep: () => void;
   readonly onDiscard: () => void;
 }) {
@@ -361,36 +428,80 @@ function Offered({
     return (
       <span data-testid={`${testId}-settled`} data-state={offer.state} style={faint}>
         {offer.state === "kept" ? "Kept" : "Discarded"} — {offer.said}
+        {offer.state === "kept" ? " · undo takes it back" : ""}
       </span>
     );
   }
-  if (!offer.verdict.ok) {
-    return (
-      <span data-testid={`${testId}-refused`} style={faint}>
-        <s>{offer.said}</s> — the store refuses it: {offer.verdict.reason}
-      </span>
-    );
-  }
-  if (offer.verdict.breaks) {
-    const errors = offer.verdict.findings.filter((finding) => finding.severity === "error");
-    return (
-      <span data-testid={`${testId}-refused`} style={faint}>
-        <s>{offer.said}</s> — that would fail the build:{" "}
-        {errors.length > 0 ? `${errors[0]!.where} — ${errors[0]!.message}` : `${offer.verdict.errors} errors`}
-      </span>
-    );
-  }
+
+  const declared = store.allMutations().find((one) => one.name === offer.proposal.mutation);
+  const fields = declared ? formFields(declared.input) : [];
+  const breaks = offer.verdict.ok && offer.verdict.breaks;
+  const refused = !offer.verdict.ok;
+  /*
+   * A REFUSAL NAMES THE ARGUMENT, not the parser. The store answers with
+   * zod's own sentence — `label: Invalid input: expected string, received
+   * undefined` — which tells a person nothing they can act on. The form
+   * below is what they act on, so the line above it says which of its boxes
+   * is the problem.
+   */
+  const wanted = refused
+    ? fields
+        .filter((field) => !field.optional && (offer.args[field.name] === undefined || offer.args[field.name] === ""))
+        .map((field) => humaniseField(field.name).toLowerCase())
+    : [];
+
   return (
-    <span style={{ display: "grid", gap: 4, justifyItems: "start" }}>
-      <ProposedDrawing offer={offer} />
-      <span data-testid={`${testId}-check`} data-errors={offer.verdict.errors} data-warnings={offer.verdict.warnings} style={faint}>
-        {offer.verdict.warnings === 0
-          ? "The checker finds nothing wrong with it."
-          : `The checker would warn: ${offer.verdict.findings[0]?.message ?? `${offer.verdict.warnings} warnings`}`}
+    <span
+      data-testid={`${testId}-offer`}
+      data-mutation={offer.proposal.mutation}
+      style={{
+        display: "grid",
+        gap: 6,
+        justifySelf: "stretch",
+        padding: 8,
+        borderRadius: 8,
+        border: `1px solid ${breaks || refused ? "var(--graview-warn)" : "var(--graview-edge)"}`,
+        background: "var(--graview-panel)",
+      }}
+    >
+      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <strong style={{ fontSize: "0.78125rem", fontWeight: 550 }}>{declared?.title ?? offer.proposal.mutation}</strong>
+        <ProposedDrawing offer={offer} />
       </span>
+
+      {fields.map((field) => (
+        <Argument
+          key={field.name}
+          field={field}
+          value={offer.args[field.name]}
+          store={store}
+          testId={`${testId}-arg-${field.name}`}
+          onChange={(value) => onEdit(field.name, value)}
+        />
+      ))}
+
+      <span data-testid={`${testId}-check`} data-errors={offer.verdict.ok ? offer.verdict.errors : -1} data-warnings={offer.verdict.ok ? offer.verdict.warnings : -1} style={faint}>
+        {refused
+          ? wanted.length > 0
+            ? `It still needs ${wanted.join(" and ")}.`
+            : `The store will not take it: ${offer.verdict.reason}`
+          : breaks
+            ? `That would fail the build: ${offer.verdict.findings.find((finding) => finding.severity === "error")?.message ?? `${offer.verdict.errors} errors`}`
+            : offer.verdict.findings.length === 0
+              ? "The checker finds nothing wrong with it."
+              : `It would add a warning: ${offer.verdict.findings[0]!.message}`}
+      </span>
+
       <span style={{ display: "flex", gap: 6 }}>
-        <button type="button" data-testid={`${testId}-keep`} onClick={onKeep} title={offer.proposal.why ?? "Keep this change"} style={{ fontSize: "0.75rem" }}>
-          Keep {offer.said}
+        <button
+          type="button"
+          data-testid={`${testId}-keep`}
+          disabled={breaks || refused}
+          onClick={onKeep}
+          title={breaks ? "The checker refuses this one" : (offer.proposal.why ?? "Keep this change")}
+          style={{ fontSize: "0.75rem" }}
+        >
+          Keep
         </button>
         <button type="button" data-testid={`${testId}-discard`} onClick={onDiscard} style={{ fontSize: "0.75rem" }}>
           Discard
@@ -398,6 +509,129 @@ function Offered({
       </span>
     </span>
   );
+}
+
+/**
+ * ONE ARGUMENT, drawn as what it is.
+ *
+ * The same controls the actions strip derives, because they come from the
+ * same declaration: a kind is a picker over the kinds that exist, a type is
+ * its own enum, a flag is a checkbox. Nothing here knows what "kind" or
+ * "type" mean — it reads `formFields` and draws what it is told.
+ */
+function Argument<S extends AnySchema>({
+  field,
+  value,
+  store,
+  testId,
+  onChange,
+}: {
+  readonly field: FormField;
+  readonly value: unknown;
+  readonly store: Store<S>;
+  readonly testId: string;
+  readonly onChange: (value: unknown) => void;
+}) {
+  const label = humaniseField(field.name);
+  const box: React.CSSProperties = {
+    font: "inherit",
+    fontSize: "0.75rem",
+    padding: "3px 6px",
+    minHeight: 24,
+    borderRadius: 6,
+    border: "1px solid var(--graview-edge)",
+    background: "var(--graview-float)",
+    color: "var(--graview-ink)",
+    maxWidth: "100%",
+  };
+  const row = (control: ReactNode) => (
+    <label style={{ display: "grid", gridTemplateColumns: "minmax(0, 5.5rem) minmax(0, 1fr)", alignItems: "center", gap: 6 }}>
+      <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-muted)" }}>{label}</span>
+      {control}
+    </label>
+  );
+
+  if (field.control === "node") {
+    const choices = [...store.graph.allNodes()].filter(
+      (node) => field.kinds.includes("*") || field.kinds.includes(node.kind as string),
+    );
+    return row(
+      <select
+        data-testid={testId}
+        value={typeof value === "string" ? value : ""}
+        onChange={(event) => onChange(event.target.value)}
+        style={box}
+      >
+        <option value="">— choose —</option>
+        {choices.map((node) => (
+          <option key={node.id} value={node.id}>
+            {labelOf(store.schema.tryDefinition(node.kind as string), node as never)}
+          </option>
+        ))}
+      </select>,
+    );
+  }
+  if (field.control === "choice" && field.options) {
+    return row(
+      <select data-testid={testId} value={String(value ?? "")} onChange={(event) => onChange(event.target.value)} style={box}>
+        {field.options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>,
+    );
+  }
+  if (field.control === "boolean") {
+    return row(
+      <input
+        type="checkbox"
+        data-testid={testId}
+        checked={value === true}
+        onChange={(event) => onChange(event.target.checked)}
+        style={{ justifySelf: "start", width: 16, height: 16 }}
+      />,
+    );
+  }
+  if (field.control === "number") {
+    return row(
+      <input
+        type="number"
+        data-testid={testId}
+        value={typeof value === "number" ? value : ""}
+        onChange={(event) => onChange(event.target.value === "" ? undefined : Number(event.target.value))}
+        style={box}
+      />,
+    );
+  }
+  if (field.control === "date") {
+    return row(
+      <input type="date" data-testid={testId} value={typeof value === "string" ? value : ""} onChange={(event) => onChange(event.target.value)} style={box} />,
+    );
+  }
+  if (field.control === "list") {
+    // A list of plain words — an enum's own options, most of the time.
+    const held = Array.isArray(value) ? (value as unknown[]).map(String) : [];
+    return row(
+      <input
+        data-testid={testId}
+        value={held.join(", ")}
+        placeholder="one, two, three"
+        onChange={(event) => {
+          const words = event.target.value.split(",").map((word) => word.trim()).filter(Boolean);
+          onChange(words.length > 0 ? words : undefined);
+        }}
+        style={box}
+      />,
+    );
+  }
+  if (field.control === "text") {
+    return row(
+      <input data-testid={testId} value={typeof value === "string" ? value : ""} onChange={(event) => onChange(event.target.value)} style={box} />,
+    );
+  }
+  // Anything the framework cannot draw is said rather than silently dropped.
+  return row(<span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>{String(value ?? "—")}</span>);
 }
 
 /**

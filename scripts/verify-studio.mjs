@@ -272,28 +272,67 @@ try {
   };
 
   await asked("add a due date to tasks");
-  const theOffer = await page.evaluate(() => ({
-    keep: document.querySelector('[data-testid="studio-agent-keep"]')?.textContent?.trim() ?? null,
-    check: document.querySelector('[data-testid="studio-agent-check"]')?.textContent?.trim() ?? null,
-    errors: document.querySelector('[data-testid="studio-agent-check"]')?.getAttribute("data-errors") ?? null,
-    refused: document.querySelector('[data-testid="studio-agent-refused"]')?.textContent?.trim() ?? null,
-  }));
+  /*
+   * A PROPOSAL IS THE ACT'S OWN FORM, not a sentence and a button: the
+   * arguments are drawn as controls, filled with what was proposed, and the
+   * person corrects them before keeping. So the harness reads the form.
+   */
+  const theOffer = await page.evaluate(() => {
+    const offer = document.querySelector('[data-testid="studio-agent-offer"]');
+    const arg = (name) => document.querySelector(`[data-testid="studio-agent-arg-${name}"]`)?.value ?? null;
+    return {
+      act: offer?.getAttribute("data-mutation") ?? null,
+      kind: arg("kind"),
+      label: arg("label"),
+      type: arg("type"),
+      keep: document.querySelector('[data-testid="studio-agent-keep"]')?.textContent?.trim() ?? null,
+      keepable: document.querySelector('[data-testid="studio-agent-keep"]')?.disabled === false,
+      check: document.querySelector('[data-testid="studio-agent-check"]')?.textContent?.trim() ?? null,
+      errors: document.querySelector('[data-testid="studio-agent-check"]')?.getAttribute("data-errors") ?? null,
+    };
+  });
   const beforeKeeping = await writtenSchemaNow(page);
   report.checks.theCheckerSpeaksBeforeYouKeepAnything = {
     ...theOffer,
     /* Nothing is applied by asking: the declaration is untouched until Keep. */
     untouchedUntilKept: !beforeKeeping.includes("due-date"),
-    ok: theOffer.keep !== null && theOffer.check !== null && theOffer.errors === "0" && !beforeKeeping.includes("due-date"),
+    ok:
+      theOffer.act === "add-field" &&
+      theOffer.kind === "declared:task" &&
+      theOffer.label === "due date" &&
+      theOffer.type === "date" &&
+      theOffer.keepable === true &&
+      theOffer.errors === "0" &&
+      !beforeKeeping.includes("due-date"),
   };
+
+  /* ------------------------------ and a proposal is the person's to correct */
+  /*
+   * The whole reason the arguments are drawn as a form: an answer that is
+   * half right costs one press to fix rather than another sentence and
+   * another turn. Change the name here and the declaration takes THAT.
+   */
+  await page.fill('[data-testid="studio-agent-arg-label"]', "wanted by");
+  await page.waitForTimeout(400);
+  const corrected = await page.evaluate(() => ({
+    label: document.querySelector('[data-testid="studio-agent-arg-label"]')?.value ?? null,
+    errors: document.querySelector('[data-testid="studio-agent-check"]')?.getAttribute("data-errors") ?? null,
+  }));
 
   await page.click('[data-testid="studio-agent-keep"]');
   await page.waitForTimeout(700);
   const afterKeeping = await writtenSchemaNow(page);
   const kept = await verdict(page);
+  report.checks.aProposalIsYoursToCorrectBeforeYouKeepIt = {
+    ...corrected,
+    wroteTheCorrection: afterKeeping.includes("wanted-by"),
+    andNotTheProposal: !afterKeeping.includes("due-date"),
+    ok: corrected.label === "wanted by" && corrected.errors === "0" && afterKeeping.includes("wanted-by") && !afterKeeping.includes("due-date"),
+  };
   report.checks.keepingIsAnOrdinaryOp = {
-    inTheSchema: afterKeeping.includes("due-date"),
+    inTheSchema: afterKeeping.includes("wanted-by"),
     verdict: kept,
-    ok: afterKeeping.includes("due-date") && kept.errors === 0,
+    ok: afterKeeping.includes("wanted-by") && kept.errors === 0,
   };
 
   /* And it is an op like any other: the trail names the agent, undo takes it back. */
@@ -311,8 +350,8 @@ try {
   const afterUndo = await writtenSchemaNow(page);
   report.checks.whatTheAgentProposesIsUndone = {
     trail: trail.slice(0, 3),
-    goneAgain: !afterUndo.includes("due-date"),
-    ok: !afterUndo.includes("due-date") && afterUndo.includes('defineNode("task"'),
+    goneAgain: !afterUndo.includes("wanted-by"),
+    ok: !afterUndo.includes("wanted-by") && afterUndo.includes('defineNode("task"'),
   };
 
   /* ------------------------------------ and closing puts you back in the app */

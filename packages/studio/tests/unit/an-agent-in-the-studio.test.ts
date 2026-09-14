@@ -171,6 +171,45 @@ describe("words become proposed acts, never writes", () => {
     expect(reply.say).toContain("already");
   });
 
+  /**
+   * THE SUBJECT IS WHAT THE SENTENCE POINTS AT, not the longest word in it.
+   *
+   * "Add details to Meal. The name of the food and the number of people it
+   * can feed" put a field on USER: the user kind's plural is "People",
+   * "people" sits inside "number of people", and six letters beat four.
+   */
+  it("reads the kind from the clause that names it, not from a description of something else", async () => {
+    const { reply } = await ask("Add details to shift. The name of the job and the number of volunteers it needs");
+    expect(reply.proposals[0]?.args["kind"]).toBe("declared:shift");
+  });
+
+  it("asks rather than guessing when the kind it points at does not exist", async () => {
+    const { reply } = await ask("Add details to Meal. The name of the food and the number of people it can feed");
+    expect(reply.proposals).toEqual([]);
+    expect(reply.say).toContain("no kind called");
+    // And it says what there IS, so the next sentence can be right.
+    expect(reply.say).toContain("shift");
+  });
+
+  it("proposes a tie, and says which end declares it", async () => {
+    const { studio, reply } = await ask("Attach volunteers to shifts");
+    expect(reply.proposals[0]).toMatchObject({
+      mutation: "add-edge",
+      args: { kind: "declared:shift", to: "declared:volunteer", label: "volunteers", cardinality: "many" },
+    });
+    // Which end is a real decision, and the seat says the one it made.
+    expect(reply.say).toContain("declared on shift");
+    expect(studio.would({ name: "add-edge", args: { ...reply.proposals[0]!.args } }).ok).toBe(true);
+  });
+
+  it("reads a tie out of the way a person actually says it", async () => {
+    const { reply } = await ask("a shift has many volunteers");
+    expect(reply.proposals[0]).toMatchObject({
+      mutation: "add-edge",
+      args: { kind: "declared:shift", to: "declared:volunteer" },
+    });
+  });
+
   it("proposes a rule when somebody says every X needs a Y", async () => {
     const { reply } = await ask("every shift needs a volunteer");
     expect(reply.proposals[0]?.mutation).toBe("add-rule");

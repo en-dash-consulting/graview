@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-14T02:00:50.491Z",
+  "at": "2026-09-14T02:14:00.350Z",
   "engine": "chromium",
   "checks": {
     "theDoorBelongsToWhoeverKeepsTheApp": {
@@ -73,11 +73,22 @@
       "ok": true
     },
     "theCheckerSpeaksBeforeYouKeepAnything": {
-      "keep": "Keep Add a field — task",
+      "act": "add-field",
+      "kind": "declared:task",
+      "label": "due date",
+      "type": "date",
+      "keep": "Keep",
+      "keepable": true,
       "check": "The checker finds nothing wrong with it.",
       "errors": "0",
-      "refused": null,
       "untouchedUntilKept": true,
+      "ok": true
+    },
+    "aProposalIsYoursToCorrectBeforeYouKeepIt": {
+      "label": "wanted by",
+      "errors": "0",
+      "wroteTheCorrection": true,
+      "andNotTheProposal": true,
       "ok": true
     },
     "keepingIsAnOrdinaryOp": {
@@ -91,7 +102,7 @@
     },
     "whatTheAgentProposesIsUndone": {
       "trail": [
-        "studio-agent you asked for \"due date\" on taskundodue-datetask",
+        "studio-agent you asked for \"due date\" on taskundowanted-bytask",
         "you Undo: Add the field urgency to taskundo +1field:task.urgencytask",
         "you Add the field urgency to taskfield:task.urgencytask"
       ],
