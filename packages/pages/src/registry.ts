@@ -88,3 +88,21 @@ export function recordPath(schema: AnySchema, kind: string, id: string): string 
 export function spatialHref(id: string): string {
   return `/#focus=${encodeURIComponent(id)}`;
 }
+
+/**
+ * The spatial stop that shows one NAMED PLACE — a lens, by the name it was
+ * registered under.
+ *
+ * A page that has just drawn three areas wants to link to the map, and could
+ * only ever say "open the scene and press The grounds", because the long form
+ * of that stop needs the aggregate id of the kind behind the picture and a
+ * page has no business knowing how the layout spells one. A place's name is
+ * unique across an app, so naming it is enough: the scene looks it up and
+ * focuses the group it is a picture of.
+ *
+ * `placeSlug(title)` in `@graview/core` turns a registered title into the
+ * name to pass here.
+ */
+export function placeHref(as: string, sceneHref = "/"): string {
+  return `${sceneHref}#view=${encodeURIComponent(as)}`;
+}

@@ -1,5 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import {
+  aggregateId,
   edgeOfSelection,
   fromUrl,
   kindsOf,
@@ -202,7 +203,27 @@ export function UrlSync(): null {
 }
 
 export function useUrlSync(): void {
-  const { view, setView } = useGraview();
+  const { view, setView, views } = useGraview();
+
+  /*
+   * A STOP THAT NAMES A PLACE AND NOT ITS GROUP STILL GOES THERE.
+   *
+   * `#view=grounds-map` is the link a page can actually write: the page knows
+   * the picture it is talking about, not how the layout spells the aggregate
+   * id of the kind behind it. The registry does know — a named place carries
+   * its kind — so the place is looked up here and the group it is a picture
+   * of becomes the focus. Without this the short form lands on the default
+   * view, which is the pasted-link problem one level up.
+   */
+  const settled = useCallback(
+    (state: ViewState): ViewState => {
+      const asked = state.within?.["view"];
+      if (asked === undefined || state.focusId) return state;
+      const place = views.places().find((candidate) => candidate.as === asked);
+      return place ? { ...state, focusId: aggregateId(place.kind) } : state;
+    },
+    [views],
+  );
 
   /*
    * Adopt the fragment on FIRST load, not only on navigation.
@@ -214,7 +235,7 @@ export function useUrlSync(): void {
    */
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const initial = fromUrl(window.location.hash);
+    const initial = settled(fromUrl(window.location.hash));
     // Adopt ANY address that says something — overview, zoom, a selection —
     // not only the focus-shaped ones. A pasted link that does not go where
     // it says is worse than no link.
@@ -227,14 +248,14 @@ export function useUrlSync(): void {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const onPop = () => setView(fromUrl(window.location.hash));
+    const onPop = () => setView(settled(fromUrl(window.location.hash)));
     window.addEventListener("popstate", onPop);
     window.addEventListener("hashchange", onPop);
     return () => {
       window.removeEventListener("popstate", onPop);
       window.removeEventListener("hashchange", onPop);
     };
-  }, [setView]);
+  }, [setView, settled]);
 
   const landed = useRef(false);
   const written = useRef<ViewState | null>(null);

@@ -26,6 +26,20 @@ describe("what counts as travelling", () => {
     expect(adjustment(studio, withWithin(studio, "studio", null))).toBe(false);
   });
 
+  /*
+   * Changing WHICH PICTURE a group is drawn as is travelling — the map and
+   * the regimen are two places over one city, a link can name either, and
+   * Back out of the map has to land on the one you came from rather than on
+   * the stop before the group was ever opened.
+   */
+  it("counts turning a group to another of its pictures", () => {
+    const map = withWithin(at, "view", "the-grounds");
+    expect(adjustment(at, map)).toBe(false);
+    expect(adjustment(map, withWithin(map, "view", "the-regimen"))).toBe(false);
+    /* And the same picture twice is no journey at all — no phantom stop. */
+    expect(adjustment(map, withWithin(map, "view", "the-grounds"))).toBe(true);
+  });
+
   it("counts going somewhere, as it always did", () => {
     expect(adjustment(at, withFocus(at, "aggregate:volunteer"))).toBe(false);
     expect(adjustment(at, { ...at, overview: true })).toBe(false);

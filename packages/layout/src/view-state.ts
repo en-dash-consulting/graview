@@ -166,6 +166,23 @@ export function fromUrl(url: string): ViewState {
     if (!key.startsWith("in.") || value.length === 0) continue;
     within[key.slice(3)] = value;
   }
+  /*
+   * `#view=grounds-map` is the SHORT FORM of `#in.view=grounds-map`, and the
+   * only part of a stop a page can write without knowing how the layout
+   * spells an aggregate's id.
+   *
+   * A page that has just drawn three areas wants to link to the map. The
+   * long form needs the group too — `focus=aggregate:zone&in.view=grounds-map`
+   * — so the page has to know the kind behind the picture and the layout's
+   * own id grammar, and a link that lands on the default view and asks the
+   * person to press a button is the pasted-link problem all over again. Named
+   * places are unique across an app, so naming one is enough: whoever adopts
+   * the stop looks the place up and focuses the group it is a picture of.
+   *
+   * The long form wins when both are written, because it is what toUrl mints.
+   */
+  const shorthand = params.get("view");
+  if (shorthand && shorthand.length > 0 && within["view"] === undefined) within["view"] = shorthand;
   const rawPan = params.get("pan")?.split(",") ?? [];
   const panX = rawPan[0] === undefined ? null : num(rawPan[0]);
   const panY = rawPan[1] === undefined ? null : num(rawPan[1]);

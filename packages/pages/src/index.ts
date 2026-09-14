@@ -1,4 +1,4 @@
-export { createPageRegistry, kindOfSlug, pluralSlug, recordPath, spatialHref } from "./registry.js";
+export { createPageRegistry, kindOfSlug, placeHref, pluralSlug, recordPath, spatialHref } from "./registry.js";
 export type { PageRegistry, PageRegistration, PageType, SurfaceType } from "./registry.js";
 export { kindFacts, rankedRepairs, recordFacts } from "./facts.js";
 export type { KindFacts, RecordFacts, RecordLinkGroup, FactsOptions } from "./facts.js";

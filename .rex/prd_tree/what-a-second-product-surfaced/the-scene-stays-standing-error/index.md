@@ -28,4 +28,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [F-023 · The scene draws past the right edge at 390px](./f-023-the-scene-draws-past-the-right.md) | pending |
 | [F-024 · A scrolling panel has no tab stop](./f-024-a-scrolling-panel-has-no-tab-stop.md) | completed |
 | [F-026 · A view that throws takes the whole scene down](./f-026-a-view-that-throws-takes-the.md) | completed |
-| [F-030 · The scene's URL carries the focus and not the view](./f-030-the-scene-s-url-carries-the.md) | pending |
+| [F-030 · The scene's URL carries the focus and not the view](./f-030-the-scene-s-url-carries-the.md) | completed |

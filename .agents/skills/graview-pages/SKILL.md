@@ -9,9 +9,9 @@ A Graview app has two faces over one store. The scene is the picture. The
 pages face is the same declaration routed as an ordinary web application:
 a home, a list per kind, a record per node, forms for every act, and a
 problems page — derived, then replaceable one surface at a time, all the way
-to a product design of the app's own. This skill is the whole of that ladder,
-and it ends where the framework's own example ends: `apps/seedbed`, chapter
-nine (one page replaced) and chapter thirteen (every surface replaced).
+to a product design of the app's own. The ladder ends where the framework's
+own example does: `apps/seedbed`, chapter nine (one page replaced) and
+chapter thirteen (every surface).
 
 ## What comes for free
 
@@ -76,16 +76,20 @@ Rules for a page at this rung:
 5. **Read permission before drawing an act.** `store.permits({ name, args },
    principal)`, struck through with `verdict.refusal.message` when not ok. A
    form that refuses on submit is the bug this prevents.
-6. **Take the act LIST from the derivation, not from the mutations.**
+6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the
+   scene on one thing; `placeHref(as)` — `/#view=the-grounds`, the title
+   through `placeSlug` — opens it on one named place, group in focus. A link
+   that lands on the default view and says "press The grounds" is the
+   pasted-link problem one rung up.
+7. **Take the act LIST from the derivation, not from the mutations.**
    `recordFacts(store, id, { principal }).actions` is the same `AffordanceSet`
    the scene's strip reads: `affordances` are the acts that can actually act
    here, each with its `args` already decided and its `open` questions left,
    and `withheld` are the ones this seat may not take, with the reason.
-   Filtering `store.allMutations()` yourself looks equivalent and is not: it
-   offers "Take it back" on a record with nothing attached, and a picker
-   with no candidates. A **list** page asks the same question of a kind —
-   `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN
-   it — for the same reason.
+   Filtering `store.allMutations()` looks equivalent and is not: it offers
+   "Take it back" on a record with nothing attached, and a picker with no
+   candidates. A **list** page asks it of a kind instead —
+   `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN it.
 
 ## Rung two: a product design
 
@@ -102,9 +106,7 @@ createPageRegistry<S, PageComponent<S>>(schema)
   // ... every kind
 ```
 
-The shell surface receives `{ context, children }` and frames the routes.
-
-Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, and
+The shell surface receives `{ context, children }`. Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, and
 what makes it finished is not the type — it is that everything a person
 tries there works: the grouping, sort and filter live in `useSearchParams`
 (a list you arranged is a link you can send); a record edits where it is
@@ -135,12 +137,10 @@ What every design must keep doing:
   screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on
   the row. Measure rather than trust: `-ink-faint` fails AA on an 11px
   label, and the accent fails on the warning ground. `node
-  scripts/verify-pages.mjs` runs axe over every route at both widths in both
-  schemes; `apps/todo/scripts/run-a11y.mjs` reads the tree.
-- **Withhold, do not hide, and offer only what can act.**
-  `facts.actions.affordances` and `facts.actions.withheld` — never your own
-  scan of the mutations. Struck through with the policy's own sentence, not
-  dropped.
+  scripts/verify-pages.mjs` runs axe over every route, both widths, both
+  schemes.
+- **Withhold, do not hide.** Rule 7 again, at every surface: struck through
+  with the policy's own sentence rather than dropped.
 
 ## The embed
 
@@ -166,10 +166,10 @@ pnpm build && npx graview check ./dist/domain/app.js   # the declaration is stil
 pnpm test                                               # render every page you registered
 ```
 
-Render each registered page with `PagesApp` and `initialPath` in a test, as
-`apps/seedbed/tests/integration/chapters.test.ts` does for chapter thirteen,
-asserting your own `data-testid`s are there. Then open it: a design that
-passes its tests and reads like an admin panel has not replaced anything.
+Render each registered page with `PagesApp` and `initialPath` in a test —
+`apps/seedbed/tests/integration/chapters.test.ts` does — asserting your own
+`data-testid`s. Then open it: a design that passes its tests and reads like
+an admin panel has not replaced anything.
 
 ## What the check cannot see
 
@@ -178,6 +178,5 @@ passes its tests and reads like an admin panel has not replaced anything.
   sentences must keep them true as the declaration changes.
 - Whether a page still offers everything the seat may do. Listing acts by
   NAME misses the one declared after it was written; scanning the mutations
-  offers acts that cannot act. `facts.actions` is neither, and is the only
-  list that stays right on its own — but only a person can see whether the
-  page gives them room.
+  offers acts that cannot act. `facts.actions` is neither — but only a
+  person can see whether the page gives them room.
