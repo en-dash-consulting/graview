@@ -34,6 +34,12 @@ Read one before writing your own:
 
 3. **Fail loudly on a bad binding.** Throw a named error saying which role and
    what was missing. A lens that renders empty when misbound costs an hour.
+   Loud means THE PANEL SAYS SO, not the application is gone: every view host
+   sits behind an error boundary, so a throw draws the error's own message in
+   the view's place — named with the kind and the view — and leaves the bar,
+   the districts and every other view standing. Give the error a `hint`
+   property and the panel prints it under the message, which is where a
+   sentence about what to bind instead belongs.
 
 4. **Mark every real thing as a target.** Anything standing for a node gets
    `data-graview-pick={id}`. That one attribute is the whole contract: the host

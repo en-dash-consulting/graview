@@ -46,6 +46,7 @@ import { useAnimatedLayout, useTouched } from "./animation.js";
 import { useFlagged, useImplicated, useViolations } from "./hooks.js";
 import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
 import { isDefaultView } from "./view-registry.js";
+import { ViewBoundary } from "./view-boundary.js";
 import { pickedFrom, usePickTargets } from "./picking.js";
 import { kitConnector, useKit } from "./kit.js";
 import { clipPolyline, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
@@ -2998,9 +2999,20 @@ export function ResolvedView<S extends AnySchema>({
   };
 
   if (!Component) return <MissingView node={node} props={props} />;
+  /*
+   * The boundary is keyed by what it is drawing, so changing the picture or
+   * the node gives the view a fresh start rather than leaving a panel that
+   * once threw stuck saying so forever.
+   */
   return (
     <ViewModeProvider mode={mode}>
-      <Component {...props} />
+      <ViewBoundary
+        key={`${node.id}|${registration?.title ?? ""}`}
+        kind={props.label ?? node.kind}
+        {...(registration?.title ? { view: registration.title } : {})}
+      >
+        <Component {...props} />
+      </ViewBoundary>
     </ViewModeProvider>
   );
 }

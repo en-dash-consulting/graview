@@ -3,6 +3,8 @@ export type { AdministeredModule, GraviewContextValue, GraviewProviderProps, Poi
 export { applySettings, honourSetting, loadSetting, rememberSetting } from "./settings.js";
 
 export { createViews, DEFAULT_VIEW, isDefaultView, markDefaultView } from "./view-registry.js";
+export { ViewBoundary } from "./view-boundary.js";
+export type { ViewBoundaryProps } from "./view-boundary.js";
 export type {
   Cardinality,
   Fidelity,
