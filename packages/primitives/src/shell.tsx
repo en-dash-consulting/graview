@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import { Scene, useGraview, UrlSync, type Scheme, type SceneProps } from "@graview/react";
-import type { ToolCall } from "@graview/tools";
+import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode } from "react";
 import { ChatPanel } from "./chat.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
@@ -55,8 +55,20 @@ export interface ShellProps<S extends AnySchema> {
   readonly attachRenderer?: SceneProps<S>["attachRenderer"];
   readonly scheme: Scheme;
   readonly onScheme: (scheme: Scheme) => void;
-  /** The chat seat, on by default: it answers from the graph with no key. */
-  readonly chat?: boolean;
+  /**
+   * The chat seat, on by default: it answers from the graph with no key.
+   *
+   * `{ respond }` hands it the app's OWN responder. `ChatPanel` has always
+   * taken one — the agent-seat skill is about writing one — and the shell
+   * that every app uses, and that the scaffolder wires up, exposed the panel
+   * as a boolean. So an app that wrote a domain responder had no way to put
+   * it in the scene's chat: it could turn the chat off and rebuild that part
+   * of the shell, or leave the generic answer in the surface most people
+   * actually type into. A seam is only as reachable as the most convenient
+   * component sitting on top of it, and a prop the shell does not forward is
+   * in practice a prop that does not exist.
+   */
+  readonly chat?: boolean | { readonly respond?: Responder<S> };
   /**
    * Where a person's own record lives on the routed face. Given, the
    * profile pane links to it; absent, the pane says who you are without
@@ -197,7 +209,12 @@ export function Shell<S extends AnySchema>({
             </a>
           ) : null}
           <Standing clean={standing} />
-          {chat ? <ChatPanel<S> onCall={onCall} /> : null}
+          {chat ? (
+            <ChatPanel<S>
+              onCall={onCall}
+              {...(typeof chat === "object" && chat.respond ? { respond: chat.respond } : {})}
+            />
+          ) : null}
           <ActivityRail remembers={remembers} calls={calls} seat={seat?.(onCall)} />
           {/*
             * The scheme lives in the profile, with the other things that

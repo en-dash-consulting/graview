@@ -21,5 +21,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [F-021 · Shell gives the Responder seam no hole to come through](./f-021-shell-gives-the-responder-seam.md) | pending |
+| [F-021 · Shell gives the Responder seam no hole to come through](./f-021-shell-gives-the-responder-seam.md) | completed |
 | [F-025 · PagesApp has no slot for a page that is not about a kind](./f-025-pagesapp-has-no-slot-for-a-page.md) | pending |

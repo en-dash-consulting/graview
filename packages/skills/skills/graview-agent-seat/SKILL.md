@@ -103,7 +103,10 @@ path to the store:
   Keyless it answers from the graph (`graphResponder`: standings, named
   things, when/who, mutations phrased in their own titles); a model plugs in
   through one completion function (`llmResponder`, `xaiCompletion`,
-  `localCompletion`), chosen by the person in the panel's gear.
+  `localCompletion`), chosen by the person in the panel's gear. **Your own
+  responder goes in through the shell**: `<Shell chat={{ respond }} />`.
+  "Why do I still have mosquitoes?" is a walk through THIS graph, and the
+  generic answer to it is a plausible paragraph about gardens.
 - **External agents** arrive over the derived tool surface with a scoped
   principal.
 
