@@ -43,11 +43,31 @@ describe("the shell", () => {
 
   it("carries the parts the harnesses drive, under the ids they use", () => {
     const html = render({ seat: () => <button type="button" data-testid="agent-x">seat</button> });
-    for (const id of ["pages-link", "standing", "activity-button", "scheme", "overview"]) {
+    for (const id of ["pages-link", "standing", "activity-button", "overview", "profile-button"]) {
       expect(html, id).toContain(`data-testid="${id}"`);
     }
     expect(html).toContain('href="/pages"');
-    expect(html).toContain('aria-label="Switch to dark mode"');
+  });
+
+  /**
+   * WHAT IS THE READER'S OWN, AND WHAT KEEPS THE APP, LIVE BEHIND ONE DOOR.
+   *
+   * The bar carried a scheme toggle AND the profile carried a pair of
+   * scheme buttons — two controls for one setting. It also carried "Show
+   * the installation" and "Studio" beside the places, where every reader
+   * met two controls only a keeper can use, in the same row as the app's
+   * own pictures.
+   */
+  it("keeps the scheme, the installation and the studio behind the profile rather than on the bar", () => {
+    const html = render({ studio: <button type="button" data-testid="studio-place">Studio</button> });
+    // One scheme control, and it is the pair inside the pane.
+    expect(html).not.toContain('data-testid="scheme"');
+    expect(html).toContain('data-testid="profile-scheme-light"');
+    // The keeper's ways in are in the pane, which is mounted and hidden.
+    expect(html).toContain('data-testid="profile-keeping"');
+    expect(html).toContain('data-testid="studio-place"');
+    // And the gear says the settings are there before it is opened.
+    expect(html).toContain('data-testid="profile-gear"');
   });
 
   it("says what the app says when nothing is wrong, and hides the pages link when asked", () => {

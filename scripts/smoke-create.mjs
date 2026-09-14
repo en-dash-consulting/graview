@@ -275,7 +275,11 @@ try {
     await page.waitForTimeout(400);
     b.escape.pressed = await escapeState();
     b.axeAfterDark = await (async () => {
-      await page.click('[data-testid="scheme"]');
+      /* The scheme lives in the profile now, with the reader's own
+         settings — the bar's toggle was a second control for one setting. */
+      await page.click('[data-testid="profile-button"]');
+      await page.waitForTimeout(300);
+      await page.click('[data-testid="profile-scheme-dark"]');
       await page.waitForTimeout(300);
       return axe(page);
     })();

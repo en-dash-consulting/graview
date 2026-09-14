@@ -19,6 +19,25 @@ import { serving } from "./lib/serve.mjs";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 
+/*
+ * THE KEEPER'S WAYS IN, AND THE READER'S OWN SETTINGS, LIVE BEHIND THE
+ * PROFILE. "Show the installation" and "Studio" were pills on the bar
+ * beside the places, where every reader met two controls only a keeper can
+ * use; the scheme was there AND in the pane, which is two controls for one
+ * setting. A harness opens the pane before reaching for any of them.
+ */
+const openProfile = async (page) => {
+  const shown = await page.evaluate(() => {
+    const pane = document.querySelector('[data-testid="profile"]');
+    return pane !== null && !pane.hasAttribute("hidden");
+  });
+  if (shown) return;
+  const button = await page.$('[data-testid="profile-button"]');
+  if (!button) return;
+  await button.click();
+  await page.waitForTimeout(350);
+};
+
 const APPS = {
   todo: { port: 5193, ready: "__todoReady", query: "&today=2026-09-01", states: {
     lists: async () => {},
@@ -31,6 +50,7 @@ const APPS = {
      * this is a pair of screens rather than one screen and a refusal.
      */
     keeper: async (p) => {
+      await openProfile(p);
       await p.click('[data-testid="show-installation"]');
       await p.waitForTimeout(700);
     },
@@ -41,6 +61,7 @@ const APPS = {
     },
     /* What each role reaches, read from the policy the store refuses with. */
     reach: async (p) => {
+      await openProfile(p);
       await p.click('[data-testid="show-installation"]');
       await p.waitForTimeout(500);
       await p.locator('nav[aria-label="Places"] button', { hasText: "Who may do what" }).click();
@@ -188,6 +209,7 @@ const APPS = {
       await p.waitForTimeout(900);
     },
     installation: async (p) => {
+      await openProfile(p);
       await p.click('[data-testid="show-installation"]');
       await p.waitForTimeout(800);
     },

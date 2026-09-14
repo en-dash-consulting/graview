@@ -368,6 +368,88 @@ try {
       removed.pane === null,
   };
 
+  /* --------------- the two doors the back button did not know about */
+  /*
+   * "Show the installation" and the studio are both STOPS: one raises the
+   * installation's own districts into the scene, the other opens the app's
+   * declaration over it. Neither pushed a history entry — the address
+   * changed and the entry was REPLACED — so the arrows stayed grey and one
+   * Back from either left the app entirely. Both live behind the profile
+   * now, which is also where a harness has to go to find them.
+   */
+  const doorState = () =>
+    page.evaluate(() => ({
+      hash: decodeURIComponent(window.location.hash),
+      studio: document.querySelector('[data-testid="studio"]') !== null,
+      installation: document.querySelector('[data-graview-view="kind:user"]') !== null,
+      back: !document.querySelector('[data-testid="backtrack"] button[aria-label="Back"]')?.disabled,
+    }));
+  const openProfile = async () => {
+    const shown = await page.evaluate(() => {
+      const pane = document.querySelector('[data-testid="profile"]');
+      return pane !== null && !pane.hasAttribute("hidden");
+    });
+    if (shown) return;
+    await page.click('[data-testid="profile-button"]');
+    await page.waitForTimeout(350);
+  };
+
+  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1&as=user-nora", { waitUntil: "load" });
+  await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await page.waitForTimeout(900);
+
+  await openProfile();
+  await page.click('[data-testid="show-installation"]');
+  await page.waitForTimeout(800);
+  const shownInstallation = await doorState();
+  await page.goBack();
+  await page.waitForTimeout(800);
+  const afterBack = await doorState();
+  await page.goForward();
+  await page.waitForTimeout(800);
+  const afterForward = await doorState();
+  /* And the app's own arrow, which is the browser's made visible. */
+  await page.click('[data-testid="backtrack"] button[aria-label="Back"]');
+  await page.waitForTimeout(800);
+  const afterOwnArrow = await doorState();
+  report.installationIsAStop = {
+    shown: shownInstallation,
+    back: afterBack,
+    forward: afterForward,
+    ownArrow: afterOwnArrow,
+    ok:
+      shownInstallation.installation &&
+      shownInstallation.back &&
+      !afterBack.installation &&
+      afterBack.hash.includes("today") === false &&
+      afterForward.installation &&
+      !afterOwnArrow.installation,
+  };
+
+  await openProfile();
+  await page.click('[data-testid="studio-place"]');
+  await page.waitForSelector('[data-testid="studio"]', { timeout: 20_000 });
+  await page.waitForTimeout(900);
+  const inStudio = await doorState();
+  await page.goBack();
+  await page.waitForTimeout(900);
+  const outOfStudio = await doorState();
+  await page.goForward();
+  await page.waitForTimeout(900);
+  const backInStudio = await doorState();
+  report.theStudioIsAStop = {
+    inStudio,
+    outOfStudio,
+    backInStudio,
+    ok:
+      inStudio.studio &&
+      inStudio.hash.includes("in.studio=open") &&
+      /* Back leaves the STUDIO, not the app: the scene is still there. */
+      !outOfStudio.studio &&
+      !outOfStudio.hash.includes("in.studio") &&
+      backInStudio.studio,
+  };
+
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {

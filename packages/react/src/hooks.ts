@@ -308,7 +308,15 @@ export function useUrlSync(): void {
  * have risen above the stack. Where you dragged things to is not a different
  * place; it is the same place, rearranged.
  */
-function adjustment(before: ViewState | null, after: ViewState): boolean {
+/**
+ * WHETHER A CHANGE IS A STOP OR JUST A NUDGE OF THE ONE YOU ARE ON.
+ *
+ * Exported so it can be read and held to: what belongs in here is the
+ * difference between the back button meaning something and meaning "one
+ * pixel ago", and the two things that went wrong went wrong silently — the
+ * address changed, no entry was pushed, and the arrows stayed grey.
+ */
+export function adjustment(before: ViewState | null, after: ViewState): boolean {
   if (!before) return false;
   return (
     before.focusId === after.focusId &&
@@ -317,6 +325,15 @@ function adjustment(before: ViewState | null, after: ViewState): boolean {
     (before.zoom ?? false) === (after.zoom ?? false) &&
     (before.past ?? false) === (after.past ?? false) &&
     before.expanded.join(",") === after.expanded.join(",") &&
+    /*
+     * SHOWING A MODULE IS TRAVELLING. "Show the installation" raises whole
+     * districts into the scene — who is here, who has been invited — and
+     * its own comment always said it was a stop Back knew the way out of.
+     * It was not: `shown` was missing from this comparison, so the address
+     * gained `show=installation` and the entry was REPLACED, the arrows
+     * stayed grey, and one Back from the installation left the app.
+     */
+    (before.shown ?? []).join(",") === (after.shown ?? []).join(",") &&
     /*
      * A VIEW MOVING ALONG ITS OWN DIMENSION IS TRAVELLING.
      *

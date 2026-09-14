@@ -27,7 +27,13 @@ export function Seats<S extends AnySchema>() {
       role="group"
       aria-label="Seat"
       data-testid="seats"
-      style={{ display: "flex", alignItems: "center", gap: 6 }}
+      /*
+       * IT WRAPS. The switcher sits in the profile pane, which is 280
+       * wide: three seats in one unwrapping row ran straight off the edge,
+       * and the third was a chip with its name cut in half. A row of
+       * choices that cannot be read is not a choice.
+       */
+      style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6, rowGap: 4 }}
     >
       <span
         style={{

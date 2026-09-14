@@ -68,6 +68,31 @@ try {
     await page.goto(`http://localhost:5193/?today=2026-09-01&fresh=1&as=${as}`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(800);
+    await profile();
+  };
+
+  /*
+   * THE KEEPER'S WAYS IN LIVE BEHIND THE PROFILE. "Show the installation"
+   * and "Studio" were pills on the bar, beside the places, where every
+   * reader met two controls only a keeper can use. They are in the profile
+   * pane now, with the other things that are about you rather than about
+   * the graph — so a harness opens the pane before looking for them.
+   */
+  const profile = async () => {
+    /*
+     * The pane is MOUNTED whether or not it is open — a control in it may
+     * own something that outlives it — so "is it there" is not the
+     * question. Whether it is hidden is.
+     */
+    const shown = await page.evaluate(() => {
+      const pane = document.querySelector('[data-testid="profile"]');
+      return pane !== null && !pane.hasAttribute("hidden");
+    });
+    if (shown) return;
+    const button = await page.$('[data-testid="profile-button"]');
+    if (!button) return;
+    await button.click();
+    await page.waitForTimeout(400);
   };
 
   /* ------------------------------------ the door, and who is offered it */

@@ -185,6 +185,23 @@ try {
       await page.waitForTimeout(200);
       return said;
     };
+/*
+ * THE KEEPER'S WAYS IN LIVE BEHIND THE PROFILE. "Show the installation" and
+ * "Studio" were pills on the bar, beside the places, where every reader met
+ * two controls only a keeper can use. A harness opens the pane first.
+ */
+const openProfile = async (page) => {
+  const shown = await page.evaluate(() => {
+    const pane = document.querySelector('[data-testid="profile"]');
+    return pane !== null && !pane.hasAttribute("hidden");
+  });
+  if (shown) return;
+  const button = await page.$('[data-testid="profile-button"]');
+  if (!button) return;
+  await button.click();
+  await page.waitForTimeout(350);
+};
+
     const districts = () =>
       page.evaluate(() =>
         [...document.querySelectorAll("[data-graview-view]")].map((e) =>
@@ -200,6 +217,7 @@ try {
         keeperBar.sittingAs === "Nora, keeper",
       `${keeperBar.signedInAs} · ${keeperBar.seats.join(" / ")}`);
 
+    await openProfile(page);
     await page.click('[data-testid="show-installation"]');
     await page.waitForTimeout(900);
     const raised = await districts();

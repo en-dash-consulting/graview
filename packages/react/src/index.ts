@@ -43,6 +43,7 @@ export { bandRows, channelRoute } from "./channels.js";
 export {
   useAffordances,
   useApplyAffordance,
+  adjustment,
   useBacktrack,
   useEditableFields,
   useJackIn,

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-14T01:30:50.337Z",
+  "at": "2026-09-14T01:56:57.473Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Graview",
       "pressed": "false",
       "name": "Graview",
-      "wingOpacity": 0.539219,
+      "wingOpacity": 0.539359,
       "registered": true
     },
     "groundAgain": {
@@ -144,6 +144,54 @@
     "landedOn": "#focus=aggregate%3Alist",
     "views": 5,
     "pane": null,
+    "ok": true
+  },
+  "installationIsAStop": {
+    "shown": {
+      "hash": "#focus=aggregate:list&show=installation",
+      "studio": false,
+      "installation": true,
+      "back": true
+    },
+    "back": {
+      "hash": "#focus=aggregate:list",
+      "studio": false,
+      "installation": false,
+      "back": false
+    },
+    "forward": {
+      "hash": "#focus=aggregate:list&show=installation",
+      "studio": false,
+      "installation": true,
+      "back": true
+    },
+    "ownArrow": {
+      "hash": "#focus=aggregate:list",
+      "studio": false,
+      "installation": false,
+      "back": false
+    },
+    "ok": true
+  },
+  "theStudioIsAStop": {
+    "inStudio": {
+      "hash": "#focus=aggregate:list&in.studio=open",
+      "studio": true,
+      "installation": false,
+      "back": true
+    },
+    "outOfStudio": {
+      "hash": "#focus=aggregate:list",
+      "studio": false,
+      "installation": false,
+      "back": false
+    },
+    "backInStudio": {
+      "hash": "#focus=aggregate:list&in.studio=open",
+      "studio": true,
+      "installation": false,
+      "back": true
+    },
     "ok": true
   },
   "verdict": {

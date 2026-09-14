@@ -39,8 +39,26 @@ try {
     await page.waitForTimeout(900);
   };
 
+/*
+ * THE KEEPER'S WAYS IN LIVE BEHIND THE PROFILE. "Show the installation" and
+ * "Studio" were pills on the bar, beside the places, where every reader met
+ * two controls only a keeper can use. A harness opens the pane first.
+ */
+const openProfile = async (page) => {
+  const shown = await page.evaluate(() => {
+    const pane = document.querySelector('[data-testid="profile"]');
+    return pane !== null && !pane.hasAttribute("hidden");
+  });
+  if (shown) return;
+  const button = await page.$('[data-testid="profile-button"]');
+  if (!button) return;
+  await button.click();
+  await page.waitForTimeout(350);
+};
+
   /* -------------------------------- three pictures of one roster, by name */
   await open(`/?${DAY}&fresh=1`);
+  await openProfile(page);
   const opened = await page.evaluate(() => ({
     places: [...document.querySelectorAll('nav[aria-label="Places"] button')].map((b) => b.textContent?.trim()),
     studio: document.querySelector('[data-testid="studio-place"]') !== null,
@@ -62,6 +80,7 @@ try {
   /* ------------------------------- three seats, and the third is the point */
   const seatSays = async (as) => {
     await open(`/?${DAY}&fresh=1&as=${as}#focus=aggregate:shift&sel=s-fri-repair`);
+    await openProfile(page);
     return page.evaluate(() => ({
       offered: [...document.querySelectorAll('[data-testid="inspector-strip"] [data-affordance]:not([disabled])')].length,
       withheld: [...document.querySelectorAll('[data-testid="inspector-strip"] [data-withheld]')].map((b) =>
@@ -110,6 +129,7 @@ try {
 
   /* ---------------------------- the studio, over Rota's own declaration */
   await open(`/?${DAY}&fresh=1`);
+  await openProfile(page);
   await page.click('[data-testid="studio-place"]');
   await page.waitForSelector('[data-testid="studio"]', { timeout: 20_000 });
   await page.waitForTimeout(1200);

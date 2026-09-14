@@ -22,6 +22,25 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 const out = resolve(repoRoot, "docs/survey");
 
+/*
+ * THE KEEPER'S WAYS IN, AND THE READER'S OWN SETTINGS, LIVE BEHIND THE
+ * PROFILE. "Show the installation" and "Studio" were pills on the bar
+ * beside the places, where every reader met two controls only a keeper can
+ * use; the scheme was there AND in the pane, which is two controls for one
+ * setting. A harness opens the pane before reaching for any of them.
+ */
+const openProfile = async (page) => {
+  const shown = await page.evaluate(() => {
+    const pane = document.querySelector('[data-testid="profile"]');
+    return pane !== null && !pane.hasAttribute("hidden");
+  });
+  if (shown) return;
+  const button = await page.$('[data-testid="profile-button"]');
+  if (!button) return;
+  await button.click();
+  await page.waitForTimeout(350);
+};
+
 /** Every landing place, and how to get to it from a fresh load. */
 const APPS = {
   todo: {
@@ -47,6 +66,7 @@ const APPS = {
        * this is a pair of screens rather than one screen and a refusal.
        */
       keeper: async (page) => {
+        await openProfile(page);
         await page.click('[data-testid="show-installation"]');
         await page.waitForTimeout(700);
       },
@@ -57,6 +77,7 @@ const APPS = {
       },
       /* What each role reaches, read from the policy the store refuses with. */
       reach: async (page) => {
+        await openProfile(page);
         await page.click('[data-testid="show-installation"]');
         await page.waitForTimeout(500);
         await page.locator('nav[aria-label="Places"] button', { hasText: "Who may do what" }).click();

@@ -373,6 +373,14 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   -webkit-mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);
 }
 
+/* THE KEEPER'S BLOCK IN THE PROFILE, which hides itself when it is empty.
+   Both controls inside it draw nothing for a seat that may not administer,
+   and a heading with nothing under it is worse than no heading — so the
+   block is drawn only when it actually holds a control. */
+.graview-profile-keeping { display: grid; gap: 6px; }
+.graview-profile-keeping:not(:has(button, a)) { display: none; }
+.graview-profile-keeping > * { justify-self: start; }
+
 /* The district-open control and its roster: altitude-only chrome. Inside
    the stack expanding dissolves a card, so the control does not exist
    there. A full fingertip even though the glyph is small — the audit holds

@@ -103,7 +103,6 @@ export function Shell<S extends AnySchema>({
       return [call, ...(settling ? current.slice(1) : current)].slice(0, 12);
     });
   }, []);
-  const other = scheme === "dark" ? "light" : "dark";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
@@ -155,11 +154,14 @@ export function Shell<S extends AnySchema>({
         <Trail home={home} {...(homeLabel !== undefined ? { homeLabel } : {})} />
         {/* The named pictures over the graph, if the app registered any. */}
         <Places<S> />
-        {/* The way into the installation, for the seat that keeps it. */}
-        <ShowInstallation<S> />
-        {/* And the way into the DECLARATION, for the same seat: the app's
-            own kinds, fields, acts and rules, one press away and in place. */}
-        {studio}
+        {/*
+          * The installation and the studio used to stand here, beside the
+          * places — so every reader met "Show the installation" and
+          * "Studio" in the same row as "The week", and the two controls
+          * only the KEEPER can use sat where the app's own pictures go.
+          * They are behind the profile now, with the other things that are
+          * about you rather than about the graph.
+          */}
         {/* The right-hand group wraps for the same reason the bar does: as one
             unwrapping unit it carried the whole overflow across the edge by
             itself, so the bar wrapped and the controls were still gone. */}
@@ -197,16 +199,12 @@ export function Shell<S extends AnySchema>({
           <Standing clean={standing} />
           {chat ? <ChatPanel<S> onCall={onCall} /> : null}
           <ActivityRail remembers={remembers} calls={calls} seat={seat?.(onCall)} />
-          <button
-            type="button"
-            data-testid="scheme"
-            aria-label={`Switch to ${other} mode`}
-            title={`Switch to ${other} mode`}
-            onClick={() => onScheme(other)}
-            style={{ padding: "6px 9px", lineHeight: 1 }}
-          >
-            {scheme === "dark" ? "☀" : "☾"}
-          </button>
+          {/*
+            * The scheme lives in the profile, with the other things that
+            * are the reader's own — it was BOTH here and there, so the bar
+            * carried a toggle that duplicated a pair of buttons one press
+            * away, and two controls for one setting is one too many.
+            */}
           {/*
             * WHO YOU ARE, AND WHAT YOU SET FOR YOURSELF — last on the bar,
             * where every application in the world puts it. The seat
@@ -218,6 +216,12 @@ export function Shell<S extends AnySchema>({
             scheme={scheme}
             onScheme={onScheme}
             {...(profileHref ? { profileHref } : {})}
+            keeping={
+              <>
+                <ShowInstallation<S> />
+                {studio}
+              </>
+            }
           />
         </div>
       </header>

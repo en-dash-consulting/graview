@@ -1,6 +1,6 @@
 import { labelOf, type AnySchema } from "@graview/core";
 import { useGraview } from "@graview/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Seats } from "./seats.js";
 
 /**
@@ -24,15 +24,36 @@ import { Seats } from "./seats.js";
  *                 "text size" means; it renders what the app declared and
  *                 the provider has already carried the answer to the root.
  *   the scheme  — light or dark, which was on the bar alone.
+ *   keeping it — and, for the seat that keeps this installation ONLY, the
+ *                ways into it: its own districts, and its declaration.
  *
- * Nothing about this is administration: a member sees their own name, their
- * own record and their own text size, and never a person who is not them.
+ * That last block was two pills on the bar, beside the places — which put
+ * administration in the same row as "the week" and "the month", where every
+ * reader saw the app's shape before they saw their own work. They are the
+ * keeper's, they are rare, and they belong behind the same door as "who am
+ * I". A member never sees the block at all, because both controls draw
+ * nothing for a seat that may not administer and the block hides itself
+ * when it holds nothing.
+ *
+ * What is NOT administration stays what it was: a member sees their own
+ * name, their own record and their own text size, and never a person who is
+ * not them.
  */
 export function Profile<S extends AnySchema>({
   scheme,
   onScheme,
   /** Where a person's own record lives on the routed face, if there is one. */
   profileHref,
+  /**
+   * The ways into the app itself, for the seat that keeps it: showing the
+   * installation's own districts, and opening its declaration in the studio.
+   *
+   * A slot rather than a fixed pair, because the studio lives in a package
+   * this one must not depend on — the same reason the shell takes it as a
+   * node. Both of them render nothing for a seat that may not administer,
+   * and the block they sit in hides itself when they do.
+   */
+  keeping,
 }: {
   /**
    * The scheme, where this surface owns it. An embed wears the scheme its
@@ -43,6 +64,7 @@ export function Profile<S extends AnySchema>({
   readonly scheme?: "light" | "dark";
   readonly onScheme?: (scheme: "light" | "dark") => void;
   readonly profileHref?: (userId: string) => string;
+  readonly keeping?: ReactNode;
 }) {
   const { store, principal, seats, settings, settingValues, chooseSetting } = useGraview<S>();
   const [open, setOpen] = useState(false);
@@ -51,7 +73,20 @@ export function Profile<S extends AnySchema>({
   useEffect(() => {
     if (!open) return;
     const away = (event: MouseEvent) => {
-      if (!anchor.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node | null;
+      if (anchor.current?.contains(target)) return;
+      /*
+       * A CONTROL IN HERE MAY OPEN SOMETHING BIGGER THAN HERE.
+       *
+       * The studio is a full-screen dialog portalled to the body, and its
+       * button lives in this pane. Treating the first press inside the
+       * studio as "away" closed the pane, which unmounted the button, which
+       * took the portal with it — the studio opened and vanished on the
+       * next click. Anything that is itself a dialog or an overlay is not
+       * away from the thing that opened it.
+       */
+      if (target instanceof Element && target.closest('[role="dialog"], [data-graview-overlay]')) return;
+      setOpen(false);
     };
     const key = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
@@ -117,14 +152,36 @@ export function Profile<S extends AnySchema>({
           {initial(name)}
         </span>
         <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+        {/*
+          * A GEAR, because this is where the settings are.
+          *
+          * A name alone reads as an account menu, and the things a person
+          * actually comes here for — how big the words are, whether things
+          * move, which scheme — are settings. The mark says so before it is
+          * opened, which is the difference between finding them and being
+          * told where they were.
+          */}
+        <span aria-hidden="true" data-testid="profile-gear" style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
+          ⚙
+        </span>
       </button>
 
-      {open ? (
-        <aside
+      {/*
+        * MOUNTED WHETHER OR NOT IT IS OPEN, and hidden when it is not.
+        *
+        * A control in here may own something that outlives the pane: the
+        * studio is a full-screen face whose portal belongs to the button
+        * that opened it, so unmounting the pane on the first press inside
+        * the studio took the studio with it. Hidden rather than absent, the
+        * pane keeps its children alive, and `hidden` keeps them out of the
+        * picture and out of the accessibility tree both.
+        */}
+      <aside
           aria-label="Profile"
           data-testid="profile"
           data-graview-offstage=""
           data-graview-overlay=""
+          hidden={!open}
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
@@ -133,8 +190,19 @@ export function Profile<S extends AnySchema>({
             width: 280,
             maxWidth: "calc(100vw - 32px)",
             maxHeight: "min(62cqh, 520px)",
-            overflow: "auto",
-            display: "grid",
+            overflowY: "auto",
+            // Not `overflow: auto`: nothing in here may run off the side.
+            // A setting's own sentence was clipped mid-word against the
+            // pane's edge, which is the one thing a text-size control must
+            // not do.
+            overflowX: "hidden",
+            /*
+             * `hidden` alone is not enough when the element sets its own
+             * display: an inline `display: grid` beats the browser's
+             * `[hidden] { display: none }`, so the closed pane stayed on
+             * top of the bar and swallowed every press aimed at it.
+             */
+            display: open ? "grid" : "none",
             gap: 12,
             padding: 12,
             borderRadius: 10,
@@ -160,11 +228,43 @@ export function Profile<S extends AnySchema>({
               <a
                 href={profileHref(me.id)}
                 data-testid="profile-record"
-                style={{ fontSize: "0.78125rem", color: "var(--graview-accent)" }}
+                style={{
+                  /*
+                   * A full fingertip, like every other control the audit
+                   * counts. It was nineteen pixels tall — and nothing had
+                   * ever measured it, because until the keeper's own ways
+                   * in moved here no audited screen opened this pane.
+                   */
+                  display: "inline-flex",
+                  alignItems: "center",
+                  minHeight: 24,
+                  justifySelf: "start",
+                  fontSize: "0.78125rem",
+                  color: "var(--graview-accent)",
+                }}
               >
                 Your record ↗
               </a>
             ) : null}
+          </div>
+
+          {/*
+            * THE WAYS INTO THE APP ITSELF — under who you are, because that
+            * is what decides whether they are there at all, and above the
+            * reader's own settings, because a pane that put them last put
+            * them below the fold on a laptop.
+            *
+            * Only for whoever keeps it: the block hides itself when both
+            * controls draw nothing (see `.graview-profile-keeping` in the
+            * theme), so a member never meets an empty heading where an
+            * administrator's tools would be.
+            *
+            * No inline `display`: an inline style beats the stylesheet, and
+            * the stylesheet is what does the hiding.
+            */}
+          <div className="graview-profile-keeping" data-testid="profile-keeping" style={ruled}>
+            <span style={eyebrow}>Keeping this app</span>
+            {keeping}
           </div>
 
           {seats.length > 1 ? (
@@ -254,8 +354,8 @@ export function Profile<S extends AnySchema>({
             </div>
           </div>
           ) : null}
+
         </aside>
-      ) : null}
     </div>
   );
 }

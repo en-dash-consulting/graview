@@ -1,6 +1,6 @@
 import { INSTALLATION_MODULE, type AnySchema, type CheckResult, type GraviewApp, type Store } from "@graview/core";
-import { EMPTY_VIEW } from "@graview/layout";
-import { GraviewProvider, Scene, createViews, useGraview } from "@graview/react";
+import { EMPTY_VIEW, withWithin } from "@graview/layout";
+import { GraviewProvider, Scene, createViews, useGraview, useNavigation } from "@graview/react";
 import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
@@ -30,6 +30,14 @@ import type { WrittenFile } from "./source.js";
  * `graview create` writes and the migration a stored graph needs — offered
  * as downloads, because a browser cannot write your checkout and pretending
  * otherwise would be the one dishonest thing in the whole flow.
+ *
+ * AND OPENING IT IS A STOP. It was component state — so the one door in
+ * this interface that Back did not know about was the door into the app's
+ * own declaration: you pressed Escape or Back and left the whole app
+ * instead of the studio. It is `in.studio=open` in the address now, which
+ * means the browser's arrows and the bar's own carry you in and out of it,
+ * a link can open it, and closing puts you back exactly where you were —
+ * which is what the stop you came from IS.
  */
 export function StudioPlace<S extends AnySchema>({
   app,
@@ -54,7 +62,9 @@ export function StudioPlace<S extends AnySchema>({
   readonly within?: "page" | "box";
 }) {
   const { store, principal } = useGraview<S>();
-  const [open, setOpen] = useState(false);
+  const { view, go } = useNavigation();
+  const open = view.within?.["studio"] === "open";
+  const setOpen = (next: boolean) => go(withWithin(view, "studio", next ? "open" : null));
   if (!maySeeTheStudio(store, principal)) return null;
   return (
     <>
@@ -62,7 +72,7 @@ export function StudioPlace<S extends AnySchema>({
         type="button"
         data-testid="studio-place"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setOpen(!open)}
         title="Open this app's own declaration — its kinds, fields, acts and rules — and change it"
         style={{
           padding: "3px 11px",
