@@ -499,8 +499,44 @@ export function CoverageView<S extends AnySchema>({
           paddingRight: HEADER_OVERHANG,
         }}
       >
-        <div style={{ display: "flex", alignItems: "flex-end", flex: "0 0 auto" }}>
-          <div style={{ width: ROW_LABEL_WIDTH, flex: "0 0 auto" }} />
+        {/*
+          * THE NAMES STAY WHEN THE GRID MOVES.
+          *
+          * A matrix is read by crossing a row with a column, which means
+          * both names have to be on screen at the moment you are looking at
+          * the cell. This one scrolled them away: twenty-two practices is
+          * wider than the panel and twenty concerns is taller, so the column
+          * names went off the top as soon as anybody scrolled down to the
+          * rows they were reading, and came back CUT — the rotated labels
+          * sliced off mid-word by the panel's own edge.
+          *
+          * Sticky, and opaque, because a translucent header with a grid
+          * sliding under it is harder to read than no header at all.
+          */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            flex: "0 0 auto",
+            position: "sticky",
+            top: 0,
+            zIndex: 2,
+            background: "var(--graview-panel)",
+            /* The names lean up out of their own boxes; without this the
+               panel's edge takes the top off the longest of them. */
+            paddingTop: 6,
+          }}
+        >
+          <div
+            style={{
+              width: ROW_LABEL_WIDTH,
+              flex: "0 0 auto",
+              position: "sticky",
+              left: 0,
+              zIndex: 1,
+              background: "var(--graview-panel)",
+            }}
+          />
           <div style={{ display: "flex", flex: 1, minWidth: 0, height: headerHeight }}>
             {grid.columns.map((column) => (
               <div
@@ -580,7 +616,23 @@ export function CoverageView<S extends AnySchema>({
                       padding: "9px 0 3px",
                     }}
                   >
-                    {row.group}
+                    {/*
+                      * The WORD sticks, not the box. A full-width heading
+                      * pinned at left:0 is already at the left; what slides
+                      * away under a sideways scroll is the text inside it,
+                      * which came back reading "AGE" and "RANCE".
+                      */}
+                    <span
+                      style={{
+                        position: "sticky",
+                        left: 0,
+                        display: "inline-block",
+                        paddingRight: 8,
+                        background: "var(--graview-panel)",
+                      }}
+                    >
+                      {row.group}
+                    </span>
                   </div>
                 ) : null}
                 <div
@@ -600,6 +652,12 @@ export function CoverageView<S extends AnySchema>({
                     style={{
                       width: ROW_LABEL_WIDTH,
                       flex: "0 0 auto",
+                      /* And the row's name stays when the grid slides
+                         sideways, for the same reason the column's does. */
+                      position: "sticky",
+                      left: 0,
+                      zIndex: 1,
+                      background: "var(--graview-panel)",
                       display: "flex",
                       alignItems: "center",
                       gap: 7,

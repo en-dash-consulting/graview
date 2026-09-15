@@ -79,6 +79,7 @@ export function AnswerArgs({
   const [draft, setDraft] = useState("");
   /** What has been chosen so far, for an argument that takes several. */
   const [picked, setPicked] = useState<readonly string[]>(NOTHING_PICKED);
+
   // Stable across the walk's steps, so the group's label never dangles.
   const promptId = useId();
   const asked = useRef<HTMLDivElement>(null);
@@ -129,6 +130,27 @@ export function AnswerArgs({
 
   const shape = parameter.shape ?? { type: "unknown" as const };
   const choices = choicesFor(parameter, shape);
+  /*
+   * A PICKER THAT DROPS CHOICES MAKES THE ACT IMPOSSIBLE, AND SAYS NOTHING.
+   *
+   * This listed the first ten and stopped. A property with twenty-two
+   * practices on it offered ten of them under "Name something that helps",
+   * and the other twelve could not be chosen at all — not behind a control,
+   * not summarised as "+12", simply absent, with the panel looking exactly
+   * as it would if ten were all there were.
+   *
+   * Ten is still the right number to SHOW; a wall of forty chips is its own
+   * kind of unusable. What was missing is the way through — a filter, and a
+   * count of what is not on screen. Neither is a new idea here: the strip
+   * has had both since it was written. It just never reached the ask.
+   */
+  const [among, setAmong] = useState("");
+  const matching = useMemo(() => {
+    const term = among.trim().toLowerCase();
+    if (term === "") return choices;
+    return choices.filter((choice) => said(store, shape, choice).toLowerCase().includes(term));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choices, among, store, shape]);
   /*
    * AN ARGUMENT THAT TAKES A LIST IS ANSWERED WITH A LIST.
    *
@@ -206,13 +228,25 @@ export function AnswerArgs({
         </span>
       ) : null}
 
+      {choices.length > SHOWN ? (
+        <input
+          type="search"
+          value={among}
+          onChange={(event) => setAmong(event.target.value)}
+          placeholder={`Filter ${choices.length}…`}
+          aria-label={`Filter ${asking}`}
+          data-testid="ask-filter"
+          style={{ font: "inherit", fontSize: "0.75rem", minWidth: 0, padding: "3px 7px" }}
+        />
+      ) : null}
+
       {choices.length > 0 ? (
         <div
           role="group"
           aria-labelledby={promptId}
           style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
         >
-          {choices.slice(0, 10).map((choice) => {
+          {matching.slice(0, SHOWN).map((choice) => {
             const held = picked.includes(choice);
             return (
               <button
@@ -243,6 +277,22 @@ export function AnswerArgs({
               </button>
             );
           })}
+          {matching.length > SHOWN ? (
+            <span
+              data-testid="ask-more"
+              style={{ alignSelf: "center", fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}
+            >
+              {matching.length - SHOWN} more — type to narrow
+            </span>
+          ) : null}
+          {matching.length === 0 ? (
+            <span
+              data-testid="ask-none"
+              style={{ alignSelf: "center", fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}
+            >
+              None of the {choices.length} match that.
+            </span>
+          ) : null}
           {several ? (
             <button
               type="button"
@@ -312,6 +362,9 @@ export function AnswerArgs({
 }
 
 const NOTHING_PICKED: readonly string[] = [];
+
+/** How many choices an ask shows at once. Past this it offers a filter. */
+const SHOWN = 10;
 
 function choicesFor(
   parameter: OpenParameter,
