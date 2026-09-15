@@ -1,0 +1,30 @@
+{
+  "id": "c2f9ac01-be0c-47a7-8d99-bdd89f35299d",
+  "taskId": "1adea064-d2f0-486e-a595-3d6f775a0d4a",
+  "taskTitle": "A landing page that makes the case in thirty seconds, not fifteen chapters",
+  "startedAt": "2026-09-15T17:12:09.271Z",
+  "finishedAt": "2026-09-15T17:12:09.271Z",
+  "status": "completed",
+  "turns": 298,
+  "summary": "Hero with the install line, counted numbers, the declaration-to-app pair, a five-step live stepper, and the model case as its own section; chapters moved to progression.html.",
+  "tokenUsage": {
+    "input": 596,
+    "output": 223566,
+    "cacheCreationInput": 332671,
+    "cacheReadInput": 165624529
+  },
+  "toolCalls": [],
+  "model": "claude-opus-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 596,
+    "output": 223566,
+    "cached": 165957200,
+    "total": 166181362
+  }
+}
