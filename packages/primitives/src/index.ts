@@ -64,6 +64,7 @@ export {
   Grid,
   MUTED_TEXT,
   Panel,
+  Prose,
   VISUALLY_HIDDEN,
   Roster,
 } from "./primitives/index.js";
@@ -147,3 +148,9 @@ export type {
   CalendarSpan,
   PlacedEntry,
 } from "./lens/calendar.js";
+
+// The surfaces a blank graph needs, derived from the chain the declaration
+// already states: the way in, what a model proposes before it does it, and
+// the doors it was declared to be reachable through.
+export { Begin, Door, Intake, PlanReview } from "./seeding.js";
+export type { BeginProps, DoorProps, IntakeProps, PlanReviewProps } from "./seeding.js";

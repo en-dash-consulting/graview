@@ -287,6 +287,30 @@ export function Panel({
 }
 
 /**
+ * A PARAGRAPH WHOSE LINKS ARE TARGETS TOO.
+ *
+ * An inline link in a sentence is a link however it reads, and a harness
+ * measuring every control found one at 194x17 in a product's own prose — the
+ * text is sized in rem, the fingertip floor is not, and a line of body copy
+ * is shorter than a fingertip. Every app that ran the audit found this, and
+ * each one fixed it in its own stylesheet.
+ *
+ * `inline-flex` with the floor, so a link in a paragraph is as pressable as
+ * a button without the sentence changing shape around it.
+ */
+export function Prose({ children, style }: { readonly children: ReactNode; readonly style?: CSSProperties }) {
+  return (
+    <div
+      data-graview-primitive="prose"
+      style={{ fontSize: "0.9375rem", lineHeight: 1.6, ...style }}
+    >
+      <style>{`[data-graview-primitive="prose"] a { display: inline-flex; align-items: center; min-height: max(1.5rem, 24px); }`}</style>
+      {children}
+    </div>
+  );
+}
+
+/**
  * Present to a screen reader, absent to the eye — the one idiom, written
  * once.
  *

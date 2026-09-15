@@ -1,0 +1,156 @@
+// @vitest-environment jsdom
+/* React's act() wants to know it is in a test environment. */
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
+import { EMPTY_VIEW } from "@graview/layout";
+import { createViews, GraviewProvider } from "@graview/react";
+import { planFrom } from "@graview/tools";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { z } from "zod";
+import { Begin, PlanReview, registerDefaultViews } from "../../src/index.js";
+
+/**
+ * THE WAY IN, DERIVED.
+ *
+ * The framework derives a home, a list per kind, a record per node, a form
+ * per act and a problems page — and not the way in, which is the one state
+ * every product ships in and the one its author never sees, because their own
+ * graph has had data in it since the first afternoon. A ten-kind app on an
+ * empty graph is one door and nine silent districts.
+ */
+const zone = defineNode("zone", { fields: z.object({ label: z.string() }), plural: "Zones" });
+const feature = defineNode("feature", { fields: z.object({ label: z.string() }), plural: "Features" });
+const almanac = defineNode("almanac", { fields: z.object({ label: z.string() }), plural: "Almanacs" });
+const schema = createSchema([zone, feature, almanac]);
+const { defineMutation } = bindSchema(schema);
+
+const stakeOut = defineMutation("stake-out", {
+  title: "Stake out some ground",
+  creates: ["zone"],
+  input: z.object({ label: z.string() }),
+  apply: (ctx, args) =>
+    void ctx.addNode({ id: ctx.freshId(args.label, "zone"), kind: "zone", label: args.label } as never),
+});
+const placeFeature = defineMutation("place-feature", {
+  title: "Place a feature",
+  creates: ["feature"],
+  input: z.object({ label: z.string(), zoneId: nodeRef(["zone"]) }),
+  apply: (ctx, args) =>
+    void ctx.addNode({ id: ctx.freshId(args.label, "feature"), kind: "feature", label: args.label } as never),
+});
+
+const store = (nodes: readonly unknown[] = []) =>
+  new Store({
+    schema,
+    mutations: [stakeOut, placeFeature],
+    snapshot: { nodes: nodes as never, edges: [] },
+  });
+
+let host: HTMLDivElement;
+beforeEach(() => {
+  host = document.createElement("div");
+  document.body.append(host);
+});
+afterEach(() => host.remove());
+
+const draw = async (node: React.ReactNode, at = store()) => {
+  const root = createRoot(host);
+  await act(async () => {
+    root.render(
+      <GraviewProvider store={at} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW}>
+        {node}
+      </GraviewProvider>,
+    );
+  });
+  return { root, at };
+};
+
+describe("the first screen of an empty product", () => {
+  it("names the door, and what everything else is waiting for", async () => {
+    const { root } = await draw(<Begin />);
+    const list = host.querySelector('[data-testid="begin"]')!;
+    expect(list.textContent).toContain("Zones");
+    /* The one act that can run with nothing in the graph. */
+    expect(host.querySelector('[data-testid="begin-stake-out"]')).not.toBeNull();
+    /* And the one that cannot, saying why rather than showing nothing. */
+    expect(host.querySelector('[data-testid="begin-place-feature"]')).toBeNull();
+    expect(list.textContent).toContain("Waiting for Zones");
+    await act(async () => root.unmount());
+  });
+
+  it("says plainly when a kind arrives with the data rather than by an act", async () => {
+    const { root } = await draw(<Begin />);
+    expect(host.querySelector('[data-testid="begin"]')!.textContent).toContain(
+      "Nothing here makes almanacs",
+    );
+    await act(async () => root.unmount());
+  });
+
+  it("offers the next door once the first is through", async () => {
+    const { root } = await draw(<Begin />, store([{ id: "lawn", kind: "zone", label: "Back Lawn" }]));
+    expect(host.querySelector('[data-testid="begin-place-feature"]')).not.toBeNull();
+    /* And stops offering what is already done. */
+    expect(host.querySelector('[data-begin-kind="zone"]')!.textContent).not.toContain("none yet");
+    await act(async () => root.unmount());
+  });
+
+  it("stands down when everything has something in it", async () => {
+    const full = store([
+      { id: "lawn", kind: "zone", label: "Back Lawn" },
+      { id: "oak", kind: "feature", label: "The oak" },
+      { id: "a", kind: "almanac", label: "2026" },
+    ]);
+    const { root } = await draw(<Begin whenFull={<p data-testid="full">All set.</p>} />, full);
+    expect(host.querySelector('[data-testid="begin"]')).toBeNull();
+    expect(host.querySelector('[data-testid="full"]')).not.toBeNull();
+    await act(async () => root.unmount());
+  });
+});
+
+describe("what a model wants to do, before it does it", () => {
+  const proposals = [
+    { mutation: "place-feature", args: { label: "The oak", zoneId: { $plan: "lawn" } }, why: "it stands there" },
+    { mutation: "stake-out", as: "lawn", args: { label: "Back Lawn" }, why: "the ground it stands on" },
+    { mutation: "invent-a-thing", args: {} },
+  ];
+
+  it("shows them in the order they will run, with what it makes", async () => {
+    const at = store();
+    const { root } = await draw(<PlanReview plan={planFrom(at, proposals)} />, at);
+    const shown = [...host.querySelectorAll('[data-testid="plan"] li')].map((li) => li.textContent);
+    expect(shown[0]).toContain("Stake out some ground");
+    expect(shown[1]).toContain("Place a feature");
+    /* The panel's subtitle carries the count and what it makes. */
+    expect(host.textContent).toContain("2 of 3 to run");
+    expect(host.textContent).toContain("making 1 zone, 1 feature");
+    await act(async () => root.unmount());
+  });
+
+  it("strikes a refusal through with its reason rather than dropping it", async () => {
+    const at = store();
+    const { root } = await draw(<PlanReview plan={planFrom(at, proposals)} />, at);
+    const refused = host.querySelector("[data-plan-refused]")!;
+    expect(refused.textContent).toContain("invent-a-thing");
+    expect(host.querySelector('[data-testid="plan-refusal"]')!.textContent).toContain("registered");
+    await act(async () => root.unmount());
+  });
+
+  it("applies the ready ones as one turn, and says so", async () => {
+    const at = store();
+    let batch: string | null = null;
+    const { root } = await draw(
+      <PlanReview plan={planFrom(at, proposals)} onApplied={(id) => (batch = id)} />,
+      at,
+    );
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="plan-apply"]')!.click());
+    expect(host.querySelector('[data-testid="plan-done"]')!.textContent).toContain("2 applied as one turn");
+    expect(at.graph.nodesOfKind("zone")).toHaveLength(1);
+    expect(at.graph.nodesOfKind("feature")).toHaveLength(1);
+    /* One handle, so the whole seeding goes back together. */
+    at.undo(batch!);
+    expect(at.graph.allNodes()).toHaveLength(0);
+    await act(async () => root.unmount());
+  });
+});

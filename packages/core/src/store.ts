@@ -133,6 +133,15 @@ export class Store<S extends AnySchema> {
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
+  /**
+   * The intelligence the app declared, so a surface can read the DOORS.
+   *
+   * The store already held the allowlist to enforce it; a seat that wants to
+   * offer "copy the prompt" or "send from here" according to what was
+   * declared needs the declaration itself, and the store is what every
+   * surface already has.
+   */
+  readonly intelligence: readonly IntelligenceProviderDeclaration[];
   /** What each declared agent may do, by provider name. */
   private readonly may = new Map<string, ReadonlySet<string>>();
   /** What the enabled modules work out to; every surface reads this one answer. */
@@ -147,6 +156,7 @@ export class Store<S extends AnySchema> {
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
     this.policy = options.policy;
+    this.intelligence = options.intelligence ?? [];
     for (const provider of options.intelligence ?? []) {
       if (provider.may) this.may.set(provider.name, new Set(provider.may));
     }
