@@ -369,7 +369,18 @@ try {
   await phone.evaluate(() => {
     document.documentElement.style.fontSize = "32px";
   });
-  await phone.waitForTimeout(500);
+  /*
+   * Long enough for the re-layout to SETTLE.
+   *
+   * Every size the scene draws is the reader's, so changing the text size
+   * moves every card — and the scene animates that move like any other, in
+   * 380ms plus whatever the browser is doing. At 500ms this was measuring a
+   * frame mid-flight and calling it the layout: a card on its way to a new
+   * slot is briefly wherever the tween has it, which is not a claim about
+   * where anything ends up. Every other harness here settles before it
+   * counts.
+   */
+  await phone.waitForTimeout(1600);
   const reflow = await phone.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     width: window.innerWidth,

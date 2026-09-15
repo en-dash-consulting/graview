@@ -548,16 +548,24 @@ export function layout<S extends AnySchema>(
    */
   const districtRow = (count: number, cap: number, height: number) => {
     const size = fit(count, cap, height);
-    return size.width >= DISTRICT_MIN_WIDTH * unit
-      ? size
-      : { width: Math.min(cap, DISTRICT_MIN_WIDTH * unit), height };
+    /*
+     * The floor is a floor until the ROOM runs out, and then the room wins.
+     *
+     * At the reader's largest text on a phone the unit doubles, so the floor
+     * is 264 of a span that is 262 — and a card held to a floor wider than
+     * the ground it stands on paints off the edge with nothing to scroll.
+     * Wrapping a name is bad; drawing it past the screen is worse.
+     */
+    const floor = Math.min(cap, DISTRICT_MIN_WIDTH * unit, spanW - opts.gap * 2);
+    return size.width >= floor ? size : { width: floor, height };
   };
   /** How many districts fit at the floor, before the row has to shed. */
   const districtCapacity = (cap: number) =>
     Math.max(
       1,
       Math.floor(
-        (spanW - opts.gap) / (Math.min(cap, DISTRICT_MIN_WIDTH * unit) + opts.gap),
+        (spanW - opts.gap) /
+          (Math.min(cap, DISTRICT_MIN_WIDTH * unit, spanW - opts.gap * 2) + opts.gap),
       ),
     );
   const expanded = new Set(state.expanded);
@@ -945,14 +953,18 @@ export function layout<S extends AnySchema>(
    */
   const rowCap = districtCapacity((zoomed ? 240 : opts.contextSize.width) * unit);
   const sheds = !state.overview && inRow.length > rowCap;
+  /*
+   * The card that names the rest TAKES A SLOT, so the row keeps room for it
+   * — and where there is room for only one card, that one card is it. At
+   * the reader's largest text on a phone that is the honest answer: one
+   * legible list of every district, rather than two cards painting off the
+   * edge of the screen.
+   */
+  const keep = Math.max(0, rowCap - 1);
   const slotted = sheds
     ? [
-        ...inRow.slice(0, Math.max(1, rowCap - 1)),
-        {
-          id: BEYOND_CARD,
-          kind: "",
-          beyond: inRow.slice(Math.max(1, rowCap - 1)).map((item) => item.kind),
-        },
+        ...inRow.slice(0, keep),
+        { id: BEYOND_CARD, kind: "", beyond: inRow.slice(keep).map((item) => item.kind) },
       ]
     : inRow;
 

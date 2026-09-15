@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-15T00:43:32.606Z",
+  "at": "2026-09-15T00:50:43.547Z",
   "engine": "chromium",
   "screens": [
     {
@@ -407,7 +407,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 40,
+      "fill": 39,
       "inspector": null,
       "led": null,
       "figures": []

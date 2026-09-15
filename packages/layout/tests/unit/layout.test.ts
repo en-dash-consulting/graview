@@ -1364,6 +1364,34 @@ describe("a row of districts that cannot hold them all", () => {
     expect([...shown, ...beyond.beyond!].sort()).toEqual(many.map((kind) => kind.kind).sort());
   });
 
+  it("holds the floor to the room, at the reader's largest text", () => {
+    /*
+     * The unit doubles at 32px, so the floor doubles with it — and a floor
+     * wider than the ground it stands on paints off the edge with nothing to
+     * scroll. Where there is room for one card, that card is the one that
+     * names them all: a legible list beats two cards off the screen.
+     */
+    for (const width of [390, 700, 1560]) {
+      const row = layout(populated(), wide as never, EMPTY_VIEW, {
+        width,
+        height: 844,
+        unit: 32,
+      }).nodes.filter((node) => node.plane === 2);
+      for (const card of row) {
+        expect(card.x, `${width}px`).toBeGreaterThanOrEqual(0);
+        expect(card.x + card.width, `${width}px`).toBeLessThanOrEqual(width);
+      }
+      /* And no two of them on top of each other. */
+      for (const [index, card] of row.entries()) {
+        for (const other of row.slice(index + 1)) {
+          const overlap =
+            card.x < other.x + other.width - 1 && other.x < card.x + card.width - 1;
+          expect(overlap, `${width}px`).toBe(false);
+        }
+      }
+    }
+  });
+
   it("sheds nothing when the row can hold them all", () => {
     const row = districts(2400);
     expect(row.some((card) => card.beyond !== undefined)).toBe(false);
