@@ -24,6 +24,21 @@ img { max-width: 100%; }
 </head>
 <body>
 <style>
+/* site-css:start — written by scripts/site-css.mjs. Edit docs/site/site.css. */
+/*
+ * ONE STYLESHEET, TWO PAGES, AND A THIRD THAT IS NOT A FILE.
+ *
+ * The landing page is also published as a Claude artifact, whose host
+ * supplies the document and rejects a page that brings its own — and blocks
+ * an external stylesheet outright. So the styles cannot live in a <link>,
+ * and the moment there was a second page they could not live in one page's
+ * <style> either.
+ *
+ * They live here, and `node scripts/site-css.mjs` writes them into every
+ * page between its markers. One source, several renderings, and a test that
+ * fails when a page's copy has gone stale — the same shape the chapters
+ * already use.
+ */
 :root {
   color-scheme: light;
 
@@ -602,6 +617,148 @@ footer {
   .two { gap: 20px; }
   section { padding-top: 42px; }
 }
+
+/* ── The landing page ─────────────────────────────────────────────────────
+   A page whose job is thirty seconds, not fifteen chapters. Everything
+   below exists because the page had the right content in the wrong order:
+   the call to action was in section nine, the proof was prose, and the
+   reason to choose this over a form library was one paragraph at the end of
+   the introduction. */
+
+/* The install line, at the top, where somebody deciding can reach it. */
+.cta { margin-top: 26px; display: grid; gap: 8px; max-width: 62ch; }
+.cta-line {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 12px 14px; border: 1px solid var(--rule); border-radius: 2px;
+  background: var(--sunk);
+}
+.cta-line code { font-family: var(--mono); font-size: 14.5px; color: var(--ink); overflow-wrap: anywhere; }
+.copy {
+  font: inherit; font-family: var(--sans); font-size: 12.5px; font-weight: 600;
+  min-height: max(1.75rem, 28px); padding: 0 12px; margin-left: auto;
+  color: var(--panel); background: var(--pine); border: 1px solid transparent;
+  border-radius: 2px; cursor: pointer;
+}
+.copy:hover { background: var(--pine-2); }
+.copy[data-copied] { background: var(--amber); }
+.cta-sub { margin: 0; max-width: 62ch; }
+
+/* Numbers, counted out of the repository rather than asserted. */
+.numbers {
+  margin: 26px 0 0; padding: 0; list-style: none;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 16px 22px;
+}
+.numbers li { display: grid; gap: 1px; border-top: 1px solid var(--rule); padding-top: 10px; min-width: 0; }
+.numbers strong {
+  font-family: var(--serif); font-size: 30px; line-height: 1.05; color: var(--pine);
+  font-variant-numeric: tabular-nums;
+}
+.numbers span { font-size: 12.5px; line-height: 1.45; color: var(--ink-3); }
+
+/* The causal arrow over the hero pair, said rather than implied.
+   A FLEX ROW, not a three-column grid: the grid version overlapped its own
+   spans at every width the harness measured, because a `1fr auto 1fr` whose
+   middle cell is a rotated glyph is a promise about boxes that rotation
+   does not keep. Flex items cannot overlap. */
+.pair-says {
+  margin: 0 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.pair-says .pair-arrow { font-size: 14px; color: var(--pine); letter-spacing: 0; }
+
+/* The stepper: press a step, the left says what was added, the right is the
+   application at exactly that point. */
+.steps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.steps button {
+  font: inherit; font-family: var(--sans); font-size: 13.5px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: max(2rem, 32px); padding: 0 14px;
+  color: var(--ink-2); background: var(--panel);
+  border: 1px solid var(--rule); border-radius: 2px; cursor: pointer;
+}
+.steps button:hover { color: var(--pine); border-color: var(--pine); }
+.steps button[aria-selected="true"] {
+  color: var(--panel); background: var(--pine); border-color: var(--pine);
+}
+.steps .step-n {
+  font-family: var(--serif); font-variant-numeric: tabular-nums; font-size: 15px;
+  opacity: 0.75;
+}
+.step-panel { margin-top: 20px; }
+.step-panel:focus-visible { outline: 2px solid var(--pine); outline-offset: 6px; }
+.step-two { align-items: stretch; }
+/* The left column packs to the top. A grid that stretches two rows over a
+   460px panel puts a hundred and eighty pixels of nothing between a claim
+   and the list under it, which reads as two unrelated things. */
+.step-two > .stack { align-content: start; }
+.step-two .chapter-live { height: 460px; }
+@media (max-width: 560px) { .step-two .chapter-live { height: 400px; } }
+.step-claim { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2); max-width: 46ch; }
+.step-adds ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.step-adds li { margin-top: 4px; }
+.step-adds code { font-size: 12px; overflow-wrap: anywhere; }
+
+/* The model section, which used to be a paragraph. */
+.minor { margin: 0; font-size: 16px; font-weight: 600; }
+.ai-two .code { max-height: 340px; overflow: auto; }
+.ai-derived { grid-template-columns: minmax(0, 1fr); margin-top: 16px; gap: 12px; }
+
+/* ── The docs ─────────────────────────────────────────────────────────────
+   Thirty pages written out of the repository, so these have to hold whatever
+   a README, a SKILL.md or a barrel turns out to contain. */
+
+/* A list of things to go to: the title, and why you would. */
+.cards { margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.cards a {
+  display: grid; gap: 3px; min-width: 0;
+  padding: 12px 14px; border: 1px solid var(--rule); border-radius: 2px;
+  color: inherit; text-decoration: none; background: var(--panel);
+}
+.cards a:hover { border-color: var(--pine); }
+.cards strong { font-size: 15.5px; color: var(--pine); }
+.cards span { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+
+/* A plain list of names — exports, finding codes. Wraps, never scrolls. */
+.names {
+  margin: 14px 0 0; padding: 0; list-style: none;
+  display: flex; flex-wrap: wrap; gap: 6px 10px;
+}
+.names li { min-width: 0; }
+.names code { font-size: 12.5px; overflow-wrap: anywhere; }
+
+/* A README's table, which may be any width at all. */
+.tablewrap { margin-top: 16px; max-width: 100%; overflow-x: auto; }
+.tablewrap table { border-collapse: collapse; font-size: 13.5px; }
+.tablewrap th, .tablewrap td {
+  text-align: left; vertical-align: top;
+  padding: 7px 14px 7px 0; border-bottom: 1px solid var(--rule-2);
+}
+.tablewrap th { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+
+main.col hr { margin: 26px 0; border: 0; border-top: 1px solid var(--rule); }
+main.col blockquote {
+  margin: 16px 0; padding-left: 16px; border-left: 2px solid var(--rule);
+  color: var(--ink-2);
+}
+main.col h3 { margin: 24px 0 0; font-size: 17px; font-weight: 600; }
+main.col h4 { margin: 20px 0 0; font-size: 15px; font-weight: 600; }
+main.col .jump a[aria-current="page"] { color: var(--pine); border-left-color: var(--pine); font-weight: 600; }
+.jump a[aria-current="page"] { color: var(--pine); border-left-color: var(--pine); font-weight: 600; }
+
+/* A list the markdown renderer made, which carries no class of its own.
+   The page's other lists (.derived, .cards, .names, .chapter-adds) set
+   their own; these get the hanging indent a bulleted list is supposed to
+   have, which is the thing a reader notices missing without knowing why. */
+main.col ul:not([class]), main.col ol:not([class]) {
+  margin: 12px 0 0; padding-left: 22px;
+  list-style-position: outside;
+}
+main.col ul:not([class]) li, main.col ol:not([class]) li {
+  margin-top: 6px; line-height: 1.62; color: var(--ink-2);
+}
+main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: anywhere; }
+/* site-css:end */
 </style>
 
 <a class="skip" href="#what">Skip to content</a>
@@ -623,17 +780,13 @@ footer {
 
     <div class="jump">
       <a href="#what">What it is</a>
-      <a href="#grown">The garden, grown</a>
-      <a href="#declare">The declaration</a>
-      <a href="#packages">The packages</a>
-      <a href="#depth">Depth</a>
-      <a href="#lenses">Lenses</a>
-      <a href="#kit">The kit</a>
-      <a href="#rules">Rules &amp; agents</a>
+      <a href="#grow">See it grow</a>
+      <a href="#agent">With a model</a>
+      <a href="#free">What you get</a>
       <a href="#checked">What is checked</a>
       <a href="#install">Install</a>
+      <a href="progression.html">The long version &rarr;</a>
       <a href="#endash">En&nbsp;Dash</a>
-      <a href="#status">Status</a>
     </div>
 
     <div class="railfoot">
@@ -648,15 +801,44 @@ footer {
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">Declare the domain. The application follows.</h1>
       <p class="lede" style="margin-top: 22px;">
-        Graview is a development framework built on a typed context graph.
-        You declare the kinds of things in your domain, how they connect, the
-        acts that change them and the rules they must not break — once, as
-        code. The picture, the pages, the checks and an agent's tools are
-        derived from that one declaration. A model can read and write it
-        beside you.
+        Declare what your domain is made of — the kinds of thing, how they
+        connect, the acts that change them, the rules they must not break —
+        once, as code. The interface, the pages, the permissions, the checks
+        and an agent's tools all come from that one declaration.
       </p>
 
+      <!--
+        THE CALL TO ACTION AT THE TOP, not in section nine. A person deciding
+        whether to care should be able to start in the time it takes to read
+        one line, and a person who is not ready has lost nothing by seeing it.
+      -->
+      <div class="cta">
+        <div class="cta-line"><code>npm create graview@latest my-app</code>
+          <button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button>
+        </div>
+        <p class="cta-sub sm dim">
+          Writes a running app with one kind, one act, one rule, a routed face,
+          a headless test, a CI workflow and the skills — then
+          <code>pnpm verify</code> tells you it works.
+        </p>
+      </div>
+
+      <!--
+        NUMBERS, NOT ADJECTIVES. Every one of these is counted out of the
+        repository by scripts/site-numbers.mjs, which fails the build when the
+        page and the repository disagree. A marketing page that rounds up is a
+        marketing page nobody on the team will defend.
+      -->
+      <ul class="numbers" aria-label="Graview by the numbers">
+        <li><strong data-number="packages">12</strong> <span>packages</span></li>
+        <li><strong data-number="lenses">6</strong> <span>lenses that rebind</span></li>
+        <li><strong data-number="skills">13</strong> <span>skills for your model</span></li>
+        <li><strong data-number="codes">71</strong> <span>things the checker can say</span></li>
+        <li><strong data-number="tests">1181</strong> <span>named tests, green</span></li>
+      </ul>
+
       <figure class="chapter-shot hero-pair">
+        <p class="pair-says"><span>You write this</span><span class="pair-arrow" aria-hidden="true">&rarr;</span><span>You get this, running</span></p>
         <div class="two">
           <div class="code" data-scroller aria-label="Chapter one of the garden, as code">
 <pre><span class="c">// The whole of chapter one. Nothing else is written.</span>
@@ -730,589 +912,210 @@ footer {
       </p>
     </section>
 
-    <!-- progression:start -->
-
-    <section id="grown" aria-labelledby="h-grown">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-grown">The garden, grown</h2></div>
+    <!--
+      SEE IT GROW. The single most persuasive thing this framework can do is
+      show the same app after one more line of declaration, so that is a
+      control rather than a paragraph: press a chapter, the left says what was
+      added and the right IS the application, mounted live at that chapter.
+      Nothing here is a screenshot and nothing is a mock-up.
+    -->
+    <section id="grow" aria-labelledby="h-grow">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-grow">Add a line. Watch it grow.</h2></div>
       <p class="lede">
-        One example, the community garden, declared a little at a time. Every
-        chapter below is a real declaration that passes its own check, opened
-        in a real browser by <code>scripts/progression.mjs</code> on every push.
-        Nothing here is a mock-up; a chapter that stops holding its claim fails
-        the build.
+        One example — a community garden — declared a little at a time. Press a
+        step. The left is everything the declaration gained; the right is the
+        application, running on this page, at exactly that point.
       </p>
-      <p class="sm">
-        Chapter one is what <code>graview create</code> writes. The loop from
-        there is the whole method: declare, check, look, declare more.
-      </p>
-      <div class="chapters">
-      <article class="chapter" id="chapter-1" aria-labelledby="h-chapter-1">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">1</span>
-          <h3 id="h-chapter-1">A plot</h3>
-        </div>
-        <p class="chapter-claim">One kind, one act. The city, the district, the derived form and the routed face all exist before a line of UI is written.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="1" role="region" aria-label="A plot, live">
-            <p class="chapter-loading">The garden after chapter 1, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>defineNode("plot")</code></li><li><code>defineMutation("add-plot") with creates: ["plot"]</code></li></ul>
-        </div>
-      </article>
 
-      <article class="chapter" id="chapter-2" aria-labelledby="h-chapter-2">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">2</span>
-          <h3 id="h-chapter-2">Gardeners, and who tends what</h3>
-        </div>
-        <p class="chapter-claim">A second kind and one edge. The line is drawn from the declaration, captioned in its own words, and made and unmade by the act that names it.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="2" role="region" aria-label="Gardeners, and who tends what, live">
-            <p class="chapter-loading">The garden after chapter 2, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>defineNode("gardener")</code></li><li><code>edges: { "tended-by": { to: ["gardener"], description, inverse } } on plot</code></li><li><code>defineMutation("tend") with connects and severs</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-3" aria-labelledby="h-chapter-3">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">3</span>
-          <h3 id="h-chapter-3">The garden's agreement</h3>
-        </div>
-        <p class="chapter-claim">A rule is data on the map, and it names its own repair. The moment it lands, an untended plot is a problem with a one-click fix, not a bug report.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="3" role="region" aria-label="The garden's agreement, live">
-            <p class="chapter-loading">The garden after chapter 3, loading…</p>
-          </div>
-          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>defineNode("rule") with requiresInvariant</code></li><li><code>defineInvariant("every-plot-tended") with repairs: ["tend"]</code></li><li><code>defineMutation("adopt-rule")</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-4" aria-labelledby="h-chapter-4">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">4</span>
-          <h3 id="h-chapter-4">Plantings, and the horizon</h3>
-        </div>
-        <p class="chapter-claim">A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="4" role="region" aria-label="Plantings, and the horizon, live">
-            <p class="chapter-loading">The garden after chapter 4, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>defineNode("planting") with lifecycle: { field: "status", retired: ["harvested", "failed"] }</code></li><li><code>an appendOnly edge "grows-in"</code></li><li><code>defineMutation("sow"), defineMutation("harvest") with writes: ["status"]</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-5" aria-labelledby="h-chapter-5">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">5</span>
-          <h3 id="h-chapter-5">A seat for an agent</h3>
-        </div>
-        <p class="chapter-claim">An agent gets the same acts a person does, through one declared seam. Its turn is attributed in the log, watchable from altitude, and undoable out of order.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="5" role="region" aria-label="A seat for an agent, live">
-            <p class="chapter-loading">The garden after chapter 5, loading…</p>
-          </div>
-          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>intelligence: [{ name: "starter", kind: "graph", may: [...] }] on defineApp</code></li><li><code>an AgentSeat in the rail, gated on add-gardener</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-6" aria-labelledby="h-chapter-6">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">6</span>
-          <h3 id="h-chapter-6">The garden remembers</h3>
-        </div>
-        <p class="chapter-claim">Persistence is the operation log. One adapter in main.tsx and an edit survives a reload, still attributed, still undoable, with the way back to empty on the rail.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="6" role="region" aria-label="The garden remembers, live">
-            <p class="chapter-loading">The garden after chapter 6, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>openStore({ app, adapter: createBrowserAdapter(), fresh: browserStartsFresh() }) in main.tsx</code></li><li><code>remembers on the Shell</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-7" aria-labelledby="h-chapter-7">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">7</span>
-          <h3 id="h-chapter-7">Who may do what</h3>
-        </div>
-        <p class="chapter-claim">One policy, declared once. The store refuses, the actions strip narrows, and an agent's seat narrows with it, so a gardener never sees a button that would fail.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="7" role="region" aria-label="Who may do what, live">
-            <p class="chapter-loading">The garden after chapter 7, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>policy: { roles, grants } on defineApp</code></li><li><code>a principal with roles on the store</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-8" aria-labelledby="h-chapter-8">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">8</span>
-          <h3 id="h-chapter-8">The garden's own name</h3>
-        </div>
-        <p class="chapter-claim">One accent, a mark and a typeface, and both schemes are derived and measured. Every text pair is checked against AA before the brand is allowed to ship.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="8" role="region" aria-label="The garden's own name, live">
-            <p class="chapter-loading">The garden after chapter 8, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>brand: { name, logo, typography, accents, schemes: brandFromAccent(...) } on defineApp</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter phone" id="chapter-9" aria-labelledby="h-chapter-9">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">9</span>
-          <h3 id="h-chapter-9">The other face</h3>
-        </div>
-        <p class="chapter-claim">The same declaration is also an ordinary web application: lists, records, forms and problems, routed, at phone width. Any page can be replaced with one the app writes, in its own words, over the same derivations.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="9" role="region" aria-label="The other face, live">
-            <p class="chapter-loading">The garden after chapter 9, loading…</p>
-          </div>
-          <figcaption> graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>PagesApp at /pages, from the same store</code></li><li><code>createPageRegistry(schema).register("plot", "record", PlotPage) — the plot's page in the garden's words</code></li><li><code>pageStyles from @graview/pages, so a custom page is still the same face</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-10" aria-labelledby="h-chapter-10">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">10</span>
-          <h3 id="h-chapter-10">A lens over the garden</h3>
-        </div>
-        <p class="chapter-claim">A lens binds roles, not field names. The coverage grid was written for requirements and tests; pointed at gardeners and plots it says, in a picture, which plot nobody tends.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="10" role="region" aria-label="A lens over the garden, live">
-            <p class="chapter-loading">The garden after chapter 10, loading…</p>
-          </div>
-          <figcaption>Standing says “1 problem”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>lenses: [{ name: "coverage", binds: "entities", bindings: { rows, columns, link } }] on defineApp</code></li><li><code>the lens's View registered for the gardeners, cardinality many</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-11" aria-labelledby="h-chapter-11">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">11</span>
-          <h3 id="h-chapter-11">What grows where</h3>
-        </div>
-        <p class="chapter-claim">A second lens, written for a seating plan, drawn over the plots where they lie in the garden. Things sit where the domain says they sit, and an empty bed is a picture of something to do, not a missing row.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="11" role="region" aria-label="What grows where, live">
-            <p class="chapter-loading">The garden after chapter 11, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>x and y on plot, 0..1 across the garden</code></li><li><code>a second lens declaration binding slots, x, y and fill to plot and grows-in</code></li><li><code>fillFrom: "occupant" — the lens reads the edge from the planting's end</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-12" aria-labelledby="h-chapter-12">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">12</span>
-          <h3 id="h-chapter-12">Ship it</h3>
-        </div>
-        <p class="chapter-claim">Deployment is one declaration plus one adapter. A version and a migration on the app carry a garden stored last season forward, as a logged, attributed, undoable operation.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="12" role="region" aria-label="Ship it, live">
-            <p class="chapter-loading">The garden after chapter 12, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>version: 2 and migrations: [{ from: 1, to: 2, title, apply }] on defineApp</code></li><li><code>openStore against a stored version-1 garden</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-13" aria-labelledby="h-chapter-13">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">13</span>
-          <h3 id="h-chapter-13">The garden's own face</h3>
-        </div>
-        <p class="chapter-claim">Every surface of the pages face replaced with the garden's own design — an almanac, not an admin panel — and a lens the garden drew of itself in the scene. The same store, acts, rules and permissions underneath; only what a reader sees is the app's.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="13" role="region" aria-label="The garden's own face, live">
-            <p class="chapter-loading">The garden after chapter 13, loading…</p>
-          </div>
-          <figcaption> graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>createPageRegistry(schema).surface("shell" | "home" | "problems", …) and .register(kind, "list" | "record", …) for every kind</code></li><li><code>register("plot", { cardinality: "many", fidelity: "full" }, GardenMapView, { title: "The garden map" }) — a lens of the garden's own</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-14" aria-labelledby="h-chapter-14">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">14</span>
-          <h3 id="h-chapter-14">Who is here</h3>
-        </div>
-        <p class="chapter-claim">Users, invitations and roles are nodes and acts like everything else: drawn only for the seat that keeps the installation, refused for everyone else by the same policy, and a person's own record is theirs to edit. A lens over the policy shows what each role reaches.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="14" role="region" aria-label="Who is here, live">
-            <p class="chapter-loading">The garden after chapter 14, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>declareInstallation({ roles, admin }) — two kinds, six acts, a module drawn only for those who administer it, and a self grant for a profile</code></li><li><code>createSchema([...yours, ...installation.kinds]), mutations: [...yours, ...installation.mutations], policy: installation.withPolicy(policy)</code></li><li><code>reachLens registered over the people as "Who may do what"</code></li></ul>
-        </div>
-      </article>
-
-      <article class="chapter" id="chapter-15" aria-labelledby="h-chapter-15">
-        <div class="chapter-head">
-          <span class="chapter-n" aria-hidden="true">15</span>
-          <h3 id="h-chapter-15">The studio</h3>
-        </div>
-        <p class="chapter-claim">The declaration itself is a graph: every kind, field, edge, act, rule, role and grant of chapter fourteen is a node here, edited with ordinary acts, checked before it is applied, migrated when a stored garden needs it, and written back as the files graview create writes.</p>
-        <figure class="chapter-shot">
-          <div class="chapter-live" data-graview-chapter="15" role="region" aria-label="The studio, live">
-            <p class="chapter-loading">The garden after chapter 15, loading…</p>
-          </div>
-          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: switch its face, click a district, take an act.</figcaption>
-        </figure>
-        <div class="chapter-adds">
-          <span class="chapter-label">The declaration gained</span>
-          <ul><li><code>createStudio(app) — the declaration as a store of the meta-schema; studio.check(), studio.apply(), studio.files()</code></li><li><code>add-kind, add-field, add-edge, add-act, add-rule, name-repair, add-role, grant — acts on the declaration, undone like any other</code></li><li><code>createStudioLens(app) registered over the kinds as "What the checker says"</code></li></ul>
-        </div>
-      </article>
+      <div class="steps" role="tablist" aria-label="Steps in the garden's declaration">
+        <button type="button" role="tab" id="step-tab-1" aria-controls="step-panel-1" aria-selected="true" data-step="1">
+          <span class="step-n">1</span> A plot
+        </button>
+        <button type="button" role="tab" id="step-tab-3" aria-controls="step-panel-3" aria-selected="false" tabindex="-1" data-step="3">
+          <span class="step-n">3</span> A rule that repairs itself
+        </button>
+        <button type="button" role="tab" id="step-tab-5" aria-controls="step-panel-5" aria-selected="false" tabindex="-1" data-step="5">
+          <span class="step-n">5</span> A seat for an agent
+        </button>
+        <button type="button" role="tab" id="step-tab-9" aria-controls="step-panel-9" aria-selected="false" tabindex="-1" data-step="9">
+          <span class="step-n">9</span> The other face
+        </button>
+        <button type="button" role="tab" id="step-tab-13" aria-controls="step-panel-13" aria-selected="false" tabindex="-1" data-step="13">
+          <span class="step-n">13</span> Its own design
+        </button>
       </div>
-    </section>
-    <!-- progression:end -->
 
-    <section id="declare" aria-labelledby="h-declare">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-declare">The declaration</h2></div>
-      <div class="two">
-        <div class="stack">
-          <div class="code" data-scroller aria-label="The task declaration, as code">
-<pre><span class="k">export const</span> <span class="n">task</span> = <span class="n">defineNode</span>(<span class="s">"task"</span>, {
-  description: <span class="s">"One thing to do."</span>,
-  fields: z.<span class="n">object</span>({
-    label: z.<span class="n">string</span>().min(<span class="n">1</span>),
-    done:  z.<span class="n">boolean</span>(),
-    due:   isoDate.optional(),
-    day:   dayOfWeek.optional(),
-    plannedAt: minutes.optional(),
-  }),
-  plural: <span class="s">"Tasks"</span>,
-  <span class="c">// A lens asks for roles, not field names.</span>
-  fieldRoles: { start: <span class="s">"plannedAt"</span>, day: <span class="s">"day"</span> },
-  edges: {
-    <span class="s">"waits-for"</span>: {
-      to: [<span class="s">"task"</span>],
-      description: <span class="s">"what has to happen first"</span>,
-      inverse:     <span class="s">"what is waiting on this"</span>,
-    },
-  },
-});</pre>
+      <div class="step-panel" role="tabpanel" id="step-panel-1" aria-labelledby="step-tab-1" tabindex="0">
+        <div class="two step-two">
+          <div class="stack">
+            <p class="step-claim">One kind, one act. The city, the district, the derived form and the routed face all exist before a line of UI is written.</p>
+            <div class="step-adds">
+              <span class="chapter-label">The declaration gained</span>
+              <ul><li><code>defineNode("plot")</code></li><li><code>defineMutation("add-plot")</code> with <code>creates: ["plot"]</code></li></ul>
+            </div>
           </div>
-          <p class="sm dim">
-            An edge pointing at a kind the schema never declared fails
-            <code>tsc</code>. Not at runtime. At build.
+          <div class="chapter-live" data-step-live="1" role="region" aria-label="The garden after step 1, live">
+            <p class="chapter-loading">Loading the garden at step 1…</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-panel" role="tabpanel" id="step-panel-3" aria-labelledby="step-tab-3" tabindex="0" hidden>
+        <div class="two step-two">
+          <div class="stack">
+            <p class="step-claim">A rule is data on the map, and it names its own repair. The moment it lands, an untended plot is a problem with a one-click fix, not a bug report.</p>
+            <div class="step-adds">
+              <span class="chapter-label">The declaration gained</span>
+              <ul><li><code>defineNode("rule")</code> with <code>requiresInvariant</code></li><li><code>defineInvariant("every-plot-tended")</code> with <code>repairs: ["tend"]</code></li><li><code>defineMutation("adopt-rule")</code></li></ul>
+            </div>
+          </div>
+          <div class="chapter-live" data-step-live="3" role="region" aria-label="The garden after step 3, live">
+            <p class="chapter-loading">Loading the garden at step 3…</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-panel" role="tabpanel" id="step-panel-5" aria-labelledby="step-tab-5" tabindex="0" hidden>
+        <div class="two step-two">
+          <div class="stack">
+            <p class="step-claim">An agent gets the same acts a person does, through one declared seam. Its turn is attributed in the log, watchable from altitude, and undoable out of it.</p>
+            <div class="step-adds">
+              <span class="chapter-label">The declaration gained</span>
+              <ul><li><code>intelligence: [{ name: "starter", kind: "graph", may: [&hellip;] }]</code></li><li>an <code>AgentSeat</code> in the rail, gated on <code>add-gardener</code></li></ul>
+            </div>
+          </div>
+          <div class="chapter-live" data-step-live="5" role="region" aria-label="The garden after step 5, live">
+            <p class="chapter-loading">Loading the garden at step 5…</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-panel" role="tabpanel" id="step-panel-9" aria-labelledby="step-tab-9" tabindex="0" hidden>
+        <div class="two step-two">
+          <div class="stack">
+            <p class="step-claim">The same declaration is also an ordinary web application: lists, records, forms and problems, routed, at phone width. Any page can be replaced with one of your own.</p>
+            <div class="step-adds">
+              <span class="chapter-label">The declaration gained</span>
+              <ul><li><code>PagesApp</code> at <code>/pages</code>, from the same store</li><li><code>createPageRegistry(schema).register("plot", "record", PlotPage)</code></li></ul>
+            </div>
+          </div>
+          <div class="chapter-live" data-step-live="9" role="region" aria-label="The garden after step 9, live">
+            <p class="chapter-loading">Loading the garden at step 9…</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-panel" role="tabpanel" id="step-panel-13" aria-labelledby="step-tab-13" tabindex="0" hidden>
+        <div class="two step-two">
+          <div class="stack">
+            <p class="step-claim">Every surface of the routed face replaced with the garden's own design — an almanac, not an admin panel — over the same store, the same acts and the same rules.</p>
+            <div class="step-adds">
+              <span class="chapter-label">The declaration gained</span>
+              <ul><li><code>.surface("shell" | "home" | "problems", …)</code> and <code>.register(kind, "list" | "record", …)</code></li><li>a lens the garden drew of itself</li></ul>
+            </div>
+          </div>
+          <div class="chapter-live" data-step-live="13" role="region" aria-label="The garden after step 13, live">
+            <p class="chapter-loading">Loading the garden at step 13…</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="sm dim" style="margin-top: 14px;">
+        Fifteen steps in all, each a real declaration that passes its own
+        check, opened in a real browser on every push. A step that stops
+        holding its claim fails the build.
+        <a class="inl" href="progression.html">Read all fifteen &rarr;</a>
+      </p>
+    </section>
+
+    <!--
+      WITH A MODEL. This was one paragraph at the end of the first section,
+      which is where a thing goes when nobody has decided whether it matters.
+      It is the reason to choose this framework over a form library, so it is
+      a section, and everything in it is real output rather than a claim.
+    -->
+    <section id="agent" aria-labelledby="h-agent">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-agent">Built to be worked on with a model</h2></div>
+      <p class="lede">
+        A declaration is a context graph, and a context graph is the one thing
+        a model reads as well as a person does. Not a chat box bolted to a
+        CRUD app — the same object is the source for your interface, your
+        agent's tools and the checker that keeps them honest.
+      </p>
+
+      <div class="two ai-two">
+        <div class="stack">
+          <h3 class="minor">It can read the whole app</h3>
+          <p class="sm">
+            <code>graview describe</code> reads the declaration and says what
+            somebody opening the product for the first time can actually do —
+            derived, so it cannot drift. This is real output, from a real app:
           </p>
+          <div class="code" data-scroller aria-label="graview describe, as an observer"><pre><code>$ graview describe app.js --as observer
+
+Groundskeeper — 12 kinds, 76 acts
+  (64 declared, 12 derived).
+
+## Opening it empty
+Nothing here is this seat's to begin.
+7 of 12 kinds can be started, and
+"raise-concern", "stake-out-zone" …
+are not permitted to it.
+  feature waits for zone (1 deep).
+  routine waits for practice and zone.
+
+## Who may do what
+4 roles: steward, keeper, crew, observer.
+As observer: 2 of 76 acts permitted.</code></pre></div>
         </div>
 
         <div class="stack">
-          <p class="sm">Everything below comes out of that block. None of it is written twice.</p>
-          <ul class="plain">
-            <li><b>The picture.</b> Layout is a pure function of focus, relation and graph. Same graph, same picture. Every stop is a URL. Any two states interpolate.</li>
-            <li><b>The actions.</b> Which mutations are legal across the current selection, ranked, with their unanswered arguments typed and their pickers populated.</li>
-            <li><b>The agent's tools.</b> One surface, shared with the interface. An agent edit and a human edit produce the same diff and the same log entry.</li>
-            <li><b>The words.</b> Connector captions, group headings, accessible names. Read from <code>description</code> and <code>inverse</code>.</li>
-            <li><b>A view, before you write one.</b> A new kind renders sensibly on day one. Replace it with a real view when you have something better to say.</li>
+          <h3 class="minor">It can write it, and you see what it would do first</h3>
+          <p class="sm">
+            Every act is a typed tool with a sentence attached, narrowed by the
+            same policy a person is under. What comes back is a
+            <strong>plan</strong> before it is a change: one row per thing, what
+            it was sure about, what goes with what if you decline something, and
+            then one batch with one undo.
+          </p>
+          <ul class="derived ai-derived" aria-label="What a model works through">
+            <li><strong>The same acts.</strong> No privileged write path. A model's edits produce the diffs a person's do, in the same log, under the same rules.</li>
+            <li><strong>Attributed and reversible.</strong> Every turn carries its author and its intent, and comes back out through the same control.</li>
+            <li><strong>Refused out loud.</strong> An act a seat may not take is struck through with the sentence saying who can — never a button that silently fails.</li>
+            <li><strong>13 skills ship with it.</strong> Each teaches a model one shape of the declaration and ends in <code>graview check</code>, reporting what it actually said.</li>
           </ul>
         </div>
       </div>
-    </section>
 
-    <section id="packages" aria-labelledby="h-packages">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-packages">The packages</h2></div>
-      <p class="sm" style="margin-bottom: 16px; max-width: 62ch;">
-        Eleven packages, layered. Take the whole stack or take the parts that
-        earn their place. <code>layout</code> is pure geometry with no React in
-        it; <code>core</code> runs headless in a worker or a test; <code>embed</code>
-        puts an app on somebody else's page.
-      </p>
-      <div class="scroll" data-scroller aria-label="The packages, as a table">
-        <table>
-          <caption class="sr-only">The twelve packages and what each contains</caption>
-            <thead><tr><th scope="col">Package</th><th scope="col">What is in it</th></tr></thead>
-          <tbody>
-            <tr><td class="pkg">@graview/core</td><td>Schema, graph, invariants, mutations, the operation log, persistence and sync adapters, the installation as a module, the brand and its kit, and the <code>graview check</code> CLI.</td></tr>
-            <tr><td class="pkg">@graview/layout</td><td>Where everything sits. Headless and pure. No DOM, no framework.</td></tr>
-            <tr><td class="pkg">@graview/tools</td><td>Derived affordances, and one tool surface an agent and an interface both use.</td></tr>
-            <tr><td class="pkg">@graview/render</td><td>Capture, depth compositing, pointer routing. Only this package touches the GPU, and only through its <code>/gpu</code> entry.</td></tr>
-            <tr><td class="pkg">@graview/react</td><td>The binding, and the routes a line may take. Deliberately thin.</td></tr>
-            <tr><td class="pkg">@graview/primitives</td><td>View primitives, three lenses, the named places, the way into the installation and the lens over its policy, and the workbench: inspector, standing, activity, undo, trail, the shell.</td></tr>
-            <tr><td class="pkg">@graview/pages</td><td>The routed face: home, lists, records, forms and problems derived from the declaration, every surface replaceable.</td></tr>
-            <tr><td class="pkg">@graview/ship</td><td>Persistence in the browser, versions and migrations, and the deploy shape.</td></tr>
-            <tr><td class="pkg">@graview/embed</td><td><code>mount(el, { app, seed, stop })</code>: an app inside any element, themed to itself, with faces, places and seats on a strip.</td></tr>
-            <tr><td class="pkg">@graview/studio</td><td>The declaration itself as a graph: edited with ordinary acts, checked before it is applied, migrated, and written back as the files <code>graview create</code> writes.</td></tr>
-            <tr><td class="pkg">@graview/skills</td><td>Authoring moves for Claude Code and Codex. Each one ends in a check rather than a claim.</td></tr>
-            <tr><td class="pkg">create-graview</td><td>The door: <code>npm create graview</code> runs <code>graview create</code>, which writes chapter one for your domain.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="sm dim" style="margin-top: 14px;">
-        The repository also carries example apps. They are fixtures for the
-        harnesses and are not published.
+      <p class="sm" style="margin-top: 20px; max-width: 74ch;">
+        The loop is the whole method, and it is the same loop whether the hands
+        are yours or a model's: <strong>describe a kind, let it draft the edges,
+        the acts and the rule, run <code>graview check</code>, look at the
+        picture, declare more.</strong> The checker tells you both when a shape
+        is wrong — 71 things it can say, in words, before a page does.
       </p>
     </section>
 
-    <section id="depth" aria-labelledby="h-depth">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-depth">Depth</h2></div>
-      <p class="sm" style="margin-bottom: 16px; max-width: 62ch;">
-        A view further away is not drawn smaller. It is asked for less. That
-        split carries real weight: capture runs about 0.016&nbsp;ms per node up
-        to roughly 128 live captures a frame, then falls off a cliff.
+    <!--
+      WHAT YOU GET. Moved out of the first section, where it was a list under
+      a wall of prose, and given the room to be the list of reasons it is.
+    -->
+    <section id="free" aria-labelledby="h-free">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-free">What you do not write</h2></div>
+      <p class="lede">
+        All of this is derived from the one declaration. Every piece of it is
+        replaceable, and none of it has to be.
       </p>
-      <div class="planes">
-        <div class="plane">
-          <div class="no">plane 0<i></i></div>
-          <div><h3>Focus, full fidelity</h3><p>Live DOM, captured every frame it moves. Whatever you are working on, at whatever size it wants.</p></div>
-        </div>
-        <div class="plane">
-          <div class="no">plane 1<i></i></div>
-          <div><h3>Relations, summary</h3><p>Whatever the focus touches, captured on change into a cached texture. Still real elements. Still clickable and focusable.</p></div>
-        </div>
-        <div class="plane">
-          <div class="no">plane 2<i></i></div>
-          <div><h3>Context, glyph</h3><p>Every declared kind, always, in the same place. Painted in the shader and never captured, so a graph that is not changing costs nothing per frame.</p></div>
-        </div>
-      </div>
+      <ul class="derived" aria-label="What is derived from the declaration">
+        <li><strong>The picture.</strong> Every kind is a district of one city; every record a card among its relations; the words on the lines are the declaration's own, read from whichever end you are standing on.</li>
+        <li><strong>The acts, and the checks.</strong> What a selection may have done to it comes from the mutations and the policy — a seat never sees a button that would fail. <code>graview check</code> reads the whole declaration and says what is wrong before a page does.</li>
+        <li><strong>The pages.</strong> The same declaration, routed: lists, records and forms for the person who wanted an ordinary web app — and every surface replaceable, up to <a class="inl" href="progression.html#chapter-13">a product design of the app's own</a> over the same store.</li>
+        <li><strong>The agent's seat.</strong> Every act is a typed tool with a sentence attached. A model works the same graph, in the same operation log, under the same policy, and its turns can be taken back.</li>
+        <li><strong>The way in.</strong> An empty installation is the screen nobody designs. <code>beginning()</code> reads the chain out of the declaration and says what can be made now, what the rest are waiting for, and — for a seat that may not — who can.</li>
+        <li><strong>Six lenses.</strong> A timeline, a calendar, a matrix, a board, a reach and a plan. Each binds roles rather than field names, so one written for your domain works unchanged in somebody else's.</li>
+      </ul>
     </section>
 
-    <section id="lenses" aria-labelledby="h-lenses">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-lenses">Lenses</h2></div>
-      <p class="sm" style="margin-bottom: 14px; max-width: 62ch;">
-        A lens binds <em>roles</em>, not field names. Point the timeline at
-        <code>plannedAt</code> in one app and at <code>leaveAt</code> in
-        another; it never learns what either one means. That is the line
-        between a lens and a component you copied. The garden proves it
-        twice: the coverage grid, written for requirements and tests, shows
-        <a class="inl" href="#chapter-10">which plot nobody tends</a>; the
-        board, written for a seating plan, shows
-        <a class="inl" href="#chapter-11">what grows where</a> — and the
-        empty bed.
-      </p>
-      <p class="sm" style="margin-bottom: 18px; max-width: 62ch;">
-        <strong>Lenses are yours to make.</strong> A lens is an ordinary
-        React component that takes the nodes, the bindings and the selection
-        the framework hands it, and draws whatever your domain needs to see —
-        a map, a ledger, a floor plan, a Gantt of the week. Register it over
-        a kind with a title and it is a named place in the bar; every mark it
-        draws is a real pick target, so selection, ties and actions land on
-        the things themselves. <a class="inl" href="#chapter-13">Chapter
-        thirteen</a> is the garden drawing itself: beds as beds, a sprout per
-        planting, and the same drawing on the home page of a pages face that
-        replaced every surface. The core ships with three starters — the
-        board, the coverage grid and the timeline — as the shapes most
-        domains reach for first, and every one of them is one file you can
-        read and copy.
-      </p>
-      <div class="lenses">
-        <div class="lens">
-          <figure>
-            <svg viewBox="0 0 200 92" role="img" aria-label="A board: five slots arranged in bands, one empty">
-              <rect x="0.5" y="0.5" width="199" height="91" fill="none" stroke="var(--rule)"></rect>
-              <line x1="0" y1="31" x2="200" y2="31" stroke="var(--rule)" stroke-dasharray="3 3"></line>
-              <line x1="0" y1="61" x2="200" y2="61" stroke="var(--rule)" stroke-dasharray="3 3"></line>
-              <circle cx="100" cy="16" r="7.5" fill="none" stroke="var(--pine)"></circle>
-              <circle cx="58" cy="46" r="7.5" fill="none" stroke="var(--amber)" stroke-dasharray="3 2"></circle>
-              <circle cx="142" cy="46" r="7.5" fill="none" stroke="var(--pine)"></circle>
-              <circle cx="79" cy="76" r="7.5" fill="none" stroke="var(--pine)"></circle>
-              <circle cx="121" cy="76" r="7.5" fill="none" stroke="var(--pine)"></circle>
-            </svg>
-          </figure>
-          <div><h3>Board</h3><p>Things sit where the domain says they sit, not where a layout engine decided. The empty slot is the whole point.</p></div>
-        </div>
-        <div class="lens">
-          <figure>
-            <svg viewBox="0 0 200 92" role="img" aria-label="A coverage matrix with one empty row">
-              <rect x="0.5" y="0.5" width="199" height="91" fill="none" stroke="var(--rule)"></rect>
-              <g fill="var(--pine)">
-                <rect x="24" y="15" width="8" height="8"></rect>
-                <rect x="86" y="15" width="8" height="8"></rect>
-                <rect x="55" y="36" width="8" height="8"></rect>
-                <rect x="148" y="36" width="8" height="8"></rect>
-                <rect x="117" y="78" width="8" height="8"></rect>
-                <rect x="24" y="78" width="8" height="8"></rect>
-              </g>
-              <line x1="14" y1="62" x2="186" y2="62" stroke="var(--amber)" stroke-width="1.5"></line>
-              <g fill="var(--ink-3)" opacity="0.3">
-                <circle cx="59" cy="19" r="1.3"></circle><circle cx="121" cy="19" r="1.3"></circle>
-                <circle cx="28" cy="40" r="1.3"></circle><circle cx="90" cy="40" r="1.3"></circle>
-                <circle cx="59" cy="82" r="1.3"></circle><circle cx="152" cy="82" r="1.3"></circle>
-              </g>
-            </svg>
-          </figure>
-          <div><h3>Coverage</h3><p>An empty row is a requirement nobody answered. An empty column is work nobody asked for. Reading a document never finds the paragraph that was never written.</p></div>
-        </div>
-        <div class="lens">
-          <figure>
-            <svg viewBox="0 0 200 92" role="img" aria-label="A timeline with spans across columns">
-              <rect x="0.5" y="0.5" width="199" height="91" fill="none" stroke="var(--rule)"></rect>
-              <g stroke="var(--rule)">
-                <line x1="40" y1="0" x2="40" y2="92"></line>
-                <line x1="79" y1="0" x2="79" y2="92"></line>
-                <line x1="118" y1="0" x2="118" y2="92"></line>
-                <line x1="157" y1="0" x2="157" y2="92"></line>
-              </g>
-              <g fill="var(--pine)" opacity="0.85">
-                <rect x="6" y="20" width="28" height="19"></rect>
-                <rect x="45" y="38" width="28" height="29"></rect>
-                <rect x="123" y="15" width="28" height="25"></rect>
-                <rect x="162" y="50" width="28" height="21"></rect>
-              </g>
-              <rect x="84" y="32" width="28" height="33" fill="var(--amber)" opacity="0.9"></rect>
-            </svg>
-          </figure>
-          <div><h3>Timeline</h3><p>Intervals against columns. The minimum window is the app's call, because an eight-hour default is right for a school day and wrong for a Tuesday evening.</p></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="kit" aria-labelledby="h-kit">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-kit">The kit</h2></div>
-      <p class="sm" style="margin-bottom: 14px; max-width: 62ch;">
-        Everything the scene draws that is not a view is declared on the brand:
-        the lines, their route and their stroke, the ground's grid and lattice,
-        the kind tags, the captions. A route is a named strategy — curve,
-        straight, right-angled — and the next one is one case in one file.
-        Colour and visibility are per edge kind. Try it on the garden after
-        chapter eight: the declaration you are writing is beside it, and the
-        checker's verdict on any colour you pick is under that.
-      </p>
-      <div class="two">
-        <div class="chapter-live" data-graview-chapter="8" data-stop="#overview=1" data-label="The dressed garden" role="region" aria-label="The kit's garden, live">
-          <p class="chapter-loading">The garden after chapter 8, loading…</p>
-        </div>
-        <form class="kit-controls" id="kit-form" aria-label="Dress the garden">
-          <fieldset>
-            <legend>Every line's route</legend>
-            <label><input type="radio" name="route" value="curve" checked> curve</label>
-            <label><input type="radio" name="route" value="straight"> straight</label>
-            <label><input type="radio" name="route" value="orthogonal"> right-angled</label>
-          </fieldset>
-          <fieldset>
-            <legend>The tended-by line</legend>
-            <label><input type="checkbox" name="tended-visible" checked> drawn</label>
-            <label>stroke <select name="tended-pattern"><option value="">as derived</option><option value="solid">solid</option><option value="dashed">dashed</option><option value="dotted">dotted</option></select></label>
-            <label><input type="checkbox" name="tended-painted"> painted</label>
-            <label>colour <input type="color" name="tended-colour" value="#1d3f8a"></label>
-          </fieldset>
-          <fieldset>
-            <legend>The ground and the marks</legend>
-            <label><input type="checkbox" name="grid" checked> grid</label>
-            <label><input type="checkbox" name="lattice" checked> lattice</label>
-            <label><input type="checkbox" name="tags" checked> kind tags</label>
-            <label><input type="checkbox" name="captions" checked> captions</label>
-          </fieldset>
-          <pre class="kit-decl" id="kit-decl" data-scroller aria-label="The kit you are declaring">kit: {}</pre>
-          <p class="kit-verdict" id="kit-verdict" role="status" data-clean="true"><b>graview check:</b> the kit is clean.</p>
-        </form>
-      </div>
-    </section>
-
-    <section id="rules" aria-labelledby="h-rules">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-rules">Rules &amp; agents</h2></div>
-      <p class="sm" style="margin-bottom: 14px; max-width: 62ch;">
-        <strong>Who is here is in the graph too.</strong> Users, invitations
-        and the roles they hold are nodes and acts like everything else:
-        judged by the policy, offered in the strip and the pages, written to
-        the log. The seat that keeps the installation sees "Show the
-        installation" in the bar and the people rise as districts beside the
-        domain; nobody else ever sees them. A person's record is their
-        profile and theirs alone to edit. <a class="inl" href="#chapter-14">Chapter
-        fourteen</a> is the garden with its gardeners at the keyboard, and a
-        lens over the policy that says what each role reaches.
-      </p>
-      <p class="sm" style="margin-bottom: 14px; max-width: 62ch;">
-        <strong>The declaration is a graph too.</strong> In the studio every
-        kind, field, edge, act, rule, role and grant is a node, and a change
-        to the declaration is an act with an author, an intent and an
-        inverse. The checker judges what it would become before it is
-        applied; a stored graph gets the migration it needs; the result is
-        written back as the files <code>graview create</code> writes. An
-        agent seat proposes by acting, and a person keeps or takes back its
-        turn. <a class="inl" href="#chapter-15">Chapter fifteen</a> is the
-        garden's own declaration, open in the studio.
-      </p>
-      <div class="two">
-        <div class="stack">
-          <h3>A rule names its own repairs</h3>
-          <p class="sm">
-            Invariants run on every change. The bar states the result, and zero
-            is an answer too. Open a problem and it selects what it names, marks
-            those nodes wherever they happen to be drawn, and offers the
-            mutations that would fix it. You never go hunting.
-          </p>
-          <p class="sm">
-            Suggestions fall out of the same machinery. Select three tasks where
-            two share a day and <em>align the third</em> appears, because the
-            schema already said which mutation writes that field. Nobody wrote a
-            rule about days.
-          </p>
-        </div>
-        <div class="stack">
-          <h3>History is a fold, not a stack</h3>
-          <p class="sm">
-            The graph is a fold over an append-only log. Every operation carries
-            its author, its batch, its intent, its inverse, and the nodes it
-            <em>read</em>.
-          </p>
-          <p class="sm">
-            That last one turns "drop the agent's turn, keep my edits" into a
-            dependency check rather than a stack pop. When it will not work, the
-            check names the operation in the way and offers to bring it along.
-          </p>
-          <p class="sm">
-            The tool runtime emits every call as it happens, reads included, so
-            a turn reads back as <em>looked at the whole graph, looked at the
-            Tuesday task, moved it</em>. Every node it names is one click away.
-          </p>
-        </div>
-      </div>
-    </section>
 
     <section id="checked" aria-labelledby="h-checked">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-checked">What is checked</h2></div>
@@ -1548,6 +1351,106 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScroll
 </script>
 <!-- The garden's chapters, live: built by `pnpm site:build` from apps/seedbed. -->
 <script src="chapters.js"></script>
+<script>
+/*
+ * THE STEPPER, and the one thing it must not do: mount five applications
+ * nobody asked for. Each step mounts the first time its panel is shown and
+ * stays mounted after that, so pressing back and forth is instant and a
+ * reader who never presses anything pays for one.
+ *
+ * The tabs are real tabs — arrow keys move, Home and End jump — because a
+ * row of buttons that looks like tabs and behaves like a list is worse than
+ * either. Without the chapters bundle the panels are still there, still
+ * readable, and say so rather than spinning.
+ */
+(function () {
+  var tabs = [].slice.call(document.querySelectorAll('.steps [role="tab"]'));
+  if (tabs.length === 0) return;
+  var mounted = Object.create(null);
+
+  function mount(step) {
+    if (mounted[step]) return;
+    var host = document.querySelector('[data-step-live="' + step + '"]');
+    var api = window.graviewChapters || {};
+    /* The bundle exposes its module namespace, so the name is
+       `mountChapter`; `mount` is the older one and is checked second rather
+       than assumed either way. */
+    var put = typeof api.mountChapter === "function" ? api.mountChapter
+            : typeof api.mount === "function" ? api.mount : null;
+    if (!host || put === null) return;
+    mounted[step] = true;
+    host.replaceChildren();
+    put(host, Number(step));
+  }
+
+  function show(tab, focus) {
+    tabs.forEach(function (other) {
+      var on = other === tab;
+      other.setAttribute("aria-selected", on ? "true" : "false");
+      other.tabIndex = on ? 0 : -1;
+      var panel = document.getElementById(other.getAttribute("aria-controls"));
+      if (panel) panel.hidden = !on;
+    });
+    mount(tab.dataset.step);
+    if (focus) tab.focus();
+  }
+
+  tabs.forEach(function (tab, index) {
+    tab.addEventListener("click", function () { show(tab, false); });
+    tab.addEventListener("keydown", function (event) {
+      var to =
+        event.key === "ArrowRight" ? (index + 1) % tabs.length :
+        event.key === "ArrowLeft" ? (index - 1 + tabs.length) % tabs.length :
+        event.key === "Home" ? 0 :
+        event.key === "End" ? tabs.length - 1 : -1;
+      if (to === -1) return;
+      event.preventDefault();
+      show(tabs[to], true);
+    });
+  });
+
+  /* The first one when it comes into view, not on load: the page should not
+     start an application for somebody who never scrolls this far. */
+  var first = document.querySelector('[data-step-live="1"]');
+  if (first && typeof IntersectionObserver === "function") {
+    var watch = new IntersectionObserver(function (entries) {
+      if (entries.some(function (e) { return e.isIntersecting; })) {
+        mount("1");
+        watch.disconnect();
+      }
+    }, { threshold: 0.2 });
+    watch.observe(first);
+  } else {
+    mount("1");
+  }
+})();
+
+/*
+ * COPY, AND SAY SO. A copy button that does nothing visible is a copy button
+ * a person presses three times. Where the clipboard is refused the command
+ * is still on the page and still selectable, so nothing is lost.
+ */
+(function () {
+  document.querySelectorAll("[data-copy]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var said = button.textContent;
+      function done(word) {
+        button.textContent = word;
+        button.setAttribute("data-copied", "");
+        setTimeout(function () {
+          button.textContent = said;
+          button.removeAttribute("data-copied");
+        }, 1600);
+      }
+      if (!navigator.clipboard) { done("Select it"); return; }
+      navigator.clipboard.writeText(button.dataset.copy).then(
+        function () { done("Copied"); },
+        function () { done("Select it"); }
+      );
+    });
+  });
+})();
+</script>
 
 </body>
 </html>

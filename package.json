@@ -45,7 +45,11 @@
     "rota": "node scripts/verify-rota.mjs",
     "serve:rota": "node packages/ship/dist/cli.js serve apps/rota/dist/domain/app.js --data apps/rota/data --seed apps/rota/src/data/example.json --port 5196",
     "served": "node scripts/verify-served.mjs",
-    "desk": "node scripts/verify-desk.mjs"
+    "desk": "node scripts/verify-desk.mjs",
+    "site:css": "node scripts/site-css.mjs",
+    "site:numbers": "node scripts/site-numbers.mjs",
+    "site:docs": "node scripts/site-docs.mjs",
+    "site:build:all": "pnpm site:css && pnpm site:numbers && pnpm site:docs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",

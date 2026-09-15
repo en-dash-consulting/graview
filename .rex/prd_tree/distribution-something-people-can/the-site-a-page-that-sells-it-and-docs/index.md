@@ -15,4 +15,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [A docs site with a page per thing, generated from the declaration where it can be](./a-docs-site-with-a-page-per-thing.md) | pending |
-| [A landing page that makes the case in thirty seconds, not fifteen chapters](./a-landing-page-that-makes-the-case-in.md) | pending |
+| [A landing page that makes the case in thirty seconds, not fifteen chapters](./a-landing-page-that-makes-the-case-in.md) | in_progress |

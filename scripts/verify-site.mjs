@@ -25,7 +25,35 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 const require = createRequire(import.meta.url);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const AXE = require.resolve("axe-core/axe.min.js");
-const PAGE = `file://${resolve(repoRoot, "docs/site/index.html")}`;
+/*
+ * TWO PAGES NOW, AND BOTH ARE THE PRODUCT.
+ *
+ * The site used to be one document doing two jobs: a landing page that
+ * opened with a code block and a tutorial that ran to fifteen chapters.
+ * Split, the harness has to follow — and the interesting part is that the
+ * claims did not move with the content. Keyboard order, reflow, contrast and
+ * reduced motion are asked of BOTH pages, because a docs page nobody can tab
+ * through is exactly as broken as a landing page nobody can. What is asked
+ * of one page only is what only one page has: the stepper here, the
+ * chapters and the kit there.
+ */
+const pageAt = (file) => `file://${resolve(repoRoot, "docs/site", file)}`;
+const PAGES = [
+  { file: "index.html", name: "the page", live: 2, skip: "#what" },
+  { file: "progression.html", name: "the long version", live: 16, skip: "#grown" },
+  /*
+   * And a sample of the docs. Thirty-one pages at ten widths in two schemes
+   * is six hundred page loads for thirty-one renderings of four templates,
+   * so this takes one of each: the map, a package (the longest README in the
+   * repository), a skill (the longest body), and the generated lists.
+   */
+  { file: "docs/index.html", name: "docs home", live: 0, skip: "#main", widths: [320, 768, 1280] },
+  { file: "docs/concepts.html", name: "concepts", live: 0, skip: "#main", widths: [320, 768, 1280] },
+  { file: "docs/packages/core.html", name: "a package page", live: 0, skip: "#main", widths: [320, 768, 1280] },
+  { file: "docs/skills/graview-lens.html", name: "a skill page", live: 0, skip: "#main", widths: [320, 768, 1280] },
+  { file: "docs/checks.html", name: "the findings list", live: 0, skip: "#main", widths: [320, 768, 1280] },
+];
+const PAGE = pageAt("index.html");
 const ENGINE = engineName();
 
 /* 320 is the reflow floor WCAG asks for; 1920 is where a wide layout gives up. */
@@ -35,15 +63,16 @@ const report = { at: new Date().toISOString(), engine: ENGINE, viewports: [], cr
 const browser = await launchEngine(ENGINE, { headless: true });
 
 try {
+  for (const sheet of PAGES) {
   for (const scheme of ["light", "dark"]) {
-    for (const width of WIDTHS) {
+    for (const width of sheet.widths ?? WIDTHS) {
       const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: scheme });
       const errors = [];
       page.on("pageerror", (error) => errors.push(String(error).slice(0, 90)));
       page.on("console", (message) => {
         if (message.type() === "error") errors.push(`console: ${message.text().slice(0, 90)}`);
       });
-      await page.goto(PAGE, { waitUntil: "networkidle" });
+      await page.goto(pageAt(sheet.file), { waitUntil: "networkidle" });
       await page.waitForTimeout(700);
       /*
        * The chapters mount as the reader comes near them. The whole page is
@@ -51,7 +80,7 @@ try {
        * judged with fourteen live Graviews on it — their targets, their text,
        * their accessibility tree, their console.
        */
-      const height = await page.evaluate(() => document.documentElement.scrollHeight);
+      const height = sheet.live > 0 ? await page.evaluate(() => document.documentElement.scrollHeight) : 0;
       const step = Math.max(400, 900 - 100);
       for (let y = 0; y <= height; y += step) {
         // One step per call, as a reader scrolls: a whole sweep inside one
@@ -66,20 +95,33 @@ try {
        * nothing should mount — so the harness stays put at the foot of the
        * page until everything near it is up, and only then goes back.
        */
-      await page
-        .waitForFunction(
-          () => [...document.querySelectorAll("[data-graview-chapter]")].every((el) => el.querySelector("[data-graview-embed]") !== null),
-          null,
-          { timeout: 20_000 },
-        )
-        .catch(() => {});
+      if (sheet.live > 0) {
+        await page
+          .waitForFunction(
+            () => [...document.querySelectorAll("[data-graview-chapter]")].every((el) => el.querySelector("[data-graview-embed]") !== null),
+            null,
+            { timeout: 20_000 },
+          )
+          .catch(() => {});
+      }
       await page.waitForTimeout(150);
       await page.evaluate(() => window.scrollTo(0, 0));
-      await page.waitForFunction(
-        (n) => document.querySelectorAll("[data-graview-embed]").length >= n,
-        17,
-        { timeout: 30_000 },
-      ).catch(() => {});
+      /*
+       * WAIT FOR THIS PAGE'S OWN COUNT, which is the thing that was
+       * hardcoded. Seventeen was right when there was one page; after the
+       * split no page has seventeen, so every viewport sat out the whole
+       * thirty-second timeout and a five-minute sweep became seventy. A
+       * harness slow enough that nobody runs it is a harness that is not
+       * checking anything, and this one degraded silently into that — it
+       * still PASSED, it just took an hour to say so.
+       */
+      if (sheet.live > 0) {
+        await page.waitForFunction(
+          (n) => document.querySelectorAll("[data-graview-embed]").length >= n,
+          sheet.live,
+          { timeout: 30_000 },
+        ).catch(() => {});
+      }
       await page.waitForTimeout(900);
       await page.addScriptTag({ path: AXE });
 
@@ -155,33 +197,83 @@ try {
       });
 
       report.viewports.push({
-        scheme, width, violations, ...geometry,
+        page: sheet.file, scheme, width, violations, ...geometry,
         live,
+        wanted: sheet.live,
         errors: errors.slice(0, 2),
       });
       await page.close();
     }
   }
+  }
 
-  /* The things axe cannot answer. */
+  /*
+   * The things axe cannot answer — asked of every page, because a docs page
+   * nobody can tab through is exactly as broken as a landing page nobody
+   * can. The name of the page goes in the criterion, so a failure says which.
+   */
+  for (const sheet of PAGES) {
+    const one = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await one.goto(pageAt(sheet.file), { waitUntil: "networkidle" });
+    await one.waitForTimeout(600);
+    await one.keyboard.press("Tab");
+    report.criteria[`theFirstStopIsTheWayPastTheNavigationOn_${sheet.file}`] =
+      (await one.evaluate(() => document.activeElement?.className)) === "skip";
+    await one.keyboard.press("Enter");
+    await one.waitForTimeout(300);
+    report.criteria[`theSkipLinkReachesTheContentOn_${sheet.file}`] =
+      (await one.evaluate(() => location.hash)) === sheet.skip;
+    report.criteria[`focusIsVisibleOn_${sheet.file}`] = await one.evaluate(() => {
+      const link = document.querySelector(".jump a");
+      link.focus();
+      const style = getComputedStyle(link);
+      return style.outlineStyle === "solid" && parseFloat(style.outlineWidth) >= 2;
+    });
+    await one.addStyleTag({ content: "html { font-size: 200% }" });
+    await one.waitForTimeout(400);
+    report.criteria[`textZoomToTwoHundredDoesNotScrollSidewaysOn_${sheet.file}`] = await one.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+    );
+    await one.close();
+  }
+
+  /*
+   * THE STEPPER, which is the landing page's whole argument: press a step and
+   * the application on the right is a DIFFERENT application, mounted at that
+   * point in the declaration. A row of buttons that looks like it does that
+   * and does not is the worst thing this page could ship.
+   */
+  const stepper = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await stepper.goto(pageAt("index.html"), { waitUntil: "networkidle" });
+  await stepper.locator("#grow").scrollIntoViewIfNeeded();
+  await stepper
+    .waitForFunction(() => document.querySelector('[data-step-live="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 })
+    .catch(() => {});
+  /* A district is a view of a kind: `data-graview-view="kind:plot"`. */
+  const districtsAt = (step) =>
+    stepper.evaluate((s) => document.querySelectorAll(`[data-step-live="${s}"] [data-graview-view^="kind:"]`).length, step);
+  const atOne = await districtsAt(1);
+  await stepper.click("#step-tab-5");
+  await stepper
+    .waitForFunction(() => document.querySelector('[data-step-live="5"] [data-graview-embed]') !== null, null, { timeout: 20_000 })
+    .catch(() => {});
+  const atFive = await districtsAt(5);
+  report.criteria.aStepMountsTheApplicationAtThatStep = atOne > 0 && atFive > atOne;
+  /* And the tabs are tabs: an arrow key moves, and only one panel is shown. */
+  await stepper.focus("#step-tab-5");
+  await stepper.keyboard.press("ArrowRight");
+  await stepper.waitForTimeout(300);
+  report.criteria.theStepsAreReachableFromTheKeyboard = await stepper.evaluate(
+    () =>
+      document.activeElement?.id === "step-tab-9" &&
+      [...document.querySelectorAll(".step-panel")].filter((p) => !p.hidden).length === 1,
+  );
+  await stepper.close();
+
+  /* The long version is where the chapters and the kit went. */
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await page.goto(PAGE, { waitUntil: "networkidle" });
+  await page.goto(pageAt("progression.html"), { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
-  await page.keyboard.press("Tab");
-  report.criteria.theFirstStopIsTheWayPastTheNavigation =
-    (await page.evaluate(() => document.activeElement?.className)) === "skip";
-  await page.keyboard.press("Enter");
-  await page.waitForTimeout(300);
-  report.criteria.theSkipLinkReachesTheContent =
-    (await page.evaluate(() => location.hash)) === "#what";
-  report.criteria.focusIsVisible = await page.evaluate(() => {
-    const link = document.querySelector(".jump a");
-    link.focus();
-    const style = getComputedStyle(link);
-    return style.outlineStyle === "solid" && parseFloat(style.outlineWidth) >= 2;
-  });
-  await page.addStyleTag({ content: "html { font-size: 200% }" });
-  await page.waitForTimeout(400);
   /* A chapter's face switches on the page itself: the picture is the app. */
   await page.locator('#chapter-1 [data-graview-chapter="1"]').scrollIntoViewIfNeeded();
   await page.waitForFunction(() => document.querySelector('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
@@ -211,13 +303,10 @@ try {
   await page.waitForTimeout(300);
   report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("kit-contrast-below-aa") ?? false);
 
-  report.criteria.textZoomToTwoHundredDoesNotScrollSideways = await page.evaluate(
-    () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
-  );
   await page.close();
 
   const reduced = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
-  await reduced.goto(PAGE, { waitUntil: "networkidle" });
+  await reduced.goto(pageAt("index.html"), { waitUntil: "networkidle" });
   await reduced.waitForTimeout(400);
   // The opener's own Graview is on screen at load, so its cards are the
   // thing to ask: under reduced motion the theme turns their transitions off.
@@ -233,7 +322,7 @@ try {
   await reduced.close();
 
   const forced = await browser.newPage({ viewport: { width: 1280, height: 900 }, forcedColors: "active" });
-  await forced.goto(PAGE, { waitUntil: "networkidle" });
+  await forced.goto(pageAt("index.html"), { waitUntil: "networkidle" });
   await forced.waitForTimeout(400);
   report.criteria.forcedColoursKeepTheMeaningfulMarks = await forced.evaluate(
     () => getComputedStyle(document.querySelector(".head .tick")).forcedColorAdjust === "none",
@@ -249,10 +338,13 @@ const bad = report.viewports.filter(
   (v) => v.violations.length || v.sideways || v.small.length || v.cut.length || v.overlaps.length || v.errors.length,
 );
 report.criteria.everyViewportIsClean = bad.length === 0;
-// Twelve chapters, live, at every width and in both schemes — the page is
-// judged with the applications on it, not with pictures of them.
-// Fifteen chapters, the opener's own copy of the first, and the kit's garden: seventeen live.
-report.criteria.everyChapterIsLiveAtEveryWidth = report.viewports.every((v) => v.live === 17);
+/*
+ * Every live Graview is up, at every width and in both schemes — each page
+ * judged with the applications ON it rather than with pictures of them. The
+ * landing page carries two (the hero's garden and the stepper's first step);
+ * the long version carries fifteen chapters and the kit's garden.
+ */
+report.criteria.everyGraviewIsLiveAtEveryWidth = report.viewports.every((v) => v.live === v.wanted);
 report.passed = Object.values(report.criteria).every(Boolean) && !report.error;
 
 writeFileSync(resolve(repoRoot, "docs/site-check.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
@@ -265,7 +357,8 @@ for (const v of report.viewports) {
     v.cut.length ? `cut: ${v.cut.join("; ")}` : "",
     v.errors.length ? `js: ${v.errors[0]}` : "",
   ].filter(Boolean);
-  if (notes.length) process.stdout.write(`?? ${v.scheme}/${String(v.width).padStart(4)}  ${notes.join("  ")}\n`);
+  if (v.live !== v.wanted) notes.push(`live: ${v.live} of ${v.wanted}`);
+  if (notes.length) process.stdout.write(`?? ${v.page} ${v.scheme}/${String(v.width).padStart(4)}  ${notes.join("  ")}\n`);
 }
 for (const [name, ok] of Object.entries(report.criteria)) {
   process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}\n`);
