@@ -118,7 +118,10 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
    * every time somebody runs a check, which is most of the distance.
    */
   const SHIPPED_LENSES = new Set(["timeline", "coverage", "board", "calendar", "reach"]);
-  const authored = (app.lenses ?? []).filter((lens) => !SHIPPED_LENSES.has(lens.name));
+  const authored = (app.lenses ?? [])
+    .filter((lens) => !SHIPPED_LENSES.has(lens.name))
+    /* A lens that says where its reuse was proved has answered this. */
+    .filter((lens) => lens.provenBy === undefined);
   if (authored.length > 0) {
     add({
       severity: "note",

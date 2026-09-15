@@ -118,7 +118,8 @@ The checker reads `lenses` in `defineApp` and reports `lens-role-unbound`,
 the checker cannot make for you — it NOTES every lens in `lenses` that the
 framework did not ship (`lens-authored-here`) so the question gets asked out
 loud, and the answer is yours. Write a test that builds it against a domain it
-was not designed for:
+was not designed for, then point at it with `provenBy: "tests/lens-reuse.test.ts"`
+and the note stands down:
 
 ```ts
 it("works in a domain nothing here is about", () => {

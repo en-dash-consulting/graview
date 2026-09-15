@@ -104,6 +104,21 @@ export function describeApp<S extends AnySchema>(
         : `${places.length} named places: ${list(places.map((place) => `"${place.title}" over the ${place.kind}s`))}.`,
     );
   }
+  const authored = (app.lenses ?? []).filter(
+    (lens) => !["timeline", "coverage", "board", "calendar", "reach"].includes(lens.name),
+  );
+  if (authored.length > 0) {
+    lines.push(
+      `Lenses this app wrote: ${list(
+        authored.map((lens) =>
+          lens.provenBy
+            ? `${lens.name} (reuse proved in ${lens.provenBy})`
+            : `${lens.name} (reuse unproved)`,
+        ),
+      )}.`,
+    );
+  }
+
   /*
    * THE HUES, IN DEGREES. Six kinds all landing within a few degrees of each
    * other is a city drawn in one colour, which reads as a rendering fault

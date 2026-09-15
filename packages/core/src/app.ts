@@ -54,6 +54,24 @@ export type EntityBinding =
 export interface LensDeclaration {
   readonly name: string;
   readonly requiredRoles: readonly string[];
+  /**
+   * WHERE THE REUSE WAS PROVED — for a lens this app wrote.
+   *
+   * "Build it against a domain it was not designed for, and if you cannot
+   * write that test, say so plainly: you wrote a view" is the best
+   * instruction in `graview-lens` and the one nothing can check. The checker
+   * asks about every app-authored lens (`lens-authored-here`) precisely
+   * because it cannot know the answer — and a question that can only ever be
+   * acknowledged is one people learn to scroll past, which is what the note
+   * severity exists to avoid.
+   *
+   * So the declaration answers it. A path to the test that builds this lens
+   * in another domain quiets the note and appears in `graview describe`,
+   * where a reader can go and look. It is a claim the author makes, like
+   * every `description` here; what it buys is that the claim is written down
+   * next to the thing it is about, rather than remembered.
+   */
+  readonly provenBy?: string;
   /** Defaults to `fields`, which is what every lens did before there were two. */
   readonly binds?: "fields" | "entities";
   readonly bindings?:

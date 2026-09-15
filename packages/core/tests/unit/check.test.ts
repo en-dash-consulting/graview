@@ -514,6 +514,22 @@ describe("what the checker says out loud without failing", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("stops asking once the lens says where its reuse was proved", () => {
+    const app = defineApp({
+      name: "grounds",
+      schema: timedSchema,
+      lenses: [
+        {
+          name: "grounds-map",
+          requiredRoles: ["start"],
+          bindings: { timed: { start: "at" } },
+          provenBy: "tests/lens-reuse.test.ts",
+        },
+      ],
+    });
+    expect(findings(app)).not.toContain("note:lens-authored-here");
+  });
+
   it("says nothing about an app that only binds lenses the framework ships", () => {
     const app = defineApp({
       name: "test",
