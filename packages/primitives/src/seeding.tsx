@@ -734,6 +734,7 @@ export function Intake({
         void take(event.dataTransfer?.files ?? null);
       }}
       style={{
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -759,7 +760,25 @@ export function Intake({
         accept={accept}
         onChange={(event) => void take(event.target.files)}
         data-testid="intake-files"
-        style={VISUALLY_HIDDEN as never}
+        /*
+         * TRANSPARENT AND FULL-BLEED, not visually hidden.
+         *
+         * The obvious way to hide a file input is the visually-hidden
+         * pattern, and a product's own accessibility audit caught what that
+         * costs: the input is still focusable and still a control, so it is
+         * a 1x1 target with a 1x1 focus ring, and a keyboard lands on
+         * something nobody can see. Stretching it over the whole box
+         * instead keeps the native picker, keeps the drop zone, and makes
+         * the target the size the box already is.
+         */
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          opacity: 0,
+          cursor: "pointer",
+        }}
       />
     </label>
   );
