@@ -41,10 +41,18 @@ const placeFeature = defineMutation("place-feature", {
     void ctx.addNode({ id: ctx.freshId(args.label, "feature"), kind: "feature", label: args.label } as never),
 });
 
+/** Acts on a zone rather than making one — the shape a row gathers. */
+const redrawBounds = defineMutation("redraw-bounds", {
+  title: "Redraw the bounds",
+  subject: { kinds: ["zone"], arg: "zoneId" },
+  input: z.object({ zoneId: nodeRef(["zone"]), corners: z.number() }),
+  apply: () => undefined,
+});
+
 const store = (nodes: readonly unknown[] = []) =>
   new Store({
     schema,
-    mutations: [stakeOut, placeFeature],
+    mutations: [stakeOut, placeFeature, redrawBounds],
     snapshot: { nodes: nodes as never, edges: [] },
   });
 
@@ -52,7 +60,7 @@ const store = (nodes: readonly unknown[] = []) =>
 const guarded = (nodes: readonly unknown[] = []) =>
   new Store({
     schema,
-    mutations: [stakeOut, placeFeature],
+    mutations: [stakeOut, placeFeature, redrawBounds],
     policy: { roles: ["keeper", "crew"], grants: [{ roles: ["keeper"], mutations: ["stake-out"] }, { roles: ["crew"], mutations: ["place-feature"] }] },
     snapshot: { nodes: nodes as never, edges: [] },
   });
@@ -162,8 +170,9 @@ describe("what a model wants to do, before it does it", () => {
     const at = store();
     const { root } = await draw(<PlanReview plan={planFrom(at, proposals)} />, at);
     const shown = [...host.querySelectorAll('[data-testid="plan"] li')].map((li) => li.textContent);
-    expect(shown[0]).toContain("Stake out some ground");
-    expect(shown[1]).toContain("Place a feature");
+    /* Named by the THING, not the act: a person decides about the lawn. */
+    expect(shown[0]).toContain("Back Lawn");
+    expect(shown[1]).toContain("The oak");
     /* The panel's subtitle carries the count and what it makes. */
     expect(host.textContent).toContain("2 of 3 to run");
     expect(host.textContent).toContain("making 1 zone, 1 feature");
@@ -194,6 +203,26 @@ describe("what a model wants to do, before it does it", () => {
     /* And it is a decision, not a deletion. */
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="plan-decline-lawn"]')!.click());
     expect(host.textContent).toContain("2 of 2 to run");
+    await act(async () => root.unmount());
+  });
+
+  it("gathers what the plan says about one thing into that thing's row", async () => {
+    /*
+     * The model proposes an area and then draws its outline. Listed as
+     * calls that read "Back Lawn" and then "Redraw the bounds" underneath —
+     * the model repeating itself, except it was not.
+     */
+    const at = store();
+    const survey = [
+      { mutation: "stake-out", as: "lawn", args: { label: "Back Lawn" }, why: "the big one" },
+      { mutation: "redraw-bounds", args: { zoneId: { $plan: "lawn" }, corners: 4 } },
+    ];
+    const { root } = await draw(<PlanReview plan={planFrom(at, survey)} />, at);
+    expect(host.querySelectorAll('[data-testid="plan"] li')).toHaveLength(1);
+    expect(host.querySelector('[data-plan-row="lawn"]')!.textContent).toContain("Back Lawn");
+    /* And what else it said about the lawn, under it, in the act's own words. */
+    expect(host.querySelector('[data-testid="plan-also-lawn"]')!.textContent).toContain("Redraw the bounds");
+    expect(host.textContent).toContain("1 of 1 to run");
     await act(async () => root.unmount());
   });
 

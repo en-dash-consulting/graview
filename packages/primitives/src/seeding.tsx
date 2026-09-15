@@ -20,6 +20,7 @@ import {
   type Affordance,
   type AffordanceSet,
   type Plan,
+  type PlanEntry,
   type PlanOptions,
   type PlannedCall,
 } from "@graview/tools";
@@ -258,7 +259,79 @@ export interface PlanReviewProps<S extends AnySchema> {
   readonly declinable?: boolean;
   /** Passed on when the plan is re-made after a decline. */
   readonly options?: PlanOptions<S>;
+  /**
+   * What a follow-up act adds, in the product's words. Given the entry and
+   * the names of everything else in the plan; return null to fall back to
+   * the mutation's own title, which is always at least true.
+   */
+  readonly also?: (entry: PlanEntry, names: ReadonlyMap<string, string>) => string | null;
 }
+
+/**
+ * ONE ROW PER THING, NOT PER ACT.
+ *
+ * A proposal becomes several calls — a feature with an inspection interval
+ * is `place-feature` and then `set-inspection-interval`; a concern is
+ * `raise-concern` and one `contend-with` per area it touches. A review that
+ * listed the calls showed "Large central tree" and then "central-tree"
+ * underneath it, which reads as the model repeating itself. It was not; the
+ * review was. A person decides about the tree, and everything the plan says
+ * about the tree goes with that decision.
+ *
+ * Which thing a call is about is already declared: `as` names the one it
+ * makes, and `subject.arg` — the same seam affordances are derived through
+ * — names the argument holding the one it acts on. Nothing new to write.
+ */
+interface PlanRow {
+  readonly key: string;
+  readonly name?: string;
+  readonly entries: readonly PlanEntry[];
+}
+
+function rowsOf(
+  plan: Plan,
+  about: (mutation: string) => { readonly subjectArg?: string; readonly makes: boolean },
+): readonly PlanRow[] {
+  const rows: PlanRow[] = [];
+  const byName = new Map<string, number>();
+  for (const entry of plan.entries) {
+    const made = entry.call.as;
+    const { subjectArg, makes } = about(entry.call.mutation);
+    /*
+     * A call that MAKES something is always its own row, named or not — the
+     * oak stands in the lawn and depends on it, but nobody thinks of the oak
+     * as a detail of the lawn. Only a call that modifies or connects belongs
+     * to the thing it is about.
+     */
+    if (made !== undefined || makes) {
+      if (made !== undefined) byName.set(made, rows.length);
+      rows.push({ key: made ?? `${entry.call.mutation}:${entry.at}`, ...(made ? { name: made } : {}), entries: [entry] });
+      continue;
+    }
+    const acted = subjectArg === undefined ? undefined : planRefName(entry.call.args[subjectArg]);
+    const owner = acted ?? entry.dependsOn[0];
+    const at = owner === undefined ? undefined : byName.get(owner);
+    if (at === undefined) {
+      rows.push({ key: `${entry.call.mutation}:${entry.at}`, entries: [entry] });
+    } else {
+      rows[at] = { ...rows[at]!, entries: [...rows[at]!.entries, entry] };
+    }
+  }
+  return rows;
+}
+
+/** What to call a row: what the thing is named, falling back to the act. */
+function labelOf(row: PlanRow, titleOf: (mutation: string) => { readonly title?: string } | undefined): string {
+  const first = row.entries[0]!;
+  const label = first.call.args["label"];
+  if (typeof label === "string" && label.length > 0) return label;
+  return titleOf(first.call.mutation)?.title ?? first.call.mutation;
+}
+
+const planRefName = (value: unknown): string | undefined =>
+  typeof value === "object" && value !== null && typeof (value as { $plan?: unknown }).$plan === "string"
+    ? (value as { $plan: string }).$plan
+    : undefined;
 
 /**
  * WHAT A MODEL WANTS TO DO, BEFORE IT DOES IT.
@@ -275,12 +348,27 @@ export function PlanReview<S extends AnySchema>({
   title = "What this would do",
   declinable = false,
   options,
+  also,
 }: PlanReviewProps<S>) {
   const { store, principal } = useGraview<S>();
   const [done, setDone] = useState<{ batch: string; applied: number; why?: string } | null>(null);
   const [declined, setDeclined] = useState<readonly string[]>([]);
   /* What is left after the declines, ordered and judged like any other plan. */
   const kept = declined.length === 0 ? plan : without(store as never, plan, declined, options ?? {});
+  const titleOf = (mutation: string) => store.allMutations().find((m) => m.name === mutation);
+  const rows = rowsOf(plan, (mutation) => {
+    const declared = titleOf(mutation);
+    return {
+      ...(declared?.subject?.arg ? { subjectArg: declared.subject.arg } : {}),
+      makes: (declared?.creates?.length ?? 0) > 0,
+    };
+  });
+  const names = new Map(
+    rows.flatMap((row) => {
+      const label = labelOf(row, titleOf);
+      return row.name === undefined ? [] : [[row.name, label] as const];
+    }),
+  );
   /* "1 zone, 2 features" — the kind's own word when there is one of it. */
   const makes = Object.entries(kept.makes)
     .map(
@@ -288,34 +376,50 @@ export function PlanReview<S extends AnySchema>({
         `${count} ${count === 1 ? kind : (store.schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase()}`,
     )
     .join(", ");
+  const live = rows.filter(
+    (row) =>
+      !row.entries.some((entry) => entry.refusal !== undefined) &&
+      !(row.name !== undefined && declined.includes(row.name)) &&
+      row.entries.some((entry) => kept.entries.some((other) => other.call === entry.call)),
+  ).length;
 
   return (
     <Panel
       title={title}
-      subtitle={`${kept.ready.length} of ${plan.entries.length} to run${makes ? `, making ${makes}` : ""}.`}
+      subtitle={`${live} of ${rows.length} to run${makes ? `, making ${makes}` : ""}.`}
       fit
     >
-      <ol data-testid="plan" style={{ margin: 0, paddingLeft: "1.25rem", display: "grid", gap: 4 }}>
-        {plan.entries.map((entry, index) => {
-          const name = entry.call.as;
+      <ol data-testid="plan" style={{ margin: 0, paddingLeft: "1.25rem", display: "grid", gap: 6 }}>
+        {rows.map((row) => {
+          const first = row.entries[0]!;
+          const refused = row.entries.find((entry) => entry.refusal !== undefined);
+          const name = row.name;
           const out =
-            entry.refusal !== undefined ||
+            refused !== undefined ||
             (name !== undefined && declined.includes(name)) ||
-            !kept.entries.some((other) => other.call === entry.call);
+            !kept.entries.some((other) => other.call === first.call);
           /* What would go with it, said before the press rather than after. */
-          const goesWith = name === undefined ? [] : [...dependentsOf(plan, name)];
+          const goesWith =
+            name === undefined
+              ? []
+              : [...dependentsOf(plan, name)].filter((entry) => !row.entries.includes(entry));
+          /* The follow-ups, in the product's words where it has any. */
+          const rest = row.entries
+            .slice(1)
+            .map((entry) => also?.(entry, names) ?? titleOf(entry.call.mutation)?.title ?? entry.call.mutation)
+            .filter((part): part is string => Boolean(part))
+            .join(" · ");
           return (
             <li
-              key={`${entry.call.mutation}:${index}`}
-              data-plan-refused={entry.refusal ? "" : undefined}
-              data-plan-declined={out && !entry.refusal ? "" : undefined}
+              key={row.key}
+              data-plan-row={row.key}
+              data-plan-refused={refused ? "" : undefined}
+              data-plan-declined={out && !refused ? "" : undefined}
               style={out ? { textDecoration: "line-through", opacity: 0.6 } : undefined}
             >
-              <span>
-                {store.allMutations().find((m) => m.name === entry.call.mutation)?.title ?? entry.call.mutation}
-              </span>
-              {entry.call.why ? <span style={{ ...MUTED_TEXT }}> — {entry.call.why}</span> : null}
-              {declinable && !entry.refusal && name !== undefined && !done ? (
+              <span>{labelOf(row, titleOf)}</span>
+              {first.call.why ? <span style={{ ...MUTED_TEXT }}> — {first.call.why}</span> : null}
+              {declinable && !refused && name !== undefined && !done ? (
                 <button
                   type="button"
                   data-testid={`plan-decline-${name}`}
@@ -340,14 +444,19 @@ export function PlanReview<S extends AnySchema>({
                   {declined.includes(name) ? "Keep it" : "Not this"}
                 </button>
               ) : null}
-              {declinable && goesWith.length > 0 && !entry.refusal ? (
+              {rest ? (
+                <div data-testid={`plan-also-${row.key}`} style={{ fontSize: "0.75rem", textDecoration: "none", ...MUTED_TEXT }}>
+                  {rest}
+                </div>
+              ) : null}
+              {declinable && goesWith.length > 0 && !refused ? (
                 <div data-testid="plan-goes-with" style={{ fontSize: "0.75rem", textDecoration: "none", ...MUTED_TEXT }}>
                   {goesWith.length} {goesWith.length === 1 ? "other goes" : "others go"} with it.
                 </div>
               ) : null}
-              {entry.refusal ? (
+              {refused ? (
                 <div data-testid="plan-refusal" style={{ fontSize: "0.75rem", color: "var(--graview-warn)", textDecoration: "none" }}>
-                  {entry.refusal.message}
+                  {refused.refusal!.message}
                 </div>
               ) : null}
             </li>
