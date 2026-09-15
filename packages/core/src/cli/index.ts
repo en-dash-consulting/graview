@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { realpathSync } from "node:fs";
+import { existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -8,6 +8,7 @@ import { checkApp, formatFindings } from "./check.js";
 import { create, CREATE_USAGE } from "./create.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
 import { figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
+import { scaffoldLens, validateLensOptions, type LensScaffoldOptions } from "../scaffold/lens.js";
 
 const USAGE = `graview — start a product, check its declaration, write its agent docs
 
@@ -19,6 +20,13 @@ ${CREATE_USAGE}
 
   graview docs <entry> [--out <dir>]
       Writes llms.txt and agents.md next to the entry, or into <dir>.
+
+  graview lens <name> --roles a,b,c [--binds fields|entities] [--dir <dir>]
+      Writes a lens that compiles: the role check that fails loudly, the
+      createXLens factory, three fidelities, pick targets — and beside it a
+      REUSE TEST in a domain the app is not about, red until you make the
+      claim true. If you cannot make it pass, you wrote a view, and a view
+      is a legitimate thing to have written.
 
   graview figure <entry> --kind <kind> [--name <shipped>]
       Prints the figure line to paste into defineNode. With --name it is one
@@ -63,6 +71,52 @@ export async function main(argv: string[]): Promise<number> {
     return 0;
   }
   if (command === "create") return create(argv.slice(1));
+  if (command === "lens") {
+    /*
+     * A LENS, STARTED. The rules in `graview-lens` are the kind that are
+     * easy to agree with and easy to forget at line 300, so they arrive in
+     * the file already — and the reuse test arrives RED, which is the only
+     * way an instruction nothing can enforce ever gets followed.
+     */
+    const name = argv[1];
+    if (!name || name.startsWith("--")) {
+      process.stderr.write(`graview lens: a name is required\n\n${USAGE}`);
+      return 2;
+    }
+    const roles = (flag(argv, "--roles") ?? "").split(",").map((role) => role.trim()).filter(Boolean);
+    const bindsFlag = flag(argv, "--binds");
+    const dir = flag(argv, "--dir");
+    const options: LensScaffoldOptions = {
+      name,
+      roles,
+      ...(bindsFlag === "entities" || bindsFlag === "fields" ? { binds: bindsFlag as "entities" | "fields" } : {}),
+      ...(dir ? { dir } : {}),
+    };
+    const problems = validateLensOptions(options);
+    if (problems.length > 0) {
+      process.stderr.write(`graview lens: ${problems.join("\ngraview lens: ")}\n`);
+      return 2;
+    }
+    const files = scaffoldLens(options);
+    for (const file of files) {
+      const path = resolve(process.cwd(), file.path);
+      if (existsSync(path)) {
+        process.stderr.write(`graview lens: ${file.path} already exists — nothing was written.\n`);
+        return 1;
+      }
+    }
+    for (const file of files) {
+      const path = resolve(process.cwd(), file.path);
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, file.contents, "utf8");
+    }
+    process.stdout.write(
+      `${files.map((file) => `  ${file.path}\n`).join("")}` +
+        `\nThe reuse test is RED on purpose: bind the roles to a domain this app is not\n` +
+        `about and make it pass, or say plainly that you wrote a view.\n`,
+    );
+    return 0;
+  }
   if (!entry) {
     process.stderr.write(`graview ${command}: an entry module is required\n\n${USAGE}`);
     return 2;

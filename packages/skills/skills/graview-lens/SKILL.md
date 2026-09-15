@@ -19,6 +19,10 @@ Read one before writing your own:
 - `packages/primitives/src/lens/coverage.tsx` — a bipartite mapping
 - `packages/primitives/src/lens/board.tsx` — position given by the domain
 
+Start it with the scaffolder — `graview lens grounds-map --roles regions,markers
+--binds entities` — which writes all eight rules below already in place, and
+the reuse test beside it, red on purpose.
+
 ## Do this
 
 1. **Name the roles, not the fields.** A lens declares

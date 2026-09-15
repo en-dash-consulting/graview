@@ -112,7 +112,7 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-function titleCase(slug: string): string {
+export function titleCase(slug: string): string {
   return slug
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -123,7 +123,7 @@ function camel(slug: string): string {
   return slug.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 }
 
-function pascal(slug: string): string {
+export function pascal(slug: string): string {
   const c = camel(slug);
   return c.charAt(0).toUpperCase() + c.slice(1);
 }
