@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { checkApp, createSchema, DARK, defineApp, defineNode, figureFaults, FIGURES, figureSvg, LIGHT } from "../../src/index.js";
+import { checkApp, createSchema, DARK, defineApp, defineNode, figureBrief, figureFaults, FIGURES, figureSvg, LIGHT } from "../../src/index.js";
 
 /**
  * A FIGURE THAT CANNOT BE DRAWN IS A BLANK NOBODY EXPLAINS.
@@ -81,5 +81,42 @@ describe("what a figure has to be", () => {
       schema: createSchema([defineNode("thing", { fields: z.object({ label: z.string() }), plural: "Things" })]),
     });
     expect(checkApp(app).findings.filter((f) => f.code.startsWith("figure-"))).toEqual([]);
+  });
+});
+
+/**
+ * NINE FIGURES IS A VOCABULARY TO START FROM, NOT ONE TO FINISH IN.
+ *
+ * The shipped set is deliberately generic — the things almost every domain
+ * turns out to have — and any domain that is not an abstract tracker runs
+ * out of it at once: an outdoors product needed eleven figures and had to
+ * draw ten. Growing the set moves that wall rather than removing it, so the
+ * answer is the authoring loop, through the door every app has: a brief to
+ * copy, an answer to paste, and the same judging `graview check` does.
+ */
+describe("the brief a figure is drawn from", () => {
+  const brief = figureBrief("gutter", "a gutter along a roof edge");
+
+  it("says what the thing is, and what a figure is not", () => {
+    expect(brief).toContain('a node kind called "gutter": a gutter along a roof edge');
+    expect(brief).toContain("line art of the THING");
+    expect(brief).toContain("never a badge");
+    expect(brief).toContain("three-quarter isometric angle");
+  });
+
+  it("names every rule the checker will hold the answer to", () => {
+    /* Each of these is a fault figureFaults reports, said before the fact. */
+    expect(brief).toContain('viewBox="0 0 24 24"');
+    expect(brief).toContain("currentColor");
+    expect(brief).toContain("no literal colour anywhere");
+    expect(brief).toContain("READ AT TWENTY PIXELS");
+  });
+
+  it("hands over a shipped figure as the style rather than describing it", () => {
+    expect(brief).toContain(FIGURES["person"]!);
+  });
+
+  it("ends by saying how to bring the answer back", () => {
+    expect(brief).toContain("--judge");
   });
 });

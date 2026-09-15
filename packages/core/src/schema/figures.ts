@@ -155,6 +155,42 @@ const DRAWING_ATTRIBUTES: ReadonlySet<string> = new Set([
  * not in the shipped set is a silent blank — and anything in the markup
  * that is not a drawing is not a figure at all.
  */
+/**
+ * THE BRIEF A FIGURE IS DRAWN FROM — the rules, in the words somebody draws
+ * to, with a shipped figure beside them as the style.
+ *
+ * The shipped set is nine, deliberately generic, and any domain that is not
+ * an abstract tracker runs out of it immediately: an outdoors product needed
+ * eleven figures and had to draw ten. Growing the set would move the wall
+ * rather than remove it, so the authoring loop is the answer — and it works
+ * through the door every app has, which is a prompt to copy and an answer to
+ * paste. No key, no vendor, no seam the CLI has no business holding.
+ */
+export function figureBrief(kind: string, from: string): string {
+  return [
+    `Draw a figure for a node kind called "${kind}": ${from}.`,
+    "",
+    "It is line art of the THING, not an emblem for it — never a badge, never a",
+    "rounded-square app icon, never a shape chosen because it filled the space.",
+    "Draw it from a three-quarter isometric angle, the same angle as a city seen",
+    "from above and to the side, so a dozen of them on one screen read as one",
+    "drawing rather than as twelve clip-art imports.",
+    "",
+    "Answer with the SVG and nothing else. It must:",
+    '  - be one <svg> with viewBox="0 0 24 24" and no width or height;',
+    '  - stroke with currentColor, fill="none", stroke-width 1.4,',
+    "    stroke-linecap and stroke-linejoin round;",
+    "  - use only path, circle, ellipse, rect, line, polyline, polygon and g;",
+    "  - carry no literal colour anywhere, no class, no style, no id;",
+    "  - READ AT TWENTY PIXELS, because that is the size a chip gives it.",
+    "",
+    "This is the shipped figure for a person, as the style to match:",
+    FIGURES["person"] ?? "",
+    "",
+    `Then: graview figure <entry> --kind ${kind} --judge <the file you saved it in>`,
+  ].join("\n");
+}
+
 export function figureFaults(figure: Figure): readonly string[] {
   if (!figure.trimStart().startsWith("<svg")) {
     return FIGURE_NAMES.includes(figure)

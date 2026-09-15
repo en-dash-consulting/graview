@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -7,7 +7,7 @@ import type { GraviewApp } from "../app.js";
 import { checkApp, formatFindings } from "./check.js";
 import { create, CREATE_USAGE } from "./create.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
-import { figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
+import { figureBrief, figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
 import { scaffoldLens, validateLensOptions, type LensScaffoldOptions } from "../scaffold/lens.js";
 
 const USAGE = `graview — start a product, check its declaration, write its agent docs
@@ -29,10 +29,14 @@ ${CREATE_USAGE}
       is a legitimate thing to have written.
 
   graview figure <entry> --kind <kind> [--name <shipped>]
+                         [--from "<what the thing is>"] [--judge <file|->]
       Prints the figure line to paste into defineNode. With --name it is one
-      of the shipped drawings; without a model to ask, it suggests the
-      nearest one by name and says so. Whatever it prints, it has already
-      been judged by the same rules graview check holds a figure to.
+      of the shipped drawings; with neither, it suggests the nearest one by
+      name and says so. --from prints the brief to hand a model — the rules,
+      the angle and a shipped figure as the style — and --judge reads the
+      answer back, holds it to the rules graview check holds a figure to, and
+      prints the line. Nine shipped figures is a vocabulary to start from,
+      not a vocabulary to finish in.
 `;
 
 async function loadApp(entry: string): Promise<GraviewApp> {
@@ -167,6 +171,36 @@ export async function main(argv: string[]): Promise<number> {
           `graview figure: "${kind}" is not a kind of ${app.name}. It declares: ${(app.schema.kinds as readonly string[]).join(", ")}\n`,
         );
         return 1;
+      }
+      /*
+       * THE AUTHORING LOOP, through the door every app has: a prompt to
+       * copy and an answer to paste. The CLI still holds no key and reaches
+       * no vendor — that is `@graview/tools`' job — and it does the half it
+       * is actually good at, which is saying what a figure must be and then
+       * judging what came back.
+       */
+      const from = flag(argv, "--from");
+      if (from) {
+        process.stdout.write(`${figureBrief(kind, from)}\n`);
+        return 0;
+      }
+      const judge = flag(argv, "--judge");
+      if (judge) {
+        const drawn = judge === "-" ? readFileSync(0, "utf8") : readFileSync(resolve(process.cwd(), judge), "utf8");
+        const trimmed = drawn.trim();
+        const faults = figureFaults(trimmed);
+        if (faults.length > 0) {
+          process.stderr.write(
+            `graview figure: that drawing cannot be kept —\n${faults.map((fault) => `  ${fault}\n`).join("")}` +
+              `Ask again with the fault quoted; the brief is graview figure ${entry} --kind ${kind} --from "…".\n`,
+          );
+          return 1;
+        }
+        process.stdout.write(
+          `  figure:\n    ${JSON.stringify(trimmed)},\n` +
+            `Paste it into defineNode(${JSON.stringify(kind)}, { ... }), then look at it at twenty pixels.\n`,
+        );
+        return 0;
       }
       const named = flag(argv, "--name");
       const figure = named || nearest(kind);

@@ -97,6 +97,15 @@ agent tool that walks the graph.
   ["played"] }` or `{ field: "until", retired: "date" }`. Every count then
   aggregates over the horizon ("4, +12 past") instead of drowning, and
   `graview check` refuses a lifecycle reading a missing field.
+- **A figure**, which is line art of the THING at the city's own three-quarter
+  angle — a person, a plot of ground, a gutter — drawn wherever the kind is
+  drawn. Nine ship; any domain that is not an abstract tracker runs out of
+  them at once, so draw the rest:
+  `graview figure ./dist/domain/app.js --kind gutter --from "a gutter along a
+  roof edge"` prints the brief (the rules, the angle, a shipped figure as the
+  style), and `--judge <file>` reads the answer back, holds it to the rules
+  `graview check` holds a figure to, and prints the line to paste. Then look
+  at it at twenty pixels, which is the size a chip gives it.
 - **A declared hue** in the brand (`accents: { fixture: 210 }`) if this kind
   should wear a chosen colour rather than a stable hash — every chip dot,
   district roof and the focus tag follow.
