@@ -154,3 +154,11 @@ export type {
 // the doors it was declared to be reachable through.
 export { Begin, Door, downscale, Intake, PlanReview, PHOTO_MAX_EDGE, PHOTO_QUALITY } from "./seeding.js";
 export type { BeginProps, DoorProps, IntakeProps, PlanReviewProps } from "./seeding.js";
+export {
+  buildPlanLens,
+  createPlanLens,
+  PlanBindingError,
+  PlanView,
+  PLAN_REQUIRED_ROLES,
+} from "./lens/plan.js";
+export type { PlanLens, PlanLensOptions, PlanLensState, PlanViewProps } from "./lens/plan.js";
