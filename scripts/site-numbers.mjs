@@ -28,7 +28,18 @@ export function countOf() {
   return {
     packages: dirs("packages").length,
     skills: dirs("packages/skills/skills").length,
-    lenses: readdirSync(at("packages/primitives/src/lens")).filter((f) => f.endsWith(".tsx")).length,
+    /*
+     * A LENS IS A THING WITH A FACTORY AND ROLES, not a file in the lens
+     * folder. Counting files said six and the docs page rendered a skill
+     * saying four, which is how a number that nobody can check drifts in
+     * two directions at once. `reach` lives there and is a built-in view:
+     * no `create…Lens`, no roles to rebind, nothing a second domain could
+     * take. Five is the number, and this is why it is five.
+     */
+    lenses: readdirSync(at("packages/primitives/src/lens"))
+      .filter((file) => file.endsWith(".tsx"))
+      .filter((file) => /export function create[A-Za-z]+Lens/.test(readFileSync(at("packages/primitives/src/lens", file), "utf8")))
+      .length,
     codes: codes.size,
     chapters: [...readFileSync(at("docs/site/progression.html"), "utf8").matchAll(/id="chapter-\d+"/g)].length,
     tests: tested(),

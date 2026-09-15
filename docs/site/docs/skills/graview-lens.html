@@ -805,13 +805,15 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-skill">The skill</h2></div>
 <h2>Build a lens</h2>
 <p>A lens is a picture that knows nothing about your domain. The timeline does not know what a duty is; it knows there is a <code>start</code>, an <code>end</code> and a column. The coverage matrix does not know what a requirement is; it knows there are rows, columns and an edge that fills a cell. That indirection is the entire point: a lens written for one app is used unchanged by another.</p>
-<p>The framework ships four, each built from the public primitives — which makes them the worked example of the authoring API rather than privileged insiders. Read one before writing your own:</p>
+<p>The framework ships five, each built from the public primitives — which makes them the worked example of the authoring API rather than privileged insiders. Read one before writing your own:</p>
 <ul>
 <li><code>packages/primitives/src/lens/timeline.tsx</code> — intervals in columns</li>
+<li><code>packages/primitives/src/lens/calendar.tsx</code> — the same intervals, by date</li>
 <li><code>packages/primitives/src/lens/coverage.tsx</code> — a bipartite mapping</li>
 <li><code>packages/primitives/src/lens/board.tsx</code> — position given by the domain</li>
 <li><code>packages/primitives/src/lens/plan.tsx</code> — an outline, with points inside it</li>
 </ul>
+<p>(<code>reach.tsx</code> sits beside them and is not one: no factory, no roles to rebind. A view that ships is still a view.)</p>
 <p>The plan is the one to read if yours draws anything, because it is the one that learned what drawing costs. A name is fitted to the shape it names — <code>fitLabel</code> and <code>spanAt</code> from <code>@graview/layout</code>, which give the width of a shape AT A HEIGHT rather than its bounding box, because the shapes that overflow are the long thin ones. Names are painted after everything else, because a marker dot took the first letter off two of them. Whatever will not fit goes in a key underneath. And <code>useDrawnSize</code> answers the question a scalable drawing hides: at THIS size, can a person read it, or press it? A one-pixel target with a keyboard stop and an ARIA label is not an accessible control; it is an inaccessible one that has been described.</p>
 <p>Start it with the scaffolder — `graview lens grounds-map --roles regions,markers</p>
 <p>--binds entities` — which writes all eight rules below already in place, and the reuse test beside it, red on purpose.</p>
