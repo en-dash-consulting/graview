@@ -480,8 +480,75 @@ export function PlanView<S extends AnySchema>({
     );
   }
 
-  const aspect = options.aspect ?? 1.45;
-  const H = Math.round(W / aspect);
+  /*
+   * THE DRAWING TAKES ITS PROPORTIONS FROM WHAT WAS DRAWN.
+   *
+   * The canvas used to be a fixed 1.45 to 1 and the coordinate space was
+   * "0–1 across and 0–1 down" — which is not a space, it is two independent
+   * scales, and it cannot say that a property is three times as long as it
+   * is wide. A surveyed town lot, deep and narrow, came back as squat
+   * horizontal bands: every shape stretched sideways to fill a canvas whose
+   * shape had nothing to do with the ground.
+   *
+   * So one unit across is one unit down — a SQUARE space, in which a long
+   * lot simply uses less of one axis — and the picture is cropped to what
+   * is actually in it. The canvas is then the shape of the property, and a
+   * lawn twice as long as it is wide is drawn twice as long as it is wide.
+   *
+   * `aspect` remains as an override for a domain that knows better, and is
+   * no longer a default that quietly lies.
+   */
+  const extent = useMemo(() => {
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    const see = (p: MapPoint) => {
+      if (p.x < x0) x0 = p.x;
+      if (p.x > x1) x1 = p.x;
+      if (p.y < y0) y0 = p.y;
+      if (p.y > y1) y1 = p.y;
+    };
+    for (const region of map.regions) {
+      for (const corner of region.outline) see(corner);
+      for (const marker of region.markers) see(marker.at);
+    }
+    if (!Number.isFinite(x0) || x1 - x0 <= 0 || y1 - y0 <= 0) return { x0: 0, y0: 0, x1: 1, y1: 1 };
+    /* A margin, so nothing is drawn against the frame. */
+    const pad = Math.max(x1 - x0, y1 - y0) * 0.04;
+    return { x0: x0 - pad, y0: y0 - pad, x1: x1 + pad, y1: y1 + pad };
+  }, [map.regions]);
+
+  /*
+   * Clamped, because a property really can be ten to one and a picture that
+   * is ten to one is a ribbon nothing is legible in. Past the clamp the
+   * drawing stops being true rather than stops being readable, and the true
+   * one nobody can read is the worse of the two.
+   */
+  const raw = (extent.x1 - extent.x0) / (extent.y1 - extent.y0);
+  const aspect = options.aspect ?? Math.min(3.2, Math.max(0.55, raw));
+  /* U is the scale of the square space; the view is the window onto it. */
+  const U = Math.round(W / (extent.x1 - extent.x0));
+  const viewW = Math.round(U * (extent.x1 - extent.x0));
+  const viewH = Math.round(viewW / aspect);
+  const view = {
+    x: extent.x0 * U,
+    y: extent.y0 * U - (viewH - U * (extent.y1 - extent.y0)) / 2,
+    w: viewW,
+    h: viewH,
+  };
+  /*
+   * Two scales, and keeping them apart is the whole of this.
+   *
+   * `U` turns a coordinate into a place: it is how many units of the
+   * drawing one unit of the square space is worth, and it grows as the
+   * window narrows. `S` is how big a thing should LOOK — a font, a dot, a
+   * margin — and it is a fraction of the window, so a name on a narrow lot
+   * is the same size on screen as a name on a square one. Using the space's
+   * scale for sizes is how a long thin property ends up with enormous type.
+   */
+  const H = U;
+  const S = view.w;
   const anyEmphasis = (implicated?.length ?? 0) > 0 || (flagged?.length ?? 0) > 0;
 
   /*
@@ -504,7 +571,7 @@ export function PlanView<S extends AnySchema>({
    * this panel out at 136 pixels on a phone, where the answer is no twice.
    */
   const canvas = useRef<SVGSVGElement>(null);
-  const { touchable, legible: drawable } = useDrawnSize(canvas, { units: W, target: W * HIT * 2 });
+  const { touchable, legible: drawable } = useDrawnSize(canvas, { units: view.w, target: S * HIT * 2 });
   const display = useTextMeasure("--graview-font-display", "serif");
   const body = useTextMeasure("--graview-font-body", "sans-serif");
 
@@ -520,8 +587,15 @@ export function PlanView<S extends AnySchema>({
      * ever drawn does the opposite — the area is named quietly along its
      * top edge, and the middle is left for what is in it.
      */
-    const inset = W * 0.012;
-    const clear = (box: LabelBox) => !taken.some((other) => overlaps(box, other));
+    const inset = S * 0.012;
+    /* A hair of air: two names that merely touch read as one long word. */
+    const air = W * 0.004;
+    const clear = (box: LabelBox, mine?: LabelBox) =>
+      !taken.some(
+        (other) =>
+          other !== mine &&
+          overlaps({ x0: box.x0 - air, y0: box.y0 - air, x1: box.x1 + air, y1: box.y1 + air }, other),
+      );
 
     /*
      * BIGGEST GROUND FIRST. Where two names cannot both be drawn, the one
@@ -542,32 +616,45 @@ export function PlanView<S extends AnySchema>({
        * name drawn over another name belongs to neither of them.
        */
       let put: { fitted: FittedLabel; x: number; y: number } | null = null;
-      for (const down of [0.1, 0.24, 0.4, 0.58, 0.76]) {
+      for (const down of [0.12, 0.26, 0.42, 0.6, 0.78]) {
         const y = box.top + down * (box.bottom - box.top);
         const span = spanAt(region.outline, y);
-        const room = Math.max(0, (span.x1 - span.x0) * W - inset * 2);
+        const room = Math.max(0, (span.x1 - span.x0) * U - inset * 2);
         const fitted = fitLabel(region.label, {
           room,
           height,
-          size: W * 0.023,
-          floor: W * 0.015,
+          size: S * 0.023,
+          floor: S * 0.015,
           measure: display,
         });
         if (fitted === null) continue;
         const wide = Math.max(...fitted.lines.map((line) => display(line, fitted.fontSize)));
         const tall = fitted.lines.length * fitted.fontSize * 1.15;
-        const x = span.x0 * W + inset;
         /*
          * OFF THE EDGE IT IS DRAWN ON. A short band's tenth-of-the-way-down
          * is a couple of pixels, so the first row of names came back with
          * the outline stroke ruled straight through them — a name on a
-         * boundary reads as belonging to whichever side you looked at
-         * first. Pushed down until the whole of it clears the edge, and
-         * back up if that would push it out of the bottom.
+         * boundary reads as belonging to whichever side you looked at first.
          */
         const top = box.top * H + inset + tall / 2;
         const bottom = box.bottom * H - inset - tall / 2;
-        const mid = bottom < top ? (box.top + box.bottom) * H / 2 : Math.min(Math.max(y * H, top), bottom);
+        const mid = bottom < top ? ((box.top + box.bottom) * H) / 2 : Math.min(Math.max(y * H, top), bottom);
+
+        /*
+         * AND MEASURED WHERE IT IS ACTUALLY DRAWN.
+         *
+         * The room was measured at `y` and the clamp above moves the label
+         * to `mid`, which is a different height — and a shape is a
+         * different width at a different height. That is how "The Tree Bed"
+         * came to be lettered across the patio next door: the widest run at
+         * the height it was measured, drawn at a height where the bed is
+         * not. So the span is re-asked where the words will land, and a
+         * label that does not fit THERE tries the next line down instead.
+         */
+        const here = spanAt(region.outline, mid / H);
+        const x = here.x0 * U + inset;
+        if (wide > (here.x1 - here.x0) * U - inset * 2) continue;
+
         const candidate = { x0: x, y0: mid - tall / 2, x1: x + wide, y1: mid + tall / 2 };
         if (!clear(candidate)) continue;
         taken.push(candidate);
@@ -590,8 +677,32 @@ export function PlanView<S extends AnySchema>({
      * sentence rather than as two things. What buys the room is the area
      * names moving out of the middle, above.
      */
-    const size = W * 0.018;
+    const size = S * 0.018;
     const tagged = new Map<string, { readonly at: MapPoint; readonly anchor: "start" | "end"; readonly size: number }>();
+    /*
+     * THE DOTS ARE IN THE WAY TOO.
+     *
+     * Names dodged other names and sailed straight over the marks they
+     * belong to: "Back Fence Beds" written across the alley gate's dot,
+     * "Deck Shrub" across the drain's. A dot is the thing carrying the
+     * meaning — the name is only there to say which dot — so a name over
+     * somebody else's dot mislabels it, which is worse than the dot having
+     * no name at all. Every mark goes into the set before any name does.
+     */
+    const dot = S * 0.011 + S * 0.004;
+    const marks = new Map<string, LabelBox>();
+    for (const region of map.regions) {
+      for (const marker of region.markers) {
+        const box = {
+          x0: marker.at.x * U - dot,
+          y0: marker.at.y * H - dot,
+          x1: marker.at.x * U + dot,
+          y1: marker.at.y * H + dot,
+        };
+        marks.set(marker.id, box);
+        taken.push(box);
+      }
+    }
     /*
      * And none of them at all when the drawing is too small to press,
      * because it is then also too small to read: at phone width this canvas
@@ -602,16 +713,52 @@ export function PlanView<S extends AnySchema>({
      */
     for (const region of touchable ? map.regions : []) {
       for (const marker of region.markers) {
-        const gap = W * 0.018;
+        const gap = S * 0.018;
         const wide = body(marker.label, size);
-        const right = marker.at.x * W + gap;
-        const anchor: "start" | "end" = right + wide <= W - 4 ? "start" : "end";
-        const x0 = anchor === "start" ? right : marker.at.x * W - gap - wide;
-        const y = marker.at.y * H;
-        const box = { x0, y0: y - size * 0.62, x1: x0 + wide, y1: y + size * 0.62 };
-        if (x0 < 4 || !clear(box)) continue;
-        taken.push(box);
-        tagged.set(marker.id, { at: { x: anchor === "start" ? right : marker.at.x * W - gap, y }, anchor, size });
+        const cx = marker.at.x * U;
+        const cy = marker.at.y * H;
+        const rise = size * 1.15;
+        /*
+         * EIGHT PLACES TO TRY, not one.
+         *
+         * The first version put every name to the right of its dot and gave
+         * up if that was taken — so on a real plan, where twenty-two things
+         * stand in eight small areas, it gave up twenty-two times and the
+         * drawing was dots. A name beside its dot is worth a good deal of
+         * looking for: right first because it reads most naturally, then
+         * left, then the diagonals, then straight above and below.
+         */
+        const tries: { x: number; y: number; anchor: "start" | "end" }[] = [
+          { x: cx + gap, y: cy, anchor: "start" },
+          { x: cx - gap, y: cy, anchor: "end" },
+          { x: cx + gap * 0.7, y: cy - rise, anchor: "start" },
+          { x: cx - gap * 0.7, y: cy - rise, anchor: "end" },
+          { x: cx + gap * 0.7, y: cy + rise, anchor: "start" },
+          { x: cx - gap * 0.7, y: cy + rise, anchor: "end" },
+          { x: cx, y: cy - rise * 1.1, anchor: "start" },
+          { x: cx, y: cy + rise * 1.1, anchor: "start" },
+        ];
+        for (const put of tries) {
+          const x0 = put.anchor === "start" ? put.x : put.x - wide;
+          const box = { x0, y0: put.y - size * 0.62, x1: x0 + wide, y1: put.y + size * 0.62 };
+          if (x0 < view.x + 4 || x0 + wide > view.x + view.w - 4) continue;
+          if (box.y0 < view.y + 2 || box.y1 > view.y + view.h - 2) continue;
+          /*
+           * A MARK DOES NOT BLOCK ITS OWN NAME.
+           *
+           * Every dot went into the set so that no name would be written
+           * across somebody else's — and then every name was written
+           * eighteen units from a dot whose blocked square reaches fifteen,
+           * with four units of air between labels on top. Nineteen against
+           * eighteen: each of the twenty-two names was refused by the one
+           * mark it belongs to, and the drawing came back as dots with a
+           * key of everything on it.
+           */
+          if (!clear(box, marks.get(marker.id))) continue;
+          taken.push(box);
+          tagged.set(marker.id, { at: { x: put.x, y: put.y }, anchor: put.anchor, size });
+          break;
+        }
       }
     }
     return { named, placed, tagged };
@@ -732,10 +879,10 @@ export function PlanView<S extends AnySchema>({
         * So the aspect ratio lives on a plain block that nothing argues
         * with, and the canvas is pinned to its inside.
         */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: "hidden" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: `${view.w} / ${view.h}`, overflow: "hidden" }}>
       <svg
         ref={canvas}
-        viewBox={`0 0 ${W} ${H}`}
+        viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
         width="100%"
         height="100%"
         preserveAspectRatio="xMidYMid meet"
@@ -787,18 +934,18 @@ export function PlanView<S extends AnySchema>({
         }}
       >
         {/* North, so the drawing has an orientation somebody can agree on. */}
-        <text x={W - 28} y={34} fontSize={W * 0.022} textAnchor="middle" fill="var(--graview-ink)" opacity={0.55}>
+        <text x={view.x + view.w - S * 0.028} y={view.y + S * 0.034} fontSize={S * 0.022} textAnchor="middle" fill="var(--graview-ink)" opacity={0.55}>
           N
         </text>
         {/* Centre-canvas only while the canvas is empty; over a drawn site
             the same words go in the tool row rather than across the labels. */}
         {hint !== null && map.regions.length === 0 ? (
           <text
-            x={W / 2}
-            y={H / 2}
+            x={view.x + view.w / 2}
+            y={view.y + view.h / 2}
             textAnchor="middle"
             dominantBaseline="middle"
-            fontSize={W * 0.026}
+            fontSize={S * 0.026}
             fill="var(--graview-ink)"
             opacity={0.7}
             style={{ pointerEvents: "none", fontFamily: "var(--graview-font-body)" }}
@@ -809,21 +956,21 @@ export function PlanView<S extends AnySchema>({
         {drawing !== null && drawing.kind === "region" && drawing.corners.length > 0 ? (
           <g style={{ pointerEvents: "none" }}>
             <polyline
-              points={drawing.corners.map((p) => `${p.x * W},${p.y * H}`).join(" ")}
+              points={drawing.corners.map((p) => `${p.x * U},${p.y * H}`).join(" ")}
               fill={drawing.corners.length >= 3 ? "color-mix(in oklab, var(--graview-accent) 22%, transparent)" : "none"}
               stroke="var(--graview-accent)"
               strokeWidth={3}
               strokeDasharray="8 6"
             />
             {drawing.corners.map((p, index) => (
-              <circle key={index} cx={p.x * W} cy={p.y * H} r={7} fill="var(--graview-accent)" />
+              <circle key={index} cx={p.x * U} cy={p.y * H} r={S * 0.008} fill="var(--graview-accent)" />
             ))}
           </g>
         ) : null}
         {map.regions.map((region) => {
           const emphasis = emphasisOf(region.id, implicated, flagged);
           const dim = anyEmphasis && emphasis === undefined ? 0.34 : 1;
-          const points = region.outline.map((p) => `${p.x * W},${p.y * H}`).join(" ");
+          const points = region.outline.map((p) => `${p.x * U},${p.y * H}`).join(" ");
           return (
             <g
               key={region.id}
@@ -871,19 +1018,19 @@ export function PlanView<S extends AnySchema>({
                 {/* Transparent, and twice the dot: the thing a finger has to
                     land on is bigger than the thing an eye has to see. */}
                 {touchable ? (
-                  <circle cx={marker.at.x * W} cy={marker.at.y * H} r={W * HIT} fill="transparent" />
+                  <circle cx={marker.at.x * U} cy={marker.at.y * H} r={S * HIT} fill="transparent" />
                 ) : null}
                 <circle
-                  cx={marker.at.x * W}
+                  cx={marker.at.x * U}
                   cy={marker.at.y * H}
-                  r={W * 0.011}
+                  r={S * 0.011}
                   fill={
                     emphasis === "flagged"
                       ? "var(--graview-warn)"
                       : `hsl(${degrees(marker.what, options.hues)} 55% 45%)`
                   }
                   stroke="var(--graview-panel)"
-                  strokeWidth={W * 0.004}
+                  strokeWidth={S * 0.004}
                 />
                 {tagged.has(marker.id) ? (
                   <text

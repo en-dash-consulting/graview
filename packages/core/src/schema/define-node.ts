@@ -181,11 +181,27 @@ export function readableFields(
   const fields: ReadableField[] = [];
   for (const [key, value] of Object.entries(node)) {
     if (skip.has(key) || value === undefined || value === null) continue;
-    // A nested object has no one-line rendering, and inventing one is worse
-    // than leaving it to a view that knows what it is.
-    if (typeof value === "object" && !Array.isArray(value)) continue;
-
     const format = display?.format?.[key];
+    /*
+     * A NESTED OBJECT HAS NO ONE-LINE RENDERING, and inventing one is worse
+     * than leaving it to a view that knows what it is.
+     *
+     * That was true of an object and was not checked of an ARRAY of them,
+     * which fell through to `join(", ")` — so a piece of ground with a
+     * five-corner outline had a field on its record reading "[object
+     * Object], [object Object], [object Object], [object Object]". Nobody
+     * wrote that; nobody could have read it. The shape is drawn on the map
+     * and belongs there, not in a list of words.
+     *
+     * A declaration that HAS a one-line rendering says so with `format`,
+     * and then it is the declaration's sentence rather than this one's
+     * guess — "5 corners" is a useful thing to say and only the app knows
+     * that the numbers are corners.
+     */
+    const nested =
+      typeof value === "object" &&
+      (!Array.isArray(value) || value.some((one) => typeof one === "object" && one !== null));
+    if (nested && format === undefined) continue;
     const text = format
       ? format(value)
       : Array.isArray(value)

@@ -510,3 +510,58 @@ describe("an administered module on the pages", () => {
     expect(page(["hand"])).toContain("Things");
   });
 });
+
+/**
+ * WHAT A FIELD READS AS WHEN IT IS NOT A WORD.
+ *
+ * A piece of ground with a five-corner outline had a field on its record
+ * reading "[object Object], [object Object], [object Object]". Nobody wrote
+ * that and nobody could read it: the rule that a nested object has no
+ * one-line rendering was stated in the code and checked only of objects,
+ * not of arrays of them.
+ */
+describe("a field that is not a word", () => {
+  const shaped = defineNode("plot", {
+    fields: z.object({
+      label: z.string(),
+      outline: z.array(z.object({ x: z.number(), y: z.number() })).optional(),
+      corners: z.array(z.string()).optional(),
+      at: z.object({ x: z.number(), y: z.number() }).optional(),
+    }),
+    plural: "Plots",
+  });
+  const node = {
+    id: "p1",
+    kind: "plot",
+    label: "Back Lawn",
+    outline: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }],
+    corners: ["north", "south"],
+    at: { x: 0.5, y: 0.5 },
+  };
+  const keys = (definition: typeof shaped) =>
+    readableFields(node, definition as never).map((f) => `${f.label}: ${f.value}`);
+
+  it("leaves out a shape rather than printing what an object stringifies to", () => {
+    const said = keys(shaped).join(" | ");
+    expect(said).not.toContain("[object Object]");
+    expect(said).not.toContain("Outline");
+    expect(said).not.toContain("At");
+  });
+
+  it("still reads a list of words as a list of words", () => {
+    expect(keys(shaped).join(" | ")).toContain("Corners: north, south");
+  });
+
+  it("says a shape the declaration knows how to say", () => {
+    /*
+     * Only the app knows the numbers are corners, so only the app can put
+     * it in words — and once it has, that is a sentence worth showing.
+     */
+    const told = defineNode("plot", {
+      fields: shaped.fields,
+      plural: "Plots",
+      display: { format: { outline: (value) => `${(value as unknown[]).length} corners` } },
+    });
+    expect(keys(told as never).join(" | ")).toContain("Outline: 3 corners");
+  });
+});
