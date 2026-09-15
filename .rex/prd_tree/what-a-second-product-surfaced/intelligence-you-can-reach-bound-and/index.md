@@ -24,5 +24,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [F-027 · An llm intelligence has a may and no way to say how it is reached](./f-027-an-llm-intelligence-has-a-may.md) | pending |
-| [F-028 · may is verified and never enforced](./f-028-may-is-verified-and-never-enforced.md) | pending |
+| [F-028 · may is verified and never enforced](./f-028-may-is-verified-and-never-enforced.md) | completed |
 | [F-029 · ship has a persistence lifecycle and no local-process seam](./f-029-ship-has-a-persistence-lifecycle.md) | pending |

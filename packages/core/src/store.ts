@@ -1,3 +1,4 @@
+import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
@@ -16,7 +17,7 @@ import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog } from "./ops/log.js";
 import type { Author, Batch, Operation } from "./ops/types.js";
 import { permits, permittedMutations } from "./permissions/policy.js";
-import { PermissionDeniedError, type Policy, type Principal } from "./permissions/types.js";
+import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 
@@ -57,6 +58,24 @@ export interface StoreOptions<S extends AnySchema> {
    */
   readonly modules?: ModuleMap;
   readonly enabledModules?: readonly string[];
+  /**
+   * The app's declared intelligence providers, so an AGENT is held to the
+   * allowlist it was declared with.
+   *
+   * `may` was a promise made in the declaration, verified by `graview check`
+   * — every name in it is a real act — and enforced by nothing. The tool
+   * runtime honoured it for proposals that went through the tool runtime; a
+   * survey applied by the app's own code went through `store.apply`, where
+   * there was no `may` at all, so an agent principal could run any act its
+   * ROLES allowed whatever the declaration said it was for.
+   *
+   * The allowlist is a promise to the person who typed a key in — it may
+   * describe the ground and may not touch the record — and a promise that
+   * holds on one path and not another is not a promise. It lives on the
+   * store for the same reason the policy does: every caller hits the same
+   * wall in the same way, and an app should not have to remember.
+   */
+  readonly intelligence?: readonly IntelligenceProviderDeclaration[];
 }
 
 export interface ApplyOptions {
@@ -114,6 +133,8 @@ export class Store<S extends AnySchema> {
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
+  /** What each declared agent may do, by provider name. */
+  private readonly may = new Map<string, ReadonlySet<string>>();
   /** What the enabled modules work out to; every surface reads this one answer. */
   readonly modules: ModuleProjection;
   private readonly nextId: () => string;
@@ -126,6 +147,9 @@ export class Store<S extends AnySchema> {
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
     this.policy = options.policy;
+    for (const provider of options.intelligence ?? []) {
+      if (provider.may) this.may.set(provider.name, new Set(provider.may));
+    }
     this.modules = resolveModules(options.modules, options.enabledModules);
     let n = 0;
     this.nextId = options.ids ?? (() => `op${++n}`);
@@ -262,6 +286,27 @@ export class Store<S extends AnySchema> {
       this.viaOf(this.mutations.get(call.name)),
       this.subjectIdOf(call),
     );
+  }
+
+  /**
+   * Why a declared agent may not run this call, if it may not.
+   *
+   * Only ever narrows, and only for an agent: a human author has no
+   * allowlist, and a provider that declared no `may` may do whatever its
+   * roles allow, which is what "absent means all" has always meant.
+   */
+  private refusesAgent(call: MutationCall, author: Author | Principal): Refusal | undefined {
+    if (author.kind !== "agent" || author.id === undefined) return undefined;
+    const allowed = this.may.get(author.id);
+    if (!allowed || allowed.has(call.name)) return undefined;
+    const named = [...allowed];
+    return {
+      mutation: call.name,
+      message: `${author.id} may not ${call.name} here: it was declared able to ${
+        named.length === 0 ? "do nothing else" : named.join(", ")
+      }.`,
+      wouldNeed: [],
+    };
   }
 
   /**
@@ -449,6 +494,20 @@ export class Store<S extends AnySchema> {
         const verdict = this.permits(call, author as Principal);
         if (!verdict.ok) throw new PermissionDeniedError(verdict.refusal);
       }
+    }
+    /*
+     * AND AN AGENT IS HELD TO WHAT IT WAS DECLARED ABLE TO DO.
+     *
+     * Checked here rather than only in the tool runtime, because the runtime
+     * is one path and `store.apply` is the one everything else uses — an app
+     * applying a model's plan itself went straight past the allowlist, and
+     * every app would have had to remember to re-implement it. The roles a
+     * seat holds say what it may do at all; `may` narrows what THIS provider
+     * was brought in for, and the narrower of the two wins.
+     */
+    for (const call of calls) {
+      const refusal = this.refusesAgent(call, author);
+      if (refusal) throw new PermissionDeniedError(refusal);
     }
 
     try {

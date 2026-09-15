@@ -78,6 +78,9 @@ export function createSeedbedStore(
     schema: seedbedSchema,
     mutations: seedbedMutations,
     invariants: seedbedInvariants,
+    /* The allowlist above is enforced here, not only where a tool runtime
+       happens to be: every path into the store is the same wall. */
+    intelligence: seedbedApp.intelligence ?? [],
     ...options,
   });
 }

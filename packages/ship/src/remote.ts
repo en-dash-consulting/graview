@@ -84,6 +84,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     invariants: options.app.invariants ?? [],
     ...(options.app.policy ? { policy: options.app.policy } : {}),
     ...(options.app.modules ? { modules: options.app.modules } : {}),
+    ...(options.app.intelligence ? { intelligence: options.app.intelligence } : {}),
     /*
      * The snapshot AND the log: the snapshot is the graph, the log is the
      * history that led to it. Folding the log alone would lose whatever the

@@ -115,6 +115,7 @@ function storeOf<S extends AnySchema>(app: GraviewApp<S>, seed: EmbedOptions<S>[
     invariants: app.invariants ?? [],
     ...(seed ? { snapshot: seed as never } : {}),
     ...(app.policy ? { policy: app.policy } : {}),
+    ...(app.intelligence ? { intelligence: app.intelligence } : {}),
     ...(principal ? { principal } : {}),
   } as never);
 }

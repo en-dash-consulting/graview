@@ -112,4 +112,8 @@ path to the store:
 
 Declare what runs where on the app: `intelligence: [{ name, kind:
 "graph" | "llm" | "external", may: [...mutations] }]` — `graview check`
-refuses an allowlist naming a mutation nobody registered.
+refuses an allowlist naming a mutation nobody registered, and the STORE
+enforces it: hand the store `intelligence` and an author
+`{ kind: "agent", id: "<provider name>" }` is refused anything outside its
+`may`, on `apply` as on a tool call. `openStore` and the embed pass it
+through for you.
