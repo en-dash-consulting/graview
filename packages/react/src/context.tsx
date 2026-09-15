@@ -573,6 +573,20 @@ export function useGraview<S extends AnySchema>(): GraviewContextValue<S> {
 }
 
 /**
+ * The same, for a surface that can live on EITHER FACE.
+ *
+ * The scene is always inside a provider; the routed face is not — it carries
+ * its store in a `PageContext` instead. Most primitives belong to one face
+ * and can insist, but the few that belong to both must be able to ask
+ * without throwing: a component cannot call a hook conditionally, so "is
+ * there a provider" has to be a hook that answers rather than one that
+ * raises.
+ */
+export function useGraviewIfAny<S extends AnySchema>(): GraviewContextValue<S> | null {
+  return (useContext(GraviewContext) as unknown as GraviewContextValue<S> | null) ?? null;
+}
+
+/**
  * Subscribes to the graph. Re-renders on every applied diff, whoever caused
  * it — so an agent's edit updates the interface through exactly the path a
  * human edit does.

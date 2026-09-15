@@ -1,4 +1,4 @@
-export { GraviewProvider, useGraph, useGraview, useNode, useViewMode, ViewModeProvider } from "./context.js";
+export { GraviewProvider, useGraph, useGraview, useGraviewIfAny, useNode, useViewMode, ViewModeProvider } from "./context.js";
 export type { AdministeredModule, GraviewContextValue, GraviewProviderProps, PointerMenu, Scheme, Seat, ViewMode } from "./context.js";
 export { applySettings, honourSetting, loadSetting, rememberSetting } from "./settings.js";
 

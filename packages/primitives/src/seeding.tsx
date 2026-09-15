@@ -1,14 +1,24 @@
-import { beginning, type AnySchema, type Beginning } from "@graview/core";
+import { beginning, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
 import { kindCardId } from "@graview/layout";
-import { useAffordances, useApplyAffordance, useGraview, useLocalIntelligence } from "@graview/react";
+import {
+  createViews,
+  GraviewProvider,
+  useApplyAffordance,
+  useGraph,
+  useGraview,
+  useGraviewIfAny,
+  useLocalIntelligence,
+} from "@graview/react";
 import {
   applyPlan,
   dependentsOf,
+  deriveAffordances,
   firstJsonObject,
   planFrom,
   validateProposals,
   without,
   type Affordance,
+  type AffordanceSet,
   type Plan,
   type PlanOptions,
   type PlannedCall,
@@ -38,10 +48,25 @@ function chainOf<S extends AnySchema>(store: { schema: S; allMutations: () => re
   });
 }
 
-export interface BeginProps {
+export interface BeginProps<S extends AnySchema = AnySchema> {
   /** What to say once every kind has something in it. Absent, it says nothing. */
   readonly whenFull?: ReactNode;
   readonly title?: string;
+  /**
+   * The store, for a face that has no provider.
+   *
+   * The way in belongs on BOTH faces — the scene's first screen and the
+   * routed face's home are the same question — and only the scene has a
+   * provider. Given a store this reads it; inside a provider it needs
+   * nothing.
+   */
+  readonly store?: Store<S>;
+  /**
+   * Who is beginning. Without it a guarded store answers as an unroled
+   * human, which is refused everything — so a seat that may not act must
+   * still be TOLD, rather than shown an empty page.
+   */
+  readonly principal?: Principal;
 }
 
 /**
@@ -56,17 +81,85 @@ export interface BeginProps {
  * strip reads, so an act offered here is an act that can actually run, with
  * its open questions asked by the same walk that asks them anywhere else.
  */
-export function Begin<S extends AnySchema>({ whenFull, title = "Begin" }: BeginProps = {}) {
-  const { store } = useGraview<S>();
+export function Begin<S extends AnySchema>(props: BeginProps<S> = {}) {
+  /*
+   * THE WAY IN BELONGS ON BOTH FACES, and only one of them has a provider.
+   *
+   * The scene is always inside a `GraviewProvider`; the routed face carries
+   * its store in a `PageContext` instead. Everything this surface is made of
+   * — the affordance derivation, the walk that asks an act's open questions
+   * — reads the provider, so rather than teach each of them a second way to
+   * find a store, this puts one up when there is none. The registry is empty
+   * because nothing here draws a view.
+   */
+  const provided = useGraviewIfAny<S>();
+  if (provided === null) {
+    if (!props.store) {
+      throw new Error("<Begin> needs a store: pass one, or put it inside a <GraviewProvider>.");
+    }
+    return (
+      <GraviewProvider
+        store={props.store}
+        views={createViews(props.store.schema)}
+        {...(props.principal ? { principal: props.principal } : {})}
+      >
+        <BeginInside {...props} />
+      </GraviewProvider>
+    );
+  }
+  return <BeginInside {...props} />;
+}
+
+function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginProps<S>) {
+  const { store, principal } = useGraview<S>();
+  const nodes = useGraph();
   const chain = useMemo(() => chainOf(store as never), [store]);
   const counts = useMemo(() => {
     const found: Record<string, number> = {};
     for (const entry of chain.order) found[entry.kind] = store.graph.nodesOfKind(entry.kind as never).length;
     return found;
-  }, [chain, store]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chain, store, nodes]);
+
+  /*
+   * Derived once, here, rather than inside each row — because whether this
+   * surface should be on screen AT ALL depends on the answer.
+   */
+  const ways = useMemo(() => {
+    const found: Record<string, AffordanceSet> = {};
+    for (const entry of chain.order) {
+      if ((counts[entry.kind] ?? 0) > 0) continue;
+      if (!entry.needs.every((needed) => (counts[needed] ?? 0) > 0)) continue;
+      found[entry.kind] = deriveAffordances(store, [kindCardId(entry.kind)], {
+        kindSelection: [entry.kind],
+        ...(principal ? { principal } : {}),
+      });
+    }
+    return found;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, principal, chain, counts, nodes]);
 
   const empty = chain.order.filter((entry) => (counts[entry.kind] ?? 0) === 0);
-  if (empty.length === 0) return whenFull === undefined ? null : <>{whenFull}</>;
+  const startable = Object.values(ways).some((way) => way.affordances.length > 0);
+  const standing = chain.order.some((entry) => (counts[entry.kind] ?? 0) > 0);
+
+  /*
+   * WHEN TO STAND DOWN — and the answer is not "when every kind has one".
+   *
+   * A working property found this: Maple Street is planted, tended and
+   * inspected, and this panel was still on its front page, headed "what has
+   * to exist before the rest of it can", because two kinds were empty —
+   * invitations and people — and the seat reading the page was a keeper,
+   * who may not invite anybody. Nothing on the list was anything that
+   * reader could do, so the list was a chore board of other people's work.
+   *
+   * So: stand down when nothing here is startable BY THIS SEAT and the
+   * graph is standing anyway. The empty graph keeps the opposite rule —
+   * there, "you may not, and here is who may" is the single most useful
+   * sentence on the screen, and hiding it would put a person in front of a
+   * blank page with no explanation, which is the wall this exists to end.
+   */
+  if (empty.length === 0 || (!startable && standing)) return whenFull === undefined ? null : <>{whenFull}</>;
 
   return (
     <Panel title={title} subtitle="What has to exist before the rest of it can." fit>
@@ -86,7 +179,7 @@ export function Begin<S extends AnySchema>({ whenFull, title = "Begin" }: BeginP
                   Nothing here makes {plural.toLowerCase()} — they arrive with the data.
                 </div>
               ) : has > 0 ? null : ready ? (
-                <BeginHere kind={entry.kind} />
+                <BeginHere kind={entry.kind} derived={ways[entry.kind]!} />
               ) : (
                 <div style={{ fontSize: "0.8125rem", ...MUTED_TEXT }}>
                   Waiting for {entry.needs.map((kind) => store.schema.tryDefinition(kind)?.plural ?? kind).join(" and ")}.
@@ -99,16 +192,27 @@ export function Begin<S extends AnySchema>({ whenFull, title = "Begin" }: BeginP
     </Panel>
   );
 }
-
-/** The acts that can begin one kind, asked the way they are asked anywhere. */
-function BeginHere({ kind }: { readonly kind: string }) {
-  const { affordances } = useAffordances({
-    selection: [kindCardId(kind)],
-    kindSelection: [kind],
-  } as never);
+function BeginHere({ kind, derived }: { readonly kind: string; readonly derived: AffordanceSet }) {
+  const { store } = useGraview();
+  const { affordances, withheld } = derived;
   const { apply } = useApplyAffordance();
   const [asking, setAsking] = useState<Affordance | null>(null);
 
+  /*
+   * WITHHELD, NOT HIDDEN — the same honesty the actions strip gives.
+   *
+   * A guarded store answers an unroled seat by refusing everything, and a
+   * first screen that responds to that by drawing nothing is the exact
+   * failure this surface exists to end: a person looking at a page with no
+   * way in and no reason given. Say who could instead.
+   */
+  if (affordances.length === 0 && withheld.length > 0) {
+    return (
+      <div data-testid={`begin-withheld-${kind}`} style={{ fontSize: "0.8125rem", marginTop: 4, ...MUTED_TEXT }}>
+        {withheld[0]!.refusal.message}
+      </div>
+    );
+  }
   if (affordances.length === 0) return null;
   if (asking) {
     return (

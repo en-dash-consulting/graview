@@ -48,6 +48,16 @@ const store = (nodes: readonly unknown[] = []) =>
     snapshot: { nodes: nodes as never, edges: [] },
   });
 
+/** The same product, with a seat that may plant but may not survey. */
+const guarded = (nodes: readonly unknown[] = []) =>
+  new Store({
+    schema,
+    mutations: [stakeOut, placeFeature],
+    policy: { roles: ["keeper", "crew"], grants: [{ roles: ["keeper"], mutations: ["stake-out"] }, { roles: ["crew"], mutations: ["place-feature"] }] },
+    snapshot: { nodes: nodes as never, edges: [] },
+  });
+const crew = { id: "c", roles: ["crew"] } as const;
+
 let host: HTMLDivElement;
 beforeEach(() => {
   host = document.createElement("div");
@@ -55,11 +65,11 @@ beforeEach(() => {
 });
 afterEach(() => host.remove());
 
-const draw = async (node: React.ReactNode, at = store()) => {
+const draw = async (node: React.ReactNode, at = store(), principal?: { readonly id: string; readonly roles: readonly string[] }) => {
   const root = createRoot(host);
   await act(async () => {
     root.render(
-      <GraviewProvider store={at} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW}>
+      <GraviewProvider store={at} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW} {...(principal ? { principal } : {})}>
         {node}
       </GraviewProvider>,
     );
@@ -93,6 +103,38 @@ describe("the first screen of an empty product", () => {
     expect(host.querySelector('[data-testid="begin-place-feature"]')).not.toBeNull();
     /* And stops offering what is already done. */
     expect(host.querySelector('[data-begin-kind="zone"]')!.textContent).not.toContain("none yet");
+    await act(async () => root.unmount());
+  });
+
+  it("says who may, rather than drawing an empty page at a seat that may not", async () => {
+    /*
+     * A guarded store answers an unroled — or under-roled — seat by refusing
+     * everything. A first screen that responds by rendering nothing puts a
+     * person in front of a blank page with no way in and no reason given,
+     * which is the exact thing this surface exists to end.
+     */
+    const { root } = await draw(<Begin />, guarded(), crew);
+    expect(host.querySelector('[data-testid="begin-stake-out"]')).toBeNull();
+    expect(host.querySelector('[data-testid="begin-withheld-zone"]')!.textContent).toMatch(/keeper/);
+    await act(async () => root.unmount());
+  });
+
+  it("stands down when nothing left is this seat's to begin, rather than listing other people's work", async () => {
+    /*
+     * Found by a working property: every area planted and tended, and the
+     * front page still headed "what has to exist before the rest of it can"
+     * — because two kinds were empty and the reader was not permitted
+     * either of them. An empty graph keeps the opposite rule, above.
+     */
+    const standing = guarded([
+      { id: "lawn", kind: "zone", label: "Back Lawn" },
+      { id: "a", kind: "almanac", label: "2026" },
+    ]);
+    const asKeeper = { id: "k", roles: ["keeper"] } as const;
+    const { root } = await draw(<Begin whenFull={<p data-testid="full">All set.</p>} />, standing, asKeeper);
+    /* A keeper may not place features, and features are all that is left. */
+    expect(host.querySelector('[data-testid="begin"]')).toBeNull();
+    expect(host.querySelector('[data-testid="full"]')).not.toBeNull();
     await act(async () => root.unmount());
   });
 
