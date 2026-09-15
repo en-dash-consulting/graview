@@ -74,3 +74,5 @@ export type { DrawnFigure } from "./figure.js";
 
 export { applyPlan, dependentsOf, describePlan, isPlanReference, planFrom, without } from "./plan.js";
 export type { AppliedPlan, Plan, PlanEntry, PlanOptions, PlannedCall, PlanReference } from "./plan.js";
+export { across, inside, within } from "./space.js";
+export type { Ring, SpacePoint } from "./space.js";

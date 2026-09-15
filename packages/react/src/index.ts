@@ -56,3 +56,5 @@ export {
   UrlSync,
   useUrlSync,
 } from "./hooks.js";
+export { useDrawnSize, useTextMeasure } from "./drawn.js";
+export type { DrawnOptions, DrawnSize } from "./drawn.js";

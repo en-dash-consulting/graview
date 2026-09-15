@@ -5,6 +5,7 @@ import {
   checkApp,
   createSchema,
   defineApp,
+  defineMutation,
   defineNode,
   formatFindings,
   generateAgentsMd,
@@ -493,6 +494,61 @@ describe("what the checker says out loud without failing", () => {
     expect(result.notes).toBe(1);
     expect(formatFindings(result)).toContain("note ");
     expect(formatFindings(result)).toContain("1 note(s)");
+  });
+
+  /**
+   * A LABEL A MODEL WRITES.
+   *
+   * A product asked one to survey a garden and got back areas called
+   * "Pea-gravel corner with river-rock border, log seats and a fire bowl".
+   * True, useful, and a terrible name — and the model was never told,
+   * because the prompt is generated from the schema and the schema said
+   * `z.string().min(1)`.
+   */
+  const surveyed = (label: z.ZodTypeAny) =>
+    defineApp({
+      name: "grounds",
+      schema: createSchema([
+        defineNode("zone", { fields: z.object({ label }), plural: "Zones" }),
+        defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes" }),
+      ]),
+      mutations: [
+        defineMutation("stake-out", {
+          title: "Stake out some ground",
+          creates: ["zone"],
+          input: z.object({ label: z.string() }),
+          apply: () => undefined,
+        }),
+        defineMutation("jot", {
+          title: "Jot something down",
+          creates: ["note"],
+          input: z.object({ label: z.string() }),
+          apply: () => undefined,
+        }),
+      ],
+      intelligence: [{ name: "surveyor", kind: "llm", may: ["stake-out"] }],
+    });
+
+  it("notes an unbounded label on a kind a model may create", () => {
+    const result = checkApp(surveyed(z.string().min(1)));
+    expect(findings(surveyed(z.string().min(1)))).toContain("note:label-unbounded");
+    expect(result.ok).toBe(true);
+    /* Only the kind the provider may make. Nobody asked a model for notes. */
+    const said = formatFindings(result);
+    expect(said).toContain("zone");
+    expect(said).not.toMatch(/label-unbounded[\s\S]*\bnote\b.*fields\.label/);
+  });
+
+  it("says nothing once the label has a ceiling an interface can draw", () => {
+    expect(findings(surveyed(z.string().min(1).max(60)))).not.toContain("note:label-unbounded");
+  });
+
+  it("says nothing at all when no provider can create anything", () => {
+    const app = defineApp({
+      name: "grounds",
+      schema: createSchema([defineNode("zone", { fields: z.object({ label: z.string() }), plural: "Zones" })]),
+    });
+    expect(findings(app)).not.toContain("note:label-unbounded");
   });
 
   it("asks out loud whether a lens this app wrote is reusable", () => {

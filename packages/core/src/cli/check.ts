@@ -272,6 +272,19 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
       }
     }
   }
+  /*
+   * The kinds a declared intelligence provider can bring into existence —
+   * which is the set whose labels are written by something that has never
+   * been told what a label is for.
+   */
+  const writtenByAModel = new Set<string>();
+  for (const provider of app.intelligence ?? []) {
+    for (const mutation of app.mutations ?? []) {
+      if (provider.may !== undefined && !provider.may.includes(mutation.name)) continue;
+      for (const made of mutation.creates ?? []) writtenByAModel.add(made);
+    }
+  }
+
   for (const kind of Object.keys(app.brand?.figures ?? {})) {
     if (kinds.has(kind)) continue;
     add({
@@ -613,6 +626,40 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
             fix: `Declare a node kind "${target}", or change the target to one of: ${[...kinds].join(", ")}.`,
           });
         }
+      }
+    }
+
+    /*
+     * A LABEL A MODEL WRITES IS A NAME, AND NOTHING SAYS SO.
+     *
+     * Every derived surface in this framework draws `label`: on a card, in
+     * a list, on a plan, in a chip. And the declaration almost always says
+     * `z.string().min(1)`, which permits a paragraph. When a person types
+     * it that is fine — people write names. When a MODEL writes it, it
+     * writes whatever the prompt implied, and the prompt was generated from
+     * this schema, which said nothing.
+     *
+     * A product asked a model to survey a garden and got back seven areas
+     * called things like "Pea-gravel corner with river-rock border, log
+     * seats and a fire bowl". Every one is a true, useful sentence and a
+     * terrible name, and the model was not wrong — it was never told. The
+     * plan drew them across each other, the cards wrapped to four lines,
+     * and nothing failed anywhere.
+     *
+     * So this asks only about kinds a declared provider may actually
+     * create. A note, not a warning: a long label is legal and sometimes
+     * right. What is not defensible is not having made the call.
+     */
+    if (writtenByAModel.has(definition.kind)) {
+      const field = (definition.fields.shape as Record<string, unknown>)["label"];
+      if (field !== undefined && !bounded(field)) {
+        add({
+          severity: "note",
+          code: "label-unbounded",
+          where: `defineNode("${definition.kind}").fields.label`,
+          message: `A declared provider may create ${withArticle(definition.kind)}, and "label" has no maximum length — so a model may write a paragraph where a name goes, and every surface that draws it will try.`,
+          fix: `Bound it to something an interface can draw: z.string().min(1).max(60). Whatever else there is to say about ${withArticle(definition.kind)} belongs in a field of its own, where a person will actually read it.`,
+        });
       }
     }
 
@@ -1404,6 +1451,21 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
  * bare field name, or `{ field, is }` — a field and the values that make the
  * role true, the same shape `lifecycle` takes. Undefined when it is neither.
  */
+/**
+ * Whether a string schema has been given a ceiling.
+ *
+ * Read off zod's own checks rather than by parsing probe values: a schema
+ * that refuses a long string for some OTHER reason — a regex, an enum — is
+ * bounded in the way that matters here, and asking it is the only way to
+ * find that out without knowing what every check means.
+ */
+function bounded(field: unknown): boolean {
+  const schema = field as { safeParse?: (value: unknown) => { success: boolean } };
+  if (typeof schema?.safeParse !== "function") return true;
+  /* Sixty-one characters: past any name, short of any description. */
+  return !schema.safeParse("x".repeat(61)).success;
+}
+
 function fieldOf(bound: unknown): string | undefined {
   if (typeof bound === "string") return bound;
   if (bound !== null && typeof bound === "object") {

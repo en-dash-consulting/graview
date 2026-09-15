@@ -47,3 +47,5 @@ export {
   withZoom,
 } from "./view-state.js";
 export type { EdgeRef, Pin, ViewState } from "./view-state.js";
+export { areaOf, boxOf, centroidOf, estimateWidth, fitLabel, overlaps, spanAt } from "./label-fit.js";
+export type { FitOptions, FitPoint, FittedLabel, LabelBox, Measure } from "./label-fit.js";
