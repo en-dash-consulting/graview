@@ -63,12 +63,16 @@ pnpm build:domain && npx graview describe ./dist/domain/app.js
    A call can name what it is about to make — `as: "lawn"` — and a later call
    points at it with `{ $plan: "lawn" }`. That is the only way a model can
    refer to a node that does not exist yet, and it is what turns forty
-   proposals into one graph.
+   proposals into one graph. It is all-or-nothing and says where it stopped;
+   `keepWhatRan` is for a caller who would rather have the half.
 
-4. **Show it before you run it.** `<PlanReview plan={plan} />` draws the plan
-   in the order it will run, counts what it makes, and strikes refusals
-   through with their reason. A seeding nobody read is a seeding nobody can
-   trust.
+4. **Show it before you run it.** `<PlanReview plan={plan} declinable />`
+   draws the plan in the order it will run, counts what it makes, and strikes
+   refusals through with their reason. `declinable` lets a person drop one —
+   and declining the area declines the tree standing in it, said beside the
+   entry BEFORE the press (`dependentsOf`, `without`). A seeding nobody read
+   is a seeding nobody can trust, and a review nobody can disagree with is
+   not a review.
 
 5. **Write the prompt from the graph, not from your head.** The model needs
    the kinds, the acts and their arguments — which `generateLlmsTxt(app)`

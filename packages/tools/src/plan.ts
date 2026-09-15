@@ -243,8 +243,10 @@ export interface AppliedPlan<S extends AnySchema> {
   readonly made: Readonly<Record<string, string>>;
   readonly batch: string;
   readonly applied: number;
-  /** Set when a call threw: everything before it stands, and the batch undoes it. */
+  /** Set when a call threw, naming which one and why. */
   readonly stoppedAt?: { readonly at: number; readonly why: string };
+  /** Whether what had already been applied was taken back again. */
+  readonly undone?: boolean;
   readonly store: Store<S>;
 }
 
@@ -256,14 +258,21 @@ export interface AppliedPlan<S extends AnySchema> {
  * but under one batch, so the activity shows one entry and `store.undo(batch)`
  * takes the whole seeding back the way it arrived.
  *
- * A call that throws stops the plan where it is. Nothing is rolled back
- * here: the batch is the handle, the caller decides, and a half-applied plan
- * that silently vanished would be worse than one that says where it stopped.
+ * ALL OR NOTHING, and it says where it stopped. A plan that half-applied
+ * leaves a graph nobody meant and an undo nobody trusts, so what the batch
+ * has written is taken back before the error reaches the caller — and the
+ * result names the call that failed and why, because a plan that silently
+ * vanished would be its own kind of wrong. `keepWhatRan` is for a caller who
+ * would rather have the half: a long seeding whose last call was a typo.
  */
 export function applyPlan<S extends AnySchema>(
   store: Store<S>,
   plan: Plan,
-  options: { readonly author?: Principal; readonly batch?: string } = {},
+  options: {
+    readonly author?: Principal;
+    readonly batch?: string;
+    readonly keepWhatRan?: boolean;
+  } = {},
 ): AppliedPlan<S> {
   const batch = options.batch ?? `plan:${Date.now().toString(36)}`;
   const made: Record<string, string> = {};
@@ -295,19 +304,23 @@ export function applyPlan<S extends AnySchema>(
         if (added.length === 1) made[entry.call.as] = added[0]!;
       }
     } catch (error) {
+      const why =
+        error instanceof PermissionDeniedError
+          ? error.refusal.message
+          : error instanceof Error
+            ? error.message
+            : String(error);
+      let undone = false;
+      if (!options.keepWhatRan && applied > 0) {
+        store.undo(batch, options.author ? { author: options.author } : {});
+        undone = true;
+      }
       return {
         made,
         batch,
         applied,
-        stoppedAt: {
-          at: entry.at,
-          why:
-            error instanceof PermissionDeniedError
-              ? error.refusal.message
-              : error instanceof Error
-                ? error.message
-                : String(error),
-        },
+        stoppedAt: { at: entry.at, why },
+        ...(undone ? { undone: true } : {}),
         store,
       };
     }

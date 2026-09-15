@@ -166,7 +166,7 @@ describe("applying a plan", () => {
     expect(at.graph.allNodes()).toHaveLength(0);
   });
 
-  it("stops where it stopped and says so, rather than vanishing", () => {
+  it("takes back what ran when one call fails, and still says which", () => {
     const at = store();
     const plan = planFrom(at, [
       { mutation: "stake-out", as: "lawn", args: { label: "Back Lawn" } },
@@ -177,10 +177,24 @@ describe("applying a plan", () => {
     expect(done.applied).toBe(1);
     expect(done.stoppedAt?.at).toBe(1);
     expect(done.stoppedAt?.why).toBeTruthy();
-    /* What did run stands, and the batch is the handle for taking it back. */
-    expect(at.graph.nodesOfKind("zone")).toHaveLength(1);
-    at.undo(done.batch);
+    /*
+     * A plan that half-applied leaves a graph nobody meant and an undo
+     * nobody trusts, so the batch is taken back — and the result still names
+     * the call that failed, because vanishing silently is its own wrong.
+     */
+    expect(done.undone).toBe(true);
     expect(at.graph.allNodes()).toHaveLength(0);
+  });
+
+  it("keeps the half when a caller asks for it", () => {
+    const at = store();
+    const plan = planFrom(at, [
+      { mutation: "stake-out", as: "lawn", args: { label: "Back Lawn" } },
+      { mutation: "place-feature", args: { label: "The oak", zoneId: "not-a-zone" } },
+    ], { app });
+    const done = applyPlan(at, plan, { keepWhatRan: true });
+    expect(done.undone).toBeUndefined();
+    expect(at.graph.nodesOfKind("zone")).toHaveLength(1);
   });
 
   it("runs only what an agent was declared able to run", () => {
@@ -194,7 +208,7 @@ describe("applying a plan", () => {
       { mutation: "stake-out", as: "lawn", args: { label: "Back Lawn" } },
       { mutation: "place-feature", args: { label: "The oak", zoneId: { $plan: "lawn" } } },
     ], { app });
-    const done = applyPlan(guarded, plan, { author: surveyor });
+    const done = applyPlan(guarded, plan, { author: surveyor, keepWhatRan: true });
     expect(done.applied).toBe(1);
     expect(done.stoppedAt?.why).toContain("declared able to");
   });
