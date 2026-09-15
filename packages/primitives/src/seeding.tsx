@@ -82,33 +82,52 @@ export interface BeginProps<S extends AnySchema = AnySchema> {
  * strip reads, so an act offered here is an act that can actually run, with
  * its open questions asked by the same walk that asks them anywhere else.
  */
-export function Begin<S extends AnySchema>(props: BeginProps<S> = {}) {
-  /*
-   * THE WAY IN BELONGS ON BOTH FACES, and only one of them has a provider.
-   *
-   * The scene is always inside a `GraviewProvider`; the routed face carries
-   * its store in a `PageContext` instead. Everything this surface is made of
-   * — the affordance derivation, the walk that asks an act's open questions
-   * — reads the provider, so rather than teach each of them a second way to
-   * find a store, this puts one up when there is none. The registry is empty
-   * because nothing here draws a view.
-   */
+/**
+ * THE WAY IN BELONGS ON BOTH FACES, and only one of them has a provider.
+ *
+ * The scene is always inside a `GraviewProvider`; the routed face carries
+ * its store in a `PageContext` instead. Everything these surfaces are made
+ * of — the affordance derivation, the walk that asks an act's open
+ * questions, applying a plan as one turn — reads the provider, so rather
+ * than teach each of them a second way to find a store, this puts one up
+ * when there is none. The registry is empty because nothing here draws a
+ * view.
+ *
+ * The SEAT comes with it. A surface handed a guarded store and no principal
+ * is refused everything, which draws as a page with no way in and no reason
+ * given — the exact wall these surfaces exist to take down.
+ */
+function Lifted<S extends AnySchema>({
+  store,
+  principal,
+  what,
+  children,
+}: {
+  readonly store?: Store<S>;
+  readonly principal?: Principal;
+  readonly what: string;
+  readonly children: ReactNode;
+}) {
   const provided = useGraviewIfAny<S>();
-  if (provided === null) {
-    if (!props.store) {
-      throw new Error("<Begin> needs a store: pass one, or put it inside a <GraviewProvider>.");
-    }
-    return (
-      <GraviewProvider
-        store={props.store}
-        views={createViews(props.store.schema)}
-        {...(props.principal ? { principal: props.principal } : {})}
-      >
-        <BeginInside {...props} />
-      </GraviewProvider>
-    );
-  }
-  return <BeginInside {...props} />;
+  if (provided !== null) return <>{children}</>;
+  if (!store) throw new Error(`<${what}> needs a store: pass one, or put it inside a <GraviewProvider>.`);
+  return (
+    <GraviewProvider
+      store={store}
+      views={createViews(store.schema)}
+      {...(principal ? { principal } : {})}
+    >
+      {children}
+    </GraviewProvider>
+  );
+}
+
+export function Begin<S extends AnySchema>(props: BeginProps<S> = {}) {
+  return (
+    <Lifted what="Begin" {...(props.store ? { store: props.store } : {})} {...(props.principal ? { principal: props.principal } : {})}>
+      <BeginInside {...props} />
+    </Lifted>
+  );
 }
 
 function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginProps<S>) {
@@ -265,6 +284,15 @@ export interface PlanReviewProps<S extends AnySchema> {
    * the mutation's own title, which is always at least true.
    */
   readonly also?: (entry: PlanEntry, names: ReadonlyMap<string, string>) => string | null;
+  /** Anything the product wants said above the list — a summary, a warning. */
+  readonly header?: ReactNode;
+  /** Render without the panel around it, for a product with its own frame. */
+  readonly bare?: boolean;
+  /** A name for the turn, so the activity rail reads as one thing. */
+  readonly batch?: string;
+  /** For the routed face, which has no provider. See `<Begin>`. */
+  readonly store?: Store<S>;
+  readonly principal?: Principal;
 }
 
 /**
@@ -284,7 +312,10 @@ export interface PlanReviewProps<S extends AnySchema> {
  */
 interface PlanRow {
   readonly key: string;
+  /** The plan's own name for what this row makes, when it makes one. */
   readonly name?: string;
+  /** The node it acts on, when that node is already standing in the graph. */
+  readonly about?: string;
   readonly entries: readonly PlanEntry[];
 }
 
@@ -293,7 +324,7 @@ function rowsOf(
   about: (mutation: string) => { readonly subjectArg?: string; readonly makes: boolean },
 ): readonly PlanRow[] {
   const rows: PlanRow[] = [];
-  const byName = new Map<string, number>();
+  const byOwner = new Map<string, number>();
   for (const entry of plan.entries) {
     const made = entry.call.as;
     const { subjectArg, makes } = about(entry.call.mutation);
@@ -304,28 +335,59 @@ function rowsOf(
      * to the thing it is about.
      */
     if (made !== undefined || makes) {
-      if (made !== undefined) byName.set(made, rows.length);
+      if (made !== undefined) byOwner.set(made, rows.length);
       rows.push({ key: made ?? `${entry.call.mutation}:${entry.at}`, ...(made ? { name: made } : {}), entries: [entry] });
       continue;
     }
-    const acted = subjectArg === undefined ? undefined : planRefName(entry.call.args[subjectArg]);
-    const owner = acted ?? entry.dependsOn[0];
-    const at = owner === undefined ? undefined : byName.get(owner);
-    if (at === undefined) {
-      rows.push({ key: `${entry.call.mutation}:${entry.at}`, entries: [entry] });
-    } else {
+    /*
+     * What it acts on is either something this plan is making — a
+     * `{ $plan: name }` — or something already in the graph, in which case
+     * the id is the owner. A plan that outlines an area and then places a
+     * tree on it is two things; one that outlines an area and marks a
+     * position on the SAME area is one.
+     */
+    const raw = subjectArg === undefined ? undefined : entry.call.args[subjectArg];
+    const planned = planRefName(raw);
+    const standing = typeof raw === "string" ? raw : undefined;
+    const owner = planned ?? standing ?? entry.dependsOn[0];
+    const at = owner === undefined ? undefined : byOwner.get(owner);
+    if (at !== undefined) {
       rows[at] = { ...rows[at]!, entries: [...rows[at]!.entries, entry] };
+      continue;
     }
+    const key = owner ?? `${entry.call.mutation}:${entry.at}`;
+    byOwner.set(key, rows.length);
+    rows.push({
+      key,
+      ...(planned !== undefined ? { name: planned } : {}),
+      ...(standing !== undefined ? { about: standing } : {}),
+      entries: [entry],
+    });
   }
   return rows;
 }
 
-/** What to call a row: what the thing is named, falling back to the act. */
-function labelOf(row: PlanRow, titleOf: (mutation: string) => { readonly title?: string } | undefined): string {
+/**
+ * What to call a row — the THING, wherever its name can be found.
+ *
+ * A call that makes something carries the name in its arguments. A call that
+ * acts on something already standing does not, and asking it to would be
+ * asking a plan to repeat what the graph already knows: the node is right
+ * there with a label on it. Only when neither holds a name does the row fall
+ * back to reading as the act, which is the case where the act IS the only
+ * thing there is to say.
+ */
+function labelOf(
+  row: PlanRow,
+  titleOf: (mutation: string) => { readonly title?: string } | undefined,
+  labelIn: (id: string) => string | undefined,
+): { readonly text: string; readonly named: boolean } {
   const first = row.entries[0]!;
   const label = first.call.args["label"];
-  if (typeof label === "string" && label.length > 0) return label;
-  return titleOf(first.call.mutation)?.title ?? first.call.mutation;
+  if (typeof label === "string" && label.length > 0) return { text: label, named: true };
+  const standing = row.about === undefined ? undefined : labelIn(row.about);
+  if (standing !== undefined && standing.length > 0) return { text: standing, named: true };
+  return { text: titleOf(first.call.mutation)?.title ?? first.call.mutation, named: false };
 }
 
 const planRefName = (value: unknown): string | undefined =>
@@ -341,7 +403,15 @@ const planRefName = (value: unknown): string | undefined =>
  * the actions strip gives a seat that may not act. Applying is one press and
  * one turn, so taking it back is one press too.
  */
-export function PlanReview<S extends AnySchema>({
+export function PlanReview<S extends AnySchema>(props: PlanReviewProps<S>) {
+  return (
+    <Lifted what="PlanReview" {...(props.store ? { store: props.store } : {})} {...(props.principal ? { principal: props.principal } : {})}>
+      <PlanReviewInside {...props} />
+    </Lifted>
+  );
+}
+
+function PlanReviewInside<S extends AnySchema>({
   plan,
   onApplied,
   onDiscard,
@@ -349,6 +419,9 @@ export function PlanReview<S extends AnySchema>({
   declinable = false,
   options,
   also,
+  header,
+  bare = false,
+  batch,
 }: PlanReviewProps<S>) {
   const { store, principal } = useGraview<S>();
   const [done, setDone] = useState<{ batch: string; applied: number; why?: string } | null>(null);
@@ -363,11 +436,10 @@ export function PlanReview<S extends AnySchema>({
       makes: (declared?.creates?.length ?? 0) > 0,
     };
   });
+  const named = (id: string) => (store.graph.getNode(id as never) as { label?: string } | undefined)?.label;
+  const shown = new Map(rows.map((row) => [row.key, labelOf(row, titleOf, named)] as const));
   const names = new Map(
-    rows.flatMap((row) => {
-      const label = labelOf(row, titleOf);
-      return row.name === undefined ? [] : [[row.name, label] as const];
-    }),
+    rows.flatMap((row) => (row.name === undefined ? [] : [[row.name, shown.get(row.key)!.text] as const])),
   );
   /* "1 zone, 2 features" — the kind's own word when there is one of it. */
   const makes = Object.entries(kept.makes)
@@ -376,6 +448,22 @@ export function PlanReview<S extends AnySchema>({
         `${count} ${count === 1 ? kind : (store.schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase()}`,
     )
     .join(", ");
+  /*
+   * WHAT CARRIED IT OUT. A row struck through because something it points
+   * at was declined says which one, by name: "goes with Back Lawn". A count
+   * on the parent is only useful while the parent is on screen, and the
+   * thing a person is looking at when they wonder is the child.
+   */
+  const carriedBy = new Map<string, string>();
+  for (const name of declined) {
+    for (const entry of dependentsOf(plan, name)) {
+      const row = rows.find((one) => one.entries.includes(entry));
+      if (row === undefined || row.name === name) continue;
+      if (row.name !== undefined && declined.includes(row.name)) continue;
+      if (!carriedBy.has(row.key)) carriedBy.set(row.key, name);
+    }
+  }
+
   const live = rows.filter(
     (row) =>
       !row.entries.some((entry) => entry.refusal !== undefined) &&
@@ -383,12 +471,24 @@ export function PlanReview<S extends AnySchema>({
       row.entries.some((entry) => kept.entries.some((other) => other.call === entry.call)),
   ).length;
 
+  const Frame = bare
+    ? ({ children }: { readonly children: ReactNode }) => (
+        <div>
+          <p style={{ margin: "0 0 .4rem", fontSize: "0.8125rem", ...MUTED_TEXT }}>
+            {`${live} of ${rows.length} to run${makes ? `, making ${makes}` : ""}.`}
+          </p>
+          {children}
+        </div>
+      )
+    : ({ children }: { readonly children: ReactNode }) => (
+        <Panel title={title} subtitle={`${live} of ${rows.length} to run${makes ? `, making ${makes}` : ""}.`} fit>
+          {children}
+        </Panel>
+      );
+
   return (
-    <Panel
-      title={title}
-      subtitle={`${live} of ${rows.length} to run${makes ? `, making ${makes}` : ""}.`}
-      fit
-    >
+    <Frame>
+      {header}
       <ol data-testid="plan" style={{ margin: 0, paddingLeft: "1.25rem", display: "grid", gap: 6 }}>
         {rows.map((row) => {
           const first = row.entries[0]!;
@@ -403,9 +503,14 @@ export function PlanReview<S extends AnySchema>({
             name === undefined
               ? []
               : [...dependentsOf(plan, name)].filter((entry) => !row.entries.includes(entry));
-          /* The follow-ups, in the product's words where it has any. */
+          /*
+           * The follow-ups, in the product's words where it has any. When
+           * the row is named by the thing, the FIRST act is a follow-up too
+           * — "Back Lawn / drawn with 4 corners". When it is named by the
+           * act, the first one has already been said.
+           */
           const rest = row.entries
-            .slice(1)
+            .slice(shown.get(row.key)!.named ? 0 : 1)
             .map((entry) => also?.(entry, names) ?? titleOf(entry.call.mutation)?.title ?? entry.call.mutation)
             .filter((part): part is string => Boolean(part))
             .join(" · ");
@@ -417,7 +522,7 @@ export function PlanReview<S extends AnySchema>({
               data-plan-declined={out && !refused ? "" : undefined}
               style={out ? { textDecoration: "line-through", opacity: 0.6 } : undefined}
             >
-              <span>{labelOf(row, titleOf)}</span>
+              <span>{shown.get(row.key)!.text}</span>
               {first.call.why ? <span style={{ ...MUTED_TEXT }}> — {first.call.why}</span> : null}
               {declinable && !refused && name !== undefined && !done ? (
                 <button
@@ -449,6 +554,14 @@ export function PlanReview<S extends AnySchema>({
                   {rest}
                 </div>
               ) : null}
+              {declinable && carriedBy.has(row.key) ? (
+                <div
+                  data-testid={`plan-carried-${row.key}`}
+                  style={{ fontSize: "0.75rem", textDecoration: "none", ...MUTED_TEXT }}
+                >
+                  goes with {names.get(carriedBy.get(row.key)!) ?? carriedBy.get(row.key)}
+                </div>
+              ) : null}
               {declinable && goesWith.length > 0 && !refused ? (
                 <div data-testid="plan-goes-with" style={{ fontSize: "0.75rem", textDecoration: "none", ...MUTED_TEXT }}>
                   {goesWith.length} {goesWith.length === 1 ? "other goes" : "others go"} with it.
@@ -476,7 +589,10 @@ export function PlanReview<S extends AnySchema>({
             data-testid="plan-apply"
             disabled={kept.ready.length === 0}
             onClick={() => {
-              const result = applyPlan(store as never, kept, principal ? { author: principal } : {});
+              const result = applyPlan(store as never, kept, {
+                ...(principal ? { author: principal } : {}),
+                ...(batch ? { batch } : {}),
+              });
               setDone({
                 batch: result.batch,
                 applied: result.applied,
@@ -495,7 +611,7 @@ export function PlanReview<S extends AnySchema>({
           ) : null}
         </div>
       )}
-    </Panel>
+    </Frame>
   );
 }
 

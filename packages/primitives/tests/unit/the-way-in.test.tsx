@@ -199,6 +199,8 @@ describe("what a model wants to do, before it does it", () => {
     expect(host.querySelector('[data-testid="plan-goes-with"]')!.textContent).toContain("1 other goes with it");
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="plan-decline-lawn"]')!.click());
     expect(host.querySelectorAll("[data-plan-declined]")).toHaveLength(2);
+    /* And the struck row says which decision carried it, by name. */
+    expect(host.querySelector('[data-testid^="plan-carried-"]')!.textContent).toContain("goes with Back Lawn");
     expect(host.textContent).toContain("0 of 2 to run");
     /* And it is a decision, not a deletion. */
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="plan-decline-lawn"]')!.click());
@@ -223,6 +225,30 @@ describe("what a model wants to do, before it does it", () => {
     /* And what else it said about the lawn, under it, in the act's own words. */
     expect(host.querySelector('[data-testid="plan-also-lawn"]')!.textContent).toContain("Redraw the bounds");
     expect(host.textContent).toContain("1 of 1 to run");
+    await act(async () => root.unmount());
+  });
+
+  it("names a row after the thing already standing, and gathers what is said about it", async () => {
+    /*
+     * A plan that only changes things already in the graph carries no
+     * labels — the names are on the nodes. Asking the plan to repeat them
+     * would be asking it to duplicate the graph, so the row reads them off
+     * the node it is about, and two acts on the same node are one row.
+     */
+    const at = store([{ id: "lawn", kind: "zone", label: "Back Lawn" }]);
+    const plan = planFrom(at, [
+      { mutation: "redraw-bounds", args: { zoneId: "lawn", corners: 4 } },
+      { mutation: "redraw-bounds", args: { zoneId: "lawn", corners: 6 } },
+    ]);
+    const { root } = await draw(
+      <PlanReview plan={plan} also={(entry) => `drawn with ${String(entry.call.args["corners"])} corners`} />,
+      at,
+    );
+    const rows = [...host.querySelectorAll('[data-testid="plan"] li')];
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.textContent).toContain("Back Lawn");
+    /* Including the first act, because the row is not named after it. */
+    expect(rows[0]!.textContent).toContain("drawn with 4 corners · drawn with 6 corners");
     await act(async () => root.unmount());
   });
 
