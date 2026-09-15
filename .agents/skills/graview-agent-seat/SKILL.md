@@ -109,6 +109,9 @@ path to the store:
   generic answer to it is a plausible paragraph about gardens.
 - **External agents** arrive over the derived tool surface with a scoped
   principal.
+- **A desk** — the model INSIDE the product, taking photographs or words and
+  proposing a plan somebody reviews. That is `graview-desk`; this skill is
+  the seat beside the product rather than the surface in it.
 
 Declare what runs where on the app: `intelligence: [{ name, kind:
 "graph" | "llm" | "external", may: [...mutations] }]` — `graview check`

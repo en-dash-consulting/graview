@@ -58,24 +58,26 @@ drag a UI package into the checker.
 1. **Install.** The scaffold already did. Reach for `@graview/render/gpu`
    only if you want the experimental capture path; the DOM path is what ships.
 
-2. **Declare one kind, one mutation, one rule.** Do not model the whole domain
-   first. The loop you want running on day one is: declare → `graview check` →
-   look at it → declare more.
+2. **Declare one kind, one mutation, one rule.** Not the whole domain. The
+   loop you want on day one is: declare → `graview check` → look → declare
+   more.
 
-3. **Declare the seams that make the interface smart.** These are one-line
+3. **Open it empty before you believe in it.** `graview describe
+   ./dist/domain/app.js` reads out what a blank installation meets; `<Begin>`
+   is that as a surface, wired into the scaffolded home. See `graview-seed`.
+
+4. **Declare the seams that make the interface smart.** These are one-line
    declarations on mutations and kinds, and every derived surface reads them:
-   - `creates: ["<kind>"]` on every mutation that adds a kind — an EMPTY kind
-     card offers its own beginnings, which is the whole onboarding of a blank
-     graph (see `apps/seedbed`, the example that ships with no data).
+   - `creates: ["<kind>"]` on every mutation that adds a kind — the chain
+     `Begin` and `graview describe` read, and the empty card's own way in.
    - `connects: [...]` / `severs: [...]` naming the edge kinds a mutation
      makes or breaks — what makes drawn LINES selectable, offers the act from
-     either endpoint, scopes candidates to what is attached, and hides a
-     severing act with nothing to sever.
+     either end, and hides a severing act with nothing to sever.
    - `lifecycle: { field, retired }` on kinds whose members expire — counts
-     say "+N past", and `past=1` widens the view.
+     say "+N past".
    - `subject: { kinds, arg }` on every mutation that acts on a thing.
 
-4. **Take the shell.** `Inspector`, `Standing`, `ActivityRail`, `ChatPanel`,
+5. **Take the shell.** `Inspector`, `Standing`, `ActivityRail`, `ChatPanel`,
    `QuickRelations`, `RelationKey`, `BackOut`, `Trail`, `OverviewButton` and
    `Wordmark` from `@graview/primitives` are the parts of an interface that
    are not about your domain — including a chat seat that answers from the
@@ -87,12 +89,12 @@ drag a UI package into the checker.
    from `@graview/pages` — lists, records, forms and problems derived from
    the same declaration, at phone widths.
 
-5. **Register default views first, override later.** `registerDefaultViews`
+6. **Register default views first, override later.** `registerDefaultViews`
    means a new kind renders sensibly at all three fidelities before you write
    anything. Write a custom view for a kind when the generic one is genuinely
    wrong, not on principle.
 
-6. **Add the check to your build.** `"check": "graview check
+7. **Add the check to your build.** `"check": "graview check
    ./dist/domain/app.js"`, and a `verify` that runs typecheck, test, build
    and check in that order. The scaffold writes both.
 

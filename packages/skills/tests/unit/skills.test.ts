@@ -32,6 +32,7 @@ describe("the skills package", () => {
     expect(skills.map((skill) => skill.name)).toEqual([
       "graview-agent-seat",
       "graview-brand",
+      "graview-desk",
       "graview-invariant",
       "graview-lens",
       "graview-new-app",
@@ -39,6 +40,7 @@ describe("the skills package", () => {
       "graview-pages",
       "graview-permissions",
       "graview-port-app",
+      "graview-seed",
       "graview-ship",
       "graview-studio",
     ]);

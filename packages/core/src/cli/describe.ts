@@ -154,8 +154,14 @@ export function describeApp<S extends AnySchema>(
   if (providers.length > 0) {
     lines.push("", "## Intelligence");
     for (const provider of providers as readonly IntelligenceProviderDeclaration[]) {
+      const doors =
+        provider.kind === "graph"
+          ? "it IS the graph, so there is no door"
+          : provider.reach?.length
+            ? `reached by ${list([...provider.reach])}`
+            : "no door declared, so nothing derived can offer one";
       lines.push(
-        `${provider.name} (${provider.kind}) — reached by ${list([...(provider.reach ?? [])]) || "nothing declared"}; may ${
+        `${provider.name} (${provider.kind}) — ${doors}; may ${
           provider.may ? list([...provider.may]) : "every act"
         }.`,
       );

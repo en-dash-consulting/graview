@@ -1315,8 +1315,10 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
 }
 
 function pagesTsx(ids: Ids): string {
-  return `import {
+  return `import { Begin } from "@graview/primitives";
+import {
   createPageRegistry,
+  DefaultHomePage,
   DerivedForm,
   PageMain,
   pageStyles,
@@ -1459,9 +1461,31 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
   );
 }
 
+/**
+ * THE WAY IN, on the home page, until there is a way past it.
+ *
+ * Every product ships empty once and it is the state its author never sees —
+ * your own graph has had data in it since the first afternoon. \`Begin\` is
+ * derived: it reads the chain your declaration already states (which acts
+ * \`create\` which kinds, and what those acts must be handed first), offers
+ * the ones that can run now, and says what everything else is waiting for.
+ * It stands down on its own once every kind has something in it, which is
+ * why the derived home is what it hands back to.
+ */
+function Home({ context }: { context: PageContext<S> }) {
+  useStoreTick(context.store);
+  return (
+    <PageMain context={context} data-testid="home">
+      <Begin whenFull={<DefaultHomePage context={context} />} />
+    </PageMain>
+  );
+}
+
 /** Your pages: every derived page, with the ${ids.spoken}'s record in your own words. */
 export function pages() {
-  return createPageRegistry<S, PageComponent<S>>(${ids.schemaVar}).register("${ids.kind}", "record", ${ids.KindPascal}Page as PageComponent<S>);
+  return createPageRegistry<S, PageComponent<S>>(${ids.schemaVar})
+    .register("${ids.kind}", "record", ${ids.KindPascal}Page as PageComponent<S>)
+    .surface("home", Home as PageComponent<S>);
 }
 `;
 }
