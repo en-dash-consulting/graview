@@ -615,34 +615,109 @@ function PlanReviewInside<S extends AnySchema>({
   );
 }
 
+/** The long edge, in pixels. Enough to see a blockage, not a print. */
+export const PHOTO_MAX_EDGE = 1280;
+/** JPEG quality. What a model is asked to look at is texture, not a print. */
+export const PHOTO_QUALITY = 0.7;
+
+/**
+ * A file from a camera or the filesystem, down to something sendable.
+ *
+ * Browser-only: it is the one part of the photograph path that needs a
+ * canvas. It ALWAYS re-encodes, even when the original is small, so what
+ * comes out is one known format rather than whatever the phone produced —
+ * HEIC and 12-bit PNGs both arrive here and neither belongs in a snapshot
+ * or on the wire.
+ *
+ * Every product that lets a model look at something wrote this, and the one
+ * that did not sent six megabytes per frame and wondered why it was slow.
+ */
+export async function downscale(
+  file: Blob,
+  maxEdge = PHOTO_MAX_EDGE,
+  quality = PHOTO_QUALITY,
+): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (context === null) throw new Error("This browser will not give us a canvas to resize with.");
+    context.drawImage(bitmap, 0, 0, width, height);
+    return canvas.toDataURL("image/jpeg", quality);
+  } finally {
+    bitmap.close();
+  }
+}
+
 export interface IntakeProps {
-  /** Data URLs, in the order they were given. */
+  /** Data URLs, in the order they were given, already made smaller. */
   readonly onPhotos: (photos: readonly string[]) => void;
   readonly accept?: string;
   readonly label?: string;
+  /**
+   * The most one ask may carry. A model's context is finite and so is the
+   * patience of whoever is waiting, so this is a number a product states
+   * rather than a wall it discovers.
+   */
+  readonly most?: number;
+  /** How many are already chosen, when the product is holding them. */
+  readonly chosen?: number;
+  /** The long edge to resize to before handing them over. */
+  readonly maxEdge?: number;
+  readonly quality?: number;
+  /** Said when more were offered than there was room for. */
+  readonly onTrouble?: (message: string) => void;
 }
 
 /**
  * PHOTOGRAPHS IN. A drop zone and a file input over one handler, because a
  * product that lets a model look at something has to get the something in,
- * and every one of them wrote this.
+ * and every one of them wrote this — including the downscaling, which is
+ * not a detail: a phone photograph is three to six megabytes, and a dozen
+ * of them at full size will exhaust a browser's whole storage quota and
+ * lose the graph along with them.
+ *
+ * It says what it does, every time, because "and none is kept" is the
+ * sentence a person actually wants before they hand over pictures of their
+ * house.
  */
-export function Intake({ onPhotos, accept = "image/*", label = "Photographs" }: IntakeProps) {
+export function Intake({
+  onPhotos,
+  accept = "image/*",
+  label = "Photographs",
+  most,
+  chosen = 0,
+  maxEdge,
+  quality,
+  onTrouble,
+}: IntakeProps) {
   const [over, setOver] = useState(false);
   const take = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    const read = await Promise.all(
-      [...files].map(
-        (file) =>
-          new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result));
-            reader.onerror = () => reject(reader.error ?? new Error("That file could not be read."));
-            reader.readAsDataURL(file);
-          }),
-      ),
-    );
-    onPhotos(read);
+    const offered = [...files];
+    const room = most === undefined ? offered.length : most - chosen;
+    if (room <= 0) {
+      onTrouble?.(`There is room for no more — ${most} is the most one ask may carry. Send the rest as a second ask.`);
+      return;
+    }
+    if (offered.length > room) {
+      onTrouble?.(
+        `That is ${offered.length} photographs and there is room for ${room} more — ${most} is the most one ask ` +
+          `may carry. The first ${room} were kept; send the rest as a second ask.`,
+      );
+    }
+    try {
+      const read: string[] = [];
+      for (const file of offered.slice(0, room)) read.push(await downscale(file, maxEdge, quality));
+      onPhotos(read);
+    } catch (error) {
+      onTrouble?.(error instanceof Error ? error.message : String(error));
+    }
   };
   return (
     <label
@@ -660,8 +735,10 @@ export function Intake({ onPhotos, accept = "image/*", label = "Photographs" }: 
       }}
       style={{
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
+        gap: 2,
         minHeight: "4rem",
         padding: "var(--graview-pad-sm, 8px)",
         border: `1px dashed ${over ? "var(--graview-accent)" : "var(--graview-edge)"}`,
@@ -671,12 +748,17 @@ export function Intake({ onPhotos, accept = "image/*", label = "Photographs" }: 
         cursor: "pointer",
       }}
     >
-      {label} — drop them here, or choose
+      <span>{label} — drop them here, or choose</span>
+      <span data-testid="intake-terms" style={{ fontSize: "0.75rem" }}>
+        {most === undefined ? "" : `${chosen} of ${most} chosen — `}each is made smaller before it is sent, and none
+        is kept
+      </span>
       <input
         type="file"
         multiple
         accept={accept}
         onChange={(event) => void take(event.target.files)}
+        data-testid="intake-files"
         style={VISUALLY_HIDDEN as never}
       />
     </label>

@@ -137,18 +137,70 @@ describe("a door", () => {
 });
 
 describe("taking photographs in", () => {
-  it("hands back a data URL per file", async () => {
-    const got: string[][] = [];
-    const root = createRoot(host);
-    await act(async () => root.render(<Intake onPhotos={(photos) => got.push([...photos])} />));
-    const input = host.querySelector<HTMLInputElement>('[data-testid="intake"] input')!;
-    const file = new File([new Uint8Array([1, 2, 3])], "lawn.png", { type: "image/png" });
-    Object.defineProperty(input, "files", { value: [file], configurable: true });
+  /*
+   * A canvas, because the point of this component is that it re-encodes:
+   * a phone photograph is three to six megabytes and a dozen at full size
+   * exhausts a browser's whole storage quota. jsdom has no canvas, so the
+   * one it would have used is stood in for here.
+   */
+  const withCanvas = () => {
+    const globals = globalThis as unknown as Record<string, unknown>;
+    globals["createImageBitmap"] = async () => ({ width: 4032, height: 3024, close: () => undefined });
+    const drawn: { width: number; height: number }[] = [];
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement) {
+      return { drawImage: () => drawn.push({ width: this.width, height: this.height }) } as never;
+    } as never;
+    HTMLCanvasElement.prototype.toDataURL = () => "data:image/jpeg;base64,c21hbGw=";
+    return drawn;
+  };
+
+  const choose = async (input: HTMLInputElement, files: readonly File[]) => {
+    Object.defineProperty(input, "files", { value: files, configurable: true });
     await act(async () => input.dispatchEvent(new Event("change", { bubbles: true })));
     await act(async () => {
       await new Promise((settle) => setTimeout(settle, 10));
     });
-    expect(got[0]?.[0]).toMatch(/^data:image\/png;base64,/);
+  };
+  const jpeg = (name: string) => new File([new Uint8Array([1, 2, 3])], name, { type: "image/jpeg" });
+
+  it("hands back one data URL per file, made smaller on the way", async () => {
+    const drawn = withCanvas();
+    const got: string[][] = [];
+    const root = createRoot(host);
+    await act(async () => root.render(<Intake onPhotos={(photos) => got.push([...photos])} />));
+    await choose(host.querySelector<HTMLInputElement>('[data-testid="intake-files"]')!, [jpeg("lawn.jpg")]);
+    expect(got[0]?.[0]).toMatch(/^data:image\/jpeg;base64,/);
+    /* 4032 on the long edge came down to the declared 1280. */
+    expect(drawn[0]).toEqual({ width: 1280, height: 960 });
+    await act(async () => root.unmount());
+  });
+
+  it("says what it is doing with them, because that is what a person wants to know", async () => {
+    const root = createRoot(host);
+    await act(async () => root.render(<Intake onPhotos={() => undefined} most={30} chosen={2} />));
+    expect(host.querySelector('[data-testid="intake-terms"]')!.textContent).toContain("2 of 30 chosen");
+    expect(host.querySelector('[data-testid="intake-terms"]')!.textContent).toContain("none is kept");
+    await act(async () => root.unmount());
+  });
+
+  it("keeps what there is room for and says so, rather than quietly dropping the rest", async () => {
+    withCanvas();
+    const got: string[][] = [];
+    const trouble: string[] = [];
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <Intake most={3} chosen={1} onPhotos={(photos) => got.push([...photos])} onTrouble={(m) => trouble.push(m)} />,
+      ),
+    );
+    await choose(host.querySelector<HTMLInputElement>('[data-testid="intake-files"]')!, [
+      jpeg("a.jpg"),
+      jpeg("b.jpg"),
+      jpeg("c.jpg"),
+    ]);
+    expect(got[0]).toHaveLength(2);
+    expect(trouble[0]).toContain("room for 2 more");
+    expect(trouble[0]).toContain("second ask");
     await act(async () => root.unmount());
   });
 });

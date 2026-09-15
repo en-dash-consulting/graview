@@ -22,3 +22,12 @@ export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
 export { openRemote } from "./remote.js";
 export type { RemoteOptions, RemoteStore } from "./remote.js";
+export {
+  assertPhotoFits,
+  photosUsed,
+  storageBytes,
+  PhotoTooLarge,
+  PHOTO_BUDGET_BYTES,
+  PHOTO_MAX_BYTES,
+} from "./photos.js";
+export type { PhotoBudget, PhotoField } from "./photos.js";

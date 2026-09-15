@@ -22,3 +22,12 @@ export type { RemoteOptions, RemoteStore } from "./remote.js";
 export { serveStore } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";
 export { serve, SERVE_USAGE } from "./cli.js";
+export {
+  assertPhotoFits,
+  photosUsed,
+  storageBytes,
+  PhotoTooLarge,
+  PHOTO_BUDGET_BYTES,
+  PHOTO_MAX_BYTES,
+} from "./photos.js";
+export type { PhotoBudget, PhotoField } from "./photos.js";

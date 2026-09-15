@@ -152,5 +152,5 @@ export type {
 // The surfaces a blank graph needs, derived from the chain the declaration
 // already states: the way in, what a model proposes before it does it, and
 // the doors it was declared to be reachable through.
-export { Begin, Door, Intake, PlanReview } from "./seeding.js";
+export { Begin, Door, downscale, Intake, PlanReview, PHOTO_MAX_EDGE, PHOTO_QUALITY } from "./seeding.js";
 export type { BeginProps, DoorProps, IntakeProps, PlanReviewProps } from "./seeding.js";
