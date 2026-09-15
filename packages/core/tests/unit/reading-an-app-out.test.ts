@@ -75,6 +75,30 @@ describe("reading an app out", () => {
     );
   });
 
+  it("says a door is shut to this seat, rather than reading out somebody else's product", () => {
+    /*
+     * The chain is a property of the declaration and the same for
+     * everyone; the doors are not. Telling an observer that seven kinds
+     * can begin is telling them about a product they are not in.
+     */
+    const app = defineApp({
+      name: "grounds",
+      schema,
+      mutations: [stakeOut, placeFeature],
+      policy: {
+        roles: ["keeper", "visitor"],
+        grants: [{ roles: ["keeper"], mutations: "*", describe: "The keeper keeps it." }],
+      },
+    });
+    const visitor = describeApp(app, { as: { kind: "human", id: "sam", roles: ["visitor"] } });
+    expect(visitor).toContain("Nothing here is this seat's to begin");
+    expect(visitor).toContain('"stake-out" is not permitted to it');
+    /* And the seat that may still reads the ordinary sentence. */
+    expect(describeApp(app, { as: { kind: "human", id: "ada", roles: ["keeper"] } })).toContain(
+      "1 of 2 kinds can begin",
+    );
+  });
+
   /*
    * THE HUE FAULT, in its general form: not "the unit is wrong" but "these
    * kinds will read as one colour", which is what a person sees.

@@ -34,6 +34,21 @@ export interface DescribeOptions {
   readonly as?: { readonly kind: "human" | "agent"; readonly id?: string; readonly roles?: readonly string[] };
 }
 
+/** Whether a seat may run one named act, by the declaration's own grants. */
+function permits<S extends AnySchema>(
+  app: GraviewApp<S>,
+  act: string,
+  seat: { readonly roles?: readonly string[] },
+): boolean {
+  if (!app.policy) return true;
+  const held = seat.roles ?? [];
+  return (app.policy.grants ?? []).some(
+    (grant) =>
+      (grant.roles === "*" || held.some((role) => (grant.roles as readonly string[]).includes(role))) &&
+      (grant.mutations === "*" || (grant.mutations as readonly string[]).includes(act)),
+  );
+}
+
 const list = (words: readonly string[]): string =>
   words.length === 0 ? "none" : words.length === 1 ? words[0]! : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
 
@@ -55,9 +70,29 @@ export function describeApp<S extends AnySchema>(
   if (chain.doors.length === 0) {
     lines.push(`Nothing can be made. Every act that creates a kind needs a node that does not exist yet, so a blank installation is ${kinds.length} districts and no way in.`);
   } else {
-    lines.push(
-      `${chain.roots.length} of ${kinds.length} kinds can begin: ${list(chain.roots)} — through ${list(chain.doors.map((door) => `"${door}"`))}.`,
-    );
+    /*
+     * AND WHETHER THIS SEAT MAY GO THROUGH ANY OF THEM.
+     *
+     * The chain is a property of the declaration and the same for everyone;
+     * the doors are not. An observer reading "7 of 12 kinds can begin" is
+     * being told about somebody else's product — they can begin none of
+     * them, and the useful sentence names who can. The same mistake was
+     * shipped in `<Begin>`, which drew ten kinds and offered no acts to a
+     * seat the policy refused, so it is worth saying in both places.
+     */
+    const open = options.as === undefined ? chain.doors : chain.doors.filter((door) => permits(app, door, options.as!));
+    if (open.length === 0) {
+      lines.push(
+        `Nothing here is this seat's to begin. ${chain.roots.length} of ${kinds.length} kinds can be started — ` +
+          `${list(chain.roots)} — and ${list(chain.doors.map((door) => `"${door}"`))} ${chain.doors.length === 1 ? "is" : "are"} not permitted to it.`,
+      );
+    } else {
+      lines.push(
+        `${chain.roots.length} of ${kinds.length} kinds can begin: ${list(chain.roots)} — through ${list(open.map((door) => `"${door}"`))}${
+          open.length < chain.doors.length ? ` (${chain.doors.length - open.length} more not permitted to this seat)` : ""
+        }.`,
+      );
+    }
     const waiting = chain.order.filter((entry) => (entry.depth ?? 0) > 0 && entry.depth !== null);
     for (const entry of waiting) {
       lines.push(`  ${entry.kind} waits for ${list(entry.needs)} (${entry.depth} deep).`);
@@ -146,13 +181,7 @@ export function describeApp<S extends AnySchema>(
     const asked = options.as;
     if (asked) {
       const held = asked.roles ?? [];
-      const permitted = acts.filter((act) =>
-        (app.policy!.grants ?? []).some(
-          (grant) =>
-            (grant.roles === "*" || held.some((role) => (grant.roles as readonly string[]).includes(role))) &&
-            (grant.mutations === "*" || (grant.mutations as readonly string[]).includes(act.name)),
-        ),
-      );
+      const permitted = acts.filter((act) => permits(app, act.name, asked));
       lines.push(
         `As ${asked.id ?? asked.kind} holding ${list([...held])}: ${permitted.length} of ${acts.length} acts permitted.` +
           (permitted.length === 0
