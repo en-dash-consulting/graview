@@ -1,0 +1,36 @@
+{
+  "schema": "rex/archive/v1",
+  "batches": [
+    {
+      "timestamp": "2026-09-15T03:41:15.054Z",
+      "source": "reshape",
+      "items": [
+        {
+          "id": "464318ae-1d82-4e10-8072-a1064c86155a",
+          "title": "F-031 · The district overflow card's names are 22px targets",
+          "status": "pending",
+          "level": "task",
+          "description": "Found by Groundskeeper's audit-ui on its first run after taking the F-018 fix: every name on the new district overflow card measures 21.7px drawn. The CSS floor was there — designed 24 — but plane two is drawn at 0.90, and these names are the ONLY way to the districts the row could not hold, unlike the chip's disclosure which sits on a card-sized target. Source: groundskeeper-graview/docs/graview-feedback.md, F-031.",
+          "priority": "high",
+          "acceptanceCriteria": [],
+          "lastModified": "2026-09-15T03:41:14.791Z",
+          "lastModifiedBy": "Nick Daniel <nick@endash.us>",
+          "children": []
+        }
+      ],
+      "count": 1,
+      "reason": "hash-suffix consolidation (add path)",
+      "mergeAuditTrail": [
+        {
+          "survivorId": "c65ccb7c-b5c0-4143-b441-25ae7b6031dd",
+          "mergedFromIds": [
+            "464318ae-1d82-4e10-8072-a1064c86155a"
+          ],
+          "reasoning": "Hash-suffix duplicate: \"F-031 · The district overflow card's names are 22px targets\" consolidates into \"F-031 · The district overflow card's names are 22px targets\" (same stripped title)",
+          "preReshapeCommit": "4c5afac8bf7dc0cf5aff313a1e30a87793acf66a",
+          "timestamp": "2026-09-15T03:41:15.054Z"
+        }
+      ]
+    }
+  ]
+}

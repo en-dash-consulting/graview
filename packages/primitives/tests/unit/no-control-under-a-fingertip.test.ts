@@ -83,4 +83,49 @@ describe("the chrome the framework draws", () => {
     }
     expect(under).toEqual([]);
   });
+
+  /*
+   * AND EVERY PIECE OF CHROME DECLARES ONE.
+   *
+   * The rule above only judges a floor that is already there, so the next
+   * control the framework draws could ship without one and pass — which is
+   * exactly what happened: the district row's overflow card was written
+   * after this test, and a product's own audit found its names at 21.7px
+   * before anything here did. A chrome class that is pressable has to say
+   * what its floor is.
+   *
+   * `[data-graview-pick]` and `[data-graview-view]` are excluded on purpose:
+   * those are whole cards and whole views, sized by the layout, and a floor
+   * on them would be a floor on the picture.
+   */
+  it("makes every pressable piece of chrome declare a floor at all", () => {
+    const silent = rules(css)
+      .filter(pressable)
+      .filter(([selector]) => /\.graview-[a-z-]+/.test(selector))
+      .filter(([, body]) => !/min-height:/.test(body))
+      .map(([selector]) => selector);
+    expect(silent).toEqual([]);
+  });
+
+  /*
+   * THE ONE CONTROL THAT IS JUDGED WHERE IT IS DRAWN.
+   *
+   * audit-ui divides by the plane's scale before measuring, because a
+   * perfectly good 24px control at the back of the city measures 20 and that
+   * is the depth model working rather than a defect. It holds for a control
+   * that sits ON a large target — the chip's disclosure is small and the
+   * card behind it is a card. The overflow card's names are not that: they
+   * are the only way to the districts the row could not hold, so they are
+   * designed big enough to be a fingertip at plane two's own 0.90.
+   */
+  it("designs the overflow card's names to survive the plane's own shrink", () => {
+    const [, body] =
+      rules(css)
+        .filter(pressable)
+        .find(([selector]) => selector.includes("graview-beyond-list")) ?? [];
+    const said = /min-height:\s*([^;]+);/.exec(body ?? "")?.[1]?.trim();
+    expect(said, "the overflow card's names declare no floor").toBeDefined();
+    /* Plane two is drawn at 0.90, and 24 is the floor it has to meet there. */
+    expect((pixels(said!) ?? 0) * 0.9).toBeGreaterThanOrEqual(24);
+  });
 });

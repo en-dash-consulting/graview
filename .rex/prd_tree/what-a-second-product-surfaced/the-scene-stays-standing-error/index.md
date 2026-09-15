@@ -10,14 +10,14 @@ tags:
   - "@graview/primitives"
 source: "groundskeeper-graview/docs/graview-feedback.md"
 startedAt: "2026-09-15T00:45:59.682Z"
-completedAt: "2026-09-15T00:45:59.682Z"
-endedAt: "2026-09-15T00:45:59.682Z"
+completedAt: "2026-09-15T03:41:39.779Z"
+endedAt: "2026-09-15T03:41:39.779Z"
 acceptanceCriteria:
   - "A throwing view renders its own message in its place and the rest of the scene stands"
   - "audit-ui-style measurements at 390px and 1280px hold on the scene chrome"
   - "A page can link to a specific group view of the scene"
 description: "Four things a person can hit in the scene without doing anything wrong: a throwing view blacks out the whole app; the district chrome is two pixels under the framework's own target floor; the scene overflows a 390px viewport; a scrolling panel has no tab stop. Plus: the URL carries the focus but not which view is showing, so no page can link to a lens."
-lastModified: "2026-09-15T00:45:59.692Z"
+lastModified: "2026-09-15T03:41:39.789Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -32,3 +32,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [F-024 · A scrolling panel has no tab stop](./f-024-a-scrolling-panel-has-no-tab-stop.md) | completed |
 | [F-026 · A view that throws takes the whole scene down](./f-026-a-view-that-throws-takes-the.md) | completed |
 | [F-030 · The scene's URL carries the focus and not the view](./f-030-the-scene-s-url-carries-the.md) | completed |
+| [F-031 · The district overflow card's names are 22px targets](./f-031-the-district-overflow-card-s.md) | completed |

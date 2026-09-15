@@ -534,7 +534,15 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: max(1.5rem, 24px);
+  /* A FINGERTIP WHERE IT IS ACTUALLY DRAWN, not where it was designed.
+     Every other control in this sheet is floored at 24 and the audit divides
+     by the plane's scale before judging it, which is right for a control
+     that sits ON a large target: the chip's disclosure is small, and the
+     card behind it is the size of a card. These names are not that. They are
+     the ONLY way to the districts the row could not hold, and plane two is
+     drawn at 0.90 — so a designed 24 meets a finger as 21.7. Designed at 28
+     it is drawn at 25, which is the number the floor was always about. */
+  min-height: max(1.75rem, 28px);
   padding: 0 4px;
   border: none;
   border-radius: var(--graview-radius-sm, 6px);

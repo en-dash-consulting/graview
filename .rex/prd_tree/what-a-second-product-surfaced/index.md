@@ -9,13 +9,13 @@ tags:
   - "framework"
 source: "groundskeeper-graview/docs/graview-feedback.md"
 startedAt: "2026-09-15T00:45:59.774Z"
-completedAt: "2026-09-15T00:45:59.774Z"
-endedAt: "2026-09-15T00:45:59.774Z"
+completedAt: "2026-09-15T03:41:39.869Z"
+endedAt: "2026-09-15T03:41:39.869Z"
 acceptanceCriteria:
   - "Every open F-NNN in groundskeeper-graview/docs/graview-feedback.md has an item here, or a written reason it will not be done"
   - "Groundskeeper builds and passes its harnesses against the framework after each feature lands, with its workarounds removed as the findings close (its notes file records which)"
 description: "Groundskeeper is the first product built on Graview by following the skills and never editing the framework. Thirty findings came out of it, written up in groundskeeper-graview/docs/graview-feedback.md with measurements and proposed fixes. The shape: the scaffolder is the weakest part and the first thing anybody touches; the gaps are where a second app looks and the examples have never been one; the best ideas have no enforcement behind them; the checker is good and stopped at the edge of the browser. Every item here names the finding (F-NNN) it comes from."
-lastModified: "2026-09-15T00:45:59.785Z"
+lastModified: "2026-09-15T03:41:39.880Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
