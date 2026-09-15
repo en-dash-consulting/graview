@@ -28,6 +28,11 @@ export const CREATE_USAGE = `  graview create <dir> [--name "Field Notes"] [--ki
         --no-install       write the files and stop
         --no-skills        do not install the authoring skills
         --no-git           do not initialise a git repository
+        --workspace        the layout every real product ends up with: a
+                           workspace root with the app under app/ and the
+                           harness scripts at the root
+        --merge            write only the files that do not exist yet, and
+                           name every collision without touching it
         --force            write into a directory that is not empty
 `;
 
@@ -83,8 +88,25 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
   }
   const asked = resolve(process.cwd(), dir);
   const force = argv.includes("--force");
-  if (existsSync(asked) && readdirSync(asked).length > 0 && !force) {
-    io.stderr(`graview create: ${dir} is not empty. Pass --force to write into it anyway.\n`);
+  /*
+   * A DIRECTORY THAT ALREADY EXISTS IS THE NORMAL CASE.
+   *
+   * The realistic start is a repository somebody has already made: a README
+   * they wrote, a licence, CI, assistant instruction files from some other
+   * tool. `--force` is too blunt for that — it writes over the README — so
+   * two products independently worked around it by scaffolding into `app/`
+   * and hand-writing a workspace root, which is a scaffolder gap rather
+   * than a taste they shared.
+   *
+   * `--merge` writes only what is not there, names every collision without
+   * touching it, and exits non-zero so a script cannot mistake a partial
+   * write for a clean one. `--force` keeps its meaning exactly.
+   */
+  const merge = argv.includes("--merge");
+  if (existsSync(asked) && readdirSync(asked).length > 0 && !force && !merge) {
+    io.stderr(
+      `graview create: ${dir} is not empty. Pass --merge to write only what is missing, or --force to write into it anyway.\n`,
+    );
     return 2;
   }
 
@@ -104,6 +126,7 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     ...(flag(argv, "--accent") ? { accent: flag(argv, "--accent") } : {}),
     ...(portFlag ? { port: Number(portFlag) } : {}),
     packageManager,
+    ...(argv.includes("--workspace") ? { workspace: true } : {}),
     range: `^${version}`,
   };
   const problems = [...validateScaffoldOptions(base)];
@@ -147,29 +170,9 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
   }
   const frameworkRepo = framework !== undefined ? originSlug(framework) : undefined;
 
-  /*
-   * The framework's zod, at its real location. pnpm's node_modules/zod is a
-   * symlink into its store, and tsc's `paths` does not see through it the way
-   * it sees through a bare import — so the project gets the resolved path.
-   */
-  const dedupeTypes =
-    framework !== undefined
-      ? Object.fromEntries(
-          ["zod"].flatMap((module) => {
-            // The framework's copy lives under the package that declares it.
-            const candidate = [
-              resolve(framework, "packages/core/node_modules", module),
-              resolve(framework, "node_modules", module),
-            ].find((path) => existsSync(path));
-            return candidate ? [[module, toPosix(relative(target, realpathSync(candidate)))]] : [];
-          }),
-        )
-      : undefined;
-
   const options: ScaffoldOptions = {
     ...base,
     ...(link !== undefined ? { link } : {}),
-    ...(dedupeTypes && Object.keys(dedupeTypes).length > 0 ? { dedupeTypes } : {}),
     ...(frameworkRepo ? { frameworkRepo } : {}),
   };
 
@@ -182,12 +185,19 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
   }
 
   const scaffold = scaffoldProject(options);
+  const collisions: string[] = [];
+  let written = 0;
   for (const file of scaffold.files) {
     const path = resolve(target, file.path);
+    if (merge && existsSync(path)) {
+      collisions.push(file.path);
+      continue;
+    }
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, file.contents, "utf8");
+    written += 1;
   }
-  io.stdout(`graview create: ${scaffold.files.length} files → ${dir}\n`);
+  io.stdout(`graview create: ${written} files → ${dir}\n`);
 
   const install = !argv.includes("--no-install");
   const skills = !argv.includes("--no-skills");
@@ -215,6 +225,15 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
         io.stderr("graview create: @graview/skills did not install, so the authoring skills were not written.\n");
       }
     }
+  } else if (skills) {
+    /*
+     * THE SKILLS COME THROUGH THE PACKAGE MANAGER, so `--no-install` skips
+     * them too — and it used to skip them SILENTLY, which is the expensive
+     * half: an agent starts on a fresh product without the skills that teach
+     * it how, which is the single highest-leverage thing the framework
+     * ships, and nothing on the screen said they were missing.
+     */
+    io.stdout(`graview create: skills: skipped (needs install — then \`${run} skills\`)\n`);
   }
 
   io.stdout(
@@ -231,6 +250,16 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
         : "") +
       `Then declare more: src/domain/ is the whole surface, and \`${run} check\` says what is wrong with it.\n`,
   );
+  if (collisions.length > 0) {
+    io.stderr(
+      `\ngraview create: ${collisions.length} file${collisions.length === 1 ? "" : "s"} already existed and ${
+        collisions.length === 1 ? "was" : "were"
+      } left exactly as ${collisions.length === 1 ? "it was" : "they were"}:\n` +
+        collisions.map((path) => `  ${path}\n`).join("") +
+        `Merge what you want from a scaffold written elsewhere, or pass --force to overwrite.\n`,
+    );
+    return 1;
+  }
   return 0;
 }
 

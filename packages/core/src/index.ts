@@ -1,3 +1,21 @@
+/*
+ * ONE COPY OF ZOD, AND IT IS THIS ONE.
+ *
+ * A kind's fields are a `z.ZodObject`, so a project building one with a
+ * DIFFERENT copy of zod hands `defineNode` a nominally incompatible type —
+ * and comparing a declared field schema across two copies exhausts tsc's
+ * heap rather than saying so. The scaffolder used to answer that with a
+ * `paths` entry pointing at an exact version inside the framework's own
+ * pnpm store, which typechecks until the framework bumps zod and then reads
+ * as a corrupted install.
+ *
+ * Re-exporting is the answer that cannot drift: a project writes
+ * `import { z } from "@graview/core"` and gets the copy the framework was
+ * built with, for types and at runtime, with nothing to pin and nothing to
+ * keep in step.
+ */
+export { z } from "zod";
+
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf, describeNode } from "./schema/define-node.js";
 export { createSchema, SchemaError } from "./schema/schema.js";

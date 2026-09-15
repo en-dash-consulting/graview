@@ -191,8 +191,8 @@ describe("the first kind", () => {
 });
 
 describe("link mode", () => {
-  it("consumes the framework by path, aliases its sources, and dedupes zod for tsc", () => {
-    const s = scaffoldProject({ name: "Linked", link: "../graview", dedupeTypes: { zod: "../graview/node_modules/.pnpm/zod@4.4.3/node_modules/zod" } });
+  it("consumes the framework by path, aliases its sources, and pins nothing", () => {
+    const s = scaffoldProject({ name: "Linked", link: "../graview" });
     const manifest = JSON.parse(s.files.find((f) => f.path === "package.json")!.contents) as {
       dependencies: Record<string, string>;
     };
@@ -201,10 +201,17 @@ describe("link mode", () => {
     expect(vite).toContain("dedupe");
     expect(vite).toContain('"@graview/ship/browser"');
     expect(vite).toContain("searchForWorkspaceRoot");
+    /*
+     * And no `paths` into anyone's package manager. The project's schemas
+     * are built with the `z` that "@graview/core" re-exports — one copy for
+     * types and runtime, with nothing to keep in step — where this used to
+     * name an exact zod version inside the framework's own pnpm store.
+     */
     const tsconfig = JSON.parse(s.files.find((f) => f.path === "tsconfig.json")!.contents) as {
       compilerOptions: { paths?: Record<string, string[]> };
     };
-    expect(tsconfig.compilerOptions.paths?.["zod"]).toEqual(["../graview/node_modules/.pnpm/zod@4.4.3/node_modules/zod"]);
+    expect(tsconfig.compilerOptions.paths).toBeUndefined();
+    expect(s.files.find((f) => f.path === "package.json")!.contents).not.toContain("zod");
     expect(s.linked).toBe(true);
   });
 
@@ -358,6 +365,96 @@ describe("the article agrees with the kind", () => {
     for (const kind of ["item", "asset", "order", "issue", "epic", "invoice"]) {
       const offending = prose(kind).match(/\ba (?=[aeiou])[a-z]+/g) ?? [];
       expect(offending, `kind "${kind}"`).toEqual([]);
+    }
+  });
+});
+
+/**
+ * THE LAYOUT EVERY REAL PRODUCT ENDS UP WITH.
+ *
+ * `graview create` wrote a single standalone package, and no first-party
+ * product is one: a real product accretes sibling things — `scripts/` for
+ * the harnesses, `docs/`, a PRD, a second surface. The harnesses are the
+ * tell. The framework documents survey, audit-ui and a11y as the things a
+ * serious product should steal, and then scaffolded a layout with nowhere
+ * to put them, so two products independently hand-wrote a workspace root
+ * around the scaffold.
+ */
+describe("a workspace, which is what a product actually is", () => {
+  const ws = scaffoldProject({ name: "Field Notes", kind: "note", workspace: true });
+  const at = (path: string) => ws.files.find((file) => file.path === path);
+
+  it("puts the app under app/ and the product's own things at the root", () => {
+    expect(at("app/src/domain/schema.ts")).toBeDefined();
+    expect(at("app/package.json")).toBeDefined();
+    expect(at("package.json")).toBeDefined();
+    expect(at("pnpm-workspace.yaml")?.contents).toContain("- app");
+    expect(at("tsconfig.base.json")).toBeDefined();
+    expect(at("vitest.config.ts")).toBeDefined();
+    /* Read first, verified whole, ignored once: all three are the product's. */
+    expect(at("README.md")).toBeDefined();
+    expect(at(".gitignore")).toBeDefined();
+    expect(at(".github/workflows/ci.yml")).toBeDefined();
+    expect(at("app/README.md")).toBeUndefined();
+  });
+
+  it("gives the harnesses somewhere to live, saying what each would measure", () => {
+    for (const name of ["survey", "audit-ui", "a11y"]) {
+      const stub = at(`scripts/${name}.mjs`);
+      expect(stub, name).toBeDefined();
+      /* A green verdict from a script that measured nothing is a claim, so
+         a stub says it has not been written and exits non-zero. */
+      expect(stub!.contents).toContain("has not been written yet");
+      expect(stub!.contents).toContain("process.exit(1)");
+      expect(stub!.contents).toContain(`scripts/${name}.mjs in the`);
+    }
+    const root = JSON.parse(at("package.json")!.contents) as { scripts: Record<string, string> };
+    expect(root.scripts["audit-ui"]).toBe("node scripts/audit-ui.mjs");
+    /* And they are NOT in verify: a stub must not fail the build. */
+    expect(root.scripts["verify"]).not.toContain("audit-ui");
+  });
+
+  it("delegates the app's own scripts and keeps pnpm's field where it works", () => {
+    const root = JSON.parse(at("package.json")!.contents) as {
+      scripts: Record<string, string>;
+      pnpm?: { onlyBuiltDependencies?: readonly string[] };
+    };
+    expect(root.scripts["dev"]).toContain("--filter field-notes");
+    expect(root.pnpm?.onlyBuiltDependencies).toEqual(["esbuild"]);
+    /* pnpm warns when the field is in a workspace member, so it is not. */
+    const app = JSON.parse(at("app/package.json")!.contents) as { pnpm?: unknown };
+    expect(app.pnpm).toBeUndefined();
+    expect(JSON.parse(at("app/tsconfig.json")!.contents).extends).toBe("../tsconfig.base.json");
+  });
+
+  it("lengthens the link by one directory, because the app is one deeper", () => {
+    const linked = scaffoldProject({ name: "Field Notes", kind: "note", workspace: true, link: "../graview" });
+    const app = JSON.parse(linked.files.find((f) => f.path === "app/package.json")!.contents) as {
+      dependencies: Record<string, string>;
+    };
+    expect(app.dependencies["@graview/core"]).toBe("link:../../graview/packages/core");
+  });
+
+  it("is not what you get unless you ask", () => {
+    const flat = scaffoldProject({ name: "Field Notes", kind: "note" });
+    expect(flat.files.some((file) => file.path.startsWith("app/"))).toBe(false);
+  });
+});
+
+/**
+ * A scaffold's first build used to print a performance warning about the
+ * framework, on the first command anybody runs.
+ */
+describe("what a first build says", () => {
+  it("splits the framework from the app along the framework's own tier boundary", () => {
+    for (const options of [{ name: "Field Notes" }, { name: "Field Notes", link: "../graview" }]) {
+      const config = scaffoldProject(options).files.find((f) => f.path === "vite.config.ts")!.contents;
+      expect(config).toContain("manualChunks");
+      /* The headless half is the tiers with no React in them. */
+      expect(config).toContain('["core", "layout", "tools", "ship"].includes(name)');
+      expect(config).toContain('["react", "primitives", "pages", "render", "embed", "studio"].includes(name)');
+      /* React keeps its own, because it changes on nobody's schedule but its own. */
+      expect(config).toContain('return "vendor"');
     }
   });
 });

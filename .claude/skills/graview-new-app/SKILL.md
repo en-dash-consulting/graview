@@ -21,20 +21,23 @@ npm create graview@latest my-app        # or: pnpm create graview my-app
 ```
 
 Put the product BESIDE the framework, never inside its git tree; `--link`
-names the framework relative to where you run the command.
+names it relative to where you run the command. `--workspace` writes the
+layout every real product ends up with (a root, the app under `app/`, the
+harnesses beside it); `--merge` starts in a repository that already has a
+README, naming collisions rather than writing over them.
 
-`graview create` writes exactly the shape below — one kind with `creates`,
-`connects`, `writes` and a `lifecycle`, one rule with its repair, the shell,
-the routed face, a headless test, a CI workflow — installs it, and installs
-these skills into it. Run its `verify`, then start replacing the first kind
-with the product's own. The rest of this skill is what each part is for.
+It writes exactly the shape below — one kind with `creates`, `connects`,
+`writes` and a `lifecycle`, one rule with its repair, the shell, the routed
+face, a headless test, a CI workflow — installs it, and installs these skills
+into it. Run its `verify`, then replace the first kind with the product's own.
+The rest of this skill is what each part is for.
 
 ## The shape
 
 ```
 src/
   domain/            # No React in here. This is what `graview check` reads.
-    schema.ts        # defineNode × n, createSchema
+    schema.ts        # defineNode × n, createSchema (z comes from @graview/core)
     mutations.ts     # defineMutation × n — every change is a named, typed act
     invariants.ts    # defineInvariant × n — rules that name their repairs
     policy.ts        # who may do what, if anyone
@@ -46,16 +49,14 @@ src/
   main.tsx
 ```
 
-The domain/ui split is what keeps the declaration inspectable by a build, a
-CLI and an agent: `graview check` reads `defineApp`, and a React import in
-that file would drag a UI package into the checker.
+The domain/ui split keeps the declaration inspectable by a build, a CLI and
+an agent: `graview check` reads `defineApp`, and a React import there would
+drag a UI package into the checker.
 
 ## Do this
 
-1. **Install.** The scaffold already did: `@graview/core`, `layout`, `tools`,
-   `render`, `react`, `primitives`, `pages`, `ship`, `react`, `react-dom`, `zod`.
-   Only reach for `@graview/render/gpu` if you want the experimental capture
-   path; the DOM path is what ships.
+1. **Install.** The scaffold already did. Reach for `@graview/render/gpu`
+   only if you want the experimental capture path; the DOM path is what ships.
 
 2. **Declare one kind, one mutation, one rule.** Do not model the whole domain
    first. The loop you want running on day one is: declare → `graview check` →
@@ -67,10 +68,9 @@ that file would drag a UI package into the checker.
      card offers its own beginnings, which is the whole onboarding of a blank
      graph (see `apps/seedbed`, the example that ships with no data).
    - `connects: [...]` / `severs: [...]` naming the edge kinds a mutation
-     makes or breaks — this is what makes drawn LINES selectable and
-     actionable, offers the act from either endpoint, scopes candidates to
-     what is actually attached, and hides a severing act with nothing to
-     sever.
+     makes or breaks — what makes drawn LINES selectable, offers the act from
+     either endpoint, scopes candidates to what is attached, and hides a
+     severing act with nothing to sever.
    - `lifecycle: { field, retired }` on kinds whose members expire — counts
      say "+N past", and `past=1` widens the view.
    - `subject: { kinds, arg }` on every mutation that acts on a thing.
@@ -92,13 +92,9 @@ that file would drag a UI package into the checker.
    anything. Write a custom view for a kind when the generic one is genuinely
    wrong, not on principle.
 
-6. **Add the check to your build.** In `package.json`:
-   ```json
-   "scripts": {
-     "check": "graview check ./dist/domain/app.js",
-     "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm check"
-   }
-   ```
+6. **Add the check to your build.** `"check": "graview check
+   ./dist/domain/app.js"`, and a `verify` that runs typecheck, test, build
+   and check in that order. The scaffold writes both.
 
 ## What to make yours next
 
@@ -111,11 +107,10 @@ in this order, and each step has a skill and a worked chapter in
    far end is captioned with the edge kind's name. Every mutation gets a
    `title` and `description`; they are the button and the tool schema.
    (`graview-node-kind`.)
-2. **A lens with a name.** Register a lens over a group with a `title` and it
-   is a PLACE — in the bar, on an embed's strip, one press from anywhere.
-   Start from the three that ship (board, coverage, timeline); write your own
-   when the domain has a picture of itself, the way the garden has a map.
-   (`graview-lens`, chapters 10, 11 and 13.)
+2. **A lens with a name.** A lens registered over a group with a `title` is
+   a PLACE — in the bar, on an embed's strip, one press from anywhere. Start
+   from the three that ship; write your own when the domain has a picture of
+   itself, the way the garden has a map. (`graview-lens`, chapters 10-13.)
 3. **The pages.** One page in the product's words first, then, when the
    product needs to look like a product, every surface: the shell, the home,
    the lists, the records, the problems — over the same store, acts, rules

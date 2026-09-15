@@ -36,14 +36,6 @@ export interface ScaffoldOptions {
    */
   readonly link?: string;
   /**
-   * In link mode: modules whose ONE copy of types the project must share
-   * with the framework, as module → directory. tsc compares a declared field
-   * schema across two copies of zod by exhausting its heap, so the CLI
-   * resolves the framework's copy to its real location and passes it here.
-   * Defaults to zod under `<link>/packages/core/node_modules`.
-   */
-  readonly dedupeTypes?: Readonly<Record<string, string>>;
-  /**
    * In link mode: the framework's repository as "owner/name", so the
    * project's CI can check it out as a sibling and build it before verify.
    * Without it the workflow says what to fill in.
@@ -55,6 +47,20 @@ export interface ScaffoldOptions {
   readonly port?: number;
   /** The brand accent, as a hex colour. */
   readonly accent?: string;
+  /**
+   * THE LAYOUT EVERY REAL PRODUCT ENDS UP WITH: a workspace root with the
+   * app under `app/`.
+   *
+   * A single standalone package is what this wrote, and no first-party
+   * product is one — because a real product accretes sibling things:
+   * `scripts/` for the harnesses, `docs/`, a PRD, a second surface. The
+   * harnesses are the tell. The framework documents `survey`, `audit-ui`,
+   * `a11y`, `shrunk` and `seat` as the things a serious product should
+   * steal, and then scaffolded a layout with nowhere to put them, so two
+   * products independently hand-wrote a workspace root around the scaffold.
+   * Two is a gap rather than a taste.
+   */
+  readonly workspace?: boolean;
 }
 
 export interface ScaffoldFile {
@@ -166,7 +172,14 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
   const packageManager = options.packageManager ?? "pnpm";
   const port = options.port ?? 5170;
   const range = options.range ?? "*";
-  const link = options.link?.replace(/\/+$/, "");
+  const workspace = options.workspace === true;
+  const rootLink = options.link?.replace(/\/+$/, "");
+  /*
+   * Every path the APP writes is one directory deeper in a workspace, so
+   * the link it consumes the framework by is one `../` longer. The root's
+   * own files use the link as given.
+   */
+  const link = rootLink === undefined ? undefined : workspace ? `../${rootLink}` : rootLink;
   // A worked green that clears the checker's contrast pairs in both schemes.
   const accent = options.accent ?? "#2e7d32";
 
@@ -203,7 +216,6 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
     accent,
     port,
     link,
-    dedupeTypes: options.dedupeTypes,
     frameworkRepo: options.frameworkRepo,
     range,
     packageManager,
@@ -211,8 +223,8 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
   };
 
   const files: ScaffoldFile[] = [
-    { path: "package.json", contents: packageJson(ids) },
-    { path: "tsconfig.json", contents: tsconfig(ids) },
+    { path: "package.json", contents: packageJson(ids, workspace) },
+    { path: "tsconfig.json", contents: tsconfig(ids, workspace) },
     { path: "tsconfig.build.json", contents: tsconfigBuild() },
     { path: "vite.config.ts", contents: viteConfig(ids) },
     { path: "index.html", contents: indexHtml(ids) },
@@ -233,7 +245,167 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
     { path: ".github/workflows/ci.yml", contents: ciYml(ids) },
   ];
 
-  return { files, name, packageName, kind, plural, packageManager, port, linked: link !== undefined };
+  if (!workspace) {
+    return { files, name, packageName, kind, plural, packageManager, port, linked: link !== undefined };
+  }
+
+  /*
+   * THE WORKSPACE: the app under `app/`, and a root that has somewhere to
+   * put the things a product accretes. The harnesses are the point — they
+   * want to live at a root and drive the app — so they are written as stubs
+   * that say what they would measure rather than as a `scripts/` directory
+   * somebody has to invent.
+   */
+  /*
+   * What belongs to the PRODUCT rather than to the app package stays at the
+   * root: the README a person reads first, the CI that verifies the whole
+   * workspace, and the one .gitignore.
+   */
+  const atRoot = new Set(["README.md", ".gitignore", ".github/workflows/ci.yml"]);
+  const rooted: ScaffoldFile[] = files.map((file) =>
+    atRoot.has(file.path) ? file : { ...file, path: `app/${file.path}` },
+  );
+  return {
+    files: [
+      { path: "package.json", contents: workspaceRoot(ids, rootLink) },
+      ...(packageManager === "pnpm"
+        ? [{ path: "pnpm-workspace.yaml", contents: "packages:\n  - app\n" }]
+        : []),
+      { path: "tsconfig.base.json", contents: tsconfigBase() },
+      { path: "vitest.config.ts", contents: rootVitest() },
+      { path: "scripts/survey.mjs", contents: harness("survey", SURVEY_SAYS, ids) },
+      { path: "scripts/audit-ui.mjs", contents: harness("audit-ui", AUDIT_SAYS, ids) },
+      { path: "scripts/a11y.mjs", contents: harness("a11y", A11Y_SAYS, ids) },
+      ...rooted,
+    ],
+    name,
+    packageName,
+    kind,
+    plural,
+    packageManager,
+    port,
+    linked: link !== undefined,
+  };
+}
+
+const SURVEY_SAYS = [
+  "Photograph every place a person can land, at both widths and in both schemes,",
+  "and write the shots somewhere a person can flick through them. A screenshot",
+  "of every state is the cheapest way to find the one that is wrong.",
+];
+
+const AUDIT_SAYS = [
+  "Ask the questions a photograph makes you squint at, in numbers: is a control",
+  "under 24px, is one card drawn on top of another, is a caption cut mid-word,",
+  "is the same string on screen twice, does anything paint past the edge with",
+  "nowhere to scroll. Every one of these is found by eye first, which is exactly",
+  "why it belongs in a script.",
+];
+
+const A11Y_SAYS = [
+  "Run axe-core over every route at both widths in both schemes, and read the",
+  "real accessibility tree rather than assuming it. A populated tree is",
+  "necessary, not sufficient — it does not replace a screen-reader pass.",
+];
+
+/**
+ * A harness that has not been written yet, and says so rather than passing.
+ *
+ * A green verdict from a script that measured nothing is worse than no
+ * script: it is a claim. This one exits non-zero, names what it is for, and
+ * points at the framework's own implementation to steal.
+ */
+function harness(name: string, says: readonly string[], ids: Ids): string {
+  const quoted = (line: string) => JSON.stringify(line);
+  return `#!/usr/bin/env node
+/**
+ * ${name} — NOT WRITTEN YET.
+ *
+${says.map((line) => ` * ${line}`).join("\n")}
+ *
+ * The framework's own is the one to steal: scripts/${name}.mjs in the
+ * Graview checkout. Run the app on http://localhost:${ids.port} and drive it.
+ */
+for (const line of [
+  ${quoted(`${name}: this harness has not been written yet.`)},
+${says.map((line) => `  ${quoted(`  ${line}`)},`).join("\n")}
+  "",
+  ${quoted(`  Steal the framework's scripts/${name}.mjs and point it at this app.`)},
+]) {
+  console.error(line);
+}
+process.exit(1);
+`;
+}
+
+/** The workspace root: what the app is, and where the harnesses go. */
+function workspaceRoot(ids: Ids, link: string | undefined): string {
+  const run = ids.packageManager === "pnpm" ? "pnpm" : "npm run";
+  const inApp = (script: string) =>
+    ids.packageManager === "pnpm" ? `pnpm --filter ${ids.packageName} ${script}` : `npm run ${script} --workspace app`;
+  return `${JSON.stringify(
+    {
+      name: `${ids.packageName}-workspace`,
+      version: "0.0.0",
+      private: true,
+      type: "module",
+      description: `${ids.name}, on Graview.`,
+      engines: { node: ">=22" },
+      ...(ids.packageManager === "npm" ? { workspaces: ["app"] } : {}),
+      scripts: {
+        dev: inApp("dev"),
+        build: inApp("build"),
+        test: "vitest run",
+        typecheck: inApp("typecheck"),
+        check: inApp("check"),
+        verify: `${run} typecheck && ${run} test && ${run} build && ${run} check`,
+        // The harnesses, at the root, driving the app. Stubs until written.
+        survey: "node scripts/survey.mjs",
+        "audit-ui": "node scripts/audit-ui.mjs",
+        a11y: "node scripts/a11y.mjs",
+      },
+      ...(ids.packageManager === "pnpm" ? { pnpm: { onlyBuiltDependencies: ["esbuild"] } } : {}),
+      devDependencies: { typescript: "^5.7.2", vitest: "^2.1.8" },
+      ...(link ? { graview: { link } } : {}),
+    },
+    null,
+    2,
+  )}\n`;
+}
+
+/** The compiler options both the app and anything beside it share. */
+function tsconfigBase(): string {
+  return `${JSON.stringify(
+    {
+      compilerOptions: {
+        target: "ES2022",
+        lib: ["ES2022", "DOM", "DOM.Iterable"],
+        module: "ESNext",
+        moduleResolution: "Bundler",
+        strict: true,
+        noUncheckedIndexedAccess: true,
+        noImplicitOverride: true,
+        isolatedModules: true,
+        verbatimModuleSyntax: true,
+        skipLibCheck: true,
+        esModuleInterop: true,
+        forceConsistentCasingInFileNames: true,
+        jsx: "react-jsx",
+      },
+    },
+    null,
+    2,
+  )}\n`;
+}
+
+/** One test run for the whole workspace, whatever grows beside the app. */
+function rootVitest(): string {
+  return `import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: { include: ["app/tests/**/*.test.ts?(x)", "tests/**/*.test.ts?(x)"] },
+});
+`;
 }
 
 type Ids = {
@@ -259,7 +431,6 @@ type Ids = {
   accent: string;
   port: number;
   link: string | undefined;
-  dedupeTypes: Readonly<Record<string, string>> | undefined;
   frameworkRepo: string | undefined;
   range: string;
   packageManager: "pnpm" | "npm";
@@ -268,7 +439,7 @@ type Ids = {
 
 /* ------------------------------------------------------------ manifests */
 
-function packageJson(ids: Ids): string {
+function packageJson(ids: Ids, workspace: boolean): string {
   const dep = (pkg: string) =>
     ids.link ? `link:${ids.link}/packages/${pkg}` : ids.range;
   const graview = Object.fromEntries(GRAVIEW_PACKAGES.map((pkg) => [`@graview/${pkg}`, dep(pkg)]));
@@ -294,19 +465,27 @@ function packageJson(ids: Ids): string {
       skills: "graview-skills install .",
       verify: `${run} typecheck && ${run} test && ${run} build && ${run} check`,
     },
-    ...(ids.packageManager === "pnpm"
-      ? {
-          // pnpm 10 refuses postinstall scripts it was not told about, and
-          // says so on every install; esbuild's is the one this project has.
-          pnpm: { onlyBuiltDependencies: ["esbuild"] },
-        }
+    /*
+     * pnpm 10 refuses postinstall scripts it was not told about, and says so
+     * on every install; esbuild's is the one this project has. In a
+     * workspace the field only takes effect at the ROOT — pnpm warns about
+     * it here — so the root carries it and this does not.
+     */
+    ...(ids.packageManager === "pnpm" && !workspace
+      ? { pnpm: { onlyBuiltDependencies: ["esbuild"] } }
       : {}),
     dependencies: {
       ...graview,
       react: "^19.2.0",
       "react-dom": "^19.2.0",
       "react-router-dom": "^7.1.1",
-      zod: "^4.4.3",
+      /*
+       * NO ZOD. A kind's fields are a `z.ZodObject`, and a second copy of
+       * zod makes them a nominally different type — which tsc reports by
+       * exhausting its heap rather than by saying so. `@graview/core`
+       * re-exports `z`, so the project builds its schemas with exactly the
+       * copy the framework was built with and has nothing to keep in step.
+       */
     },
     devDependencies: {
       "@graview/skills": dep("skills"),
@@ -321,26 +500,24 @@ function packageJson(ids: Ids): string {
   return `${JSON.stringify(manifest, null, 2)}\n`;
 }
 
-function tsconfig(ids: Ids): string {
+function tsconfig(ids: Ids, workspace: boolean): string {
   /*
-   * In link mode the project and the framework each hold a copy of zod, and
-   * comparing a declared field schema across the two exhausts tsc's heap.
-   * One copy, by path — the type-level twin of vite's `dedupe`.
+   * NOTHING POINTS INTO ANOTHER REPOSITORY'S PACKAGE MANAGER.
+   *
+   * This used to carry a `paths` entry for zod naming an exact version
+   * inside the framework's pnpm store — `../../graview/node_modules/.pnpm/
+   * zod@4.4.3/node_modules/zod` — because two copies of zod make a declared
+   * field schema a nominally different type. It typechecked, and it broke on
+   * the day the framework bumped zod, as a missing file in somebody else's
+   * internals rather than as a version bump. The project imports `z` from
+   * `@graview/core` now: one copy, by re-export, with nothing to pin.
    */
-  const dedupe = ids.link
-    ? {
-        baseUrl: ".",
-        paths: Object.fromEntries(
-          Object.entries(ids.dedupeTypes ?? { zod: `${ids.link}/packages/core/node_modules/zod` }).map(
-            ([module, dir]) => [module, [dir]],
-          ),
-        ),
-      }
-    : {};
   return `${JSON.stringify(
     {
+      /* In a workspace the shared half lives at the root, where a second
+         package beside the app can extend the same one. */
+      ...(workspace ? { extends: "../tsconfig.base.json" } : {}),
       compilerOptions: {
-        ...dedupe,
         target: "ES2022",
         lib: ["ES2022", "DOM", "DOM.Iterable"],
         module: "ESNext",
@@ -398,7 +575,56 @@ export default defineConfig({
   // somewhere else so neither build overwrites the other. ES2022 because
   // main.tsx awaits the store at the top level, and every browser the
   // framework supports (Safari 16.4+, Firefox 101+, Chromium 99+) has it.
-  build: { outDir: "build", target: "es2022" },
+  /*
+   * THE FRAMEWORK SPLIT FROM THE APP, ALONG THE FRAMEWORK'S OWN TIER
+   * BOUNDARY.
+   *
+   * A one-kind scaffold's first build used to print
+   * "(!) Some chunks are larger than 500 kB" — a performance warning about
+   * the framework, on the first command anybody runs. It was not wrong; it
+   * was simply the first impression, and a scaffold that warns on its first
+   * run teaches people to ignore build output.
+   *
+   * Measured on a one-kind app: as one bundle, 700 kB and a warning; as
+   * framework-and-app, 512 + 189 and still a warning; headless / UI / app,
+   * 218 + 295 + 189 and no warning at all. The headless half is core,
+   * layout, tools and ship — the tiers with no React in them — and it
+   * changes on a different schedule from the UI binding, so a returning
+   * visitor keeps the larger half cached across every change to the app.
+   */
+  build: {
+    outDir: "build",
+    target: "es2022",
+    rollupOptions: {
+      output: {
+        /*
+         * Which half a module belongs to, from its path alone: rollup ids
+         * use forward slashes on every platform, and a framework package is
+         * under "@graview/<name>" installed, or "packages/<name>" linked.
+         */
+        manualChunks(id: string) {
+          const parts = id.split("/");
+          const owner = Math.max(parts.lastIndexOf("@graview"), parts.lastIndexOf("packages"));
+          const name = owner === -1 ? undefined : parts[owner + 1];
+          if (name && ["core", "layout", "tools", "ship"].includes(name)) return "graview";
+          if (name && ["react", "primitives", "pages", "render", "embed", "studio"].includes(name)) {
+            return "graview-ui";
+          }
+          const vendor = parts.lastIndexOf("node_modules");
+          const from = vendor === -1 ? undefined : parts[vendor + 1];
+          // Zod rides with the headless half, which is what declares against
+          // it: in the other chunk the two would import each other.
+          if (from === "zod") return "graview";
+          // React and the router keep their own, because they change on
+          // nobody's schedule but their own.
+          if (from && ["react", "react-dom", "react-router", "react-router-dom", "scheduler"].includes(from)) {
+            return "vendor";
+          }
+          return undefined;
+        },
+      },
+    },
+  },
   server: { port: ${ids.port}, strictPort: true },
   test: { environment: "node" },
 });
@@ -421,9 +647,66 @@ const framework = (p: string) =>
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
-  build: { outDir: "build", target: "es2022" },
+  /*
+   * THE FRAMEWORK SPLIT FROM THE APP, ALONG THE FRAMEWORK'S OWN TIER
+   * BOUNDARY.
+   *
+   * A one-kind scaffold's first build used to print
+   * "(!) Some chunks are larger than 500 kB" — a performance warning about
+   * the framework, on the first command anybody runs. It was not wrong; it
+   * was simply the first impression, and a scaffold that warns on its first
+   * run teaches people to ignore build output.
+   *
+   * Measured on a one-kind app: as one bundle, 700 kB and a warning; as
+   * framework-and-app, 512 + 189 and still a warning; headless / UI / app,
+   * 218 + 295 + 189 and no warning at all. The headless half is core,
+   * layout, tools and ship — the tiers with no React in them — and it
+   * changes on a different schedule from the UI binding, so a returning
+   * visitor keeps the larger half cached across every change to the app.
+   */
+  build: {
+    outDir: "build",
+    target: "es2022",
+    rollupOptions: {
+      output: {
+        /*
+         * Which half a module belongs to, from its path alone: rollup ids
+         * use forward slashes on every platform, and a framework package is
+         * under "@graview/<name>" installed, or "packages/<name>" linked.
+         */
+        manualChunks(id: string) {
+          const parts = id.split("/");
+          const owner = Math.max(parts.lastIndexOf("@graview"), parts.lastIndexOf("packages"));
+          const name = owner === -1 ? undefined : parts[owner + 1];
+          if (name && ["core", "layout", "tools", "ship"].includes(name)) return "graview";
+          if (name && ["react", "primitives", "pages", "render", "embed", "studio"].includes(name)) {
+            return "graview-ui";
+          }
+          const vendor = parts.lastIndexOf("node_modules");
+          const from = vendor === -1 ? undefined : parts[vendor + 1];
+          // Zod rides with the headless half, which is what declares against
+          // it: in the other chunk the two would import each other.
+          if (from === "zod") return "graview";
+          // React and the router keep their own, because they change on
+          // nobody's schedule but their own.
+          if (from && ["react", "react-dom", "react-router", "react-router-dom", "scheduler"].includes(from)) {
+            return "vendor";
+          }
+          return undefined;
+        },
+      },
+    },
+  },
   resolve: {
-    dedupe: ["react", "react-dom", "react-router-dom", "zod"],
+    /*
+     * React and the router, and NOT zod. Two copies of React break hooks,
+     * so they are forced to one — resolved from this project, which has
+     * them. Zod is not this project's dependency at all any more: the
+     * schemas are built with the copy "@graview/core" re-exports, and
+     * listing it here would force the framework's own import to resolve
+     * from a place that does not have it.
+     */
+    dedupe: ["react", "react-dom", "react-router-dom"],
     alias: {
       "@graview/core": framework("core/src/index.ts"),
       "@graview/layout": framework("layout/src/index.ts"),
@@ -634,7 +917,7 @@ the interface, or an agent reads a tool schema.
 
 function schemaTs(ids: Ids): string {
   return `import { createSchema, defineNode } from "@graview/core";
-import { z } from "zod";
+import { z } from "@graview/core";
 
 /**
  * The first kind. Model one thing well before modelling the domain: the
@@ -673,7 +956,7 @@ export type ${ids.SchemaType} = typeof ${ids.schemaVar};
 
 function mutationsTs(ids: Ids): string {
   return `import { bindSchema, nodeRef, type GraphReader } from "@graview/core";
-import { z } from "zod";
+import { z } from "@graview/core";
 import { ${ids.schemaVar} } from "./schema.js";
 
 const { defineMutation } = bindSchema(${ids.schemaVar});
