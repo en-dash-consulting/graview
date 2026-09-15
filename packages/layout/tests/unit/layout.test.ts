@@ -1310,3 +1310,72 @@ describe("the relation band", () => {
     expect(wholesale.nodes.filter((node) => node.plane === 1).map((node) => node.id).sort()).toEqual(["ana", "bo", "cass"]);
   });
 });
+
+/**
+ * A DISTRICT IS READ, NOT GLANCED AT — so the row never squeezes a name
+ * below a word.
+ *
+ * `fit` divided the span by the count with no floor. Measured in a browser:
+ * a district card holds a seven- or eight-letter plural on one line down to
+ * about 132px at a 16px root and breaks between 132 and 98. Four kinds at
+ * 390px gave 46px cards and five lines of "Lists"; thirteen kinds in a 700px
+ * host gave 72px and three lines of "Rules". The chips already shed the
+ * count and the disclosure before the label; the missing step was shedding
+ * the ROW.
+ */
+describe("a row of districts that cannot hold them all", () => {
+  const many = Array.from({ length: 12 }, (_, index) =>
+    defineNode(`kind${index}`, { fields: z.object({ label: z.string() }), plural: `Kind${index}s` }),
+  );
+  const wide = createSchema(many as never);
+  const populated = () =>
+    Graph.from(wide as never, {
+      nodes: many.map((kind, index) => ({ id: `n${index}`, kind: kind.kind, label: "A" })) as never,
+      edges: [],
+    });
+  const districts = (width: number) =>
+    layout(populated(), wide as never, EMPTY_VIEW, { width, height: 800 }).nodes.filter(
+      (node) => node.plane === 2,
+    );
+
+  it("gives every card it draws a width its name can be read at", () => {
+    for (const width of [390, 700, 1000, 1560]) {
+      for (const card of districts(width)) {
+        expect(card.width, `${width}px`).toBeGreaterThanOrEqual(132);
+      }
+    }
+  });
+
+  it("keeps every card inside the canvas, which is what forces the shedding", () => {
+    for (const width of [390, 700, 1000]) {
+      for (const card of districts(width)) {
+        expect(card.x, `${width}px`).toBeGreaterThanOrEqual(0);
+        expect(card.x + card.width, `${width}px`).toBeLessThanOrEqual(width);
+      }
+    }
+  });
+
+  it("names the ones it left out on one card, rather than dropping them", () => {
+    const row = districts(700);
+    const beyond = row.find((card) => card.beyond !== undefined)!;
+    expect(beyond).toBeDefined();
+    const shown = row.filter((card) => card.beyond === undefined).map((card) => card.kind);
+    /* Every kind is either drawn or named: the map is still complete. */
+    expect([...shown, ...beyond.beyond!].sort()).toEqual(many.map((kind) => kind.kind).sort());
+  });
+
+  it("sheds nothing when the row can hold them all", () => {
+    const row = districts(2400);
+    expect(row.some((card) => card.beyond !== undefined)).toBe(false);
+    expect(row).toHaveLength(12);
+  });
+
+  it("does not shed at altitude, where the ring has the room", () => {
+    const row = layout(populated(), wide as never, { ...EMPTY_VIEW, overview: true }, {
+      width: 700,
+      height: 800,
+    }).nodes.filter((node) => node.plane === 2);
+    expect(row.some((card) => card.beyond !== undefined)).toBe(false);
+    expect(row).toHaveLength(12);
+  });
+});

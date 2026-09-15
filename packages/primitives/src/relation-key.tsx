@@ -106,7 +106,24 @@ export function RelationKey<S extends AnySchema>() {
         border: "1px solid var(--graview-edge)",
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-low)",
-        maxWidth: 250,
+        /*
+         * IT STAYS INSIDE ITS OWN RAIL.
+         *
+         * The scene reserves a left rail for this and the panes beside it —
+         * `min(264, width * 0.22)` — and the key was sized in fixed pixels,
+         * so the two agreed only on a wide screen. Below about 740px of
+         * scene the key is wider than the rail it was given, and whatever
+         * the layout drew at the left edge of the focus band was under it:
+         * a product in a 700x520 embed had a panel's title clipped to
+         * "…nds" by this card.
+         *
+         * The same formula, in CSS, minus its own 16px offset and a margin,
+         * so the cap cannot drift from the rail again. The 110px floor is
+         * where a key stops being readable at all — under about 590px of
+         * scene the floor wins, and at that width the scene is a desk view
+         * in a phone's clothing anyway (see the routed face).
+         */
+        maxWidth: "max(110px, calc(min(250px, 22%) - 32px))",
         // Arrives after the cards have mostly flown, rather than popping at
         // the cut.
         animation: "graview-settle 380ms 280ms ease backwards",

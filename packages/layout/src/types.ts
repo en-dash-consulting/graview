@@ -100,6 +100,17 @@ export interface LayoutNode {
    */
   readonly nestedUnder?: string;
   /**
+   * The kinds this card STANDS FOR, when the row could not hold them all at
+   * a width their names can be read at.
+   *
+   * A district is read, not glanced at, so the row never squeezes a name
+   * below a word: past what it can hold it keeps the ones that fit and hands
+   * the rest to one card that names them. Not a kind of its own — it has no
+   * members and no figure — which is why it is said here rather than by
+   * giving it a kind nobody declared.
+   */
+  readonly beyond?: readonly string[];
+  /**
    * A group standing for the kind currently in focus.
    *
    * It stays on the kinds plane rather than being removed, so the strip is a

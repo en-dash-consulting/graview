@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-14T22:49:48.204Z",
+  "at": "2026-09-15T00:43:32.606Z",
   "engine": "chromium",
   "screens": [
     {
@@ -386,6 +386,28 @@
       "asking": [],
       "board": [],
       "fill": 20,
+      "inspector": null,
+      "led": null,
+      "figures": []
+    },
+    {
+      "app": "todo",
+      "state": "phone",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 40,
       "inspector": null,
       "led": null,
       "figures": []

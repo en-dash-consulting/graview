@@ -498,6 +498,58 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   opacity: 0.3;
 }
 
+/* THE DISTRICTS THE ROW COULD NOT HOLD.
+   Not a district: no figure, no count, no tint of its own. A quiet card that
+   says how many are missing and names them, each name a real control at a
+   real size — a district is read, not glanced at, and so is this. */
+.graview-beyond {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: var(--graview-pad-sm, 8px);
+  box-sizing: border-box;
+  overflow: auto;
+  border-radius: var(--graview-radius-sm, 8px);
+  border: 1px dashed var(--graview-edge);
+  background: var(--graview-panel);
+}
+.graview-beyond-count {
+  flex: 0 0 auto;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--graview-ink-faint);
+}
+.graview-beyond-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.graview-beyond-list button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: max(1.5rem, 24px);
+  padding: 0 4px;
+  border: none;
+  border-radius: var(--graview-radius-sm, 6px);
+  background: none;
+  color: var(--graview-ink-muted);
+  cursor: pointer;
+  font-size: 0.78125rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.graview-beyond-list button:hover {
+  color: var(--graview-accent);
+  background: var(--graview-wash);
+}
+
 /* The way into the archive, on the card that fed it: quiet, but a real
    control at a real size. */
 .graview-kind-past {

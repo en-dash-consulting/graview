@@ -1,7 +1,9 @@
 import { labelOf } from "@graview/core";
 import type { AnySchema, Fidelity, GraphReader, NodeOfSchema } from "@graview/core";
 import {
+  aggregateId,
   isAggregateId,
+  kindCardId,
   kindOfCard,
   kindsOf,
   layout,
@@ -43,7 +45,7 @@ import {
 } from "react";
 import { useActivity, type ActivityMark, type Manner } from "./activity.js";
 import { useAnimatedLayout, useTouched } from "./animation.js";
-import { useFlagged, useImplicated, useViolations } from "./hooks.js";
+import { useFlagged, useImplicated, useNavigation, useViolations } from "./hooks.js";
 import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
 import { isDefaultView } from "./view-registry.js";
 import { ViewBoundary } from "./view-boundary.js";
@@ -574,12 +576,16 @@ export function Scene<S extends AnySchema>({
       onDragEnd={onDragUp}
       swallowClick={swallow}
     >
-      <ResolvedView
-        node={node}
-        mode="scene"
-        selected={selection.includes(node.id)}
-        {...(crowded(node) ? { fidelity: "glyph" as const } : {})}
-      />
+      {node.beyond ? (
+        <BeyondCard kinds={node.beyond} />
+      ) : (
+        <ResolvedView
+          node={node}
+          mode="scene"
+          selected={selection.includes(node.id)}
+          {...(crowded(node) ? { fidelity: "glyph" as const } : {})}
+        />
+      )}
     </SceneViewHost>
   ));
 
@@ -1498,7 +1504,10 @@ function SceneViewHost({
    * The name a screen reader reads for this box: the group's plural, or the
    * node's own label — never the id, which is an address.
    */
-  const hostName = node.aggregate
+  const hostName = node.beyond
+    ? /* Not a thing in the graph: the row saying what it could not hold. */
+      `${node.beyond.length} more district${node.beyond.length === 1 ? "" : "s"}`
+    : node.aggregate
     ? node.aggregate.label
     : (() => {
         const graphNode = hostStore.graph.getNode(node.id);
@@ -2918,6 +2927,49 @@ export interface ResolvedViewProps<S extends AnySchema> {
   readonly selected: boolean;
   /** Overrides the fidelity the plane would ask for. Jack-in uses this. */
   readonly fidelity?: Fidelity;
+}
+
+/**
+ * THE DISTRICTS THE ROW COULD NOT HOLD, NAMED.
+ *
+ * A district is read rather than glanced at, so the row never squeezes a name
+ * below a word: past what it can hold at a legible width it keeps the ones
+ * that fit and hands the rest to this. Not a district — it has no members, no
+ * figure and no count — a card that says what is missing and takes you there.
+ *
+ * Every name is a pick target, which is the same gesture the row offers: a
+ * press goes to that district. No new vocabulary, and nothing behind a
+ * control somebody has to discover.
+ */
+function BeyondCard({ kinds }: { kinds: readonly string[] }) {
+  const { store } = useGraview();
+  const { view, go } = useNavigation();
+  const plural = (kind: string) => store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
+  return (
+    <div
+      className="graview-beyond"
+      data-graview-beyond={kinds.length}
+    >
+      <span className="graview-beyond-count">+{kinds.length}</span>
+      <ul className="graview-beyond-list">
+        {kinds.map((kind) => (
+          <li key={kind}>
+            <button
+              type="button"
+              data-graview-pick={kindCardId(kind)}
+              title={`Go to ${plural(kind)}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                go(withFocus(view, aggregateId(kind)));
+              }}
+            >
+              {plural(kind)}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 /**

@@ -134,6 +134,9 @@ function mix(a: LayoutNode, b: LayoutNode, t: number, opacity: number): Interpol
     ...(b.opened ? { opened: true } : {}),
     ...(b.rank ? { rank: b.rank } : {}),
     ...(b.nestedUnder ? { nestedUnder: b.nestedUnder } : {}),
+    /* What a card STANDS FOR travels with it, or the row's overflow card
+       arrives mid-transition as an empty box with no kind and nothing in it. */
+    ...(b.beyond ? { beyond: b.beyond } : {}),
     ...(b.depth === undefined ? {} : { depth: lerp(a.depth ?? 1, b.depth, t) }),
     ...(b.natural ? { natural: b.natural } : {}),
   };

@@ -21,20 +21,24 @@ if (location.pathname.startsWith("/pages")) {
 }
 ```
 
-`PagesApp` renders, with no registry at all:
+`PagesApp` renders with no registry at all:
 
 - `/` — a home saying what is here, and on an empty installation which act
   begins it.
 - `/<plural>` — a list per kind, marking trouble, with the creating acts
   beneath it.
 - `/<plural>/<id>` — a record: its facts, its relations captioned in the
-  declaration's words (from the end you stand on), what can be done, what has
-  happened.
+  declaration's words, what can be done, what has happened.
 - `/problems` — every broken rule with its repairs.
 
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
 or who may take it** — it strikes through what the seat may not, and says why.
+
+**At a phone's width this face is the answer.** The scene still holds there —
+districts stay legible, panels scroll, measured at 390px by `audit-ui` — but
+a 134px card in a 390px viewport is a city through a letterbox. `Shell`
+carries `pagesHref`.
 
 ## Rung one: a page in the app's own words
 
@@ -77,8 +81,8 @@ Rules for a page at this rung:
 4. **Prefill, never wire.** `DerivedForm` with `prefilled` is how a record
    offers an act about itself; the form asks for the rest.
 5. **Read permission before drawing an act.** `store.permits({ name, args },
-   principal)`, struck through with `verdict.refusal.message` when not ok. A
-   form that refuses on submit is the bug this prevents.
+   principal)`, struck through with `verdict.refusal.message`. A form that
+   refuses on submit is the bug this prevents.
 6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the
    scene on one thing; `placeHref(as)` — `/#view=the-grounds`, the title
    through `placeSlug` — opens it on one named place, group in focus. A link
@@ -128,11 +132,10 @@ What every design must keep doing:
 - **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`,
   `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with
   `color-mix` for the design's own paper. Never a colour that works in one
-  scheme only; the design then wears both schemes and the brand's typefaces.
-- **Keep landmarks and targets honest.** One `main` (a `section` when
-  `context.embedded`, and an UNNAMED one — the embed already made a region
-  carrying the page's name, so naming this one too puts two regions with one
-  name on a page holding two embeds). Controls at least 24px, AA contrast.
+  scheme only.
+- **Keep landmarks and targets honest.** One `main` — a `section` when
+  `context.embedded`, and UNNAMED, or a page holding two embeds has two
+  regions with one name. Controls at least 24px, AA contrast.
   Every size in `rem`: at 200% text a flex or grid item's automatic minimum
   is its CONTENT's, so one un-wrappable row pushes the whole column off the
   screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on
@@ -146,8 +149,7 @@ What every design must keep doing:
 ## The embed
 
 `@graview/embed` mounts an app into any element on any page: its own theme
-scoped to the element, fonts, a strip with the faces and the named places,
-no Shell chrome.
+scoped to the element, fonts, a strip with the faces and places, no chrome.
 
 ```ts
 import { mount } from "@graview/embed";
@@ -158,7 +160,7 @@ handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
 - `face` is inferred from the stop, `scheme` from the host page; `label`
   names the landmarks, so two embeds are two regions with two names.
 - `mountWhenNear(elements, mountOne)` mounts many as a reader scrolls near
-  them. The strip shows the app's named places (`graview-lens`, step 8).
+  them. The strip shows the app's places (`graview-lens`, step 8).
 
 ## Then find out whether it worked
 
@@ -168,9 +170,9 @@ pnpm test                                               # render every page you 
 ```
 
 Render each registered page with `PagesApp` and `initialPath` in a test —
-`apps/seedbed/tests/integration/chapters.test.ts` does — asserting your own
-`data-testid`s. Then open it: a design that passes its tests and reads like
-an admin panel has not replaced anything.
+`apps/seedbed/tests/integration/chapters.test.ts` does. Then open it: a
+design that passes its tests and reads like an admin panel has replaced
+nothing.
 
 ## What the check cannot see
 

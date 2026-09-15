@@ -33,6 +33,14 @@ export function kindOfCard(id: string): string | null {
   return id.startsWith(KIND_PREFIX) ? id.slice(KIND_PREFIX.length) : null;
 }
 
+/**
+ * The card that stands for the districts the row could not hold.
+ *
+ * Its own id rather than a kind's, because it is not a kind: it is the row
+ * saying what it had to leave out, and naming them.
+ */
+export const BEYOND_CARD = "kinds:beyond";
+
 /** The kinds an id stands for, whichever namespace it is in. */
 export function kindsOf(id: string): string[] {
   const card = kindOfCard(id);
@@ -264,6 +272,17 @@ const SHELF_DEPTH = 0.85;
  * proportional answer lands under it.
  */
 const CARD_MIN_HEIGHT = 56;
+
+/*
+ * The width a district card needs to hold its own name on one line.
+ *
+ * Measured rather than chosen: at a 16px root a seven- or eight-letter
+ * plural reads on one line down to about 132px of card and breaks between
+ * 132 and 98 — the label box is roughly a third of the card, the rest being
+ * the figure, the count and the padding. In the reader's own unit, like
+ * everything else here.
+ */
+const DISTRICT_MIN_WIDTH = 132;
 
 function shelf(
   count: number,
@@ -510,6 +529,37 @@ export function layout<S extends AnySchema>(
         : Math.min(cap, (spanW - opts.gap * (count + 1)) / count),
     height,
   });
+
+  /*
+   * A DISTRICT IS READ, SO IT IS NEVER SQUEEZED BELOW A WORD.
+   *
+   * `fit` divides the span by the count with no floor, and past a handful of
+   * kinds in a narrow host that is a row of one letter per line: measured,
+   * a district card needs about 132px at a 16px root to hold a seven- or
+   * eight-letter plural on one line, and it breaks somewhere between 132 and
+   * 98. Four kinds at 390px gave 46px cards and five lines of "Lists";
+   * thirteen kinds at 700px gave 72px and three lines of "Rules". The chips
+   * already know how to shed detail — they drop the count and the disclosure
+   * before the label — and the missing step was shedding the ROW.
+   *
+   * So the row holds as many as fit at the floor and hands the rest to one
+   * card that names them. Squeezing to one glyph per line is the one answer
+   * that communicates nothing.
+   */
+  const districtRow = (count: number, cap: number, height: number) => {
+    const size = fit(count, cap, height);
+    return size.width >= DISTRICT_MIN_WIDTH * unit
+      ? size
+      : { width: Math.min(cap, DISTRICT_MIN_WIDTH * unit), height };
+  };
+  /** How many districts fit at the floor, before the row has to shed. */
+  const districtCapacity = (cap: number) =>
+    Math.max(
+      1,
+      Math.floor(
+        (spanW - opts.gap) / (Math.min(cap, DISTRICT_MIN_WIDTH * unit) + opts.gap),
+      ),
+    );
   const expanded = new Set(state.expanded);
 
   // Nothing is raised while you are above the stack: the ring IS the
@@ -799,6 +849,8 @@ export function layout<S extends AnySchema>(
   const contextItems: {
     id: string;
     kind: string;
+    /** The kinds this card stands for, when the row could not hold them all. */
+    beyond?: readonly string[];
     aggregate?: Aggregate;
     raised?: boolean;
     focused?: boolean;
@@ -876,7 +928,33 @@ export function layout<S extends AnySchema>(
   }
 
   const tucked = contextItems.filter((item) => item.nestedUnder !== undefined);
-  const slotted = contextItems.filter((item) => item.nestedUnder === undefined);
+  const inRow = contextItems.filter((item) => item.nestedUnder === undefined);
+
+  /*
+   * PAST WHAT THE ROW CAN READ, THE ROW SHEDS.
+   *
+   * With every card floored at a legible width, a domain with more kinds
+   * than the host is wide would run its districts off the edge — so the row
+   * holds as many as fit and hands the rest to one card that names them.
+   * That card is a district-shaped thing standing for several kinds, and
+   * pressing one of the names it lists goes to that district: no new
+   * vocabulary, the same gesture the row itself offers.
+   *
+   * Not at altitude: the ring lays every kind out around the ellipse and has
+   * the room, which is the whole reason to rise to it.
+   */
+  const rowCap = districtCapacity((zoomed ? 240 : opts.contextSize.width) * unit);
+  const sheds = !state.overview && inRow.length > rowCap;
+  const slotted = sheds
+    ? [
+        ...inRow.slice(0, Math.max(1, rowCap - 1)),
+        {
+          id: BEYOND_CARD,
+          kind: "",
+          beyond: inRow.slice(Math.max(1, rowCap - 1)).map((item) => item.kind),
+        },
+      ]
+    : inRow;
 
   /*
    * The overview is the SAME CARDS, on a ring instead of a row.
@@ -898,7 +976,7 @@ export function layout<S extends AnySchema>(
       // reader's unit itself, because only the ring knows how much room is
       // left to grow into.
       { width: Math.min(220, spanW / 6.5), height: Math.min(92, opts.height * 0.125) }
-    : fit(slotted.length, (zoomed ? 240 : opts.contextSize.width) * unit, band.contextH);
+    : districtRow(slotted.length, (zoomed ? 240 : opts.contextSize.width) * unit, band.contextH);
   const contextPositions: {
     x: number;
     y: number;
@@ -969,7 +1047,17 @@ export function layout<S extends AnySchema>(
     const slotW = position.width ?? contextSize.width;
     const slotH = position.height ?? contextSize.height;
     const shrink = item.rank === "secondary" ? SECONDARY : 1;
-    const width = slotW * shrink;
+    /*
+     * A SECONDARY DISTRICT IS QUIETER, NOT ILLEGIBLE.
+     *
+     * The height has had a floor since the band became a strip of glyphs;
+     * the width had none, so a rank shrink applied after the row's own
+     * sizing took a card that had just been floored at a readable width and
+     * put it back under it — 0.74 of 132 is 98, which is where a plural
+     * starts wrapping. The same mistake as the row's, one multiplication
+     * later. Proportion is right until it crosses the floor.
+     */
+    const width = Math.max(Math.min(slotW, DISTRICT_MIN_WIDTH * unit), slotW * shrink);
     const height = Math.max(CARD_MIN_HEIGHT * unit, slotH * shrink);
     slotOf.set(item.id, {
       // Centred across the slot it was allotted, sitting on its baseline.
@@ -1146,6 +1234,7 @@ export function layout<S extends AnySchema>(
       ...(item.opened ? { opened: true } : {}),
       ...(item.rank ? { rank: item.rank } : {}),
       ...(item.nestedUnder ? { nestedUnder: item.nestedUnder } : {}),
+      ...(item.beyond ? { beyond: item.beyond } : {}),
       depth: item.depth,
     });
   });

@@ -159,6 +159,17 @@ const APPS = {
 
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
     /*
+     * A PHONE. The scene is a desk view and the routed face is the answer at
+     * this width — but the scene is still reachable here, and a person who
+     * lands on it must not be missing a fifth of the picture with nowhere to
+     * scroll. Every count in this file runs at this width too now: the
+     * district row (which sheds rather than squeezing a name to one letter
+     * per line), the panel scrollers, and every control's designed size.
+     */
+    phone: { viewport: { width: 390, height: 844 }, go: async (p) => {
+      await p.waitForTimeout(600);
+    } },
+    /*
      * THE RAIL, OPEN. Two states here opened it and pressed Escape on the
      * way past, so every count was taken with it shut — and the two
      * controls inside it, the only way to take a turn back and the only way
