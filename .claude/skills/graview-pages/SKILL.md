@@ -158,7 +158,7 @@ handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
 - `face` is inferred from the stop, `scheme` from the host page; `label`
   names the landmarks, so two embeds are two regions with two names.
 - `mountWhenNear(elements, mountOne)` mounts many as a reader scrolls near
-  them. The strip shows the app's named places (`graview-lens`, step 7).
+  them. The strip shows the app's named places (`graview-lens`, step 8).
 
 ## Then find out whether it worked
 

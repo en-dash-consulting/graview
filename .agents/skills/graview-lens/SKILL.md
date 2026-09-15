@@ -63,7 +63,18 @@ Read one before writing your own:
 6. **Render at three fidelities.** `glyph` is a chip; `summary` is denser
    content, not the same content scaled down; `full` is the picture.
 
-7. **Give it a name when you register it.** A lens mounted over a group is
+7. **`nodes` is THE GROUP'S MEMBERS, and nothing else.** A lens mounted over
+   a kind's `many` cell receives that kind's members in `ViewProps.nodes` —
+   not the graph. Every interesting lens draws more than one kind (a board
+   has slots and occupants, a matrix has rows and columns, a map has regions
+   and markers), and every other kind comes from `store.graph`, narrowed back
+   to `nodes` for the group's own kind so the scene's horizon still applies.
+   Built from `nodes` alone, a map drew every piece of ground with nothing
+   standing in it: no error, no empty state, a complete, tidy, wrong picture,
+   which is the worst failure a lens has. The framework's own board lens had
+   this exact bug.
+
+8. **Give it a name when you register it.** A lens mounted over a group is
    registered on that kind's `many` cells, and the fourth argument names it:
    `registry.register("gardener", { cardinality: "many", fidelity: "full" },
    TendingView, { title: "Who tends what" })`. A titled group view is a
@@ -71,6 +82,19 @@ Read one before writing your own:
    anywhere, and show it pressed while you are there. Without the title the
    lens is reachable only by focusing the group, and once someone clicks
    into a member nothing on screen says it exists.
+
+## Roles live in two places, and they do different jobs
+
+`defineNode("shift", { fieldRoles: { start: "from" } })` is what everything
+that is NOT a lens reads: the graph's own responder answering "when is it",
+the generated docs. A lens reads `bindings` and only `bindings`. Neither
+overrides the other, because neither is looking at the other — so bind the
+lens, and declare `fieldRoles` because the rest of the app wants them too.
+
+`graview check` NOTES it when the two disagree about one role. Often that is
+a mistake; sometimes it is right, because a role name belongs to a lens and
+`fieldRoles` has one namespace for all of them: a rota means the hour a shift
+starts by `start`, and its calendar means the day. Look once, then decide.
 
 ## Then find out whether it worked
 

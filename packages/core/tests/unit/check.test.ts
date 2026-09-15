@@ -418,3 +418,45 @@ describe("an edge reads from both ends", () => {
     );
   });
 });
+
+/**
+ * A NOTE IS A QUESTION ASKED OUT LOUD, NOT A PROBLEM.
+ *
+ * Some things a checker can see are legitimate designs the author should
+ * nonetheless have looked at once. Filed as warnings they would be warnings
+ * that can only ever be acknowledged, and those are the ones people learn to
+ * scroll past — which costs the checker its authority on the warnings that
+ * matter.
+ */
+describe("what the checker says out loud without failing", () => {
+  const timed = defineNode("timed", {
+    fields: z.object({ label: z.string(), at: z.number(), due: z.string() }),
+    fieldRoles: { start: "at" },
+  });
+  const timedSchema = createSchema([timed]);
+
+  it("notes a lens binding and a fieldRole that disagree about one role", () => {
+    const app = defineApp({
+      name: "test",
+      schema: timedSchema,
+      lenses: [{ name: "calendar", requiredRoles: ["start"], bindings: { timed: { start: "due" } } }],
+    });
+    const result = checkApp(app);
+    expect(findings(app)).toContain("note:lens-binding-disagrees-with-field-role");
+    /* A note is never a failure, and is counted apart from the warnings. */
+    expect(result.ok).toBe(true);
+    expect(result.warnings).toBe(0);
+    expect(result.notes).toBe(1);
+    expect(formatFindings(result)).toContain("note ");
+    expect(formatFindings(result)).toContain("1 note(s)");
+  });
+
+  it("says nothing when they agree", () => {
+    const app = defineApp({
+      name: "test",
+      schema: timedSchema,
+      lenses: [{ name: "timeline", requiredRoles: ["start"], bindings: { timed: { start: "at" } } }],
+    });
+    expect(findings(app)).not.toContain("note:lens-binding-disagrees-with-field-role");
+  });
+});

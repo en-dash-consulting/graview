@@ -25,7 +25,20 @@ const store = () => createRotaUiStore(EXAMPLE_TODAY);
 describe("a roster is enough to show the whole platform", () => {
   it("declares its domain, its installation and its own check", () => {
     expect(rotaApp.schema.kinds).toEqual(["shift", "volunteer", "rule", "user", "invitation"]);
-    expect(checkApp(rotaApp).findings).toEqual([]);
+    /*
+     * No errors and no warnings. The one NOTE it carries is the deliberate
+     * answer to a real question: this app means two different things by the
+     * role "start" — the hour a shift begins (fieldRoles, which the
+     * responder reads and renders through the app's own clock format) and
+     * the day it falls on (the calendar's binding). A role name is a lens's
+     * word; fieldRoles has one namespace for all of them.
+     */
+    const checked = checkApp(rotaApp);
+    expect(checked.errors).toBe(0);
+    expect(checked.warnings).toBe(0);
+    expect(checked.findings.map((finding) => finding.code)).toEqual([
+      "lens-binding-disagrees-with-field-role",
+    ]);
     expect(rotaApp.version).toBe(2);
     expect(rotaApp.migrations).toHaveLength(1);
   });

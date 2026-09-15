@@ -15,7 +15,19 @@ import { checkKitContrast, resolveKit } from "../theme/kit.js";
 import type { Scheme } from "../theme/types.js";
 import type { AnySchema } from "../schema/schema.js";
 
-export type Severity = "error" | "warning";
+/**
+ * `note` is a QUESTION ASKED OUT LOUD, not a problem.
+ *
+ * Some things a checker can see are legitimate designs that the author
+ * should nonetheless have looked at once: a lens written for this app and
+ * never proved against another domain, a role name two vocabularies both
+ * use, a kind unreachable on an empty graph. Filed as warnings they would
+ * be warnings that can only ever be acknowledged, and those are the ones
+ * people learn to scroll past — which costs the checker its authority on
+ * the warnings that matter. So they have their own voice: counted, printed,
+ * and never a failure.
+ */
+export type Severity = "error" | "warning" | "note";
 
 export interface Finding {
   readonly severity: Severity;
@@ -32,6 +44,8 @@ export interface CheckResult {
   readonly findings: readonly Finding[];
   readonly errors: number;
   readonly warnings: number;
+  /** Questions asked out loud: never a failure, always worth one read. */
+  readonly notes: number;
   readonly ok: boolean;
 }
 
@@ -1240,12 +1254,38 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
           });
         }
       }
+      /*
+       * TWO PLACES NAME A ROLE, AND THEY DO DIFFERENT JOBS.
+       *
+       * `fieldRoles` on the kind is what everything that is not a lens reads
+       * — the graph's own responder answering "when is it", the generated
+       * docs. A lens reads `bindings` and only `bindings`. Neither overrides
+       * the other, because neither is looking at the other.
+       *
+       * Which is fine until they disagree, and then one surface answers with
+       * one field and the next surface answers with another, both truthfully.
+       * Nothing could see it before: each half is valid on its own.
+       */
+      const declaredRoles = (definition.fieldRoles ?? {}) as Record<string, string>;
+      for (const [role, bound] of Object.entries(bindings)) {
+        const field = fieldOf(bound);
+        const declared = declaredRoles[role];
+        if (field === undefined || declared === undefined || declared === field) continue;
+        add({
+          severity: "note",
+          code: "lens-binding-disagrees-with-field-role",
+          where: `lens "${lens.name}" bindings.${kind}.${role}`,
+          message: `The lens binds "${role}" to "${field}"; defineNode("${kind}").fieldRoles binds it to "${declared}". A lens reads bindings and everything else reads fieldRoles, so the picture and the sentence will answer differently.`,
+          fix: `Point both at the same field — or keep them apart deliberately, which is right when two lenses mean different things by one role name (a day and a time of day both being a "start").`,
+        });
+      }
     }
   }
 
   const errors = findings.filter((f) => f.severity === "error").length;
-  const warnings = findings.length - errors;
-  return { app: app.name, findings, errors, warnings, ok: errors === 0 };
+  const notes = findings.filter((f) => f.severity === "note").length;
+  const warnings = findings.length - errors - notes;
+  return { app: app.name, findings, errors, warnings, notes, ok: errors === 0 };
 }
 
 /**
@@ -1267,14 +1307,17 @@ export function formatFindings(result: CheckResult): string {
   if (result.findings.length === 0) {
     return `graview check: ${result.app} — no problems found.`;
   }
+  const said = { error: "ERROR", warning: "warn ", note: "note " } as const;
   const lines = result.findings.map(
     (f) =>
-      `${f.severity === "error" ? "ERROR" : "warn "} [${f.code}] ${f.where}\n` +
+      `${said[f.severity]} [${f.code}] ${f.where}\n` +
       `        ${f.message}\n        fix: ${f.fix}`,
   );
   return [
     `graview check: ${result.app}`,
     ...lines,
-    `${result.errors} error(s), ${result.warnings} warning(s)`,
+    `${result.errors} error(s), ${result.warnings} warning(s)${
+      result.notes > 0 ? `, ${result.notes} note(s)` : ""
+    }`,
   ].join("\n");
 }
