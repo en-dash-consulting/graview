@@ -67,8 +67,9 @@ export const pages = createPageRegistry<S, PageComponent<S>>(schema)
 ```
 
 `.route(path, Component)` gives a page that is NOT about a kind an address —
-onboarding, settings, import. It matches before `/:plural`, so nothing
-swallows it.
+onboarding, settings, import — matched before `/:plural`. **Every `to` is
+basename-relative** (`to="/survey"`, never `to="/pages/survey"`), and so is
+`initialPath`, so a test renders the hrefs a browser will.
 
 Rules for a page at this rung:
 

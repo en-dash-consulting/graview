@@ -1,0 +1,30 @@
+{
+  "id": "f6389f19-97cb-4141-93f3-65960efcc7ad",
+  "taskId": "112f7916-cb61-4415-aac8-962fac4bd70e",
+  "taskTitle": "built",
+  "startedAt": "2026-09-15T04:56:51.163Z",
+  "finishedAt": "2026-09-15T04:56:51.163Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "See the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

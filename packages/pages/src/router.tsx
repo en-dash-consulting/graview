@@ -27,7 +27,13 @@ export interface PagesAppProps<S extends AnySchema> {
   readonly registry?: PageRegistry<S, PageComponent<S>>;
   /** Mount path when the scene owns "/" — e.g. "/pages". */
   readonly basename?: string;
-  /** For tests and SSR: render at a fixed address with no real history. */
+  /**
+   * For tests and SSR: render at a fixed address with no real history.
+   *
+   * BASENAME-RELATIVE, like every `to` on this face. Given `basename`, the
+   * router is mounted at it and this path is joined on — so what a test
+   * renders is what a browser renders.
+   */
   readonly initialPath?: string;
 }
 
@@ -105,7 +111,28 @@ export function PagesApp<S extends AnySchema>({
 }: PagesAppProps<S>) {
   const inner = <PagesRoutes context={context} {...(registry ? { registry } : {})} />;
   if (initialPath !== undefined) {
-    return <MemoryRouter initialEntries={[initialPath]}>{inner}</MemoryRouter>;
+    /*
+     * THE TEST ROUTER CARRIES THE BASENAME TOO, OR THE TESTS ARE A LIE.
+     *
+     * `MemoryRouter` used to be handed the path and nothing else, so under
+     * `basename="/pages"` a `<Link to="/survey">` rendered `/survey` in a
+     * test and `/pages/survey` in a browser — and a link written the other
+     * way round, `to="/pages/survey"`, rendered correctly in every test and
+     * doubled to `/pages/pages/survey` the moment anybody opened it. A
+     * product shipped nine of those with twenty-five green tests asserting
+     * the exact hrefs.
+     *
+     * `initialPath` is basename-RELATIVE, like every `to` on this face, and
+     * the router is given both — so a test renders the hrefs a browser will.
+     * A path that already carries the basename now doubles here as well,
+     * which is the whole point: the mistake fails where it is cheap.
+     */
+    const entry = basename === undefined ? initialPath : `${basename.replace(/\/$/, "")}${initialPath}`;
+    return (
+      <MemoryRouter initialEntries={[entry]} {...(basename === undefined ? {} : { basename })}>
+        {inner}
+      </MemoryRouter>
+    );
   }
   return <BrowserRouter {...(basename === undefined ? {} : { basename })}>{inner}</BrowserRouter>;
 }

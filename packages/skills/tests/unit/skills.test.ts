@@ -202,8 +202,25 @@ describe("the skills package", () => {
     const pointing = skills.filter((skill) => /apps\/|packages\/[a-z]+\/src\//.test(skill.body));
     expect(pointing.length).toBeGreaterThanOrEqual(3);
     for (const skill of skills) {
-      // Nothing here should be long enough to be a copy of an app.
-      expect(skill.body.length, skill.name).toBeLessThan(9000);
+      /*
+       * NOTHING HERE IS LONG ENOUGH TO BE A COPY OF AN APP.
+       *
+       * That is the rule; the number is a proxy for it, and the proxy was
+       * set when the framework was smaller. One product's thirty-two
+       * findings put fourteen new facts into these files — the chain a blank
+       * graph walks, the doors a provider declares, where a lens gets its
+       * nodes, which role map wins, the plan a model proposes — and the last
+       * few were paid for by tightening prose that was carrying meaning.
+       * That trade is worth making once or twice and is a bad habit by the
+       * fifth time: the skills are the highest-value documentation in the
+       * repository, and shaving them to fit a round number is how they stop
+       * being read.
+       *
+       * Raised deliberately rather than removed. `graview-pages` is the
+       * largest because it covers three rungs and the embed, and at 11k it
+       * is still a quarter of the app it describes.
+       */
+      expect(skill.body.length, skill.name).toBeLessThan(11_000);
     }
   });
 });
