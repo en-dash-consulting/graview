@@ -106,7 +106,9 @@ The checker reads `lenses` in `defineApp` and reports `lens-role-unbound`,
 `lens-binding-missing-field` and `lens-binding-undeclared-kind`. Report the output.
 
 **And prove the reuse.** This is the claim a lens exists to support, and the one
-the checker cannot make for you. Write a test that builds it against a domain it
+the checker cannot make for you — it NOTES every lens in `lenses` that the
+framework did not ship (`lens-authored-here`) so the question gets asked out
+loud, and the answer is yours. Write a test that builds it against a domain it
 was not designed for:
 
 ```ts

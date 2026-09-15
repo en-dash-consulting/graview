@@ -104,6 +104,34 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
    * A declared provider's allowlist must name real mutations — a metering
    * or narrowing rule pointing at nothing enforces nothing.
    */
+  /*
+   * THE LENSES THIS FRAMEWORK SHIPS, by name.
+   *
+   * Names rather than implementations, because the checker lives a tier
+   * below the package that draws them. Anything else in `lenses` is a lens
+   * this app wrote, which is the one thing worth asking about: the reuse
+   * test is the single most valuable instruction in `graview-lens` — build
+   * it against a domain it was not designed for, and if you cannot, say so
+   * plainly, you wrote a view — and nothing enforces it. This cannot
+   * enforce it either. It can make sure the question gets asked out loud
+   * every time somebody runs a check, which is most of the distance.
+   */
+  const SHIPPED_LENSES = new Set(["timeline", "coverage", "board", "calendar", "reach"]);
+  const authored = (app.lenses ?? []).filter((lens) => !SHIPPED_LENSES.has(lens.name));
+  if (authored.length > 0) {
+    add({
+      severity: "note",
+      code: "lens-authored-here",
+      where: "lenses",
+      message: `${authored.map((lens) => `"${lens.name}"`).join(", ")} ${
+        authored.length === 1 ? "is a lens" : "are lenses"
+      } this app wrote. A lens claims to be reusable by a domain it was not designed for.`,
+      fix: `Build ${
+        authored.length === 1 ? "it" : "each of them"
+      } against another domain in a test — and if you cannot, say so plainly: it is a view, and there is nothing wrong with a view.`,
+    });
+  }
+
   const DOORS = ["paste", "mcp", "key", "local"] as const;
   for (const provider of app.intelligence ?? []) {
     for (const may of provider.may ?? []) {

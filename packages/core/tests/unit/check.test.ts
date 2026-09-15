@@ -451,6 +451,34 @@ describe("what the checker says out loud without failing", () => {
     expect(formatFindings(result)).toContain("1 note(s)");
   });
 
+  it("asks out loud whether a lens this app wrote is reusable", () => {
+    const app = defineApp({
+      name: "grounds",
+      schema: timedSchema,
+      lenses: [
+        { name: "timeline", requiredRoles: ["start"], bindings: { timed: { start: "at" } } },
+        { name: "grounds-map", requiredRoles: ["start"], bindings: { timed: { start: "at" } } },
+      ],
+    });
+    const result = checkApp(app);
+    expect(findings(app)).toContain("note:lens-authored-here");
+    /* The shipped one is not asked about; the app's own is, by name. */
+    const note = result.findings.find((finding) => finding.code === "lens-authored-here")!;
+    expect(note.message).toContain("grounds-map");
+    expect(note.message).not.toContain("timeline");
+    expect(note.fix).toContain("it is a view, and there is nothing wrong with a view");
+    expect(result.ok).toBe(true);
+  });
+
+  it("says nothing about an app that only binds lenses the framework ships", () => {
+    const app = defineApp({
+      name: "test",
+      schema: timedSchema,
+      lenses: [{ name: "timeline", requiredRoles: ["start"], bindings: { timed: { start: "at" } } }],
+    });
+    expect(findings(app)).not.toContain("note:lens-authored-here");
+  });
+
   it("says nothing when they agree", () => {
     const app = defineApp({
       name: "test",

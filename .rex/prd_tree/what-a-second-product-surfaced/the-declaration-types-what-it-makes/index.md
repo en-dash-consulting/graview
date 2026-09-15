@@ -20,7 +20,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [F-008 · The reuse test is the skill's best idea and the easiest to skip](./f-008-the-reuse-test-is-the-skill-s.md) | pending |
+| [F-008 · The reuse test is the skill's best idea and the easiest to skip](./f-008-the-reuse-test-is-the-skill-s.md) | completed |
 | [F-010 · fieldRoles vs lens bindings — two places, one job, unclear which wins](./f-010-fieldroles-vs-lens-bindings-two.md) | completed |
 | [F-012 · creates onboards a blank graph only for the FIRST kind in a chain](./f-012-creates-onboards-a-blank-graph.md) | pending |
 | [F-019 · An app cannot declare an edge to a person without losing its own kind names](./f-019-an-app-cannot-declare-an-edge-to.md) | completed |
