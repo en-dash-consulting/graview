@@ -22,7 +22,15 @@ agent tool that walks the graph.
    ```ts
    export const fixture = defineNode("fixture", {
      fields: z.object({
-       label: z.string(),
+       // A NAME, and bounded. Every derived surface draws `label` — on a
+       // card, in a list, on a plan — and `z.string().min(1)` permits a
+       // paragraph. That is fine while a person is typing it; a model asked
+       // to survey a garden wrote "Pea-gravel corner with river-rock
+       // border, log seats and a fire bowl", which is a true sentence and a
+       // terrible name, and it was never told otherwise because the prompt
+       // is generated from this file. `graview check` notes
+       // `label-unbounded` on any kind a declared provider may create.
+       label: z.string().min(1).max(60),
        kickOff: z.string(),
        opponent: z.string(),
      }),

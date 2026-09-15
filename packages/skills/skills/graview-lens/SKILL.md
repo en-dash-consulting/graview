@@ -11,13 +11,25 @@ coverage matrix does not know what a requirement is; it knows there are rows,
 columns and an edge that fills a cell. That indirection is the entire point: a
 lens written for one app is used unchanged by another.
 
-The framework ships three, each built from the public primitives — which makes
+The framework ships four, each built from the public primitives — which makes
 them the worked example of the authoring API rather than privileged insiders.
 Read one before writing your own:
 
 - `packages/primitives/src/lens/timeline.tsx` — intervals in columns
 - `packages/primitives/src/lens/coverage.tsx` — a bipartite mapping
 - `packages/primitives/src/lens/board.tsx` — position given by the domain
+- `packages/primitives/src/lens/plan.tsx` — an outline, with points inside it
+
+The plan is the one to read if yours draws anything, because it is the one
+that learned what drawing costs. A name is fitted to the shape it names —
+`fitLabel` and `spanAt` from `@graview/layout`, which give the width of a
+shape AT A HEIGHT rather than its bounding box, because the shapes that
+overflow are the long thin ones. Names are painted after everything else,
+because a marker dot took the first letter off two of them. Whatever will
+not fit goes in a key underneath. And `useDrawnSize` answers the question a
+scalable drawing hides: at THIS size, can a person read it, or press it? A
+one-pixel target with a keyboard stop and an ARIA label is not an accessible
+control; it is an inaccessible one that has been described.
 
 Start it with the scaffolder — `graview lens grounds-map --roles regions,markers
 --binds entities` — which writes all eight rules below already in place, and

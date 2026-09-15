@@ -24,3 +24,9 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [F-040 · awkwardGraph fills three field names, so it cannot build a graph for any real app](./f-040-awkwardgraph-fills-three-field.md) | completed |
 | [F-041 · <Intake>'s visually-hidden file input is a 1x1 target with a 1x1 focus ring](./f-041-intake-s-visually-hidden-file.md) | completed |
 | [F-042 · Open — nothing outside a browser can see what is drawn, and no app can fix it](./f-042-open-nothing-outside-a-browser.md) | pending |
+| [F-043 · A label a model writes is a name, and the declaration never said so](./f-043-a-label-a-model-writes-is-a-name.md) | completed |
+| [F-044 · A name has to fit the thing it names, and nothing did the arithmetic](./f-044-a-name-has-to-fit-the-thing-it.md) | completed |
+| [F-045 · A drawing does not know how big it actually is](./f-045-a-drawing-does-not-know-how-big.md) | completed |
+| [F-046 · A model's spatial answer was never checked against the space](./f-046-a-model-s-spatial-answer-was.md) | completed |
+| [F-047 · role=img on a drawing whose every shape is a button](./f-047-role-img-on-a-drawing-whose.md) | completed |
+| [F-048 · The plan lens belonged in the framework, not in a product](./f-048-the-plan-lens-belonged-in-the.md) | completed |
