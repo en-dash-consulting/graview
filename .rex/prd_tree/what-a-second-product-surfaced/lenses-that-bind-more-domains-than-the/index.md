@@ -22,7 +22,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [F-006 · The coverage lens cannot express a coverage that runs through a node](./f-006-the-coverage-lens-cannot-express.md) | pending |
+| [F-006 · The coverage lens cannot express a coverage that runs through a node](./f-006-the-coverage-lens-cannot-express.md) | completed |
 | [F-007 · There is no scaffolder for a lens](./f-007-there-is-no-scaffolder-for-a-lens.md) | pending |
 | [F-009 · figure is a great idea with a small shipped vocabulary](./f-009-figure-is-a-great-idea-with-a.md) | pending |
 | [F-013 · usePickTargets grants role=button to no SVG element](./f-013-usepicktargets-grants-role.md) | completed |

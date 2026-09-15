@@ -34,8 +34,16 @@ export interface CoverageRoles {
   readonly rows: string;
   /** Kind whose nodes are columns: the things that do the covering. */
   readonly columns: string;
-  /** Edge kind running from a column node to a row node. */
-  readonly link: string;
+  /**
+   * How a column node reaches a row node.
+   *
+   * An edge kind, for a relationship that IS a bare edge. Or a `path` of
+   * edge kinds — column end to row end — for one that runs through a node
+   * with fields of its own: a concern is addressed by a practice, applied by
+   * a routine, which covers a ground. That node is not incidental; it is
+   * where the cadence and the season live, so the cells carry it back.
+   */
+  readonly link: string | { readonly path: readonly string[] };
 }
 
 export interface CoverageOptions extends CoverageRoles {
@@ -84,6 +92,12 @@ export interface CoverageOptions extends CoverageRoles {
 export interface CoverageCell {
   readonly rowId: string;
   readonly columnId: string;
+  /**
+   * The nodes the walk passed through, column end first — empty for a bare
+   * edge. "Mosquitoes are covered in the Back Lawn" is only useful if
+   * pressing it shows WHICH routine does it and when it next runs.
+   */
+  readonly via?: readonly string[];
 }
 
 export interface CoverageGrid {
@@ -176,47 +190,99 @@ export function buildCoverage<S extends AnySchema>(
     return index === -1 ? order.length : index;
   };
 
-  const linked = edges.filter((edge) => edge.kind === options.link);
   const badgeEdges = options.badge
     ? edges.filter((edge) => edge.kind === options.badge!.edge)
     : [];
 
-  /*
-   * WHICH WAY THE EDGE RUNS IS SOMETHING THE SCHEMA ALREADY SAYS.
-   *
-   * This assumed `edge.from` was the column and `edge.to` the row, and the
-   * comment beside it claimed anything else was "a binding mistake rather
-   * than an empty grid, and saying so beats drawing nothing" — which the code
-   * did not do: it dropped the edge in silence. Half of all domains declare
-   * the relation the other way round ("an item is kept by an owner" reads row
-   * → column; "a control mitigates a risk" reads column → row), and those got
-   * a grid of entirely empty cells, every row flagged, and the lens reporting
-   * that nothing was covered when everything was. `graview check` passed,
-   * because the binding was not wrong — the assumption was.
-   *
-   * Guessing per edge would be worse: a hand-built edge running the illegal
-   * way would then fill a cell and the picture would lie about who covers
-   * what. The declaration settles it without guessing — whichever kind
-   * declares `link`, and what it points at, IS the direction — and an edge
-   * that does not fit that orientation is still ignored.
-   */
-  const declares = (kind: string) =>
-    schema?.tryDefinition?.(kind)?.edges?.[options.link]?.to as readonly string[] | undefined;
-  const columnPointsAtRow = (declares(options.columns) ?? []).some(
-    (target) => target === options.rows || target === "*",
-  );
-  const rowPointsAtColumn = (declares(options.rows) ?? []).some(
-    (target) => target === options.columns || target === "*",
-  );
-  // Undeclared either way: keep the reading this lens has always had.
-  const fromIsColumn = columnPointsAtRow || !rowPointsAtColumn;
   const rowIds = new Set(rowNodes.map((node) => node.id));
   const columnIds = new Set(columnNodes.map((node) => node.id));
   const cells: CoverageCell[] = [];
-  for (const edge of linked) {
-    const rowId = fromIsColumn ? edge.to : edge.from;
-    const columnId = fromIsColumn ? edge.from : edge.to;
-    if (rowIds.has(rowId) && columnIds.has(columnId)) cells.push({ rowId, columnId });
+
+  if (typeof options.link === "string") {
+    const link = options.link;
+    const linked = edges.filter((edge) => edge.kind === link);
+    /*
+     * WHICH WAY THE EDGE RUNS IS SOMETHING THE SCHEMA ALREADY SAYS.
+     *
+     * This assumed `edge.from` was the column and `edge.to` the row, and the
+     * comment beside it claimed anything else was "a binding mistake rather
+     * than an empty grid, and saying so beats drawing nothing" — which the
+     * code did not do: it dropped the edge in silence. Half of all domains
+     * declare the relation the other way round ("an item is kept by an
+     * owner" reads row → column; "a control mitigates a risk" reads column →
+     * row), and those got a grid of entirely empty cells, every row flagged,
+     * and the lens reporting that nothing was covered when everything was.
+     * `graview check` passed, because the binding was not wrong — the
+     * assumption was.
+     *
+     * Guessing per edge would be worse: a hand-built edge running the
+     * illegal way would then fill a cell and the picture would lie about who
+     * covers what. The declaration settles it without guessing — whichever
+     * kind declares `link`, and what it points at, IS the direction — and an
+     * edge that does not fit that orientation is still ignored.
+     */
+    const declares = (kind: string) =>
+      schema?.tryDefinition?.(kind)?.edges?.[link]?.to as readonly string[] | undefined;
+    const columnPointsAtRow = (declares(options.columns) ?? []).some(
+      (target) => target === options.rows || target === "*",
+    );
+    const rowPointsAtColumn = (declares(options.rows) ?? []).some(
+      (target) => target === options.columns || target === "*",
+    );
+    // Undeclared either way: keep the reading this lens has always had.
+    const fromIsColumn = columnPointsAtRow || !rowPointsAtColumn;
+    for (const edge of linked) {
+      const rowId = fromIsColumn ? edge.to : edge.from;
+      const columnId = fromIsColumn ? edge.from : edge.to;
+      if (rowIds.has(rowId) && columnIds.has(columnId)) cells.push({ rowId, columnId });
+    }
+  } else {
+    /*
+     * A RELATIONSHIP THAT RUNS THROUGH A NODE.
+     *
+     * The walk is named by edge kind, column end first, and each step
+     * follows an edge of that kind IN EITHER DIRECTION — an edge has two
+     * readings, and which one a domain happened to declare is not the
+     * picture's business. What comes back with the cell is the nodes passed
+     * through, because the routine in the middle is the thing worth pressing.
+     *
+     * A path is walked per column node rather than joined over the whole
+     * graph: it keeps the intermediates for THIS cell, and a domain with
+     * hundreds of routines still only ever walks the edges of one kind at a
+     * time.
+     */
+    const byKind = new Map<string, { from: string; to: string }[]>();
+    for (const edge of edges) {
+      const bucket = byKind.get(edge.kind);
+      if (bucket) bucket.push(edge);
+      else byKind.set(edge.kind, [{ from: edge.from, to: edge.to }]);
+    }
+    const seen = new Set<string>();
+    for (const column of columnNodes) {
+      /* Each reachable node, with the trail that got there. */
+      let frontier: { id: string; via: string[] }[] = [{ id: column.id, via: [] }];
+      for (const step of options.link.path) {
+        const next: { id: string; via: string[] }[] = [];
+        const here = new Set<string>();
+        for (const at of frontier) {
+          for (const edge of byKind.get(step) ?? []) {
+            const onward = edge.from === at.id ? edge.to : edge.to === at.id ? edge.from : undefined;
+            if (onward === undefined || here.has(`${at.id}|${onward}`)) continue;
+            here.add(`${at.id}|${onward}`);
+            next.push({ id: onward, via: [...at.via, at.id] });
+          }
+        }
+        frontier = next;
+      }
+      for (const reached of frontier) {
+        if (!rowIds.has(reached.id)) continue;
+        const key = `${reached.id}|${column.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        /* The trail starts at the column itself; the hinges are what is after it. */
+        cells.push({ rowId: reached.id, columnId: column.id, via: reached.via.slice(1) });
+      }
+    }
   }
 
   const required = new Set(options.requiredGroups ?? []);

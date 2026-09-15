@@ -1150,7 +1150,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
      * and completely wrong diagnosis — the sort a checker earns distrust for.
      */
     if (lens.binds === "entities") {
-      const bindings = (lens.bindings ?? {}) as Record<string, Record<string, string>>;
+      const bindings = (lens.bindings ?? {}) as Record<string, Record<string, unknown>>;
       for (const role of lens.requiredRoles) {
         if (!(role in bindings)) {
           add({
@@ -1158,17 +1158,49 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
             code: "lens-role-unbound",
             where: `lens "${lens.name}" bindings`,
             message: `Lens "${lens.name}" requires role "${role}", which nothing binds.`,
-            fix: `Add ${role}: { kind: "<node kind>" } or { edge: "<edge kind>" }.`,
+            fix: `Add ${role}: { kind: "<node kind>" }, { edge: "<edge kind>" } or { path: ["<edge>", …] }.`,
           });
         }
       }
       /** The kind a role names, so a field binding can be checked against it. */
-      const kindOfRole = (role: string): string | undefined => bindings[role]?.["kind"];
+      const kindOfRole = (role: string): string | undefined => {
+        const named = bindings[role]?.["kind"];
+        return typeof named === "string" ? named : undefined;
+      };
 
       for (const [role, binding] of Object.entries(bindings)) {
-        const kind = binding["kind"];
-        const edge = binding["edge"];
-        const field = binding["field"];
+        const kind = typeof binding["kind"] === "string" ? (binding["kind"] as string) : undefined;
+        const edge = typeof binding["edge"] === "string" ? (binding["edge"] as string) : undefined;
+        const field = typeof binding["field"] === "string" ? (binding["field"] as string) : undefined;
+        /*
+         * A relationship that runs THROUGH a node is a walk, and every step
+         * of it is an edge kind somebody declared — so the whole path is
+         * checkable, which is the point of naming it here rather than
+         * reaching for the graph inside a view.
+         */
+        const path = Array.isArray(binding["path"]) ? (binding["path"] as readonly unknown[]) : undefined;
+        if (path !== undefined) {
+          if (path.length === 0) {
+            add({
+              severity: "error",
+              code: "lens-binding-empty-path",
+              where: `lens "${lens.name}" bindings.${role}`,
+              message: `Role "${role}" binds an empty path, which reaches nothing.`,
+              fix: `Name the edge kinds from the column end to the row end, e.g. path: ["covers", "applies", "addresses"].`,
+            });
+          }
+          for (const step of path) {
+            if (typeof step !== "string" || !edgeKinds.has(step)) {
+              add({
+                severity: "error",
+                code: "lens-binding-undeclared-edge",
+                where: `lens "${lens.name}" bindings.${role}`,
+                message: `Role "${role}" walks through "${String(step)}", which no defineNode declares as an edge.`,
+                fix: `Use one of: ${[...edgeKinds].join(", ")}.`,
+              });
+            }
+          }
+        }
         if (kind !== undefined && !kinds.has(kind)) {
           add({
             severity: "error",
@@ -1188,7 +1220,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
           });
         }
         if (field !== undefined) {
-          const owner = binding["on"];
+          const owner = typeof binding["on"] === "string" ? (binding["on"] as string) : undefined;
           const ownerKind = owner === undefined ? undefined : kindOfRole(owner);
           if (owner === undefined || ownerKind === undefined) {
             add({
@@ -1213,13 +1245,13 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
             }
           }
         }
-        if (kind === undefined && edge === undefined && field === undefined) {
+        if (kind === undefined && edge === undefined && field === undefined && path === undefined) {
           add({
             severity: "error",
             code: "lens-binding-empty",
             where: `lens "${lens.name}" bindings.${role}`,
             message: `Role "${role}" binds nothing.`,
-            fix: `Give it { kind: "<node kind>" }, { edge: "<edge kind>" } or { field: "<field>", on: "<role>" }.`,
+            fix: `Give it { kind: "<node kind>" }, { edge: "<edge kind>" }, { path: ["<edge>", …] } or { field: "<field>", on: "<role>" }.`,
           });
         }
       }

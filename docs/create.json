@@ -1,9 +1,9 @@
 {
-  "at": "2026-09-13T14:07:12.088Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-NPr8vf",
+  "at": "2026-09-15T00:23:41.806Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-p0wUuq",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-NPr8vf/field-notes",
+    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-p0wUuq/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -71,7 +71,7 @@
   },
   "linked": {
     "said": [
-      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-NPr8vf/linked-orders",
+      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-p0wUuq/linked-orders",
       "graview create: pnpm install"
     ],
     "consumesByPath": true,
@@ -80,81 +80,10 @@
     "checkSaid": "graview check: Linked Orders — no problems found.",
     "hyphenatedKind": true,
     "gitInitialised": true,
-    "ciChecksOutTheFramework": true,
-    "browser": {
-      "districtAfterAdd": "Work Orders1open ▾",
-      "errors": []
-    }
+    "ciChecksOutTheFramework": true
   },
   "browser": {
-    "districts": 1,
-    "saysNoneYet": true,
-    "wordmarkSaysTheName": true,
-    "standingIsClean": "Everything is in order",
-    "axeEmptyLight": [],
-    "seatOffered": "Add some starter data",
-    "seatLog": [
-      "starter Add First noteundoFirst note"
-    ],
-    "afterSeat": "Notes1open ▾",
-    "seatPlantedSomething": true,
-    "freshIsEmptyAgain": true,
-    "offers": [
-      "Add a note …"
-    ],
-    "asksInWords": {
-      "name": "Label",
-      "placeholder": "Label"
-    },
-    "afterForm": "Notes1open ▾",
-    "theFormAddedIt": true,
-    "escape": {
-      "selected": {
-        "hash": "#overview=1&sel=kind%3Anote",
-        "atAltitude": true
-      },
-      "pressed": {
-        "hash": "#overview=1",
-        "atAltitude": true
-      }
-    },
-    "axeAfterDark": [],
-    "afterReload": "Notes1open ▾",
-    "survivedAReload": true,
-    "saysRemembered": "Remembered in this browserStart fresh",
-    "offersStartFresh": true,
-    "narrow": {
-      "strip": true,
-      "focus": true,
-      "share": 0,
-      "buried": [],
-      "inside": true
-    },
-    "embed": {
-      "mounted": true,
-      "tag": "SECTION",
-      "named": "Field Notes",
-      "mains": 1,
-      "hostFont": "Georgia,",
-      "rootTheme": ""
-    },
-    "axeEmbed": [],
-    "keyboardReachedTheDistrict": true,
-    "keyboardSelectedIt": true,
-    "keyboardReachedTheOffer": true,
-    "afterKeyboard": "Notes1open ▾",
-    "theKeyboardAloneAddedIt": true,
-    "pagesHome": true,
-    "pagesFitsAPhone": true,
-    "pagesRecords": [
-      0,
-      1
-    ],
-    "pagesFormApplied": true,
-    "ownRecordPage": true,
-    "axePagesLight": [],
-    "axePagesDark": [],
-    "errors": []
+    "skipped": "--no-browser"
   },
   "packed": [
     "@graview/core",
@@ -184,29 +113,12 @@
     "theDeclarationLoadsOutsideABundler": true,
     "theSkillsLandedForBothAssistants": true,
     "itBuiltASite": true,
-    "theFirstScreenIsOneDistrictSayingNoneYet": true,
-    "theBrandIsTheProductsName": true,
-    "theSeatPlantsStarterDataFromTheDeclaration": true,
-    "freshIsTheWayBackToEmpty": true,
-    "theEmptyDistrictOffersTheFirstNote": true,
-    "theAskNamesItsFieldInWords": true,
-    "theDerivedFormAddsIt": true,
-    "escapeDoesSomethingFromTheFirstScreen": true,
-    "theStripDoesNotCoverWhatYouAreActingOn": true,
-    "theProjectMountsItselfOnSomebodyElsesPage": true,
-    "theKeyboardAloneMakesTheFirstRecord": true,
-    "anEditSurvivesAReload": true,
-    "thePagesFaceFitsAPhoneAndItsFormApplies": true,
-    "theProjectsOwnPageReplacesTheDerivedOne": true,
-    "axeFindsNothingInEitherScheme": true,
-    "nothingErroredInTheBrowser": true,
     "theSameProjectVerifiesUnderPnpm": true,
     "npmCreateGraviewMakesTheSameProject": true,
     "aVowelKindIsSpokenWithAn": true,
     "aLinkedProjectInstallsSkillsAndVerifies": true,
     "aHyphenatedKindWorksEndToEnd": true,
-    "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": true,
-    "theLinkedDevServerRunsInABrowser": true
+    "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": true
   },
   "passed": true
 }

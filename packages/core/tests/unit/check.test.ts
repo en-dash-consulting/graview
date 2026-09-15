@@ -428,6 +428,50 @@ describe("an edge reads from both ends", () => {
  * scroll past — which costs the checker its authority on the warnings that
  * matter.
  */
+/**
+ * A relationship that runs THROUGH a node is a walk, and every step of it is
+ * an edge kind somebody declared — so the whole path is checkable, which is
+ * the point of naming it in the declaration rather than reaching for the
+ * graph inside a view.
+ */
+describe("a coverage that runs through a node", () => {
+  const thing = defineNode("thing", { fields: z.object({ label: z.string() }) });
+  const hinge = defineNode("hinge", {
+    fields: z.object({ label: z.string() }),
+    edges: {
+      applies: { to: ["thing"], description: "what it applies", inverse: "how" },
+      covers: { to: ["duty"], description: "what it covers", inverse: "what covers it" },
+    },
+  });
+  const walkSchema = createSchema([thing, hinge, duty]);
+  const lens = (path: readonly unknown[]) =>
+    defineApp({
+      name: "test",
+      schema: walkSchema,
+      lenses: [
+        {
+          name: "coverage",
+          binds: "entities" as const,
+          requiredRoles: ["rows", "columns", "link"],
+          bindings: { rows: { kind: "thing" }, columns: { kind: "duty" }, link: { path } } as never,
+        },
+      ],
+    });
+
+  it("accepts a path of declared edge kinds", () => {
+    expect(findings(lens(["covers", "applies"]))).not.toContain("error:lens-binding-undeclared-edge");
+    expect(findings(lens(["covers", "applies"]))).not.toContain("error:lens-binding-empty");
+  });
+
+  it("names a step no kind declares", () => {
+    expect(findings(lens(["covers", "sprinkles"]))).toContain("error:lens-binding-undeclared-edge");
+  });
+
+  it("refuses a path that reaches nothing", () => {
+    expect(findings(lens([]))).toContain("error:lens-binding-empty-path");
+  });
+});
+
 describe("what the checker says out loud without failing", () => {
   const timed = defineNode("timed", {
     fields: z.object({ label: z.string(), at: z.number(), due: z.string() }),

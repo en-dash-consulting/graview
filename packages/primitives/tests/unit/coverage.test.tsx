@@ -272,3 +272,118 @@ describe("an edge declared from the row towards the column", () => {
     expect(grid.cells.map((cell) => [cell.rowId, cell.columnId])).toEqual([["b", "a"]]);
   });
 });
+
+/**
+ * A COVERAGE THAT RUNS THROUGH A NODE.
+ *
+ * `link` as one edge kind covers the relationships that ARE a bare edge —
+ * requirements↔deliverables, skills↔drills. It cannot express the ones where
+ * the relationship is a thing with fields of its own:
+ *
+ *   concern ◀──addresses── practice ◀──applies── routine ──covers──▶ zone
+ *
+ * "Is this concern covered on this ground?" is a two-hop question with a node
+ * in the middle, and the node in the middle is where the cadence and the
+ * season window live. The workarounds were all bad: denormalise an edge and
+ * keep two sources of truth in step by hand; draw a weaker question than the
+ * rule answers; or reimplement a shipped lens with one extra hop.
+ */
+const concern = defineNode("concern", { fields: z.object({ label: z.string() }), plural: "Concerns" });
+const practice = defineNode("practice", {
+  fields: z.object({ label: z.string() }),
+  plural: "Practices",
+  edges: { addresses: { to: ["concern"], description: "what it is for", inverse: "what bears on it" } },
+});
+const routine = defineNode("routine", {
+  fields: z.object({ label: z.string(), cadence: z.string() }),
+  plural: "Routines",
+  edges: {
+    applies: { to: ["practice"], description: "what it applies", inverse: "how it is done" },
+    covers: { to: ["zone"], description: "the ground it covers", inverse: "what is done here" },
+  },
+});
+const zone = defineNode("zone", { fields: z.object({ label: z.string() }), plural: "Zones" });
+const grounds = createSchema([concern, practice, routine, zone]);
+
+const ground = {
+  nodes: [
+    { id: "mosquitoes", kind: "concern", label: "Mosquitoes" },
+    { id: "moss", kind: "concern", label: "Moss" },
+    { id: "damp-sweep", kind: "practice", label: "Damp sweep" },
+    { id: "scarify", kind: "practice", label: "Scarify" },
+    { id: "fortnightly-sweep", kind: "routine", label: "Fortnightly sweep", cadence: "P14D" },
+    { id: "spring-scarify", kind: "routine", label: "Spring scarify", cadence: "P1Y" },
+    { id: "back-lawn", kind: "zone", label: "Back Lawn" },
+    { id: "drive", kind: "zone", label: "Drive" },
+  ],
+  edges: [
+    { kind: "addresses", from: "damp-sweep", to: "mosquitoes" },
+    { kind: "addresses", from: "scarify", to: "moss" },
+    { kind: "applies", from: "fortnightly-sweep", to: "damp-sweep" },
+    { kind: "applies", from: "spring-scarify", to: "scarify" },
+    { kind: "covers", from: "fortnightly-sweep", to: "back-lawn" },
+    { kind: "covers", from: "spring-scarify", to: "back-lawn" },
+  ],
+};
+
+const walked = () =>
+  buildCoverage(ground.nodes as never, ground.edges, {
+    rows: "concern",
+    columns: "zone",
+    link: { path: ["covers", "applies", "addresses"] },
+  }, grounds as never);
+
+describe("a matrix whose relationship is a node", () => {
+  it("fills a cell when a path exists, and leaves it empty when none does", () => {
+    const grid = walked();
+    const filled = grid.cells.map((cell) => `${cell.rowId}@${cell.columnId}`).sort();
+    expect(filled).toEqual(["mosquitoes@back-lawn", "moss@back-lawn"]);
+    /* The Drive has no routine on it, so nothing is covered there. */
+    expect(grid.cells.some((cell) => cell.columnId === "drive")).toBe(false);
+  });
+
+  it("carries the hinge node, which is the thing worth pressing", () => {
+    const cell = walked().cells.find((one) => one.rowId === "mosquitoes")!;
+    /* "Mosquitoes are covered in the Back Lawn" — by WHICH routine, doing what. */
+    expect(cell.via).toEqual(["fortnightly-sweep", "damp-sweep"]);
+  });
+
+  it("walks an edge in either direction, because an edge has two readings", () => {
+    /* The same question asked from the other end: rows and columns swapped,
+       and the path reversed. The domain declared none of these edges in the
+       direction the walk happens to take. */
+    const grid = buildCoverage(ground.nodes as never, ground.edges, {
+      rows: "zone",
+      columns: "concern",
+      link: { path: ["addresses", "applies", "covers"] },
+    }, grounds as never);
+    expect(grid.cells.map((cell) => `${cell.rowId}@${cell.columnId}`).sort()).toEqual([
+      "back-lawn@mosquitoes",
+      "back-lawn@moss",
+    ]);
+  });
+
+  it("says a row is uncovered when the chain is broken anywhere along it", () => {
+    const without = ground.edges.filter((edge) => edge.from !== "fortnightly-sweep" || edge.kind !== "covers");
+    const grid = buildCoverage(ground.nodes as never, without, {
+      rows: "concern",
+      columns: "zone",
+      link: { path: ["covers", "applies", "addresses"] },
+    }, grounds as never);
+    expect(grid.rows.find((row) => row.id === "mosquitoes")?.covered).toBe(false);
+    expect(grid.rows.find((row) => row.id === "moss")?.covered).toBe(true);
+  });
+
+  it("leaves a bare-edge binding doing exactly what it did", () => {
+    const grid = buildCoverage(ground.nodes as never, ground.edges, {
+      rows: "concern",
+      columns: "practice",
+      link: "addresses",
+    }, grounds as never);
+    expect(grid.cells.map((cell) => `${cell.rowId}@${cell.columnId}`).sort()).toEqual([
+      "mosquitoes@damp-sweep",
+      "moss@scarify",
+    ]);
+    expect(grid.cells.every((cell) => cell.via === undefined)).toBe(true);
+  });
+});

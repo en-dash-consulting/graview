@@ -26,6 +26,29 @@ import type { ViewRegistry } from "./views/types.js";
 export type EntityBinding =
   | { readonly kind: string }
   | { readonly edge: string }
+  /**
+   * A RELATIONSHIP THAT RUNS THROUGH A NODE.
+   *
+   * One edge kind covers the relationships that are a bare edge —
+   * requirements↔deliverables, skills↔drills. It cannot express the ones
+   * where the relationship IS a thing with fields of its own: a concern is
+   * addressed by a practice, applied by a routine, which covers a ground.
+   * "Is this concern covered on this ground?" is a two-hop question with a
+   * node in the middle, and the node in the middle is not incidental — it is
+   * where the cadence and the season live.
+   *
+   * `path` is that walk, named by edge kind, from the COLUMN end to the ROW
+   * end. Each step follows an edge of that kind in either direction, because
+   * an edge has two readings and which one a domain declared is not the
+   * picture's business. The nodes passed through come back with the cell, so
+   * pressing "mosquitoes are covered in the Back Lawn" can show WHICH
+   * routine does it and when it next runs.
+   *
+   * Generalises well past one domain: controls↔risks through a policy,
+   * tests↔behaviours through a suite, staff↔shifts through a rota line.
+   * Wherever the relationship has attributes, it is a node.
+   */
+  | { readonly path: readonly string[] }
   | { readonly field: string; readonly on: string };
 
 export interface LensDeclaration {
