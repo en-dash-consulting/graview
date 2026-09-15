@@ -157,12 +157,48 @@ export interface MigrationDeclaration {
   readonly apply: (snapshot: GraphSnapshot) => readonly Primitive[];
 }
 
+/**
+ * THE FOUR DOORS a browser app has to a model.
+ *
+ *   "paste"  — a prompt to copy out and an answer to paste back. Works
+ *              everywhere, needs nothing, and is the floor every provider
+ *              should keep: a person with a model open in another tab.
+ *   "mcp"    — an assistant already holding the tool surface reaches in.
+ *   "key"    — the person's own key, typed into this browser. Whoever
+ *              declares this owes an answer about where the key lives.
+ *   "local"  — a process on this machine, spawned by the dev server and
+ *              called from the page. Free, private, and only ever there
+ *              while somebody is running the app from a terminal.
+ */
+export type IntelligenceReach = "paste" | "mcp" | "key" | "local";
+
 export interface IntelligenceProviderDeclaration {
   readonly name: string;
   readonly kind: "graph" | "llm" | "external";
   readonly description?: string;
   /** Mutation names this provider may propose or call. Absent means all. */
   readonly may?: readonly string[];
+  /**
+   * How words and photographs actually REACH this provider.
+   *
+   * A provider could be named and bounded and not reached: the declaration
+   * said what a model may do and nothing about how a person's photograph
+   * gets to it, so nothing derived from it could say either — a seat could
+   * not offer "send from here" or "copy the prompt" according to what was
+   * declared, the checker could not ask a keyed provider where its key
+   * lives, and the docs could not list the doors. Absent means the provider
+   * says nothing about its doors, which is what every app said until now.
+   */
+  readonly reach?: readonly IntelligenceReach[];
+  /**
+   * Where a `local` reach answers: the dev-server path the bridge serves.
+   *
+   * Named here so the same string is the checker's evidence that a local
+   * reach was actually wired, and the path `useLocalIntelligence()` probes.
+   */
+  readonly bridge?: string;
+  /** Where a `key` reach keeps the key, in the app's own words. */
+  readonly keyStorage?: string;
 }
 
 export function defineApp<S extends AnySchema>(app: GraviewApp<S>): GraviewApp<S> {

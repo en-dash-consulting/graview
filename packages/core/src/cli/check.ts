@@ -90,6 +90,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
    * A declared provider's allowlist must name real mutations — a metering
    * or narrowing rule pointing at nothing enforces nothing.
    */
+  const DOORS = ["paste", "mcp", "key", "local"] as const;
   for (const provider of app.intelligence ?? []) {
     for (const may of provider.may ?? []) {
       if (!mutations.has(may)) {
@@ -101,6 +102,53 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
           fix: `Register the mutation, or remove it from the allowlist.`,
         });
       }
+    }
+    /*
+     * THE DOORS, asked about. A declaration that says how a provider is
+     * reached is worth having only if the answers are the ones the seat and
+     * the docs can act on, and if the two that owe a second sentence are
+     * made to give it: a local reach with nothing serving it is a door onto
+     * a wall, and a key typed into a browser with no storage story is the
+     * kind of thing nobody notices until it is somebody's key.
+     */
+    const reach = provider.reach ?? [];
+    for (const door of reach) {
+      if (!(DOORS as readonly string[]).includes(door)) {
+        add({
+          severity: "error",
+          code: "intelligence-reach-unknown",
+          where: `intelligence["${provider.name}"].reach`,
+          message: `"${door}" is not a way a provider can be reached.`,
+          fix: `Use one of: ${DOORS.join(", ")}.`,
+        });
+      }
+    }
+    if (reach.length > 0 && provider.kind === "graph") {
+      add({
+        severity: "warning",
+        code: "intelligence-reach-on-graph",
+        where: `intelligence["${provider.name}"].reach`,
+        message: `"${provider.name}" is a graph provider: it IS the graph, so there is no door to it.`,
+        fix: `Drop reach, or declare the provider as "llm" or "external".`,
+      });
+    }
+    if (reach.includes("local") && !provider.bridge) {
+      add({
+        severity: "warning",
+        code: "intelligence-local-without-bridge",
+        where: `intelligence["${provider.name}"]`,
+        message: `"${provider.name}" says it can be reached locally and names no bridge, so nothing serves that door.`,
+        fix: `Add bridge: "<path>" and serve it with localIntelligence() from @graview/ship/dev.`,
+      });
+    }
+    if (reach.includes("key") && !provider.keyStorage) {
+      add({
+        severity: "warning",
+        code: "intelligence-key-without-storage",
+        where: `intelligence["${provider.name}"]`,
+        message: `"${provider.name}" takes a person's own key and does not say where it is kept.`,
+        fix: `Add keyStorage: "<where, in your own words>" — a person handing over a key is owed the sentence.`,
+      });
     }
   }
 

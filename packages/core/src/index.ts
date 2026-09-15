@@ -201,7 +201,7 @@ export { resolveModules } from "./modules.js";
 export { declareInstallation, INSTALLATION_MODULE } from "./installation.js";
 export type { Installation, InstallationOf, InstallationOptions } from "./installation.js";
 export type { ModuleDeclaration, ModuleMap, ModuleProjection } from "./modules.js";
-export type { IntelligenceProviderDeclaration, MigrationDeclaration, SettingDeclaration } from "./app.js";
+export type { IntelligenceProviderDeclaration, IntelligenceReach, MigrationDeclaration, SettingDeclaration } from "./app.js";
 export { motion, readerSettings, textSize } from "./settings.js";
 export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";

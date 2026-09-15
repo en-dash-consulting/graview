@@ -77,6 +77,21 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
   }
   lines.push("");
 
+  if (app.intelligence?.length) {
+    lines.push("## Intelligence", "");
+    for (const provider of app.intelligence) {
+      lines.push(`### ${provider.name} (${provider.kind})`);
+      if (provider.description) lines.push("", provider.description);
+      /* THE DOORS, so a reader knows how to reach it rather than guessing. */
+      if (provider.reach?.length) {
+        lines.push("", `Reached by: ${provider.reach.join(", ")}.`);
+        if (provider.bridge) lines.push(`The local door answers at \`${provider.bridge}\`.`);
+        if (provider.keyStorage) lines.push(`A key given here is kept ${provider.keyStorage}.`);
+      }
+      lines.push("", `May: ${provider.may?.join(", ") ?? "every registered mutation"}.`, "");
+    }
+  }
+
   if (app.views) {
     lines.push("## Views", "");
     lines.push(
