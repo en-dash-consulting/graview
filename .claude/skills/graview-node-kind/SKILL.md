@@ -80,7 +80,13 @@ agent tool that walks the graph.
 
 - **`creates`** on the mutation that adds this kind (`creates: ["fixture"]`):
   the empty kind card then offers "Add a fixture" by derivation — the blank
-  graph onboards itself.
+  graph onboards itself, FROM THE ROOT OF THE CHAIN. An act that also takes
+  a `nodeRef` has no candidates on an empty graph, so it is withheld (a
+  picker with nothing in it is worse than no button) and the district says
+  what it is waiting for instead: *"Place a feature" cannot begin until there
+  is a zone.* Expect exactly one way in on a blank installation, and check
+  that it is the one you meant — this only ever shows up on the graph nobody
+  tests against.
 - **`fromTheOtherEnd`** on the act that makes or breaks the edge. An act
   declaring `connects` or `severs` is offered from BOTH ends of the tie, and
   `title` is written from the subject's side: "Name a caretaker", offered on

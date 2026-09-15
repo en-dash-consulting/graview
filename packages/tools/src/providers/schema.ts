@@ -1,5 +1,5 @@
 import { argShape, humaniseField, nodeRefArgs, withArticle, type AnySchema, type Store } from "@graview/core";
-import type { Affordance, AffordanceProvider, OpenParameter } from "../types.js";
+import type { Affordance, AffordanceProvider, Observation, OpenParameter } from "../types.js";
 
 const BASE_SCORE = 40;
 
@@ -116,6 +116,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
        */
       if (nodes.length === 0 && kindSelection.length > 0) {
         const wanted = new Set(kindSelection);
+        const observations: Observation[] = [];
         for (const mutation of store.allMutations()) {
           if (!(mutation.creates ?? []).some((kind) => wanted.has(kind as string))) continue;
           const open: OpenParameter[] = [];
@@ -148,7 +149,49 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
               : (parameter.candidates?.length ?? 0) > 0 ||
                 (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
           );
-          if (!askable) continue;
+          /*
+           * AN ACT WITHHELD FOR WANT OF A CANDIDATE IS NOT AN ACT THAT DOES
+           * NOT EXIST, and the difference is the whole onboarding of a blank
+           * graph.
+           *
+           * "creates: [kind] means an empty kind card offers its own
+           * beginnings" holds for the kinds at the ROOT of the dependency
+           * chain and stops there — because in any real domain almost every
+           * creating act connects to something, and an act that needs a zone
+           * cannot act when there are no zones. The derivation is right to
+           * withhold it; a form with an empty picker is worse than nothing.
+           *
+           * What was wrong is that it said nothing. A person meets eight
+           * districts, one of which offers a way in, and no explanation for
+           * the other seven. The unsatisfied argument already names the kind
+           * it wants, so the district can say it in the declaration's own
+           * words — and it is an observation rather than an action, because
+           * there is nothing to press yet.
+           */
+          if (!askable) {
+            const waiting = open.filter(
+              (parameter) =>
+                parameter.optional !== true &&
+                parameter.kinds !== undefined &&
+                !parameter.kinds.includes("*") &&
+                (parameter.candidates?.length ?? 0) === 0,
+            );
+            if (waiting.length > 0) {
+              const wants = [
+                ...new Set(waiting.flatMap((parameter) => parameter.kinds ?? [])),
+              ].map((kind) => withArticle(kind));
+              observations.push({
+                id: `schema:waits:${mutation.name}`,
+                text: `"${mutation.title ?? mutation.name}" cannot begin until there is ${
+                  wants.length === 1
+                    ? wants[0]
+                    : `${wants.slice(0, -1).join(", ")} and ${wants[wants.length - 1]}`
+                }.`,
+                nodeIds: [],
+              });
+            }
+            continue;
+          }
           affordances.push({
             id: `schema:add:${mutation.name}`,
             label: mutation.title ?? mutation.name,
@@ -164,7 +207,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             nodeIds: [],
           });
         }
-        return { affordances };
+        return { affordances, observations };
       }
 
       if (nodes.length === 0) return {};

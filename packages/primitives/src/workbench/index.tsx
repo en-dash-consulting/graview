@@ -512,6 +512,12 @@ export function Inspector() {
     [store],
   );
   const { affordances, withheld, observations } = useAffordances(deriveOptions);
+  /*
+   * Whether the derivation is withholding a creating act for want of the
+   * kind it connects to, rather than for want of a mutation. The observation
+   * above the list already names it, so the empty-list sentence stands down.
+   */
+  const waiting = observations.some((observation) => observation.id.startsWith("schema:waits:"));
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -1109,11 +1115,16 @@ export function Inspector() {
           Nothing offered here matches “{query.trim()}”.
         </p>
       ) : null}
-      {affordances.length === 0 ? (
+      {affordances.length === 0 && !waiting ? (
         /*
          * An empty action list is a RESULT, not a blank space. Saying which
          * kind has no mutations declaring it as a subject is the same honesty
          * the check CLI gives an agent, pointed at a person.
+         *
+         * Except when the derivation has already said something truer: an
+         * act that exists and cannot act YET — "Place a feature" cannot
+         * begin until there is a zone — is not "no mutation declares it as a
+         * subject", and saying both would be saying one wrong thing loudly.
          */
         <p
           data-testid="no-affordances"
