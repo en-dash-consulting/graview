@@ -137,6 +137,24 @@ describe("what a model wants to do, before it does it", () => {
     await act(async () => root.unmount());
   });
 
+  it("lets a person decline, and says what goes with it", async () => {
+    const at = store();
+    const survey = [
+      { mutation: "stake-out", as: "lawn", args: { label: "Back Lawn" }, why: "the big one" },
+      { mutation: "place-feature", args: { label: "The oak", zoneId: { $plan: "lawn" } }, why: "it stands there" },
+    ];
+    const { root } = await draw(<PlanReview plan={planFrom(at, survey)} declinable />, at);
+    /* Said before the press: declining the area declines the tree in it. */
+    expect(host.querySelector('[data-testid="plan-goes-with"]')!.textContent).toContain("1 other goes with it");
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="plan-decline-lawn"]')!.click());
+    expect(host.querySelectorAll("[data-plan-declined]")).toHaveLength(2);
+    expect(host.textContent).toContain("0 of 2 to run");
+    /* And it is a decision, not a deletion. */
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="plan-decline-lawn"]')!.click());
+    expect(host.textContent).toContain("2 of 2 to run");
+    await act(async () => root.unmount());
+  });
+
   it("applies the ready ones as one turn, and says so", async () => {
     const at = store();
     let batch: string | null = null;

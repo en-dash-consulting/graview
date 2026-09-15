@@ -72,5 +72,5 @@ export type { IntelligenceConfig, LocalStatus } from "./local.js";
 export { drawFigure, FIGURE_STYLE, nearestFigure, onlyTheSvg } from "./figure.js";
 export type { DrawnFigure } from "./figure.js";
 
-export { applyPlan, describePlan, isPlanReference, planFrom } from "./plan.js";
+export { applyPlan, dependentsOf, describePlan, isPlanReference, planFrom, without } from "./plan.js";
 export type { AppliedPlan, Plan, PlanEntry, PlanOptions, PlannedCall, PlanReference } from "./plan.js";

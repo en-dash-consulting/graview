@@ -1,7 +1,7 @@
 import { bindSchema, createSchema, defineApp, defineNode, nodeRef, Store, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { applyPlan, describePlan, planFrom } from "../../src/index.js";
+import { applyPlan, dependentsOf, describePlan, planFrom, without } from "../../src/index.js";
 
 /**
  * A PLAN IS WHAT A MODEL WANTS TO DO, AS AN OBJECT.
@@ -197,5 +197,55 @@ describe("applying a plan", () => {
     const done = applyPlan(guarded, plan, { author: surveyor });
     expect(done.applied).toBe(1);
     expect(done.stoppedAt?.why).toContain("declared able to");
+  });
+});
+
+/**
+ * DECLINING THE AREA DECLINES THE TREE STANDING IN IT.
+ *
+ * A review a person cannot disagree with is not a review, and a model
+ * confident about eleven things and wrong about the twelfth is the normal
+ * case — where the twelfth is very often the one the other four point at.
+ * The cascade is the app's own idea, generalised: everything here knows what
+ * points at what, because the plan's references say so.
+ */
+describe("declining one thing", () => {
+  const survey = [
+    { mutation: "stake-out", as: "lawn", args: { label: "Back Lawn" } },
+    { mutation: "stake-out", as: "drive", args: { label: "The Drive" } },
+    { mutation: "place-feature", as: "oak", args: { label: "The oak", zoneId: { $plan: "lawn" } } },
+    { mutation: "place-feature", as: "gate", args: { label: "The gate", zoneId: { $plan: "drive" } } },
+  ];
+
+  it("names everything that goes with it, before the press", () => {
+    const plan = planFrom(store(), survey, { app });
+    expect(dependentsOf(plan, "lawn").map((entry) => entry.call.as)).toEqual(["oak"]);
+    expect(dependentsOf(plan, "oak")).toEqual([]);
+  });
+
+  it("gives back the plan a person is left with, ordered and judged like any other", () => {
+    const at = store();
+    const kept = without(at, planFrom(at, survey, { app }), ["lawn"], { app });
+    expect(kept.entries.map((entry) => entry.call.as)).toEqual(["drive", "gate"]);
+    expect(kept.refused).toEqual([]);
+    expect(kept.makes).toEqual({ zone: 1, feature: 1 });
+  });
+
+  it("counts what goes with it even when it was never named", () => {
+    /* The oak is named; a second feature in the same area is not, and goes
+       just the same — which is why this is the entries rather than names. */
+    const plan = planFrom(store(), [
+      ...survey,
+      { mutation: "place-feature", args: { label: "The hedge", zoneId: { $plan: "lawn" } } },
+    ], { app });
+    expect(dependentsOf(plan, "lawn")).toHaveLength(2);
+  });
+
+  it("leaves a plan that declined nothing exactly as it was", () => {
+    const at = store();
+    const plan = planFrom(at, survey, { app });
+    expect(without(at, plan, [], { app }).entries.map((entry) => entry.call.as)).toEqual(
+      plan.entries.map((entry) => entry.call.as),
+    );
   });
 });

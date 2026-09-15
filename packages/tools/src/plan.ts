@@ -65,6 +65,8 @@ export interface PlanEntry {
   readonly call: PlannedCall;
   /** Where it ended up once the plan was ordered. */
   readonly at: number;
+  /** The plan names this call points at — what must be made before it. */
+  readonly dependsOn: readonly string[];
   /** Why this cannot run, if it cannot. */
   readonly refusal?: Refusal;
 }
@@ -167,15 +169,22 @@ export function planFrom<S extends AnySchema>(
   }
 
   const entries: PlanEntry[] = [...ordered, ...stuck].map((call, at) => {
+    const dependsOn = [...new Set(waitsFor(call).filter((name) => named.has(name)))];
     const cycled = stuck.includes(call);
     if (cycled) {
-      return { call, at, refusal: refusal(call.mutation, "This call and another wait for each other, so neither can go first.") };
+      return {
+        call,
+        at,
+        dependsOn,
+        refusal: refusal(call.mutation, "This call and another wait for each other, so neither can go first."),
+      };
     }
     const dangling = waitsFor(call).filter((name) => !named.has(name));
     if (dangling.length > 0) {
       return {
         call,
         at,
+        dependsOn,
         refusal: refusal(
           call.mutation,
           `Refers to ${dangling.map((name) => `"${name}"`).join(", ")}, which nothing in this plan makes.`,
@@ -189,7 +198,12 @@ export function planFrom<S extends AnySchema>(
       known = false;
     }
     if (!known) {
-      return { call, at, refusal: refusal(call.mutation, `No act called "${call.mutation}" is registered.`) };
+      return {
+        call,
+        at,
+        dependsOn,
+        refusal: refusal(call.mutation, `No act called "${call.mutation}" is registered.`),
+      };
     }
     /*
      * The policy's own answer, asked now rather than at the press. A call
@@ -199,9 +213,9 @@ export function planFrom<S extends AnySchema>(
      */
     if (options.principal) {
       const verdict = store.permits({ name: call.mutation, args: {} }, options.principal);
-      if (!verdict.ok) return { call, at, refusal: verdict.refusal };
+      if (!verdict.ok) return { call, at, dependsOn, refusal: verdict.refusal };
     }
-    return { call, at };
+    return { call, at, dependsOn };
   });
 
   const makes: Record<string, number> = {};
@@ -299,6 +313,66 @@ export function applyPlan<S extends AnySchema>(
     }
   }
   return { made, batch, applied, store };
+}
+
+/**
+ * EVERYTHING THAT GOES IF THIS GOES.
+ *
+ * Declining the area declines the tree standing in it. A review a person
+ * cannot disagree with is not a review — a model confident about eleven
+ * things and wrong about the twelfth is the normal case — and the twelfth
+ * is very often the one the other four point at. Saying so BEFORE the press
+ * is the difference between a review and a surprise.
+ *
+ * Only what POINTS AT it, transitively. A call that merely mentions the same
+ * subject is its own business.
+ */
+export function dependentsOf(plan: Plan, name: string): readonly PlanEntry[] {
+  const gone = new Set<string>([name]);
+  const going = new Set<PlanEntry>();
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const entry of plan.entries) {
+      if (going.has(entry)) continue;
+      if (!entry.dependsOn.some((wanted) => gone.has(wanted))) continue;
+      going.add(entry);
+      /*
+       * A call that MAKES something carries its own dependents with it; one
+       * that makes nothing is a leaf. Both go, and only the first widens the
+       * set — which is why this is the entries rather than their names: half
+       * of what goes with a thing was never named.
+       */
+      if (entry.call.as !== undefined) gone.add(entry.call.as);
+      grew = true;
+    }
+  }
+  return [...going];
+}
+
+/**
+ * The plan without those entries, and without anything left pointing at
+ * nothing — the same plan a person is left with after declining one thing.
+ *
+ * Re-planned rather than filtered, so what comes back is ordered, judged and
+ * counted exactly like the plan it came from.
+ */
+export function without<S extends AnySchema>(
+  store: Store<S>,
+  plan: Plan,
+  declined: Iterable<string>,
+  options: PlanOptions<S> = {},
+): Plan {
+  const out = new Set<PlanEntry>();
+  const names = new Set<string>();
+  for (const name of declined) {
+    names.add(name);
+    for (const entry of dependentsOf(plan, name)) out.add(entry);
+  }
+  const kept = plan.entries
+    .filter((entry) => entry.call.as === undefined || !names.has(entry.call.as))
+    .filter((entry) => !out.has(entry))
+    .map((entry) => entry.call);
+  return planFrom(store, kept, options);
 }
 
 /** What a plan would do, in the words a person reviewing it needs. */

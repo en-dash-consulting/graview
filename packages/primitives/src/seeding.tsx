@@ -3,10 +3,14 @@ import { kindCardId } from "@graview/layout";
 import { useAffordances, useApplyAffordance, useGraview, useLocalIntelligence } from "@graview/react";
 import {
   applyPlan,
+  dependentsOf,
   firstJsonObject,
+  planFrom,
   validateProposals,
+  without,
   type Affordance,
   type Plan,
+  type PlanOptions,
   type PlannedCall,
 } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
@@ -141,6 +145,15 @@ export interface PlanReviewProps<S extends AnySchema> {
   readonly onApplied?: (batch: string, applied: number) => void;
   readonly onDiscard?: () => void;
   readonly title?: string;
+  /**
+   * Let a person decline an entry. A review nobody can disagree with is not
+   * a review, and declining the area declines the tree standing in it — the
+   * plan says what points at what, so the cascade is stated before the press
+   * rather than discovered after it.
+   */
+  readonly declinable?: boolean;
+  /** Passed on when the plan is re-made after a decline. */
+  readonly options?: PlanOptions<S>;
 }
 
 /**
@@ -156,11 +169,16 @@ export function PlanReview<S extends AnySchema>({
   onApplied,
   onDiscard,
   title = "What this would do",
+  declinable = false,
+  options,
 }: PlanReviewProps<S>) {
   const { store, principal } = useGraview<S>();
   const [done, setDone] = useState<{ batch: string; applied: number; why?: string } | null>(null);
+  const [declined, setDeclined] = useState<readonly string[]>([]);
+  /* What is left after the declines, ordered and judged like any other plan. */
+  const kept = declined.length === 0 ? plan : without(store as never, plan, declined, options ?? {});
   /* "1 zone, 2 features" — the kind's own word when there is one of it. */
-  const makes = Object.entries(plan.makes)
+  const makes = Object.entries(kept.makes)
     .map(
       ([kind, count]) =>
         `${count} ${count === 1 ? kind : (store.schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase()}`,
@@ -170,25 +188,67 @@ export function PlanReview<S extends AnySchema>({
   return (
     <Panel
       title={title}
-      subtitle={`${plan.ready.length} of ${plan.entries.length} to run${makes ? `, making ${makes}` : ""}.`}
+      subtitle={`${kept.ready.length} of ${plan.entries.length} to run${makes ? `, making ${makes}` : ""}.`}
       fit
     >
       <ol data-testid="plan" style={{ margin: 0, paddingLeft: "1.25rem", display: "grid", gap: 4 }}>
-        {plan.entries.map((entry, index) => (
-          <li
-            key={`${entry.call.mutation}:${index}`}
-            data-plan-refused={entry.refusal ? "" : undefined}
-            style={entry.refusal ? { textDecoration: "line-through", opacity: 0.6 } : undefined}
-          >
-            <span>{store.allMutations().find((m) => m.name === entry.call.mutation)?.title ?? entry.call.mutation}</span>
-            {entry.call.why ? <span style={{ ...MUTED_TEXT }}> — {entry.call.why}</span> : null}
-            {entry.refusal ? (
-              <div data-testid="plan-refusal" style={{ fontSize: "0.75rem", color: "var(--graview-warn)", textDecoration: "none" }}>
-                {entry.refusal.message}
-              </div>
-            ) : null}
-          </li>
-        ))}
+        {plan.entries.map((entry, index) => {
+          const name = entry.call.as;
+          const out =
+            entry.refusal !== undefined ||
+            (name !== undefined && declined.includes(name)) ||
+            !kept.entries.some((other) => other.call === entry.call);
+          /* What would go with it, said before the press rather than after. */
+          const goesWith = name === undefined ? [] : [...dependentsOf(plan, name)];
+          return (
+            <li
+              key={`${entry.call.mutation}:${index}`}
+              data-plan-refused={entry.refusal ? "" : undefined}
+              data-plan-declined={out && !entry.refusal ? "" : undefined}
+              style={out ? { textDecoration: "line-through", opacity: 0.6 } : undefined}
+            >
+              <span>
+                {store.allMutations().find((m) => m.name === entry.call.mutation)?.title ?? entry.call.mutation}
+              </span>
+              {entry.call.why ? <span style={{ ...MUTED_TEXT }}> — {entry.call.why}</span> : null}
+              {declinable && !entry.refusal && name !== undefined && !done ? (
+                <button
+                  type="button"
+                  data-testid={`plan-decline-${name}`}
+                  title={
+                    goesWith.length > 0
+                      ? `Declining this also drops ${goesWith.length} that point at it`
+                      : "Drop this one"
+                  }
+                  onClick={() =>
+                    setDeclined((current) =>
+                      current.includes(name) ? current.filter((one) => one !== name) : [...current, name],
+                    )
+                  }
+                  style={{
+                    marginLeft: 8,
+                    minHeight: "max(1.5rem, 24px)",
+                    padding: "0 8px",
+                    fontSize: "0.75rem",
+                    textDecoration: "none",
+                  }}
+                >
+                  {declined.includes(name) ? "Keep it" : "Not this"}
+                </button>
+              ) : null}
+              {declinable && goesWith.length > 0 && !entry.refusal ? (
+                <div data-testid="plan-goes-with" style={{ fontSize: "0.75rem", textDecoration: "none", ...MUTED_TEXT }}>
+                  {goesWith.length} {goesWith.length === 1 ? "other goes" : "others go"} with it.
+                </div>
+              ) : null}
+              {entry.refusal ? (
+                <div data-testid="plan-refusal" style={{ fontSize: "0.75rem", color: "var(--graview-warn)", textDecoration: "none" }}>
+                  {entry.refusal.message}
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
       </ol>
       {done ? (
         <p data-testid="plan-done" style={{ margin: 0, fontSize: "0.8125rem", ...MUTED_TEXT }}>
@@ -201,9 +261,9 @@ export function PlanReview<S extends AnySchema>({
           <button
             type="button"
             data-testid="plan-apply"
-            disabled={plan.ready.length === 0}
+            disabled={kept.ready.length === 0}
             onClick={() => {
-              const result = applyPlan(store as never, plan, principal ? { author: principal } : {});
+              const result = applyPlan(store as never, kept, principal ? { author: principal } : {});
               setDone({
                 batch: result.batch,
                 applied: result.applied,
@@ -213,7 +273,7 @@ export function PlanReview<S extends AnySchema>({
             }}
             style={{ minHeight: "max(1.5rem, 24px)", padding: "2px 12px" }}
           >
-            Apply {plan.ready.length === 1 ? "it" : "all"}
+            Apply {kept.ready.length === 1 ? "it" : "all"}
           </button>
           {onDiscard ? (
             <button type="button" data-testid="plan-discard" onClick={onDiscard} style={{ minHeight: "max(1.5rem, 24px)", padding: "2px 12px" }}>
