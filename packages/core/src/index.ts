@@ -203,6 +203,8 @@ export type { Installation, InstallationOf, InstallationOptions } from "./instal
 export type { ModuleDeclaration, ModuleMap, ModuleProjection } from "./modules.js";
 export type { IntelligenceProviderDeclaration, IntelligenceReach, MigrationDeclaration, SettingDeclaration } from "./app.js";
 export { motion, readerSettings, textSize } from "./settings.js";
+export { LOCAL_BRIDGE_PATH } from "./intelligence-bridge.js";
+export type { LocalBridgeAnswer, LocalBridgeAsk, LocalBridgeStatus } from "./intelligence-bridge.js";
 export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export { checkApp, formatFindings } from "./cli/check.js";

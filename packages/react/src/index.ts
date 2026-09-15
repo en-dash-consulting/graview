@@ -39,6 +39,8 @@ export type { ResolvedViewProps, SceneProps } from "./scene.js";
 
 
 export { useFlagged, useImplicated, useViolations } from "./hooks.js";
+export { useLocalIntelligence } from "./local-intelligence.js";
+export type { Ask, LocalIntelligence } from "./local-intelligence.js";
 export { kitConnector, useKit } from "./kit.js";
 export { clipPolyline, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 export { bandRows, channelRoute } from "./channels.js";

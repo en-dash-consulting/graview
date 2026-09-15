@@ -82,6 +82,24 @@ here requires a service.
 4. **Health is coherence, not liveness.** `health(store)` reports sizes,
    standing and dangling edges — poll it per deployment, curl it self-hosted.
 
+5. **The machine under the dev server is a door.** A locally-run product
+   very often has a coding agent installed, logged in and paid for; the
+   browser cannot spawn it and the dev server can.
+
+   ```ts
+   // vite.config.ts
+   import { localIntelligence } from "@graview/ship/dev";
+   plugins: [localIntelligence({ path: "/__graview/local", budgetUsd: 2 })]
+   ```
+
+   Declare it — `intelligence: [{ …, reach: ["paste", "local"], bridge:
+   "/__graview/local" }]` — and read it with `useLocalIntelligence(path)`
+   from `@graview/react`. The spawned session gets Read and only Read, a
+   turn per photograph plus three, a dollar budget, a closed stdin and an
+   environment with every `CLAUDE*` variable stripped. `apply: "serve"` means
+   a build carries no door: a deployed copy probes, gets nothing, and reads
+   as **closed** — which is a state, not a fault.
+
 ## Then find out whether it worked
 
 Write, close, reopen, and read: the graph must survive the round trip and
