@@ -165,17 +165,95 @@ export function awkwardApp(options: AwkwardOptions = {}): GraviewApp {
 }
 
 /** A graph with `per` of each kind the app declares, and the edges between them. */
-export function awkwardGraph(app: GraviewApp, per = 3): GraphSnapshot {
+/**
+ * A VALUE THAT PARSES, found rather than known.
+ *
+ * The first version of this filled three field names it had met — `email`,
+ * `roles`, `status` — which was enough for the fixtures it was written
+ * beside and enough for nothing else. The first real product to reach for
+ * it got `zone 0 does not match what zone declares`, because a zone has a
+ * surface and nobody had told this about surfaces.
+ *
+ * So it asks. Each candidate is offered to the field's own schema and the
+ * first one accepted is used, which means a kind can declare whatever it
+ * likes — an enum, a date, a tuple of numbers — without this having to
+ * have heard of it. `undefined` goes first so an optional field stays
+ * unset: the awkward graph should be the SPARSEST one that parses, not the
+ * fullest.
+ */
+function parseable(field: unknown, hint: string): { found: boolean; value?: unknown } {
+  const schema = field as { safeParse?: (value: unknown) => { success: boolean }; def?: { entries?: unknown } };
+  if (typeof schema?.safeParse !== "function") return { found: false };
+  const entries = schema.def?.entries;
+  const enumerated = entries && typeof entries === "object" ? Object.values(entries as Record<string, unknown>) : [];
+  const candidates: unknown[] = [
+    undefined,
+    ...enumerated,
+    hint,
+    "2026-05-04",
+    `${hint}@example.test`,
+    1,
+    0,
+    true,
+    [],
+    [hint],
+    {},
+    { x: 0.5, y: 0.5 },
+    null,
+  ];
+  for (const candidate of candidates) {
+    if (schema.safeParse(candidate).success) return { found: true, value: candidate };
+  }
+  return { found: false };
+}
+
+/**
+ * Three of every kind, joined to nothing, every field filled with the least
+ * interesting value that parses.
+ *
+ * It is the state a real installation passes through on its second
+ * afternoon — some ground named, some concerns raised, none of it joined up
+ * — and it is the state that breaks anything written while looking at a
+ * finished graph.
+ */
+export interface AwkwardGraphOptions {
+  readonly per?: number;
+  /**
+   * Values for fields this cannot guess — a discriminated union, a tuple
+   * with a meaning. Keyed `kind.field`, and each is offered to the field's
+   * own schema like any other candidate, so a wrong one is a refusal here
+   * rather than a mystery three layers down.
+   */
+  readonly fill?: Readonly<Record<string, unknown>>;
+}
+
+export function awkwardGraph(app: GraviewApp, options: number | AwkwardGraphOptions = {}): GraphSnapshot {
+  const { per = 3, fill = {} } = typeof options === "number" ? { per: options, fill: {} } : options;
   const nodes: Record<string, unknown>[] = [];
   for (const kind of app.schema.kinds as readonly string[]) {
     const definition = app.schema.tryDefinition(kind);
     const shape = (definition?.fields.shape ?? {}) as Record<string, unknown>;
     for (let index = 0; index < per; index += 1) {
       const node: Record<string, unknown> = { id: `${kind}-${index}`, kind, label: `${kind} ${index}` };
-      /* Whatever else the kind declares, filled with something parseable. */
-      if ("email" in shape) node["email"] = `${kind}${index}@example.test`;
-      if ("roles" in shape) node["roles"] = ["helper"];
-      if ("status" in shape) node["status"] = kind === "user" ? "active" : "pending";
+      for (const [name, field] of Object.entries(shape)) {
+        if (name === "id" || name === "kind" || name === "label") continue;
+        const given = fill[`${kind}.${name}`];
+        const answer =
+          given === undefined
+            ? parseable(field, `${kind}-${index}`)
+            : (field as { safeParse: (value: unknown) => { success: boolean } }).safeParse(given).success
+              ? { found: true, value: given }
+              : { found: false };
+        if (!answer.found) {
+          throw new Error(
+            given === undefined
+              ? `awkwardGraph cannot fill ${kind}.${name}: none of the values it knows how to offer were accepted. ` +
+                `Pass one it cannot guess as fill: { "${kind}.${name}": … }.`
+              : `awkwardGraph was given a fill for ${kind}.${name} that ${kind} does not accept.`,
+          );
+        }
+        if (answer.value !== undefined) node[name] = answer.value;
+      }
       nodes.push(node);
     }
   }
