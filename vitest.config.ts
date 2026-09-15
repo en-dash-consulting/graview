@@ -12,6 +12,11 @@ export default defineConfig({
   esbuild: { jsx: "automatic" },
   resolve: {
     alias: {
+      // The subpath first, or the bare-name alias swallows it: a declaration
+      // built to be awkward, for holding the derivation to properties.
+      "@graview/core/testing": fileURLToPath(
+        new URL("./packages/core/src/testing.ts", import.meta.url),
+      ),
       "@graview/core": src("core"),
       "@graview/layout": src("layout"),
       "@graview/tools": src("tools"),

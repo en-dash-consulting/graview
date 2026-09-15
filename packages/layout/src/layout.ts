@@ -442,6 +442,22 @@ export function layout<S extends AnySchema>(
    * from every relation it had.
    */
   const zoomed = state.zoom === true && !state.overview && state.focusId !== null;
+  /*
+   * THE SHELF'S OWN HEIGHT HAS A FLOOR, SO ITS TOP CANNOT BE A PROPORTION.
+   *
+   * A zoomed band put the kinds plane at 89.5% of the height and gave it
+   * `max(56, height * 0.062)` — which agree only while the proportion is the
+   * larger of the two. On a short canvas the floor wins and the row runs off
+   * the bottom: at 390x242, 0.895 puts its top at 217 and 56 more is 273, a
+   * card thirty pixels below the screen with nothing to scroll. Every other
+   * band in this function ends inside the canvas by arithmetic; this one
+   * ended inside it by luck, and a generated declaration at a phone's
+   * proportions is where the luck ran out.
+   *
+   * The floor decides where the top is, not the other way round.
+   */
+  const zoomedContextH = Math.max(56, opts.height * 0.062);
+  const zoomedContextY = Math.min(opts.height * 0.895, opts.height - zoomedContextH);
   const band = zoomed
     ? focus !== undefined
       ? {
@@ -453,8 +469,8 @@ export function layout<S extends AnySchema>(
           focusH: opts.height * 0.58,
           relationY: opts.height * 0.645,
           relationH: opts.height * 0.2,
-          contextY: opts.height * 0.895,
-          contextH: Math.max(56, opts.height * 0.062),
+          contextY: zoomedContextY,
+          contextH: zoomedContextH,
         }
       : {
           // A zoomed PLACE is the dense picture: most of the scene, with a
@@ -463,8 +479,8 @@ export function layout<S extends AnySchema>(
           focusH: opts.height * 0.71,
           relationY: opts.height * 0.765,
           relationH: opts.height * 0.1,
-          contextY: opts.height * 0.895,
-          contextH: Math.max(56, opts.height * 0.062),
+          contextY: zoomedContextY,
+          contextH: zoomedContextH,
         }
     : focus === undefined
       ? {
