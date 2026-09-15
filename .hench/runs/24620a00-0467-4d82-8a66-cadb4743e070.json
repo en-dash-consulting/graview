@@ -1,0 +1,30 @@
+{
+  "id": "24620a00-0467-4d82-8a66-cadb4743e070",
+  "taskId": "e8d0fbea-d101-4e05-99ed-4451823b24f8",
+  "taskTitle": "F-015 · A group lens is handed one kind's members, and the skill never says so",
+  "startedAt": "2026-09-15T00:53:28.019Z",
+  "finishedAt": "2026-09-15T00:53:28.019Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-015 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

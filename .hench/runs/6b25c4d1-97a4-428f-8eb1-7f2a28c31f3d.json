@@ -1,0 +1,30 @@
+{
+  "id": "6b25c4d1-97a4-428f-8eb1-7f2a28c31f3d",
+  "taskId": "0920841f-3dfe-418d-af01-3ecabf7efe29",
+  "taskTitle": "F-002 · The proven product layout is not the layout the scaffolder writes",
+  "startedAt": "2026-09-15T00:53:25.310Z",
+  "finishedAt": "2026-09-15T00:53:25.310Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-002 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

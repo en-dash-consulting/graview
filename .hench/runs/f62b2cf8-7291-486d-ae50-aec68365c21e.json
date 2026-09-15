@@ -1,0 +1,30 @@
+{
+  "id": "f62b2cf8-7291-486d-ae50-aec68365c21e",
+  "taskId": "b92f6561-c3de-436b-b024-8e49a123c596",
+  "taskTitle": "F-009 · figure is a great idea with a small shipped vocabulary",
+  "startedAt": "2026-09-15T00:53:26.775Z",
+  "finishedAt": "2026-09-15T00:53:26.775Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-009 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "2b150d53-e9fa-4e52-b7c9-f9b7b7a79bb0",
+  "taskId": "aebd9f0e-60c2-4bb5-b7d0-5a54c6fcf171",
+  "taskTitle": "F-030 · The scene's URL carries the focus and not the view",
+  "startedAt": "2026-09-15T00:53:31.083Z",
+  "finishedAt": "2026-09-15T00:53:31.083Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-030 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "1a9ffdbf-2afe-4c9b-9d8b-3ba89ca87758",
+  "taskId": "0ed0e4fb-8bee-452f-ba72-a70334a2f4b6",
+  "taskTitle": "F-006 · The coverage lens cannot express a coverage that runs through a node",
+  "startedAt": "2026-09-15T00:53:26.145Z",
+  "finishedAt": "2026-09-15T00:53:26.145Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-006 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

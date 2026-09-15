@@ -1,0 +1,30 @@
+{
+  "id": "15893b88-4483-42ad-973b-05ec69cdddc5",
+  "taskId": "264198ae-cfa4-496a-b0dc-800f728dfed4",
+  "taskTitle": "F-017 · The calendar's done role accepts only a boolean, so most domains cannot bind it",
+  "startedAt": "2026-09-15T00:53:28.419Z",
+  "finishedAt": "2026-09-15T00:53:28.419Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-017 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "9795a7a1-0714-4c2b-9de1-b8f7aecb4191",
+  "taskId": "f4093efa-8100-45ee-801f-7c2c13aaa69e",
+  "taskTitle": "F-026 · A view that throws takes the whole scene down",
+  "startedAt": "2026-09-15T00:53:30.249Z",
+  "finishedAt": "2026-09-15T00:53:30.249Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-026 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "17856409-f744-4132-8490-1a8ca0ea2b6b",
+  "taskId": "9e0d263c-4a93-4c8e-9631-f5e314afb566",
+  "taskTitle": "F-029 · ship has a persistence lifecycle and no local-process seam",
+  "startedAt": "2026-09-15T00:53:30.869Z",
+  "finishedAt": "2026-09-15T00:53:30.869Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-029 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

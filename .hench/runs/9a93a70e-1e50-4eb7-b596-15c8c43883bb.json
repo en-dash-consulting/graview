@@ -1,0 +1,30 @@
+{
+  "id": "9a93a70e-1e50-4eb7-b596-15c8c43883bb",
+  "taskId": "f956fc9f-c107-46d5-af39-3e4c68e053e7",
+  "taskTitle": "F-018 · The district row breaks down past about six kinds in a narrow host",
+  "startedAt": "2026-09-15T00:53:28.631Z",
+  "finishedAt": "2026-09-15T00:53:28.631Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-018 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

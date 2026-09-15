@@ -1,0 +1,30 @@
+{
+  "id": "3bf72cd7-58bb-4b98-8328-b7645d26fff5",
+  "taskId": "5d9c9cd5-8577-415d-a1e9-f7cc827f30fc",
+  "taskTitle": "F-007 · There is no scaffolder for a lens",
+  "startedAt": "2026-09-15T00:53:26.358Z",
+  "finishedAt": "2026-09-15T00:53:26.358Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-007 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

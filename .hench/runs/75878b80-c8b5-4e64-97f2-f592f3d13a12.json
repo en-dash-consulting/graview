@@ -1,0 +1,30 @@
+{
+  "id": "75878b80-c8b5-4e64-97f2-f592f3d13a12",
+  "taskId": "5acc1e9f-f845-44d1-bd89-079717493db5",
+  "taskTitle": "F-028 · may is verified and never enforced",
+  "startedAt": "2026-09-15T00:53:30.658Z",
+  "finishedAt": "2026-09-15T00:53:30.658Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-028 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

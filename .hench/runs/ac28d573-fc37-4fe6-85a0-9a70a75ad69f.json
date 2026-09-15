@@ -1,0 +1,30 @@
+{
+  "id": "ac28d573-fc37-4fe6-85a0-9a70a75ad69f",
+  "taskId": "a3ea8c6e-e34a-42c3-86e5-cab3955b8be4",
+  "taskTitle": "F-004 · --no-install silently skips installing the skills",
+  "startedAt": "2026-09-15T00:53:25.718Z",
+  "finishedAt": "2026-09-15T00:53:25.718Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-004 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

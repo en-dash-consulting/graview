@@ -1,0 +1,30 @@
+{
+  "id": "c0893f74-717a-4bce-b8ed-d73d173a0c72",
+  "taskId": "7753eced-d3c7-43f9-a583-6d5cb8e18f47",
+  "taskTitle": "F-019 · An app cannot declare an edge to a person without losing its own kind names",
+  "startedAt": "2026-09-15T00:53:28.828Z",
+  "finishedAt": "2026-09-15T00:53:28.828Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-019 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

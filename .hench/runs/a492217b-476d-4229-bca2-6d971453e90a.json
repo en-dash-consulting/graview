@@ -1,0 +1,30 @@
+{
+  "id": "a492217b-476d-4229-bca2-6d971453e90a",
+  "taskId": "8ba8f8fd-cd84-4762-b1b8-6197541b4282",
+  "taskTitle": "F-020 · A module you can never turn off is still warned about",
+  "startedAt": "2026-09-15T00:53:29.030Z",
+  "finishedAt": "2026-09-15T00:53:29.030Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-020 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "a76ac5ab-8fcb-43a7-9821-76e2cce76695",
+  "taskId": "6346f1d0-7a9b-4edd-9a65-6fda9ce4db99",
+  "taskTitle": "F-012 · creates onboards a blank graph only for the FIRST kind in a chain",
+  "startedAt": "2026-09-15T00:53:27.398Z",
+  "finishedAt": "2026-09-15T00:53:27.398Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-012 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

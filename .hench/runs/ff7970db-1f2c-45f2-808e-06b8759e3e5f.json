@@ -1,0 +1,30 @@
+{
+  "id": "ff7970db-1f2c-45f2-808e-06b8759e3e5f",
+  "taskId": "118b096d-a9e9-4679-a7c2-e84bec1f6321",
+  "taskTitle": "F-010 · fieldRoles vs lens bindings — two places, one job, unclear which wins",
+  "startedAt": "2026-09-15T00:53:26.991Z",
+  "finishedAt": "2026-09-15T00:53:26.991Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-010 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

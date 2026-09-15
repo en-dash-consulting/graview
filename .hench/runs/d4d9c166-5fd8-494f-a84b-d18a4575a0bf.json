@@ -1,0 +1,30 @@
+{
+  "id": "d4d9c166-5fd8-494f-a84b-d18a4575a0bf",
+  "taskId": "b4fc810d-bdfc-470d-bf6f-d95480fa34d6",
+  "taskTitle": "F-023 · The scene draws past the right edge at 390px",
+  "startedAt": "2026-09-15T00:53:29.634Z",
+  "finishedAt": "2026-09-15T00:53:29.634Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-023 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

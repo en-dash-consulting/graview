@@ -1,0 +1,30 @@
+{
+  "id": "c8eaa535-376c-40a0-97ff-b9cc974f6c72",
+  "taskId": "78fb7434-0fd1-460a-8deb-3497c7a3c02a",
+  "taskTitle": "F-027 · An llm intelligence has a may and no way to say how it is reached",
+  "startedAt": "2026-09-15T00:53:30.451Z",
+  "finishedAt": "2026-09-15T00:53:30.451Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "F-027 closed: see the commit that names it.",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/hench/dist/cli/index.js",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}
