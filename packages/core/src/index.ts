@@ -223,6 +223,10 @@ export type { IntelligenceProviderDeclaration, IntelligenceReach, MigrationDecla
 export { motion, readerSettings, textSize } from "./settings.js";
 export { LOCAL_BRIDGE_PATH } from "./intelligence-bridge.js";
 export type { LocalBridgeAnswer, LocalBridgeAsk, LocalBridgeStatus } from "./intelligence-bridge.js";
+export { describeApp } from "./cli/describe.js";
+export type { DescribeOptions } from "./cli/describe.js";
+export { beginning } from "./beginning.js";
+export type { Beginning, KindBeginning } from "./beginning.js";
 export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export { checkApp, formatFindings } from "./cli/check.js";

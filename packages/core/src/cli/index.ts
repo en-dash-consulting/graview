@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import type { GraviewApp } from "../app.js";
 import { checkApp, formatFindings } from "./check.js";
 import { create, CREATE_USAGE } from "./create.js";
+import { describeApp } from "./describe.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
 import { figureBrief, figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
 import { scaffoldLens, validateLensOptions, type LensScaffoldOptions } from "../scaffold/lens.js";
@@ -20,6 +21,12 @@ ${CREATE_USAGE}
 
   graview docs <entry> [--out <dir>]
       Writes llms.txt and agents.md next to the entry, or into <dir>.
+
+  graview describe <entry> [--as <role>]
+      Reads the app out: what a blank installation meets and in what order,
+      what is drawn and what falls back, the hues, what a seat may do, how a
+      model is reached, what is judged. The rung between check and a browser
+      — "run it and look" for something that cannot see.
 
   graview lens <name> --roles a,b,c [--binds fields|entities] [--dir <dir>]
       Writes a lens that compiles: the role check that fails loudly, the
@@ -147,6 +154,19 @@ export async function main(argv: string[]): Promise<number> {
       await writeFile(`${outDir}/llms.txt`, generateLlmsTxt(app), "utf8");
       await writeFile(`${outDir}/agents.md`, generateAgentsMd(app), "utf8");
       process.stdout.write(`graview docs: wrote llms.txt and agents.md to ${outDir}\n`);
+      return 0;
+    }
+    case "describe": {
+      /*
+       * The one instruction an agent cannot follow is the one every skill
+       * ends on. It can declare, and it cannot see — so the derivations say
+       * what they would do, in words.
+       */
+      const app = await loadApp(entry);
+      const role = flag(argv, "--as");
+      process.stdout.write(
+        `${describeApp(app, role ? { as: { kind: "human", id: role, roles: [role] } } : {})}\n`,
+      );
       return 0;
     }
     case "figure": {

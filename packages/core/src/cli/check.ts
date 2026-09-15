@@ -1,4 +1,5 @@
 import type { GraviewApp } from "../app.js";
+import { beginning } from "../beginning.js";
 import {
   deriveEditMutations,
   editVia,
@@ -129,6 +130,53 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
       fix: `Build ${
         authored.length === 1 ? "it" : "each of them"
       } against another domain in a test — and if you cannot, say so plainly: it is a view, and there is nothing wrong with a view.`,
+    });
+  }
+
+  /*
+   * WHAT A BLANK INSTALLATION CAN ACTUALLY DO.
+   *
+   * `creates` and a nodeRef argument are together a chain — a feature cannot
+   * be made until a zone exists — and it is invisible at build time: the
+   * declaration is well-formed, every act is correct, and the gap only
+   * appears at runtime on the one graph nobody tests against. A ten-kind app
+   * can ship with one door and seven silent districts, and the first person
+   * to open it is the first to find out.
+   *
+   * Notes rather than warnings, because every answer here is a legitimate
+   * design: a kind a migration seeds, a catalogue that arrives whole, a
+   * product whose data comes from a sync. The author should have to look at
+   * it once, not argue with it forever.
+   */
+  const chain = beginning(app);
+  /*
+   * Only an app that says it MAKES things is asked how. An app whose every
+   * act edits what is already there — a catalogue, a graph that arrives by
+   * seed or sync — never claimed a way in, and telling it there is none is
+   * a note with no question in it.
+   */
+  const claimsToMake = (app.mutations ?? []).some((mutation) => (mutation.creates ?? []).length > 0);
+  if (!claimsToMake) {
+    // Nothing to say: creation is not this app's business.
+  } else if (chain.doors.length === 0 && kinds.size > 0) {
+    add({
+      severity: "note",
+      code: "blank-graph-has-no-door",
+      where: "mutations",
+      message: `Nothing can be made in an empty ${app.name}: every act that creates a kind needs a node that does not exist yet.`,
+      fix: `If the graph arrives seeded or synced, that is the answer and this is just the note. Otherwise give one act no required nodeRef, so a blank installation has a way in.`,
+    });
+  } else if (chain.unreachable.length > 0) {
+    add({
+      severity: "note",
+      code: "blank-graph-unreachable",
+      where: "mutations",
+      message: `${chain.unreachable
+        .map((entry) => `"${entry.kind}"`)
+        .join(", ")} cannot be made from empty — ${chain.unreachable[0]!.why}. The way in is ${chain.doors
+        .map((door) => `"${door}"`)
+        .join(", ")}.`,
+      fix: `Declare creates: ["<kind>"] on the act that adds one, or accept that these arrive by seed, migration or sync.`,
     });
   }
 

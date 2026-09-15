@@ -36,7 +36,14 @@ describe("a roster is enough to show the whole platform", () => {
     const checked = checkApp(rotaApp);
     expect(checked.errors).toBe(0);
     expect(checked.warnings).toBe(0);
-    expect(checked.findings.map((finding) => finding.code)).toEqual([
+    expect(checked.findings.map((finding) => finding.code).sort()).toEqual([
+      /*
+       * A rota's rules arrive with the roster rather than being adopted by
+       * anybody, so nothing creates a `rule` and the checker says so once.
+       * True, deliberate, and exactly the sort of thing a person should read
+       * one time — which is what a note is.
+       */
+      "blank-graph-unreachable",
       "lens-binding-disagrees-with-field-role",
     ]);
     expect(rotaApp.version).toBe(2);
