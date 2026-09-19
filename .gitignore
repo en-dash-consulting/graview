@@ -11,3 +11,4 @@ apps/*/generated/
 .n-dx-web.port
 .rex/.cache/
 .generated/
+.n-dx-web.pid
