@@ -254,6 +254,14 @@ export function Scene<S extends AnySchema>({
         schema: store.schema,
         mutations: store.allMutations().filter((mutation) => !mutation.derived),
       }).order.map((entry) => entry.kind),
+      /*
+       * THE SHOWINGS, by kind: the named places the registry holds, so a
+       * focused picture stands on its kind's plot as a screen from altitude.
+       */
+      screens: views.places().reduce<Record<string, { as: string; title: string; across?: string }[]>>((held, place) => {
+        (held[place.kind] ??= []).push({ as: place.as, title: place.title, ...(place.across ? { across: place.across } : {}) });
+        return held;
+      }, {}),
       ...(size
         ? {
             width: size.width,
@@ -290,6 +298,32 @@ export function Scene<S extends AnySchema>({
   // one. Everything downstream draws the tween, not the destination.
   const frame = useAnimatedLayout(result, { enabled: animate && !dragging });
   const touched = useTouched<S>();
+
+  /*
+   * A DRIVE-IN ON THE FAR SIDE OF A LARGE CITY lights up off-screen unless
+   * the camera goes to it: focusing a screen re-centres the pan on its
+   * plot, still baked into the coordinates, still `pan` in the URL.
+   */
+  const screenId = result.nodes.find((node) => node.screenOf !== undefined)?.id ?? null;
+  useEffect(() => {
+    if (!view.overview || !screenId || !result.city) return;
+    const screen = result.nodes.find((node) => node.id === screenId);
+    if (!screen) return;
+    const inside = screen.x >= 0 && screen.y >= 0 && screen.x + screen.width <= result.width && screen.y + screen.height <= result.height;
+    if (inside) return;
+    const pan = view.pan ?? { x: 0, y: 0 };
+    const limit = cameraLimit(result);
+    const wantedX = pan.x + (result.width / 2 - (screen.x + screen.width / 2));
+    const wantedY = pan.y + (result.height / 2 - (screen.y + screen.height / 2));
+    setView((current) =>
+      withPan(current, {
+        x: Math.max(-limit.x, Math.min(limit.x, wantedX)),
+        y: Math.max(-limit.y, Math.min(limit.y, wantedY)),
+      }),
+    );
+    // Only when the focus lands: a person's own pan afterwards is theirs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screenId, view.overview]);
 
   /*
    * WHERE IS: the scene lends the context its live frame. A ref, so the
@@ -655,6 +689,12 @@ export function Scene<S extends AnySchema>({
       // grids, blocks and shadows actually ride, and it transitions — so
       // rising is a morph, not a cut.
       data-graview-altitude={view.overview ? "" : undefined}
+      /*
+       * HOW FAR THE CAMERA REACHES, said on the ground — so a harness that
+       * finds a district past the edge can tell "pannable to" from "lost":
+       * a city wider than a phone is reached by dragging the ground.
+       */
+      data-graview-reach={frame.city ? `${Math.round(cameraLimit(result).x)} ${Math.round(cameraLimit(result).y)}` : undefined}
       onPointerDown={onGroundDown}
       onPointerMove={onDragMove}
       onPointerUp={onDragUp}
@@ -2196,6 +2236,23 @@ export function whereIsIn(
   id: string,
 ): DrawnBox | null {
   const find = (wanted: string) => frame.nodes.find((node) => node.id === wanted);
+  /*
+   * THE AUDIENCE STRIP in front of a drive-in's screen: the ground between
+   * the screen's foot and the plot's near half, where figures will stand.
+   * Nothing draws there yet; the address is what later tasks stand on.
+   */
+  if (id.startsWith("screen:")) {
+    const kind = id.slice("screen:".length);
+    const screen = frame.nodes.find((node) => node.screenOf === kind);
+    if (!screen) return null;
+    const box = measureVisible(stageEl, screen.id, false) ?? drawnBox(screen, scheme);
+    if (!box) return null;
+    const card = frame.nodes.find((node) => node.id === kindCardId(kind));
+    const plate = card ? drawnBox(card, scheme) : null;
+    const foot = box.y + box.height;
+    const depth = plate ? Math.max(20, plate.y - foot) : Math.max(20, box.height * 0.18);
+    return { x: box.x, y: foot, width: box.width, height: depth };
+  }
   let target = find(id);
   const kind = kindOfCard(id);
   if (!target && kind !== null) target = find(aggregateId(kind));
@@ -2952,13 +3009,27 @@ function Connectors({
           ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`;
         const d = self ? loopD : channelled ? roundedPolylineD(channelled, 10) : orthogonal ? polylineD(legs) : quad(runs);
         // The hit stroke also keeps out of the cards an end is drawn inside.
+        /*
+         * The hit corridor keeps OFF the cards by its own half-width: a
+         * road leaves a district at its border, and a fourteen-pixel
+         * corridor centred on that border sat seven pixels inside the
+         * card — so a press on the card's corner selected the road, and a
+         * double-click there travelled down it instead of into the kind.
+         */
+        const clear = (box: { x: number; y: number; width: number; height: number }) => ({
+          x: box.x - 8,
+          y: box.y - 8,
+          width: box.width + 16,
+          height: box.height + 16,
+        });
+        const keptOff = [fromBox, toBox, ...strand.hosts, ...strand.obstacles].map(clear);
         const hitD = self
           ? loopD
           : channelled
             ? polylineD(legs)
             : orthogonal
-            ? polylineD(clipPolyline(bends(from, to), [fromBox, toBox, ...strand.hosts, ...strand.obstacles]))
-            : quad(clipQuadratic(curve, [fromBox, toBox, ...strand.hosts, ...strand.obstacles]));
+            ? polylineD(clipPolyline(bends(from, to), keptOff))
+            : quad(clipQuadratic(curve, keptOff));
         const only = strand.edges.length === 1 ? strand.edges[0]! : null;
         const edgeId = only ? edgeSelectionId(connector.kind, only.from, only.to) : null;
         const edgeChosen = edgeId !== null && selection.includes(edgeId);

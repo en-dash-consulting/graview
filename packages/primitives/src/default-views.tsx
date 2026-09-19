@@ -6,7 +6,7 @@ import {
   type AnySchema,
   type KindOfSchema,
 } from "@graview/core";
-import { kindCardId, withPast } from "@graview/layout";
+import { aggregateId, kindCardId, withFocus, withOverview, withPast, withWithin } from "@graview/layout";
 import {
   createViews,
   useGraview,
@@ -303,6 +303,18 @@ export function registerDefaultViews<S extends AnySchema>(
       const flag = useKit().marks.flag;
       const { selection } = useSelection();
       const { toggle, view, go } = useNavigation();
+      const { views, hiddenKinds } = useGraview<S>();
+      /*
+       * THE DRIVE-IN'S MARQUEE. A kind with a named picture has a drive-in
+       * from altitude: a dark screen on its plot and, under it, the showings
+       * as real buttons. Pressing one focuses the kind with that showing and
+       * descends in one gesture — the lens is already drawn at the plot, so
+       * the descent reads as walking up to the screen. On the drive-in that
+       * is focused, pressing another showing switches the picture without
+       * descending; pressing the one already showing walks up to it.
+       */
+      const showings = view.overview && !hiddenKinds.has(String(kind)) ? views.places().filter((place) => place.kind === String(kind)) : [];
+      const showingNow = props.focused ? (view.within?.["view"] ?? showings[0]?.as) : undefined;
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
       const accent = props.focused || props.raised;
@@ -724,6 +736,42 @@ export function registerDefaultViews<S extends AnySchema>(
             </div>
           ) : null}
           </div>
+          {!nested && showings.length > 0 ? (
+            <div
+              className="graview-drive-in"
+              data-testid={`drive-in-${String(kind)}`}
+              data-graview-showing={showingNow}
+              onPointerDown={(event) => event.stopPropagation()}
+              onDoubleClick={(event) => event.stopPropagation()}
+            >
+              {props.focused ? null : <span className="graview-drive-in-screen" aria-hidden="true" />}
+              <div className="graview-drive-in-marquee" role="group" aria-label={`${plural}: pictures`}>
+                {showings.map((place) => {
+                  const showing = showingNow === place.as;
+                  return (
+                    <button
+                      key={place.as}
+                      type="button"
+                      data-testid={`showing-${place.as}`}
+                      aria-label={`${plural}: ${place.title}`}
+                      aria-pressed={showing}
+                      title={showing ? `${place.title} — walk up to it` : props.focused ? `Show ${place.title} here` : `${place.title} — walk up to it`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (props.focused && !showing) {
+                          go(withWithin(view, "view", place.as));
+                          return;
+                        }
+                        go(withWithin(withOverview(withFocus(view, aggregateId(String(kind))), false), "view", place.as));
+                      }}
+                    >
+                      {place.title}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
       );
     };

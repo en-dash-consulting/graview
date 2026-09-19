@@ -132,6 +132,13 @@ export interface LayoutNode {
    * corner they get back. `side` is how many cells it takes today.
    */
   readonly plot?: { readonly col: number; readonly row: number; readonly side: number };
+  /**
+   * THE SCREEN OF A DRIVE-IN: this plane-0 node is a kind's own picture,
+   * standing on that kind's plot from altitude rather than floating in the
+   * middle. Names the kind, so the audience strip in front of it can be
+   * found (`whereIs("screen:<kind>")`) and the tween can carry it.
+   */
+  readonly screenOf?: string;
   /** True when the user pinned this position rather than the layout choosing it. */
   readonly pinned: boolean;
 }
@@ -271,6 +278,13 @@ export interface LayoutOptions {
   readonly cityOrder?: readonly string[];
   /** Hand-laid plots by kind, from a brand kit; a kind's own `plot` wins first. */
   readonly plots?: Readonly<Record<string, { readonly col: number; readonly row: number }>>;
+  /**
+   * THE SHOWINGS each kind has — its named Places — so a focused picture
+   * from altitude can stand on its kind's plot as a screen, and a picture
+   * over two kinds (`across`) on the road between them. A kind with none
+   * has no drive-in: its group opens in place, as it always did.
+   */
+  readonly screens?: Readonly<Record<string, readonly { readonly as: string; readonly title: string; readonly across?: string }[]>>;
 }
 
 /**
@@ -284,7 +298,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "cityOrder" | "plots">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "cityOrder" | "plots" | "screens">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1040, height: 420 },

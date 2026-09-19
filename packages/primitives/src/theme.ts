@@ -428,6 +428,60 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 /* The roster reads as a LIST, one member a row — chips wrapping at their
    own widths read as spilled tiles, and a district's population is a roll
    call, not a mosaic. */
+/* A DRIVE-IN: a dark screen standing on the plot, and the showings under
+   it as a marquee of real buttons. Only from altitude; the same list the
+   Places pills carry, drawn where the pictures live. */
+.graview-drive-in {
+  /* Its own block under the nameplate, never a row inside the pill: the
+     pill is one line of name and count, and a marquee flattened into it
+     read as "12 • shown above The month The week". On a box the pill sits
+     on the roof at the top of the card, so the marquee hangs under it; on
+     a landmark the pill floats above the card, so the marquee takes the
+     card's own top edge. */
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  animation: graview-settle 240ms ease backwards;
+}
+[data-graview-landmark] .graview-drive-in {
+  top: 4px;
+}
+.graview-drive-in-screen {
+  display: block;
+  width: 88px;
+  height: 22px;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--graview-ink) 78%, var(--graview-panel));
+  border: 1px solid color-mix(in oklab, var(--graview-ink) 55%, var(--graview-panel));
+  opacity: calc(0.5 + 0.5 * var(--graview-altitude));
+}
+.graview-drive-in-marquee {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.graview-drive-in-marquee > button {
+  font: inherit;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  padding: 2px 8px;
+  min-height: max(1.5rem, 24px);
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-panel);
+  color: var(--graview-ink);
+  cursor: pointer;
+}
+.graview-drive-in-marquee > button[aria-pressed="true"] {
+  border-color: var(--graview-accent);
+  color: var(--graview-accent);
+}
+
 .graview-kind-members {
   display: flex;
   flex-direction: column;

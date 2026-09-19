@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-14T05:13:03.269Z",
+  "at": "2026-09-19T06:37:42.410Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Graview",
       "pressed": "false",
       "name": "Graview",
-      "wingOpacity": 0.539234,
+      "wingOpacity": 0.539137,
       "registered": true
     },
     "groundAgain": {
@@ -194,7 +194,62 @@
     },
     "ok": true
   },
+  "driveIn": {
+    "marquee": [
+      {
+        "label": "Tasks: The month",
+        "focusable": true
+      },
+      {
+        "label": "Tasks: The week",
+        "focusable": true
+      }
+    ],
+    "noteDriveIn": false,
+    "standing": {
+      "screen": {
+        "x": 538.9037475585938,
+        "y": 302.6746826171875,
+        "width": 303,
+        "height": 257,
+        "top": 302.6746826171875,
+        "right": 841.9037475585938,
+        "bottom": 559.6746826171875,
+        "left": 538.9037475585938
+      },
+      "card": {
+        "x": 573.449951171875,
+        "y": 611.6721801757812,
+        "width": 214.78277587890625,
+        "height": 163.3817138671875,
+        "top": 611.6721801757812,
+        "right": 788.2327270507812,
+        "bottom": 775.0538940429688,
+        "left": 573.449951171875
+      },
+      "url": "#focus=aggregate%3Atask&overview=1&in.view=the-week"
+    },
+    "switched": {
+      "url": "#focus=aggregate%3Atask&overview=1&in.view=the-month",
+      "up": true
+    },
+    "midway": {
+      "x": 695.3585815429688,
+      "y": 432.29530334472656,
+      "width": 327
+    },
+    "landed": {
+      "url": "#focus=aggregate%3Atask&in.view=the-month",
+      "up": false
+    },
+    "movedFromThePlot": true
+  },
   "verdict": {
+    "aDriveInHasAMarquee": true,
+    "theScreenStandsOnItsPlot": true,
+    "switchingAShowingStaysUp": true,
+    "walkingUpDescendsInOneGesture": true,
+    "theDescentTweensFromThePlot": true,
     "nothingToGoBackToAtFirst": true,
     "travellingChangesTheAddress": true,
     "backBecomesAvailable": true,

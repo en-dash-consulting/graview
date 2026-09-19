@@ -145,6 +145,9 @@ describe("Focus, from altitude", () => {
     const altitude = { ...EMPTY_VIEW, overview: true };
     expect(descentTarget(altitude, ["note", "tag"])).toBe(aggregateId("note"));
     expect(descentTarget({ ...altitude, selection: [kindCardId("tag")] }, ["note", "tag"])).toBe(aggregateId("tag"));
+    /* With nothing focused or selected, the first kind that has a drive-in wins over the first kind. */
+    expect(descentTarget(altitude, ["note", "tag"], ["tag"])).toBe(aggregateId("tag"));
+    expect(descentTarget({ ...altitude, selection: [kindCardId("note")] }, ["note", "tag"], ["tag"])).toBe(aggregateId("note"));
     expect(descentTarget({ ...altitude, focusId: "note:a" }, ["note"])).toBe("note:a");
     expect(descentTarget(altitude, [])).toBeNull();
   });

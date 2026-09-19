@@ -2345,19 +2345,26 @@ export function BackOut({ home }: { readonly home: string | null }) {
  * button that did nothing, in every such app. Descending has to go
  * SOMEWHERE: into the district that is selected, or the first one declared.
  */
-export function descentTarget(view: ViewState, kinds: readonly string[]): string | null {
+/**
+ * WHERE "FOCUS" LANDS FROM ALTITUDE: the drive-in that is focused, else the
+ * selected kind's, else the first kind that has a drive-in — a kind with a
+ * picture of its own is a better place to walk up to than the first kind
+ * in the declaration — else the first kind at all.
+ */
+export function descentTarget(view: ViewState, kinds: readonly string[], driveIns: readonly string[] = []): string | null {
   if (view.focusId) return view.focusId;
   const selected = (view.selection ?? []).map(kindOfCard).find((kind) => kind !== null);
-  const kind = selected ?? kinds[0] ?? null;
+  const kind = selected ?? driveIns.find((one) => kinds.includes(one)) ?? kinds[0] ?? null;
   return kind === null ? null : aggregateId(kind);
 }
 
 export function OverviewButton() {
   const { view, go } = useNavigation();
-  const { store } = useGraview();
+  const { store, views, hiddenKinds } = useGraview();
   const overview = view.overview ?? false;
   const descend = () => {
-    const target = descentTarget(view, store.schema.kinds as readonly string[]);
+    const driveIns = views.places().map((place) => place.kind).filter((kind) => !hiddenKinds.has(kind));
+    const target = descentTarget(view, store.schema.kinds as readonly string[], driveIns);
     go(withFocus(withOverview(view, false), target));
   };
   const label = overview ? "Focus" : "Graview";

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T06:17:37.544Z",
+  "at": "2026-09-19T06:40:50.171Z",
   "engine": "chromium",
   "shots": [
     {
@@ -168,17 +168,11 @@
         940
       ],
       "covered": [],
-      "contentBottom": 979,
-      "contentRight": 1571,
-      "verticalFill": 104,
-      "horizontalFill": 101,
-      "overflowing": [
-        {
-          "tag": "div",
-          "by": 43,
-          "text": "The lists3 listsToday2 leftPay the depos"
-        }
-      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -402,17 +396,11 @@
         940
       ],
       "covered": [],
-      "contentBottom": 979,
-      "contentRight": 1571,
-      "verticalFill": 104,
-      "horizontalFill": 101,
-      "overflowing": [
-        {
-          "tag": "div",
-          "by": 43,
-          "text": "The lists3 listsToday2 leftPay the depos"
-        }
-      ],
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },

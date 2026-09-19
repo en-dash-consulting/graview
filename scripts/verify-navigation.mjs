@@ -450,6 +450,75 @@ try {
       backInStudio.studio,
   };
 
+/*
+ * A LENS IS A DRIVE-IN. From altitude a kind's named pictures are a
+ * marquee on its district — real buttons — and the focused picture stands
+ * on the kind's plot, not in the middle. Pressing a showing focuses the
+ * kind and descends in ONE gesture, and the picture tweens from the plot,
+ * which the mid-tween capture asserts: at a hundred milliseconds in, the
+ * lens's host is nearer the plot than the canvas centre.
+ */
+try {
+  const drive = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  drive.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await drive.goto("http://localhost:5193/?today=2026-09-01#overview=1", { waitUntil: "load" });
+  await drive.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await drive.waitForTimeout(1200);
+  const marquee = await drive.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="drive-in-task"] button')].map((el) => ({
+      label: el.getAttribute("aria-label"),
+      focusable: el.tabIndex >= 0 && !el.disabled,
+    })),
+  );
+  const noteDriveIn = await drive.evaluate(() => document.querySelector('[data-testid="drive-in-reason"]') !== null);
+  /* Switch showings at altitude: focus the tasks' month by the marquee, rise stays. */
+  await drive.evaluate(() => {
+    window.location.hash = "#overview=1&focus=aggregate%3Atask&in.view=the-week";
+  });
+  await drive.waitForTimeout(1200);
+  const standing = await drive.evaluate(() => {
+    const screen = document.querySelector('[data-graview-view="aggregate:task"][data-graview-plane="0"]');
+    const card = document.querySelector('[data-graview-view="kind:task"]');
+    const box = (el) => el?.getBoundingClientRect() ?? null;
+    return { screen: box(screen), card: box(card), url: location.hash };
+  });
+  await drive.click('[data-testid="showing-the-month"]');
+  await drive.waitForTimeout(600);
+  const switched = await drive.evaluate(() => ({
+    url: location.hash,
+    up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+  }));
+  /* Walk up to it: press the showing that is showing, capture mid-tween. */
+  const centreX = 1560 / 2;
+  await drive.click('[data-testid="showing-the-month"]');
+  await drive.waitForTimeout(110);
+  const midway = await drive.evaluate(() => {
+    const el = document.querySelector('[data-graview-view="aggregate:task"]');
+    const b = el?.getBoundingClientRect();
+    return b ? { x: b.x + b.width / 2, y: b.y + b.height / 2, width: b.width } : null;
+  });
+  await drive.waitForTimeout(1000);
+  const landed = await drive.evaluate(() => ({
+    url: location.hash,
+    up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+  }));
+  const plotX = standing.screen ? standing.screen.x + standing.screen.width / 2 : null;
+  report.driveIn = {
+    marquee,
+    noteDriveIn,
+    standing,
+    switched,
+    midway,
+    landed,
+    /* Mid-tween the lens is nearer the plot's column than the centre's. */
+    movedFromThePlot:
+      midway !== null && plotX !== null && Math.abs(midway.x - plotX) < Math.abs(midway.x - centreX) + 40,
+  };
+  await drive.close();
+} catch (error) {
+  report.driveIn = { error: String(error).slice(0, 2000) };
+}
+
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
@@ -474,6 +543,26 @@ const placeOf = (hash) => {
   return params.toString();
 };
 report.verdict = {
+  // A kind with named pictures has a drive-in whose showings are real, labelled, focusable buttons; a kind with only defaults has none.
+  aDriveInHasAMarquee:
+    (report.driveIn?.marquee?.length ?? 0) >= 2 &&
+    report.driveIn.marquee.every((button) => /^Tasks: /.test(button.label ?? "") && button.focusable) &&
+    report.driveIn?.noteDriveIn === false,
+  // The focused picture stands on its plot: the screen's foot sits above the district's nameplate, centred on it.
+  theScreenStandsOnItsPlot:
+    report.driveIn?.standing?.screen !== null &&
+    report.driveIn?.standing?.card !== null &&
+    Math.abs(
+      (report.driveIn?.standing?.screen?.x ?? 0) + (report.driveIn?.standing?.screen?.width ?? 0) / 2 -
+        ((report.driveIn?.standing?.card?.x ?? 0) + (report.driveIn?.standing?.card?.width ?? 0) / 2),
+    ) < 120 &&
+    (report.driveIn?.standing?.screen?.y ?? 0) < (report.driveIn?.standing?.card?.y ?? 0),
+  // Switching showings at altitude changes in.view and stays up; pressing the showing that is showing walks down to it.
+  switchingAShowingStaysUp:
+    (report.driveIn?.switched?.url ?? "").includes("in.view=the-month") && report.driveIn?.switched?.up === true,
+  walkingUpDescendsInOneGesture:
+    report.driveIn?.landed?.up === false && (report.driveIn?.landed?.url ?? "").includes("in.view=the-month"),
+  theDescentTweensFromThePlot: report.driveIn?.movedFromThePlot === true,
   // Nowhere to go back to on arrival, and the control says so rather than
   // being offered and doing nothing.
   nothingToGoBackToAtFirst: step("landed")?.back === false,

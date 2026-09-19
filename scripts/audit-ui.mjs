@@ -692,8 +692,13 @@ const audit = () => {
       );
     })
     .map((el) => (el.textContent ?? "").trim());
+  // A drive-in's marquee is the Places list drawn where the pictures live:
+  // the same titles twice is the design, not a repeat.
+  const marquee = [...document.querySelectorAll('[data-testid^="drive-in-"] button')].map((el) =>
+    (el.textContent ?? "").trim(),
+  );
   const repeats = [...seen.entries()]
-    .filter(([t, n]) => n > 1 && t !== crumb && t !== raisedChip && !atThisPlace.includes(t))
+    .filter(([t, n]) => n > 1 && t !== crumb && t !== raisedChip && !atThisPlace.includes(t) && !marquee.includes(t))
     .map(([t, n]) => `${t} x${n}`);
 
   /*
@@ -754,13 +759,26 @@ const audit = () => {
     }
     return false;
   };
+  /*
+   * THE GROUND PANS. From altitude a city wider than the window is reached
+   * by dragging the ground, and the ground says how far the camera reaches
+   * (`data-graview-reach`, the scene's own camera limit). A control past
+   * the edge but within that reach is pannable to, which is not lost.
+   */
+  const pannable = (el) => {
+    const ground = el.closest("[data-graview-reach]");
+    if (!ground) return null;
+    const [x, y] = (ground.getAttribute("data-graview-reach") ?? "0 0").split(" ").map(Number);
+    return { x: x || 0, y: y || 0 };
+  };
   const offscreen = [...document.querySelectorAll("button, [role=button], a[href], select, input")]
     .filter((el) => {
       const b = el.getBoundingClientRect();
       if (b.width < 1 || b.height < 1) return false;
       if (getComputedStyle(el).visibility === "hidden") return false;
-      const pastSide = b.right > window.innerWidth + 1 || b.left < -1;
-      const pastEnd = b.bottom > window.innerHeight + 1 || b.top < -1;
+      const reach = pannable(el) ?? { x: 0, y: 0 };
+      const pastSide = b.right > window.innerWidth + reach.x + 1 || b.left < -reach.x - 1;
+      const pastEnd = b.bottom > window.innerHeight + reach.y + 1 || b.top < -reach.y - 1;
       if (pastSide && !scrollableAbove(el, "x")) return true;
       return pastEnd && !scrollableAbove(el, "y");
     })

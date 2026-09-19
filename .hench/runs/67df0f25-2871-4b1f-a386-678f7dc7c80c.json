@@ -1,0 +1,30 @@
+{
+  "id": "67df0f25-2871-4b1f-a386-678f7dc7c80c",
+  "taskId": "22731804-b2c0-4ce7-b289-9edf459f594e",
+  "taskTitle": "A kind is a neighborhood: the city is a map drawn from the declaration",
+  "startedAt": "2026-09-19T06:20:36.679Z",
+  "finishedAt": "2026-09-19T06:20:36.679Z",
+  "status": "completed",
+  "turns": 226,
+  "summary": "cityMap/placeCity/cameraLimit, plot on nodes, lattice roads, buildings, whereIs/scenePointer, describe city",
+  "tokenUsage": {
+    "input": 6992,
+    "output": 450216,
+    "cacheCreationInput": 981561,
+    "cacheReadInput": 116002446
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 6992,
+    "output": 450216,
+    "cached": 116984007,
+    "total": 117441215
+  }
+}

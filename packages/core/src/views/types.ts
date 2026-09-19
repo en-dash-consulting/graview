@@ -42,12 +42,20 @@ export interface ViewRegistration<V = unknown> {
  */
 export interface ViewMeta {
   readonly title?: string;
+  /**
+   * For a picture over TWO kinds — a coverage matrix of practices against
+   * concerns — the other kind. A drive-in for such a picture stands on the
+   * road between the two plots rather than on one of them.
+   */
+  readonly across?: string;
 }
 
 /** A named group view: somewhere to go, by name. */
 export interface Place {
   readonly kind: string;
   readonly title: string;
+  /** The other kind, when the picture is over two. */
+  readonly across?: string;
   /**
    * The short name this place answers to in a stop, from its title.
    *
@@ -140,7 +148,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
         const as = placeSlug(meta.title);
         entries.set(key(kind, cell, as), registration);
         if (cell.cardinality === "many" && !named.some((place) => place.kind === kind && place.as === as)) {
-          named.push({ kind, title: meta.title, as });
+          named.push({ kind, title: meta.title, as, ...(meta.across ? { across: meta.across } : {}) });
         }
       }
       return registry;

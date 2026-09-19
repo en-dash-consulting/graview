@@ -1,4 +1,4 @@
-import { isCurrent, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
+import { isCurrent, toIso, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
 import {
   DEFAULT_OPTIONS,
   type Aggregate,
@@ -147,6 +147,26 @@ const CARD_MIN_HEIGHT = 56;
  * everything else here.
  */
 const DISTRICT_MIN_WIDTH = 132;
+
+/*
+ * The width a drive-in screen is never drawn under: the picture is the
+ * interface scaled, and below this its words are not words. In the
+ * reader's unit, like the districts.
+ */
+const DRIVE_IN_MIN_WIDTH = 300;
+
+/** The room a drive-in's marquee takes under the nameplate: the screen glyph and one row of buttons. */
+const MARQUEE_HEIGHT = 58;
+
+/*
+ * A district's nameplate is a pill drawn by the stylesheet, not the card's
+ * box: on a landmark it floats above the box by its own height and a gap,
+ * and it is as wide as its words. The screen keeps this much clear of the
+ * box's top, and other districts' boxes reach this much further sideways,
+ * so a screen never stands on a plate.
+ */
+const PLATE_CLEARANCE = 52;
+const PLATE_REACH = 60;
 
 function shelf(
   count: number,
@@ -545,6 +565,16 @@ export function layout<S extends AnySchema>(
       else expanded.delete(kindCardId(kind));
     }
   }
+  /**
+   * A DRIVE-IN, when the focused group's kind has a named picture: the
+   * screen will stand on that kind's plot once the city is placed, so the
+   * city need not slide aside for it. The showing is the one the address
+   * names, or the first the kind has.
+   */
+  const screenKind = groupFocus && !groupIsPlain && focusKinds.length === 1 ? focusKinds[0]! : undefined;
+  const showings = screenKind ? (options.screens?.[screenKind] ?? []) : [];
+  const showing = showings.find((one) => one.as === state.within?.["view"]) ?? showings[0];
+  const driveIn = screenKind !== undefined && showing !== undefined;
   /** The picture standing in the middle from altitude, when there is one: ground the city must not take. */
   let stamp: { x: number; y: number; width: number; height: number } | undefined;
   if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain) {
@@ -893,6 +923,9 @@ export function layout<S extends AnySchema>(
           // An opened district lays its members out inside its plot: room
           // for a small grid, in the reader's unit.
           opened: expanded.has(item.id) ? 96 * unit : 0,
+          // A district with showings carries their marquee under its name:
+          // a dark screen and a row of buttons, in the reader's unit.
+          ...((options.screens?.[item.kind]?.length ?? 0) > 0 ? { marquee: MARQUEE_HEIGHT * unit } : {}),
         })),
         schema,
         contextSize,
@@ -903,7 +936,7 @@ export function layout<S extends AnySchema>(
           ...(opts.plots ? { plots: opts.plots } : {}),
           scale: unit,
           minHeight: CARD_MIN_HEIGHT * unit,
-          ...(stamp ? { avoid: [stamp] } : {}),
+          ...(stamp && !driveIn ? { avoid: [stamp] } : {}),
         },
       )
     : null;
@@ -1160,6 +1193,83 @@ export function layout<S extends AnySchema>(
       depth: item.depth,
     });
   });
+
+  /*
+   * THE SCREEN STANDS ON ITS PLOT. Anchored to the plot's far edge — the
+   * top vertex of its diamond — centred on the plot, sized by the plot's
+   * side so a bigger neighbourhood has a bigger screen, floored so its
+   * words can be read, and shrunk only as a last resort until it covers
+   * no other district's nameplate. A picture over two kinds stands on the
+   * road between their plots. The same natural size and shrink as before:
+   * the interface, scaled, never re-laid-out small.
+   */
+  if (driveIn && city && stamp && state.focusId) {
+    const frame = city.frame;
+    const own = city.map.get(screenKind!);
+    const other = showing?.across ? city.map.get(showing.across) : undefined;
+    if (own) {
+      const cornerOf = (plot: { col: number; row: number; side: number }) => {
+        const top = toIso(plot.col, plot.row, frame.cell);
+        const centre = toIso(plot.col + plot.side / 2, plot.row + plot.side / 2, frame.cell);
+        return {
+          top: { x: frame.originX + top.x, y: frame.originY + top.y },
+          centre: { x: frame.originX + centre.x, y: frame.originY + centre.y },
+        };
+      };
+      const mine = cornerOf(own);
+      const theirs = other ? cornerOf(other) : undefined;
+      const anchorX = theirs ? (mine.centre.x + theirs.centre.x) / 2 : mine.centre.x;
+      /*
+       * Its foot is at the plot's far edge — and never below its own
+       * district's nameplate, which a tall card on a small plot can lift
+       * above that edge: the screen stands behind the plate, not on it.
+       */
+      const ownCard = placed.get(kindCardId(screenKind!));
+      const ownTop = ownCard ? ownCard.y - (state.pan?.y ?? 0) - PLATE_CLEARANCE * unit : Infinity;
+      const anchorBottom = theirs ? Math.min((mine.top.y + theirs.top.y) / 2, ownTop) : Math.min(mine.top.y + frame.cell * 0.1, ownTop);
+      const aspect = naturalH / naturalW;
+      const floor = Math.min(DRIVE_IN_MIN_WIDTH * unit, spanW * 0.5);
+      let width = Math.max(floor, Math.min(spanW * 0.5, own.side * frame.cell * 1.7));
+      if (width * aspect > opts.height * 0.48) width = (opts.height * 0.48) / aspect;
+      const others = [...placed.values()].filter((node) => node.plane === 2 && node.id !== kindCardId(screenKind!));
+      const boxAt = (w: number) => {
+        const h = w * aspect;
+        const y = Math.max(4, anchorBottom - h);
+        return { x: anchorX - w / 2, y, width: w, height: h };
+      };
+      let box = boxAt(width);
+      /*
+       * Another district's NAMEPLATE is wider than its box and floats above
+       * it — a label overflows its building the way a map label does — so
+       * the box is inflated by what the plate can reach before the screen
+       * is judged against it.
+       */
+      const covers = (b: { x: number; y: number; width: number; height: number }) =>
+        others.some((card) => {
+          const unpanned = {
+            x: card.x - (state.pan?.x ?? 0) - PLATE_REACH * unit,
+            y: card.y - (state.pan?.y ?? 0) - PLATE_CLEARANCE * unit,
+            width: card.width + PLATE_REACH * unit * 2,
+            height: card.height + PLATE_CLEARANCE * unit,
+          };
+          return b.x < unpanned.x + unpanned.width && unpanned.x < b.x + b.width && b.y < unpanned.y + unpanned.height && unpanned.y < b.y + b.height;
+        });
+      for (let w = width; covers(box) && w > floor + 1; w = Math.max(floor, w * 0.92)) box = boxAt(w);
+      const at = nodes.findIndex((node) => node.id === state.focusId);
+      if (at !== -1) {
+        const raised: LayoutNode = {
+          ...nodes[at]!,
+          x: box.x + (state.pan?.x ?? 0),
+          y: box.y + (state.pan?.y ?? 0),
+          width: box.width,
+          height: box.height,
+          screenOf: screenKind!,
+        };
+        nodes[at] = raised;
+        placed.set(raised.id, raised);
+      }
+    }
+  }
 
   return {
     nodes,

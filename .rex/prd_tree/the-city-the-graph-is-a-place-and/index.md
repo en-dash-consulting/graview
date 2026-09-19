@@ -21,7 +21,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [A kind is a neighborhood: the city is a map drawn from the declaration, and everything in it has an address](./a-kind-is-a-neighborhood-the-city-is-a.md) | in_progress |
-| [A lens is a drive-in: the picture stands at its kind's plot, and descending is walking up to the screen](./a-lens-is-a-drive-in-the-picture.md) | pending |
+| [A kind is a neighborhood: the city is a map drawn from the declaration, and everything in it has an address](./a-kind-is-a-neighborhood-the-city-is-a.md) | completed |
+| [A lens is a drive-in: the picture stands at its kind's plot, and descending is walking up to the screen](./a-lens-is-a-drive-in-the-picture.md) | in_progress |
 | [The seat is a robot in the city: it stands where it reads and writes, comes to your cursor when asked, and says its refusals at the gate](./the-seat-is-a-robot-in-the-city-it.md) | pending |
 | [Who is where: other people stand at their drive-ins with their robots, over a presence channel that is not the op log](./who-is-where-other-people-stand-at.md) | pending |

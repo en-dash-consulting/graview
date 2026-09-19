@@ -21,6 +21,12 @@ export interface CityCard {
   readonly count: number;
   /** Extra height this card asks for, opened in place. */
   readonly opened: number;
+  /**
+   * Extra height for a drive-in's marquee — the showings drawn as buttons
+   * under the nameplate. Not given back like the listing: a marquee
+   * clipped is a button nobody can press.
+   */
+  readonly marquee?: number;
 }
 
 export interface PlacedCard {
@@ -128,7 +134,8 @@ export function placeCity(
       const near = lowest === highest ? 0.5 : (centre.y - highest) / (lowest - highest);
       const grow = 0.85 + near * 0.45;
       const width = size.width * grow;
-      const height = Math.max(minHeight, size.height * grow) + card.opened * openedShare;
+      const base = Math.max(minHeight, size.height * grow);
+      const height = base + (card.marquee ?? 0) + card.opened * openedShare;
       /*
        * NOT HELD INSIDE THE CANVAS. The ring pushed its near card back in
        * from the edge; a city has a shape, and a district pushed off its
@@ -136,10 +143,16 @@ export function placeCity(
        * wider than the window is reached by panning, which the camera
        * bounds to the map's extent for exactly this reason.
        */
+      /*
+       * The NAMEPLATE is centred on the plot; what hangs under it — a
+       * marquee, an opened listing — grows DOWNWARD, so the top of the card
+       * stays where the plot's far half is, and a screen standing at the
+       * far edge is never covered by its own district's growth.
+       */
       return {
         id: card.id,
         x: originX + centre.x - width / 2,
-        y: originY + centre.y - height / 2,
+        y: originY + centre.y - base / 2,
         width,
         height,
         depth: 1 - near * 0.65,

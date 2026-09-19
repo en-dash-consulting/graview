@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-15T05:00:24.938Z",
+  "at": "2026-09-19T06:47:06.682Z",
   "engine": "chromium",
   "screens": [
     {
@@ -341,7 +341,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 5,
+      "fill": 7,
       "inspector": null,
       "led": null,
       "figures": []
@@ -363,7 +363,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 5,
+      "fill": 7,
       "inspector": null,
       "led": null,
       "figures": []
@@ -385,7 +385,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 20,
+      "fill": 12,
       "inspector": null,
       "led": null,
       "figures": []
@@ -647,7 +647,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 23,
+      "fill": 10,
       "inspector": null,
       "led": null,
       "figures": []
@@ -669,7 +669,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 18,
+      "fill": 22,
       "inspector": {
         "shown": 3,
         "hidden": 0,
@@ -696,7 +696,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 6,
+      "fill": 8,
       "inspector": null,
       "led": null,
       "figures": []
@@ -784,7 +784,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 6,
+      "fill": 8,
       "inspector": {
         "shown": 1,
         "hidden": 0,
@@ -811,7 +811,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 6,
+      "fill": 8,
       "inspector": null,
       "led": null,
       "figures": []
@@ -833,7 +833,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 6,
+      "fill": 8,
       "inspector": {
         "shown": 3,
         "hidden": 0,
@@ -882,7 +882,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 10,
+      "fill": 15,
       "inspector": {
         "shown": 3,
         "hidden": 0,

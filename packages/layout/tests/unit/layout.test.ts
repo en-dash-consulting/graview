@@ -2,6 +2,7 @@ import { createSchema, defineNode, Graph } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  withWithin,
   cameraLimit,
   aggregateId,
   edgeOfSelection,
@@ -243,6 +244,23 @@ describe("every stop is a URL", () => {
       pins: {},
     });
     expect(fromUrl("")).toEqual(EMPTY_VIEW);
+  });
+});
+
+describe("a drive-in's showing is a stop", () => {
+  it("round-trips overview, the focused group and the showing through the address", () => {
+    const stop = withWithin({ ...view({ overview: true, focusId: aggregateId("duty") }) }, "view", "the-month");
+    const url = toUrl(stop);
+    expect(url).toContain("overview=1");
+    expect(url).toContain("in.view=the-month");
+    const back = fromUrl(url);
+    expect(back.overview).toBe(true);
+    expect(back.focusId).toBe(aggregateId("duty"));
+    expect(back.within?.["view"]).toBe("the-month");
+    /* Switching the showing at altitude is a new stop that stays at altitude. */
+    const switched = withWithin(back, "view", "the-week");
+    expect(switched.overview).toBe(true);
+    expect(fromUrl(toUrl(switched)).within?.["view"]).toBe("the-week");
   });
 });
 

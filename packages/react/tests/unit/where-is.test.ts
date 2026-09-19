@@ -43,6 +43,24 @@ describe("where is", () => {
   });
 });
 
+describe("the audience strip", () => {
+  it("answers screen:<kind> with the ground in front of the drive-in's screen, down to its nameplate", () => {
+    const withScreen = {
+      nodes: [
+        ...(frame as { nodes: unknown[] }).nodes,
+        { id: "aggregate:zone", kind: "zone", plane: 0, x: 120, y: 40, width: 300, height: 120, pinned: false, opacity: 1, screenOf: "zone", aggregate: { kind: "zone", memberIds: [], label: "Zones" } },
+      ].filter((node: { id: string }) => node.id !== "aggregate:zone" || (node as { screenOf?: string }).screenOf === "zone"),
+    } as never;
+    const strip = whereIsIn(withScreen, null, "light", views, "screen:zone")!;
+    expect(strip.x).toBe(120);
+    expect(strip.width).toBeCloseTo(300, 0);
+    expect(strip.y).toBeCloseTo(160, 0);
+    /* Down to the nameplate at y 200. */
+    expect(strip.height).toBeCloseTo(40, 0);
+    expect(whereIsIn(frame, null, "light", views, "screen:zone")).toBeNull();
+  });
+});
+
 describe("the pointer store", () => {
   it("is null until something subscribes, tells the scene on the first and last subscriber, and forgets the point when nobody listens", () => {
     const store = createPointerStore();

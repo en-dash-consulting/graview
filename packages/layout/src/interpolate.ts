@@ -146,6 +146,7 @@ function mix(a: LayoutNode, b: LayoutNode, t: number, opacity: number): Interpol
        here, a district mid-flight to altitude has no plot, and the ground
        under it and the roads to it have nothing to stand on. */
     ...(b.plot ? { plot: b.plot } : {}),
+    ...(b.screenOf ? { screenOf: b.screenOf } : {}),
     ...(b.depth === undefined ? {} : { depth: lerp(a.depth ?? 1, b.depth, t) }),
     ...(b.natural ? { natural: b.natural } : {}),
   };
