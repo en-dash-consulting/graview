@@ -20,5 +20,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Derive the questions from the declaration rather than authoring them](./derive-the-questions-from-the.md) | completed |
 | [Groundskeeper proves it on the matrix it already draws](./groundskeeper-proves-it-on-the-matrix.md) | pending |
 | [Loops: act, re-judge, act again, and know when to stop](./loops-act-re-judge-act-again-and-know.md) | pending |
-| [One switch, four rungs — and a rung that says what it cannot do](./one-switch-four-rungs-and-a-rung-that.md) | in_progress |
+| [One switch, four rungs — and a rung that says what it cannot do](./one-switch-four-rungs-and-a-rung-that.md) | completed |
 | [The provider itself: one call, many questions, honest about failure](./the-provider-itself-one-call-many.md) | completed |

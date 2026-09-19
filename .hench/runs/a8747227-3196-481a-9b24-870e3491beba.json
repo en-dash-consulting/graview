@@ -1,0 +1,30 @@
+{
+  "id": "a8747227-3196-481a-9b24-870e3491beba",
+  "taskId": "31b8372d-28d2-4fdd-850d-60ca08a11e65",
+  "taskTitle": "One switch, four rungs — and a rung that says what it cannot do",
+  "startedAt": "2026-09-19T05:30:04.184Z",
+  "finishedAt": "2026-09-19T05:30:04.184Z",
+  "status": "completed",
+  "turns": 71,
+  "summary": "decision rung, RUNGS/rungFor, honesty in say, mid-turn switch note, decideFor, describe ladder",
+  "tokenUsage": {
+    "input": 2272,
+    "output": 153787,
+    "cacheCreationInput": 231954,
+    "cacheReadInput": 15793183
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 2272,
+    "output": 153787,
+    "cached": 16025137,
+    "total": 16181196
+  }
+}
