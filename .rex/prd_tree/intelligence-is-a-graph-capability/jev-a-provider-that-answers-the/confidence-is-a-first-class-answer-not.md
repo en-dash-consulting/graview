@@ -4,12 +4,12 @@ level: "task"
 title: "Confidence is a first-class answer, not a number in a log"
 status: "pending"
 priority: "high"
+blockedBy:
+  - "9893a227-a8c5-4f50-80cf-01cf3c15375f"
 acceptanceCriteria:
   - "Every answer reaches a surface with its confidence, not only its value"
   - "A split distribution is offered as a question rather than applied as an answer"
   - "PlanReview orders the least sure first, as it already does for a survey"
-blockedBy:
-  - "9893a227-a8c5-4f50-80cf-01cf3c15375f"
 description: "Every answer carries a confidence and a full probability distribution. PlanReview already shows how sure a proposal was and orders leastSure first — that path was built for the survey and is exactly right here. A low-confidence answer should be offered rather than applied, a split distribution should say so (\"turf 0.5, bed 0.45\" is a question for a person, not an answer), and a confident one should still be a plan before it is a change."
 lastModified: "2026-09-19T04:15:14.421Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
