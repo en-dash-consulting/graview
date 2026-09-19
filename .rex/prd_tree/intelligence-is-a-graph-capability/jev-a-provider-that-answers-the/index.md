@@ -19,6 +19,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Confidence is a first-class answer, not a number in a log](./confidence-is-a-first-class-answer-not.md) | completed |
 | [Derive the questions from the declaration rather than authoring them](./derive-the-questions-from-the.md) | completed |
 | [Groundskeeper proves it on the matrix it already draws](./groundskeeper-proves-it-on-the-matrix.md) | pending |
-| [Loops: act, re-judge, act again, and know when to stop](./loops-act-re-judge-act-again-and-know.md) | in_progress |
+| [Loops: act, re-judge, act again, and know when to stop](./loops-act-re-judge-act-again-and-know.md) | completed |
 | [One switch, four rungs — and a rung that says what it cannot do](./one-switch-four-rungs-and-a-rung-that.md) | completed |
 | [The provider itself: one call, many questions, honest about failure](./the-provider-itself-one-call-many.md) | completed |
