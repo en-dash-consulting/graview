@@ -29,23 +29,59 @@ export interface OccupantsProps {
   readonly pan: { readonly x: number; readonly y: number };
 }
 
-/** The robot, in the scene's own line vocabulary: an iso box body, a visor, two feet. */
+/**
+ * THE ROBOT, in the scene's own line vocabulary. A dome head with a visor
+ * and two eyes, an antenna, and a body that is one of the city's own iso
+ * blocks — the same block a district is — on two small feet. What it is
+ * doing is in the drawing: the antenna lights while it follows, an arm
+ * comes up with a pen while it writes, the visor sweeps while it reads,
+ * the eyes drop while it is docked, and a refusal flattens the visor.
+ */
 export function Figure({ hue, mode }: { readonly hue: number; readonly mode: RobotState["mode"] }): ReactElement {
-  const busy = mode === "reading" || mode === "writing";
+  const docked = mode === "docked";
+  const writing = mode === "writing";
+  const reading = mode === "reading";
+  const following = mode === "following";
+  const refused = mode === "refused";
+  void hue;
   return (
-    <svg viewBox="0 0 28 30" aria-hidden="true">
+    <svg viewBox="0 0 32 38" aria-hidden="true">
       <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round">
-        {/* head: an iso block */}
-        <polygon points="14,2 24,7 14,12 4,7" />
-        <polyline points="4,7 4,15 14,20 24,15 24,7" />
-        <line x1="14" y1="12" x2="14" y2="20" />
-        {/* visor */}
-        <line x1="7" y1="10.5" x2="12" y2="13" />
-        {mode === "asking" ? <circle cx="20" cy="12" r="1.2" fill="currentColor" stroke="none" /> : null}
-        {/* body and feet */}
-        <polyline points="9,20 9,25 12,26.5 12,29" />
-        <polyline points="19,20 19,25 16,26.5 16,29" />
-        {busy ? <line x1="24" y1="11" x2="27" y2="9" /> : null}
+        {/* antenna */}
+        <line x1="16" y1="3.5" x2="16" y2="7" />
+        <circle cx="16" cy="2.6" r="1.5" fill={following ? "currentColor" : "none"} />
+        {/* head: a dome */}
+        <path d="M8 16 V12.5 C8 8.5 11.5 7 16 7 C20.5 7 24 8.5 24 12.5 V16 Z" fill="currentColor" fillOpacity="0.1" />
+        {/* visor and eyes */}
+        {refused ? (
+          <line x1="11" y1="12.5" x2="21" y2="12.5" strokeWidth="2" />
+        ) : (
+          <>
+            <rect x="10.2" y="10.2" width="11.6" height="4.6" rx="2.3" fill="currentColor" fillOpacity="0.14" strokeWidth="1" />
+            <circle cx="13.4" cy="12.5" r="1.25" fill="currentColor" stroke="none" opacity={docked ? 0.45 : 1} />
+            <circle cx="18.6" cy="12.5" r="1.25" fill="currentColor" stroke="none" opacity={docked ? 0.45 : 1} />
+            {reading ? <line x1="10.2" y1="12.5" x2="21.8" y2="12.5" strokeWidth="0.8" opacity="0.7" /> : null}
+          </>
+        )}
+        {/* neck */}
+        <line x1="16" y1="16" x2="16" y2="18.5" />
+        {/* body: an iso block, the city's own */}
+        <polygon points="16,18.5 24,22.5 16,26.5 8,22.5" fill="currentColor" fillOpacity="0.22" />
+        <polygon points="8,22.5 16,26.5 16,33.5 8,29.5" fill="currentColor" fillOpacity="0.08" />
+        <polygon points="24,22.5 16,26.5 16,33.5 24,29.5" fill="currentColor" fillOpacity="0.3" />
+        {/* arms */}
+        {writing ? (
+          <>
+            <polyline points="24,24 28.5,20.5" />
+            <line x1="27.5" y1="19" x2="30" y2="21.5" strokeWidth="1.8" />
+          </>
+        ) : (
+          <line x1="24" y1="24" x2="26.5" y2="29" />
+        )}
+        <line x1="8" y1="24" x2="5.5" y2="29" />
+        {/* feet */}
+        <path d="M9.5 33.5 v2.2 h4" />
+        <path d="M22.5 33.5 v2.2 h-4" />
       </g>
       <title>{`robot, ${mode}`}</title>
     </svg>
@@ -83,9 +119,11 @@ const footOf = (box: DrawnBox): { x: number; y: number } => ({ x: box.x + box.wi
  * all is drawn far enough in for the whole body; one that is off the ground
  * is left where it is, so the edge marker still says which way it went.
  */
-const BODY_ABOVE = 30;
+/** How close a hand has to come for a following robot to stand still. */
+const CATCH_REACH = 34;
+const BODY_ABOVE = 38;
 const NAME_BELOW = 16;
-const BODY_HALF = 16;
+const BODY_HALF = 18;
 function onGround(point: { x: number; y: number }, width: number, height: number): { x: number; y: number } {
   const on = point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height;
   if (!on || width < BODY_HALF * 2 || height < BODY_ABOVE + NAME_BELOW) return point;
@@ -126,6 +164,9 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }
   const { robots, noteSeat, principal, store, administered, who, following, follow } = useGraview();
   const [trails, setTrails] = useState<Record<string, readonly { x: number; y: number }[]>>({});
   const lastAt = useRef<Record<string, string | null>>({});
+  /* Where each body was last drawn, and where a following one is holding still to be caught. */
+  const lastPoint = useRef<Record<string, { x: number; y: number }>>({});
+  const heldStill = useRef<Record<string, { x: number; y: number }>>({});
 
   /*
    * THE DOCK: the seated person's own building when the installation is
@@ -156,8 +197,27 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }
     let point: { x: number; y: number } | null = null;
     let over: string | null = null;
     if (robot.mode === "following" && pointer) {
-      // Trailing the pointer, offset so it never sits under the cursor.
-      point = { x: pointer.x + 22, y: pointer.y + 26 };
+      /*
+       * TRAILING THE POINTER, offset so it never sits under the cursor —
+       * and HOLDING STILL WHEN REACHED FOR. Placed at a fixed offset it
+       * moved away by exactly as much as the hand came toward it, and a
+       * robot you cannot catch cannot be pressed to let go. Within reach
+       * it stays where it is; once the hand goes back to work it follows.
+       */
+      const trailing = { x: pointer.x + 22, y: pointer.y + 26 };
+      const held = heldStill.current[robot.participant];
+      const near = (p: { x: number; y: number }) => Math.hypot(pointer.x - p.x, pointer.y - (p.y - BODY_ABOVE / 2));
+      if (held && near(held) < CATCH_REACH * 2) point = held;
+      else {
+        const last = lastPoint.current[robot.participant];
+        if (last && near(last) < CATCH_REACH) {
+          heldStill.current[robot.participant] = last;
+          point = last;
+        } else {
+          delete heldStill.current[robot.participant];
+          point = trailing;
+        }
+      }
       over = overAt(stageRef.current, pointer);
     } else if (robot.at !== null) {
       const box = whereIs(robot.at);
@@ -175,7 +235,10 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }
        */
       point = null;
     }
-    return { robot, point: point ? onGround(point, width, height) : point, over };
+    const drawn = point ? onGround(point, width, height) : point;
+    if (drawn) lastPoint.current[robot.participant] = drawn;
+    else delete lastPoint.current[robot.participant];
+    return { robot, point: drawn, over };
   });
 
   /* What is under the pointer while following reaches the fold, so "this" in chat means it. */

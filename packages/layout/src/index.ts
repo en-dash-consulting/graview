@@ -5,6 +5,7 @@ export {
   kindOfCard,
   kindsOf,
   kindsOfAggregate,
+  marqueeHeightFor,
   KIND_PREFIX,
   layout,
   planeOf,

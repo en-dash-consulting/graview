@@ -6,7 +6,7 @@ import {
   type AnySchema,
   type KindOfSchema,
 } from "@graview/core";
-import { aggregateId, kindCardId, withFocus, withOverview, withPast, withWithin } from "@graview/layout";
+import { aggregateId, kindCardId, marqueeHeightFor, withFocus, withOverview, withPast, withWithin } from "@graview/layout";
 import {
   createViews,
   useGraview,
@@ -417,6 +417,15 @@ export function registerDefaultViews<S extends AnySchema>(
             position: "relative",
             height: "100%",
             ["--graview-hue" as string]: Math.round(hue),
+            /*
+             * THE ROOM THE MARQUEE TAKES, told to the drawing under it. The
+             * building is sized from the card's height, and the layout grew
+             * the card by the marquee's band — so the building grew into the
+             * band and the showings stood on its roof. The band's height is
+             * the layout's own estimate, and the building sizes from what is
+             * left.
+             */
+            ["--graview-marquee-room" as string]: showings.length > 0 ? `${marqueeHeightFor(showings.map((place) => place.title), 132) + (figure ? 4 : 42)}px` : "0px",
           }}
         >
           {/*
@@ -744,7 +753,6 @@ export function registerDefaultViews<S extends AnySchema>(
               onPointerDown={(event) => event.stopPropagation()}
               onDoubleClick={(event) => event.stopPropagation()}
             >
-              {props.focused ? null : <span className="graview-drive-in-screen" aria-hidden="true" />}
               <div className="graview-drive-in-marquee" role="group" aria-label={`${plural}: pictures`}>
                 {showings.map((place) => {
                   const showing = showingNow === place.as;

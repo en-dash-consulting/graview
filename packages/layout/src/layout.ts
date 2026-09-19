@@ -155,8 +155,30 @@ const DISTRICT_MIN_WIDTH = 132;
  */
 const DRIVE_IN_MIN_WIDTH = 300;
 
-/** The room a drive-in's marquee takes under the nameplate: the screen glyph and one row of buttons. */
-const MARQUEE_HEIGHT = 58;
+/*
+ * THE ROOM A DRIVE-IN'S MARQUEE TAKES under the nameplate: its showings as
+ * buttons, wrapped to the card's width. It was one fixed row, and Rota's
+ * three long titles wrapped to three and stood on the landmark below. The
+ * estimate is the pill's own metrics — eleven-pixel type, eight of padding
+ * a side, a four-pixel gap, a twenty-eight-pixel row — so the band is the
+ * height the buttons will actually take, and nothing else moves.
+ */
+const MARQUEE_ROW = 28;
+const MARQUEE_GAP = 4;
+export function marqueeHeightFor(titles: readonly string[], cardWidth: number): number {
+  if (titles.length === 0) return 0;
+  const usable = Math.max(40, cardWidth - 16);
+  let rows = 1;
+  let filled = 0;
+  for (const title of titles) {
+    const pill = Math.min(usable, title.length * 6.2 + 18);
+    if (filled > 0 && filled + MARQUEE_GAP + pill > usable) {
+      rows += 1;
+      filled = pill;
+    } else filled += (filled > 0 ? MARQUEE_GAP : 0) + pill;
+  }
+  return 10 + rows * MARQUEE_ROW + (rows - 1) * MARQUEE_GAP;
+}
 
 /*
  * A district's nameplate is a pill drawn by the stylesheet, not the card's
@@ -924,8 +946,10 @@ export function layout<S extends AnySchema>(
           // for a small grid, in the reader's unit.
           opened: expanded.has(item.id) ? 96 * unit : 0,
           // A district with showings carries their marquee under its name:
-          // a dark screen and a row of buttons, in the reader's unit.
-          ...((options.screens?.[item.kind]?.length ?? 0) > 0 ? { marquee: MARQUEE_HEIGHT * unit } : {}),
+          // its buttons, wrapped to the card, in the reader's unit.
+          ...((options.screens?.[item.kind]?.length ?? 0) > 0
+            ? { marquee: marqueeHeightFor((options.screens?.[item.kind] ?? []).map((place) => place.title), DISTRICT_MIN_WIDTH * unit) * unit }
+            : {}),
         })),
         schema,
         contextSize,

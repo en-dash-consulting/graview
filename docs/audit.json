@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T12:28:06.410Z",
+  "at": "2026-09-19T14:29:54.637Z",
   "engine": "chromium",
   "screens": [
     {
@@ -691,7 +691,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 22,
+      "fill": 21,
       "inspector": {
         "shown": 3,
         "hidden": 0,
@@ -718,7 +718,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 8,
+      "fill": 7,
       "inspector": null,
       "led": null,
       "figures": []
@@ -806,7 +806,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 8,
+      "fill": 7,
       "inspector": {
         "shown": 1,
         "hidden": 0,
@@ -833,7 +833,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 8,
+      "fill": 7,
       "inspector": null,
       "led": null,
       "figures": []
@@ -904,7 +904,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 15,
+      "fill": 14,
       "inspector": {
         "shown": 3,
         "hidden": 0,

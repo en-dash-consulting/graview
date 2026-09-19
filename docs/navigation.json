@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T12:27:29.400Z",
+  "at": "2026-09-19T14:25:02.529Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Graview",
       "pressed": "false",
       "name": "Graview",
-      "wingOpacity": 0.509796,
+      "wingOpacity": 0.539227,
       "registered": true
     },
     "groundAgain": {
@@ -221,10 +221,10 @@
         "x": 573.449951171875,
         "y": 611.6721801757812,
         "width": 214.78277587890625,
-        "height": 163.3817138671875,
+        "height": 174.396240234375,
         "top": 611.6721801757812,
         "right": 788.2327270507812,
-        "bottom": 775.0538940429688,
+        "bottom": 786.0684204101562,
         "left": 573.449951171875
       },
       "url": "#focus=aggregate%3Atask&overview=1&in.view=the-week"
@@ -234,9 +234,9 @@
       "up": true
     },
     "midway": {
-      "x": 695.232421875,
-      "y": 432.16033935546875,
-      "width": 326
+      "x": 695.7376708984375,
+      "y": 432.17726135253906,
+      "width": 328
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",

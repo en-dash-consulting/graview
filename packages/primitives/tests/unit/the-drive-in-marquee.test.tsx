@@ -54,7 +54,8 @@ describe("the marquee", () => {
     const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true });
     const marquee = host.querySelector('[data-testid="drive-in-task"]')!;
     expect(marquee).not.toBeNull();
-    expect(marquee.querySelector(".graview-drive-in-screen")).not.toBeNull();
+    // No stand-in screen: the marquee is the sign. A dark slab read as a broken picture.
+    expect(marquee.querySelector(".graview-drive-in-screen")).toBeNull();
     const buttons = [...marquee.querySelectorAll("button")];
     expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual(["Tasks: The week", "Tasks: The month"]);
     expect(host.querySelector('[data-testid="drive-in-note"]')).toBeNull();

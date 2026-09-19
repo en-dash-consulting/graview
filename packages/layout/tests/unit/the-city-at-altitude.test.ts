@@ -110,3 +110,14 @@ describe("the city at altitude", () => {
     expect(a.placed.map((card) => card.plot)).toEqual([...a.map.values()].filter((plot) => plot.col !== undefined).slice(0, 2).length === 2 ? a.placed.map((card) => a.map.get(card.id.slice(5))!) : []);
   });
 });
+
+describe("the marquee takes the room its buttons take", () => {
+  it("is one row for short titles and grows a row when they wrap", async () => {
+    const { marqueeHeightFor } = await import("../../src/layout.js");
+    const one = marqueeHeightFor(["The week"], 132);
+    const three = marqueeHeightFor(["The quarter", "The fortnight", "The week"], 132);
+    expect(one).toBe(10 + 28);
+    expect(three).toBeGreaterThan(one + 28);
+    expect(marqueeHeightFor([], 132)).toBe(0);
+  });
+});

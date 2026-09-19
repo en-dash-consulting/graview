@@ -461,15 +461,6 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 [data-graview-landmark] .graview-drive-in {
   top: 4px;
 }
-.graview-drive-in-screen {
-  display: block;
-  width: 88px;
-  height: 22px;
-  border-radius: 3px;
-  background: color-mix(in oklab, var(--graview-ink) 78%, var(--graview-panel));
-  border: 1px solid color-mix(in oklab, var(--graview-ink) 55%, var(--graview-panel));
-  opacity: calc(0.5 + 0.5 * var(--graview-altitude));
-}
 .graview-drive-in-marquee {
   display: flex;
   flex-wrap: wrap;
@@ -526,10 +517,10 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 }
 .graview-figure-body {
   position: absolute;
-  left: -14px;
-  top: -30px;
-  width: 28px;
-  height: 30px;
+  left: -16px;
+  top: -38px;
+  width: 32px;
+  height: 38px;
   min-height: max(1.5rem, 24px);
   padding: 0;
   border: 0;
@@ -545,8 +536,8 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 }
 .graview-figure-body svg {
   display: block;
-  width: 28px;
-  height: 30px;
+  width: 32px;
+  height: 38px;
   overflow: visible;
 }
 .graview-figure[data-graview-mode="following"] .graview-figure-body {
@@ -861,6 +852,8 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   bottom: 2px;
   width: 84%;
   height: auto;
+  /* Under a marquee the block keeps out of its band: the drawing scales down inside the box. */
+  max-height: calc(100% - var(--graview-marquee-room, 0px));
   opacity: var(--graview-altitude);
   transform: translateY(calc((1 - var(--graview-altitude)) * 18px));
   filter: drop-shadow(${
@@ -903,7 +896,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
      of itself above the card and back through the nameplate. Population is
      in the drawing's size either way — the same rise the box's height
      carried, 10 for a district of one and 46 for the largest. */
-  height: calc((72 + var(--graview-rise, 24) * 0.8) * 1%);
+  height: calc((100% - var(--graview-marquee-room, 0px)) * (0.72 + var(--graview-rise, 24) * 0.008));
   width: auto;
   /* AND IT KEEPS UP WITH THE WORDS. The card is laid out in pixels off the
      stage and the nameplate is sized in rem, so a reader on Largest doubled
@@ -920,7 +913,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 
      (No back ticks in here: this whole stylesheet is a template literal,
      and one of them ends it.) */
-  min-height: min(5em, 96%);
+  min-height: min(5em, calc(96% - var(--graview-marquee-room, 0px)));
   /* The morph is a GROWTH from the ground line, not a drop: a block slides
      eighteen pixels down at altitude zero and grows up out of the card, and
      a drawing given the same treatment hangs below the card it belongs to —
