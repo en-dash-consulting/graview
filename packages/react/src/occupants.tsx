@@ -142,10 +142,14 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }
     }
     const pad = padAt(frame, pan);
     if (pad) return { at: null, point: pad, pad: true };
-    // No city drawn (inside the stack): the robot stands under the shelf's first district.
+    // No city drawn (inside the stack): the robot stands on the shelf's first
+    // district, at its far end — it stood at the centre before, with its name
+    // across the card's own nameplate, which read as a label on the wrong
+    // thing. Beside the shelf was tried and fell off the ground at the
+    // widest window; the card's right end is empty and always on screen.
     const first = frame.nodes.find((node) => Math.round(node.plane) === 2);
     const box = first ? whereIs(first.id) : null;
-    return { at: null, point: box ? { x: box.x + box.width / 2, y: box.y - 6 } : { x: width / 2, y: height - 40 }, pad: false };
+    return { at: null, point: box ? { x: box.x + box.width - 22, y: box.y - 6 } : { x: width / 2, y: height - 40 }, pad: false };
   }, [administered, principal.id, store, whereIs, frame, pan, width, height]);
 
   const placed = [...robots.values()].map((robot) => {

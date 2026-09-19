@@ -480,7 +480,10 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   font-size: 0.6875rem;
   line-height: 1.2;
   padding: 2px 8px;
-  min-height: max(1.5rem, 24px);
+  /* A fingertip AFTER the card's depth scale: from altitude a plot a row
+     back is drawn at nine-tenths, and a 24px button there measured 22 on
+     Groundskeeper's audit. Sized so the far row still clears 24. */
+  min-height: max(1.75rem, 28px);
   border-radius: 999px;
   border: 1px solid var(--graview-edge);
   background: var(--graview-panel);

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T08:18:12.845Z",
+  "at": "2026-09-19T08:39:39.737Z",
   "engine": "chromium",
   "checks": {
     "dockedOnOpen": {
@@ -24,8 +24,8 @@
         "at": ""
       },
       "after": {
-        "x": 724,
-        "y": 692,
+        "x": 737,
+        "y": 687,
         "at": "t-deposit",
         "mode": "writing"
       },

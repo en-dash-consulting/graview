@@ -65,6 +65,9 @@ export function Places<S extends AnySchema>() {
             title={`${place.title} — a picture over the ${place.kind}s`}
             onClick={() => go(withWithin(withOverview(withFocus(view, stop), false), "view", place.as))}
             style={{
+              // A full fingertip whatever the brand's line height: Groundskeeper's
+              // pills measured 22px and its audit counted every one.
+              minHeight: 24,
               padding: "3px 11px",
               borderRadius: 999,
               fontSize: "0.78125rem",
