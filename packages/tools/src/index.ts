@@ -87,3 +87,7 @@ export {
   scoreToValue,
 } from "./questions.js";
 export type { ChoiceQuestion, DerivedQuestion, NoulQuestion, Question, QuestionAbout, ScoreQuestion } from "./questions.js";
+
+// The decision provider: one call, many questions, honest about failure.
+export { JEV_ENDPOINT, JEV_INPUT_USD_PER_MILLION, JEV_MODEL, JevError, jevCostUsd, jevDecide, jevKeyFromEnvironment } from "./providers/jev.js";
+export type { Answer, ChoiceAnswer, Decide, Decided, JevFailure, JevOptions, NoulAnswer, ScoreAnswer, Usage } from "./providers/jev.js";

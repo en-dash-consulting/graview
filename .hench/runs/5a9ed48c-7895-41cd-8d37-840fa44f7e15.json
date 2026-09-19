@@ -1,0 +1,30 @@
+{
+  "id": "5a9ed48c-7895-41cd-8d37-840fa44f7e15",
+  "taskId": "1b750f27-d08d-4f10-b3d1-28bfb34eb53d",
+  "taskTitle": "Derive the questions from the declaration rather than authoring them",
+  "startedAt": "2026-09-19T05:16:38.600Z",
+  "finishedAt": "2026-09-19T05:16:38.600Z",
+  "status": "completed",
+  "turns": 37,
+  "summary": "questionsForKind/Mutation/Invariant + nodeState + allQuestions in tools; nodeRef survives describe",
+  "tokenUsage": {
+    "input": 1184,
+    "output": 63478,
+    "cacheCreationInput": 128436,
+    "cacheReadInput": 5953596
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 1184,
+    "output": 63478,
+    "cached": 6082032,
+    "total": 6146694
+  }
+}

@@ -231,8 +231,15 @@ export { providerCan } from "./app.js";
 export { undecidableArguments } from "./mutations/decidable.js";
 export type { UndecidableArgument } from "./mutations/decidable.js";
 export { motion, readerSettings, textSize } from "./settings.js";
-export { LOCAL_BRIDGE_PATH } from "./intelligence-bridge.js";
-export type { LocalBridgeAnswer, LocalBridgeAsk, LocalBridgeStatus } from "./intelligence-bridge.js";
+export { DECISION_BRIDGE_PATH, LOCAL_BRIDGE_PATH } from "./intelligence-bridge.js";
+export type {
+  DecisionBridgeAnswer,
+  DecisionBridgeAsk,
+  DecisionBridgeStatus,
+  LocalBridgeAnswer,
+  LocalBridgeAsk,
+  LocalBridgeStatus,
+} from "./intelligence-bridge.js";
 export { describeApp } from "./cli/describe.js";
 export type { DescribeOptions } from "./cli/describe.js";
 export { beginning } from "./beginning.js";

@@ -4,7 +4,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  DECISION_BRIDGE_PATH,
   LOCAL_BRIDGE_PATH,
+  type DecisionBridgeAnswer,
+  type DecisionBridgeAsk,
+  type DecisionBridgeStatus,
   type LocalBridgeAnswer,
   type LocalBridgeAsk,
   type LocalBridgeStatus,
@@ -288,7 +292,11 @@ function readBody(req: IncomingMessage, limit: number): Promise<string> {
   });
 }
 
-function send(res: ServerResponse, status: number, body: LocalBridgeStatus | LocalBridgeAnswer): void {
+function send(
+  res: ServerResponse,
+  status: number,
+  body: LocalBridgeStatus | LocalBridgeAnswer | DecisionBridgeStatus | DecisionBridgeAnswer,
+): void {
   res.statusCode = status;
   res.setHeader("content-type", "application/json");
   res.end(JSON.stringify(body));
@@ -354,6 +362,122 @@ export function localIntelligence(options: LocalIntelligenceOptions = {}): DevSe
     apply: "serve",
     configureServer(server) {
       server.middlewares.use(options.path ?? LOCAL_BRIDGE_PATH, (req, res) => {
+        void handler(req, res);
+      });
+    },
+  };
+}
+
+/* ---------------------------------------------------- the decision door */
+
+/**
+ * THE DOOR TO A DECISION PROVIDER, with the key on this side of it.
+ *
+ * A browser page must not hold a service key, and the environment the dev
+ * server runs in already does: `TYPESAFE_API_KEY`, set once by the person
+ * who runs `pnpm dev`. So the page posts a state and a map of questions to
+ * this path and the server forwards them with the key in the header — one
+ * call, the provider's own shape, and the answer back untouched. GET says
+ * whether the door is open, which is whether a key is set.
+ *
+ * Same-origin only, for the same reason as the local door: a page on some
+ * other site must not spend this key. And the key is NEVER in a response,
+ * a thrown error or a log line — a refused key is reported as refused.
+ */
+export interface DecisionBridgeOptions {
+  /** The path the door answers on. Must match the provider's `bridge`. */
+  readonly path?: string;
+  /** Where the provider is. Its real endpoint unless a test says otherwise. */
+  readonly endpoint?: string;
+  readonly model?: string;
+  /** Where the key is read from. The process environment unless a test says otherwise. */
+  readonly env?: Readonly<Record<string, string | undefined>>;
+  /** Injectable for tests. */
+  readonly fetch?: (
+    input: string,
+    init: { method: string; headers: Record<string, string>; body: string },
+  ) => Promise<{ status: number; text(): Promise<string> }>;
+  /** The most one request may carry, in bytes. A fan-out over a big graph is large. */
+  readonly limitBytes?: number;
+}
+
+const DECISION_DEFAULTS = {
+  endpoint: "https://api.typesafe.ai/v1/systemone",
+  model: "jev-latest",
+  limitBytes: 4_000_000,
+};
+
+/** The key the door holds, from the documented name or the older one. */
+export function decisionKey(env: Readonly<Record<string, string | undefined>> | undefined): string | undefined {
+  const key = env?.["TYPESAFE_API_KEY"] || env?.["JEV_API_KEY"];
+  return key && key.length > 0 ? key : undefined;
+}
+
+export function decisionBridgeHandler(options: DecisionBridgeOptions = {}) {
+  const env = options.env ?? process.env;
+  const endpoint = options.endpoint ?? DECISION_DEFAULTS.endpoint;
+  const model = options.model ?? DECISION_DEFAULTS.model;
+  const call = options.fetch ?? (globalThis.fetch as unknown as NonNullable<DecisionBridgeOptions["fetch"]>);
+  return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    const { origin, host } = req.headers;
+    if (!sameOrigin({ ...(origin ? { origin } : {}), ...(host ? { host } : {}) })) {
+      send(res, 403, { error: "The decision door answers this app only." });
+      return;
+    }
+    const key = decisionKey(env);
+    if (req.method === "GET") {
+      send(
+        res,
+        200,
+        key
+          ? { available: true, model }
+          : { available: false, reason: "No TYPESAFE_API_KEY in the environment this server was started from." },
+      );
+      return;
+    }
+    if (req.method !== "POST") {
+      send(res, 405, { error: "GET to ask whether the door is open; POST a state and questions." });
+      return;
+    }
+    if (!key) {
+      send(res, 503, { error: "No TYPESAFE_API_KEY in the environment this server was started from.", status: 503 });
+      return;
+    }
+    try {
+      const ask = JSON.parse(await readBody(req, options.limitBytes ?? DECISION_DEFAULTS.limitBytes)) as Partial<DecisionBridgeAsk>;
+      if (typeof ask.questions !== "object" || ask.questions === null) {
+        send(res, 400, { error: "A request is { state, questions }.", status: 400 });
+        return;
+      }
+      const upstream = await call(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+        body: JSON.stringify({ model, state: ask.state ?? null, questions: ask.questions }),
+      });
+      const text = await upstream.text();
+      /*
+       * The provider's status is the page's status, so the page-side
+       * provider tells failures apart the same way it would have with the
+       * key in hand — 401 a seat problem, 422 ours, 429/529 busy. The body
+       * is passed through as it came: it never held the key.
+       */
+      res.statusCode = upstream.status;
+      res.setHeader("content-type", "application/json");
+      res.end(text);
+    } catch (error) {
+      send(res, 500, { error: error instanceof Error ? error.message : String(error), status: 500 });
+    }
+  };
+}
+
+/** The Vite plugin. One path; GET is the probe, POST is the ask. */
+export function decisionBridge(options: DecisionBridgeOptions = {}): DevServerPlugin {
+  const handler = decisionBridgeHandler(options);
+  return {
+    name: "graview:decision-bridge",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use(options.path ?? DECISION_BRIDGE_PATH, (req, res) => {
         void handler(req, res);
       });
     },

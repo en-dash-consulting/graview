@@ -31,3 +31,36 @@ export interface LocalBridgeAsk {
 
 /** What comes back: what it said, or why there is nothing. */
 export type LocalBridgeAnswer = { readonly text: string } | { readonly error: string };
+
+/* ---------------------------------------------------- the decision door */
+
+/**
+ * THE DOOR A DECISION PROVIDER IS REACHED BY from a browser: the dev server
+ * holds the key, the page holds the questions. Same three shapes as the
+ * local door — a probe, an ask, an answer — and the same rule about who may
+ * knock: the page this server serves, and nobody else.
+ *
+ * The key is read on the SERVER side from the environment, so it is never
+ * in a bundle, a repo or the browser's storage: the person running
+ * `pnpm dev` set it once, and the page never sees it.
+ */
+export const DECISION_BRIDGE_PATH = "/__graview/decide";
+
+/** GET — is a decision provider reachable through this server, and which? */
+export type DecisionBridgeStatus =
+  | { readonly available: true; readonly model: string }
+  | { readonly available: false; readonly reason: string };
+
+/** POST — one state, a map of typed questions. The provider's own wire shape. */
+export interface DecisionBridgeAsk {
+  readonly state: unknown;
+  readonly questions: Readonly<Record<string, unknown>>;
+}
+
+/** What comes back: the provider's answers under the same keys, or why not. */
+export type DecisionBridgeAnswer =
+  | {
+      readonly answers: Readonly<Record<string, unknown>>;
+      readonly usage?: { readonly input_tokens?: number; readonly output_tokens?: number };
+    }
+  | { readonly error: string; readonly status?: number };
