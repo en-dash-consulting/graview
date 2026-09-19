@@ -802,7 +802,7 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
     </section>
     <section id="cli-check" aria-labelledby="h-cli-check">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-check">graview check</h2></div>
-      <div class="code" data-scroller aria-label="graview check, usage"><pre><code>graview check &lt;entry&gt; [--json]</code></pre></div>
+      <div class="code" data-scroller aria-label="graview check, usage"><pre><code>graview check &lt;entry&gt; [--views &lt;module&gt;] [--json]</code></pre></div>
       <p>Loads &lt;entry&gt; (a module whose default export, or <code>app</code> export, is a GraviewApp) and reports schema problems. Exits 1 on any error.</p>
     </section>
     <section id="cli-create" aria-labelledby="h-cli-create">
@@ -831,12 +831,12 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
     </section>
     <section id="cli-describe" aria-labelledby="h-cli-describe">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-describe">graview describe</h2></div>
-      <div class="code" data-scroller aria-label="graview describe, usage"><pre><code>graview describe &lt;entry&gt; [--as &lt;role&gt;]</code></pre></div>
+      <div class="code" data-scroller aria-label="graview describe, usage"><pre><code>graview describe &lt;entry&gt; [--as &lt;role&gt;] [--views &lt;module&gt;]</code></pre></div>
       <p>Reads the app out: what a blank installation meets and in what order, what is drawn and what falls back, the hues, what a seat may do, how a model is reached, what is judged. The rung between check and a browser — "run it and look" for something that cannot see.</p>
     </section>
     <section id="cli-docs" aria-labelledby="h-cli-docs">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-docs">graview docs</h2></div>
-      <div class="code" data-scroller aria-label="graview docs, usage"><pre><code>graview docs &lt;entry&gt; [--out &lt;dir&gt;]</code></pre></div>
+      <div class="code" data-scroller aria-label="graview docs, usage"><pre><code>graview docs &lt;entry&gt; [--out &lt;dir&gt;] [--views &lt;module&gt;]</code></pre></div>
       <p>Writes llms.txt and agents.md next to the entry, or into &lt;dir&gt;.</p>
     </section>
     <section id="cli-figure" aria-labelledby="h-cli-figure">

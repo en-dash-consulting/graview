@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T06:40:50.171Z",
+  "at": "2026-09-19T07:43:15.887Z",
   "engine": "chromium",
   "shots": [
     {
@@ -70,13 +70,7 @@
       "contentRight": 1560,
       "verticalFill": 101,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "div",
-          "by": 9,
-          "text": "The lists3 listsToday2 leftPay the depos"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -112,13 +106,7 @@
       "contentRight": 2980,
       "verticalFill": 101,
       "horizontalFill": 191,
-      "overflowing": [
-        {
-          "tag": "div",
-          "by": 7,
-          "text": "Who may do what● may · ◐ on their own re"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -298,13 +286,7 @@
       "contentRight": 1560,
       "verticalFill": 101,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "div",
-          "by": 9,
-          "text": "The lists3 listsToday2 leftPay the depos"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -340,13 +322,7 @@
       "contentRight": 2980,
       "verticalFill": 101,
       "horizontalFill": 191,
-      "overflowing": [
-        {
-          "tag": "div",
-          "by": 7,
-          "text": "Who may do what● may · ◐ on their own re"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -472,13 +448,7 @@
       "contentRight": 1560,
       "verticalFill": 182,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "div",
-          "by": 7,
-          "text": "What each app exercises2 unansweredRotaS"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
@@ -496,13 +466,7 @@
       "contentRight": 1560,
       "verticalFill": 182,
       "horizontalFill": 100,
-      "overflowing": [
-        {
-          "tag": "div",
-          "by": 7,
-          "text": "What each app exercises2 unansweredRotaS"
-        }
-      ],
+      "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },

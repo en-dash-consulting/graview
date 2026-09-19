@@ -333,6 +333,16 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   height: 100%;
   transition: transform 170ms cubic-bezier(0.22, 1, 0.36, 1), height 170ms ease,
     box-shadow 170ms ease;
+  /* IN THE STACK NOTHING HANGS BELOW A CARD. The iso block rests eighteen
+     pixels low there, invisible, ready to rise — and an invisible box that
+     pokes under the bottom row still made the stage scroll by nine pixels
+     with nowhere to scroll. Clipped (not hidden: no scroll container, no
+     scrollable overflow), and let out again from altitude, where the plate
+     floats above the card and the block stands up out of it. */
+  overflow: clip;
+}
+[data-graview-altitude] .graview-kind-card {
+  overflow: visible;
 }
 .graview-kind-card:hover,
 .graview-kind-card:focus-within {

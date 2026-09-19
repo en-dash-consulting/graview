@@ -209,6 +209,7 @@ const measure = () => {
    * header shaved by a single pixel at the top, was not. An ellipsis is a
    * decision; a hard edge with text behind it is a bug.
    */
+  const behind = new Map();
   const overflowing = within("*")
     .filter((el) => {
       const style = getComputedStyle(el);
@@ -232,13 +233,45 @@ const measure = () => {
       if (style.overflowY === "auto" || style.overflowY === "scroll") return false;
       const clipped =
         el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2;
-      return clipped && el.clientWidth > 0 && style.overflow !== "visible";
+      if (!clipped || el.clientWidth <= 0 || style.overflow === "visible") return false;
+      /*
+       * AN INVISIBLE THING BEHIND THE EDGE IS NOT A CUT.
+       *
+       * A district card in the stack keeps its iso block resting eighteen
+       * pixels below its foot at opacity zero, ready to rise from altitude;
+       * clipping the card is what stops that invisible box from making the
+       * stage scroll. The clip is a decision like the ellipsis above, and
+       * what it clips cannot be seen — so the count asks what is actually
+       * behind the edge, and only something a reader could have seen there
+       * is a cut. A caption run off the bottom of a fixed-height box still
+       * counts; a hidden drawing waiting its turn does not.
+       */
+      const box = el.getBoundingClientRect();
+      const seen = (node) => {
+        for (let at = node; at && at !== el; at = at.parentElement) {
+          const s = getComputedStyle(at);
+          if (s.display === "none" || s.visibility === "hidden" || Number(s.opacity) < 0.05) return false;
+        }
+        return true;
+      };
+      const culprit = [...el.querySelectorAll("*")].find((child) => {
+        const r = child.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return false;
+        const past =
+          r.right > box.right + 2 || r.bottom > box.bottom + 2 || r.left < box.left - 2 || r.top < box.top - 2;
+        return past && seen(child);
+      });
+      if (!culprit) return false;
+      behind.set(el, culprit);
+      return true;
     })
     .slice(0, 8)
     .map((el) => ({
       tag: el.tagName.toLowerCase(),
       by: Math.max(el.scrollWidth - el.clientWidth, el.scrollHeight - el.clientHeight),
       text: (el.textContent ?? "").trim().slice(0, 40),
+      // What is behind the edge, so the report names the cut and not only the box.
+      behind: `${behind.get(el).tagName.toLowerCase()}.${[...behind.get(el).classList].join(".")} ${(behind.get(el).textContent ?? "").trim().slice(0, 30)}`,
     }));
 
   const unnamed = within("button, [role=button], a, select, input")

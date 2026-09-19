@@ -61,6 +61,27 @@ function padAt(frame: InterpolatedLayout, pan: { x: number; y: number }): { x: n
 const footOf = (box: DrawnBox): { x: number; y: number } => ({ x: box.x + box.width / 2, y: box.y + box.height - 4 });
 
 /*
+ * A BODY STANDS WHERE IT CAN BE SEEN WHOLE. The figure is thirty pixels
+ * above its foot and its name a dozen below, so a foot at the very edge of
+ * the stage — a district in the last row of the stack, whose own foot IS
+ * the stage's — put the name eight pixels past an edge that clips, which
+ * the survey reported as the cut it was. A foot that is on the ground at
+ * all is drawn far enough in for the whole body; one that is off the ground
+ * is left where it is, so the edge marker still says which way it went.
+ */
+const BODY_ABOVE = 30;
+const NAME_BELOW = 16;
+const BODY_HALF = 16;
+function onGround(point: { x: number; y: number }, width: number, height: number): { x: number; y: number } {
+  const on = point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height;
+  if (!on || width < BODY_HALF * 2 || height < BODY_ABOVE + NAME_BELOW) return point;
+  return {
+    x: Math.min(Math.max(point.x, BODY_HALF), width - BODY_HALF),
+    y: Math.min(Math.max(point.y, BODY_ABOVE), height - NAME_BELOW),
+  };
+}
+
+/*
  * Two components, so the pointer store is subscribed to ONLY while a robot
  * is following: hooks cannot be conditional, but a component boundary can.
  */
@@ -126,7 +147,7 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }
     } else {
       point = dock.point;
     }
-    return { robot, point, over };
+    return { robot, point: point ? onGround(point, width, height) : point, over };
   });
 
   /* What is under the pointer while following reaches the fold, so "this" in chat means it. */
