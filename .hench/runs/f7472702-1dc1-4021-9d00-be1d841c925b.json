@@ -1,0 +1,30 @@
+{
+  "id": "f7472702-1dc1-4021-9d00-be1d841c925b",
+  "taskId": "e72ec788-cec5-4825-b09a-99bfe503a7a4",
+  "taskTitle": "Confidence is a first-class answer, not a number in a log",
+  "startedAt": "2026-09-19T05:43:56.044Z",
+  "finishedAt": "2026-09-19T05:43:56.044Z",
+  "status": "completed",
+  "turns": 21,
+  "summary": "PlannedCall.confidence, OfferedQuestion, ChatReply.questions, replyFromRun, chat question at node, PlanReview least sure first",
+  "tokenUsage": {
+    "input": 672,
+    "output": 75043,
+    "cacheCreationInput": 132391,
+    "cacheReadInput": 6782615
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 672,
+    "output": 75043,
+    "cached": 6915006,
+    "total": 6990721
+  }
+}

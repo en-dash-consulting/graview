@@ -102,3 +102,7 @@ export type { Answer, ChoiceAnswer, Decide, Decided, JevFailure, JevOptions, Nou
 // A run: a sequence of typed asks over the graph, declared not scripted.
 export { describeRun, landRun, offerOf, readRun, replyFromRun, runFrom, valueOf } from "./run.js";
 export type { Answered, RunDeclaration, RunOptions, RunReading, RunResult, RunStep, StepOutcome } from "./run.js";
+
+// A loop: act, re-judge, act again, and know when to stop.
+export { replyFromLoop, runLoop } from "./loop.js";
+export type { LoopDeclaration, LoopOptions, LoopResult, LoopTurn, StopWhy, Stopped } from "./loop.js";
