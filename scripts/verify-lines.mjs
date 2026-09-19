@@ -31,13 +31,45 @@ import { serving } from "./lib/serve.mjs";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 /*
- * The todo app, focused on a rule with its relation shown — the state the
- * UI audit already uses because it is the one with lines in it. A picture
- * with no connectors cannot fail a test about connectors, and a harness
- * that passes on nothing is the thing this file exists to replace.
+ * FOUR LINES IN ONE STATE IS NOT AN ANALYSIS.
+ *
+ * The first version of this asked one app in one place and passed, which
+ * proved that one picture was all right. A connector fault is a fault of
+ * ARRANGEMENT — a box of no size, two ends in the same place, a member
+ * inside something that scrolls — so the way to find one is to look at
+ * many arrangements, and the framework ships three apps whose pictures are
+ * nothing like each other.
  */
-const served = await serving("todo", 5193, repoRoot);
-const PAGE = `${served.url}/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1`;
+const APPS = [
+  {
+    app: "todo",
+    port: 5193,
+    states: [
+      ["at rest", "/?theme=light&today=2026-09-01"],
+      ["from altitude", "/?theme=light&today=2026-09-01#overview=1"],
+      ["focused, with a relation shown", "/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1"],
+      ["in the dark", "/?theme=dark&today=2026-09-01#overview=1"],
+    ],
+  },
+  {
+    app: "seedbed",
+    port: 5194,
+    states: [
+      ["at rest", "/?chapter=15&theme=light"],
+      ["from altitude", "/?chapter=15&theme=light#overview=1"],
+      ["a chapter with one kind", "/?chapter=1&theme=light#overview=1"],
+    ],
+  },
+  {
+    app: "rota",
+    port: 5195,
+    states: [
+      ["at rest", "/?theme=light&today=2026-09-14"],
+      ["from altitude", "/?theme=light&today=2026-09-14#overview=1"],
+      ["a shift chosen", "/?theme=light&today=2026-09-14#focus=aggregate:shift&sel=s-fri-repair"],
+    ],
+  },
+];
 
 /**
  * Every line, and what each end is sitting on.
@@ -78,8 +110,20 @@ const MEASURE = () => {
   };
 
   const lines = [];
+  const sick = [];
   for (const path of document.querySelectorAll("path[data-graview-connector]")) {
-    const e = endsOf(path.getAttribute("d") ?? "");
+    const d = path.getAttribute("d") ?? "";
+    /*
+     * ARITHMETIC FIRST, because one assertion catches every degeneracy at
+     * once: a zero-size box divided into, a control point from two
+     * coincident ends, a radius of nothing. A NaN in a path is not a wrong
+     * line, it is NO line — the browser drops the whole subpath silently,
+     * so the failure looks exactly like a relationship that was never
+     * drawn, which is the hardest kind to notice and the easiest to test.
+     */
+    if (/NaN|Infinity|undefined/.test(d)) sick.push({ kind: path.getAttribute("data-graview-connector"), why: "not a number", d: d.slice(0, 60) });
+    else if (d.trim() === "") sick.push({ kind: path.getAttribute("data-graview-connector"), why: "empty path" });
+    const e = endsOf(d);
     if (e === null) continue;
     const at = toClient(e.p0);
     const to = toClient(e.p1);
@@ -94,12 +138,13 @@ const MEASURE = () => {
       length: Math.hypot(e.p1.x - e.p0.x, e.p1.y - e.p0.y),
     });
   }
-  return { stage: { w: Math.round(sb.width), h: Math.round(sb.height) }, lines };
+  return { stage: { w: Math.round(sb.width), h: Math.round(sb.height) }, lines, sick };
 };
 
 const faults = (shot, when) => {
   const out = [];
   if (shot.error) return [`${when}: ${shot.error}`];
+  for (const bad of shot.sick ?? []) out.push(`${when}: a ${bad.kind} line is ${bad.why}${bad.d ? ` — ${bad.d}` : ""}`);
   for (const line of shot.lines) {
     if (!line.inside) out.push(`${when}: a ${line.kind} line leaves the stage`);
     /*
@@ -116,101 +161,96 @@ const faults = (shot, when) => {
   return out;
 };
 
-const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [] };
-const browser = await launchEngine(ENGINE, { headless: true });
+const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [], seen: [] };
 
-try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
-  await page.goto(PAGE, { waitUntil: "networkidle" });
-  await page.waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 });
-  await page.waitForTimeout(1200);
+for (const { app, port, states } of APPS) {
+  const served = await serving(app, port, repoRoot);
+  const browser = await launchEngine(ENGINE, { headless: true });
+  try {
+    for (const [what, path] of states) {
+      const where = `${app} ${what}`;
+      const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
+      await page.goto(`${served.url}${path}`, { waitUntil: "load" });
+      await page
+        .waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 })
+        .catch(() => {});
+      await page.waitForTimeout(1600);
 
-  /* Something selected, so there are lit lines with real ends. */
-  const opened = await page.evaluate(() => {
-    const pick =
-      document.querySelector('[data-graview-pick^="kind:"]') ??
-      document.querySelector("[data-graview-pick]");
-    pick?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    return pick?.getAttribute("data-graview-pick") ?? null;
-  });
-  await page.waitForTimeout(1200);
-  report.opened = opened;
+      const still = await page.evaluate(MEASURE);
+      report.faults.push(...faults(still, where));
+      report.seen.push({ where, lines: still.lines?.length ?? 0 });
 
-  /*
-   * THE CONSTELLATION FIRST, because it is where the lines are: every kind
-   * against every other, which is the densest picture this framework draws
-   * and the one where a wrong anchor has the most room to be wrong in.
-   */
-  await page.goto(`${served.url}/?theme=light&today=2026-09-01#overview=1`, { waitUntil: "load" });
-  await page.waitForTimeout(1600);
-  const above = await page.evaluate(MEASURE);
-  report.checks.linesLandOnSomethingFromAltitude = faults(above, "from altitude").length === 0;
-  report.faults.push(...faults(above, "from altitude"));
-  report.overviewLines = above.lines?.length ?? 0;
+      /*
+       * THE SCROLL: the thing that moves content and changes no layout, and
+       * the one a measured anchor forgets about.
+       */
+      const scrollers = await page.evaluate(() => {
+        const found = [...document.querySelectorAll("[data-graview-stage] *")].filter((el) => {
+          const s = getComputedStyle(el);
+          const scrolls = ["auto", "scroll"].includes(s.overflow) || ["auto", "scroll"].includes(s.overflowY) || ["auto", "scroll"].includes(s.overflowX);
+          return scrolls && (el.scrollHeight > el.clientHeight + 4 || el.scrollWidth > el.clientWidth + 4);
+        });
+        for (const el of found) {
+          el.scrollTop = Math.min(140, el.scrollHeight - el.clientHeight);
+          el.scrollLeft = Math.min(140, el.scrollWidth - el.clientWidth);
+        }
+        return found.length;
+      });
+      if (scrollers > 0) {
+        await page.waitForTimeout(700);
+        report.faults.push(...faults(await page.evaluate(MEASURE), `${where}, scrolled`));
+        report.scrolled = (report.scrolled ?? 0) + scrollers;
+      }
 
-  await page.goto(PAGE, { waitUntil: "load" });
-  await page.waitForTimeout(1400);
+      /* And a reshape, which moves everything without touching the graph. */
+      await page.setViewportSize({ width: 1080, height: 820 });
+      await page.waitForTimeout(900);
+      report.faults.push(...faults(await page.evaluate(MEASURE), `${where}, reshaped`));
 
-  const still = await page.evaluate(MEASURE);
-  report.checks.linesLandOnSomethingAtRest = faults(still, "at rest").length === 0;
-  report.faults.push(...faults(still, "at rest"));
-  report.lines = still.lines?.length ?? 0;
-
-  /*
-   * THE SCROLL. The thing that moves content and changes no layout, and the
-   * one every measured anchor forgets about.
-   */
-  const scrolled = await page.evaluate(() => {
-    const scrollers = [...document.querySelectorAll("[data-graview-stage] *")].filter((el) => {
-      const s = getComputedStyle(el);
-      return (
-        (s.overflow === "auto" || s.overflow === "scroll" || s.overflowY === "auto" || s.overflowX === "auto") &&
-        (el.scrollHeight > el.clientHeight + 4 || el.scrollWidth > el.clientWidth + 4)
-      );
-    });
-    for (const el of scrollers) {
-      el.scrollTop = Math.min(120, el.scrollHeight - el.clientHeight);
-      el.scrollLeft = Math.min(120, el.scrollWidth - el.clientWidth);
+      await page.close();
     }
-    return scrollers.length;
-  });
-  report.scrollers = scrolled;
-  await page.waitForTimeout(700);
-  const after = await page.evaluate(MEASURE);
-  report.checks.linesLandOnSomethingAfterAScroll = faults(after, "after a scroll").length === 0;
-  report.faults.push(...faults(after, "after a scroll"));
-
-  /* And after the window changes shape, which moves everything. */
-  await page.setViewportSize({ width: 1100, height: 800 });
-  await page.waitForTimeout(900);
-  const resized = await page.evaluate(MEASURE);
-  report.checks.linesLandOnSomethingAfterAResize = faults(resized, "after a resize").length === 0;
-  report.faults.push(...faults(resized, "after a resize"));
-
-  await page.close();
-} catch (error) {
-  report.error = String(error).slice(0, 300);
-} finally {
-  await browser.close();
-  served.stop();
+  } catch (error) {
+    report.faults.push(`${app}: ${String(error).slice(0, 160)}`);
+  } finally {
+    await browser.close();
+    served.stop();
+  }
 }
+
+report.lines = report.seen.reduce((sum, one) => sum + one.lines, 0);
+report.checks.everyLineIsDrawable = !report.faults.some((f) => /not a number|empty path/.test(f));
+report.checks.everyLineStaysInThePicture = !report.faults.some((f) => /leaves the stage/.test(f));
+report.checks.everyLineLandsOnSomething = !report.faults.some((f) => /neither end on anything/.test(f));
+report.checks.nothingThrew = !report.faults.some((f) => /Error|Timeout/.test(f));
+/*
+ * A HARNESS THAT PASSES ON NOTHING IS THEATRE: with no lines on any page
+ * every claim above is vacuously true and the run has checked nothing.
+ */
+report.checks.thereWereLinesToCheck = report.lines > 0;
+if (report.lines === 0) report.faults.push("no connectors anywhere: the harness checked nothing");
 
 /*
- * A HARNESS THAT PASSES ON NOTHING IS THEATRE. If the page drew no lines,
- * every claim above is vacuously true and the run has checked nothing —
- * which is a failure of the harness, and should read as one.
+ * AND SAY WHEN A CLAIM WENT UNEXERCISED.
+ *
+ * None of the framework's own apps puts a member inside something that
+ * scrolls — their lenses fit their cards — so the scroll claim passes here
+ * by never being asked. That is not a pass, and pretending it is would be
+ * how the fault got in: it was found in a PRODUCT, in a matrix wider than
+ * its panel, because the framework had nothing shaped like that to find it
+ * in. A harness should be able to say "I did not check this".
  */
-report.checks.thereWereLinesToCheck = (report.lines ?? 0) + (report.overviewLines ?? 0) > 0;
-if (!report.checks.thereWereLinesToCheck) {
-  report.faults.push("no connectors were drawn: the harness checked nothing");
+if ((report.scrolled ?? 0) === 0) {
+  report.unexercised = "no app here has a member inside a scroller, so the scroll claim went unasked";
 }
-report.passed = Object.values(report.checks).every(Boolean) && !report.error;
+
+report.passed = Object.values(report.checks).every(Boolean);
 writeFileSync(resolve(repoRoot, "docs/lines-check.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
-for (const fault of report.faults.slice(0, 12)) process.stdout.write(`??  ${fault}\n`);
+for (const fault of report.faults.slice(0, 14)) process.stdout.write(`??  ${fault}\n`);
 for (const [name, ok] of Object.entries(report.checks)) process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}\n`);
+if (report.unexercised) process.stdout.write(`--  ${report.unexercised}\n`);
 process.stdout.write(
-  `\n${report.overviewLines ?? 0} from altitude, ${report.lines ?? 0} in the stack, ` +
-    `${report.scrollers ?? 0} scrollers — ${report.passed ? "the lines point at things" : "the lines do not point at things"}\n`,
+  `\n${report.lines} lines across ${report.seen.length} states, ${report.scrolled ?? 0} scrollers — ` +
+    `${report.passed ? "the lines point at things" : "the lines do not point at things"}\n`,
 );
 process.exit(report.passed ? 0 : 1);

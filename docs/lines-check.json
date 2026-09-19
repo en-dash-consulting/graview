@@ -1,17 +1,57 @@
 {
-  "at": "2026-09-18T21:43:35.724Z",
+  "at": "2026-09-19T04:08:25.101Z",
   "engine": "chromium",
   "checks": {
-    "linesLandOnSomethingFromAltitude": true,
-    "linesLandOnSomethingAtRest": true,
-    "linesLandOnSomethingAfterAScroll": true,
-    "linesLandOnSomethingAfterAResize": true,
+    "everyLineIsDrawable": true,
+    "everyLineStaysInThePicture": true,
+    "everyLineLandsOnSomething": true,
+    "nothingThrew": true,
     "thereWereLinesToCheck": true
   },
   "faults": [],
-  "opened": "t-boxes",
-  "overviewLines": 3,
-  "lines": 1,
-  "scrollers": 0,
+  "seen": [
+    {
+      "where": "todo at rest",
+      "lines": 0
+    },
+    {
+      "where": "todo from altitude",
+      "lines": 3
+    },
+    {
+      "where": "todo focused, with a relation shown",
+      "lines": 1
+    },
+    {
+      "where": "todo in the dark",
+      "lines": 3
+    },
+    {
+      "where": "seedbed at rest",
+      "lines": 12
+    },
+    {
+      "where": "seedbed from altitude",
+      "lines": 12
+    },
+    {
+      "where": "seedbed a chapter with one kind",
+      "lines": 0
+    },
+    {
+      "where": "rota at rest",
+      "lines": 0
+    },
+    {
+      "where": "rota from altitude",
+      "lines": 1
+    },
+    {
+      "where": "rota a shift chosen",
+      "lines": 0
+    }
+  ],
+  "lines": 32,
+  "unexercised": "no app here has a member inside a scroller, so the scroll claim went unasked",
   "passed": true
 }
