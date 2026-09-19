@@ -1,0 +1,347 @@
+import {
+  fieldWriters,
+  formFields,
+  humaniseField,
+  labelOf,
+  readableFields,
+  withArticle,
+  type AnySchema,
+  type FormField,
+  type InvariantDefinition,
+  type Store,
+  type Violation,
+} from "@graview/core";
+
+/**
+ * THE QUESTIONS ARE DERIVED, NOT AUTHORED.
+ *
+ * A Graview declaration already types every question worth asking. A
+ * `z.enum` is a Choice whose criteria are its own options; a `nodeRef` is a
+ * Choice over the live nodes of that kind, labelled the way every surface
+ * labels them; a `z.boolean` and an invariant are a truth with the rule as
+ * what "yes" means; a bounded number is a Score over its own levels. None
+ * of it is written by hand, for the same reason no agent tool is: two
+ * descriptions of one domain will disagree, and the one in the declaration
+ * is the one the store enforces.
+ *
+ * The shapes here are the wire shapes of a decision provider — a map of
+ * typed questions over one state, typed answers back under the same keys —
+ * so a derived question is sent as it is, and an answer is read straight
+ * into an argument of the act that writes the thing asked about.
+ */
+
+export type ChoiceQuestion = {
+  readonly type: "choice";
+  readonly instructions: string;
+  /** Option name → what it means, or null when the name says it all. */
+  readonly criteria: Readonly<Record<string, string | null>>;
+};
+export type NoulQuestion = {
+  readonly type: "noul";
+  readonly instructions: string;
+  readonly criteria?: { readonly true?: string; readonly false?: string };
+};
+export type ScoreQuestion = {
+  readonly type: "score";
+  readonly instructions: string;
+  /** Ordered level descriptions, lowest first. At least two. */
+  readonly criteria: readonly string[];
+};
+export type Question = ChoiceQuestion | NoulQuestion | ScoreQuestion;
+
+/** Where a question came from, and where its answer goes. */
+export type QuestionAbout =
+  | {
+      readonly about: "field";
+      readonly kind: string;
+      readonly field: string;
+      /** The act that writes the field, and the argument the answer fills. */
+      readonly writes?: { readonly mutation: string; readonly arg: string; readonly subjectArg: string };
+    }
+  | { readonly about: "argument"; readonly mutation: string; readonly arg: string }
+  | { readonly about: "rule"; readonly invariant: string; readonly subjectId?: string }
+  | {
+      readonly about: "repair";
+      readonly invariant: string;
+      readonly subjectId?: string;
+      /** Option name → the call it means, arguments already settled. */
+      readonly options: Readonly<Record<string, { readonly mutation: string; readonly args: Readonly<Record<string, unknown>> }>>;
+    };
+
+export type DerivedQuestion = QuestionAbout & {
+  /** Stable, code-facing. Never sent to the model. */
+  readonly id: string;
+  readonly question: Question;
+};
+
+/** Node-typed values a decision provider answers with, as declared. */
+const MAX_SCORE_LEVELS = 10;
+
+/** The description a zod field carries, through optional/default wrappers. */
+function describedAs(schema: unknown): string | undefined {
+  let at = schema as { description?: string; _def?: { innerType?: unknown } } | undefined;
+  while (at) {
+    if (typeof at.description === "string" && at.description.length > 0) return at.description;
+    at = at._def?.innerType as typeof at;
+  }
+  return undefined;
+}
+
+const say = (field: FormField, description: string | undefined, of: string): string =>
+  description ?? `${humaniseField(field.name)} of ${of}.`;
+
+/**
+ * One scalar control as one question, or nothing when the control has no
+ * typed answer (text, a date, a list). `describe` is the field's own
+ * description, which is the instruction when there is one — the
+ * declaration's words, not a paraphrase.
+ */
+function questionFor<S extends AnySchema>(
+  store: Store<S>,
+  field: FormField,
+  description: string | undefined,
+  of: string,
+): Question | undefined {
+  switch (field.control) {
+    case "choice": {
+      if (!field.options?.length) return undefined;
+      const criteria: Record<string, string | null> = {};
+      for (const option of field.options) criteria[option] = null;
+      return { type: "choice", instructions: `Which ${humaniseField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria };
+    }
+    case "node": {
+      /*
+       * THE LIVE NODES OF THAT KIND, labelled by labelOf: the same word a
+       * card shows, a chat names and a tool describes. The option name is
+       * the id, because the answer has to be a call's argument; the
+       * meaning beside it is what the model reads.
+       */
+      const criteria: Record<string, string | null> = {};
+      for (const node of store.graph.allNodes()) {
+        if (!field.kinds.includes("*") && !field.kinds.includes(node.kind as string)) continue;
+        if (store.modules.disabledKinds.has(node.kind as string)) continue;
+        criteria[node.id] = `${withArticle(node.kind as string)}: ${labelOf(store.schema.tryDefinition(node.kind as string), node as never)}`;
+      }
+      if (Object.keys(criteria).length === 0) return undefined;
+      return { type: "choice", instructions: `Which ${humaniseField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria };
+    }
+    case "boolean":
+      return {
+        type: "noul",
+        instructions: `${humaniseField(field.name)}: ${description ?? `is this true of ${of}?`}`,
+        criteria: { true: `${humaniseField(field.name)} holds.`, false: `${humaniseField(field.name)} does not hold.` },
+      };
+    case "number": {
+      if (field.min === undefined || field.max === undefined) return undefined;
+      const span = field.max - field.min;
+      if (span < 1 || span + 1 > MAX_SCORE_LEVELS) return undefined;
+      const levels: string[] = [];
+      for (let level = field.min; level <= field.max; level++) {
+        levels.push(
+          level === field.min
+            ? `${humaniseField(field.name)} ${level} of ${field.max}: the least.`
+            : level === field.max
+              ? `${humaniseField(field.name)} ${level} of ${field.max}: the most.`
+              : `${humaniseField(field.name)} ${level} of ${field.max}.`,
+        );
+      }
+      return { type: "score", instructions: `How much ${humaniseField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria: levels };
+    }
+    default:
+      return undefined;
+  }
+}
+
+/** The number a Score answer means, on the field's own scale. */
+export function scoreToValue(field: { readonly min: number }, level: number): number {
+  return field.min + Math.round(level);
+}
+
+/**
+ * The questions a KIND asks of one of its members: one per settable field
+ * with a typed answer, each naming the act that writes it. A kind whose
+ * every field is prose asks nothing, and says so by an empty list.
+ */
+export function questionsForKind<S extends AnySchema>(store: Store<S>, kind: string): readonly DerivedQuestion[] {
+  const definition = store.schema.tryDefinition(kind);
+  if (!definition) return [];
+  const shape = (definition.fields as { shape?: Record<string, unknown> }).shape ?? {};
+  const writers = fieldWriters(store.schema, store.allMutations()).get(kind);
+  const of = withArticle(kind);
+  const out: DerivedQuestion[] = [];
+  for (const field of formFields(definition.fields)) {
+    if (field.name in (definition.fixed ?? {})) continue;
+    const question = questionFor(store, field, describedAs(shape[field.name]), of);
+    if (!question) continue;
+    const writer = (writers?.get(field.name) ?? [])
+      .map((name) => store.allMutations().find((mutation) => mutation.name === name))
+      .find((mutation) => mutation?.subject && formFields(mutation.input).some((arg) => arg.name === field.name));
+    out.push({
+      id: `field:${kind}.${field.name}`,
+      about: "field",
+      kind,
+      field: field.name,
+      ...(writer?.subject ? { writes: { mutation: writer.name, arg: field.name, subjectArg: writer.subject.arg } } : {}),
+      question,
+    });
+  }
+  return out;
+}
+
+/**
+ * The questions an ACT asks before it can be called: one per argument with
+ * a typed answer that `given` has not already settled. The subject is
+ * usually given — a run fans out over nodes and asks each one's questions
+ * — and an argument with no typed answer is simply not asked, which is
+ * what the checker already guaranteed a decision provider would never
+ * meet on its allowlist.
+ */
+export function questionsForMutation<S extends AnySchema>(
+  store: Store<S>,
+  name: string,
+  given: Readonly<Record<string, unknown>> = {},
+): readonly DerivedQuestion[] {
+  const mutation = store.mutation(name);
+  const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
+  const of = mutation.title ?? name;
+  const out: DerivedQuestion[] = [];
+  for (const field of formFields(mutation.input)) {
+    if (field.name in given) continue;
+    const question = questionFor(store, field, describedAs(shape[field.name]), `the act "${of}"`);
+    if (!question) continue;
+    out.push({ id: `arg:${name}.${field.name}`, about: "argument", mutation: name, arg: field.name, question });
+  }
+  return out;
+}
+
+/**
+ * A RULE IS A TRUTH, and its repairs are the closed set that follows.
+ *
+ * The invariant's own words are what "yes" means; a violation the store
+ * already raised narrows the follow-on Choice to the repairs it named, each
+ * with its arguments settled, so the answer is a call and not a guess.
+ * Asked without a violation, the follow-on is over the repairs the
+ * invariant declares it may name, which is what a loop asks before the
+ * store has judged.
+ */
+export function questionsForInvariant<S extends AnySchema>(
+  store: Store<S>,
+  name: string,
+  violation?: Violation,
+): readonly DerivedQuestion[] {
+  const invariant = store.allInvariants().find((candidate) => candidate.name === name) as
+    | InvariantDefinition<S>
+    | undefined;
+  if (!invariant) return [];
+  const rule = invariant.description ?? invariant.label ?? humaniseField(invariant.name);
+  const subject = violation?.subjectId;
+  const suffix = subject ? `:${subject}` : "";
+  const out: DerivedQuestion[] = [
+    {
+      id: `rule:${name}${suffix}`,
+      about: "rule",
+      invariant: name,
+      ...(subject ? { subjectId: subject } : {}),
+      question: {
+        type: "noul",
+        instructions: violation ? `${rule} Is this so of the state given?` : `${rule} Does this hold in the state given?`,
+        criteria: { true: rule, false: violation?.message ?? `${rule} — but it does not hold.` },
+      },
+    },
+  ];
+  const criteria: Record<string, string | null> = {};
+  const options: Record<string, { mutation: string; args: Readonly<Record<string, unknown>> }> = {};
+  /*
+   * Two repairs of one violation are often the same act with different
+   * arguments — "call it turf", "call it a bed" — so the option name is
+   * the act's name only while that is unique, and `options` says which
+   * call each name means.
+   */
+  const nameFor = (mutation: string): string => {
+    if (!(mutation in options)) return mutation;
+    let n = 2;
+    while (`${mutation}:${n}` in options) n += 1;
+    return `${mutation}:${n}`;
+  };
+  if (violation) {
+    for (const repair of violation.repairs) {
+      if (repair.missing?.length) continue;
+      const key = nameFor(repair.mutation);
+      criteria[key] = repair.label;
+      options[key] = { mutation: repair.mutation, args: { ...(repair.args ?? {}) } };
+    }
+  } else {
+    for (const repairName of invariant.repairs ?? []) {
+      const mutation = store.allMutations().find((candidate) => candidate.name === repairName);
+      criteria[repairName] = mutation?.description ?? mutation?.title ?? null;
+      options[repairName] = { mutation: repairName, args: {} };
+    }
+  }
+  /*
+   * A Choice with one option is not a question, and a violation with one
+   * ready repair has already answered: a caller finding no repair question
+   * takes the one the violation named.
+   */
+  if (Object.keys(criteria).length >= 2) {
+    out.push({
+      id: `repair:${name}${suffix}`,
+      about: "repair",
+      invariant: name,
+      ...(subject ? { subjectId: subject } : {}),
+      options,
+      question: {
+        type: "choice",
+        instructions: `Which repair should be taken so that: ${rule}`,
+        criteria,
+      },
+    });
+  }
+  return out;
+}
+
+/**
+ * THE STATE A QUESTION IS ASKED OVER: one node as the model should see it
+ * — its kind and what the kind is for, its label, its readable fields in
+ * the declaration's own words, and what it is joined to, by label. Nothing
+ * a card would not show. Ids are kept beside labels so an answer that is
+ * an id can be checked against what was shown.
+ */
+export function nodeState<S extends AnySchema>(store: Store<S>, id: string): Readonly<Record<string, unknown>> | undefined {
+  const node = store.graph.getNode(id);
+  if (!node) return undefined;
+  const definition = store.schema.tryDefinition(node.kind as string);
+  const fields: Record<string, unknown> = {};
+  for (const field of readableFields(node as never, definition)) fields[field.label] = field.value;
+  const joined: Record<string, string[]> = {};
+  for (const edge of store.graph.outEdges(id)) {
+    const other = store.graph.getNode(edge.to);
+    if (!other) continue;
+    (joined[edge.kind] ??= []).push(labelOf(store.schema.tryDefinition(other.kind as string), other as never));
+  }
+  for (const edge of store.graph.inEdges(id)) {
+    const other = store.graph.getNode(edge.from);
+    if (!other) continue;
+    const inverse = `${edge.kind} (from)`;
+    (joined[inverse] ??= []).push(labelOf(store.schema.tryDefinition(other.kind as string), other as never));
+  }
+  return {
+    id,
+    kind: node.kind,
+    ...(definition?.description ? { "what the kind is": definition.description } : {}),
+    label: labelOf(definition, node as never),
+    fields,
+    ...(Object.keys(joined).length > 0 ? { joined } : {}),
+  };
+}
+
+/** Every derived question in the app, for a reader — or a test — that wants the whole surface. */
+export function allQuestions<S extends AnySchema>(store: Store<S>): readonly DerivedQuestion[] {
+  const out: DerivedQuestion[] = [];
+  for (const kind of store.schema.kinds as readonly string[]) {
+    if (store.modules.disabledKinds.has(kind)) continue;
+    out.push(...questionsForKind(store, kind));
+  }
+  for (const mutation of store.allMutations()) out.push(...questionsForMutation(store, mutation.name));
+  for (const invariant of store.allInvariants()) out.push(...questionsForInvariant(store, invariant.name));
+  return out;
+}

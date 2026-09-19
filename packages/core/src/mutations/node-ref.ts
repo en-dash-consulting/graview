@@ -12,7 +12,16 @@ export function nodeRef<const K extends string>(
   kinds: readonly K[] | "*" = "*",
 ): z.ZodString {
   const schema = z.string().min(1);
-  NODE_REFS.set(schema, kinds === "*" ? ["*"] : kinds);
+  const accepted = kinds === "*" ? ["*"] : kinds;
+  NODE_REFS.set(schema, accepted);
+  /*
+   * `.describe()` and `.meta()` CLONE the schema and share its def, so a
+   * described node reference — the natural thing to write, since the
+   * description is the question a decision provider is asked — used to
+   * come back as a plain string. The def is the stable identity.
+   */
+  const def = (schema as { _def?: object })._def;
+  if (def) NODE_REFS.set(def, accepted);
   return schema;
 }
 
@@ -21,6 +30,9 @@ export function nodeRefKinds(schema: unknown): readonly string[] | undefined {
   if (typeof schema !== "object" || schema === null) return undefined;
   const direct = NODE_REFS.get(schema);
   if (direct) return direct;
+  const def = (schema as { _def?: object })._def;
+  const byDef = def ? NODE_REFS.get(def) : undefined;
+  if (byDef) return byDef;
   // Unwrap optional/default/nullable wrappers so `nodeRef([...]).optional()`
   // keeps its meaning.
   const inner = (schema as { _def?: { innerType?: unknown } })._def?.innerType;

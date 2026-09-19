@@ -17,7 +17,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A decision provider is a third kind, and the declaration should say so](./a-decision-provider-is-a-third-kind.md) | completed |
 | [Chains: a run is a sequence of typed asks over the graph, declared not scripted](./chains-a-run-is-a-sequence-of-typed.md) | pending |
 | [Confidence is a first-class answer, not a number in a log](./confidence-is-a-first-class-answer-not.md) | pending |
-| [Derive the questions from the declaration rather than authoring them](./derive-the-questions-from-the.md) | pending |
+| [Derive the questions from the declaration rather than authoring them](./derive-the-questions-from-the.md) | in_progress |
 | [Groundskeeper proves it on the matrix it already draws](./groundskeeper-proves-it-on-the-matrix.md) | pending |
 | [Loops: act, re-judge, act again, and know when to stop](./loops-act-re-judge-act-again-and-know.md) | pending |
 | [One switch, four rungs — and a rung that says what it cannot do](./one-switch-four-rungs-and-a-rung-that.md) | pending |

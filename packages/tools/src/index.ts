@@ -76,3 +76,14 @@ export { applyPlan, dependentsOf, describePlan, isPlanReference, planFrom, witho
 export type { AppliedPlan, Plan, PlanEntry, PlanOptions, PlannedCall, PlanReference } from "./plan.js";
 export { across, inside, within } from "./space.js";
 export type { Ring, SpacePoint } from "./space.js";
+
+// The questions a declaration already types, derived rather than authored.
+export {
+  allQuestions,
+  nodeState,
+  questionsForInvariant,
+  questionsForKind,
+  questionsForMutation,
+  scoreToValue,
+} from "./questions.js";
+export type { ChoiceQuestion, DerivedQuestion, NoulQuestion, Question, QuestionAbout, ScoreQuestion } from "./questions.js";
