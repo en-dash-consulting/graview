@@ -1,0 +1,30 @@
+{
+  "id": "c2519a87-b087-4f10-99a1-03779599eaa4",
+  "taskId": "a038f6be-a30c-4f1d-9b53-d31d26ab7193",
+  "taskTitle": "Two stack overflows the survey found",
+  "startedAt": "2026-09-19T07:50:01.193Z",
+  "finishedAt": "2026-09-19T07:50:01.193Z",
+  "status": "completed",
+  "turns": 207,
+  "summary": "Card clips in the stack; robot stands whole; survey counts only visible cuts",
+  "tokenUsage": {
+    "input": 6356,
+    "output": 309149,
+    "cacheCreationInput": 639525,
+    "cacheReadInput": 82575473
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 6356,
+    "output": 309149,
+    "cached": 83214998,
+    "total": 83530503
+  }
+}

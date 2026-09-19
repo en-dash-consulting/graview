@@ -279,10 +279,27 @@ export function Scene<S extends AnySchema>({
     }),
     [options, size, unit, store, views, hiddenKinds, judged],
   );
+  /*
+   * THE CAMERA IS NOT A MOVE. A drive-in on the far side of a large city
+   * lights up off-screen unless the camera goes to it, and the camera's
+   * own offset is derived from the focus rather than made by a hand — so
+   * it lives here, added to whatever the person panned, and never in the
+   * URL. "Put it back" then clears the person's pan and leaves the camera
+   * on the screen, which is what putting it back means.
+   */
+  const [camera, setCamera] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const panned = useMemo(
+    () => ({ x: (view.pan?.x ?? 0) + camera.x, y: (view.pan?.y ?? 0) + camera.y }),
+    [view.pan, camera],
+  );
+  const seen = useMemo(
+    () => (camera.x === 0 && camera.y === 0 ? view : withPan(view, panned)),
+    [view, camera, panned],
+  );
   const result = useMemo<Layout>(
-    () => layout(store.graph, store.schema, view, sized),
+    () => layout(store.graph, store.schema, seen, sized),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, view, sized, nodes],
+    [store, seen, sized, nodes],
   );
 
   /*
@@ -307,21 +324,24 @@ export function Scene<S extends AnySchema>({
    */
   const screenId = result.nodes.find((node) => node.screenOf !== undefined)?.id ?? null;
   useEffect(() => {
-    if (!view.overview || !screenId || !result.city) return;
+    if (!view.overview || !screenId || !result.city) {
+      setCamera((current) => (current.x === 0 && current.y === 0 ? current : { x: 0, y: 0 }));
+      return;
+    }
     const screen = result.nodes.find((node) => node.id === screenId);
     if (!screen) return;
     const inside = screen.x >= 0 && screen.y >= 0 && screen.x + screen.width <= result.width && screen.y + screen.height <= result.height;
     if (inside) return;
-    const pan = view.pan ?? { x: 0, y: 0 };
+    // The whole offset — the person's pan plus the camera — stays inside the
+    // camera limit, so the screen can be reached and nothing is dropped off the edge.
     const limit = cameraLimit(result);
-    const wantedX = pan.x + (result.width / 2 - (screen.x + screen.width / 2));
-    const wantedY = pan.y + (result.height / 2 - (screen.y + screen.height / 2));
-    setView((current) =>
-      withPan(current, {
-        x: Math.max(-limit.x, Math.min(limit.x, wantedX)),
-        y: Math.max(-limit.y, Math.min(limit.y, wantedY)),
-      }),
-    );
+    const pan = view.pan ?? { x: 0, y: 0 };
+    const wantedX = panned.x + (result.width / 2 - (screen.x + screen.width / 2));
+    const wantedY = panned.y + (result.height / 2 - (screen.y + screen.height / 2));
+    setCamera({
+      x: Math.max(-limit.x, Math.min(limit.x, wantedX)) - pan.x,
+      y: Math.max(-limit.y, Math.min(limit.y, wantedY)) - pan.y,
+    });
     // Only when the focus lands: a person's own pan afterwards is theirs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenId, view.overview]);
@@ -486,8 +506,8 @@ export function Scene<S extends AnySchema>({
       fromX: event.clientX,
       fromY: event.clientY,
       // Unpanned, because that is the space a pin is stored in.
-      baseX: node.x - (view.pan?.x ?? 0),
-      baseY: node.y - (view.pan?.y ?? 0),
+      baseX: node.x - panned.x,
+      baseY: node.y - panned.y,
       moved: false,
     };
   };
@@ -731,8 +751,8 @@ export function Scene<S extends AnySchema>({
         ...(frame.city
           ? {
               ["--graview-kit-lattice-size" as string]: `${(frame.city.cell / Math.sqrt(5)).toFixed(2)}px`,
-              ["--graview-lattice-x" as string]: `${(frame.city.originX + (view.pan?.x ?? 0)).toFixed(1)}px`,
-              ["--graview-lattice-y" as string]: `${(frame.city.originY + (view.pan?.y ?? 0)).toFixed(1)}px`,
+              ["--graview-lattice-x" as string]: `${(frame.city.originX + panned.x).toFixed(1)}px`,
+              ["--graview-lattice-y" as string]: `${(frame.city.originY + panned.y).toFixed(1)}px`,
             }
           : {}),
         ...(dragging ? { userSelect: "none" as const } : {}),
@@ -836,7 +856,7 @@ export function Scene<S extends AnySchema>({
         height={result.height}
         whereIs={(id) => whereIsIn(frame, wrapperRef.current, scheme, views, id)}
         stageRef={wrapperRef}
-        pan={view.pan ?? { x: 0, y: 0 }}
+        pan={panned}
       />
       <RelationCaptions
         nodes={frame.nodes}
