@@ -166,7 +166,7 @@ const APPS = {
     following: async (p) => {
       await p.click('[data-testid="overview"]');
       await p.waitForTimeout(900);
-      await p.click('[data-graview-figure="agent:tidy:ui"] .graview-figure-body');
+      await p.click('[data-graview-figure^="agent:tidy:"] .graview-figure-body');
       await p.mouse.move(700, 480);
       await p.waitForTimeout(700);
     },

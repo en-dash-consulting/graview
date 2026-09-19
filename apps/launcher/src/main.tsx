@@ -212,6 +212,8 @@ function Desk({
                  remembers — the same three the app gets at its own port. */
               store={demo.store ?? demo.opened?.store}
               {...(demo.principal ? { principal: demo.principal } : {})}
+              /* And who else is here, for the demos whose open() carries a channel. */
+              {...("presence" in demo && demo.presence ? { presence: demo.presence } : {})}
               remembers={demo.remembers}
               syncUrl
               renderer="dom"

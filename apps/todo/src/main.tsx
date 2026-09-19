@@ -66,7 +66,7 @@ if (!root) throw new Error("no #root");
  * through too, so "Things remembers" is one fact rather than one fact here
  * and a different one on the desk.
  */
-const { opened, principal, remembers } = await open();
+const { opened, principal, remembers, presence } = await open();
 
 /*
  * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
@@ -107,6 +107,7 @@ if (window.location.pathname.startsWith("/pages")) {
       store={opened.store}
       principal={principal}
       remembers={remembers}
+      presence={presence}
       syncUrl
       renderer="dom"
       initialScheme={scheme}

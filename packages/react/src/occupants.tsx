@@ -3,6 +3,7 @@ import { kindCardId, type InterpolatedLayout } from "@graview/layout";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { useGraview, useScenePointer, type DrawnBox } from "./context.js";
 import { pickedFrom } from "./picking.js";
+import { placeOthers } from "./presence.js";
 import type { RobotState } from "./robot.js";
 
 /**
@@ -47,6 +48,19 @@ export function Figure({ hue, mode }: { readonly hue: number; readonly mode: Rob
         {busy ? <line x1="24" y1="11" x2="27" y2="9" /> : null}
       </g>
       <title>{`robot, ${mode}`}</title>
+    </svg>
+  );
+}
+
+/** A person, in the same line vocabulary: a head, shoulders, standing. */
+export function PersonFigure({ hue }: { readonly hue: number }): ReactElement {
+  return (
+    <svg viewBox="0 0 22 24" aria-hidden="true" style={{ color: `hsl(${Math.round(hue)} 50% 48%)` }}>
+      <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round">
+        <circle cx="11" cy="6" r="4.2" />
+        <path d="M3 23 C3 15.5 6 13 11 13 C16 13 19 15.5 19 23" />
+      </g>
+      <title>somebody</title>
     </svg>
   );
 }
@@ -109,7 +123,7 @@ function FollowingOccupants(props: OccupantsProps): ReactElement | null {
 }
 
 function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }: OccupantsProps & { readonly pointer: { x: number; y: number } | null }): ReactElement | null {
-  const { robots, noteSeat, principal, store, administered } = useGraview();
+  const { robots, noteSeat, principal, store, administered, who, following, follow } = useGraview();
   const [trails, setTrails] = useState<Record<string, readonly { x: number; y: number }[]>>({});
   const lastAt = useRef<Record<string, string | null>>({});
 
@@ -179,10 +193,107 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [robots]);
 
-  if (placed.length === 0) return null;
+  /*
+   * THE OTHERS, on this map. Placed here with this frame's own whereIs, so
+   * each viewer draws the same people at the same plots in its own pixels.
+   */
+  const others = placeOthers([...who.values()], whereIs, width, height);
+
+  if (placed.length === 0 && others.length === 0) return null;
 
   return (
-    <div className="graview-occupants" data-testid="occupants" data-graview-occupants={placed.length}>
+    <div className="graview-occupants" data-testid="occupants" data-graview-occupants={placed.length + others.length}>
+      {others.map((one, index) => {
+        if (one.kind === "over") {
+          return (
+            <div
+              key={`over:${one.presence.participant}`}
+              className="graview-presence-over"
+              data-testid="presence-over"
+              data-graview-over-by={one.presence.participant}
+              style={{ left: one.box.x - 3, top: one.box.y - 3, width: one.box.width + 6, height: one.box.height + 6, ["--graview-hue" as string]: one.presence.hue }}
+            />
+          );
+        }
+        if (one.kind === "count") {
+          return (
+            <span
+              key={`count:${one.at}:${index}`}
+              className="graview-figure-count"
+              data-testid="presence-count"
+              data-graview-at={one.at}
+              style={{ left: one.point.x, top: one.point.y }}
+              title={`${one.n} more here`}
+            >
+              +{one.n}
+            </span>
+          );
+        }
+        const hue = one.presence.hue;
+        const name = one.presence.name ?? "somebody";
+        if (one.kind === "edge") {
+          return (
+            <button
+              key={`edge:${one.presence.participant}`}
+              type="button"
+              className="graview-figure-edge"
+              data-testid="presence-edge"
+              data-graview-person={one.presence.participant}
+              style={{ left: Math.max(8, one.point.x - 120), top: one.point.y }}
+              onClick={() => follow(one.presence.participant)}
+              aria-label={`${name} is somewhere else — press to go where they are`}
+            >
+              → {name}
+            </button>
+          );
+        }
+        if (one.kind === "robot") {
+          return (
+            <div
+              key={`robot:${one.presence.participant}`}
+              className="graview-figure"
+              data-graview-figure={`theirs:${one.presence.participant}`}
+              data-graview-theirs=""
+              data-graview-mode={one.mode}
+              data-graview-at={one.presence.robot?.at ?? ""}
+              style={{ transform: `translate(${one.point.x.toFixed(1)}px, ${one.point.y.toFixed(1)}px)`, ["--graview-hue" as string]: hue }}
+            >
+              <span className="graview-figure-body" role="img" aria-label={`${name}'s agent — ${one.mode}`} style={{ cursor: "default" }}>
+                <Figure hue={hue} mode={one.mode as RobotState["mode"]} />
+              </span>
+              <span className="graview-figure-name">{name}'s agent</span>
+            </div>
+          );
+        }
+        const followed = following?.participant === one.presence.participant;
+        return (
+          <div
+            key={`person:${one.presence.participant}`}
+            className="graview-figure"
+            data-graview-figure={one.presence.participant}
+            data-graview-person=""
+            data-graview-at={one.at}
+            data-graview-audience={one.audience ? "" : undefined}
+            data-graview-followed={followed ? "" : undefined}
+            style={{ transform: `translate(${one.point.x.toFixed(1)}px, ${one.point.y.toFixed(1)}px)`, ["--graview-hue" as string]: hue }}
+          >
+            <button
+              type="button"
+              className="graview-figure-body"
+              aria-label={`${name} is here${followed ? ". Press to stop following" : ". Press to go where they go"}`}
+              aria-pressed={followed}
+              onClick={(event) => {
+                event.stopPropagation();
+                follow(followed ? null : one.presence.participant);
+              }}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <PersonFigure hue={hue} />
+            </button>
+            <span className="graview-figure-name">{name}</span>
+          </div>
+        );
+      })}
       {placed.map(({ robot, point }) => {
         if (!point) return null;
         const hue = hueFor(robot.who);

@@ -15,6 +15,7 @@ import {
   Backtrack,
   Inspector,
   OverviewButton,
+  FollowingLine,
   Standing,
   Trail,
 } from "./workbench/index.js";
@@ -209,6 +210,7 @@ export function Shell<S extends AnySchema>({
             </a>
           ) : null}
           <Standing clean={standing} />
+          <FollowingLine />
           {chat ? (
             <ChatPanel<S>
               onCall={onCall}

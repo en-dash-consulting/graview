@@ -52,12 +52,12 @@ export function ChatPanel<S extends AnySchema>({
   onCall,
   testId = "chat",
 }: ChatPanelProps<S>) {
-  const { store, principal, seatWho, noteSeat, robots } = useGraview<S>();
+  const { store, principal, seatWho, noteSeat, robots, session } = useGraview<S>();
   const { selection } = useSelection();
-  /* The chat writes as the tab's seat when one has sat down, so the two are one robot. */
+  /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
   const who = seatWho ?? "chat";
-  const author = useMemo(() => ({ kind: "agent" as const, id: who, session: "ui" }), [who]);
-  const robot = robots.get(`agent:${who}:ui`);
+  const author = useMemo(() => ({ kind: "agent" as const, id: who, session }), [who, session]);
+  const robot = robots.get(`agent:${who}:${session}`);
   const following = robot?.mode === "following";
   const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState<readonly Turn[]>([]);
@@ -129,10 +129,10 @@ export function ChatPanel<S extends AnySchema>({
       return;
     }
     setOpen(true);
-    const figure = typeof document === "undefined" ? null : document.querySelector(`[data-graview-figure="agent:${who}:ui"]`);
+    const figure = typeof document === "undefined" ? null : document.querySelector(`[data-graview-figure="agent:${who}:${session}"]`);
     const rect = figure?.getBoundingClientRect();
     if (rect) setBeside({ left: Math.max(8, Math.min(window.innerWidth - 328, rect.left + 24)), top: Math.max(8, Math.min(window.innerHeight - 320, rect.top - 40)) });
-  }, [following, who, robot?.at, robot?.over]);
+  }, [following, who, session, robot?.at, robot?.over]);
 
   // Escape and click-away close it — it floats over the scene.
   useEffect(() => {

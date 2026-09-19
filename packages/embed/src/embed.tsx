@@ -1,4 +1,4 @@
-import { Store, type AnySchema, type Brand, type GraviewApp, type Principal } from "@graview/core";
+import { Store, type AnySchema, type Brand, type GraviewApp, type PresenceChannel, type Principal } from "@graview/core";
 import { EMPTY_VIEW, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PagesApp, type PageComponent, type PageRegistry } from "@graview/pages";
 import {
@@ -55,6 +55,13 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
   /** For the pages face: the path to open, within the app's own routes. */
   readonly path?: string;
   readonly principal?: Principal;
+  /**
+   * WHO ELSE IS HERE, if the host wants that: an embed broadcasts nothing
+   * and draws nobody unless it is handed a channel — a page that puts a
+   * graph on it is not thereby a page that tells its readers about each
+   * other.
+   */
+  readonly presence?: PresenceChannel;
   /**
    * The seats a reader may take, when the page wants the policy to be felt
    * rather than read: each is a name and a principal, shown on the strip and
@@ -229,6 +236,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         scheme={scheme}
         {...(brand ? { brand } : {})}
         {...(principal ? { principal } : {})}
+        {...(props.presence ? { presence: props.presence } : {})}
         /* The reader's own text size and motion, on somebody else's page
            too: the answer lives on the browser, not on the installation. */
         settings={app.settings ?? []}

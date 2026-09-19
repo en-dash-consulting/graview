@@ -619,6 +619,49 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   from { opacity: 0.55; }
   to { opacity: 0; }
 }
+/* ANOTHER PERSON, on your map: a head and shoulders in their own hue, at
+   the plot their stop names or in the audience row of the showing they are
+   watching. Press to follow them; their name is under them like a robot's. */
+.graview-figure[data-graview-person] .graview-figure-body {
+  left: -11px;
+  top: -24px;
+  width: 22px;
+  height: 24px;
+  min-height: 0;
+}
+.graview-figure[data-graview-person] .graview-figure-body svg {
+  width: 22px;
+  height: 24px;
+}
+.graview-figure[data-graview-person][data-graview-followed] .graview-figure-body {
+  color: var(--graview-accent);
+}
+/* Their robot, beside them, captioned as theirs. */
+.graview-figure[data-graview-theirs] .graview-figure-body {
+  opacity: 0.85;
+}
+/* More than a row can hold, and the anonymous: a number where they stand. */
+.graview-figure-count {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-float);
+  color: var(--graview-ink-muted);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+/* What somebody else is pointing at, outlined in their colour. */
+.graview-presence-over {
+  position: absolute;
+  border: 2px solid hsl(var(--graview-hue, 200) 55% 52%);
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0.75;
+  transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
+}
 /* Off the visible ground: an indicator at the border, pointing at it. */
 .graview-figure-edge {
   position: absolute;

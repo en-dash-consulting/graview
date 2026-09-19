@@ -25,7 +25,7 @@ let vite;
 
 const robot = (page) =>
   page.evaluate(() => {
-    const figure = document.querySelector('[data-graview-figure="agent:tidy:ui"]');
+    const figure = document.querySelector('[data-graview-figure^="agent:tidy:"]');
     if (!figure) return null;
     const ground = document.querySelector(".graview-ground").getBoundingClientRect();
     const box = figure.querySelector(".graview-figure-body").getBoundingClientRect();
@@ -101,7 +101,7 @@ try {
   await page.waitForTimeout(300);
 
   /* ------------------------------------------------- follow the pointer */
-  await page.click('[data-graview-figure="agent:tidy:ui"] .graview-figure-body');
+  await page.click('[data-graview-figure^="agent:tidy:"] .graview-figure-body');
   await page.waitForTimeout(200);
   const ground = await page.$eval(".graview-ground", (el) => {
     const b = el.getBoundingClientRect();
@@ -128,7 +128,7 @@ try {
     const cb = await chip.boundingBox();
     await page.mouse.move(cb.x + cb.width / 2, cb.y + cb.height / 2);
     await page.waitForTimeout(500);
-    const over = await page.evaluate(() => document.querySelector('[data-graview-figure="agent:tidy:ui"]')?.getAttribute("data-graview-at"));
+    const over = await page.evaluate(() => document.querySelector('[data-graview-figure^="agent:tidy:"]')?.getAttribute("data-graview-at"));
     const anchor = await page.evaluate(() => document.querySelector('[data-testid="chat-panel"]')?.getAttribute("data-graview-anchor") ?? null);
     await page.fill('[aria-label="Message the seat"]', "tell me about this");
     await page.press('[aria-label="Message the seat"]', "Enter");

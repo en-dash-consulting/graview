@@ -1,11 +1,12 @@
 import {
   browserStartsFresh,
   createBrowserAdapter,
+  createBroadcastPresence,
   forgetFreshParam,
   openStore,
   type OpenedStore,
 } from "@graview/ship/browser";
-import type { Principal } from "@graview/core";
+import type { PresenceChannel, Principal } from "@graview/core";
 import example from "./data/example.json";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
@@ -32,6 +33,12 @@ export interface OpenedApp {
   readonly brand: typeof thingsBrand;
   /** Whether this browser is keeping the edits — true wherever it is opened. */
   readonly remembers: boolean;
+  /**
+   * WHO ELSE IS HERE: the tabs of this origin, over a BroadcastChannel
+   * scoped like the store. Multiplayer for free, beside the adapter and
+   * never in the log.
+   */
+  readonly presence: PresenceChannel;
 }
 
 export async function open(): Promise<OpenedApp> {
@@ -44,5 +51,11 @@ export async function open(): Promise<OpenedApp> {
     storeOptions: { invariantOptions: { context: { today: today() } } },
   });
   forgetFreshParam();
-  return { opened, principal: openingSeat(), brand: thingsBrand, remembers: true };
+  return {
+    opened,
+    principal: openingSeat(),
+    brand: thingsBrand,
+    remembers: true,
+    presence: createBroadcastPresence(todoApp.name),
+  };
 }

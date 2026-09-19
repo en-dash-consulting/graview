@@ -1,4 +1,16 @@
-import { Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal } from "@graview/core";
+import {
+  foldPresence,
+  PRESENCE_TTL_MS,
+  samePresence,
+  Store,
+  type AnySchema,
+  type GraviewApp,
+  type MutationCall,
+  type Operation,
+  type Presence,
+  type PresenceChannel,
+  type Principal,
+} from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -48,6 +60,12 @@ export interface RemoteStore<S extends AnySchema> {
    * saying so, in the policy's own words.
    */
   onRefusal(listener: (reason: string) => void): () => void;
+  /**
+   * WHO IS HERE, over the same poll. Saying where you are rides on the next
+   * heartbeat and the answer carries everybody else — no round trip of its
+   * own, nothing written to the store, the adapter or the log.
+   */
+  readonly presence: PresenceChannel;
   close(): void;
 }
 
@@ -112,34 +130,92 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
 
   let seen = state.log.at(-1)?.seq ?? -1;
 
-  const pull = async (): Promise<readonly Operation[]> => {
-    const response = await call(`${options.url}/graview/since?seq=${seen}`, { headers });
-    const { ops } = (await response.json()) as { ops: Operation[] };
+  /*
+   * PRESENCE, beside the log and never in it. `mine` is the last word this
+   * browser said about itself; it goes out with every poll while it stands,
+   * and what comes back is folded into `known` for whoever is listening.
+   */
+  let mine: Presence | null = null;
+  let known = new Map<string, Presence>();
+  const whoListeners = new Set<(who: readonly Presence[]) => void>();
+  const heard = (who: readonly Presence[]) => {
+    const next = foldPresence(new Map(), who, Date.now(), PRESENCE_TTL_MS * 4, mine?.participant);
+    let changed = next.size !== known.size;
+    if (!changed) for (const [participant, presence] of next) if (!samePresence(presence, known.get(participant))) changed = true;
+    known = next;
+    if (!changed) return;
+    for (const listener of whoListeners) listener([...known.values()]);
+  };
+
+  const land = (ops: readonly Operation[]): readonly Operation[] => {
     if (ops.length === 0) return [];
     seen = Math.max(seen, ...ops.map((op) => op.seq));
     return store.receive(ops);
   };
 
-  const send = async (
-    calls: readonly MutationCall[],
-    sending: { intent?: string; batch?: string } = {},
-  ): Promise<readonly Operation[]> => {
+  const pull = async (): Promise<readonly Operation[]> => {
+    if (mine) {
+      const response = await call(`${options.url}/graview/here`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ presence: mine, seq: seen }),
+      });
+      const { who, ops } = (await response.json()) as { who: Presence[]; ops?: Operation[] };
+      heard(who ?? []);
+      return land(ops ?? []);
+    }
+    const response = await call(`${options.url}/graview/since?seq=${seen}`, { headers });
+    const { ops } = (await response.json()) as { ops: Operation[] };
+    return land(ops);
+  };
+
+  const presence: PresenceChannel = {
+    here(next) {
+      mine = next;
+    },
+    onWho(listener) {
+      whoListeners.add(listener);
+      return () => {
+        whoListeners.delete(listener);
+      };
+    },
+    leave() {
+      if (!mine) return;
+      const body = JSON.stringify({ participant: mine.participant });
+      mine = null;
+      // A page on its way out gets one shot; a beacon is what survives it.
+      const beacon = (globalThis as { navigator?: { sendBeacon?: (url: string, body: string) => boolean } }).navigator?.sendBeacon;
+      if (beacon) beacon.call((globalThis as { navigator?: unknown }).navigator, `${options.url}/graview/leave`, body);
+      else void call(`${options.url}/graview/leave`, { method: "POST", headers, body }).catch(() => {});
+    },
+  };
+
+  /** The server's batch for each provisional one this browser minted, so an undo names what the server has. */
+  const batches = new Map<string, string>();
+
+  const post = async (
+    body: { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string },
+  ): Promise<{ ops: readonly Operation[]; batch?: string }> => {
     const response = await call(`${options.url}/graview/ops`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ calls, ...sending }),
+      body: JSON.stringify(body),
     });
-    const body = (await response.json()) as { ops?: Operation[]; error?: string };
+    const answer = (await response.json()) as { ops?: Operation[]; batch?: string; error?: string };
     if (!response.ok) {
       // The policy's own sentence, carried across the wire unchanged: a
       // refusal a person can read is the whole point of having one.
-      throw new Error(body.error ?? `The server refused (${response.status})`);
+      throw new Error(answer.error ?? `The server refused (${response.status})`);
     }
-    const ops = body.ops ?? [];
-    if (ops.length > 0) seen = Math.max(seen, ...ops.map((op) => op.seq));
-    store.receive(ops);
-    return ops;
+    const ops = answer.ops ?? [];
+    land(ops);
+    return { ops, ...(answer.batch ? { batch: answer.batch } : {}) };
   };
+
+  const send = async (
+    calls: readonly MutationCall[],
+    sending: { intent?: string; batch?: string } = {},
+  ): Promise<readonly Operation[]> => (await post({ calls, ...sending })).ops;
 
   /*
    * APPLIED HERE FIRST, DECIDED THERE.
@@ -155,9 +231,36 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
    * one behaviour that would make this whole design a lie: the interface
    * would be showing a graph the server does not have.
    */
-  const applied = store.apply.bind(store);
+  const appliedAll = store.applyAll.bind(store);
+  const undone = store.undo.bind(store);
   const refusals = new Set<(reason: string) => void>();
-  store.apply = ((callMade, applyOptions) => {
+  /*
+   * A refusal takes the optimism back — undone by its own batch, which is
+   * the same mechanism a person's undo uses — AS THE SAME PERSON. What you
+   * may undo is what you may have done, and an undo judged as nobody is
+   * refused in an app with a policy: taking back your own optimism would
+   * have thrown a second, more confusing refusal on top of the first.
+   */
+  const takeBack = (batch: string, error: unknown) => {
+    const reason = error instanceof Error ? error.message : String(error);
+    try {
+      const asMe = options.principal ? { author: options.principal } : {};
+      if (store.canUndo(batch).ok) undone(batch, asMe);
+    } catch {
+      // A take-back that cannot run leaves the interface wrong, and
+      // saying so is still better than saying nothing.
+    }
+    for (const told of refusals) told(reason);
+  };
+  /*
+   * EVERY WAY THE GRAPH CHANGES GOES DOWN THE WIRE. `apply` is one call;
+   * `applyAll` is a whole gesture — a seat's plan lands as one batch — and
+   * `undo` is a take-back. The first version patched `apply` alone, so a
+   * robot's plans and undos stayed in the browser that made them while its
+   * single presses travelled: two windows on one roster disagreed about
+   * exactly the changes an agent had made.
+   */
+  store.applyAll = ((calls, applyOptions) => {
     /*
      * As WHOEVER IS AT THIS KEYBOARD, by default.
      *
@@ -167,32 +270,34 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
      * this fixes is the one that does not, which would otherwise meet a
      * refusal about a person who is not sitting there.
      */
-    const result = applied(callMade, {
+    const result = appliedAll(calls, {
       ...(options.principal ? { author: options.principal } : {}),
       ...applyOptions,
     });
-    void send([callMade], applyOptions?.intent ? { intent: applyOptions.intent } : {}).catch(
-      (error: unknown) => {
-        const reason = error instanceof Error ? error.message : String(error);
-        /*
-         * Undone by its own batch, which is the same mechanism a person's
-         * undo uses — AS THE SAME PERSON. What you may undo is what you may
-         * have done, and an undo judged as nobody is refused in an app with
-         * a policy: taking back your own optimism would have thrown a
-         * second, more confusing refusal on top of the first.
-         */
-        try {
-          const mine = options.principal ? { author: options.principal } : {};
-          if (store.canUndo(result.batch).ok) store.undo(result.batch, mine);
-        } catch {
-          // A take-back that cannot run leaves the interface wrong, and
-          // saying so is still better than saying nothing.
-        }
-        for (const told of refusals) told(reason);
-      },
-    );
+    void post({ calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}) })
+      .then((answer) => {
+        if (answer.batch) batches.set(result.batch, answer.batch);
+      })
+      .catch((error: unknown) => takeBack(result.batch, error));
     return result;
-  }) as typeof store.apply;
+  }) as typeof store.applyAll;
+  // `apply` is `applyAll` of one — and it must go through the patched one.
+  store.apply = ((callMade, applyOptions) => store.applyAll([callMade], applyOptions)) as typeof store.apply;
+  store.undo = ((batchIds, undoOptions) => {
+    const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
+    const result = undone(ids, {
+      ...(options.principal ? { author: options.principal } : {}),
+      ...undoOptions,
+    });
+    // Named as the server knows them: a provisional batch by the one it became.
+    const theirs = ids.map((id) => batches.get(id) ?? id);
+    void post({ undo: theirs, ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}) })
+      .then((answer) => {
+        if (answer.batch) batches.set(result.batch, answer.batch);
+      })
+      .catch((error: unknown) => takeBack(result.batch, error));
+    return result;
+  }) as typeof store.undo;
 
   const every = options.pollMs ?? 800;
   const timer =
@@ -216,8 +321,10 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       refusals.add(listener);
       return () => refusals.delete(listener);
     },
+    presence,
     close() {
       if (timer) clearInterval(timer);
+      presence.leave();
     },
   };
 }

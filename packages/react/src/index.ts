@@ -1,5 +1,7 @@
 export { GraviewProvider, ROBOT_REST_MS, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
-export { Figure, Occupants } from "./occupants.js";
+export { Figure, Occupants, PersonFigure } from "./occupants.js";
+export { anchorOf, AUDIENCE_ROW, HEARTBEAT_MS, placeOthers, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
+export type { Placed, PresenceInputs, PresenceState } from "./presence.js";
 export type { OccupantsProps } from "./occupants.js";
 export { foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO } from "./robot.js";
 export type { RobotEvent, RobotMode, RobotState, SeatNote } from "./robot.js";

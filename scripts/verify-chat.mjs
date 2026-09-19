@@ -180,11 +180,12 @@ try {
   await page.keyboard.press("Escape"); // put the chat away first
   await page.click('[data-testid="activity-button"]');
   await page.waitForSelector('[data-testid="activity"]');
-  // The rail names the SEAT that did it — "chat", not a person, not some
-  // other agent's name — beside the mutation's own intent.
+  // The rail names the SEAT that did it — the tab's seat, "tidy", whose
+  // body the chat shares (it wrote as "chat" before the seat and the chat
+  // were one robot) — not a person, beside the mutation's own intent.
   const attributed = await page.evaluate(() => {
     const rail = document.querySelector('[data-testid="activity"]')?.textContent ?? "";
-    return rail.includes('Finish "Book the van"') && rail.includes("chat");
+    return rail.includes('Finish "Book the van"') && (rail.includes("tidy") || rail.includes("chat"));
   });
   // Undo THAT turn — the rail holds every batch, so find the row that
   // carries the chat's own intent and press its undo.

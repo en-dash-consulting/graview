@@ -2,6 +2,8 @@ import type {
   AnySchema,
   Brand,
   NodeOfSchema,
+  Presence,
+  PresenceChannel,
   Principal,
   SettingDeclaration,
   Store,
@@ -9,6 +11,7 @@ import type {
 } from "@graview/core";
 import type { AffordanceProvider } from "@graview/tools";
 import { honourSetting, loadSetting, rememberSetting } from "./settings.js";
+import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
 import { EMPTY_VIEW, edgeOfSelection, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout";
@@ -137,6 +140,16 @@ export interface GraviewContextValue<S extends AnySchema> {
    */
   readonly seatWho: string | null;
   registerSeatWho(who: string | null): void;
+  /**
+   * WHO IS WHERE. The others on this map, by participant; whose stop this
+   * tab is adopting; how this tab is seen; and this tab's own session —
+   * the third part of every participant key, on its ops and its figure alike.
+   */
+  readonly who: ReadonlyMap<string, Presence>;
+  readonly following: Presence | null;
+  follow(participant: string | null): void;
+  readonly sharing: { readonly participant: string; readonly name: string } | null;
+  readonly session: string;
   /**
    * The seats a reader may sit in, and how to sit down in one.
    *
@@ -299,6 +312,13 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly onSeat?: (principal: Principal) => void;
   /** The app's declared reader settings — `app.settings`, passed straight through. */
   readonly settings?: readonly SettingDeclaration[];
+  /**
+   * The channel that carries who is where — `createBroadcastPresence` beside
+   * the browser adapter, or a remote store's own. Without one this tab
+   * broadcasts nothing and draws nobody, which is what an embed wants
+   * unless it opts in.
+   */
+  readonly presence?: PresenceChannel;
   readonly brand?: Brand;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
@@ -325,13 +345,21 @@ export function GraviewProvider<S extends AnySchema>({
   principal,
   seats = NO_SEATS,
   onSeat,
-  settings = NO_SETTINGS,
+  settings: appSettings = NO_SETTINGS,
+  presence,
   brand,
   providers,
   view,
   onViewChange,
   children,
 }: GraviewProviderProps<S>) {
+  /* This tab, for the life of the tab: see `tabSession`. */
+  const [session] = useState(() => tabSession());
+  /* Privacy is a reader setting, and it appears only where there is somebody to be seen by. */
+  const settings = useMemo(
+    () => (presence ? [...appSettings, ...PRESENCE_SETTINGS] : appSettings),
+    [appSettings, presence],
+  );
   const [internalView, setInternalView] = useState<ViewState>(() =>
     withSelection(initialView ?? EMPTY_VIEW, initialSelection ?? initialView?.selection ?? []),
   );
@@ -385,9 +413,9 @@ export function GraviewProvider<S extends AnySchema>({
   const registerSeatWho = useCallback(
     (who: string | null) => {
       setSeatWho(who);
-      if (who) foldSeat({ type: "home", author: { kind: "agent", id: who, session: "ui" }, at: Date.now() });
+      if (who) foldSeat({ type: "home", author: { kind: "agent", id: who, session }, at: Date.now() });
     },
-    [foldSeat],
+    [foldSeat, session],
   );
   useEffect(
     () =>
@@ -416,7 +444,9 @@ export function GraviewProvider<S extends AnySchema>({
    * tools) re-derives from one principal rather than each reading its own.
    */
   const [seated, setSeated] = useState<Principal | null>(null);
-  const who = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
+  const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
+  // With this tab's session on it, so every op this seat authors names the tab that made it.
+  const who = useMemo<Principal>(() => ({ ...seatNow, session }), [seatNow, session]);
   const takeSeat = useCallback(
     (next: Principal) => {
       setSeated(next);
@@ -628,6 +658,18 @@ export function GraviewProvider<S extends AnySchema>({
     [setView],
   );
 
+  const { who: others, following, follow, sharing } = usePresenceState<S>({
+    channel: presence,
+    store,
+    view: current,
+    principal: who,
+    session,
+    robots,
+    seatWho,
+    settingValues,
+    setView,
+  });
+
   const value = useMemo<GraviewContextValue<S>>(
     () => ({
       store,
@@ -647,6 +689,11 @@ export function GraviewProvider<S extends AnySchema>({
       noteSeat,
       seatWho,
       registerSeatWho,
+      who: others,
+      following,
+      follow,
+      sharing,
+      session,
       emphasis,
       setEmphasis,
       activity,
@@ -678,6 +725,11 @@ export function GraviewProvider<S extends AnySchema>({
       noteSeat,
       seatWho,
       registerSeatWho,
+      others,
+      following,
+      follow,
+      sharing,
+      session,
       emphasis,
       activity,
       noteAttention,

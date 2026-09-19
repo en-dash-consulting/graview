@@ -253,3 +253,5 @@ export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
 // The city: a map drawn from the declaration, in lattice cells.
 export { BLOCK, cityExtent, cityMap, MAX_SIDE, plotsOverlap, roadsOf, sharedEdges, sideFor, toIso } from "./city.js";
 export type { CityHints, CityMap, Plot, Road } from "./city.js";
+export { foldPresence, PRESENCE_TTL_MS, samePresence } from "./presence.js";
+export type { Presence, PresenceChannel, PresenceRobot } from "./presence.js";

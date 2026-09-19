@@ -9,7 +9,7 @@ import {
 } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
-import type { Principal } from "@graview/core";
+import type { PresenceChannel, Principal } from "@graview/core";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useState } from "react";
 import example from "../data/example.json";
@@ -97,6 +97,8 @@ export interface TodoAppProps {
   readonly principal?: Principal;
   /** Told when a seat is taken, for a host that keeps the choice in its address. */
   readonly onSeat?: (principal: Principal) => void;
+  /** The channel that carries who else is here; absent, this tab is alone. */
+  readonly presence?: PresenceChannel;
 }
 
 export function TodoApp({
@@ -110,6 +112,7 @@ export function TodoApp({
   remembers = false,
   principal,
   onSeat,
+  presence,
 }: TodoAppProps) {
   const created = useMemo(() => store ?? createTodoUiStore(), [store]);
   const views = useMemo(() => todoViews(), []);
@@ -126,6 +129,7 @@ export function TodoApp({
       seats={SEATS}
       settings={todoApp.settings ?? []}
       {...(onSeat ? { onSeat } : {})}
+      {...(presence ? { presence } : {})}
     >
       <TodoShell
         remembers={remembers}

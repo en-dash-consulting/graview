@@ -41,15 +41,15 @@ describe("the occupants", () => {
         </GraviewProvider>,
       ),
     );
-    const figure = host.querySelector('[data-graview-figure="agent:tidy:ui"]')!;
+    const figure = host.querySelector('[data-graview-figure^="agent:tidy:"]')!;
     expect(figure).not.toBeNull();
     expect(figure.getAttribute("data-graview-mode")).toBe("docked");
     const button = figure.querySelector<HTMLButtonElement>("button")!;
     expect(button.getAttribute("aria-label")).toContain("tidy — at its dock");
     await act(async () => button.click());
-    expect(host.querySelector('[data-graview-figure="agent:tidy:ui"]')!.getAttribute("data-graview-mode")).toBe("following");
+    expect(host.querySelector('[data-graview-figure^="agent:tidy:"]')!.getAttribute("data-graview-mode")).toBe("following");
     await act(async () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
-    expect(host.querySelector('[data-graview-figure="agent:tidy:ui"]')!.getAttribute("data-graview-mode")).not.toBe("following");
+    expect(host.querySelector('[data-graview-figure^="agent:tidy:"]')!.getAttribute("data-graview-mode")).not.toBe("following");
     await act(async () => root.unmount());
     host.remove();
   });

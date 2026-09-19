@@ -1,11 +1,14 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import {
+  foldPresence,
+  PRESENCE_TTL_MS,
   Store,
   type AnySchema,
   type GraviewApp,
   type MutationCall,
   type Operation,
   type PersistenceAdapter,
+  type Presence,
   type Principal,
 } from "@graview/core";
 import { exportBundle } from "./export.js";
@@ -32,9 +35,19 @@ import type { GraphSnapshot } from "./snapshot.js";
  * The whole protocol is four routes:
  *
  *   GET  /graview/state        the graph, the log and the stored version
- *   POST /graview/ops          calls in, the ops they produced out
+ *   POST /graview/ops          calls in, the ops they produced out — or `undo`, batches to take back
  *   GET  /graview/since?seq=N  the ops appended after N — everyone else's
  *   GET  /graview/health       ship's own report, plus where the data is
+ *
+ * And two for WHO IS HERE, which is not the op log and never touches it:
+ *
+ *   POST /graview/here         say where you are; answers with who else is, and the ops since `seq`
+ *   GET  /graview/who          who is here right now
+ *   POST /graview/leave        say you have gone
+ *
+ * Presence lives in a map inside this closure with a time to live — not in
+ * the store, not in the adapter, not in the log. A tab that dies without a
+ * word is gone after three missed heartbeats.
  *
  * Polling rather than a socket, on purpose: a demo whose point is "your data
  * is in this folder" should not also be a demonstration of connection
@@ -61,6 +74,8 @@ export interface ServeOptions<S extends AnySchema> {
   readonly seatOf?: (request: IncomingMessage) => Principal;
   /** Where the data is, for the health report to say out loud. */
   readonly where?: string;
+  /** How long a presence stands after its last word. Three heartbeats by default. */
+  readonly presenceTtlMs?: number;
 }
 
 export interface ServedStore<S extends AnySchema> {
@@ -104,6 +119,27 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
   });
   const store = opened.store;
 
+  /*
+   * WHO IS HERE. Keyed by participant, named by the seat the request
+   * carries — a poster cannot claim to be somebody else's seat — and
+   * stamped with the server's clock, so expiry does not depend on two
+   * browsers agreeing what time it is.
+   */
+  const ttl = options.presenceTtlMs ?? PRESENCE_TTL_MS;
+  let here = new Map<string, Presence>();
+  const alive = (): Presence[] => {
+    here = foldPresence(here, [], Date.now(), ttl);
+    return [...here.values()];
+  };
+  const arrive = (told: Presence, seat: Principal): Presence => {
+    const session = told.participant.split(":").slice(2).join(":");
+    const participant = seat.id ? `${seat.kind}:${seat.id}:${session}` : told.participant;
+    const presence: Presence = { ...told, participant, at: new Date().toISOString() };
+    here = foldPresence(here, [presence], Date.now(), ttl);
+    return presence;
+  };
+  const since = (seq: number): Operation[] => store.log.all().filter((op) => op.seq > seq);
+
   const server = createServer((request, response) => {
     void handle(request, response).catch((error: unknown) => {
       send(response, 500, { error: error instanceof Error ? error.message : String(error) });
@@ -133,7 +169,38 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
 
     if (url.pathname === "/graview/since") {
       const seq = Number(url.searchParams.get("seq") ?? "-1");
-      send(response, 200, { ops: store.log.all().filter((op) => op.seq > seq) });
+      send(response, 200, { ops: since(seq) });
+      return;
+    }
+
+    if (url.pathname === "/graview/who") {
+      send(response, 200, { who: alive() });
+      return;
+    }
+
+    if (url.pathname === "/graview/here" && request.method === "POST") {
+      const body = (await read(request)) as { presence?: Presence; seq?: number };
+      if (!body.presence || typeof body.presence.participant !== "string" || typeof body.presence.stop !== "string") {
+        send(response, 400, { error: "A presence is a participant and a stop." });
+        return;
+      }
+      const mine = arrive(body.presence, seatOf(request));
+      // Folded into the poll: the heartbeat carries back everybody else AND
+      // the ops since, so being here costs no round trip of its own.
+      send(response, 200, {
+        who: alive().filter((presence) => presence.participant !== mine.participant),
+        ...(typeof body.seq === "number" ? { ops: since(body.seq) } : {}),
+      });
+      return;
+    }
+
+    if (url.pathname === "/graview/leave" && request.method === "POST") {
+      const body = (await read(request)) as { participant?: string };
+      if (typeof body.participant === "string") {
+        here = new Map(here);
+        here.delete(body.participant);
+      }
+      send(response, 200, { who: alive() });
       return;
     }
 
@@ -156,6 +223,8 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     if (url.pathname === "/graview/ops" && request.method === "POST") {
       const body = (await read(request)) as {
         calls?: readonly MutationCall[];
+        /** Batches to take back instead — judged like any change, as the seat that asks. */
+        undo?: readonly string[];
         intent?: string;
         batch?: string;
       };
@@ -168,11 +237,13 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
          * refusal comes back with the policy's own sentence rather than a
          * bare 403, because that sentence is the product.
          */
-        const result = store.applyAll(calls, {
-          author: seat,
-          ...(body.intent ? { intent: body.intent } : {}),
-          ...(body.batch ? { batch: body.batch } : {}),
-        });
+        const result = body.undo
+          ? store.undo(body.undo, { author: seat, ...(body.intent ? { intent: body.intent } : {}) })
+          : store.applyAll(calls, {
+              author: seat,
+              ...(body.intent ? { intent: body.intent } : {}),
+              ...(body.batch ? { batch: body.batch } : {}),
+            });
         await opened.flush();
         send(response, 200, { ops: result.ops, batch: result.batch });
       } catch (error) {

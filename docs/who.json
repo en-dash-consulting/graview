@@ -1,0 +1,66 @@
+{
+  "at": "2026-09-19T08:14:49.319Z",
+  "engine": "chromium",
+  "checks": {
+    "bSeesAAtTheTasksPlot": {
+      "seen": {
+        "at": "aggregate:task",
+        "audience": false,
+        "followed": false,
+        "name": "Nora"
+      },
+      "ok": true
+    },
+    "andASeesBAtTheListsPlot": {
+      "seen": {
+        "at": "aggregate:list",
+        "audience": false,
+        "followed": false,
+        "name": "Sam"
+      },
+      "ok": true
+    },
+    "aPicksAShowingAndStandsInTheAudienceRowOnB": {
+      "showing": "#focus=aggregate%3Alist&in.view=the-lists",
+      "screen": "screen:list",
+      "seen": {
+        "at": "screen:list",
+        "audience": true,
+        "followed": false,
+        "name": "Nora"
+      },
+      "ok": true
+    },
+    "asRobotAppearsOnBCaptionedAsHers": {
+      "enabled": true,
+      "theirs": {
+        "at": "t-deposit",
+        "mode": "writing",
+        "caption": "Nora's agent"
+      },
+      "ok": true
+    },
+    "profileSaysHowSheIsSeen": {
+      "seenAs": "Seen by others as Nora",
+      "ok": true
+    },
+    "hoverIsPrivateUntilSharedThenOutlinedOnB": {
+      "privateByDefault": true,
+      "pickId": "today",
+      "outline": true,
+      "ok": true
+    },
+    "bClicksAAndFollowsHerUntilEscape": {
+      "followingLine": "following Nora",
+      "bHash": "#focus=aggregate%3Alist&overview=1",
+      "bHashAfter": "#focus=aggregate%3Alist&overview=1",
+      "ok": true
+    },
+    "aClosesAndIsGoneWithinTheTtl": {
+      "gone": null,
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

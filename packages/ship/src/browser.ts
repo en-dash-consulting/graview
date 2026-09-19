@@ -21,6 +21,8 @@ export type { AppBundle } from "./export.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
 export { openRemote } from "./remote.js";
+export { createBroadcastPresence, presenceChannelName } from "./presence.js";
+export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
 export type { RemoteOptions, RemoteStore } from "./remote.js";
 export {
   assertPhotoFits,

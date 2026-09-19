@@ -167,6 +167,38 @@ describe("the store behind HTTP", () => {
     two.close();
   });
 
+  it("carries a whole gesture and its take-back to the wire, not only a single press", async () => {
+    /*
+     * A seat's plan lands as `applyAll` and its undo as `undo`. The first
+     * version patched `apply` alone, so a robot's plans stayed in the
+     * browser that made them while its presses travelled. Both go now,
+     * judged on the server as the same seat.
+     */
+    const one = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });
+    const two = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });
+    const plan = one.store.applyAll(
+      [
+        { name: "finish", args: { id: "t1" } },
+        { name: "finish", args: { id: "t2" } },
+      ],
+      { intent: "Finish both" },
+    );
+    await new Promise((settle) => setTimeout(settle, 80));
+    await two.pull();
+    expect(done(two.store, "t1")).toBe(true);
+    expect(done(two.store, "t2")).toBe(true);
+    expect(served.store.log.all().at(-1)?.intent).toBe("Finish both");
+
+    one.store.undo(plan.batch);
+    await new Promise((settle) => setTimeout(settle, 80));
+    await two.pull();
+    expect(done(two.store, "t1")).toBe(false);
+    expect(done(two.store, "t2")).toBe(false);
+    expect(served.store.log.all().at(-1)?.intent).toMatch(/^Undo/);
+    one.close();
+    two.close();
+  });
+
   it("ignores an op it already has, so a poll that overlaps is not a second change", async () => {
     const remote = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });
     await remote.send([{ name: "finish", args: { id: "t1" } }]);
@@ -195,6 +227,68 @@ describe("the store behind HTTP", () => {
     expect(report.ok).toBe(true);
     expect(report.adapter).toBe("file");
     expect(report.where).toContain(root);
+  });
+});
+
+describe("who is here, beside the log and never in it", () => {
+  const presence = (participant: string, stop: string) => ({ participant, name: participant.split(":")[1]!, hue: 200, stop, at: new Date().toISOString() });
+
+  it("round-trips a presence through the poll, named by the seat that posted it", async () => {
+    const one = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });
+    const two = await openRemote({ app, url: served.url, principal: READER, pollMs: 0 });
+    const seen: (readonly { participant: string; stop: string }[])[] = [];
+    two.presence.onWho((who) => seen.push(who));
+    // A poster cannot claim another seat: the id segment is the seat's own.
+    one.presence.here(presence("human:somebody-else:tab-a", "#focus=aggregate%3Atask"));
+    two.presence.here(presence("human:u-reader:tab-b", "#focus=t1"));
+    await one.pull();
+    await two.pull();
+    expect(seen.at(-1)).toEqual([expect.objectContaining({ participant: "human:u-keeper:tab-a", name: "somebody-else", stop: "#focus=aggregate%3Atask" })]);
+    // And the op log stayed the op log.
+    expect(served.store.log.all()).toHaveLength(0);
+    // A person with curl can still see it.
+    const who = (await (await fetch(`${served.url}/graview/who`)).json()) as { who: { participant: string }[] };
+    expect(who.who.map((p) => p.participant).sort()).toEqual(["human:u-keeper:tab-a", "human:u-reader:tab-b"]);
+    one.close();
+    two.close();
+  });
+
+  it("carries the ops since on the same heartbeat, so being here costs no round trip", async () => {
+    const one = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });
+    const two = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });
+    two.presence.here(presence("human:u-keeper:tab-b", "#focus=t1"));
+    await one.send([{ name: "finish", args: { id: "t1" } }]);
+    await two.pull();
+    expect(done(two.store, "t1")).toBe(true);
+    one.close();
+    two.close();
+  });
+
+  it("forgets a tab that went quiet, and one that said goodbye at once", async () => {
+    await served.close();
+    served = await serveStore({ app, adapter: createFileAdapter(root), seed: seed as never, presenceTtlMs: 60 });
+    const one = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });
+    const two = await openRemote({ app, url: served.url, principal: READER, pollMs: 0 });
+    const three = await openRemote({ app, url: served.url, principal: { kind: "human", id: "u-third", roles: ["reader"] }, pollMs: 0 });
+    const seen: string[][] = [];
+    three.presence.onWho((who) => seen.push(who.map((p) => p.participant)));
+    one.presence.here(presence("human:u-keeper:a", "#"));
+    two.presence.here(presence("human:u-reader:b", "#"));
+    three.presence.here(presence("human:u-third:c", "#"));
+    await one.pull();
+    await two.pull();
+    await three.pull();
+    expect(seen.at(-1)?.sort()).toEqual(["human:u-keeper:a", "human:u-reader:b"]);
+    // Two says goodbye; one just stops talking.
+    two.presence.leave();
+    await new Promise((settle) => setTimeout(settle, 20));
+    await three.pull();
+    expect(seen.at(-1)).toEqual(["human:u-keeper:a"]);
+    await new Promise((settle) => setTimeout(settle, 90));
+    await three.pull();
+    expect(seen.at(-1)).toEqual([]);
+    one.close();
+    three.close();
   });
 });
 

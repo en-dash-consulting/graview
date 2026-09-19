@@ -1483,6 +1483,41 @@ export function Inspector() {
   );
 }
 
+/* ---------------------------------------------------------------- following */
+
+/**
+ * WHOSE STOP YOU ARE ADOPTING, said on the bar while it holds — the mirror
+ * of a robot following you. Pressing it, or Escape, or going somewhere of
+ * your own, lets go.
+ */
+export function FollowingLine() {
+  const { following, follow } = useGraview<AnySchema>();
+  if (!following) return null;
+  return (
+    <button
+      type="button"
+      data-testid="following-who"
+      onClick={() => follow(null)}
+      title="Press, or Escape, to stop following"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        minHeight: 24,
+        padding: "2px 9px",
+        borderRadius: 999,
+        border: "1px solid var(--graview-accent)",
+        background: "transparent",
+        color: "var(--graview-accent)",
+        fontSize: "0.78125rem",
+        whiteSpace: "nowrap",
+      }}
+    >
+      following {following.name}
+    </button>
+  );
+}
+
 /* ----------------------------------------------------------------- standing */
 
 /**
@@ -2159,7 +2194,7 @@ export function AgentSeat<S extends AnySchema>({
   onCall,
   run,
 }: AgentSeatProps<S>) {
-  const { store, principal, registerSeatWho, noteSeat } = useGraview<S>();
+  const { store, principal, registerSeatWho, noteSeat, session } = useGraview<S>();
   /*
    * ONE ROBOT for the tab's seat and its chat: the seat registers its name
    * and the chat writes as it, so the two surfaces are one body in the city.
@@ -2171,10 +2206,11 @@ export function AgentSeat<S extends AnySchema>({
   const runtime = useMemo(
     () =>
       createToolRuntime(store, {
+        // This tab's own session, so the robot and the log agree about which tab it was.
         author: {
           kind: "agent",
           id: who,
-          session: "ui",
+          session,
           ...(principal.roles ? { roles: principal.roles } : {}),
         },
         // Read per call: a pin toggled in the menu after this runtime was
@@ -2182,7 +2218,7 @@ export function AgentSeat<S extends AnySchema>({
         // pointer menu and the agent must never disagree about the acts.
         derive: () => ({ pins: loadPins() }),
       }),
-    [store, principal, who],
+    [store, principal, who, session],
   );
   const agent = useMemo(() => createInAppAdapter(runtime), [runtime]);
   const [busy, setBusy] = useState(false);
@@ -2215,7 +2251,7 @@ export function AgentSeat<S extends AnySchema>({
     if (!said) return;
     const gateKind = gate ? (store.allMutations().find((m) => m.name === gate)?.subject?.kinds as readonly string[] | "*" | undefined) : undefined;
     const where = Array.isArray(gateKind) && gateKind[0] ? kindCardId(gateKind[0]) : null;
-    noteSeat({ type: "refused", author: { kind: "agent", id: who, session: "ui" }, where, say: said });
+    noteSeat({ type: "refused", author: { kind: "agent", id: who, session }, where, say: said });
   }, [refused, permitted, why, gate, store, who, noteSeat]);
 
   /*

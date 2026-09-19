@@ -66,7 +66,7 @@ export function Profile<S extends AnySchema>({
   readonly profileHref?: (userId: string) => string;
   readonly keeping?: ReactNode;
 }) {
-  const { store, principal, seats, settings, settingValues, chooseSetting } = useGraview<S>();
+  const { store, principal, seats, settings, settingValues, chooseSetting, sharing } = useGraview<S>();
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
 
@@ -252,6 +252,12 @@ export function Profile<S extends AnySchema>({
               >
                 Your record ↗
               </a>
+            ) : null}
+            {sharing ? (
+              /* How the others here see you — the name on the figure that stands where you are. */
+              <span data-testid="profile-seen-as" style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+                Seen by others as {sharing.name}
+              </span>
             ) : null}
           </div>
 
