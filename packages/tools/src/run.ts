@@ -1,0 +1,503 @@
+import { isCurrent, labelOf, type AnySchema, type Principal, type Store, type Violation } from "@graview/core";
+import type { ToolCall } from "./agent/tools.js";
+import { applyPlan, planFrom, type AppliedPlan, type Plan, type PlanOptions, type PlannedCall } from "./plan.js";
+import type { Answer, Decide, Decided } from "./providers/jev.js";
+import { jevCostUsd } from "./providers/jev.js";
+import {
+  nodeState,
+  pairQuestion,
+  questionsForInvariant,
+  questionsForKind,
+  questionsForMutation,
+  scoreToValue,
+  type DerivedQuestion,
+  type Question,
+} from "./questions.js";
+
+/**
+ * A RUN IS A SEQUENCE OF TYPED ASKS OVER THE GRAPH, DECLARED NOT SCRIPTED.
+ *
+ * This is the thing a context graph buys that a chat box cannot. A run is
+ * steps: select nodes by a rule, ask each the questions the declaration
+ * already types, turn the answers into calls, land them as one batch,
+ * re-evaluate. Fan-out is the ordinary case — output is unmetered, so
+ * "fill every unset field of every zone" is one step and not a loop
+ * somebody writes — and because every step's output is typed, a step can
+ * be judged before the next one runs.
+ *
+ * A run READS before it runs: how many nodes, how many questions, roughly
+ * what it will cost — and refuses to begin one its budget cannot afford,
+ * because a fan-out over four hundred questions is a fraction of a cent
+ * and a run that does not stop is not.
+ *
+ * A run holds the Decide it started with for its whole length. Switching
+ * the rung underneath it does not move it: a run half done on one rung
+ * does not silently finish on another.
+ */
+
+export type RunStep =
+  | {
+      /** Fill the typed fields of every node of this kind. */
+      readonly fill: string;
+      /** Only these fields; every typed one otherwise. */
+      readonly fields?: readonly string[];
+      /** Which nodes. Every current one otherwise. */
+      readonly where?: (node: { readonly id: string; readonly kind: string } & Record<string, unknown>) => boolean;
+      /** Ask about fields already set, too. Unset ones only otherwise. */
+      readonly including?: "unset" | "all";
+    }
+  | {
+      /** Ask the remaining arguments of this act, once per node of `over` as its subject. */
+      readonly ask: string;
+      readonly over: string;
+      readonly where?: (node: { readonly id: string; readonly kind: string } & Record<string, unknown>) => boolean;
+      /** Arguments already settled for a node; the rest are asked. */
+      readonly given?: (node: { readonly id: string; readonly kind: string } & Record<string, unknown>) => Readonly<Record<string, unknown>>;
+    }
+  | {
+      /** For every current violation of this rule, choose a repair from the closed set it names. */
+      readonly judge: string;
+    }
+  | {
+      /** Ask, for every (subject, other) pair, whether this joining act holds — a matrix. */
+      readonly pair: string;
+      readonly over: string;
+      readonly against: string;
+      readonly where?: (a: { readonly id: string } & Record<string, unknown>, b: { readonly id: string } & Record<string, unknown>) => boolean;
+      /** The truth above which the pair is a call. 0.5 otherwise. */
+      readonly threshold?: number;
+    };
+
+export interface RunDeclaration {
+  readonly name: string;
+  readonly steps: readonly RunStep[];
+  /** What this run may spend. A run over budget does not begin. */
+  readonly budget?: { readonly questions?: number; readonly usd?: number };
+}
+
+/** One answer, where it came from, and the call it became (if any). */
+export interface Answered {
+  readonly step: number;
+  readonly nodeId?: string;
+  readonly question: DerivedQuestion;
+  readonly answer: Answer;
+  /** 0–1: how sure. A truth's is its distance from even. */
+  readonly confidence: number;
+  readonly call?: PlannedCall;
+}
+
+export interface StepOutcome {
+  readonly step: number;
+  readonly what: string;
+  /** The nodes visited, in order. */
+  readonly nodes: readonly string[];
+  readonly asked: number;
+  readonly answered: readonly Answered[];
+  readonly proposals: readonly PlannedCall[];
+  /** The step's calls, ordered and judged — what a person reviews. */
+  readonly plan: Plan;
+  /** Set when the step landed (each-step mode): what it made, under which batch. */
+  readonly applied?: Pick<AppliedPlan<AnySchema>, "batch" | "applied" | "made" | "stoppedAt">;
+}
+
+export interface RunReading {
+  readonly name: string;
+  readonly steps: readonly { readonly step: number; readonly what: string; readonly nodes: number; readonly questions: number; readonly calls: number }[];
+  readonly questions: number;
+  readonly calls: number;
+  /** A rough figure: the JSON that would be sent, at four characters a token. */
+  readonly approxInputTokens: number;
+  readonly approxUsd: number;
+  /** Why the run would not begin, if it would not. */
+  readonly refused?: string;
+}
+
+export interface RunOptions<S extends AnySchema> extends PlanOptions<S> {
+  readonly decide: Decide;
+  /** Who the run writes as. `agent:<run name>:run-<time>` otherwise. */
+  readonly author?: Principal;
+  /**
+   * "review": every step's calls are planned and returned, nothing is
+   * applied — a person reviews the plan and lands it as one batch.
+   * "each-step": each step lands under the run's one batch before the next
+   * step is asked, so a later step sees an earlier one's answers. Both are
+   * one batch and one undo.
+   */
+  readonly land?: "review" | "each-step";
+  /** Judge a step's typed outcome before the next runs. A string stops the run and is the reason. */
+  readonly judge?: (outcome: StepOutcome) => true | string;
+  /** The seat's own announcement path: every visit to a node is a read here. */
+  readonly onCall?: (call: ToolCall) => void;
+  readonly batch?: string;
+  readonly today?: string;
+}
+
+export interface RunResult<S extends AnySchema> {
+  readonly name: string;
+  readonly author: Principal;
+  readonly batch: string;
+  readonly reading: RunReading;
+  readonly steps: readonly StepOutcome[];
+  /** Every step's calls as one plan, for review — or what was applied. */
+  readonly plan: Plan;
+  readonly applied?: AppliedPlan<S>;
+  readonly usage: { readonly questions: number; readonly calls: number; readonly inputTokens: number; readonly usd: number };
+  /** Why the run stopped early, if it did. */
+  readonly stopped?: { readonly at: number; readonly why: string };
+  readonly refused?: string;
+}
+
+type AnyNode = { readonly id: string; readonly kind: string } & Record<string, unknown>;
+
+const confidenceOf = (answer: Answer): number =>
+  answer.type === "noul" ? Math.abs(answer.noul - 0.5) * 2 : answer.confidence;
+
+/** The answer as the value the argument wants. */
+export function valueOf(question: DerivedQuestion, answer: Answer): unknown {
+  switch (answer.type) {
+    case "choice":
+      return answer.choice;
+    case "noul":
+      return answer.noul >= 0.5;
+    case "score":
+      return scoreToValue({ min: question.scale?.min ?? 0 }, answer.score);
+    default:
+      return undefined;
+  }
+}
+
+function currentOfKind<S extends AnySchema>(store: Store<S>, kind: string, today?: string): AnyNode[] {
+  const definition = store.schema.tryDefinition(kind);
+  return (store.graph.nodesOfKind(kind as never) as unknown as AnyNode[]).filter((node) =>
+    isCurrent(definition, node, today),
+  );
+}
+
+/**
+ * THE QUESTIONS A STEP ASKS, per node, without asking them — so a run can
+ * be read before it is run and refused before it costs anything.
+ */
+function questionsOfStep<S extends AnySchema>(
+  store: Store<S>,
+  step: RunStep,
+  today?: string,
+): { readonly what: string; readonly visits: readonly { readonly nodeId?: string; readonly state: unknown; readonly questions: readonly DerivedQuestion[]; readonly violation?: Violation }[] } {
+  if ("fill" in step) {
+    const nodes = currentOfKind(store, step.fill, today).filter((node) => step.where?.(node) ?? true);
+    const all = questionsForKind(store, step.fill).filter((q) => q.about === "field" && q.writes !== undefined);
+    const visits = nodes.map((node) => ({
+      nodeId: node.id,
+      state: nodeState(store, node.id),
+      questions: all.filter((q) => {
+        if (q.about !== "field") return false;
+        if (step.fields && !step.fields.includes(q.field)) return false;
+        if ((step.including ?? "unset") === "unset") {
+          const held = node[q.field];
+          return held === undefined || held === null || held === "";
+        }
+        return true;
+      }),
+    }));
+    return { what: `fill ${step.fields ? step.fields.join(", ") : "every typed field"} of every ${step.fill}`, visits: visits.filter((v) => v.questions.length > 0) };
+  }
+  if ("ask" in step) {
+    const mutation = store.mutation(step.ask);
+    const subjectArg = mutation.subject?.arg;
+    const nodes = currentOfKind(store, step.over, today).filter((node) => step.where?.(node) ?? true);
+    const visits = nodes.map((node) => {
+      const given = { ...(subjectArg ? { [subjectArg]: node.id } : {}), ...(step.given?.(node) ?? {}) };
+      return { nodeId: node.id, state: nodeState(store, node.id), questions: questionsForMutation(store, step.ask, given) };
+    });
+    return { what: `ask "${mutation.title ?? step.ask}" of every ${step.over}`, visits: visits.filter((v) => v.questions.length > 0) };
+  }
+  if ("judge" in step) {
+    const violations = store.violations().filter((v) => v.invariant === step.judge);
+    const visits = violations.map((violation) => ({
+      ...(violation.subjectId ? { nodeId: violation.subjectId } : {}),
+      state: {
+        ...(violation.subjectId ? nodeState(store, violation.subjectId) : {}),
+        broken: violation.message,
+        implicated: violation.nodeIds.map((id) => {
+          const node = store.graph.getNode(id);
+          return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : id;
+        }),
+      },
+      questions: questionsForInvariant(store, step.judge, violation).filter((q) => q.about === "repair"),
+      violation,
+    }));
+    return { what: `judge every violation of "${step.judge}"`, visits: visits.filter((v) => v.questions.length > 0) };
+  }
+  const subjects = currentOfKind(store, step.over, today);
+  const others = currentOfKind(store, step.against, today);
+  const visits: { nodeId: string; state: unknown; questions: DerivedQuestion[] }[] = [];
+  for (const a of subjects) {
+    const questions: DerivedQuestion[] = [];
+    for (const b of others) {
+      if (step.where && !step.where(a, b)) continue;
+      const question = pairQuestion(store, step.pair, a.id, b.id);
+      if (question) questions.push(question);
+    }
+    if (questions.length > 0) {
+      const state = { ...nodeState(store, a.id), against: others.map((b) => ({ id: b.id, ...nodeState(store, b.id) })) };
+      visits.push({ nodeId: a.id, state, questions });
+    }
+  }
+  return { what: `ask "${store.mutation(step.pair).title ?? step.pair}" of every ${step.over} against every ${step.against}`, visits };
+}
+
+/** What a run would do, counted, before it does any of it. */
+export function readRun<S extends AnySchema>(store: Store<S>, run: RunDeclaration, options: { readonly today?: string } = {}): RunReading {
+  const steps = run.steps.map((step, index) => {
+    const { what, visits } = questionsOfStep(store, step, options.today);
+    const questions = visits.reduce((sum, visit) => sum + visit.questions.length, 0);
+    const chars = visits.reduce(
+      (sum, visit) => sum + JSON.stringify({ state: visit.state, questions: Object.fromEntries(visit.questions.map((q) => [q.id, q.question])) }).length,
+      0,
+    );
+    return { step: index, what, nodes: visits.length, questions, calls: visits.length, chars };
+  });
+  const questions = steps.reduce((sum, step) => sum + step.questions, 0);
+  const calls = steps.reduce((sum, step) => sum + step.calls, 0);
+  const approxInputTokens = Math.ceil(steps.reduce((sum, step) => sum + step.chars, 0) / 4);
+  const approxUsd = jevCostUsd(approxInputTokens);
+  let refused: string | undefined;
+  if (run.budget?.questions !== undefined && questions > run.budget.questions) {
+    refused = `This run would ask ${questions} questions and its budget is ${run.budget.questions}. It did not begin.`;
+  } else if (run.budget?.usd !== undefined && approxUsd > run.budget.usd) {
+    refused = `This run would cost about $${approxUsd.toFixed(4)} and its budget is $${run.budget.usd}. It did not begin.`;
+  }
+  return {
+    name: run.name,
+    steps: steps.map(({ chars: _chars, ...step }) => step),
+    questions,
+    calls,
+    approxInputTokens,
+    approxUsd,
+    ...(refused ? { refused } : {}),
+  };
+}
+
+/** A run's reading, in words a person can weigh before pressing. */
+export function describeRun(reading: RunReading): string {
+  const lines = [
+    `${reading.name}: ${reading.questions} questions over ${reading.calls} calls, about $${reading.approxUsd.toFixed(4)}.`,
+    ...reading.steps.map((step) => `${step.step + 1}. ${step.what} — ${step.nodes} node${step.nodes === 1 ? "" : "s"}, ${step.questions} question${step.questions === 1 ? "" : "s"}.`),
+  ];
+  if (reading.refused) lines.push(`REFUSED: ${reading.refused}`);
+  return lines.join("\n");
+}
+
+/** The calls one visit's answers become. */
+function callsFrom<S extends AnySchema>(
+  store: Store<S>,
+  step: RunStep,
+  visit: { readonly nodeId?: string; readonly questions: readonly DerivedQuestion[]; readonly violation?: Violation },
+  answers: Readonly<Record<string, Answer>>,
+  index: number,
+): Answered[] {
+  const out: Answered[] = [];
+  const one = (question: DerivedQuestion, answer: Answer, call?: PlannedCall): Answered => ({
+    step: index,
+    ...(visit.nodeId ? { nodeId: visit.nodeId } : {}),
+    question,
+    answer,
+    confidence: confidenceOf(answer),
+    ...(call ? { call } : {}),
+  });
+  if ("fill" in step) {
+    for (const question of visit.questions) {
+      const answer = answers[question.id];
+      if (!answer || question.about !== "field" || !question.writes || !visit.nodeId) continue;
+      const value = valueOf(question, answer);
+      const label = store.graph.getNode(visit.nodeId);
+      out.push(
+        one(question, answer, {
+          mutation: question.writes.mutation,
+          args: { [question.writes.subjectArg]: visit.nodeId, [question.writes.arg]: value },
+          why: `${question.field} of ${label ? labelOf(store.schema.tryDefinition(label.kind as string), label as never) : visit.nodeId}: ${String(value)} (${Math.round(confidenceOf(answer) * 100)}% sure)`,
+        }),
+      );
+    }
+    return out;
+  }
+  if ("ask" in step) {
+    const mutation = store.mutation(step.ask);
+    const subjectArg = mutation.subject?.arg;
+    const node = visit.nodeId ? store.graph.getNode(visit.nodeId) : undefined;
+    const args: Record<string, unknown> = {
+      ...(subjectArg && visit.nodeId ? { [subjectArg]: visit.nodeId } : {}),
+      ...(node ? (step.given?.(node as AnyNode) ?? {}) : {}),
+    };
+    let least = 1;
+    const parts: string[] = [];
+    let complete = true;
+    for (const question of visit.questions) {
+      const answer = answers[question.id];
+      if (!answer || question.about !== "argument") {
+        complete = false;
+        continue;
+      }
+      args[question.arg] = valueOf(question, answer);
+      least = Math.min(least, confidenceOf(answer));
+      parts.push(`${question.arg}: ${String(args[question.arg])}`);
+    }
+    const call: PlannedCall | undefined = complete
+      ? { mutation: step.ask, args, why: `${mutation.title ?? step.ask} — ${parts.join(", ")} (${Math.round(least * 100)}% sure)` }
+      : undefined;
+    for (const question of visit.questions) {
+      const answer = answers[question.id];
+      if (answer) out.push(one(question, answer, call));
+    }
+    return out;
+  }
+  if ("judge" in step) {
+    for (const question of visit.questions) {
+      const answer = answers[question.id];
+      if (!answer || question.about !== "repair" || answer.type !== "choice") continue;
+      const chosen = question.options[answer.choice];
+      if (!chosen) continue;
+      out.push(
+        one(question, answer, {
+          mutation: chosen.mutation,
+          args: { ...chosen.args },
+          why: `${visit.violation?.message ?? question.invariant}: ${question.question.type === "choice" ? (question.question.criteria[answer.choice] ?? answer.choice) : answer.choice} (${Math.round(answer.confidence * 100)}% sure)`,
+        }),
+      );
+    }
+    return out;
+  }
+  const threshold = step.threshold ?? 0.5;
+  const mutation = store.mutation(step.pair);
+  const subjectArg = mutation.subject?.arg;
+  for (const question of visit.questions) {
+    const answer = answers[question.id];
+    if (!answer || answer.type !== "noul" || question.about !== "argument" || !subjectArg) continue;
+    const otherId = question.id.split(":")[3];
+    const holds = answer.noul >= threshold;
+    out.push(
+      one(
+        question,
+        answer,
+        holds && otherId
+          ? {
+              mutation: step.pair,
+              args: { [subjectArg]: visit.nodeId, [question.arg]: otherId },
+              why: `${question.question.instructions.split("?")[0]} — yes (${Math.round(answer.noul * 100)}%)`,
+            }
+          : undefined,
+      ),
+    );
+  }
+  return out;
+}
+
+/**
+ * Runs the run. Every visit to a node is announced through `onCall` as a
+ * read of that node — the same shape a seat's tool calls take, so the
+ * Activity rail marks where the run is without a second reporting path.
+ */
+export async function runFrom<S extends AnySchema>(
+  store: Store<S>,
+  run: RunDeclaration,
+  options: RunOptions<S>,
+): Promise<RunResult<S>> {
+  const author: Principal = options.author ?? { kind: "agent", id: run.name, session: `run-${Date.now().toString(36)}` };
+  const batch = options.batch ?? `run:${run.name}:${Date.now().toString(36)}`;
+  const land = options.land ?? "review";
+  const reading = readRun(store, run, options.today !== undefined ? { today: options.today } : {});
+  const usage = { questions: 0, calls: 0, inputTokens: 0, usd: 0 };
+  const planOptions: PlanOptions<S> = { ...(options.app ? { app: options.app } : {}), principal: options.principal ?? author };
+  const empty = planFrom(store, [], planOptions);
+  if (reading.refused) {
+    return { name: run.name, author, batch, reading, steps: [], plan: empty, usage, refused: reading.refused };
+  }
+  /* The Decide the run started with. A rung switched underneath does not move it. */
+  const decide = options.decide;
+  const steps: StepOutcome[] = [];
+  const everything: PlannedCall[] = [];
+  let stopped: { at: number; why: string } | undefined;
+  let applied: AppliedPlan<S> | undefined;
+
+  for (let index = 0; index < run.steps.length; index++) {
+    const step = run.steps[index]!;
+    /* Re-read on the live graph: an earlier step may have changed what is unset. */
+    const { what, visits } = questionsOfStep(store, step, options.today);
+    const answered: Answered[] = [];
+    const nodes: string[] = [];
+    let asked = 0;
+    for (const visit of visits) {
+      const at = new Date().toISOString();
+      const node = visit.nodeId ? store.graph.getNode(visit.nodeId) : undefined;
+      const announced = {
+        name: "decide",
+        args: { step: index, what, ...(node ? { kind: node.kind, node: visit.nodeId } : {}) },
+        mutating: false,
+        at,
+      };
+      options.onCall?.({ ...announced, phase: "running" });
+      const questions: Record<string, Question> = {};
+      for (const q of visit.questions) questions[q.id] = q.question;
+      let decided: Decided;
+      try {
+        decided = await decide(visit.state, questions);
+      } catch (error) {
+        const why = error instanceof Error ? error.message : String(error);
+        options.onCall?.({ ...announced, phase: "failed", error: why });
+        stopped = { at: index, why };
+        break;
+      }
+      asked += visit.questions.length;
+      usage.questions += visit.questions.length;
+      usage.calls += 1;
+      usage.inputTokens += decided.usage.inputTokens;
+      if (visit.nodeId) nodes.push(visit.nodeId);
+      options.onCall?.({ ...announced, phase: "ok", ...(visit.nodeId ? { reads: [visit.nodeId] } : {}) });
+      answered.push(...callsFrom(store, step, visit, decided.answers, index));
+    }
+    if (stopped) break;
+    const proposals = [...new Set(answered.map((a) => a.call).filter((call): call is PlannedCall => call !== undefined))];
+    const plan = planFrom(store, proposals, planOptions);
+    let landed: AppliedPlan<S> | undefined;
+    if (land === "each-step" && plan.ready.length > 0) {
+      landed = applyPlan(store, plan, { author, batch, keepWhatRan: true });
+      applied = landed;
+    }
+    const outcome: StepOutcome = {
+      step: index,
+      what,
+      nodes,
+      asked,
+      answered,
+      proposals,
+      plan,
+      ...(landed
+        ? { applied: { batch: landed.batch, applied: landed.applied, made: landed.made, ...(landed.stoppedAt ? { stoppedAt: landed.stoppedAt } : {}) } }
+        : {}),
+    };
+    steps.push(outcome);
+    everything.push(...proposals);
+    const verdict = options.judge?.(outcome) ?? true;
+    if (verdict !== true) {
+      stopped = { at: index, why: verdict };
+      break;
+    }
+  }
+  usage.usd = jevCostUsd(usage.inputTokens);
+  const plan = land === "each-step" ? planFrom(store, [], planOptions) : planFrom(store, everything, planOptions);
+  return {
+    name: run.name,
+    author,
+    batch,
+    reading,
+    steps,
+    plan,
+    ...(applied ? { applied } : {}),
+    usage,
+    ...(stopped ? { stopped } : {}),
+  };
+}
+
+/** Lands a reviewed run as one batch, attributed to the run's own seat. One undo. */
+export function landRun<S extends AnySchema>(store: Store<S>, result: RunResult<S>, plan: Plan = result.plan): AppliedPlan<S> {
+  return applyPlan(store, plan, { author: result.author, batch: result.batch });
+}

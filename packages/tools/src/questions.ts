@@ -72,6 +72,8 @@ export type DerivedQuestion = QuestionAbout & {
   /** Stable, code-facing. Never sent to the model. */
   readonly id: string;
   readonly question: Question;
+  /** For a Score: the field's own scale, so level 0 is `min`. */
+  readonly scale?: { readonly min: number; readonly max: number };
 };
 
 /** Node-typed values a decision provider answers with, as declared. */
@@ -173,6 +175,10 @@ export function questionsForKind<S extends AnySchema>(store: Store<S>, kind: str
     if (field.name in (definition.fixed ?? {})) continue;
     const question = questionFor(store, field, describedAs(shape[field.name]), of);
     if (!question) continue;
+    const scale =
+      field.control === "number" && field.min !== undefined && field.max !== undefined
+        ? { scale: { min: field.min, max: field.max } }
+        : {};
     const writer = (writers?.get(field.name) ?? [])
       .map((name) => store.allMutations().find((mutation) => mutation.name === name))
       .find((mutation) => mutation?.subject && formFields(mutation.input).some((arg) => arg.name === field.name));
@@ -182,6 +188,7 @@ export function questionsForKind<S extends AnySchema>(store: Store<S>, kind: str
       kind,
       field: field.name,
       ...(writer?.subject ? { writes: { mutation: writer.name, arg: field.name, subjectArg: writer.subject.arg } } : {}),
+      ...scale,
       question,
     });
   }
@@ -209,7 +216,11 @@ export function questionsForMutation<S extends AnySchema>(
     if (field.name in given) continue;
     const question = questionFor(store, field, describedAs(shape[field.name]), `the act "${of}"`);
     if (!question) continue;
-    out.push({ id: `arg:${name}.${field.name}`, about: "argument", mutation: name, arg: field.name, question });
+    const scale =
+      field.control === "number" && field.min !== undefined && field.max !== undefined
+        ? { scale: { min: field.min, max: field.max } }
+        : {};
+    out.push({ id: `arg:${name}.${field.name}`, about: "argument", mutation: name, arg: field.name, ...scale, question });
   }
   return out;
 }
@@ -297,6 +308,48 @@ export function questionsForInvariant<S extends AnySchema>(
     });
   }
   return out;
+}
+
+/**
+ * A PAIR IS A TRUTH. An act that joins a subject to one other node —
+ * "says it helps": a practice and a concern — asked of one particular pair
+ * is a yes-or-no question, and the act's own title and description are
+ * its words. Fan this out over every pair and you have a matrix nobody
+ * ever had to author.
+ */
+export function pairQuestion<S extends AnySchema>(
+  store: Store<S>,
+  name: string,
+  subjectId: string,
+  otherId: string,
+): (DerivedQuestion & { readonly about: "argument" }) | undefined {
+  const mutation = store.mutation(name);
+  const subject = mutation.subject;
+  if (!subject) return undefined;
+  const a = store.graph.getNode(subjectId);
+  const b = store.graph.getNode(otherId);
+  if (!a || !b) return undefined;
+  const other = formFields(mutation.input).find(
+    (field) => field.control === "node" && field.name !== subject.arg && (field.kinds.includes("*") || field.kinds.includes(b.kind as string)),
+  );
+  if (!other) return undefined;
+  const labelA = labelOf(store.schema.tryDefinition(a.kind as string), a as never);
+  const labelB = labelOf(store.schema.tryDefinition(b.kind as string), b as never);
+  const title = mutation.title ?? name;
+  return {
+    id: `pair:${name}:${subjectId}:${otherId}`,
+    about: "argument",
+    mutation: name,
+    arg: other.name,
+    question: {
+      type: "noul",
+      instructions: `${title}: ${labelA} — ${labelB}? ${mutation.description ?? ""}`.trim(),
+      criteria: {
+        true: `"${title}" holds for ${labelA} and ${labelB}.`,
+        false: `"${title}" does not hold for ${labelA} and ${labelB}.`,
+      },
+    },
+  };
 }
 
 /**
