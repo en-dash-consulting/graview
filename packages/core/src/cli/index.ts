@@ -15,14 +15,14 @@ const USAGE = `graview — start a product, check its declaration, write its age
 
 ${CREATE_USAGE}
 
-  graview check <entry> [--json]
+  graview check <entry> [--views <module>] [--json]
       Loads <entry> (a module whose default export, or \`app\` export, is a
       GraviewApp) and reports schema problems. Exits 1 on any error.
 
-  graview docs <entry> [--out <dir>]
+  graview docs <entry> [--out <dir>] [--views <module>]
       Writes llms.txt and agents.md next to the entry, or into <dir>.
 
-  graview describe <entry> [--as <role>]
+  graview describe <entry> [--as <role>] [--views <module>]
       Reads the app out: what a blank installation meets and in what order,
       what is drawn and what falls back, the hues, what a seat may do, how a
       model is reached, what is judged. The rung between check and a browser
@@ -67,6 +67,40 @@ function nearest(kind: string): string {
   const said = kind.toLowerCase();
   if (FIGURES[said]) return said;
   return FIGURE_NAMES.find((name) => said.includes(name) || name.includes(said)) ?? "note";
+}
+
+/**
+ * THE PICTURES, FROM WHERE THEY LIVE (F-042).
+ *
+ * A view registry is React, and the declaration is the domain tier, which
+ * must not import React — so no app can pass `defineApp({ views })`, and
+ * everything outside a browser went quiet about what is drawn. The
+ * pictures are still a module: `--views ./dist/ui/views.js` names it, and
+ * this reads the registry — `places()`, `kindsWithViews()`, `all()` —
+ * without rendering anything. The module exports `views` (a registry, or
+ * a function that builds one), or the registry as its default export.
+ */
+export function withViews(app: GraviewApp, module: Record<string, unknown>, name: string): GraviewApp {
+  const candidate = module["views"] ?? module["default"] ?? module["registry"];
+  const registry = typeof candidate === "function" ? (candidate as () => unknown)() : candidate;
+  const looksLikeOne =
+    typeof registry === "object" &&
+    registry !== null &&
+    typeof (registry as { kindsWithViews?: unknown }).kindsWithViews === "function" &&
+    typeof (registry as { places?: unknown }).places === "function";
+  if (!looksLikeOne) {
+    throw new Error(
+      `${name} does not export a view registry. Export \`views\` — the registry, or a function that builds it — or the registry as default.`,
+    );
+  }
+  return { ...app, views: registry as GraviewApp["views"] };
+}
+
+async function loadViews(app: GraviewApp, entry: string | undefined): Promise<GraviewApp> {
+  if (!entry) return app;
+  const path = resolve(process.cwd(), entry);
+  const module = (await import(pathToFileURL(path).href)) as Record<string, unknown>;
+  return withViews(app, module, entry);
 }
 
 function flag(argv: string[], name: string): string | undefined {
@@ -135,7 +169,7 @@ export async function main(argv: string[]): Promise<number> {
 
   switch (command) {
     case "check": {
-      const app = await loadApp(entry);
+      const app = await loadViews(await loadApp(entry), flag(argv, "--views"));
       const result = checkApp(app);
       if (argv.includes("--json")) {
         process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -145,7 +179,7 @@ export async function main(argv: string[]): Promise<number> {
       return result.ok ? 0 : 1;
     }
     case "docs": {
-      const app = await loadApp(entry);
+      const app = await loadViews(await loadApp(entry), flag(argv, "--views"));
       const outDir = resolve(
         process.cwd(),
         flag(argv, "--out") || dirname(resolve(process.cwd(), entry)),
@@ -162,7 +196,7 @@ export async function main(argv: string[]): Promise<number> {
        * ends on. It can declare, and it cannot see — so the derivations say
        * what they would do, in words.
        */
-      const app = await loadApp(entry);
+      const app = await loadViews(await loadApp(entry), flag(argv, "--views"));
       const role = flag(argv, "--as");
       process.stdout.write(
         `${describeApp(app, role ? { as: { kind: "human", id: role, roles: [role] } } : {})}\n`,

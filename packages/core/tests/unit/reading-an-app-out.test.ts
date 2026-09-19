@@ -127,7 +127,7 @@ describe("reading an app out", () => {
    */
   it("distinguishes an app with no views from one whose views it cannot see", () => {
     const unseen = describeApp(defineApp({ name: "grounds", schema, mutations: [stakeOut] }));
-    expect(unseen).toContain("carries no view registry");
+    expect(unseen).toContain("that is the design, not neglect");
 
     const views = createViewRegistry<typeof schema, string>(schema);
     views.register("zone", { cardinality: "many", fidelity: "full" }, "TheGrounds", { title: "The grounds" });

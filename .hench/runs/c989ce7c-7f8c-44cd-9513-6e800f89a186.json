@@ -1,0 +1,30 @@
+{
+  "id": "c989ce7c-7f8c-44cd-9513-6e800f89a186",
+  "taskId": "8c3f387d-df17-44e3-bd0f-a89901df52c1",
+  "taskTitle": "The seat is a robot in the city",
+  "startedAt": "2026-09-19T07:13:11.938Z",
+  "finishedAt": "2026-09-19T07:13:11.938Z",
+  "status": "completed",
+  "turns": 96,
+  "summary": "foldRobots, Occupants overlay, one body per participant, follow mode, refusals said at the gate, verify-robot harness",
+  "tokenUsage": {
+    "input": 3072,
+    "output": 239344,
+    "cacheCreationInput": 305795,
+    "cacheReadInput": 76423524
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 3072,
+    "output": 239344,
+    "cached": 76729319,
+    "total": 76971735
+  }
+}

@@ -23,7 +23,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [F-039 · graview describe --as reads somebody else's product out to a seat that may do none of it](./f-039-graview-describe-as-reads.md) | completed |
 | [F-040 · awkwardGraph fills three field names, so it cannot build a graph for any real app](./f-040-awkwardgraph-fills-three-field.md) | completed |
 | [F-041 · <Intake>'s visually-hidden file input is a 1x1 target with a 1x1 focus ring](./f-041-intake-s-visually-hidden-file.md) | completed |
-| [F-042 · Open — nothing outside a browser can see what is drawn, and no app can fix it](./f-042-open-nothing-outside-a-browser.md) | pending |
+| [F-042 · Open — nothing outside a browser can see what is drawn, and no app can fix it](./f-042-open-nothing-outside-a-browser.md) | in_progress |
 | [F-043 · A label a model writes is a name, and the declaration never said so](./f-043-a-label-a-model-writes-is-a-name.md) | completed |
 | [F-044 · A name has to fit the thing it names, and nothing did the arithmetic](./f-044-a-name-has-to-fit-the-thing-it.md) | completed |
 | [F-045 · A drawing does not know how big it actually is](./f-045-a-drawing-does-not-know-how-big.md) | completed |

@@ -121,7 +121,7 @@ export function describeApp<S extends AnySchema>(
      * this is matters more than the count.
      */
     lines.push(
-      `The declaration carries no view registry, so nothing outside a browser can see what is drawn. Pass it to defineApp({ views }) and check, docs and this can all read the pictures.`,
+      `The pictures live in the UI package, which the declaration cannot import, so this cannot see what is drawn — that is the design, not neglect. Run it with --views ./dist/ui/views.js (a module exporting \`views\`, or the registry as default) and this, check and docs read the pictures: which kinds have one of their own, which places are named, which have a drive-in.`,
     );
   } else {
     const registered = new Set(app.views.kindsWithViews());
@@ -136,9 +136,13 @@ export function describeApp<S extends AnySchema>(
     const places = app.views.places?.() ?? [];
     lines.push(
       places.length === 0
-        ? "No group view is titled, so the bar lists no places and a page can link to none."
+        ? "No group view is titled, so the bar lists no places, a page can link to none, and no district has a drive-in."
         : `${places.length} named places: ${list(places.map((place) => `"${place.title}" over the ${place.kind}s`))}.`,
     );
+    const driveIns = [...new Set(places.map((place) => place.kind))];
+    if (driveIns.length > 0) {
+      lines.push(`  Drive-ins from altitude: ${list(driveIns)}; the rest open in place.`);
+    }
   }
   const authored = (app.lenses ?? []).filter(
     (lens) => !["timeline", "coverage", "board", "calendar", "reach"].includes(lens.name),
