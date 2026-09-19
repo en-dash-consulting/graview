@@ -438,6 +438,21 @@ function PlanReviewInside<S extends AnySchema>({
   });
   const named = (id: string) => (store.graph.getNode(id as never) as { label?: string } | undefined)?.label;
   const shown = new Map(rows.map((row) => [row.key, labelOf(row, titleOf, named)] as const));
+  /*
+   * THE LEAST SURE FIRST. A plan whose calls carry a confidence is read in
+   * that order — the row a model was least sure of is the one a person
+   * should read first, and the survey's review already knew it. A plan
+   * that carries none keeps the order it will run in. Display only: the
+   * press applies the plan in its own order regardless.
+   */
+  const sureOf = (row: PlanRow): number | undefined => {
+    const held = row.entries.map((entry) => entry.call.confidence).filter((c): c is number => typeof c === "number");
+    return held.length > 0 ? Math.min(...held) : undefined;
+  };
+  const anySure = rows.some((row) => sureOf(row) !== undefined);
+  const ordered = anySure
+    ? [...rows].sort((a, b) => (sureOf(a) ?? 1) - (sureOf(b) ?? 1))
+    : rows;
   const names = new Map(
     rows.flatMap((row) => (row.name === undefined ? [] : [[row.name, shown.get(row.key)!.text] as const])),
   );
@@ -489,8 +504,14 @@ function PlanReviewInside<S extends AnySchema>({
   return (
     <Frame>
       {header}
+      {anySure ? (
+        <p data-testid="plan-least-sure" style={{ margin: "0 0 .4rem", fontSize: "0.75rem", ...MUTED_TEXT }}>
+          Least sure first.
+        </p>
+      ) : null}
       <ol data-testid="plan" style={{ margin: 0, paddingLeft: "1.25rem", display: "grid", gap: 6 }}>
-        {rows.map((row) => {
+        {ordered.map((row) => {
+          const sure = sureOf(row);
           const first = row.entries[0]!;
           const refused = row.entries.find((entry) => entry.refusal !== undefined);
           const name = row.name;
@@ -524,6 +545,16 @@ function PlanReviewInside<S extends AnySchema>({
             >
               <span>{shown.get(row.key)!.text}</span>
               {first.call.why ? <span style={{ ...MUTED_TEXT }}> — {first.call.why}</span> : null}
+              {sure !== undefined ? (
+                <span
+                  data-testid="plan-sure"
+                  data-plan-sure={sure.toFixed(2)}
+                  title="How sure the proposer was"
+                  style={{ marginLeft: 6, fontSize: "0.6875rem", color: sure < 0.5 ? "var(--graview-warn)" : "var(--graview-ink-faint)" }}
+                >
+                  {Math.round(sure * 100)}% sure
+                </span>
+              ) : null}
               {declinable && !refused && name !== undefined && !done ? (
                 <button
                   type="button"

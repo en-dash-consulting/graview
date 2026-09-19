@@ -11,6 +11,7 @@ import {
   type ChatReply,
   type IntelligenceConfig,
   type LocalStatus,
+  type OfferedQuestion,
   type ProposedCall,
   type Responder,
   type ToolCall,
@@ -33,6 +34,8 @@ interface Turn {
   readonly role: "person" | "seat";
   readonly text: string;
   readonly proposals?: readonly ProposedCall[];
+  /** Questions the seat is asking back, each at the node it is about. */
+  readonly questions?: readonly OfferedQuestion[];
 }
 
 export interface ChatPanelProps<S extends AnySchema> {
@@ -150,7 +153,7 @@ export function ChatPanel<S extends AnySchema>({
     }
     setTurns((current) => [
       ...current,
-      { role: "seat", text: reply.say, proposals: reply.proposals },
+      { role: "seat", text: reply.say, proposals: reply.proposals, ...(reply.questions ? { questions: reply.questions } : {}) },
     ]);
     setBusy(false);
   };
@@ -307,6 +310,41 @@ export function ChatPanel<S extends AnySchema>({
                 >
                   {turn.text}
                 </p>
+                {(turn.questions ?? []).map((asked) => (
+                  /*
+                   * A QUESTION STANDS AT ITS NODE. The seat was not sure
+                   * enough to propose — a split, or a shrug — so it asks,
+                   * naming the node, with each option as a press that lands
+                   * through the same path a proposal does.
+                   */
+                  <div
+                    key={asked.id}
+                    data-testid="chat-question"
+                    data-chat-question-node={asked.nodeId}
+                    style={{ display: "grid", gap: 4, justifySelf: "start", maxWidth: 260 }}
+                  >
+                    <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+                      {asked.nodeLabel ? <strong>{asked.nodeLabel}: </strong> : null}
+                      {asked.asks}
+                      {asked.because === "split" ? " (it could be either)" : " (it was not sure)"}
+                    </span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      {asked.options.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          data-testid="chat-option"
+                          disabled={!option.call}
+                          title={option.call ? option.call.why ?? "Take this answer" : "Nothing to do for this answer"}
+                          onClick={() => (option.call ? void apply(option.call) : undefined)}
+                          style={{ fontSize: "0.75rem" }}
+                        >
+                          {option.value} {Math.round(option.probability * 100)}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
                 {(turn.proposals ?? []).map((proposal, at) => {
                   /*
                    * WITHHELD, NOT OFFERED — the same rule as the strip. The

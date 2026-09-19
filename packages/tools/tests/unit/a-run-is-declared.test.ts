@@ -121,7 +121,7 @@ const deciding = () => {
         const choice = key.endsWith(".surface") ? "turf" : key.endsWith(".exposure") ? "sun" : key.includes("zoneId") ? "lawn" : options[0]!;
         answers[key] = { type: "choice", choice, confidence: 0.9, probabilities: Object.fromEntries(options.map((o) => [o, o === choice ? 0.9 : 0.1 / (options.length - 1)])) };
       } else if (question.type === "noul") {
-        answers[key] = { type: "noul", noul: key.includes(":mow:") && key.endsWith(":moss") ? 0.2 : key.includes(":mow:") ? 0.85 : 0.6 };
+        answers[key] = { type: "noul", noul: key.includes(":mow:") && key.endsWith(":moss") ? 0.2 : 0.85 };
       } else {
         answers[key] = { type: "score", score: 1, confidence: 0.8, probabilities: {}, legend: {} };
       }
@@ -173,9 +173,9 @@ describe("fan-out is the ordinary case", () => {
     const [step] = result.steps;
     expect(step!.nodes).toEqual(["lawn", "border"]);
     expect(step!.proposals).toEqual([
-      { mutation: "set-surface", args: { zoneId: "lawn", surface: "turf" }, why: "surface of Back Lawn: turf (90% sure)" },
-      { mutation: "set-exposure", args: { zoneId: "lawn", exposure: "sun" }, why: "exposure of Back Lawn: sun (90% sure)" },
-      { mutation: "set-exposure", args: { zoneId: "border", exposure: "sun" }, why: "exposure of Long Border: sun (90% sure)" },
+      { mutation: "set-surface", args: { zoneId: "lawn", surface: "turf" }, why: "surface of Back Lawn: turf", confidence: 0.9 },
+      { mutation: "set-exposure", args: { zoneId: "lawn", exposure: "sun" }, why: "exposure of Back Lawn: sun", confidence: 0.9 },
+      { mutation: "set-exposure", args: { zoneId: "border", exposure: "sun" }, why: "exposure of Long Border: sun", confidence: 0.9 },
     ]);
     expect(result.usage).toMatchObject({ questions: 3, calls: 2, inputTokens: 300 });
   });
@@ -201,8 +201,8 @@ describe("fan-out is the ordinary case", () => {
     const { decide } = deciding();
     const result = await runFrom(store(), { name: "place", steps: [run.steps[1]!] }, { decide, app });
     expect(result.steps[0]!.proposals).toEqual([
-      { mutation: "place-concern", args: { concernId: "moss", zoneId: "lawn" }, why: "Say where a concern shows — zoneId: lawn (90% sure)" },
-      { mutation: "place-concern", args: { concernId: "weeds", zoneId: "lawn" }, why: "Say where a concern shows — zoneId: lawn (90% sure)" },
+      { mutation: "place-concern", args: { concernId: "moss", zoneId: "lawn" }, why: "Say where a concern shows — zoneId: lawn", confidence: 0.9 },
+      { mutation: "place-concern", args: { concernId: "weeds", zoneId: "lawn" }, why: "Say where a concern shows — zoneId: lawn", confidence: 0.9 },
     ]);
   });
 
@@ -211,7 +211,7 @@ describe("fan-out is the ordinary case", () => {
     const result = await runFrom(store(), { name: "judge", steps: [{ judge: "surfaced" }] }, { decide, app });
     expect(Object.keys(calls[0]!.questions)).toEqual(["repair:surfaced:lawn"]);
     expect(result.steps[0]!.proposals).toEqual([
-      { mutation: "set-surface", args: { zoneId: "lawn", surface: "turf" }, why: "Back Lawn does not say what its surface is.: Call it turf (90% sure)" },
+      { mutation: "set-surface", args: { zoneId: "lawn", surface: "turf" }, why: "Back Lawn does not say what its surface is.: Call it turf", confidence: 0.9 },
     ]);
   });
 });

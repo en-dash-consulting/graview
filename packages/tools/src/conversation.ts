@@ -17,6 +17,7 @@ import {
   type Completion,
   type ProposedCall,
 } from "./intelligence.js";
+import type { OfferedQuestion } from "./questions.js";
 
 /**
  * A CONVERSATION over the same seam everything else uses.
@@ -60,6 +61,16 @@ export interface ChatReply {
    * is a fact about the ANSWER, not an instruction to the interface.
    */
   readonly unsure?: boolean;
+  /**
+   * QUESTIONS FOR THE PERSON, each standing at the node it is about.
+   *
+   * A decision that came back split, or not sure enough, is not applied and
+   * not dropped: it is offered, with its options as presses. It travels here
+   * — the seat's own answer — so every surface the seat speaks from can
+   * stand it at the node by name: the chat thread now, a figure's bubble
+   * when the city has one.
+   */
+  readonly questions?: readonly OfferedQuestion[];
 }
 
 export interface ChatContext {

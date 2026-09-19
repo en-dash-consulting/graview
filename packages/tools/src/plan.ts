@@ -46,6 +46,13 @@ import type { ProposedCall } from "./intelligence.js";
 export interface PlannedCall extends ProposedCall {
   /** A name for the node this call creates, referred to as { $plan: name }. */
   readonly as?: string;
+  /**
+   * HOW SURE whoever proposed it was, 0–1. A first-class field rather than
+   * a number in `why`, so a review can order the least sure first and a
+   * surface can offer rather than apply — the same number wherever the
+   * call travels.
+   */
+  readonly confidence?: number;
 }
 
 /** A reference to a node an earlier call in this plan will create. */

@@ -76,6 +76,34 @@ export type DerivedQuestion = QuestionAbout & {
   readonly scale?: { readonly min: number; readonly max: number };
 };
 
+/**
+ * A QUESTION FOR A PERSON, because the answer was not one.
+ *
+ * "turf 0.5, bed 0.45" is a split, not an answer, and a low confidence is a
+ * shrug. Either is offered rather than applied: the question, the node it
+ * is about by name, and each option with its probability and the call it
+ * would be — so a surface can stand the question AT that node, with the
+ * choices as presses, rather than in a list somewhere else.
+ */
+export interface OfferedQuestion {
+  readonly id: string;
+  /** The node it is about, when it is about one. */
+  readonly nodeId?: string;
+  /** Its label, so a surface can say it without a lookup. */
+  readonly nodeLabel?: string;
+  /** The question in the declaration's words. */
+  readonly asks: string;
+  /** Why it is offered rather than applied. */
+  readonly because: "split" | "unsure";
+  readonly confidence: number;
+  readonly options: readonly {
+    readonly value: string;
+    readonly probability: number;
+    /** The call taking this option would be; absent when "no" means do nothing. */
+    readonly call?: { readonly mutation: string; readonly args: Readonly<Record<string, unknown>>; readonly why?: string };
+  }[];
+}
+
 /** Node-typed values a decision provider answers with, as declared. */
 const MAX_SCORE_LEVELS = 10;
 

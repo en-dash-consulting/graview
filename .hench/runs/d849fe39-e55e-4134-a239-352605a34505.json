@@ -1,0 +1,30 @@
+{
+  "id": "d849fe39-e55e-4134-a239-352605a34505",
+  "taskId": "f0b410ab-97af-4250-b55b-da1392c9c77f",
+  "taskTitle": "Chains: a run is a sequence of typed asks over the graph, declared not scripted",
+  "startedAt": "2026-09-19T05:39:06.005Z",
+  "finishedAt": "2026-09-19T05:39:06.005Z",
+  "status": "completed",
+  "turns": 35,
+  "summary": "run.ts: declared steps, readRun budget, runFrom onCall announcements, one batch one undo",
+  "tokenUsage": {
+    "input": 1120,
+    "output": 81146,
+    "cacheCreationInput": 157874,
+    "cacheReadInput": 9906209
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 1120,
+    "output": 81146,
+    "cached": 10064083,
+    "total": 10146349
+  }
+}

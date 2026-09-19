@@ -93,12 +93,12 @@ export {
   questionsForMutation,
   scoreToValue,
 } from "./questions.js";
-export type { ChoiceQuestion, DerivedQuestion, NoulQuestion, Question, QuestionAbout, ScoreQuestion } from "./questions.js";
+export type { ChoiceQuestion, DerivedQuestion, NoulQuestion, OfferedQuestion, Question, QuestionAbout, ScoreQuestion } from "./questions.js";
 
 // The decision provider: one call, many questions, honest about failure.
 export { JEV_ENDPOINT, JEV_INPUT_USD_PER_MILLION, JEV_MODEL, JevError, jevCostUsd, jevDecide, jevKeyFromEnvironment } from "./providers/jev.js";
 export type { Answer, ChoiceAnswer, Decide, Decided, JevFailure, JevOptions, NoulAnswer, ScoreAnswer, Usage } from "./providers/jev.js";
 
 // A run: a sequence of typed asks over the graph, declared not scripted.
-export { describeRun, landRun, readRun, runFrom, valueOf } from "./run.js";
+export { describeRun, landRun, offerOf, readRun, replyFromRun, runFrom, valueOf } from "./run.js";
 export type { Answered, RunDeclaration, RunOptions, RunReading, RunResult, RunStep, StepOutcome } from "./run.js";

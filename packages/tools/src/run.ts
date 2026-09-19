@@ -3,6 +3,7 @@ import type { ToolCall } from "./agent/tools.js";
 import { applyPlan, planFrom, type AppliedPlan, type Plan, type PlanOptions, type PlannedCall } from "./plan.js";
 import type { Answer, Decide, Decided } from "./providers/jev.js";
 import { jevCostUsd } from "./providers/jev.js";
+import type { ChatReply } from "./conversation.js";
 import {
   nodeState,
   pairQuestion,
@@ -11,6 +12,7 @@ import {
   questionsForMutation,
   scoreToValue,
   type DerivedQuestion,
+  type OfferedQuestion,
   type Question,
 } from "./questions.js";
 
@@ -84,6 +86,8 @@ export interface Answered {
   /** 0–1: how sure. A truth's is its distance from even. */
   readonly confidence: number;
   readonly call?: PlannedCall;
+  /** Set when the answer was offered to a person rather than planned. */
+  readonly offered?: OfferedQuestion;
 }
 
 export interface StepOutcome {
@@ -94,6 +98,8 @@ export interface StepOutcome {
   readonly asked: number;
   readonly answered: readonly Answered[];
   readonly proposals: readonly PlannedCall[];
+  /** What was not sure enough to propose: questions for a person, at their nodes. */
+  readonly questions: readonly OfferedQuestion[];
   /** The step's calls, ordered and judged — what a person reviews. */
   readonly plan: Plan;
   /** Set when the step landed (each-step mode): what it made, under which batch. */
@@ -130,6 +136,10 @@ export interface RunOptions<S extends AnySchema> extends PlanOptions<S> {
   readonly onCall?: (call: ToolCall) => void;
   readonly batch?: string;
   readonly today?: string;
+  /** Below this confidence an answer is offered rather than planned. 0.5 otherwise. */
+  readonly floor?: number;
+  /** Two options this close in probability are a split — a question, not an answer. 0.15 otherwise. */
+  readonly splitWithin?: number;
 }
 
 export interface RunResult<S extends AnySchema> {
@@ -140,6 +150,8 @@ export interface RunResult<S extends AnySchema> {
   readonly steps: readonly StepOutcome[];
   /** Every step's calls as one plan, for review — or what was applied. */
   readonly plan: Plan;
+  /** Every question offered to a person, across the steps. */
+  readonly questions: readonly OfferedQuestion[];
   readonly applied?: AppliedPlan<S>;
   readonly usage: { readonly questions: number; readonly calls: number; readonly inputTokens: number; readonly usd: number };
   /** Why the run stopped early, if it did. */
@@ -149,8 +161,37 @@ export interface RunResult<S extends AnySchema> {
 
 type AnyNode = { readonly id: string; readonly kind: string } & Record<string, unknown>;
 
+/** How sure, 0–1, to three places — a truth's is its distance from even. */
 const confidenceOf = (answer: Answer): number =>
-  answer.type === "noul" ? Math.abs(answer.noul - 0.5) * 2 : answer.confidence;
+  Math.round((answer.type === "noul" ? Math.abs(answer.noul - 0.5) * 2 : answer.confidence) * 1000) / 1000;
+
+/** The distribution, highest first, as options a person could take. */
+const distributionOf = (answer: Answer): readonly { readonly value: string; readonly probability: number }[] => {
+  if (answer.type === "noul") {
+    return [
+      { value: "yes", probability: answer.noul },
+      { value: "no", probability: 1 - answer.noul },
+    ].sort((a, b) => b.probability - a.probability);
+  }
+  return Object.entries(answer.probabilities)
+    .map(([value, probability]) => ({ value, probability }))
+    .sort((a, b) => b.probability - a.probability);
+};
+
+/**
+ * WHY AN ANSWER IS A QUESTION. A split — the top two options within
+ * `within` of each other — is a question for a person, not an answer with
+ * a low number beside it; and an answer below the floor is a shrug. Either
+ * is offered. Undefined means it is an answer.
+ */
+export function offerOf(answer: Answer, options: { readonly floor?: number; readonly splitWithin?: number } = {}): "split" | "unsure" | undefined {
+  const floor = options.floor ?? 0.5;
+  const within = options.splitWithin ?? 0.15;
+  const [first, second] = distributionOf(answer);
+  if (first && second && first.probability - second.probability <= within) return "split";
+  if (confidenceOf(answer) < floor) return "unsure";
+  return undefined;
+}
 
 /** The answer as the value the argument wants. */
 export function valueOf(question: DerivedQuestion, answer: Answer): unknown {
@@ -294,28 +335,70 @@ function callsFrom<S extends AnySchema>(
   visit: { readonly nodeId?: string; readonly questions: readonly DerivedQuestion[]; readonly violation?: Violation },
   answers: Readonly<Record<string, Answer>>,
   index: number,
+  sureness: { readonly floor?: number; readonly splitWithin?: number } = {},
 ): Answered[] {
   const out: Answered[] = [];
-  const one = (question: DerivedQuestion, answer: Answer, call?: PlannedCall): Answered => ({
-    step: index,
-    ...(visit.nodeId ? { nodeId: visit.nodeId } : {}),
-    question,
-    answer,
-    confidence: confidenceOf(answer),
-    ...(call ? { call } : {}),
-  });
+  const nodeLabel = (id: string | undefined): string | undefined => {
+    const node = id ? store.graph.getNode(id) : undefined;
+    return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : undefined;
+  };
+  /*
+   * AN ANSWER OR A QUESTION. A call is made only from an answer that IS
+   * one; a split or a shrug becomes an offered question at the node, each
+   * option carrying the call it would be — so the person's press lands
+   * through the same path the run's own confident calls do.
+   */
+  const one = (
+    question: DerivedQuestion,
+    answer: Answer,
+    call?: PlannedCall,
+    withValue?: (value: string) => PlannedCall | undefined,
+  ): Answered => {
+    const confidence = confidenceOf(answer);
+    const because = offerOf(answer, sureness);
+    const base = {
+      step: index,
+      ...(visit.nodeId ? { nodeId: visit.nodeId } : {}),
+      question,
+      answer,
+      confidence,
+    };
+    if (!because || !withValue) return { ...base, ...(call ? { call: { ...call, confidence } } : {}) };
+    const label = nodeLabel(visit.nodeId);
+    const offered: OfferedQuestion = {
+      id: question.id,
+      ...(visit.nodeId ? { nodeId: visit.nodeId } : {}),
+      ...(label ? { nodeLabel: label } : {}),
+      asks: question.question.instructions,
+      because,
+      confidence,
+      options: distributionOf(answer).map((option) => {
+        const would = withValue(option.value);
+        return { ...option, ...(would ? { call: { ...would, confidence: option.probability } } : {}) };
+      }),
+    };
+    return { ...base, offered };
+  };
   if ("fill" in step) {
     for (const question of visit.questions) {
       const answer = answers[question.id];
       if (!answer || question.about !== "field" || !question.writes || !visit.nodeId) continue;
       const value = valueOf(question, answer);
-      const label = store.graph.getNode(visit.nodeId);
+      const writes = question.writes;
+      const nodeId = visit.nodeId;
+      const called = (held: unknown): PlannedCall => ({
+        mutation: writes.mutation,
+        args: { [writes.subjectArg]: nodeId, [writes.arg]: held },
+        why: `${question.field} of ${nodeLabel(nodeId) ?? nodeId}: ${String(held)}`,
+      });
       out.push(
-        one(question, answer, {
-          mutation: question.writes.mutation,
-          args: { [question.writes.subjectArg]: visit.nodeId, [question.writes.arg]: value },
-          why: `${question.field} of ${label ? labelOf(store.schema.tryDefinition(label.kind as string), label as never) : visit.nodeId}: ${String(value)} (${Math.round(confidenceOf(answer) * 100)}% sure)`,
-        }),
+        one(question, answer, called(value), (option) =>
+          answer.type === "noul"
+            ? called(option === "yes")
+            : answer.type === "score"
+              ? called(scoreToValue({ min: question.scale?.min ?? 0 }, Number(option)))
+              : called(option),
+        ),
       );
     }
     return out;
@@ -342,11 +425,34 @@ function callsFrom<S extends AnySchema>(
       parts.push(`${question.arg}: ${String(args[question.arg])}`);
     }
     const call: PlannedCall | undefined = complete
-      ? { mutation: step.ask, args, why: `${mutation.title ?? step.ask} — ${parts.join(", ")} (${Math.round(least * 100)}% sure)` }
+      ? { mutation: step.ask, args, why: `${mutation.title ?? step.ask} — ${parts.join(", ")}`, confidence: least }
       : undefined;
+    /*
+     * One call carries every argument, so ONE unsure argument makes the
+     * whole call a question: the options are that argument's, each with
+     * the rest of the call as decided.
+     */
     for (const question of visit.questions) {
       const answer = answers[question.id];
-      if (answer) out.push(one(question, answer, call));
+      if (!answer || question.about !== "argument") continue;
+      out.push(
+        one(question, answer, call, (option) =>
+          call
+            ? {
+                ...call,
+                args: {
+                  ...call.args,
+                  [question.arg]:
+                    answer.type === "noul"
+                      ? option === "yes"
+                      : answer.type === "score"
+                        ? scoreToValue({ min: question.scale?.min ?? 0 }, Number(option))
+                        : option,
+                },
+              }
+            : undefined,
+        ),
+      );
     }
     return out;
   }
@@ -356,13 +462,16 @@ function callsFrom<S extends AnySchema>(
       if (!answer || question.about !== "repair" || answer.type !== "choice") continue;
       const chosen = question.options[answer.choice];
       if (!chosen) continue;
-      out.push(
-        one(question, answer, {
-          mutation: chosen.mutation,
-          args: { ...chosen.args },
-          why: `${visit.violation?.message ?? question.invariant}: ${question.question.type === "choice" ? (question.question.criteria[answer.choice] ?? answer.choice) : answer.choice} (${Math.round(answer.confidence * 100)}% sure)`,
-        }),
-      );
+      const called = (key: string): PlannedCall | undefined => {
+        const option = question.options[key];
+        if (!option) return undefined;
+        return {
+          mutation: option.mutation,
+          args: { ...option.args },
+          why: `${visit.violation?.message ?? question.invariant}: ${question.question.type === "choice" ? (question.question.criteria[key] ?? key) : key}`,
+        };
+      };
+      out.push(one(question, answer, called(answer.choice), called));
     }
     return out;
   }
@@ -374,19 +483,14 @@ function callsFrom<S extends AnySchema>(
     if (!answer || answer.type !== "noul" || question.about !== "argument" || !subjectArg) continue;
     const otherId = question.id.split(":")[3];
     const holds = answer.noul >= threshold;
-    out.push(
-      one(
-        question,
-        answer,
-        holds && otherId
-          ? {
-              mutation: step.pair,
-              args: { [subjectArg]: visit.nodeId, [question.arg]: otherId },
-              why: `${question.question.instructions.split("?")[0]} — yes (${Math.round(answer.noul * 100)}%)`,
-            }
-          : undefined,
-      ),
-    );
+    const yes: PlannedCall | undefined = otherId
+      ? {
+          mutation: step.pair,
+          args: { [subjectArg]: visit.nodeId, [question.arg]: otherId },
+          why: `${question.question.instructions.split("?")[0]} — yes`,
+        }
+      : undefined;
+    out.push(one(question, answer, holds ? yes : undefined, (option) => (option === "yes" ? yes : undefined)));
   }
   return out;
 }
@@ -409,7 +513,7 @@ export async function runFrom<S extends AnySchema>(
   const planOptions: PlanOptions<S> = { ...(options.app ? { app: options.app } : {}), principal: options.principal ?? author };
   const empty = planFrom(store, [], planOptions);
   if (reading.refused) {
-    return { name: run.name, author, batch, reading, steps: [], plan: empty, usage, refused: reading.refused };
+    return { name: run.name, author, batch, reading, steps: [], plan: empty, questions: [], usage, refused: reading.refused };
   }
   /* The Decide the run started with. A rung switched underneath does not move it. */
   const decide = options.decide;
@@ -452,10 +556,21 @@ export async function runFrom<S extends AnySchema>(
       usage.inputTokens += decided.usage.inputTokens;
       if (visit.nodeId) nodes.push(visit.nodeId);
       options.onCall?.({ ...announced, phase: "ok", ...(visit.nodeId ? { reads: [visit.nodeId] } : {}) });
-      answered.push(...callsFrom(store, step, visit, decided.answers, index));
+      answered.push(
+        ...callsFrom(store, step, visit, decided.answers, index, {
+          ...(options.floor !== undefined ? { floor: options.floor } : {}),
+          ...(options.splitWithin !== undefined ? { splitWithin: options.splitWithin } : {}),
+        }),
+      );
     }
     if (stopped) break;
-    const proposals = [...new Set(answered.map((a) => a.call).filter((call): call is PlannedCall => call !== undefined))];
+    /*
+     * A call with any offered argument is a question, not a proposal: the
+     * whole call waits on the person's press.
+     */
+    const asked_of_person = new Set(answered.filter((a) => a.offered).map((a) => a.call).filter(Boolean));
+    const proposals = [...new Set(answered.map((a) => a.call).filter((call): call is PlannedCall => call !== undefined && !asked_of_person.has(call)))];
+    const questions = answered.map((a) => a.offered).filter((q): q is OfferedQuestion => q !== undefined);
     const plan = planFrom(store, proposals, planOptions);
     let landed: AppliedPlan<S> | undefined;
     if (land === "each-step" && plan.ready.length > 0) {
@@ -469,6 +584,7 @@ export async function runFrom<S extends AnySchema>(
       asked,
       answered,
       proposals,
+      questions,
       plan,
       ...(landed
         ? { applied: { batch: landed.batch, applied: landed.applied, made: landed.made, ...(landed.stoppedAt ? { stoppedAt: landed.stoppedAt } : {}) } }
@@ -491,10 +607,31 @@ export async function runFrom<S extends AnySchema>(
     reading,
     steps,
     plan,
+    questions: steps.flatMap((step) => step.questions),
     ...(applied ? { applied } : {}),
     usage,
     ...(stopped ? { stopped } : {}),
   };
+}
+
+/**
+ * A RUN, SPOKEN BY THE SEAT. What it asked, what it proposes, what it is
+ * asking the person — as one ChatReply, so the outcome travels the seat's
+ * own surfaces: the thread, the rail, a figure's bubble. The confident
+ * calls are proposals; the split or unsure ones are questions standing at
+ * their nodes; a refusal or a stop is said, not logged.
+ */
+export function replyFromRun<S extends AnySchema>(result: RunResult<S>): ChatReply {
+  if (result.refused) return { say: result.refused, proposals: [] };
+  const proposals = result.plan.ready.map((entry) => entry.call);
+  const questions = result.questions;
+  const parts = [
+    `Asked ${result.usage.questions} question${result.usage.questions === 1 ? "" : "s"} over ${result.steps.length} step${result.steps.length === 1 ? "" : "s"}.`,
+    proposals.length > 0 ? `${proposals.length} change${proposals.length === 1 ? "" : "s"} proposed.` : "Nothing to change.",
+    questions.length > 0 ? `${questions.length} question${questions.length === 1 ? "" : "s"} for you.` : "",
+    result.stopped ? `Stopped at step ${result.stopped.at + 1}: ${result.stopped.why}` : "",
+  ].filter(Boolean);
+  return { say: parts.join(" "), proposals, ...(questions.length > 0 ? { questions } : {}) };
 }
 
 /** Lands a reviewed run as one batch, attributed to the run's own seat. One undo. */
