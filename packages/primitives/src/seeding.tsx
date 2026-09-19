@@ -423,7 +423,7 @@ function PlanReviewInside<S extends AnySchema>({
   bare = false,
   batch,
 }: PlanReviewProps<S>) {
-  const { store, principal } = useGraview<S>();
+  const { store, principal, noteSeat } = useGraview<S>();
   const [done, setDone] = useState<{ batch: string; applied: number; why?: string } | null>(null);
   const [declined, setDeclined] = useState<readonly string[]>([]);
   /* What is left after the declines, ordered and judged like any other plan. */
@@ -623,6 +623,17 @@ function PlanReviewInside<S extends AnySchema>({
               const result = applyPlan(store as never, kept, {
                 ...(principal ? { author: principal } : {}),
                 ...(batch ? { batch } : {}),
+                /*
+                 * The seat's body walks to each target BEFORE the op lands,
+                 * in the plan's order: cause and effect co-located, and the
+                 * mark then lights where it is standing.
+                 */
+                before: (entry, args) => {
+                  if (!principal || principal.kind !== "agent") return;
+                  const subject = store.allMutations().find((m) => m.name === entry.call.mutation)?.subject?.arg;
+                  const target = subject ? args[subject] : undefined;
+                  noteSeat({ type: "about-to-write", author: principal, ids: typeof target === "string" ? [target] : [] });
+                },
               });
               setDone({
                 batch: result.batch,

@@ -24,6 +24,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
+import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
 import type { ViewComponent } from "./view-registry.js";
 
 /**
@@ -120,6 +121,22 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly pointer: PointerStore;
   /** The scene says what it is drawing. Nobody else calls this. */
   registerScene(handle: SceneHandle | null): void;
+  /**
+   * THE ROBOTS: one body per agent participant, standing where it read,
+   * wrote, was refused or is asking — folded from the same events the
+   * activity marks are folded from, plus what the seat itself says.
+   */
+  readonly robots: ReadonlyMap<string, RobotState>;
+  /** Tell the robots something the log cannot: a refusal, a question, a reply, a follow. */
+  noteSeat(event: SeatNote): void;
+  /**
+   * The seat this tab's interactive surfaces act as, so the one-press seat
+   * and the chat are ONE robot: the seat registers its name and the chat
+   * writes as it. Null until a seat sits down; the chat then writes as
+   * "chat".
+   */
+  readonly seatWho: string | null;
+  registerSeatWho(who: string | null): void;
   /**
    * The seats a reader may sit in, and how to sit down in one.
    *
@@ -331,6 +348,63 @@ export function GraviewProvider<S extends AnySchema>({
   }, []);
   const whereIs = useCallback((id: string): DrawnBox | null => sceneHandle.current?.whereIs(id) ?? null, []);
   const [pointer] = useState<PointerStore>(() => createPointerStore());
+  const [seatWho, setSeatWho] = useState<string | null>(null);
+  /*
+   * THE ROBOTS' STATE, folded here beside the activity marks, from the same
+   * two sources — ops as they land, reads as the runtime reports them —
+   * and from what a seat says of itself. One timer rests them after the
+   * hold; a quiet city holds no timer.
+   */
+  const [robots, setRobots] = useState<ReadonlyMap<string, RobotState>>(() => new Map());
+  const robotsLive = useRef(robots);
+  robotsLive.current = robots;
+  const restTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const kindOf = useCallback((id: string) => store.graph.getNode(id)?.kind as string | undefined, [store]);
+  const foldSeat = useCallback(
+    (event: RobotEvent) => {
+      const next = foldRobots(robotsLive.current, event, kindOf);
+      robotsLive.current = next;
+      setRobots(next);
+      if (restTimer.current) clearTimeout(restTimer.current);
+      const busy = [...next.values()].some((robot) => robot.mode !== "docked" && robot.mode !== "following" && robot.mode !== "asking");
+      if (busy) {
+        restTimer.current = setTimeout(() => {
+          const rested = foldRobots(robotsLive.current, { type: "rest", at: Date.now(), holdMs: ROBOT_REST_MS }, kindOf);
+          robotsLive.current = rested;
+          setRobots(rested);
+        }, ROBOT_REST_MS + 20);
+      }
+    },
+    [kindOf],
+  );
+  const noteSeat = useCallback((event: SeatNote) => foldSeat({ ...event, at: event.at ?? Date.now() } as RobotEvent), [foldSeat]);
+  /*
+   * A SEAT THAT SITS DOWN HAS A BODY AT ONCE, docked: the robot is in the
+   * city from the first frame, not from the first turn.
+   */
+  const registerSeatWho = useCallback(
+    (who: string | null) => {
+      setSeatWho(who);
+      if (who) foldSeat({ type: "home", author: { kind: "agent", id: who, session: "ui" }, at: Date.now() });
+    },
+    [foldSeat],
+  );
+  useEffect(
+    () =>
+      store.subscribe((_diff, ops) => {
+        for (const op of ops) {
+          if (op.author.kind !== "agent") continue;
+          foldSeat({ type: "write", author: op.author, ids: op.writes, at: Date.now() });
+        }
+      }),
+    [store, foldSeat],
+  );
+  useEffect(
+    () => () => {
+      if (restTimer.current) clearTimeout(restTimer.current);
+    },
+    [],
+  );
   /*
    * WHO IS AT THE KEYBOARD, and the reader's own answer to it.
    *
@@ -378,7 +452,14 @@ export function GraviewProvider<S extends AnySchema>({
     [settings],
   );
   const [emphasis, setEmphasis] = useState<string | null>(null);
-  const { activity, noteAttention } = useActivityState(store);
+  const { activity, noteAttention: markAttention } = useActivityState(store);
+  const noteAttention = useCallback(
+    (note: Attention) => {
+      markAttention(note);
+      foldSeat({ type: "read", author: note.author, ids: note.reads, at: Date.now() });
+    },
+    [markAttention, foldSeat],
+  );
 
   /** Whether an id in the address still names something the graph has. */
   const stillThere = useCallback(
@@ -562,6 +643,10 @@ export function GraviewProvider<S extends AnySchema>({
       whereIs,
       pointer,
       registerScene,
+      robots,
+      noteSeat,
+      seatWho,
+      registerSeatWho,
       emphasis,
       setEmphasis,
       activity,
@@ -589,6 +674,10 @@ export function GraviewProvider<S extends AnySchema>({
       whereIs,
       pointer,
       registerScene,
+      robots,
+      noteSeat,
+      seatWho,
+      registerSeatWho,
       emphasis,
       activity,
       noteAttention,
@@ -700,6 +789,14 @@ function hiddenFor<S extends AnySchema>(
     for (const kind of module.kinds ?? []) hidden.add(kind);
   }
   return hidden;
+}
+
+/** How long a robot stands where it worked before walking home. The activity hold, so the mark and the body agree. */
+export const ROBOT_REST_MS = 2600;
+
+/** The robots, one per agent participant. */
+export function useRobots(): ReadonlyMap<string, RobotState> {
+  return useGraview().robots;
 }
 
 /** Where something is drawn right now, from the live frame. See `GraviewContextValue.whereIs`. */

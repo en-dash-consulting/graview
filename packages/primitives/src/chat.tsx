@@ -1,5 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import { useAttention, useGraview, useSelection } from "@graview/react";
+import { kindCardId } from "@graview/layout";
 import {
   configuredResponder,
   createToolRuntime,
@@ -51,8 +52,13 @@ export function ChatPanel<S extends AnySchema>({
   onCall,
   testId = "chat",
 }: ChatPanelProps<S>) {
-  const { store, principal } = useGraview<S>();
+  const { store, principal, seatWho, noteSeat, robots } = useGraview<S>();
   const { selection } = useSelection();
+  /* The chat writes as the tab's seat when one has sat down, so the two are one robot. */
+  const who = seatWho ?? "chat";
+  const author = useMemo(() => ({ kind: "agent" as const, id: who, session: "ui" }), [who]);
+  const robot = robots.get(`agent:${who}:ui`);
+  const following = robot?.mode === "following";
   const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState<readonly Turn[]>([]);
   const [draft, setDraft] = useState("");
@@ -73,9 +79,7 @@ export function ChatPanel<S extends AnySchema>({
     () =>
       createToolRuntime(store, {
         author: {
-          kind: "agent",
-          id: "chat",
-          session: "ui",
+          ...author,
           ...(principal.roles ? { roles: principal.roles } : {}),
         },
         // The person's pins reach this seat too — read per call, so a pin
@@ -83,7 +87,7 @@ export function ChatPanel<S extends AnySchema>({
         // rebuild. No surface may disagree with another about the acts.
         derive: () => ({ pins: loadPins() }),
       }),
-    [store, principal],
+    [store, principal, author],
   );
   const statusToken = useRef(0);
   /*
@@ -111,6 +115,24 @@ export function ChatPanel<S extends AnySchema>({
   useEffect(() => (onCall ? runtime.onCall(onCall) : undefined), [runtime, onCall]);
   // What the conversation looked at reaches the picture, like any seat's reads.
   useAttention(runtime);
+
+  /*
+   * ANCHORED AS THE ROBOT'S BUBBLE while it follows: the same panel, drawn
+   * beside the figure rather than under the bar's pill, and opened by the
+   * follow itself — the person called it over to talk. Positioned in the
+   * window from the figure's own box, which is inside the scene's.
+   */
+  const [beside, setBeside] = useState<{ left: number; top: number } | null>(null);
+  useEffect(() => {
+    if (!following) {
+      setBeside(null);
+      return;
+    }
+    setOpen(true);
+    const figure = typeof document === "undefined" ? null : document.querySelector(`[data-graview-figure="agent:${who}:ui"]`);
+    const rect = figure?.getBoundingClientRect();
+    if (rect) setBeside({ left: Math.max(8, Math.min(window.innerWidth - 328, rect.left + 24)), top: Math.max(8, Math.min(window.innerHeight - 320, rect.top - 40)) });
+  }, [following, who, robot?.at, robot?.over]);
 
   // Escape and click-away close it — it floats over the scene.
   useEffect(() => {
@@ -140,9 +162,14 @@ export function ChatPanel<S extends AnySchema>({
     setBusy(true);
     setTurns((current) => [...current, { role: "person", text }]);
     let reply: ChatReply;
+    /*
+     * "THIS" IS WHAT THE ROBOT IS AT. While it follows the pointer, the
+     * referent is the pick under the cursor; otherwise the selection.
+     */
+    const referent = following && robot?.over ? [robot.over] : selection;
     try {
       reply = await answer(store, text, {
-        selection,
+        selection: referent,
         history: turns.map((turn) => ({ role: turn.role, text: turn.text })),
       });
     } catch (error) {
@@ -155,6 +182,25 @@ export function ChatPanel<S extends AnySchema>({
       ...current,
       { role: "seat", text: reply.say, proposals: reply.proposals, ...(reply.questions ? { questions: reply.questions } : {}) },
     ]);
+    /*
+     * SAID FROM THE BODY TOO. The reply — prose, the graph's answer, or a
+     * typed answer with the rung's own honesty sentence — is the robot's
+     * bubble; a question for the person stands it on the node's doorstep.
+     */
+    const asked = reply.questions?.[0];
+    if (asked) {
+      noteSeat({ type: "asking", author, where: asked.nodeId ?? null, say: `${asked.nodeLabel ? `${asked.nodeLabel}: ` : ""}${asked.asks}`, confidence: asked.confidence });
+    } else {
+      noteSeat({ type: "said", author, say: reply.say });
+    }
+    /* A proposal the policy withholds is a refusal said at the gate of the kind it acts on. */
+    const withheld = reply.proposals.find((proposal) => !store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal).ok);
+    if (withheld) {
+      const verdict = store.permits({ name: withheld.mutation, args: { ...withheld.args } }, principal);
+      const kinds = store.allMutations().find((m) => m.name === withheld.mutation)?.subject?.kinds;
+      const where = Array.isArray(kinds) && kinds[0] ? kindCardId(kinds[0] as string) : null;
+      if (!verdict.ok) noteSeat({ type: "refused", author, where, say: verdict.refusal.message });
+    }
     setBusy(false);
   };
 
@@ -170,6 +216,8 @@ export function ChatPanel<S extends AnySchema>({
       const result = await runtime.call(proposal.mutation, { ...proposal.args });
       if (!result.ok) {
         setTurns((current) => [...current, { role: "seat", text: `Refused: ${result.error}` }]);
+        const kinds = store.allMutations().find((m) => m.name === proposal.mutation)?.subject?.kinds;
+        noteSeat({ type: "refused", author, where: Array.isArray(kinds) && kinds[0] ? kindCardId(kinds[0] as string) : null, say: result.error });
         return;
       }
       setTurns((current) => [
@@ -207,10 +255,11 @@ export function ChatPanel<S extends AnySchema>({
           data-testid={`${testId}-panel`}
           data-graview-offstage=""
           data-graview-overlay=""
+          data-graview-anchor={beside ? "figure" : "bar"}
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
+            ...(beside
+              ? { position: "fixed", left: beside.left, top: beside.top }
+              : { position: "absolute", top: "calc(100% + 6px)", right: 0 }),
             zIndex: 30,
             width: 320,
             display: "grid",

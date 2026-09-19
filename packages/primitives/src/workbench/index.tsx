@@ -1,5 +1,6 @@
 import { humaniseField, labelOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import {
+  kindCardId,
   aggregateId,
   edgeOfSelection,
   kindOfCard,
@@ -1696,7 +1697,7 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
    * In any app with one, a person could not take back the edit they had
    * just made, and the row they made it on said "you".
    */
-  const { store, principal } = useGraview<AnySchema>();
+  const { store, principal, noteSeat } = useGraview<AnySchema>();
   const nodes = useGraph();
   const [refused, setRefused] = useState<string | null>(null);
   const check = useMemo(
@@ -1730,7 +1731,10 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
       onClick={() => {
         setRefused(null);
         try {
+          /* Taking an agent's turn back walks its body home: the log and the body agree. */
+          const turned = store.log.all().find((op) => op.batch === batch && op.author.kind === "agent");
           store.undo(blocked ? [batch, ...alsoNeeded] : batch, { author: principal });
+          if (turned) noteSeat({ type: "home", author: turned.author });
         } catch (error) {
           setRefused(error instanceof Error ? error.message : String(error));
         }
@@ -1908,6 +1912,17 @@ export function ActivityRail({
         {changes.length > 0 ? changes.length : ""} Activity
       </button>
 
+      {/*
+        * THE SEAT IS SEATED WHETHER OR NOT THE RAIL IS OPEN. Its body stands
+        * in the city from the first frame, docked, and that needs the seat
+        * mounted — so while the rail is shut the seat is here, hidden, and
+        * moves into the rail's row when it opens.
+        */}
+      {!open && seat !== undefined ? (
+        <div hidden data-testid="agent-seat-seated">
+          {seat}
+        </div>
+      ) : null}
       {open ? (
         <aside
           aria-label="Activity"
@@ -2144,7 +2159,15 @@ export function AgentSeat<S extends AnySchema>({
   onCall,
   run,
 }: AgentSeatProps<S>) {
-  const { store, principal } = useGraview<S>();
+  const { store, principal, registerSeatWho, noteSeat } = useGraview<S>();
+  /*
+   * ONE ROBOT for the tab's seat and its chat: the seat registers its name
+   * and the chat writes as it, so the two surfaces are one body in the city.
+   */
+  useEffect(() => {
+    registerSeatWho(who);
+    return () => registerSeatWho(null);
+  }, [who, registerSeatWho]);
   const runtime = useMemo(
     () =>
       createToolRuntime(store, {
@@ -2181,6 +2204,19 @@ export function AgentSeat<S extends AnySchema>({
     : nothing
       ? idle
       : `${runtime.definitions.length} tools, generated from the schema. Its edits produce the diffs yours do, and Activity can take the turn back.`;
+
+  /*
+   * A REFUSAL IS SAID AT THE GATE. The seat that may not act stands at the
+   * plot of the kind its gate acts on and says the policy's own words from
+   * there — the same sentence this control renders, spoken by the body.
+   */
+  useEffect(() => {
+    const said = refused ?? (!permitted ? why : null);
+    if (!said) return;
+    const gateKind = gate ? (store.allMutations().find((m) => m.name === gate)?.subject?.kinds as readonly string[] | "*" | undefined) : undefined;
+    const where = Array.isArray(gateKind) && gateKind[0] ? kindCardId(gateKind[0]) : null;
+    noteSeat({ type: "refused", author: { kind: "agent", id: who, session: "ui" }, where, say: said });
+  }, [refused, permitted, why, gate, store, who, noteSeat]);
 
   /*
    * A SEAT THAT MAY NOT SIT DOWN SAYS SO, in the open.

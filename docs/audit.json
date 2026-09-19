@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T06:47:06.682Z",
+  "at": "2026-09-19T07:09:19.196Z",
   "engine": "chromium",
   "screens": [
     {
@@ -371,6 +371,28 @@
     {
       "app": "todo",
       "state": "graview",
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 12,
+      "inspector": null,
+      "led": null,
+      "figures": []
+    },
+    {
+      "app": "todo",
+      "state": "following",
       "collisions": [],
       "small": [],
       "cut": [],

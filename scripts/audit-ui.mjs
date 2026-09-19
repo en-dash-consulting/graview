@@ -159,6 +159,18 @@ const APPS = {
 
     graview: async (p) => { await p.click('[data-testid="overview"]'); },
     /*
+     * THE ROBOT, DOCKED AND FOLLOWING. From altitude the seat's body stands
+     * at its dock; pressed, it follows the pointer and the chat is its
+     * bubble. Both are chrome the audit holds to the same rules as any.
+     */
+    following: async (p) => {
+      await p.click('[data-testid="overview"]');
+      await p.waitForTimeout(900);
+      await p.click('[data-graview-figure="agent:tidy:ui"] .graview-figure-body');
+      await p.mouse.move(700, 480);
+      await p.waitForTimeout(700);
+    },
+    /*
      * A PHONE. The scene is a desk view and the routed face is the answer at
      * this width — but the scene is still reachable here, and a person who
      * lands on it must not be missing a fifth of the picture with nowhere to

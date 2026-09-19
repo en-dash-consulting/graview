@@ -1,4 +1,8 @@
-export { GraviewProvider, useGraph, useGraview, useGraviewIfAny, useNode, useScenePointer, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export { GraviewProvider, ROBOT_REST_MS, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export { Figure, Occupants } from "./occupants.js";
+export type { OccupantsProps } from "./occupants.js";
+export { foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO } from "./robot.js";
+export type { RobotEvent, RobotMode, RobotState, SeatNote } from "./robot.js";
 export type { AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
 export { createPointerStore } from "./pointer.js";
 export type { PointerStore, ScenePoint } from "./pointer.js";

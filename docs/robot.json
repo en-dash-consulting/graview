@@ -1,0 +1,82 @@
+{
+  "at": "2026-09-19T07:12:00.693Z",
+  "engine": "chromium",
+  "checks": {
+    "dockedOnOpen": {
+      "mode": "docked",
+      "at": "",
+      "x": 1141,
+      "y": 502,
+      "bubble": null,
+      "label": "tidy — at its dock. Press to have it follow you",
+      "ok": true
+    },
+    "quietCityRunsNothing": {
+      "animations": 0,
+      "listeners": 0,
+      "ok": true
+    },
+    "aTurnMovesItToWhatItWrote": {
+      "enabled": true,
+      "before": {
+        "x": 1141,
+        "y": 502,
+        "at": ""
+      },
+      "after": {
+        "x": 724,
+        "y": 692,
+        "at": "t-deposit",
+        "mode": "writing"
+      },
+      "ok": true
+    },
+    "itWalksHomeAfterTheHold": {
+      "mode": "docked",
+      "ok": true
+    },
+    "undoWalksItHome": {
+      "mode": "docked",
+      "ok": true
+    },
+    "followModeTrailsThePointer": {
+      "mode": "following",
+      "at300": {
+        "x": 322,
+        "y": 326
+      },
+      "at900": {
+        "x": 922,
+        "y": 526
+      },
+      "ok": true
+    },
+    "thisIsTheHoveredTask": {
+      "over": "",
+      "anchor": "figure",
+      "reply": "Pay the deposit — a task (finished No, due 2026-08-28, day TUE). the list it is on: Today. why this is here: The landlor",
+      "ok": true
+    },
+    "escapeReleases": {
+      "mode": "docked",
+      "ok": true
+    },
+    "keyboardReachesIt": {
+      "reached": true,
+      "follows": true,
+      "releases": true,
+      "ok": true
+    },
+    "aRefusalIsSaidAtTheGate": {
+      "reply": "I can do that. Review it below — it applies like any other change, and undo works.Give a role — Sam — Not permitted: grant on a user — keeper can. The keeper ke",
+      "parked": {
+        "at": "kind:user",
+        "bubble": "Not permitted: grant on a user — keeper can. The keeper keeps the installation: who is here, and what each of them may do."
+      },
+      "withheld": "Give a role — Sam — Not permitted: grant on a user — keeper can. The keeper keeps the installation: ",
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

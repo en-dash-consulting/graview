@@ -257,7 +257,7 @@ export function graphResponder<S extends AnySchema>(
       // tie is an act that cannot act, and never what was said.
       const unused = [...referents];
       for (const field of formFields(phrased.input)) {
-        const value = answerFrom(field, unused, quoted, options.today);
+        const value = answerFrom(field, unused, quoted, options.today, asked);
         if (value !== undefined) {
           args[field.name] = value;
           const at = unused.findIndex((node) => node.id === value);
@@ -521,6 +521,8 @@ function answerFrom(
   referents: readonly ({ id: string; kind: string } & Record<string, unknown>)[],
   quoted: string | undefined,
   today: string | undefined,
+  /** The sentence, lower-cased: a choice is answered by its own word in it. */
+  asked = "",
 ): unknown {
   switch (field.control) {
     case "node": {
@@ -533,6 +535,23 @@ function answerFrom(
       return quoted;
     case "date":
       return today ?? new Date().toISOString().slice(0, 10);
+    /*
+     * A CHOICE IS ITS OWN WORD. "Give a role keeper to Sam" names the role
+     * the way a person would, and a closed set of options is the one kind
+     * of argument a sentence can settle exactly: the option that appears
+     * as a whole word is the answer; two of them, or none, is no answer.
+     */
+    case "choice": {
+      const words = new Set(asked.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+      const named = (field.options ?? []).filter((option) =>
+        option
+          .toLowerCase()
+          .split(/[^a-z0-9]+/)
+          .filter(Boolean)
+          .every((part) => words.has(part)),
+      );
+      return named.length === 1 ? named[0] : undefined;
+    }
     default:
       return undefined;
   }

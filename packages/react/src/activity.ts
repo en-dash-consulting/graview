@@ -283,21 +283,31 @@ export function useAttention(runtime: {
   readonly author?: Author;
   onCall(listener: (call: ToolCallLike) => void): () => void;
 }): void {
-  const { noteAttention } = useGraview();
+  const { noteAttention, noteSeat } = useGraview();
   useEffect(
     () =>
       runtime.onCall((call) => {
+        const author = runtime.author ?? { kind: "agent" as const };
+        /*
+         * WHAT A CALL SAYS reaches the body: a run's stop reason, a loop's
+         * sentence — announced as a `stop` call carrying `said` — is said
+         * from the robot, not only written to the rail.
+         */
+        const said = call.args?.["said"];
+        if (call.phase === "ok" && typeof said === "string" && said.length > 0) {
+          noteSeat({ type: "said", author, say: said });
+        }
         if (call.phase !== "ok" || !call.reads || call.reads.length === 0) return;
         noteAttention({
           reads: call.reads,
           // The seat's OWN author, not a generic agent: attributing a read to
           // a different participant than the writes makes one agent looking
           // and then moving read as two people editing at once.
-          author: runtime.author ?? { kind: "agent" },
+          author,
           intent: `read ${call.name}`,
         });
       }),
-    [runtime, noteAttention],
+    [runtime, noteAttention, noteSeat],
   );
 }
 
@@ -312,4 +322,5 @@ export interface ToolCallLike {
   readonly name: string;
   readonly phase: "running" | "ok" | "failed";
   readonly reads?: readonly string[];
+  readonly args?: Readonly<Record<string, unknown>>;
 }

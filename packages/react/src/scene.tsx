@@ -52,6 +52,7 @@ import { useGraph, useGraview, ViewModeProvider, type DrawnBox, type ViewMode } 
 import { isDefaultView } from "./view-registry.js";
 import { ViewBoundary } from "./view-boundary.js";
 import { pickedFrom, usePickTargets } from "./picking.js";
+import { Occupants } from "./occupants.js";
 import { kitConnector, useKit } from "./kit.js";
 import { clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 import { channelRoute } from "./channels.js";
@@ -823,6 +824,19 @@ export function Scene<S extends AnySchema>({
           const to = activityOf(frame.nodes.find((node) => node.id === connector.to));
           return from?.wrote && to?.wrote ? (from.at > to.at ? from : to) : undefined;
         }}
+      />
+      {/*
+        * THE OCCUPANTS — the robots — over the stage on both paths, placed
+        * from the frame being drawn. Never in layout(): a body stands where
+        * the fold says, at the box whereIs answers.
+        */}
+      <Occupants
+        frame={frame}
+        width={result.width}
+        height={result.height}
+        whereIs={(id) => whereIsIn(frame, wrapperRef.current, scheme, views, id)}
+        stageRef={wrapperRef}
+        pan={view.pan ?? { x: 0, y: 0 }}
       />
       <RelationCaptions
         nodes={frame.nodes}
@@ -2270,8 +2284,14 @@ export function whereIsIn(
       .sort((a, b) => a.plane - b.plane)[0];
   }
   if (!target) return null;
+  /*
+   * The iso BLOCK is the district's visible thing only from altitude; in
+   * the stack it is invisible and hangs a few pixels below the card, and
+   * a figure docked on it stood past the bottom of the ground.
+   */
+  const aloft = (frame as { readonly city?: unknown }).city !== undefined;
   return (
-    measureVisible(stageEl, target.id, target.aggregate !== undefined && Math.round(target.plane) === 2) ??
+    measureVisible(stageEl, target.id, aloft && target.aggregate !== undefined && Math.round(target.plane) === 2) ??
     drawnBox(target, scheme)
   );
 }

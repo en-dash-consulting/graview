@@ -406,3 +406,23 @@ describe("a model holds the conversation through the same gate", () => {
     expect(reply.proposals).toEqual([]);
   });
 });
+
+describe("a choice is its own word", () => {
+  it("fills an enum argument from the option named in the sentence, and only when exactly one is", async () => {
+    const shade = defineNode("shade", { fields: z.object({ label: z.string(), tone: z.enum(["light", "dark"]).optional() }), plural: "Shades" });
+    const one = createSchema([shade]);
+    const { defineMutation } = bindSchema(one);
+    const setTone = defineMutation("set-tone", {
+      title: "Set the tone",
+      subject: { kinds: ["shade"], arg: "id" },
+      input: z.object({ id: nodeRef(["shade"]), tone: z.enum(["light", "dark"]) }),
+      apply: (ctx, args) => ctx.patchNode(args.id, { tone: args.tone }),
+    });
+    const at = new Store({ schema: one, mutations: [setTone], snapshot: { nodes: [{ id: "s1", kind: "shade", label: "Hall" }] as never, edges: [] } });
+    const reply = await graphResponder()(at, "set the tone dark for Hall");
+    expect(reply.proposals).toEqual([{ mutation: "set-tone", args: { id: "s1", tone: "dark" }, why: expect.any(String) }]);
+    const unsure = await graphResponder()(at, "set the tone light or dark for Hall");
+    expect(unsure.proposals).toEqual([]);
+    expect(unsure.say).toContain("needs tone");
+  });
+});

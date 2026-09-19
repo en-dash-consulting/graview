@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T06:44:53.543Z",
+  "at": "2026-09-19T07:11:42.070Z",
   "browser": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
   "flags": [
     "--enable-blink-features=CanvasDrawElement",
@@ -9,7 +9,7 @@
   ],
   "scheme": "dark",
   "renderer": "dom",
-  "axNodeCount": 340,
+  "axNodeCount": 345,
   "drawnViews": 8,
   "viewsInAxTree": [
     {
@@ -262,5 +262,16 @@
   ],
   "axe": {
     "violations": []
+  },
+  "robot": {
+    "docked": {
+      "inTree": true,
+      "name": "tidy — at its dock. Press to have it follow you"
+    },
+    "following": {
+      "inTree": true,
+      "name": "tidy — following you. Press to release",
+      "violations": []
+    }
   }
 }

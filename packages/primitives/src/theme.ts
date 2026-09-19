@@ -482,6 +482,148 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   color: var(--graview-accent);
 }
 
+/* THE ROBOT: a seat's body in the city. A small iso figure in the scene's
+   own line vocabulary, its name under it, a bubble over it when it has
+   something to say. It moves by a transition on transform — one number,
+   the layout tween's curve — so a quiet city runs nothing. */
+/* Present for a screen reader, absent to the eye: the 1x1 clip-rect idiom. */
+.graview-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.graview-occupants {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+.graview-figure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  transition: transform 420ms cubic-bezier(0.33, 0, 0.2, 1);
+  will-change: transform;
+}
+.graview-figure-body {
+  position: absolute;
+  left: -14px;
+  top: -30px;
+  width: 28px;
+  height: 30px;
+  min-height: max(1.5rem, 24px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: hsl(var(--graview-hue, 200) 50% 48%);
+  cursor: pointer;
+  pointer-events: auto;
+  border-radius: 6px;
+}
+.graview-figure-body:focus-visible {
+  outline: 2px solid var(--graview-accent);
+  outline-offset: 2px;
+}
+.graview-figure-body svg {
+  display: block;
+  width: 28px;
+  height: 30px;
+  overflow: visible;
+}
+.graview-figure[data-graview-mode="following"] .graview-figure-body {
+  color: var(--graview-accent);
+}
+.graview-figure[data-graview-mode="refused"] .graview-figure-body {
+  color: var(--graview-warn);
+}
+.graview-figure-name {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--graview-ink-muted);
+  pointer-events: none;
+}
+.graview-figure-bubble {
+  position: absolute;
+  left: 18px;
+  bottom: 22px;
+  width: max-content;
+  max-width: 240px;
+  margin: 0;
+  padding: 6px 9px;
+  border-radius: 10px 10px 10px 2px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-float);
+  color: var(--graview-ink);
+  box-shadow: var(--graview-lift-low);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: normal;
+  pointer-events: auto;
+}
+.graview-figure-bubble > small {
+  display: block;
+  color: var(--graview-ink-faint);
+  font-size: 0.6875rem;
+}
+/* The pad the robot docks on when the seated person has no building: a
+   marked cell at the city's origin, labelled with the seat's name. */
+.graview-figure-pad {
+  position: absolute;
+  left: -20px;
+  top: -10px;
+  width: 40px;
+  height: 20px;
+  border: 1px dashed var(--graview-ink-faint);
+  border-radius: 50%;
+  opacity: 0.6;
+  pointer-events: none;
+}
+/* Where it has been this turn: a dotted trail that fades once, like a mark. */
+.graview-figure-trail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.graview-figure-trail path {
+  fill: none;
+  stroke: hsl(var(--graview-hue, 200) 50% 48%);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 5;
+  opacity: 0.55;
+  animation: graview-trail-fade 2600ms ease forwards;
+}
+@keyframes graview-trail-fade {
+  from { opacity: 0.55; }
+  to { opacity: 0; }
+}
+/* Off the visible ground: an indicator at the border, pointing at it. */
+.graview-figure-edge {
+  position: absolute;
+  min-height: max(1.5rem, 24px);
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-float);
+  color: var(--graview-ink-muted);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .graview-kind-members {
   display: flex;
   flex-direction: column;
@@ -995,6 +1137,8 @@ code { color: var(--graview-ink-muted); font-size: 0.75rem; letter-spacing: 0.02
  * they will.
  */
 @media (prefers-reduced-motion: reduce) {
+  .graview-figure { transition: none; }
+  .graview-figure-trail path { animation: none; opacity: 0; }
 ${stillness(`${motionRoot}:not([data-graview-motion='full'])`, text)}
 }
 ${stillness(`${motionRoot}[data-graview-motion='reduce']`, text)}

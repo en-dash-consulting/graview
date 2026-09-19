@@ -279,6 +279,12 @@ export function applyPlan<S extends AnySchema>(
     readonly author?: Principal;
     readonly batch?: string;
     readonly keepWhatRan?: boolean;
+    /**
+     * Told before each entry lands, with the resolved arguments — so a
+     * body can walk to the target before the op does, and the activity
+     * mark then lights where it is standing.
+     */
+    readonly before?: (entry: PlanEntry, args: Readonly<Record<string, unknown>>) => void;
   } = {},
 ): AppliedPlan<S> {
   const batch = options.batch ?? `plan:${Date.now().toString(36)}`;
@@ -296,6 +302,7 @@ export function applyPlan<S extends AnySchema>(
 
   for (const entry of plan.ready) {
     const args = resolve(entry.call.args) as Record<string, unknown>;
+    options.before?.(entry, args);
     try {
       const result = store.apply(
         { name: entry.call.mutation, args },
