@@ -124,6 +124,14 @@ export interface LayoutNode {
    * every stop and break the map.
    */
   readonly opened?: boolean;
+  /**
+   * WHERE THIS DISTRICT STANDS IN THE CITY, in lattice cells — its address.
+   *
+   * Set on a kind card at altitude, from the declaration's own map
+   * (`cityMap`), never from the data: the corner a person remembers is the
+   * corner they get back. `side` is how many cells it takes today.
+   */
+  readonly plot?: { readonly col: number; readonly row: number; readonly side: number };
   /** True when the user pinned this position rather than the layout choosing it. */
   readonly pinned: boolean;
 }
@@ -168,11 +176,27 @@ export interface Connector {
   readonly y2: number;
 }
 
+/**
+ * THE LATTICE THE CITY WAS DRAWN ON, so the ground can draw the same one
+ * and the camera can know how far the city reaches. `cell` is one lattice
+ * cell's width in pixels (its height is half); `originX/Y` is where cell
+ * (0,0) meets the canvas before the pan. `extent` is the city's bounding
+ * box in canvas pixels, unpanned.
+ */
+export interface CityFrame {
+  readonly cell: number;
+  readonly originX: number;
+  readonly originY: number;
+  readonly extent: { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
+}
+
 export interface Layout {
   readonly nodes: readonly LayoutNode[];
   readonly connectors: readonly Connector[];
   readonly width: number;
   readonly height: number;
+  /** Present at altitude: the lattice the districts were placed on. */
+  readonly city?: CityFrame;
 }
 
 export interface LayoutOptions {
@@ -239,6 +263,14 @@ export interface LayoutOptions {
    * the thing you were standing in.
    */
   readonly plainGroups?: readonly string[];
+  /**
+   * THE ORDER A BLANK INSTALLATION FILLS ITS KINDS — `beginning(app).order`
+   * — which is the order the city is walked in. Sorted ids otherwise, which
+   * is deterministic too, only less meaningful.
+   */
+  readonly cityOrder?: readonly string[];
+  /** Hand-laid plots by kind, from a brand kit; a kind's own `plot` wins first. */
+  readonly plots?: Readonly<Record<string, { readonly col: number; readonly row: number }>>;
 }
 
 /**
@@ -252,7 +284,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "cityOrder" | "plots">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1040, height: 420 },

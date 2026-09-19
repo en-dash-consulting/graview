@@ -23,6 +23,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import type { ViewComponent } from "./view-registry.js";
 
 /**
@@ -60,6 +61,19 @@ export interface PointerMenu {
   readonly on?: string;
 }
 
+/** A box in scene coordinates: where something is drawn. */
+export interface DrawnBox {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** What a mounted scene lends the context: its own answer to "where is". */
+export interface SceneHandle {
+  whereIs(id: string): DrawnBox | null;
+}
+
 export interface GraviewContextValue<S extends AnySchema> {
   readonly store: Store<S>;
   /**
@@ -89,6 +103,23 @@ export interface GraviewContextValue<S extends AnySchema> {
    */
   readonly menuAt: PointerMenu | null;
   setMenuAt(at: PointerMenu | null): void;
+  /**
+   * WHERE SOMETHING IS DRAWN, RIGHT NOW — the spatial API everything later
+   * stands on. `id` is a node id, `kind:<kind>`, `aggregate:<kind>` or a
+   * Place slug; the answer is its box in scene coordinates from the CURRENT
+   * frame, so it rides the tween and the pan. A node not drawn itself
+   * answers as the nearest drawn container, the rule the connectors use.
+   * Null when nothing is drawing (no scene mounted, or the id is nowhere).
+   */
+  whereIs(id: string): DrawnBox | null;
+  /**
+   * The pointer over the scene, for whoever subscribes — and a quiet scene
+   * runs no listener at all: the store counts its subscribers and the scene
+   * attaches on the first, detaches on the last.
+   */
+  readonly pointer: PointerStore;
+  /** The scene says what it is drawing. Nobody else calls this. */
+  registerScene(handle: SceneHandle | null): void;
   /**
    * The seats a reader may sit in, and how to sit down in one.
    *
@@ -289,6 +320,17 @@ export function GraviewProvider<S extends AnySchema>({
   );
   const homeView = useRef<ViewState>(initialView ?? EMPTY_VIEW).current;
   const [menuAt, setMenuAt] = useState<PointerMenu | null>(null);
+  /*
+   * The scene's handle, held in a ref: where things are changes every frame
+   * of a tween, and a context value that changed with it would re-render
+   * every consumer sixty times a second for a question most never ask.
+   */
+  const sceneHandle = useRef<SceneHandle | null>(null);
+  const registerScene = useCallback((handle: SceneHandle | null) => {
+    sceneHandle.current = handle;
+  }, []);
+  const whereIs = useCallback((id: string): DrawnBox | null => sceneHandle.current?.whereIs(id) ?? null, []);
+  const [pointer] = useState<PointerStore>(() => createPointerStore());
   /*
    * WHO IS AT THE KEYBOARD, and the reader's own answer to it.
    *
@@ -517,6 +559,9 @@ export function GraviewProvider<S extends AnySchema>({
       setSelection,
       menuAt,
       setMenuAt,
+      whereIs,
+      pointer,
+      registerScene,
       emphasis,
       setEmphasis,
       activity,
@@ -541,6 +586,9 @@ export function GraviewProvider<S extends AnySchema>({
       selection,
       setSelection,
       menuAt,
+      whereIs,
+      pointer,
+      registerScene,
       emphasis,
       activity,
       noteAttention,
@@ -652,4 +700,21 @@ function hiddenFor<S extends AnySchema>(
     for (const kind of module.kinds ?? []) hidden.add(kind);
   }
   return hidden;
+}
+
+/** Where something is drawn right now, from the live frame. See `GraviewContextValue.whereIs`. */
+export function useWhereIs(): (id: string) => DrawnBox | null {
+  return useGraview().whereIs;
+}
+
+const NO_POINT = (): ScenePoint | null => null;
+
+/**
+ * The pointer over the scene, in scene coordinates, or null while it is
+ * not over the scene. Subscribing is what turns the scene's listener on;
+ * a component that stops rendering this turns it off again.
+ */
+export function useScenePointer(): ScenePoint | null {
+  const { pointer } = useGraview();
+  return useSyncExternalStore(pointer.subscribe, pointer.snapshot, NO_POINT);
 }

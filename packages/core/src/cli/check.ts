@@ -9,6 +9,7 @@ import {
 } from "../mutations/derive-edits.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { undecidableArguments } from "../mutations/decidable.js";
+import { BLOCK, plotsOverlap } from "../city.js";
 import { figureFaults, FIGURE_NAMES } from "../schema/figures.js";
 import { withArticle } from "../schema/define-node.js";
 import { permits, rolesOf } from "../permissions/policy.js";
@@ -278,6 +279,27 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
         where: `intelligence["${provider.name}"]`,
         message: `"${provider.name}" takes a person's own key and does not say where it is kept.`,
         fix: `Add keyStorage: "<where, in your own words>" — a person handing over a key is owed the sentence.`,
+      });
+    }
+  }
+
+  /*
+   * TWO KINDS ON ONE BLOCK. A hand-laid plot is used verbatim, so two kinds
+   * laid on the same block would be drawn on top of each other, and which
+   * one answers a click would be whichever was drawn second.
+   */
+  const laid = app.schema.definitions.filter((definition) => definition.plot !== undefined);
+  for (let i = 0; i < laid.length; i++) {
+    for (let j = i + 1; j < laid.length; j++) {
+      const a = laid[i]!;
+      const b = laid[j]!;
+      if (!plotsOverlap(a.plot!, b.plot!)) continue;
+      add({
+        severity: "error",
+        code: "plot-overlap",
+        where: `defineNode("${b.kind}").plot`,
+        message: `"${a.kind}" at (${a.plot!.col}, ${a.plot!.row}) and "${b.kind}" at (${b.plot!.col}, ${b.plot!.row}) stand on the same block.`,
+        fix: `Move one of them at least ${BLOCK} cells away, or drop the plot and let the map place it.`,
       });
     }
   }

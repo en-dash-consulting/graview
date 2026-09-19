@@ -9,6 +9,7 @@ import {
   type Plane,
   type Via,
 } from "./types.js";
+import { placeCity } from "./city.js";
 import { rankKinds } from "./rank.js";
 import { toggleExpanded, withFocus, withZoom, type ViewState } from "./view-state.js";
 
@@ -118,143 +119,6 @@ function byStableKey(a: { id: string }, b: { id: string }): number {
 }
 
 /**
- * Lays boxes on an ellipse — a circle seen from above and in front — the way
- * a city reads from altitude: what is on the near side of the ring comes
- * toward the viewer, larger and sharper; what is on the far side sits
- * smaller, hazier, further back. Every card is still an axis-aligned box
- * under scale and translate, so the whole picture stays affine.
- *
- * Ordered the way the shelf is ordered, so a card keeps its neighbours when
- * the shelf becomes a ring and the eye can follow it round.
- */
-/** Two drawn boxes sharing ground, with a little air required between them. */
-function collides(
-  a: { x: number; y: number; width: number; height: number },
-  b: { x: number; y: number; width: number; height: number },
-  air = 6,
-): boolean {
-  return (
-    a.x < b.x + b.width + air &&
-    b.x < a.x + a.width + air &&
-    a.y < b.y + b.height + air &&
-    b.y < a.y + a.height + air
-  );
-}
-
-/**
- * THE CITY GROWS WITH THE READER UNTIL THE RING IS FULL.
- *
- * A district card holds a name and a count, both sized in `rem`, and the
- * card was sized in pixels off the stage — so a reader on Largest doubled
- * every name in the city inside cards that had not moved, and the picture
- * came apart. The cards take the reader's unit now.
- *
- * They cannot simply take it, though: a ring is a fixed amount of ground,
- * and cards twice the size on the same ellipse are districts standing in
- * each other. So the scale asked for is the MOST it will use, and it gives
- * back whatever it must to keep the ring a ring — down to the size it has
- * always been and never below. A person who asks for bigger words gets them
- * everywhere, and gets as much bigger a city as there is room for.
- */
-function ring(
-  count: number,
-  size: { width: number; height: number },
-  canvasWidth: number,
-  canvasHeight: number,
-  inset: { readonly left?: number; readonly right?: number } = {},
-  /** Extra height the nearest card may take: a district opened in place lists its members. */
-  opened = 0,
-  /** How much bigger the reader's own text size asks these cards to be. */
-  scale = 1,
-): { x: number; y: number; depth: number; width: number; height: number }[] {
-  let placed = ringAt(count, size, canvasWidth, canvasHeight, inset, opened, scale);
-  for (let asked = scale; asked > 1.001; asked = Math.max(1, asked - 0.05)) {
-    const crowded = placed.some((one, index) =>
-      placed.some((other, at) => at !== index && collides(one, other)),
-    );
-    if (!crowded) return placed;
-    placed = ringAt(count, size, canvasWidth, canvasHeight, inset, opened, Math.max(1, asked - 0.05));
-  }
-  return placed;
-}
-
-function ringAt(
-  count: number,
-  base: { width: number; height: number },
-  canvasWidth: number,
-  canvasHeight: number,
-  inset: { readonly left?: number; readonly right?: number },
-  opened: number,
-  scale: number,
-): { x: number; y: number; depth: number; width: number; height: number }[] {
-  const size = { width: base.width * scale, height: base.height * scale };
-  // The span the ring may use: the canvas, less any rail reserved for chrome.
-  const left = inset.left ?? 0;
-  const span = canvasWidth - left - (inset.right ?? 0);
-  const cx = left + span / 2;
-  const cy = canvasHeight * 0.53;
-  /*
-   * A wide, tall ring: a picture of the whole domain should use the space it
-   * was given. The ellipse is a circle under a vertical squash — affine.
-   */
-  const rx = span * 0.385;
-  /*
-   * The nearest card is the largest (1.3× at the bottom of the ellipse) and
-   * sits lowest; in a short canvas — an embed the height of a paragraph —
-   * the ring's natural sweep put it past the bottom edge. The ring is only
-   * as tall as leaves that card whole, with a little ground under it.
-   */
-  const slack = canvasHeight - cy - size.height * 0.65 - 12;
-  /*
-   * THE RING HAS TO STAY A RING.
-   *
-   * With an even number of kinds two districts sit directly opposite, in the
-   * same column, and the vertical radius is the only thing holding them
-   * apart: the far card's lower edge is `ry - 0.425h` above centre, the near
-   * card's upper edge `ry - 0.65h` below it. Below that the picture is two
-   * districts on top of each other, and which one answers a click is
-   * whichever happened to be drawn second.
-   *
-   * An opened district asks for more room under the near card to list its
-   * members, and it used to take that room out of the radius without
-   * looking: at 320 high with one district open, `ry` came out at under a
-   * pixel and all four cards landed in one line. The listing is the luxury
-   * here and the ring is the picture, so the listing gets what is left after
-   * the ring has what it needs, rather than the other way round.
-   */
-  const far = Math.max(CARD_MIN_HEIGHT, size.height * 0.85);
-  const near = Math.max(CARD_MIN_HEIGHT, size.height * 1.3);
-  // The two ends are 2·ry apart, and each reaches half its own height in.
-  const leastRy = (far / 2 + near / 2 + 5) / 2;
-  const opening = Math.max(0, Math.min(opened, slack - leastRy));
-  const ry = Math.max(0, Math.min(canvasHeight * 0.365, slack - opening));
-  return Array.from({ length: count }, (_, index) => {
-    // Starting at the bottom, going clockwise, so the first card of the shelf
-    // ends up nearest the viewer rather than hidden at the back.
-    const angle = Math.PI / 2 + (index / Math.max(1, count)) * Math.PI * 2;
-    /*
-     * How near this stop on the ring is: 1 at the bottom of the ellipse
-     * (toward the viewer), 0 at the top (the far side). Depth and size both
-     * follow it, which is the entire altitude effect — the ellipse gives the
-     * ground positions, nearness gives the elevation.
-     */
-    const near = (1 + Math.sin(angle)) / 2;
-    const grow = 0.85 + near * 0.45;
-    const width = size.width * grow;
-    const height = size.height * grow;
-    return {
-      // Held inside the canvas: the near-bottom card is the largest, and a
-      // generous ring can push its lower edge past the ground line.
-      x: Math.max(4, Math.min(cx + Math.cos(angle) * rx - width / 2, canvasWidth - width - 4)),
-      y: Math.max(4, Math.min(cy + Math.sin(angle) * ry - height / 2, canvasHeight - height - 4)),
-      depth: 1 - near * 0.65,
-      width,
-      height,
-    };
-  });
-}
-
-/**
  * Lays the kinds out as a flat shelf: one baseline, even spacing.
  *
  * It used to bow upward in an arc, middle cards lifted and receded. The bow
@@ -331,7 +195,7 @@ export function layout<S extends AnySchema>(
   state: ViewState,
   options: LayoutOptions = {},
 ): Layout {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const opts: typeof DEFAULT_OPTIONS & LayoutOptions = { ...DEFAULT_OPTIONS, ...options };
   /*
    * THE SPAN: the canvas less the rail reserved for chrome. Every card is
    * sized and centred within it, in every mode — the inspector and the
@@ -681,14 +545,22 @@ export function layout<S extends AnySchema>(
       else expanded.delete(kindCardId(kind));
     }
   }
+  /** The picture standing in the middle from altitude, when there is one: ground the city must not take. */
+  let stamp: { x: number; y: number; width: number; height: number } | undefined;
   if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain) {
+    stamp = {
+      x: railLeft + (spanW - overviewW) / 2,
+      y: opts.height * 0.53 - overviewH / 2,
+      width: overviewW,
+      height: overviewH,
+    };
     push({
       id: state.focusId,
       kind: focus ? focus.kind : focusKinds[0]!,
       plane: 0,
-      // Centred in the span the ring uses, so the picture and its ring agree.
-      x: railLeft + (spanW - overviewW) / 2,
-      y: opts.height * 0.53 - overviewH / 2,
+      // Centred in the span the city uses, so the picture and its city agree.
+      x: stamp.x,
+      y: stamp.y,
       width: overviewW,
       height: overviewH,
       // Lay out as if it had the whole scene, then draw it small. The view
@@ -1005,24 +877,45 @@ export function layout<S extends AnySchema>(
       // left to grow into.
       { width: Math.min(220, spanW / 6.5), height: Math.min(92, opts.height * 0.125) }
     : districtRow(slotted.length, (zoomed ? 240 : opts.contextSize.width) * unit, band.contextH);
+  /*
+   * THE CITY. From altitude the kinds are districts on the declaration's
+   * own map — a plot each, on the 2:1 lattice, one uniform scale and
+   * translate — so the picture has the same shape at every width and a
+   * district is on the corner a person remembers. `placeCity` keeps the
+   * collision shrink as a safety net; the placement is the map's.
+   */
+  const city = state.overview
+    ? placeCity(
+        slotted.map((item) => ({
+          id: item.id,
+          kind: item.kind,
+          count: item.aggregate?.memberIds.length ?? 0,
+          // An opened district lays its members out inside its plot: room
+          // for a small grid, in the reader's unit.
+          opened: expanded.has(item.id) ? 96 * unit : 0,
+        })),
+        schema,
+        contextSize,
+        { width: opts.width, height: opts.height },
+        opts.inset ?? {},
+        {
+          ...(opts.cityOrder ? { order: opts.cityOrder } : {}),
+          ...(opts.plots ? { plots: opts.plots } : {}),
+          scale: unit,
+          minHeight: CARD_MIN_HEIGHT * unit,
+          ...(stamp ? { avoid: [stamp] } : {}),
+        },
+      )
+    : null;
+  const plotOf = new Map(city?.placed.map((card) => [card.id, card.plot]) ?? []);
   const contextPositions: {
     x: number;
     y: number;
     depth: number;
     width?: number;
     height?: number;
-  }[] = state.overview
-    ? ring(
-        slotted.length,
-        contextSize,
-        opts.width,
-        opts.height,
-        opts.inset ?? {},
-        // An opened district lists its members below its name: room for a
-        // few, in rows of text, so the room is the reader's unit too.
-        slotted.some((item) => expanded.has(item.id)) ? 96 * unit : 0,
-        unit,
-      )
+  }[] = city
+    ? city.placed.map(({ x, y, depth, width, height }) => ({ x, y, depth, width, height }))
     : shelf(
         slotted.length,
         contextSize,
@@ -1263,6 +1156,7 @@ export function layout<S extends AnySchema>(
       ...(item.rank ? { rank: item.rank } : {}),
       ...(item.nestedUnder ? { nestedUnder: item.nestedUnder } : {}),
       ...(item.beyond ? { beyond: item.beyond } : {}),
+      ...(plotOf.has(item.id) ? { plot: plotOf.get(item.id)! } : {}),
       depth: item.depth,
     });
   });
@@ -1272,6 +1166,7 @@ export function layout<S extends AnySchema>(
     connectors: connectorsFor(graph, placed, state),
     width: opts.width,
     height: opts.height,
+    ...(city ? { city: city.frame } : {}),
   };
 
   function push(node: Omit<LayoutNode, "pinned">): void {

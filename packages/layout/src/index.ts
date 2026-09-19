@@ -49,3 +49,6 @@ export {
 export type { EdgeRef, Pin, ViewState } from "./view-state.js";
 export { areaOf, boxOf, centroidOf, estimateWidth, fitLabel, overlaps, spanAt } from "./label-fit.js";
 export type { FitOptions, FitPoint, FittedLabel, LabelBox, Measure } from "./label-fit.js";
+export { cameraLimit, collides, placeCity } from "./city.js";
+export type { CityCard, PlacedCard } from "./city.js";
+export type { CityFrame } from "./types.js";

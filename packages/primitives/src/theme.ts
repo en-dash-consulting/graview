@@ -368,6 +368,9 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
     repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px var(--graview-kit-lattice-size, 46px)),
     repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px calc(var(--graview-kit-lattice-size, 46px) / 2)),
     repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px calc(var(--graview-kit-lattice-size, 46px) / 2));
+  /* Anchored where the city's cell (0,0) meets the canvas, so a plot placed
+     by the map sits ON the grid a person can see, and pans with it. */
+  background-position: var(--graview-lattice-x, 0px) var(--graview-lattice-y, 0px);
   opacity: calc(var(--graview-kit-lattice, 1) * var(--graview-grid-alpha) * var(--graview-altitude));
   mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);
   -webkit-mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);

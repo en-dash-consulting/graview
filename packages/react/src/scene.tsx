@@ -1,11 +1,13 @@
-import { labelOf } from "@graview/core";
+import { beginning, labelOf } from "@graview/core";
 import type { AnySchema, Fidelity, GraphReader, NodeOfSchema } from "@graview/core";
 import {
   aggregateId,
+  cameraLimit,
   isAggregateId,
   kindCardId,
   kindOfCard,
   kindsOf,
+  kindsOfAggregate,
   layout,
   withFocus,
   withOverview,
@@ -46,12 +48,12 @@ import {
 import { useActivity, type ActivityMark, type Manner } from "./activity.js";
 import { useAnimatedLayout, useTouched } from "./animation.js";
 import { useFlagged, useImplicated, useNavigation, useViolations } from "./hooks.js";
-import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
+import { useGraph, useGraview, ViewModeProvider, type DrawnBox, type ViewMode } from "./context.js";
 import { isDefaultView } from "./view-registry.js";
 import { ViewBoundary } from "./view-boundary.js";
 import { pickedFrom, usePickTargets } from "./picking.js";
 import { kitConnector, useKit } from "./kit.js";
-import { clipPolyline, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
+import { clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 import { channelRoute } from "./channels.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
@@ -141,7 +143,7 @@ export function Scene<S extends AnySchema>({
     selection,
     setSelection,
     setMenuAt,
-    emphasis, hiddenKinds } = useGraview<S>();
+    emphasis, hiddenKinds, registerScene, pointer } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -242,6 +244,16 @@ export function Scene<S extends AnySchema>({
       plainGroups: (store.schema.kinds as readonly string[]).filter((kind) =>
         isDefaultView(views.lookup(kind as never, { cardinality: "many", fidelity: "full" })),
       ),
+      /*
+       * THE ORDER THE CITY IS WALKED IN: the chain a blank installation fills
+       * its kinds in, read from the store's own acts. The declaration's
+       * order, so the map is the declaration's map.
+       */
+      cityOrder: beginning({
+        name: "scene",
+        schema: store.schema,
+        mutations: store.allMutations().filter((mutation) => !mutation.derived),
+      }).order.map((entry) => entry.kind),
       ...(size
         ? {
             width: size.width,
@@ -278,6 +290,50 @@ export function Scene<S extends AnySchema>({
   // one. Everything downstream draws the tween, not the destination.
   const frame = useAnimatedLayout(result, { enabled: animate && !dragging });
   const touched = useTouched<S>();
+
+  /*
+   * WHERE IS: the scene lends the context its live frame. A ref, so the
+   * answer is the frame being drawn right now — mid-tween, mid-pan — and
+   * asking costs nobody a render.
+   */
+  const frameRef = useRef(frame);
+  frameRef.current = frame;
+  useEffect(() => {
+    registerScene({
+      whereIs: (id) => whereIsIn(frameRef.current, wrapperRef.current, scheme, views, id),
+    });
+    return () => registerScene(null);
+  }, [registerScene, scheme, views]);
+
+  /*
+   * THE POINTER, only while somebody is listening. The store tells the
+   * scene when its first subscriber arrives and its last leaves; between
+   * those two moments there is a listener, and outside them there is none.
+   */
+  useEffect(
+    () =>
+      pointer.onActive((active) => {
+        const element = wrapperRef.current;
+        if (!element) return;
+        const move = (event: PointerEvent) => {
+          const rect = element.getBoundingClientRect();
+          pointer.set({ x: event.clientX - rect.left, y: event.clientY - rect.top });
+        };
+        const leave = () => pointer.set(null);
+        if (active) {
+          element.addEventListener("pointermove", move);
+          element.addEventListener("pointerleave", leave);
+          (element as HTMLElement & { __graviewPointer?: () => void }).__graviewPointer = () => {
+            element.removeEventListener("pointermove", move);
+            element.removeEventListener("pointerleave", leave);
+          };
+        } else {
+          (element as HTMLElement & { __graviewPointer?: () => void }).__graviewPointer?.();
+          delete (element as HTMLElement & { __graviewPointer?: () => void }).__graviewPointer;
+        }
+      }),
+    [pointer],
+  );
 
   useEffect(() => {
     if (renderer === "dom") return;
@@ -423,9 +479,10 @@ export function Scene<S extends AnySchema>({
       (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
     }
     if (drag.kind === "pan") {
-      // A LITTLE way, not anywhere. Losing the scene off the edge of its own
-      // window is not panning, it is dropping it.
-      const limit = { x: result.width * 0.45, y: result.height * 0.45 };
+      // A LITTLE way over a picture that fits, and as far as the city
+      // reaches when it is bigger than the window: every district can be
+      // reached, none can be dropped off the edge.
+      const limit = cameraLimit(result);
       setView((current) =>
         withPan(current, {
           x: Math.max(-limit.x, Math.min(limit.x, drag.baseX + dx)),
@@ -623,6 +680,20 @@ export function Scene<S extends AnySchema>({
         cursor: dragging ? "grabbing" : "grab",
         touchAction: "none",
         ["--graview-altitude" as string]: view.overview ? 1 : 0,
+        /*
+         * THE LATTICE THE CITY STANDS ON. The ground draws its diamonds at
+         * the cell the map was placed with, anchored where cell (0,0) meets
+         * the canvas — and the anchor pans with the picture, since the pan
+         * is baked into every coordinate — so a plot sits on a grid line a
+         * person can see. The kit's own size stands when no city is drawn.
+         */
+        ...(frame.city
+          ? {
+              ["--graview-kit-lattice-size" as string]: `${(frame.city.cell / Math.sqrt(5)).toFixed(2)}px`,
+              ["--graview-lattice-x" as string]: `${(frame.city.originX + (view.pan?.x ?? 0)).toFixed(1)}px`,
+              ["--graview-lattice-y" as string]: `${(frame.city.originY + (view.pan?.y ?? 0)).toFixed(1)}px`,
+            }
+          : {}),
         ...(dragging ? { userSelect: "none" as const } : {}),
 
         // The stage is sized to the measurement, but a stale measurement
@@ -2105,6 +2176,49 @@ function measureVisible(
   return { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height };
 }
 
+/**
+ * WHERE SOMETHING IS, in the frame being drawn.
+ *
+ * `id` may be a node, a kind card (`kind:<kind>`), a group
+ * (`aggregate:<kind>`) or a Place slug. Each is resolved to the node in
+ * the frame that stands for it — a kind and its group are one card at
+ * altitude and one group in the stack, so either name finds whichever is
+ * drawn — and a node not drawn itself resolves to the nearest container
+ * that holds it, exactly as a connector's endpoint does. The box is what
+ * a person can see when there is a DOM to measure, and the drawn box
+ * otherwise, so the answer is the same one the ties land on.
+ */
+export function whereIsIn(
+  frame: { readonly nodes: readonly SceneNode[] },
+  stageEl: HTMLElement | null,
+  scheme: "light" | "dark",
+  views: { places(): readonly { readonly kind: string; readonly as: string }[] },
+  id: string,
+): DrawnBox | null {
+  const find = (wanted: string) => frame.nodes.find((node) => node.id === wanted);
+  let target = find(id);
+  const kind = kindOfCard(id);
+  if (!target && kind !== null) target = find(aggregateId(kind));
+  if (!target && isAggregateId(id)) {
+    const [first] = kindsOfAggregate(id);
+    if (first) target = find(kindCardId(first));
+  }
+  if (!target) {
+    const place = views.places().find((candidate) => candidate.as === id);
+    if (place) target = find(aggregateId(place.kind)) ?? find(kindCardId(place.kind));
+  }
+  if (!target) {
+    target = [...frame.nodes]
+      .filter((node) => node.aggregate?.memberIds.includes(id))
+      .sort((a, b) => a.plane - b.plane)[0];
+  }
+  if (!target) return null;
+  return (
+    measureVisible(stageEl, target.id, target.aggregate !== undefined && Math.round(target.plane) === 2) ??
+    drawnBox(target, scheme)
+  );
+}
+
 /** The centre of a node's box as DRAWN, after its plane's scale. */
 function drawnCentre(
   node: SceneNode | undefined,
@@ -2637,10 +2751,23 @@ function Connectors({
     nodes: readonly SceneNode[];
     width: number;
     height: number;
+    /** Present at altitude: the roads run along this lattice. */
+    city?: { readonly cell: number };
   };
   scheme: "light" | "dark";
 }) {
   const kit = useKit();
+  /*
+   * ROADS. From altitude, with the districts on the lattice, a line between
+   * two of them runs along the lattice's diagonals rather than bowing
+   * around the middle — a road on the same grid the buildings stand on.
+   * Inside the stack the kit's route stands.
+   */
+  const onLattice = new Set(
+    result.nodes.filter((node) => node.plot !== undefined && Math.round(node.plane) === 2).map((node) => node.id),
+  );
+  const roadBetween = (connector: { from: string; to: string }) =>
+    overview && result.city !== undefined && onLattice.has(connector.from) && onLattice.has(connector.to);
   /*
    * Selecting DRAWS ITS RELATIONS and recedes the rest.
    *
@@ -2791,7 +2918,11 @@ function Connectors({
         }
         // The route is the kit's call: the bowed arc, its chord, or two elbows.
         const curve: Quadratic = routedQuadratic(kitLine.route, { p0: from, c: { x: midX + nx * bow, y: midY + ny * bow }, p1: to });
-        const orthogonal = kitLine.route === "orthogonal";
+        /* A road runs between two districts on the lattice; a line to the
+           picture standing in the middle keeps the kit's own route. */
+        const road = roadBetween(connector);
+        const orthogonal = kitLine.route === "orthogonal" || road;
+        const bends = (a: { x: number; y: number }, b: { x: number; y: number }) => (road ? latticePoints(a, b) : orthogonalPoints(a, b));
         /*
          * The visible runs: out of the box it starts in, into the box it
          * ends in, and under any card it crosses between. A line with no
@@ -2805,7 +2936,7 @@ function Connectors({
          */
         const channelled = !self && strand.band ? channelRoute(fromBox, toBox, strand.band, lane) : null;
         const runs = self || orthogonal || channelled ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
-        const legs = channelled ? [channelled] : !self && orthogonal ? clipPolyline(orthogonalPoints(from, to), [fromBox, toBox, ...strand.obstacles]) : [];
+        const legs = channelled ? [channelled] : !self && orthogonal ? clipPolyline(bends(from, to), [fromBox, toBox, ...strand.obstacles]) : [];
         if (!self && runs.length === 0 && legs.length === 0) return null;
         const lastLeg = legs[legs.length - 1];
         const firstDrawn = orthogonal || channelled ? legs[0]?.[0] : runs[0]?.p0;
@@ -2826,7 +2957,7 @@ function Connectors({
           : channelled
             ? polylineD(legs)
             : orthogonal
-            ? polylineD(clipPolyline(orthogonalPoints(from, to), [fromBox, toBox, ...strand.hosts, ...strand.obstacles]))
+            ? polylineD(clipPolyline(bends(from, to), [fromBox, toBox, ...strand.hosts, ...strand.obstacles]))
             : quad(clipQuadratic(curve, [fromBox, toBox, ...strand.hosts, ...strand.obstacles]));
         const only = strand.edges.length === 1 ? strand.edges[0]! : null;
         const edgeId = only ? edgeSelectionId(connector.kind, only.from, only.to) : null;
@@ -3133,6 +3264,7 @@ export function ResolvedView<S extends AnySchema>({
     ...(node.raised ? { raised: true } : {}),
     ...(node.focused ? { focused: true } : {}),
     ...(node.opened ? { opened: true } : {}),
+    ...(node.plot ? { plot: node.plot } : {}),
     ...(node.aggregate?.retired ? { retired: node.aggregate.retired } : {}),
     ...(node.rank ? { rank: node.rank } : {}),
     ...(node.nestedUnder ? { nestedUnder: node.nestedUnder } : {}),

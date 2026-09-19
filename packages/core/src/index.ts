@@ -249,3 +249,7 @@ export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export { checkApp, formatFindings } from "./cli/check.js";
 export type { CheckResult, Finding, Severity } from "./cli/check.js";
 export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
+
+// The city: a map drawn from the declaration, in lattice cells.
+export { BLOCK, cityExtent, cityMap, MAX_SIDE, plotsOverlap, roadsOf, sharedEdges, sideFor, toIso } from "./city.js";
+export type { CityHints, CityMap, Plot, Road } from "./city.js";

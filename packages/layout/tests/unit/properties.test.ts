@@ -1,7 +1,8 @@
 import { Graph } from "@graview/core";
 import { awkwardApp, awkwardGraph } from "@graview/core/testing";
 import { describe, expect, it } from "vitest";
-import { EMPTY_VIEW, aggregateId, kindCardId, layout, withFocus, withOverview, withRelation } from "../../src/index.js";
+import {
+  cameraLimit, EMPTY_VIEW, aggregateId, kindCardId, layout, withFocus, withOverview, withRelation } from "../../src/index.js";
 
 /**
  * THE DERIVATION, HELD TO PROPERTIES RATHER THAN TO EXAMPLES.
@@ -42,15 +43,29 @@ const scene = (kinds: number, width: number, unit: number, state = EMPTY_VIEW) =
 };
 
 describe("everything the layout places is reachable, for every declaration", () => {
-  it("keeps every card inside the canvas at every width and text size", () => {
+  /*
+   * REACHABLE, which at altitude means within the camera's reach. A city
+   * has a shape, and a phone is narrower than some shapes: the districts
+   * keep their corners and the camera is bounded by the map's extent, so
+   * every one of them can be panned to. Inside the stack nothing may leave
+   * the canvas at all. `cameraLimit` is the scene's own bound, so this
+   * test and the scene cannot disagree about what reachable means.
+   */
+  it("keeps every card within the camera's reach at every width and text size", () => {
     const outside: string[] = [];
     for (const kinds of COUNTS) {
       for (const width of WIDTHS) {
         for (const unit of UNITS) {
           const { result } = scene(kinds, width, unit);
           const height = Math.round(width * 0.62);
+          const reach = result.city ? cameraLimit(result) : { x: 0, y: 0 };
           for (const node of result.nodes) {
-            if (node.x < -0.5 || node.x + node.width > width + 0.5 || node.y < -0.5 || node.y + node.height > height + 0.5) {
+            if (
+              node.x < -reach.x - 0.5 ||
+              node.x + node.width > width + reach.x + 0.5 ||
+              node.y < -reach.y - 0.5 ||
+              node.y + node.height > height + reach.y + 0.5
+            ) {
               outside.push(
                 `${kinds} kinds at ${width}x${height}/${unit}: ${node.id} at ${Math.round(node.x)}..${Math.round(node.x + node.width)}`,
               );
@@ -144,10 +159,11 @@ describe("everything the layout places is reachable, for every declaration", () 
       for (const state of states) {
         const height = Math.round(width * 0.62);
         const result = layout(graph as never, app.schema, state, { width, height, unit: 16 });
+        const reach = result.city ? cameraLimit(result) : { x: 0, y: 0 };
         for (const node of result.nodes) {
-          expect(node.x, `${width} ${JSON.stringify(state).slice(0, 40)} ${node.id}`).toBeGreaterThanOrEqual(-0.5);
-          expect(node.x + node.width).toBeLessThanOrEqual(width + 0.5);
-          expect(node.y + node.height).toBeLessThanOrEqual(height + 0.5);
+          expect(node.x, `${width} ${JSON.stringify(state).slice(0, 40)} ${node.id}`).toBeGreaterThanOrEqual(-reach.x - 0.5);
+          expect(node.x + node.width).toBeLessThanOrEqual(width + reach.x + 0.5);
+          expect(node.y + node.height).toBeLessThanOrEqual(height + reach.y + 0.5);
         }
       }
     }

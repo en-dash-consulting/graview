@@ -66,6 +66,12 @@ function longFormOf(
   return undefined;
 }
 
+/** How many buildings an opened plot shows: its side squared, and never fewer than the old eight without a plot. */
+function buildingsCap(side: number | undefined, count: number): number {
+  const s = side ?? Math.min(4, Math.max(1, Math.ceil(Math.sqrt(count))));
+  return Math.max(1, s * s);
+}
+
 export function registerDefaultViews<S extends AnySchema>(
   schema: S,
   registry: ReactViewRegistry<S> = createViews(schema),
@@ -673,8 +679,23 @@ export function registerDefaultViews<S extends AnySchema>(
             ) : null}
           </div>
           {props.opened ? (
-            <div className="graview-kind-members">
-              {members.slice(0, 8).map((member) => {
+            /*
+             * BUILDINGS. An opened neighbourhood lays its members out inside
+             * its plot as a small grid on the lattice — `side` to a row, the
+             * plot's own width in cells — rather than a column of chips. Each
+             * is still a Chip with a pick id, so measuring, ties and the
+             * keyboard work for free; past `side × side` the rest are counted.
+             */
+            <div
+              className="graview-kind-members"
+              data-graview-buildings={props.plot?.side ?? 1}
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${Math.max(1, props.plot?.side ?? Math.min(4, Math.ceil(Math.sqrt(members.length))))}, minmax(0, 1fr))`,
+                gap: 3,
+              }}
+            >
+              {members.slice(0, buildingsCap(props.plot?.side, members.length)).map((member) => {
                 /*
                  * WHICH ONE. The card's own count already says "⚠ 1" —
                  * opening the district to find out which member that is was
@@ -695,9 +716,9 @@ export function registerDefaultViews<S extends AnySchema>(
                   />
                 );
               })}
-              {members.length > 8 ? (
-                <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)", padding: "2px 4px" }}>
-                  +{members.length - 8} more — double-click to go in
+              {members.length > buildingsCap(props.plot?.side, members.length) ? (
+                <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)", padding: "2px 4px", gridColumn: "1 / -1" }}>
+                  +{members.length - buildingsCap(props.plot?.side, members.length)} more — double-click to go in
                 </span>
               ) : null}
             </div>

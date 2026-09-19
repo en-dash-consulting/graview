@@ -1,5 +1,7 @@
-export { GraviewProvider, useGraph, useGraview, useGraviewIfAny, useNode, useViewMode, ViewModeProvider } from "./context.js";
-export type { AdministeredModule, GraviewContextValue, GraviewProviderProps, PointerMenu, Scheme, Seat, ViewMode } from "./context.js";
+export { GraviewProvider, useGraph, useGraview, useGraviewIfAny, useNode, useScenePointer, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export type { AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
+export { createPointerStore } from "./pointer.js";
+export type { PointerStore, ScenePoint } from "./pointer.js";
 export { applySettings, honourSetting, loadSetting, rememberSetting } from "./settings.js";
 
 export { createViews, DEFAULT_VIEW, isDefaultView, markDefaultView } from "./view-registry.js";
@@ -23,6 +25,7 @@ export {
   Scene,
   selectionFor,
   tieRoute,
+  whereIsIn,
 } from "./scene.js";
 export type { SceneNode, Strand } from "./scene.js";
 export { useAnimatedLayout, useTouched } from "./animation.js";
@@ -42,7 +45,7 @@ export { useFlagged, useImplicated, useViolations } from "./hooks.js";
 export { useLocalIntelligence } from "./local-intelligence.js";
 export type { Ask, LocalIntelligence } from "./local-intelligence.js";
 export { kitConnector, useKit } from "./kit.js";
-export { clipPolyline, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
+export { clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 export { bandRows, channelRoute } from "./channels.js";
 export {
   useAffordances,

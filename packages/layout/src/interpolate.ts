@@ -1,5 +1,5 @@
 import { aggregateId, isAggregateId, kindCardId, kindOfCard } from "./layout.js";
-import type { Connector, Layout, LayoutNode } from "./types.js";
+import type { CityFrame, Connector, Layout, LayoutNode } from "./types.js";
 
 export interface InterpolatedNode extends Omit<LayoutNode, "plane"> {
   /** Fractional plane, so the renderer can mix two plane styles. */
@@ -14,6 +14,8 @@ export interface InterpolatedLayout {
   readonly width: number;
   readonly height: number;
   readonly t: number;
+  /** The destination's lattice, when it has one. */
+  readonly city?: CityFrame;
 }
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -113,6 +115,9 @@ export function interpolate(from: Layout, to: Layout, t: number): InterpolatedLa
     width: lerp(from.width, to.width, clamped),
     height: lerp(from.height, to.height, clamped),
     t: clamped,
+    /* The lattice arrives with the destination: the ground crossfades to it
+       by the altitude number, and a half-scaled lattice would be no grid. */
+    ...(to.city ? { city: to.city } : {}),
   };
 }
 
@@ -137,6 +142,10 @@ function mix(a: LayoutNode, b: LayoutNode, t: number, opacity: number): Interpol
     /* What a card STANDS FOR travels with it, or the row's overflow card
        arrives mid-transition as an empty box with no kind and nothing in it. */
     ...(b.beyond ? { beyond: b.beyond } : {}),
+    /* An address is not a position: it does not tween, it travels. Dropped
+       here, a district mid-flight to altitude has no plot, and the ground
+       under it and the roads to it have nothing to stand on. */
+    ...(b.plot ? { plot: b.plot } : {}),
     ...(b.depth === undefined ? {} : { depth: lerp(a.depth ?? 1, b.depth, t) }),
     ...(b.natural ? { natural: b.natural } : {}),
   };

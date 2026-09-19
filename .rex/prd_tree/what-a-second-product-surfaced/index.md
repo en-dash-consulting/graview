@@ -29,3 +29,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The product adopted what it asked for, and found the next round](./the-product-adopted-what-it-asked-for/index.md) | pending |
 | [The scaffolder writes what a product actually needs](./the-scaffolder-writes-what-a-product/index.md) | completed |
 | [The scene stays standing — error boundary, chrome floors, phone width, the view in the URL](./the-scene-stays-standing-error/index.md) | completed |
+| [Two stack overflows the survey found on 2026-09-19: the shelf's iso block hangs 9px below the stage, and the launcher's matrix is cut at row 10](./two-stack-overflows-the-survey-found.md) | pending |

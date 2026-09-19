@@ -1,5 +1,6 @@
 import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceProviderDeclaration } from "../app.js";
 import { beginning } from "../beginning.js";
+import { cityMap, roadsOf } from "../city.js";
 import { deriveEditMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 import { hueFor } from "../theme/derive.js";
@@ -244,6 +245,18 @@ export function describeApp<S extends AnySchema>(
           : ""),
     );
   }
+
+  /*
+   * THE CITY, READ OUT. Where each kind stands and which roads join them —
+   * the first thing outside a browser that can say what is drawn, because
+   * the map is drawn from the declaration and nothing else. Sides are
+   * empty here: an installation's population is not the declaration's.
+   */
+  const map = cityMap(app.schema, { order: chain.order.map((entry) => entry.kind) });
+  lines.push("", "## The city");
+  for (const [kind, plot] of map) lines.push(`${kind} at (${plot.col}, ${plot.row})`);
+  const roads = roadsOf(app.schema, map);
+  lines.push(roads.length === 0 ? "No roads: no kind declares an edge to another." : `Roads: ${roads.map((road) => `${road.from} — ${road.to} by ${road.edges.join(", ")}`).join("; ")}.`);
 
   /* WHAT IS JUDGED. A rule with no repair is a problem a person is told about and cannot fix. */
   const invariants = app.invariants ?? [];

@@ -2,6 +2,7 @@ import { createSchema, defineNode, Graph } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  cameraLimit,
   aggregateId,
   edgeOfSelection,
   edgeSelectionId,
@@ -654,16 +655,34 @@ describe("the overview is the same cards, on a ring", () => {
     expect(sameView(fromUrl(toUrl(above)), above)).toBe(true);
   });
 
-  it("still fits inside the canvas", () => {
+  it("keeps the picture in the canvas and every district within the camera's reach", () => {
+    /*
+     * The live view stands in the middle and the city slides aside for it —
+     * no district is laid under the picture you rose to look at — which can
+     * put the far side of the city past the edge. Past the edge is not
+     * lost: the camera is bounded by the map, so every district can be
+     * panned to, and the picture itself never leaves the canvas.
+     */
     const result = layout(graph(), schema, view({ focusId: "week-1", overview: true }), {
       width: 1200,
       height: 700,
     });
+    const reach = cameraLimit(result);
+    const stamp = result.nodes.find((node) => node.id === "week-1")!;
+    expect(stamp.x).toBeGreaterThanOrEqual(0);
+    expect(stamp.x + stamp.width).toBeLessThanOrEqual(1200);
     for (const node of result.nodes) {
-      expect(node.y).toBeGreaterThanOrEqual(0);
-      expect(node.y + node.height).toBeLessThanOrEqual(700);
-      expect(node.x).toBeGreaterThanOrEqual(0);
-      expect(node.x + node.width).toBeLessThanOrEqual(1200);
+      expect(node.y).toBeGreaterThanOrEqual(-reach.y);
+      expect(node.y + node.height).toBeLessThanOrEqual(700 + reach.y);
+      expect(node.x).toBeGreaterThanOrEqual(-reach.x);
+      expect(node.x + node.width).toBeLessThanOrEqual(1200 + reach.x);
+      /* And none of them stands on the picture. */
+      if (node.id !== "week-1" && node.plane === 2) {
+        const over =
+          Math.max(0, Math.min(node.x + node.width, stamp.x + stamp.width) - Math.max(node.x, stamp.x)) *
+          Math.max(0, Math.min(node.y + node.height, stamp.y + stamp.height) - Math.max(node.y, stamp.y));
+        expect(over, node.id).toBe(0);
+      }
     }
   });
 });

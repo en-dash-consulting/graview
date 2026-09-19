@@ -139,3 +139,21 @@ export function routedQuadratic(route: ConnectorRoute, q: Quadratic): Quadratic 
   if (route !== "straight") return q;
   return { ...q, c: { x: (q.p0.x + q.p1.x) / 2, y: (q.p0.y + q.p1.y) / 2 } };
 }
+
+/**
+ * A ROAD ALONG THE LATTICE. From altitude the ground is a 2:1 lattice and
+ * a road between two districts runs along its diagonals — one leg on each,
+ * with the elbow where they meet — so the roads lie on the same grid the
+ * districts stand on. Solving from + a·(2,1) + b·(−2,1) = to gives the two
+ * legs; a pair on one diagonal needs no elbow at all.
+ */
+export function latticePoints(from: Point, to: Point): Point[] {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  // Along (2,1): a; along (-2,1): b. dx = 2a − 2b, dy = a + b.
+  const a = (dx / 2 + dy) / 2;
+  const b = (dy - dx / 2) / 2;
+  if (Math.abs(a) < 1 || Math.abs(b) < 1) return [from, to];
+  const elbow = { x: from.x + 2 * a, y: from.y + a };
+  return [from, elbow, to];
+}

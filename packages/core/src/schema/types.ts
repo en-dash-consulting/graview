@@ -139,6 +139,17 @@ export interface NodeDefinitionSpec<
    * thing, at the isometric city's own angle, or it should not be there.
    */
   readonly figure?: Figure;
+  /**
+   * WHERE THIS KIND STANDS IN THE CITY, hand-laid, in lattice cells.
+   *
+   * The map is drawn from the declaration and needs no help; this is for
+   * an installation that wants a kind on a particular corner. Used
+   * verbatim — `graview check` reports two kinds laid on one block as
+   * `plot-overlap`. The studio will write these back one day; a plot is
+   * a fact about the declaration, so it belongs here rather than in a
+   * person's storage.
+   */
+  readonly plot?: { readonly col: number; readonly row: number };
 }
 
 export interface LifecycleDeclaration {
