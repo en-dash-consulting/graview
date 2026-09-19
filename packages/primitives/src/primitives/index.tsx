@@ -278,6 +278,24 @@ export function Panel({
           flex: "1 1 auto",
           // A page never scrolls inside itself: the page scrolls.
           ...(page ? { overflow: "visible" } : {}),
+          /*
+           * A CUT ROW AND A SCROLLED ROW LOOK THE SAME, and only one of them
+           * is all right.
+           *
+           * A card's chips sliced flat across the bottom edge read as
+           * broken — somebody reported it as text being cut off, which is
+           * exactly what it looks like — when in fact the panel scrolls and
+           * nothing is lost. The tab stop above says so to a keyboard and to
+           * a screen reader; this says the same thing to an eye. A few
+           * pixels of fade is the oldest way there is to write "there is
+           * more of this", and it costs nothing when there is not.
+           */
+          ...(overflowing && !page
+            ? {
+                maskImage: "linear-gradient(to bottom, #000 calc(100% - 14px), transparent)",
+                WebkitMaskImage: "linear-gradient(to bottom, #000 calc(100% - 14px), transparent)",
+              }
+            : {}),
         }}
       >
         {children}

@@ -779,6 +779,52 @@ function Lines<S extends AnySchema>({
     remeasure((n) => n + 1);
   }, [frame, selection, overview, graphNodes]);
 
+  /*
+   * A LINE POINTS AT WHERE A THING IS, NOT AT WHERE IT WAS.
+   *
+   * Connectors are anchored on MEASURED DOM boxes — that is what lets a line
+   * land on one row of a matrix rather than on the panel containing it — and
+   * the measurement was taken once, when the frame, the selection, the
+   * altitude or the graph changed. None of those is what moves a row.
+   *
+   * What moves a row is a scroll. A matrix wider than its panel, a roster
+   * taller than its card, a lens with a filter in it: the content slides and
+   * every line still points at the place the content used to be. It does
+   * not look like a stale measurement, it looks like the lines are wrong
+   * about the graph.
+   *
+   * Scroll does not bubble, so this listens in the capture phase and hears
+   * every scroller in the stage; a ResizeObserver catches the other half —
+   * a panel that grows because something inside it opened moves everything
+   * below it, and no frame changed.
+   */
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    if (stage === null || typeof window === "undefined") return;
+    let queued = 0;
+    const again = () => {
+      if (queued !== 0) return;
+      queued = requestAnimationFrame(() => {
+        queued = 0;
+        remeasure((n) => n + 1);
+      });
+    };
+    stage.addEventListener("scroll", again, { capture: true, passive: true });
+    window.addEventListener("resize", again, { passive: true });
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(again);
+    if (watch) {
+      watch.observe(stage);
+      /* Every view, because a view growing moves its neighbours' members. */
+      for (const view of stage.querySelectorAll("[data-graview-view]")) watch.observe(view);
+    }
+    return () => {
+      if (queued !== 0) cancelAnimationFrame(queued);
+      stage.removeEventListener("scroll", again, { capture: true } as never);
+      window.removeEventListener("resize", again);
+      watch?.disconnect();
+    };
+  }, [stageRef, frame]);
+
   // Not memoised: it measures the DOM, and the DOM is what changed.
   const strands = connectorStrands(frame.nodes, frame.connectors, stageRef.current, overview, scheme);
   const drawnSingles = new Set<string>();
@@ -2229,6 +2275,34 @@ export interface Strand {
 }
 
 /**
+ * Whether an element is actually visible inside every scroller above it.
+ *
+ * Walks up to the view it belongs to, and at each clipping ancestor asks
+ * whether the element still overlaps it. Partly visible counts: half a row
+ * is still that row, and a line to it is still true.
+ */
+function withinItsScroller(el: Element, rect: DOMRect): boolean {
+  let parent = el.parentElement;
+  while (parent !== null) {
+    const style = getComputedStyle(parent);
+    const clips =
+      style.overflow !== "visible" || style.overflowX !== "visible" || style.overflowY !== "visible";
+    if (clips) {
+      const box = parent.getBoundingClientRect();
+      const overlaps =
+        rect.right > box.left + 1 &&
+        rect.left < box.right - 1 &&
+        rect.bottom > box.top + 1 &&
+        rect.top < box.bottom - 1;
+      if (!overlaps) return false;
+    }
+    if (parent.hasAttribute("data-graview-view")) break;
+    parent = parent.parentElement;
+  }
+  return true;
+}
+
+/**
  * The elements a view draws for a MEMBER of a drawn node — a session's span
  * in the week, a drill's chip in a session card — measured in stage space
  * and sorted compact-first. Chrome is not scene: an offstage rail repeating
@@ -2248,6 +2322,21 @@ function memberBoxes(
     if (el.closest("[data-graview-offstage]")) continue;
     const rect = el.getBoundingClientRect();
     if (rect.width <= 2 || rect.height <= 2) continue;
+    /*
+     * A MEMBER SCROLLED OUT OF ITS PANEL IS NOT AN ANCHOR.
+     *
+     * `getBoundingClientRect` answers for an element that has been scrolled
+     * past the edge of its own scroller just as happily as for one you can
+     * see — with coordinates that are outside the panel, and often outside
+     * the stage. A line drawn to that lands somewhere there is nothing,
+     * usually across a neighbouring card, and reads as the picture lying
+     * about the graph.
+     *
+     * Where the member is out of sight the line falls back to the host,
+     * which is the honest answer: the thing is in there somewhere, and the
+     * panel is the finest box that is actually true.
+     */
+    if (!withinItsScroller(el, rect)) continue;
     boxes.push({
       x: rect.left - stage.left,
       y: rect.top - stage.top,

@@ -1,0 +1,17 @@
+{
+  "at": "2026-09-18T21:43:35.724Z",
+  "engine": "chromium",
+  "checks": {
+    "linesLandOnSomethingFromAltitude": true,
+    "linesLandOnSomethingAtRest": true,
+    "linesLandOnSomethingAfterAScroll": true,
+    "linesLandOnSomethingAfterAResize": true,
+    "thereWereLinesToCheck": true
+  },
+  "faults": [],
+  "opened": "t-boxes",
+  "overviewLines": 3,
+  "lines": 1,
+  "scrollers": 0,
+  "passed": true
+}

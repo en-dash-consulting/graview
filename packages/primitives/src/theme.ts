@@ -510,6 +510,10 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   padding: var(--graview-pad-sm, 8px);
   box-sizing: border-box;
   overflow: auto;
+  /* The same fade the panels have: a district name sliced flat across the
+     bottom of this card reads as broken, and it is only scrolled. */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
   border-radius: var(--graview-radius-sm, 8px);
   border: 1px dashed var(--graview-edge);
   background: var(--graview-panel);

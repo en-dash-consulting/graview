@@ -49,7 +49,8 @@
     "site:css": "node scripts/site-css.mjs",
     "site:numbers": "node scripts/site-numbers.mjs",
     "site:docs": "node scripts/site-docs.mjs",
-    "site:build:all": "pnpm site:css && pnpm site:numbers && pnpm site:docs"
+    "site:build:all": "pnpm site:css && pnpm site:numbers && pnpm site:docs",
+    "lines": "node scripts/verify-lines.mjs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",
