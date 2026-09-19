@@ -304,9 +304,20 @@ export function applyPlan<S extends AnySchema>(
     const args = resolve(entry.call.args) as Record<string, unknown>;
     options.before?.(entry, args);
     try {
+      /*
+       * THE LOG KEEPS THE NUMBER. A review shows how sure a proposer was
+       * beside each row and orders by it; the op that lands still records
+       * it in its intent, because the log is the record and "why" without
+       * "how sure" is half a reason.
+       */
+      const sure = entry.call.confidence;
+      const intent =
+        sure !== undefined && !/\d+% sure/.test(entry.call.why ?? "")
+          ? `${entry.call.why ?? ""} (${Math.round(sure * 100)}% sure)`.trim()
+          : (entry.call.why ?? "");
       const result = store.apply(
         { name: entry.call.mutation, args },
-        { ...(options.author ? { author: options.author } : {}), batch, intent: entry.call.why ?? "" },
+        { ...(options.author ? { author: options.author } : {}), batch, intent },
       );
       applied += 1;
       if (entry.call.as !== undefined) {
