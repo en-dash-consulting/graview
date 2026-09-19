@@ -332,12 +332,21 @@ export function Scene<S extends AnySchema>({
     if (!screen) return;
     const inside = screen.x >= 0 && screen.y >= 0 && screen.x + screen.width <= result.width && screen.y + screen.height <= result.height;
     if (inside) return;
+    /*
+     * THE SMALLEST MOVE THAT BRINGS THE SCREEN IN. Centring it dragged the
+     * rest of the city off the far side — six districts fit the window and
+     * four of them left it — so the camera goes only as far as it must for
+     * the screen to clear the edge, and the rest stays where it was.
+     */
+    const EDGE = 24;
+    const shift = (start: number, size: number, span: number): number =>
+      start < EDGE ? EDGE - start : start + size > span - EDGE ? span - EDGE - (start + size) : 0;
     // The whole offset — the person's pan plus the camera — stays inside the
     // camera limit, so the screen can be reached and nothing is dropped off the edge.
     const limit = cameraLimit(result);
     const pan = view.pan ?? { x: 0, y: 0 };
-    const wantedX = panned.x + (result.width / 2 - (screen.x + screen.width / 2));
-    const wantedY = panned.y + (result.height / 2 - (screen.y + screen.height / 2));
+    const wantedX = panned.x + shift(screen.x, screen.width, result.width);
+    const wantedY = panned.y + shift(screen.y, screen.height, result.height);
     setCamera({
       x: Math.max(-limit.x, Math.min(limit.x, wantedX)) - pan.x,
       y: Math.max(-limit.y, Math.min(limit.y, wantedY)) - pan.y,

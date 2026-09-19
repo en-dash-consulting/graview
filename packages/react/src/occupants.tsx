@@ -162,8 +162,18 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }
     } else if (robot.at !== null) {
       const box = whereIs(robot.at);
       point = box ? footOf(box) : dock.point;
-    } else {
+    } else if (dock.pad || dock.at !== null) {
       point = dock.point;
+    } else {
+      /*
+       * DOCKED IN THE STACK, WITH NO PLACE OF ITS OWN: not drawn. There is
+       * no pad down here, and a body parked on whichever district happens
+       * to be first on the shelf moved every time the shelf did — which
+       * read as a robot tagging along unasked. It appears when it has
+       * something to do, stands where it works, and rests out of the
+       * picture; from altitude it has its pad.
+       */
+      point = null;
     }
     return { robot, point: point ? onGround(point, width, height) : point, over };
   });

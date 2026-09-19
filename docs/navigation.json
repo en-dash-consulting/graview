@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T09:10:01.997Z",
+  "at": "2026-09-19T12:27:29.400Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Graview",
       "pressed": "false",
       "name": "Graview",
-      "wingOpacity": 0.539352,
+      "wingOpacity": 0.509796,
       "registered": true
     },
     "groundAgain": {
@@ -234,9 +234,9 @@
       "up": true
     },
     "midway": {
-      "x": 694.9992065429688,
-      "y": 432.4208984375,
-      "width": 325
+      "x": 695.232421875,
+      "y": 432.16033935546875,
+      "width": 326
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",

@@ -26,7 +26,10 @@ function Seated({ who }: { who: string }) {
   return null;
 }
 
-const frame = { nodes: [], connectors: [], width: 800, height: 500, t: 1 } as never;
+/* From altitude: a city with a pad at its origin block, where a docked robot stands. */
+const frame = { nodes: [], connectors: [], width: 800, height: 500, t: 1, city: { cell: 40, originX: 200, originY: 120 } } as never;
+/* In the stack: no city, no pad. */
+const stack = { nodes: [], connectors: [], width: 800, height: 500, t: 1 } as never;
 
 describe("the occupants", () => {
   it("draws the seated robot docked, as a named button, and follows on press until Escape", async () => {
@@ -50,6 +53,23 @@ describe("the occupants", () => {
     expect(host.querySelector('[data-graview-figure^="agent:tidy:"]')!.getAttribute("data-graview-mode")).toBe("following");
     await act(async () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
     expect(host.querySelector('[data-graview-figure^="agent:tidy:"]')!.getAttribute("data-graview-mode")).not.toBe("following");
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it("does not draw a docked robot in the stack, where it has no place of its own", async () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <GraviewProvider store={store()} views={createViews(schema)} initialView={EMPTY_VIEW}>
+          <Seated who="tidy" />
+          <Occupants frame={stack} width={800} height={500} whereIs={() => null} stageRef={{ current: host }} pan={{ x: 0, y: 0 }} />
+        </GraviewProvider>,
+      ),
+    );
+    expect(host.querySelector('[data-graview-figure^="agent:tidy:"]')).toBeNull();
     await act(async () => root.unmount());
     host.remove();
   });
