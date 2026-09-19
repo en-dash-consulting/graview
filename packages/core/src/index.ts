@@ -219,7 +219,17 @@ export { resolveModules } from "./modules.js";
 export { declareInstallation, INSTALLATION_MODULE } from "./installation.js";
 export type { Installation, InstallationOf, InstallationOptions } from "./installation.js";
 export type { ModuleDeclaration, ModuleMap, ModuleProjection } from "./modules.js";
-export type { IntelligenceProviderDeclaration, IntelligenceReach, MigrationDeclaration, SettingDeclaration } from "./app.js";
+export type {
+  IntelligenceCapability,
+  IntelligenceKind,
+  IntelligenceProviderDeclaration,
+  IntelligenceReach,
+  MigrationDeclaration,
+  SettingDeclaration,
+} from "./app.js";
+export { providerCan } from "./app.js";
+export { undecidableArguments } from "./mutations/decidable.js";
+export type { UndecidableArgument } from "./mutations/decidable.js";
 export { motion, readerSettings, textSize } from "./settings.js";
 export { LOCAL_BRIDGE_PATH } from "./intelligence-bridge.js";
 export type { LocalBridgeAnswer, LocalBridgeAsk, LocalBridgeStatus } from "./intelligence-bridge.js";

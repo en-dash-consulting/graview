@@ -68,6 +68,14 @@ describe("a door", () => {
     await act(async () => root.unmount());
   });
 
+  it("is nothing at all for a provider that decides rather than talks", async () => {
+    /* A decision provider has no prose, so a prompt-out answer-back door
+       would be a chat offered to something that cannot hold one. */
+    const root = await draw(store([{ name: "surveyor", kind: "decision", reach: ["key"], keyStorage: "env" }]));
+    expect(host.querySelector('[data-testid="door"]')).toBeNull();
+    await act(async () => root.unmount());
+  });
+
   it("is nothing at all for a provider nobody declared", async () => {
     const root = await draw(store([{ name: "somebody-else", kind: "llm", reach: ["paste"] }]));
     expect(host.querySelector('[data-testid="door"]')).toBeNull();

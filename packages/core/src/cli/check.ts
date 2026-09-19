@@ -8,6 +8,7 @@ import {
   unwrittenFields,
 } from "../mutations/derive-edits.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
+import { undecidableArguments } from "../mutations/decidable.js";
 import { figureFaults, FIGURE_NAMES } from "../schema/figures.js";
 import { withArticle } from "../schema/define-node.js";
 import { permits, rolesOf } from "../permissions/policy.js";
@@ -222,7 +223,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
         code: "intelligence-reach-on-graph",
         where: `intelligence["${provider.name}"].reach`,
         message: `"${provider.name}" is a graph provider: it IS the graph, so there is no door to it.`,
-        fix: `Drop reach, or declare the provider as "llm" or "external".`,
+        fix: `Drop reach, or declare the provider as "llm", "external" or "decision".`,
       });
     }
     if (reach.includes("local") && !provider.bridge) {
@@ -233,6 +234,42 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
         message: `"${provider.name}" says it can be reached locally and names no bridge, so nothing serves that door.`,
         fix: `Add bridge: "<path>" and serve it with localIntelligence() from @graview/ship/dev.`,
       });
+    }
+    /*
+     * A DECISION PROVIDER IS HELD TO WHAT IT CAN DECIDE. It answers in a
+     * choice, a truth or a score and never in prose, so an act on its
+     * allowlist that wants a label or a note is an act it could never call
+     * — and an allowlist that promises one is a promise the seat would
+     * break silently, by asking a question that has no typed answer. Absent
+     * `may` means every act, and is held to every act.
+     */
+    if (provider.kind === "decision") {
+      for (const mutation of app.mutations ?? []) {
+        if (provider.may !== undefined && !provider.may.includes(mutation.name)) continue;
+        const wants = undecidableArguments(mutation);
+        if (wants.length === 0) continue;
+        add({
+          severity: "error",
+          code: "intelligence-decision-cannot-call",
+          where: `intelligence["${provider.name}"].may`,
+          message: `"${provider.name}" decides and does not write, and "${mutation.name}" needs ${wants
+            .map((want) => `${want.name} (${want.control})`)
+            .join(", ")} — which no typed answer can supply.`,
+          fix:
+            provider.may === undefined
+              ? `Give "${provider.name}" a may: [...] naming only the acts whose arguments are choices, node references, truths or bounded numbers.`
+              : `Drop "${mutation.name}" from may, or make its ${wants.map((want) => want.name).join(", ")} optional.`,
+        });
+      }
+      if (reach.includes("paste") || reach.includes("mcp")) {
+        add({
+          severity: "warning",
+          code: "intelligence-decision-prose-door",
+          where: `intelligence["${provider.name}"].reach`,
+          message: `"${provider.name}" decides and has no prose, so a paste or MCP door — words out, words back — leads nowhere.`,
+          fix: `Reach a decision provider by "key" or "local".`,
+        });
+      }
     }
     if (reach.includes("key") && !provider.keyStorage) {
       add({

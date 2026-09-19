@@ -213,9 +213,52 @@ export interface MigrationDeclaration {
  */
 export type IntelligenceReach = "paste" | "mcp" | "key" | "local";
 
+/**
+ * WHAT KIND OF THING ANSWERS.
+ *
+ *   "graph"    — the declaration itself: starter data and the repairs an
+ *                invariant already named. Keyless, always there.
+ *   "llm"      — a model reached through one completion function. Prose in,
+ *                prose out, proposals read out of the prose.
+ *   "external" — somebody's own agent, arriving over the derived tool
+ *                surface with its own model behind it.
+ *   "decision" — a model that answers TYPED questions and nothing else: a
+ *                Choice over named options, a Score over an ordered rubric,
+ *                a truth with a confidence. It writes no prose and cannot
+ *                propose an arbitrary call, so a chat seat must not offer
+ *                it, a field that wants filling should, and the checker
+ *                refuses it an act whose arguments it could not decide.
+ */
+export type IntelligenceKind = "graph" | "llm" | "external" | "decision";
+
+/** What a provider of some kind can be asked for. */
+export type IntelligenceCapability = "prose" | "decide" | "propose";
+
+/**
+ * The capabilities each kind serves, derived from the kind alone — so a
+ * surface asks whether a provider CAN before it offers one, rather than
+ * remembering which names talk.
+ */
+export function providerCan(
+  provider: { readonly kind: IntelligenceKind },
+  capability: IntelligenceCapability,
+): boolean {
+  switch (provider.kind) {
+    case "graph":
+      return capability !== "prose";
+    case "decision":
+      return capability === "decide";
+    case "llm":
+    case "external":
+      return true;
+    default:
+      return false;
+  }
+}
+
 export interface IntelligenceProviderDeclaration {
   readonly name: string;
-  readonly kind: "graph" | "llm" | "external";
+  readonly kind: IntelligenceKind;
   readonly description?: string;
   /** Mutation names this provider may propose or call. Absent means all. */
   readonly may?: readonly string[];

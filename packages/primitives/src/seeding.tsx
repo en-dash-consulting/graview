@@ -1,4 +1,4 @@
-import { beginning, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
+import { beginning, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
 import { kindCardId } from "@graview/layout";
 import {
   createViews,
@@ -827,6 +827,15 @@ export function Door<S extends AnySchema>({ provider, prompt, photos = [], onPro
   };
 
   if (!declared) return null;
+  /*
+   * A DOOR IS FOR PROSE. Every door here carries words out and words back
+   * — a prompt copied, an answer pasted, a process asked on this machine —
+   * and a decision provider has none to give: it answers typed questions
+   * with typed answers, through the questions the declaration derives, not
+   * through a prompt. Drawing it a door would be offering a chat to a
+   * thing that cannot talk.
+   */
+  if (!providerCan(declared, "prose")) return null;
   return (
     <div data-testid="door" data-door-reach={reach.join(",")} style={{ display: "grid", gap: 8 }}>
       {reach.includes("local") ? (

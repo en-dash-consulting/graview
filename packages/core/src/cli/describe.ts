@@ -204,10 +204,19 @@ export function describeApp<S extends AnySchema>(
           : provider.reach?.length
             ? `reached by ${list([...provider.reach])}`
             : "no door declared, so nothing derived can offer one";
+      /*
+       * A decision provider is read out for what it IS: typed answers, never
+       * prose. A reader deciding whether to offer it in a chat, or to a
+       * field that wants filling, needs that sentence more than the doors.
+       */
+      const nature =
+        provider.kind === "decision"
+          ? " Answers typed questions only — a choice, a truth, a score — and never prose, so no chat seat offers it."
+          : "";
       lines.push(
         `${provider.name} (${provider.kind}) — ${doors}; may ${
           provider.may ? list([...provider.may]) : "every act"
-        }.`,
+        }.${nature}`,
       );
     }
   }

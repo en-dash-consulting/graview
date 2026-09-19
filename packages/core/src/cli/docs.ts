@@ -82,6 +82,12 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
     for (const provider of app.intelligence) {
       lines.push(`### ${provider.name} (${provider.kind})`);
       if (provider.description) lines.push("", provider.description);
+      if (provider.kind === "decision") {
+        lines.push(
+          "",
+          "Answers typed questions only — a choice over declared options, a truth, a score over a declared rubric — with a confidence, and never prose. Not a conversational seat.",
+        );
+      }
       /* THE DOORS, so a reader knows how to reach it rather than guessing. */
       if (provider.reach?.length) {
         lines.push("", `Reached by: ${provider.reach.join(", ")}.`);
