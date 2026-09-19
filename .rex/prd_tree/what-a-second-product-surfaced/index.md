@@ -26,7 +26,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Lenses that bind more domains than the examples](./lenses-that-bind-more-domains-than-the/index.md) | completed |
 | [Pages can route to anything, and the shell passes the responder through](./pages-can-route-to-anything-and-the/index.md) | completed |
 | [The declaration types what it makes, and the checker asks the questions that matter](./the-declaration-types-what-it-makes/index.md) | completed |
-| [The product adopted what it asked for, and found the next round](./the-product-adopted-what-it-asked-for/index.md) | pending |
+| [The product adopted what it asked for, and found the next round](./the-product-adopted-what-it-asked-for/index.md) | completed |
 | [The scaffolder writes what a product actually needs](./the-scaffolder-writes-what-a-product/index.md) | completed |
 | [The scene stays standing — error boundary, chrome floors, phone width, the view in the URL](./the-scene-stays-standing-error/index.md) | completed |
 | [Two stack overflows the survey found on 2026-09-19: the shelf's iso block hangs 9px below the stage, and the launcher's matrix is cut at row 10](./two-stack-overflows-the-survey-found.md) | pending |

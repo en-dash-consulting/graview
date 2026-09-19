@@ -58,7 +58,13 @@ export type QuestionAbout =
       /** The act that writes the field, and the argument the answer fills. */
       readonly writes?: { readonly mutation: string; readonly arg: string; readonly subjectArg: string };
     }
-  | { readonly about: "argument"; readonly mutation: string; readonly arg: string }
+  | {
+      readonly about: "argument";
+      readonly mutation: string;
+      readonly arg: string;
+      /** For a pair question: the other node the argument would name. Carried, not parsed — an id may hold a colon. */
+      readonly other?: string;
+    }
   | { readonly about: "rule"; readonly invariant: string; readonly subjectId?: string }
   | {
       readonly about: "repair";
@@ -369,6 +375,7 @@ export function pairQuestion<S extends AnySchema>(
     about: "argument",
     mutation: name,
     arg: other.name,
+    other: otherId,
     question: {
       type: "noul",
       instructions: `${title}: ${labelA} — ${labelB}? ${mutation.description ?? ""}`.trim(),

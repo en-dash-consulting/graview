@@ -481,7 +481,7 @@ function callsFrom<S extends AnySchema>(
   for (const question of visit.questions) {
     const answer = answers[question.id];
     if (!answer || answer.type !== "noul" || question.about !== "argument" || !subjectArg) continue;
-    const otherId = question.id.split(":")[3];
+    const otherId = question.other;
     const holds = answer.noul >= threshold;
     const yes: PlannedCall | undefined = otherId
       ? {
