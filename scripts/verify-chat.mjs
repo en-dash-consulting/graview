@@ -269,6 +269,32 @@ try {
     ...kept,
     ok: kept.source === "graph" && kept.key === "k-test",
   };
+
+  /* --------------- the decision rung says what it cannot do, in the answer */
+  // Four rungs on one switch; the fourth decides and does not talk, so the
+  // graph answers the chat and the seat SAYS SO in the reply itself — the
+  // sentence is part of the answer, not chrome painted by the panel — and
+  // switching takes effect without a reload.
+  await remote.click('[data-testid="chat-settings"]');
+  await remote.waitForSelector('[data-testid="chat-settings-form"]');
+  const rungs = await remote.$$eval('input[name="intelligence-source"]', (inputs) => inputs.map((input) => input.value));
+  await remote.check('input[name="intelligence-source"][value="decision"]');
+  await remote.click('[data-testid="chat-settings-form"] button[type="submit"]');
+  await remote.waitForFunction(
+    () => (document.querySelector('[data-testid="chat-source"]')?.textContent ?? "").includes("decides"),
+    null,
+    { timeout: 10_000 },
+  );
+  const decided = await send(remote, "what's wrong?");
+  report.checks.decisionRungSaysItDecides = {
+    rungs,
+    header: await remote.textContent('[data-testid="chat-source"]'),
+    reply: decided.text.slice(-120),
+    ok:
+      rungs.join(",") === "graph,local,decision,remote" &&
+      decided.text.includes("decides rather than talks") &&
+      decided.text.includes("the graph is answering here"),
+  };
   await remote.close();
   stopVite(vite);
   vite = null;

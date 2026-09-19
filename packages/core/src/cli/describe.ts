@@ -1,4 +1,4 @@
-import type { GraviewApp, IntelligenceProviderDeclaration } from "../app.js";
+import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceProviderDeclaration } from "../app.js";
 import { beginning } from "../beginning.js";
 import { deriveEditMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
@@ -219,6 +219,30 @@ export function describeApp<S extends AnySchema>(
         }.${nature}`,
       );
     }
+  }
+
+  /*
+   * THE LADDER, READ OUT. Which rungs this app declares and what each can
+   * do — so a reader knows, before opening it, that on a decision rung the
+   * chat seat will be answered by the graph, and that a prose-only door is
+   * not a rung a field can be filled from. The graph rung is always there,
+   * declared or not: it is what everything falls down to.
+   */
+  lines.push("", "## The ladder");
+  const graphDeclared = providers.some((provider) => provider.kind === "graph");
+  lines.push(
+    `graph only (${graphDeclared ? "declared" : "always there, undeclared"}) — ${capabilitiesOf("graph").map(describeCapability).join("; ")}. Keyless; every capability a rung cannot serve falls down to it.`,
+  );
+  for (const provider of providers as readonly IntelligenceProviderDeclaration[]) {
+    if (provider.kind === "graph") continue;
+    const serves = capabilitiesOf(provider.kind);
+    const cannot = (["prose", "decide", "propose"] as const).filter((capability) => !serves.includes(capability));
+    lines.push(
+      `${provider.name} (${provider.kind}) — ${serves.map(describeCapability).join("; ")}.` +
+        (cannot.length > 0
+          ? ` Cannot ${cannot.map((capability) => ({ prose: "talk", decide: "decide", propose: "propose" })[capability]).join(" or ")}: on this rung the graph answers that instead.`
+          : ""),
+    );
   }
 
   /* WHAT IS JUDGED. A rule with no repair is a problem a person is told about and cannot fix. */

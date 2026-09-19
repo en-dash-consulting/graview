@@ -111,6 +111,21 @@ describe("reading a decision provider out", () => {
     expect(said).toContain("never prose");
   });
 
+  it("describe reads the ladder out: which rungs the app declares and what each can do", () => {
+    const said = describeApp(
+      app([
+        { name: "starter", kind: "graph", may: ["set-surface"] },
+        { name: "jev", kind: "decision", may: ["set-surface"] },
+        { name: "model", kind: "llm", may: ["set-surface"] },
+      ]),
+    );
+    expect(said).toContain("## The ladder");
+    expect(said).toContain("graph only (declared) — decides");
+    expect(said).toContain("jev (decision) — decides — answers a typed question with a confidence. Cannot talk or propose: on this rung the graph answers that instead.");
+    expect(said).toContain("model (llm) — talks");
+    expect(describeApp(app([]))).toContain("graph only (always there, undeclared)");
+  });
+
   it("the docs say so too", () => {
     const said = generateLlmsTxt(app([{ name: "jev", kind: "decision", may: ["set-surface"] }]));
     expect(said).toContain("### jev (decision)");

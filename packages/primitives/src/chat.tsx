@@ -83,6 +83,13 @@ export function ChatPanel<S extends AnySchema>({
     [store, principal],
   );
   const statusToken = useRef(0);
+  /*
+   * The setting as it is NOW, for a turn that started before it changed:
+   * the answer says which rung made it and which the person has moved to,
+   * rather than finishing silently on a rung they left.
+   */
+  const configNow = useRef(config);
+  configNow.current = config;
   const answer = useMemo<Responder<S>>(() => {
     // A replaced responder must not keep narrating: only the current
     // build's status reaches the header.
@@ -93,6 +100,7 @@ export function ChatPanel<S extends AnySchema>({
         onStatus: (status) => {
           if (token === statusToken.current) setWarmth(status);
         },
+        current: () => configNow.current,
       })
     );
   }, [respond, config]);
@@ -244,7 +252,7 @@ export function ChatPanel<S extends AnySchema>({
                 data-testid="chat-settings"
                 aria-expanded={settings}
                 onClick={() => setSettings((current) => !current)}
-                title="Choose what answers: the graph, a model in this browser, or your own key"
+                title="Choose what answers: the graph, a model in this browser, a decision provider, or your own key"
                 style={{ fontSize: "0.75rem", padding: "2px 8px", minHeight: 24 }}
               >
                 ⚙
@@ -392,6 +400,7 @@ export function IntelligenceSettings({
   const [apiKey, setApiKey] = useState(config.remote?.apiKey ?? "");
   const [model, setModel] = useState(config.remote?.model ?? "");
   const [baseUrl, setBaseUrl] = useState(config.remote?.baseUrl ?? "");
+  const [decisionKey, setDecisionKey] = useState(config.decision?.apiKey ?? "");
 
   const label: React.CSSProperties = { fontSize: "0.6875rem", color: "var(--graview-ink-muted)" };
   const field: React.CSSProperties = {
@@ -431,15 +440,29 @@ export function IntelligenceSettings({
             : config.remote
               ? { remote: config.remote }
               : {};
-        onDone({ source, ...remote });
+        /*
+         * The decision rung needs no key in the browser at all — the dev
+         * server's door holds one — so an empty key is a choice, not a
+         * refusal: the door is used. A key typed here goes straight to
+         * the provider, like the LLM rung's.
+         */
+        const decisionHeld = decisionKey || config.decision?.apiKey || "";
+        const decision =
+          decisionHeld.length > 0
+            ? { decision: { ...(config.decision ?? {}), apiKey: decisionHeld } }
+            : config.decision
+              ? { decision: config.decision }
+              : {};
+        onDone({ source, ...remote, ...decision });
       }}
       style={{ display: "grid", gap: 10, padding: 12, maxHeight: "min(46cqh, 400px)", overflowY: "auto" }}
     >
       {(
         [
-          ["graph", "Graph-native", "Keyless and instant. The graph answers from its own structure."],
-          ["local", "In this browser", "A small model runs on this machine. First use downloads ~1–2GB, then it is free and private."],
-          ["remote", "Advanced (your key)", "A frontier model answers. Calls go straight from this browser to the provider."],
+          ["graph", "Graph only", "Keyless and instant. The graph answers from its own structure."],
+          ["local", "Onboard AI", "A small model runs in this browser. First use downloads ~1–2GB, then it is free and private."],
+          ["decision", "Jev (decides, does not talk)", "A decision provider answers typed questions exactly — which surface, which zone, does this help — with a confidence. It writes no prose, so the graph still answers the chat."],
+          ["remote", "LLM (your key)", "A frontier model answers. Calls go straight from this browser to the provider."],
         ] as const
       ).map(([value, title, detail]) => (
         <label key={value} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 8, alignItems: "start", cursor: "pointer" }}>
@@ -456,6 +479,28 @@ export function IntelligenceSettings({
           </span>
         </label>
       ))}
+
+      {source === "decision" ? (
+        <div style={{ display: "grid", gap: 8, paddingLeft: 22 }}>
+          <label style={{ display: "grid", gap: 3 }}>
+            <span style={label}>TypeSafe key (optional)</span>
+            <input
+              type="password"
+              data-testid="chat-decision-key"
+              value={decisionKey}
+              onChange={(event) => setDecisionKey(event.target.value)}
+              placeholder="leave empty to use the dev server's door"
+              autoComplete="off"
+              style={field}
+            />
+          </label>
+          <p style={{ ...label, margin: 0, lineHeight: 1.4 }}>
+            With no key here, questions go through this app's own decision door, which holds a key
+            on the server side (TYPESAFE_API_KEY in the environment `pnpm dev` was started from). A
+            key typed here is stored in this browser only and sent only to the provider.
+          </p>
+        </div>
+      ) : null}
 
       {source === "remote" ? (
         <div style={{ display: "grid", gap: 8, paddingLeft: 22 }}>

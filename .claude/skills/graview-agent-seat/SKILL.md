@@ -114,8 +114,11 @@ path to the store:
   the seat beside the product rather than the surface in it.
 
 Declare what runs where on the app: `intelligence: [{ name, kind:
-"graph" | "llm" | "external", may: [...mutations] }]` — `graview check`
-refuses an allowlist naming a mutation nobody registered, and the STORE
+"graph" | "llm" | "external" | "decision", may: [...mutations] }]` —
+`graview check` refuses an allowlist naming a mutation nobody registered,
+refuses a `"decision"` provider (one that answers typed questions — a
+choice, a truth, a score — and never prose) any act whose required
+arguments want text, and the STORE
 enforces it: hand the store `intelligence` and an author
 `{ kind: "agent", id: "<provider name>" }` is refused anything outside its
 `may`, on `apply` as on a tool call. `openStore` and the embed pass it

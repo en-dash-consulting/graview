@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-14T05:12:23.690Z",
+  "at": "2026-09-19T05:29:38.345Z",
   "engine": "chromium",
   "checks": {
     "closedByDefault": {
@@ -46,6 +46,17 @@
     "keySurvivesRungSwitch": {
       "source": "graph",
       "key": "k-test",
+      "ok": true
+    },
+    "decisionRungSaysItDecides": {
+      "rungs": [
+        "graph",
+        "local",
+        "decision",
+        "remote"
+      ],
+      "header": "jev — decides; the graph talks",
+      "reply": "her than talks — the graph is answering here.)Mark it done — Find someone who moves pianosMark it done — Pay the deposit",
       "ok": true
     }
   },

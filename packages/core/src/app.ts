@@ -243,16 +243,45 @@ export function providerCan(
   provider: { readonly kind: IntelligenceKind },
   capability: IntelligenceCapability,
 ): boolean {
-  switch (provider.kind) {
+  return capabilitiesOf(provider.kind).includes(capability);
+}
+
+/**
+ * THE LADDER HAS TWO AXES, and this is the table that keeps a switch from
+ * lying about it. Prose is one axis — a Responder answers in it, and a
+ * decision provider has none. A decision is the other — which surface is
+ * this, does this practice address that concern — and it can be answered
+ * by the graph's own rules, by a decision provider exactly, or by a model
+ * with the whole parse-and-refuse layer behind it. A kind declares which
+ * it serves; a surface asks for a capability, never for a kind; and what a
+ * kind cannot serve falls down to the graph, which is keyless and always
+ * there.
+ */
+export function capabilitiesOf(kind: IntelligenceKind): readonly IntelligenceCapability[] {
+  switch (kind) {
     case "graph":
-      return capability !== "prose";
+      return ["decide", "propose"];
     case "decision":
-      return capability === "decide";
+      return ["decide"];
     case "llm":
     case "external":
-      return true;
+      return ["prose", "decide", "propose"];
     default:
-      return false;
+      return [];
+  }
+}
+
+/** What a capability is for, in a reader's words. */
+export function describeCapability(capability: IntelligenceCapability): string {
+  switch (capability) {
+    case "prose":
+      return "talks — answers in sentences";
+    case "decide":
+      return "decides — answers a typed question with a confidence";
+    case "propose":
+      return "proposes — offers calls to declared acts";
+    default:
+      return capability;
   }
 }
 

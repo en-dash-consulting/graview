@@ -96,6 +96,8 @@ export function StudioAgentPanel({
    * cannot answer. The drawing reaches the same configured provider through
    * `completionFor`, so there is one place a key is read.
    */
+  const configNow = useRef(config);
+  configNow.current = config;
   const answer = useMemo<Responder<StudioSchema>>(() => {
     const token = ++statusToken.current;
     const onStatus = (status: LocalStatus) => {
@@ -103,7 +105,7 @@ export function StudioAgentPanel({
     };
     const complete = completionFor(config, { onStatus });
     const floor = studioResponder(complete ? { complete } : {});
-    return configuredResponder<StudioSchema>(config, { onStatus, floor });
+    return configuredResponder<StudioSchema>(config, { onStatus, floor, current: () => configNow.current });
   }, [config]);
 
   useEffect(() => {
@@ -345,7 +347,7 @@ export function StudioAgentPanel({
               data-testid={`${testId}-settings`}
               aria-expanded={settings}
               onClick={() => setSettings((current) => !current)}
-              title="Choose what answers: the declaration itself, a model in this browser, or your own key"
+              title="Choose what answers: the declaration itself, a model in this browser, a decision provider, or your own key"
               style={{ fontSize: "0.75rem", padding: "2px 8px", minHeight: 24 }}
             >
               ⚙

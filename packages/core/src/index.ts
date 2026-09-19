@@ -227,7 +227,7 @@ export type {
   MigrationDeclaration,
   SettingDeclaration,
 } from "./app.js";
-export { providerCan } from "./app.js";
+export { capabilitiesOf, describeCapability, providerCan } from "./app.js";
 export { undecidableArguments } from "./mutations/decidable.js";
 export type { UndecidableArgument } from "./mutations/decidable.js";
 export { motion, readerSettings, textSize } from "./settings.js";

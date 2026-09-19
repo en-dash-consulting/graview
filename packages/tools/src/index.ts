@@ -60,15 +60,21 @@ export type { ChatContext, ChatReply, Responder } from "./conversation.js";
 export {
   completionFor,
   configuredResponder,
+  decideFor,
   DEFAULT_INTELLIGENCE,
   describeIntelligence,
   loadIntelligenceConfig,
   localCompletion,
   openAiCompatibleCompletion,
+  RUNGS,
+  rungFor,
+  rungHonesty,
   saveIntelligenceConfig,
   xaiCompletion,
 } from "./local.js";
-export type { IntelligenceConfig, LocalStatus } from "./local.js";
+export type { IntelligenceConfig, IntelligenceSource, LocalStatus } from "./local.js";
+export { completionDecide, graphDecide } from "./decide.js";
+export type { PartlyDecided } from "./decide.js";
 export { drawFigure, FIGURE_STYLE, nearestFigure, onlyTheSvg } from "./figure.js";
 export type { DrawnFigure } from "./figure.js";
 
