@@ -22,7 +22,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A district is a village: its members stand as small buildings on the plot, the landmark among them, so the population is the size of the cluster](./a-district-is-a-village-its-members.md) | completed |
 | [A plot is drawn as ground: an iso tile per district in its hue, with a kerb and a cast shadow, and the lattice reads as fields between plots](./a-plot-is-drawn-as-ground-an-iso-tile.md) | completed |
 | [Roads run on the ground between plots: one road per relation kind, lattice-aligned, ending at the kerb, with member lines only for what is selected](./roads-run-on-the-ground-between-plots.md) | completed |
-| [Signs stand on the land: the nameplate is a signpost at the plot's front corner, and the descent from altitude lands in the village](./signs-stand-on-the-land-the-nameplate.md) | pending |
-| [The bar and the plates say less: Up and Down instead of Graview and Focus, an open chevron only when reached for, no "moved" for a move nobody made, and a legend of what is on screen](./the-bar-and-the-plates-say-less-up-and.md) | pending |
-| [The drive-in screen stands on its plot and the marquee is its sign: no picture hovering at the top of the window](./the-drive-in-screen-stands-on-its-plot.md) | pending |
-| [The seat's door is a setting in the profile, not a pane of prose over the map](./the-seat-s-door-is-a-setting-in-the.md) | pending |
+| [The bar and the plates say less: Up and Down instead of Graview and Focus, an open chevron only when reached for, no "moved" for a move nobody made, and a legend of what is on screen](./the-bar-and-the-plates-say-less-up-and.md) | completed |
+| [The descent lands in the village: leaving altitude zooms into the plot you chose, with its tile as the pivot, rather than flying it to the centre](./the-descent-lands-in-the-village.md) | pending |
+| [The drive-in screen stands on its plot and the marquee is its sign: no picture hovering at the top of the window](./the-drive-in-screen-stands-on-its-plot.md) | completed |
+| [The seat's door is a setting in the profile, not a pane of prose over the map](./the-seat-s-door-is-a-setting-in-the.md) | completed |

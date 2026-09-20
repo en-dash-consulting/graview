@@ -1,5 +1,6 @@
 import { labelOf, type AnySchema } from "@graview/core";
 import { useGraview } from "@graview/react";
+import { LadderSetting } from "./ladder.js";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Seats } from "./seats.js";
 
@@ -286,6 +287,11 @@ export function Profile<S extends AnySchema>({
               <Seats<S> />
             </div>
           ) : null}
+
+          {/* Which rung answers the chat: a setting like the others, not a pane over the map. */}
+          <div style={{ display: "grid", gap: 6, ...ruled }}>
+            <LadderSetting />
+          </div>
 
           {settings.length > 0 ? (
             <div style={{ display: "grid", gap: 10, ...ruled }}>

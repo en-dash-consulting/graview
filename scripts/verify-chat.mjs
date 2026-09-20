@@ -253,10 +253,27 @@ try {
   };
 
   /* ------------------------ a saved key survives visiting another rung */
-  await remote.click('[data-testid="chat-settings"]');
-  await remote.waitForSelector('[data-testid="chat-settings-form"]');
-  await remote.check('input[name="intelligence-source"][value="graph"]');
-  await remote.click('[data-testid="chat-settings-form"] button[type="submit"]');
+  // The ladder is a setting in the profile pane now, not a form in the chat.
+  const rung = async (page, value) => {
+    const shown = await page.evaluate(() => {
+      const pane = document.querySelector('[data-testid="profile"]');
+      return pane !== null && !pane.hasAttribute("hidden");
+    });
+    if (!shown) {
+      await page.click('[data-testid="profile-button"]');
+      await page.waitForTimeout(300);
+    }
+    await page.click(`[data-testid="setting-intelligence-${value}"]`);
+    await page.waitForTimeout(200);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(150);
+    // Escape put the profile away and the chat with it; the conversation comes back.
+    if (!(await page.$('[data-testid="chat-panel"]'))) {
+      await page.click('[data-testid="chat"]');
+      await page.waitForSelector('[data-testid="chat-panel"]');
+    }
+  };
+  await rung(remote, "graph");
   await remote.waitForFunction(
     () => document.querySelector('[data-testid="chat-source"]')?.textContent?.trim() === "graph-native",
     null,
@@ -276,11 +293,16 @@ try {
   // graph answers the chat and the seat SAYS SO in the reply itself — the
   // sentence is part of the answer, not chrome painted by the panel — and
   // switching takes effect without a reload.
-  await remote.click('[data-testid="chat-settings"]');
-  await remote.waitForSelector('[data-testid="chat-settings-form"]');
-  const rungs = await remote.$$eval('input[name="intelligence-source"]', (inputs) => inputs.map((input) => input.value));
-  await remote.check('input[name="intelligence-source"][value="decision"]');
-  await remote.click('[data-testid="chat-settings-form"] button[type="submit"]');
+  await rung(remote, "decision");
+  await remote.click('[data-testid="profile-button"]');
+  await remote.waitForTimeout(200);
+  const rungs = await remote.$$eval('[data-testid^="setting-intelligence-"][aria-pressed]', (pills) => pills.map((pill) => pill.getAttribute("data-testid").replace("setting-intelligence-", "")));
+  await remote.keyboard.press("Escape");
+  await remote.waitForTimeout(150);
+  if (!(await remote.$('[data-testid="chat-panel"]'))) {
+    await remote.click('[data-testid="chat"]');
+    await remote.waitForSelector('[data-testid="chat-panel"]');
+  }
   await remote.waitForFunction(
     () => (document.querySelector('[data-testid="chat-source"]')?.textContent ?? "").includes("decides"),
     null,

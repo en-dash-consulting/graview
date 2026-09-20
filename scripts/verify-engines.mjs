@@ -126,10 +126,12 @@ for (const engine of chosen) {
   clearReport("docs/pages-face.json");
   const pages = await run(["scripts/verify-pages.mjs", `--engine=${engine}`]);
   const pagesReport = readReport("docs/pages-face.json");
-  const flatChecks = JSON.stringify(pagesReport?.checks ?? {});
+  // The pages harness judges its own checks (a check can carry a `false`
+  // field that is the RIGHT answer — "still a form: false" after saving);
+  // this reads its verdict rather than grepping its report for the word.
   results.pages = pagesReport
     ? {
-        ok: pages.code === 0 && !flatChecks.includes("false"),
+        ok: pages.code === 0 && pagesReport.passed !== false,
         ...(pagesReport.error ? { error: pagesReport.error } : {}),
       }
     : { ok: false, error: `pages wrote no report — ${pages.tail.slice(-300)}` };
@@ -260,7 +262,7 @@ async function verifyAltitudeCut() {
         cut.grid === "0" &&
         cut.overview &&
         cut.markWing === "0" &&
-        cut.controlLabel === "Focus" &&
+        /^Down/.test(cut.controlLabel ?? "") &&
         errors.length === 0,
       registeredPropertiesDisabled: unsupported,
       gridOpacityAt250ms: cut.grid,

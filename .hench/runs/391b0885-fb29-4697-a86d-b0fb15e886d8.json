@@ -1,0 +1,30 @@
+{
+  "id": "391b0885-fb29-4697-a86d-b0fb15e886d8",
+  "taskId": "ed0eca5b-135c-4206-bdba-75f29554bff1",
+  "taskTitle": "A district is a village",
+  "startedAt": "2026-09-20T05:11:02.843Z",
+  "finishedAt": "2026-09-20T05:11:02.843Z",
+  "status": "completed",
+  "turns": 79,
+  "summary": "Buildings per member on the plot, the square kept free, block retired",
+  "tokenUsage": {
+    "input": 2318,
+    "output": 142093,
+    "cacheCreationInput": 210363,
+    "cacheReadInput": 51063820
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 2318,
+    "output": 142093,
+    "cached": 51274183,
+    "total": 51418594
+  }
+}

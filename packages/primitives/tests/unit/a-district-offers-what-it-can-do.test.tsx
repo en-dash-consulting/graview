@@ -80,16 +80,16 @@ const city = async (focusId: string | null) => {
 const card = (kind: string) => host.querySelector(`[data-graview-view="kind:${kind}"]`);
 
 describe("the district of the kind in focus", () => {
-  it("says where its members are instead of offering to open", async () => {
+  it("does not offer to open: its members are the screen standing on its plot", async () => {
     await city(aggregateId("shift"));
     const shifts = card("shift")!;
     expect(shifts.querySelectorAll(".graview-kind-open")).toHaveLength(0);
-    expect(shifts.textContent).toContain("shown above");
+    // No note about it either: the screen on the plot says where they are.
+    expect(shifts.textContent).not.toContain("shown above");
 
     // Every other district is untouched: this is about the one in focus.
     const volunteers = card("volunteer")!;
     expect(volunteers.querySelectorAll(".graview-kind-open")).toHaveLength(1);
-    expect(volunteers.textContent).not.toContain("shown above");
   });
 
   it("does not offer to close the district it opened in place either", async () => {

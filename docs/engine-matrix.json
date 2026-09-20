@@ -1,24 +1,24 @@
 {
-  "at": "2026-09-12T19:26:34.854Z",
+  "at": "2026-09-20T13:42:05.917Z",
   "engines": {
     "chromium": {
       "audit": {
         "ok": true,
-        "screens": 15
+        "screens": 39
       },
       "pages": {
         "ok": true
       },
       "survey": {
         "ok": true,
-        "shots": 18
+        "shots": 24
       },
       "keyboardSurvivesThePane": {
         "ok": true,
         "paneWentAway": true,
         "tabbedTo": [
           "aggregate:list",
-          "header",
+          "div",
           "div"
         ]
       }
@@ -26,21 +26,21 @@
     "webkit": {
       "audit": {
         "ok": true,
-        "screens": 15
+        "screens": 39
       },
       "pages": {
-        "ok": true
+        "ok": false
       },
       "survey": {
         "ok": true,
-        "shots": 18
+        "shots": 24
       },
       "keyboardSurvivesThePane": {
         "ok": true,
         "paneWentAway": true,
         "tabbedTo": [
           "aggregate:list",
-          "header",
+          "div",
           "div"
         ]
       }
@@ -48,21 +48,21 @@
     "firefox": {
       "audit": {
         "ok": true,
-        "screens": 15
+        "screens": 39
       },
       "pages": {
         "ok": true
       },
       "survey": {
         "ok": true,
-        "shots": 18
+        "shots": 24
       },
       "keyboardSurvivesThePane": {
         "ok": true,
         "paneWentAway": true,
         "tabbedTo": [
           "aggregate:list",
-          "header",
+          "div",
           "div"
         ]
       }
@@ -73,7 +73,7 @@
     "registeredPropertiesDisabled": true,
     "gridOpacityAt250ms": "0",
     "markWingOpacityAt250ms": "0",
-    "controlLabelAt250ms": "Focus",
+    "controlLabelAt250ms": "Down to The lists",
     "overviewReached": true
   },
   "capability": {
@@ -86,7 +86,7 @@
       "text": "graph answering — this browser has no WebGPU, which the local model needs",
       "title": "this browser has no WebGPU, which the local model needs"
     },
-    "answeredFromGraph": "This graph holds 3 Lists, 12 Tasks, 3 Rules, 1 Reasons. Ask about anything by name, ask what's wrong, or say a change in"
+    "answeredFromGraph": "This graph holds 3 Lists, 12 Tasks, 3 Rules, 1 Reasons, 2 People, 1 Invitations. Ask about anything by name, ask what's "
   },
-  "passed": true
+  "passed": false
 }

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-20T05:08:09.951Z",
+  "at": "2026-09-20T13:37:15.702Z",
   "engine": "chromium",
   "steps": [
     {
@@ -77,30 +77,30 @@
   },
   "control": {
     "ground": {
-      "label": "Graview",
+      "label": "Up",
       "pressed": "false",
-      "name": "Graview",
+      "name": "Up",
       "wingOpacity": 0.75,
       "registered": true
     },
     "altitude": {
-      "label": "Focus",
+      "label": "Down to The month",
       "pressed": "true",
-      "name": "Focus",
+      "name": "Down to The month",
       "wingOpacity": 0,
       "registered": true
     },
     "midway": {
-      "label": "Graview",
+      "label": "Up",
       "pressed": "false",
-      "name": "Graview",
-      "wingOpacity": 0.539234,
+      "name": "Up",
+      "wingOpacity": 0.539149,
       "registered": true
     },
     "groundAgain": {
-      "label": "Graview",
+      "label": "Up",
       "pressed": "false",
-      "name": "Graview",
+      "name": "Up",
       "wingOpacity": 0.75,
       "registered": true
     }
@@ -209,12 +209,12 @@
     "standing": {
       "screen": {
         "x": 538.9037475585938,
-        "y": 302.6746826171875,
+        "y": 333.3460693359375,
         "width": 303,
         "height": 257,
-        "top": 302.6746826171875,
+        "top": 333.3460693359375,
         "right": 841.9037475585938,
-        "bottom": 559.6746826171875,
+        "bottom": 590.3460693359375,
         "left": 538.9037475585938
       },
       "card": {
@@ -234,9 +234,9 @@
       "up": true
     },
     "midway": {
-      "x": 694.6669311523438,
-      "y": 432.08465576171875,
-      "width": 324
+      "x": 695.1484375,
+      "y": 461.82830810546875,
+      "width": 325
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",

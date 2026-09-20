@@ -11,6 +11,7 @@ import {
   withPast,
   withZoom,
   type ViewState,
+  kindsOfAggregate,
 } from "@graview/layout";
 import {
   useAffordances,
@@ -2361,7 +2362,8 @@ export function BackOut({ home }: { readonly home: string | null }) {
        * closing in the microtask between listeners — by the time a bubble
        * listener on the window looked, the popover was already gone.
        */
-      if (document.querySelector("[data-graview-overlay]")) return;
+      // A pane kept in the tree but hidden — the profile, shut — is not open over anything.
+      if (document.querySelector("[data-graview-overlay]:not([hidden])")) return;
       /*
        * Outermost first, and the full page is the outermost thing there is.
        *
@@ -2434,12 +2436,30 @@ export function OverviewButton() {
   const { view, go } = useNavigation();
   const { store, views, hiddenKinds } = useGraview();
   const overview = view.overview ?? false;
+  const driveIns = views.places().map((place) => place.kind).filter((kind) => !hiddenKinds.has(kind));
+  const target = descentTarget(view, store.schema.kinds as readonly string[], driveIns);
   const descend = () => {
-    const driveIns = views.places().map((place) => place.kind).filter((kind) => !hiddenKinds.has(kind));
-    const target = descentTarget(view, store.schema.kinds as readonly string[], driveIns);
     go(withFocus(withOverview(view, false), target));
   };
-  const label = overview ? "Focus" : "Graview";
+  /*
+   * UP AND DOWN. "Graview" and "Focus" said neither: a person meeting the
+   * control for the first time had to press it to learn what it did. Up is
+   * up; down says where you land — the place whose picture is showing, or
+   * the district the focus names, in its own words.
+   */
+  const landing = (() => {
+    if (!target) return null;
+    const kind = kindsOfAggregate(target)[0];
+    // The showing that is showing, else the kind's first place.
+    const showing = view.within?.["view"];
+    const place =
+      (showing ? views.places().find((one) => one.as === showing) : undefined) ??
+      (kind ? views.places().find((one) => one.kind === kind) : undefined);
+    if (place) return place.title;
+    if (kind) return store.schema.tryDefinition(kind)?.plural ?? kind;
+    return store.graph.getNode(target)?.label ?? null;
+  })();
+  const label = overview ? (landing ? `Down to ${landing}` : "Down") : "Up";
   return (
     <button
       type="button"
@@ -2447,11 +2467,7 @@ export function OverviewButton() {
       className="graview-altitude-control"
       aria-pressed={overview}
       aria-label={label}
-      title={
-        overview
-          ? "Focus — back down into the view"
-          : "Graview — the whole thing, from outside"
-      }
+      title={overview ? `${label} — back down into the view` : "Up — the whole thing, from outside"}
       // A view state, so it is a URL, the back button works, and the cards
       // already on screen fly out into the ring rather than being replaced.
       onClick={() => (overview ? descend() : go(withOverview(view, true)))}
@@ -2612,7 +2628,13 @@ export function Trail({
 }) {
   const { view, focus, show, go } = useNavigation();
   const { store } = useGraview<AnySchema>();
-  const moved = view.pan !== undefined || Object.keys(view.pins).length > 0;
+  /*
+   * "moved" MEANS A HAND MOVED SOMETHING. A pan carried in a link, or a
+   * pin the layout remembered, is a state to arrive in, not a move to put
+   * back; the chip appears only after a gesture in this tab.
+   */
+  const { movedByHand } = useGraview<AnySchema>();
+  const moved = movedByHand && (view.pan !== undefined || Object.keys(view.pins).length > 0);
   const focused =
     view.focusId && view.focusId !== home ? store.graph.getNode(view.focusId) : undefined;
   const plural = (kind: string) => store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;

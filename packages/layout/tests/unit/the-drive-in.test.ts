@@ -42,7 +42,8 @@ describe("the drive-in", () => {
     /* Its foot is at the far edge of the plot, a little inside — and never on its own nameplate. */
     const foot = screen.y + screen.height;
     expect(foot).toBeLessThanOrEqual(top.y + frame.cell * 0.1 + 0.01);
-    expect(foot).toBeLessThanOrEqual(card.y - 8 + 0.01);
+    // Not above the card any more: the nameplate is a signpost at the front
+    // corner, so the billboard's foot is on the back kerb, wherever the card's top is.
     expect(foot).toBeGreaterThan(card.y - card.height * 2);
     expect(screen.width).toBeGreaterThanOrEqual(300);
     /* And it covers no other district's nameplate. */

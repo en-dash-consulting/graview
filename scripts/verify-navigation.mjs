@@ -589,12 +589,13 @@ report.verdict = {
   theTrailGetsYouHome: placeOf(step("home by breadcrumb")?.url) === placeOf(step("landed")?.url),
   // The altitude control: a toggle that names where it takes you.
   theControlSaysGraviewOnTheGround:
-    report.control?.ground?.label === "Graview" &&
-    report.control?.ground?.name === "Graview" &&
+    report.control?.ground?.label === "Up" &&
+    report.control?.ground?.name === "Up" &&
     report.control?.ground?.pressed === "false",
+  // From altitude the control says where you land: "Down to <place>".
   theControlSaysFocusFromAltitude:
-    report.control?.altitude?.label === "Focus" &&
-    report.control?.altitude?.name === "Focus" &&
+    /^Down to /.test(report.control?.altitude?.label ?? "") &&
+    /^Down to /.test(report.control?.altitude?.name ?? "") &&
     report.control?.altitude?.pressed === "true",
   theMarkHasTwoStates:
     near(report.control?.ground?.wingOpacity, 0.75) && near(report.control?.altitude?.wingOpacity, 0),
@@ -603,7 +604,7 @@ report.verdict = {
     ? between(report.control?.midway?.wingOpacity, 0.04, 0.71)
     : near(report.control?.midway?.wingOpacity, 0.75),
   theControlComesBackDown:
-    report.control?.groundAgain?.label === "Graview" &&
+    report.control?.groundAgain?.label === "Up" &&
     near(report.control?.groundAgain?.wingOpacity, 0.75),
   // An invisible box is not a target: the record answers on its content and nowhere else.
   // A move belongs to the stop it was made at: the next stop is the layout's, and Back has the arrangement.

@@ -2,7 +2,7 @@
 id: "c8b16164-f9cc-47e6-b942-10e8ac2e604a"
 level: "task"
 title: "The bar and the plates say less: Up and Down instead of Graview and Focus, an open chevron only when reached for, no \"moved\" for a move nobody made, and a legend of what is on screen"
-status: "pending"
+status: "completed"
 priority: "medium"
 tags:
   - "interface"
@@ -10,6 +10,11 @@ tags:
   - "altitude"
   - "nameplate"
 source: "Nick's Squad screenshot, 2026-09-19"
+startedAt: "2026-09-20T14:03:58.036Z"
+completedAt: "2026-09-20T14:03:58.036Z"
+endedAt: "2026-09-20T14:03:58.036Z"
+resolutionType: "code-change"
+resolutionDetail: "Up / Down to <place>; chevron quiet until reached for; moved only after a hand's gesture; legend hover lights roads; Escape clears a selection again."
 acceptanceCriteria:
   - "The altitude control reads Up on the ground and Down to <place> from altitude, same test id"
   - "The open chevron on a plate appears on hover, focus or when opened, and Enter on a focused plate opens it"
@@ -17,6 +22,6 @@ acceptanceCriteria:
   - "The legend at altitude lists the edge kinds with a road on screen, and hovering a row emphasises its roads"
   - "navigation, audit and survey harnesses pass"
 description: "Four small things that together make the chrome feel like an engineer's console rather than a place. (1) The altitude control reads \"Graview\" on the ground and \"Focus\" from altitude (workbench/index.tsx ~2399-2442); neither says what happens. Make it a pair a person understands at once: \"Up\" (with the altitude mark) on the ground and \"Down to <place>\" from altitude, where <place> is the named place you would land in (the last place, or the home). Same test id (overview). (2) Every nameplate at altitude carries an \"OPEN ▾\" chip, which is noise times the number of districts; show the chevron only on hover, focus or when the district is opened, keep it reachable by keyboard (the plate is focusable; Enter opens). The count and the warning stay. (3) \"moved ×\" on the bar must mean a hand moved something — the camera's own re-centre no longer counts (fixed 2026-09-19), but a pan carried in a link still shows it on arrival; show it only after a gesture in this tab, and keep \"put it back\" available from the trail regardless. (4) The relations legend lists every edge kind in the schema with its dash; at altitude list only the kinds that have a road on screen, and let a legend row highlight its roads on hover (the existing emphasis). The \"shown above\" note on a plate goes away with the screen standing on its plot (task f3119731). Harnesses: navigation, audit (no repeats, no small targets), survey; tests for the labels and the chevron's visibility."
-lastModified: "2026-09-20T03:46:03.620Z"
+lastModified: "2026-09-20T14:03:58.048Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

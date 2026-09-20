@@ -352,6 +352,15 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   position: relative;
   z-index: 3;
 }
+/* From altitude a district is a village on its plot, not a card: hovering
+   it must not raise a white panel over the buildings. The lift stays in
+   the stack, where the card is a card. */
+[data-graview-altitude] .graview-kind-card:hover,
+[data-graview-altitude] .graview-kind-card:focus-within {
+  transform: none;
+  box-shadow: none;
+  background: transparent;
+}
 .graview-kind-note {
   max-height: 0;
   opacity: 0;
@@ -476,6 +485,30 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 .graview-profile-keeping:not(:has(button, a)) { display: none; }
 .graview-profile-keeping > * { justify-self: start; }
 
+/* THE OPEN CHEVRON APPEARS WHEN REACHED FOR. Drawn on every plate at
+   altitude it was noise times the number of districts; it shows on hover,
+   on keyboard focus, and while the district is open — and stays a real
+   button in between, so Tab still finds it and Enter still opens. */
+[data-graview-altitude] .graview-kind-open {
+  opacity: 0.5;
+  transition: opacity 150ms ease;
+}
+/* Quiet: the chevron alone until reached for. Never opacity zero — a
+   button nobody can see is a button a driven browser cannot press either,
+   and Tab must land on something that looks like something. */
+[data-graview-altitude] .graview-kind-open-word {
+  display: none;
+}
+[data-graview-altitude] .graview-kind-card:hover .graview-kind-open,
+[data-graview-altitude] .graview-kind-card:focus-within .graview-kind-open,
+[data-graview-altitude] .graview-kind-open[aria-expanded="true"] {
+  opacity: 1;
+}
+[data-graview-altitude] .graview-kind-card:hover .graview-kind-open-word,
+[data-graview-altitude] .graview-kind-card:focus-within .graview-kind-open-word,
+[data-graview-altitude] .graview-kind-open[aria-expanded="true"] .graview-kind-open-word {
+  display: inline;
+}
 /* The district-open control and its roster: altitude-only chrome. Inside
    the stack expanding dissolves a card, so the control does not exist
    there. A full fingertip even though the glyph is small — the audit holds
@@ -1001,10 +1034,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 /* The nameplate floats ABOVE a drawing rather than standing on it. On a box
    the pill sits on the roof, which is what a label does over a building; on
    a figure the same 2% put it across the head. */
-[data-graview-altitude] [data-graview-landmark] .graview-kind-face {
-  top: 0 !important;
-  transform: translate(-50%, calc(-100% - 7px));
-}
+
 .graview-kind-landmark [data-graview-figure] {
   width: 100% !important;
   height: 100% !important;
@@ -1026,10 +1056,15 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
     padding 640ms cubic-bezier(0.33, 0, 0.2, 1),
     box-shadow 640ms ease;
 }
+/* A SIGNPOST at the plot's front corner. From altitude the nameplate stood
+   at the top of the card — over the back row of the village — and the
+   screen had to clear it. It is planted at the front vertex of the tile
+   now, on a short post, where a sign stands at the entrance to a place;
+   the scene says where that vertex is in --graview-front-y. */
 [data-graview-altitude] .graview-kind-face {
   position: absolute !important;
   left: 50% !important;
-  top: 2% !important;
+  top: calc(var(--graview-front-y, 2%) - 22px) !important;
   transform: translateX(-50%);
   width: max-content;
   /* Wider than the block when the name is: a label overflows its building
@@ -1045,6 +1080,55 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   box-shadow: var(--graview-lift-low) !important;
   z-index: 2;
 }
+[data-graview-altitude] [data-graview-plot] .graview-kind-face::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: 10px;
+  background: var(--graview-ink-faint);
+}
+/* And the landmark's plate stands at the same post, not over its head. */
+[data-graview-altitude] [data-graview-landmark] .graview-kind-face {
+  top: calc(var(--graview-front-y, 0%) - 22px) !important;
+  transform: translateX(-50%);
+}
+/* The drive-in's board hangs UNDER the signpost, in the ground the layout
+   reserved for it below the tile's front corner, not over the village. */
+[data-graview-altitude] .graview-drive-in {
+  top: calc(var(--graview-front-y, 42px) + 12px);
+}
+/* An OPENED district's listing takes the ground under the signpost; the
+   board steps up over the village, which the listing covers anyway. */
+[data-graview-altitude] .graview-kind-face[data-graview-opened] ~ .graview-drive-in {
+  top: calc(var(--graview-front-y, 42px) - 22px - var(--graview-marquee-room, 0px) + 8px);
+}
+/* THE LANDMARK STANDS IN THE SQUARE: its feet at the plot's centre, among
+   the buildings, rather than at the card's bottom edge — which, once the
+   card grew for a board, was out in the road in front of the village. */
+[data-graview-altitude] [data-graview-plot] .graview-kind-landmark {
+  bottom: auto;
+  top: calc(var(--graview-centre-y, 50%) + 10px);
+  transform: translate(-50%, -100%) scale(calc(0.55 + var(--graview-altitude) * 0.45));
+}
+/* THE SCREEN IS A BILLBOARD at the back of the village: a frame, and two
+   posts into the ground at its foot. */
+[data-graview-altitude] [data-graview-screen] {
+  outline: 2px solid color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
+  outline-offset: 0;
+}
+[data-graview-altitude] [data-graview-screen]::before,
+[data-graview-altitude] [data-graview-screen]::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  width: 3px;
+  height: 16px;
+  background: color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
+}
+[data-graview-altitude] [data-graview-screen]::before { left: 22%; }
+[data-graview-altitude] [data-graview-screen]::after { right: 22%; }
 
 /* A thing inside a view that is itself a thing: an event in a calendar, a
    person in a list. It has to look reachable, and it has to SHOW focus —

@@ -1,4 +1,4 @@
-import { beginning, labelOf } from "@graview/core";
+import { beginning, labelOf , toIso } from "@graview/core";
 import type { AnySchema, Fidelity, GraphReader, NodeOfSchema } from "@graview/core";
 import {
   aggregateId,
@@ -145,7 +145,7 @@ export function Scene<S extends AnySchema>({
     selection,
     setSelection,
     setMenuAt,
-    emphasis, hiddenKinds, registerScene, pointer, brand } = useGraview<S>();
+    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -568,6 +568,8 @@ export function Scene<S extends AnySchema>({
       // ends on a card does not also select it.
       swallow.current = true;
       setTimeout(() => (swallow.current = false), 0);
+      // And say a hand moved something, so the bar can offer to put it back.
+      noteMoved();
     }
     gesture.current = null;
     setDragging(false);
@@ -603,6 +605,13 @@ export function Scene<S extends AnySchema>({
       node={node}
       crowded={crowded(node)}
       useDom={useDom}
+      {...(node.plot && frame.city && Math.round(node.plane) === 2
+        ? {
+            frontY: frame.city.originY + panned.y + toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side, frame.city.cell).y - node.y,
+            centreY: frame.city.originY + panned.y + toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell).y - node.y,
+          }
+        : {})}
+      {...(node.screenOf !== undefined ? { screen: true } : {})}
       touched={touched.has(node.id)}
       {...(activityOf(node) ? { activity: activityOf(node) } : {})}
       scheme={scheme}
@@ -1657,6 +1666,12 @@ interface HostProps {
   readonly node: SceneNode;
   readonly useDom: boolean;
   readonly touched: boolean;
+  /** From altitude: how far below this box's top the plot's front vertex lies, so the nameplate can stand there as a signpost. */
+  readonly frontY?: number;
+  /** From altitude: how far below this box's top the plot's centre lies, where the landmark stands in the square. */
+  readonly centreY?: number;
+  /** From altitude: this box is the focused place's screen, a billboard on its plot. */
+  readonly screen?: boolean;
   /** Too narrow for its plane's fidelity; rendering its glyph instead. */
   readonly crowded?: boolean;
   /** What just happened here, if anything. Absent on a quiet graph. */
@@ -1695,6 +1710,9 @@ function SceneViewHost({
   node,
   useDom,
   touched,
+  frontY,
+  centreY,
+  screen,
   crowded,
   activity,
   scheme,
@@ -1825,6 +1843,8 @@ function SceneViewHost({
          * built on `Panel` gets it without knowing planes exist.
          */
         ["--graview-lift-low" as string]: planeShadow(style.shadow, scheme),
+        ...(frontY !== undefined ? { ["--graview-front-y" as string]: `${frontY.toFixed(1)}px` } : {}),
+        ...(centreY !== undefined ? { ["--graview-centre-y" as string]: `${centreY.toFixed(1)}px` } : {}),
       }
     : // The GPU path does NOT fade the host: the shader owns opacity there,
       // and applying it in both places made an entering view fade as
@@ -1840,6 +1860,8 @@ function SceneViewHost({
       data-graview-plane={Math.round(node.plane)}
       data-graview-selected={selected || undefined}
       data-graview-touched={touched || undefined}
+      data-graview-plot={frontY !== undefined ? "" : undefined}
+      data-graview-screen={screen ? "" : undefined}
       /*
        * A card drawn deliberately BEHIND another says so in the tree.
        *

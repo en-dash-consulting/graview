@@ -45,6 +45,24 @@ type Ctx = PageContext<S>;
  * already measured rather than a second one invented here.
  */
 
+/*
+ * A FULL FINGERTIP on every engine. A bare <select> is drawn by the
+ * platform, and WebKit's menulist ignores a min-height and lands at 21px
+ * on a phone; drawn the way the framework draws its own selects, it is
+ * the same control the rest of the face has.
+ */
+const filterSelect: React.CSSProperties = {
+  font: "inherit",
+  minHeight: 24,
+  boxSizing: "border-box",
+  padding: "3px 24px 3px 8px",
+  borderRadius: 8,
+  border: "1px solid var(--graview-edge)",
+  background: "var(--graview-panel)",
+  color: "var(--graview-ink)",
+  appearance: "none",
+};
+
 const CSS = `
 .th {
   --th-paper: color-mix(in oklab, var(--graview-ground) 92%, var(--graview-accent) 8%);
@@ -450,14 +468,14 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
             <>
               <label>
                 Show
-                <select data-testid="list-show" value={show} onChange={(event) => set("show", event.target.value)}>
+                <select data-testid="list-show" style={filterSelect} value={show} onChange={(event) => set("show", event.target.value)}>
                   <option value="open">Open</option>
                   <option value="all">Everything</option>
                 </select>
               </label>
               <label>
                 Group
-                <select data-testid="list-group" value={group} onChange={(event) => set("group", event.target.value)}>
+                <select data-testid="list-group" style={filterSelect} value={group} onChange={(event) => set("group", event.target.value)}>
                   <option value="list">By list</option>
                   <option value="due">By date</option>
                   <option value="none">Not at all</option>
@@ -465,7 +483,7 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
               </label>
               <label>
                 Sort
-                <select data-testid="list-sort" value={sort} onChange={(event) => set("sort", event.target.value)}>
+                <select data-testid="list-sort" style={filterSelect} value={sort} onChange={(event) => set("sort", event.target.value)}>
                   <option value="name">By name</option>
                   <option value="due">By date</option>
                 </select>

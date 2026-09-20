@@ -52,7 +52,7 @@ export function ChatPanel<S extends AnySchema>({
   onCall,
   testId = "chat",
 }: ChatPanelProps<S>) {
-  const { store, principal, seatWho, noteSeat, robots, session } = useGraview<S>();
+  const { store, principal, seatWho, noteSeat, robots, session, intelligence: config } = useGraview<S>();
   const { selection } = useSelection();
   /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
   const who = seatWho ?? "chat";
@@ -64,14 +64,12 @@ export function ChatPanel<S extends AnySchema>({
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   /*
-   * THE LADDER IS A SETTING. Which rung answers — the graph, a model in
-   * this browser, or a frontier model with the person's own key — lives in
-   * the person's own storage, never in the repo or the bundle. The gear
-   * changes it in place; a host that passes `respond` has decided for them.
+   * THE LADDER IS A SETTING — the provider's, chosen in the profile pane
+   * beside text size and scheme, read here. A host that passes `respond`
+   * has decided for them.
    */
-  const [config, setConfig] = useState<IntelligenceConfig>(() => loadIntelligenceConfig());
-  const [settings, setSettings] = useState(false);
   const [warmth, setWarmth] = useState<LocalStatus | null>(null);
+  useEffect(() => setWarmth(null), [config]);
   const anchor = useRef<HTMLDivElement | null>(null);
   const log = useRef<HTMLOListElement | null>(null);
 
@@ -298,30 +296,8 @@ export function ChatPanel<S extends AnySchema>({
                     : describeIntelligence(config)}
             </span>
             <span style={{ flex: "1 1 auto" }} />
-            {respond ? null : (
-              <button
-                type="button"
-                data-testid="chat-settings"
-                aria-expanded={settings}
-                onClick={() => setSettings((current) => !current)}
-                title="Choose what answers: the graph, a model in this browser, a decision provider, or your own key"
-                style={{ fontSize: "0.75rem", padding: "2px 8px", minHeight: 24 }}
-              >
-                ⚙
-              </button>
-            )}
           </div>
-          {settings ? (
-            <IntelligenceSettings
-              config={config}
-              onDone={(next) => {
-                saveIntelligenceConfig(next);
-                setConfig(next);
-                setWarmth(null);
-                setSettings(false);
-              }}
-            />
-          ) : (
+          {(
           <ol
             ref={log}
             style={{

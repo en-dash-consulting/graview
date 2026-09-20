@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-20T05:05:47.627Z",
-  "engine": "chromium",
+  "at": "2026-09-20T13:51:31.398Z",
+  "engine": "firefox",
   "screens": [
     {
       "app": "todo",
@@ -695,7 +695,7 @@
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "370x131",
+        "size": "370x141",
         "text": "×Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆"
       },
       "led": null,
@@ -908,7 +908,7 @@
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "370x107",
+        "size": "370x199",
         "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
       },
       "led": null,

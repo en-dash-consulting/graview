@@ -668,15 +668,7 @@ export function registerDefaultViews<S extends AnySchema>(
               * nothing moved. Saying where they are is the honest answer;
               * a button that cannot do its own job is not.
               */}
-            {!nested && members.length > 0 && props.focused && !props.opened ? (
-              <span
-                data-testid={`shown-above-${String(kind)}`}
-                title={`The ${plural} are the picture above`}
-                style={{ fontSize: "0.71875rem", color: "var(--graview-ink-faint)" }}
-              >
-                shown above
-              </span>
-            ) : null}
+            {/* The focused district's picture stands on its own plot as a screen; the plate says nothing about it, the screen does. */}
             {!nested && members.length > 0 && !props.focused ? (
               <button
                 type="button"
@@ -691,7 +683,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 onDoubleClick={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
               >
-                {props.opened ? "close ▴" : "open ▾"}
+                <span className="graview-kind-open-word">{props.opened ? "close" : "open"}</span> {props.opened ? "▴" : "▾"}
               </button>
             ) : null}
           </div>

@@ -1248,9 +1248,13 @@ export function layout<S extends AnySchema>(
        * district's nameplate, which a tall card on a small plot can lift
        * above that edge: the screen stands behind the plate, not on it.
        */
-      const ownCard = placed.get(kindCardId(screenKind!));
-      const ownTop = ownCard ? ownCard.y - (state.pan?.y ?? 0) - PLATE_CLEARANCE * unit : Infinity;
-      const anchorBottom = theirs ? Math.min((mine.top.y + theirs.top.y) / 2, ownTop) : Math.min(mine.top.y + frame.cell * 0.1, ownTop);
+      /*
+       * Its foot is on the plot's far kerb — the back vertex of the diamond.
+       * The nameplate no longer stands there (it is a signpost at the front
+       * corner from altitude), so the screen needs no clearance above its
+       * own card: it is a billboard at the back of the village.
+       */
+      const anchorBottom = theirs ? (mine.top.y + theirs.top.y) / 2 : mine.top.y + frame.cell * 0.1;
       const aspect = naturalH / naturalW;
       const floor = Math.min(DRIVE_IN_MIN_WIDTH * unit, spanW * 0.5);
       let width = Math.max(floor, Math.min(spanW * 0.5, own.side * frame.cell * 1.7));

@@ -9,7 +9,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import type { AffordanceProvider } from "@graview/tools";
+import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools";
 import { honourSetting, loadSetting, rememberSetting } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
@@ -150,6 +150,18 @@ export interface GraviewContextValue<S extends AnySchema> {
   follow(participant: string | null): void;
   readonly sharing: { readonly participant: string; readonly name: string } | null;
   readonly session: string;
+  /**
+   * THE LADDER IS A SETTING. Which rung answers — the graph, a model in
+   * this browser, a decision provider, or a frontier model with the
+   * person's own key — is the reader's, kept in their own storage. Owned
+   * here so the profile pane sets it and the chat reads it: one choice,
+   * two surfaces that cannot disagree.
+   */
+  readonly intelligence: IntelligenceConfig;
+  chooseIntelligence(next: IntelligenceConfig): void;
+  /** Whether a hand has panned or dragged in this tab, so "moved" on the bar means a move somebody made. */
+  readonly movedByHand: boolean;
+  noteMoved(): void;
   /**
    * The seats a reader may sit in, and how to sit down in one.
    *
@@ -355,6 +367,13 @@ export function GraviewProvider<S extends AnySchema>({
 }: GraviewProviderProps<S>) {
   /* This tab, for the life of the tab: see `tabSession`. */
   const [session] = useState(() => tabSession());
+  const [intelligence, setIntelligence] = useState<IntelligenceConfig>(() => loadIntelligenceConfig());
+  const chooseIntelligence = useCallback((next: IntelligenceConfig) => {
+    saveIntelligenceConfig(next);
+    setIntelligence(next);
+  }, []);
+  const [movedByHand, setMovedByHand] = useState(false);
+  const noteMoved = useCallback(() => setMovedByHand(true), []);
   /* Privacy is a reader setting, and it appears only where there is somebody to be seen by. */
   const settings = useMemo(
     () => (presence ? [...appSettings, ...PRESENCE_SETTINGS] : appSettings),
@@ -694,6 +713,10 @@ export function GraviewProvider<S extends AnySchema>({
       follow,
       sharing,
       session,
+      intelligence,
+      chooseIntelligence,
+      movedByHand,
+      noteMoved,
       emphasis,
       setEmphasis,
       activity,
@@ -730,6 +753,10 @@ export function GraviewProvider<S extends AnySchema>({
       follow,
       sharing,
       session,
+      intelligence,
+      chooseIntelligence,
+      movedByHand,
+      noteMoved,
       emphasis,
       activity,
       noteAttention,
