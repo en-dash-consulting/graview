@@ -381,9 +381,54 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   /* Anchored where the city's cell (0,0) meets the canvas, so a plot placed
      by the map sits ON the grid a person can see, and pans with it. */
   background-position: var(--graview-lattice-x, 0px) var(--graview-lattice-y, 0px);
-  opacity: calc(var(--graview-kit-lattice, 1) * var(--graview-grid-alpha) * var(--graview-altitude));
+  /* Twice the square grid's weight: fields are meant to be seen, the grid is meant to be felt. */
+  opacity: calc(var(--graview-kit-lattice, 1) * var(--graview-grid-alpha) * 2 * var(--graview-altitude));
   mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);
   -webkit-mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);
+}
+
+/* THE GROUND UNDER A DISTRICT: its plot, drawn. Four lattice corners in
+   the kind's hue, a kerb, a cast shadow toward the light — the arithmetic
+   the layout already did, made visible, so a district stands on land
+   rather than floating on a hatch. Fades in with the altitude number the
+   lattice fades in with; a hand-placed district's kerb is dashed, which is
+   the pinned mark on the ground rather than a box over the drawing. */
+.graview-plots {
+  z-index: 0;
+  opacity: var(--graview-altitude);
+  transition: opacity 640ms cubic-bezier(0.33, 0, 0.2, 1);
+}
+.graview-plot-tile {
+  fill: hsl(var(--graview-hue, 200) 45% ${scheme === "light" ? "58%" : "48%"} / ${scheme === "light" ? "0.12" : "0.2"});
+  stroke: hsl(var(--graview-hue, 200) 40% ${scheme === "light" ? "48%" : "62%"} / 0.55);
+  stroke-width: 1;
+  stroke-linejoin: round;
+  pointer-events: auto;
+  cursor: pointer;
+  filter: drop-shadow(${scheme === "light" ? "5px 4px 6px rgba(20,30,32,0.14)" : "6px 5px 8px rgba(0,0,0,0.4)"});
+  transition: fill 170ms ease;
+}
+.graview-plot-tile:hover {
+  fill: hsl(var(--graview-hue, 200) 45% ${scheme === "light" ? "58%" : "48%"} / ${scheme === "light" ? "0.2" : "0.3"});
+}
+.graview-plot[data-graview-pinned] .graview-plot-tile {
+  stroke-dasharray: 4 3;
+}
+/* The robot's pad: one cell at the origin block, in the ground's own ink. */
+.graview-plot-pad polygon {
+  fill: none;
+  stroke: var(--graview-ink-faint);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.7;
+}
+/* FIELDS. From altitude the ground darkens a shade toward the near edge and
+   fades to the page at the horizon, so the lattice is land with a distance
+   rather than paper with a pattern. */
+.graview-ground[data-graview-altitude] {
+  background:
+    linear-gradient(to top, color-mix(in oklab, var(--graview-ground) ${scheme === "light" ? "93%" : "88%"}, var(--graview-ink)) 0%, var(--graview-ground) 78%),
+    var(--graview-ground);
 }
 
 /* THE KEEPER'S BLOCK IN THE PROFILE, which hides itself when it is empty.
@@ -580,19 +625,6 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   display: block;
   color: var(--graview-ink-faint);
   font-size: 0.6875rem;
-}
-/* The pad the robot docks on when the seated person has no building: a
-   marked cell at the city's origin, labelled with the seat's name. */
-.graview-figure-pad {
-  position: absolute;
-  left: -20px;
-  top: -10px;
-  width: 40px;
-  height: 20px;
-  border: 1px dashed var(--graview-ink-faint);
-  border-radius: 50%;
-  opacity: 0.6;
-  pointer-events: none;
 }
 /* Where it has been this turn: a dotted trail that fades once, like a mark. */
 .graview-figure-trail {

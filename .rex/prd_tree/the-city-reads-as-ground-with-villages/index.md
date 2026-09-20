@@ -20,7 +20,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [A district is a village: its members stand as small buildings on the plot, the landmark among them, so the population is the size of the cluster](./a-district-is-a-village-its-members.md) | pending |
-| [A plot is drawn as ground: an iso tile per district in its hue, with a kerb and a cast shadow, and the lattice reads as fields between plots](./a-plot-is-drawn-as-ground-an-iso-tile.md) | pending |
+| [A plot is drawn as ground: an iso tile per district in its hue, with a kerb and a cast shadow, and the lattice reads as fields between plots](./a-plot-is-drawn-as-ground-an-iso-tile.md) | completed |
 | [Roads run on the ground between plots: one road per relation kind, lattice-aligned, ending at the kerb, with member lines only for what is selected](./roads-run-on-the-ground-between-plots.md) | pending |
 | [Signs stand on the land: the nameplate is a signpost at the plot's front corner, and the descent from altitude lands in the village](./signs-stand-on-the-land-the-nameplate.md) | pending |
 | [The bar and the plates say less: Up and Down instead of Graview and Focus, an open chevron only when reached for, no "moved" for a move nobody made, and a legend of what is on screen](./the-bar-and-the-plates-say-less-up-and.md) | pending |

@@ -389,9 +389,6 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }
                 <path key={trail.length} d={trail.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ")} />
               </svg>
             ) : null}
-            {dock.pad && robot.mode === "docked" && dock.point ? (
-              <div className="graview-figure-pad" style={{ transform: `translate(${dock.point.x.toFixed(1)}px, ${dock.point.y.toFixed(1)}px)` }} />
-            ) : null}
             <div
               className="graview-figure"
               data-graview-figure={robot.participant}

@@ -102,6 +102,8 @@ describe("the chrome the framework draws", () => {
     const silent = rules(css)
       .filter(pressable)
       .filter(([selector]) => /\.graview-[a-z-]+/.test(selector))
+      // The ground tile is a whole plot, sized by the layout like a card: the picture, not chrome.
+      .filter(([selector]) => !selector.includes("graview-plot-tile"))
       .filter(([, body]) => !/min-height:/.test(body))
       .map(([selector]) => selector);
     expect(silent).toEqual([]);

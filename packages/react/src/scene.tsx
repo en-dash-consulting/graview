@@ -52,6 +52,7 @@ import { useGraph, useGraview, ViewModeProvider, type DrawnBox, type ViewMode } 
 import { isDefaultView } from "./view-registry.js";
 import { ViewBoundary } from "./view-boundary.js";
 import { pickedFrom, usePickTargets } from "./picking.js";
+import { Plots } from "./plots.js";
 import { Occupants } from "./occupants.js";
 import { kitConnector, useKit } from "./kit.js";
 import { clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
@@ -144,7 +145,7 @@ export function Scene<S extends AnySchema>({
     selection,
     setSelection,
     setMenuAt,
-    emphasis, hiddenKinds, registerScene, pointer } = useGraview<S>();
+    emphasis, hiddenKinds, registerScene, pointer, brand } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -296,6 +297,7 @@ export function Scene<S extends AnySchema>({
     () => (camera.x === 0 && camera.y === 0 ? view : withPan(view, panned)),
     [view, camera, panned],
   );
+  const pinnedIds = useMemo(() => new Set(Object.keys(view.pins)), [view.pins]);
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, seen, sized),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -774,6 +776,19 @@ export function Scene<S extends AnySchema>({
         ...style,
       }}
     >
+      {/*
+        * THE GROUND: every district's plot as a tile, under the cards and
+        * over the fields, from the same origin and pan the lattice rides.
+        */}
+      <Plots
+        frame={frame}
+        width={result.width}
+        height={result.height}
+        pan={panned}
+        brand={brand}
+        pinned={pinnedIds}
+        onFocus={(id) => setView((current) => withFocus(current, id))}
+      />
       {useDom ? (
         /*
          * The DOM path uses an ORDINARY container, not a capture canvas.
