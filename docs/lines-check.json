@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T04:08:25.101Z",
+  "at": "2026-09-20T05:09:54.049Z",
   "engine": "chromium",
   "checks": {
     "everyLineIsDrawable": true,
@@ -16,7 +16,7 @@
     },
     {
       "where": "todo from altitude",
-      "lines": 3
+      "lines": 0
     },
     {
       "where": "todo focused, with a relation shown",
@@ -24,15 +24,15 @@
     },
     {
       "where": "todo in the dark",
-      "lines": 3
+      "lines": 0
     },
     {
       "where": "seedbed at rest",
-      "lines": 12
+      "lines": 0
     },
     {
       "where": "seedbed from altitude",
-      "lines": 12
+      "lines": 0
     },
     {
       "where": "seedbed a chapter with one kind",
@@ -44,14 +44,14 @@
     },
     {
       "where": "rota from altitude",
-      "lines": 1
+      "lines": 0
     },
     {
       "where": "rota a shift chosen",
       "lines": 0
     }
   ],
-  "lines": 32,
+  "lines": 1,
   "unexercised": "no app here has a member inside a scroller, so the scroll claim went unasked",
   "passed": true
 }

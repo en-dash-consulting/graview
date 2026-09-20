@@ -456,18 +456,14 @@ export function registerDefaultViews<S extends AnySchema>(
             >
               <KindFigure kind={String(kind)} schema={schema} {...(brand ? { brand } : {})} size={96} />
             </span>
-          ) : (
-            <svg
-              className="graview-kind-block"
-              data-graview-opened={props.opened || undefined}
-              viewBox={`0 0 100 ${45 + rise}`}
-              aria-hidden="true"
-            >
-              <polygon className="graview-iso-left" points={`1,22 50,43 50,${43 + rise} 1,${22 + rise}`} />
-              <polygon className="graview-iso-right" points={`99,22 50,43 50,${43 + rise} 99,${22 + rise}`} />
-              <polygon className="graview-iso-roof" points="50,1 99,22 50,43 1,22" />
-            </svg>
-          )}
+          ) : /*
+           * A KIND WITH NO DRAWING STANDS AS ITS VILLAGE. The anonymous iso
+           * block — one box for every kind, its population a height nobody
+           * read — is retired at altitude: the members stand as buildings
+           * on the plot the scene draws under this card, and the population
+           * is the size of the cluster.
+           */
+          null}
           <div
           className="graview-kind-face"
           data-graview-opened={props.opened || undefined}

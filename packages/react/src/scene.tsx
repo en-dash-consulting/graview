@@ -3100,6 +3100,16 @@ function Connectors({
         const mine = strand.edges.some((edge) => chosenReal.has(edge.from) || chosenReal.has(edge.to));
         const lit = !overview && chosenReal.size > 0 && mine;
         const stressed = (emphasis !== null && connector.kind === emphasis) || edgeChosen;
+        /*
+         * FROM ALTITUDE THE ROADS ARE ON THE GROUND (the plots layer draws
+         * one per pair of districts, kerb to kerb). A line up here is drawn
+         * only when it says something the road cannot: the relation the
+         * legend is asking about, the edge that is chosen, a member of the
+         * selection, or a change that just happened. A focused screen's
+         * every member wired across the city was the picture this replaces.
+         */
+        const live = liveOf?.(connector) !== undefined;
+        if (overview && !stressed && !mine && !(chosen.size > 0 && touches(connector)) && !live) return null;
         const opacity = overview
           ? altitudeOpacity({
               emphasised: emphasis !== null,

@@ -82,9 +82,11 @@ describe("a district that has a figure", () => {
     expect(people!.querySelector(".graview-kind-landmark svg")).not.toBeNull();
     expect(people!.querySelectorAll(".graview-iso-roof")).toHaveLength(0);
 
-    // And a kind with nothing declared is drawn exactly as it always was.
+    // And a kind with nothing declared has no landmark and no anonymous
+    // block either: its members stand as buildings on the plot the scene
+    // draws under the card, so the card itself carries only the nameplate.
     expect(reasons!.querySelectorAll(".graview-kind-landmark")).toHaveLength(0);
-    expect(reasons!.querySelectorAll(".graview-iso-roof")).toHaveLength(1);
+    expect(reasons!.querySelectorAll(".graview-iso-roof")).toHaveLength(0);
 
     // The card says which of the two it is, so the stylesheet can lift the
     // nameplate clear of a drawing without lifting it off a roof.

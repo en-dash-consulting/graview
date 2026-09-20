@@ -414,6 +414,43 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 .graview-plot[data-graview-pinned] .graview-plot-tile {
   stroke-dasharray: 4 3;
 }
+/* THE VILLAGE on the tile: one small iso building per member in the kind's
+   own faces (the same roof and walls the block had), a flagged member's roof
+   in the warning colour, a selected member's building lit in the accent.
+   Architecture, not controls: the tile under them takes the click. */
+.graview-village { pointer-events: none; }
+.graview-building polygon { stroke-width: 0.8; }
+.graview-building[data-graview-flagged] .graview-iso-roof { fill: var(--graview-warn); stroke: var(--graview-warn); }
+.graview-building[data-graview-selected] polygon { stroke: var(--graview-accent); stroke-width: 1.4; }
+.graview-building[data-graview-selected] .graview-iso-roof { fill: color-mix(in oklab, var(--graview-accent) 45%, var(--graview-panel)); }
+.graview-village-rest {
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  fill: var(--graview-ink-muted);
+}
+/* THE ROADS between plots: the lattice's own two legs from kerb to kerb, a
+   bed between two edges in the ground's ink. Under the tiles and the
+   buildings, over the fields. A road the legend is asking about comes up
+   in the accent. */
+.graview-road-edge {
+  fill: none;
+  stroke: var(--graview-ink);
+  stroke-opacity: ${scheme === "light" ? "0.28" : "0.4"};
+  stroke-width: 7;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.graview-road-bed {
+  fill: none;
+  stroke: var(--graview-ground);
+  stroke-width: 5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.graview-road[data-graview-lit] .graview-road-edge {
+  stroke: var(--graview-accent);
+  stroke-opacity: 0.9;
+}
 /* The robot's pad: one cell at the origin block, in the ground's own ink. */
 .graview-plot-pad polygon {
   fill: none;

@@ -492,12 +492,12 @@ describe("a selection, mapped onto what is drawn", () => {
     expect(drawn.some((value) => value > 0.5)).toBe(true);
   });
 
-  it("draws the relations at full strength from up there", () => {
+  it("draws the relations as roads on the ground from up there, and no line in the air", () => {
     const html = graview();
-    const drawn = opacities(html);
-    expect(drawn.length).toBeGreaterThan(0);
-    // Inside the scene a connector is an aside; up here the lines ARE the
-    // content, and at a third of a receded plane's opacity they were not.
-    expect(drawn.every((value) => value > 0.5)).toBe(true);
+    // The relations ARE the content up here — as roads between the plots,
+    // on the ground layer, one per pair of districts a declared edge joins.
+    expect((html.match(/class="graview-road"/g) ?? []).length).toBeGreaterThan(0);
+    // A line in the air says only what a road cannot: nothing is chosen, so nothing is drawn.
+    expect(opacities(html)).toEqual([]);
   });
 });
