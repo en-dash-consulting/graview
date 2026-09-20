@@ -68,12 +68,24 @@ describe("the marquee", () => {
     await unmount();
   });
 
-  it("focuses the kind with that showing and descends in one gesture", async () => {
+  it("draws each showing as a small picture of its lens, named", async () => {
+    const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true });
+    const thumbs = [...host.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb')];
+    expect(thumbs).toHaveLength(2);
+    // The lens itself, drawn small: the Week component's own words are in the thumbnail.
+    expect(thumbs[0]!.querySelector(".graview-drive-in-thumb-picture")?.textContent).toContain("the week");
+    expect(thumbs[0]!.querySelector(".graview-drive-in-thumb-title")?.textContent).toBe("The week");
+    // A picture, not a panel: the small lens is inert, so nothing drawn in it is a second control.
+    expect(thumbs[0]!.querySelector(".graview-drive-in-thumb-picture")?.hasAttribute("inert")).toBe(true);
+    await unmount();
+  });
+
+  it("focuses the kind with that showing and STAYS ALOFT: the billboard shows it, the graview is not left", async () => {
     const seen: ViewState[] = [];
     const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true }, (next) => seen.push(next));
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="showing-the-month"]')!.click());
     const landed = seen.at(-1)!;
-    expect(landed.overview ?? false).toBe(false);
+    expect(landed.overview).toBe(true);
     expect(landed.focusId).toBe("aggregate:task");
     expect(landed.within?.["view"]).toBe("the-month");
     await unmount();

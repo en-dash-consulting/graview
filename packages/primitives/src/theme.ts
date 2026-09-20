@@ -577,23 +577,88 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   top: 4px;
 }
 .graview-drive-in-marquee {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 4px;
+  grid-template-columns: repeat(2, 58px);
+  justify-content: center;
 }
-.graview-drive-in-marquee > button {
-  font: inherit;
-  font-size: 0.6875rem;
-  line-height: 1.2;
-  padding: 2px 8px;
-  /* A fingertip AFTER the card's depth scale: from altitude a plot a row
-     back is drawn at nine-tenths, and a 24px button there measured 22 on
-     Groundskeeper's audit. Sized so the far row still clears 24. */
+.graview-drive-in-marquee[data-graview-thumbs="one"] {
+  grid-template-columns: 120px;
+}
+/* THE LENSES AS PICTURES: each showing is its lens drawn small — the real
+   component at a fraction of its size, cut to a thumbnail — with its name
+   under it. The picture takes no pointer; the button around it does. */
+.graview-drive-in-thumb {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 2px;
   min-height: max(1.75rem, 28px);
-  border-radius: 999px;
+  border-radius: 6px;
   border: 1px solid var(--graview-edge);
   background: var(--graview-panel);
   color: var(--graview-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.graview-drive-in-thumb[aria-pressed="true"] {
+  border-color: var(--graview-accent);
+  color: var(--graview-accent);
+}
+.graview-drive-in-thumb-picture {
+  display: block;
+  position: relative;
+  width: 54px;
+  height: 34px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--graview-panel);
+  pointer-events: none;
+}
+[data-graview-thumbs="one"] .graview-drive-in-thumb-picture {
+  width: 116px;
+  height: 70px;
+}
+.graview-drive-in-thumb-natural {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  transform: scale(0.05625);
+  transform-origin: 0 0;
+}
+[data-graview-thumbs="one"] .graview-drive-in-thumb-natural {
+  transform: scale(0.1208);
+}
+.graview-drive-in-thumb-title {
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  max-width: 116px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */
+.graview-screen-fullscreen {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  top: -30px;
+  min-height: max(1.5rem, 24px);
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-float);
+  color: var(--graview-ink);
+  font-size: 0.75rem;
+  cursor: pointer;
+  z-index: 4;
+}
+.graview-drive-in-marquee > button.graview-drive-in-thumb {
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  min-height: max(1.75rem, 28px);
   cursor: pointer;
 }
 .graview-drive-in-marquee > button[aria-pressed="true"] {
@@ -1119,12 +1184,27 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 }
 /* THE SCREEN IS A BILLBOARD at the back of the village: a frame, and two
    posts into the ground at its foot. */
-[data-graview-altitude] [data-graview-screen] {
+/* On the NATURAL BOX, which is the picture now: the layout cuts the
+   billboard to what the lens drew (measured by the scene), never shorter
+   than a screen's worth — so the box is the picture, and an empty lens is a
+   header over an empty screen rather than a strip floating over the
+   village. The frame used to sit on the drawing itself, from the days the
+   box was as tall as the window with the picture in its top third. It
+   carries the panel's own ground so the empty part of a screen is a screen
+   and not the field showing through a frame. */
+[data-graview-altitude] [data-graview-screen] > [data-graview-natural],
+[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag) {
   outline: 2px solid color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
   outline-offset: 0;
+  background: var(--graview-panel);
 }
-[data-graview-altitude] [data-graview-screen]::before,
-[data-graview-altitude] [data-graview-screen]::after {
+[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag) {
+  position: relative;
+}
+[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::before,
+[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::after,
+[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::before,
+[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::after {
   content: "";
   position: absolute;
   top: 100%;
@@ -1132,8 +1212,10 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   height: 16px;
   background: color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
 }
-[data-graview-altitude] [data-graview-screen]::before { left: 22%; }
-[data-graview-altitude] [data-graview-screen]::after { right: 22%; }
+[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::before,
+[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::before { left: 22%; }
+[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::after,
+[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::after { right: 22%; }
 
 /* A thing inside a view that is itself a thing: an event in a calendar, a
    person in a list. It has to look reachable, and it has to SHOW focus —

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-20T14:55:56.999Z",
+  "at": "2026-09-20T17:55:37.106Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565521,
+      "wingOpacity": 0.565486,
       "registered": true
     },
     "groundAgain": {
@@ -205,27 +205,28 @@
         "focusable": true
       }
     ],
+    "liveInsideAPicture": 0,
     "noteDriveIn": false,
     "standing": {
       "screen": {
-        "x": 538.9037475585938,
-        "y": 333.3460693359375,
-        "width": 303,
-        "height": 257,
-        "top": 333.3460693359375,
-        "right": 841.9037475585938,
-        "bottom": 590.3460693359375,
-        "left": 538.9037475585938
+        "x": 615.4932250976562,
+        "y": 237.0810089111328,
+        "width": 329,
+        "height": 279,
+        "top": 237.0810089111328,
+        "right": 944.4932250976562,
+        "bottom": 516.0810089111328,
+        "left": 615.4932250976562
       },
       "card": {
-        "x": 573.449951171875,
-        "y": 611.6721801757812,
-        "width": 214.78277587890625,
-        "height": 174.396240234375,
-        "top": 611.6721801757812,
-        "right": 788.2327270507812,
-        "bottom": 786.0684204101562,
-        "left": 573.449951171875
+        "x": 663.2000122070312,
+        "y": 578.3189697265625,
+        "width": 214.78271484375,
+        "height": 167.05328369140625,
+        "top": 578.3189697265625,
+        "right": 877.9827270507812,
+        "bottom": 745.3722534179688,
+        "left": 663.2000122070312
       },
       "url": "#focus=aggregate%3Atask&overview=1&in.view=the-week"
     },
@@ -234,9 +235,9 @@
       "up": true
     },
     "midway": {
-      "x": 690.4356079101562,
-      "y": 472.6929931640625,
-      "width": 342
+      "x": 775.1314086914062,
+      "y": 387.6317138671875,
+      "width": 350
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -248,7 +249,7 @@
     "aDriveInHasAMarquee": true,
     "theScreenStandsOnItsPlot": true,
     "switchingAShowingStaysUp": true,
-    "walkingUpDescendsInOneGesture": true,
+    "fullScreenDescendsInOneGesture": true,
     "theDescentTweensFromThePlot": true,
     "nothingToGoBackToAtFirst": true,
     "travellingChangesTheAddress": true,

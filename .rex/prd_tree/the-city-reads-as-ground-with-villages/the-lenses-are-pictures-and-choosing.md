@@ -1,0 +1,23 @@
+---
+id: "cf910e28-74ca-4477-83b3-db91abcf91fd"
+level: "task"
+title: "The lenses are pictures, and choosing one flies closer"
+status: "in_progress"
+priority: "high"
+tags:
+  - "graview"
+  - "city"
+  - "drive-in"
+  - "altitude"
+source: "Nick: \"i want those lenses to be more clear, not just a little label, but like a small version of the lens. and if i select it, i don't necessarily want to leave the graview, but more like fly closer to that part of the view as it gets bigger, and then i'd be able to full-screen it kinda\""
+startedAt: "2026-09-20T17:36:14.909Z"
+acceptanceCriteria:
+  - "Each showing on a drive-in board renders the registered lens small inside an inert, aria-hidden picture with its title beneath"
+  - "Pressing a showing keeps overview true, sets in.view, and the layout is placed at cityZoom 1.5 with the camera centred on the billboard and its village"
+  - "The billboard carries a Full screen control that descends in one gesture (navigation harness verdict fullScreenDescendsInOneGesture)"
+  - "No control drawn inside a thumbnail is focusable (navigation verdict aDriveInHasAMarquee with liveInsideAPicture 0)"
+  - "survey, audit-ui, navigation, who, robot, seat, chat, pages harnesses pass on the framework apps"
+description: "A kind's drive-in board shows each available lens as a small drawing of the lens itself (inert, aria-hidden), not a label. Pressing one stays at altitude: the city grows (cityZoom 1.5) and the camera flies to the billboard and its village; a Full screen control on the billboard is the way down. The survey treats the stage's clip as pannable at altitude; the audits ignore what is drawn inside an inert thumbnail."
+lastModified: "2026-09-20T17:36:14.921Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
+---

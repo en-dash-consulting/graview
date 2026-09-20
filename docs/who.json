@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-20T15:00:49.917Z",
+  "at": "2026-09-20T17:40:54.521Z",
   "engine": "chromium",
   "checks": {
     "bSeesAAtTheTasksPlot": {
@@ -21,7 +21,7 @@
       "ok": true
     },
     "aPicksAShowingAndStandsInTheAudienceRowOnB": {
-      "showing": "#focus=aggregate%3Alist&in.view=the-lists",
+      "showing": "#focus=aggregate%3Alist&overview=1&in.view=the-lists",
       "screen": "screen:list",
       "seen": {
         "at": "screen:list",

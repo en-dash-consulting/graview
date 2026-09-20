@@ -122,7 +122,12 @@ try {
   /* "This" is the hovered task: open the tasks district so its members stand as buildings, hover one, ask about "this". */
   await page.click('[data-testid="open-task"]').catch(() => {});
   await page.waitForTimeout(700);
-  const chip = await page.$('[data-graview-pick="t-deposit"]');
+  /* The first match is no longer the chip: the lens drawn small on the tasks'
+     marquee carries the same pick, inert. The real one is outside any picture. */
+  let chip = null;
+  for (const handle of await page.$$('[data-graview-pick="t-deposit"]')) {
+    if (!(await handle.evaluate((el) => el.closest('[inert], [aria-hidden="true"]') !== null))) { chip = handle; break; }
+  }
   let thisIsTheHovered = { ok: false, why: "no t-deposit pick on screen" };
   if (chip) {
     const cb = await chip.boundingBox();

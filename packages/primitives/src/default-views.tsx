@@ -17,6 +17,7 @@ import {
   type ReactViewRegistry,
   type ViewProps,
  markDefaultView } from "@graview/react";
+import type { ReactNode } from "react";
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -741,27 +742,54 @@ export function registerDefaultViews<S extends AnySchema>(
               onPointerDown={(event) => event.stopPropagation()}
               onDoubleClick={(event) => event.stopPropagation()}
             >
-              <div className="graview-drive-in-marquee" role="group" aria-label={`${plural}: pictures`}>
+              {/*
+                * THE LENSES, AS PICTURES. Each showing is a small live version
+                * of its lens — the same component, drawn at a thirteenth and
+                * cut to a thumbnail — under its name, so a person can see
+                * what a picture IS before choosing it. Pressing one STAYS
+                * ALOFT: the kind is focused with that showing, the billboard
+                * on its plot shows it, and the camera flies closer. Leaving
+                * the graview is the billboard's own full-screen control.
+                */}
+              <div className="graview-drive-in-marquee" role="group" aria-label={`${plural}: pictures`} data-graview-thumbs={showings.length === 1 ? "one" : "two"}>
                 {showings.map((place) => {
                   const showing = showingNow === place.as;
+                  const registration = views.resolve(String(kind), { cardinality: "many", fidelity: "full" }, place.as);
+                  const Lens = registration?.view as ((p: ViewProps<S>) => ReactNode) | undefined;
                   return (
                     <button
                       key={place.as}
                       type="button"
+                      className="graview-drive-in-thumb"
                       data-testid={`showing-${place.as}`}
                       aria-label={`${plural}: ${place.title}`}
                       aria-pressed={showing}
-                      title={showing ? `${place.title} — walk up to it` : props.focused ? `Show ${place.title} here` : `${place.title} — walk up to it`}
+                      title={showing ? `${place.title} is showing` : `Show ${place.title} on the billboard`}
                       onClick={(event) => {
                         event.stopPropagation();
-                        if (props.focused && !showing) {
-                          go(withWithin(view, "view", place.as));
-                          return;
-                        }
-                        go(withWithin(withOverview(withFocus(view, aggregateId(String(kind))), false), "view", place.as));
+                        if (showing && props.focused) return;
+                        go(withWithin(withFocus(withOverview(view, true), aggregateId(String(kind))), "view", place.as));
                       }}
                     >
-                      {place.title}
+                      {/* A picture, not a panel: the lens drawn small keeps its own buttons in the
+                          tree, and a button inside a button is a control the marquee never meant
+                          to offer — inert takes them out of the tab order and out of hit-testing. */}
+                      <span className="graview-drive-in-thumb-picture" aria-hidden="true" inert>
+                        {Lens ? (
+                          <span className="graview-drive-in-thumb-natural">
+                            <Lens
+                              nodes={members as never}
+                              label={place.title}
+                              fidelity="full"
+                              cardinality="many"
+                              mode="scene"
+                              selected={false}
+                              {...(props.flagged ? { flagged: props.flagged } : {})}
+                            />
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="graview-drive-in-thumb-title">{place.title}</span>
                     </button>
                   );
                 })}

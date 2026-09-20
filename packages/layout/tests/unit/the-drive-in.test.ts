@@ -53,16 +53,35 @@ describe("the drive-in", () => {
     }
   });
 
-  it("stands a picture over two kinds on the road between their plots", () => {
+  it("stands a picture across two kinds on its OWN kind's plot, not on the road between", () => {
+    // Rows are its kind; the other kind is only its columns. Standing it
+    // between the plots buried the other village and its own signpost.
     const result = layout(graph(), schema, withWithin(focused, "view", "the-matrix"), options);
     const screen = result.nodes.find((node) => node.id === "aggregate:duty")!;
     const duties = result.nodes.find((node) => node.id === kindCardId("duty"))!;
-    const people = result.nodes.find((node) => node.id === kindCardId("person"))!;
-    const mid = (duties.x + duties.width / 2 + people.x + people.width / 2) / 2;
     expect(screen.screenOf).toBe("duty");
-    expect(Math.abs(screen.x + screen.width / 2 - mid)).toBeLessThan(screen.width);
+    expect(screen.x + screen.width / 2).toBeCloseTo(duties.x + duties.width / 2, 3);
     const alone = layout(graph(), schema, focused, options).nodes.find((node) => node.id === "aggregate:duty")!;
-    expect(alone.x).not.toBeCloseTo(screen.x, 0);
+    expect(alone.x).toBeCloseTo(screen.x, 0);
+  });
+
+  it("is cut to its picture: a measured drawn height sizes the billboard, floored and never taller than the box", () => {
+    const whole = layout(graph(), schema, withWithin(focused, "view", "the-week"), options);
+    const full = whole.nodes.find((node) => node.id === "aggregate:duty")!;
+    const cut = layout(graph(), schema, withWithin(focused, "view", "the-week"), { ...options, screenHeight: 300 });
+    const short = cut.nodes.find((node) => node.id === "aggregate:duty")!;
+    // The lens's natural width is the same; its natural height is what was drawn.
+    expect(short.natural!.width).toBe(full.natural!.width);
+    expect(short.natural!.height).toBe(300);
+    // The box keeps the picture's proportions, so it is shorter by the same ratio, and its foot stays where it was.
+    expect(short.width).toBe(full.width);
+    expect(short.height).toBeCloseTo(full.width * (300 / full.natural!.width), 5);
+    expect(short.y + short.height).toBeCloseTo(full.y + full.height, 5);
+    // A title alone is not a picture; a lens cannot draw past its box.
+    const floored = layout(graph(), schema, withWithin(focused, "view", "the-week"), { ...options, screenHeight: 12 });
+    expect(floored.nodes.find((node) => node.id === "aggregate:duty")!.natural!.height).toBe(240);
+    const capped = layout(graph(), schema, withWithin(focused, "view", "the-week"), { ...options, screenHeight: 5000 });
+    expect(capped.nodes.find((node) => node.id === "aggregate:duty")!.natural!.height).toBe(full.natural!.height);
   });
 
   it("keeps the picture in the middle for a kind with no named place, and no screen is named", () => {

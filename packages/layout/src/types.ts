@@ -285,6 +285,23 @@ export interface LayoutOptions {
    * has no drive-in: its group opens in place, as it always did.
    */
   readonly screens?: Readonly<Record<string, readonly { readonly as: string; readonly title: string; readonly across?: string }[]>>;
+  /**
+   * FLY CLOSER. A factor on the city's cell from altitude — 1 is the whole
+   * map fitted to the window; 1.5 is the camera brought in toward the
+   * picture a person chose, plots and villages and roads all bigger, the
+   * city allowed past the window's edge (the camera pans to reach it).
+   */
+  readonly cityZoom?: number;
+  /**
+   * HOW TALL THE PICTURE ON THE BILLBOARD ACTUALLY DRAWS, in the lens's own
+   * natural pixels, measured by whoever renders it. A lens is laid out in a
+   * box as tall as the window so it never scrolls, but a short lens fills
+   * only the top of it — and a billboard sized to the whole box stood its
+   * picture a village's height above the kerb, floating over the next
+   * district with empty room beneath. Cut to what is drawn, the picture's
+   * foot is on the kerb. Absent (or not yet measured): the whole box.
+   */
+  readonly screenHeight?: number;
 }
 
 /**
@@ -298,7 +315,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "cityOrder" | "plots" | "screens">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "cityOrder" | "plots" | "screens" | "cityZoom" | "screenHeight">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1040, height: 420 },

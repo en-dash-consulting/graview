@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-20T14:56:34.159Z",
+  "at": "2026-09-20T17:53:14.658Z",
   "engine": "chromium",
   "screens": [
     {
@@ -385,7 +385,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 12,
+      "fill": 9,
       "inspector": null,
       "led": null,
       "figures": []
@@ -407,7 +407,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 12,
+      "fill": 9,
       "inspector": null,
       "led": null,
       "figures": []
@@ -669,7 +669,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 10,
+      "fill": 12,
       "inspector": null,
       "led": null,
       "figures": []
@@ -691,7 +691,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 21,
+      "fill": 24,
       "inspector": {
         "shown": 3,
         "hidden": 0,
@@ -718,7 +718,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 7,
+      "fill": 8,
       "inspector": null,
       "led": null,
       "figures": []
@@ -806,13 +806,8 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 7,
-      "inspector": {
-        "shown": 1,
-        "hidden": 0,
-        "size": "236x121",
-        "text": "Gardeners· double-click opens×Nothing here yet, though Plots expect to connect to theseWel"
-      },
+      "fill": 10,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -833,7 +828,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 7,
+      "fill": 8,
       "inspector": null,
       "led": null,
       "figures": []
@@ -855,7 +850,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 8,
+      "fill": 9,
       "inspector": {
         "shown": 3,
         "hidden": 0,
@@ -904,7 +899,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 14,
+      "fill": 17,
       "inspector": {
         "shown": 3,
         "hidden": 0,

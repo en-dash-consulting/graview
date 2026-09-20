@@ -114,10 +114,11 @@ describe("the city at altitude", () => {
 describe("the marquee takes the room its buttons take", () => {
   it("is one row for short titles and grows a row when they wrap", async () => {
     const { marqueeHeightFor } = await import("../../src/layout.js");
+    // One showing is one big thumbnail; three are two rows of small ones.
     const one = marqueeHeightFor(["The week"], 132);
     const three = marqueeHeightFor(["The quarter", "The fortnight", "The week"], 132);
-    expect(one).toBe(10 + 28);
-    expect(three).toBeGreaterThan(one + 28);
+    expect(one).toBe(10 + 72 + 16);
+    expect(three).toBe(10 + 2 * (36 + 16) + 4);
     expect(marqueeHeightFor([], 132)).toBe(0);
   });
 });

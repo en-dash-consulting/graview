@@ -465,12 +465,18 @@ try {
   await drive.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await drive.waitForTimeout(1200);
   const marquee = await drive.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="drive-in-task"] button')].map((el) => ({
+    [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-marquee > button')].map((el) => ({
       label: el.getAttribute("aria-label"),
       focusable: el.tabIndex >= 0 && !el.disabled,
     })),
   );
   const noteDriveIn = await drive.evaluate(() => document.querySelector('[data-testid="drive-in-reason"]') !== null);
+  /* The pictures on the board are pictures: nothing drawn inside one can take focus. */
+  const liveInsideAPicture = await drive.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb-picture *')].filter(
+      (el) => el.matches("button, a, input, select, textarea, [tabindex]") && !el.closest("[inert]"),
+    ).length,
+  );
   /* Switch showings at altitude: focus the tasks' month by the marquee, rise stays. */
   await drive.evaluate(() => {
     window.location.hash = "#overview=1&focus=aggregate%3Atask&in.view=the-week";
@@ -488,9 +494,9 @@ try {
     url: location.hash,
     up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
   }));
-  /* Walk up to it: press the showing that is showing, capture mid-tween. */
+  /* Full screen: the billboard's own control is the way down; capture mid-tween. */
   const centreX = 1560 / 2;
-  await drive.click('[data-testid="showing-the-month"]');
+  await drive.click('[data-testid="screen-fullscreen"]');
   await drive.waitForTimeout(110);
   const midway = await drive.evaluate(() => {
     const el = document.querySelector('[data-graview-view="aggregate:task"]');
@@ -505,6 +511,7 @@ try {
   const plotX = standing.screen ? standing.screen.x + standing.screen.width / 2 : null;
   report.driveIn = {
     marquee,
+    liveInsideAPicture,
     noteDriveIn,
     standing,
     switched,
@@ -547,7 +554,8 @@ report.verdict = {
   aDriveInHasAMarquee:
     (report.driveIn?.marquee?.length ?? 0) >= 2 &&
     report.driveIn.marquee.every((button) => /^Tasks: /.test(button.label ?? "") && button.focusable) &&
-    report.driveIn?.noteDriveIn === false,
+    report.driveIn?.noteDriveIn === false &&
+    report.driveIn?.liveInsideAPicture === 0,
   // The focused picture stands on its plot: the screen's foot sits above the district's nameplate, centred on it.
   theScreenStandsOnItsPlot:
     report.driveIn?.standing?.screen !== null &&
@@ -557,10 +565,10 @@ report.verdict = {
         ((report.driveIn?.standing?.card?.x ?? 0) + (report.driveIn?.standing?.card?.width ?? 0) / 2),
     ) < 120 &&
     (report.driveIn?.standing?.screen?.y ?? 0) < (report.driveIn?.standing?.card?.y ?? 0),
-  // Switching showings at altitude changes in.view and stays up; pressing the showing that is showing walks down to it.
+  // Pressing a showing at altitude changes in.view and stays up; the billboard's full-screen control is the way down.
   switchingAShowingStaysUp:
     (report.driveIn?.switched?.url ?? "").includes("in.view=the-month") && report.driveIn?.switched?.up === true,
-  walkingUpDescendsInOneGesture:
+  fullScreenDescendsInOneGesture:
     report.driveIn?.landed?.up === false && (report.driveIn?.landed?.url ?? "").includes("in.view=the-month"),
   theDescentTweensFromThePlot: report.driveIn?.movedFromThePlot === true,
   // Nowhere to go back to on arrival, and the control says so rather than

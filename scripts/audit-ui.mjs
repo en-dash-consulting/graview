@@ -396,7 +396,10 @@ const audit = () => {
   /* Two cards drawn on top of one another. Views are siblings on a stage and
      the layout is supposed to keep them apart; where it does not, one card is
      literally hiding another's content. */
-  const views = [...document.querySelectorAll("[data-graview-view]")].filter(visible);
+  // A lens drawn small on a drive-in's board is a picture: what it holds is
+  // inert, so nothing in it is a control, a mark or a board of this screen.
+  const pictured = (el) => el.closest('[inert], [aria-hidden="true"]') !== null;
+  const views = [...document.querySelectorAll("[data-graview-view]")].filter(visible).filter((el) => !pictured(el));
   const collisions = [];
   /*
    * A TUCK is not a collision. A card drawn deliberately behind the one it
@@ -496,7 +499,7 @@ const audit = () => {
    */
   const halfSaid = [];
   for (const host of views) {
-    const marks = [...host.querySelectorAll("[data-graview-pick]")].filter(visible);
+    const marks = [...host.querySelectorAll("[data-graview-pick]")].filter(visible).filter((el) => !pictured(el));
     if (marks.length === 0) continue;
     const said = marks.filter((el) => el.dataset.graviewEmphasis !== undefined);
     if (said.length !== 0 && said.length !== marks.length) {
@@ -601,6 +604,7 @@ const audit = () => {
   };
   const small = [...document.querySelectorAll("button, [role=button], a[href], select, input")]
     .filter(visible)
+    .filter((el) => !pictured(el))
     .map((el) => ({ el, b: box(el), scale: scaleOf(el) }))
     // Half a pixel of tolerance: a control designed at exactly 24 must not
     // fail on a sub-pixel transform.
@@ -652,6 +656,8 @@ const audit = () => {
     // A string that is not on screen cannot repeat on it: altitude-only
     // controls exist in the tree at display none inside the stack.
     if (!visible(el)) continue;
+    // A lens drawn small in a drive-in's thumbnail repeats its own words by construction.
+    if (el.closest('[aria-hidden="true"]')) continue;
     /*
      * A RAISED card duplicating its origin's title is the design, not the
      * smell: keeping the origin legible while its members stand on plane 1
@@ -706,7 +712,7 @@ const audit = () => {
     .map((el) => (el.textContent ?? "").trim());
   // A drive-in's marquee is the Places list drawn where the pictures live:
   // the same titles twice is the design, not a repeat.
-  const marquee = [...document.querySelectorAll('[data-testid^="drive-in-"] button')].map((el) =>
+  const marquee = [...document.querySelectorAll('[data-testid^="drive-in-"] button, [data-testid^="drive-in-"] .graview-drive-in-thumb-title')].map((el) =>
     (el.textContent ?? "").trim(),
   );
   const repeats = [...seen.entries()]
@@ -803,7 +809,7 @@ const audit = () => {
   /* The board's own arrangement: no slot on top of another, and no slot
      clipped by the pitch edge — the two ways a shrinking pitch failed, kept
      failing, and never showed up in a count. */
-  const boardEl = document.querySelector('[data-graview-primitive="board"]');
+  const boardEl = [...document.querySelectorAll('[data-graview-primitive="board"]')].find((el) => !pictured(el)) ?? null;
   const board = [];
   if (boardEl) {
     const pitch = box(boardEl);

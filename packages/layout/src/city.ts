@@ -68,6 +68,8 @@ export function placeCity(
     readonly scale?: number;
     /** The height a card is never drawn under, whatever the canvas — the layout's own floor. */
     readonly minHeight?: number;
+    /** A factor on the fitted cell: the camera brought closer, the city allowed past the window. */
+    readonly zoom?: number;
     /**
      * Ground already taken — the picture standing in the middle from
      * altitude. No district is laid under it: the city slides aside, and
@@ -259,6 +261,16 @@ export function placeCity(
   }
   for (let grown = 0; crowded(settled.placed) && grown < 80; grown++) {
     cell *= 1.06;
+    settled = settle(cell, asked, openedShare);
+  }
+  /*
+   * FLYING CLOSER. The fit above is the whole map in the window; a zoom is
+   * the camera brought in afterwards, so the map keeps its shape and only
+   * the cell grows — the city may run past the window, and the camera
+   * pans to reach it.
+   */
+  if (options.zoom && options.zoom !== 1) {
+    cell *= options.zoom;
     settled = settle(cell, asked, openedShare);
   }
   const placed = settled.placed;

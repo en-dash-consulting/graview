@@ -36,6 +36,7 @@ import {
   hueFor,
 } from "@graview/render";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -215,9 +216,32 @@ export function Scene<S extends AnySchema>({
   // The scene is laid out to the space it actually has. A fixed canvas leaves
   // dead ground on a wide screen and clips on a narrow one, and the plane
   // bands are proportions rather than pixels, so they follow.
+  /*
+   * FLYING CLOSER. Choosing a picture from altitude brings the camera in:
+   * the city's cell grows, the villages and roads with it, the billboard
+   * bigger on its plot, and the camera keeps the picture in view. Derived
+   * from the stop, never stored: leaving the picture flies back out.
+   */
+  const closer = (view.overview ?? false) && view.within?.["view"] !== undefined ? 1.5 : 1;
+  /*
+   * THE BILLBOARD IS CUT TO ITS PICTURE. The lens draws in a box as tall as
+   * the window; the screen's host reports how much of it the lens actually
+   * used, and the layout sizes the billboard to that — so the picture's foot
+   * is on the kerb instead of a village's height above it. Whole pixels,
+   * and only a change re-lays the city.
+   */
+  const [screenHeight, setScreenHeight] = useState<number | undefined>(undefined);
+  const noteScreenHeight = useCallback((height: number | undefined) => {
+    setScreenHeight((current) => {
+      const next = height === undefined ? undefined : Math.round(height);
+      return current === next ? current : next;
+    });
+  }, []);
   const sized = useMemo<LayoutOptions>(
     () => ({
       ...options,
+      cityZoom: closer,
+      ...(screenHeight !== undefined ? { screenHeight } : {}),
       // What is not drawn for this seat at this stop: a workspace's disabled
       // modules, and the administered ones this seat may not see or has not
       // asked to — one set, from the provider, so every surface agrees.
@@ -278,7 +302,8 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [options, size, unit, store, views, hiddenKinds, judged, closer, screenHeight],
   );
   /*
    * THE CAMERA IS NOT A MOVE. A drive-in on the far side of a large city
@@ -349,8 +374,23 @@ export function Scene<S extends AnySchema>({
     }
     const screen = result.nodes.find((node) => node.id === screenId);
     if (!screen) return;
-    const inside = screen.x >= 0 && screen.y >= 0 && screen.x + screen.width <= result.width && screen.y + screen.height <= result.height;
-    if (inside) return;
+    /*
+     * FLOWN CLOSER, the camera centres on the whole drive-in — the
+     * billboard and the village under it — rather than only keeping the
+     * picture inside the edge; a person chose that plot, and it is what
+     * they are looking at.
+     */
+    const village = closer > 1 && screen.screenOf ? result.nodes.find((node) => node.id === kindCardId(screen.screenOf!)) : undefined;
+    const want = village
+      ? {
+          x: Math.min(screen.x, village.x),
+          y: Math.min(screen.y, village.y),
+          width: Math.max(screen.x + screen.width, village.x + village.width) - Math.min(screen.x, village.x),
+          height: Math.max(screen.y + screen.height, village.y + village.height) - Math.min(screen.y, village.y),
+        }
+      : screen;
+    const inside = want.x >= 0 && want.y >= 0 && want.x + want.width <= result.width && want.y + want.height <= result.height;
+    if (inside && !village) return;
     /*
      * THE SMALLEST MOVE THAT BRINGS THE SCREEN IN. Centring it dragged the
      * rest of the city off the far side — six districts fit the window and
@@ -364,15 +404,23 @@ export function Scene<S extends AnySchema>({
     // camera limit, so the screen can be reached and nothing is dropped off the edge.
     const limit = cameraLimit(result);
     const pan = view.pan ?? { x: 0, y: 0 };
-    const wantedX = panned.x + shift(screen.x, screen.width, result.width);
-    const wantedY = panned.y + shift(screen.y, screen.height, result.height);
+    const wantedX = village ? panned.x + (result.width / 2 - (want.x + want.width / 2)) : panned.x + shift(want.x, want.width, result.width);
+    // Centred on the drive-in — but the PICTURE is what was chosen, so when the
+    // drive-in is taller than the window the picture's top stays in and the
+    // village hangs below rather than the picture losing its head.
+    const centredY = result.height / 2 - (want.y + want.height / 2);
+    const wantedY = village
+      ? panned.y + (screen.y + centredY < EDGE ? EDGE - screen.y : centredY)
+      : panned.y + shift(want.y, want.height, result.height);
+    // Flown closer, the billboard stands above the city's extent, which the
+    // limit does not know about: the camera goes where the drive-in is.
     setCamera({
-      x: Math.max(-limit.x, Math.min(limit.x, wantedX)) - pan.x,
-      y: Math.max(-limit.y, Math.min(limit.y, wantedY)) - pan.y,
+      x: (village ? wantedX : Math.max(-limit.x, Math.min(limit.x, wantedX))) - pan.x,
+      y: (village ? wantedY : Math.max(-limit.y, Math.min(limit.y, wantedY))) - pan.y,
     });
-    // Only when the focus lands: a person's own pan afterwards is theirs.
+    // Only when the focus lands, or the camera flies closer: a person's own pan afterwards is theirs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screenId, view.overview]);
+  }, [screenId, view.overview, closer]);
   if (frame.city) {
     // Remembered every altitude frame: where each plot's centre is on the canvas right now.
     const remembered = new Map<string, { x: number; y: number }>();
@@ -667,7 +715,7 @@ export function Scene<S extends AnySchema>({
             centreY: frame.city.originY + panned.y + toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell).y - node.y,
           }
         : {})}
-      {...(node.screenOf !== undefined ? { screen: true } : {})}
+      {...(node.screenOf !== undefined ? { screen: true, onDrawnHeight: noteScreenHeight } : {})}
       touched={touched.has(node.id)}
       {...(activityOf(node) ? { activity: activityOf(node) } : {})}
       scheme={scheme}
@@ -764,6 +812,23 @@ export function Scene<S extends AnySchema>({
       onDragEnd={onDragUp}
       swallowClick={swallow}
     >
+      {node.screenOf !== undefined ? (
+        /* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */
+        <button
+          type="button"
+          className="graview-screen-fullscreen"
+          data-testid="screen-fullscreen"
+          title="Full screen — leave the graview with this picture"
+          onClick={(event) => {
+            event.stopPropagation();
+            setView((current) => withOverview(current, false));
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+        >
+          ⤢ Full screen
+        </button>
+      ) : null}
       {node.beyond ? (
         <BeyondCard kinds={node.beyond} />
       ) : (
@@ -1735,6 +1800,9 @@ interface HostProps {
   readonly centreY?: number;
   /** From altitude: this box is the focused place's screen, a billboard on its plot. */
   readonly screen?: boolean;
+  /** For a screen: how tall the lens actually drew in its natural box, so the billboard can be cut to it. */
+  onDrawnHeight?(height: number | undefined): void;
+
   /** Too narrow for its plane's fidelity; rendering its glyph instead. */
   readonly crowded?: boolean;
   /** What just happened here, if anything. Absent on a quiet graph. */
@@ -1776,6 +1844,7 @@ function SceneViewHost({
   frontY,
   centreY,
   screen,
+  onDrawnHeight,
   crowded,
   activity,
   scheme,
@@ -1885,6 +1954,59 @@ function SceneViewHost({
   const shrink = natural
     ? Math.min(node.width / natural.width, node.height / natural.height)
     : 1;
+  /*
+   * A BILLBOARD REPORTS ITS PICTURE'S HEIGHT.
+   *
+   * The lens lays itself out in the natural box, as tall as the window, and
+   * a lens is built to fill what it is given: a header, then a scroll
+   * region that takes the rest. So neither the box nor the lens's own
+   * height says how tall the PICTURE is. What does: the extent of what is
+   * in flow, plus what every scroll region inside needs beyond what it has
+   * (negative when it has room to spare). From the whole box that comes to
+   * header-plus-rows; cut to that, the scroll region holds exactly its
+   * rows and the measure is its own fixed point. Watched for size and for
+   * content, because rows come and go without anything resizing; withdrawn
+   * when this box stops being the screen.
+   */
+  const naturalRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!screen || !onDrawnHeight) return;
+    const box = naturalRef.current;
+    if (!box || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      let extent = 0;
+      let wanted = 0;
+      for (const child of box.children) {
+        if (!(child instanceof HTMLElement) || child.classList.contains("graview-screen-fullscreen")) continue;
+        extent = Math.max(extent, child.offsetTop + child.offsetHeight);
+        for (const el of [child, ...child.querySelectorAll<HTMLElement>("*")]) {
+          const overflow = getComputedStyle(el).overflowY;
+          if (overflow === "auto" || overflow === "scroll") wanted += el.scrollHeight - el.clientHeight;
+        }
+      }
+      onDrawnHeight(extent + wanted);
+    };
+    let queued = 0;
+    const later = () => {
+      if (queued) return;
+      queued = requestAnimationFrame(() => {
+        queued = 0;
+        measure();
+      });
+    };
+    measure();
+    const sizes = new ResizeObserver(later);
+    sizes.observe(box);
+    for (const child of box.children) sizes.observe(child);
+    const content = new MutationObserver(later);
+    content.observe(box, { childList: true, subtree: true, characterData: true, attributes: true });
+    return () => {
+      if (queued) cancelAnimationFrame(queued);
+      sizes.disconnect();
+      content.disconnect();
+      onDrawnHeight(undefined);
+    };
+  }, [screen, onDrawnHeight, node.id]);
 
   const domOnly: CSSProperties = useDom
     ? {
@@ -2176,6 +2298,7 @@ function SceneViewHost({
          * the capture allocates a texture from that.
          */
         <div
+          ref={naturalRef}
           data-graview-natural={`${Math.round(natural.width)}x${Math.round(natural.height)}`}
           style={{
             position: "absolute",

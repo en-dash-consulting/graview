@@ -148,6 +148,14 @@ const CARD_MIN_HEIGHT = 56;
  */
 const DISTRICT_MIN_WIDTH = 132;
 
+/**
+ * A billboard cut to its picture is never shorter than this, in the lens's
+ * own pixels. An empty lens — a header over no rows yet — measured to a
+ * strip one line tall, which read as a label, not a screen; at this height
+ * the room under the header is visibly an empty screen.
+ */
+const SCREEN_MIN_NATURAL_HEIGHT = 240;
+
 /*
  * The width a drive-in screen is never drawn under: the picture is the
  * interface scaled, and below this its words are not words. In the
@@ -163,21 +171,22 @@ const DRIVE_IN_MIN_WIDTH = 300;
  * a side, a four-pixel gap, a twenty-eight-pixel row — so the band is the
  * height the buttons will actually take, and nothing else moves.
  */
-const MARQUEE_ROW = 28;
+/*
+ * The showings are PICTURES now: one thumbnail per lens with its name
+ * under it — a single showing at 120×72, two or more in two columns of
+ * 58×36 — so the band is the rows of thumbnails they make. `cardWidth` is
+ * kept for the call sites; the columns are fixed by the thumbnail size.
+ */
+export const THUMB_ONE = { width: 120, height: 72 };
+export const THUMB_TWO = { width: 58, height: 36 };
+const THUMB_TITLE = 16;
 const MARQUEE_GAP = 4;
 export function marqueeHeightFor(titles: readonly string[], cardWidth: number): number {
+  void cardWidth;
   if (titles.length === 0) return 0;
-  const usable = Math.max(40, cardWidth - 16);
-  let rows = 1;
-  let filled = 0;
-  for (const title of titles) {
-    const pill = Math.min(usable, title.length * 6.2 + 18);
-    if (filled > 0 && filled + MARQUEE_GAP + pill > usable) {
-      rows += 1;
-      filled = pill;
-    } else filled += (filled > 0 ? MARQUEE_GAP : 0) + pill;
-  }
-  return 10 + rows * MARQUEE_ROW + (rows - 1) * MARQUEE_GAP;
+  if (titles.length === 1) return 10 + THUMB_ONE.height + THUMB_TITLE;
+  const rows = Math.ceil(titles.length / 2);
+  return 10 + rows * (THUMB_TWO.height + THUMB_TITLE) + (rows - 1) * MARQUEE_GAP;
 }
 
 /*
@@ -960,6 +969,7 @@ export function layout<S extends AnySchema>(
           ...(opts.plots ? { plots: opts.plots } : {}),
           scale: unit,
           minHeight: CARD_MIN_HEIGHT * unit,
+          ...(options.cityZoom && options.cityZoom !== 1 ? { zoom: options.cityZoom } : {}),
           ...(stamp && !driveIn ? { avoid: [stamp] } : {}),
         },
       )
@@ -1241,28 +1251,44 @@ export function layout<S extends AnySchema>(
         };
       };
       const mine = cornerOf(own);
-      const theirs = other ? cornerOf(other) : undefined;
-      const anchorX = theirs ? (mine.centre.x + theirs.centre.x) / 2 : mine.centre.x;
       /*
-       * Its foot is at the plot's far edge — and never below its own
-       * district's nameplate, which a tall card on a small plot can lift
-       * above that edge: the screen stands behind the plate, not on it.
+       * ON ITS OWN PLOT, always. A picture across two kinds — skills down,
+       * drills across — used to stand on the road between their plots, and
+       * landed on the other village with its own district's signpost and
+       * board buried under it: the lens read as the drills', not the
+       * skills'. Its rows are its kind; it stands at that village's back
+       * kerb, and the road to the other kind is already on the ground.
        */
+      void other;
+      const anchorX = mine.centre.x;
       /*
        * Its foot is on the plot's far kerb — the back vertex of the diamond.
        * The nameplate no longer stands there (it is a signpost at the front
        * corner from altitude), so the screen needs no clearance above its
        * own card: it is a billboard at the back of the village.
        */
-      const anchorBottom = theirs ? (mine.top.y + theirs.top.y) / 2 : mine.top.y + frame.cell * 0.1;
-      const aspect = naturalH / naturalW;
+      const anchorBottom = mine.top.y + frame.cell * 0.1;
+      /*
+       * Cut to the picture. The lens lays itself out in a box as tall as the
+       * window (`naturalH`) so nothing in it ever scrolls; the billboard
+       * shows only as much of that box as the lens actually drew, when the
+       * scene has measured it. Never taller than the box — a lens cannot
+       * draw past it.
+       */
+      const drawnH =
+        opts.screenHeight !== undefined && opts.screenHeight > 0
+          ? Math.min(naturalH, Math.max(SCREEN_MIN_NATURAL_HEIGHT, Math.round(opts.screenHeight)))
+          : naturalH;
+      const aspect = drawnH / naturalW;
       const floor = Math.min(DRIVE_IN_MIN_WIDTH * unit, spanW * 0.5);
       let width = Math.max(floor, Math.min(spanW * 0.5, own.side * frame.cell * 1.7));
       if (width * aspect > opts.height * 0.48) width = (opts.height * 0.48) / aspect;
       const others = [...placed.values()].filter((node) => node.plane === 2 && node.id !== kindCardId(screenKind!));
       const boxAt = (w: number) => {
         const h = w * aspect;
-        const y = Math.max(4, anchorBottom - h);
+        // Its foot on the kerb, wherever that is: a billboard held inside the
+        // window's top slid down over its own village; the camera brings it in.
+        const y = anchorBottom - h;
         return { x: anchorX - w / 2, y, width: w, height: h };
       };
       let box = boxAt(width);
@@ -1296,6 +1322,7 @@ export function layout<S extends AnySchema>(
           y: box.y + (state.pan?.y ?? 0),
           width: box.width,
           height: box.height,
+          natural: { width: naturalW, height: drawnH },
           screenOf: screenKind!,
         };
         nodes[at] = raised;

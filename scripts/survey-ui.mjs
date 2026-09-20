@@ -215,6 +215,9 @@ const measure = () => {
       const style = getComputedStyle(el);
       if (style.display === "none") return false;
       if (style.textOverflow === "ellipsis") return false;
+      // A crop that is hidden from assistive tech is a decision too: a lens drawn
+      // small in a drive-in's thumbnail is cut to its frame on purpose.
+      if (el.getAttribute("aria-hidden") === "true" || el.closest('[aria-hidden="true"]')) return false;
       /*
        * VISUALLY HIDDEN IS A DECISION TOO.
        *
@@ -231,6 +234,10 @@ const measure = () => {
       if (style.webkitLineClamp && style.webkitLineClamp !== "none") return false;
       // A scroll region can be scrolled to, so it is not lost either.
       if (style.overflowY === "auto" || style.overflowY === "scroll") return false;
+      // The stage clips the city on purpose from altitude: flown closer, the
+      // city runs past the window and the ground says how far the camera
+      // reaches (data-graview-reach) — a district past the edge is panned to.
+      if (el.hasAttribute("data-graview-stage") && el.closest("[data-graview-reach]")) return false;
       const clipped =
         el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2;
       if (!clipped || el.clientWidth <= 0 || style.overflow === "visible") return false;
@@ -339,6 +346,9 @@ const measure = () => {
     repeatedText: (() => {
       const seen = new Map();
       for (const el of within("h1,h2,h3,strong,dt")) {
+        // A lens drawn small in a drive-in's thumbnail repeats its own
+        // headings by construction, and is hidden from assistive tech.
+        if (el.closest('[aria-hidden="true"]')) continue;
         const text = (el.textContent ?? "").trim();
         if (text.length < 8) continue;
         seen.set(text, (seen.get(text) ?? 0) + 1);
