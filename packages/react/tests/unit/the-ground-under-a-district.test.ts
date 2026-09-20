@@ -136,3 +136,4 @@ describe("a road runs kerb to kerb", () => {
     expect(streetPoints({ col: 0, row: 0, side: 1 }, { col: 10, row: 10, side: 1 }).length).toBeLessThanOrEqual(5);
   });
 });
+

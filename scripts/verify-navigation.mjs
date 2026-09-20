@@ -588,12 +588,12 @@ report.verdict = {
   theTrailNamesWhereYouAre: (step("travelled")?.trail ?? "").includes("deposit"),
   theTrailGetsYouHome: placeOf(step("home by breadcrumb")?.url) === placeOf(step("landed")?.url),
   // The altitude control: a toggle that names where it takes you.
-  theControlSaysGraviewOnTheGround:
+  theControlSaysUpOnTheGround:
     report.control?.ground?.label === "Up" &&
     report.control?.ground?.name === "Up" &&
     report.control?.ground?.pressed === "false",
   // From altitude the control says where you land: "Down to <place>".
-  theControlSaysFocusFromAltitude:
+  theControlSaysDownToFromAltitude:
     /^Down to /.test(report.control?.altitude?.label ?? "") &&
     /^Down to /.test(report.control?.altitude?.name ?? "") &&
     report.control?.altitude?.pressed === "true",

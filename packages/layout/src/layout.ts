@@ -1272,11 +1272,16 @@ export function layout<S extends AnySchema>(
        * the box is inflated by what the plate can reach before the screen
        * is judged against it.
        */
+      /*
+       * The plate is a SIGNPOST at the plot's front corner now, so the reach
+       * to guard is below the card's foot, not above its top — and a
+       * district's own village fills its box, so the box itself counts.
+       */
       const covers = (b: { x: number; y: number; width: number; height: number }) =>
         others.some((card) => {
           const unpanned = {
             x: card.x - (state.pan?.x ?? 0) - PLATE_REACH * unit,
-            y: card.y - (state.pan?.y ?? 0) - PLATE_CLEARANCE * unit,
+            y: card.y - (state.pan?.y ?? 0),
             width: card.width + PLATE_REACH * unit * 2,
             height: card.height + PLATE_CLEARANCE * unit,
           };

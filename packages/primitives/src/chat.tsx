@@ -6,9 +6,7 @@ import {
   createToolRuntime,
   describeIntelligence,
   describeProposal,
-  loadIntelligenceConfig,
   loadPins,
-  saveIntelligenceConfig,
   type ChatReply,
   type IntelligenceConfig,
   type LocalStatus,
@@ -52,7 +50,7 @@ export function ChatPanel<S extends AnySchema>({
   onCall,
   testId = "chat",
 }: ChatPanelProps<S>) {
-  const { store, principal, seatWho, noteSeat, robots, session, intelligence: config } = useGraview<S>();
+  const { store, principal, seatWho, noteSeat, robots, session, intelligence: config, registerHostAnswers } = useGraview<S>();
   const { selection } = useSelection();
   /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
   const who = seatWho ?? "chat";
@@ -70,6 +68,11 @@ export function ChatPanel<S extends AnySchema>({
    */
   const [warmth, setWarmth] = useState<LocalStatus | null>(null);
   useEffect(() => setWarmth(null), [config]);
+  // A host that passes `respond` has decided which rung answers; the profile's ladder steps aside.
+  useEffect(() => {
+    registerHostAnswers(respond !== undefined);
+    return () => registerHostAnswers(false);
+  }, [respond, registerHostAnswers]);
   const anchor = useRef<HTMLDivElement | null>(null);
   const log = useRef<HTMLOListElement | null>(null);
 
@@ -297,7 +300,6 @@ export function ChatPanel<S extends AnySchema>({
             </span>
             <span style={{ flex: "1 1 auto" }} />
           </div>
-          {(
           <ol
             ref={log}
             style={{
@@ -407,7 +409,6 @@ export function ChatPanel<S extends AnySchema>({
               <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>thinking…</li>
             ) : null}
           </ol>
-          )}
           <form
             onSubmit={(event) => {
               event.preventDefault();

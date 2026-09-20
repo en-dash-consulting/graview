@@ -1,6 +1,6 @@
 import { BLOCK, hueFor, roadsOf, toIso, type Brand, type Plot } from "@graview/core";
 import { kindOfCard, type InterpolatedLayout } from "@graview/layout";
-import type { CSSProperties, ReactElement } from "react";
+import { useMemo, type CSSProperties, type ReactElement } from "react";
 import { useGraview } from "./context.js";
 import { useFlagged } from "./hooks.js";
 
@@ -60,6 +60,8 @@ export interface PlotsProps {
   readonly brand?: Brand | undefined;
   /** Which district ids are hand-placed: their kerb is dashed, as the pinned mark. */
   readonly pinned?: ReadonlySet<string>;
+  /** The scene's own flag for a click that a drag is about to produce: a pan that ends on a tile is not a press. */
+  readonly swallowed?: { readonly current: boolean };
   onFocus?(id: string): void;
 }
 
@@ -69,28 +71,56 @@ export interface PlotsProps {
  * on. The fill takes the pointer so a click on the land focuses its
  * district, the same as a click on the card.
  */
-export function Plots({ frame, width, height, pan, brand, pinned, onFocus }: PlotsProps): ReactElement | null {
+export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onFocus }: PlotsProps): ReactElement | null {
   const { selection, store, emphasis } = useGraview();
   const flagged = useFlagged();
   const city = frame.city;
-  if (!city) return null;
+  /*
+   * THE GEOMETRY IS MEMOISED where the pan and the origin are not: a road's
+   * legs and a village's foot cells depend only on the plots and the cell,
+   * so they are computed at origin zero once per city and translated per
+   * frame — a tween or a pan redraws, it does not re-route. The roads are
+   * one per pair of plots joined by any declared edge (`roadsOf`), kerb to
+   * kerb along the gutters; drawn first, so kerbs and buildings stand over them.
+   */
+  const tiles = frame.nodes.filter((node) => node.plot !== undefined && Math.round(node.plane) === 2);
+  const signature = `${city?.cell ?? 0}|${tiles.map((node) => `${node.id}:${node.plot!.col},${node.plot!.row},${node.plot!.side}:${node.aggregate?.memberIds.join(",") ?? ""}`).join(";")}`;
+  const still = useMemo(() => {
+    if (!city) return null;
+    const at0 = { cell: city.cell, originX: 0, originY: 0 };
+    const none = { x: 0, y: 0 };
+    const plotsByKind = new Map<string, Plot>();
+    for (const node of tiles) {
+      const kind = kindOfCard(node.id);
+      if (kind !== null && node.plot) plotsByKind.set(kind, node.plot);
+    }
+    const roads = roadsOf(store.schema, plotsByKind as never).map((road) => ({
+      ...road,
+      points: roadBetween(plotsByKind.get(road.from)!, plotsByKind.get(road.to)!, at0, none),
+    }));
+    const villages = new Map(
+      tiles.map((node) => {
+        const { buildings, rest } = villageOf(node.plot!, node.aggregate?.memberIds ?? []);
+        return [node.id, { rest, faces: buildings.map((building) => ({ id: building.id, ...buildingFaces(building, at0, none) })) }] as const;
+      }),
+    );
+    return { roads, villages, corners: new Map(tiles.map((node) => [node.id, tileCorners(node.plot!, at0, none)] as const)) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature, store.schema]);
+  if (!city || !still) return null;
   const chosen = new Set(selection);
   const broken = new Set(flagged);
-  /*
-   * THE ROADS: one per pair of plots joined by any declared edge, from
-   * `roadsOf` on the plots the frame is drawing, kerb to kerb along the
-   * lattice. Drawn first, so tiles' kerbs and buildings stand over them.
-   */
-  const plotsByKind = new Map<string, Plot>();
-  for (const node of frame.nodes) {
-    const kind = kindOfCard(node.id);
-    if (kind !== null && node.plot && Math.round(node.plane) === 2) plotsByKind.set(kind, node.plot);
-  }
-  const roads = roadsOf(store.schema, plotsByKind as never).map((road) => ({
-    ...road,
-    points: roadBetween(plotsByKind.get(road.from)!, plotsByKind.get(road.to)!, city, pan),
-  }));
-  const tiles = frame.nodes.filter((node) => node.plot !== undefined && Math.round(node.plane) === 2);
+  const offset = { x: city.originX + pan.x, y: city.originY + pan.y };
+  const shift = (p: Point): Point => ({ x: p.x + offset.x, y: p.y + offset.y });
+  const shiftPoints = (list: string): string =>
+    list
+      .split(" ")
+      .map((pair) => {
+        const [x, y] = pair.split(",").map(Number);
+        return `${(x! + offset.x).toFixed(1)},${(y! + offset.y).toFixed(1)}`;
+      })
+      .join(" ");
+  const roads = still.roads.map((road) => ({ ...road, points: road.points.map(shift) }));
   const style: CSSProperties = { position: "absolute", left: 0, top: 0, pointerEvents: "none", overflow: "visible" };
   const pad = tileCorners(padPlot(), city, pan);
   return (
@@ -112,7 +142,7 @@ export function Plots({ frame, width, height, pan, brand, pinned, onFocus }: Plo
         <polygon points={points(pad)} />
       </g>
       {tiles.map((node) => {
-        const corners = tileCorners(node.plot!, city, pan);
+        const corners = still.corners.get(node.id)!.map(shift) as [Point, Point, Point, Point];
         const hue = Math.round(hueFor(node.kind, brand?.accents));
         return (
           <g
@@ -126,35 +156,32 @@ export function Plots({ frame, width, height, pan, brand, pinned, onFocus }: Plo
               className="graview-plot-tile"
               points={points(corners)}
               onClick={(event) => {
-                if (!onFocus) return;
+                if (!onFocus || swallowed?.current) return;
                 event.stopPropagation();
                 onFocus(node.id);
               }}
             />
             {/* THE VILLAGE: one building per member, back to front, the square in the middle kept for the hall. */}
             {(() => {
-              const members = node.aggregate?.memberIds ?? [];
-              if (members.length === 0) return null;
-              const { buildings, rest } = villageOf(node.plot!, members);
+              const village = still.villages.get(node.id);
+              if (!village || village.faces.length === 0) return null;
+              const { faces: buildings, rest } = village;
               const front = corners[2];
               return (
                 <g className="graview-village" data-graview-village={buildings.length} data-graview-rest={rest || undefined}>
-                  {buildings.map((building) => {
-                    const faces = buildingFaces(building, city, pan);
-                    return (
-                      <g
-                        key={building.id}
-                        className="graview-building"
-                        data-graview-building={building.id}
-                        data-graview-flagged={broken.has(building.id) ? "" : undefined}
-                        data-graview-selected={chosen.has(building.id) ? "" : undefined}
-                      >
-                        <polygon className="graview-iso-left" points={faces.left} />
-                        <polygon className="graview-iso-right" points={faces.right} />
-                        <polygon className="graview-iso-roof" points={faces.roof} />
-                      </g>
-                    );
-                  })}
+                  {buildings.map((faces) => (
+                    <g
+                      key={faces.id}
+                      className="graview-building"
+                      data-graview-building={faces.id}
+                      data-graview-flagged={broken.has(faces.id) ? "" : undefined}
+                      data-graview-selected={chosen.has(faces.id) ? "" : undefined}
+                    >
+                      <polygon className="graview-iso-left" points={shiftPoints(faces.left)} />
+                      <polygon className="graview-iso-right" points={shiftPoints(faces.right)} />
+                      <polygon className="graview-iso-roof" points={shiftPoints(faces.roof)} />
+                    </g>
+                  ))}
                   {rest > 0 ? (
                     <text className="graview-village-rest" x={front.x} y={front.y - 4} textAnchor="middle">
                       +{rest}

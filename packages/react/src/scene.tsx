@@ -387,6 +387,11 @@ export function Scene<S extends AnySchema>({
     const aloft = view.overview ?? false;
     const descending = wasAloft.current && !aloft;
     wasAloft.current = aloft;
+    if (aloft && glide.current) {
+      // Back up before the glide landed: the altitude camera owns the offset now.
+      clearTimeout(glide.current);
+      glide.current = null;
+    }
     if (!descending) return;
     const kind = view.focusId ? kindsOfAggregate(view.focusId)[0] : undefined;
     const from = kind ? stood.current.get(kindCardId(kind)) : undefined;
@@ -849,7 +854,12 @@ export function Scene<S extends AnySchema>({
         pan={panned}
         brand={brand}
         pinned={pinnedIds}
-        onFocus={(id) => setView((current) => withFocus(current, id))}
+        swallowed={swallow}
+        // A tile is its district: focusing it means the kind's aggregate, never the card's own id.
+        onFocus={(id) => {
+          const kind = kindOfCard(id);
+          if (kind !== null) setView((current) => withFocus(current, aggregateId(kind)));
+        }}
       />
       {useDom ? (
         /*

@@ -1064,7 +1064,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 [data-graview-altitude] .graview-kind-face {
   position: absolute !important;
   left: 50% !important;
-  top: calc(var(--graview-front-y, 2%) - 22px) !important;
+  top: 2% !important;
   transform: translateX(-50%);
   width: max-content;
   /* Wider than the block when the name is: a label overflows its building
@@ -1080,6 +1080,9 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   box-shadow: var(--graview-lift-low) !important;
   z-index: 2;
 }
+[data-graview-altitude] [data-graview-plot] .graview-kind-face {
+  top: calc(var(--graview-front-y) - 22px) !important;
+}
 [data-graview-altitude] [data-graview-plot] .graview-kind-face::after {
   content: "";
   position: absolute;
@@ -1089,10 +1092,12 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   height: 10px;
   background: var(--graview-ink-faint);
 }
-/* And the landmark's plate stands at the same post, not over its head. */
-[data-graview-altitude] [data-graview-landmark] .graview-kind-face {
-  top: calc(var(--graview-front-y, 0%) - 22px) !important;
-  transform: translateX(-50%);
+/* A landmark WITHOUT a plot — a nested card — keeps its plate floating
+   above the drawing rather than across its head; one on a plot stands at
+   the signpost like every other district (the rule above). */
+[data-graview-altitude] [data-graview-landmark]:not([data-graview-plot] *) .graview-kind-face {
+  top: 0 !important;
+  transform: translate(-50%, calc(-100% - 7px));
 }
 /* The drive-in's board hangs UNDER the signpost, in the ground the layout
    reserved for it below the tile's front corner, not over the village. */

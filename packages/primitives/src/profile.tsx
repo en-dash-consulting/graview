@@ -67,7 +67,7 @@ export function Profile<S extends AnySchema>({
   readonly profileHref?: (userId: string) => string;
   readonly keeping?: ReactNode;
 }) {
-  const { store, principal, seats, settings, settingValues, chooseSetting, sharing } = useGraview<S>();
+  const { store, principal, seats, settings, settingValues, chooseSetting, sharing, hostAnswers } = useGraview<S>();
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
 
@@ -289,9 +289,11 @@ export function Profile<S extends AnySchema>({
           ) : null}
 
           {/* Which rung answers the chat: a setting like the others, not a pane over the map. */}
-          <div style={{ display: "grid", gap: 6, ...ruled }}>
-            <LadderSetting />
-          </div>
+          {hostAnswers ? null : (
+            <div style={{ display: "grid", gap: 6, ...ruled }}>
+              <LadderSetting />
+            </div>
+          )}
 
           {settings.length > 0 ? (
             <div style={{ display: "grid", gap: 10, ...ruled }}>

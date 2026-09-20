@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-20T14:11:32.787Z",
+  "at": "2026-09-20T14:55:56.999Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.539349,
+      "wingOpacity": 0.565521,
       "registered": true
     },
     "groundAgain": {
@@ -234,9 +234,9 @@
       "up": true
     },
     "midway": {
-      "x": 690.1382446289062,
-      "y": 470.134765625,
-      "width": 331
+      "x": 690.4356079101562,
+      "y": 472.6929931640625,
+      "width": 342
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -265,8 +265,8 @@
     "forwardActuallyGoesForward": true,
     "theTrailNamesWhereYouAre": true,
     "theTrailGetsYouHome": true,
-    "theControlSaysGraviewOnTheGround": true,
-    "theControlSaysFocusFromAltitude": true,
+    "theControlSaysUpOnTheGround": true,
+    "theControlSaysDownToFromAltitude": true,
     "theMarkHasTwoStates": true,
     "theMarkMovesAsTheSceneDoes": true,
     "theControlComesBackDown": true,

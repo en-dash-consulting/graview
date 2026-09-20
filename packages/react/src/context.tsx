@@ -159,6 +159,9 @@ export interface GraviewContextValue<S extends AnySchema> {
    */
   readonly intelligence: IntelligenceConfig;
   chooseIntelligence(next: IntelligenceConfig): void;
+  /** A host that answers the chat itself (a `respond` on the panel) has decided for the reader: the ladder is not theirs to set. */
+  readonly hostAnswers: boolean;
+  registerHostAnswers(answers: boolean): void;
   /** Whether a hand has panned or dragged in this tab, so "moved" on the bar means a move somebody made. */
   readonly movedByHand: boolean;
   noteMoved(): void;
@@ -373,6 +376,8 @@ export function GraviewProvider<S extends AnySchema>({
     setIntelligence(next);
   }, []);
   const [movedByHand, setMovedByHand] = useState(false);
+  const [hostAnswers, setHostAnswers] = useState(false);
+  const registerHostAnswers = useCallback((answers: boolean) => setHostAnswers(answers), []);
   const noteMoved = useCallback(() => setMovedByHand(true), []);
   /* Privacy is a reader setting, and it appears only where there is somebody to be seen by. */
   const settings = useMemo(
@@ -715,6 +720,8 @@ export function GraviewProvider<S extends AnySchema>({
       session,
       intelligence,
       chooseIntelligence,
+      hostAnswers,
+      registerHostAnswers,
       movedByHand,
       noteMoved,
       emphasis,
@@ -755,6 +762,8 @@ export function GraviewProvider<S extends AnySchema>({
       session,
       intelligence,
       chooseIntelligence,
+      hostAnswers,
+      registerHostAnswers,
       movedByHand,
       noteMoved,
       emphasis,
