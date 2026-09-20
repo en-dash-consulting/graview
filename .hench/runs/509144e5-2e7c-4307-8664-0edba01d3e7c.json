@@ -1,0 +1,30 @@
+{
+  "id": "509144e5-2e7c-4307-8664-0edba01d3e7c",
+  "taskId": "cf910e28-74ca-4477-83b3-db91abcf91fd",
+  "taskTitle": "The lenses are pictures, and choosing one flies closer",
+  "startedAt": "2026-09-20T18:14:12.772Z",
+  "finishedAt": "2026-09-20T18:14:12.772Z",
+  "status": "completed",
+  "turns": 326,
+  "summary": "Drive-in board draws each lens small and inert; pressing flies closer; Full screen descends; billboard cut to its measured picture; harnesses skip small-lens content; framework 8828d8a, Squad 0c85f19, Groundskeeper 698da22",
+  "tokenUsage": {
+    "input": 9482,
+    "output": 443068,
+    "cacheCreationInput": 4233429,
+    "cacheReadInput": 149543655
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 9482,
+    "output": 443068,
+    "cached": 153777084,
+    "total": 154229634
+  }
+}
