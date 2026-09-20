@@ -289,6 +289,8 @@ export function Scene<S extends AnySchema>({
    * on the screen, which is what putting it back means.
    */
   const [camera, setCamera] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  /** How long the focus stands where the village stood before the camera glides to rest. */
+  const GLIDE_AFTER_MS = 180;
   const panned = useMemo(
     () => ({ x: (view.pan?.x ?? 0) + camera.x, y: (view.pan?.y ?? 0) + camera.y }),
     [view.pan, camera],
@@ -325,8 +327,23 @@ export function Scene<S extends AnySchema>({
    * plot, still baked into the coordinates, still `pan` in the URL.
    */
   const screenId = result.nodes.find((node) => node.screenOf !== undefined)?.id ?? null;
+  /*
+   * THE DESCENT LANDS IN THE VILLAGE. Double-clicking a district from
+   * altitude used to fly it to the stage's centre while the rest
+   * reorganised around it — the picture rearranging rather than you coming
+   * down. The plot is the pivot now: the stack's focus is landed where the
+   * village stood, so it grows in place, and the camera then glides to
+   * rest so the world slides to meet it. Every way down — the Down
+   * control, a marquee's showing, Escape — is a change of view from
+   * outside the scene, so the scene watches the view itself: `stood`
+   * remembers where each district's plot was in the last altitude frame.
+   */
+  const stood = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const wasAloft = useRef(view.overview ?? false);
+  const glide = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!view.overview || !screenId || !result.city) {
+      if (wasAloft.current && !view.overview) return; // the descent effect below owns the camera on the way down
       setCamera((current) => (current.x === 0 && current.y === 0 ? current : { x: 0, y: 0 }));
       return;
     }
@@ -356,6 +373,40 @@ export function Scene<S extends AnySchema>({
     // Only when the focus lands: a person's own pan afterwards is theirs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenId, view.overview]);
+  if (frame.city) {
+    // Remembered every altitude frame: where each plot's centre is on the canvas right now.
+    const remembered = new Map<string, { x: number; y: number }>();
+    for (const node of frame.nodes) {
+      if (!node.plot || Math.round(node.plane) !== 2) continue;
+      const centre = toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell);
+      remembered.set(node.id, { x: frame.city.originX + panned.x + centre.x, y: frame.city.originY + panned.y + centre.y });
+    }
+    stood.current = remembered;
+  }
+  useEffect(() => {
+    const aloft = view.overview ?? false;
+    const descending = wasAloft.current && !aloft;
+    wasAloft.current = aloft;
+    if (!descending) return;
+    const kind = view.focusId ? kindsOfAggregate(view.focusId)[0] : undefined;
+    const from = kind ? stood.current.get(kindCardId(kind)) : undefined;
+    const focus = result.nodes.find((node) => node.id === view.focusId);
+    if (!from || !focus) {
+      setCamera({ x: 0, y: 0 });
+      return;
+    }
+    // Land the focus where the village stood; then let go, and the world slides to meet it.
+    setCamera({ x: from.x - (focus.x + focus.width / 2), y: from.y - (focus.y + focus.height / 2) });
+    if (glide.current) clearTimeout(glide.current);
+    glide.current = setTimeout(() => {
+      glide.current = null;
+      setCamera({ x: 0, y: 0 });
+    }, GLIDE_AFTER_MS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.overview]);
+  useEffect(() => () => {
+    if (glide.current) clearTimeout(glide.current);
+  }, []);
 
   /*
    * WHERE IS: the scene lends the context its live frame. A ref, so the
@@ -736,6 +787,8 @@ export function Scene<S extends AnySchema>({
        * a city wider than a phone is reached by dragging the ground.
        */
       data-graview-reach={frame.city ? `${Math.round(cameraLimit(result).x)} ${Math.round(cameraLimit(result).y)}` : undefined}
+      // Nothing in motion: no tween running and no camera glide pending. A harness can wait on this rather than on a timer.
+      data-graview-settled={frame.t >= 1 && glide.current === null ? "" : undefined}
       onPointerDown={onGroundDown}
       onPointerMove={onDragMove}
       onPointerUp={onDragUp}

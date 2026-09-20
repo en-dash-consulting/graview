@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-20T13:37:15.702Z",
+  "at": "2026-09-20T14:11:32.787Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.539149,
+      "wingOpacity": 0.539349,
       "registered": true
     },
     "groundAgain": {
@@ -234,9 +234,9 @@
       "up": true
     },
     "midway": {
-      "x": 695.1484375,
-      "y": 461.82830810546875,
-      "width": 325
+      "x": 690.1382446289062,
+      "y": 470.134765625,
+      "width": 331
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
