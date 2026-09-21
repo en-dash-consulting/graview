@@ -1,0 +1,30 @@
+{
+  "id": "b32cdf0a-50b6-40af-b943-02e356c4f35f",
+  "taskId": "42de4f53-b0e9-44bc-a525-27f848ecadc7",
+  "taskTitle": "Pictures on pages: every place is a page, an index lands you among them, and the nav mirrors the scene's bar",
+  "startedAt": "2026-09-21T20:06:11.304Z",
+  "finishedAt": "2026-09-21T20:06:11.304Z",
+  "status": "completed",
+  "turns": 166,
+  "summary": "Places index and per-lens pages under the scene's provider; nav, home and kind pages carry the pictures; todo, seedbed and rota wired; harness and tests; framework 01caeef",
+  "tokenUsage": {
+    "input": 4562,
+    "output": 287599,
+    "cacheCreationInput": 1751188,
+    "cacheReadInput": 78195546
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 4562,
+    "output": 287599,
+    "cached": 79946734,
+    "total": 80238895
+  }
+}
