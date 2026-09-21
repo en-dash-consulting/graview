@@ -98,6 +98,41 @@ describe("the drive-in", () => {
     expect(half.nodes.find((node) => node.id === "aggregate:duty")!.screenOf).toBe("duty");
   });
 
+  it("sinks a leaving billboard into its village and raises the next out of its own, so no two pictures stand over each other", () => {
+    const both = { ...options, screens: { ...screens, person: [{ as: "the-roster", title: "The roster" }] } };
+    const duties = layout(graph(), schema, withWithin(focused, "view", "the-week"), both);
+    const people = layout(graph(), schema, withWithin({ ...focused, focusId: "aggregate:person" }, "view", "the-roster"), both);
+    const dutyScreen = duties.nodes.find((node) => node.id === "aggregate:duty")!;
+    const personScreen = people.nodes.find((node) => node.id === "aggregate:person")!;
+    expect(dutyScreen.screenOf).toBe("duty");
+    expect(personScreen.screenOf).toBe("person");
+    const half = interpolate(duties, people, 0.5);
+    const leaving = half.nodes.find((node) => node.id === "aggregate:duty")!;
+    const arriving = half.nodes.find((node) => node.id === "aggregate:person")!;
+    const dutyCard = people.nodes.find((node) => node.id === kindCardId("duty"))!;
+    const personCard = duties.nodes.find((node) => node.id === kindCardId("person"))!;
+    // Halfway, the old picture is halfway into its kind's card and fading; the new one is halfway out of its own.
+    expect(leaving.width).toBeCloseTo((dutyScreen.width + dutyCard.width) / 2, 5);
+    expect(leaving.x).toBeCloseTo((dutyScreen.x + dutyCard.x) / 2, 5);
+    expect(leaving.opacity).toBeCloseTo(0.5, 5);
+    expect(leaving.screenOf).toBe("duty");
+    expect(arriving.width).toBeCloseTo((personScreen.width + personCard.width) / 2, 5);
+    expect(arriving.y).toBeCloseTo((personScreen.y + personCard.y) / 2, 5);
+  });
+
+  it("tweens the city between two cities, keeps it on the way down, and takes the destination's on the way up", () => {
+    const near = layout(graph(), schema, withWithin(focused, "view", "the-week"), options);
+    const closer = layout(graph(), schema, withWithin(focused, "view", "the-week"), { ...options, cityZoom: 1.5 });
+    expect(closer.city!.cell).toBeGreaterThan(near.city!.cell);
+    const half = interpolate(near, closer, 0.5);
+    expect(half.city!.cell).toBeCloseTo((near.city!.cell + closer.city!.cell) / 2, 5);
+    expect(half.city!.originX).toBeCloseTo((near.city!.originX + closer.city!.originX) / 2, 5);
+    const ground = layout(graph(), schema, { ...EMPTY_VIEW, focusId: "aggregate:duty" }, options);
+    expect(ground.city).toBeUndefined();
+    expect(interpolate(near, ground, 0.5).city).toEqual(near.city);
+    expect(interpolate(ground, near, 0.5).city).toEqual(near.city);
+  });
+
   it("no longer makes the city slide aside: every district stays on the canvas beside its own screen", () => {
     const result = layout(graph(), schema, focused, options);
     for (const card of result.nodes.filter((node) => node.plane === 2)) {

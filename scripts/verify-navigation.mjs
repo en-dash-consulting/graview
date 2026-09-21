@@ -494,6 +494,26 @@ try {
     url: location.hash,
     up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
   }));
+  /* Switch KINDS at altitude: the tasks' picture sinks into its village while the lists' rises out of its own.
+     Captured mid-tween, because the fault was two pictures over each other for the length of it. */
+  const before = await drive.evaluate(() => {
+    const el = document.querySelector('[data-graview-screen][data-graview-view="aggregate:task"]');
+    const b = el?.getBoundingClientRect();
+    return b ? { width: b.width, height: b.height } : null;
+  });
+  await drive.click('[data-testid="showing-the-lists"]');
+  await drive.waitForTimeout(260);
+  const midSwitch = await drive.evaluate(() =>
+    [...document.querySelectorAll("[data-graview-screen]")].map((el) => {
+      const b = el.getBoundingClientRect();
+      return { view: el.getAttribute("data-graview-view"), width: b.width, height: b.height, opacity: Number(getComputedStyle(el).opacity) };
+    }),
+  );
+  await drive.waitForTimeout(1200);
+  const afterSwitch = await drive.evaluate(() => [...document.querySelectorAll("[data-graview-screen]")].map((el) => el.getAttribute("data-graview-view")));
+  // Back to the tasks' month for the descent below.
+  await drive.click('[data-testid="showing-the-month"]');
+  await drive.waitForTimeout(1200);
   /* Full screen: the billboard's own control is the way down; capture mid-tween. */
   const centreX = 1560 / 2;
   await drive.click('[data-testid="screen-fullscreen"]');
@@ -512,6 +532,9 @@ try {
   report.driveIn = {
     marquee,
     liveInsideAPicture,
+    leavingBefore: before,
+    midSwitch,
+    afterSwitch,
     noteDriveIn,
     standing,
     switched,
@@ -556,6 +579,16 @@ report.verdict = {
     report.driveIn.marquee.every((button) => /^Tasks: /.test(button.label ?? "") && button.focusable) &&
     report.driveIn?.noteDriveIn === false &&
     report.driveIn?.liveInsideAPicture === 0,
+  // Switching kinds: mid-tween the old picture is smaller than it was and fading, and afterwards only the new one stands.
+  aLeavingPictureSinksIntoItsVillage:
+    report.driveIn?.leavingBefore !== null &&
+    (report.driveIn?.midSwitch ?? []).some((screen) => screen.view === "aggregate:list") &&
+    (report.driveIn?.midSwitch ?? [])
+      .filter((screen) => screen.view === "aggregate:task")
+      // A quarter of the way in, ease-in-out has moved it a little and faded it more: smaller than it was, and going.
+      .every((screen) => screen.width < (report.driveIn?.leavingBefore?.width ?? 0) - 4 && screen.opacity < 0.9) &&
+    (report.driveIn?.afterSwitch ?? []).length === 1 &&
+    report.driveIn?.afterSwitch?.[0] === "aggregate:list",
   // The focused picture stands on its plot: the screen's foot sits above the district's nameplate, centred on it.
   theScreenStandsOnItsPlot:
     report.driveIn?.standing?.screen !== null &&

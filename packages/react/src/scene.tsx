@@ -230,6 +230,13 @@ export function Scene<S extends AnySchema>({
    * is on the kerb instead of a village's height above it. Whole pixels,
    * and only a change re-lays the city.
    */
+  /*
+   * Reported by the layout's CURRENT screen only. A billboard on its way
+   * into its village is still drawn as one, but for the length of the tween
+   * two hosts would report, the layout would flip between their two heights,
+   * and every flip restarted the tween from where it was — a crawl of a
+   * pixel a frame until the old picture had faded.
+   */
   const [screenHeight, setScreenHeight] = useState<number | undefined>(undefined);
   const noteScreenHeight = useCallback((height: number | undefined) => {
     setScreenHeight((current) => {
@@ -715,7 +722,7 @@ export function Scene<S extends AnySchema>({
             centreY: frame.city.originY + panned.y + toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell).y - node.y,
           }
         : {})}
-      {...(node.screenOf !== undefined ? { screen: true, onDrawnHeight: noteScreenHeight } : {})}
+      {...(node.screenOf !== undefined ? { screen: true, ...(node.id === screenId ? { onDrawnHeight: noteScreenHeight } : {}) } : {})}
       touched={touched.has(node.id)}
       {...(activityOf(node) ? { activity: activityOf(node) } : {})}
       scheme={scheme}
@@ -893,7 +900,7 @@ export function Scene<S extends AnySchema>({
          */
         ...(frame.city
           ? {
-              ["--graview-kit-lattice-size" as string]: `${(frame.city.cell / Math.sqrt(5)).toFixed(2)}px`,
+              ["--graview-lattice-cell" as string]: `${frame.city.cell.toFixed(2)}px`,
               ["--graview-lattice-x" as string]: `${(frame.city.originX + panned.x).toFixed(1)}px`,
               ["--graview-lattice-y" as string]: `${(frame.city.originY + panned.y).toFixed(1)}px`,
             }

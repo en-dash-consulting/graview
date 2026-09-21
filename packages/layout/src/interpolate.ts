@@ -33,6 +33,21 @@ function centre(node: LayoutNode): { x: number; y: number } {
  * members are the same interpolation run in opposite directions.
  */
 function standIn(node: LayoutNode, other: Layout): LayoutNode | null {
+  /*
+   * A BILLBOARD SINKS INTO ITS VILLAGE, and rises out of it. The picture on
+   * a kind's plot is an aggregate node, and an aggregate's stand-in is the
+   * centroid of its members — but from altitude the members are buildings
+   * on the ground, not nodes, so a billboard leaving had nowhere to go and
+   * faded where it stood, at full size, under the billboard replacing it:
+   * two pictures on top of each other for the length of the tween, and
+   * the old one read as left up. Its kind's card is where it goes — the
+   * signpost and board at the front of the village, where its own small
+   * picture is — and where the next one comes from.
+   */
+  if (node.screenOf !== undefined) {
+    const card = other.nodes.find((candidate) => candidate.id === kindCardId(node.screenOf!));
+    if (card) return { ...node, x: card.x, y: card.y, width: card.width, height: card.height };
+  }
   if (isAggregateId(node.id) || kindOfCard(node.id) !== null) {
     // A group vanishing: its members are the thing it becomes. Collapse to
     // the centroid of wherever they went.
@@ -115,9 +130,34 @@ export function interpolate(from: Layout, to: Layout, t: number): InterpolatedLa
     width: lerp(from.width, to.width, clamped),
     height: lerp(from.height, to.height, clamped),
     t: clamped,
-    /* The lattice arrives with the destination: the ground crossfades to it
-       by the altitude number, and a half-scaled lattice would be no grid. */
-    ...(to.city ? { city: to.city } : {}),
+    ...(mixCity(from.city, to.city, clamped) ? { city: mixCity(from.city, to.city, clamped)! } : {}),
+  };
+}
+
+/**
+ * THE GROUND MOVES WITH THE CITY. Between two cities — the camera flying
+ * closer, a district pinned elsewhere — the cell and the origin tween, so
+ * the lattice, the plots and the roads slide and grow with the cards on
+ * them rather than snapping to the destination while the cards are still
+ * on their way. Rising, there is no city to start from, so the lattice
+ * arrives with the destination and the ground crossfades to it by the
+ * altitude number; a half-scaled lattice would be no grid. Descending, the
+ * city stays as it was while the ground fades out under the landing
+ * picture, instead of vanishing on the first frame of the way down.
+ */
+function mixCity(from: CityFrame | undefined, to: CityFrame | undefined, t: number): CityFrame | undefined {
+  if (!from) return to;
+  if (!to) return from;
+  return {
+    cell: lerp(from.cell, to.cell, t),
+    originX: lerp(from.originX, to.originX, t),
+    originY: lerp(from.originY, to.originY, t),
+    extent: {
+      x: lerp(from.extent.x, to.extent.x, t),
+      y: lerp(from.extent.y, to.extent.y, t),
+      width: lerp(from.extent.width, to.extent.width, t),
+      height: lerp(from.extent.height, to.extent.height, t),
+    },
   };
 }
 

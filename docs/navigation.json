@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-20T17:55:37.106Z",
+  "at": "2026-09-21T03:51:28.043Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565486,
+      "wingOpacity": 0.565483,
       "registered": true
     },
     "groundAgain": {
@@ -206,6 +206,27 @@
       }
     ],
     "liveInsideAPicture": 0,
+    "leavingBefore": {
+      "width": 329,
+      "height": 279
+    },
+    "midSwitch": [
+      {
+        "view": "aggregate:list",
+        "width": 329.00006103515625,
+        "height": 174.00003051757812,
+        "opacity": 1
+      },
+      {
+        "view": "aggregate:task",
+        "width": 281.9999694824219,
+        "height": 230.99996948242188,
+        "opacity": 0.503454
+      }
+    ],
+    "afterSwitch": [
+      "aggregate:list"
+    ],
     "noteDriveIn": false,
     "standing": {
       "screen": {
@@ -235,9 +256,9 @@
       "up": true
     },
     "midway": {
-      "x": 775.1314086914062,
-      "y": 387.6317138671875,
-      "width": 350
+      "x": 770.7026977539062,
+      "y": 317.87815856933594,
+      "width": 367
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -247,6 +268,7 @@
   },
   "verdict": {
     "aDriveInHasAMarquee": true,
+    "aLeavingPictureSinksIntoItsVillage": true,
     "theScreenStandsOnItsPlot": true,
     "switchingAShowingStaysUp": true,
     "fullScreenDescendsInOneGesture": true,

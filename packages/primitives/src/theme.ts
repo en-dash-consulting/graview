@@ -377,16 +377,32 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
    classic 2:1 pitch, a finer far weave above, dissolving toward the
    horizon. Always present, faded by the altitude number, so rising
    CROSSFADES the square grid into the lattice instead of cutting. */
+/* DRAWN AS TILES, one cell each. A repeating gradient at the lattice's
+   angle was phased from the middle of the box and seamed at the box's own
+   edge when repeated with an offset, so the lines never sat where the
+   city's cells were: a plot stood beside the grid, not on it. Each tile is
+   one cell wide and half a cell tall — the diamond's bounding box — with
+   the tile's two diagonals drawn across it, which is the whole lattice:
+   corners and centres of the tiles are its vertices, and a tile corner is
+   pinned where the city's cell (0,0) meets the canvas. The far weave is the
+   same tile at half size. */
 .graview-ground::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
+  --graview-lattice-tile: var(--graview-lattice-cell, calc(var(--graview-kit-lattice-size, 46px) * 2.2361));
+  --graview-lattice-line: var(--graview-edge);
   background-image:
-    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px var(--graview-kit-lattice-size, 46px)),
-    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px var(--graview-kit-lattice-size, 46px)),
-    repeating-linear-gradient(116.565deg, var(--graview-edge) 0 1px, transparent 1px calc(var(--graview-kit-lattice-size, 46px) / 2)),
-    repeating-linear-gradient(63.435deg, var(--graview-edge) 0 1px, transparent 1px calc(var(--graview-kit-lattice-size, 46px) / 2));
+    linear-gradient(to top right, transparent calc(50% - 0.5px), var(--graview-lattice-line) calc(50% - 0.5px), var(--graview-lattice-line) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to top left, transparent calc(50% - 0.5px), var(--graview-lattice-line) calc(50% - 0.5px), var(--graview-lattice-line) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to top right, transparent calc(50% - 0.5px), var(--graview-lattice-line) calc(50% - 0.5px), var(--graview-lattice-line) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to top left, transparent calc(50% - 0.5px), var(--graview-lattice-line) calc(50% - 0.5px), var(--graview-lattice-line) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  background-size:
+    var(--graview-lattice-tile) calc(var(--graview-lattice-tile) / 2),
+    var(--graview-lattice-tile) calc(var(--graview-lattice-tile) / 2),
+    calc(var(--graview-lattice-tile) / 2) calc(var(--graview-lattice-tile) / 4),
+    calc(var(--graview-lattice-tile) / 2) calc(var(--graview-lattice-tile) / 4);
   /* Anchored where the city's cell (0,0) meets the canvas, so a plot placed
      by the map sits ON the grid a person can see, and pans with it. */
   background-position: var(--graview-lattice-x, 0px) var(--graview-lattice-y, 0px);

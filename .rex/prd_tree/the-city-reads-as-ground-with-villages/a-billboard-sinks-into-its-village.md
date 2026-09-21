@@ -1,0 +1,25 @@
+---
+id: "d71053b9-3f51-4505-b75f-d45c160303fb"
+level: "task"
+title: "A billboard sinks into its village when another rises: no two pictures over each other mid-tween"
+status: "completed"
+priority: "high"
+tags:
+  - "graview"
+  - "city"
+  - "drive-in"
+  - "altitude"
+source: "Nick: \"Lenses should open and close properly upon navigation, not leaving stale billboards up as we shift from one lens to another\""
+startedAt: "2026-09-21T03:30:58.260Z"
+completedAt: "2026-09-21T03:52:32.546Z"
+endedAt: "2026-09-21T03:52:32.546Z"
+resolutionType: "code-change"
+resolutionDetail: "standIn() sends a leaving billboard into its kind's card; only the current screen reports its drawn height; navigation harness verdict added."
+acceptanceCriteria:
+  - "interpolate(): a node with screenOf leaving stands in at kindCardId(screenOf) in the destination, sized to that card; entering grows from the same in the source"
+  - "Mid-tween after switching showings across kinds, the leaving screen is smaller than it was and centred toward its kind card (unit test)"
+  - "Navigation harness: no two [data-graview-screen] hosts at full size 120ms after a switch"
+description: "Switching from one lens to another at altitude left the old billboard standing at full size, fading in place under the new one for the length of the tween, because a leaving screen (an aggregate node) had no stand-in: its members are buildings on the ground, not nodes. The stand-in for a screen is its kind's card, so a leaving picture shrinks into its village's signpost and board and the next one grows out of its own."
+lastModified: "2026-09-21T03:52:32.557Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
+---
