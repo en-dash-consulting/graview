@@ -2,7 +2,7 @@
 id: "6c1b654a-73ac-47a3-9cae-e1f7fa9004b0"
 level: "task"
 title: "Zoom and pan the city by hand: pinch or ctrl+wheel zooms about the pointer, the wheel pans, and the ground reaches its far edge"
-status: "in_progress"
+status: "completed"
 priority: "high"
 tags:
   - "graview"
@@ -11,6 +11,10 @@ tags:
   - "camera"
 source: "Nick: \"the zoom in graview view seems to get stuck and i can't pan around the screen fully. we should fix that and also allow a user to zoom in or out\"; and \"i just clicked a different lense when one was open, and now it's like its sooooooooo slowly changing sizes and positions\""
 startedAt: "2026-09-21T04:16:46.241Z"
+completedAt: "2026-09-21T04:30:34.183Z"
+endedAt: "2026-09-21T04:30:34.183Z"
+resolutionType: "code-change"
+resolutionDetail: "Scene zoom with pinch, ctrl+wheel and corner controls; wheel pan; whole-offset clamp; tween keeps its clock on restart."
 acceptanceCriteria:
   - "Ctrl+wheel and pinch at altitude change the city's cell continuously, anchored under the pointer; from the ground pinch-in still rises"
   - "Zoom in / zoom out buttons (data-testid zoom-in, zoom-out) at altitude, 32px targets, aria-labelled, with the level shown"
@@ -19,6 +23,6 @@ acceptanceCriteria:
   - "A restarted tween completes within the original duration (unit test)"
   - "Navigation harness verdicts for wheel zoom, wheel pan, buttons and reach; full chain green"
 description: "From altitude the pinch and ctrl+wheel stepped the altitude (one discrete rise or descent with a cooldown), which read as a zoom that sticks, and the drag clamped the person's pan on its own while the camera's flight to a village sat on top of it, so the far side of the city could not be reached. Now: a scene zoom (0.6 to 3, times the fly-closer 1.5) that pinch and ctrl+wheel change continuously about the pointer, with zoom-in and zoom-out controls in the ground's corner; the plain wheel over the ground pans; the drag clamps the whole offset (pan plus camera) to the camera limit so every district is reachable; direct manipulation is not tweened; zoom resets on descent. Also: a tween that is restarted mid-flight keeps its clock and its easing velocity, so a storm of restarts no longer crawls."
-lastModified: "2026-09-21T04:16:46.253Z"
+lastModified: "2026-09-21T04:30:34.194Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
