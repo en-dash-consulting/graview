@@ -1198,6 +1198,50 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   top: calc(var(--graview-centre-y, 50%) + 10px);
   transform: translate(-50%, -100%) scale(calc(0.55 + var(--graview-altitude) * 0.45));
 }
+/* ZOOM, in the ground's corner: the way a map carries its own. Two
+   fingertip-sized buttons and the level between them, shown from altitude. */
+.graview-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  /* Above the occupants: a robot walking past a control must not cover it. */
+  z-index: 8;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-panel);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.graview-zoom-button {
+  min-width: 32px;
+  min-height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--graview-ink);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.graview-zoom-button:hover:not(:disabled) {
+  background: var(--graview-edge);
+}
+.graview-zoom-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.graview-zoom-level {
+  min-width: 3.2em;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--graview-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
 /* THE SCREEN IS A BILLBOARD at the back of the village: a frame, and two
    posts into the ground at its foot. */
 /* On the NATURAL BOX, which is the picture now: the layout cuts the

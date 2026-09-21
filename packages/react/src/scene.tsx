@@ -3,6 +3,7 @@ import type { AnySchema, Fidelity, GraphReader, NodeOfSchema } from "@graview/co
 import {
   aggregateId,
   cameraLimit,
+  panForZoom,
   isAggregateId,
   kindCardId,
   kindOfCard,
@@ -160,8 +161,17 @@ export function Scene<S extends AnySchema>({
    * pinch over as ctrl+wheel; Safari speaks GestureEvent. Both are
    * claimed here so the browser's own page zoom never fires on the scene.
    */
-  const altitude = useRef({ view, charge: 0, coolUntil: 0 });
+  const altitude = useRef({ view, charge: 0, coolUntil: 0, lastScale: 1 });
   altitude.current.view = view;
+  /*
+   * FROM ALTITUDE, PINCH AND CTRL+WHEEL ZOOM THE CITY — continuously, about
+   * the pointer, the way every map does — and the plain wheel pans the
+   * ground. Stepping the altitude once per gesture with a cooldown read as
+   * a zoom that sticks. From the ground, fingers together still rise: the
+   * way up is a gesture, the way down is the picture's own control.
+   */
+  const zoomAbout = useRef<(factor: number, clientX?: number, clientY?: number) => void>(() => {});
+  const panBy = useRef<(dx: number, dy: number) => void>(() => {});
   useEffect(() => {
     const element = wrapperRef.current;
     if (!element) return;
@@ -175,26 +185,51 @@ export function Scene<S extends AnySchema>({
       setView(withOverview(held.view, rising));
     };
     const onWheel = (event: WheelEvent) => {
-      if (!event.ctrlKey) return;
-      event.preventDefault();
       const held = altitude.current;
-      held.charge += event.deltaY;
-      if (Math.abs(held.charge) < 60) return;
-      step(held.charge > 0, performance.now());
+      const up = held.view.overview ?? false;
+      if (event.ctrlKey) {
+        event.preventDefault();
+        if (!up) {
+          held.charge += event.deltaY;
+          if (Math.abs(held.charge) < 60) return;
+          if (held.charge > 0) step(true, performance.now());
+          else held.charge = 0;
+          return;
+        }
+        // A mouse notch (a hundred) is a step and a half; a trackpad's few units are a nudge.
+        zoomAbout.current(Math.exp(-event.deltaY * 0.004), event.clientX, event.clientY);
+        return;
+      }
+      if (!up) return;
+      // Over the ground only: a lens, a scroll region or a pane keeps its own wheel.
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("[data-graview-view], .graview-scroll, [data-graview-overlay], .graview-zoom")) return;
+      event.preventDefault();
+      panBy.current(-event.deltaX, -event.deltaY);
+    };
+    const onGestureStart = (event: Event) => {
+      event.preventDefault();
+      altitude.current.lastScale = 1;
     };
     const onGesture = (event: Event) => {
       event.preventDefault();
-      const scale = (event as Event & { scale?: number }).scale ?? 1;
-      if (scale < 0.72) step(true, performance.now());
-      else if (scale > 1.4) step(false, performance.now());
+      const held = altitude.current;
+      const scale = (event as Event & { scale?: number; clientX?: number; clientY?: number }).scale ?? 1;
+      if (!(held.view.overview ?? false)) {
+        if (scale < 0.72) step(true, performance.now());
+        return;
+      }
+      const ratio = scale / (held.lastScale || 1);
+      held.lastScale = scale;
+      const at = event as Event & { clientX?: number; clientY?: number };
+      zoomAbout.current(ratio, at.clientX, at.clientY);
     };
-    const swallowGesture = (event: Event) => event.preventDefault();
     element.addEventListener("wheel", onWheel, { passive: false });
-    element.addEventListener("gesturestart", swallowGesture);
+    element.addEventListener("gesturestart", onGestureStart);
     element.addEventListener("gesturechange", onGesture);
     return () => {
       element.removeEventListener("wheel", onWheel);
-      element.removeEventListener("gesturestart", swallowGesture);
+      element.removeEventListener("gesturestart", onGestureStart);
       element.removeEventListener("gesturechange", onGesture);
     };
   }, [setView]);
@@ -224,6 +259,22 @@ export function Scene<S extends AnySchema>({
    */
   const closer = (view.overview ?? false) && view.within?.["view"] !== undefined ? 1.5 : 1;
   /*
+   * ZOOM BY HAND. The fly-closer step above is the scene's own; this is the
+   * person's, changed continuously by pinch and ctrl+wheel about the
+   * pointer and by the controls in the ground's corner, multiplied in.
+   * Scene state like the camera, never the URL: an address says where you
+   * are, not how close you are standing. Reset on the way down — on the
+   * ground it means nothing, and rising again starts level.
+   */
+  const [zoom, setZoom] = useState(1);
+  const zoomLive = useRef(1);
+  useEffect(() => {
+    if (view.overview) return;
+    zoomLive.current = 1;
+    setZoom(1);
+  }, [view.overview]);
+  const cityZoom = closer * zoom;
+  /*
    * THE BILLBOARD IS CUT TO ITS PICTURE. The lens draws in a box as tall as
    * the window; the screen's host reports how much of it the lens actually
    * used, and the layout sizes the billboard to that — so the picture's foot
@@ -247,7 +298,7 @@ export function Scene<S extends AnySchema>({
   const sized = useMemo<LayoutOptions>(
     () => ({
       ...options,
-      cityZoom: closer,
+      cityZoom,
       ...(screenHeight !== undefined ? { screenHeight } : {}),
       // What is not drawn for this seat at this stop: a workspace's disabled
       // modules, and the administered ones this seat may not see or has not
@@ -310,7 +361,7 @@ export function Scene<S extends AnySchema>({
         : {}),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [options, size, unit, store, views, hiddenKinds, judged, closer, screenHeight],
+    [options, size, unit, store, views, hiddenKinds, judged, cityZoom, screenHeight],
   );
   /*
    * THE CAMERA IS NOT A MOVE. A drive-in on the far side of a large city
@@ -331,12 +382,59 @@ export function Scene<S extends AnySchema>({
     () => (camera.x === 0 && camera.y === 0 ? view : withPan(view, panned)),
     [view, camera, panned],
   );
+  /*
+   * THE WHOLE OFFSET IS WHAT IS CLAMPED. The person's pan and the camera's
+   * flight add up to where the city is; clamping the pan alone let the
+   * flight to a far village eat the room to pan back, and the far side of
+   * a flown-closer city could not be reached. Pan plus camera stays within
+   * the camera limit — a little way over a picture that fits, as far as the
+   * city reaches when it is bigger than the window — and every district is
+   * reachable.
+   */
+  const cameraLive = useRef(camera);
+  cameraLive.current = camera;
+  const panWithin = useCallback(
+    (limit: { x: number; y: number }, wanted: { x: number; y: number }): { x: number; y: number } => {
+      const cam = cameraLive.current;
+      return {
+        x: Math.max(-limit.x, Math.min(limit.x, wanted.x + cam.x)) - cam.x,
+        y: Math.max(-limit.y, Math.min(limit.y, wanted.y + cam.y)) - cam.y,
+      };
+    },
+    [],
+  );
   const pinnedIds = useMemo(() => new Set(Object.keys(view.pins)), [view.pins]);
   const result = useMemo<Layout>(
     () => layout(store.graph, store.schema, seen, sized),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, seen, sized, nodes],
   );
+  const ZOOM_MIN = 0.6;
+  const ZOOM_MAX = 3;
+  zoomAbout.current = (factor, clientX, clientY) => {
+    if (!(view.overview ?? false)) return;
+    const current = zoomLive.current;
+    const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, current * factor));
+    if (Math.abs(next - current) < 1e-4) return;
+    zoomLive.current = next;
+    steer();
+    setZoom(next);
+    const box = wrapperRef.current?.getBoundingClientRect();
+    const centre = { x: result.width / 2, y: result.height / 2 };
+    const pointer = box && clientX !== undefined && clientY !== undefined ? { x: clientX - box.left, y: clientY - box.top } : centre;
+    const ratio = next / current;
+    setView((current) => withPan(current, panForZoom(current.pan ?? { x: 0, y: 0 }, cameraLive.current, pointer, centre, ratio)));
+    noteMoved();
+  };
+  panBy.current = (dx, dy) => {
+    steer();
+    const limit = cameraLimit(result);
+    setView((current) => {
+      const pan = current.pan ?? { x: 0, y: 0 };
+      return withPan(current, panWithin(limit, { x: pan.x + dx, y: pan.y + dy }));
+    });
+    noteMoved();
+  };
 
   /*
    * A DRAG IS NOT A TRANSITION.
@@ -348,9 +446,25 @@ export function Scene<S extends AnySchema>({
    * moves you did not make with your own hand.
    */
   const [dragging, setDragging] = useState(false);
+  /*
+   * A WHEEL IS A HAND TOO. Zooming and panning by wheel arrive as a stream
+   * of small moves; tweening each one lagged the picture behind the fingers
+   * the way a tweened drag did. While the wheel is turning, and for a beat
+   * after, the picture snaps to it.
+   */
+  const [steering, setSteering] = useState(false);
+  const steeringUntil = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const steer = useCallback(() => {
+    setSteering(true);
+    if (steeringUntil.current) clearTimeout(steeringUntil.current);
+    steeringUntil.current = setTimeout(() => {
+      steeringUntil.current = null;
+      setSteering(false);
+    }, 160);
+  }, []);
   // The picture as it is right now, part-way between the last view and this
   // one. Everything downstream draws the tween, not the destination.
-  const frame = useAnimatedLayout(result, { enabled: animate && !dragging });
+  const frame = useAnimatedLayout(result, { enabled: animate && !dragging && !steering });
   const touched = useTouched<S>();
 
   /*
@@ -660,12 +774,7 @@ export function Scene<S extends AnySchema>({
       // reaches when it is bigger than the window: every district can be
       // reached, none can be dropped off the edge.
       const limit = cameraLimit(result);
-      setView((current) =>
-        withPan(current, {
-          x: Math.max(-limit.x, Math.min(limit.x, drag.baseX + dx)),
-          y: Math.max(-limit.y, Math.min(limit.y, drag.baseY + dy)),
-        }),
-      );
+      setView((current) => withPan(current, panWithin(limit, { x: drag.baseX + dx, y: drag.baseY + dy })));
     } else if (drag.id) {
       setView((current) =>
         withPin(current, drag.id!, { x: drag.baseX + dx, y: drag.baseY + dy }),
@@ -975,6 +1084,42 @@ export function Scene<S extends AnySchema>({
           {hosts}
         </canvas>
       )}
+      {view.overview ? (
+        /* SCENE FURNITURE in the ground's other corner: the way a map carries its own zoom. */
+        <div
+          className="graview-zoom"
+          role="group"
+          aria-label="Zoom"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="graview-zoom-button"
+            data-testid="zoom-out"
+            aria-label="Zoom out"
+            title="Zoom out — or pinch, or ctrl+wheel"
+            disabled={zoom <= ZOOM_MIN + 1e-6}
+            onClick={() => zoomAbout.current(1 / 1.25)}
+          >
+            −
+          </button>
+          <span className="graview-zoom-level" data-testid="zoom-level" aria-live="polite">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            type="button"
+            className="graview-zoom-button"
+            data-testid="zoom-in"
+            aria-label="Zoom in"
+            title="Zoom in — or pinch, or ctrl+wheel"
+            disabled={zoom >= ZOOM_MAX - 1e-6}
+            onClick={() => zoomAbout.current(1.25)}
+          >
+            +
+          </button>
+        </div>
+      ) : null}
       <Lines
         frame={frame}
         width={result.width}

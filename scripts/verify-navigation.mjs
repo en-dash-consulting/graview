@@ -549,6 +549,68 @@ try {
   report.driveIn = { error: String(error).slice(0, 2000) };
 }
 
+/*
+ * ZOOM AND PAN BY HAND, from altitude. Ctrl+wheel (what a trackpad pinch
+ * arrives as) zooms the city about the pointer; the plain wheel over the
+ * ground pans; the corner controls zoom; and the ground can be dragged as
+ * far as the camera reaches even after the camera flew to a village.
+ */
+try {
+  const cam = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  cam.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await cam.goto("http://localhost:5193/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists", { waitUntil: "load" });
+  await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await cam.waitForTimeout(1500);
+  const ground = () =>
+    cam.evaluate(() => {
+      const el = document.querySelector(".graview-ground");
+      const st = el.style;
+      const pan = new URLSearchParams(location.hash.slice(1)).get("pan");
+      return {
+        cell: parseFloat(st.getPropertyValue("--graview-lattice-cell")),
+        latticeX: parseFloat(st.getPropertyValue("--graview-lattice-x")),
+        pan,
+        level: document.querySelector('[data-testid="zoom-level"]')?.textContent ?? null,
+        reach: (el.getAttribute("data-graview-reach") ?? "0 0").split(" ").map(Number),
+      };
+    });
+  const start = await ground();
+  // A pinch in: ctrl+wheel with a negative delta zooms in, about the pointer.
+  const spot = { x: 700, y: 600 };
+  await cam.mouse.move(spot.x, spot.y);
+  await cam.mouse.wheel(0, -120).catch(() => {});
+  await cam.keyboard.down("Control");
+  for (let i = 0; i < 6; i++) await cam.mouse.wheel(0, -40);
+  await cam.keyboard.up("Control");
+  await cam.waitForTimeout(400);
+  const zoomedIn = await ground();
+  // The plain wheel over the ground pans.
+  await cam.mouse.move(400, 300);
+  await cam.mouse.wheel(60, 80);
+  await cam.waitForTimeout(400);
+  const wheeled = await ground();
+  // The controls.
+  await cam.click('[data-testid="zoom-out"]');
+  await cam.waitForTimeout(400);
+  const buttonOut = await ground();
+  await cam.click('[data-testid="zoom-in"]');
+  await cam.waitForTimeout(400);
+  const buttonIn = await ground();
+  // Dragging the ground as far as it goes: the whole offset reaches the limit, not the pan alone.
+  const box = await cam.evaluate(() => { const b = document.querySelector(".graview-ground").getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; });
+  const dragFrom = { x: box.x + box.w - 60, y: box.y + box.h / 2 };
+  await cam.mouse.move(dragFrom.x, dragFrom.y);
+  await cam.mouse.down();
+  for (let i = 1; i <= 20; i++) await cam.mouse.move(dragFrom.x - i * 90, dragFrom.y, { steps: 2 });
+  await cam.mouse.up();
+  await cam.waitForTimeout(400);
+  const dragged = await ground();
+  report.camera = { start, zoomedIn, wheeled, buttonOut, buttonIn, dragged };
+  await cam.close();
+} catch (error) {
+  report.camera = { error: String(error).slice(0, 2000) };
+}
+
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
@@ -579,6 +641,21 @@ report.verdict = {
     report.driveIn.marquee.every((button) => /^Tasks: /.test(button.label ?? "") && button.focusable) &&
     report.driveIn?.noteDriveIn === false &&
     report.driveIn?.liveInsideAPicture === 0,
+  // Ctrl+wheel from altitude zooms the city — the cell grows — and says so in the corner.
+  theWheelZoomsTheCity:
+    (report.camera?.zoomedIn?.cell ?? 0) > (report.camera?.start?.cell ?? 0) * 1.1 &&
+    report.camera?.zoomedIn?.level !== report.camera?.start?.level,
+  // The plain wheel over the ground pans: the lattice, pinned to the city, moves with it.
+  theWheelPansTheGround:
+    report.camera?.wheeled !== undefined &&
+    Math.abs((report.camera?.wheeled?.latticeX ?? 0) - (report.camera?.zoomedIn?.latticeX ?? 0)) > 20,
+  // The corner controls zoom out and in.
+  theZoomControlsWork:
+    (report.camera?.buttonOut?.cell ?? 0) < (report.camera?.wheeled?.cell ?? 0) &&
+    (report.camera?.buttonIn?.cell ?? 0) > (report.camera?.buttonOut?.cell ?? 0),
+  // Dragged as far as it goes, the ground moves by far more than a little way: the far side is reachable.
+  theGroundReachesItsFarEdge:
+    (report.camera?.buttonIn?.latticeX ?? 0) - (report.camera?.dragged?.latticeX ?? 0) > 400,
   // Switching kinds: mid-tween the old picture is smaller than it was and fading, and afterwards only the new one stands.
   aLeavingPictureSinksIntoItsVillage:
     report.driveIn?.leavingBefore !== null &&

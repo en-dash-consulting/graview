@@ -309,3 +309,24 @@ export function cameraLimit(result: { readonly width: number; readonly height: n
     y: Math.max(slack.y, extent.y + extent.height - result.height + margin, -extent.y + margin),
   };
 }
+
+/**
+ * THE PAN THAT KEEPS THE POINT UNDER THE POINTER STILL when the city is
+ * zoomed. The city is placed about the canvas's centre, so scaling its cell
+ * by `ratio` moves every point away from (or toward) the centre; the pan
+ * moves the opposite way by the pointer's share of that, and what was under
+ * the finger stays under it. Whole offset in, pan out: the camera's own
+ * flight is part of where the city is, and only the pan is the person's.
+ */
+export function panForZoom(
+  pan: { readonly x: number; readonly y: number },
+  camera: { readonly x: number; readonly y: number },
+  pointer: { readonly x: number; readonly y: number },
+  centre: { readonly x: number; readonly y: number },
+  ratio: number,
+): { readonly x: number; readonly y: number } {
+  return {
+    x: pan.x + (pointer.x - pan.x - camera.x - centre.x) * (1 - ratio),
+    y: pan.y + (pointer.y - pan.y - camera.y - centre.y) * (1 - ratio),
+  };
+}

@@ -56,6 +56,17 @@ export function useAnimatedLayout(
   // two states before animating forward.
   const latest = useRef<InterpolatedLayout>(current);
   const frame = useRef<number | null>(null);
+  /*
+   * WHEN THIS FLIGHT BEGAN, kept across restarts. A new target arriving
+   * mid-flight — the camera re-centring a frame after a click, a host
+   * reporting a size, a wheel's worth of events — used to start a fresh
+   * tween from the live frame with the whole duration and the ease-in from
+   * zero, so a stream of them moved the scene a hair a frame and never
+   * arrived: a crawl. The clock belongs to the flight, not the target: a
+   * restart tweens from the live frame to the new target over what is LEFT,
+   * picking the easing up at the velocity it already had.
+   */
+  const clock = useRef<number | null>(null);
 
   useEffect(() => {
     if (!enabled || typeof requestAnimationFrame === "undefined") {
@@ -83,18 +94,25 @@ export function useAnimatedLayout(
 
     // Tween from wherever the scene actually IS, not from the last target:
     // interrupting a transition half way must not snap back to its start.
-    const start = performance.now();
+    const now = performance.now();
+    const inFlight = clock.current !== null && latest.current.t < 1 && now - clock.current < duration;
+    const start = inFlight ? clock.current! : now;
+    clock.current = start;
+    // Where the easing already is, so the rest of the flight continues from
+    // that point on the curve rather than easing in again from a standstill.
+    const alreadyEased = easeInOut(Math.min(1, (now - start) / duration));
     const origin = from.current;
 
-    const step = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = easeInOut(t);
-      const next = interpolate(origin, target, eased);
+    const step = (at: number) => {
+      const t = Math.min(1, (at - start) / duration);
+      const eased = alreadyEased >= 1 ? 1 : (easeInOut(t) - alreadyEased) / (1 - alreadyEased);
+      const next = interpolate(origin, target, Math.max(0, eased));
       latest.current = next;
       setCurrent(next);
       if (t < 1) {
         frame.current = requestAnimationFrame(step);
       } else {
+        clock.current = null;
         from.current = target;
         /*
          * ONE SETTLE TICK after the last frame has painted.

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-21T03:51:28.043Z",
+  "at": "2026-09-21T04:25:20.345Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565483,
+      "wingOpacity": 0.539309,
       "registered": true
     },
     "groundAgain": {
@@ -213,15 +213,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 329.00006103515625,
-        "height": 174.00003051757812,
+        "width": 332.99993896484375,
+        "height": 173,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 281.9999694824219,
-        "height": 230.99996948242188,
-        "opacity": 0.503454
+        "width": 280.0000305175781,
+        "height": 229,
+        "opacity": 0.487767
       }
     ],
     "afterSwitch": [
@@ -256,9 +256,9 @@
       "up": true
     },
     "midway": {
-      "x": 770.7026977539062,
-      "y": 317.87815856933594,
-      "width": 367
+      "x": 770.2348022460938,
+      "y": 319.9204406738281,
+      "width": 371
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -266,8 +266,74 @@
     },
     "movedFromThePlot": true
   },
+  "camera": {
+    "start": {
+      "cell": 135.21,
+      "latticeX": 1147.5,
+      "pan": null,
+      "level": "100%",
+      "reach": [
+        702,
+        397
+      ]
+    },
+    "zoomedIn": {
+      "cell": 353.14,
+      "latticeX": 1759.1,
+      "pan": "-96.63,323.61",
+      "level": "261%",
+      "reach": [
+        1519,
+        713
+      ]
+    },
+    "wheeled": {
+      "cell": 353.14,
+      "latticeX": 1699.1,
+      "pan": "-156.63,243.61",
+      "level": "261%",
+      "reach": [
+        1519,
+        713
+      ]
+    },
+    "buttonOut": {
+      "cell": 282.51,
+      "latticeX": 1528.9,
+      "pan": "-97.31,173.32",
+      "level": "209%",
+      "reach": [
+        1078,
+        492
+      ]
+    },
+    "buttonIn": {
+      "cell": 353.14,
+      "latticeX": 1699.1,
+      "pan": "-156.63,243.61",
+      "level": "261%",
+      "reach": [
+        1519,
+        713
+      ]
+    },
+    "dragged": {
+      "cell": 353.14,
+      "latticeX": 476.6,
+      "pan": "-1379.16,243.61",
+      "level": "261%",
+      "reach": [
+        1519,
+        713
+      ]
+    }
+  },
   "verdict": {
     "aDriveInHasAMarquee": true,
+    "theWheelZoomsTheCity": true,
+    "theWheelPansTheGround": true,
+    "theZoomControlsWork": true,
+    "theGroundReachesItsFarEdge": true,
     "aLeavingPictureSinksIntoItsVillage": true,
     "theScreenStandsOnItsPlot": true,
     "switchingAShowingStaysUp": true,

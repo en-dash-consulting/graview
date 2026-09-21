@@ -1,7 +1,7 @@
 import { createSchema, defineNode, Graph } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { cameraLimit, EMPTY_VIEW, interpolate, kindCardId, layout, placeCity, toggleExpanded } from "../../src/index.js";
+import { cameraLimit, EMPTY_VIEW, interpolate, kindCardId, layout, panForZoom, placeCity, toggleExpanded } from "../../src/index.js";
 
 /**
  * THE CITY AT ALTITUDE. The kinds stand on the declaration's own map, on
@@ -120,5 +120,23 @@ describe("the marquee takes the room its buttons take", () => {
     expect(one).toBe(10 + 72 + 16);
     expect(three).toBe(10 + 2 * (36 + 16) + 4);
     expect(marqueeHeightFor([], 132)).toBe(0);
+  });
+});
+
+describe("zooming by hand", () => {
+  it("keeps the point under the pointer still: the pan moves against the scaling about the centre", () => {
+    const centre = { x: 800, y: 470 };
+    const camera = { x: -120, y: 40 };
+    const pan = { x: 30, y: -10 };
+    const pointer = { x: 1100, y: 700 };
+    const ratio = 1.5;
+    const next = panForZoom(pan, camera, pointer, centre, ratio);
+    // The city point under the pointer, before and after, in the city's own (unscaled) frame.
+    const before = { x: (pointer.x - pan.x - camera.x - centre.x), y: (pointer.y - pan.y - camera.y - centre.y) };
+    const after = { x: (pointer.x - next.x - camera.x - centre.x) / ratio, y: (pointer.y - next.y - camera.y - centre.y) / ratio };
+    expect(after.x).toBeCloseTo(before.x, 6);
+    expect(after.y).toBeCloseTo(before.y, 6);
+    // Zooming about the centre itself moves nothing.
+    expect(panForZoom(pan, camera, { x: centre.x + pan.x + camera.x, y: centre.y + pan.y + camera.y }, centre, 2)).toEqual(pan);
   });
 });
