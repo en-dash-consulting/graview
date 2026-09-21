@@ -1,0 +1,30 @@
+{
+  "id": "0f0935d7-5584-4872-8ee9-68b8318004fa",
+  "taskId": "aa547494-41a5-4044-8150-4c5fe0e1e2c9",
+  "taskTitle": "Relationships as structure on pages",
+  "startedAt": "2026-09-21T21:07:40.950Z",
+  "finishedAt": "2026-09-21T21:07:40.950Z",
+  "status": "completed",
+  "turns": 48,
+  "summary": "kindMap + map page and home section, list group-by and narrowing, record two-way links and seen-in, RelationMark shared with the scene; framework 7411220",
+  "tokenUsage": {
+    "input": 1356,
+    "output": 114780,
+    "cacheCreationInput": 175720,
+    "cacheReadInput": 28330553
+  },
+  "toolCalls": [],
+  "model": "claude-fable-5-1",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.6.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 1356,
+    "output": 114780,
+    "cached": 28506273,
+    "total": 28622409
+  }
+}
