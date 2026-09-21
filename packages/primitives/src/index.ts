@@ -41,7 +41,7 @@ export type {
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
 export { EditableTitle, EditableValue, Fields, humanise } from "./editable.js";
-export { RelationKey } from "./relation-key.js";
+export { RelationKey, RelationMark } from "./relation-key.js";
 export { QuickRelations } from "./quick-relations.js";
 export { ChatPanel, IntelligenceSettings } from "./chat.js";
 export type { ChatPanelProps } from "./chat.js";

@@ -39,6 +39,14 @@ if (location.pathname.startsWith("/pages")) {
   first, then kinds, then Problems. A pick inside a lens on a page travels
   to the record. Pass `views` (and `settings`, `presence`) in the context;
   the face puts the scene's provider under the routes for you.
+- `/map` — how the kinds fit together: every declared relation in the
+  declaration's own words with its live count (`kindMap(store)`), also a
+  section on the home page. A kind's list says what it relates to, groups
+  by a relation (`?by=<edge>`) and narrows by one (`?<edge>=<id>` keeps the
+  members joined to that node; `?with=<edge>` keeps the ones that have the
+  relation at all) — all in the URL, so a list you arranged is a link you
+  can send. A record links the other way round, to the far kind's list
+  narrowed to itself, and says which pictures it is seen in.
 
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is

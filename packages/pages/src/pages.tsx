@@ -1,4 +1,4 @@
-import { KindFigure, useMarkup } from "@graview/primitives";
+import { KindFigure, RelationMark, useMarkup } from "@graview/primitives";
 import {
   describeNode,
   hueFor,
@@ -20,7 +20,7 @@ import {
 } from "@graview/core";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useCallback, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { kindFacts, rankedRepairs, recordFacts } from "./facts.js";
+import { kindFacts, kindMap, rankedRepairs, recordFacts, type KindRelation } from "./facts.js";
 import type { ReactViewRegistry, ViewProps } from "@graview/react";
 import type { ComponentType } from "react";
 import { DerivedForm } from "./form.js";
@@ -435,6 +435,11 @@ export function DefaultShell<S extends AnySchema>({
                 </Link>
               );
             })}
+            {kindMap(store).relations.length > 0 ? (
+              <Link to="/map" style={navLink("/map")} {...(current("/map") ? { "aria-current": "page" as const } : {})}>
+                Map
+              </Link>
+            ) : null}
             <Link
               to="/problems"
               // At the end of the row, and at the end of the last row when
@@ -481,6 +486,127 @@ export function DefaultShell<S extends AnySchema>({
         </div>
       </footer>
     </div>
+  );
+}
+
+/* ---------------------------------------------------------------- the map */
+
+/** "anything" for a relation the declaration leaves open. */
+function endOf<S extends AnySchema>(store: Store<S>, kind: string): { readonly label: string; readonly path: string | null } {
+  if (kind === "*") return { label: "anything", path: null };
+  return { label: pluralOf(store, kind), path: `/${pluralSlug(store.schema, kind)}` };
+}
+
+/**
+ * ONE RELATION, AS A LINE: its mark, the two kinds it joins with the edge's
+ * name between them, its own words from each end, and how many of it there
+ * are — the count opening the far kind's list narrowed to the ones that
+ * have it.
+ */
+function RelationLine<S extends AnySchema>({ context, relation }: { context: PageContext<S>; relation: KindRelation }) {
+  const { store } = context;
+  const from = endOf(store, relation.from);
+  const to = endOf(store, relation.to);
+  const end = (one: typeof from) => (one.path ? <Link to={one.path} style={{ ...plain, fontWeight: 550 }}>{one.label}</Link> : <span>{one.label}</span>);
+  return (
+    <li
+      data-testid="relation"
+      data-relation={relation.edgeKind}
+      style={{ display: "grid", gridTemplateColumns: "30px minmax(0, 1fr) auto", gap: 12, alignItems: "baseline" }}
+    >
+      <RelationMark edgeKind={relation.edgeKind} {...(context.brand?.kit ? { kit: context.brand.kit } : {})} />
+      <span style={{ display: "grid", gap: 1 }}>
+        <span>
+          {end(from)} <span style={quiet}>{humaniseField(relation.edgeKind)}</span> {end(to)}
+        </span>
+        {relation.description || relation.inverse ? (
+          <span style={{ ...quiet, fontSize: "0.875rem" }}>
+            {relation.description ? capitalise(relation.description) : null}
+            {relation.description && relation.inverse ? " · " : null}
+            {relation.inverse ? `from the other end, ${relation.inverse}` : null}
+          </span>
+        ) : null}
+      </span>
+      {to.path ? (
+        <Link
+          to={`${to.path}?with=${encodeURIComponent(relation.edgeKind)}`}
+          // A count is a small word and a real target: a fingertip's width at least.
+          style={{ ...link, ...quiet, fontVariantNumeric: "tabular-nums", display: "inline-block", minWidth: 24, minHeight: 24, textAlign: "center" }}
+          title={`The ${to.label.toLowerCase()} that have this`}
+        >
+          {relation.count}
+        </Link>
+      ) : (
+        <span style={{ ...quiet, fontVariantNumeric: "tabular-nums" }}>{relation.count}</span>
+      )}
+    </li>
+  );
+}
+
+/**
+ * HOW IT FITS TOGETHER: every declared relation between the kinds, in the
+ * declaration's words, with its count — the roads between the districts
+ * and the key that names them, as a page can carry them. On the home page
+ * as a section; at `/map` on its own.
+ */
+export function KindMapSection<S extends AnySchema>({ context, heading = true }: { context: PageContext<S>; heading?: boolean }) {
+  const { store } = context;
+  const live = new Set(liveKinds(store, context.principal));
+  const relations = kindMap(store).relations.filter((relation) => live.has(relation.from) && (relation.to === "*" || live.has(relation.to)));
+  if (relations.length === 0) return null;
+  return (
+    <section style={{ ...rule, display: "grid", gap: 12 }} data-testid="kind-map">
+      {heading ? (
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+          <h2 style={h2}>
+            <Link to="/map" style={plain}>
+              How it fits together
+            </Link>
+          </h2>
+          <span style={quiet}>{relations.length === 1 ? "1 relation" : `${relations.length} relations`}</span>
+        </div>
+      ) : null}
+      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 10 }}>
+        {relations.map((relation) => (
+          <RelationLine key={`${relation.edgeKind}|${relation.from}|${relation.to}`} context={context} relation={relation} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export function DefaultMapPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
+  const { store } = context;
+  useStoreTick(store);
+  const live = new Set(liveKinds(store, context.principal));
+  const map = kindMap(store);
+  const relations = map.relations.filter((relation) => live.has(relation.from));
+  return (
+    <PageMain context={context}>
+      <header style={{ display: "grid", gap: 12 }}>
+        <p style={eyebrow}>{relations.length === 0 ? "No relations" : `${relations.length} ${relations.length === 1 ? "relation" : "relations"}`}</p>
+        <h1 style={h1}>How it fits together</h1>
+        <p style={lede}>
+          {relations.length === 0
+            ? "Nothing here is declared to relate to anything else yet."
+            : "The kinds this installation holds, and the relations declared between them — each in the declaration's own words, with how many of it there are."}
+        </p>
+      </header>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "6px 18px" }} data-testid="map-kinds">
+        {map.kinds
+          .filter((entry) => live.has(entry.kind))
+          .map((entry) => (
+            <li key={entry.kind} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <KindMark kind={entry.kind} brand={context.brand} schema={store.schema} size={7} />
+              <Link to={`/${pluralSlug(store.schema, entry.kind)}`} style={link}>
+                {entry.plural}
+              </Link>
+              <span style={quiet}>{entry.count}</span>
+            </li>
+          ))}
+      </ul>
+      <KindMapSection context={context} heading={false} />
+    </PageMain>
   );
 }
 
@@ -815,6 +941,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         </section>
       ) : null}
 
+      <KindMapSection context={context} />
+
       {counted.map(({ kind, definition, members }) => {
         const path = `/${pluralSlug(store.schema, kind)}`;
         const shown = members.slice(0, 4);
@@ -886,7 +1014,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   const { store, brand, invariantContext } = context;
   useStoreTick(store);
   const params = useParams();
-  const [search] = useSearchParams();
+  const [search, setSearch] = useSearchParams();
   const kind = kindOfSlug(store.schema, params["slug"] ?? "");
   if (!kind) {
     return (
@@ -898,8 +1026,45 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   const definition = store.schema.tryDefinition(kind);
   const past = search.get("past") === "1";
   const all = store.graph.nodesOfKind(kind as never);
-  const members = past ? all : all.filter((node) => isCurrent(definition, node as never));
-  const retired = all.length - members.length;
+  const current = past ? all : all.filter((node) => isCurrent(definition, node as never));
+  const retired = all.length - current.length;
+  /*
+   * RELATIONS ARE STRUCTURE HERE TOO. A list can be NARROWED by a relation —
+   * `?<edge>=<id>` keeps the members joined to that one node by that edge,
+   * either way round, which is what a record's "all the tasks on this list"
+   * links to; `?with=<edge>` keeps the ones that have the relation at all,
+   * which is what the map's counts open — and GROUPED by one: `?by=<edge>`
+   * reads the pile as piles-per-far-end, in the URL like every arrangement
+   * on this face, so a list you arranged is a link you can send.
+   */
+  const edges = store.graph.allEdges();
+  const relations = kindMap(store).relations.filter((relation) => relation.from === kind || relation.to === kind);
+  const relatedTo = (memberId: string, edgeKind: string, otherId?: string) =>
+    edges.some(
+      (edge) =>
+        edge.kind === edgeKind &&
+        ((edge.from === memberId && (otherId === undefined || edge.to === otherId)) ||
+          (edge.to === memberId && (otherId === undefined || edge.from === otherId))),
+    );
+  const narrowing = [...search.entries()].filter(([key, value]) => !["past", "by", "with", "q", "group"].includes(key) && relations.some((relation) => relation.edgeKind === key) && value.length > 0);
+  const withEdge = search.get("with");
+  const members = current.filter(
+    (node) =>
+      narrowing.every(([edgeKind, otherId]) => relatedTo(node.id, edgeKind, otherId)) &&
+      (withEdge === null || relatedTo(node.id, withEdge)),
+  );
+  const by = search.get("by");
+  const grouping = by && relations.some((relation) => relation.edgeKind === by) ? by : null;
+  const farEnds = (memberId: string, edgeKind: string): string[] =>
+    [...new Set(edges.filter((edge) => edge.kind === edgeKind && (edge.from === memberId || edge.to === memberId)).map((edge) => (edge.from === memberId ? edge.to : edge.from)))]
+      .map((otherId) => store.graph.getNode(otherId))
+      .filter((other): other is NonNullable<typeof other> => other !== undefined)
+      .map((other) => labelOf(store.schema.tryDefinition(other.kind), other as never))
+      .sort();
+  const named = (id: string): string => {
+    const node = store.graph.getNode(id);
+    return node ? labelOf(store.schema.tryDefinition(node.kind), node as never) : id;
+  };
   const flagged = new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds));
   /*
    * AN ACT THE SEAT MAY NOT TAKE IS STATED, NOT OFFERED. The strip and the
@@ -933,6 +1098,30 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
     );
   const withheld = facts.actions.withheld;
   const plural = pluralOf(store, kind);
+  const row = (node: (typeof members)[number]) => {
+    const label = labelOf(definition, node as never);
+    const said = glance(node as Record<string, unknown>, definition, label);
+    return (
+      <li
+        key={node.id}
+        style={{
+          display: "grid",
+          gap: 2,
+          padding: "14px 0",
+          borderTop: "1px solid var(--graview-edge)",
+        }}
+      >
+        <Link
+          to={recordPath(store.schema, kind, node.id)}
+          style={{ ...plain, fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, lineHeight: 1.3 }}
+        >
+          {flagged.has(node.id) ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
+          {label}
+        </Link>
+        {said ? <span style={quiet}>{said}</span> : null}
+      </li>
+    );
+  };
 
   return (
     <PageMain context={context}>
@@ -945,6 +1134,29 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         </p>
         <h1 style={h1}>{plural}</h1>
         {definition?.description ? <p style={lede}>{definition.description}</p> : null}
+        {relations.length > 0 ? (
+          /* The roads out of this district: each relation this kind takes part in, with the far end named and linked. */
+          <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 14px", alignItems: "center" }} data-testid="kind-relations">
+            <span>Related:</span>
+            {relations.map((relation) => {
+              const far = relation.from === kind ? relation.to : relation.from;
+              const words = relation.from === kind ? relation.description : (relation.inverse ?? relation.description);
+              return (
+                <span key={`${relation.edgeKind}|${relation.from}|${relation.to}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }} title={words ? capitalise(words) : undefined}>
+                  <RelationMark edgeKind={relation.edgeKind} width={22} {...(context.brand?.kit ? { kit: context.brand.kit } : {})} />
+                  <span>{humaniseField(relation.edgeKind)}</span>
+                  {far === "*" ? (
+                    <span>anything</span>
+                  ) : (
+                    <Link to={`/${pluralSlug(store.schema, far)}`} style={link}>
+                      {pluralOf(store, far)}
+                    </Link>
+                  )}
+                </span>
+              );
+            })}
+          </p>
+        ) : null}
         {placesOf(context).some((place) => place.kind === kind) ? (
           /* A district's board, in the page's idiom: the kind's own pictures, by name. */
           <p style={{ ...quiet, margin: 0 }} data-testid="kind-pictures">
@@ -963,42 +1175,88 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         ) : null}
       </header>
 
+      {narrowing.length > 0 || withEdge !== null ? (
+        <p style={{ ...quiet, margin: 0 }} data-testid="list-filter-note">
+          {[
+            `Only the ${plural.toLowerCase()}`,
+            ...(withEdge !== null ? [`that ${humaniseField(withEdge).toLowerCase()} anything`] : []),
+            ...narrowing.map(([edgeKind, otherId]) => `${humaniseField(edgeKind).toLowerCase()} ${named(otherId)}`),
+          ].join(" ")}
+          {" · "}
+          <Link to={past ? "?past=1" : "?"} style={link}>
+            All {plural.toLowerCase()}
+          </Link>
+        </p>
+      ) : null}
+      {relations.length > 0 && current.length > 1 ? (
+        <form
+          style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+          data-testid="list-by-controls"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <label style={{ ...quiet, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            Group by
+            <select
+              data-testid="list-by"
+              value={grouping ?? ""}
+              onChange={(event) => {
+                const next = new URLSearchParams(search);
+                if (event.target.value) next.set("by", event.target.value);
+                else next.delete("by");
+                setSearch(next);
+              }}
+              style={{ font: "inherit", minHeight: 32, padding: "4px 8px", borderRadius: 8, border: "1px solid var(--graview-edge)", background: "var(--graview-panel)", color: "var(--graview-ink)" }}
+            >
+              <option value="">nothing</option>
+              {[...new Map(relations.map((relation) => [relation.edgeKind, relation])).values()].map((relation) => {
+                const far = relation.from === kind ? relation.to : relation.from;
+                return (
+                  <option key={relation.edgeKind} value={relation.edgeKind}>
+                    {humaniseField(relation.edgeKind)} — {far === "*" ? "anything" : pluralOf(store, far).toLowerCase()}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+        </form>
+      ) : null}
       {members.length === 0 ? (
         <p style={{ ...lede, fontSize: "1rem" }} data-testid="none-yet">
-          None yet
-          {creators.length > 0
+          {narrowing.length > 0 || withEdge !== null ? "None of them." : "None yet"}
+          {narrowing.length === 0 && withEdge === null && creators.length > 0
             ? ` — the first one starts below, with “${creators[0]?.mutation.title ?? creators[0]?.mutation.name}”.`
-            : "."}
+            : narrowing.length === 0 && withEdge === null
+              ? "."
+              : ""}
         </p>
+      ) : grouping ? (
+        (() => {
+          const groups = new Map<string, typeof members>();
+          for (const node of members) {
+            const ends = farEnds(node.id, grouping);
+            const key = ends.length > 0 ? ends.join(", ") : "";
+            groups.set(key, [...(groups.get(key) ?? []), node]);
+          }
+          const ordered = [...groups.entries()].sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)));
+          return (
+            <div style={{ display: "grid", gap: 18 }} data-testid="records" data-grouped={grouping}>
+              {ordered.map(([key, nodes]) => (
+                <section key={key || "-"} style={{ display: "grid", gap: 0 }} data-testid="list-group">
+                  <h2 style={{ ...h2, fontSize: "1rem", marginBottom: 4 }}>
+                    {key || `No ${humaniseField(grouping).toLowerCase()}`} <span style={quiet}>{nodes.length}</span>
+                  </h2>
+                  <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 0 }}>{nodes.map(row)}</ul>
+                </section>
+              ))}
+            </div>
+          );
+        })()
       ) : (
         <ul
           style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 0 }}
           data-testid="records"
         >
-          {members.map((node) => {
-            const label = labelOf(definition, node as never);
-            const facts = glance(node as Record<string, unknown>, definition, label);
-            return (
-              <li
-                key={node.id}
-                style={{
-                  display: "grid",
-                  gap: 2,
-                  padding: "14px 0",
-                  borderTop: "1px solid var(--graview-edge)",
-                }}
-              >
-                <Link
-                  to={recordPath(store.schema, kind, node.id)}
-                  style={{ ...plain, fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, lineHeight: 1.3 }}
-                >
-                  {flagged.has(node.id) ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
-                  {label}
-                </Link>
-                {facts ? <span style={quiet}>{facts}</span> : null}
-              </li>
-            );
-          })}
+          {members.map(row)}
         </ul>
       )}
       {retired > 0 ? (
@@ -1086,6 +1344,25 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         <a href={spatialHref(id)} style={{ ...link, ...quiet }} data-testid="spatial-link">
           See it in the scene ↗
         </a>
+        {placesOf(context).some((place) => place.kind === facts.kind || place.across === facts.kind) ? (
+          /* WHERE IT IS SEEN: the pictures this kind of thing appears in, each as a page and as a stop in the scene. */
+          <p style={{ ...quiet, margin: 0 }} data-testid="seen-in">
+            Seen in:{" "}
+            {placesOf(context)
+              .filter((place) => place.kind === facts.kind || place.across === facts.kind)
+              .map((place, index) => (
+                <span key={place.as}>
+                  {index > 0 ? " · " : null}
+                  <Link to={placePath(place.as)} style={link}>
+                    {place.title}
+                  </Link>{" "}
+                  <a href={placeHref(place.as, context.sceneHref ?? "/")} style={{ ...link, ...quiet }} title={`${place.title}, in the scene`}>
+                    ↗
+                  </a>
+                </span>
+              ))}
+          </p>
+        ) : null}
       </header>
 
       {facts.violations.length > 0 ? (
@@ -1166,6 +1443,17 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               </li>
             ))}
           </ul>
+          {/* THE OTHER WAY ROUND: the far kind's list, narrowed to this record — the same relation read as a pile. */}
+          {[...new Set(group.targets.map((target) => target.kind))].map((farKind) => (
+            <Link
+              key={farKind}
+              to={`/${pluralSlug(store.schema, farKind)}?${encodeURIComponent(group.edgeKind)}=${encodeURIComponent(id)}`}
+              style={{ ...link, ...quiet }}
+              data-testid="related-all"
+            >
+              All {pluralOf(store, farKind).toLowerCase()} {humaniseField(group.edgeKind).toLowerCase()} {facts.label} →
+            </Link>
+          ))}
         </section>
       ))}
 

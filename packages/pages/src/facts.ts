@@ -205,3 +205,75 @@ export function rankedRepairs(actions: AffordanceSet, repairs: readonly Repair[]
     )
     .map((entry) => entry.repair);
 }
+
+/* ------------------------------------------------------- the map of kinds */
+
+/** One declared relation between two kinds, with how many of it there are. */
+export interface KindRelation {
+  readonly edgeKind: string;
+  readonly from: string;
+  /** The kind at the far end — or "*" when the declaration allows any. */
+  readonly to: string;
+  /** How the edge reads from the kind that declares it. */
+  readonly description?: string;
+  /** How it reads from the other end. */
+  readonly inverse?: string;
+  readonly count: number;
+}
+
+export interface KindMap {
+  readonly kinds: readonly { readonly kind: string; readonly plural: string; readonly count: number }[];
+  readonly relations: readonly KindRelation[];
+}
+
+/**
+ * HOW THE KINDS FIT TOGETHER, derived once: every kind with how many of it
+ * there are, and every declared edge between kinds with its own words and
+ * the live count — the routed face's roads and relation key. A declaration
+ * that allows any kind at the far end ("*") is listed once per kind the
+ * graph actually joins it to, and once as "*" when it joins none yet.
+ */
+export function kindMap<S extends AnySchema>(store: Store<S>): KindMap {
+  const kinds = (store.schema.kinds as readonly string[]).map((kind) => ({
+    kind,
+    plural: store.schema.tryDefinition(kind)?.plural ?? kind,
+    count: store.graph.nodesOfKind(kind as never).length,
+  }));
+  const counts = new Map<string, number>();
+  for (const edge of store.graph.allEdges()) {
+    const from = store.graph.getNode(edge.from);
+    const to = store.graph.getNode(edge.to);
+    if (!from || !to) continue;
+    const key = `${edge.kind}|${from.kind}|${to.kind}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const relations: KindRelation[] = [];
+  for (const { kind } of kinds) {
+    const declared = (store.schema.tryDefinition(kind)?.edges ?? {}) as Record<
+      string,
+      { to?: readonly string[] | "*"; description?: string; inverse?: string }
+    >;
+    for (const [edgeKind, declaration] of Object.entries(declared)) {
+      const targets =
+        declaration.to === "*" || declaration.to === undefined
+          ? (() => {
+              const seen = [...counts.keys()]
+                .filter((key) => key.startsWith(`${edgeKind}|${kind}|`))
+                .map((key) => key.split("|")[2]!);
+              return seen.length > 0 ? seen : ["*"];
+            })()
+          : declaration.to;
+      for (const to of targets) {
+        relations.push({
+          edgeKind,
+          from: kind,
+          to,
+          ...(declaration.description ? { description: declaration.description } : {}),
+          ...(declaration.inverse ? { inverse: declaration.inverse } : {}),
+          count: counts.get(`${edgeKind}|${kind}|${to}`) ?? 0,
+        });
+      }
+    }
+  }
+  return { kinds, relations };
+}

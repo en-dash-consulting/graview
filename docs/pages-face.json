@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-21T20:02:44.570Z",
-  "engine": "firefox",
+  "at": "2026-09-21T21:05:59.998Z",
+  "engine": "chromium",
   "checks": {
     "phoneHome": {
       "noSideScroll": true,
@@ -164,6 +164,45 @@
       "bigEnoughToHit": []
     },
     "phonePlace": {
+      "noSideScroll": true,
+      "hasH1": true,
+      "namedLinks": true,
+      "labelledInputs": true,
+      "bigEnoughToHit": []
+    },
+    "theMapSaysHowItFitsTogether": {
+      "relations": [
+        {
+          "edge": "tended-by",
+          "count": 2,
+          "marked": true
+        },
+        {
+          "edge": "grows-in",
+          "count": 2,
+          "marked": true
+        }
+      ],
+      "kinds": 4,
+      "ok": true
+    },
+    "aListGroupsByARelation": {
+      "groups": [
+        "Plot 1 1",
+        "Plot 2 1"
+      ],
+      "by": "grows-in",
+      "related": true,
+      "ok": true
+    },
+    "aRecordLinksTheOtherWayRound": {
+      "related": "/pages/plots?tended-by=june",
+      "path": "/pages/plots?tended-by=june",
+      "rows": 1,
+      "note": "Only the plots tended by June · All plots",
+      "ok": true
+    },
+    "phoneMap": {
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,

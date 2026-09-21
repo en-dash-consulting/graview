@@ -1,16 +1,18 @@
 export { createPageRegistry, kindOfSlug, placeHref, placePath, pluralSlug, recordPath, spatialHref } from "./registry.js";
 export type { RouteRegistration } from "./registry.js";
 export type { PageRegistry, PageRegistration, PageType, SurfaceType } from "./registry.js";
-export { kindFacts, rankedRepairs, recordFacts } from "./facts.js";
-export type { KindFacts, RecordFacts, RecordLinkGroup, FactsOptions } from "./facts.js";
+export { kindFacts, kindMap, rankedRepairs, recordFacts } from "./facts.js";
+export type { KindFacts, KindMap, KindRelation, RecordFacts, RecordLinkGroup, FactsOptions } from "./facts.js";
 export { DerivedForm } from "./form.js";
 export type { DerivedFormProps } from "./form.js";
 export {
   DefaultHomePage,
   DefaultListPage,
+  DefaultMapPage,
   DefaultPlacePage,
   DefaultPlacesPage,
   PlaceCard,
+  KindMapSection,
   DefaultProblemsPage,
   DefaultRecordPage,
   DefaultShell,

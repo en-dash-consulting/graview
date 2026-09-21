@@ -1,5 +1,5 @@
-import type { AnySchema } from "@graview/core";
-import { kitConnector, useGraph, useGraview, useKit, useNavigation, useSelection } from "@graview/react";
+import { resolveKit, type AnySchema } from "@graview/core";
+import { kitConnector, useGraph, useGraview, useGraviewIfAny, useKit, useNavigation, useSelection } from "@graview/react";
 import {
   CONNECTOR_DASH,
   connectorStroke,
@@ -218,5 +218,23 @@ export function RelationKey<S extends AnySchema>() {
         );
       })}
     </aside>
+  );
+}
+
+/**
+ * ONE RELATION'S MARK, on its own: the same stroke the scene draws and the
+ * key lists, for any surface that names an edge kind — the routed face's
+ * map of the kinds, a record's relation groups. Works with or without the
+ * scene's provider: outside one, the brand's kit is resolved from what the
+ * caller hands over, or the default kit stands.
+ */
+export function RelationMark({ edgeKind, kit: given, width = 30 }: { readonly edgeKind: string; readonly kit?: Parameters<typeof resolveKit>[0]; readonly width?: number }) {
+  const context = useGraviewIfAny();
+  const kit = useMemo(() => resolveKit(given ?? context?.brand?.kit), [given, context?.brand?.kit]);
+  const { connector, style } = kitConnector(kit, edgeKind);
+  return (
+    <svg width={width} height="8" aria-hidden="true" data-testid="relation-mark" data-graview-relation={edgeKind} style={{ display: "inline-block", verticalAlign: "middle", opacity: connector.visible ? 1 : 0.35 }}>
+      <path d={`M 1 4 L ${width - 1} 4`} fill="none" stroke={connectorStroke(style)} strokeWidth={connectorWidth(style, true)} strokeDasharray={CONNECTOR_DASH[style.pattern]} strokeLinecap="round" />
+    </svg>
   );
 }

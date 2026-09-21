@@ -35,6 +35,7 @@ function startVite(name, port) {
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
 let browser;
 let vite;
+let garden;
 
 const hygiene = (page) =>
   page.evaluate(() => ({
@@ -447,12 +448,75 @@ try {
   await phone3.waitForTimeout(400);
   report.checks.phonePlace = await hygiene(phone3);
   await phone3.close();
+
+  /*
+   * ---------------------------------------- relationships as structure
+   * On the DERIVED pages, which the todo app has replaced with its own
+   * design: seedbed's chapter nine keeps the framework's list and record
+   * pages, with plots tended by gardeners and plantings that grow in plots.
+   */
+  garden = await startVite("seedbed", 5194);
+  const bed = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await bed.goto("http://localhost:5194/pages/map?chapter=9", { waitUntil: "networkidle" });
+  await bed.waitForTimeout(500);
+  const map = await bed.evaluate(() => ({
+    relations: [...document.querySelectorAll('[data-testid="relation"]')].map((li) => ({
+      edge: li.getAttribute("data-relation"),
+      count: Number((li.querySelector("a[href*='with=']")?.textContent ?? "").trim()),
+      marked: li.querySelector('[data-testid="relation-mark"]') !== null,
+    })),
+    kinds: document.querySelectorAll('[data-testid="map-kinds"] li').length,
+  }));
+  report.checks.theMapSaysHowItFitsTogether = {
+    ...map,
+    ok: map.relations.length >= 2 && map.relations.every((r) => r.marked) && map.relations.some((r) => r.edge === "grows-in" && r.count === 2) && map.kinds >= 3,
+  };
+  // A list grouped by a relation is a link you can send: opened cold, the same groups.
+  await bed.goto("http://localhost:5194/pages/plantings?chapter=9&by=grows-in&past=1", { waitUntil: "networkidle" });
+  await bed.waitForTimeout(500);
+  const grouped = await bed.evaluate(() => ({
+    groups: [...document.querySelectorAll('[data-testid="list-group"] h2')].map((h) => (h.textContent ?? "").trim()),
+    by: document.querySelector('[data-testid="list-by"]')?.value ?? null,
+    related: document.querySelector('[data-testid="kind-relations"]') !== null,
+  }));
+  report.checks.aListGroupsByARelation = {
+    ...grouped,
+    ok: grouped.groups.length === 2 && grouped.groups.some((g) => g.startsWith("Plot 1")) && grouped.by === "grows-in" && grouped.related,
+  };
+  // A record links the other way round: the far kind's list, narrowed to it.
+  await bed.goto("http://localhost:5194/pages/gardeners/june?chapter=9", { waitUntil: "networkidle" });
+  await bed.waitForTimeout(500);
+  const related = await bed.evaluate(() => document.querySelector('[data-testid="related-all"]')?.getAttribute("href") ?? null);
+  await bed.click('[data-testid="related-all"]');
+  await bed.waitForTimeout(500);
+  const narrowed = await bed.evaluate(() => ({
+    path: location.pathname + location.search,
+    rows: document.querySelectorAll('[data-testid="records"] li').length,
+    note: document.querySelector('[data-testid="list-filter-note"]')?.textContent?.trim() ?? null,
+  }));
+  report.checks.aRecordLinksTheOtherWayRound = {
+    related,
+    ...narrowed,
+    ok: related === "/pages/plots?tended-by=june" && narrowed.rows === 1 && narrowed.note !== null && narrowed.note.includes("June"),
+  };
+  report.checks.phoneMap = await (async () => {
+    const small = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await small.goto("http://localhost:5194/pages/map?chapter=9", { waitUntil: "networkidle" });
+    await small.waitForTimeout(400);
+    const seen = await hygiene(small);
+    await small.close();
+    return seen;
+  })();
+  await bed.close();
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
   await browser?.close();
   if (vite) {
     vite.stop();
+  }
+  if (garden) {
+    garden.stop();
   }
 }
 
