@@ -54,6 +54,8 @@ const hygiene = (page) =>
      */
     bigEnoughToHit: [...document.querySelectorAll("a[href], button, summary, select, input")]
       .filter((el) => {
+        // A lens drawn small on a picture card is inert: what it holds is not a control of this page.
+        if (el.closest('[inert], [aria-hidden="true"]')) return false;
         const box = el.getBoundingClientRect();
         if (box.width === 0 && box.height === 0) return false;
         if (el.type === "hidden") return false;
@@ -398,7 +400,53 @@ try {
     () => document.querySelector('[data-testid="spatial-link"]')?.getAttribute("href") ?? "",
   );
   report.checks.recordLinksItsStop = spatial === "/#focus=t-deposit";
+
+  /* ------------------------------------------------ the pictures on pages */
+  await desk.goto("http://localhost:5193/pages/places?today=2026-09-01", { waitUntil: "networkidle" });
+  await desk.waitForTimeout(500);
+  const index = await desk.evaluate(() => ({
+    cards: [...document.querySelectorAll('[data-testid="place-card"]')].map((a) => a.getAttribute("href")),
+    inert: [...document.querySelectorAll('[data-testid="place-picture"]')].every(
+      (el) => el.hasAttribute("inert") && el.getAttribute("aria-hidden") === "true",
+    ),
+    // Each picture is the lens itself, drawn: something is in the frame.
+    drawn: [...document.querySelectorAll('[data-testid="place-picture"]')].every((el) => el.querySelector("*") !== null),
+    nav: [...document.querySelectorAll("nav a")].map((a) => (a.textContent ?? "").trim()),
+  }));
+  report.checks.placesIndex = { cards: index.cards, inert: index.inert, drawn: index.drawn, ok: index.cards.length >= 2 && index.inert && index.drawn };
+  // The scene's bar, mirrored: a picture's name comes before a kind's plural, and Problems is last.
+  // A rail's link carries its count in the same text ("Tasks10"), so it is read by its opening words.
+  const firstPlace = index.nav.findIndex((text) => text.startsWith("The week"));
+  const firstKind = index.nav.findIndex((text) => text.startsWith("Tasks"));
+  report.checks.navMirrorsTheBar = {
+    nav: index.nav,
+    ok: firstPlace !== -1 && firstKind !== -1 && firstPlace < firstKind && (index.nav[index.nav.length - 1] ?? "").startsWith("Problems"),
+  };
+  await desk.goto("http://localhost:5193/pages/places/the-week?today=2026-09-01", { waitUntil: "networkidle" });
+  await desk.waitForTimeout(500);
+  const lens = await desk.evaluate(() => ({
+    present: document.querySelector('[data-testid="place-lens"]') !== null,
+    picks: document.querySelectorAll('[data-testid="place-lens"] [data-graview-pick]').length,
+    stop: document.querySelector('[data-testid="place-stop"]')?.getAttribute("href") ?? null,
+    noSideScroll: document.documentElement.scrollWidth <= window.innerWidth + 1,
+  }));
+  report.checks.placePage = { ...lens, ok: lens.present && lens.picks > 0 && lens.stop === "/#view=the-week" && lens.noSideScroll };
+  // A pick inside the picture travels to the record.
+  // A moment in the week has its own children under the pointer; the click lands on them and bubbles, as a finger's would.
+  await desk.click('[data-testid="place-lens"] [data-graview-pick]', { force: true });
+  await desk.waitForTimeout(500);
+  const landed = await desk.evaluate(() => location.pathname);
+  report.checks.aPickTravelsToTheRecord = { landed, ok: /^\/pages\/tasks\/.+/.test(landed) };
   await desk.close();
+  // The index and a picture at a phone's width: one column, nothing side-scrolls the document.
+  const phone3 = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await phone3.goto("http://localhost:5193/pages/places?today=2026-09-01", { waitUntil: "networkidle" });
+  await phone3.waitForTimeout(400);
+  report.checks.phonePlaces = await hygiene(phone3);
+  await phone3.goto("http://localhost:5193/pages/places/the-week?today=2026-09-01", { waitUntil: "networkidle" });
+  await phone3.waitForTimeout(400);
+  report.checks.phonePlace = await hygiene(phone3);
+  await phone3.close();
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {

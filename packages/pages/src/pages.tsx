@@ -14,12 +14,17 @@ import {
   type Principal,
   type Repair,
   type Store,
+  type Place,
+  type PresenceChannel,
+  type SettingDeclaration,
 } from "@graview/core";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useCallback, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { kindFacts, rankedRepairs, recordFacts } from "./facts.js";
+import type { ReactViewRegistry, ViewProps } from "@graview/react";
+import type { ComponentType } from "react";
 import { DerivedForm } from "./form.js";
-import { kindOfSlug, pluralSlug, recordPath, spatialHref } from "./registry.js";
+import { kindOfSlug, placeHref, placePath, pluralSlug, recordPath, spatialHref } from "./registry.js";
 
 /**
  * The default pages: the product's own site, derived.
@@ -65,6 +70,20 @@ export interface PageContext<S extends AnySchema> {
    * above me own the landmark) with a different somebody.
    */
   readonly framed?: boolean;
+  /**
+   * THE APP'S PICTURES. The view registry the scene draws from; given, every
+   * registered place is a page on this face too — an index at `/places`,
+   * each lens at `/places/<as>` — the home leads with them, each kind's page
+   * lists its own, and the nav mirrors the scene's bar. Absent, the face is
+   * the derived site it always was. A registry means a provider under the
+   * routes (the same one the embed puts there), so a lens's hooks work with
+   * no scene at all.
+   */
+  readonly views?: ReactViewRegistry<S>;
+  /** The reader's own settings, for the provider under the pages when `views` is given. */
+  readonly settings?: readonly SettingDeclaration[];
+  /** Who else is here, for the same provider. */
+  readonly presence?: PresenceChannel;
 }
 
 /** The way back to the example, for a face whose browser remembers. */
@@ -386,6 +405,19 @@ export function DefaultShell<S extends AnySchema>({
               Open the scene ↗
             </a>
           </div>
+          {/* THE SCENE'S BAR, MIRRORED: the app's pictures first, in its own words, then the kinds. */}
+          {placesOf(context).length > 0 ? (
+            <nav aria-label="Pictures" style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "baseline" }}>
+              {placesOf(context).map((place) => {
+                const path = placePath(place.as);
+                return (
+                  <Link key={place.as} to={path} style={navLink(path)} {...(current(path) ? { "aria-current": "page" as const } : {})}>
+                    {place.title}
+                  </Link>
+                );
+              })}
+            </nav>
+          ) : null}
           <nav
             aria-label="Kinds"
             style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "baseline" }}
@@ -449,6 +481,246 @@ export function DefaultShell<S extends AnySchema>({
         </div>
       </footer>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------- the places */
+
+/** The app's pictures this seat may see: registered places whose kind is live here. */
+function placesOf<S extends AnySchema>(context: PageContext<S>): readonly Place[] {
+  const views = context.views;
+  if (!views) return [];
+  const live = new Set(liveKinds(context.store, context.principal));
+  return views.places().filter((place) => live.has(place.kind));
+}
+
+function membersOf<S extends AnySchema>(store: Store<S>, kind: string) {
+  const definition = store.schema.tryDefinition(kind);
+  return store.graph.nodesOfKind(kind as never).filter((node) => isCurrent(definition, node as never));
+}
+
+/** "a picture of Tasks", "a picture of Skills across People". */
+function pictureOf<S extends AnySchema>(store: Store<S>, place: Place): string {
+  const of = pluralOf(store, place.kind);
+  return place.across ? `A picture of ${of.toLowerCase()} across ${pluralOf(store, place.across).toLowerCase()}` : `A picture of ${of.toLowerCase()}`;
+}
+
+/*
+ * THE LENS ITSELF, ON A PAGE. The same component the scene descends into,
+ * over the kind's current members, in fullscreen mode — the mode a view
+ * must already render correctly in, since jacking out of the scene is a
+ * promise every lens makes. Nothing here is a copy of a lens: it is the
+ * lens.
+ */
+function LensOnPage<S extends AnySchema>({ context, place }: { context: PageContext<S>; place: Place }) {
+  const { store, views, invariantContext } = context;
+  const registration = views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as);
+  const View = registration?.view as ComponentType<ViewProps<S>> | undefined;
+  if (!View) return null;
+  const members = membersOf(store, place.kind);
+  const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
+  return (
+    <View
+      nodes={members as never}
+      label={place.title}
+      fidelity="full"
+      cardinality="many"
+      mode="fullscreen"
+      selected={false}
+      {...(flagged.length > 0 ? { flagged } : {})}
+    />
+  );
+}
+
+/** The natural width a lens is drawn at before it is scaled into a card, and the card's own width. */
+const PICTURE_NATURAL = 960;
+const PICTURE_WIDTH = 288;
+
+/**
+ * A PLACE AS A CARD: the lens drawn small and live — inert, so nothing in
+ * it is a second control — with its name and what it is a picture of. The
+ * same idea as the drive-in's board in the scene, in the page's idiom.
+ */
+export function PlaceCard<S extends AnySchema>({ context, place }: { context: PageContext<S>; place: Place }) {
+  const { store } = context;
+  const scale = PICTURE_WIDTH / PICTURE_NATURAL;
+  return (
+    <Link
+      to={placePath(place.as)}
+      data-testid="place-card"
+      style={{ ...plain, display: "grid", gap: 8, width: PICTURE_WIDTH, maxWidth: "100%" }}
+    >
+      <span
+        data-testid="place-picture"
+        aria-hidden="true"
+        inert
+        style={{
+          display: "block",
+          position: "relative",
+          width: "100%",
+          aspectRatio: "16 / 10",
+          overflow: "hidden",
+          borderRadius: 8,
+          border: "1px solid var(--graview-edge)",
+          background: "var(--graview-panel)",
+          pointerEvents: "none",
+        }}
+      >
+        {/* A lens fills what it is given, so it is given the whole frame: the card's aspect at natural size, stretched by a one-row grid. */}
+        <span
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: PICTURE_NATURAL,
+            height: (PICTURE_NATURAL * 10) / 16,
+            display: "grid",
+            gridTemplateRows: "minmax(0, 1fr)",
+            transform: `scale(${scale})`,
+            transformOrigin: "0 0",
+          }}
+        >
+          <LensOnPage context={context} place={place} />
+        </span>
+      </span>
+      <span style={{ display: "grid", gap: 1 }}>
+        <span style={{ fontFamily: DISPLAY, fontSize: "1.0625rem", fontWeight: 600, lineHeight: 1.3 }}>{place.title}</span>
+        <span style={quiet}>{pictureOf(store, place)}</span>
+      </span>
+    </Link>
+  );
+}
+
+const cards: React.CSSProperties = {
+  display: "grid",
+  gap: 20,
+  gridTemplateColumns: `repeat(auto-fill, minmax(min(${PICTURE_WIDTH}px, 100%), max-content))`,
+};
+
+/**
+ * THE INDEX OF PICTURES: where a person lands among the app's own ways of
+ * looking at what is here. A kind is a pile; a picture is a question about
+ * it — the week, the month, who may do what — and a face that only had the
+ * piles made the reader do the asking.
+ */
+export function DefaultPlacesPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
+  const { store } = context;
+  useStoreTick(store);
+  const places = placesOf(context);
+  return (
+    <PageMain context={context}>
+      <header style={{ display: "grid", gap: 12 }}>
+        <p style={eyebrow}>{places.length === 0 ? "None yet" : `${places.length} ${places.length === 1 ? "picture" : "pictures"}`}</p>
+        <h1 style={h1}>Pictures</h1>
+        <p style={lede}>
+          {places.length === 0
+            ? "Nothing here has a picture of its own yet; the scene shows each kind as a district."
+            : "The ways this installation looks at what it holds — each one the same picture the scene shows, here as a page."}
+        </p>
+      </header>
+      {places.length > 0 ? (
+        <div style={cards} data-testid="places">
+          {places.map((place) => (
+            <PlaceCard key={place.as} context={context} place={place} />
+          ))}
+        </div>
+      ) : null}
+    </PageMain>
+  );
+}
+
+/**
+ * ONE PICTURE, FULL WIDTH: the lens over the kind's current members, what
+ * it is a picture of, the acts that begin the kind beneath it, and the way
+ * to the same picture in the scene. A pick inside it travels to the record
+ * — on a page, choosing a thing means going to it.
+ */
+export function DefaultPlacePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
+  const { store, brand, principal, sceneHref = "/" } = context;
+  useStoreTick(store);
+  const params = useParams();
+  const navigate = useNavigate();
+  const asked = decodeURIComponent(params["as"] ?? "");
+  const place = placesOf(context).find((candidate) => candidate.as === asked);
+  if (!place) {
+    return (
+      <PageMain context={context}>
+        <h1 style={h1}>No picture is called that.</h1>
+        <p style={lede}>
+          <Link to="/places" style={link}>
+            The pictures there are →
+          </Link>
+        </p>
+      </PageMain>
+    );
+  }
+  const definition = store.schema.tryDefinition(place.kind);
+  const plural = pluralOf(store, place.kind);
+  const facts = kindFacts(store, place.kind, {
+    ...(principal ? { principal } : {}),
+    ...(context.invariantContext ? { context: context.invariantContext } : {}),
+  });
+  const creators = facts.actions.affordances
+    .map((affordance) => ({ affordance, mutation: store.allMutations().find((m) => m.name === affordance.mutation) }))
+    .filter((entry): entry is { affordance: typeof entry.affordance; mutation: NonNullable<typeof entry.mutation> } => entry.mutation !== undefined);
+  return (
+    <PageMain context={context}>
+      <header style={{ display: "grid", gap: 12 }}>
+        <p style={{ ...eyebrow, display: "flex", alignItems: "center", gap: 8 }}>
+          <KindMark kind={place.kind} brand={brand} schema={store.schema} size={8} />
+          <Link to={`/${pluralSlug(store.schema, place.kind)}`} style={plain}>
+            {pictureOf(store, place)}
+          </Link>
+        </p>
+        <h1 style={h1}>{place.title}</h1>
+        {definition?.description ? <p style={lede}>{definition.description}</p> : null}
+        <a href={placeHref(place.as, sceneHref)} style={{ ...link, ...quiet }} data-testid="place-stop">
+          See it in the scene ↗
+        </a>
+      </header>
+      {/*
+        * The lens's own region: as wide as the column and most of the window
+        * tall — a lens fills what it is given, and given nothing it is a
+        * header — scrolling inside itself when the picture is bigger, never
+        * the document. A one-row grid is what stretches the lens to it.
+        */}
+      <div
+        data-testid="place-lens"
+        style={{
+          height: "min(72vh, 760px)",
+          display: "grid",
+          gridTemplateRows: "minmax(0, 1fr)",
+          overflow: "auto",
+          maxWidth: "100%",
+          borderRadius: 8,
+          border: "1px solid var(--graview-edge)",
+          background: "var(--graview-panel)",
+        }}
+        onClick={(event) => {
+          const picked = (event.target as HTMLElement | null)?.closest("[data-graview-pick]");
+          const id = picked?.getAttribute("data-graview-pick");
+          if (!id) return;
+          const node = store.graph.getNode(id);
+          if (!node) return;
+          event.preventDefault();
+          navigate(recordPath(store.schema, node.kind, id));
+        }}
+      >
+        <LensOnPage context={context} place={place} />
+      </div>
+      {creators.map(({ affordance, mutation }) => (
+        <section key={affordance.id} style={{ ...rule, display: "grid", gap: 14 }}>
+          <h2 style={h2}>{mutation.title ?? mutation.name}</h2>
+          {mutation.description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{mutation.description}</p> : null}
+          <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} {...(principal ? { principal } : {})} />
+        </section>
+      ))}
+      <p style={quiet}>
+        <Link to={`/${pluralSlug(store.schema, place.kind)}`} style={link}>
+          All {plural.toLowerCase()} as a list →
+        </Link>
+      </p>
+    </PageMain>
   );
 }
 
@@ -523,6 +795,25 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
           )}
         </p>
       </header>
+
+      {placesOf(context).length > 0 ? (
+        /* THE PICTURES FIRST: what this installation looks at, before the piles it looks at it through. */
+        <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="pictures">
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+            <h2 style={h2}>
+              <Link to="/places" style={plain}>
+                Pictures
+              </Link>
+            </h2>
+            <span style={quiet}>{placesOf(context).length}</span>
+          </div>
+          <div style={cards}>
+            {placesOf(context).map((place) => (
+              <PlaceCard key={place.as} context={context} place={place} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {counted.map(({ kind, definition, members }) => {
         const path = `/${pluralSlug(store.schema, kind)}`;
@@ -654,6 +945,22 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         </p>
         <h1 style={h1}>{plural}</h1>
         {definition?.description ? <p style={lede}>{definition.description}</p> : null}
+        {placesOf(context).some((place) => place.kind === kind) ? (
+          /* A district's board, in the page's idiom: the kind's own pictures, by name. */
+          <p style={{ ...quiet, margin: 0 }} data-testid="kind-pictures">
+            See {plural.toLowerCase()} as:{" "}
+            {placesOf(context)
+              .filter((place) => place.kind === kind)
+              .map((place, index) => (
+                <span key={place.as}>
+                  {index > 0 ? " · " : null}
+                  <Link to={placePath(place.as)} style={link}>
+                    {place.title}
+                  </Link>
+                </span>
+              ))}
+          </p>
+        ) : null}
       </header>
 
       {members.length === 0 ? (

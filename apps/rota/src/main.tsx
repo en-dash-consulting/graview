@@ -7,6 +7,7 @@ import { rotaApp } from "./domain/app.js";
 import { rotaBrand } from "./domain/brand.js";
 import { RotaApp, today } from "./ui/app.js";
 import { rotaDesign } from "./ui/design.js";
+import { rotaViews } from "./ui/views.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -77,6 +78,9 @@ if (window.location.pathname.startsWith("/pages")) {
         invariantContext: { today: today() },
         principal,
         remembers,
+        // The app's pictures on this face too: every named lens a page, the nav the bar.
+        views: rotaViews(),
+        settings: rotaApp.settings ?? [],
       }}
       registry={rotaDesign(rotaApp.schema)}
     />,

@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-21T04:23:50.315Z",
-  "engine": "chromium",
+  "at": "2026-09-21T20:02:44.570Z",
+  "engine": "firefox",
   "checks": {
     "phoneHome": {
       "noSideScroll": true,
@@ -116,7 +116,60 @@
     },
     "derivedFormApplies": true,
     "sceneOffersThePages": true,
-    "recordLinksItsStop": true
+    "recordLinksItsStop": true,
+    "placesIndex": {
+      "cards": [
+        "/pages/places/who-may-do-what",
+        "/pages/places/the-lists",
+        "/pages/places/the-month",
+        "/pages/places/the-week"
+      ],
+      "inert": true,
+      "drawn": true,
+      "ok": true
+    },
+    "navMirrorsTheBar": {
+      "nav": [
+        "Who may do what",
+        "The lists",
+        "The month",
+        "The week",
+        "Today",
+        "Lists3",
+        "Tasks10",
+        "Rules3",
+        "Reasons1",
+        "People2",
+        "Invitations1",
+        "Problems2"
+      ],
+      "ok": true
+    },
+    "placePage": {
+      "present": true,
+      "picks": 9,
+      "stop": "/#view=the-week",
+      "noSideScroll": true,
+      "ok": true
+    },
+    "aPickTravelsToTheRecord": {
+      "landed": "/pages/tasks/t-boxes",
+      "ok": true
+    },
+    "phonePlaces": {
+      "noSideScroll": true,
+      "hasH1": true,
+      "namedLinks": true,
+      "labelledInputs": true,
+      "bigEnoughToHit": []
+    },
+    "phonePlace": {
+      "noSideScroll": true,
+      "hasH1": true,
+      "namedLinks": true,
+      "labelledInputs": true,
+      "bigEnoughToHit": []
+    }
   },
   "failing": [],
   "passed": true

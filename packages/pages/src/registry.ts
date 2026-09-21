@@ -158,3 +158,12 @@ export function spatialHref(id: string): string {
 export function placeHref(as: string, sceneHref = "/"): string {
   return `${sceneHref}#view=${encodeURIComponent(as)}`;
 }
+
+/**
+ * The routed address of one PLACE — a lens, by the name it was registered
+ * under — on this face. Namespaced under `/places/` so it can never collide
+ * with a kind's plural, whatever an app calls its pictures.
+ */
+export function placePath(as: string): string {
+  return `/places/${encodeURIComponent(as)}`;
+}

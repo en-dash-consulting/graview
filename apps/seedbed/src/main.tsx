@@ -15,6 +15,7 @@ import type { SeedbedSchema } from "./domain/schema.js";
 import { chapterFromSearch } from "./domain/chapters.js";
 import { SeedbedApp } from "./ui/app.js";
 import { seedbedDesign } from "./ui/design.js";
+import { seedbedViews } from "./ui/views.js";
 import { seedbedPages } from "./ui/pages.js";
 
 const sheet = new CSSStyleSheet();
@@ -104,6 +105,17 @@ if (window.location.pathname.startsWith("/pages")) {
         ...(chapter?.principal ? { principal: chapter.principal } : {}),
         sceneHref: "/",
         remembers,
+        // The garden's pictures on this face too, as the chapter stands them up.
+        views: seedbedViews(opened.store.schema as never, {
+          lens: chapter ? chapter.lens : true,
+          board: chapter ? chapter.board : true,
+          map: chapter ? (chapter.map ?? false) : false,
+          reach: chapter ? (chapter.reach ?? false) : true,
+          ...(chapter?.studioOf ? { studio: chapter.studioOf } : {}),
+          ...(chapter?.season ? { season: true } : {}),
+          ...(chapter?.rotation ? { rotation: true } : {}),
+        }),
+        settings: ((chapter?.app ?? seedbedApp) as { settings?: readonly SettingDeclaration[] }).settings ?? [],
       }}
       // The garden's own plot page, over the derived defaults for the rest.
       {...(!chapter || chapter.pages

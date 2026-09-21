@@ -1,17 +1,18 @@
 import { humaniseField, labelOf, type Principal, type Violation } from "@graview/core";
 import { KindFigure, useMarkup } from "@graview/primitives";
 import {
-  createPageRegistry,
   DerivedForm,
+  StartFreshLink,
+  createPageRegistry,
   kindFacts,
+  placePath,
   rankedRepairs,
   recordFacts,
   recordPath,
   spatialHref,
-  StartFreshLink,
-  useStoreTick,
   type PageComponent,
   type PageContext,
+  useStoreTick,
 } from "@graview/pages";
 import { editableFields, type Affordance, type AffordanceSet, type EditableField } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
@@ -258,6 +259,14 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
           <span aria-hidden="true" dangerouslySetInnerHTML={logo} />
           {brand?.name ?? "Things"}
         </Link>
+        {/* THE PICTURES FIRST, as the scene's bar has them: the app's own ways of looking, by name. */}
+        {(context.views?.places() ?? []).length > 0 ? (
+          <nav className="th-nav" aria-label="Pictures">
+            {(context.views?.places() ?? []).map((place) => (
+              <Rail key={place.as} to={placePath(place.as)} here={here} label={place.title} />
+            ))}
+          </nav>
+        ) : null}
         <nav className="th-nav" aria-label="Kinds">
           <Rail to="/" here={here} label="Today" />
           {kinds.map((kind) => (

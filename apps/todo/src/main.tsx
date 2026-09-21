@@ -7,6 +7,7 @@ import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
 import { openingSeat, today, TodoApp } from "./ui/app.js";
 import { thingsDesign } from "./ui/design.js";
+import { todoViews } from "./ui/views.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -91,6 +92,13 @@ if (window.location.pathname.startsWith("/pages")) {
          */
         principal,
         remembers,
+        /*
+         * THE APP'S PICTURES, on this face too: the same registry the scene
+         * draws from, so every named lens is a page and the nav is the bar.
+         */
+        views: todoViews(),
+        settings: todoApp.settings ?? [],
+        ...(presence ? { presence } : {}),
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is

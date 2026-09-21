@@ -372,6 +372,9 @@ importers:
       '@graview/primitives':
         specifier: workspace:*
         version: link:../primitives
+      '@graview/react':
+        specifier: workspace:*
+        version: link:../react
       '@graview/tools':
         specifier: workspace:*
         version: link:../tools

@@ -1,14 +1,8 @@
 import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
 import type { ComponentType, ReactNode } from "react";
-import {
-  DefaultHomePage,
-  DefaultListPage,
-  DefaultProblemsPage,
-  DefaultRecordPage,
-  DefaultShell,
-  type PageContext,
-} from "./pages.js";
+import { GraviewProvider } from "@graview/react";
+import { DefaultHomePage, DefaultListPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultShell, type PageContext } from "./pages.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useParams } from "react-router-dom";
 
@@ -93,6 +87,9 @@ export function PagesRoutes<S extends AnySchema>({
         })}
         <Route path="/" element={<Home context={inside} />} />
         <Route path="/problems" element={<Problems context={inside} />} />
+        {/* The app's pictures, when it handed the face its views: an index, and each lens at its name. */}
+        <Route path="/places" element={<DefaultPlacesPage context={inside} />} />
+        <Route path="/places/:as" element={<DefaultPlacePage context={inside} />} />
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />
         <Route
           path="/:slug/:id"
@@ -109,7 +106,27 @@ export function PagesApp<S extends AnySchema>({
   basename,
   initialPath,
 }: PagesAppProps<S>) {
-  const inner = <PagesRoutes context={context} {...(registry ? { registry } : {})} />;
+  const routed = <PagesRoutes context={context} {...(registry ? { registry } : {})} />;
+  /*
+   * A PROVIDER UNDER THE PAGES when the app handed over its views, so a lens
+   * drawn on a page finds the store, the seat and the registry its hooks ask
+   * for — the same provider the embed puts under this face. No scene, no
+   * URL sync: the router owns the address here.
+   */
+  const inner = context.views ? (
+    <GraviewProvider
+      store={context.store}
+      views={context.views}
+      {...(context.principal ? { principal: context.principal } : {})}
+      {...(context.brand ? { brand: context.brand } : {})}
+      {...(context.settings ? { settings: context.settings } : {})}
+      {...(context.presence ? { presence: context.presence } : {})}
+    >
+      {routed}
+    </GraviewProvider>
+  ) : (
+    routed
+  );
   if (initialPath !== undefined) {
     /*
      * THE TEST ROUTER CARRIES THE BASENAME TOO, OR THE TESTS ARE A LIE.

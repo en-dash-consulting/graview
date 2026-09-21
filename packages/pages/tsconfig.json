@@ -26,6 +26,9 @@
     },
     {
       "path": "../primitives"
+    },
+    {
+      "path": "../react"
     }
   ]
 }

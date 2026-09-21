@@ -30,6 +30,15 @@ if (location.pathname.startsWith("/pages")) {
 - `/<plural>/<id>` — a record: its facts, its relations captioned in the
   declaration's words, what can be done, what has happened.
 - `/problems` — every broken rule with its repairs.
+- `/places` and `/places/<as>` — when the context carries the app's `views`
+  (the same registry the scene draws from): an index of every named lens,
+  each drawn small and live, and each lens as a page at its name, full
+  width in fullscreen mode over the kind's current members, with the acts
+  that begin the kind beneath it. The home leads with the pictures, a
+  kind's page lists its own, and the nav is the scene's bar: pictures
+  first, then kinds, then Problems. A pick inside a lens on a page travels
+  to the record. Pass `views` (and `settings`, `presence`) in the context;
+  the face puts the scene's provider under the routes for you.
 
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
