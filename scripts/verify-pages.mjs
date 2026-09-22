@@ -42,8 +42,21 @@ const hygiene = (page) =>
     noSideScroll: document.documentElement.scrollWidth <= window.innerWidth + 1,
     hasH1: document.querySelectorAll("h1, header a").length > 0,
     namedLinks: [...document.querySelectorAll("a")].every((a) => (a.textContent ?? "").trim().length > 0),
+    /*
+     * A NAME, however it is given. A wrapping label is the common way and
+     * an `aria-label` is the other one — it is what a screen reader
+     * announces, and the seat's own field has carried one since it was
+     * written. The question is whether the control has a name, not which
+     * of the two spellings the author reached for.
+     */
     labelledInputs: [...document.querySelectorAll("input, select")].every(
-      (el) => el.closest("label")?.textContent?.trim() || el.type === "checkbox",
+      (el) =>
+        el.closest("label")?.textContent?.trim() ||
+        el.getAttribute("aria-label")?.trim() ||
+        (el.getAttribute("aria-labelledby") ?? "")
+          .split(/\s+/)
+          .some((id) => document.getElementById(id)?.textContent?.trim()) ||
+        el.type === "checkbox",
     ),
     /*
      * A CONTROL BIG ENOUGH TO HIT. 24px is the WCAG 2.2 minimum, and
@@ -448,6 +461,57 @@ try {
   await phone3.waitForTimeout(400);
   report.checks.phonePlace = await hygiene(phone3);
   await phone3.close();
+
+  /* ------------------------------------------ the assistant on every page */
+  const asker = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await asker.goto("http://localhost:5193/pages/tasks/t-deposit?today=2026-09-01&fresh=1", { waitUntil: "networkidle" });
+  await asker.waitForTimeout(600);
+  await asker.click('[data-testid="page-ask"]');
+  await asker.waitForSelector('[data-testid="page-ask-drawer"]');
+  await asker.waitForTimeout(500);
+  const drawer = await asker.evaluate(() => ({
+    subject: document.querySelector('[data-testid="companion"]')?.getAttribute("data-graview-subject") ?? null,
+    said: document.querySelector('[data-testid="companion-subject"]')?.textContent?.trim() ?? null,
+    offers: [...document.querySelectorAll('[data-testid="chat-offer"]')].map((el) => (el.textContent ?? "").trim()),
+  }));
+  report.checks.theAssistantIsOnThePage = {
+    ...drawer,
+    // The route is the referent: a record page is about that record.
+    ok: drawer.subject === "t-deposit" && (drawer.said ?? "").includes("deposit") && drawer.offers.length > 0,
+  };
+  /* A grounded question, answered from the graph with no model at all. */
+  await asker.click('[data-testid="chat-offer"]');
+  await asker.waitForFunction(() => document.querySelectorAll('[data-testid="chat-panel"] ol li').length >= 2, undefined, { timeout: 15_000 });
+  await asker.waitForTimeout(400);
+  const answered = await asker.evaluate(() => {
+    const rows = [...document.querySelectorAll('[data-testid="chat-panel"] ol li')];
+    return (rows[rows.length - 1]?.textContent ?? "").slice(0, 160);
+  });
+  report.checks.aGroundedQuestionIsAnswered = { answered, ok: answered.length > 0 && !/could not answer/i.test(answered) };
+  /* And it says a change in words, which lands through the same runtime, attributed and undoable. */
+  await asker.fill('[aria-label="Message the seat"]', "finish Pay the deposit");
+  await asker.press('[aria-label="Message the seat"]', "Enter");
+  await asker.waitForTimeout(1200);
+  const proposed = await asker.$('[data-testid="chat-apply"]');
+  let applied = { ok: false, why: "nothing proposed" };
+  if (proposed) {
+    await proposed.click();
+    await asker.waitForTimeout(800);
+    applied = await asker.evaluate(() => ({
+      said: [...document.querySelectorAll('[data-testid="chat-panel"] ol li')].map((li) => li.textContent ?? "").join(" | ").slice(-160),
+      ok: [...document.querySelectorAll('[data-testid="chat-panel"] ol li')].some((li) => /Done —/.test(li.textContent ?? "")),
+    }));
+  }
+  report.checks.aProposalAppliesFromThePage = applied;
+  await asker.close();
+  /* The drawer on a phone: nothing side-scrolls the document. */
+  const phone4 = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await phone4.goto("http://localhost:5193/pages/tasks?today=2026-09-01", { waitUntil: "networkidle" });
+  await phone4.waitForTimeout(500);
+  await phone4.click('[data-testid="page-ask"]');
+  await phone4.waitForTimeout(700);
+  report.checks.phoneAsk = await hygiene(phone4);
+  await phone4.close();
 
   /*
    * ---------------------------------------- relationships as structure

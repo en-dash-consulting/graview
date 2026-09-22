@@ -26,4 +26,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 |-------|--------|
 | [Pictures on pages: every place is a page, an index lands you among them, and the nav mirrors the scene's bar](./pictures-on-pages-every-place-is-a.md) | completed |
 | [Relationships as structure on pages: a map of the kinds, lists that group by relation, and records that link both ways](./relationships-as-structure-on-pages-a.md) | completed |
-| [The assistant on every page: Ask in the shell with the page's subject as "this", grounded chips, proposals as prefilled forms, and the seat's questions at the record](./the-assistant-on-every-page-ask-in-the.md) | pending |
+| [The assistant on every page: Ask in the shell with the page's subject as "this", grounded chips, proposals as prefilled forms, and the seat's questions at the record](./the-assistant-on-every-page-ask-in-the.md) | in_progress |

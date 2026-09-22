@@ -48,6 +48,13 @@ export interface ChatPanelProps<S extends AnySchema> {
   readonly inside?: boolean;
   /** How the seat answers. Defaults to the graph's own responder. */
   readonly respond?: Responder<S>;
+  /**
+   * GROUNDED QUESTIONS, OFFERED BEFORE ANYBODY TYPES. A panel showing an
+   * empty field asks the person to guess what it can answer; these are
+   * questions the graph's own responder can answer about what is in front
+   * of them, and pressing one asks it.
+   */
+  readonly offer?: readonly string[];
   /** Feeds the app's activity rail, like any other seat. */
   readonly onCall?: (call: ToolCall) => void;
   readonly testId?: string;
@@ -55,6 +62,7 @@ export interface ChatPanelProps<S extends AnySchema> {
 
 export function ChatPanel<S extends AnySchema>({
   inside = false,
+  offer,
   respond,
   onCall,
   testId = "chat",
@@ -157,8 +165,8 @@ export function ChatPanel<S extends AnySchema>({
     log.current?.scrollTo?.({ top: log.current.scrollHeight });
   }, [turns]);
 
-  const send = async () => {
-    const text = draft.trim();
+  const send = async (question?: string) => {
+    const text = (question ?? draft).trim();
     if (!text || busy) return;
     setDraft("");
     setBusy(true);
@@ -433,6 +441,23 @@ export function ChatPanel<S extends AnySchema>({
               <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>thinking…</li>
             ) : null}
           </ol>
+          {/* What it can answer about what is in front of you, before anybody types. */}
+          {(offer ?? []).length > 0 && turns.length === 0 ? (
+            <div data-testid="chat-offers" style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "0 8px 6px" }}>
+              {(offer ?? []).slice(0, 3).map((question) => (
+                <button
+                  key={question}
+                  type="button"
+                  data-testid="chat-offer"
+                  disabled={busy}
+                  onClick={() => void send(question)}
+                  style={{ font: "inherit", fontSize: "0.6875rem", minHeight: 24, padding: "0 8px", borderRadius: 999 }}
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <form
             onSubmit={(event) => {
               event.preventDefault();

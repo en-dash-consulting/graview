@@ -23,5 +23,6 @@ export {
   Repairs,
 } from "./pages.js";
 export type { PageContext } from "./pages.js";
+export { PageAsk } from "./ask.js";
 export { PagesApp, PagesRoutes } from "./router.js";
 export type { PagesAppProps, PageComponent } from "./router.js";

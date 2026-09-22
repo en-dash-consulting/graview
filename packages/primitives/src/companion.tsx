@@ -135,9 +135,16 @@ export interface CompanionProps<S extends AnySchema> {
   readonly onCall?: Parameters<typeof ChatPanel<S>>[0]["onCall"];
   /** Whether a conversation is offered at all. An app with no seat still gets the acts and the relations. */
   readonly chat?: boolean;
+  /**
+   * Already given a box of its own — a drawer on the routed face — rather
+   * than floating over a picture. Framed, it fills what it was given,
+   * stays open, and never collapses itself for want of room: the host
+   * decided how much room there is before it mounted.
+   */
+  readonly framed?: boolean;
 }
 
-export function Companion<S extends AnySchema>({ respond, onCall, chat = true }: CompanionProps<S> = {}) {
+export function Companion<S extends AnySchema>({ respond, onCall, chat = true, framed = false }: CompanionProps<S> = {}) {
   const { seatWho, robots, session, store, setView: setViewOf } = useGraview<S>();
   const { set: chooseOf } = useSelection();
   const subject = useSubject<S>();
@@ -155,6 +162,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true }:
   const [narrow, setNarrow] = useState(false);
   const frame = useRef<HTMLElement | null>(null);
   useEffect(() => {
+    if (framed) return;
     const element = frame.current?.parentElement;
     if (!element || typeof ResizeObserver === "undefined") return;
     const watch = new ResizeObserver(() => setNarrow(element.getBoundingClientRect().width < 640));
@@ -163,8 +171,8 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true }:
     return () => watch.disconnect();
   }, []);
   useEffect(() => {
-    if (narrow) setOpen(false);
-  }, [narrow]);
+    if (narrow && !framed) setOpen(false);
+  }, [narrow, framed]);
   const anything = store.graph.allEdges().length > 0;
   const work = useSeatWork<S>();
   /* Questions back, from every seat in this tab: they wait for an answer, so they are listed until answered. */
@@ -215,7 +223,6 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true }:
       data-graview-offstage=""
       onMouseDown={(event) => event.stopPropagation()}
       style={{
-        position: "absolute",
         zIndex: 40,
         boxSizing: "border-box",
         display: "flex",
@@ -225,9 +232,12 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true }:
         border: "1px solid var(--graview-edge)",
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-high)",
-        ...(narrow
-          ? { left: 10, right: 10, bottom: 10, maxHeight: open ? "min(58cqh, 420px)" : undefined, padding: open ? "10px 12px" : "6px 10px" }
+        ...(framed
+          ? { position: "static" as const, width: "auto", maxHeight: "100%", padding: "10px 12px" }
+          : narrow
+          ? { position: "absolute" as const, left: 10, right: 10, bottom: 10, maxHeight: open ? "min(58cqh, 420px)" : undefined, padding: open ? "10px 12px" : "6px 10px" }
           : {
+              position: "absolute" as const,
               left: 14,
               top: 14,
               width: 264,
@@ -285,6 +295,12 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true }:
           {chat ? (
             <ChatPanel<S>
               inside
+              /* What the graph can answer about THIS, offered before anybody types. */
+              offer={[
+                "What's wrong?",
+                ...(subject.id && store.graph.getNode(subject.id) ? [`Tell me about ${subject.name}`] : []),
+                "What is here?",
+              ]}
               {...(respond ? { respond } : {})}
               {...(onCall ? { onCall } : {})}
             />

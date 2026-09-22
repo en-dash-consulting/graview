@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T00:33:08.963Z",
+  "at": "2026-09-22T01:27:06.340Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -164,6 +164,31 @@
       "bigEnoughToHit": []
     },
     "phonePlace": {
+      "noSideScroll": true,
+      "hasH1": true,
+      "namedLinks": true,
+      "labelledInputs": true,
+      "bigEnoughToHit": []
+    },
+    "theAssistantIsOnThePage": {
+      "subject": "t-deposit",
+      "said": "Pay the deposit",
+      "offers": [
+        "What's wrong?",
+        "Tell me about Pay the deposit",
+        "What is here?"
+      ],
+      "ok": true
+    },
+    "aGroundedQuestionIsAnswered": {
+      "answered": "2 problems: \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\"; \"Pay the deposit\" was due 2026-08-28. The repairs below come from the rules",
+      "ok": true
+    },
+    "aProposalAppliesFromThePage": {
+      "said": "ce the deposit…. Trouble: \"Pay the deposit\" was due 2026-08-28.Mark it done — Pay the deposit | Done — Mark it done — Find someone who moves pianos. Undo works.",
+      "ok": true
+    },
+    "phoneAsk": {
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,

@@ -1,4 +1,4 @@
-import { KindFigure, RelationMark, useMarkup } from "@graview/primitives";
+import { KindFigure, LadderSetting, RelationMark, useMarkup } from "@graview/primitives";
 import {
   describeNode,
   hueFor,
@@ -23,6 +23,7 @@ import { useCallback, useRef, useState, useSyncExternalStore, type ReactNode } f
 import { kindFacts, kindMap, rankedRepairs, recordFacts, type KindRelation } from "./facts.js";
 import type { ReactViewRegistry, ViewProps } from "@graview/react";
 import type { ComponentType } from "react";
+import { useGraviewIfAny } from "@graview/react";
 import { DerivedForm } from "./form.js";
 import { kindOfSlug, placeHref, placePath, pluralSlug, recordPath, spatialHref } from "./registry.js";
 
@@ -476,8 +477,10 @@ export function DefaultShell<S extends AnySchema>({
           fontSize: "0.8125rem",
         }}
       >
-        <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
           <span>{brand?.name ?? "Graview"}</span>
+          {/* Which rung answers, chosen here as it is in the scene's profile: the reader's own setting. */}
+          {context.views ? <LadderSetting /> : null}
           {context.remembers ? (
             <span data-testid="remembered" style={{ marginLeft: "auto" }}>
               Remembered in this browser · <StartFreshLink />
@@ -607,6 +610,34 @@ export function DefaultMapPage<S extends AnySchema>({ context }: { context: Page
       </ul>
       <KindMapSection context={context} heading={false} />
     </PageMain>
+  );
+}
+
+/** The questions the seat has asked and nobody has answered, each at the record it is about. */
+function SeatQuestions<S extends AnySchema>({ context }: { context: PageContext<S> }) {
+  const here = useGraviewIfAny<S>();
+  const asked = [...(here?.robots.values() ?? [])].filter((one) => one.mode === "asking" && one.say);
+  if (asked.length === 0) return null;
+  const { store } = context;
+  return (
+    <section style={{ ...rule, display: "grid", gap: 10 }} data-testid="seat-questions">
+      <h2 style={h2}>{asked.length === 1 ? "The seat asked something" : `The seat asked ${asked.length} things`}</h2>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
+        {asked.map((one) => {
+          const about = one.at ? store.graph.getNode(one.at) : undefined;
+          return (
+            <li key={one.participant} style={{ display: "grid", gap: 2 }}>
+              <span>{one.say}</span>
+              {about ? (
+                <Link to={recordPath(store.schema, about.kind as string, about.id)} style={{ ...link, ...quiet }}>
+                  {labelOf(store.schema.tryDefinition(about.kind), about as never)} →
+                </Link>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -1569,6 +1600,14 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
           <p style={lede}>Each rule says what it found, and names what would fix it.</p>
         )}
       </header>
+      {/*
+        * AND WHAT THE SEAT ASKED. The problems page is the face's inbox:
+        * a rule that is broken and a question the seat could not answer
+        * for itself are the same kind of thing to the person reading it —
+        * something waiting for a decision — and putting them in two
+        * places means one of them is never looked at.
+        */}
+      <SeatQuestions context={context} />
       {violations.map((violation, index) => {
         const first = violation.nodeIds[0];
         const node = first ? store.graph.getNode(first) : undefined;

@@ -46,6 +46,7 @@ export type { CompanionProps, Subject } from "./companion.js";
 export { RelationKey, RelationMark } from "./relation-key.js";
 export { QuickRelations } from "./quick-relations.js";
 export { ChatPanel, IntelligenceSettings } from "./chat.js";
+export { LadderSetting } from "./ladder.js";
 export type { ChatPanelProps } from "./chat.js";
 export { Wordmark } from "./wordmark.js";
 export { Places } from "./places.js";

@@ -1,0 +1,60 @@
+import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
+import { createViews, type ViewComponent } from "@graview/react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import { z } from "zod";
+import { PagesApp, type PageContext } from "../../src/index.js";
+
+/**
+ * THE ASSISTANT IS ON EVERY PAGE, and it is the SAME one.
+ *
+ * The scene keeps the seat in a rail that names its subject; a routed face
+ * that grew a chat box of its own would be two assistants with two habits
+ * over one graph. The pages face opens the same companion, and the route
+ * is what "this" means: a record page is about that record, a kind's page
+ * about that kind, a picture about the kind it is a picture of.
+ */
+const task = defineNode("task", { fields: z.object({ label: z.string(), done: z.boolean().default(false) }), plural: "Tasks" });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
+const finish = defineMutation("finish", {
+  title: "Finish it",
+  subject: { kinds: ["task"], arg: "taskId" },
+  writes: ["done"],
+  input: z.object({ taskId: nodeRef(["task"]) }),
+  apply: (ctx, args) => ctx.patchNode(args.taskId, { done: true }),
+});
+const store = () =>
+  new Store({
+    schema,
+    mutations: [finish],
+    snapshot: { nodes: [{ id: "t1", kind: "task", label: "Pay the deposit", done: false }] as never, edges: [] },
+  });
+const Board: ViewComponent<typeof schema> = ({ nodes }) => <div>{nodes?.length ?? 0} on the board</div>;
+const views = () => createViews(schema).register("task", { cardinality: "many", fidelity: "full" }, Board, { title: "The board" });
+
+const draw = (path: string, withViews = true) =>
+  renderToStaticMarkup(
+    <PagesApp
+      context={{ store: store(), ...(withViews ? { views: views() } : {}) } as PageContext<typeof schema>}
+      initialPath={path}
+    />,
+  );
+
+describe("the assistant on every page", () => {
+  it("offers one control on every route, and it opens the scene's own companion", () => {
+    for (const path of ["/", "/tasks", "/tasks/t1", "/places", "/places/the-board", "/problems", "/map"]) {
+      expect(draw(path), path).toContain('data-testid="page-ask"');
+    }
+  });
+
+  it("is not there at all when the app handed the face no views, because there is no provider to answer from", () => {
+    const html = draw("/", false);
+    expect(html).not.toContain('data-testid="page-ask"');
+    expect(html).not.toContain('data-testid="setting-intelligence"');
+  });
+
+  it("lets the reader choose which rung answers, from the face's own footer", () => {
+    expect(draw("/")).toContain('data-testid="setting-intelligence"');
+  });
+});

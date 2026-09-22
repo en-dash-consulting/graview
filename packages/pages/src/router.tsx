@@ -2,6 +2,7 @@ import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
 import type { ComponentType, ReactNode } from "react";
 import { GraviewProvider } from "@graview/react";
+import { PageAsk } from "./ask.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultShell, type PageContext } from "./pages.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useParams } from "react-router-dom";
@@ -114,6 +115,12 @@ export function PagesApp<S extends AnySchema>({
    * for — the same provider the embed puts under this face. No scene, no
    * URL sync: the router owns the address here.
    */
+  /*
+   * THE SEAT BELONGS TO THE FACE, NOT TO ONE SHELL. Mounted here rather
+   * than inside the derived chrome, so an app that replaced every surface
+   * with a design of its own still has the assistant — the same panel, on
+   * every route, however the pages around it are drawn.
+   */
   const inner = context.views ? (
     <GraviewProvider
       store={context.store}
@@ -124,6 +131,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.presence ? { presence: context.presence } : {})}
     >
       {routed}
+      <PageAsk context={context} />
     </GraviewProvider>
   ) : (
     routed

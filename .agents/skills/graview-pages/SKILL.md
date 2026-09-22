@@ -30,23 +30,27 @@ if (location.pathname.startsWith("/pages")) {
 - `/<plural>/<id>` — a record: its facts, its relations captioned in the
   declaration's words, what can be done, what has happened.
 - `/problems` — every broken rule with its repairs.
-- `/places` and `/places/<as>` — when the context carries the app's `views`
-  (the same registry the scene draws from): an index of every named lens,
-  each drawn small and live, and each lens as a page at its name, full
-  width in fullscreen mode over the kind's current members, with the acts
-  that begin the kind beneath it. The home leads with the pictures, a
-  kind's page lists its own, and the nav is the scene's bar: pictures
-  first, then kinds, then Problems. A pick inside a lens on a page travels
-  to the record. Pass `views` (and `settings`, `presence`) in the context;
-  the face puts the scene's provider under the routes for you.
-- `/map` — how the kinds fit together: every declared relation in the
-  declaration's own words with its live count (`kindMap(store)`), also a
-  section on the home page. A kind's list says what it relates to, groups
-  by a relation (`?by=<edge>`) and narrows by one (`?<edge>=<id>` keeps the
-  members joined to that node; `?with=<edge>` keeps the ones that have the
-  relation at all) — all in the URL, so a list you arranged is a link you
-  can send. A record links the other way round, to the far kind's list
-  narrowed to itself, and says which pictures it is seen in.
+**Hand it `views`** (the scene's own registry, plus `settings`/`presence`)
+and the face puts the scene's provider under its routes, which buys three
+things at once:
+
+- `/places`, `/places/<as>` — every named lens as a page (fullscreen mode,
+  over the kind's members, the kind's beginning acts beneath) and an index
+  drawing each one small and live. The home leads with them, a kind's page
+  lists its own, the nav mirrors the bar, and a pick inside a lens travels
+  to the record.
+- `/map` — `kindMap(store)`: every declared relation in its own words with
+  its live count, also a section on the home page. A kind's list says what
+  it relates to, groups by a relation (`?by=<edge>`) and narrows by one
+  (`?<edge>=<id>`, or `?with=<edge>` for having it at all) — in the URL, so
+  an arrangement is a link. A record links the other way round and says
+  which pictures it is seen in.
+- **The assistant**, on every route: one control opens the scene's own
+  `Companion` in a drawer, and the ROUTE is what "this" means. Grounded
+  questions before anybody types; proposals apply through the same runtime,
+  attributed and undoable, withheld ones struck through. Open questions are
+  listed on `/problems`; the rung that answers is chosen in the footer.
+  Mounted by the router, so a design that replaces every surface keeps it.
 
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
