@@ -2,9 +2,10 @@ import {
   describeNode,
   labelOf,
   readableFields,
-  violationsTouching,
   type AnySchema,
   type KindOfSchema,
+  type NodeOfSchema,
+  violationsTouching,
 } from "@graview/core";
 import { aggregateId, kindCardId, marqueeHeightFor, withFocus, withOverview, withPast, withWithin } from "@graview/layout";
 import {
@@ -17,7 +18,7 @@ import {
   type ReactViewRegistry,
   type ViewProps,
  markDefaultView } from "@graview/react";
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -72,6 +73,54 @@ function buildingsCap(side: number | undefined, count: number): number {
   const s = side ?? Math.min(4, Math.max(1, Math.ceil(Math.sqrt(count))));
   return Math.max(1, s * s);
 }
+
+/**
+ * A LENS DRAWN SMALL, AND ONLY WHEN WHAT IT DRAWS CHANGES.
+ *
+ * The board renders the real component for every showing a kind has, and
+ * the card around it re-renders on every frame of a flight — so choosing
+ * a picture re-drew three matrices and a calendar sixty times a second
+ * while the camera moved, which is where "slow and glitchy" came from.
+ * Nothing about a thumbnail depends on the size of the card it sits in:
+ * memoised on what it actually draws, the flight costs one render each.
+ */
+const Picture = memo(
+  function Picture<S extends AnySchema>({
+    lens: Lens,
+    nodes,
+    label,
+    flagged,
+  }: {
+    readonly lens: (props: ViewProps<S>) => ReactNode;
+    readonly nodes: readonly NodeOfSchema<S>[];
+    readonly label: string;
+    readonly flagged?: readonly string[];
+  }) {
+    return (
+      <Lens
+        nodes={nodes as never}
+        label={label}
+        fidelity="full"
+        cardinality="many"
+        mode="scene"
+        selected={false}
+        {...(flagged ? { flagged } : {})}
+      />
+    );
+  },
+  (was, now) =>
+    was.lens === now.lens &&
+    was.label === now.label &&
+    was.nodes.length === now.nodes.length &&
+    was.nodes.every((node, at) => node === now.nodes[at]) &&
+    (was.flagged ?? []).length === (now.flagged ?? []).length &&
+    (was.flagged ?? []).every((id, at) => id === (now.flagged ?? [])[at]),
+) as <S extends AnySchema>(props: {
+  readonly lens: (props: ViewProps<S>) => ReactNode;
+  readonly nodes: readonly NodeOfSchema<S>[];
+  readonly label: string;
+  readonly flagged?: readonly string[];
+}) => ReactNode;
 
 export function registerDefaultViews<S extends AnySchema>(
   schema: S,
@@ -701,7 +750,24 @@ export function registerDefaultViews<S extends AnySchema>(
               data-graview-buildings={props.plot?.side ?? 1}
               style={{
                 display: "grid",
-                gridTemplateColumns: `repeat(${Math.max(1, props.plot?.side ?? Math.min(4, Math.ceil(Math.sqrt(members.length))))}, minmax(0, 1fr))`,
+                /*
+                 * A NAME YOU CAN READ BEATS A GRID THAT MATCHES THE PLOT.
+                 *
+                 * The members were laid out `side` to a row so the chips
+                 * echoed the buildings on the lattice — which at a district's
+                 * own width meant sixty pixels a chip, and "Enough bodies for
+                 * the drill" arrived as "Eno…". Opening a district is the
+                 * gesture that asks WHICH ONE; a row of initials cannot
+                 * answer it. So the columns are set by what the widest name
+                 * needs, and a district only wide enough for one keeps one.
+                 */
+                gridTemplateColumns: `repeat(${Math.max(
+                  1,
+                  Math.min(
+                    props.plot?.side ?? 4,
+                    Math.floor((props.plot ? props.plot.side * 46 : 180) / 88) || 1,
+                  ),
+                )}, minmax(0, 1fr))`,
                 gap: 3,
               }}
             >
@@ -777,13 +843,10 @@ export function registerDefaultViews<S extends AnySchema>(
                       <span className="graview-drive-in-thumb-picture" aria-hidden="true" inert>
                         {Lens ? (
                           <span className="graview-drive-in-thumb-natural">
-                            <Lens
+                            <Picture
+                              lens={Lens}
                               nodes={members as never}
                               label={place.title}
-                              fidelity="full"
-                              cardinality="many"
-                              mode="scene"
-                              selected={false}
                               {...(props.flagged ? { flagged: props.flagged } : {})}
                             />
                           </span>

@@ -1288,6 +1288,16 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   outline-offset: 3px;
   border-radius: 12px;
 }
+/* AND NOT FROM ALTITUDE, where a district is a village on a plot and its
+   card is a box with nothing drawn in it: the dashed outline was the only
+   visible part, so a hand-placed district read as an empty rounded
+   rectangle sitting on the ground — several of them, in a picture that had
+   no rectangles in it. The plot's own kerb goes dashed up here, which is
+   the same fact said where the district actually is. */
+[data-graview-altitude] [data-graview-pinned] > :not([data-graview-natural]):not(.graview-kind-tag),
+[data-graview-altitude] [data-graview-pinned] > [data-graview-natural] > * {
+  outline: none;
+}
 
 [data-graview-pick] {
   cursor: pointer;

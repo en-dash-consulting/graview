@@ -37,6 +37,7 @@ import {
   hueFor,
 } from "@graview/render";
 import {
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -3759,6 +3760,8 @@ export function ResolvedView<S extends AnySchema>({
   fidelity,
 }: ResolvedViewProps<S>) {
   const { store, views, view } = useGraview<S>();
+  /* The graph's own version: a view redraws when the graph it is drawing changes. */
+  const graph = useGraph<S>();
   const implicated = useImplicated();
   const flagged = useFlagged();
   const cardinality =
@@ -3825,6 +3828,40 @@ export function ResolvedView<S extends AnySchema>({
 
   if (!Component) return <MissingView node={node} props={props} />;
   /*
+   * DRAWN AGAIN ONLY WHEN WHAT IT DRAWS CHANGED.
+   *
+   * A host re-renders on every frame of a flight, a pan and a zoom — the
+   * box it is given is changing, which is the point — and the view inside
+   * it was re-rendered with it, sixty times a second, for a picture that
+   * had not changed at all. On a heavy lens (a matrix with rotated heads,
+   * a calendar of a hundred moments) that is the whole frame budget, and
+   * it is what made choosing a picture feel slow.
+   *
+   * What it draws is the node or the members, the cell, and the handful of
+   * flags a view reads; the SIZE is not a prop, it is the box around it.
+   * A view that watches the store or the selection through a hook still
+   * re-renders on its own, because context reaches past a bailout.
+   */
+  const signature = [
+    node.id,
+    registration?.title ?? "",
+    cell.fidelity,
+    cell.cardinality,
+    mode,
+    selected,
+    node.raised ?? false,
+    node.focused ?? false,
+    node.opened ?? false,
+    node.rank ?? "",
+    node.nestedUnder ?? "",
+    node.plot ? `${node.plot.col},${node.plot.row},${node.plot.side}` : "",
+    node.aggregate?.memberIds.join(",") ?? "",
+    node.aggregate?.retired ?? "",
+    (implicated ?? []).join(","),
+    (flagged ?? []).join(","),
+    hasOwnView,
+  ].join("|");
+  /*
    * The boundary is keyed by what it is drawing, so changing the picture or
    * the node gives the view a fresh start rather than leaving a panel that
    * once threw stuck saying so forever.
@@ -3836,11 +3873,26 @@ export function ResolvedView<S extends AnySchema>({
         kind={props.label ?? node.kind}
         {...(registration?.title ? { view: registration.title } : {})}
       >
-        <Component {...props} />
+        {/* The graph goes in by identity, not by a string: a label edited in
+            place changes no id and no count, and a picture that missed it
+            would be the one thing a graph view must never be — out of date. */}
+        <Drawn signature={signature} graph={graph} draw={() => <Component {...props} />} />
       </ViewBoundary>
     </ViewModeProvider>
   );
 }
+
+/**
+ * One view, redrawn when its signature changes and not otherwise. The
+ * element is built inside a memo, so a parent re-render with the same
+ * signature hands React the same element and it skips the subtree.
+ */
+const Drawn = memo(
+  function Drawn({ draw }: { readonly signature: string; readonly graph: unknown; readonly draw: () => ReactNode }) {
+    return <>{draw()}</>;
+  },
+  (was, now) => was.signature === now.signature && was.graph === now.graph,
+);
 
 function clampPlane(plane: number): 0 | 1 | 2 {
   return Math.max(0, Math.min(2, Math.round(plane))) as 0 | 1 | 2;
