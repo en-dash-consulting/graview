@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T02:32:00.768Z",
+  "at": "2026-09-22T03:18:03.311Z",
   "engine": "chromium",
   "checks": {
     "theRailIsFixed": {
@@ -7,25 +7,25 @@
         "x": 14,
         "y": 71,
         "w": 264,
-        "h": 492
+        "h": 436
       },
       "aloft": {
         "x": 14,
         "y": 71,
         "w": 264,
-        "h": 354
+        "h": 298
       },
       "closer": {
         "x": 14,
         "y": 71,
         "w": 264,
-        "h": 354
+        "h": 298
       },
       "inALens": {
         "x": 14,
         "y": 71,
         "w": 264,
-        "h": 408
+        "h": 352
       },
       "ok": true
     },
@@ -107,6 +107,11 @@
       "before": 1,
       "marks": 0,
       "log": 0,
+      "ok": true
+    },
+    "theSectionsDoNotOverlap": {
+      "sections": 2,
+      "over": [],
       "ok": true
     },
     "quietCityRunsNothing": {

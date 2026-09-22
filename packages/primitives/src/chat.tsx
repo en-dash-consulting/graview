@@ -274,14 +274,18 @@ export function ChatPanel<S extends AnySchema>({
                   position: "static",
                   width: "auto",
                   /*
-                   * A FLOOR, or it is not a conversation. In the rail the
-                   * panel is one item of a scrolling column, and a grid
-                   * item's automatic minimum let the log's `1fr` row
-                   * collapse to nothing whenever the acts above it were
-                   * long: the seat vanished from its own rail, field and
-                   * all, exactly when there was most to ask about.
+                   * SIZED BY WHAT IS IN IT, in the rail.
+                   *
+                   * A `1fr` middle row and a floor made the panel a fixed
+                   * box: shorter than the log, the chips and the field
+                   * together, so with `overflow: visible` the field and the
+                   * chips were painted straight over the relation key
+                   * below, and with `overflow: hidden` they were cut off
+                   * instead. The log carries its own floor and ceiling
+                   * (120 to 400, scrolling); everything else is as tall as
+                   * it needs to be, and the rail's own column scrolls.
                    */
-                  minHeight: 148,
+                  gridTemplateRows: "auto auto auto auto",
                 }
               : {
                   position: "absolute" as const,
@@ -295,7 +299,7 @@ export function ChatPanel<S extends AnySchema>({
                   boxShadow: "var(--graview-lift-high)",
                 }),
             display: "grid",
-            gridTemplateRows: "auto 1fr auto",
+            ...(inside ? {} : { gridTemplateRows: "auto 1fr auto" }),
             /*
              * The rail is the scroller here, and the log inside keeps its
              * own: clipping the panel as well cut the seat's own greeting
@@ -342,7 +346,14 @@ export function ChatPanel<S extends AnySchema>({
               gap: 8,
               alignContent: "start",
               maxHeight: "min(46cqh, 400px)",
-              minHeight: 120,
+              /*
+               * In the rail the log sits between the acts above and the key
+               * below, and a hundred and twenty pixels of blank under one
+               * sentence reads as something failing to load. It keeps a
+               * floor — the panel must not jump as the first turn lands —
+               * but a smaller one, and grows with what is said.
+               */
+              minHeight: inside ? 64 : 120,
               overflowY: "auto",
             }}
           >

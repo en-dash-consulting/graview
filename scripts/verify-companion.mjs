@@ -252,6 +252,29 @@ try {
   }
   report.checks.undoClearsTheMarks = cleared;
 
+  /* -------------------- the key opens under the conversation, not through it */
+  /*
+   * The rail is a column of sections, and the conversation used to be a
+   * fixed box shorter than what was in it: with the key expanded, the
+   * chips and the field were painted straight over the relations. A
+   * section that overlaps the one below it is a panel nobody can use.
+   */
+  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
+  await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await page.waitForTimeout(1400);
+  await page.click('[data-testid="companion-key"] summary').catch(() => {});
+  await page.waitForTimeout(500);
+  report.checks.theSectionsDoNotOverlap = await page.evaluate(() => {
+    const rail = document.querySelector('[data-testid="companion"]');
+    const sections = [...(rail?.querySelectorAll(':scope > div > *') ?? [])].filter((el) => el.getBoundingClientRect().height > 0);
+    const boxes = sections.map((el) => el.getBoundingClientRect());
+    const over = [];
+    for (let at = 1; at < boxes.length; at++) {
+      if (boxes[at].top < boxes[at - 1].bottom - 2) over.push(`${sections[at - 1].tagName} over ${sections[at].tagName}`);
+    }
+    return { sections: sections.length, over, ok: sections.length > 1 && over.length === 0 };
+  });
+
   /* --------------------------------- quiet: nothing animating on a still city */
   await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
