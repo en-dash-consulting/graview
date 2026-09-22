@@ -9,6 +9,7 @@ export {
   KIND_PREFIX,
   layout,
   panLayout,
+  SCREEN_LEASH_CELLS,
   planeOf,
   withJackIn,
   AGGREGATE_PREFIX,

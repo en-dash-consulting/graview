@@ -893,9 +893,13 @@ export function Scene<S extends AnySchema>({
      * gesture with a dashed kerb to show for it.
      */
     if (node.screenOf !== undefined) {
-      const pan = view.pan ?? { x: 0, y: 0 };
-      gesture.current = { kind: "pan", fromX: event.clientX, fromY: event.clientY, baseX: pan.x, baseY: pan.y, moved: false };
-      return;
+      // Unless it started on the rail, which is the one part of a billboard
+      // that means "move the board" rather than "look around".
+      if (!(event.target as HTMLElement).closest("[data-graview-grip]")) {
+        const pan = view.pan ?? { x: 0, y: 0 };
+        gesture.current = { kind: "pan", fromX: event.clientX, fromY: event.clientY, baseX: pan.x, baseY: pan.y, moved: false };
+        return;
+      }
     }
     gesture.current = {
       kind: "card",
@@ -1107,6 +1111,30 @@ export function Scene<S extends AnySchema>({
       onDragEnd={onDragUp}
       swallowClick={swallow}
     >
+      {node.screenOf !== undefined ? (
+        /*
+         * THE RAIL YOU MOVE THE BOARD BY.
+         *
+         * Dragging the picture itself looks around the city, and must go on
+         * doing so: the billboard is the biggest thing on screen and the one
+         * most likely to be under the hand, and taking panning away from it
+         * was how the far side of a city became unreachable once. So the
+         * board gets a rail along its top edge, the way a window has a title
+         * bar — the picture pans, the rail moves the board, and neither
+         * gesture has to be discovered from the other.
+         *
+         * How far it may go is not this rail's business: `layout` leashes
+         * the pin to its own plot, so a hand and a pasted link are held to
+         * the same distance.
+         */
+        <span
+          className="graview-screen-grip"
+          data-graview-grip={node.id}
+          data-testid="screen-grip"
+          title="Move this picture — it stays by its own village"
+          aria-hidden="true"
+        />
+      ) : null}
       {node.screenOf !== undefined ? (
         /* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */
         <button

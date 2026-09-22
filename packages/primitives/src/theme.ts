@@ -647,6 +647,44 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   text-overflow: ellipsis;
 }
 /* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */
+/* THE RAIL A BILLBOARD IS MOVED BY: a title bar, in the board's own frame
+   ink, along its top edge. Positioned like the full-screen control beside
+   it — the host wraps its children, so the rail is a grandchild of the
+   screen box and a child selector never reaches it. Wide enough to be an
+   easy target, short enough that the picture underneath is still what you
+   see, and present only at altitude, because only up there is the board
+   standing on a plot it could be moved around. */
+.graview-screen-grip {
+  display: none;
+}
+[data-graview-altitude] [data-graview-screen] .graview-screen-grip {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  /* Drawn height, not CSS height: a district's plane is scaled down at
+     altitude, and 14 here reached the screen as an eight-pixel strip that
+     took three attempts to catch. */
+  height: 24px;
+  cursor: grab;
+  background: color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
+  z-index: 3;
+}
+[data-graview-altitude] [data-graview-screen] .graview-screen-grip:active {
+  cursor: grabbing;
+}
+/* Two nicks in the rail, so it reads as a handle rather than as a bar the
+   frame happened to grow. */
+[data-graview-altitude] [data-graview-screen] .graview-screen-grip::after {
+  content: "";
+  position: absolute;
+  inset: 9px calc(50% - 14px);
+  border-top: 1px solid var(--graview-panel);
+  border-bottom: 1px solid var(--graview-panel);
+  opacity: 0.55;
+}
+
 .graview-screen-fullscreen {
   position: absolute;
   left: 50%;

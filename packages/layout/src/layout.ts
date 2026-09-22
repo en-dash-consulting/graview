@@ -154,6 +154,17 @@ const DISTRICT_MIN_WIDTH = 132;
  * strip one line tall, which read as a label, not a screen; at this height
  * the room under the header is visibly an empty screen.
  */
+/**
+ * HOW FAR A BILLBOARD MAY BE MOVED FROM ITS OWN PLOT, in city cells.
+ *
+ * Cells rather than pixels so the same pin holds at every zoom: a board
+ * nudged two cells north is two cells north whether the city is flown close
+ * or seen whole. Two is about a village's width — enough to shift a board
+ * off whatever it was covering, not enough for it to read as a picture of
+ * somewhere else.
+ */
+export const SCREEN_LEASH_CELLS = 2;
+
 const SCREEN_MIN_NATURAL_HEIGHT = 240;
 
 /*
@@ -1318,14 +1329,43 @@ export function layout<S extends AnySchema>(
       for (let w = width; covers(box) && w > floor + 1; w = Math.max(floor, w * 0.92)) box = boxAt(w);
       const at = nodes.findIndex((node) => node.id === state.focusId);
       if (at !== -1) {
+        /*
+         * A BILLBOARD CAN BE MOVED, ON A LEASH.
+         *
+         * Its home is the back kerb of its own plot, which is where it
+         * belongs: a picture of a kind, standing on that kind's land. But a
+         * board planted to the millimetre is furniture, and a person wants
+         * to nudge it off whatever it is covering.
+         *
+         * So a pin moves it, and the leash is what keeps it a picture OF
+         * this village rather than a sheet floating over the city. Measured
+         * in the city's own cells, so the same pin holds at every zoom —
+         * pin it two cells north and it is two cells north whether you are
+         * flown close or looking down on the whole map.
+         *
+         * Clamped HERE rather than where the drag is made, because a pin
+         * arrives from a link as readily as from a hand, and a leash that
+         * only the hand respects is not a leash.
+         */
+        const home = { x: box.x, y: box.y };
+        const held = state.pins[nodes[at]!.id];
+        const wandered = held ? { x: held.x - home.x, y: held.y - home.y } : { x: 0, y: 0 };
+        const reach = Math.hypot(wandered.x, wandered.y);
+        const leash = SCREEN_LEASH_CELLS * frame.cell;
+        const pulled = reach > leash ? leash / reach : 1;
+        const stand = {
+          x: home.x + wandered.x * pulled,
+          y: home.y + wandered.y * pulled,
+        };
         const raised: LayoutNode = {
           ...nodes[at]!,
-          x: box.x + (state.pan?.x ?? 0),
-          y: box.y + (state.pan?.y ?? 0),
+          x: stand.x + (state.pan?.x ?? 0),
+          y: stand.y + (state.pan?.y ?? 0),
           width: box.width,
           height: box.height,
           natural: { width: naturalW, height: drawnH },
           screenOf: screenKind!,
+          ...(held ? { pinned: true } : {}),
         };
         nodes[at] = raised;
         placed.set(raised.id, raised);
