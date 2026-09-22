@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T06:05:00.192Z",
+  "at": "2026-09-22T06:17:27.504Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.589002,
+      "wingOpacity": 0.588957,
       "registered": true
     },
     "groundAgain": {
@@ -203,6 +203,10 @@
         "focusable": true
       },
       {
+        "label": "Tasks: What is left",
+        "focusable": true
+      },
+      {
         "label": "Tasks: The week",
         "focusable": true
       }
@@ -215,15 +219,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 353.00006103515625,
-        "height": 169.00003051757812,
+        "width": 332.00006103515625,
+        "height": 172.99996948242188,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 273,
-        "height": 222,
-        "opacity": 0.411076
+        "width": 281.0000305175781,
+        "height": 257.9999694824219,
+        "opacity": 0.492928
       }
     ],
     "afterSwitch": [
@@ -233,22 +237,22 @@
     "standing": {
       "screen": {
         "x": 615.4932250976562,
-        "y": 237.0810089111328,
+        "y": 209.0810089111328,
         "width": 329,
         "height": 279,
-        "top": 237.0810089111328,
+        "top": 209.0810089111328,
         "right": 944.4932250976562,
-        "bottom": 516.0810089111328,
+        "bottom": 488.0810089111328,
         "left": 615.4932250976562
       },
       "card": {
         "x": 663.2000122070312,
-        "y": 578.3189697265625,
+        "y": 550.3189697265625,
         "width": 214.78271484375,
-        "height": 167.05328369140625,
-        "top": 578.3189697265625,
+        "height": 218.45428466796875,
+        "top": 550.3189697265625,
         "right": 877.9827270507812,
-        "bottom": 745.3722534179688,
+        "bottom": 768.7732543945312,
         "left": 663.2000122070312
       },
       "url": "#focus=aggregate%3Atask&overview=1&in.view=the-week"
@@ -258,9 +262,9 @@
       "up": true
     },
     "midway": {
-      "x": 770.8827514648438,
-      "y": 317.59095764160156,
-      "width": 366
+      "x": 773.3768920898438,
+      "y": 284.97633361816406,
+      "width": 358
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",

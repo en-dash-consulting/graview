@@ -572,6 +572,66 @@ try {
     return seen;
   })();
   await bed.close();
+/* ------------------- a page draws with whatever the picture needs */
+/*
+ * HTML AND CANVAS BOTH, AND HTML-IN-CANVAS NEITHER.
+ *
+ * The routed face is derived from a schema and was traditional on purpose,
+ * which is the right shape for lists and records and the wrong ceiling for a
+ * picture — so a lens that wants a drawing surface gets one here, on a phone
+ * as much as on a desk. Todo's "What is left" is that lens: a burn-down, one
+ * stroke per day, sized from the box the page gives it.
+ *
+ * The exception is the capture path the spatial scene's GPU renderer uses.
+ * `layoutsubtree` is the whole of its opt-in, it is Chromium-only and behind
+ * a flag, and on this face it is not defaulted off but absent. Checked on
+ * every route rather than asserted once.
+ */
+  try {
+    const canvasChecks = {};
+    for (const width of [390, 1280]) {
+      const seen = await browser.newPage({ viewport: { width, height: 900 } });
+      await seen.goto(`${vite.url}/pages/places/what-is-left`, { waitUntil: "load" });
+      await seen.waitForSelector('[data-testid="burndown-canvas"]', { timeout: 20_000 });
+      // A canvas with no pixels is a canvas that never drew.
+      canvasChecks[`drawnAt${width}`] = await seen.evaluate(() => {
+        const canvas = document.querySelector('[data-testid="burndown-canvas"]');
+        const box = canvas.getBoundingClientRect();
+        return {
+          backingPixels: canvas.width > 0 && canvas.height > 0,
+          fillsItsColumn: box.width > 0 && box.width <= document.documentElement.clientWidth,
+          named: (canvas.getAttribute("aria-label") ?? "").length > 10,
+          // The same facts in the document, for a reader the canvas cannot serve.
+          factsInTheDocument: (document.querySelector('[data-testid="burndown-days"]')?.textContent ?? "").includes("left"),
+          // And the picture must not push the page sideways on a phone.
+          noSidewaysPage: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+        };
+      });
+      await seen.close();
+    }
+    const routes = ["", "/problems", "/map", "/places", "/places/what-is-left", "/places/the-week", "/tasks"];
+    const captured = [];
+    for (const route of routes) {
+      const seen = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await seen.goto(`${vite.url}/pages${route}`, { waitUntil: "load" });
+      await seen.waitForTimeout(400);
+      const reached = await seen.evaluate(
+        () =>
+          document.querySelectorAll("[layoutsubtree]").length +
+          [...document.querySelectorAll("canvas")].filter((c) => "layoutSubtree" in c && c.layoutSubtree).length,
+      );
+      if (reached > 0) captured.push(route || "/");
+      await seen.close();
+    }
+    report.checks.aPageDrawsWithWhatThePictureNeeds = {
+      ...canvasChecks,
+      noCaptureOnAnyRoute: captured.length === 0,
+      routesChecked: routes.length,
+    };
+  } catch (error) {
+    report.checks.aPageDrawsWithWhatThePictureNeeds = { ok: false, error: String(error).slice(0, 200) };
+  }
+
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {

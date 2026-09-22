@@ -1,4 +1,5 @@
 import { createViews, useGraview, type ViewComponent, type ViewProps } from "@graview/react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Chip,
   Connections,
@@ -355,6 +356,141 @@ const MonthView = ((props: ViewProps<S>) => (
   <monthLens.View {...props} label="What is coming up" />
 )) as ViewComponent<S>;
 
+
+/**
+ * WHAT IS LEFT, DRAWN — the one picture here that is not boxes.
+ *
+ * The week and the month lay tasks out; this one plots them. How much is
+ * still to do, day by day, from the first thing due to the last: a shape
+ * you read at a glance and cannot get from a list, and a shape made of
+ * strokes rather than of elements. It exists as much to keep the routed
+ * face honest as to answer the question — a page is allowed whatever the
+ * picture needs, HTML and canvas both, and a claim with nothing standing on
+ * it rots.
+ *
+ * The canvas is sized from the box it is given rather than from a constant,
+ * because the same picture has to work in a card, on a page, and on a
+ * phone; and it is drawn at the device's own pixel ratio, because a line
+ * drawn at CSS resolution on a retina screen is the one thing that makes a
+ * canvas look cheap beside the DOM around it.
+ */
+function BurndownView({ nodes }: ViewProps<S, "task">) {
+  const surface = useRef<HTMLCanvasElement | null>(null);
+  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
+  const holder = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const host = holder.current;
+    if (!host || typeof ResizeObserver === "undefined") return;
+    const watch = new ResizeObserver(([entry]) => {
+      const rect = entry?.contentRect;
+      if (rect) setBox({ width: Math.round(rect.width), height: Math.round(rect.height) });
+    });
+    watch.observe(host);
+    return () => watch.disconnect();
+  }, []);
+
+  /** One point per day that has anything due, and how much is still open on it. */
+  const trail = useMemo(() => {
+    const dated = (nodes ?? [])
+      .map((node) => node as unknown as TaskNode)
+      .filter((task) => task.due !== undefined)
+      .sort((a, b) => String(a.due).localeCompare(String(b.due)));
+    const days = [...new Set(dated.map((task) => String(task.due)))];
+    return days.map((day) => ({
+      day,
+      left: dated.filter((task) => !task.done && String(task.due) >= day).length,
+    }));
+  }, [nodes]);
+
+  useEffect(() => {
+    const canvas = surface.current;
+    if (!canvas || !box || box.width <= 0) return;
+    const ratio = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+    canvas.width = Math.round(box.width * ratio);
+    canvas.height = Math.round(box.height * ratio);
+    const ink = canvas.getContext("2d");
+    // A browser that will not give a context is a browser that reads the
+    // list below instead. Nothing here is the only way to the facts.
+    if (!ink) return;
+    ink.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ink.clearRect(0, 0, box.width, box.height);
+    if (trail.length < 2) return;
+
+    const pad = { left: 28, right: 12, top: 12, bottom: 22 };
+    const wide = box.width - pad.left - pad.right;
+    const tall = box.height - pad.top - pad.bottom;
+    const peak = Math.max(1, ...trail.map((point) => point.left));
+    const style = getComputedStyle(canvas);
+    const line = style.getPropertyValue("--graview-accent").trim() || "#555";
+    const faint = style.getPropertyValue("--graview-edge").trim() || "#ddd";
+    const at = (index: number, left: number) => ({
+      x: pad.left + (wide * index) / (trail.length - 1),
+      y: pad.top + tall - (tall * left) / peak,
+    });
+
+    ink.strokeStyle = faint;
+    ink.lineWidth = 1;
+    for (let step = 0; step <= 2; step += 1) {
+      const y = pad.top + (tall * step) / 2;
+      ink.beginPath();
+      ink.moveTo(pad.left, y);
+      ink.lineTo(pad.left + wide, y);
+      ink.stroke();
+    }
+
+    ink.strokeStyle = line;
+    ink.lineWidth = 2;
+    ink.lineJoin = "round";
+    ink.beginPath();
+    trail.forEach((point, index) => {
+      const spot = at(index, point.left);
+      if (index === 0) ink.moveTo(spot.x, spot.y);
+      else ink.lineTo(spot.x, spot.y);
+    });
+    ink.stroke();
+
+    ink.fillStyle = line;
+    for (const [index, point] of trail.entries()) {
+      const spot = at(index, point.left);
+      ink.beginPath();
+      ink.arc(spot.x, spot.y, 2.5, 0, Math.PI * 2);
+      ink.fill();
+    }
+  }, [trail, box]);
+
+  const peak = Math.max(0, ...trail.map((point) => point.left));
+  return (
+    <div style={{ display: "grid", gridTemplateRows: "minmax(0, 1fr) auto", gap: 8, minWidth: 0, padding: 12 }}>
+      <div ref={holder} style={{ position: "relative", minHeight: 140, minWidth: 0 }}>
+        <canvas
+          ref={surface}
+          data-testid="burndown-canvas"
+          role="img"
+          aria-label={
+            trail.length < 2
+              ? "Nothing with a date yet."
+              : `What is left, from ${trail[0]!.day} to ${trail[trail.length - 1]!.day}: ${peak} at the most.`
+          }
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}
+        />
+      </div>
+      {/*
+        * THE SAME FACTS IN THE DOCUMENT. A canvas says nothing to a screen
+        * reader, to a search engine, or to a browser that could not start
+        * it — and a routed page is exactly where all three turn up.
+        */}
+      <ol data-testid="burndown-days" style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "2px 12px", fontSize: 12.5, color: "var(--graview-ink-muted)" }}>
+        {trail.map((point) => (
+          <li key={point.day}>
+            {point.day}: {point.left} left
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export function todoViews() {
   const registry = registerDefaultViews(todoSchema, createViews(todoSchema));
   return registry
@@ -391,6 +527,14 @@ export function todoViews() {
      */
     .register("task", { cardinality: "many", fidelity: "full" }, MonthView, { title: "The month" })
     .register("task", { cardinality: "many", fidelity: "summary" }, MonthView, { title: "The month" })
+    /*
+     * And a third that is DRAWN rather than laid out: see `BurndownView`.
+     * A place like any other — the bar lists it, the routed face gives it a
+     * page — which is the whole claim, that a page carries what the picture
+     * needs and not only what the DOM can express.
+     */
+    .register("task", { cardinality: "many", fidelity: "full" }, BurndownView as never, { title: "What is left" })
+    .register("task", { cardinality: "many", fidelity: "summary" }, BurndownView as never, { title: "What is left" })
     .register("task", { cardinality: "many", fidelity: "full" }, WeekView, { title: "The week" })
     .register("task", { cardinality: "many", fidelity: "summary" }, WeekView, { title: "The week" });
 }

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T03:47:03.002Z",
+  "at": "2026-09-22T06:25:28.906Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -122,6 +122,7 @@
         "/pages/places/who-may-do-what",
         "/pages/places/the-lists",
         "/pages/places/the-month",
+        "/pages/places/what-is-left",
         "/pages/places/the-week"
       ],
       "inert": true,
@@ -133,6 +134,7 @@
         "Who may do what",
         "The lists",
         "The month",
+        "What is left",
         "The week",
         "Today",
         "Lists3",
@@ -233,6 +235,24 @@
       "namedLinks": true,
       "labelledInputs": true,
       "bigEnoughToHit": []
+    },
+    "aPageDrawsWithWhatThePictureNeeds": {
+      "drawnAt390": {
+        "backingPixels": true,
+        "fillsItsColumn": true,
+        "named": true,
+        "factsInTheDocument": true,
+        "noSidewaysPage": true
+      },
+      "drawnAt1280": {
+        "backingPixels": true,
+        "fillsItsColumn": true,
+        "named": true,
+        "factsInTheDocument": true,
+        "noSidewaysPage": true
+      },
+      "noCaptureOnAnyRoute": true,
+      "routesChecked": 7
     }
   },
   "failing": [],

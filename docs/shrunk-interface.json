@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T06:11:57.087Z",
+  "at": "2026-09-22T06:18:49.633Z",
   "engine": "canary-gpu",
   "flags": [
     "--enable-unsafe-webgpu",
@@ -152,55 +152,55 @@
         {
           "id": "t-boxes",
           "x": 661,
-          "y": 352,
+          "y": 324,
           "inside": true
         },
         {
           "id": "t-quote",
           "x": 701,
-          "y": 345,
+          "y": 317,
           "inside": true
         },
         {
           "id": "t-deposit",
           "x": 701,
-          "y": 310,
+          "y": 282,
           "inside": true
         },
         {
           "id": "t-book",
           "x": 703,
-          "y": 324,
+          "y": 296,
           "inside": true
         },
         {
           "id": "t-notice",
           "x": 745,
-          "y": 321,
+          "y": 293,
           "inside": true
         },
         {
           "id": "t-broadband",
           "x": 788,
-          "y": 344,
+          "y": 316,
           "inside": true
         },
         {
           "id": "t-meter",
           "x": 788,
-          "y": 281,
+          "y": 253,
           "inside": true
         },
         {
           "id": "t-post",
           "x": 788,
-          "y": 296,
+          "y": 268,
           "inside": true
         },
         {
           "id": "t-keys",
           "x": 832,
-          "y": 480,
+          "y": 452,
           "inside": true
         }
       ],
@@ -354,55 +354,55 @@
         {
           "id": "t-boxes",
           "x": 661,
-          "y": 352,
+          "y": 324,
           "inside": true
         },
         {
           "id": "t-quote",
           "x": 701,
-          "y": 345,
+          "y": 317,
           "inside": true
         },
         {
           "id": "t-deposit",
           "x": 701,
-          "y": 310,
+          "y": 282,
           "inside": true
         },
         {
           "id": "t-book",
           "x": 703,
-          "y": 324,
+          "y": 296,
           "inside": true
         },
         {
           "id": "t-notice",
           "x": 745,
-          "y": 321,
+          "y": 293,
           "inside": true
         },
         {
           "id": "t-broadband",
           "x": 788,
-          "y": 344,
+          "y": 316,
           "inside": true
         },
         {
           "id": "t-meter",
           "x": 788,
-          "y": 281,
+          "y": 253,
           "inside": true
         },
         {
           "id": "t-post",
           "x": 788,
-          "y": 296,
+          "y": 268,
           "inside": true
         },
         {
           "id": "t-keys",
           "x": 832,
-          "y": 480,
+          "y": 452,
           "inside": true
         }
       ],
