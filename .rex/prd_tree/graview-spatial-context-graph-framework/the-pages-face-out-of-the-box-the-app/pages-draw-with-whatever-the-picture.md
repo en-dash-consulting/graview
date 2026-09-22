@@ -1,0 +1,22 @@
+---
+id: "a2bd5497-9b29-4b29-99a5-51d8babd8da1"
+level: "task"
+title: "Pages draw with whatever the picture needs: HTML and canvas both, with html-in-canvas the one thing kept off them"
+status: "pending"
+priority: "high"
+tags:
+  - "pages"
+  - "lenses"
+  - "render"
+  - "mobile"
+source: "Nick, 2026-09-22: \"update the Pages to still allow for whatever is needed for the best views possible. the layouts can have html and canvas. [the] only thing that's not really mobile friendly is html-in-canvas because it hasn't been fully supported by all browsers yet\""
+acceptanceCriteria:
+  - "A lens registered for a place may draw on a canvas on the routed face, and the pages harness covers one such lens at phone width as well as at desk width"
+  - "Pages never enable html-in-canvas: no layoutsubtree attribute and no capture path is reachable from PagesApp whatever a view asks for, asserted by a test rather than by a default"
+  - "A canvas-drawn page keeps the face's own promises — its heading, the lens's label, keyboard reach to whatever is pickable, and a DOM fallback when the canvas cannot start"
+  - "The renderer a page uses is addressable the way the scene's is, minus the capture path"
+  - "Nothing changes for the lenses that are DOM today: todo, rota, seedbed and squad's pages render as they do now"
+description: "The routed face is DOM-only by construction: `packages/pages` contains no mention of a renderer, a canvas or a Scene anywhere in it, and `LensOnPage` renders the registered React view and that is the whole of it. That was right while the pages face was traditional on purpose — lists, records, links, forms — and it is wrong now that every registered place is a page: a lens that draws best on a canvas, or on WebGPU, has no way to say so on the face a phone and a search engine get, so the routed face is capped at whatever a lens can do in the DOM. Let a page carry what the picture needs, HTML and canvas both, the layout free to mix them. The one exception is html-in-canvas (`layoutsubtree` plus `drawElementImageToTexture`, packages/render/src/platform/html-in-canvas.ts): Chromium-only by nature, experimental, opt-in, and already the reason every app's `chooseRenderer` defaults to DOM. It is not mobile-friendly and it is not merely defaulted off here — it stays off the routed face entirely, so no view can reach it from a page however it is registered."
+lastModified: "2026-09-22T05:14:57.533Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
+---
