@@ -1,7 +1,7 @@
 import { labelOf, placeSlug, type AnySchema } from "@graview/core";
 import { withFocus } from "@graview/layout";
 import { aggregateId, isAggregateId, kindCardId, kindOfCard } from "@graview/layout";
-import { useGraview, useScenePointer, useSeatWork, useSelection } from "@graview/react";
+import { useGraview, useSeatWork, useSelection } from "@graview/react";
 import { useEffect, useRef, useState } from "react";
 import { ChatPanel } from "./chat.js";
 import { QuickRelations } from "./quick-relations.js";
@@ -65,19 +65,76 @@ function pickAt(stage: HTMLElement | null, point: { readonly x: number; readonly
  * you are: the focused place, district or record, or the whole thing.
  */
 export function useSubject<S extends AnySchema>(): Subject {
-  const { store, view, views } = useGraview<S>();
+  const { store, view, views, pointer } = useGraview<S>();
   const { selection } = useSelection();
-  const point = useScenePointer();
   const [dwelt, setDwelt] = useState<string | null>(null);
+  /*
+   * THE POINTER IS WATCHED, NOT SUBSCRIBED TO.
+   *
+   * Reading it the ordinary way — `useScenePointer`, a store subscription
+   * React re-renders on — re-rendered this whole rail on every pointer
+   * move: the acts, the relations, the conversation and the key, sixty
+   * times a second, for a subject that changes when you stop rather than
+   * while you move. The moves are taken here without a render; only what
+   * the pointer SETTLED on is state, and only when it is a different
+   * thing from last time.
+   */
   useEffect(() => {
-    if (!point) {
-      setDwelt(null);
-      return;
-    }
-    const stage = typeof document === "undefined" ? null : document.querySelector<HTMLElement>("[data-graview-stage]");
-    const timer = setTimeout(() => setDwelt(pickAt(stage, point)), DWELL_MS);
-    return () => clearTimeout(timer);
-  }, [point]);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let handOn = false;
+    /*
+     * AND NOT WHILE THE PICTURE IS MOVING UNDER THE POINTER.
+     *
+     * Dragging the city slides one district after another past a pointer
+     * that never moved, and the subject chased every one of them: the
+     * rail's header, its acts and its relations flickered through the
+     * whole map on the way. The pointer says what you are looking at when
+     * YOU move it over a picture that is still — so while a hand is down,
+     * and while the scene is still travelling, the question is not asked.
+     */
+    const stillMoving = () =>
+      typeof document !== "undefined" && document.querySelector("[data-graview-reach]") !== null
+        ? document.querySelector("[data-graview-settled]") === null
+        : false;
+    const settle = () => {
+      if (timer) clearTimeout(timer);
+      if (handOn) return;
+      const at = pointer.snapshot();
+      if (!at) {
+        setDwelt((was) => (was === null ? was : null));
+        return;
+      }
+      timer = setTimeout(() => {
+        if (handOn || stillMoving()) {
+          settle();
+          return;
+        }
+        const stage = typeof document === "undefined" ? null : document.querySelector<HTMLElement>("[data-graview-stage]");
+        const on = pickAt(stage, at);
+        setDwelt((was) => (was === on ? was : on));
+      }, DWELL_MS);
+    };
+    const down = () => {
+      handOn = true;
+      if (timer) clearTimeout(timer);
+    };
+    const up = () => {
+      handOn = false;
+      settle();
+    };
+    const stop = pointer.subscribe(settle);
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("pointerup", up, true);
+    document.addEventListener("pointercancel", up, true);
+    settle();
+    return () => {
+      stop();
+      document.removeEventListener("pointerdown", down, true);
+      document.removeEventListener("pointerup", up, true);
+      document.removeEventListener("pointercancel", up, true);
+      if (timer) clearTimeout(timer);
+    };
+  }, [pointer]);
 
   const name = (id: string): string | null => {
     const node = store.graph.getNode(id);

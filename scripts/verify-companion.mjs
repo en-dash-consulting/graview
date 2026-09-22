@@ -252,6 +252,43 @@ try {
   }
   report.checks.undoClearsTheMarks = cleared;
 
+  /* ------------------- the rail is still while the picture is being moved */
+  /*
+   * The subject is what the pointer settled on, and dragging the city
+   * slides one district after another past a pointer that never moved:
+   * the rail flickered through the whole map on the way. It costs a
+   * render each time, and it is the wrong answer each time.
+   */
+  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
+  await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await page.waitForTimeout(1400);
+  await page.evaluate(() => {
+    window.__rail = 0;
+    const rail = document.querySelector('[data-testid="companion"]');
+    new MutationObserver(() => { window.__rail += 1; }).observe(rail, { subtree: true, childList: true, characterData: true });
+  });
+  const from = { x: 1200, y: 760 };
+  await page.mouse.move(from.x, from.y);
+  await page.waitForTimeout(400);
+  await page.evaluate(() => { window.__rail = 0; });
+  /* Fifty moves of the pointer with nothing pressed, then a drag of the city. */
+  for (let step = 0; step < 50; step++) await page.mouse.move(400 + step * 18, 620 - (step % 8) * 9);
+  await page.waitForTimeout(300);
+  const onTheMove = await page.evaluate(() => window.__rail);
+  await page.evaluate(() => { window.__rail = 0; });
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  for (let step = 1; step <= 30; step++) await page.mouse.move(from.x - step * 14, from.y - step * 5);
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+  const dragged = await page.evaluate(() => window.__rail);
+  report.checks.theRailIsStillWhileTheSceneMoves = {
+    onTheMove,
+    dragged,
+    // A move is not a question and a drag is not an answer: neither redraws the rail.
+    ok: onTheMove <= 4 && dragged <= 4,
+  };
+
   /* -------------------- the key opens under the conversation, not through it */
   /*
    * The rail is a column of sections, and the conversation used to be a
