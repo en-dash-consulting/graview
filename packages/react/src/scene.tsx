@@ -14,6 +14,7 @@ import {
   withOverview,
   withPan,
   withPin,
+  panLayout,
   withRelation,
   type Connector,
   type InterpolatedLayout,
@@ -424,10 +425,37 @@ export function Scene<S extends AnySchema>({
     [],
   );
   const pinnedIds = useMemo(() => new Set(Object.keys(view.pins)), [view.pins]);
-  const result = useMemo<Layout>(
-    () => layout(store.graph, store.schema, seen, sized),
+  /*
+   * THE WORLD IS LAID OUT AT REST, AND THEN MOVED.
+   *
+   * `layout` bakes the pan into every coordinate, which is what lets two
+   * layouts be interpolated into motion — but it does that at the very end,
+   * after it has decided communities, plots, band packing and the drive-in's
+   * own sizing loop. A drag changes nothing but the pan, and this memo was
+   * keyed on a view that carried it, so every pointer move ran all of that
+   * again to reach an answer that differed from the last one by a
+   * subtraction. Measured on rota's city: 169 of 467 frames dropped and ten
+   * seconds of blocked main thread in a two-second drag.
+   *
+   * So the pan comes off the key. The expensive half is held still while a
+   * hand is moving, and `panLayout` puts the world where the hand has taken
+   * it — the same object, held to that by `the-pan-is-a-translation`.
+   */
+  /*
+   * Keyed on the VIEW, not on the view-plus-camera: the camera is an offset
+   * the scene makes for itself — flying to a drive-in, landing a descent —
+   * and it is the same kind of thing as a pan. Keying this on `seen` meant a
+   * camera that moved by a pixel rebuilt the world exactly as a pan did.
+   */
+  const atRest = useMemo(() => (view.pan ? { ...view, pan: undefined } : view), [view]);
+  const still = useMemo<Layout>(
+    () => layout(store.graph, store.schema, atRest, sized),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, seen, sized, nodes],
+    [store, atRest, sized, nodes],
+  );
+  const result = useMemo<Layout>(
+    () => panLayout(still, seen.pan ?? { x: 0, y: 0 }),
+    [still, seen.pan],
   );
   const ZOOM_MIN = 0.6;
   const ZOOM_MAX = 3;
@@ -728,6 +756,102 @@ export function Scene<S extends AnySchema>({
    * happened and the pointer-up is an ordinary selection; above it the
    * gesture owns the pointer and the click that follows is swallowed.
    */
+  /*
+   * THE HAND MOVES THE PICTURE; ONLY LETTING GO MOVES THE WORLD.
+   *
+   * A pan used to write `view.pan` on every pointer move. That is one state
+   * change per frame at the very top of the scene, and `view` is part of the
+   * Graview context — so every consumer of that context re-rendered, memo or
+   * no memo, and the lenses inside the drive-in boards redrew themselves
+   * sixty times a second to show the same picture in a different place.
+   * Profiled over one drag across rota's city: a fifth of the main thread in
+   * the calendar, the coverage matrix and the timeline, another fifth in
+   * `getBoundingClientRect` re-measuring what had only been translated. 169
+   * of 442 frames missed.
+   *
+   * While a hand is on it, the offset it has made lives here and is painted
+   * straight onto the layers as a transform, once per animation frame,
+   * outside React entirely. Letting go writes it into the view, exactly as
+   * before, and the transform is cleared after that has been committed so
+   * the picture never jumps back for a frame.
+   *
+   * The GPU path keeps the old road: its stage is a `layoutsubtree` canvas,
+   * and combining that with CSS transforms crashes the renderer (see the
+   * DOM/GPU note where the stage is drawn). It is not the default path and
+   * it is not the measured one.
+   */
+  const liveShift = useRef({ x: 0, y: 0 });
+  const shiftPainting = useRef(0);
+  const shiftSettling = useRef(false);
+  const worldLayers = useCallback(
+    () => [...(wrapperRef.current?.querySelectorAll<HTMLElement>("[data-graview-world]") ?? [])],
+    [],
+  );
+  const paintShift = useCallback(() => {
+    if (shiftPainting.current !== 0) return;
+    shiftPainting.current = requestAnimationFrame(() => {
+      shiftPainting.current = 0;
+      const { x, y } = liveShift.current;
+      const move = x === 0 && y === 0 ? "" : `translate3d(${x}px, ${y}px, 0)`;
+      for (const layer of worldLayers()) layer.style.transform = move;
+    });
+  }, [worldLayers]);
+  /** Where the hand has taken the picture, against where the view says it is. */
+  const shiftTo = useCallback(
+    (wanted: { x: number; y: number }, from: { x: number; y: number }) => {
+      liveShift.current = { x: wanted.x - from.x, y: wanted.y - from.y };
+      paintShift();
+    },
+    [paintShift],
+  );
+  /** Letting go: the offset becomes the view's own pan, and the transform goes. */
+  const settleShift = useCallback(() => {
+    const { x, y } = liveShift.current;
+    if (x === 0 && y === 0) return;
+    liveShift.current = { x: 0, y: 0 };
+    shiftSettling.current = true;
+    setView((current) => {
+      const pan = current.pan ?? { x: 0, y: 0 };
+      return withPan(current, { x: pan.x + x, y: pan.y + y });
+    });
+    /*
+     * AND IF THE VIEW NEVER ARRIVES, LET GO ANYWAY.
+     *
+     * The transform is cleared by the layout effect below, the moment the
+     * new pan has actually been committed. This is only for the case where
+     * it never is — a scene whose view is controlled from outside may
+     * decline the change, and then nothing would ever clear the transform
+     * and the picture would stay shoved off to one side for good.
+     *
+     * LATE ON PURPOSE. It was a `requestAnimationFrame` first, and it beat
+     * React to the commit: the transform came off on the next frame while
+     * the cards were still at their old coordinates, so every release
+     * flashed the whole city back to where the drag had started and then
+     * snapped forward again. Traced at altitude — 811 to 411 under the
+     * hand, 809 for one frame on release, 411 after. A backstop that fires
+     * in the ordinary case is not a backstop, it is a race.
+     */
+    window.setTimeout(() => {
+      if (!shiftSettling.current) return;
+      shiftSettling.current = false;
+      for (const layer of worldLayers()) layer.style.transform = "";
+      setDragging(false);
+    }, 300);
+  }, [setView, worldLayers]);
+  /*
+   * CLEARED ONLY ONCE THE WORLD HAS ACTUALLY MOVED. Clearing the transform
+   * in the same breath as the state change put the picture back where it
+   * started for one frame, because React had not committed the new pan yet.
+   */
+  useLayoutEffect(() => {
+    if (!shiftSettling.current) return;
+    shiftSettling.current = false;
+    for (const layer of worldLayers()) layer.style.transform = "";
+    // The gesture ends HERE, with the world already where the hand left it,
+    // so nothing tweens its way there afterwards.
+    setDragging(false);
+  }, [view.pan, worldLayers]);
+
   const swallow = useRef(false);
   const gesture = useRef<{
     kind: "pan" | "card";
@@ -811,7 +935,9 @@ export function Scene<S extends AnySchema>({
       // reaches when it is bigger than the window: every district can be
       // reached, none can be dropped off the edge.
       const limit = cameraLimit(result);
-      setView((current) => withPan(current, panWithin(limit, { x: drag.baseX + dx, y: drag.baseY + dy })));
+      const wanted = panWithin(limit, { x: drag.baseX + dx, y: drag.baseY + dy });
+      if (useDom) shiftTo(wanted, view.pan ?? { x: 0, y: 0 });
+      else setView((current) => withPan(current, wanted));
     } else if (drag.id) {
       setView((current) =>
         withPin(current, drag.id!, { x: drag.baseX + dx, y: drag.baseY + dy }),
@@ -820,6 +946,7 @@ export function Scene<S extends AnySchema>({
   };
 
   const onDragUp = () => {
+    settleShift();
     if (gesture.current?.moved) {
       // Swallow the click this pointer-up is about to produce, so a drag that
       // ends on a card does not also select it.
@@ -829,6 +956,21 @@ export function Scene<S extends AnySchema>({
       noteMoved();
     }
     gesture.current = null;
+    /*
+     * THE COMMIT A HAND MADE IS NOT A TRANSITION EITHER.
+     *
+     * Letting go used to end the drag on the spot, which re-enabled the
+     * tween in the same breath as the pan landed — so the whole city flew
+     * from where the drag had started to where it had ended, over half a
+     * second, after the hand had already put it there. Traced at altitude:
+     * 811 under the hand, 411 at the end of the drag, and then 808 again
+     * for the length of a tween.
+     *
+     * So the drag stays open until the pan it made has been drawn. The
+     * layout effect that clears the transform closes it, in the same commit
+     * that moves the cards.
+     */
+    if (shiftSettling.current) return;
     setDragging(false);
   };
 
@@ -985,7 +1127,7 @@ export function Scene<S extends AnySchema>({
       {node.beyond ? (
         <BeyondCard kinds={node.beyond} />
       ) : (
-        <ResolvedView
+        <SettledView
           node={node}
           mode="scene"
           selected={selection.includes(node.id)}
@@ -1094,6 +1236,8 @@ export function Scene<S extends AnySchema>({
          */
         <div
           data-graview-stage="dom"
+          /* One of the layers the hand moves as a unit; see `liveShift`. */
+          data-graview-world=""
           style={{
             position: "relative",
             zIndex: 1,
@@ -1691,6 +1835,8 @@ function SelectionTies<S extends AnySchema>({
       // relation must exist for assistive tech too.
       aria-hidden={lines.some((line) => line.edgeId) ? undefined : true}
       data-graview-ties={lines.length}
+      /* Moves with the cards it is drawn between; see `liveShift`. */
+      data-graview-world=""
       width={width}
       height={height}
       style={{
@@ -3760,6 +3906,7 @@ function Connectors({
     <>
       <svg
         aria-hidden="true"
+        data-graview-world=""
         width={result.width}
         height={result.height}
         style={{
@@ -3783,6 +3930,7 @@ function Connectors({
       </svg>
       {drawn.some((piece) => piece?.hit) ? (
         <svg
+          data-graview-world=""
           width={result.width}
           height={result.height}
           style={{
@@ -3863,6 +4011,46 @@ function BeyondCard({ kinds }: { kinds: readonly string[] }) {
  * supplied, which is why a new node kind renders sensibly before anyone
  * writes a view for it.
  */
+/**
+ * WHETHER TWO FRAMES ASK FOR THE SAME PICTURE.
+ *
+ * Every field of the node except where it is. A pan moves the whole world by
+ * one offset and changes nothing else, so this is false exactly when the
+ * view has something new to draw — which is what lets `SettledView` sit out
+ * a drag.
+ */
+function samePicture(before: SceneNode, after: SceneNode): boolean {
+  if (before === after) return true;
+  const keys = Object.keys(before);
+  if (keys.length !== Object.keys(after).length) return false;
+  return keys.every(
+    (key) =>
+      key === "x" ||
+      key === "y" ||
+      Object.is((before as unknown as Record<string, unknown>)[key], (after as unknown as Record<string, unknown>)[key]),
+  );
+}
+
+/**
+ * THE PICTURE DOES NOT REDRAW ITSELF BECAUSE THE WORLD MOVED.
+ *
+ * `panLayout` hands every node a new object per frame — it has moved, after
+ * all — and React took that at face value and re-rendered every lens in the
+ * scene on every pointer move of a drag. A profile of one drag across rota's
+ * city put a fifth of the main thread inside the calendar, the coverage
+ * matrix and the timeline redrawing themselves, none of which had anything
+ * new to say: a lens is drawn in its host's own coordinates and does not
+ * know where the host is.
+ *
+ * So a view redraws when its picture changes, not when its position does.
+ */
+const SettledView = memo(ResolvedView, (before, after) =>
+  before.mode === after.mode &&
+  before.selected === after.selected &&
+  before.fidelity === after.fidelity &&
+  samePicture(before.node, after.node),
+) as typeof ResolvedView;
+
 export function ResolvedView<S extends AnySchema>({
   node,
   mode,

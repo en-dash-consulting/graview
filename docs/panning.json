@@ -1,0 +1,60 @@
+{
+  "at": "2026-09-22T05:54:03.282Z",
+  "engine": "chromium",
+  "floor": 55,
+  "slowdown": 4,
+  "runs": [
+    {
+      "app": "todo",
+      "where": "stack",
+      "label": "drag the ground",
+      "frames": 389,
+      "medianMs": 16.7,
+      "worstMs": 66.6,
+      "fps": 59.9,
+      "slowFrames": 3,
+      "blockedMs": 51,
+      "stuckLayers": 0,
+      "jumpOnRelease": 0
+    },
+    {
+      "app": "todo",
+      "where": "altitude",
+      "label": "drag the city",
+      "frames": 121,
+      "medianMs": 16.7,
+      "worstMs": 16.8,
+      "fps": 59.9,
+      "slowFrames": 0,
+      "blockedMs": 0,
+      "stuckLayers": 0,
+      "jumpOnRelease": 0
+    },
+    {
+      "app": "rota",
+      "where": "stack",
+      "label": "drag the ground",
+      "frames": 346,
+      "medianMs": 16.7,
+      "worstMs": 66.6,
+      "fps": 59.9,
+      "slowFrames": 1,
+      "blockedMs": 0,
+      "stuckLayers": 0,
+      "jumpOnRelease": 0
+    },
+    {
+      "app": "rota",
+      "where": "altitude",
+      "label": "drag the city",
+      "frames": 124,
+      "medianMs": 16.7,
+      "worstMs": 16.8,
+      "fps": 59.9,
+      "slowFrames": 0,
+      "blockedMs": 0,
+      "stuckLayers": 0,
+      "jumpOnRelease": 0
+    }
+  ]
+}

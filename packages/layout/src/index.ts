@@ -8,6 +8,7 @@ export {
   marqueeHeightFor,
   KIND_PREFIX,
   layout,
+  panLayout,
   planeOf,
   withJackIn,
   AGGREGATE_PREFIX,

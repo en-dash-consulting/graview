@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T03:55:33.542Z",
+  "at": "2026-09-22T05:57:10.557Z",
   "engine": "chromium",
   "screens": [
     {
@@ -840,12 +840,7 @@
       "asking": [],
       "board": [],
       "fill": 10,
-      "inspector": {
-        "shown": 1,
-        "hidden": 0,
-        "size": "238x80",
-        "text": "Nothing here yet, though Plots expect to connect to theseWelcome a gardener …☆"
-      },
+      "inspector": null,
       "led": null,
       "figures": []
     },

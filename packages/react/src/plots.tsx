@@ -118,7 +118,7 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
   const roads = still.roads.map((road) => ({ ...road, points: road.points.map(shift) }));
   const style: CSSProperties = { position: "absolute", left: 0, top: 0, pointerEvents: "none", overflow: "visible" };
   return (
-    <svg className="graview-plots" aria-hidden="true" width={width} height={height} style={style} data-graview-plots={tiles.length}>
+    <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length}>
       <g className="graview-roads" data-graview-roads={roads.length}>
         {roads.map((road) => {
           if (road.points.length < 2) return null;

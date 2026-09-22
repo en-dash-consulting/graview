@@ -1582,3 +1582,42 @@ function connectorsFor<N extends { id: string; kind: string }>(
 export function planeOf(result: Layout, id: string): Plane | null {
   return result.nodes.find((node) => node.id === id)?.plane ?? null;
 }
+
+/**
+ * THE PAN, APPLIED AFTER THE FACT — the same answer, without the arithmetic.
+ *
+ * The pan is baked into every card's coordinates at layout time, and that is
+ * right: it is what lets two layouts be interpolated into motion, and it is
+ * why connectors, the frame planner and both renderers get panning without
+ * any of them learning about it.
+ *
+ * But it is applied at the END of a function that has already decided
+ * everything else — communities, plots, band packing, the drive-in's own
+ * sizing loop — and a drag changes nothing but the pan. Running all of that
+ * again per pointer move cost rota's city 169 dropped frames and ten
+ * seconds of blocked main thread in a two-second drag.
+ *
+ * So the pan comes out: lay the world out once at rest, and translate it.
+ * The result is the same object `layout` would have returned — held to that
+ * by `the-pan-is-a-translation` — and the caller can hold the expensive half
+ * still while a hand is moving.
+ *
+ * The city's own origin and extent are unpanned by definition (the ground
+ * rides `city.pan`), so only the cards, the lines between them and the
+ * recorded pan move.
+ */
+export function panLayout(placed: Layout, pan: { x: number; y: number }): Layout {
+  if (pan.x === 0 && pan.y === 0) return placed;
+  return {
+    ...placed,
+    nodes: placed.nodes.map((node) => ({ ...node, x: node.x + pan.x, y: node.y + pan.y })),
+    connectors: placed.connectors.map((connector) => ({
+      ...connector,
+      x1: connector.x1 + pan.x,
+      y1: connector.y1 + pan.y,
+      x2: connector.x2 + pan.x,
+      y2: connector.y2 + pan.y,
+    })),
+    ...(placed.city ? { city: { ...placed.city, pan: { x: pan.x, y: pan.y } } } : {}),
+  };
+}

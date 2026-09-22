@@ -24,7 +24,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A billboard sinks into its village when another rises: no two pictures over each other mid-tween](./a-billboard-sinks-into-its-village.md) | completed |
 | [A district is a village: its members stand as small buildings on the plot, the landmark among them, so the population is the size of the cluster](./a-district-is-a-village-its-members.md) | completed |
 | [A plot is drawn as ground: an iso tile per district in its hue, with a kerb and a cast shadow, and the lattice reads as fields between plots](./a-plot-is-drawn-as-ground-an-iso-tile.md) | completed |
-| [Panning the city holds 60fps: the camera moves without recomputing the world](./panning-the-city-holds-60fps-the.md) | pending |
+| [Panning the city holds 60fps: the camera moves without recomputing the world](./panning-the-city-holds-60fps-the.md) | completed |
 | [Roads run on the ground between plots: one road per relation kind, lattice-aligned, ending at the kerb, with member lines only for what is selected](./roads-run-on-the-ground-between-plots.md) | completed |
 | [The bar and the plates say less: Up and Down instead of Graview and Focus, an open chevron only when reached for, no "moved" for a move nobody made, and a legend of what is on screen](./the-bar-and-the-plates-say-less-up-and.md) | completed |
 | [The billboard can be moved by hand, on a leash: dragged within a set distance of its village](./the-billboard-can-be-moved-by-hand-on.md) | pending |
