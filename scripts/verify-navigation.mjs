@@ -616,7 +616,34 @@ try {
   await cam.mouse.up();
   await cam.waitForTimeout(400);
   const dragged = await ground();
-  report.camera = { start, zoomedIn, wheeled, buttonOut, buttonIn, dragged };
+  /*
+   * AND THE PICTURE ITSELF PANS. Choosing a lens puts a billboard in the
+   * middle of the window; a drag that started on it used to move the card
+   * rather than the view, so the biggest thing on screen — the one most
+   * likely to be under the hand — was the one place panning did not work.
+   */
+  await cam.goto("http://localhost:5193/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists", { waitUntil: "load" });
+  await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await cam.waitForTimeout(1500);
+  const before = await ground();
+  const screen = await cam.$("[data-graview-screen]");
+  let onThePicture = { ok: false, why: "no picture standing" };
+  if (screen) {
+    const at = await screen.boundingBox();
+    const from = { x: at.x + at.width / 2, y: at.y + at.height / 2 };
+    await cam.mouse.move(from.x, from.y);
+    await cam.mouse.down();
+    for (let i = 1; i <= 10; i++) await cam.mouse.move(from.x - i * 24, from.y, { steps: 2 });
+    await cam.mouse.up();
+    await cam.waitForTimeout(400);
+    const after = await ground();
+    onThePicture = {
+      moved: Math.round((before.latticeX ?? 0) - (after.latticeX ?? 0)),
+      ok: Math.abs((after.latticeX ?? 0) - (before.latticeX ?? 0)) > 100,
+    };
+  }
+  report.checks = { ...(report.checks ?? {}), theBillboardPansTheCity: onThePicture };
+  report.camera = { start, zoomedIn, wheeled, buttonOut, buttonIn, dragged, onThePicture };
   await cam.close();
 } catch (error) {
   report.camera = { error: String(error).slice(0, 2000) };
@@ -664,6 +691,8 @@ report.verdict = {
   theZoomControlsWork:
     (report.camera?.buttonOut?.cell ?? 0) < (report.camera?.wheeled?.cell ?? 0) &&
     (report.camera?.buttonIn?.cell ?? 0) > (report.camera?.buttonOut?.cell ?? 0),
+  // A drag that starts on the picture moves the view, not the card.
+  theBillboardPansTheCity: report.camera?.onThePicture?.ok === true,
   // Dragged as far as it goes, the ground moves by far more than a little way: the far side is reachable.
   theGroundReachesItsFarEdge:
     (report.camera?.buttonIn?.latticeX ?? 0) - (report.camera?.dragged?.latticeX ?? 0) > 400,

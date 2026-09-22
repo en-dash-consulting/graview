@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T01:33:24.785Z",
+  "at": "2026-09-22T02:37:47.424Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.588957,
+      "wingOpacity": 0.589002,
       "registered": true
     },
     "groundAgain": {
@@ -215,15 +215,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 363,
-        "height": 166.99996948242188,
+        "width": 339,
+        "height": 172,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 268.9999694824219,
-        "height": 218,
-        "opacity": 0.372234
+        "width": 278,
+        "height": 227,
+        "opacity": 0.463944
       }
     ],
     "afterSwitch": [
@@ -258,15 +258,21 @@
       "up": true
     },
     "midway": {
-      "x": 768.0638427734375,
-      "y": 325.52667236328125,
-      "width": 379
+      "x": 770.5252685546875,
+      "y": 319.5865936279297,
+      "width": 370
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
       "up": false
     },
     "movedFromThePlot": true
+  },
+  "checks": {
+    "theBillboardPansTheCity": {
+      "moved": 240,
+      "ok": true
+    }
   },
   "camera": {
     "start": {
@@ -328,6 +334,10 @@
         1519,
         713
       ]
+    },
+    "onThePicture": {
+      "moved": 240,
+      "ok": true
     }
   },
   "verdict": {
@@ -335,6 +345,7 @@
     "theWheelZoomsTheCity": true,
     "theWheelPansTheGround": true,
     "theZoomControlsWork": true,
+    "theBillboardPansTheCity": true,
     "theGroundReachesItsFarEdge": true,
     "aLeavingPictureSinksIntoItsVillage": true,
     "theScreenStandsOnItsPlot": true,

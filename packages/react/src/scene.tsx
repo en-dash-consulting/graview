@@ -397,9 +397,27 @@ export function Scene<S extends AnySchema>({
   const panWithin = useCallback(
     (limit: { x: number; y: number }, wanted: { x: number; y: number }): { x: number; y: number } => {
       const cam = cameraLive.current;
+      /*
+       * AND THE CAMERA'S OWN FLIGHT IS INSIDE THE LIMIT, WHEREVER IT WENT.
+       *
+       * Flying closer to a picture takes the camera past what the limit
+       * allows on purpose — the billboard stands above the city's extent,
+       * and the limit does not know about it. Clamping the total offset to
+       * that limit afterwards meant every drag resolved to the same
+       * clamped number: the ground would not move at all once a lens had
+       * been chosen, which is the picture refusing to be looked around.
+       *
+       * The interval is the limit OR the camera, whichever reaches further
+       * — so at rest this is exactly the old rule, and after a flight you
+       * can pan back over the city and as far as the flight itself went,
+       * but never further out than either.
+       */
+      const room = (bound: number, at: number) => ({ low: Math.min(-bound, at), high: Math.max(bound, at) });
+      const across = room(limit.x, cam.x);
+      const down = room(limit.y, cam.y);
       return {
-        x: Math.max(-limit.x, Math.min(limit.x, wanted.x + cam.x)) - cam.x,
-        y: Math.max(-limit.y, Math.min(limit.y, wanted.y + cam.y)) - cam.y,
+        x: Math.max(across.low, Math.min(across.high, wanted.x + cam.x)) - cam.x,
+        y: Math.max(down.low, Math.min(down.high, wanted.y + cam.y)) - cam.y,
       };
     },
     [],
@@ -738,6 +756,22 @@ export function Scene<S extends AnySchema>({
 
   const onCardDown = (node: SceneNode, event: ReactPointerEvent<HTMLElement>) => {
     if (event.button !== 0) return;
+    /*
+     * A PICTURE IS NOT A THING YOU REARRANGE — you look around it.
+     *
+     * Choosing a lens from altitude puts a billboard in the middle of the
+     * window and flies the camera to it, and a drag that starts on it was
+     * a drag of the card: the biggest thing on screen, and the one most
+     * likely to be under the hand, did not pan. The picture reads as the
+     * view you are in, so dragging it moves the view; a district's own
+     * card keeps its drag, because placing a district by hand is a real
+     * gesture with a dashed kerb to show for it.
+     */
+    if (node.screenOf !== undefined) {
+      const pan = view.pan ?? { x: 0, y: 0 };
+      gesture.current = { kind: "pan", fromX: event.clientX, fromY: event.clientY, baseX: pan.x, baseY: pan.y, moved: false };
+      return;
+    }
     gesture.current = {
       kind: "card",
       id: node.id,
