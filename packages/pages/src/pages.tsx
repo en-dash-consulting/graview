@@ -813,6 +813,14 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
   }
   const definition = store.schema.tryDefinition(place.kind);
   const plural = pluralOf(store, place.kind);
+  /** How much this picture is over, in the plurals the schema declares. */
+  const held = membersOf(store, place.kind).length;
+  const alongside = place.across ? membersOf(store, place.across).length : 0;
+  const count = (n: number, kind: string) =>
+    `${n} ${n === 1 ? kind : pluralOf(store, kind).toLowerCase()}`;
+  const over = place.across
+    ? `${count(held, place.kind)} across ${count(alongside, place.across)}.`
+    : `${count(held, place.kind)}.`;
   const facts = kindFacts(store, place.kind, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
@@ -830,7 +838,26 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           </Link>
         </p>
         <h1 style={h1}>{place.title}</h1>
-        {definition?.description ? <p style={lede}>{definition.description}</p> : null}
+        {/*
+          * WHAT THE PICTURE IS, NOT WHAT ONE OF ITS MEMBERS IS.
+          *
+          * This led with the KIND's description, and a kind is described in
+          * the singular because a kind describes one of its members. So a
+          * burn-down over every task read "What is left / One thing to do.",
+          * a training week read "The week / One training session in the
+          * week.", and a formation board read "The team / A place in the
+          * formation, where it sits, and what it demands." Every one of them
+          * a sentence about a member, standing under the name of a picture
+          * of all of them.
+          *
+          * What is true of the picture is how much is in it, and — when it
+          * is a picture over two kinds — what it is across. The kind's own
+          * description is not lost: it still leads the kind's list page and
+          * its records, where it is about one of them and reads correctly.
+          */}
+        <p style={lede} data-testid="place-lede">
+          {over}
+        </p>
         <a href={placeHref(place.as, sceneHref)} style={{ ...link, ...quiet }} data-testid="place-stop">
           See it in the scene ↗
         </a>

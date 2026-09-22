@@ -133,3 +133,52 @@ describe("a page draws with what the picture needs", () => {
     }
   });
 });
+
+/**
+ * AND IT SAYS WHAT IT IS.
+ *
+ * The place page led with the KIND's description, and a kind is described in
+ * the singular because a kind describes one of its members — so a picture of
+ * every reading was introduced by a sentence about one reading. What is true
+ * of a picture is how much is in it, and what it is across.
+ */
+describe("a picture's page says what the picture is", () => {
+  it("says how much the picture holds, not what one member is", () => {
+    const page = at(placePath("the-trace"));
+    expect(page).toContain("2 readings.");
+    // The kind's own singular description does not lead a picture of all of them.
+    expect(page).not.toContain("A number taken off a meter.");
+  });
+
+  it("still gives the kind its own description where that is about one of them", () => {
+    // The list page is about the kind, and there the sentence reads correctly.
+    expect(at("/readings")).toContain("A number taken off a meter.");
+  });
+
+  it("says what a picture over two kinds is across", () => {
+    const meter = defineNode("meter", { fields: z.object({ label: z.string() }), plural: "Meters" });
+    const pair = createSchema([reading, meter]);
+    const both = new Store({
+      schema: pair,
+      mutations: [],
+      snapshot: {
+        nodes: [
+          { id: "r1", kind: "reading", label: "Monday", at: 3 },
+          { id: "m1", kind: "meter", label: "Gas" },
+          { id: "m2", kind: "meter", label: "Water" },
+        ] as never,
+        edges: [],
+      },
+    });
+    const grid = createViews(pair).register(
+      "reading",
+      { cardinality: "many", fidelity: "full" },
+      Trace as never,
+      { title: "The grid", across: "meter" },
+    );
+    const page = renderToStaticMarkup(
+      <PagesApp initialPath={placePath("the-grid")} context={{ store: both, views: grid, sceneHref: "/" }} />,
+    );
+    expect(page).toContain("1 reading across 2 meters.");
+  });
+});

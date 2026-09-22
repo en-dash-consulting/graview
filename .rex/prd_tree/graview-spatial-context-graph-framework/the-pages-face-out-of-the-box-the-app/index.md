@@ -26,7 +26,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [A picture's page says what the picture is, not what one of its members is](./a-picture-s-page-says-what-the-picture.md) | pending |
+| [A picture's page says what the picture is, not what one of its members is](./a-picture-s-page-says-what-the-picture.md) | in_progress |
 | [Pages draw with whatever the picture needs: HTML and canvas both, with html-in-canvas the one thing kept off them](./pages-draw-with-whatever-the-picture.md) | completed |
 | [Pictures on pages: every place is a page, an index lands you among them, and the nav mirrors the scene's bar](./pictures-on-pages-every-place-is-a.md) | completed |
 | [Relationships as structure on pages: a map of the kinds, lists that group by relation, and records that link both ways](./relationships-as-structure-on-pages-a.md) | completed |
