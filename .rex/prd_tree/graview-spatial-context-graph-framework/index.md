@@ -46,3 +46,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The pointer menu leads with the thing you clicked: its own repair first, then its acts, then the rest](./the-pointer-menu-leads-with-the-thing.md) | completed |
 | [Three harnesses are failing on main and nobody is being told](./three-harnesses-are-failing-on-main.md) | completed |
 | [Two product repos drifted off the framework without anything saying so](./two-product-repos-drifted-off-the.md) | pending |
+| [verify-site fails inside the chain and passes on its own](./verify-site-fails-inside-the-chain-and.md) | pending |
