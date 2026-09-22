@@ -1,18 +1,4 @@
 {
-  "lastUuid": "b507691e-5b4e-4a6c-ad5b-38b9de1b02cd",
-  "consumed": 508,
-  "marks": {
-    "a2bd5497-9b29-4b29-99a5-51d8babd8da1": {
-      "task": "a2bd5497-9b29-4b29-99a5-51d8babd8da1",
-      "at": "2026-09-22T06:12:31.845Z",
-      "lastUuid": "937a422a-6900-4dfd-9c7c-5a03606c1b50",
-      "consumed": 509,
-      "totals": {
-        "input": 1018,
-        "output": 410855,
-        "cacheCreationInput": 886704,
-        "cacheReadInput": 138690207
-      }
-    }
-  }
+  "lastUuid": "56bcfb89-61e3-4975-97af-ad21ae05b155",
+  "consumed": 555
 }
