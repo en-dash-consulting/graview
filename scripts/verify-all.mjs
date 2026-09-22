@@ -78,6 +78,42 @@ const gist = (text) => {
   return lines[lines.length - 1]?.slice(0, 72) ?? "";
 };
 
+/*
+ * SAY WHAT WAS ALREADY RUNNING.
+ *
+ * The harnesses borrow a dev server that is already answering their port —
+ * deliberately, because a harness you cannot run while the app is open is a
+ * harness nobody runs. The cost is that a stale or foreign server silently
+ * changes what is under test, and a machine busy serving six of them
+ * changes how long everything takes.
+ *
+ * That is how a clean thirteen-minute chain became forty-seven minutes with
+ * three failures in it — a presence check that waits on a time-to-live, a
+ * click that waits for an animation to settle, and a seat harness thirty
+ * times slower than usual. All three passed on a quiet machine a minute
+ * later. Nothing in the report said the machine had not been quiet.
+ *
+ * So it says so now, at the top, before any of it runs.
+ */
+const APP_PORTS = [5178, 5190, 5191, 5192, 5193, 5194, 5195, 5196];
+const answering = [];
+for (const port of APP_PORTS) {
+  try {
+    await fetch(`http://localhost:${port}/`, { signal: AbortSignal.timeout(400) });
+    answering.push(port);
+  } catch {
+    // Nothing there, which is what a quiet machine looks like.
+  }
+}
+if (answering.length > 0) {
+  say(
+    `note  ${answering.length} dev server${answering.length === 1 ? "" : "s"} already running (${answering.join(", ")}).\n` +
+      `      The harnesses will drive those rather than starting their own, and the\n` +
+      `      machine is busier than it would be otherwise. Timing-sensitive checks —\n` +
+      `      presence time-to-live, animations settling — are the ones that mind.\n\n`,
+  );
+}
+
 const results = [];
 for (const [name, file] of chain) {
   const began = Date.now();

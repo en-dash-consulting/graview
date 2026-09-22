@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T15:02:22.531Z",
+  "at": "2026-09-22T16:04:38.993Z",
   "products": [
     {
       "name": "squad",
@@ -22,7 +22,7 @@
       },
       "test": {
         "ok": true,
-        "seconds": 1
+        "seconds": 2
       }
     },
     {
@@ -42,7 +42,7 @@
       "ok": true,
       "typecheck": {
         "ok": true,
-        "seconds": 2
+        "seconds": 3
       },
       "test": {
         "ok": true,
