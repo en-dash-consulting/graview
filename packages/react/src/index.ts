@@ -34,7 +34,9 @@ export {
   whereIsIn,
 } from "./scene.js";
 export type { SceneNode, Strand } from "./scene.js";
-export { useAnimatedLayout, useTouched } from "./animation.js";
+export { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
+export { SeatMarks } from "./seat-marks.js";
+export type { SeatAct, SeatWork } from "./animation.js";
 export type { TransitionOptions } from "./animation.js";
 export {
   ACTIVITY_HOLD_MS,

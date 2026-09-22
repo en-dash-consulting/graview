@@ -1,6 +1,7 @@
 import { labelOf, placeSlug, type AnySchema } from "@graview/core";
-import { isAggregateId, kindOfCard } from "@graview/layout";
-import { useGraview, useScenePointer, useSelection } from "@graview/react";
+import { withFocus } from "@graview/layout";
+import { aggregateId, isAggregateId, kindCardId, kindOfCard } from "@graview/layout";
+import { useGraview, useScenePointer, useSeatWork, useSelection } from "@graview/react";
 import { useEffect, useRef, useState } from "react";
 import { ChatPanel } from "./chat.js";
 import { QuickRelations } from "./quick-relations.js";
@@ -137,7 +138,8 @@ export interface CompanionProps<S extends AnySchema> {
 }
 
 export function Companion<S extends AnySchema>({ respond, onCall, chat = true }: CompanionProps<S> = {}) {
-  const { seatWho, robots, session, store } = useGraview<S>();
+  const { seatWho, robots, session, store, setView: setViewOf } = useGraview<S>();
+  const { set: chooseOf } = useSelection();
   const subject = useSubject<S>();
   const [open, setOpen] = useState(true);
   const robot = robots.get(`agent:${seatWho ?? "chat"}:${session}`);
@@ -164,6 +166,25 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true }:
     if (narrow) setOpen(false);
   }, [narrow]);
   const anything = store.graph.allEdges().length > 0;
+  const work = useSeatWork<S>();
+  /* Questions back, from every seat in this tab: they wait for an answer, so they are listed until answered. */
+  const asking = [...robots.values()].filter((one) => one.mode === "asking" && one.say);
+  const { setView, choose } = { setView: setViewOf, choose: chooseOf };
+  /*
+   * THE WAY BACK TO WHAT IT DID. Where you are decides what "show me"
+   * means: from altitude the district the thing lives in, since a single
+   * task is a building up there; on the ground the thing itself, chosen
+   * and focused, which is what a person would have clicked.
+   */
+  const showMe = (id: string) => {
+    const node = store.graph.getNode(id);
+    choose([id]);
+    setView((current) =>
+      current.overview && node
+        ? withFocus(current, aggregateId(node.kind as string))
+        : withFocus(current, id),
+    );
+  };
   /*
    * AN ASK COMES TO THE TOP. Answering an act's open question is a
    * conversation of its own, and in a scrolling column it can open below
@@ -267,6 +288,84 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true }:
               {...(respond ? { respond } : {})}
               {...(onCall ? { onCall } : {})}
             />
+          ) : null}
+          {/*
+            * WHAT THE SEAT DID, and the way back to it. The figure used to
+            * walk to what it wrote and stand there; the marks say the same
+            * thing where the change is, and this says it in words with a
+            * press that takes the camera there — at altitude the district,
+            * on the ground the thing itself.
+            */}
+          {/*
+            * WHAT IT ASKED, listed where the answer will be given. The
+            * question stands at its own node in the picture too; this is
+            * the way back to it when the picture has moved on.
+            */}
+          {asking.length > 0 ? (
+            <section data-testid="companion-asking" style={{ display: "grid", gap: 6 }}>
+              <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-accent)" }}>
+                {asking.length === 1 ? "It asked" : `It asked ${asking.length} things`}
+              </span>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
+                {asking.map((one) => (
+                  <li key={one.participant} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 6, alignItems: "baseline" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={one.say}>
+                      {one.say}
+                    </span>
+                    {one.at ? (
+                      <button
+                        type="button"
+                        data-testid="companion-show-me"
+                        data-graview-show={one.at}
+                        aria-label={`Show me what ${one.who} is asking about`}
+                        title="Show me what it is asking about"
+                        onClick={() => showMe(one.at!)}
+                        style={{ font: "inherit", fontSize: "0.6875rem", minHeight: 24, padding: "0 8px", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                      >
+                        {(() => {
+                          const about = store.graph.getNode(one.at!);
+                          return about ? labelOf(store.schema.tryDefinition(about.kind), about as never) : "Show me";
+                        })()}
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          {work.acts.length > 0 ? (
+            <section data-testid="companion-log" style={{ display: "grid", gap: 6 }}>
+              <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
+                What it did
+              </span>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
+                {work.acts.slice(0, 4).map((act) => {
+                  const first = act.wrote[0];
+                  const node = first ? store.graph.getNode(first) : undefined;
+                  return (
+                    <li key={act.batch} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 6, alignItems: "baseline" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={act.intent}>
+                        {act.intent}
+                      </span>
+                      {node ? (
+                        /* Named, not "Show me" three times: a row of identical labels is a list nobody can read. */
+                        <button
+                          type="button"
+                          data-testid="companion-show-me"
+                          data-graview-show={first}
+                          aria-label={`Show me ${labelOf(store.schema.tryDefinition(node.kind), node as never)}`}
+                          title={`Show me ${labelOf(store.schema.tryDefinition(node.kind), node as never)}`}
+                          onClick={() => showMe(first!)}
+                          style={{ font: "inherit", fontSize: "0.6875rem", minHeight: 24, padding: "0 8px", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                        >
+                          {labelOf(store.schema.tryDefinition(node.kind), node as never)}
+                        </button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           ) : null}
           {/* WHAT THE LINES MEAN, at the foot, where a map keeps its key. */}
           {anything ? (

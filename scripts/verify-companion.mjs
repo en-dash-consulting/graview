@@ -174,6 +174,84 @@ try {
     ok: railActs.length > 0,
   };
 
+  /* ------------------------------- what the seat wrote is marked where it is */
+  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await page.waitForTimeout(1500);
+  await page.click('[data-testid="activity-button"]').catch(() => {});
+  await page.waitForTimeout(400);
+  const seat = await page.$('[data-testid="agent-tidy"]');
+  let marked = { ok: false, why: "no seat to press" };
+  if (seat && !(await seat.isDisabled())) {
+    await seat.click();
+    await page.waitForTimeout(700);
+    const marks = await page.evaluate(() => ({
+      on: [...document.querySelectorAll('[data-testid="seat-mark"]')].map((el) => el.getAttribute("data-graview-seat-mark")),
+      who: document.querySelector('[data-testid="seat-mark"]')?.getAttribute("data-graview-seat-who") ?? null,
+      log: [...document.querySelectorAll('[data-testid="companion-log"] li')].length,
+    }));
+    marked = { ...marks, ok: marks.on.length > 0 && marks.who !== null && marks.log > 0 };
+  }
+  report.checks.aTurnMarksWhatItWrote = marked;
+
+  /* ------------------------------------- "show me" takes the camera to it */
+  let shown = { ok: false, why: "nothing in the log to show" };
+  if (marked.ok) {
+    const going = await page.$('[data-testid="companion-show-me"]');
+    if (going) {
+      const target = await going.getAttribute("data-graview-show");
+      await page.evaluate(() => {
+        window.location.hash = "#overview=1";
+      });
+      await page.waitForTimeout(900);
+      await page.click('[data-testid="companion-show-me"]');
+      await page.waitForTimeout(900);
+      const aloft = await page.evaluate(() => location.hash);
+      await page.evaluate(() => {
+        window.location.hash = "";
+      });
+      await page.waitForTimeout(900);
+      await page.click('[data-testid="companion-show-me"]');
+      await page.waitForTimeout(700);
+      const onTheGround = await page.evaluate(() => location.hash);
+      shown = {
+        target,
+        aloft,
+        onTheGround,
+        // Up there a single task is a building: the camera goes to its district.
+        ok: aloft.includes("focus=aggregate") && onTheGround.includes(`focus=${target}`),
+      };
+    }
+  }
+  report.checks.showMeFliesThere = shown;
+
+  /* ------------------------------------------- undo takes the mark with it */
+  let cleared = { ok: false, why: "nothing to undo" };
+  if (marked.ok) {
+    await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+    await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await page.waitForTimeout(1400);
+    await page.click('[data-testid="activity-button"]').catch(() => {});
+    await page.waitForTimeout(400);
+    const again = await page.$('[data-testid="agent-tidy"]');
+    if (again && !(await again.isDisabled())) {
+      await again.click();
+      await page.waitForTimeout(700);
+      const before = await page.evaluate(() => document.querySelectorAll('[data-testid="seat-mark"]').length);
+      const undo = await page.$('[data-testid="undo-turn"], button[aria-label^="Undo"], button:has-text("Undo")');
+      if (undo) {
+        await undo.click();
+        await page.waitForTimeout(700);
+        const after = await page.evaluate(() => ({
+          marks: document.querySelectorAll('[data-testid="seat-mark"]').length,
+          log: document.querySelectorAll('[data-testid="companion-log"] li').length,
+        }));
+        cleared = { before, ...after, ok: before > 0 && after.marks === 0 && after.log === 0 };
+      }
+    }
+  }
+  report.checks.undoClearsTheMarks = cleared;
+
   /* --------------------------------- quiet: nothing animating on a still city */
   await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });

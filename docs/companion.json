@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-21T23:10:35.285Z",
+  "at": "2026-09-22T00:37:54.926Z",
   "engine": "chromium",
   "checks": {
     "theRailIsFixed": {
@@ -87,6 +87,26 @@
         "schema:wait-for",
         "schema:drop"
       ],
+      "ok": true
+    },
+    "aTurnMarksWhatItWrote": {
+      "on": [
+        "t-deposit"
+      ],
+      "who": "tidy",
+      "log": 1,
+      "ok": true
+    },
+    "showMeFliesThere": {
+      "target": "t-deposit",
+      "aloft": "#focus=aggregate%3Atask&overview=1&sel=t-deposit",
+      "onTheGround": "#focus=t-deposit&sel=t-deposit",
+      "ok": true
+    },
+    "undoClearsTheMarks": {
+      "before": 1,
+      "marks": 0,
+      "log": 0,
       "ok": true
     },
     "quietCityRunsNothing": {

@@ -181,3 +181,94 @@ export function useTouched<S extends AnySchema>(holdMs = 1100): ReadonlySet<stri
 
   return touched;
 }
+
+/** One thing the seat did, and what it touched. */
+export interface SeatAct {
+  readonly batch: string;
+  /** The agent's own name, from the op's author. */
+  readonly who: string;
+  readonly intent: string;
+  readonly at: string;
+  readonly wrote: readonly string[];
+}
+
+export interface SeatWork {
+  /** Node id → the seat that wrote it, while the mark stands. */
+  readonly marks: ReadonlyMap<string, string>;
+  /** What the seat has done this session, newest first — the companion's log. */
+  readonly acts: readonly SeatAct[];
+}
+
+const NO_WORK: SeatWork = { marks: new Map(), acts: [] };
+
+/**
+ * WHERE THE SEAT WORKED, MARKED ON THE THINGS THEMSELVES.
+ *
+ * The robot used to walk to what it wrote and stand there, which is the
+ * one thing the body was genuinely good for: attribution in space. The
+ * walk is gone; the attribution is not. Every op the log attributes to an
+ * agent marks what it wrote for a hold, and the acts stay in a list the
+ * companion can offer to fly you to.
+ *
+ * Read from the OP LOG rather than from the seat's own reports, so it is
+ * the same on both render paths, inside a lens, and for a turn that
+ * arrived from somewhere else entirely. An undo takes its marks with it:
+ * an op that undoes another says so, and what it took back stops being
+ * something the seat just did.
+ */
+export function useSeatWork<S extends AnySchema>(holdMs = 4000): SeatWork {
+  const { store } = useGraview<S>();
+  const [work, setWork] = useState<SeatWork>(NO_WORK);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = store.subscribe((_diff, ops) => {
+      setWork((current) => {
+        const marks = new Map(current.marks);
+        let acts = [...current.acts];
+        for (const op of ops) {
+          if (op.undoes !== undefined) {
+            /*
+             * Taken back: the act leaves the log the companion shows, and
+             * the marks it put on things leave with it. A mark over a
+             * change that no longer exists is the seat claiming credit for
+             * nothing.
+             */
+            const undone = acts.find((act) => act.batch === op.undoes || act.wrote.length > 0);
+            const taken = acts.filter((act) => op.writes.some((id) => act.wrote.includes(id)));
+            for (const act of taken.length > 0 ? taken : undone ? [undone] : []) {
+              for (const id of act.wrote) marks.delete(id);
+              acts = acts.filter((one) => one.batch !== act.batch);
+            }
+            continue;
+          }
+          if (op.author.kind !== "agent") continue;
+          const who = op.author.id ?? "the seat";
+          for (const id of op.writes) marks.set(id, who);
+          const already = acts.find((act) => act.batch === op.batch);
+          if (already) {
+            acts = acts.map((act) =>
+              act.batch === op.batch
+                ? { ...act, wrote: [...new Set([...act.wrote, ...op.writes])] }
+                : act,
+            );
+          } else {
+            acts = [{ batch: op.batch, who, intent: op.intent, at: op.at, wrote: [...op.writes] }, ...acts].slice(0, 12);
+          }
+        }
+        return marks.size === current.marks.size && acts === current.acts && marks.size === 0
+          ? current
+          : { marks, acts };
+      });
+      if (timer) clearTimeout(timer);
+      /* The marks fade; the log stays, because "what did it just do" outlives the flash. */
+      timer = setTimeout(() => setWork((current) => (current.marks.size === 0 ? current : { ...current, marks: new Map() })), holdMs);
+    });
+    return () => {
+      unsubscribe();
+      if (timer) clearTimeout(timer);
+    };
+  }, [store, holdMs]);
+
+  return work;
+}

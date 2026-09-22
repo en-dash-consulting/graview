@@ -48,7 +48,8 @@ import {
   type ReactNode,
 } from "react";
 import { useActivity, type ActivityMark, type Manner } from "./activity.js";
-import { useAnimatedLayout, useTouched } from "./animation.js";
+import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
+import { SeatMarks } from "./seat-marks.js";
 import { useFlagged, useImplicated, useNavigation, useViolations } from "./hooks.js";
 import { useGraph, useGraview, ViewModeProvider, type DrawnBox, type ViewMode } from "./context.js";
 import { isDefaultView } from "./view-registry.js";
@@ -147,7 +148,7 @@ export function Scene<S extends AnySchema>({
     selection,
     setSelection,
     setMenuAt,
-    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved } = useGraview<S>();
+    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved, robots } = useGraview<S>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -466,6 +467,7 @@ export function Scene<S extends AnySchema>({
   // one. Everything downstream draws the tween, not the destination.
   const frame = useAnimatedLayout(result, { enabled: animate && !dragging && !steering });
   const touched = useTouched<S>();
+  const seatWork = useSeatWork<S>();
 
   /*
    * A DRIVE-IN ON THE FAR SIDE OF A LARGE CITY lights up off-screen unless
@@ -1170,6 +1172,17 @@ export function Scene<S extends AnySchema>({
         whereIs={(id) => whereIsIn(frame, wrapperRef.current, scheme, views, id)}
         stageRef={wrapperRef}
         pan={panned}
+      />
+      {/* What the seat just wrote, marked where it is — the attribution the figure used to carry. */}
+      <SeatMarks
+        marks={seatWork.marks}
+        questions={[...robots.values()]
+          .filter((one) => one.mode === "asking" && one.at !== null && one.say)
+          .map((one) => ({ id: one.at!, who: one.who, asks: one.say! }))}
+        whereIs={(id) => whereIsIn(frame, wrapperRef.current, scheme, views, id)}
+        stageRef={wrapperRef}
+        width={result.width}
+        height={result.height}
       />
       <RelationCaptions
         nodes={frame.nodes}

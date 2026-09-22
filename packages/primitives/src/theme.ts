@@ -1381,6 +1381,74 @@ code { color: var(--graview-ink-muted); font-size: 0.75rem; letter-spacing: 0.02
 
 /* A node implicated by the last change, whoever made it. The pulse is the
    same for a human edit and an agent edit, because the diff is. */
+/* THE SEAT'S MARK on what it just wrote: its own glyph, in its own hue, at
+   the thing's top-right corner. It arrives with the change and fades with
+   it; the companion's log is what remembers. */
+.graview-seat-marks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+}
+.graview-seat-mark {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-float);
+  color: oklch(0.62 0.16 var(--graview-hue, 250));
+  font-size: 0.5625rem;
+  line-height: 1;
+  box-shadow: var(--graview-lift-low);
+  animation: graview-seat-mark 4000ms ease-out forwards;
+}
+/* A QUESTION THE SEAT ASKED, standing at the node it is about: it says
+   itself and waits, because a dot nobody can read is a question nobody
+   answers. It does not fade — an unanswered question is still open. */
+.graview-seat-asking {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+  padding: 3px 9px 3px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-accent);
+  background: var(--graview-float);
+  color: var(--graview-ink);
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  box-shadow: var(--graview-lift-low);
+  pointer-events: auto;
+}
+.graview-seat-asking > [aria-hidden] {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--graview-accent);
+  color: var(--graview-panel);
+  font-size: 0.5625rem;
+}
+.graview-seat-asking-said {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes graview-seat-mark {
+  0% { opacity: 0; transform: translateY(3px) scale(0.8); }
+  8% { opacity: 1; transform: none; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @keyframes graview-touched {
   0%   { box-shadow: 0 0 0 0 var(--graview-accent-dim); }
   35%  { box-shadow: 0 0 26px 3px var(--graview-accent-dim); }
