@@ -38,6 +38,31 @@ const AXE = require.resolve("axe-core/axe.min.js");
  * chapters and the kit there.
  */
 const pageAt = (file) => `file://${resolve(repoRoot, "docs/site", file)}`;
+
+/**
+ * ARRIVE, WITHOUT WAITING ON THE INTERNET.
+ *
+ * Every load here used `waitUntil: "networkidle"`, and the site asks Google
+ * for three families of webfont — so each of these pages waited for a CDN
+ * to go quiet before a single check ran. Inside the full chain it failed in
+ * 42 seconds where it passes in 350 on its own, against the same static
+ * files: a harness whose verdict depends on somebody else's network is a
+ * harness that goes red for reasons nobody can act on.
+ *
+ * What the checks actually need is the document laid out in its real faces —
+ * text measurement is half of what they test, so the fonts are wanted, they
+ * are simply not worth hanging on. So: wait for `load`, then give the fonts
+ * a bounded moment to settle, and carry on either way.
+ */
+const arrive = async (page, url) => {
+  await page.goto(url, { waitUntil: "load" });
+  await page
+    .waitForFunction(() => document.fonts?.status === "loaded", null, { timeout: 8_000 })
+    .catch(() => {
+      // Measured in whatever faces did arrive; a fallback face is still a face.
+    });
+};
+
 const PAGES = [
   { file: "index.html", name: "the page", live: 2, skip: "#what" },
   { file: "progression.html", name: "the long version", live: 16, skip: "#grown" },
@@ -72,7 +97,7 @@ try {
       page.on("console", (message) => {
         if (message.type() === "error") errors.push(`console: ${message.text().slice(0, 90)}`);
       });
-      await page.goto(pageAt(sheet.file), { waitUntil: "networkidle" });
+      await arrive(page, pageAt(sheet.file));
       await page.waitForTimeout(700);
       /*
        * The chapters mount as the reader comes near them. The whole page is
@@ -214,7 +239,7 @@ try {
    */
   for (const sheet of PAGES) {
     const one = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-    await one.goto(pageAt(sheet.file), { waitUntil: "networkidle" });
+    await arrive(one, pageAt(sheet.file));
     await one.waitForTimeout(600);
     await one.keyboard.press("Tab");
     report.criteria[`theFirstStopIsTheWayPastTheNavigationOn_${sheet.file}`] =
@@ -244,7 +269,7 @@ try {
    * and does not is the worst thing this page could ship.
    */
   const stepper = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await stepper.goto(pageAt("index.html"), { waitUntil: "networkidle" });
+  await arrive(stepper, pageAt("index.html"));
   await stepper.locator("#grow").scrollIntoViewIfNeeded();
   await stepper
     .waitForFunction(() => document.querySelector('[data-step-live="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 })
@@ -272,7 +297,7 @@ try {
 
   /* The long version is where the chapters and the kit went. */
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await page.goto(pageAt("progression.html"), { waitUntil: "networkidle" });
+  await arrive(page, pageAt("progression.html"));
   await page.waitForTimeout(600);
   /* A chapter's face switches on the page itself: the picture is the app. */
   await page.locator('#chapter-1 [data-graview-chapter="1"]').scrollIntoViewIfNeeded();
@@ -306,7 +331,7 @@ try {
   await page.close();
 
   const reduced = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
-  await reduced.goto(pageAt("index.html"), { waitUntil: "networkidle" });
+  await arrive(reduced, pageAt("index.html"));
   await reduced.waitForTimeout(400);
   // The opener's own Graview is on screen at load, so its cards are the
   // thing to ask: under reduced motion the theme turns their transitions off.
@@ -322,7 +347,7 @@ try {
   await reduced.close();
 
   const forced = await browser.newPage({ viewport: { width: 1280, height: 900 }, forcedColors: "active" });
-  await forced.goto(pageAt("index.html"), { waitUntil: "networkidle" });
+  await arrive(forced, pageAt("index.html"));
   await forced.waitForTimeout(400);
   report.criteria.forcedColoursKeepTheMeaningfulMarks = await forced.evaluate(
     () => getComputedStyle(document.querySelector(".head .tick")).forcedColorAdjust === "none",
