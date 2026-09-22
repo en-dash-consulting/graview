@@ -48,8 +48,18 @@ export interface Kit {
   readonly lattice: { readonly visible: boolean; readonly size: number };
   /** The kind's name astride a focused card. */
   readonly tags: { readonly visible: boolean };
-  /** What an unlit line keeps of its opacity while another is lit: 0 vanishes, 1 does not recede. */
-  readonly emphasis: { readonly dim: number };
+  /**
+   * How loud a connector is when it is not the one being looked at.
+   *
+   * `rest` is what an unlit line keeps while NOTHING is lit — the quiet
+   * weight every relation in the picture carries at once. `dim` is what it
+   * keeps while something else IS lit: 0 vanishes, 1 does not recede. They
+   * are two different questions, and one number could not answer both —
+   * a resting opacity low enough to be calm made a selection's own lines
+   * barely brighter than the crowd, and one high enough to show the crowd
+   * left twenty lines shouting over the two a person had just chosen.
+   */
+  readonly emphasis: { readonly rest: number; readonly dim: number };
   /** The glyph a broken rule leaves on what it names. */
   readonly marks: { readonly flag: string };
 }
@@ -74,7 +84,7 @@ export const DEFAULT_KIT: Kit = {
   grid: { visible: true, size: 64 },
   lattice: { visible: true, size: 46 },
   tags: { visible: true },
-  emphasis: { dim: 0.34 },
+  emphasis: { rest: 0.34, dim: 0.12 },
   marks: { flag: "⚠" },
 };
 
@@ -113,6 +123,7 @@ export function kitVariables(kit: Kit): string {
     `  --graview-kit-lattice-size: ${kit.lattice.size}px;`,
     `  --graview-kit-tags: ${kit.tags.visible ? "inline-flex" : "none"};`,
     `  --graview-kit-captions: ${kit.captions.visible ? "block" : "none"};`,
+    `  --graview-kit-rest: ${kit.emphasis.rest};`,
     `  --graview-kit-dim: ${kit.emphasis.dim};`,
     `  --graview-kit-flag: "${kit.marks.flag.replace(/"/g, "'")}";`,
   ].join("\n");

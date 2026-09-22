@@ -1500,6 +1500,35 @@ function SelectionTies<S extends AnySchema>({
     nodes.find((node) => node.id === id) ??
     nodes.find((node) => node.aggregate?.memberIds.includes(id));
 
+  /*
+   * A VIEW THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION.
+   *
+   * `connectorStrands` has said this for as long as there have been lines;
+   * ties said a weaker version of it — "not inside the SELECTION's own
+   * card" — and in a matrix neither end owns the card. The coverage lens
+   * belongs to the volunteers; a chosen shift is a row in it. So the guard
+   * never fired, and choosing a shift drew a tie from its row label to the
+   * cell in the chosen volunteer's column: a horizontal rule across one
+   * row of a table, restating the mark already sitting at its end. The
+   * cell IS the edge — the lens draws it, and lights it when either end is
+   * chosen.
+   *
+   * Asked of the drawings rather than the nodes, so it holds however the
+   * view came to draw them.
+   */
+  const drawingsOf = (id: string) => `[data-graview-pick="${CSS.escape(id)}"], [data-graview-slot="${CSS.escape(id)}"]`;
+  const someViewDrawsBoth = (a: string, b: string): boolean => {
+    const stageNow = stageRef.current;
+    if (!stageNow) return false;
+    for (const host of stageNow.querySelectorAll("[data-graview-view]")) {
+      const here = host.querySelector(drawingsOf(a));
+      if (here === null || here.closest("[data-graview-offstage]")) continue;
+      const there = host.querySelector(drawingsOf(b));
+      if (there !== null && !there.closest("[data-graview-offstage]")) return true;
+    }
+    return false;
+  };
+
   const seen = new Set<string>();
   const lines: {
     key: string;
@@ -1516,6 +1545,7 @@ function SelectionTies<S extends AnySchema>({
     edgeId: string | null;
   }[] = [];
   for (const tie of ties) {
+    if (someViewDrawsBoth(tie.self, tie.other)) continue;
     const selfHost = hostOf(tie.self);
     const selfHostEl = selfHost
       ? stageRef.current?.querySelector(`[data-graview-view="${CSS.escape(selfHost.id)}"]`)
@@ -1533,10 +1563,17 @@ function SelectionTies<S extends AnySchema>({
      *    and beats any chip that merely mentions it (the fan of dashes
      *    sweeping out of the fixture card's own border was ties preferring
      *    the card's OWN chips over the real cards below).
-     * 2. An element standing for it — but an element inside the selection's
-     *    own card only counts when the origin is itself an element:
-     *    chip-to-chip inside one view is the view's wiring made visible;
-     *    whole-card-to-its-own-chip is the selection restating itself.
+     * 2. An element standing for it — but never one inside the view that
+     *    already draws the selection. A VIEW THAT DRAWS BOTH ENDS HAS
+     *    DRAWN THE RELATION; `connectorStrands` has said so for as long as
+     *    there have been lines, and ties made an exception for chip-to-chip
+     *    inside one view, on the grounds that it was the view's wiring made
+     *    visible. In a matrix it is the opposite. The cell at the
+     *    intersection IS the edge — the lens marks it, and lights it when
+     *    either end is chosen — so the tie added a second drawing of the
+     *    same fact, and because both ends sit in one row it drew it as a
+     *    horizontal rule running from the row label to the cell. One rule
+     *    for both layers, and the view keeps its own relations.
      * 3. The group card containing it — unless that is the very card the
      *    selection sits in, in which case the tie is internal and the
      *    view's own emphasis already shows it.
@@ -1554,9 +1591,7 @@ function SelectionTies<S extends AnySchema>({
       if (box) toCandidates.push(box);
     } else {
       toCandidates.push(
-        ...elementBoxes(tie.other, (el) =>
-          selfHostEl ? selfHostEl.contains(el) && !hasFromEl : false,
-        ),
+        ...elementBoxes(tie.other, (el) => (selfHostEl ? selfHostEl.contains(el) : false)),
       );
       if (toCandidates.length === 0) {
         const otherHost = hostOf(tie.other);
@@ -2640,6 +2675,38 @@ export function altitudeOpacity(state: {
   return Math.max(0.34, 0.9 - 0.09 * Math.max(0, (state.siblings ?? 1) - 1));
 }
 
+/**
+ * How strongly a line is drawn INSIDE THE STACK.
+ *
+ * The twin of `altitudeOpacity`, and for a long time the reason the two
+ * altitudes disagreed: up there an untouched line recedes to 0.12 the
+ * moment anything is chosen, while down here the rule was a single
+ * expression with no name and no recede in it. Every unlit line kept its
+ * resting weight whatever was selected, so choosing one thing lit two lines
+ * and left fifteen others at full strength across the same picture — the
+ * two you asked for were the quietest thing on screen.
+ *
+ * The kit owns both numbers: `rest` is the crowd's weight while nothing is
+ * lit, `dim` what the crowd keeps once something is. A line's own declared
+ * opacity multiplies through, so a relation a brand made faint stays
+ * fainter than its neighbours at every step.
+ */
+export function stackOpacity(state: {
+  /** This line IS the chosen edge. */
+  readonly edgeChosen: boolean;
+  /** This line touches the selection. */
+  readonly lit: boolean;
+  /** Something on screen is lit — a selection, or a relation kind stressed. */
+  readonly anyLit: boolean;
+  /** The line's own opacity, from the kit. */
+  readonly own: number;
+  readonly kit: { readonly rest: number; readonly dim: number };
+}): number {
+  if (state.edgeChosen) return 0.9;
+  if (state.lit) return 0.78;
+  return state.own * (state.anyLit ? state.kit.dim : state.kit.rest);
+}
+
 /** A node's box as DRAWN, after its plane's scale — anchored at its top-left. */
 function drawnBox(
   node: SceneNode | undefined,
@@ -3025,9 +3092,46 @@ export function connectorStrands(
     const box = measureVisible(stageEl, node.id, overview) ?? drawnBox(node, scheme);
     if (box) boxes.set(node.id, box);
   }
+  /*
+   * THE DRAWINGS INSIDE THE VIEWS ARE OBSTACLES TOO.
+   *
+   * A line dives under any card it merely crosses — but "card" meant a
+   * DRAWN NODE, and the things a lens draws inside itself are not drawn
+   * nodes. So a line across the week passed over ten shift cards, and the
+   * connector layer sits above the hosts, so it passed over them literally:
+   * a stroke painted across somebody's Tuesday. Going under is what the
+   * clipping already does; it just had nothing to clip against in there.
+   *
+   * Measured once per pass, keyed by the id each drawing wears, so a
+   * strand can leave its own two ends out.
+   */
+  const memberBoxesById = new Map<string, Box[]>();
+  if (stageEl && typeof document !== "undefined") {
+    const stage = stageEl.getBoundingClientRect();
+    for (const el of stageEl.querySelectorAll("[data-graview-pick], [data-graview-slot]")) {
+      if (el.closest("[data-graview-offstage]")) continue;
+      const id = el.getAttribute("data-graview-pick") ?? el.getAttribute("data-graview-slot");
+      if (id === null) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 2 || rect.height <= 2) continue;
+      /*
+       * A ROTATED HEADER'S BOUNDING BOX is a huge diagonal rectangle whose
+       * border is nowhere near the visible text — a matrix's column names
+       * are written on the slant, and taking their boxes as obstacles
+       * erased every line in the picture. Anything approaching the size of
+       * the stage is furniture, not a drawing.
+       */
+      if (rect.width > stage.width * 0.6 && rect.height > stage.height * 0.6) continue;
+      const held = memberBoxesById.get(id);
+      const box = { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height };
+      if (held) held.push(box);
+      else memberBoxesById.set(id, [box]);
+    }
+  }
   const obstaclesFor = (a: string, b: string): Box[] => {
     const out: Box[] = [];
     for (const [id, box] of boxes) if (id !== a && id !== b) out.push(box);
+    for (const [id, drawn] of memberBoxesById) if (id !== a && id !== b) out.push(...drawn);
     return out;
   };
   // The relation band's chips, for a line whose both ends are in it.
@@ -3529,11 +3633,15 @@ function Connectors({
               touches: touches(connector),
               siblings: siblings.get(connector.id) ?? 1,
             })
-          : edgeChosen
-            ? 0.9
-            : lit
-              ? 0.78
-              : style.opacity * kit.emphasis.dim;
+          : stackOpacity({
+              edgeChosen,
+              lit,
+              // A relation the key is hovering lights the picture the same
+              // way a selection does, so the rest recedes for it too.
+              anyLit: anyStrandChosen || emphasis !== null,
+              own: style.opacity,
+              kit: kit.emphasis,
+            });
         /*
          * A lit line MARKS ITS FAR END, as a tie does: the destination is
          * where the eye is being sent, and a dot says the line lands on
