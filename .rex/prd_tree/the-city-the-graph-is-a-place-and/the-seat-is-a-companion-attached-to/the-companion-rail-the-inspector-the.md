@@ -2,12 +2,17 @@
 id: "82820801-f31e-435b-b1b6-375721ed72b3"
 level: "task"
 title: "The companion rail: the inspector, the quick relations and the seat become one subject-driven panel on the left, and right-click opens it at the pointer"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "assistant"
   - "scene"
   - "presence"
+startedAt: "2026-09-22T00:21:54.405Z"
+completedAt: "2026-09-22T00:21:54.405Z"
+endedAt: "2026-09-22T00:21:54.405Z"
+resolutionType: "code-change"
+resolutionDetail: "Companion rail composes the inspector, quick relations, conversation and key about one subject; robot figure, pad, follow mode and the bar's Ask pill retired; verify-companion.mjs replaces verify-robot.mjs."
 acceptanceCriteria:
   - "One entrance: the companion rail on the left; the Inspector, QuickRelations and ChatPanel panels, the robot figure, its pad, follow mode and the bar's Ask pill are gone from the scene"
   - "The rail's box is identical at altitude, on the ground, flown closer and inside a full-screen lens (verify-companion: theRailIsFixed); collapsed it is a narrow dock"
@@ -15,6 +20,6 @@ acceptanceCriteria:
   - "Right-click, the menu key and Shift+F10 open the same panel at the pointer with the subject's acts, withheld ones struck through (rightClickOpensItHere, theInspectorsActsAreInIt); Escape closes it"
   - "Sheet on a phone; tab reaches the dock; targets ≥ 32px; no document side-scroll at 390px; who, seat, chat, navigation, survey, audit-ui, pages and shrunk stay green; Squad and Groundskeeper re-run"
 description: "A `Companion` primitive in @graview/primitives replaces three panels that each say the current subject — the Inspector (workbench/index.tsx: the acts for the selection, opened at the pointer by right-click through `menuAt`), QuickRelations and the ChatPanel — and the robot figure and the bar's Ask pill as the one entrance to the seat. It lives where the left rail already is (the scene's `inset.left`, 264 at 1200 wide), fixed to the scene's frame under the bar, so it is identical at altitude, on the ground, while flying closer and inside a full-screen lens, where the figure had no place. Its sections, top to bottom: the SUBJECT header — the selection when there is one, else the pick under the pointer after a short dwell (the hover the robot read in follow mode, now read always), else where you are (the focused district, place or record), named (\"Pay the deposit\", \"The week\", \"the whole thing\") with the seat's glyph and state (listening, working while a turn runs, asked when it has a question back, refused with the policy's sentence); the ACTS for the subject from the same affordance derivation the inspector uses, withheld ones struck through with the reason, forms opening in place; the subject's RELATIONS, the quick-relations toggles folded in; the CONVERSATION, the chat body with \"this\" meaning the subject; and the relation key at the foot, collapsible. Right-click on a node, chip, tile or line, and the keyboard's menu key or Shift+F10, open the same panel as a popover at the pointer (the inspector's `menuAt` path), so the context menu and the assistant are one construct; Escape closes a popover and never changes the subject. Collapsed, the rail is a narrow dock: glyph, name, subject line, one press to open. On a phone it is a sheet from the bottom. `RobotMode`'s docked/following retire; reading/writing/refused/asking remain as the seat's state. The robot's `padPlot` leaves the city map; `occupants.tsx` keeps people's figures only; the `Ask` pill leaves the bar; `keyboardReachesIt` becomes a tab stop on the dock. verify-robot.mjs is rewritten as verify-companion.mjs: dockedOnOpen becomes theRailIsFixed (same box at altitude, on the ground, flown closer and in a full-screen lens), followModeTrailsThePointer becomes theSubjectFollowsTheHover, thisIsTheHoveredTask and aRefusalIsSaidAtTheGate keep their meaning, escapeReleases becomes escapeClosesThePopover, plus rightClickOpensItHere and theInspectorsActsAreInIt. Unit: the-occupants.test.tsx loses the robot cases; a-companion-names-its-subject test."
-lastModified: "2026-09-21T19:26:35.066Z"
+lastModified: "2026-09-22T00:21:54.417Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

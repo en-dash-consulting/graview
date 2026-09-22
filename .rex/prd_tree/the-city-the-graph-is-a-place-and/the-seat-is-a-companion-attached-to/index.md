@@ -25,5 +25,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [The companion rail: the inspector, the quick relations and the seat become one subject-driven panel on the left, and right-click opens it at the pointer](./the-companion-rail-the-inspector-the.md) | pending |
+| [The companion rail: the inspector, the quick relations and the seat become one subject-driven panel on the left, and right-click opens it at the pointer](./the-companion-rail-the-inspector-the.md) | completed |
 | [Where the seat worked is marked on the thing, with a fly-to from the companion's log; its questions stay pinned at their nodes](./where-the-seat-worked-is-marked-on-the.md) | pending |
