@@ -642,7 +642,42 @@ try {
       ok: Math.abs((after.latticeX ?? 0) - (before.latticeX ?? 0)) > 100,
     };
   }
-  report.checks = { ...(report.checks ?? {}), theBillboardPansTheCity: onThePicture };
+  /*
+   * THE GROUND TRAVELS WITH THE CARDS. The lattice, the plots and the roads
+   * were drawn from the live pan and the destination's cell while the cards
+   * rode the tween — so choosing a picture snapped the whole ground to the
+   * new place on one frame and the buildings walked over to join it.
+   */
+  await cam.goto("http://localhost:5193/?today=2026-09-01#overview=1", { waitUntil: "load" });
+  await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await cam.waitForTimeout(1500);
+  const travel = await cam.evaluate(async () => {
+    const read = () => {
+      const g = document.querySelector(".graview-ground");
+      return {
+        cell: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-cell")) || 0),
+        x: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-x")) || 0),
+      };
+    };
+    const seen = [];
+    let frames = 0;
+    const tick = () => {
+      seen.push(read());
+      if (++frames < 40) requestAnimationFrame(tick);
+    };
+    document.querySelector('[data-testid="showing-the-week"]')?.click();
+    requestAnimationFrame(tick);
+    await new Promise((done) => setTimeout(done, 900));
+    const cells = [...new Set(seen.map((one) => one.cell))];
+    const jumps = seen.filter((one, at) => at > 0 && Math.abs(one.cell - seen[at - 1].cell) > 20).length;
+    return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1] };
+  });
+  report.checks = {
+    ...(report.checks ?? {}),
+    theBillboardPansTheCity: onThePicture,
+    // Many small steps and no leap: the ground eased from one cell to the other.
+    theGroundTravelsWithTheCards: { ...travel, ok: travel.steps >= 5 && travel.jumps === 0 && travel.last !== travel.first },
+  };
   report.camera = { start, zoomedIn, wheeled, buttonOut, buttonIn, dragged, onThePicture };
   await cam.close();
 } catch (error) {
@@ -693,6 +728,8 @@ report.verdict = {
     (report.camera?.buttonIn?.cell ?? 0) > (report.camera?.buttonOut?.cell ?? 0),
   // A drag that starts on the picture moves the view, not the card.
   theBillboardPansTheCity: report.camera?.onThePicture?.ok === true,
+  // And flying closer is travel, not a cut: the ground eases with the cards on it.
+  theGroundTravelsWithTheCards: report.checks?.theGroundTravelsWithTheCards?.ok === true,
   // Dragged as far as it goes, the ground moves by far more than a little way: the far side is reachable.
   theGroundReachesItsFarEdge:
     (report.camera?.buttonIn?.latticeX ?? 0) - (report.camera?.dragged?.latticeX ?? 0) > 400,

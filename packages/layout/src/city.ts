@@ -70,6 +70,8 @@ export function placeCity(
     readonly minHeight?: number;
     /** A factor on the fitted cell: the camera brought closer, the city allowed past the window. */
     readonly zoom?: number;
+    /** The pan baked into the cards, recorded on the frame so the ground can tween with them. */
+    readonly pan?: { readonly x: number; readonly y: number };
     /**
      * Ground already taken — the picture standing in the middle from
      * altitude. No district is laid under it: the city slides aside, and
@@ -281,6 +283,7 @@ export function placeCity(
     cell,
     originX,
     originY,
+    pan: options.pan ?? { x: 0, y: 0 },
     extent: {
       x: originX + minX * cell,
       y: originY + minY * cell,

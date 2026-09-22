@@ -1047,8 +1047,9 @@ export function Scene<S extends AnySchema>({
         ...(frame.city
           ? {
               ["--graview-lattice-cell" as string]: `${frame.city.cell.toFixed(2)}px`,
-              ["--graview-lattice-x" as string]: `${(frame.city.originX + panned.x).toFixed(1)}px`,
-              ["--graview-lattice-y" as string]: `${(frame.city.originY + panned.y).toFixed(1)}px`,
+              // The tween's own pan, not the live one: the ground moves with the cards it is under.
+              ["--graview-lattice-x" as string]: `${(frame.city.originX + frame.city.pan.x).toFixed(1)}px`,
+              ["--graview-lattice-y" as string]: `${(frame.city.originY + frame.city.pan.y).toFixed(1)}px`,
             }
           : {}),
         ...(dragging ? { userSelect: "none" as const } : {}),
@@ -1069,7 +1070,8 @@ export function Scene<S extends AnySchema>({
         frame={frame}
         width={result.width}
         height={result.height}
-        pan={panned}
+        // The tween's own pan: the tiles, the villages and the roads move with the cards on them.
+        pan={frame.city ? frame.city.pan : panned}
         brand={brand}
         pinned={pinnedIds}
         swallowed={swallow}

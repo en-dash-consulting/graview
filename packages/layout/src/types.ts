@@ -194,6 +194,18 @@ export interface CityFrame {
   readonly cell: number;
   readonly originX: number;
   readonly originY: number;
+  /**
+   * THE PAN THIS CITY WAS PLACED WITH, so the ground can ride the same
+   * tween its cards do.
+   *
+   * The pan is baked into every card's coordinates at layout time, which
+   * is what lets two layouts be interpolated into motion. The lattice and
+   * the plots under them were drawn from the LIVE pan instead — so the
+   * ground snapped to its destination on the frame the view changed while
+   * the cards were still on their way, which reads as the picture flashing
+   * to the new place and the buildings catching up.
+   */
+  readonly pan: { readonly x: number; readonly y: number };
   readonly extent: { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
 }
 

@@ -142,6 +142,17 @@ export function useAnimatedLayout(
       const live = latest.current;
       from.current = {
         ...target,
+        /*
+         * INCLUDING THE GROUND IT WAS STANDING ON.
+         *
+         * Spreading the target carried the DESTINATION's city into the
+         * frozen origin, so the next tween interpolated from the new cell
+         * and the new origin to themselves: the cards flew and the lattice,
+         * the plots and the roads under them were already there. That is
+         * the picture flashing to the new place while the buildings walk
+         * over to join it.
+         */
+        ...(live.city ? { city: live.city } : {}),
         nodes: live.nodes.map((node) => ({
           ...node,
           plane: Math.round(node.plane) as 0 | 1 | 2,

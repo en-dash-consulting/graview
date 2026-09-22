@@ -970,6 +970,8 @@ export function layout<S extends AnySchema>(
           scale: unit,
           minHeight: CARD_MIN_HEIGHT * unit,
           ...(options.cityZoom && options.cityZoom !== 1 ? { zoom: options.cityZoom } : {}),
+          // Recorded, not applied: the cards already carry it, and the ground reads it to ride the same tween.
+          pan: { x: state.pan?.x ?? 0, y: state.pan?.y ?? 0 },
           ...(stamp && !driveIn ? { avoid: [stamp] } : {}),
         },
       )

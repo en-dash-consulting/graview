@@ -152,6 +152,7 @@ function mixCity(from: CityFrame | undefined, to: CityFrame | undefined, t: numb
     cell: lerp(from.cell, to.cell, t),
     originX: lerp(from.originX, to.originX, t),
     originY: lerp(from.originY, to.originY, t),
+    pan: { x: lerp(from.pan.x, to.pan.x, t), y: lerp(from.pan.y, to.pan.y, t) },
     extent: {
       x: lerp(from.extent.x, to.extent.x, t),
       y: lerp(from.extent.y, to.extent.y, t),
