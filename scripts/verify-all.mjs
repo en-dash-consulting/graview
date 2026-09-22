@@ -100,9 +100,21 @@ const broken = results.filter((one) => one.code !== 0);
 if (broken.length > 0) {
   say(`\n${"—".repeat(60)}\n`);
   for (const one of broken) {
-    // The whole of a failing harness's output, so the verdict is actionable
-    // without knowing which file to open — which was the point.
-    say(`\n${one.name}:\n${one.output.trimEnd().split("\n").slice(-25).join("\n")}\n`);
+    /*
+     * WHAT FAILED, not the last twenty-five lines.
+     *
+     * The tail was the first thing written here, and `verify-site` prints a
+     * line per passing check — so its one failure scrolled off and the
+     * report said nothing but `ok`, which is the exact shape of the problem
+     * this command exists to fix, arrived at from the other direction.
+     *
+     * So: every line that is not a plain `ok`, and the tail as well when
+     * there are none — some harnesses say what went wrong only at the end.
+     */
+    const lines = one.output.trimEnd().split("\n");
+    const wrong = lines.filter((line) => !/^\s*ok\s/.test(line) && line.trim() !== "");
+    const shown = wrong.length > 0 ? wrong : lines.slice(-25);
+    say(`\n${one.name}:\n${shown.slice(-40).join("\n")}\n`);
   }
 }
 const spent = results.reduce((sum, one) => sum + one.took, 0);

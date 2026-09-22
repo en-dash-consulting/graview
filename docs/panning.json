@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T13:34:00.604Z",
+  "at": "2026-09-22T14:26:40.704Z",
   "engine": "chromium",
   "floor": 55,
   "slowdown": 4,
@@ -8,14 +8,15 @@
       "app": "todo",
       "where": "stack",
       "label": "drag the ground",
-      "frames": 319,
+      "frames": 314,
       "medianMs": 16.7,
-      "worstMs": 83.3,
+      "worstMs": 66.6,
       "fps": 59.9,
       "slowFrames": 1,
       "blockedMs": 0,
       "stuckLayers": 0,
-      "jumpOnRelease": 0
+      "jumpOnRelease": 0,
+      "moved": 500
     },
     {
       "app": "todo",
@@ -28,20 +29,36 @@
       "slowFrames": 0,
       "blockedMs": 0,
       "stuckLayers": 0,
-      "jumpOnRelease": 0
+      "jumpOnRelease": 0,
+      "moved": 0
+    },
+    {
+      "app": "todo",
+      "where": "altitude/wheel",
+      "label": "wheel the city",
+      "frames": 41,
+      "medianMs": 16.7,
+      "worstMs": 66.6,
+      "fps": 59.9,
+      "slowFrames": 1,
+      "blockedMs": 80,
+      "stuckLayers": 0,
+      "jumpOnRelease": 0,
+      "moved": 821
     },
     {
       "app": "rota",
       "where": "stack",
       "label": "drag the ground",
-      "frames": 309,
+      "frames": 307,
       "medianMs": 16.7,
       "worstMs": 66.6,
       "fps": 59.9,
       "slowFrames": 1,
-      "blockedMs": 0,
+      "blockedMs": 51,
       "stuckLayers": 0,
-      "jumpOnRelease": 0
+      "jumpOnRelease": 0,
+      "moved": 500
     },
     {
       "app": "rota",
@@ -54,7 +71,22 @@
       "slowFrames": 0,
       "blockedMs": 0,
       "stuckLayers": 0,
-      "jumpOnRelease": 0
+      "jumpOnRelease": 0,
+      "moved": 500
+    },
+    {
+      "app": "rota",
+      "where": "altitude/wheel",
+      "label": "wheel the city",
+      "frames": 41,
+      "medianMs": 16.7,
+      "worstMs": 33.4,
+      "fps": 59.9,
+      "slowFrames": 2,
+      "blockedMs": 60,
+      "stuckLayers": 0,
+      "jumpOnRelease": 0,
+      "moved": 821
     }
   ]
 }

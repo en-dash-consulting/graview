@@ -83,8 +83,71 @@ const WORST_MS = WORST_WORK_MS * SLOWDOWN;
  * screenshots: a harness that samples from outside measures its own polling,
  * not the page's paint.
  */
-async function dragAcross(page, { from, to, steps, label }) {
-  await page.evaluate(() => {
+/**
+ * A WHEEL IS A HAND TOO, and is measured the same way.
+ *
+ * The drag came off writing state per move long before the wheel did, so
+ * for a while the same picture was smooth under a finger and not under a
+ * trackpad — one gesture measured, the other taken on trust.
+ */
+async function wheelAcross(page, { at, ticks, label }) {
+  await watchFrames(page);
+  await page.mouse.move(at.x, at.y);
+  const before = await whereIsIt(page);
+  /*
+   * THE NOTCHES COME FROM INSIDE THE PAGE, one per animation frame.
+   *
+   * `page.mouse.wheel` awaits a round trip per call, and under a quartered
+   * processor two notches could be more than 160ms apart — which is the
+   * window after which a wheel is considered to have stopped. So the
+   * harness's own latency broke one gesture into several, each paying the
+   * commit that ends a gesture, and the measurement blamed the app for it:
+   * a hundred-millisecond frame a third of the way through a wheel that a
+   * trackpad would never have produced.
+   *
+   * A trackpad delivers a notch about every frame. So does this.
+   */
+  await page.evaluate(
+    ({ x, y, ticks }) =>
+      new Promise((done) => {
+        const target = document.elementFromPoint(x, y) ?? document.body;
+        let sent = 0;
+        const send = () => {
+          target.dispatchEvent(
+            new WheelEvent("wheel", { deltaX: -18, deltaY: -14, clientX: x, clientY: y, bubbles: true, cancelable: true }),
+          );
+          sent += 1;
+          if (sent < ticks) requestAnimationFrame(send);
+          else done(undefined);
+        };
+        requestAnimationFrame(send);
+      }),
+    { x: at.x, y: at.y, ticks },
+  );
+  const { at: stamps, blocking } = await page.evaluate(() => window.__stopFrames());
+  const underHand = await whereIsIt(page);
+  // The wheel settles on its own, 160ms after it stops turning.
+  await page.waitForTimeout(700);
+  const afterwards = await whereIsIt(page);
+  const stuck = await stuckLayers(page);
+  return {
+    ...framesToVerdict(stamps, blocking, label),
+    stuckLayers: stuck,
+    jumpOnRelease:
+      underHand && afterwards
+        ? Math.round(Math.hypot(afterwards.x - underHand.x, afterwards.y - underHand.y))
+        : null,
+    moved: before && afterwards ? Math.round(Math.hypot(afterwards.x - before.x, afterwards.y - before.y)) : 0,
+  };
+}
+
+/**
+ * START THE CLOCK. Frames are collected by the page itself rather than by
+ * sampling from outside: a harness that polls measures its own polling, not
+ * the page's paint.
+ */
+const watchFrames = (page) =>
+  page.evaluate(() => {
     const at = [];
     const blocking = [];
     let stop = false;
@@ -118,68 +181,39 @@ async function dragAcross(page, { from, to, steps, label }) {
     requestAnimationFrame(tick);
   });
 
-  /*
-   * ONE CALL, many moves. Awaiting each move separately puts a round trip
-   * between every one of them, so the page is handed a gentle trickle of
-   * input no hand ever produced and the harness measures its own latency.
-   */
-  /*
-   * NEITHER THE HAND NOR THE URL IS THE MEASURE.
-   *
-   * Not the hand: a pan is clamped to what the city actually reaches, and
-   * todo's whole city fits the window, so dragging it moves nothing at all
-   * and that is right. Not the URL either: in the stack the pan is not
-   * serialised at all, which is true of the code this replaced as well.
-   *
-   * What must hold is that LETTING GO CHANGES NOTHING. The drag moves the
-   * layers with a transform and writes the pan on release, and the two must
-   * be worth exactly the same — so the picture where the hand left it and
-   * the picture a moment later are the same picture. The first version of
-   * this change failed precisely here: releasing re-enabled the tween, and
-   * the whole city flew back to where the drag started and animated forward
-   * again over half a second.
-   */
-  const whereIsIt = () =>
-    page.evaluate(() => {
-      const card = document.querySelector("[data-graview-view]");
-      const box = card?.getBoundingClientRect();
-      return box ? { x: Math.round(box.left), y: Math.round(box.top) } : null;
-    });
+/*
+ * NEITHER THE HAND NOR THE URL IS THE MEASURE.
+ *
+ * Not the hand: a pan is clamped to what the city actually reaches, and
+ * todo's whole city fits the window, so dragging it moves nothing at all
+ * and that is right. Not the URL either: in the stack the pan is not
+ * serialised at all, which was true of the code this replaced as well.
+ *
+ * What must hold is that LETTING GO CHANGES NOTHING — the picture where the
+ * gesture left it and the picture a moment later are the same picture. The
+ * first version of the transform failed precisely here: ending the gesture
+ * re-enabled the tween, and the whole city flew back to where it had
+ * started and animated forward again over half a second.
+ */
+const whereIsIt = (page) =>
+  page.evaluate(() => {
+    const card = document.querySelector("[data-graview-view]");
+    const box = card?.getBoundingClientRect();
+    return box ? { x: Math.round(box.left), y: Math.round(box.top) } : null;
+  });
 
-  await page.mouse.move(from.x, from.y);
-  await page.mouse.down();
-  await page.mouse.move(to.x, to.y, { steps });
-
-  /*
-   * THE FRAMES ARE THE DRAG'S OWN, and the clock stops at the release.
-   * Letting go costs one full lay-out and one re-measure — the world has to
-   * be put where the hand left it — and that frame is a legitimate cost at
-   * the end of a gesture, not a stutter during it. Counting it condemned
-   * every drag for the one frame that finishes it.
-   */
-  const { at: stamps, blocking } = await page.evaluate(() => window.__stopFrames());
-  const underHand = await whereIsIt();
-  await page.mouse.up();
-  await page.waitForTimeout(600);
-  const afterwards = await whereIsIt();
-
-  /*
-   * AND THE WORLD IS WHERE THE HAND LEFT IT.
-   *
-   * The drag moves the layers with a transform and writes the pan on
-   * release, which is the whole of the speed — and exactly the sort of
-   * trade that can leave the picture a few pixels out, or leave a transform
-   * on a layer for good if the release is missed. So the gesture is checked
-   * as well as timed: nothing may still be transformed, and a card must have
-   * travelled the distance the pointer did.
-   */
-  const stuck = await page.evaluate(
+/** A transform left behind is a world stuck where nobody put it. */
+const stuckLayers = (page) =>
+  page.evaluate(
     () =>
       [...document.querySelectorAll("[data-graview-world]")].filter((el) => {
         const move = getComputedStyle(el).transform;
         return move !== "none" && move !== "";
       }).length,
   );
+
+/** Frame stamps and blocked time, as the numbers a person argues about. */
+function framesToVerdict(stamps, blocking, label) {
   const gaps = [];
   for (let i = 1; i < stamps.length; i += 1) gaps.push(stamps[i] - stamps[i - 1]);
   if (gaps.length < 8) return { label, frames: gaps.length, error: "too few frames to judge" };
@@ -192,16 +226,45 @@ async function dragAcross(page, { from, to, steps, label }) {
     medianMs: Number(median.toFixed(2)),
     worstMs: Number(worst.toFixed(2)),
     fps: Number((1000 / median).toFixed(1)),
-    // What a person actually complains about: how much of the drag was slow.
     slowFrames: gaps.filter((gap) => gap > 1000 / FLOOR).length,
-    // How long the thread spent unable to answer anything, over the drag.
     blockedMs: Number(blocking.reduce((sum, one) => sum + one, 0).toFixed(1)),
-    stuckLayers: stuck,
-    // How far the picture shifted between the hand letting go and the world coming to rest.
+  };
+}
+
+async function dragAcross(page, { from, to, steps, label }) {
+  await watchFrames(page);
+  const before = await whereIsIt(page);
+
+  /*
+   * ONE CALL, many moves. Awaiting each move separately puts a round trip
+   * between every one of them, so the page is handed a gentle trickle of
+   * input no hand ever produced and the harness measures its own latency.
+   */
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps });
+
+  /*
+   * THE FRAMES ARE THE DRAG'S OWN, and the clock stops at the release.
+   * Letting go costs one full lay-out and one re-measure — the world has to
+   * be put where the hand left it — and that frame is a legitimate cost at
+   * the end of a gesture, not a stutter during it. Counting it condemned
+   * every drag for the one frame that finishes it.
+   */
+  const { at: stamps, blocking } = await page.evaluate(() => window.__stopFrames());
+  const underHand = await whereIsIt(page);
+  await page.mouse.up();
+  await page.waitForTimeout(600);
+  const afterwards = await whereIsIt(page);
+
+  return {
+    ...framesToVerdict(stamps, blocking, label),
+    stuckLayers: await stuckLayers(page),
     jumpOnRelease:
       underHand && afterwards
         ? Math.round(Math.hypot(afterwards.x - underHand.x, afterwards.y - underHand.y))
         : null,
+    moved: before && afterwards ? Math.round(Math.hypot(afterwards.x - before.x, afterwards.y - before.y)) : 0,
   };
 }
 
@@ -215,27 +278,58 @@ try {
     try {
       const page = await browser.newPage({ viewport: { width: 1560, height: 1000 } });
       try {
-        await page.goto(`${vite.url}/?theme=light`, { waitUntil: "load" });
-        await page.waitForFunction((flag) => flag in window, app.ready, { timeout: 120_000 });
-        await page.waitForTimeout(1200);
         // Slowed to stand in for a bigger graph; see SLOWDOWN.
         const cdp = await page.context().newCDPSession(page).catch(() => null);
         await cdp?.send("Emulation.setCPUThrottlingRate", { rate: SLOWDOWN });
 
+        /*
+         * EVERY GESTURE STARTS FROM A PICTURE NOBODY HAS MOVED.
+         *
+         * These used to run one after another on the same page, and a pan is
+         * clamped to what the city actually reaches — so by the time the
+         * wheel ran, the drag before it had spent the whole budget and the
+         * wheel moved nothing at all. Every run reported a clean sixty
+         * frames for a gesture that did not happen, which is a harness
+         * agreeing with itself.
+         */
+        const arrive = async (aloft) => {
+          await page.goto(`${vite.url}/?theme=light`, { waitUntil: "load" });
+          await page.waitForFunction((flag) => flag in window, app.ready, { timeout: 120_000 });
+          await page.waitForTimeout(1200);
+          if (aloft) {
+            await page.click('[data-testid="overview"]');
+            await page.waitForTimeout(1400);
+          }
+        };
+
         // In the stack first: the picture a person spends most of their time in.
+        await arrive(false);
         report.runs.push({
           app: app.name,
           where: "stack",
           ...(await dragAcross(page, { from: { x: 900, y: 600 }, to: { x: 500, y: 300 }, steps: 120, label: "drag the ground" })),
         });
+        /*
+         * NO WHEEL RUN IN THE STACK. The plain wheel pans at altitude only —
+         * `onWheel` returns early below the city, because down here a lens, a
+         * scroll region and a pane each keep their own wheel. A run here
+         * measured a gesture that deliberately does not exist and reported
+         * sixty clean frames for it, which is a harness agreeing with itself.
+         */
 
         // Then at altitude, where there is a whole city under the hand.
-        await page.click('[data-testid="overview"]');
-        await page.waitForTimeout(1400);
+        await arrive(true);
         report.runs.push({
           app: app.name,
           where: "altitude",
           ...(await dragAcross(page, { from: { x: 900, y: 600 }, to: { x: 500, y: 300 }, steps: 120, label: "drag the city" })),
+        });
+        // And by wheel, which is the same gesture with a different hand on it.
+        await arrive(true);
+        report.runs.push({
+          app: app.name,
+          where: "altitude/wheel",
+          ...(await wheelAcross(page, { at: { x: 800, y: 520 }, ticks: 40, label: "wheel the city" })),
         });
       } finally {
         await page.close();
@@ -273,7 +367,7 @@ for (const run of report.runs) {
   ].filter(Boolean);
   if (faults.length) bad += 1;
   process.stdout.write(
-    `${faults.length ? "??" : "ok"} ${`${run.app}/${run.where}`.padEnd(18)} ${String(run.fps).padStart(5)}fps  worst ${String(run.worstMs).padStart(6)}ms  ${String(run.slowFrames).padStart(3)}/${run.frames} slow  blocked ${String(run.blockedMs).padStart(6)}ms  jump ${String(run.jumpOnRelease).padStart(3)}px  ${faults.join("; ")}\n`,
+    `${faults.length ? "??" : "ok"} ${`${run.app}/${run.where}`.padEnd(18)} ${String(run.fps).padStart(5)}fps  worst ${String(run.worstMs).padStart(6)}ms  ${String(run.slowFrames).padStart(3)}/${run.frames} slow  blocked ${String(run.blockedMs).padStart(6)}ms  jump ${String(run.jumpOnRelease).padStart(3)}px  moved ${String(run.moved).padStart(4)}px  ${faults.join("; ")}\n`,
   );
 }
 process.stdout.write(`\n${report.runs.length - bad} of ${report.runs.length} drags hold ${FLOOR}fps\n`);

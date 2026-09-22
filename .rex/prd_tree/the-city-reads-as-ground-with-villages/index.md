@@ -33,5 +33,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The lattice is the city's own grid: pinned to its cells, and it moves with the camera](./the-lattice-is-the-city-s-own-grid.md) | completed |
 | [The lenses are pictures, and choosing one flies closer](./the-lenses-are-pictures-and-choosing.md) | completed |
 | [The seat's door is a setting in the profile, not a pane of prose over the map](./the-seat-s-door-is-a-setting-in-the.md) | completed |
-| [The wheel pans the way the hand does: no state written per tick](./the-wheel-pans-the-way-the-hand-does.md) | pending |
+| [The wheel pans the way the hand does: no state written per tick](./the-wheel-pans-the-way-the-hand-does.md) | in_progress |
 | [Zoom and pan the city by hand: pinch or ctrl+wheel zooms about the pointer, the wheel pans, and the ground reaches its far edge](./zoom-and-pan-the-city-by-hand-pinch-or.md) | completed |

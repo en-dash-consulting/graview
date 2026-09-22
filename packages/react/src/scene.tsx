@@ -461,6 +461,12 @@ export function Scene<S extends AnySchema>({
   const ZOOM_MAX = 3;
   zoomAbout.current = (factor, clientX, clientY) => {
     if (!(view.overview ?? false)) return;
+    /*
+     * A ZOOM WRITES STATE, so any pan the wheel is still holding has to
+     * land first — zoom and pan share `steer`, and a zoom on top of an
+     * uncommitted offset would compute from a pan the view does not have.
+     */
+    settleLive.current();
     const current = zoomLive.current;
     const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, current * factor));
     if (Math.abs(next - current) < 1e-4) return;
@@ -477,10 +483,22 @@ export function Scene<S extends AnySchema>({
   panBy.current = (dx, dy) => {
     steer();
     const limit = cameraLimit(result);
-    setView((current) => {
-      const pan = current.pan ?? { x: 0, y: 0 };
-      return withPan(current, panWithin(limit, { x: pan.x + dx, y: pan.y + dy }));
-    });
+    const pan = view.pan ?? { x: 0, y: 0 };
+    if (useDom) {
+      /*
+       * THE WHEEL IS A HAND TOO — so it moves the picture, and only the
+       * wheel coming to rest moves the world. It was left on the old road
+       * when the drag came off it: a `setView` per tick, which is a layout,
+       * a render of every context consumer and a DOM re-measure for each
+       * notch of a wheel.
+       */
+      const live = liveShift.current;
+      shiftTo(panWithin(limit, { x: pan.x + live.x + dx, y: pan.y + live.y + dy }), pan);
+    } else {
+      setView((current) =>
+        withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + dx, y: (current.pan?.y ?? 0) + dy })),
+      );
+    }
     noteMoved();
   };
 
@@ -502,11 +520,29 @@ export function Scene<S extends AnySchema>({
    */
   const [steering, setSteering] = useState(false);
   const steeringUntil = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /*
+   * A WHEEL LETS GO TOO, and this is how it says so.
+   *
+   * The live-shift machinery is declared below — it needs the layout, which
+   * needs the view — and `steer` is needed above it, by the wheel and the
+   * zoom. A ref rather than a reordering: moving the declaration would drag
+   * `steering` and the tween's own `enabled` down with it, which is three
+   * hundred lines of unrelated motion for one call.
+   */
+  const settleLive = useRef<() => boolean>(() => false);
   const steer = useCallback(() => {
     setSteering(true);
     if (steeringUntil.current) clearTimeout(steeringUntil.current);
     steeringUntil.current = setTimeout(() => {
       steeringUntil.current = null;
+      /*
+       * The wheel stops steering when the pan it made has been DRAWN, not
+       * when the wheel stops turning — clearing it here would re-enable the
+       * tween in the same breath as the commit, and the city would fly from
+       * where the wheel left it back to where it started. The same trap the
+       * drag fell into; the layout effect closes both.
+       */
+      if (settleLive.current()) return;
       setSteering(false);
     }, 160);
   }, []);
@@ -805,9 +841,9 @@ export function Scene<S extends AnySchema>({
     [paintShift],
   );
   /** Letting go: the offset becomes the view's own pan, and the transform goes. */
-  const settleShift = useCallback(() => {
+  const settleShift = useCallback((): boolean => {
     const { x, y } = liveShift.current;
-    if (x === 0 && y === 0) return;
+    if (x === 0 && y === 0) return false;
     liveShift.current = { x: 0, y: 0 };
     shiftSettling.current = true;
     setView((current) => {
@@ -836,8 +872,12 @@ export function Scene<S extends AnySchema>({
       shiftSettling.current = false;
       for (const layer of worldLayers()) layer.style.transform = "";
       setDragging(false);
+      setSteering(false);
     }, 300);
+    return true;
   }, [setView, worldLayers]);
+  // Wired here, where `settleShift` exists; see the ref's own note above.
+  settleLive.current = settleShift;
   /*
    * CLEARED ONLY ONCE THE WORLD HAS ACTUALLY MOVED. Clearing the transform
    * in the same breath as the state change put the picture back where it
@@ -848,8 +888,9 @@ export function Scene<S extends AnySchema>({
     shiftSettling.current = false;
     for (const layer of worldLayers()) layer.style.transform = "";
     // The gesture ends HERE, with the world already where the hand left it,
-    // so nothing tweens its way there afterwards.
+    // so nothing tweens its way there afterwards — by drag or by wheel.
     setDragging(false);
+    setSteering(false);
   }, [view.pan, worldLayers]);
 
   const swallow = useRef(false);

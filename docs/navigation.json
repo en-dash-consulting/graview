@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T13:27:26.465Z",
+  "at": "2026-09-22T14:20:01.013Z",
   "engine": "chromium",
   "steps": [
     {
@@ -219,15 +219,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 330,
-        "height": 174,
+        "width": 347,
+        "height": 170,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 280.9999694824219,
-        "height": 257.9999694824219,
-        "opacity": 0.499788
+        "width": 274.9999694824219,
+        "height": 256,
+        "opacity": 0.433237
       }
     ],
     "afterSwitch": [
@@ -262,9 +262,9 @@
       "up": true
     },
     "midway": {
-      "x": 770.8021240234375,
-      "y": 292.3179931640625,
-      "width": 369
+      "x": 773.43603515625,
+      "y": 284.21034240722656,
+      "width": 357
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -278,7 +278,7 @@
       "ok": true
     },
     "theGroundTravelsWithTheCards": {
-      "steps": 26,
+      "steps": 27,
       "jumps": 0,
       "first": 235,
       "last": 353,
