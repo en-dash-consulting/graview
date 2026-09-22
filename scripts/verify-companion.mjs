@@ -264,6 +264,9 @@ try {
   await page.waitForTimeout(1400);
   await page.click('[data-testid="companion-key"] summary').catch(() => {});
   await page.waitForTimeout(500);
+  /* And with something in hand, so the acts and the relations are in the column too. */
+  await page.click('[data-graview-pick]').catch(() => {});
+  await page.waitForTimeout(600);
   report.checks.theSectionsDoNotOverlap = await page.evaluate(() => {
     const rail = document.querySelector('[data-testid="companion"]');
     const sections = [...(rail?.querySelectorAll(':scope > div > *') ?? [])].filter((el) => el.getBoundingClientRect().height > 0);
@@ -272,7 +275,9 @@ try {
     for (let at = 1; at < boxes.length; at++) {
       if (boxes[at].top < boxes[at - 1].bottom - 2) over.push(`${sections[at - 1].tagName} over ${sections[at].tagName}`);
     }
-    return { sections: sections.length, over, ok: sections.length > 1 && over.length === 0 };
+    /* And nothing paints outside the box it was given, which is the shape the overlap took. */
+    const spills = sections.filter((el) => el.scrollHeight > el.clientHeight + 2).map((el) => el.getAttribute("data-testid") ?? el.tagName);
+    return { sections: sections.length, over, spills, ok: sections.length > 1 && over.length === 0 && spills.length === 0 };
   });
 
   /* --------------------------------- quiet: nothing animating on a still city */

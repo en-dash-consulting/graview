@@ -248,7 +248,21 @@ export function ChatPanel<S extends AnySchema>({
   };
 
   return (
-    <div ref={anchor} style={inside ? { display: "grid", minHeight: 0 } : { position: "relative" }}>
+    <div
+      ref={anchor}
+      style={
+        inside
+          ? /*
+             * ONE LAYER FEWER IN THE RAIL. The wrapper exists to anchor a
+             * panel that hangs off a pill; in the rail there is no pill and
+             * nothing hangs, and a second box between the column and the
+             * conversation is a second chance for the two to disagree about
+             * how tall it is. It passes its own row straight through.
+             */
+            { display: "grid", gridTemplateRows: "min-content", minHeight: "min-content" }
+          : { position: "relative" }
+      }
+    >
       {inside ? null : (
         <button
           type="button"
@@ -286,6 +300,8 @@ export function ChatPanel<S extends AnySchema>({
                    * it needs to be, and the rail's own column scrolls.
                    */
                   gridTemplateRows: "auto auto auto auto",
+                  // And never smaller than what is in it, whatever the column decides.
+                  minHeight: "min-content",
                 }
               : {
                   position: "absolute" as const,
@@ -301,11 +317,15 @@ export function ChatPanel<S extends AnySchema>({
             display: "grid",
             ...(inside ? {} : { gridTemplateRows: "auto 1fr auto" }),
             /*
-             * The rail is the scroller here, and the log inside keeps its
-             * own: clipping the panel as well cut the seat's own greeting
-             * off at the bottom of a box it had already outgrown.
+             * CLIPPED, EVEN IN THE RAIL. The panel is sized by its content
+             * and floored at `min-content`, so there should be nothing to
+             * clip — but "should" is doing a lot of work across engines and
+             * layouts, and the failure this guards against is the ugly one:
+             * a squeezed box painting its chips and its field straight over
+             * the relations in the section below. Clipped, the worst case
+             * is a section that scrolls in a rail that already scrolls.
              */
-            overflow: inside ? "visible" : "hidden",
+            overflow: "hidden",
           }}
         >
           <div

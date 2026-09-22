@@ -286,7 +286,27 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
         </p>
       ) : null}
       {open ? (
-        <div ref={column} style={{ display: "grid", gap: 10, minHeight: 0, overflowY: "auto", overflowX: "hidden" }}>
+        <div
+          ref={column}
+          style={{
+            display: "grid",
+            /*
+             * EVERY SECTION IS AS TALL AS ITS CONTENT, and the column
+             * scrolls. Left to itself a grid with a definite height hands
+             * each row a share of the space — and a row whose item has no
+             * automatic minimum is compressed below what is in it, which
+             * paints the conversation's chips and field straight over the
+             * relations underneath. Rows sized by their content, packed at
+             * the top, cannot do that: what does not fit is scrolled to.
+             */
+            gridAutoRows: "min-content",
+            alignContent: "start",
+            gap: 10,
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+          }}
+        >
           {/* WHAT CAN BE DONE HERE — the same derivation the pointer menu reads. */}
           <Inspector placement="rail" />
           {/* WHAT IT RELATES TO. */}

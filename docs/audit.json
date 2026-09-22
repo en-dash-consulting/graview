@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T03:13:18.361Z",
+  "at": "2026-09-22T03:27:00.087Z",
   "engine": "chromium",
   "screens": [
     {
@@ -50,7 +50,7 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "380x111",
+        "size": "238x181",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -537,7 +537,7 @@
       "inspector": {
         "shown": 1,
         "hidden": 0,
-        "size": "245x38",
+        "size": "238x38",
         "text": "Add a shift …☆"
       },
       "led": null,
@@ -630,7 +630,7 @@
       "inspector": {
         "shown": 7,
         "hidden": 0,
-        "size": "245x283",
+        "size": "238x283",
         "text": "Is connected to nothing yet⚠ Nobody is covering \"Friday repair cafe\" on 2026-09-18Find som"
       },
       "led": null,
@@ -657,7 +657,7 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "245x441",
+        "size": "238x457",
         "text": "Nobody is covering \"Friday repair cafe\" on 2026-09-18Is connected to nothing yetNothing yo"
       },
       "led": null,
@@ -684,7 +684,7 @@
       "inspector": {
         "shown": 1,
         "hidden": 0,
-        "size": "245x38",
+        "size": "238x38",
         "text": "Add a shift …☆"
       },
       "led": null,
