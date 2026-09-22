@@ -48,6 +48,7 @@ export {
   droppedProposals,
   firstJsonObject,
   resolveProposal,
+  stillNeeded,
   intelligenceProvider,
   llmIntelligence,
   toCall,

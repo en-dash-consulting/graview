@@ -1,12 +1,14 @@
 import {
+  argShape,
   formFields,
   labelOf,
+  nodeRefArgs,
   type AnySchema,
   type FormField,
   type MutationCall,
   type Store,
 } from "@graview/core";
-import type { Affordance, AffordanceProvider } from "./types.js";
+import type { Affordance, AffordanceProvider, OpenParameter } from "./types.js";
 
 /**
  * INTELLIGENCE IS ONE SEAM, whoever supplies it.
@@ -409,4 +411,70 @@ export function describeProposal<S extends AnySchema>(
   return node
     ? `${title} — ${labelOf(store.schema.tryDefinition(node.kind), node as never)}`
     : title;
+}
+
+/**
+ * WHAT A PROPOSAL HAS NOT SAID YET.
+ *
+ * A responder proposes from the graph and knows nothing of the policy, so
+ * the seat asks the store whether the person may do a thing before offering
+ * it. It knows just as little about the ACT'S OWN ARGUMENTS — a model told
+ * "add a shift called soup kitchen" will happily answer `add-shift` with no
+ * arguments at all, or with the label and none of the day, the place and
+ * the hours. Applied, the store refuses, and what reaches the person is the
+ * validator talking to itself:
+ *
+ *   Refused: Invalid arguments for mutation "add-shift" label: Invalid
+ *   input: expected string, received undefined; on: Invalid input: …
+ *
+ * That is not a refusal, it is a stack trace. The act was never impossible;
+ * it was under-specified, and the framework already knows what to do with
+ * an under-specified act — it asks. A person pressing "Add a shift" from
+ * the menu gets the same questions one at a time, with the graph's own
+ * candidates offered for anything that names a node.
+ *
+ * So: the arguments this proposal still owes, in the shape the ask already
+ * takes. Empty means it is ready to apply.
+ */
+export function stillNeeded<S extends AnySchema>(
+  store: Store<S>,
+  proposal: ProposedCall,
+): readonly OpenParameter[] {
+  const mutation = store.allMutations().find((one) => one.name === proposal.mutation);
+  if (!mutation) return [];
+  const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
+  const refs = nodeRefArgs(mutation.input);
+  const owed: OpenParameter[] = [];
+  for (const name of Object.keys(shape)) {
+    if (optionalArg(shape[name])) continue;
+    const given = proposal.args[name];
+    /*
+     * Given means given. A model that answers `""` or `null` for a required
+     * field has not answered it — and the empty string is the common one,
+     * because a model asked for JSON fills every key it was shown.
+     */
+    if (given !== undefined && given !== null && given !== "") continue;
+    const ref = refs.find((candidate) => candidate.name === name);
+    owed.push({
+      name,
+      ...(ref ? { kinds: ref.kinds } : {}),
+      ...(ref
+        ? {
+            candidates: ref.kinds.includes("*")
+              ? store.graph.allNodes().map((node) => node.id)
+              : ref.kinds.flatMap((kind) =>
+                  store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                ),
+          }
+        : {}),
+      shape: argShape(mutation.input, name),
+    });
+  }
+  return owed;
+}
+
+/** Whether an argument may be left out, so it does not count as unanswered. */
+function optionalArg(schema: unknown): boolean {
+  const type = (schema as { _def?: { type?: string } })?._def?.type;
+  return type === "optional" || type === "default" || type === "nullable";
 }

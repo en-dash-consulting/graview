@@ -7,6 +7,7 @@ import {
   describeIntelligence,
   describeProposal,
   loadPins,
+  stillNeeded,
   type ChatReply,
   type IntelligenceConfig,
   type LocalStatus,
@@ -17,6 +18,7 @@ import {
 } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSubject } from "./companion.js";
+import { AnswerArgs } from "./workbench/index.js";
 
 /**
  * A SEAT YOU CAN TALK TO.
@@ -214,6 +216,27 @@ export function ChatPanel<S extends AnySchema>({
     }
     setBusy(false);
   };
+
+  /*
+   * A PROPOSAL THE ACT'S OWN ARGUMENTS ARE NOT SATISFIED BY IS AN ASK, NOT
+   * A REFUSAL.
+   *
+   * The seat already refuses to OFFER what the policy withholds, for the
+   * reason written above the proposal list: the responder proposes from the
+   * graph and knows nothing of the policy. It knows just as little about
+   * what an act NEEDS. A model told "add a shift called soup kitchen"
+   * answers `add-shift` with a label and none of the day, the place or the
+   * hours — and pressing it handed the person the validator talking to
+   * itself, six clauses of "expected string, received undefined".
+   *
+   * The act was never impossible, only under-specified, and this framework
+   * already knows what to do with an under-specified act: a person pressing
+   * "Add a shift" from the menu is asked for each missing argument in turn,
+   * with the graph's own candidates offered for anything that names a node.
+   * The seat's proposals go the same way now — the same component, the same
+   * questions, the model's own answers already filled in.
+   */
+  const [answering, setAnswering] = useState<{ proposal: ProposedCall; open: ReturnType<typeof stillNeeded> } | null>(null);
 
   const apply = async (proposal: ProposedCall) => {
     try {
@@ -453,16 +476,29 @@ export function ChatPanel<S extends AnySchema>({
                       </span>
                     );
                   }
+                  /*
+                   * The same question asked of the ACT rather than of the
+                   * policy: has the responder actually said what this needs?
+                   */
+                  const owed = stillNeeded(store, proposal);
                   return (
                     <button
                       key={at}
                       type="button"
                       data-testid="chat-apply"
-                      onClick={() => void apply(proposal)}
-                      title={proposal.why ?? "Apply this change"}
+                      data-graview-asks={owed.length > 0 ? owed.length : undefined}
+                      onClick={() =>
+                        owed.length > 0 ? setAnswering({ proposal, open: owed }) : void apply(proposal)
+                      }
+                      title={
+                        owed.length > 0
+                          ? `${proposal.why ?? "Apply this change"} — needs ${owed.map((one) => one.name).join(", ")}`
+                          : (proposal.why ?? "Apply this change")
+                      }
                       style={{ fontSize: "0.75rem", justifySelf: "start" }}
                     >
                       {describeProposal(store, proposal)}
+                      {owed.length > 0 ? " …" : ""}
                     </button>
                   );
                 })}
@@ -472,6 +508,40 @@ export function ChatPanel<S extends AnySchema>({
               <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>thinking…</li>
             ) : null}
           </ol>
+          {/*
+            * THE ASK, in the thread where it was proposed.
+            *
+            * The same component the actions strip raises, given the same
+            * shape: what the model already answered stays answered, and the
+            * questions are only the ones it left open. Answering applies
+            * through the ordinary runtime, so the log, the undo and the
+            * attribution are the ones every other act gets.
+            */}
+          {answering ? (
+            <div data-testid="chat-asking" style={{ padding: "0 8px 6px" }}>
+              <AnswerArgs
+                affordance={{
+                  id: `chat:${answering.proposal.mutation}`,
+                  mutation: answering.proposal.mutation,
+                  label: describeProposal(store, answering.proposal),
+                  // What it is, honestly: a responder's suggestion. The union
+                  // has a name for that already.
+                  provider: "llm",
+                  why: answering.proposal.why ?? "The seat suggested this.",
+                  nodeIds: [],
+                  args: answering.proposal.args,
+                  open: answering.open,
+                  score: 0,
+                }}
+                onApply={(args) => {
+                  const proposal = { ...answering.proposal, args: { ...answering.proposal.args, ...args } };
+                  setAnswering(null);
+                  void apply(proposal);
+                }}
+                onCancel={() => setAnswering(null)}
+              />
+            </div>
+          ) : null}
           {/* What it can answer about what is in front of you, before anybody types. */}
           {(offer ?? []).length > 0 && turns.length === 0 ? (
             <div data-testid="chat-offers" style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "0 8px 6px" }}>
