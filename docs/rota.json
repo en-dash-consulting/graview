@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-14T05:05:45.490Z",
+  "at": "2026-09-22T13:03:27.767Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
@@ -73,8 +73,8 @@
       "hostFont": "Georgia, \"Times New Roman\", serif",
       "scoped": true,
       "views": [
-        6,
-        6
+        3,
+        3
       ],
       "ok": true
     },

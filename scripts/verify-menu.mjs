@@ -125,9 +125,31 @@ try {
   };
   await page.fill('[data-testid="action-filter"]', "");
 
+  /*
+   * HOW THE APP ACTUALLY CLEARS A SELECTION.
+   *
+   * This used to click a × on the docked strip. That × belongs to
+   * `placement="float"`, and nothing renders the inspector that way any more —
+   * the shell gives it as a menu at the pointer and the companion gives it as
+   * a rail, and neither carries a close control, because Escape, clicking away
+   * and choosing an action all close it. So the harness sat waiting thirty
+   * seconds for a button the design had removed, and reported the timeout as
+   * the app's failure rather than its own.
+   *
+   * Escape is what a person presses, so it is what this presses.
+   */
+  const clearSelection = async (page) => {
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(
+      () => document.querySelectorAll("[data-graview-selected]").length === 0,
+      null,
+      { timeout: 10_000 },
+    );
+  };
+
   /* --------------------------------------------------- pin, then reorder */
   // Clear t-book first: its drawn ties otherwise lie over the next card.
-  await page.click('[aria-label="Clear selection"]');
+  await clearSelection(page);
   await page.waitForTimeout(200);
   await page.click('[data-graview-pick="t-deposit"]');
   await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for]');
@@ -206,7 +228,7 @@ try {
   // finish is pinned by the app's own declaration. The same star demotes
   // it for this person — and brings it back. Without this, the star on a
   // declared pin was a control that visibly did nothing.
-  await page.click('[aria-label="Clear selection"]');
+  await clearSelection(page);
   await page.waitForTimeout(200);
   await page.click('[data-graview-pick="t-book"]');
   await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for="finish"]');
@@ -348,7 +370,9 @@ try {
   await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   await page.click('[data-graview-pick="t-book"]');
-  await page.waitForSelector('[aria-label="Clear selection"]', { timeout: 10_000 });
+  // The pane is up once it has acts in it; the × it used to wait for belongs
+  // to a placement nothing renders any more (see `clearSelection`).
+  await page.waitForSelector('[data-testid="inspector-strip"] [data-affordance]', { timeout: 10_000 });
   /*
    * EVERY ACT TAKEN FROM THE KEYBOARD used to end at the top of the
    * document. The pane is a live list — an act applies and leaves the list,
@@ -361,7 +385,7 @@ try {
    * pin beside it, and the Apply of an ask. After each, focus must still be
    * inside the pane.
    */
-  await page.click('[aria-label="Clear selection"]');
+  await clearSelection(page);
   await page.waitForTimeout(200);
   await page.click('[data-graview-pick="t-deposit"]');
   await page.waitForSelector('[data-testid="inspector-strip"] [data-affordance]');
@@ -392,7 +416,7 @@ try {
   const actRow = (mutation) =>
     `[data-testid="inspector-strip"] li:has([data-pin-for="${mutation}"]) button[data-affordance]`;
   const afterAnAct = await pressFromTheKeyboard(actRow("finish"));
-  await page.click('[aria-label="Clear selection"]');
+  await clearSelection(page);
   await page.waitForTimeout(200);
   await page.click('[data-graview-pick="t-book"]');
   await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for]');

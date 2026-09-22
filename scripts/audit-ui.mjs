@@ -163,13 +163,23 @@ const APPS = {
      * at its dock; pressed, it follows the pointer and the chat is its
      * bubble. Both are chrome the audit holds to the same rules as any.
      */
-    following: async (p) => {
-      await p.click('[data-testid="overview"]');
-      await p.waitForTimeout(900);
-      await p.click('[data-graview-figure^="agent:tidy:"] .graview-figure-body');
-      await p.mouse.move(700, 480);
-      await p.waitForTimeout(700);
-    },
+    /*
+     * `following` WAS RETIRED, and this is why rather than a gap.
+     *
+     * It clicked `[data-graview-figure^="agent:tidy:"] .graview-figure-body`
+     * to follow a robot. Nothing has ever drawn that id: a robot figure is
+     * always somebody ELSE's agent, drawn as `theirs:<participant>` and
+     * captioned "X's agent", and its body is a span with `cursor: default`
+     * — robots are not followable, people are. So this waited thirty
+     * seconds for an element the design does not produce and reported the
+     * timeout as the app's failure.
+     *
+     * Following is a two-person picture and needs two pages to have any
+     * presence at all, which is not the shape of this file — one page per
+     * state. `scripts/verify-who.mjs` drives both sides and holds the
+     * claims: a robot appears on the other person's screen captioned as
+     * hers, and a person can be followed and stopped.
+     */
     /*
      * A PHONE. The scene is a desk view and the routed face is the answer at
      * this width — but the scene is still reachable here, and a person who
@@ -372,8 +382,28 @@ const APPS = {
       await p.waitForTimeout(400);
       const opener = await p.$("[data-testid^='open-']");
       if (opener) { await opener.click(); await p.waitForTimeout(500); }
-      const chip = await p.$("[data-graview-pick]");
-      if (chip) { await chip.click(); await p.waitForTimeout(500); }
+      /*
+       * PICK SOMETHING THAT HAS ACTS. This took whatever chip was first on
+       * screen, which in this chapter is a plot — and a fresh plot declares
+       * no mutation with itself as a subject, so the pane says so in a
+       * sentence and renders no list at all. The gardener is the subject
+       * with acts on it, and "Change the gardener …" is the derived edit
+       * this state exists to open.
+       */
+      const chip = await p.$('[data-graview-pick^="gardener:"]');
+      if (chip) { await chip.click({ force: true }); await p.waitForTimeout(500); }
+      /*
+       * AND OPEN THE SEAT'S PANE. At this width the companion starts shut —
+       * the scene is a desk view and the routed face is the answer on a
+       * phone — so the acts of whatever is chosen are behind its dock. A
+       * harness that never opened it waited thirty seconds for a list that
+       * was one press away.
+       */
+      const dock = await p.$('[data-testid="companion-dock"]');
+      if (dock && (await dock.getAttribute("aria-expanded")) === "false") {
+        await dock.click();
+        await p.waitForTimeout(400);
+      }
       await p.locator('[data-testid="affordances"] button', { hasText: "Change the" }).first().click();
     } },
   } },

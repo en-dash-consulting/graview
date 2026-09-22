@@ -34,6 +34,7 @@
     "a11y": "node apps/todo/scripts/run-a11y.mjs",
     "apps:all": "pnpm --parallel --filter @graview/launcher --filter @graview/todo --filter @graview/seedbed --filter @graview/rota dev",
     "audit-ui": "node scripts/audit-ui.mjs",
+    "verify": "node scripts/verify-all.mjs",
     "elm": "node scripts/eval-elm.mjs",
     "smoke:create": "node scripts/smoke-create.mjs",
     "graview": "node packages/core/dist/cli/index.js",

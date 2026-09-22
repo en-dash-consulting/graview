@@ -1,11 +1,12 @@
 {
-  "at": "2026-09-15T00:49:58.821Z",
+  "at": "2026-09-22T13:02:36.363Z",
   "engine": "chromium",
   "checks": {
     "aSecondPictureOfOneGroupIsASecondPlace": {
       "places": [
         "The lists",
         "The month",
+        "What is left",
         "The week"
       ],
       "opened": {

@@ -350,8 +350,24 @@ try {
   await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1200);
+  /*
+   * HOW FAR IS NOT THE CLAIM; REACHABLE IS.
+   *
+   * This stopped at thirty presses, and the dock sat at thirty-one the day
+   * todo registered a fourth picture — one more pill in the bar, one more
+   * tab stop, and a check that had never had a single press of headroom
+   * reported the companion as unreachable by keyboard. The number of
+   * controls before it is the app's own business and moves whenever anybody
+   * adds a place; what must hold is that a keyboard gets there at all.
+   *
+   * So the bound is generous and the depth is reported, which is the honest
+   * split: the verdict is reachability, and the number is there to be
+   * looked at if it starts climbing.
+   */
   let reached = false;
-  for (let press = 0; press < 30 && !reached; press++) {
+  let depth = 0;
+  for (let press = 0; press < 120 && !reached; press++) {
+    depth = press + 1;
     await page.keyboard.press("Tab");
     reached = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "companion-dock");
   }
@@ -362,7 +378,7 @@ try {
         return page.evaluate(() => document.querySelector('[data-testid="companion"]')?.getAttribute("data-graview-companion"));
       })()
     : null;
-  report.checks.keyboardReachesIt = { reached, shut, ok: reached && shut === "shut" };
+  report.checks.keyboardReachesIt = { reached, tabsAway: reached ? depth : null, shut, ok: reached && shut === "shut" };
 
   await page.close();
   report.passed = Object.values(report.checks).every((check) => check.ok) && report.pageErrors.length === 0;

@@ -1,4 +1,18 @@
 {
   "lastUuid": "56bcfb89-61e3-4975-97af-ad21ae05b155",
-  "consumed": 555
+  "consumed": 555,
+  "marks": {
+    "61efdb16-c377-4ba7-9ed6-f926ac614b7": {
+      "task": "61efdb16-c377-4ba7-9ed6-f926ac614b7",
+      "at": "2026-09-22T12:38:03.465Z",
+      "lastUuid": "12d6d367-e878-4740-8a9c-795cf508f3b2",
+      "consumed": 563,
+      "totals": {
+        "input": 1126,
+        "output": 457068,
+        "cacheCreationInput": 954191,
+        "cacheReadInput": 164445256
+      }
+    }
+  }
 }

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T06:22:09.178Z",
+  "at": "2026-09-22T13:08:33.760Z",
   "engine": "chromium",
   "screens": [
     {
@@ -434,11 +434,6 @@
       },
       "led": null,
       "figures": []
-    },
-    {
-      "app": "todo",
-      "state": "following",
-      "error": "TimeoutError: page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-graview-figure^=\"agent:tidy:\"] .graview-figure-body')\u001b[22m\n"
     },
     {
       "app": "todo",
@@ -918,7 +913,29 @@
     {
       "app": "seedbed",
       "state": "askedNarrow",
-      "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"affordances\"] button').filter({ hasText: 'Change the"
+      "collisions": [],
+      "small": [],
+      "cut": [],
+      "unnamed": [],
+      "keyed": [],
+      "headings": [],
+      "halfSaid": [],
+      "painted": [],
+      "repeats": [],
+      "articles": [],
+      "covered": [],
+      "offscreen": [],
+      "asking": [],
+      "board": [],
+      "fill": 11,
+      "inspector": {
+        "shown": 3,
+        "hidden": 0,
+        "size": "344x170",
+        "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆ApplySkip"
+      },
+      "led": null,
+      "figures": []
     }
   ]
 }

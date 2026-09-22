@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T06:19:44.318Z",
+  "at": "2026-09-22T13:00:31.761Z",
   "engine": "chromium",
   "checks": {
     "filterOnlyPastTheFold": {
@@ -19,8 +19,108 @@
       "hintShown": false,
       "stillThere": true,
       "ok": true
+    },
+    "pinThenReorder": {
+      "before": [
+        "reschedule",
+        "finish",
+        "rename",
+        "edit-task",
+        "plan-it",
+        "explain",
+        "move-to-list",
+        "wait-for",
+        "drop"
+      ],
+      "after": [
+        "reschedule",
+        "finish",
+        "edit-task",
+        "rename",
+        "plan-it",
+        "explain",
+        "move-to-list",
+        "wait-for",
+        "drop"
+      ],
+      "headings": [
+        "⚠ Was due 2026-08-28",
+        "pinned",
+        "its ties"
+      ],
+      "peerIsOffered": true,
+      "ok": true
+    },
+    "pinSurvivesReloadAndUnpins": {
+      "survived": true,
+      "pressed": true,
+      "unpinnedAgain": true,
+      "ok": true
+    },
+    "devPinOverride": {
+      "declaredShown": true,
+      "demotedNow": true,
+      "restoredNow": true,
+      "ok": true
+    },
+    "leadsWithWhatYouClicked": {
+      "menu": {
+        "t-post": {
+          "label": "A new date for \"Redirect the post\" …",
+          "rank": "0",
+          "names": true
+        },
+        "t-meter": {
+          "label": "A new date for \"Read the meters\" …",
+          "rank": "0",
+          "names": true
+        }
+      },
+      "record": {
+        "firstRepair": "A new date for \"Redirect the post\" …",
+        "ranks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      "inbox": {
+        "postGone": true,
+        "othersKept": true
+      },
+      "namedItsOwn": true,
+      "ok": true
+    },
+    "theKeyboardKeepsItsPlace": {
+      "afterAnAct": {
+        "where": "Inspector",
+        "inside": true
+      },
+      "afterAPin": {
+        "where": "edit-task",
+        "inside": true
+      },
+      "afterAnAsk": {
+        "where": "schema:edit-task",
+        "inside": true
+      },
+      "ok": true
     }
   },
-  "error": "TimeoutError: page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[aria-label=\"Clear selection\"]')\u001b[22m\n",
-  "passed": false
+  "pageErrors": [],
+  "passed": true
 }
