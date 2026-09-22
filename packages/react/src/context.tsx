@@ -418,7 +418,7 @@ export function GraviewProvider<S extends AnySchema>({
       robotsLive.current = next;
       setRobots(next);
       if (restTimer.current) clearTimeout(restTimer.current);
-      const busy = [...next.values()].some((robot) => robot.mode !== "docked" && robot.mode !== "following" && robot.mode !== "asking");
+      const busy = [...next.values()].some((robot) => robot.mode !== "docked" && robot.mode !== "asking");
       if (busy) {
         restTimer.current = setTimeout(() => {
           const rested = foldRobots(robotsLive.current, { type: "rest", at: Date.now(), holdMs: ROBOT_REST_MS }, kindOf);

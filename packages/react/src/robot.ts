@@ -15,7 +15,13 @@ import type { Author } from "@graview/core";
  * to — so the body and the log can never disagree about who moved.
  */
 
-export type RobotMode = "docked" | "reading" | "writing" | "following" | "refused" | "asking";
+/**
+ * What the seat is doing. `following` retired with the figure that walked
+ * the ground: the seat lives on the frame now, and what it is about is the
+ * companion's subject, not a body trailing the pointer. `docked` stays as
+ * the resting state the rail says "listening" for.
+ */
+export type RobotMode = "docked" | "reading" | "writing" | "refused" | "asking";
 
 export interface RobotState {
   readonly participant: string;
@@ -45,9 +51,7 @@ export type RobotEvent =
   | { readonly type: "refused"; readonly author: Author; readonly at: number; readonly where: string | null; readonly say: string }
   | { readonly type: "asking"; readonly author: Author; readonly at: number; readonly where: string | null; readonly say: string; readonly confidence?: number }
   | { readonly type: "said"; readonly author: Author; readonly at: number; readonly say: string; readonly confidence?: number; readonly caption?: string }
-  | { readonly type: "follow"; readonly author: Author; readonly at: number }
   | { readonly type: "over"; readonly author: Author; readonly at: number; readonly over: string | null }
-  | { readonly type: "release"; readonly author: Author; readonly at: number }
   | { readonly type: "home"; readonly author: Author; readonly at: number }
   | { readonly type: "rest"; readonly at: number; readonly holdMs: number };
 
@@ -110,7 +114,7 @@ export function foldRobots(
   const next = new Map(robots);
   if (event.type === "rest") {
     for (const [key, robot] of robots) {
-      if (robot.mode === "following" || robot.mode === "asking") continue;
+      if (robot.mode === "asking") continue;
       if (robot.mode !== "docked" && event.at - robot.since >= event.holdMs) {
         next.set(key, { ...robot, mode: "docked", at: null, trail: [], say: undefined, confidence: undefined });
       }
@@ -123,13 +127,13 @@ export function foldRobots(
   switch (event.type) {
     case "read": {
       const at = standingFor(event.ids, kindOf);
-      put({ at, mode: robot.mode === "following" ? "following" : "reading", trail: walked(robot.trail, at) });
+      put({ at, mode: "reading", trail: walked(robot.trail, at) });
       return next;
     }
     case "about-to-write":
     case "write": {
       const at = standingFor(event.ids, kindOf);
-      put({ at, mode: robot.mode === "following" ? "following" : "writing", trail: walked(robot.trail, at), say: undefined, confidence: undefined });
+      put({ at, mode: "writing", trail: walked(robot.trail, at), say: undefined, confidence: undefined });
       return next;
     }
     case "refused":
@@ -141,15 +145,11 @@ export function foldRobots(
     case "said":
       put({ say: event.say, ...(event.confidence !== undefined ? { confidence: event.confidence } : { confidence: undefined }), ...(event.caption ? { caption: event.caption } : {}) });
       return next;
-    case "follow":
-      put({ mode: "following", say: undefined, over: null });
-      return next;
     case "over":
-      if (robot.mode !== "following") return next;
+      // What the pointer is on, for a surface that wants it — the companion
+      // reads its own subject, but a presence figure still says where a
+      // teammate's agent is looking.
       put({ over: event.over });
-      return next;
-    case "release":
-      put({ mode: robot.at === null ? "docked" : "reading", over: null });
       return next;
     case "home":
       put({ at: null, mode: "docked", trail: [], say: undefined, confidence: undefined, over: null });

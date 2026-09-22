@@ -2,16 +2,15 @@ import { Store, type AnySchema, type Brand, type GraviewApp, type PresenceChanne
 import { EMPTY_VIEW, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PagesApp, type PageComponent, type PageRegistry } from "@graview/pages";
 import {
-  descentTarget,
+  Companion,
   Inspector,
   OverviewButton,
   Places,
-  QuickRelations,
   Profile,
   ShowInstallation,
-  registerDefaultViews,
-  RelationKey,
   Standing,
+  descentTarget,
+  registerDefaultViews,
   themeCss,
 } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
@@ -254,10 +253,10 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         ) : (
           <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size" }}>
             <Scene renderer="dom" />
-            <RelationKey<S> />
-            <QuickRelations<S> />
             <OverviewButton />
-            <Inspector />
+            {/* One panel on the frame — the acts, the relations, the seat, the key. */}
+            <Companion<S> />
+            <Inspector placement="menu" />
           </div>
         )}
       </GraviewProvider>

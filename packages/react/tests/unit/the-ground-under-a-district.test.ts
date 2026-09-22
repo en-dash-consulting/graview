@@ -1,6 +1,6 @@
-import { BLOCK, toIso } from "@graview/core";
+import { toIso } from "@graview/core";
 import { describe, expect, it } from "vitest";
-import { buildingFaces, heightOf, padPlot, roadBetween, streetPoints, tileCorners, toLattice, villageCap, villageOf } from "../../src/plots.js";
+import { buildingFaces, heightOf, roadBetween, streetPoints, tileCorners, toLattice, villageCap, villageOf } from "../../src/plots.js";
 
 /**
  * A TILE IS THE PLOT THE LAYOUT COMPUTED. Its corners are the plot's four
@@ -33,9 +33,6 @@ describe("the ground under a district", () => {
     expect(panned[0]).toEqual({ x: still[0].x + 15, y: still[0].y - 7 });
   });
 
-  it("gives the robot a pad at the origin block's street corner", () => {
-    expect(padPlot()).toEqual({ col: BLOCK - 1, row: BLOCK - 1, side: 1 });
-  });
 });
 
 describe("a district is a village", () => {

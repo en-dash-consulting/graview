@@ -62,9 +62,7 @@ const ask = async (chat: boolean | { respond?: Responder<typeof schema> }) => {
       </GraviewProvider>,
     );
   });
-  const open = host.querySelector<HTMLButtonElement>('[data-testid="chat"]');
-  if (!open) return { root, said: null };
-  await act(async () => open.click());
+  /* The conversation lives in the companion now, open with the rail — no pill to press. */
   const input = host.querySelector<HTMLInputElement>('[data-testid="chat-panel"] input');
   const form = host.querySelector<HTMLFormElement>('[data-testid="chat-panel"] form');
   if (!input || !form) return { root, said: null };
@@ -109,7 +107,9 @@ describe("the chat in the scene", () => {
         </GraviewProvider>,
       );
     });
-    expect(host.querySelector('[data-testid="chat"]')).toBeNull();
+    // No seat asked for, no conversation in the rail — the acts and the relations stand.
+    expect(host.querySelector('[data-testid="chat-panel"]')).toBeNull();
+    expect(host.querySelector('[data-testid="companion"]')).not.toBeNull();
     await act(async () => root.unmount());
   });
 });

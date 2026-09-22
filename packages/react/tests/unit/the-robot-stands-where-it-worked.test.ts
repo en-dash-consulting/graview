@@ -52,16 +52,6 @@ describe("the robot's standing", () => {
     expect(said.get("agent:tidy:ui")).toMatchObject({ at: "t-1", mode: "reading", say: "(Jev decides rather than talks — the graph is answering here.)" });
   });
 
-  it("follows until released, and following survives the reads and writes of a turn", () => {
-    const follow = foldRobots(none, { type: "follow", author: seat, at: 1 }, kindOf);
-    expect(follow.get("agent:tidy:ui")!.mode).toBe("following");
-    const over = foldRobots(follow, { type: "over", author: seat, at: 2, over: "t-3" }, kindOf);
-    expect(over.get("agent:tidy:ui")!.over).toBe("t-3");
-    const wrote = foldRobots(over, { type: "write", author: seat, ids: ["t-3"], at: 3 }, kindOf);
-    expect(wrote.get("agent:tidy:ui")).toMatchObject({ mode: "following", at: "t-3" });
-    const released = foldRobots(wrote, { type: "release", author: seat, at: 4 }, kindOf);
-    expect(released.get("agent:tidy:ui")).toMatchObject({ mode: "reading", over: null });
-  });
 
   it("goes home when told, and docks by itself after the hold — unless it is following or asking", () => {
     const wrote = foldRobots(none, { type: "write", author: seat, ids: ["t-1"], at: 1 }, kindOf);

@@ -44,11 +44,6 @@ export function tileCorners(plot: PlotLike, city: City, pan: Point = { x: 0, y: 
   ];
 }
 
-/** The robot's pad: one cell at the origin block's street corner, where `padAt` stands it. */
-export function padPlot(): PlotLike {
-  return { col: BLOCK - 1, row: BLOCK - 1, side: 1 };
-}
-
 const points = (corners: readonly Point[]): string => corners.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
 
 export interface PlotsProps {
@@ -122,7 +117,6 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
       .join(" ");
   const roads = still.roads.map((road) => ({ ...road, points: road.points.map(shift) }));
   const style: CSSProperties = { position: "absolute", left: 0, top: 0, pointerEvents: "none", overflow: "visible" };
-  const pad = tileCorners(padPlot(), city, pan);
   return (
     <svg className="graview-plots" aria-hidden="true" width={width} height={height} style={style} data-graview-plots={tiles.length}>
       <g className="graview-roads" data-graview-roads={roads.length}>
@@ -137,9 +131,6 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
             </g>
           );
         })}
-      </g>
-      <g className="graview-plot-pad">
-        <polygon points={points(pad)} />
       </g>
       {tiles.map((node) => {
         const corners = still.corners.get(node.id)!.map(shift) as [Point, Point, Point, Point];

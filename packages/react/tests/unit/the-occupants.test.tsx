@@ -32,7 +32,7 @@ const frame = { nodes: [], connectors: [], width: 800, height: 500, t: 1, city: 
 const stack = { nodes: [], connectors: [], width: 800, height: 500, t: 1 } as never;
 
 describe("the occupants", () => {
-  it("draws the seated robot docked, as a named button, and follows on press until Escape", async () => {
+  it("draws no body for the seat at all: it lives on the frame, in the companion", async () => {
     const host = document.createElement("div");
     document.body.appendChild(host);
     const root = createRoot(host);
@@ -44,33 +44,13 @@ describe("the occupants", () => {
         </GraviewProvider>,
       ),
     );
-    const figure = host.querySelector('[data-graview-figure^="agent:tidy:"]')!;
-    expect(figure).not.toBeNull();
-    expect(figure.getAttribute("data-graview-mode")).toBe("docked");
-    const button = figure.querySelector<HTMLButtonElement>("button")!;
-    expect(button.getAttribute("aria-label")).toContain("tidy — at its dock");
-    await act(async () => button.click());
-    expect(host.querySelector('[data-graview-figure^="agent:tidy:"]')!.getAttribute("data-graview-mode")).toBe("following");
-    await act(async () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
-    expect(host.querySelector('[data-graview-figure^="agent:tidy:"]')!.getAttribute("data-graview-mode")).not.toBe("following");
-    await act(async () => root.unmount());
-    host.remove();
-  });
-
-  it("does not draw a docked robot in the stack, where it has no place of its own", async () => {
-    const host = document.createElement("div");
-    document.body.appendChild(host);
-    const root = createRoot(host);
-    await act(async () =>
-      root.render(
-        <GraviewProvider store={store()} views={createViews(schema)} initialView={EMPTY_VIEW}>
-          <Seated who="tidy" />
-          <Occupants frame={stack} width={800} height={500} whereIs={() => null} stageRef={{ current: host }} pan={{ x: 0, y: 0 }} />
-        </GraviewProvider>,
-      ),
-    );
+    /* No pad, no walk, no follow: a thing in the middle of the picture that
+       moved on its own read as a distraction, and had no place inside a
+       full-screen lens. The companion says who the seat is and what it is
+       doing, at every height. */
     expect(host.querySelector('[data-graview-figure^="agent:tidy:"]')).toBeNull();
     await act(async () => root.unmount());
     host.remove();
   });
+
 });

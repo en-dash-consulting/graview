@@ -16,6 +16,7 @@ import {
   type ToolCall,
 } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSubject } from "./companion.js";
 
 /**
  * A SEAT YOU CAN TALK TO.
@@ -38,6 +39,13 @@ interface Turn {
 }
 
 export interface ChatPanelProps<S extends AnySchema> {
+  /**
+   * Drawn INSIDE something that already frames it — the companion rail —
+   * rather than as a pill on the bar with a panel hanging off it: no
+   * trigger, no float, no border of its own, and always open, because the
+   * rail is what opens and closes.
+   */
+  readonly inside?: boolean;
   /** How the seat answers. Defaults to the graph's own responder. */
   readonly respond?: Responder<S>;
   /** Feeds the app's activity rail, like any other seat. */
@@ -46,18 +54,21 @@ export interface ChatPanelProps<S extends AnySchema> {
 }
 
 export function ChatPanel<S extends AnySchema>({
+  inside = false,
   respond,
   onCall,
   testId = "chat",
 }: ChatPanelProps<S>) {
   const { store, principal, seatWho, noteSeat, robots, session, intelligence: config, registerHostAnswers } = useGraview<S>();
   const { selection } = useSelection();
+  const subject = useSubject<S>();
   /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
   const who = seatWho ?? "chat";
   const author = useMemo(() => ({ kind: "agent" as const, id: who, session }), [who, session]);
   const robot = robots.get(`agent:${who}:${session}`);
-  const following = robot?.mode === "following";
-  const [open, setOpen] = useState(false);
+  const [shown, setOpen] = useState(false);
+  // Inside the rail there is nothing to open: the rail is what opens.
+  const open = inside || shown;
   const [turns, setTurns] = useState<readonly Turn[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -118,22 +129,10 @@ export function ChatPanel<S extends AnySchema>({
   useAttention(runtime);
 
   /*
-   * ANCHORED AS THE ROBOT'S BUBBLE while it follows: the same panel, drawn
-   * beside the figure rather than under the bar's pill, and opened by the
-   * follow itself — the person called it over to talk. Positioned in the
-   * window from the figure's own box, which is inside the scene's.
+   * NO BUBBLE, NO ANCHOR. The panel used to be drawn beside the robot's
+   * body while it followed the pointer; the seat has no body now and the
+   * companion on the frame is where it speaks.
    */
-  const [beside, setBeside] = useState<{ left: number; top: number } | null>(null);
-  useEffect(() => {
-    if (!following) {
-      setBeside(null);
-      return;
-    }
-    setOpen(true);
-    const figure = typeof document === "undefined" ? null : document.querySelector(`[data-graview-figure="agent:${who}:${session}"]`);
-    const rect = figure?.getBoundingClientRect();
-    if (rect) setBeside({ left: Math.max(8, Math.min(window.innerWidth - 328, rect.left + 24)), top: Math.max(8, Math.min(window.innerHeight - 320, rect.top - 40)) });
-  }, [following, who, session, robot?.at, robot?.over]);
 
   // Escape and click-away close it — it floats over the scene.
   useEffect(() => {
@@ -153,7 +152,9 @@ export function ChatPanel<S extends AnySchema>({
   }, [open]);
 
   useEffect(() => {
-    log.current?.scrollTo({ top: log.current.scrollHeight });
+    // A log that cannot be scrolled — jsdom, a print stylesheet — is not a
+    // reason to throw out of an effect and take the rail down with it.
+    log.current?.scrollTo?.({ top: log.current.scrollHeight });
   }, [turns]);
 
   const send = async () => {
@@ -164,10 +165,11 @@ export function ChatPanel<S extends AnySchema>({
     setTurns((current) => [...current, { role: "person", text }]);
     let reply: ChatReply;
     /*
-     * "THIS" IS WHAT THE ROBOT IS AT. While it follows the pointer, the
-     * referent is the pick under the cursor; otherwise the selection.
+     * "THIS" IS THE COMPANION'S SUBJECT: the selection, else what the
+     * pointer has settled on, else where you are. One answer for the whole
+     * frame, so the panel and the header above it cannot disagree.
      */
-    const referent = following && robot?.over ? [robot.over] : selection;
+    const referent = subject.id ? [subject.id] : selection;
     try {
       reply = await answer(store, text, {
         selection: referent,
@@ -238,38 +240,60 @@ export function ChatPanel<S extends AnySchema>({
   };
 
   return (
-    <div ref={anchor} style={{ position: "relative" }}>
-      <button
-        type="button"
-        data-testid={testId}
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-        title="Talk to the seat: ask about anything here, or say a change in words"
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.78125rem" }}
-      >
-        <span aria-hidden="true">◆</span>
-        Ask
-      </button>
+    <div ref={anchor} style={inside ? { display: "grid", minHeight: 0 } : { position: "relative" }}>
+      {inside ? null : (
+        <button
+          type="button"
+          data-testid={testId}
+          aria-expanded={open}
+          onClick={() => setOpen((current) => !current)}
+          title="Talk to the seat: ask about anything here, or say a change in words"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.78125rem" }}
+        >
+          <span aria-hidden="true">◆</span>
+          Ask
+        </button>
+      )}
 
       {open ? (
         <div
           data-testid={`${testId}-panel`}
-          data-graview-offstage=""
-          data-graview-overlay=""
-          data-graview-anchor={beside ? "figure" : "bar"}
+          {...(inside ? {} : { "data-graview-offstage": "", "data-graview-overlay": "" })}
+          data-graview-anchor={inside ? "rail" : "bar"}
           style={{
-            ...(beside
-              ? { position: "fixed", left: beside.left, top: beside.top }
-              : { position: "absolute", top: "calc(100% + 6px)", right: 0 }),
-            zIndex: 30,
-            width: 320,
+            ...(inside
+              ? {
+                  position: "static",
+                  width: "auto",
+                  /*
+                   * A FLOOR, or it is not a conversation. In the rail the
+                   * panel is one item of a scrolling column, and a grid
+                   * item's automatic minimum let the log's `1fr` row
+                   * collapse to nothing whenever the acts above it were
+                   * long: the seat vanished from its own rail, field and
+                   * all, exactly when there was most to ask about.
+                   */
+                  minHeight: 148,
+                }
+              : {
+                  position: "absolute" as const,
+                  top: "calc(100% + 6px)",
+                  right: 0,
+                  zIndex: 30,
+                  width: 320,
+                  borderRadius: 10,
+                  border: "1px solid var(--graview-edge)",
+                  background: "var(--graview-float)",
+                  boxShadow: "var(--graview-lift-high)",
+                }),
             display: "grid",
             gridTemplateRows: "auto 1fr auto",
-            borderRadius: 10,
-            border: "1px solid var(--graview-edge)",
-            background: "var(--graview-float)",
-            boxShadow: "var(--graview-lift-high)",
-            overflow: "hidden",
+            /*
+             * The rail is the scroller here, and the log inside keeps its
+             * own: clipping the panel as well cut the seat's own greeting
+             * off at the bottom of a box it had already outgrown.
+             */
+            overflow: inside ? "visible" : "hidden",
           }}
         >
           <div

@@ -24,7 +24,7 @@ import { useEffect, useMemo } from "react";
  * clicking a card: from up here, "show me what this touches" is the only thing
  * selecting can mean.
  */
-export function RelationKey<S extends AnySchema>() {
+export function RelationKey<S extends AnySchema>({ inside = false }: { readonly inside?: boolean } = {}) {
   const { store, view, emphasis, setEmphasis } = useGraview<S>();
   // The same kit the scene draws with: a swatch that ignored the brand's kit would be a key you cannot trust.
   const kit = useKit();
@@ -62,7 +62,9 @@ export function RelationKey<S extends AnySchema>() {
   // A key that disappears mid-hover must not leave its question standing.
   useEffect(() => () => setEmphasis(null), [setEmphasis]);
 
-  if (!view.overview || relations.length === 0) return null;
+  // Inside the companion it stands at every height: the rail is the one
+  // place the lines are explained, and they are drawn on the ground too.
+  if ((!view.overview && !inside) || relations.length === 0) return null;
 
   /*
    * A relation is LIT when the selection reaches one of the kinds it joins.
@@ -87,7 +89,7 @@ export function RelationKey<S extends AnySchema>() {
     <aside
       aria-label="What the lines mean"
       data-testid="relation-key"
-      style={{
+      style={inside ? { display: "grid", gap: 1 } : {
         position: "absolute",
         /*
          * The TOP-LEFT corner, mirroring the altitude control top-right.

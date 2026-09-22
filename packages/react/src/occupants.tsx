@@ -41,7 +41,6 @@ export function Figure({ hue, mode }: { readonly hue: number; readonly mode: Rob
   const docked = mode === "docked";
   const writing = mode === "writing";
   const reading = mode === "reading";
-  const following = mode === "following";
   const refused = mode === "refused";
   void hue;
   return (
@@ -49,7 +48,7 @@ export function Figure({ hue, mode }: { readonly hue: number; readonly mode: Rob
       <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round">
         {/* antenna */}
         <line x1="16" y1="3.5" x2="16" y2="7" />
-        <circle cx="16" cy="2.6" r="1.5" fill={following ? "currentColor" : "none"} />
+        <circle cx="16" cy="2.6" r="1.5" fill="none" />
         {/* head: a dome */}
         <path d="M8 16 V12.5 C8 8.5 11.5 7 16 7 C20.5 7 24 8.5 24 12.5 V16 Z" fill="currentColor" fillOpacity="0.1" />
         {/* visor and eyes */}
@@ -134,152 +133,27 @@ function onGround(point: { x: number; y: number }, width: number, height: number
 }
 
 /*
- * Two components, so the pointer store is subscribed to ONLY while a robot
- * is following: hooks cannot be conditional, but a component boundary can.
+ * ONE COMPONENT NOW. There used to be two, so the pointer store was
+ * subscribed to only while a robot was following — and nothing follows any
+ * more: the seat lives on the frame, in the companion, and its subject is
+ * read there.
  */
 export function Occupants(props: OccupantsProps): ReactElement | null {
-  const { robots } = useGraview();
-  const following = [...robots.values()].some((robot) => robot.mode === "following");
-  return following ? <FollowingOccupants {...props} /> : <OccupantsBody {...props} pointer={null} />;
+  return <OccupantsBody {...props} />;
 }
 
-function FollowingOccupants(props: OccupantsProps): ReactElement | null {
-  const pointer = useScenePointer();
-  const { robots, noteSeat } = useGraview();
-  /* ESCAPE RELEASES from anywhere — the person called it over; the same key sends it back. Only while following. */
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      for (const robot of robots.values()) {
-        if (robot.mode === "following") noteSeat({ type: "release", author: authorOf(robot) });
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [robots, noteSeat]);
-  return <OccupantsBody {...props} pointer={pointer} />;
-}
-
-function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }: OccupantsProps & { readonly pointer: { x: number; y: number } | null }): ReactElement | null {
+function OccupantsBody({ frame, width, height, whereIs, stageRef, pan }: OccupantsProps): ReactElement | null {
   const { robots, noteSeat, principal, store, administered, who, following, follow } = useGraview();
-  const [trails, setTrails] = useState<Record<string, readonly { x: number; y: number }[]>>({});
-  const lastAt = useRef<Record<string, string | null>>({});
-  /* Where each body was last drawn, and where a following one is holding still to be caught. */
-  const lastPoint = useRef<Record<string, { x: number; y: number }>>({});
-  const heldStill = useRef<Record<string, { x: number; y: number }>>({});
-
-  /*
-   * THE DOCK: the seated person's own building when the installation is
-   * shown and they have a node; else the pad at the origin cell. Both are
-   * real places on the lattice — the robot is never parked in a corner
-   * of the window.
-   */
-  const dock = useMemo((): { at: string | null; point: { x: number; y: number } | null; pad: boolean } => {
-    const shown = administered.some((module) => module.shown);
-    const own = principal.id ? store.graph.getNode(principal.id) : undefined;
-    if (shown && own) {
-      const box = whereIs(own.id) ?? whereIs(kindCardId(own.kind as string));
-      if (box) return { at: own.id, point: footOf(box), pad: false };
-    }
-    const pad = padAt(frame, pan);
-    if (pad) return { at: null, point: pad, pad: true };
-    // No city drawn (inside the stack): the robot stands on the shelf's first
-    // district, at its far end — it stood at the centre before, with its name
-    // across the card's own nameplate, which read as a label on the wrong
-    // thing. Beside the shelf was tried and fell off the ground at the
-    // widest window; the card's right end is empty and always on screen.
-    const first = frame.nodes.find((node) => Math.round(node.plane) === 2);
-    const box = first ? whereIs(first.id) : null;
-    return { at: null, point: box ? { x: box.x + box.width - 22, y: box.y - 6 } : { x: width / 2, y: height - 40 }, pad: false };
-  }, [administered, principal.id, store, whereIs, frame, pan, width, height]);
-
-  const placed = [...robots.values()].map((robot) => {
-    let point: { x: number; y: number } | null = null;
-    let over: string | null = null;
-    if (robot.mode === "following" && pointer) {
-      /*
-       * TRAILING THE POINTER, offset so it never sits under the cursor —
-       * and HOLDING STILL WHEN REACHED FOR. Placed at a fixed offset it
-       * moved away by exactly as much as the hand came toward it, and a
-       * robot you cannot catch cannot be pressed to let go. Within reach
-       * it stays where it is; once the hand goes back to work it follows.
-       */
-      const trailing = { x: pointer.x + 22, y: pointer.y + 26 };
-      const held = heldStill.current[robot.participant];
-      const near = (p: { x: number; y: number }) => Math.hypot(pointer.x - p.x, pointer.y - (p.y - BODY_ABOVE / 2));
-      if (held && near(held) < CATCH_REACH * 2) point = held;
-      else {
-        const last = lastPoint.current[robot.participant];
-        if (last && near(last) < CATCH_REACH) {
-          heldStill.current[robot.participant] = last;
-          point = last;
-        } else {
-          delete heldStill.current[robot.participant];
-          point = trailing;
-        }
-      }
-      over = overAt(stageRef.current, pointer);
-    } else if (robot.at !== null) {
-      const box = whereIs(robot.at);
-      point = box ? footOf(box) : dock.point;
-    } else if (dock.pad || dock.at !== null) {
-      point = dock.point;
-    } else {
-      /*
-       * DOCKED IN THE STACK, WITH NO PLACE OF ITS OWN: not drawn. There is
-       * no pad down here, and a body parked on whichever district happens
-       * to be first on the shelf moved every time the shelf did — which
-       * read as a robot tagging along unasked. It appears when it has
-       * something to do, stands where it works, and rests out of the
-       * picture; from altitude it has its pad.
-       */
-      point = null;
-    }
-    const drawn = point ? onGround(point, width, height) : point;
-    if (drawn) lastPoint.current[robot.participant] = drawn;
-    else delete lastPoint.current[robot.participant];
-    return { robot, point: drawn, over };
-  });
-
-  /* What is under the pointer while following reaches the fold, so "this" in chat means it. */
-  useEffect(() => {
-    for (const { robot, over } of placed) {
-      if (robot.mode !== "following") continue;
-      if ((robot.over ?? null) !== over) {
-        noteSeat({ type: "over", author: authorOf(robot), over });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pointer?.x, pointer?.y, robots]);
-
-  /* The trail: where it has been this turn, a dotted line that fades. */
-  useEffect(() => {
-    setTrails((current) => {
-      const next: Record<string, readonly { x: number; y: number }[]> = {};
-      for (const { robot, point } of placed) {
-        if (!point) continue;
-        const was = lastAt.current[robot.participant];
-        const moved = was !== robot.at;
-        lastAt.current[robot.participant] = robot.at;
-        if (robot.mode === "docked") continue;
-        const held = current[robot.participant] ?? [];
-        next[robot.participant] = moved ? [...held, point].slice(-12) : held;
-      }
-      return next;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [robots]);
-
   /*
    * THE OTHERS, on this map. Placed here with this frame's own whereIs, so
    * each viewer draws the same people at the same plots in its own pixels.
    */
   const others = placeOthers([...who.values()], whereIs, width, height);
 
-  if (placed.length === 0 && others.length === 0) return null;
+  if (others.length === 0) return null;
 
   return (
-    <div className="graview-occupants" data-testid="occupants" data-graview-occupants={placed.length + others.length}>
+    <div className="graview-occupants" data-testid="occupants" data-graview-occupants={others.length}>
       {others.map((one, index) => {
         if (one.kind === "over") {
           return (
@@ -371,78 +245,21 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan, pointer }
           </div>
         );
       })}
-      {placed.map(({ robot, point }) => {
-        if (!point) return null;
-        const hue = hueFor(robot.who);
-        const visible = point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height;
-        const style: CSSProperties = { transform: `translate(${point.x.toFixed(1)}px, ${point.y.toFixed(1)}px)`, ["--graview-hue" as string]: hue };
-        const author = authorOf(robot);
-        const toggleFollow = () =>
-          noteSeat(robot.mode === "following" ? { type: "release", author } : { type: "follow", author });
-        const label = robot.caption ?? robot.who;
-        const status = robot.say ?? (robot.mode === "docked" ? "at its dock" : robot.mode === "following" ? "following you" : robot.mode);
-        const trail = trails[robot.participant] ?? [];
-        return (
-          <div key={robot.participant}>
-            {trail.length > 1 && robot.mode !== "docked" ? (
-              <svg className="graview-figure-trail" width={width} height={height} aria-hidden="true">
-                <path key={trail.length} d={trail.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ")} />
-              </svg>
-            ) : null}
-            <div
-              className="graview-figure"
-              data-graview-figure={robot.participant}
-              data-graview-mode={robot.mode}
-              data-graview-at={robot.at ?? ""}
-              style={style}
-            >
-              <button
-                type="button"
-                className="graview-figure-body"
-                aria-label={`${label} — ${status}${robot.mode === "following" ? ". Press to release" : ". Press to have it follow you"}`}
-                aria-pressed={robot.mode === "following"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  toggleFollow();
-                }}
-                onPointerDown={(event) => event.stopPropagation()}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape" && robot.mode === "following") {
-                    event.stopPropagation();
-                    noteSeat({ type: "release", author });
-                  }
-                }}
-              >
-                <Figure hue={hue} mode={robot.mode} />
-              </button>
-              <span className="graview-figure-name">{label}</span>
-              {robot.say || robot.mode === "refused" || robot.mode === "asking" ? (
-                <p className="graview-figure-bubble" data-testid="figure-bubble" aria-live="polite">
-                  {robot.say}
-                  {robot.confidence !== undefined ? <small>{Math.round(robot.confidence * 100)}% sure</small> : null}
-                </p>
-              ) : (
-                <span className="graview-visually-hidden" aria-live="polite">{`${label}: ${status}`}</span>
-              )}
-            </div>
-            {!visible ? (
-              <button
-                type="button"
-                className="graview-figure-edge"
-                data-testid="figure-edge"
-                style={{
-                  left: Math.max(8, Math.min(width - 120, point.x)),
-                  top: Math.max(8, Math.min(height - 28, point.y)),
-                }}
-                onClick={toggleFollow}
-                aria-label={`${label} is off the visible ground — ${status}`}
-              >
-                {robot.mode === "following" ? "↖" : point.x < 0 ? "←" : point.x > width ? "→" : point.y < 0 ? "↑" : "↓"} {label}: {status}
-              </button>
-            ) : null}
-          </div>
-        );
-      })}
+      {/*
+        * THE SEAT HAS NO BODY IN THE PICTURE ANY MORE.
+        *
+        * It stood on a pad when idle, walked to what it wrote, and followed
+        * the pointer when pressed, with the chat anchored beside it as a
+        * bubble — a thing in the middle of the picture that moved on its
+        * own, and nothing at all inside a full-screen lens, where there is
+        * no ground to walk on. The companion on the frame says who the seat
+        * is, what it is about and what it is doing, at every height and in
+        * every mode. What it WROTE is marked on the things themselves.
+        *
+        * Other people's agents keep their figures: a body in the picture is
+        * how you see somebody else at work, which is the whole point of
+        * presence.
+        */}
     </div>
   );
 }

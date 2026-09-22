@@ -95,16 +95,24 @@ Everything intelligent travels the same contract — validated proposed calls
 to declared mutations — so adding AI is choosing a provider, never a second
 path to the store:
 
-- **Providers** whisper suggestions into the inspector (`insightProvider`
-  ships in the defaults; `intelligenceProvider(...)` wraps any
-  `Intelligence`).
+- **Providers** whisper suggestions into the companion's acts
+  (`insightProvider` ships in the defaults; `intelligenceProvider(...)`
+  wraps any `Intelligence`).
 - **The seat** (this skill) runs one-press turns.
-- **The chat** — `<ChatPanel />` in the bar — answers questions in words.
+- **The companion** — `<Companion />`, the scene's left rail — is the one
+  place the seat lives: it names its subject (the selection, else the pick
+  the pointer settled on, else where you are), lists that subject's acts,
+  its relations, the conversation and the key. Right-click opens the same
+  acts at the pointer, so the context menu and the assistant are one
+  construct. The seat has no figure in the picture; other people's agents
+  still have theirs. `useSubject()` gives the same answer to any surface.
+- **The conversation** — a section of that rail — answers questions in words.
   Keyless it answers from the graph (`graphResponder`: standings, named
   things, when/who, mutations phrased in their own titles); a model plugs in
   through one completion function (`llmResponder`, `xaiCompletion`,
   `localCompletion`), chosen by the person in the panel's gear. **Your own
-  responder goes in through the shell**: `<Shell chat={{ respond }} />`.
+  responder goes in through the shell**: `<Shell chat={{ respond }} />`,
+  which hands it to the companion.
   "Why do I still have mosquitoes?" is a walk through THIS graph, and the
   generic answer to it is a plausible paragraph about gardens.
 - **External agents** arrive over the derived tool surface with a scoped

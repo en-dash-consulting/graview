@@ -2,13 +2,11 @@ import type { AnySchema } from "@graview/core";
 import { Scene, useGraview, UrlSync, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode } from "react";
-import { ChatPanel } from "./chat.js";
+import { Companion } from "./companion.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { ShowInstallation } from "./installation.js";
 import { Profile } from "./profile.js";
 import { Places } from "./places.js";
-import { QuickRelations } from "./quick-relations.js";
-import { RelationKey } from "./relation-key.js";
 import {
   ActivityRail,
   BackOut,
@@ -211,12 +209,6 @@ export function Shell<S extends AnySchema>({
           ) : null}
           <Standing clean={standing} />
           <FollowingLine />
-          {chat ? (
-            <ChatPanel<S>
-              onCall={onCall}
-              {...(typeof chat === "object" && chat.respond ? { respond: chat.respond } : {})}
-            />
-          ) : null}
           <ActivityRail remembers={remembers} calls={calls} seat={seat?.(onCall)} />
           {/*
             * The scheme lives in the profile, with the other things that
@@ -256,11 +248,23 @@ export function Shell<S extends AnySchema>({
         style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size", outline: "none" }}
       >
         <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
-        <RelationKey<S> />
-        <QuickRelations<S> />
         {/* The altitude control, on the picture it controls. */}
         <OverviewButton />
-        <Inspector />
+        {/*
+          * THE COMPANION: the acts, the relations, the seat and the key, on
+          * the frame, about one subject. It replaces the relation key, the
+          * quick relations, the inspector's rail and the bar's Ask pill —
+          * four panels that each said the current subject in their own
+          * corner — and the robot that used to carry the last of them
+          * around the ground.
+          */}
+        <Companion<S>
+          chat={chat !== false}
+          onCall={onCall}
+          {...(typeof chat === "object" && chat.respond ? { respond: chat.respond } : {})}
+        />
+        {/* The same pane at the pointer: right-click is the context menu, and it is this. */}
+        <Inspector placement="menu" />
       </main>
     </div>
   );

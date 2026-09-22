@@ -352,9 +352,18 @@ try {
       landedOn: await page.evaluate(() => location.hash),
       // A live picture, not a blank page.
       views: await page.evaluate(() => document.querySelectorAll("[data-graview-view]").length),
+      /*
+       * The rail is furniture: it stands whatever happens, about wherever
+       * you now are. What must not survive is the DEAD NODE — a pane still
+       * offering acts on a thing that is gone.
+       */
       pane: await page.evaluate(
         () => document.querySelector('[data-testid="inspector-strip"]')?.innerText ?? null,
       ),
+      subject: await page.evaluate(
+        () => document.querySelector('[data-testid="companion"]')?.getAttribute("data-graview-subject") ?? null,
+      ),
+      victim,
     };
   };
   const removed = await dropTheFocus();
@@ -365,7 +374,9 @@ try {
       removed.standingIn.includes("focus=t-") &&
       !removed.landedOn.includes(removed.standingIn.replace(/^#focus=/, "").split("&")[0]) &&
       removed.views > 0 &&
-      removed.pane === null,
+      // Nothing left standing about the thing that is gone.
+      removed.subject !== removed.victim &&
+      !(removed.pane ?? "").includes(removed.victim ?? "\u0000"),
   };
 
   /* --------------- the two doors the back button did not know about */

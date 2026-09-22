@@ -1,0 +1,110 @@
+{
+  "at": "2026-09-21T23:10:35.285Z",
+  "engine": "chromium",
+  "checks": {
+    "theRailIsFixed": {
+      "onTheGround": {
+        "x": 14,
+        "y": 71,
+        "w": 264,
+        "h": 462
+      },
+      "aloft": {
+        "x": 14,
+        "y": 71,
+        "w": 264,
+        "h": 324
+      },
+      "closer": {
+        "x": 14,
+        "y": 71,
+        "w": 264,
+        "h": 324
+      },
+      "inALens": {
+        "x": 14,
+        "y": 71,
+        "w": 264,
+        "h": 378
+      },
+      "ok": true
+    },
+    "theSubjectFollowsTheHover": {
+      "atRest": {
+        "id": "aggregate:list",
+        "because": "place",
+        "said": "Lists"
+      },
+      "pointed": {
+        "id": "t-deposit",
+        "because": "hover",
+        "said": "Pay the deposit"
+      },
+      "chosen": {
+        "id": "t-deposit",
+        "because": "selection",
+        "said": "Pay the deposit"
+      },
+      "ok": true
+    },
+    "thisIsTheSubject": {
+      "reply": "Pay the deposit — a task (finished No, due 2026-08-28, day TUE). the list it is on: Today. why this is here: The landlor",
+      "ok": true
+    },
+    "rightClickOpensItHere": {
+      "railActs": 9,
+      "menu": {
+        "acts": [
+          "invariant:nothing-overdue:0:0",
+          "invariant:nothing-overdue:0:1",
+          "schema:rename",
+          "schema:edit-task",
+          "schema:plan-it",
+          "schema:explain",
+          "schema:move-to-list",
+          "schema:wait-for",
+          "schema:drop"
+        ],
+        "struck": 0,
+        "railAlso": 0
+      },
+      "ok": true
+    },
+    "escapeClosesThePopover": {
+      "menu": false,
+      "subject": "t-deposit",
+      "ok": true
+    },
+    "theInspectorsActsAreInIt": {
+      "acts": [
+        "invariant:nothing-overdue:0:0",
+        "invariant:nothing-overdue:0:1",
+        "schema:rename",
+        "schema:edit-task",
+        "schema:plan-it",
+        "schema:explain",
+        "schema:move-to-list",
+        "schema:wait-for",
+        "schema:drop"
+      ],
+      "ok": true
+    },
+    "quietCityRunsNothing": {
+      "animations": 0,
+      "figures": 0,
+      "ok": true
+    },
+    "aRefusalIsSaidAtTheGate": {
+      "thread": "give a role keeper to Sam | I can do that. Review it below — it applies like any other change, and undo works.Give a role — Sam — Not permitted: grant on a user — keeper can. The keeper keeps the inst",
+      "state": "tidy · refused",
+      "ok": true
+    },
+    "keyboardReachesIt": {
+      "reached": true,
+      "shut": "shut",
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

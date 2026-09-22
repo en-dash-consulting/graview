@@ -300,7 +300,8 @@ async function verifyLocalFallback() {
       webgpu: "gpu" in navigator,
       promptApi: "LanguageModel" in globalThis,
     }));
-    await page.click('[data-testid="chat"]');
+    /* The rail is already open: the conversation is a section of it, not a panel behind a pill. */
+    await page.waitForSelector('[data-testid="chat-panel"]');
     await page.fill('[aria-label="Message the seat"]', "what is here?");
     await page.press('[aria-label="Message the seat"]', "Enter");
     // The graph floor answers while the rung tries to warm; the warm-up

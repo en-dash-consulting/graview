@@ -36,7 +36,7 @@ const MOST_KINDS = 1;
 /** A chip is a handle, not a sentence: long names cut with their full text on hover. */
 const MOST_LABEL = 18;
 
-export function QuickRelations<S extends AnySchema>() {
+export function QuickRelations<S extends AnySchema>({ inside = false }: { readonly inside?: boolean } = {}) {
   const { store, view, brand, menuAt } = useGraview<S>();
   const { set } = useSelection();
   const { selection } = useSelection();
@@ -99,27 +99,31 @@ export function QuickRelations<S extends AnySchema>() {
     <aside
       aria-label="Quick select"
       data-testid="quick-relations"
-      style={{
-        /*
-         * The SAME dress the legend wears at altitude: one corner, one
-         * visual language at both heights. Loose chips floating on the
-         * ground read as something spilled; a panel reads as something
-         * placed.
-         */
-        position: "absolute",
-        left: 16,
-        top: 14,
-        zIndex: 5,
-        display: "grid",
-        gap: 5,
-        maxWidth: 250,
-        padding: "8px 10px",
-        borderRadius: 10,
-        border: "1px solid var(--graview-edge)",
-        background: "var(--graview-float)",
-        boxShadow: "var(--graview-lift-low)",
-        animation: "graview-settle 380ms 120ms ease backwards",
-      }}
+      style={
+        inside
+          ? { display: "grid", gap: 5 }
+          : {
+              /*
+               * The SAME dress the legend wears at altitude: one corner, one
+               * visual language at both heights. Loose chips floating on the
+               * ground read as something spilled; a panel reads as something
+               * placed.
+               */
+              position: "absolute",
+              left: 16,
+              top: 14,
+              zIndex: 5,
+              display: "grid",
+              gap: 5,
+              maxWidth: 250,
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "1px solid var(--graview-edge)",
+              background: "var(--graview-float)",
+              boxShadow: "var(--graview-lift-low)",
+              animation: "graview-settle 380ms 120ms ease backwards",
+            }
+      }
     >
       {rows.map((row) => (
         <div key={row.kind} style={{ display: "grid", gap: 5 }}>

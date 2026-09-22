@@ -476,14 +476,6 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   stroke: var(--graview-accent);
   stroke-opacity: 0.9;
 }
-/* The robot's pad: one cell at the origin block, in the ground's own ink. */
-.graview-plot-pad polygon {
-  fill: none;
-  stroke: var(--graview-ink-faint);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-  opacity: 0.7;
-}
 /* FIELDS. From altitude the ground darkens a shade toward the near edge and
    fades to the page at the horizon, so the lattice is land with a distance
    rather than paper with a pattern. */

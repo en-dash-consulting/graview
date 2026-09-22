@@ -1,15 +1,23 @@
 {
-  "at": "2026-09-21T04:23:44.543Z",
+  "at": "2026-09-21T23:11:16.199Z",
   "engine": "chromium",
   "checks": {
-    "closedByDefault": {
+    "itLivesInTheRail": {
+      "inTheRail": true,
+      "anchor": "rail",
+      "tall": 222,
+      "noPill": true,
       "ok": true
     },
-    "opensAndCloses": {
-      "opened": true,
-      "escaped": true,
-      "escapeKeptTheSelection": true,
-      "clickedAway": true,
+    "theRailStandsThroughEscape": {
+      "before": {
+        "selected": true,
+        "subject": "t-deposit"
+      },
+      "after": {
+        "panel": true,
+        "subject": "t-deposit"
+      },
       "ok": true
     },
     "headerSaysGraphNative": {

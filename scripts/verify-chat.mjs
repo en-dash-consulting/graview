@@ -79,56 +79,62 @@ try {
   await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
 
-  /* -------------------------------------------- closed until asked for */
-  report.checks.closedByDefault = {
-    ok: await page.evaluate(
-      () =>
-        document.querySelector('[data-testid="chat-panel"]') === null &&
-        document.querySelector('[data-testid="chat"]')?.getAttribute("aria-expanded") === "false",
-    ),
-  };
+  /* ------------------------- in the rail, open with it, with no pill of its own */
+  report.checks.itLivesInTheRail = await page.evaluate(() => {
+    const panel = document.querySelector('[data-testid="chat-panel"]');
+    const rail = document.querySelector('[data-testid="companion"]');
+    const box = panel?.getBoundingClientRect();
+    return {
+      inTheRail: rail !== null && panel !== null && rail.contains(panel),
+      anchor: panel?.getAttribute("data-graview-anchor") ?? null,
+      // Seen, not merely present: a collapsed grid row is a seat that is not there.
+      tall: Math.round(box?.height ?? 0),
+      noPill: document.querySelector('[data-testid="chat"]') === null,
+      ok:
+        rail !== null &&
+        panel !== null &&
+        rail.contains(panel) &&
+        (box?.height ?? 0) > 100 &&
+        document.querySelector('[data-testid="chat"]') === null,
+    };
+  });
 
-  /* -------------------------- opens, and every way out actually leads out */
+  /* ------------------- the rail stands through Escape, and keeps its subject */
   /*
-   * ONE PRESS, ONE RUNG. With something selected underneath, Escape closes
-   * the panel and nothing else: the product-wide ladder used to take the
-   * same press and drop the selection with it. The ladder's own listener
-   * now asks in the capture phase whether a popover is open — the panel's
-   * document listener runs first in the bubble and React has committed its
-   * closing by the time a bubble listener on the window looks — and only a
-   * real browser dispatches in that order, so this is where it is held.
+   * The conversation used to be a popover behind a pill, and every way out
+   * of it had to lead out. It is a section of the companion now, which is
+   * furniture: Escape closes a pointer popover and nothing else, and the
+   * subject the panel is about does not change underneath the person who
+   * just pressed a key.
    */
   await page.click('[data-graview-pick="t-deposit"]');
-  await page.waitForTimeout(300);
-  const selectedBefore = await page.evaluate(() => location.hash.includes("sel="));
-  await page.click('[data-testid="chat"]');
-  const opened = (await page.$('[data-testid="chat-panel"]')) !== null;
+  await page.waitForTimeout(400);
+  const before = await page.evaluate(() => ({
+    selected: location.hash.includes("sel="),
+    subject: document.querySelector('[data-testid="companion"]')?.getAttribute("data-graview-subject") ?? null,
+  }));
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(150);
-  const escaped = (await page.$('[data-testid="chat-panel"]')) === null;
-  const escapeKeptTheSelection = selectedBefore && (await page.evaluate(() => location.hash.includes("sel=")));
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(300);
-  await page.click('[data-testid="chat"]');
-  await page.waitForSelector('[data-testid="chat-panel"]');
-  await page.mouse.click(1450, 720); // empty ground, well away from the panel
-  await page.waitForTimeout(150);
-  const clickedAway = (await page.$('[data-testid="chat-panel"]')) === null;
-  report.checks.opensAndCloses = {
-    opened,
-    escaped,
-    escapeKeptTheSelection,
-    clickedAway,
-    ok: opened && escaped && escapeKeptTheSelection && clickedAway,
+  await page.waitForTimeout(250);
+  const after = await page.evaluate(() => ({
+    panel: document.querySelector('[data-testid="chat-panel"]') !== null,
+    subject: document.querySelector('[data-testid="companion"]')?.getAttribute("data-graview-subject") ?? null,
+  }));
+  report.checks.theRailStandsThroughEscape = {
+    before,
+    after,
+    ok: before.selected && after.panel && after.subject === before.subject,
   };
 
-  // The click-away may have selected whatever it landed near; a clean
-  // conversation starts unselected, so "what is here?" means the graph.
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(150);
+  /*
+   * A clean conversation starts about nothing in particular, so "what is
+   * here?" means the graph rather than the task still in hand: clicking the
+   * bare ground puts the selection down, which is the gesture every canvas
+   * teaches, and the rail's subject falls back to where you are.
+   */
+  await page.mouse.click(1450, 760);
+  await page.waitForTimeout(400);
 
   /* ------------------------------------ the header says what is answering */
-  await page.click('[data-testid="chat"]');
   await page.waitForSelector('[data-testid="chat-panel"]');
   const source = await page.textContent('[data-testid="chat-source"]');
   report.checks.headerSaysGraphNative = { source, ok: source?.trim() === "graph-native" };
@@ -230,7 +236,8 @@ try {
   });
   await remote.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
   await remote.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
-  await remote.click('[data-testid="chat"]');
+  /* The rail is already open: the conversation is a section of it, not a panel behind a pill. */
+  await remote.waitForSelector('[data-testid="chat-panel"]');
   await remote.waitForSelector('[data-testid="chat-panel"]');
   const remoteSource = await remote.textContent('[data-testid="chat-source"]');
 
@@ -269,7 +276,8 @@ try {
     await page.waitForTimeout(150);
     // Escape put the profile away and the chat with it; the conversation comes back.
     if (!(await page.$('[data-testid="chat-panel"]'))) {
-      await page.click('[data-testid="chat"]');
+      /* The rail is already open: the conversation is a section of it, not a panel behind a pill. */
+      await page.waitForSelector('[data-testid="chat-panel"]');
       await page.waitForSelector('[data-testid="chat-panel"]');
     }
   };
@@ -300,7 +308,8 @@ try {
   await remote.keyboard.press("Escape");
   await remote.waitForTimeout(150);
   if (!(await remote.$('[data-testid="chat-panel"]'))) {
-    await remote.click('[data-testid="chat"]');
+    /* The rail is already open: the conversation is a section of it, not a panel behind a pill. */
+    await remote.waitForSelector('[data-testid="chat-panel"]');
     await remote.waitForSelector('[data-testid="chat-panel"]');
   }
   await remote.waitForFunction(

@@ -124,9 +124,18 @@ export function useImplicated(): readonly string[] {
  * stale and no "refresh actions" button.
  */
 export function useAffordances<S extends AnySchema>(
-  options: DeriveOptions<S> = {},
+  options: DeriveOptions<S> & {
+    /**
+     * Derive for THESE ids rather than the selection. The companion's rail
+     * is about a subject that may be nothing anybody clicked — the place
+     * you are looking at — and the acts under its name have to be its own.
+     */
+    readonly about?: readonly string[];
+  } = {},
 ): AffordanceSet {
-  const { store, selection, principal, providers } = useGraview<S>();
+  const { store, selection: chosen, principal, providers } = useGraview<S>();
+  const { about, ...rest } = options;
+  const selection = about ?? chosen;
   const nodes = useGraph<S>();
   return useMemo(() => {
     // A selected kind card or district denotes KINDS; the binding owns those
@@ -144,7 +153,7 @@ export function useAffordances<S extends AnySchema>(
       kindSelection,
       edgeSelection,
       ...(providers ? { providers } : {}),
-      ...options,
+      ...rest,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, selection, options, nodes, principal, providers]);

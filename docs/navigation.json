@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-21T04:25:20.345Z",
+  "at": "2026-09-21T23:09:29.047Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.539309,
+      "wingOpacity": 0.588957,
       "registered": true
     },
     "groundAgain": {
@@ -143,7 +143,9 @@
     "standingIn": "#focus=t-deposit&sel=t-deposit",
     "landedOn": "#focus=aggregate%3Alist",
     "views": 5,
-    "pane": null,
+    "pane": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject.",
+    "subject": "aggregate:list",
+    "victim": "t-deposit",
     "ok": true
   },
   "installationIsAStop": {
@@ -213,15 +215,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 332.99993896484375,
-        "height": 173,
+        "width": 345.00006103515625,
+        "height": 171.00003051757812,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 280.0000305175781,
-        "height": 229,
-        "opacity": 0.487767
+        "width": 276.0000305175781,
+        "height": 225.00006103515625,
+        "opacity": 0.441514
       }
     ],
     "afterSwitch": [
@@ -256,9 +258,9 @@
       "up": true
     },
     "midway": {
-      "x": 770.2348022460938,
-      "y": 319.9204406738281,
-      "width": 371
+      "x": 772.7803344726562,
+      "y": 313.73370361328125,
+      "width": 361
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",

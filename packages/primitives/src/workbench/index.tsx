@@ -1,4 +1,5 @@
 import { humaniseField, labelOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { useSubject } from "../companion.js";
 import {
   kindCardId,
   aggregateId,
@@ -442,8 +443,21 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
  * Graview the relation key holds the top of the same rail and this pane
  * takes the run of it below.
  */
-export function Inspector() {
+/**
+ * Where this pane is drawn.
+ *
+ * `float` is what it always was: a rail beside the picture, or a bar along
+ * the bottom when the scene is narrow, and the same pane at the pointer
+ * when a right-click opened it. `rail` is its body inside the companion,
+ * which owns the frame and the scrolling; `menu` is only the pointer
+ * popover, for a scene whose rail is the companion — so the context menu
+ * and the assistant stay one construct without drawing the acts twice.
+ */
+export type InspectorPlacement = "float" | "rail" | "menu";
+
+export function Inspector({ placement = "float" }: { readonly placement?: InspectorPlacement } = {}) {
   const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
+  const subject = useSubject();
   /*
    * The pane is positioned within the SCENE'S BOX, not the window. It was
    * fixed to the viewport, which put it at the page's edge when the scene
@@ -555,10 +569,24 @@ export function Inspector() {
    * that is simply the selected node, which is what "resolve THIS item's
    * problem" means when only one item is in hand.
    */
-  const focus = menuAt?.on ?? selection[selection.length - 1];
+  /*
+   * WHAT THIS PANE IS ABOUT. The gesture's own target when a right-click
+   * opened it, else the most recent addition to the selection — and, in
+   * the companion's rail, the rail's own subject when nothing is chosen,
+   * so the acts belong to the thing the header names. A rail that said
+   * "Pay the deposit" over the acts of nothing was two panels again.
+   */
+  const focus = menuAt?.on ?? selection[selection.length - 1] ?? (placement === "rail" ? (subject.id ?? undefined) : undefined);
+  /*
+   * In the rail with nothing chosen, the acts are the SUBJECT's: what the
+   * header names is what the buttons under it do. Everywhere else the
+   * selection is what the strip is about, as it always was.
+   */
+  const about = placement === "rail" && selection.length === 0 && subject.id ? [subject.id] : undefined;
   const deriveOptions = useMemo(
-    () => ({ pins, ...(focus === undefined ? {} : { focus }) }),
-    [pins, focus],
+    () => ({ pins, ...(focus === undefined ? {} : { focus }), ...(about ? { about } : {}) }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pins, focus, about?.[0]],
   );
   // Which acts the app itself pinned — the star on those demotes rather
   // than doubling up, so pressing it always visibly does something.
@@ -688,6 +716,13 @@ export function Inspector() {
   }, [menuAt, setMenuAt]);
 
   const atPointer = menuAt !== null;
+  /*
+   * In the companion's rail the pane is a SECTION, and the pointer popover
+   * belongs to the copy mounted for it: drawing both would put the acts on
+   * screen twice, once in the rail and once under the pointer.
+   */
+  const railed = placement === "rail" && !atPointer;
+  const standDown = (placement === "rail" && atPointer) || (placement === "menu" && !atPointer);
 
   /*
    * Whether the picture has room for a rail beside it. Measured from the
@@ -726,7 +761,15 @@ export function Inspector() {
   });
 
 
-  if (selection.length === 0) return null;
+  /*
+   * NOTHING CHOSEN, NOTHING TO SAY — as a floating strip. In the rail the
+   * pane is a section of a panel that is about SOMETHING at all times: the
+   * subject is the place you are looking at when you have chosen nothing,
+   * and the acts that begin a kind are exactly what belongs under its name
+   * there. So the rail draws whatever the derivation offers for the
+   * subject, and stands down only when that is empty too.
+   */
+  if (selection.length === 0 && (placement !== "rail" || focus === undefined)) return null;
 
   /*
    * Whether the strip should say what is selected.
@@ -738,7 +781,12 @@ export function Inspector() {
    * from the bottom of the window read as a stale leftover of the previous
    * stop.
    */
-  const named = !(selection.length === 1 && selection[0] === view.focusId);
+  /*
+   * And in the companion the header above already names the subject, so a
+   * chip saying "0 selected" under it is the same mistake from the other
+   * direction: the rail is one panel about one thing, said once.
+   */
+  const named = !(selection.length === 1 && selection[0] === view.focusId) && placement !== "rail";
 
   /*
    * Nine rows before "Show N more", and the ranking has already put what
@@ -851,6 +899,7 @@ export function Inspector() {
     .filter((observation) => !headed.has(observation.text))
     .map((observation) => ({ ...observation, text: trim(observation.text) }));
 
+  if (standDown) return null;
   return (
     <aside
       ref={asideRef}
@@ -868,7 +917,14 @@ export function Inspector() {
         if (event.relatedTarget !== null) keptFocus.current = null;
       }}
       onMouseDown={(event) => event.stopPropagation()}
-      style={{
+      style={railed ? {
+        // In the rail the companion owns the frame: this is a section of it.
+        position: "static",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        gap: 7,
+      } : {
         position: "absolute",
         /*
          * Above the jacked-in page, not only above the scene.
@@ -965,7 +1021,7 @@ export function Inspector() {
           gap: "2px 8px",
           minWidth: 0,
           // Room for the dismiss control pinned to the pane's corner.
-          paddingRight: atPointer ? 0 : 24,
+          paddingRight: atPointer || railed ? 0 : 24,
         }}
       >
         {/*
@@ -1013,7 +1069,10 @@ export function Inspector() {
             that lost its way. The docked strip keeps it: clearing the
             selection is a real act there. */}
       </div>
-      {atPointer ? null : (
+      {/* And in the rail the × belonged to a pane that could be dismissed; this
+          one cannot — the companion is always there, and its subject follows
+          you whether or not anything is chosen. */}
+      {atPointer || railed ? null : (
         <button
           type="button"
           onClick={() => {

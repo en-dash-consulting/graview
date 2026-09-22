@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-21T21:03:05.497Z",
+  "at": "2026-09-21T23:13:02.125Z",
   "engine": "chromium",
   "screens": [
     {
@@ -20,7 +20,12 @@
       "asking": [],
       "board": [],
       "fill": 60,
-      "inspector": null,
+      "inspector": {
+        "shown": 0,
+        "hidden": 0,
+        "size": "238x59",
+        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+      },
       "led": null,
       "figures": []
     },
@@ -42,7 +47,12 @@
       "asking": [],
       "board": [],
       "fill": 63,
-      "inspector": null,
+      "inspector": {
+        "shown": 0,
+        "hidden": 0,
+        "size": "380x111",
+        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+      },
       "led": null,
       "figures": []
     },
@@ -89,8 +99,8 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x435",
-        "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Give it a new date …☆Finish it"
+        "size": "238x375",
+        "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
       },
       "led": null,
       "figures": []
@@ -113,7 +123,12 @@
       "asking": [],
       "board": [],
       "fill": 59,
-      "inspector": null,
+      "inspector": {
+        "shown": 0,
+        "hidden": 0,
+        "size": "238x59",
+        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+      },
       "led": null,
       "figures": []
     },
@@ -135,7 +150,12 @@
       "asking": [],
       "board": [],
       "fill": 60,
-      "inspector": null,
+      "inspector": {
+        "shown": 0,
+        "hidden": 0,
+        "size": "238x59",
+        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+      },
       "led": null,
       "figures": []
     },
@@ -201,7 +221,12 @@
       "asking": [],
       "board": [],
       "fill": 60,
-      "inspector": null,
+      "inspector": {
+        "shown": 1,
+        "hidden": 0,
+        "size": "238x38",
+        "text": "Add a task …☆"
+      },
       "led": null,
       "figures": []
     },
@@ -223,7 +248,12 @@
       "asking": [],
       "board": [],
       "fill": 54,
-      "inspector": null,
+      "inspector": {
+        "shown": 0,
+        "hidden": 0,
+        "size": "238x59",
+        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+      },
       "led": null,
       "figures": []
     },
@@ -245,7 +275,12 @@
       "asking": [],
       "board": [],
       "fill": 43,
-      "inspector": null,
+      "inspector": {
+        "shown": 6,
+        "hidden": 0,
+        "size": "238x247",
+        "text": "Nothing done before what it waits for is connected to nothing yet⚠ \"Order boxes\" is done, "
+      },
       "led": null,
       "figures": []
     },
@@ -267,7 +302,12 @@
       "asking": [],
       "board": [],
       "fill": 44,
-      "inspector": null,
+      "inspector": {
+        "shown": 0,
+        "hidden": 0,
+        "size": "238x59",
+        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+      },
       "led": null,
       "figures": []
     },
@@ -318,8 +358,8 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x395",
-        "text": "×⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time "
+        "size": "238x375",
+        "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
       },
       "led": null,
       "figures": []
@@ -386,31 +426,19 @@
       "asking": [],
       "board": [],
       "fill": 9,
-      "inspector": null,
+      "inspector": {
+        "shown": 0,
+        "hidden": 0,
+        "size": "238x59",
+        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+      },
       "led": null,
       "figures": []
     },
     {
       "app": "todo",
       "state": "following",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 9,
-      "inspector": null,
-      "led": null,
-      "figures": []
+      "error": "TimeoutError: page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-graview-figure^=\"agent:tidy:\"] .graview-figure-body')\u001b[22m\n"
     },
     {
       "app": "todo",
@@ -455,8 +483,8 @@
       "inspector": {
         "shown": 11,
         "hidden": 0,
-        "size": "236x402",
-        "text": "Pay the deposittask· double-click opens×Put it back☆Rename …☆Move the date …☆Change the ta"
+        "size": "238x342",
+        "text": "Put it back☆Rename …☆Move the date …☆Change the task …☆Block time for it …☆its tiesNote wh"
       },
       "led": null,
       "figures": []
@@ -482,8 +510,8 @@
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "236x504",
-        "text": "Pay the deposittask· double-click opens×⚠ Was due 2026-08-28Give it a new date …☆Finish it"
+        "size": "238x444",
+        "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
       },
       "led": null,
       "figures": []
@@ -506,7 +534,12 @@
       "asking": [],
       "board": [],
       "fill": 59,
-      "inspector": null,
+      "inspector": {
+        "shown": 1,
+        "hidden": 0,
+        "size": "245x38",
+        "text": "Add a shift …☆"
+      },
       "led": null,
       "figures": []
     },
@@ -597,8 +630,8 @@
       "inspector": {
         "shown": 7,
         "hidden": 0,
-        "size": "236x343",
-        "text": "Friday repair cafeshift· double-click opens×Is connected to nothing yet⚠ Nobody is coverin"
+        "size": "245x283",
+        "text": "Is connected to nothing yet⚠ Nobody is covering \"Friday repair cafe\" on 2026-09-18Find som"
       },
       "led": null,
       "figures": []
@@ -624,8 +657,8 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "236x506",
-        "text": "Friday repair cafeshift· double-click opens×Nobody is covering \"Friday repair cafe\" on 202"
+        "size": "245x441",
+        "text": "Nobody is covering \"Friday repair cafe\" on 2026-09-18Is connected to nothing yetNothing yo"
       },
       "led": null,
       "figures": []
@@ -648,7 +681,12 @@
       "asking": [],
       "board": [],
       "fill": 59,
-      "inspector": null,
+      "inspector": {
+        "shown": 1,
+        "hidden": 0,
+        "size": "245x38",
+        "text": "Add a shift …☆"
+      },
       "led": null,
       "figures": []
     },
@@ -691,13 +729,8 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 24,
-      "inspector": {
-        "shown": 3,
-        "hidden": 0,
-        "size": "370x131",
-        "text": "×Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆"
-      },
+      "fill": 21,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -807,7 +840,12 @@
       "asking": [],
       "board": [],
       "fill": 10,
-      "inspector": null,
+      "inspector": {
+        "shown": 1,
+        "hidden": 0,
+        "size": "238x80",
+        "text": "Nothing here yet, though Plots expect to connect to theseWelcome a gardener …☆"
+      },
       "led": null,
       "figures": []
     },
@@ -854,8 +892,8 @@
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "236x230",
-        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
+        "size": "238x170",
+        "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆ApplySkip"
       },
       "led": null,
       "figures": []
@@ -885,29 +923,7 @@
     {
       "app": "seedbed",
       "state": "askedNarrow",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 17,
-      "inspector": {
-        "shown": 3,
-        "hidden": 0,
-        "size": "370x107",
-        "text": "First gardenergardener· double-click opens×Is connected to nothing yetChange the gardener "
-      },
-      "led": null,
-      "figures": []
+      "error": "TimeoutError: elementHandle.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabl"
     }
   ]
 }

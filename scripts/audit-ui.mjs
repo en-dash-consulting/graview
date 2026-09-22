@@ -574,11 +574,25 @@ const audit = () => {
     const host = clipperOf(ask);
     if (!host) continue;
     const h = box(host);
+    const scrolls = { y: host.scrollHeight > host.clientHeight + 2, x: host.scrollWidth > host.clientWidth + 2 };
     for (const el of ask.querySelectorAll("button, input, select, textarea")) {
       if (!visible(el)) continue;
       const b = box(el);
+      /*
+       * WHAT A SCROLLER CAN REACH IS NOT LOST. The rule is for an ask that
+       * escaped the pane it belongs to — drawn at a position its own box
+       * never covers. A pane that scrolls covers everything inside it; the
+       * question there is whether the ask is within what the host can
+       * scroll to, not whether it is on screen this instant.
+       */
+      const past = {
+        top: scrolls.y ? b.top - h.top + host.scrollTop < -2 : b.top < h.top - 2,
+        bottom: scrolls.y ? b.bottom - h.top + host.scrollTop > host.scrollHeight + 2 : b.bottom > h.bottom + 2,
+        left: scrolls.x ? b.left - h.left + host.scrollLeft < -2 : b.left < h.left - 2,
+        right: scrolls.x ? b.right - h.left + host.scrollLeft > host.scrollWidth + 2 : b.right > h.right + 2,
+      };
       // Two pixels of tolerance for the host's own border.
-      if (b.left < h.left - 2 || b.right > h.right + 2 || b.top < h.top - 2 || b.bottom > h.bottom + 2) {
+      if (past.left || past.right || past.top || past.bottom) {
         asking.push(
           `${(el.getAttribute("aria-label") ?? el.textContent ?? el.getAttribute("placeholder") ?? "").trim().slice(0, 20)} at ${Math.round(b.left)}..${Math.round(b.right)}/${Math.round(b.top)}..${Math.round(b.bottom)} outside ${Math.round(h.left)}..${Math.round(h.right)}/${Math.round(h.top)}..${Math.round(h.bottom)}`,
         );
