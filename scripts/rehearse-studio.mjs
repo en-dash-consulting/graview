@@ -228,9 +228,18 @@ try {
   }
   report.debug.beforeWriting = await storedEdges();
   await page.click('[data-testid="studio-write"]');
-  const outcome = await page
-    .waitForSelector('[data-testid="studio-written"], [data-testid="studio-not-written"]', { timeout: 120_000 })
-    .then((found) => found.textContent());
+  /*
+   * WRITTEN — said, or the page reloaded onto it. The dev server reloads as
+   * soon as the files change, and on a fast write that reload can come
+   * before the studio has said anything; either way what is on disk is
+   * checked below.
+   */
+  const outcome = await Promise.race([
+    page
+      .waitForSelector('[data-testid="studio-written"], [data-testid="studio-not-written"]', { timeout: 120_000 })
+      .then((found) => found.textContent()),
+    page.waitForEvent("load", { timeout: 120_000 }).then(() => "written into the checkout; the page reloaded onto it"),
+  ]);
   report.checks.itIsWrittenIntoTheCheckout = { outcome: outcome?.slice(0, 400), ok: /written into/.test(outcome ?? "") };
 
   /* ------------------------------------------------- what is on disk now */
