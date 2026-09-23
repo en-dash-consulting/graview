@@ -1,4 +1,4 @@
-import { aggregateId, isAggregateId, kindCardId, kindOfCard } from "./layout.js";
+import { aggregateId, isAggregateId, kindCardId, kindOfCard } from "./ids.js";
 import type { CityFrame, Connector, Layout, LayoutNode } from "./types.js";
 
 export interface InterpolatedNode extends Omit<LayoutNode, "plane"> {

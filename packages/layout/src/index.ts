@@ -5,15 +5,11 @@ export {
   kindOfCard,
   kindsOf,
   kindsOfAggregate,
-  marqueeHeightFor,
   KIND_PREFIX,
-  layout,
-  panLayout,
-  SCREEN_LEASH_CELLS,
-  planeOf,
   withJackIn,
   AGGREGATE_PREFIX,
-} from "./layout.js";
+} from "./ids.js";
+export { layout, marqueeHeightFor, panLayout, planeOf, SCREEN_LEASH_CELLS } from "./layout.js";
 export { easeInOut, interpolate } from "./interpolate.js";
 export { rankKinds } from "./rank.js";
 export type { KindRank, KindRanking } from "./rank.js";
