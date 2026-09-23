@@ -1,4 +1,4 @@
-# visual-system-design
+# graview
 
-PRD folder tree for **visual-system-design**.
+PRD folder tree for **graview**.
 Managed by rex — add items with `rex add epic`.

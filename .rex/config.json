@@ -1,6 +1,6 @@
 {
   "schema": "rex/v1",
-  "project": "visual-system-design",
+  "project": "graview",
   "adapter": "file",
   "sourcevision": "auto"
 }
