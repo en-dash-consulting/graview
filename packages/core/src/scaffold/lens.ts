@@ -209,7 +209,7 @@ describe("${name} in a domain nothing here is about", () => {
     const built = build${Name}(
       [{ id: "s1", kind: "shift" }],
       { ${bound} },
-      rota,
+      rota as never,
     );
     expect(built.marks).toHaveLength(1);
     /* TODO: assert something this lens is FOR, not that it returned. */
