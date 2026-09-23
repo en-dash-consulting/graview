@@ -311,7 +311,24 @@ try {
     // An empty graph has nothing to act on: put one thing in it, then go in.
     await narrow.click('#here [data-graview-view^="kind:"]');
     await narrow.waitForTimeout(400);
-    await narrow.click('#here [data-testid="affordances"] button[data-affordance]');
+    /*
+     * At phone width the acts are in the companion's sheet along the
+     * bottom, which starts closed so the picture is the first thing
+     * (348328a). A person opens it; so does this.
+     */
+    if ((await narrow.getAttribute('#here [data-testid="companion-dock"]', "aria-expanded")) === "false") {
+      await narrow.click('#here [data-testid="companion-dock"]');
+      await narrow.waitForTimeout(300);
+    }
+    await narrow.click('#here [data-testid="affordances"] button[data-affordance]', { timeout: 10_000 }).catch(async (error) => {
+      // What the narrow Graview showed instead is the finding.
+      const seen = await narrow.evaluate(() => ({
+        testids: [...new Set([...document.querySelectorAll("#here [data-testid]")].map((el) => el.getAttribute("data-testid")))].slice(0, 60),
+        affordances: document.querySelectorAll("#here [data-testid='affordances']").length,
+        buttons: [...document.querySelectorAll("#here button")].map((el) => el.textContent?.trim()).filter(Boolean).slice(0, 30),
+      }));
+      throw new Error(`${error.message.split("\n")[0]} — the narrow page showed ${JSON.stringify(seen)}`);
+    });
     await narrow.waitForTimeout(300);
     await narrow.fill('#here input[aria-label="Label"]', "Sweep the path");
     await narrow.click('#here [data-testid="inspector-strip"] button[type="submit"]');
@@ -321,9 +338,15 @@ try {
     await narrow.dblclick("#here [data-graview-pick]");
     await narrow.waitForTimeout(900);
     b.narrow = await narrow.evaluate(() => {
-      const strip = document.querySelector('#here [data-testid="inspector-strip"]');
+      const found = document.querySelector('#here [data-testid="inspector-strip"]');
       const focus = document.querySelector('#here [data-graview-plane="0"] [data-graview-primitive="panel"]');
-      if (!strip || !focus) return { strip: Boolean(strip), focus: Boolean(focus) };
+      if (!found || !focus) return { strip: Boolean(found), focus: Boolean(focus) };
+      /*
+       * The strip is a section of the companion's sheet at this width, and
+       * the sheet scrolls: it is the SHEET that must stay inside the
+       * Graview and off the thing being acted on.
+       */
+      const strip = found.closest('[data-testid="companion"]') ?? found;
       const a = strip.getBoundingClientRect();
       const b = focus.getBoundingClientRect();
       const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
@@ -334,7 +357,7 @@ try {
        * in a narrow Graview is bigger than the stage, because the stage
        * gives up room for the sheet rather than being covered by it.
        */
-      const stage = strip.offsetParent.getBoundingClientRect();
+      const stage = document.querySelector("#here").getBoundingClientRect();
       /*
        * And nothing the picture drew is buried under it: a control a
        * person needs, covered by the pane that appeared over it, is the

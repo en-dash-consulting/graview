@@ -1,9 +1,9 @@
 {
-  "at": "2026-09-23T04:17:30.289Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-9jobhP",
+  "at": "2026-09-23T04:45:55.021Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-Ul9nr1",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-9jobhP/field-notes",
+    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-Ul9nr1/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -29,17 +29,63 @@
     "installed": true,
     "lockfile": true,
     "verified": true,
-    "checkSaid": "0 error(s), 0 warning(s), 1 note(s)",
+    "checkSaid": "graview check: Field Notes — no problems found.",
     "brokenSchemaTypechecked": false,
-    "tscSaid": "src/domain/schema.ts(34,46): error TS2345: Argument of type '[NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; readonly inverse: \"what is waiting on this\"; }; }>]' is not assignable to parameter of type 'readonly [NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; readonly inverse: \"what is waiting on this\"; }; }>] & { ...; }'.",
+    "tscSaid": "src/domain/schema.ts(35,46): error TS2345: Argument of type '[NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; readonly inverse: \"what is waiting on this\"; }; }>]' is not assignable to parameter of type 'readonly [NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; readonly inverse: \"what is waiting on this\"; }; }>] & { ...; }'.",
     "docsWritten": true,
     "docsNameTheActs": true,
     "skills": true,
     "built": true
   },
-  "pnpm": {},
-  "door": {},
-  "linked": {},
+  "pnpm": {
+    "ciUsesPnpm": true,
+    "installed": true,
+    "verified": true,
+    "checkSaid": "graview check: Field Notes — no problems found."
+  },
+  "door": {
+    "said": "graview create: 20 files → door-app",
+    "tree": [
+      ".github/workflows/ci.yml",
+      ".gitignore",
+      "README.md",
+      "embed.html",
+      "index.html",
+      "package.json",
+      "src/domain/app.ts",
+      "src/domain/brand.ts",
+      "src/domain/invariants.ts",
+      "src/domain/mutations.ts",
+      "src/domain/schema.ts",
+      "src/embed.tsx",
+      "src/main.tsx",
+      "src/ui/app.tsx",
+      "src/ui/pages.tsx",
+      "src/ui/views.tsx",
+      "tests/domain.test.ts",
+      "tsconfig.build.json",
+      "tsconfig.json",
+      "vite.config.ts"
+    ],
+    "sameProject": true
+  },
+  "linked": {
+    "said": [
+      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-Ul9nr1/linked-orders",
+      "graview create: pnpm install"
+    ],
+    "consumesByPath": true,
+    "skills": true,
+    "verified": true,
+    "checkSaid": "graview check: Linked Orders — no problems found.",
+    "hyphenatedKind": true,
+    "gitInitialised": true,
+    "ciChecksOutTheFramework": true,
+    "browser": {
+      "districtAfterAdd": "Work Orders1open ▾",
+      "errors": []
+    }
+  },
   "browser": {
     "districts": 1,
     "saysNoneYet": true,
@@ -76,7 +122,39 @@
     "afterReload": "Notes1open ▾",
     "survivedAReload": true,
     "saysRemembered": "Remembered in this browserStart fresh",
-    "offersStartFresh": true
+    "offersStartFresh": true,
+    "narrow": {
+      "strip": true,
+      "focus": true,
+      "share": 0,
+      "buried": [],
+      "inside": true
+    },
+    "embed": {
+      "mounted": true,
+      "tag": "SECTION",
+      "named": "Field Notes",
+      "mains": 1,
+      "hostFont": "Georgia,",
+      "rootTheme": ""
+    },
+    "axeEmbed": [],
+    "keyboardReachedTheDistrict": true,
+    "keyboardSelectedIt": true,
+    "keyboardReachedTheOffer": true,
+    "afterKeyboard": "Notes1open ▾",
+    "theKeyboardAloneAddedIt": true,
+    "pagesHome": true,
+    "pagesFitsAPhone": true,
+    "pagesRecords": [
+      0,
+      1
+    ],
+    "pagesFormApplied": true,
+    "ownRecordPage": true,
+    "axePagesLight": [],
+    "axePagesDark": [],
+    "errors": []
   },
   "packed": [
     "@graview/core",
@@ -92,12 +170,16 @@
     "@graview/studio",
     "@graview/tools"
   ],
-  "error": "page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#here [data-testid=\"affordances\"] button[data-affordance]')\u001b[22m",
+  "vowel": {
+    "theAddActSaysAn": true,
+    "theKindDescriptionSaysAn": true,
+    "articlesBeforeVowels": []
+  },
   "verdict": {
     "theScaffoldWroteAProject": true,
     "itInstalledFromTheTarballsWithNpm": true,
     "itsOwnVerifyPassed": true,
-    "theCheckerActuallySpoke": false,
+    "theCheckerActuallySpoke": true,
     "anEdgeToAnUndeclaredKindFailsTsc": true,
     "theDeclarationLoadsOutsideABundler": true,
     "theSkillsLandedForBothAssistants": true,
@@ -110,21 +192,21 @@
     "theAskNamesItsFieldInWords": true,
     "theDerivedFormAddsIt": true,
     "escapeDoesSomethingFromTheFirstScreen": true,
-    "theStripDoesNotCoverWhatYouAreActingOn": false,
-    "theProjectMountsItselfOnSomebodyElsesPage": false,
-    "theKeyboardAloneMakesTheFirstRecord": false,
+    "theStripDoesNotCoverWhatYouAreActingOn": true,
+    "theProjectMountsItselfOnSomebodyElsesPage": true,
+    "theKeyboardAloneMakesTheFirstRecord": true,
     "anEditSurvivesAReload": true,
-    "thePagesFaceFitsAPhoneAndItsFormApplies": false,
-    "theProjectsOwnPageReplacesTheDerivedOne": false,
-    "axeFindsNothingInEitherScheme": false,
-    "nothingErroredInTheBrowser": false,
-    "theSameProjectVerifiesUnderPnpm": false,
-    "npmCreateGraviewMakesTheSameProject": false,
-    "aVowelKindIsSpokenWithAn": false,
-    "aLinkedProjectInstallsSkillsAndVerifies": false,
-    "aHyphenatedKindWorksEndToEnd": false,
-    "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": false,
-    "theLinkedDevServerRunsInABrowser": false
+    "thePagesFaceFitsAPhoneAndItsFormApplies": true,
+    "theProjectsOwnPageReplacesTheDerivedOne": true,
+    "axeFindsNothingInEitherScheme": true,
+    "nothingErroredInTheBrowser": true,
+    "theSameProjectVerifiesUnderPnpm": true,
+    "npmCreateGraviewMakesTheSameProject": true,
+    "aVowelKindIsSpokenWithAn": true,
+    "aLinkedProjectInstallsSkillsAndVerifies": true,
+    "aHyphenatedKindWorksEndToEnd": true,
+    "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": true,
+    "theLinkedDevServerRunsInABrowser": true
   },
-  "passed": false
+  "passed": true
 }

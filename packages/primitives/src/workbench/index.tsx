@@ -749,7 +749,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    */
   useLayoutEffect(() => {
     const parent = asideRef.current?.offsetParent as HTMLElement | null;
-    if (!parent || !narrow || atPointer) return;
+    // In the companion's rail the companion makes the room, for the whole sheet it is part of.
+    if (!parent || !narrow || atPointer || placement === "rail") return;
     const height = asideRef.current?.getBoundingClientRect().height ?? 0;
     const room = `${Math.round(height) + 20}px`;
     if (parent.style.paddingBottom === room) return;

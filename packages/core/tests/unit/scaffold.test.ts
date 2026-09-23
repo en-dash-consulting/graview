@@ -18,6 +18,24 @@ const file = (name: string, path: string) => {
   return found.contents;
 };
 
+describe("what a project starts with passes its own checks", () => {
+  it("bounds the label a model may fill, so graview check has nothing to say about a fresh project", () => {
+    // label-unbounded: a declared provider may create one, and an unbounded name draws a paragraph.
+    expect(file("Field Notes", "src/domain/schema.ts")).toContain("label: z.string().min(1).max(60),");
+    expect(file("Field Notes", "src/domain/mutations.ts")).toContain("input: z.object({ label: z.string().min(1).max(60) }),");
+  });
+
+  it("hands the routed home page's Begin its store, since the pages face has no provider", () => {
+    expect(file("Field Notes", "src/ui/pages.tsx")).toMatch(/<Begin\s+store=\{context\.store\}/);
+  });
+
+  it("opens the studio door in development, so Apply writes into src/domain", () => {
+    const config = file("Field Notes", "vite.config.ts");
+    expect(config).toContain('import { studioDoor } from "@graview/ship/dev";');
+    expect(config).toContain("plugins: [studioDoor()],");
+  });
+});
+
 describe("what a project starts with", () => {
   it("is the shape the graview-new-app skill describes", () => {
     const paths = scaffoldProject({ name: "Field Notes", kind: "note" }).files.map((f) => f.path);

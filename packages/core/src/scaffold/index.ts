@@ -933,7 +933,8 @@ import { z } from "@graview/core";
 export const ${ids.kindVar} = defineNode("${ids.kind}", {
   description: "${ids.ASpoken}: something ${escapeString(ids.name)} keeps track of.",
   fields: z.object({
-    label: z.string().min(1),
+    // A name, bounded: a model filling it writes a name, not a paragraph.
+    label: z.string().min(1).max(60),
     status: z.enum(["open", "closed"]),
   }),
   edges: {
@@ -984,7 +985,7 @@ export const add${ids.KindPascal} = defineMutation("add-${ids.kind}", {
   // Says what it brings into existence: an EMPTY district offers this act
   // as its own beginning, which is the whole onboarding of a blank graph.
   creates: ["${ids.kind}"],
-  input: z.object({ label: z.string().min(1) }),
+  input: z.object({ label: z.string().min(1).max(60) }),
   describe: (args) => \`Add \${args.label}\`,
   apply(ctx, args) {
     ctx.addNode({
@@ -1482,7 +1483,12 @@ function Home({ context }: { context: PageContext<S> }) {
   useStoreTick(context.store);
   return (
     <PageMain context={context} data-testid="home">
-      <Begin whenFull={<DefaultHomePage context={context} />} />
+      {/* The routed face has no provider around it, so the store is handed over. */}
+      <Begin
+        store={context.store}
+        {...(context.principal ? { principal: context.principal } : {})}
+        whenFull={<DefaultHomePage context={context} />}
+      />
     </PageMain>
   );
 }

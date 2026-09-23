@@ -43,7 +43,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A kind has a figure: a declared, blueprint-style 3D drawing of the thing, drawn wherever the kind is, and an agent can draw it](./a-kind-has-a-figure-a-declared.md) | completed |
 | [A UI kit for the picture: lines, boxes and marks are declared, customisable, and set up for styles nobody has asked for yet](./a-ui-kit-for-the-picture-lines-boxes.md) | completed |
 | [Longer horizons on the calendar lens: a quarter, a year, and a span of years the app names, with the demos scheduling across them](./longer-horizons-on-the-calendar-lens-a.md) | completed |
-| [smoke-create fails on main: the scaffolded project's strip never offers a first act](./smoke-create-fails-on-main-the.md) | pending |
+| [smoke-create fails on main: the scaffolded project's strip never offers a first act](./smoke-create-fails-on-main-the.md) | in_progress |
 | [The pointer menu leads with the thing you clicked: its own repair first, then its acts, then the rest](./the-pointer-menu-leads-with-the-thing.md) | completed |
 | [Three harnesses are failing on main and nobody is being told](./three-harnesses-are-failing-on-main.md) | completed |
 | [Two product repos drifted off the framework without anything saying so](./two-product-repos-drifted-off-the.md) | completed |

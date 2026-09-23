@@ -53,11 +53,19 @@ const CHAIN = [
   ["desk", "verify-desk.mjs"],
   ["rota", "verify-rota.mjs"],
   ["studio", "verify-studio.mjs"],
+  // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
+  ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],
   ["pages", "verify-pages.mjs"],
   ["panning", "verify-panning.mjs"],
   ["survey", "survey-ui.mjs"],
   ["audit", "audit-ui.mjs"],
+  /*
+   * Last, because it packs every package and installs a project three ways:
+   * what a stranger gets from `graview create`. It sat outside this chain,
+   * and a scaffold that failed its own checker went unheard for a week.
+   */
+  ["create", "smoke-create.mjs"],
 ];
 
 const asked = process.argv.slice(2).filter((arg) => !arg.startsWith("-"));

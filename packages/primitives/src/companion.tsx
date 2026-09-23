@@ -2,7 +2,7 @@ import { labelOf, placeSlug, type AnySchema } from "@graview/core";
 import { withFocus } from "@graview/layout";
 import { aggregateId, isAggregateId, kindCardId, kindOfCard } from "@graview/layout";
 import { useGraview, useSeatWork, useSelection } from "@graview/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChatPanel } from "./chat.js";
 import { QuickRelations } from "./quick-relations.js";
 import { RelationKey } from "./relation-key.js";
@@ -230,6 +230,24 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
   useEffect(() => {
     if (narrow && !framed) setOpen(false);
   }, [narrow, framed]);
+  /*
+   * AND THE PICTURE MAKES ROOM FOR THE SHEET. Laid over a 390-wide scene,
+   * an open sheet covers the districts and the control that opens one —
+   * the very thing it is about. The same trade the actions strip makes: the
+   * scene's box loses the sheet's height while it is there, and the layout
+   * runs again into what is left.
+   */
+  useLayoutEffect(() => {
+    const parent = frame.current?.offsetParent as HTMLElement | null;
+    if (!parent || !narrow || framed) return;
+    const room = `${Math.round(frame.current?.getBoundingClientRect().height ?? 0) + 20}px`;
+    if (parent.style.paddingBottom === room) return;
+    const before = parent.style.paddingBottom;
+    parent.style.paddingBottom = room;
+    return () => {
+      parent.style.paddingBottom = before;
+    };
+  });
   const anything = store.graph.allEdges().length > 0;
   const work = useSeatWork<S>();
   /* Questions back, from every seat in this tab: they wait for an answer, so they are listed until answered. */
