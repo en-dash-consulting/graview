@@ -361,17 +361,6 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   box-shadow: none;
   background: transparent;
 }
-.graview-kind-note {
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition: max-height 190ms ease, opacity 190ms ease;
-}
-.graview-kind-card:hover .graview-kind-note,
-.graview-kind-card:focus-within .graview-kind-note {
-  max-height: 5.4em;
-  opacity: 1;
-}
 
 /* FROM ALTITUDE the ground is an ISOMETRIC LATTICE — diamond cells at the
    classic 2:1 pitch, a finer far weave above, dissolving toward the
@@ -712,19 +701,11 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   color: var(--graview-accent);
 }
 
-/* THE ROBOT: a seat's body in the city. A small iso figure in the scene's
-   own line vocabulary, its name under it, a bubble over it when it has
-   something to say. It moves by a transition on transform — one number,
-   the layout tween's curve — so a quiet city runs nothing. */
-/* Present for a screen reader, absent to the eye: the 1x1 clip-rect idiom. */
-.graview-visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
+/* THE OTHERS: people and their agents in the city, each a small figure in
+   the scene's own line vocabulary with a name under it. They move by a
+   transition on transform — one number, the layout tween's curve — so a
+   quiet city runs nothing. This tab's own seat is not drawn here: the
+   companion on the frame is where it speaks. */
 .graview-occupants {
   position: absolute;
   inset: 0;
@@ -783,48 +764,6 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   text-transform: uppercase;
   color: var(--graview-ink-muted);
   pointer-events: none;
-}
-.graview-figure-bubble {
-  position: absolute;
-  left: 18px;
-  bottom: 22px;
-  width: max-content;
-  max-width: 240px;
-  margin: 0;
-  padding: 6px 9px;
-  border-radius: 10px 10px 10px 2px;
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-float);
-  color: var(--graview-ink);
-  box-shadow: var(--graview-lift-low);
-  font-size: 0.75rem;
-  line-height: 1.4;
-  white-space: normal;
-  pointer-events: auto;
-}
-.graview-figure-bubble > small {
-  display: block;
-  color: var(--graview-ink-faint);
-  font-size: 0.6875rem;
-}
-/* Where it has been this turn: a dotted trail that fades once, like a mark. */
-.graview-figure-trail {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: visible;
-}
-.graview-figure-trail path {
-  fill: none;
-  stroke: hsl(var(--graview-hue, 200) 50% 48%);
-  stroke-width: 1.5;
-  stroke-dasharray: 2 5;
-  opacity: 0.55;
-  animation: graview-trail-fade 2600ms ease forwards;
-}
-@keyframes graview-trail-fade {
-  from { opacity: 0.55; }
-  to { opacity: 0; }
 }
 /* ANOTHER PERSON, on your map: a head and shoulders in their own hue, at
    the plot their stop names or in the audience row of the showing they are
@@ -1595,7 +1534,6 @@ code { color: var(--graview-ink-muted); font-size: 0.75rem; letter-spacing: 0.02
  */
 @media (prefers-reduced-motion: reduce) {
   .graview-figure { transition: none; }
-  .graview-figure-trail path { animation: none; opacity: 0; }
 ${stillness(`${motionRoot}:not([data-graview-motion='full'])`, text)}
 }
 ${stillness(`${motionRoot}[data-graview-motion='reduce']`, text)}
