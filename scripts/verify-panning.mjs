@@ -231,7 +231,35 @@ function framesToVerdict(stamps, blocking, label) {
   };
 }
 
-async function dragAcross(page, { from, to, steps, label }) {
+/**
+ * OPEN GROUND near where the gesture wants to start. A fixed point is a
+ * guess about an app's layout: when Rota gained a kind, its new district
+ * landed on (900, 600), the "drag the ground" began on a card — which is a
+ * press, not a pan — and the run measured a gesture that never happened.
+ * So the start is searched for: the nearest point, outward from the one
+ * asked for, that has nothing pickable under it.
+ */
+async function groundNear(page, wanted) {
+  return page.evaluate(({ x, y }) => {
+    const bare = (px, py) => {
+      const el = document.elementFromPoint(px, py);
+      return el !== null && !el.closest("[data-graview-pick], .graview-kind-card, button, a, [role='button']");
+    };
+    for (let r = 0; r <= 400; r += 20) {
+      for (let a = 0; a < 360; a += r === 0 ? 360 : 30) {
+        const px = Math.round(x + r * Math.cos((a * Math.PI) / 180));
+        const py = Math.round(y + r * Math.sin((a * Math.PI) / 180));
+        if (bare(px, py)) return { x: px, y: py };
+      }
+    }
+    return { x, y };
+  }, wanted);
+}
+
+async function dragAcross(page, { from: wanted, to, steps, label }) {
+  const from = await groundNear(page, wanted);
+  // The same distance, from wherever the ground was found.
+  to = { x: to.x + (from.x - wanted.x), y: to.y + (from.y - wanted.y) };
   await watchFrames(page);
   const before = await whereIsIt(page);
 
