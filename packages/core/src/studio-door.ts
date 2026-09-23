@@ -51,7 +51,19 @@ export type DeclarationChange =
   | { readonly what: "add-act"; readonly act: string; readonly binding: string; readonly text: string }
   | { readonly what: "add-rule"; readonly rule: string; readonly binding: string; readonly text: string }
   | { readonly what: "remove-act"; readonly act: string }
-  | { readonly what: "remove-rule"; readonly rule: string };
+  | { readonly what: "remove-rule"; readonly rule: string }
+  /**
+   * The migration a stored graph needs to reach this declaration: `text` is
+   * the expression that joins the app's `migrations` — `stepsMigration({ … })`
+   * — `version` what the app's version becomes, and `import` what the
+   * expression needs in scope.
+   */
+  | {
+      readonly what: "add-migration";
+      readonly version: number;
+      readonly text: string;
+      readonly import: { readonly name: string; readonly from: string };
+    };
 
 /**
  * GET `${STUDIO_DOOR_PATH}/source` — the checkout's own acts and rules, each

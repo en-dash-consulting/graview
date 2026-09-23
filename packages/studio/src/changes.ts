@@ -1,4 +1,5 @@
 import type { AnySchema, DeclarationChange, GraviewApp, StudioDoorSource } from "@graview/core";
+import { migrationSteps } from "./migration.js";
 import { actLines, camel, edgeParts, fieldsOf, kindLines, label, q, Read, ruleLines, zodSource, type Node } from "./source.js";
 import type { Reading } from "./to-declaration.js";
 
@@ -167,7 +168,33 @@ export function sourceChanges(before: Reading, after: Reading, base?: GraviewApp
     for (const name of then.keys()) if (!later.has(name)) unwritten.push(`The ${kind} "${name}" is gone — remove it in the checkout.`);
   }
 
+  /*
+   * THE GRAPH SOMEBODY ALREADY HAS. What it needs to reach this declaration
+   * is written into the app beside the change — its version moved on, the
+   * steps as data — so the stored graph opens by running them.
+   */
+  const steps = migrationSteps(before, after);
+  if (steps.length > 0) {
+    const from = base?.version ?? 1;
+    changes.push({
+      what: "add-migration",
+      version: from + 1,
+      text: `stepsMigration(${literal({ from, to: from + 1, steps })})`,
+      import: { name: "stepsMigration", from: "@graview/ship/browser" },
+    });
+  }
+
   return { changes, rewrite, unwritten };
+}
+
+/** A value as TypeScript: keys bare where they can be, on one line. */
+function literal(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(literal).join(", ")}]`;
+  if (value !== null && typeof value === "object") {
+    const entries = Object.entries(value).map(([key, inner]) => `${/^[A-Za-z_$][\w$]*$/.test(key) ? key : JSON.stringify(key)}: ${literal(inner)}`);
+    return `{ ${entries.join(", ")} }`;
+  }
+  return JSON.stringify(value);
 }
 
 /**

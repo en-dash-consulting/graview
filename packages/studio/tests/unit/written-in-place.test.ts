@@ -43,6 +43,13 @@ describe("the change, as the checkout's source receives it", () => {
     // The act that makes the tie changed its declaration: it is named for rewriting, not left behind.
     expect(unwritten).toEqual([]);
     expect(rewrite.map((one) => one.name)).toContain("tend");
+    // And the graph somebody already has is carried across: the caretakers move to the plantings.
+    expect(changes).toContainEqual({
+      what: "add-migration",
+      version: 2,
+      text: 'stepsMigration({ from: 1, to: 2, steps: [{ what: "move-edge", kind: "plot", edge: "tended-by", to: "planting" }] })',
+      import: { name: "stepsMigration", from: "@graview/ship/browser" },
+    });
   });
 
   it("has nothing to say when nothing changed", () => {

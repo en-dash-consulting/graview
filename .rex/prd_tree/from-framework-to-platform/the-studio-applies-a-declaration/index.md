@@ -18,6 +18,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [A dev door writes the studio's change into the checkout, editing the source rather than regenerating it](./a-dev-door-writes-the-studio-s-change.md) | completed |
-| [An act body or rule judgement the change invalidates is authored in the studio before Apply](./an-act-body-or-rule-judgement-the.md) | pending |
+| [An act body or rule judgement the change invalidates is authored in the studio before Apply](./an-act-body-or-rule-judgement-the.md) | completed |
 | [Rehearsed on seedbed: 'people should be assigned to plants not plots', end to end in the studio](./rehearsed-on-seedbed-people-should-be.md) | pending |
 | [The migration carries the stored graph across the change, moving data rather than only dropping it](./the-migration-carries-the-stored-graph.md) | pending |

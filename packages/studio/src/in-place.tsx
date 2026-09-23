@@ -34,13 +34,7 @@ export function InPlaceWriter({
   const complete = useMemo(() => completionFor(intelligence), [intelligence]);
   // Read once, as Apply was pressed: what is written is what was checked.
   const plan = useMemo(() => studio.sourceChanges(), [studio]);
-  const blockers = useMemo(
-    () => [
-      ...plan.unwritten,
-      ...(migration ? [`A stored graph needs a migration (${migration}) — the studio cannot yet write it into the checkout.`] : []),
-    ],
-    [plan, migration],
-  );
+  const blockers = plan.unwritten;
   const [code, setCode] = useState<StudioDoorSource | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [texts, setTexts] = useState<ReadonlyMap<string, string>>(new Map());
@@ -129,7 +123,8 @@ export function InPlaceWriter({
   if (outcome?.state === "written") {
     return (
       <strong data-testid="studio-written" style={{ fontSize: "0.8125rem", fontWeight: 550 }}>
-        The checker is happy, and the change is written into {outcome.paths.join(", ")}. The app reloads onto it.
+        The checker is happy, and the change is written into {outcome.paths.join(", ")}. The app reloads onto it
+        {migration ? `, and a stored graph is carried forward: ${migration}` : ""}.
       </strong>
     );
   }
@@ -137,6 +132,12 @@ export function InPlaceWriter({
   const reasons = [...blockers, ...(failed ? [failed] : []), ...(outcome?.state === "not-written" ? outcome.reasons : [])];
   return (
     <>
+      {/* Said before it happens: what the graph somebody already has goes through. */}
+      {migration && blockers.length === 0 ? (
+        <span data-testid="studio-carried" style={quiet}>
+          A stored graph is carried forward when it next opens: {migration}.
+        </span>
+      ) : null}
       <strong style={{ fontSize: "0.8125rem", fontWeight: 550 }}>
         {blockers.length > 0
           ? "The checker is happy, but this cannot be written into the checkout yet:"

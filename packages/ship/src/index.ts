@@ -8,6 +8,8 @@ export {
 } from "./browser-adapter.js";
 export type { BrowserAdapter, BrowserAdapterOptions, StorageLike } from "./browser-adapter.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
+export { primitivesFor, sayStep, stepsMigration } from "./steps.js";
+export type { MigrationStep } from "./steps.js";
 export type { MigrationRun } from "./migrations.js";
 export { openStore } from "./open-store.js";
 export type { OpenStoreOptions, OpenedStore } from "./open-store.js";

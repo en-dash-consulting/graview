@@ -21,6 +21,7 @@
     "@graview/pages": "workspace:*",
     "@graview/primitives": "workspace:*",
     "@graview/react": "workspace:*",
+    "@graview/ship": "workspace:*",
     "@graview/tools": "workspace:*",
     "zod": "^4.4.3"
   },

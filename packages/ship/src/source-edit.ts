@@ -209,6 +209,7 @@ function replaceNode(text: string, node: TS.Node, source: TS.SourceFile, replace
 
 function applyChange(ts: Ts, files: Map<string, string>, change: DeclarationChange): string | undefined {
   if (change.what === "add-kind") return addKind(ts, files, change);
+  if (change.what === "add-migration") return addMigration(ts, files, change);
   if (change.what === "replace-act" || change.what === "replace-rule") {
     const sort = change.what === "replace-act" ? "act" : "rule";
     const name = change.what === "replace-act" ? change.act : change.rule;
@@ -449,4 +450,61 @@ function addDeclaration(ts: Ts, files: Map<string, string>, sort: "act" | "rule"
     return undefined;
   }
   return `No file declares ${sort}s to add "${name}" beside.`;
+}
+
+/**
+ * THE APP CARRIES ITS STORED GRAPHS FORWARD: its `version` moves on and the
+ * migration to it joins `migrations`, in the `defineApp({ … })` the app is
+ * declared with — so the graph somebody already has opens on the new
+ * declaration by running it, logged and undoable like any other change.
+ */
+function addMigration(ts: Ts, files: Map<string, string>, change: Extract<DeclarationChange, { what: "add-migration" }>): string | undefined {
+  for (const [path, text] of files) {
+    const source = parse(ts, path, text);
+    const call = visit(ts, source, (node) => ts.isCallExpression(node) && calleeIs(ts, node, "defineApp")) as TS.CallExpression | undefined;
+    const app = call?.arguments[0];
+    if (!app || !ts.isObjectLiteralExpression(app)) continue;
+
+    // The list first, then the version, then the import: each edit is later in the file than the next one's position, or re-read.
+    let next = text;
+    const migrations = property(ts, app, "migrations");
+    if (migrations) {
+      if (!ts.isArrayLiteralExpression(migrations.initializer)) return `The migrations in ${path} are not written as a list the studio can add to.`;
+      const list = migrations.initializer;
+      const tail = list.elements[list.elements.length - 1];
+      next = tail
+        ? `${next.slice(0, tail.end)},\n${indentAt(next, tail.getStart(source))}${change.text}${next.slice(tail.end)}`
+        : `${next.slice(0, list.getStart(source))}[${change.text}]${next.slice(list.end)}`;
+    }
+    let reread = parse(ts, path, next);
+    let object = (visit(ts, reread, (node) => ts.isCallExpression(node) && calleeIs(ts, node, "defineApp")) as TS.CallExpression).arguments[0] as TS.ObjectLiteralExpression;
+    if (!migrations) next = insertProperty(next, object, reread, `migrations: [${change.text}]`);
+
+    reread = parse(ts, path, next);
+    object = (visit(ts, reread, (node) => ts.isCallExpression(node) && calleeIs(ts, node, "defineApp")) as TS.CallExpression).arguments[0] as TS.ObjectLiteralExpression;
+    const version = property(ts, object, "version");
+    next = version ? replaceNode(next, version.initializer, reread, String(change.version)) : insertProperty(next, object, reread, `version: ${change.version}`);
+
+    files.set(path, withImport(ts, path, next, change.import.name, change.import.from));
+    return undefined;
+  }
+  return "No defineApp({ … }) in the declaration to add a migration to.";
+}
+
+/** `name` imported from `from`: added to an import of that module the file already has, or as a line of its own. */
+function withImport(ts: Ts, path: string, text: string, name: string, from: string): string {
+  const source = parse(ts, path, text);
+  const imports = source.statements.filter(ts.isImportDeclaration);
+  const existing = imports.find(
+    (one) => ts.isStringLiteral(one.moduleSpecifier) && one.moduleSpecifier.text === from && !one.importClause?.isTypeOnly,
+  );
+  const named = existing?.importClause?.namedBindings;
+  if (named && ts.isNamedImports(named)) {
+    if (named.elements.some((element) => element.name.text === name)) return text;
+    const last = named.elements[named.elements.length - 1]!;
+    return `${text.slice(0, last.end)}, ${name}${text.slice(last.end)}`;
+  }
+  const after = imports[imports.length - 1];
+  const line = `import { ${name} } from ${JSON.stringify(from)};`;
+  return after ? `${text.slice(0, after.end)}\n${line}${text.slice(after.end)}` : `${line}\n${text}`;
 }

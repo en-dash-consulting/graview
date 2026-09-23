@@ -17,7 +17,7 @@ export type { StudioSchema, FieldType } from "./meta.js";
 export { declarationToGraph, fieldTypeOf } from "./from-declaration.js";
 export { graphToDeclaration, zodFor, defaultFor } from "./to-declaration.js";
 export type { DeclarationOptions, Reading } from "./to-declaration.js";
-export { migrationBetween, migrationSteps, primitivesFor } from "./migration.js";
+export { migrationBetween, migrationSteps } from "./migration.js";
 export type { MigrationStep } from "./migration.js";
 export { declarationFiles } from "./source.js";
 export type { SourceOptions, WrittenFile } from "./source.js";
