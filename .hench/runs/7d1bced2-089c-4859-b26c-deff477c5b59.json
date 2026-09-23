@@ -1,0 +1,30 @@
+{
+  "id": "7d1bced2-089c-4859-b26c-deff477c5b59",
+  "taskId": "e5bb3848-7356-4a7b-801a-d2df23c0e6ff",
+  "taskTitle": "smoke-create fails on main: the scaffolded project's strip never offers a first act",
+  "startedAt": "2026-09-23T04:51:42.326Z",
+  "finishedAt": "2026-09-23T04:51:42.326Z",
+  "status": "completed",
+  "turns": 80,
+  "summary": "Scaffold label bounded, Begin gets its store, companion sheet makes room at phone width; smoke-create and the studio rehearsal joined pnpm verify",
+  "tokenUsage": {
+    "input": 160,
+    "output": 46376,
+    "cacheCreationInput": 86010,
+    "cacheReadInput": 44292515
+  },
+  "toolCalls": [],
+  "model": "claude-opus-5-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "host",
+  "ndxVersion": "0.7.0",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 160,
+    "output": 46376,
+    "cached": 44378525,
+    "total": 44425061
+  }
+}
