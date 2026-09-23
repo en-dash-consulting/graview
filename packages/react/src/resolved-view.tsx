@@ -60,14 +60,6 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
 }
 
 /**
- * Picks the view for a cell of the matrix — cardinality by whether this is an
- * aggregate, fidelity by plane depth — and renders it.
- *
- * A kind with no registered view falls back to the primitive the app
- * supplied, which is why a new node kind renders sensibly before anyone
- * writes a view for it.
- */
-/**
  * WHETHER TWO FRAMES ASK FOR THE SAME PICTURE.
  *
  * Every field of the node except where it is. A pan moves the whole world by
@@ -83,8 +75,27 @@ function samePicture(before: SceneNode, after: SceneNode): boolean {
     (key) =>
       key === "x" ||
       key === "y" ||
-      Object.is((before as Record<string, unknown>)[key], (after as Record<string, unknown>)[key]),
+      sameValue((before as Record<string, unknown>)[key], (after as Record<string, unknown>)[key]),
   );
+}
+
+/**
+ * The same value, by what it holds. A pan reuses a node's nested objects;
+ * a re-layout — a district moved by hand — builds them again with the same
+ * contents, and comparing those by identity redrew every lens in the city on
+ * every pointer move of the drag.
+ */
+function sameValue(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Object.getPrototypeOf(a) !== Object.getPrototypeOf(b)) return false;
+  const proto = Object.getPrototypeOf(a);
+  // Only plain data: anything with a class of its own is compared by identity.
+  if (proto !== Object.prototype && proto !== Array.prototype) return false;
+  const keys = Object.keys(a);
+  if (keys.length !== Object.keys(b).length) return false;
+  return keys.every((key) => sameValue((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]));
 }
 
 /**
@@ -107,6 +118,14 @@ export const SettledView = memo(ResolvedView, (before, after) =>
   samePicture(before.node, after.node),
 ) as typeof ResolvedView;
 
+/**
+ * Picks the view for a cell of the matrix — cardinality by whether this is an
+ * aggregate, fidelity by plane depth — and renders it.
+ *
+ * A kind with no registered view falls back to the primitive the app
+ * supplied, which is why a new node kind renders sensibly before anyone
+ * writes a view for it.
+ */
 export function ResolvedView<S extends AnySchema>({
   node,
   mode,

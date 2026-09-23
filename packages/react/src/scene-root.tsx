@@ -428,7 +428,20 @@ export function Scene<S extends AnySchema>({
    * and it is the same kind of thing as a pan. Keying this on `seen` meant a
    * camera that moved by a pixel rebuilt the world exactly as a pan did.
    */
-  const atRest = useMemo(() => (view.pan ? { ...view, pan: undefined } : view), [view]);
+  /*
+   * A DISTRICT UNDER THE HAND is placed here while it is being dragged, and
+   * written into the view once, when it is let go. Written on every pointer
+   * move, the view changed on every pointer move, and everything that reads
+   * it — every lens in the city — drew itself again for a district it was
+   * not about.
+   */
+  const [held, setHeld] = useState<{ readonly id: string; readonly x: number; readonly y: number } | null>(null);
+  const placing = useRef<{ readonly id: string; readonly x: number; readonly y: number } | null>(null);
+  const placeFrame = useRef(0);
+  const atRest = useMemo(() => {
+    const still = view.pan ? { ...view, pan: undefined } : view;
+    return held ? withPin(still, held.id, { x: held.x, y: held.y }) : still;
+  }, [view, held]);
   const still = useMemo<Layout>(
     () => layout(store.graph, store.schema, atRest, sized),
     [store, atRest, sized, nodes],
@@ -963,14 +976,28 @@ export function Scene<S extends AnySchema>({
       if (useDom) shiftTo(wanted, view.pan ?? { x: 0, y: 0 });
       else setView((current) => withPan(current, wanted));
     } else if (drag.id) {
-      setView((current) =>
-        withPin(current, drag.id!, { x: drag.baseX + dx, y: drag.baseY + dy }),
-      );
+      // At most one placement per frame: pointer events arrive faster than frames are drawn.
+      placing.current = { id: drag.id, x: drag.baseX + dx, y: drag.baseY + dy };
+      if (placeFrame.current === 0) {
+        placeFrame.current = requestAnimationFrame(() => {
+          placeFrame.current = 0;
+          setHeld(placing.current);
+        });
+      }
     }
   };
 
   const onDragUp = () => {
     settleShift();
+    // The district that was under the hand goes into the view, once, where the hand last put it.
+    if (placeFrame.current !== 0) cancelAnimationFrame(placeFrame.current);
+    placeFrame.current = 0;
+    const put = placing.current;
+    placing.current = null;
+    if (put) {
+      setView((current) => withPin(current, put.id, { x: put.x, y: put.y }));
+      setHeld(null);
+    }
     if (gesture.current?.moved) {
       // Swallow the click this pointer-up is about to produce, so a drag that
       // ends on a card does not also select it.

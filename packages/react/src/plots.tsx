@@ -1,6 +1,6 @@
 import { BLOCK, hueFor, roadsOf, toIso, type Brand, type Plot } from "@graview/core";
 import { kindOfCard, type InterpolatedLayout } from "@graview/layout";
-import { useMemo, type CSSProperties, type ReactElement } from "react";
+import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactElement } from "react";
 import { useGraview } from "./context.js";
 import { useFlagged } from "./hooks.js";
 
@@ -65,128 +65,181 @@ export interface PlotsProps {
  * the district card is the thing with a name; this is the ground it stands
  * on. The fill takes the pointer so a click on the land focuses its
  * district, the same as a click on the card.
+ *
+ * THE GROUND IS DRAWN AT THE ORIGIN AND MOVED AS ONE. Every piece of it is
+ * computed at origin zero and the pan and origin are one translate on the
+ * group, so a pan or a tween changes one attribute. Each plot is its own
+ * memoised tile whose village is kept for as long as that plot and its
+ * members are the same, so dragging one district redraws that district and
+ * the roads, not every building in the city on every frame.
  */
 export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onFocus }: PlotsProps): ReactElement | null {
   const { selection, store, emphasis } = useGraview();
   const flagged = useFlagged();
   const city = frame.city;
-  /*
-   * THE GEOMETRY IS MEMOISED where the pan and the origin are not: a road's
-   * legs and a village's foot cells depend only on the plots and the cell,
-   * so they are computed at origin zero once per city and translated per
-   * frame — a tween or a pan redraws, it does not re-route. The roads are
-   * one per pair of plots joined by any declared edge (`roadsOf`), kerb to
-   * kerb along the gutters; drawn first, so kerbs and buildings stand over them.
-   */
   const tiles = frame.nodes.filter((node) => node.plot !== undefined && Math.round(node.plane) === 2);
-  const signature = `${city?.cell ?? 0}|${tiles.map((node) => `${node.id}:${node.plot!.col},${node.plot!.row},${node.plot!.side}:${node.aggregate?.memberIds.join(",") ?? ""}`).join(";")}`;
-  const still = useMemo(() => {
-    if (!city) return null;
-    const at0 = { cell: city.cell, originX: 0, originY: 0 };
-    const none = { x: 0, y: 0 };
+  const cell = city?.cell ?? 0;
+  // The callback is read when the tile is pressed, so a new one each render redraws nothing.
+  const focus = useRef(onFocus);
+  focus.current = onFocus;
+  const press = useCallback((id: string) => {
+    if (!focus.current || swallowed?.current) return false;
+    focus.current(id);
+    return true;
+  }, [swallowed]);
+
+  /*
+   * THE ROADS, one per pair of plots joined by any declared edge
+   * (`roadsOf`), kerb to kerb along the gutters. They depend on every
+   * plot, so they are routed again when any plot moves — and only then.
+   */
+  const plotsSignature = `${cell}|${tiles.map((node) => `${node.id}:${node.plot!.col},${node.plot!.row},${node.plot!.side}`).join(";")}`;
+  const roads = useMemo(() => {
+    if (!city) return [];
+    const at0 = { cell, originX: 0, originY: 0 };
     const plotsByKind = new Map<string, Plot>();
     for (const node of tiles) {
       const kind = kindOfCard(node.id);
       if (kind !== null && node.plot) plotsByKind.set(kind, node.plot);
     }
-    const roads = roadsOf(store.schema, plotsByKind).map((road) => ({
+    return roadsOf(store.schema, plotsByKind).map((road) => ({
       ...road,
-      points: roadBetween(plotsByKind.get(road.from)!, plotsByKind.get(road.to)!, at0, none),
+      d: roadBetween(plotsByKind.get(road.from)!, plotsByKind.get(road.to)!, at0, { x: 0, y: 0 })
+        .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
+        .join(" "),
     }));
-    const villages = new Map(
-      tiles.map((node) => {
-        const { buildings, rest } = villageOf(node.plot!, node.aggregate?.memberIds ?? []);
-        return [node.id, { rest, faces: buildings.map((building) => ({ id: building.id, ...buildingFaces(building, at0, none) })) }] as const;
-      }),
-    );
-    return { roads, villages, corners: new Map(tiles.map((node) => [node.id, tileCorners(node.plot!, at0, none)] as const)) };
-    // `signature` stands for the tiles and the cell: the ground is redrawn only when it moves.
-  }, [signature, store.schema]);
-  if (!city || !still) return null;
-  const chosen = new Set(selection);
-  const broken = new Set(flagged);
-  const offset = { x: city.originX + pan.x, y: city.originY + pan.y };
-  const shift = (p: Point): Point => ({ x: p.x + offset.x, y: p.y + offset.y });
-  const shiftPoints = (list: string): string =>
-    list
-      .split(" ")
-      .map((pair) => {
-        const [x, y] = pair.split(",").map(Number);
-        return `${(x! + offset.x).toFixed(1)},${(y! + offset.y).toFixed(1)}`;
-      })
-      .join(" ");
-  const roads = still.roads.map((road) => ({ ...road, points: road.points.map(shift) }));
+    // `plotsSignature` stands for the tiles and the cell.
+  }, [plotsSignature, store.schema]);
+
+  /* EACH PLOT'S GROUND, kept while that plot and its members are unchanged. */
+  const drawn = useRef(new Map<string, PlotDrawing>());
+  const kept = new Map<string, PlotDrawing>();
+  for (const node of tiles) {
+    const members = node.aggregate?.memberIds ?? [];
+    const key = `${cell}|${node.plot!.col},${node.plot!.row},${node.plot!.side}|${members.join(",")}`;
+    const held = drawn.current.get(node.id);
+    if (held && held.key === key) {
+      kept.set(node.id, held);
+      continue;
+    }
+    const at0 = { cell, originX: 0, originY: 0 };
+    const none = { x: 0, y: 0 };
+    const { buildings, rest } = villageOf(node.plot!, members);
+    const corners = tileCorners(node.plot!, at0, none);
+    kept.set(node.id, {
+      key,
+      tile: points(corners),
+      front: corners[2]!,
+      rest,
+      buildings: buildings.map((building) => ({ id: building.id, ...buildingFaces(building, at0, none) })),
+    });
+  }
+  drawn.current = kept;
+
+  if (!city) return null;
   const style: CSSProperties = { position: "absolute", left: 0, top: 0, pointerEvents: "none", overflow: "visible" };
+  const chosenKey = selection.join("\n");
+  const flaggedKey = flagged.join("\n");
   return (
     <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length}>
-      <g className="graview-roads" data-graview-roads={roads.length}>
-        {roads.map((road) => {
-          if (road.points.length < 2) return null;
-          const d = road.points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
-          const lit = emphasis !== null && road.edges.includes(emphasis);
-          return (
-            <g key={`${road.from}|${road.to}`} className="graview-road" data-graview-road={road.edges.join(",")} data-graview-lit={lit ? "" : undefined}>
-              <path className="graview-road-edge" d={d} />
-              <path className="graview-road-bed" d={d} />
-            </g>
-          );
-        })}
-      </g>
-      {tiles.map((node) => {
-        const corners = still.corners.get(node.id)!.map(shift) as [Point, Point, Point, Point];
-        const hue = Math.round(hueFor(node.kind, brand?.accents));
-        return (
-          <g
+      <g transform={`translate(${(city.originX + pan.x).toFixed(1)} ${(city.originY + pan.y).toFixed(1)})`}>
+        <g className="graview-roads" data-graview-roads={roads.length}>
+          {roads.map((road) =>
+            road.d.includes("L") ? (
+              <g
+                key={`${road.from}|${road.to}`}
+                className="graview-road"
+                data-graview-road={road.edges.join(",")}
+                data-graview-lit={emphasis !== null && road.edges.includes(emphasis) ? "" : undefined}
+              >
+                <path className="graview-road-edge" d={road.d} />
+                <path className="graview-road-bed" d={road.d} />
+              </g>
+            ) : null,
+          )}
+        </g>
+        {tiles.map((node) => (
+          <PlotTile
             key={node.id}
-            className="graview-plot"
-            data-graview-plot={node.id}
-            data-graview-pinned={pinned?.has(node.id) ? "" : undefined}
-            style={{ ["--graview-hue" as string]: hue }}
-          >
-            <polygon
-              className="graview-plot-tile"
-              points={points(corners)}
-              onClick={(event) => {
-                if (!onFocus || swallowed?.current) return;
-                event.stopPropagation();
-                onFocus(node.id);
-              }}
-            />
-            {/* THE VILLAGE: one building per member, back to front, the square in the middle kept for the hall. */}
-            {(() => {
-              const village = still.villages.get(node.id);
-              if (!village || village.faces.length === 0) return null;
-              const { faces: buildings, rest } = village;
-              const front = corners[2];
-              return (
-                <g className="graview-village" data-graview-village={buildings.length} data-graview-rest={rest || undefined}>
-                  {buildings.map((faces) => (
-                    <g
-                      key={faces.id}
-                      className="graview-building"
-                      data-graview-building={faces.id}
-                      data-graview-flagged={broken.has(faces.id) ? "" : undefined}
-                      data-graview-selected={chosen.has(faces.id) ? "" : undefined}
-                    >
-                      <polygon className="graview-iso-left" points={shiftPoints(faces.left)} />
-                      <polygon className="graview-iso-right" points={shiftPoints(faces.right)} />
-                      <polygon className="graview-iso-roof" points={shiftPoints(faces.roof)} />
-                    </g>
-                  ))}
-                  {rest > 0 ? (
-                    <text className="graview-village-rest" x={front.x} y={front.y - 4} textAnchor="middle">
-                      +{rest}
-                    </text>
-                  ) : null}
-                </g>
-              );
-            })()}
-          </g>
-        );
-      })}
+            id={node.id}
+            hue={Math.round(hueFor(node.kind, brand?.accents))}
+            drawing={kept.get(node.id)!}
+            pinned={pinned?.has(node.id) ?? false}
+            chosenKey={chosenKey}
+            flaggedKey={flaggedKey}
+            press={press}
+          />
+        ))}
+      </g>
     </svg>
   );
 }
+
+/** One plot's ground at origin zero: its tile, and the village standing on it. */
+interface PlotDrawing {
+  /** What it was drawn from, so it is drawn again only when that changes. */
+  readonly key: string;
+  readonly tile: string;
+  readonly front: Point;
+  readonly rest: number;
+  readonly buildings: readonly { readonly id: string; readonly roof: string; readonly left: string; readonly right: string }[];
+}
+
+const PlotTile = memo(function PlotTile({
+  id,
+  hue,
+  drawing,
+  pinned,
+  chosenKey,
+  flaggedKey,
+  press,
+}: {
+  readonly id: string;
+  readonly hue: number;
+  readonly drawing: PlotDrawing;
+  readonly pinned: boolean;
+  /** The selection and the flags as keys, so a tile compares them by value. */
+  readonly chosenKey: string;
+  readonly flaggedKey: string;
+  readonly press: (id: string) => boolean;
+}) {
+  const chosen = new Set(chosenKey.split("\n"));
+  const broken = new Set(flaggedKey.split("\n"));
+  return (
+    <g className="graview-plot" data-graview-plot={id} data-graview-pinned={pinned ? "" : undefined} style={{ ["--graview-hue" as string]: hue }}>
+      <polygon
+        className="graview-plot-tile"
+        points={drawing.tile}
+        onClick={(event) => {
+          if (press(id)) event.stopPropagation();
+        }}
+      />
+      {/* THE VILLAGE: one building per member, back to front, the square in the middle kept for the hall. */}
+      {drawing.buildings.length > 0 ? (
+        <g className="graview-village" data-graview-village={drawing.buildings.length} data-graview-rest={drawing.rest || undefined}>
+          {drawing.buildings.map((faces) => (
+            <g
+              key={faces.id}
+              className="graview-building"
+              data-graview-building={faces.id}
+              data-graview-flagged={broken.has(faces.id) ? "" : undefined}
+              data-graview-selected={chosen.has(faces.id) ? "" : undefined}
+            >
+              <polygon className="graview-iso-left" points={faces.left} />
+              <polygon className="graview-iso-right" points={faces.right} />
+              <polygon className="graview-iso-roof" points={faces.roof} />
+            </g>
+          ))}
+          {drawing.rest > 0 ? (
+            <text className="graview-village-rest" x={drawing.front.x} y={drawing.front.y - 4} textAnchor="middle">
+              +{drawing.rest}
+            </text>
+          ) : null}
+        </g>
+      ) : null}
+    </g>
+  );
+});
 
 /* ------------------------------------------------------------ the village */
 

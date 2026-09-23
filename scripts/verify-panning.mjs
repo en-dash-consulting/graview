@@ -256,8 +256,8 @@ async function groundNear(page, wanted) {
   }, wanted);
 }
 
-async function dragAcross(page, { from: wanted, to, steps, label }) {
-  const from = await groundNear(page, wanted);
+async function dragAcross(page, { from: wanted, to, steps, label, onGround = true }) {
+  const from = onGround ? await groundNear(page, wanted) : wanted;
   // The same distance, from wherever the ground was found.
   to = { x: to.x + (from.x - wanted.x), y: to.y + (from.y - wanted.y) };
   await watchFrames(page);
@@ -352,6 +352,42 @@ try {
           where: "altitude",
           ...(await dragAcross(page, { from: { x: 900, y: 600 }, to: { x: 500, y: 300 }, steps: 120, label: "drag the city" })),
         });
+        /*
+         * AND A DISTRICT MOVED BY HAND, which is the other drag at altitude:
+         * pressing a district's card and dragging places it, and every move
+         * re-measures the lines that meet it. It was left unmeasured for as
+         * long as the pan's fixed start point happened to be open ground.
+         */
+        await arrive(true);
+        const cardAt = () =>
+          page.evaluate(() => {
+            // A district, not a billboard: a picture is looked around, not moved.
+            const card = document.querySelector("[data-graview-view]:not([data-graview-screen]) .graview-kind-card");
+            const box = card?.getBoundingClientRect();
+            if (!card || !box) return null;
+            // On the card itself, not on a control drawn on it: a drive-in's thumbnail is a button.
+            for (let fy = 0.5; fy > 0.05; fy -= 0.1) {
+              for (const fx of [0.5, 0.3, 0.7, 0.15, 0.85]) {
+                const x = Math.round(box.x + box.width * fx);
+                const y = Math.round(box.y + box.height * fy);
+                const el = document.elementFromPoint(x, y);
+                if (el && card.contains(el) && !el.closest("button, a, [role='button']")) return { x, y };
+              }
+            }
+            return null;
+          });
+        const card = await cardAt();
+        if (card) {
+          const run = await dragAcross(page, { from: card, to: { x: card.x - 300, y: card.y - 150 }, steps: 120, label: "move a district", onGround: false });
+          // And the district is where it was put, after the hand has let go: the gesture happened.
+          const put = await cardAt();
+          report.runs.push({
+            app: app.name,
+            where: "altitude/card",
+            ...run,
+            cardMoved: put ? Math.round(Math.hypot(put.x - card.x, put.y - card.y)) : 0,
+          });
+        }
         // And by wheel, which is the same gesture with a different hand on it.
         await arrive(true);
         report.runs.push({
@@ -392,6 +428,7 @@ for (const run of report.runs) {
     run.worstMs > WORST_MS ? `one frame took ${run.worstMs}ms` : "",
     run.stuckLayers > 0 ? `${run.stuckLayers} layers still transformed` : "",
     run.jumpOnRelease !== null && run.jumpOnRelease > 2 ? `the picture jumped ${run.jumpOnRelease}px on release` : "",
+    run.cardMoved !== undefined && run.cardMoved < 100 ? `the district moved only ${run.cardMoved}px` : "",
   ].filter(Boolean);
   if (faults.length) bad += 1;
   process.stdout.write(

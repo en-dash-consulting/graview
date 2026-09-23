@@ -59,10 +59,18 @@ export function Lines<S extends AnySchema>({
   readonly onPickEdge: (edgeId: string, at?: { x: number; y: number }) => void;
   readonly liveOf: (connector: { from: string; to: string }) => ActivityMark | undefined;
 }) {
-  const [, remeasure] = useState(0);
+  const [asked, remeasure] = useState(0);
+  /*
+   * MEASURED ONCE, AFTER THE DOM IS THERE. Measuring during render read the
+   * boxes of the frame before, so every frame was measured twice — once
+   * wrong, and again after a re-render to get it right. Now the render
+   * draws from the layout's own boxes, and the measurement is taken once,
+   * after commit and before paint, and is what is drawn.
+   */
+  const [measured, setMeasured] = useState<ReturnType<typeof connectorStrands> | null>(null);
   useLayoutEffect(() => {
-    remeasure((n) => n + 1);
-  }, [frame, selection, overview, graphNodes]);
+    setMeasured(connectorStrands(frame.nodes, frame.connectors, stageRef.current, overview, scheme));
+  }, [frame, selection, overview, graphNodes, scheme, asked, stageRef]);
 
   /*
    * A LINE POINTS AT WHERE A THING IS, NOT AT WHERE IT WAS.
@@ -83,6 +91,12 @@ export function Lines<S extends AnySchema>({
    * a panel that grows because something inside it opened moves everything
    * below it, and no frame changed.
    */
+  /*
+   * Which views there are, not where they are: a drag moves every view it
+   * touches on every pointer move, and re-observing the whole stage for
+   * each of those moves cost more than the drag.
+   */
+  const views = frame.nodes.map((node) => node.id).join("\n");
   useLayoutEffect(() => {
     const stage = stageRef.current;
     if (stage === null || typeof window === "undefined") return;
@@ -108,10 +122,10 @@ export function Lines<S extends AnySchema>({
       window.removeEventListener("resize", again);
       watch?.disconnect();
     };
-  }, [stageRef, frame]);
+  }, [stageRef, views]);
 
-  // Not memoised: it measures the DOM, and the DOM is what changed.
-  const strands = connectorStrands(frame.nodes, frame.connectors, stageRef.current, overview, scheme);
+  // Without a DOM — the first render, a server — the lines stand on the layout's own boxes.
+  const strands = measured ?? connectorStrands(frame.nodes, frame.connectors, null, overview, scheme);
   const drawnSingles = new Set<string>();
   for (const strand of strands) {
     if (strand.edges.length !== 1) continue;

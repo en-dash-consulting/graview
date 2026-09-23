@@ -181,14 +181,36 @@ export interface Strand {
  * whether the element still overlaps it. Partly visible counts: half a row
  * is still that row, and a line to it is still true.
  */
-function withinItsScroller(el: Element, rect: DOMRect): boolean {
+/**
+ * What one measuring pass has already asked the DOM. Every member's walk up
+ * to its scroller passes the same few panels, and asking each of them for
+ * its computed style and its box again, per member, per connector, per
+ * pointer move, was most of the cost of dragging a card.
+ */
+interface Pass {
+  /** A clipping ancestor's box, or null for one that does not clip. */
+  readonly clips: Map<Element, DOMRect | null>;
+  /** A member's boxes inside a host, keyed by host and member. */
+  readonly members: Map<Element, Map<string, Box[]>>;
+}
+const newPass = (): Pass => ({ clips: new Map(), members: new Map() });
+
+function clipOf(parent: Element, pass: Pass): DOMRect | null {
+  let held = pass.clips.get(parent);
+  if (held === undefined) {
+    const style = getComputedStyle(parent);
+    const clips = style.overflow !== "visible" || style.overflowX !== "visible" || style.overflowY !== "visible";
+    held = clips ? parent.getBoundingClientRect() : null;
+    pass.clips.set(parent, held);
+  }
+  return held;
+}
+
+function withinItsScroller(el: Element, rect: DOMRect, pass: Pass): boolean {
   let parent = el.parentElement;
   while (parent !== null) {
-    const style = getComputedStyle(parent);
-    const clips =
-      style.overflow !== "visible" || style.overflowX !== "visible" || style.overflowY !== "visible";
-    if (clips) {
-      const box = parent.getBoundingClientRect();
+    const box = clipOf(parent, pass);
+    if (box) {
       const overlaps =
         rect.right > box.left + 1 &&
         rect.left < box.right - 1 &&
@@ -212,8 +234,13 @@ function memberBoxes(
   stageEl: HTMLElement | null,
   host: Element | null,
   memberId: string,
+  pass: Pass,
 ): Box[] {
   if (!stageEl || !host || typeof document === "undefined") return [];
+  let inHost = pass.members.get(host);
+  if (!inHost) pass.members.set(host, (inHost = new Map()));
+  const known = inHost.get(memberId);
+  if (known) return known;
   const stage = stageEl.getBoundingClientRect();
   const boxes: Box[] = [];
   const selector =
@@ -236,7 +263,7 @@ function memberBoxes(
      * which is the honest answer: the thing is in there somewhere, and the
      * panel is the finest box that is actually true.
      */
-    if (!withinItsScroller(el, rect)) continue;
+    if (!withinItsScroller(el, rect, pass)) continue;
     boxes.push({
       x: rect.left - stage.left,
       y: rect.top - stage.top,
@@ -244,7 +271,9 @@ function memberBoxes(
       height: rect.height,
     });
   }
-  return boxes.sort((a, b) => a.width * a.height - b.width * b.height);
+  boxes.sort((a, b) => a.width * a.height - b.width * b.height);
+  inHost.set(memberId, boxes);
+  return boxes;
 }
 
 /**
@@ -264,6 +293,7 @@ export function connectorStrands(
   scheme: "light" | "dark",
 ): Strand[] {
   const byId = new Map(nodes.map((node) => [node.id, node]));
+  const pass = newPass();
   const hostEls = new Map<string, Element | null>();
   const hostOf = (id: string): Element | null => {
     if (!stageEl || typeof document === "undefined") return null;
@@ -348,8 +378,8 @@ export function connectorStrands(
       overview &&
       edges.some(
         (edge) =>
-          (edge.from !== connector.from && memberBoxes(stageEl, hostOf(connector.from), edge.from).length > 0) ||
-          (edge.to !== connector.to && memberBoxes(stageEl, hostOf(connector.to), edge.to).length > 0),
+          (edge.from !== connector.from && memberBoxes(stageEl, hostOf(connector.from), edge.from, pass).length > 0) ||
+          (edge.to !== connector.to && memberBoxes(stageEl, hostOf(connector.to), edge.to, pass).length > 0),
       );
     const band = bandFor(connector.from, connector.to);
     if ((overview && !drawnMember) || connector.loop || edges.length === 0) {
@@ -373,9 +403,9 @@ export function connectorStrands(
     >();
     for (const edge of edges) {
       const fromCandidates =
-        edge.from === connector.from ? [] : memberBoxes(stageEl, hostOf(connector.from), edge.from);
+        edge.from === connector.from ? [] : memberBoxes(stageEl, hostOf(connector.from), edge.from, pass);
       const toCandidates =
-        edge.to === connector.to ? [] : memberBoxes(stageEl, hostOf(connector.to), edge.to);
+        edge.to === connector.to ? [] : memberBoxes(stageEl, hostOf(connector.to), edge.to, pass);
       /*
        * THE FOCUS THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION. The lists
        * view draws every task inside its list; a line from each list column
@@ -391,7 +421,7 @@ export function connectorStrands(
         !overview &&
         focusEnd !== undefined &&
         (edge.from !== connector.from || edge.to !== connector.to) &&
-        memberBoxes(stageEl, hostOf(focusEnd), focusEnd === connector.from ? edge.to : edge.from).length > 0
+        memberBoxes(stageEl, hostOf(focusEnd), focusEnd === connector.from ? edge.to : edge.from, pass).length > 0
       ) {
         continue;
       }

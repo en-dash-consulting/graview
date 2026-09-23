@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T20:34:18.545Z",
+  "at": "2026-09-23T13:43:56.789Z",
   "engine": "chromium",
   "screens": [
     {
@@ -498,7 +498,9 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [],
+      "offscreen": [
+        "waits-for3 at 27..265"
+      ],
       "asking": [],
       "board": [],
       "fill": 60,
@@ -528,7 +530,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 59,
+      "fill": 60,
       "inspector": {
         "shown": 1,
         "hidden": 0,
@@ -555,7 +557,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 59,
+      "fill": 60,
       "inspector": null,
       "led": null,
       "figures": []
@@ -577,7 +579,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 59,
+      "fill": 60,
       "inspector": null,
       "led": null,
       "figures": []
@@ -599,7 +601,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 59,
+      "fill": 60,
       "inspector": null,
       "led": null,
       "figures": []
@@ -621,12 +623,12 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 59,
+      "fill": 60,
       "inspector": {
-        "shown": 7,
+        "shown": 9,
         "hidden": 0,
-        "size": "238x283",
-        "text": "Is connected to nothing yet⚠ Nobody is covering \"Friday repair cafe\" on 2026-09-18Find som"
+        "size": "238x317",
+        "text": "⚠ Nobody is covering \"Friday repair cafe\" on 2026-09-18Find somebody for \"Friday repair ca"
       },
       "led": null,
       "figures": []
@@ -648,12 +650,12 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 59,
+      "fill": 60,
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "238x457",
-        "text": "Nobody is covering \"Friday repair cafe\" on 2026-09-18Is connected to nothing yetNothing yo"
+        "size": "238x437",
+        "text": "Nobody is covering \"Friday repair cafe\" on 2026-09-18Nothing you may do with a shift — 6 a"
       },
       "led": null,
       "figures": []
@@ -702,7 +704,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 12,
+      "fill": 11,
       "inspector": null,
       "led": null,
       "figures": []
@@ -812,7 +814,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 61,
       "inspector": null,
       "led": null,
       "figures": []
@@ -834,7 +836,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 10,
+      "fill": 9,
       "inspector": null,
       "led": null,
       "figures": []
@@ -878,7 +880,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 9,
+      "fill": 8,
       "inspector": {
         "shown": 3,
         "hidden": 0,
@@ -927,7 +929,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 11,
+      "fill": 24,
       "inspector": {
         "shown": 3,
         "hidden": 0,
