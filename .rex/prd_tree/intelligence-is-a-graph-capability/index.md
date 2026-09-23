@@ -35,4 +35,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Chat is a seat you can talk to: a conversational surface over the intelligence seam](./chat-is-a-seat-you-can-talk-to-a.md) | completed |
 | [ELM evaluation: intent routing and op-log-learned ranking, measured](./elm-evaluation-intent-routing-and-op.md) | completed |
 | [Local intelligence: the free tier runs in the browser](./local-intelligence-the-free-tier-runs.md) | completed |
-| [One seat, one conversation: the app's chat and the studio's declaration seat are the same thread](./one-seat-one-conversation-the-app-s.md) | pending |
+| [One seat, one conversation: the app's chat and the studio's declaration seat are the same thread](./one-seat-one-conversation-the-app-s.md) | in_progress |

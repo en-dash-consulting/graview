@@ -1,16 +1,20 @@
 import { figureSvg, formFields, humaniseField, labelOf, type AnySchema, type Finding, type FormField, type Store } from "@graview/core";
 import { useGraview } from "@graview/react";
-import { IntelligenceSettings } from "@graview/primitives";
+import {
+  describeSource,
+  proposalKey,
+  SeatComposer,
+  SeatHeader,
+  SeatSettings,
+  SeatThread,
+  useSeatConversation,
+} from "@graview/primitives";
 import {
   completionFor,
   configuredResponder,
   describeIntelligence,
   describeProposal,
-  loadIntelligenceConfig,
   resolveProposal,
-  saveIntelligenceConfig,
-  type ChatReply,
-  type IntelligenceConfig,
   type LocalStatus,
   type ProposedCall,
   type Responder,
@@ -24,22 +28,19 @@ import type { Studio } from "./studio.js";
 /**
  * ASK FOR A DECLARATION CHANGE IN WORDS, SEE IT CHECKED, KEEP OR DISCARD IT.
  *
- * The studio could already take a proposal from an agent — `propose`,
- * `proposals`, `decline` — and the chat panel could already turn words into
- * proposals. Nothing joined them, so the one surface whose subject is the
- * declaration was the one surface you could not talk to: every change by
- * hand, one act at a time, with the whole shape held in your head.
- *
- * Three things make this trustworthy rather than merely convenient:
+ * The same conversation as the app's own seat — the thread, the header,
+ * the field, what the model is told was kept — from `@graview/primitives`.
+ * What is the studio's own is what a proposal is here: a change to the
+ * declaration, and three things make that trustworthy rather than merely
+ * convenient.
  *
  * NOTHING IS APPLIED BY ASKING. A turn produces proposals and stops. The
  * declaration is untouched until a person presses Keep.
  *
  * THE CHECKER SPEAKS FIRST. Every proposal is run through `studio.would`,
  * which applies it to a COPY and checks what the declaration would become.
- * A change that would break the build is shown struck through with the
- * finding that condemns it, and has no Keep button at all — being offered
- * something that cannot work is worse than being told no.
+ * A change that would break the build says so and cannot be kept — being
+ * offered something that cannot work is worse than being told no.
  *
  * KEEPING IS AN ORDINARY OP. Keep calls `studio.propose`, the same path the
  * studio's existing seat uses: a batch of its own under the agent's name,
@@ -50,43 +51,31 @@ type Verdict =
   | { readonly ok: true; readonly errors: number; readonly warnings: number; readonly findings: readonly Finding[]; readonly breaks: boolean }
   | { readonly ok: false; readonly reason: string };
 
+/** One proposal as it stands now: the person's corrections over what was proposed, read against the declaration as it is. */
 interface Offer {
   readonly proposal: ProposedCall;
-  /** What would actually be applied — the person's to correct before it is. */
   readonly args: Record<string, unknown>;
   readonly verdict: Verdict;
-  readonly said: string;
-  state: "open" | "kept" | "discarded";
-}
-
-interface Turn {
-  readonly role: "person" | "seat";
-  readonly text: string;
-  readonly offers?: readonly Offer[];
-  /**
-   * The rung that answered could not read the sentence — and no model is
-   * chosen. The way out is one press, so the turn carries it.
-   */
-  readonly offerModel?: boolean;
 }
 
 export function StudioAgentPanel({
   studio,
+  respond,
   testId = "studio-agent",
 }: {
   readonly studio: Studio<AnySchema>;
+  /** How the seat answers, when a host decides — as on the app's own chat. Defaults to the ladder over the declaration's floor. */
+  readonly respond?: Responder<StudioSchema>;
   readonly testId?: string;
 }) {
-  const { principal } = useGraview<StudioSchema>();
+  const { principal, intelligence: config } = useGraview<StudioSchema>();
   const [open, setOpen] = useState(false);
-  const [turns, setTurns] = useState<readonly Turn[]>([]);
-  const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [config, setConfig] = useState<IntelligenceConfig>(() => loadIntelligenceConfig());
   const [settings, setSettings] = useState(false);
   const [warmth, setWarmth] = useState<LocalStatus | null>(null);
+  useEffect(() => setWarmth(null), [config]);
+  /** What the person changed on each proposal before keeping it, by proposal key. */
+  const [edits, setEdits] = useState<ReadonlyMap<string, Record<string, unknown>>>(new Map());
   const anchor = useRef<HTMLDivElement | null>(null);
-  const log = useRef<HTMLOListElement | null>(null);
 
   const statusToken = useRef(0);
   /*
@@ -105,183 +94,96 @@ export function StudioAgentPanel({
     };
     const complete = completionFor(config, { onStatus });
     const floor = studioResponder(complete ? { complete } : {});
-    return configuredResponder<StudioSchema>(config, { onStatus, floor, current: () => configNow.current });
-  }, [config]);
+    return respond ?? configuredResponder<StudioSchema>(config, { onStatus, floor, current: () => configNow.current });
+  }, [config, respond]);
 
-  useEffect(() => {
-    log.current?.scrollTo({ top: log.current.scrollHeight });
-  }, [turns]);
-
-  const send = async () => {
-    const text = draft.trim();
-    if (!text || busy) return;
-    setDraft("");
-    setBusy(true);
-    setTurns((current) => [...current, { role: "person", text }]);
-    const history = turns.map((turn) => ({ role: turn.role, text: turn.text }));
-    let reply: ChatReply;
-    try {
-      reply = await answer(studio.store as never, text, { history });
-    } catch (error) {
-      reply = {
-        say: `The seat could not answer: ${error instanceof Error ? error.message : String(error)}`,
-        proposals: [],
-      };
-    }
-    /*
-     * Judged HERE, once, as the reply lands — not on every render, and not
-     * after the person has already decided. The baseline matters: a
-     * declaration that is already failing must not make every proposal
-     * unkeepable, so what condemns a change is the errors it ADDS.
-     */
-    const offers: Offer[] = reply.proposals.map((proposal) => {
-      /*
-       * A model names things the way a person does — "Meal", not
-       * `declared:meal`. Reading a label that means exactly one node as that
-       * node is what turns a validation refusal into a working proposal.
-       */
-      const resolved = resolveProposal(studio.store as never, proposal);
-      const args = { ...resolved.args };
-      return { proposal: resolved, args, verdict: judge(args, resolved), said: describeProposal(studio.store as never, resolved), state: "open" };
-    });
-    setTurns((current) => [
-      ...current,
-      {
-        role: "seat",
-        text: reply.say,
-        offers,
-        /*
-         * "I could not read that" is honest and, on its own, a dead end:
-         * the person is left guessing which phrasing the pattern-matcher
-         * wants, when the rung that reads any phrasing is one press away
-         * behind the gear. Only when none is chosen — a surface that
-         * already has a model has nothing to offer.
-         */
-        ...(reply.unsure && config.source === "graph" ? { offerModel: true } : {}),
-      },
-    ]);
-    setBusy(false);
-  };
+  const conversation = useSeatConversation({
+    answer: (text, context) => answer(studio.store as never, text, context),
+  });
+  const { outcomes, settle } = conversation;
 
   /*
    * WHAT THE CHECKER WOULD SAY, for the arguments as they now stand.
    *
-   * Recomputed on every edit rather than once on arrival: the whole point
-   * of letting a person correct a proposal is that the verdict has to be
-   * about what they corrected it to.
+   * The baseline matters: a declaration that is already failing must not
+   * make every proposal unkeepable, so what condemns a change is the errors
+   * it ADDS — and only the findings it brought are shown under it. Rota
+   * ships a standing finding about a role that may run nothing; shown under
+   * a proposal, it read as a verdict ON the proposal.
    */
   const judge = (args: Record<string, unknown>, proposal: ProposedCall): Verdict => {
-    const before = studio.check().errors;
+    const now = studio.check();
     const would = studio.would({ name: proposal.mutation, args: { ...args } });
     if (!would.ok) return { ok: false, reason: would.reason };
-    /*
-     * ONLY WHAT THIS CHANGE BROUGHT. The declaration has its own standing
-     * findings — rota ships one about a role that may run nothing — and
-     * showing the first of them under a proposal reads as a verdict ON the
-     * proposal. What a person needs to know is what they are ADDING.
-     */
-    const standing = new Set(studio.check().findings.map((finding) => `${finding.code}:${finding.where}`));
+    const standing = new Set(now.findings.map((finding) => `${finding.code}:${finding.where}`));
     const added = would.check.findings.filter((finding) => !standing.has(`${finding.code}:${finding.where}`));
     return {
       ok: true,
       errors: would.check.errors,
       warnings: would.check.warnings,
       findings: added.slice(0, 4),
-      breaks: would.check.errors > before,
+      breaks: would.check.errors > now.errors,
     };
   };
 
   /*
    * EVERY OPEN PROPOSAL IS ABOUT THE DECLARATION AS IT NOW STANDS.
    *
-   * A loose sentence describes several changes and several of them depend
-   * on each other: "a Meal kind, with a name and how many it feeds" is one
-   * act that creates the kind and two that need it to exist. Judged once on
-   * arrival, the two fields refuse — they name a kind that is not there yet
-   * — and keeping the first one changed nothing about them, so a person saw
-   * two dead proposals under a live one and no way to tell they were only
-   * waiting.
-   *
-   * So they are re-read and re-judged whenever the declaration changes: the
-   * name the model used resolves the moment the thing it names exists, and
-   * an undo puts them back where they were. The verdict on screen is never
-   * about a declaration that has moved on.
+   * A loose sentence describes several changes that depend on each other:
+   * "a Meal kind, with a name and how many it feeds" is one act that creates
+   * the kind and two that need it. Read afresh against the declaration each
+   * time it moves, the name the model used resolves the moment the thing it
+   * names exists, and an undo puts them back where they were — so the
+   * verdict on screen is never about a declaration that has moved on.
    */
   const tick = useStoreTick(studio.store);
-  useEffect(() => {
-    setTurns((current) =>
-      current.map((turn) =>
-        turn.offers === undefined
-          ? turn
-          : {
-              ...turn,
-              offers: turn.offers.map((offer) => {
-                if (offer.state !== "open") return offer;
-                const resolved = resolveProposal(studio.store as never, { ...offer.proposal, args: offer.args });
-                const args = { ...resolved.args };
-                return {
-                  ...offer,
-                  args,
-                  verdict: judge(args, offer.proposal),
-                  said: describeProposal(studio.store as never, { ...offer.proposal, args }),
-                };
-              }),
-            },
-      ),
-    );
-    // Only when the declaration moved: `judge` reads the store as it is, so
-    // the tick is the whole dependency.
-  }, [tick]);
-
-  const edit = (at: number, offerAt: number, name: string, value: unknown) => {
-    setTurns((current) =>
-      current.map((turn, index) =>
-        index === at && turn.offers
-          ? {
-              ...turn,
-              offers: turn.offers.map((offer, o) => {
-                if (o !== offerAt) return offer;
-                const args = { ...offer.args, [name]: value };
-                return {
-                  ...offer,
-                  args,
-                  verdict: judge(args, offer.proposal),
-                  said: describeProposal(studio.store as never, { ...offer.proposal, args }),
-                };
-              }),
-            }
-          : turn,
-      ),
-    );
+  const offerFor = (proposal: ProposedCall, key: string): Offer => {
+    const resolved = resolveProposal(studio.store as never, { ...proposal, args: edits.get(key) ?? proposal.args });
+    const args = { ...resolved.args };
+    return { proposal: resolved, args, verdict: judge(args, resolved) };
   };
+  // Judging runs the checker twice per proposal: once per declaration change and edit, not per render.
+  const offers = useMemo(() => {
+    const judged = new Map<string, Offer>();
+    conversation.turns.forEach((turn, index) =>
+      (turn.proposals ?? []).forEach((proposal, at) => {
+        const key = proposalKey(index, at);
+        if (!outcomes.has(key) || outcomes.get(key)?.state === "refused") judged.set(key, offerFor(proposal, key));
+      }),
+    );
+    return judged;
+    // `offerFor` reads the store as it is, so the tick stands for it.
+  }, [conversation.turns, outcomes, edits, tick]);
 
-  /*
-   * ONE LINE PER DECISION. Settling used to mark the offer AND append a
-   * turn saying the same thing, so keeping a field wrote "Kept — Add a
-   * field" twice, one above the other, in two different voices.
-   */
-  const settle = (at: number, offerAt: number, state: Offer["state"], say?: string) => {
-    setTurns((current) => [
-      ...current.map((turn, index) =>
-        index === at && turn.offers
-          ? { ...turn, offers: turn.offers.map((offer, o) => (o === offerAt ? { ...offer, state } : offer)) }
-          : turn,
-      ),
-      ...(say ? [{ role: "seat" as const, text: say }] : []),
-    ]);
-  };
-
-  const keep = (at: number, offerAt: number, offer: Offer) => {
+  const keep = (key: string, offer: Offer): boolean => {
     const result = studio.propose(
       { name: offer.proposal.mutation, args: { ...offer.args } },
       { kind: "agent", id: "studio-agent", session: "ui", ...(principal.roles ? { roles: principal.roles } : {}) },
       offer.proposal.why ?? `you asked for it in words`,
     );
     if (!result.ok) {
-      settle(at, offerAt, "open", `Refused: ${result.reason}`);
-      return;
+      settle(key, { state: "refused", error: result.reason });
+      return false;
     }
-    settle(at, offerAt, "kept");
+    settle(key, { state: "applied", said: describeProposal(studio.store as never, { ...offer.proposal, args: offer.args }) });
+    return true;
+  };
+
+  /*
+   * ONE REQUEST, ONE PRESS — kept in order, each read afresh after the one
+   * before it has landed, so a field waiting on its kind is judged against
+   * the declaration that now has it. It stops at the first the checker
+   * refuses: keeping past a break would hide which one broke it.
+   */
+  const keepAll = (turn: number, proposals: readonly ProposedCall[]) => {
+    for (const [at, proposal] of proposals.entries()) {
+      const key = proposalKey(turn, at);
+      const state = outcomes.get(key)?.state;
+      if (state === "applied" || state === "declined") continue;
+      const offer = offerFor(proposal, key);
+      if (!offer.verdict.ok || offer.verdict.breaks) return;
+      if (!keep(key, offer)) return;
+    }
   };
 
   return (
@@ -318,147 +220,62 @@ export function StudioAgentPanel({
             overflow: "hidden",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 8px 6px 12px",
-              borderBottom: "1px solid var(--graview-edge)",
-            }}
-          >
-            <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
-              Declaration
-            </span>
-            <span
-              data-testid={`${testId}-source`}
-              title={warmth?.state === "failed" ? warmth.detail : undefined}
-              style={{ fontSize: "0.6875rem", color: "var(--graview-ink-muted)" }}
-            >
-              {warmth?.state === "warming"
-                ? `warming${warmth.progress !== undefined ? ` ${Math.round(warmth.progress * 100)}%` : "…"}`
-                : warmth?.state === "failed"
-                  ? `the declaration answering — ${warmth.detail ?? "the local model failed"}`
-                  : describeIntelligence(config)}
-            </span>
-            <span style={{ flex: "1 1 auto" }} />
-            <button
-              type="button"
-              data-testid={`${testId}-settings`}
-              aria-expanded={settings}
-              onClick={() => setSettings((current) => !current)}
-              title="Choose what answers: the declaration itself, a model in this browser, a decision provider, or your own key"
-              style={{ fontSize: "0.75rem", padding: "2px 8px", minHeight: 24 }}
-            >
-              ⚙
-            </button>
-          </div>
-
+          {/*
+            * The studio has no profile of its own on its bar, so the one
+            * setting the app's profile holds is behind the gear here.
+            */}
+          <SeatHeader
+            label="Declaration"
+            testId={testId}
+            source={describeSource(describeIntelligence(config), warmth, "the declaration")}
+            {...(warmth?.state === "failed" && warmth.detail ? { sourceTitle: warmth.detail } : {})}
+            settings={settings}
+            onSettings={() => setSettings((current) => !current)}
+          />
           {settings ? (
-            <IntelligenceSettings
-              config={config}
-              onDone={(next) => {
-                saveIntelligenceConfig(next);
-                setConfig(next);
-                setWarmth(null);
-                setSettings(false);
-              }}
-            />
+            <SeatSettings testId={testId} onDone={() => setSettings(false)} />
           ) : (
-            <ol
-              ref={log}
-              style={{
-                margin: 0,
-                padding: 10,
-                listStyle: "none",
-                display: "grid",
-                gap: 8,
-                alignContent: "start",
-                maxHeight: "min(46cqh, 420px)",
-                minHeight: 140,
-                overflowY: "auto",
-              }}
-            >
-              {turns.length === 0 ? (
-                <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)", lineHeight: 1.5 }}>
+            <SeatThread
+              turns={conversation.turns}
+              outcomes={outcomes}
+              busy={conversation.busy}
+              testId={testId}
+              minHeight={140}
+              maxHeight="min(46cqh, 420px)"
+              empty={
+                <>
                   Ask about this declaration — what kinds there are, what an act writes, what a rule
                   judges, which kinds have no figure — or say a change: “add a due date to tasks”,
                   “draw a figure for person”. Nothing is applied until you keep it.
-                </li>
-              ) : null}
-              {turns.map((turn, at) => (
-                <li key={at} style={{ display: "grid", gap: 6, justifyItems: turn.role === "person" ? "end" : "start" }}>
-                  <p
-                    style={{
-                      margin: 0,
-                      maxWidth: 300,
-                      padding: "6px 10px",
-                      borderRadius: 10,
-                      fontSize: "0.78125rem",
-                      lineHeight: 1.45,
-                      background: turn.role === "person" ? "var(--graview-panel-muted)" : "var(--graview-panel)",
-                      border: "1px solid var(--graview-edge)",
-                      color: "var(--graview-ink)",
-                    }}
-                  >
-                    {turn.text}
-                  </p>
-                  {turn.offerModel ? (
-                    <button
-                      type="button"
-                      data-testid={`${testId}-offer-model`}
-                      onClick={() => setSettings(true)}
-                      title="A model reads a sentence however it is phrased, and proposes the acts it describes"
-                      style={{ fontSize: "0.75rem", justifySelf: "start" }}
-                    >
-                      Let a model read it →
-                    </button>
-                  ) : null}
-                  {(turn.offers ?? []).map((offer, offerAt) => (
-                    <Offered
-                      key={offerAt}
-                      offer={offer}
-                      testId={testId}
-                      store={studio.store}
-                      onEdit={(name, value) => edit(at, offerAt, name, value)}
-                      onKeep={() => keep(at, offerAt, offer)}
-                      onDiscard={() => settle(at, offerAt, "discarded")}
-                    />
-                  ))}
-                </li>
-              ))}
-              {busy ? <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>thinking…</li> : null}
-            </ol>
-          )}
-
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void send();
-            }}
-            style={{ display: "flex", gap: 6, padding: 8, borderTop: "1px solid var(--graview-edge)" }}
-          >
-            <input
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Ask for a change…"
-              aria-label="Ask for a change to the declaration"
-              data-testid={`${testId}-draft`}
-              style={{
-                flex: 1,
-                font: "inherit",
-                fontSize: "0.78125rem",
-                padding: "6px 9px",
-                borderRadius: 8,
-                border: "1px solid var(--graview-edge)",
-                background: "var(--graview-panel)",
-                color: "var(--graview-ink)",
+                </>
+              }
+              renderProposal={(proposal, { key }) => {
+                const offer = offers.get(key) ?? offerFor(proposal, key);
+                return (
+                  <Offered
+                    offer={offer}
+                    testId={testId}
+                    store={studio.store}
+                    onEdit={(name, value) => setEdits((current) => new Map(current).set(key, { ...offer.args, [name]: value }))}
+                    onKeep={() => keep(key, offer)}
+                    onDiscard={() =>
+                      settle(key, { state: "declined", said: describeProposal(studio.store as never, { ...offer.proposal, args: offer.args }) })
+                    }
+                  />
+                );
               }}
+              onApplyAll={keepAll}
+              applyAllLabel="Keep all"
+              {...(config.source === "graph" ? { onChooseModel: () => setSettings(true) } : {})}
             />
-            <button type="submit" data-testid={`${testId}-send`} disabled={busy || draft.trim().length === 0} style={{ fontSize: "0.78125rem" }}>
-              Send
-            </button>
-          </form>
+          )}
+          <SeatComposer
+            busy={conversation.busy}
+            placeholder="Ask for a change…"
+            ariaLabel="Ask for a change to the declaration"
+            testId={testId}
+            onSend={(text) => void conversation.send(text)}
+          />
         </div>
       ) : null}
     </div>
@@ -500,15 +317,6 @@ function Offered<S extends AnySchema>({
   readonly onDiscard: () => void;
 }) {
   const faint = { fontSize: "0.75rem", color: "var(--graview-ink-muted)" } as const;
-  if (offer.state !== "open") {
-    return (
-      <span data-testid={`${testId}-settled`} data-state={offer.state} style={faint}>
-        {offer.state === "kept" ? "Kept" : "Discarded"} — {offer.said}
-        {offer.state === "kept" ? " · undo takes it back" : ""}
-      </span>
-    );
-  }
-
   const declared = store.allMutations().find((one) => one.name === offer.proposal.mutation);
   const fields = declared ? formFields(declared.input) : [];
   const breaks = offer.verdict.ok && offer.verdict.breaks;

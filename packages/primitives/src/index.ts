@@ -45,9 +45,21 @@ export { Companion, useSubject } from "./companion.js";
 export type { CompanionProps, Subject } from "./companion.js";
 export { RelationKey, RelationMark } from "./relation-key.js";
 export { QuickRelations } from "./quick-relations.js";
-export { ChatPanel, IntelligenceSettings } from "./chat.js";
+export { ChatPanel } from "./chat.js";
 export { LadderSetting } from "./ladder.js";
 export type { ChatPanelProps } from "./chat.js";
+export {
+  describeSource,
+  proposalKey,
+  SeatComposer,
+  SeatHeader,
+  SeatSettings,
+  SeatThread,
+  Settled,
+  splitAside,
+  useSeatConversation,
+} from "./seat.js";
+export type { SeatAnswer, SeatOutcome, SeatTurn } from "./seat.js";
 export { Wordmark } from "./wordmark.js";
 export { Places } from "./places.js";
 export { ShowInstallation } from "./installation.js";

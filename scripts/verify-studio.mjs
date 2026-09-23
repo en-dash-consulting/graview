@@ -363,7 +363,7 @@ try {
   }));
   await page.click('[data-testid="studio-agent-offer-model"]');
   await page.waitForTimeout(400);
-  const gear = await page.evaluate(() => document.querySelector('[data-testid="chat-settings-form"], [data-testid="studio-agent-panel"] form input[type="radio"]') !== null);
+  const gear = await page.evaluate(() => document.querySelector('[data-testid="studio-agent-ladder"] [data-testid="setting-intelligence"]') !== null);
   report.checks.whatTheKeylessRungCannotReadItOffersAWayOutOf = {
     ...stuck,
     opensThePicker: gear,

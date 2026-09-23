@@ -9,16 +9,14 @@ import {
   loadPins,
   resolveProposal,
   stillNeeded,
-  type ChatReply,
-  type IntelligenceConfig,
   type LocalStatus,
-  type OfferedQuestion,
   type ProposedCall,
   type Responder,
   type ToolCall,
 } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSubject } from "./companion.js";
+import { describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, useSeatConversation } from "./seat.js";
 import { AnswerArgs } from "./workbench/index.js";
 
 /**
@@ -31,33 +29,11 @@ import { AnswerArgs } from "./workbench/index.js";
  * the host supplies it), and every proposal is an ordinary validated call,
  * applied through the same runtime a seat uses, attributed to `chat` in
  * the log, previewer-visible, undoable. Words in, the usual paths out.
+ *
+ * The conversation itself — turns, outcomes, the thread, the header and the
+ * field — is `seat.tsx`, shared with the studio's declaration seat; what is
+ * this panel's own is what a proposal does here: apply to the graph.
  */
-
-interface Turn {
-  readonly role: "person" | "seat";
-  readonly text: string;
-  readonly proposals?: readonly ProposedCall[];
-  /** Questions the seat is asking back, each at the node it is about. */
-  readonly questions?: readonly OfferedQuestion[];
-}
-
-/**
- * WHAT BECAME OF A PROPOSAL, said where it was offered. Each apply used to
- * post a bubble of its own — "Done — Stake out a plot. Undo works." under
- * "Stake out a plot …" — so one request read as five messages. The press
- * becomes its own outcome instead, in place.
- */
-type Outcome = { readonly ok: true; readonly said: string } | { readonly ok: false; readonly error: string };
-
-/**
- * The seat's trailing aside — "(from the graph)", "(the local model is
- * warming …)" — is which rung answered, not the answer: kept, and set
- * quieter than what was said.
- */
-const splitAside = (text: string): { said: string; aside?: string } => {
-  const match = /^([\s\S]*?)\s*(\((?:[^()]|\([^()]*\))*\))\s*$/.exec(text);
-  return match && match[1] ? { said: match[1], aside: match[2]! } : { said: text };
-};
 
 export interface ChatPanelProps<S extends AnySchema> {
   /**
@@ -88,24 +64,21 @@ export function ChatPanel<S extends AnySchema>({
   onCall,
   testId = "chat",
 }: ChatPanelProps<S>) {
-  const { store, principal, seatWho, noteSeat, robots, session, intelligence: config, registerHostAnswers } = useGraview<S>();
+  const { store, principal, seatWho, noteSeat, session, intelligence: config, registerHostAnswers } = useGraview<S>();
   const { selection } = useSelection();
   const subject = useSubject<S>();
   /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
   const who = seatWho ?? "chat";
   const author = useMemo(() => ({ kind: "agent" as const, id: who, session }), [who, session]);
-  const robot = robots.get(`agent:${who}:${session}`);
   const [shown, setOpen] = useState(false);
   // Inside the rail there is nothing to open: the rail is what opens.
   const open = inside || shown;
-  const [turns, setTurns] = useState<readonly Turn[]>([]);
-  const [outcomes, setOutcomes] = useState<ReadonlyMap<string, Outcome>>(new Map());
-  const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [settings, setSettings] = useState(false);
   /*
    * THE LADDER IS A SETTING — the provider's, chosen in the profile pane
-   * beside text size and scheme, read here. A host that passes `respond`
-   * has decided for them.
+   * beside text size and scheme, and read here. There is no gear on the
+   * chat: the profile is on the same bar. "Let a model read it" shows the
+   * same setting in place. A host that passes `respond` has decided.
    */
   const [warmth, setWarmth] = useState<LocalStatus | null>(null);
   useEffect(() => setWarmth(null), [config]);
@@ -115,7 +88,6 @@ export function ChatPanel<S extends AnySchema>({
     return () => registerHostAnswers(false);
   }, [respond, registerHostAnswers]);
   const anchor = useRef<HTMLDivElement | null>(null);
-  const log = useRef<HTMLOListElement | null>(null);
 
   const runtime = useMemo(
     () =>
@@ -181,74 +153,40 @@ export function ChatPanel<S extends AnySchema>({
     };
   }, [open]);
 
-  useEffect(() => {
-    // A log that cannot be scrolled — jsdom, a print stylesheet — is not a
-    // reason to throw out of an effect and take the rail down with it.
-    log.current?.scrollTo?.({ top: log.current.scrollHeight });
-  }, [turns]);
-
-  const send = async (question?: string) => {
-    const text = (question ?? draft).trim();
-    if (!text || busy) return;
-    setDraft("");
-    setBusy(true);
-    setTurns((current) => [...current, { role: "person", text }]);
-    let reply: ChatReply;
+  const conversation = useSeatConversation({
     /*
      * "THIS" IS THE COMPANION'S SUBJECT: the selection, else what the
      * pointer has settled on, else where you are. One answer for the whole
      * frame, so the panel and the header above it cannot disagree.
      */
-    const referent = subject.id ? [subject.id] : selection;
-    try {
-      reply = await answer(store, text, {
-        selection: referent,
-        /*
-         * WHAT WAS DONE is part of what was said. "Erin tends that plot"
-         * means the plot the last turn made — and the model only knows
-         * which if the history carries what landed, by name, not just the
-         * sentence that proposed it.
-         */
-        history: turns.map((turn, index) => {
-          const landed = (turn.proposals ?? [])
-            .map((_, at) => outcomes.get(`${index}:${at}`))
-            .flatMap((outcome) => (outcome?.ok ? [outcome.said] : []));
-          return {
-            role: turn.role,
-            text: landed.length > 0 ? `${turn.text} [applied: ${landed.join("; ")}]` : turn.text,
-          };
-        }),
-      });
-    } catch (error) {
-      reply = {
-        say: `The seat could not answer: ${error instanceof Error ? error.message : String(error)}`,
-        proposals: [],
-      };
-    }
-    setTurns((current) => [
-      ...current,
-      { role: "seat", text: reply.say, proposals: reply.proposals, ...(reply.questions ? { questions: reply.questions } : {}) },
-    ]);
-    /*
-     * SAID FROM THE BODY TOO. The reply — prose, the graph's answer, or a
-     * typed answer with the rung's own honesty sentence — is the robot's
-     * bubble; a question for the person stands it on the node's doorstep.
-     */
-    const asked = reply.questions?.[0];
-    if (asked) {
-      noteSeat({ type: "asking", author, where: asked.nodeId ?? null, say: `${asked.nodeLabel ? `${asked.nodeLabel}: ` : ""}${asked.asks}`, confidence: asked.confidence });
-    } else {
-      noteSeat({ type: "said", author, say: reply.say });
-    }
-    /* A proposal the policy withholds is a refusal said at the gate of the kind it acts on. */
-    const withheld = reply.proposals.find((proposal) => !store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal).ok);
-    if (withheld) {
-      const verdict = store.permits({ name: withheld.mutation, args: { ...withheld.args } }, principal);
-      const kinds = store.allMutations().find((m) => m.name === withheld.mutation)?.subject?.kinds;
-      const where = Array.isArray(kinds) && kinds[0] ? kindCardId(kinds[0] as string) : null;
-      if (!verdict.ok) noteSeat({ type: "refused", author, where, say: verdict.refusal.message });
-    }
-    setBusy(false);
+    answer: (text, context) => answer(store, text, { ...context, selection: subject.id ? [subject.id] : selection }),
+    onReply: (reply) => {
+      /*
+       * SAID FROM THE BODY TOO. The reply — prose, the graph's answer, or a
+       * typed answer with the rung's own honesty sentence — is the robot's
+       * bubble; a question for the person stands it on the node's doorstep.
+       */
+      const asked = reply.questions?.[0];
+      if (asked) {
+        noteSeat({ type: "asking", author, where: asked.nodeId ?? null, say: `${asked.nodeLabel ? `${asked.nodeLabel}: ` : ""}${asked.asks}`, confidence: asked.confidence });
+      } else {
+        noteSeat({ type: "said", author, say: reply.say });
+      }
+      /* A proposal the policy withholds is a refusal said at the gate of the kind it acts on. */
+      const withheld = reply.proposals.find((proposal) => !permitted(proposal));
+      if (withheld) {
+        const verdict = store.permits({ name: withheld.mutation, args: { ...withheld.args } }, principal);
+        if (!verdict.ok) noteSeat({ type: "refused", author, where: gateOf(withheld.mutation), say: verdict.refusal.message });
+      }
+    },
+  });
+  const { outcomes, settle } = conversation;
+
+  const permitted = (proposal: ProposedCall) =>
+    store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal).ok;
+  const gateOf = (mutation: string) => {
+    const kinds = store.allMutations().find((m) => m.name === mutation)?.subject?.kinds;
+    return Array.isArray(kinds) && kinds[0] ? kindCardId(kinds[0] as string) : null;
   };
 
   /*
@@ -276,9 +214,6 @@ export function ChatPanel<S extends AnySchema>({
     key: string;
   } | null>(null);
 
-  const settle = (key: string, outcome: Outcome) =>
-    setOutcomes((current) => new Map(current).set(key, outcome));
-
   const apply = async (offered: ProposedCall, key: string): Promise<boolean> => {
     /*
      * Resolved AT THE PRESS, not when it was offered: a sowing proposed in
@@ -287,28 +222,20 @@ export function ChatPanel<S extends AnySchema>({
      */
     const proposal = resolveProposal(store, offered);
     const said = describeProposal(store, proposal);
-    try {
-      /*
-       * The runtime RESOLVES refusals rather than throwing them — a
-       * policy denial, a validation failure — so the flag must be read.
-       * Skipping it had the chat saying "Done — … Undo works." over a
-       * change the store had refused, which is the one lie a seat must
-       * never tell.
-       */
-      const result = await runtime.call(proposal.mutation, { ...proposal.args });
-      if (!result.ok) {
-        settle(key, { ok: false, error: result.error });
-        const kinds = store.allMutations().find((m) => m.name === proposal.mutation)?.subject?.kinds;
-        noteSeat({ type: "refused", author, where: Array.isArray(kinds) && kinds[0] ? kindCardId(kinds[0] as string) : null, say: result.error });
-        return false;
-      }
-      settle(key, { ok: true, said });
-      return true;
-    } catch (error) {
-      // A refusal is a result, where the ask was made.
-      settle(key, { ok: false, error: error instanceof Error ? error.message : String(error) });
+    /*
+     * The runtime RESOLVES refusals rather than throwing them — a policy
+     * denial, a validation failure — so the flag must be read. Skipping it
+     * had the chat saying "Done" over a change the store had refused, which
+     * is the one lie a seat must never tell.
+     */
+    const result = await runtime.call(proposal.mutation, { ...proposal.args });
+    if (!result.ok) {
+      settle(key, { state: "refused", error: result.error });
+      noteSeat({ type: "refused", author, where: gateOf(proposal.mutation), say: result.error });
       return false;
     }
+    settle(key, { state: "applied", said });
+    return true;
   };
 
   /*
@@ -317,11 +244,10 @@ export function ChatPanel<S extends AnySchema>({
    * one before it has landed, stopping at the first that still needs an
    * answer (asked, as ever) or is refused.
    */
-  const applyAll = async (turnIndex: number, proposals: readonly ProposedCall[]) => {
+  const applyAll = async (turn: number, proposals: readonly ProposedCall[]) => {
     for (const [at, proposal] of proposals.entries()) {
-      const key = `${turnIndex}:${at}`;
-      if (outcomes.get(key)?.ok) continue;
-      if (!store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal).ok) continue;
+      const key = proposalKey(turn, at);
+      if (outcomes.get(key)?.state === "applied" || !permitted(proposal)) continue;
       const owed = stillNeeded(store, proposal);
       if (owed.length > 0) {
         setAnswering({ proposal, open: owed, key });
@@ -329,6 +255,58 @@ export function ChatPanel<S extends AnySchema>({
       }
       if (!(await apply(proposal, key))) return;
     }
+  };
+
+  const offerOne = (turnIndex: number, at: number, proposal: ProposedCall, key: string) => {
+    /*
+     * WITHHELD, NOT OFFERED — the same rule as the strip. The responder
+     * proposes from the graph and knows nothing of the policy, so the seat
+     * was handed "Add an item" with an apply button and refused on press.
+     * The store's own verdict, asked as the person at the keyboard, decides
+     * whether a proposal is a press or a struck line with the policy's
+     * reason beside it.
+     */
+    const verdict = store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal);
+    if (!verdict.ok) {
+      return (
+        <span data-testid={`${testId}-withheld`} style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+          <s>{describeProposal(store, proposal)}</s> — {verdict.refusal.message}
+        </span>
+      );
+    }
+    // The same question asked of the ACT rather than of the policy: has the responder said what this needs?
+    const owed = stillNeeded(store, proposal);
+    /*
+     * WAITING, NOT MISSING. A thing named by an earlier proposal in this
+     * same reply — the plot it stakes out — is an answer that has not
+     * landed yet, so the press waits for that one rather than asking again.
+     */
+    const before = (conversation.turns[turnIndex]?.proposals ?? [])
+      .slice(0, at)
+      .filter((_, was) => outcomes.get(proposalKey(turnIndex, was))?.state !== "applied")
+      .find((earlier) =>
+        owed.some((one) => one.kinds && typeof proposal.args[one.name] === "string" && earlier.args["label"] === proposal.args[one.name]),
+      );
+    return (
+      <button
+        type="button"
+        data-testid={`${testId}-apply`}
+        data-graview-asks={owed.length > 0 ? owed.length : undefined}
+        disabled={before !== undefined}
+        onClick={() => (owed.length > 0 ? setAnswering({ proposal, open: owed, key }) : void apply(proposal, key))}
+        title={
+          before
+            ? `After “${describeProposal(store, before)}”`
+            : owed.length > 0
+              ? `${proposal.why ?? "Apply this change"} — needs ${owed.map((one) => one.name).join(", ")}`
+              : (proposal.why ?? "Apply this change")
+        }
+        style={{ fontSize: "0.75rem", textAlign: "start" }}
+      >
+        {describeProposal(store, proposal)}
+        {owed.length > 0 && !before ? " …" : ""}
+      </button>
+    );
   };
 
   return (
@@ -372,19 +350,13 @@ export function ChatPanel<S extends AnySchema>({
                   position: "static",
                   width: "auto",
                   /*
-                   * SIZED BY WHAT IS IN IT, in the rail.
-                   *
-                   * A `1fr` middle row and a floor made the panel a fixed
-                   * box: shorter than the log, the chips and the field
-                   * together, so with `overflow: visible` the field and the
-                   * chips were painted straight over the relation key
-                   * below, and with `overflow: hidden` they were cut off
-                   * instead. The log carries its own floor and ceiling
-                   * (120 to 400, scrolling); everything else is as tall as
-                   * it needs to be, and the rail's own column scrolls.
+                   * SIZED BY WHAT IS IN IT, in the rail. The log carries its
+                   * own floor and ceiling, scrolling; everything else is as
+                   * tall as it needs to be, and the rail's own column
+                   * scrolls. A fixed box painted the field and the chips
+                   * over the relation key below.
                    */
                   gridTemplateRows: "auto auto auto auto",
-                  // And never smaller than what is in it, whatever the column decides.
                   minHeight: "min-content",
                 }
               : {
@@ -401,246 +373,97 @@ export function ChatPanel<S extends AnySchema>({
             display: "grid",
             ...(inside ? {} : { gridTemplateRows: "auto 1fr auto" }),
             /*
-             * CLIPPED, EVEN IN THE RAIL. The panel is sized by its content
-             * and floored at `min-content`, so there should be nothing to
-             * clip — but "should" is doing a lot of work across engines and
-             * layouts, and the failure this guards against is the ugly one:
-             * a squeezed box painting its chips and its field straight over
-             * the relations in the section below. Clipped, the worst case
-             * is a section that scrolls in a rail that already scrolls.
+             * CLIPPED, EVEN IN THE RAIL: across engines, a squeezed box
+             * painting its field over the section below is the ugly
+             * failure; clipped, the worst case is a section that scrolls in
+             * a rail that already scrolls.
              */
             overflow: "hidden",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 8px 6px 12px",
-              borderBottom: "1px solid var(--graview-edge)",
-            }}
-          >
-            <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
-              Seat
-            </span>
-            <span
-              data-testid="chat-source"
-              // The WHY rides along: "no WebGPU" is actionable, "failed" is not.
-              title={warmth?.state === "failed" ? warmth.detail : undefined}
-              style={{ fontSize: "0.6875rem", color: "var(--graview-ink-muted)" }}
-            >
-              {respond
-                ? "app-provided"
-                : warmth?.state === "warming"
-                  ? `warming${warmth.progress !== undefined ? ` ${Math.round(warmth.progress * 100)}%` : "…"}`
-                  : warmth?.state === "failed"
-                    ? `graph answering — ${warmth.detail ?? "the local model failed"}`
-                    : describeIntelligence(config)}
-            </span>
-            <span style={{ flex: "1 1 auto" }} />
-          </div>
-          <ol
-            ref={log}
-            style={{
-              margin: 0,
-              padding: 10,
-              listStyle: "none",
-              display: "grid",
-              gap: 8,
-              alignContent: "start",
-              maxHeight: "min(46cqh, 400px)",
-              /*
-               * In the rail the log sits between the acts above and the key
-               * below, and a hundred and twenty pixels of blank under one
-               * sentence reads as something failing to load. It keeps a
-               * floor — the panel must not jump as the first turn lands —
-               * but a smaller one, and grows with what is said.
-               */
-              minHeight: inside ? 64 : 120,
-              overflowY: "auto",
-            }}
-          >
-            {turns.length === 0 ? (
-              <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)", lineHeight: 1.5 }}>
-                Ask what's wrong, ask about anything by name, or say a change in its own words.
-                {selection.length > 0 ? " “This” means what you have selected." : ""}
-              </li>
-            ) : null}
-            {turns.map((turn, index) => (
-              <li key={index} style={{ display: "grid", gap: 6, justifyItems: turn.role === "person" ? "end" : "start" }}>
-                {/*
-                  * THE PERSON IN A BUBBLE, THE SEAT IN PROSE. Two boxes
-                  * that differed by a shade of grey read as one voice
-                  * talking to itself; the seat's words sit on the panel
-                  * like any other text there, and what it did sits under
-                  * them.
-                  */}
-                {turn.role === "person" ? (
-                  <p
-                    style={{
-                      margin: 0,
-                      maxWidth: "85%",
-                      padding: "6px 10px",
-                      borderRadius: "12px 12px 4px 12px",
-                      fontSize: "0.78125rem",
-                      lineHeight: 1.45,
-                      background: "var(--graview-panel-muted)",
-                      color: "var(--graview-ink)",
-                    }}
-                  >
-                    {turn.text}
-                  </p>
-                ) : (
-                  <p style={{ margin: 0, fontSize: "0.78125rem", lineHeight: 1.5, color: "var(--graview-ink)" }}>
-                    {splitAside(turn.text).said}
-                    {splitAside(turn.text).aside ? (
-                      <span style={{ display: "block", marginTop: 2, fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
-                        {splitAside(turn.text).aside}
-                      </span>
-                    ) : null}
-                  </p>
-                )}
-                {(turn.questions ?? []).map((asked) => (
+          <SeatHeader
+            label="Seat"
+            testId={testId}
+            source={respond ? "app-provided" : describeSource(describeIntelligence(config), warmth)}
+            {...(warmth?.state === "failed" && warmth.detail ? { sourceTitle: warmth.detail } : {})}
+          />
+          {settings && !respond ? (
+            <SeatSettings testId={testId} onDone={() => setSettings(false)} />
+          ) : (
+            <SeatThread
+              turns={conversation.turns}
+              outcomes={outcomes}
+              busy={conversation.busy}
+              testId={testId}
+              minHeight={inside ? 64 : 120}
+              empty={
+                <>
+                  Ask what's wrong, ask about anything by name, or say a change in its own words.
+                  {selection.length > 0 ? " “This” means what you have selected." : ""}
+                </>
+              }
+              renderProposal={(proposal, { key, turn, at }) => offerOne(turn, at, proposal, key)}
+              ready={(proposal) => permitted(proposal)}
+              onApplyAll={(turn, proposals) => void applyAll(turn, proposals)}
+              {...(respond || config.source !== "graph" ? {} : { onChooseModel: () => setSettings(true) })}
+              renderAfter={(turn, index) =>
+                (turn.questions ?? []).map((asked) => {
+                  const key = `${index}:q:${asked.id}`;
+                  const outcome = outcomes.get(key);
                   /*
                    * A QUESTION STANDS AT ITS NODE. The seat was not sure
                    * enough to propose — a split, or a shrug — so it asks,
                    * naming the node, with each option as a press that lands
                    * through the same path a proposal does.
                    */
-                  <div
-                    key={asked.id}
-                    data-testid="chat-question"
-                    data-chat-question-node={asked.nodeId}
-                    style={{ display: "grid", gap: 4, justifySelf: "start", maxWidth: 260 }}
-                  >
-                    <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
-                      {asked.nodeLabel ? <strong>{asked.nodeLabel}: </strong> : null}
-                      {asked.asks}
-                      {asked.because === "split" ? " (it could be either)" : " (it was not sure)"}
-                    </span>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {asked.options.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          data-testid="chat-option"
-                          disabled={!option.call}
-                          title={option.call ? option.call.why ?? "Take this answer" : "Nothing to do for this answer"}
-                          onClick={() => (option.call ? void apply(option.call, `${index}:q:${asked.id}`) : undefined)}
-                          style={{ fontSize: "0.75rem" }}
-                        >
-                          {option.value} {Math.round(option.probability * 100)}%
-                        </button>
-                      ))}
-                    </div>
-                    <Landed outcome={outcomes.get(`${index}:q:${asked.id}`)} />
-                  </div>
-                ))}
-                {(turn.proposals ?? []).map((proposal, at) => {
-                  const key = `${index}:${at}`;
-                  const outcome = outcomes.get(key);
-                  if (outcome) return <Landed key={at} outcome={outcome} />;
-                  /*
-                   * WITHHELD, NOT OFFERED — the same rule as the strip. The
-                   * responder proposes from the graph and knows nothing of
-                   * the policy, so the seat was handed "Add an item" with
-                   * an apply button and refused on press. The store's own
-                   * verdict, asked as the person at the keyboard, decides
-                   * whether a proposal is a press or a struck line with
-                   * the policy's reason beside it.
-                   */
-                  const verdict = store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal);
-                  if (!verdict.ok) {
-                    return (
-                      <span key={at} data-testid="chat-withheld" style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
-                        <s>{describeProposal(store, proposal)}</s> — {verdict.refusal.message}
-                      </span>
-                    );
-                  }
-                  /*
-                   * The same question asked of the ACT rather than of the
-                   * policy: has the responder actually said what this needs?
-                   */
-                  const owed = stillNeeded(store, proposal);
-                  /*
-                   * WAITING, NOT MISSING. A thing named by an earlier
-                   * proposal in this same reply — the plot it stakes out —
-                   * is an answer that has not landed yet, so the press
-                   * waits for that one rather than asking again.
-                   */
-                  const before = (turn.proposals ?? [])
-                    .slice(0, at)
-                    .filter((earlier, was) => !outcomes.get(`${index}:${was}`)?.ok)
-                    .find((earlier) =>
-                      owed.some((one) => one.kinds && typeof proposal.args[one.name] === "string" && earlier.args["label"] === proposal.args[one.name]),
-                    );
                   return (
-                    <button
-                      key={at}
-                      type="button"
-                      data-testid="chat-apply"
-                      disabled={before !== undefined}
-                      data-graview-asks={owed.length > 0 ? owed.length : undefined}
-                      onClick={() =>
-                        owed.length > 0 ? setAnswering({ proposal, open: owed, key }) : void apply(proposal, key)
-                      }
-                      title={
-                        before
-                          ? `After “${describeProposal(store, before)}”`
-                          : owed.length > 0
-                          ? `${proposal.why ?? "Apply this change"} — needs ${owed.map((one) => one.name).join(", ")}`
-                          : (proposal.why ?? "Apply this change")
-                      }
-                      style={{ fontSize: "0.75rem", justifySelf: "start", textAlign: "start" }}
+                    <div
+                      key={asked.id}
+                      data-testid={`${testId}-question`}
+                      data-chat-question-node={asked.nodeId}
+                      style={{ display: "grid", gap: 4, justifySelf: "start", maxWidth: 260 }}
                     >
-                      {describeProposal(store, proposal)}
-                      {owed.length > 0 && !before ? " …" : ""}
-                    </button>
+                      <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+                        {asked.nodeLabel ? <strong>{asked.nodeLabel}: </strong> : null}
+                        {asked.asks}
+                        {asked.because === "split" ? " (it could be either)" : " (it was not sure)"}
+                      </span>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {asked.options.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            data-testid={`${testId}-option`}
+                            disabled={!option.call}
+                            title={option.call ? option.call.why ?? "Take this answer" : "Nothing to do for this answer"}
+                            onClick={() => (option.call ? void apply(option.call, key) : undefined)}
+                            style={{ fontSize: "0.75rem" }}
+                          >
+                            {option.value} {Math.round(option.probability * 100)}%
+                          </button>
+                        ))}
+                      </div>
+                      {outcome ? <Settled outcome={outcome} testId={testId} /> : null}
+                    </div>
                   );
-                })}
-                {(() => {
-                  const pending = (turn.proposals ?? []).filter(
-                    (proposal, at) =>
-                      !outcomes.get(`${index}:${at}`)?.ok &&
-                      store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal).ok,
-                  );
-                  return pending.length >= 2 ? (
-                    <button
-                      type="button"
-                      data-testid="chat-apply-all"
-                      onClick={() => void applyAll(index, turn.proposals ?? [])}
-                      title="Apply these in order; anything still missing is asked for"
-                      style={{ fontSize: "0.75rem", justifySelf: "start", fontWeight: 600 }}
-                    >
-                      Apply all {pending.length}
-                    </button>
-                  ) : null;
-                })()}
-              </li>
-            ))}
-            {busy ? (
-              <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>thinking…</li>
-            ) : null}
-          </ol>
+                })
+              }
+            />
+          )}
           {/*
-            * THE ASK, in the thread where it was proposed.
-            *
-            * The same component the actions strip raises, given the same
-            * shape: what the model already answered stays answered, and the
-            * questions are only the ones it left open. Answering applies
-            * through the ordinary runtime, so the log, the undo and the
-            * attribution are the ones every other act gets.
+            * THE ASK, in the thread where it was proposed: the same
+            * component the actions strip raises, given the same shape, so
+            * what the model already answered stays answered and the
+            * questions are only the ones it left open.
             */}
           {answering ? (
-            <div data-testid="chat-asking" style={{ padding: "0 8px 6px" }}>
+            <div data-testid={`${testId}-asking`} style={{ padding: "0 8px 6px" }}>
               <AnswerArgs
                 affordance={{
                   id: `chat:${answering.proposal.mutation}`,
                   mutation: answering.proposal.mutation,
                   label: describeProposal(store, answering.proposal),
-                  // What it is, honestly: a responder's suggestion. The union
-                  // has a name for that already.
+                  // What it is, honestly: a responder's suggestion.
                   provider: "llm",
                   why: answering.proposal.why ?? "The seat suggested this.",
                   nodeIds: [],
@@ -658,15 +481,15 @@ export function ChatPanel<S extends AnySchema>({
             </div>
           ) : null}
           {/* What it can answer about what is in front of you, before anybody types. */}
-          {(offer ?? []).length > 0 && turns.length === 0 ? (
-            <div data-testid="chat-offers" style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "0 8px 6px" }}>
+          {(offer ?? []).length > 0 && conversation.turns.length === 0 ? (
+            <div data-testid={`${testId}-offers`} style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "0 8px 6px" }}>
               {(offer ?? []).slice(0, 3).map((question) => (
                 <button
                   key={question}
                   type="button"
-                  data-testid="chat-offer"
-                  disabled={busy}
-                  onClick={() => void send(question)}
+                  data-testid={`${testId}-offer`}
+                  disabled={conversation.busy}
+                  onClick={() => void conversation.send(question)}
                   style={{ font: "inherit", fontSize: "0.6875rem", minHeight: 24, padding: "0 8px", borderRadius: 999 }}
                 >
                   {question}
@@ -674,227 +497,15 @@ export function ChatPanel<S extends AnySchema>({
               ))}
             </div>
           ) : null}
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void send();
-            }}
-            style={{ display: "flex", gap: 6, padding: 8, borderTop: "1px solid var(--graview-edge)" }}
-          >
-            <input
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Ask, or say a change…"
-              aria-label="Message the seat"
-              style={{
-                flex: 1,
-                font: "inherit",
-                fontSize: "0.78125rem",
-                padding: "6px 9px",
-                borderRadius: 8,
-                border: "1px solid var(--graview-edge)",
-                background: "var(--graview-panel)",
-                color: "var(--graview-ink)",
-              }}
-            />
-            <button type="submit" disabled={busy || draft.trim().length === 0} style={{ fontSize: "0.78125rem" }}>
-              Send
-            </button>
-          </form>
+          <SeatComposer
+            busy={conversation.busy}
+            placeholder="Ask, or say a change…"
+            ariaLabel="Message the seat"
+            testId={testId}
+            onSend={(text) => void conversation.send(text)}
+          />
         </div>
       ) : null}
     </div>
-  );
-}
-
-/** A proposal that landed, or was refused, in the place it was offered. */
-function Landed({ outcome }: { readonly outcome: Outcome | undefined }) {
-  if (!outcome) return null;
-  return outcome.ok ? (
-    <span data-testid="chat-applied" style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
-      <span aria-hidden="true" style={{ color: "var(--graview-accent)" }}>✓ </span>
-      {outcome.said}
-    </span>
-  ) : (
-    <span data-testid="chat-refused" style={{ fontSize: "0.75rem", color: "var(--graview-warn)" }}>
-      Refused: {outcome.error}
-    </span>
-  );
-}
-
-/**
- * The rung picker. Three honest choices, stated costs, one Save — and the
- * key field says exactly where the key lives: this browser's storage, sent
- * only to the provider chosen, never to a server of ours, never in a repo.
- *
- * Exported because the studio's own agent panel climbs the same ladder: a
- * second picker beside this one would be a second place a person's key
- * could be asked for, and two surfaces that could disagree about which
- * rung is chosen.
- */
-export function IntelligenceSettings({
-  config,
-  onDone,
-}: {
-  readonly config: IntelligenceConfig;
-  readonly onDone: (next: IntelligenceConfig) => void;
-}) {
-  const [source, setSource] = useState<IntelligenceConfig["source"]>(config.source);
-  const [preset, setPreset] = useState<"xai" | "custom">(config.remote?.preset ?? "xai");
-  const [apiKey, setApiKey] = useState(config.remote?.apiKey ?? "");
-  const [model, setModel] = useState(config.remote?.model ?? "");
-  const [baseUrl, setBaseUrl] = useState(config.remote?.baseUrl ?? "");
-  const [decisionKey, setDecisionKey] = useState(config.decision?.apiKey ?? "");
-
-  const label: React.CSSProperties = { fontSize: "0.6875rem", color: "var(--graview-ink-muted)" };
-  const field: React.CSSProperties = {
-    font: "inherit",
-    fontSize: "0.78125rem",
-    padding: "6px 9px",
-    borderRadius: 8,
-    border: "1px solid var(--graview-edge)",
-    background: "var(--graview-panel)",
-    color: "var(--graview-ink)",
-    width: "100%",
-    boxSizing: "border-box",
-  };
-
-  return (
-    <form
-      data-testid="chat-settings-form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        /*
-         * A saved key SURVIVES switching rungs — losing it on a visit to
-         * "graph" would mean re-pasting secrets — and choosing "remote"
-         * with no key at all is not a save that does anything, so the
-         * submit button refuses it below.
-         */
-        const key = apiKey || config.remote?.apiKey || "";
-        const remote =
-          key.length > 0
-            ? {
-                remote: {
-                  preset,
-                  apiKey: key,
-                  ...(model ? { model } : {}),
-                  ...(preset === "custom" && baseUrl ? { baseUrl } : {}),
-                },
-              }
-            : config.remote
-              ? { remote: config.remote }
-              : {};
-        /*
-         * The decision rung needs no key in the browser at all — the dev
-         * server's door holds one — so an empty key is a choice, not a
-         * refusal: the door is used. A key typed here goes straight to
-         * the provider, like the LLM rung's.
-         */
-        const decisionHeld = decisionKey || config.decision?.apiKey || "";
-        const decision =
-          decisionHeld.length > 0
-            ? { decision: { ...(config.decision ?? {}), apiKey: decisionHeld } }
-            : config.decision
-              ? { decision: config.decision }
-              : {};
-        onDone({ source, ...remote, ...decision });
-      }}
-      style={{ display: "grid", gap: 10, padding: 12, maxHeight: "min(46cqh, 400px)", overflowY: "auto" }}
-    >
-      {(
-        [
-          ["graph", "Graph only", "Keyless and instant. The graph answers from its own structure."],
-          ["local", "Onboard AI", "A small model runs in this browser. First use downloads ~1–2GB, then it is free and private."],
-          ["decision", "Jev (decides, does not talk)", "A decision provider answers typed questions exactly — which surface, which zone, does this help — with a confidence. It writes no prose, so the graph still answers the chat."],
-          ["remote", "LLM (your key)", "A frontier model answers. Calls go straight from this browser to the provider."],
-        ] as const
-      ).map(([value, title, detail]) => (
-        <label key={value} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 8, alignItems: "start", cursor: "pointer" }}>
-          <input
-            type="radio"
-            name="intelligence-source"
-            value={value}
-            checked={source === value}
-            onChange={() => setSource(value)}
-          />
-          <span style={{ display: "grid", gap: 2 }}>
-            <span style={{ fontSize: "0.78125rem" }}>{title}</span>
-            <span style={{ ...label, lineHeight: 1.4 }}>{detail}</span>
-          </span>
-        </label>
-      ))}
-
-      {source === "decision" ? (
-        <div style={{ display: "grid", gap: 8, paddingLeft: 22 }}>
-          <label style={{ display: "grid", gap: 3 }}>
-            <span style={label}>TypeSafe key (optional)</span>
-            <input
-              type="password"
-              data-testid="chat-decision-key"
-              value={decisionKey}
-              onChange={(event) => setDecisionKey(event.target.value)}
-              placeholder="leave empty to use the dev server's door"
-              autoComplete="off"
-              style={field}
-            />
-          </label>
-          <p style={{ ...label, margin: 0, lineHeight: 1.4 }}>
-            With no key here, questions go through this app's own decision door, which holds a key
-            on the server side (TYPESAFE_API_KEY in the environment `pnpm dev` was started from). A
-            key typed here is stored in this browser only and sent only to the provider.
-          </p>
-        </div>
-      ) : null}
-
-      {source === "remote" ? (
-        <div style={{ display: "grid", gap: 8, paddingLeft: 22 }}>
-          <label style={{ display: "grid", gap: 3 }}>
-            <span style={label}>Provider</span>
-            <select value={preset} onChange={(event) => setPreset(event.target.value as "xai" | "custom")} style={field}>
-              <option value="xai">xAI (Grok)</option>
-              <option value="custom">Custom OpenAI-compatible endpoint</option>
-            </select>
-          </label>
-          {preset === "custom" ? (
-            <label style={{ display: "grid", gap: 3 }}>
-              <span style={label}>Base URL</span>
-              <input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://…/v1" style={field} />
-            </label>
-          ) : null}
-          <label style={{ display: "grid", gap: 3 }}>
-            <span style={label}>API key</span>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
-              placeholder={preset === "xai" ? "xai-…" : "sk-…"}
-              autoComplete="off"
-              style={field}
-            />
-          </label>
-          <label style={{ display: "grid", gap: 3 }}>
-            <span style={label}>Model</span>
-            <input value={model} onChange={(event) => setModel(event.target.value)} placeholder={preset === "xai" ? "grok-4-fast" : "model id"} style={field} />
-          </label>
-          <p style={{ ...label, margin: 0, lineHeight: 1.4 }}>
-            The key is stored in this browser only and sent only to the provider above — never to
-            any server of this app's, never into the project.
-          </p>
-        </div>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={source === "remote" && !apiKey && !config.remote?.apiKey}
-        title={
-          source === "remote" && !apiKey && !config.remote?.apiKey
-            ? "A remote model needs a key"
-            : undefined
-        }
-        style={{ justifySelf: "start", fontSize: "0.78125rem" }}
-      >
-        Use this
-      </button>
-    </form>
   );
 }

@@ -2,10 +2,11 @@
 id: "4f5233f8-6cde-4da5-9d09-6f44541d5e67"
 level: "task"
 title: "One seat, one conversation: the app's chat and the studio's declaration seat are the same thread"
-status: "pending"
+status: "in_progress"
 priority: "high"
+startedAt: "2026-09-23T03:56:04.041Z"
 acceptanceCriteria: []
 description: "The app's chat (packages/primitives/src/chat.tsx ChatPanel) and the studio's seat (packages/studio/src/agent-panel.tsx StudioAgentPanel) are two implementations of one idea, and they have drifted: the studio floats its own panel with 'Kept — Remove the edge tended-by · undo takes it back' lines and a bubble per reply, the chat (reworked 2026-09-22, uncommitted on main when this was captured) puts the person in a bubble and the seat in prose, settles each proposal in place (✓ line / Refused, data-testid chat-applied/chat-refused), offers 'Apply all N' in order with names resolved at the press, words proposals by the act's own describe(), and sends the model each act's argument signature, the graph's connections and what was applied. One thread component, in @graview/primitives, both surfaces render; the only differences are the responder (configuredResponder with the studio's floor) and what a proposal applies to (the app store vs the studio store, keep/discard vs apply).\n\nAcceptance:\n- One exported thread component (turns, proposals, outcomes, apply-all, the ask for under-specified args, questions at nodes, the rung aside) used by ChatPanel AND StudioAgentPanel; no second thread implementation left in packages/studio.\n- The studio seat reads the same as the app chat: person bubble, seat prose, proposals worded by the act, each settling in place — no 'Kept — …' message per change, no per-press bubble.\n- Same header (rung + gear -> IntelligenceSettings), same placeholder voice, same empty state with grounded offers, in the rail and floating.\n- The studio's llm prompt gets the same treatment as llmResponder: argument signatures, connections, applied history, 'create before you refer' rule.\n- A test renders both surfaces over one scripted responder and asserts the same DOM shape (testids) and behaviour (apply-all lands both, outcomes in place); scripts/verify-chat.mjs and scripts/verify-studio.mjs pass."
-lastModified: "2026-09-23T03:46:50.246Z"
+lastModified: "2026-09-23T03:56:04.106Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
