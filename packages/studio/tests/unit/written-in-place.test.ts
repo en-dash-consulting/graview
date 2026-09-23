@@ -52,6 +52,19 @@ describe("the change, as the checkout's source receives it", () => {
     });
   });
 
+  it("judges a set of changes by what they make together", () => {
+    const studio = createStudio(seedbedApp);
+    const edge = [...studio.store.graph.nodesOfKind("edge" as never)].find((node) => node["label"] === "tended-by")!;
+    const remove = { name: "remove-edge", args: { id: edge.id } };
+    const add = { name: "add-edge", args: { kind: "declared:planting", label: "tended-by", to: "declared:gardener" } };
+    // Alone, taking the edge away leaves `tend` connecting something nobody declares.
+    const alone = studio.would(remove);
+    expect(alone.ok && alone.check.errors).toBeGreaterThan(0);
+    // With its other half, it is whole.
+    const together = studio.would([remove, add]);
+    expect(together.ok && together.check.errors).toBe(0);
+  });
+
   it("has nothing to say when nothing changed", () => {
     expect(createStudio(seedbedApp).sourceChanges()).toEqual({ changes: [], rewrite: [], unwritten: [] });
   });

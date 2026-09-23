@@ -54,7 +54,8 @@
     "site:build:all": "pnpm site:css && pnpm site:numbers && pnpm site:docs",
     "lines": "node scripts/verify-lines.mjs",
     "companion": "node scripts/verify-companion.mjs",
-    "who": "node scripts/verify-who.mjs"
+    "who": "node scripts/verify-who.mjs",
+    "studio:rehearse": "node scripts/rehearse-studio.mjs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",

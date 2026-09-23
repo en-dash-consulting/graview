@@ -98,6 +98,19 @@ describe("a declaration change made inside the checkout's own source", () => {
     expect(ts.transpileModule(after, { reportDiagnostics: true }).diagnostics).toEqual([]);
   });
 
+  it("edits the app's own declaration when a chapter keeps a smaller copy of the same kind", async () => {
+    const chapters = await readFile(fileURLToPath(new URL("../../../../apps/seedbed/src/domain/chapters.ts", import.meta.url)), "utf8");
+    const text = await readFile(seedbed, "utf8");
+    // chapters.ts comes first, and declares a `plot` of its own that nothing exports.
+    const edited = editDeclaration(ts, [{ path: "src/domain/chapters.ts", text: chapters }, { path: "src/domain/schema.ts", text }], [
+      { what: "move-edge", edge: "tended-by", from: "plot", to: "planting", targets: '["gardener"]' },
+    ]);
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    expect(edited.files[0]!.text).toBe(chapters);
+    expect(edited.files[1]!.text).not.toBe(text);
+  });
+
   it("refuses the whole set, naming why, when one change cannot be made", async () => {
     const { edited } = await edit([
       { what: "add-field", kind: "gardener", field: "phone", zod: "z.string()" },

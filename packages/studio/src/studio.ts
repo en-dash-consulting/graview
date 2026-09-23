@@ -1,4 +1,5 @@
 import { checkApp, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
+import { resolveProposal } from "@graview/tools";
 import { declarationToGraph } from "./from-declaration.js";
 import { sourceChanges, type SourceChanges } from "./changes.js";
 import { migrationBetween } from "./migration.js";
@@ -43,7 +44,7 @@ export interface Studio<S extends AnySchema = AnySchema> {
    * the answer is — and a call the store itself refuses comes back as a
    * refusal in the store's own words rather than as a thrown error.
    */
-  would(call: MutationCall): { readonly ok: true; readonly check: CheckResult } | { readonly ok: false; readonly reason: string };
+  would(call: MutationCall | readonly MutationCall[]): { readonly ok: true; readonly check: CheckResult } | { readonly ok: false; readonly reason: string };
   /** The new app and, where a stored graph needs one, the migration to it. Refused while the checker finds errors. */
   apply(): { readonly ok: true; readonly app: GraviewApp<AnySchema>; readonly migration: MigrationDeclaration | null } | { readonly ok: false; readonly check: CheckResult };
   /** The declaration as the files `graview create` writes. */
@@ -100,8 +101,18 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
         snapshot: store.snapshot() as never,
         ...(options.principal ? { principal: options.principal } : {}),
       } as never);
+      /*
+       * SEVERAL CALLS ARE JUDGED AS WHAT THEY MAKE TOGETHER. "Remove the
+       * edge from the plot, add it to the planting" breaks the build after
+       * its first half and is whole after its second — so a set is applied
+       * to the copy in order and only the end is checked.
+       */
       try {
-        trial.apply(call, { intent: `Would: ${call.name}` });
+        for (const one of Array.isArray(call) ? call : [call as MutationCall]) {
+          // A name that means a node made earlier in the set is read once that node exists.
+          const resolved = resolveProposal(trial, { mutation: one.name, args: one.args });
+          trial.apply({ name: one.name, args: { ...resolved.args } }, { intent: `Would: ${one.name}` });
+        }
       } catch (error) {
         return { ok: false, reason: error instanceof Error ? error.message : String(error) };
       }

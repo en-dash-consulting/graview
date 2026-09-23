@@ -115,7 +115,17 @@ export function studioDoorHandler(options: StudioDoorOptions = {}) {
         }
       }
       if (!ask.dryRun) {
-        for (const changed of diff) await writeFile(join(folder, changed.path.slice(domain.length + 1)), changed.after);
+        /*
+         * THE APP LAST. A dev server reloads as each file lands, so the page
+         * can open between two writes. The file that declares the app holds
+         * the migration, and a migration that runs against the schema it
+         * was not written for moves nothing; written after everything it
+         * depends on, it only ever runs against the new declaration.
+         */
+        const last = (changed: { after: string }) => (changed.after.includes("defineApp(") ? 1 : 0);
+        for (const changed of [...diff].sort((a, b) => last(a) - last(b))) {
+          await writeFile(join(folder, changed.path.slice(domain.length + 1)), changed.after);
+        }
       }
       send(200, { written: ask.dryRun ? [] : diff.map((changed) => changed.path), diff });
     } catch (error) {

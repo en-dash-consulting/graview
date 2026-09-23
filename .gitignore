@@ -12,3 +12,4 @@ apps/*/generated/
 .rex/.cache/
 .generated/
 .n-dx-web.pid
+apps/.studio-rehearsal/

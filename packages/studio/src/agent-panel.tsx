@@ -156,6 +156,8 @@ export function StudioAgentPanel({
   }, [conversation.turns, outcomes, edits, tick]);
 
   const keep = (key: string, offer: Offer): boolean => {
+    // Said before it lands: a removal described afterwards names what is no longer there.
+    const said = describeProposal(studio.store as never, { ...offer.proposal, args: offer.args });
     const result = studio.propose(
       { name: offer.proposal.mutation, args: { ...offer.args } },
       { kind: "agent", id: "studio-agent", session: "ui", ...(principal.roles ? { roles: principal.roles } : {}) },
@@ -165,24 +167,33 @@ export function StudioAgentPanel({
       settle(key, { state: "refused", error: result.reason });
       return false;
     }
-    settle(key, { state: "applied", said: describeProposal(studio.store as never, { ...offer.proposal, args: offer.args }) });
+    settle(key, { state: "applied", said });
     return true;
   };
 
   /*
-   * ONE REQUEST, ONE PRESS — kept in order, each read afresh after the one
-   * before it has landed, so a field waiting on its kind is judged against
-   * the declaration that now has it. It stops at the first the checker
-   * refuses: keeping past a break would hide which one broke it.
+   * ONE REQUEST, ONE PRESS — judged as what the proposals make TOGETHER.
+   * "Remove the edge from the plot, add it to the planting" breaks the
+   * build after its first half and is whole after its second, so the set
+   * is tried in order on a copy and only its end is checked; kept, each is
+   * read afresh after the one before it has landed, so a field waiting on
+   * its kind resolves against the declaration that now has it.
    */
   const keepAll = (turn: number, proposals: readonly ProposedCall[]) => {
-    for (const [at, proposal] of proposals.entries()) {
+    const open = proposals.flatMap((proposal, at) => {
       const key = proposalKey(turn, at);
       const state = outcomes.get(key)?.state;
-      if (state === "applied" || state === "declined") continue;
-      const offer = offerFor(proposal, key);
-      if (!offer.verdict.ok || offer.verdict.breaks) return;
-      if (!keep(key, offer)) return;
+      return state === "applied" || state === "declined" ? [] : [{ proposal, key }];
+    });
+    const together = studio.would(open.map(({ proposal, key }) => ({ name: proposal.mutation, args: { ...offerFor(proposal, key).args } })));
+    const before = studio.check().errors;
+    if (!together.ok || together.check.errors > before) {
+      const reason = together.ok ? together.check.findings.find((finding) => finding.severity === "error")?.message : together.reason;
+      settle(open[0]!.key, { state: "refused", error: `Together these would fail the build: ${reason ?? "the checker refuses them"}` });
+      return;
+    }
+    for (const { proposal, key } of open) {
+      if (!keep(key, offerFor(proposal, key))) return;
     }
   };
 

@@ -87,23 +87,36 @@ function defineNodeOf(ts: Ts, files: ReadonlyMap<string, string>, kind: string):
   return declarationOf(ts, files, "kind", kind);
 }
 
+/**
+ * The declaration of this name. A name may be declared more than once — a
+ * tutorial's chapter keeps its own smaller `plot` beside the app's — and
+ * the one EXPORTED is the app's; the others are somebody's local copies.
+ */
 function declarationOf(ts: Ts, files: ReadonlyMap<string, string>, sort: Sort, wanted: string): Found | undefined {
+  const found: Found[] = [];
   for (const [path, text] of files) {
     const source = parse(ts, path, text);
-    const call = visit(ts, source, (node) => declares(ts, node, sort) && declared(ts, node)?.name === wanted) as TS.CallExpression | undefined;
-    if (!call) continue;
-    let statement: TS.Node = call;
-    while (statement.parent && !ts.isSourceFile(statement.parent)) statement = statement.parent;
-    const variable = ts.isVariableStatement(statement) ? statement.declarationList.declarations[0] : undefined;
-    return {
-      path,
-      source,
-      object: declared(ts, call)!.object,
-      ...(ts.isVariableStatement(statement) ? { statement } : {}),
-      ...(variable && ts.isIdentifier(variable.name) ? { binding: variable.name.text } : {}),
+    const visitAll = (node: TS.Node): void => {
+      if (declares(ts, node, sort) && declared(ts, node)?.name === wanted) found.push(foundAt(ts, path, source, node));
+      ts.forEachChild(node, visitAll);
     };
+    visitAll(source);
   }
-  return undefined;
+  const exported = (one: Found) => !!one.statement && ts.canHaveModifiers(one.statement) && (ts.getModifiers(one.statement) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword);
+  return found.find(exported) ?? found[0];
+}
+
+function foundAt(ts: Ts, path: string, source: TS.SourceFile, call: TS.CallExpression): Found {
+  let statement: TS.Node = call;
+  while (statement.parent && !ts.isSourceFile(statement.parent)) statement = statement.parent;
+  const variable = ts.isVariableStatement(statement) ? statement.declarationList.declarations[0] : undefined;
+  return {
+    path,
+    source,
+    object: declared(ts, call)!.object,
+    ...(ts.isVariableStatement(statement) ? { statement } : {}),
+    ...(variable && ts.isIdentifier(variable.name) ? { binding: variable.name.text } : {}),
+  };
 }
 
 const propertyName = (ts: Ts, property: TS.ObjectLiteralElementLike): string | undefined =>

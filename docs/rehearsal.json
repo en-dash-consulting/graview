@@ -1,0 +1,74 @@
+{
+  "at": "2026-09-23T04:37:00.460Z",
+  "checks": {
+    "theSeatsChangeIsKept": {
+      "kept": 2,
+      "said": "people should be assigned to plants not plotsMoving caretakers from plots to plantings.✓ Remove the edge tended-by✓ Add the edge tended-by from planting to gardener",
+      "ok": true
+    },
+    "theCodeTheChangeLeavesWrongIsNamed": {
+      "rewrites": [
+        "every-plot-tended",
+        "tend"
+      ],
+      "ok": true
+    },
+    "theMigrationIsSaidBeforeItRuns": {
+      "said": "A stored graph is carried forward when it next opens: plot tended-by edges move to the planting records tied to each plot.",
+      "ok": true
+    },
+    "itIsWrittenIntoTheCheckout": {
+      "outcome": "The checker is happy, and the change is written into src/domain/app.ts, src/domain/invariants.ts, src/domain/mutations.ts, src/domain/schema.ts. The app reloads onto it, and a stored graph is carried forward: plot tended-by edges move to the planting records tied to each plot.",
+      "ok": true
+    },
+    "theRelationMovedWithItsWords": {
+      "ok": true
+    },
+    "tendTakesAPlanting": {
+      "ok": true
+    },
+    "theRuleReadsPlantings": {
+      "ok": true
+    },
+    "theAppCarriesItsGraphsForward": {
+      "ok": true
+    },
+    "theCaretakersMovedOntoThePlantings": {
+      "version": 2,
+      "tended": [
+        "beans->erin",
+        "chard->sam",
+        "kale->erin"
+      ],
+      "edges": [
+        "grows-in:kale->back",
+        "grows-in:beans->back",
+        "grows-in:chard->front",
+        "tended-by:kale->erin",
+        "tended-by:beans->erin",
+        "tended-by:chard->sam"
+      ],
+      "log": [
+        "{\"id\":\"migration:1-2:2026-09-23T04:37:04.509Z\",\"seq\":0,\"batch\":\"migration:1->2\",\"author\":{\"kind\":\"system\",\"id\":\"ship:migration\"},\"intent\":\"migration 1→2: plot tended-by edges move to the planting records tied to each plot\",\"mutation\":null,\"primitives\":[{\"op\":\"remove-edge\",\"edge\":{\"kind\":\"tended-by\","
+      ],
+      "ok": true
+    },
+    "itCompiles": {
+      "ok": true
+    },
+    "graviewCheckPasses": {
+      "ok": true
+    },
+    "nothingErroredInTheBrowser": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "debug": {
+    "afterSeeding": 5,
+    "beforeWriting": 5,
+    "rightAfterWriting": 5,
+    "afterTheReload": 6
+  },
+  "prompts": 3
+}
