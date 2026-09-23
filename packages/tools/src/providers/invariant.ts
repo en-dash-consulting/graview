@@ -64,7 +64,7 @@ export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> 
                 ? ref.kinds.includes("*")
                   ? store.graph.allNodes().map((node) => node.id)
                   : ref.kinds.flatMap((kind: string) =>
-                      store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                      store.graph.nodesOfKind(kind).map((node) => node.id),
                     )
                 : undefined;
               return {

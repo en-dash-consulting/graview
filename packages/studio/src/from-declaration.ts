@@ -115,7 +115,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
   /** The checkout's own name for the far end of a tie: the node argument that is not the subject. */
   const targetArgOf = (mutation: AnyMutationDefinition): string | undefined => {
     if (!(mutation.connects?.length || mutation.severs?.length)) return undefined;
-    const refs = nodeRefArgs(mutation.input as never);
+    const refs = nodeRefArgs(mutation.input);
     return refs.find((ref) => ref.name !== mutation.subject?.arg)?.name;
   };
   for (const mutation of (app.mutations ?? []) as unknown as readonly AnyMutationDefinition[]) {
@@ -146,7 +146,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
     }
   }
 
-  for (const rule of (app.invariants ?? []) as unknown as readonly InvariantDefinition[]) {
+  for (const rule of (app.invariants ?? []) as readonly InvariantDefinition[]) {
     const id = `rule:${rule.name}`;
     nodes.push({
       id,
@@ -215,7 +215,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
   // Only edges whose both ends exist: an act that connects an edge the schema
   // does not declare is the checker's to report, not a dangling line here.
   const ids = new Set(nodes.map((node) => node.id));
-  return { nodes: nodes as never, edges: edges.filter((edge) => ids.has(edge.from) && ids.has(edge.to)) };
+  return { nodes, edges: edges.filter((edge) => ids.has(edge.from) && ids.has(edge.to)) };
 }
 
 export type { z };

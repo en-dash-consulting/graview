@@ -179,7 +179,7 @@ export function placeOnTimeline<S extends AnySchema>(
    * for each required role — and a node with no value for a bound field is
    * simply not placeable, which is what `null` already means here.
    */
-  const record = node as unknown as Record<string, unknown>;
+  const record = node as Record<string, unknown>;
   /*
    * Three cases, and the old check collapsed two of them.
    *
@@ -221,7 +221,7 @@ export function placeOnTimeline<S extends AnySchema>(
   return {
     id: node.id,
     kind: node.kind,
-    label: labelOf(schema?.tryDefinition(node.kind), node as never),
+    label: labelOf(schema?.tryDefinition(node.kind), node),
     columnIds,
     start,
     end: Number.isFinite(end) ? Math.max(end, start) : start,

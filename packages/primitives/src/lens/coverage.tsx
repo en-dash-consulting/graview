@@ -144,9 +144,9 @@ export function buildCoverage<S extends AnySchema>(
   options: CoverageOptions,
   schema?: S,
 ): CoverageGrid {
-  const asRecord = (node: NodeOfSchema<S>) => node as unknown as Record<string, unknown>;
+  const asRecord = (node: NodeOfSchema<S>) => node as Record<string, unknown>;
   const label = (node: NodeOfSchema<S>) =>
-    schema ? labelOf(schema.tryDefinition(node.kind), node as never) : String(asRecord(node)["label"] ?? node.id);
+    schema ? labelOf(schema.tryDefinition(node.kind), node) : String(asRecord(node)["label"] ?? node.id);
 
   /*
    * AN EMPTY GRAPH IS NOT A MISBINDING.
@@ -429,7 +429,7 @@ export function CoverageView<S extends AnySchema>({
   const grid = buildCoverage<S>(
     store.graph
       .allNodes()
-      .filter((node) => node.kind === options.rows || node.kind === options.columns) as never,
+      .filter((node) => node.kind === options.rows || node.kind === options.columns),
     store.graph.allEdges(),
     options,
     schema,

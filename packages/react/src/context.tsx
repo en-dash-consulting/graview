@@ -808,7 +808,7 @@ export function useGraview<S extends AnySchema>(): GraviewContextValue<S> {
  * raises.
  */
 export function useGraviewIfAny<S extends AnySchema>(): GraviewContextValue<S> | null {
-  return (useContext(GraviewContext) as unknown as GraviewContextValue<S> | null) ?? null;
+  return (useContext(GraviewContext) as GraviewContextValue<S> | null) ?? null;
 }
 
 /**

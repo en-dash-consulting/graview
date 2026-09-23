@@ -97,7 +97,7 @@ export async function runLoop<S extends AnySchema>(store: Store<S>, loop: LoopDe
   const name = (violation: Violation): string => {
     const id = violation.subjectId ?? violation.nodeIds[0];
     const node = id ? store.graph.getNode(id) : undefined;
-    return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : (id ?? violation.invariant);
+    return node ? labelOf(store.schema.tryDefinition(node.kind as string), node) : (id ?? violation.invariant);
   };
   const standing = () => store.violations(options.context).filter((v) => !loop.rules || loop.rules.includes(v.invariant));
 

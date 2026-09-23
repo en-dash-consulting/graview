@@ -98,7 +98,7 @@ export function StudioAgentPanel({
   }, [config, respond]);
 
   const conversation = useSeatConversation({
-    answer: (text, context) => answer(studio.store as never, text, context),
+    answer: (text, context) => answer(studio.store, text, context),
   });
   const { outcomes, settle } = conversation;
 
@@ -138,7 +138,7 @@ export function StudioAgentPanel({
    */
   const tick = useStoreTick(studio.store);
   const offerFor = (proposal: ProposedCall, key: string): Offer => {
-    const resolved = resolveProposal(studio.store as never, { ...proposal, args: edits.get(key) ?? proposal.args });
+    const resolved = resolveProposal(studio.store, { ...proposal, args: edits.get(key) ?? proposal.args });
     const args = { ...resolved.args };
     return { proposal: resolved, args, verdict: judge(args, resolved) };
   };
@@ -157,7 +157,7 @@ export function StudioAgentPanel({
 
   const keep = (key: string, offer: Offer): boolean => {
     // Said before it lands: a removal described afterwards names what is no longer there.
-    const said = describeProposal(studio.store as never, { ...offer.proposal, args: offer.args });
+    const said = describeProposal(studio.store, { ...offer.proposal, args: offer.args });
     const result = studio.propose(
       { name: offer.proposal.mutation, args: { ...offer.args } },
       { kind: "agent", id: "studio-agent", session: "ui", ...(principal.roles ? { roles: principal.roles } : {}) },
@@ -270,7 +270,7 @@ export function StudioAgentPanel({
                     onEdit={(name, value) => setEdits((current) => new Map(current).set(key, { ...offer.args, [name]: value }))}
                     onKeep={() => keep(key, offer)}
                     onDiscard={() =>
-                      settle(key, { state: "declined", said: describeProposal(studio.store as never, { ...offer.proposal, args: offer.args }) })
+                      settle(key, { state: "declined", said: describeProposal(studio.store, { ...offer.proposal, args: offer.args }) })
                     }
                   />
                 );
@@ -478,7 +478,7 @@ function Argument<S extends AnySchema>({
         <option value="">— choose —</option>
         {choices.map((node) => (
           <option key={node.id} value={node.id}>
-            {labelOf(store.schema.tryDefinition(node.kind as string), node as never)}
+            {labelOf(store.schema.tryDefinition(node.kind as string), node)}
           </option>
         ))}
       </select>,

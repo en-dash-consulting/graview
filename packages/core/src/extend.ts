@@ -61,5 +61,5 @@ export function extendInvariants<Wide extends AnySchema>(
       );
     }
   }
-  return invariants as unknown as InvariantDefinition<Wide>[];
+  return invariants as InvariantDefinition<Wide>[];
 }

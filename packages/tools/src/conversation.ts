@@ -122,7 +122,7 @@ export function graphResponder<S extends AnySchema>(
   return async (store, text, context = {}) => {
     const asked = text.toLowerCase();
     const name = (node: { id: string; kind: string }): string =>
-      labelOf(store.schema.tryDefinition(node.kind), node as never);
+      labelOf(store.schema.tryDefinition(node.kind), node);
 
     /*
      * REFERENTS: the selection first — "this" means what is selected — then
@@ -153,7 +153,7 @@ export function graphResponder<S extends AnySchema>(
       .filter(({ label }) => label.length >= 2 && runs.has(label))
       .sort((a, b) => b.label.length - a.label.length);
     for (const { node } of byLabel) {
-      if (!referents.some((held) => held.id === node.id)) referents.push(node as never);
+      if (!referents.some((held) => held.id === node.id)) referents.push(node);
     }
     /*
      * The SELECTION comes after anything the message NAMED. "This" means
@@ -163,7 +163,7 @@ export function graphResponder<S extends AnySchema>(
      */
     for (const id of context.selection ?? []) {
       const node = store.graph.getNode(id);
-      if (node && !referents.some((held) => held.id === node.id)) referents.push(node as never);
+      if (node && !referents.some((held) => held.id === node.id)) referents.push(node);
     }
 
     const violations = store.violations();
@@ -335,7 +335,7 @@ export function graphResponder<S extends AnySchema>(
         const other = edge.from === id ? edge.to : edge.to === id ? edge.from : null;
         if (!other) continue;
         const found = store.graph.getNode(other);
-        if (found && !out.some((held) => held.id === found.id)) out.push(found as never);
+        if (found && !out.some((held) => held.id === found.id)) out.push(found);
       }
       return out;
     };
@@ -421,7 +421,7 @@ export function graphResponder<S extends AnySchema>(
             ];
             if (others.length === 0) continue;
             const sentence = forward ? spec.description : spec.inverse;
-            parts.push(`${sentence}: ${others.map((other) => name(other as never)).join(", ")}`);
+            parts.push(`${sentence}: ${others.map((other) => name(other)).join(", ")}`);
           }
         }
         if (parts.length > 0) {
@@ -515,7 +515,7 @@ export function graphResponder<S extends AnySchema>(
       .filter((kind) => !store.modules.disabledKinds.has(kind))
       .map((kind) => {
         const plural = store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
-        return `${store.graph.nodesOfKind(kind as never).length} ${plural}`;
+        return `${store.graph.nodesOfKind(kind).length} ${plural}`;
       })
       .join(", ");
     return {
@@ -621,10 +621,10 @@ export function llmResponder<S extends AnySchema>(options: {
       .filter((kind) => !store.modules.disabledKinds.has(kind))
       .map((kind) => {
         const definition = store.schema.tryDefinition(kind);
-        const members = store.graph.nodesOfKind(kind as never);
+        const members = store.graph.nodesOfKind(kind);
         const names = members
           .slice(0, 12)
-          .map((node) => labelOf(definition, node as never))
+          .map((node) => labelOf(definition, node))
           .join(", ");
         return `- ${kind} (${definition?.plural ?? `${kind}s`}, ${members.length}): ${names}${members.length > 12 ? ", …" : ""}`;
       })
@@ -636,7 +636,7 @@ export function llmResponder<S extends AnySchema>(options: {
      */
     const nameOf = (id: string): string => {
       const node = store.graph.getNode(id);
-      return node ? labelOf(store.schema.tryDefinition(node.kind), node as never) : id;
+      return node ? labelOf(store.schema.tryDefinition(node.kind), node) : id;
     };
     const edges = [...store.graph.allEdges()];
     const connections = edges
@@ -646,7 +646,7 @@ export function llmResponder<S extends AnySchema>(options: {
     const selected = (context.selection ?? [])
       .map((id) => {
         const node = store.graph.getNode(id);
-        return node ? `${id} (${labelOf(store.schema.tryDefinition(node.kind), node as never)})` : id;
+        return node ? `${id} (${labelOf(store.schema.tryDefinition(node.kind), node)})` : id;
       })
       .join(", ");
     const history = (context.history ?? [])

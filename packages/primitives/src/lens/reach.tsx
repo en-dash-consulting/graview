@@ -63,7 +63,7 @@ export function ReachView<S extends AnySchema>({ label, fidelity, mode }: ViewPr
     .allMutations()
     .filter((mutation) => !mutation.derived)
     .map((mutation) => ({ name: mutation.name, ...(mutation.title ? { title: mutation.title } : {}), ...(mutation.subject ? { subject: mutation.subject } : {}) }));
-  const reach = buildReach(policy, acts as never, roles);
+  const reach = buildReach(policy, acts, roles);
   const title = label ?? "Who may do what";
   if (!policy || roles.length === 0) {
     return (

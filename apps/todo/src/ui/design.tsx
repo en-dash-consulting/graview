@@ -236,7 +236,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   const logo = useMarkup(brand?.logo);
   const here = useLocation().pathname;
   const problems = store.violations(context.invariantContext).length;
-  const open = (store.graph.nodesOfKind("task" as never) as unknown as { done: boolean }[]).filter(
+  const open = (store.graph.nodesOfKind("task") as { done: boolean }[]).filter(
     (task) => !task.done,
   ).length;
   /*
@@ -353,7 +353,7 @@ function Home({ context }: { context: Ctx }) {
   const { store } = context;
   useStoreTick(store);
   const now = (context.invariantContext?.["today"] as string | undefined) ?? today();
-  const tasks = store.graph.nodesOfKind("task" as never) as unknown as TaskNode[];
+  const tasks = store.graph.nodesOfKind("task") as TaskNode[];
   const open = tasks.filter((task) => !task.done);
   const late = open.filter((task) => task.due !== undefined && task.due < now);
   const due = open.filter((task) => task.due === now);
@@ -377,7 +377,7 @@ function Home({ context }: { context: Ctx }) {
                 : "Nothing is due today."}
         </h1>
         <p className="th-lede">
-          {open.length} open across {store.graph.nodesOfKind("list" as never).length} lists.
+          {open.length} open across {store.graph.nodesOfKind("list").length} lists.
         </p>
       </header>
 
@@ -438,7 +438,7 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
     setParams(next, { replace: false });
   };
 
-  const all = store.graph.nodesOfKind(kind as never) as unknown as NamedNode[];
+  const all = store.graph.nodesOfKind(kind as never) as NamedNode[];
   const named = (node: NamedNode) => labelOf(store.schema.tryDefinition(kind), node as never);
   const matching = all
     .filter((node) => (show === "open" ? (node as TaskNode).done !== true : true))
@@ -701,7 +701,7 @@ function About({ context, violation }: { context: Ctx; violation: Violation }) {
           className="th-chip"
           to={recordPath(store.schema, node.kind as string, node.id)}
         >
-          {labelOf(store.schema.tryDefinition(node.kind), node as never)}
+          {labelOf(store.schema.tryDefinition(node.kind), node)}
         </Link>
       ))}
     </p>
@@ -1024,7 +1024,7 @@ function Ask({
     <div className="th-card">
       <DerivedForm<S>
         store={store}
-        mutation={mutation as never}
+        mutation={mutation}
         prefilled={affordance.args}
         open={affordance.open}
         {...(principal ? { principal } : {})}
@@ -1088,7 +1088,7 @@ function Repairs({ context, repairs }: { context: Ctx; repairs: readonly { mutat
         <div className="th-card">
           <DerivedForm<S>
             store={store}
-            mutation={asking as never}
+            mutation={asking}
             prefilled={opened.args ?? {}}
             open={(opened.missing ?? []).map((name) => ({ name }))}
             {...(principal ? { principal } : {})}
@@ -1142,7 +1142,7 @@ function groupBy(
     }
     return [...by.entries()].sort(([a], [b]) => (a === "No date" ? 1 : b === "No date" ? -1 : a.localeCompare(b))).map(([title, members]) => ({ title, members }));
   }
-  const lists = store.graph.nodesOfKind("list" as never) as unknown as NamedNode[];
+  const lists = store.graph.nodesOfKind("list") as NamedNode[];
   const held = new Map<string, NamedNode[]>();
   for (const list of lists) {
     const on = store.graph.out(list.id, "holds").map((task) => task.id);
@@ -1169,13 +1169,13 @@ function groupBy(
  * which is what `framed` is for.
  */
 export function thingsDesign(schema: S) {
-  const page = (component: (props: { context: Ctx }) => ReactNode) => component as unknown as PageComponent<S>;
+  const page = (component: (props: { context: Ctx }) => ReactNode) => component as PageComponent<S>;
   const forKind = (kind: string, which: "list" | "record") =>
     page(({ context }: { context: Ctx }) =>
       which === "list" ? <KindList context={context} kind={kind} /> : <KindRecord context={context} kind={kind} />,
     );
-  let registry = createPageRegistry<S, PageComponent<S>>(schema as never)
-    .surface("shell", Shell as unknown as PageComponent<S>)
+  let registry = createPageRegistry<S, PageComponent<S>>(schema)
+    .surface("shell", Shell as PageComponent<S>)
     .surface("home", page(Home))
     .surface("problems", page(Problems));
   for (const kind of ["task", "list", "rule", "reason"] as const) {

@@ -141,7 +141,7 @@ const isAnswer = (value: unknown): value is Answer => {
  * with whose failure it was, and never with the key in it.
  */
 export function jevDecide(options: JevOptions = {}): Decide {
-  const call = options.fetch ?? (globalThis.fetch as unknown as FetchLike);
+  const call = options.fetch ?? (globalThis.fetch as FetchLike);
   const url = options.baseUrl ?? JEV_ENDPOINT;
   const retries = options.retries ?? 3;
   const backoff = options.backoffMs ?? ((attempt) => 400 * 2 ** (attempt - 1));

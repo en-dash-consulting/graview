@@ -124,7 +124,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             const candidates = ref.kinds.includes("*")
               ? store.graph.allNodes().map((node) => node.id)
               : ref.kinds.flatMap((kind) =>
-                  store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                  store.graph.nodesOfKind(kind).map((node) => node.id),
                 );
             open.push({
               name: ref.name,
@@ -272,7 +272,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           let candidates = ref.kinds.includes("*")
             ? store.graph.allNodes().map((node) => node.id)
             : ref.kinds.flatMap((kind) =>
-                store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                store.graph.nodesOfKind(kind).map((node) => node.id),
               );
           if (subjectId && connects.length > 0) {
             /*
@@ -315,7 +315,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
          */
         if (open.length === 0 && subjectId) {
           const optionalArgs = otherOptionalArgs(mutation.input, subject.arg);
-          if (optionalArgs.length > 0 && !rehearses(store as unknown as Pick<Store<AnySchema>, "preview">, mutation.name, { [subject.arg]: subjectId })) {
+          if (optionalArgs.length > 0 && !rehearses(store as Pick<Store<AnySchema>, "preview">, mutation.name, { [subject.arg]: subjectId })) {
             for (const name of optionalArgs) {
               const ref = nodeRefArgs(mutation.input).find((candidate) => candidate.name === name);
               open.push({
@@ -426,7 +426,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           const pool = subjectKinds.includes("*")
             ? store.graph.allNodes().map((node) => node.id)
             : subjectKinds.flatMap((kind) =>
-                store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                store.graph.nodesOfKind(kind).map((node) => node.id),
               );
           // Same rule as the forward direction: a move offers the NEW
           // (everything not already tied), a pure sever offers the tied.
@@ -451,7 +451,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             const pool = ref.kinds.includes("*")
               ? store.graph.allNodes().map((node) => node.id)
               : ref.kinds.flatMap((kind) =>
-                  store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                  store.graph.nodesOfKind(kind).map((node) => node.id),
                 );
             open.push({
               name: ref.name,

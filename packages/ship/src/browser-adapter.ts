@@ -115,7 +115,7 @@ export function browserStartsFresh(
   location: { readonly search: string } = (globalThis as unknown as { location: { search: string } })
     .location,
   navigator: { readonly webdriver?: boolean } = (
-    globalThis as unknown as { navigator: { webdriver?: boolean } }
+    globalThis as { navigator: { webdriver?: boolean } }
   ).navigator,
 ): boolean {
   const params = new URLSearchParams(location.search);

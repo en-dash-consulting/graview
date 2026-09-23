@@ -17,7 +17,7 @@ export function insightProvider<S extends AnySchema>(): AffordanceProvider<S> {
     derive({ store, nodes, kindSelection }) {
       const observations: Observation[] = [];
       const name = (node: { id: string; kind: string }): string =>
-        labelOf(store.schema.tryDefinition(node.kind), node as never);
+        labelOf(store.schema.tryDefinition(node.kind), node);
 
       for (const node of nodes) {
         // ------------------------------------------------------- an island
@@ -61,7 +61,7 @@ export function insightProvider<S extends AnySchema>(): AffordanceProvider<S> {
 
       // ------------------------------------------------------------- a gap
       for (const kind of kindSelection) {
-        if (store.graph.nodesOfKind(kind as never).length > 0) continue;
+        if (store.graph.nodesOfKind(kind).length > 0) continue;
         const expectedBy = store.schema.definitions
           /*
            * OTHER kinds, and only other kinds.

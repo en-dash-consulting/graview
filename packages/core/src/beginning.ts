@@ -80,7 +80,7 @@ export function beginning<S extends AnySchema>(app: GraviewApp<S>): Beginning {
   const makes = new Map<string, readonly string[]>();
   for (const act of acts) {
     makes.set(act.name, (act.creates ?? []) as readonly string[]);
-    const wanted = nodeRefArgs(act.input as never)
+    const wanted = nodeRefArgs(act.input)
       .filter((arg) => !arg.optional && !arg.kinds.includes("*"))
       .flatMap((arg) => arg.kinds);
     requires.set(act.name, [...new Set(wanted)]);

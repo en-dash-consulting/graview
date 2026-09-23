@@ -213,7 +213,7 @@ function Control<S extends AnySchema>({
       const all = (
         spec.kinds.includes("*")
           ? [...store.graph.allNodes()]
-          : spec.kinds.flatMap((kind) => store.graph.nodesOfKind(kind as never))
+          : spec.kinds.flatMap((kind) => store.graph.nodesOfKind(kind))
       ).filter((node) => !pinned.has(node.id));
       const candidates = narrowed
         ? narrowed
@@ -234,7 +234,7 @@ function Control<S extends AnySchema>({
               <option value="">—</option>
               {candidates.map((candidate) => (
                 <option key={candidate.id} value={candidate.id}>
-                  {labelOf(store.schema.tryDefinition(candidate.kind), candidate as never)}
+                  {labelOf(store.schema.tryDefinition(candidate.kind), candidate)}
                 </option>
               ))}
             </select>

@@ -139,7 +139,7 @@ export async function openStore<S extends AnySchema>(
     /* The allowlist travels with the declaration, so a deployment enforces
        what the app said an agent was for without being asked to. */
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),
-    snapshot: snapshot as never,
+    snapshot,
     log: history,
     ids,
     // A stored history is read back later, so its timestamps are real ones.

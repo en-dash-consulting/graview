@@ -108,7 +108,7 @@ export function editVia<S extends AnySchema>(
   const via = new Set<string>();
   for (const mutation of mutations) {
     if (mutation.derived) continue;
-    if ((mutation.creates ?? []).includes(kind as never)) via.add(mutation.name);
+    if ((mutation.creates ?? []).includes(kind)) via.add(mutation.name);
     if (
       subjectKindsOf(schema, mutation).includes(kind) &&
       fieldsWrittenBy(mutation, definition).length > 0
@@ -148,7 +148,7 @@ export function deriveEditMutations<S extends AnySchema>(
       derived: { edit: kind },
       title: `Change the ${noun}`,
       description: `Change what was set when this ${noun} was made: ${said.join(", ")}.`,
-      subject: { kinds: [kind] as never, arg: "id" },
+      subject: { kinds: [kind], arg: "id" },
       writes: fields,
       input: z.object({
         id: nodeRef([kind]),
@@ -156,7 +156,7 @@ export function deriveEditMutations<S extends AnySchema>(
       }),
       describe: (args, graph) => {
         const node = graph.getNode((args as { id: string }).id);
-        const label = node ? labelOf(definition, node as never) : (args as { id: string }).id;
+        const label = node ? labelOf(definition, node) : (args as { id: string }).id;
         const changes = fields
           .filter((field) => (args as Record<string, unknown>)[field] !== undefined)
           .map(

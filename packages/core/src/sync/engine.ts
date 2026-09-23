@@ -156,7 +156,7 @@ export class SyncEngine<S extends AnySchema> {
   private participants(): Map<string, { node: Record<string, unknown>; mapping: ResourceMapping }> {
     const graph = this.options.store.graph as GraphReader<NodeOfSchema<S>>;
     const found = new Map<string, { node: Record<string, unknown>; mapping: ResourceMapping }>();
-    for (const node of graph.allNodes() as unknown as Record<string, unknown>[]) {
+    for (const node of graph.allNodes() as Record<string, unknown>[]) {
       const mapping = this.mappingFor(node["kind"] as string);
       if (!mapping || mapping.kind !== node["kind"]) continue;
       if (mapping.match && !mapping.match(node)) continue;

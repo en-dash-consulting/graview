@@ -115,7 +115,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     app: options.app,
     adapter: options.adapter,
     scope,
-    ...(options.seed ? { seed: options.seed as never } : {}),
+    ...(options.seed ? { seed: options.seed } : {}),
   });
   const store = opened.store;
 

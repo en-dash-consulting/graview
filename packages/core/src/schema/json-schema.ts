@@ -11,7 +11,7 @@ export type JsonSchema = Record<string, unknown>;
  * definition needs. Nothing is written twice, so nothing drifts.
  */
 export function toJsonSchema(schema: z.ZodType): JsonSchema {
-  const convert = (z as unknown as { toJSONSchema?: (s: z.ZodType, o?: unknown) => JsonSchema })
+  const convert = (z as { toJSONSchema?: (s: z.ZodType, o?: unknown) => JsonSchema })
     .toJSONSchema;
   if (typeof convert !== "function") {
     throw new Error(

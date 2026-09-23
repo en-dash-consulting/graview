@@ -132,10 +132,10 @@ export function Begin<S extends AnySchema>(props: BeginProps<S> = {}) {
 function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginProps<S>) {
   const { store, principal } = useGraview<S>();
   const nodes = useGraph();
-  const chain = useMemo(() => chainOf(store as never), [store]);
+  const chain = useMemo(() => chainOf(store), [store]);
   const counts = useMemo(() => {
     const found: Record<string, number> = {};
-    for (const entry of chain.order) found[entry.kind] = store.graph.nodesOfKind(entry.kind as never).length;
+    for (const entry of chain.order) found[entry.kind] = store.graph.nodesOfKind(entry.kind).length;
     return found;
   }, [chain, store, nodes]);
 
@@ -423,7 +423,7 @@ function PlanReviewInside<S extends AnySchema>({
   const [done, setDone] = useState<{ batch: string; applied: number; why?: string } | null>(null);
   const [declined, setDeclined] = useState<readonly string[]>([]);
   /* What is left after the declines, ordered and judged like any other plan. */
-  const kept = declined.length === 0 ? plan : without(store as never, plan, declined, options ?? {});
+  const kept = declined.length === 0 ? plan : without(store, plan, declined, options ?? {});
   const titleOf = (mutation: string) => store.allMutations().find((m) => m.name === mutation);
   const rows = rowsOf(plan, (mutation) => {
     const declared = titleOf(mutation);
@@ -432,7 +432,7 @@ function PlanReviewInside<S extends AnySchema>({
       makes: (declared?.creates?.length ?? 0) > 0,
     };
   });
-  const named = (id: string) => (store.graph.getNode(id as never) as { label?: string } | undefined)?.label;
+  const named = (id: string) => (store.graph.getNode(id) as { label?: string } | undefined)?.label;
   const shown = new Map(rows.map((row) => [row.key, labelOf(row, titleOf, named)] as const));
   /*
    * THE LEAST SURE FIRST. A plan whose calls carry a confidence is read in
@@ -616,7 +616,7 @@ function PlanReviewInside<S extends AnySchema>({
             data-testid="plan-apply"
             disabled={kept.ready.length === 0}
             onClick={() => {
-              const result = applyPlan(store as never, kept, {
+              const result = applyPlan(store, kept, {
                 ...(principal ? { author: principal } : {}),
                 ...(batch ? { batch } : {}),
                 /*
@@ -852,7 +852,7 @@ export function Door<S extends AnySchema>({ provider, prompt, photos = [], onPro
   const read = (text: string) => {
     const answer = firstJsonObject(text) as { proposals?: readonly PlannedCall[] } | null;
     const proposals = Array.isArray(answer?.proposals) ? answer!.proposals : [];
-    const kept = validateProposals(store as never, proposals as never, declared?.may) as readonly PlannedCall[];
+    const kept = validateProposals(store, proposals, declared?.may) as readonly PlannedCall[];
     if (kept.length === 0) {
       setSaid("Nothing in that answer was a call this app knows, so nothing was taken from it.");
       return;

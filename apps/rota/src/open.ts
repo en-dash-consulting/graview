@@ -62,14 +62,14 @@ export async function open(): Promise<OpenedApp> {
     await adapter.save(rotaApp.name, {
       nodes: example.nodes.filter((node) => node.id !== "rule-limit"),
       edges: example.edges,
-    } as never);
+    });
     adapter.saveMeta(rotaApp.name, { version: 1 });
   }
   const opened = await openStore({
     app: rotaApp,
     adapter,
     scope: rotaApp.name,
-    seed: example as never,
+    seed: example,
     // A browser deliberately holding a version-1 roster is not a fresh one.
     fresh: stored ? false : browserStartsFresh(),
     storeOptions: { invariantOptions: { context: { today: today() } } },

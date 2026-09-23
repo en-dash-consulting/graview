@@ -138,7 +138,7 @@ export function openAiCompatibleCompletion(options: {
   /** Injectable for tests. */
   readonly fetch?: FetchLike;
 }): Completion {
-  const call = options.fetch ?? (globalThis.fetch as unknown as FetchLike);
+  const call = options.fetch ?? (globalThis.fetch as FetchLike);
   return async (prompt) => {
     const response = await call(`${options.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",

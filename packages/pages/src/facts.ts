@@ -161,7 +161,7 @@ export function kindFacts<S extends AnySchema>(
 ): KindFacts {
   return {
     kind,
-    members: store.graph.nodesOfKind(kind as never) as readonly { id: string; kind: string }[],
+    members: store.graph.nodesOfKind(kind) as readonly { id: string; kind: string }[],
     actions: deriveAffordances(store, [], {
       kindSelection: [kind],
       ...(options.principal ? { principal: options.principal } : {}),
@@ -237,7 +237,7 @@ export function kindMap<S extends AnySchema>(store: Store<S>): KindMap {
   const kinds = (store.schema.kinds as readonly string[]).map((kind) => ({
     kind,
     plural: store.schema.tryDefinition(kind)?.plural ?? kind,
-    count: store.graph.nodesOfKind(kind as never).length,
+    count: store.graph.nodesOfKind(kind).length,
   }));
   const counts = new Map<string, number>();
   for (const edge of store.graph.allEdges()) {

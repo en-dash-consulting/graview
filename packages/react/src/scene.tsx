@@ -4079,7 +4079,7 @@ function samePicture(before: SceneNode, after: SceneNode): boolean {
     (key) =>
       key === "x" ||
       key === "y" ||
-      Object.is((before as unknown as Record<string, unknown>)[key], (after as unknown as Record<string, unknown>)[key]),
+      Object.is((before as Record<string, unknown>)[key], (after as Record<string, unknown>)[key]),
   );
 }
 

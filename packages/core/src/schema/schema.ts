@@ -59,7 +59,7 @@ export class SchemaError extends Error {
 export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
   definitions: Defs & ValidateEdgeTargets<Defs>,
 ): Schema<Defs> {
-  const defs = definitions as unknown as Defs;
+  const defs = definitions as Defs;
   const byKind = new Map<string, AnyNodeDefinition>();
   for (const def of defs) {
     if (byKind.has(def.kind)) {

@@ -72,7 +72,7 @@ export function compileMutation<S extends AnySchema>(
       primitives.push(primitive);
     },
     addNode(node) {
-      primitives.push({ op: "add-node", node: node as never });
+      primitives.push({ op: "add-node", node });
     },
     removeNode(id) {
       const node = reader.getNode(id);
@@ -85,7 +85,7 @@ export function compileMutation<S extends AnySchema>(
         reader.getNode(edge.to);
         primitives.push({ op: "remove-edge", edge });
       }
-      primitives.push({ op: "remove-node", node: node as never });
+      primitives.push({ op: "remove-node", node });
     },
     patchNode(id, fields) {
       const node = reader.getNode(id);
@@ -131,7 +131,7 @@ export function compileMutation<S extends AnySchema>(
     },
   };
 
-  definition.apply(context, args as never);
+  definition.apply(context, args);
 
   const writes = new Set<string>();
   for (const primitive of primitives) {
@@ -152,7 +152,7 @@ export function compileMutation<S extends AnySchema>(
   }
 
   const intent =
-    definition.describe?.(args as never, reader) ??
+    definition.describe?.(args, reader) ??
     `${definition.name}(${Object.entries(args)
       .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
       .join(", ")})`;

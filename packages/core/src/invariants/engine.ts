@@ -93,7 +93,7 @@ export function evaluate<S extends AnySchema>(
 
   for (const node of graph.allNodes()) {
     const definition = graph.schema.tryDefinition(node.kind);
-    const required = definition?.requiresInvariant?.(node as never) ?? null;
+    const required = definition?.requiresInvariant?.(node) ?? null;
 
     if (options.subjectFilter && !options.subjectFilter(node, context)) continue;
 

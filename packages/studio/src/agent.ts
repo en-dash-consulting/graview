@@ -125,8 +125,8 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
 
     const all = (kind: string): Node[] => [...store.graph.allNodes()].filter((node) => node.kind === kind) as Node[];
     const label = (node: Node | undefined): string => String(node?.["label"] ?? node?.id ?? "");
-    const out = (id: string, kind: string): Node[] => store.graph.out(id, kind as never) as unknown as Node[];
-    const into = (id: string, kind: string): Node[] => store.graph.in(id, kind as never) as unknown as Node[];
+    const out = (id: string, kind: string): Node[] => store.graph.out(id, kind) as Node[];
+    const into = (id: string, kind: string): Node[] => store.graph.in(id, kind) as Node[];
     const list = (words: readonly string[]): string =>
       words.length <= 1 ? (words[0] ?? "nothing") : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
 

@@ -133,10 +133,10 @@ export function seedbedViews(
     const Year = season.at("year");
     const YearView = ((props: ViewProps<S>) => <Year {...props} label="The year" />) as ViewComponent<S>;
     registry = registry
-      .register("planting" as never, { cardinality: "many", fidelity: "full" }, YearView, { title: "The year" })
-      .register("planting" as never, { cardinality: "many", fidelity: "summary" }, YearView, { title: "The year" })
-      .register("planting" as never, { cardinality: "many", fidelity: "full" }, season.View as ViewComponent<S>, { title: "The season" })
-      .register("planting" as never, { cardinality: "many", fidelity: "summary" }, season.View as ViewComponent<S>, { title: "The season" });
+      .register("planting", { cardinality: "many", fidelity: "full" }, YearView, { title: "The year" })
+      .register("planting", { cardinality: "many", fidelity: "summary" }, YearView, { title: "The year" })
+      .register("planting", { cardinality: "many", fidelity: "full" }, season.View as ViewComponent<S>, { title: "The season" })
+      .register("planting", { cardinality: "many", fidelity: "summary" }, season.View as ViewComponent<S>, { title: "The season" });
   }
   if (options.rotation && kinds.includes("rotation")) {
     /*
@@ -155,8 +155,8 @@ export function seedbedViews(
       horizon: { years: 4, title: "The rotation" },
     });
     registry = registry
-      .register("rotation" as never, { cardinality: "many", fidelity: "full" }, turning.View as ViewComponent<S>, { title: "The rotation" })
-      .register("rotation" as never, { cardinality: "many", fidelity: "summary" }, turning.View as ViewComponent<S>, { title: "The rotation" });
+      .register("rotation", { cardinality: "many", fidelity: "full" }, turning.View as ViewComponent<S>, { title: "The rotation" })
+      .register("rotation", { cardinality: "many", fidelity: "summary" }, turning.View as ViewComponent<S>, { title: "The rotation" });
   }
   if (options.studio && kinds.includes("kind")) {
     // The studio over a declaration: what the checker says about it as it

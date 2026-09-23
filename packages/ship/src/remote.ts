@@ -108,7 +108,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
      * history that led to it. Folding the log alone would lose whatever the
      * server was seeded with, which was never an operation.
      */
-    snapshot: state.snapshot as never,
+    snapshot: state.snapshot,
     log: state.log,
     /*
      * IDS THIS CLIENT CANNOT SHARE WITH ANYBODY.
@@ -126,7 +126,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
      */
     ids: localIds(),
     ...(options.storeOptions ?? {}),
-  } as never);
+  });
 
   let seen = state.log.at(-1)?.seq ?? -1;
 

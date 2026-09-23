@@ -122,9 +122,9 @@ function TaskView({ node, fidelity, selected, mode, flagged }: ViewProps<S, "tas
  */
 const OneListView = ((props: ViewProps<S>) => {
   const { store } = useGraview<S>();
-  const node = props.node as unknown as ListNode | undefined;
+  const node = props.node as ListNode | undefined;
   if (!node) return null;
-  const tasks = store.graph.out(node.id, "holds") as unknown as TaskNode[];
+  const tasks = store.graph.out(node.id, "holds") as TaskNode[];
   const open = tasks.filter((task) => !task.done);
 
   if (props.fidelity === "glyph") {
@@ -204,7 +204,7 @@ const ListsView = ((props: ViewProps<S>) => {
         }}
       >
         {lists.map((list) => {
-          const tasks = store.graph.out(list.id, "holds") as unknown as TaskNode[];
+          const tasks = store.graph.out(list.id, "holds") as TaskNode[];
           const open = tasks.filter((task) => !task.done);
           const done = tasks.length - open.length;
           return (
@@ -393,7 +393,7 @@ function BurndownView({ nodes }: ViewProps<S, "task">) {
   /** One point per day that has anything due, and how much is still open on it. */
   const trail = useMemo(() => {
     const dated = (nodes ?? [])
-      .map((node) => node as unknown as TaskNode)
+      .map((node) => node as TaskNode)
       .filter((task) => task.due !== undefined)
       .sort((a, b) => String(a.due).localeCompare(String(b.due)));
     const days = [...new Set(dated.map((task) => String(task.due)))];
@@ -503,8 +503,8 @@ export function todoViews() {
      * PLACE: the bar lists it by name, and pressing it is a stop with a URL.
      * A member never sees it, because a member never sees the people.
      */
-    .register("user" as never, { cardinality: "many", fidelity: "full" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
-    .register("user" as never, { cardinality: "many", fidelity: "summary" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
+    .register("user", { cardinality: "many", fidelity: "full" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
+    .register("user", { cardinality: "many", fidelity: "summary" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
     .register("task", { cardinality: "one", fidelity: "full" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "summary" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "glyph" }, TaskView)
@@ -533,8 +533,8 @@ export function todoViews() {
      * page — which is the whole claim, that a page carries what the picture
      * needs and not only what the DOM can express.
      */
-    .register("task", { cardinality: "many", fidelity: "full" }, BurndownView as never, { title: "What is left" })
-    .register("task", { cardinality: "many", fidelity: "summary" }, BurndownView as never, { title: "What is left" })
+    .register("task", { cardinality: "many", fidelity: "full" }, BurndownView, { title: "What is left" })
+    .register("task", { cardinality: "many", fidelity: "summary" }, BurndownView, { title: "What is left" })
     .register("task", { cardinality: "many", fidelity: "full" }, WeekView, { title: "The week" })
     .register("task", { cardinality: "many", fidelity: "summary" }, WeekView, { title: "The week" });
 }

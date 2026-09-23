@@ -46,7 +46,7 @@ export async function open(): Promise<OpenedApp> {
     app: todoApp,
     adapter: createBrowserAdapter(),
     scope: todoApp.name,
-    seed: example as never,
+    seed: example,
     fresh: browserStartsFresh(),
     storeOptions: { invariantOptions: { context: { today: today() } } },
   });

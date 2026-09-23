@@ -89,7 +89,7 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
       const kind = kindOfCard(node.id);
       if (kind !== null && node.plot) plotsByKind.set(kind, node.plot);
     }
-    const roads = roadsOf(store.schema, plotsByKind as never).map((road) => ({
+    const roads = roadsOf(store.schema, plotsByKind).map((road) => ({
       ...road,
       points: roadBetween(plotsByKind.get(road.from)!, plotsByKind.get(road.to)!, at0, none),
     }));

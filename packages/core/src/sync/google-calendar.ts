@@ -97,7 +97,7 @@ function put(into: Record<string, unknown>, path: string, value: unknown): void 
 }
 
 export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
-  const doFetch = options.fetch ?? (globalThis.fetch as unknown as Fetcher);
+  const doFetch = options.fetch ?? (globalThis.fetch as Fetcher);
   const base = options.baseUrl ?? BASE;
   const events = `${base}/calendars/${encodeURIComponent(options.calendarId)}/events`;
 

@@ -153,7 +153,7 @@ export function declareInstallation<const R extends string>(options: Installatio
         email: args.email,
         roles: args.roles,
         status: "pending",
-      } as never);
+      });
     },
   });
 
@@ -181,7 +181,7 @@ export function declareInstallation<const R extends string>(options: Installatio
         email: asked["email"],
         roles: asked["roles"],
         status: "active",
-      } as never);
+      });
       ctx.addEdge({ kind: "became", from: args.invitationId, to: id });
       ctx.patchNode(args.invitationId, { status: "accepted" });
     },

@@ -379,7 +379,7 @@ export function decisionBridgeHandler(options: DecisionBridgeOptions = {}) {
   const env = options.env ?? process.env;
   const endpoint = options.endpoint ?? DECISION_DEFAULTS.endpoint;
   const model = options.model ?? DECISION_DEFAULTS.model;
-  const call = options.fetch ?? (globalThis.fetch as unknown as NonNullable<DecisionBridgeOptions["fetch"]>);
+  const call = options.fetch ?? (globalThis.fetch as NonNullable<DecisionBridgeOptions["fetch"]>);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
       send(res, 403, { error: "The decision door answers this app only." });

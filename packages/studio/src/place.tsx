@@ -477,10 +477,10 @@ function studioViews(app: GraviewApp<AnySchema>) {
   const meta = studioApp();
   const check = createStudioLens(app);
   return registerDefaultViews(meta.schema, createViews(meta.schema))
-    .register("kind" as never, { cardinality: "many", fidelity: "full" }, check.View as never, {
+    .register("kind", { cardinality: "many", fidelity: "full" }, check.View, {
       title: "What the checker says",
     })
-    .register("kind" as never, { cardinality: "many", fidelity: "summary" }, check.View as never, {
+    .register("kind", { cardinality: "many", fidelity: "summary" }, check.View, {
       title: "What the checker says",
     });
 }

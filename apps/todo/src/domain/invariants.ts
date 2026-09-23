@@ -15,7 +15,7 @@ type Reader = GraphReader<AnyNode>;
 type I = InvariantDefinition<TodoSchema>;
 
 const name = (node: AnyNode | undefined): string =>
-  node ? labelOf(todoSchema.tryDefinition(node.kind), node as never) : "something";
+  node ? labelOf(todoSchema.tryDefinition(node.kind), node) : "something";
 const nodesOf = (graph: Reader, kind: string): AnyNode[] =>
   graph.allNodes().filter((node) => node.kind === kind);
 
@@ -85,7 +85,7 @@ export const nothingOverdue: I = defineInvariant("nothing-overdue", {
     const today = typeof context["today"] === "string" ? (context["today"] as string) : undefined;
     if (!today) return [];
     // A rule can be effective only from a date, like anything else here.
-    if (!isEffectiveOn(subject as never, today)) return [];
+    if (!isEffectiveOn(subject, today)) return [];
 
     const reader = graph as Reader;
     const late = nodesOf(reader, "task").filter(

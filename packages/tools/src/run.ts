@@ -209,7 +209,7 @@ export function valueOf(question: DerivedQuestion, answer: Answer): unknown {
 
 function currentOfKind<S extends AnySchema>(store: Store<S>, kind: string, today?: string): AnyNode[] {
   const definition = store.schema.tryDefinition(kind);
-  return (store.graph.nodesOfKind(kind as never) as unknown as AnyNode[]).filter((node) =>
+  return (store.graph.nodesOfKind(kind) as AnyNode[]).filter((node) =>
     isCurrent(definition, node, today),
   );
 }
@@ -260,7 +260,7 @@ function questionsOfStep<S extends AnySchema>(
         broken: violation.message,
         implicated: violation.nodeIds.map((id) => {
           const node = store.graph.getNode(id);
-          return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : id;
+          return node ? labelOf(store.schema.tryDefinition(node.kind as string), node) : id;
         }),
       },
       questions: questionsForInvariant(store, step.judge, violation).filter((q) => q.about === "repair"),
@@ -340,7 +340,7 @@ function callsFrom<S extends AnySchema>(
   const out: Answered[] = [];
   const nodeLabel = (id: string | undefined): string | undefined => {
     const node = id ? store.graph.getNode(id) : undefined;
-    return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : undefined;
+    return node ? labelOf(store.schema.tryDefinition(node.kind as string), node) : undefined;
   };
   /*
    * AN ANSWER OR A QUESTION. A call is made only from an answer that IS

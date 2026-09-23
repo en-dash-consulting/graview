@@ -93,7 +93,7 @@ export function SeedbedApp({
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
   const views = useMemo(
-    () => seedbedViews(created.schema as never, { lens, board, map, reach, season, rotation, ...(studio ? { studio } : {}) }),
+    () => seedbedViews(created.schema, { lens, board, map, reach, season, rotation, ...(studio ? { studio } : {}) }),
     [created, lens, board, map, reach, season, rotation, studio],
   );
   const [scheme, setScheme] = useState<Scheme>(initialScheme);

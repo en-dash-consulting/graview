@@ -46,7 +46,7 @@ export const addShift = defineMutation("add-shift", {
       day: args.day,
       from: args.from,
       until: args.until,
-    } as never);
+    });
     ctx.addEdge({ kind: "held-at", from: id, to: args.locationId });
   },
 }) as M;
@@ -63,7 +63,7 @@ export const addLocation = defineMutation("add-location", {
       kind: "location",
       label: args.label,
       ...(args.directions ? { directions: args.directions } : {}),
-    } as never);
+    });
   },
 }) as M;
 
@@ -147,7 +147,7 @@ export const addVolunteer = defineMutation("add-volunteer", {
       phone: args.phone,
       limit: args.limit,
       status: "available",
-    } as never);
+    });
   },
 }) as M;
 

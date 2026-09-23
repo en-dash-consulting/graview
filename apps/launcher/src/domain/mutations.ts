@@ -95,7 +95,7 @@ export const justify = defineMutation(
     apply(ctx, args) {
       const id = `why-${slug(args.text)}`;
       if (!ctx.graph.getNode(id)) {
-        ctx.addNode({ id, kind: "rationale", text: args.text } as never);
+        ctx.addNode({ id, kind: "rationale", text: args.text });
       }
       ctx.addEdge({ kind: "justifies", from: id, to: args.id });
     },

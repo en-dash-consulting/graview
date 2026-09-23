@@ -106,7 +106,7 @@ export function editableFields<S extends AnySchema>(
                 candidates: ref.kinds.includes("*")
                   ? store.graph.allNodes().map((other2) => other2.id)
                   : ref.kinds.flatMap((refKind) =>
-                      store.graph.nodesOfKind(refKind as never).map((other2) => other2.id),
+                      store.graph.nodesOfKind(refKind).map((other2) => other2.id),
                     ),
               }
             : {}),

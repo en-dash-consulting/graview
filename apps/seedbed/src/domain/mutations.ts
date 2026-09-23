@@ -33,7 +33,7 @@ export const addGardener = defineMutation("add-gardener", {
   input: z.object({ label: z.string().min(1) }),
   describe: (args) => `Welcome ${args.label}`,
   apply(ctx, args) {
-    ctx.addNode({ id: ctx.freshId(args.label, "gardener"), kind: "gardener", label: args.label } as never);
+    ctx.addNode({ id: ctx.freshId(args.label, "gardener"), kind: "gardener", label: args.label });
   },
 }) as M;
 
@@ -49,7 +49,7 @@ export const addPlot = defineMutation("add-plot", {
       kind: "plot",
       label: args.label,
       beds: args.beds,
-    } as never);
+    });
   },
 }) as M;
 
@@ -88,7 +88,7 @@ const sowing = (turns: boolean) =>
         label: args.label,
         sown: args.sown,
         status: "growing",
-      } as never);
+      });
       ctx.addEdge({ kind: "grows-in", from: id, to: args.plotId });
       const turn = turns ? turnOn(ctx.graph as Reader, args.plotId, args.sown) : undefined;
       if (turn) ctx.addEdge({ kind: "holds", from: turn, to: id });
@@ -155,7 +155,7 @@ export const rotate = defineMutation("rotate", {
     const plot = nameOf(ctx.graph as Reader, args.plotId);
     const label = `${args.family[0]!.toUpperCase()}${args.family.slice(1)} · ${plot}`;
     const id = ctx.freshId(label, "rotation");
-    ctx.addNode({ id, kind: "rotation", label, family: args.family, from: args.from, to: args.to } as never);
+    ctx.addNode({ id, kind: "rotation", label, family: args.family, from: args.from, to: args.to });
     ctx.addEdge({ kind: "turns-over", from: id, to: args.plotId });
     // What is already in the ground there, sown inside this turn, went in under it.
     for (const planted of ctx.graph.in(args.plotId, "grows-in")) {
@@ -177,7 +177,7 @@ export const adoptRule = defineMutation("adopt-rule", {
       kind: "rule",
       label: "Every plot has a caretaker",
       spec: { type: "every-plot-tended" },
-    } as never);
+    });
   },
 }) as M;
 

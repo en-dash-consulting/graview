@@ -629,7 +629,7 @@ function SeatQuestions<S extends AnySchema>({ context }: { context: PageContext<
               <span>{one.say}</span>
               {about ? (
                 <Link to={recordPath(store.schema, about.kind as string, about.id)} style={{ ...link, ...quiet }}>
-                  {labelOf(store.schema.tryDefinition(about.kind), about as never)} →
+                  {labelOf(store.schema.tryDefinition(about.kind), about)} →
                 </Link>
               ) : null}
             </li>
@@ -652,7 +652,7 @@ function placesOf<S extends AnySchema>(context: PageContext<S>): readonly Place[
 
 function membersOf<S extends AnySchema>(store: Store<S>, kind: string) {
   const definition = store.schema.tryDefinition(kind);
-  return store.graph.nodesOfKind(kind as never).filter((node) => isCurrent(definition, node as never));
+  return store.graph.nodesOfKind(kind).filter((node) => isCurrent(definition, node));
 }
 
 /** "a picture of Tasks", "a picture of Skills across People". */
@@ -677,7 +677,7 @@ function LensOnPage<S extends AnySchema>({ context, place }: { context: PageCont
   const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
   return (
     <View
-      nodes={members as never}
+      nodes={members}
       label={place.title}
       fidelity="full"
       cardinality="many"
@@ -925,8 +925,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
     kind,
     definition: store.schema.tryDefinition(kind),
     members: store.graph
-      .nodesOfKind(kind as never)
-      .filter((node) => isCurrent(store.schema.tryDefinition(kind), node as never)),
+      .nodesOfKind(kind)
+      .filter((node) => isCurrent(store.schema.tryDefinition(kind), node)),
   }));
   const present = counted.filter((entry) => entry.members.length > 0);
   // An empty installation says where to begin, in the act's own words.
@@ -938,7 +938,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         .allMutations()
         .find(
           (mutation) =>
-            (mutation.creates ?? []).includes(entry.kind as never) &&
+            (mutation.creates ?? []).includes(entry.kind) &&
             store.permits({ name: mutation.name, args: {} }, context.principal).ok,
         ),
     }))
@@ -1019,7 +1019,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
             {shown.length > 0 ? (
               <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
                 {shown.map((node) => {
-                  const label = labelOf(definition, node as never);
+                  const label = labelOf(definition, node);
                   const facts = glance(node as Record<string, unknown>, definition, label);
                   return (
                     <li key={node.id} style={{ display: "grid", gap: 1 }}>
@@ -1081,8 +1081,8 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   }
   const definition = store.schema.tryDefinition(kind);
   const past = search.get("past") === "1";
-  const all = store.graph.nodesOfKind(kind as never);
-  const current = past ? all : all.filter((node) => isCurrent(definition, node as never));
+  const all = store.graph.nodesOfKind(kind);
+  const current = past ? all : all.filter((node) => isCurrent(definition, node));
   const retired = all.length - current.length;
   /*
    * RELATIONS ARE STRUCTURE HERE TOO. A list can be NARROWED by a relation —
@@ -1115,11 +1115,11 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
     [...new Set(edges.filter((edge) => edge.kind === edgeKind && (edge.from === memberId || edge.to === memberId)).map((edge) => (edge.from === memberId ? edge.to : edge.from)))]
       .map((otherId) => store.graph.getNode(otherId))
       .filter((other): other is NonNullable<typeof other> => other !== undefined)
-      .map((other) => labelOf(store.schema.tryDefinition(other.kind), other as never))
+      .map((other) => labelOf(store.schema.tryDefinition(other.kind), other))
       .sort();
   const named = (id: string): string => {
     const node = store.graph.getNode(id);
-    return node ? labelOf(store.schema.tryDefinition(node.kind), node as never) : id;
+    return node ? labelOf(store.schema.tryDefinition(node.kind), node) : id;
   };
   const flagged = new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds));
   /*
@@ -1155,7 +1155,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   const withheld = facts.actions.withheld;
   const plural = pluralOf(store, kind);
   const row = (node: (typeof members)[number]) => {
-    const label = labelOf(definition, node as never);
+    const label = labelOf(definition, node);
     const said = glance(node as Record<string, unknown>, definition, label);
     return (
       <li
@@ -1653,7 +1653,7 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
               <p style={{ margin: 0, display: "inline-flex", alignItems: "center", gap: 8 }}>
                 <KindMark kind={node.kind as string} brand={brand} schema={store.schema} size={7} />
                 <Link to={recordPath(store.schema, node.kind as string, node.id)} style={link}>
-                  {labelOf(store.schema.tryDefinition(node.kind), node as never)}
+                  {labelOf(store.schema.tryDefinition(node.kind), node)}
                 </Link>
               </p>
             ) : null}

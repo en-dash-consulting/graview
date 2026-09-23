@@ -258,7 +258,7 @@ export function placeOnCalendar<S extends AnySchema>(
 ): PlacedEntry | null {
   const roles = bindings[node.kind];
   if (!roles) return null;
-  const record = node as unknown as Record<string, unknown>;
+  const record = node as Record<string, unknown>;
   const declared = schema?.tryDefinition(node.kind)?.fields.shape as Record<string, unknown> | undefined;
   const missing = CALENDAR_REQUIRED_ROLES.filter((role) => {
     const field = roles[role];
@@ -278,7 +278,7 @@ export function placeOnCalendar<S extends AnySchema>(
     label:
       typeof named === "string" && named.length > 0
         ? named
-        : labelOf(schema?.tryDefinition(node.kind), node as never),
+        : labelOf(schema?.tryDefinition(node.kind), node),
     from,
     // An end before its start is a typo in the data, not a span that runs
     // backwards: the entry occupies the day it starts and says no more.
@@ -496,7 +496,7 @@ function CalendarView<S extends AnySchema>({
     const day = cell.from;
     // A date-time keeps its time: moving "Tuesday at 09:30" to Thursday
     // means Thursday at 09:30, not Thursday at midnight.
-    const was = (node as unknown as Record<string, unknown>)[roles.start];
+    const was = (node as Record<string, unknown>)[roles.start];
     const minutes = minutesOf(was);
     const value = minutes === null ? day : `${day}${String(was).slice(10)}`;
     const call = { name: act.name, args: { [act.arg]: id, [roles.start]: value } };

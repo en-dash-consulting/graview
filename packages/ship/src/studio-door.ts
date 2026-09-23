@@ -56,7 +56,7 @@ export function studioDoorHandler(options: StudioDoorOptions = {}) {
   const domain = options.domain ?? "src/domain";
   const folder = resolve(root, domain);
   const parser = async (): Promise<typeof TS> =>
-    options.typescript ?? ((await import("typescript")) as unknown as { default: typeof TS }).default;
+    options.typescript ?? ((await import("typescript")) as { default: typeof TS }).default;
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const send = (status: number, body: StudioDoorStatus | StudioDoorAnswer | StudioDoorSource) => sendJson(res, status, body);

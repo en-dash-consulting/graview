@@ -67,7 +67,7 @@ export function readGarden(
   store: Pick<Store<S>, "graph" | "violations">,
   violations = store.violations(),
 ): Garden {
-  const nodes = store.graph.allNodes() as unknown as Loose[];
+  const nodes = store.graph.allNodes() as Loose[];
   const trouble = new Map<string, string[]>();
   for (const violation of violations) {
     for (const id of violation.nodeIds) trouble.set(id, [...(trouble.get(id) ?? []), violation.message]);
@@ -82,7 +82,7 @@ export function readGarden(
     .filter((node) => node.kind === "plot")
     .map((node): GardenPlot => {
       const caretaker = (store.graph.out(node.id, "tended-by")[0] as Loose | undefined) ?? null;
-      const plantings = (store.graph.in(node.id, "grows-in") as unknown as Loose[]).map(planting);
+      const plantings = (store.graph.in(node.id, "grows-in") as Loose[]).map(planting);
       return {
         id: node.id,
         label: node.label,
@@ -101,7 +101,7 @@ export function readGarden(
     .map((node): GardenGardener => ({
       id: node.id,
       label: node.label,
-      plots: (store.graph.in(node.id, "tended-by") as unknown as Loose[]).map((plot) => ({ id: plot.id, label: plot.label })),
+      plots: (store.graph.in(node.id, "tended-by") as Loose[]).map((plot) => ({ id: plot.id, label: plot.label })),
     }));
   const plantings = nodes.filter((node) => node.kind === "planting").map(planting);
   const growing = plantings
@@ -276,7 +276,7 @@ export function GardenMapPicture({ garden, plot: wrapPlot, lit, aspect = 2.2, de
 export const GardenMapView = ((props: ViewProps<S>) => {
   const { store } = useGraview<S>();
   const violations = useViolations();
-  const garden = readGarden(store, violations as never);
+  const garden = readGarden(store, violations);
   const lit = new Set(props.implicated ?? []);
   const flagged = new Set(props.flagged ?? []);
   const label = props.label ?? "The garden map";

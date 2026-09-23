@@ -242,7 +242,7 @@ const slug = (text: string): string =>
     .replace(/^-+|-+$/g, "") || "thing";
 
 const act = <I extends z.ZodType>(name: string, spec: Spec<I>): AnyMutationDefinition<StudioSchema> =>
-  ({ ...spec, name }) as unknown as AnyMutationDefinition<StudioSchema>;
+  ({ ...spec, name }) as AnyMutationDefinition<StudioSchema>;
 
 export const addKind = act("add-kind", {
   title: "Add a kind",

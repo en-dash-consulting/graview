@@ -1126,7 +1126,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
             : [undefined];
         const via = mutation.derived
           ? declaredMutations
-              .filter((m) => (m.creates ?? []).includes(mutation.derived!.edit as never) || (m.writes ?? []).length > 0)
+              .filter((m) => (m.creates ?? []).includes(mutation.derived!.edit) || (m.writes ?? []).length > 0)
               .map((m) => m.name)
           : undefined;
         return subjectKinds.some(

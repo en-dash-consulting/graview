@@ -246,7 +246,7 @@ function Home({ context }: { context: Ctx }) {
   const { store } = context;
   useStoreTick(store);
   const now = (context.invariantContext?.["today"] as string | undefined) ?? today();
-  const shifts = store.graph.nodesOfKind("shift" as never) as unknown as ShiftNode[];
+  const shifts = store.graph.nodesOfKind("shift") as ShiftNode[];
   const week = daysFrom(startOfWeek(now), 7);
   const here = shifts.filter((shift) => week.includes(shift.on));
   const bare = here.filter((shift) => store.graph.out(shift.id, "covered-by").length === 0);
@@ -318,7 +318,7 @@ function Home({ context }: { context: Ctx }) {
 /** One shift in its day's column, saying who has it — or that nobody does. */
 function Slot({ shift, context }: { shift: ShiftNode; context: Ctx }) {
   const { store } = context;
-  const who = store.graph.out(shift.id, "covered-by") as unknown as { id: string; label?: string }[];
+  const who = store.graph.out(shift.id, "covered-by") as { id: string; label?: string }[];
   return (
     <Link
       className={`ro-slot${who.length === 0 ? " bare" : ""}`}
@@ -362,7 +362,7 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
   };
 
   const named = (node: { id: string }) => labelOf(store.schema.tryDefinition(kind), node as never);
-  const all = store.graph.nodesOfKind(kind as never) as unknown as AnyNode[];
+  const all = store.graph.nodesOfKind(kind as never) as AnyNode[];
   const matching = all
     .filter((node) =>
       show === "bare" && kind === "shift" ? store.graph.out(node.id, "covered-by").length === 0 : true,
@@ -474,7 +474,7 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
 function said(store: Ctx["store"], kind: string, node: AnyNode): string {
   if (kind === "shift") {
     const shift = node as ShiftNode;
-    const who = store.graph.out(shift.id, "covered-by") as unknown as { label?: string }[];
+    const who = store.graph.out(shift.id, "covered-by") as { label?: string }[];
     return `${shift.on} · ${who.length === 0 ? "nobody yet" : who.map((one) => one.label ?? "?").join(", ")}`;
   }
   if (kind === "volunteer") {
@@ -617,7 +617,7 @@ function About({ context, violation }: { context: Ctx; violation: Violation }) {
     <p style={{ margin: 0, display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
       {nodes.map((node) => (
         <Link key={node.id} className="ro-chip" to={recordPath(store.schema, node.kind as string, node.id)}>
-          {labelOf(store.schema.tryDefinition(node.kind), node as never)}
+          {labelOf(store.schema.tryDefinition(node.kind), node)}
         </Link>
       ))}
     </p>
@@ -639,7 +639,7 @@ interface ShiftNode extends AnyNode {
 
 /** Where a shift happens: the location it is held at, by name. */
 function whereOf(store: Ctx["store"], shiftId: string): string {
-  const at = store.graph.out(shiftId, "held-at")[0] as unknown as AnyNode | undefined;
+  const at = store.graph.out(shiftId, "held-at")[0] as AnyNode | undefined;
   return at ? (at.label ?? at.id) : "Somewhere not yet said";
 }
 interface VolunteerNode extends AnyNode {
@@ -846,7 +846,7 @@ function Ask({ affordance, context, onDone }: { affordance: Affordance; context:
     <div className="ro-card">
       <DerivedForm<S>
         store={store}
-        mutation={mutation as never}
+        mutation={mutation}
         prefilled={affordance.args}
         open={affordance.open}
         {...(principal ? { principal } : {})}
@@ -916,7 +916,7 @@ function Repairs({
         <div className="ro-card">
           <DerivedForm<S>
             store={store}
-            mutation={asking as never}
+            mutation={asking}
             prefilled={opened.args ?? {}}
             open={(opened.missing ?? []).map((name) => ({ name }))}
             {...(principal ? { principal } : {})}
@@ -981,13 +981,13 @@ function groupBy(
 /* ------------------------------------------------------------ the design */
 
 export function rotaDesign(schema: S) {
-  const page = (component: (props: { context: Ctx }) => ReactNode) => component as unknown as PageComponent<S>;
+  const page = (component: (props: { context: Ctx }) => ReactNode) => component as PageComponent<S>;
   const forKind = (kind: string, which: "list" | "record") =>
     page(({ context }: { context: Ctx }) =>
       which === "list" ? <KindList context={context} kind={kind} /> : <KindRecord context={context} kind={kind} />,
     );
-  let registry = createPageRegistry<S, PageComponent<S>>(schema as never)
-    .surface("shell", Shell as unknown as PageComponent<S>)
+  let registry = createPageRegistry<S, PageComponent<S>>(schema)
+    .surface("shell", Shell as PageComponent<S>)
     .surface("home", page(Home))
     .surface("problems", page(Problems));
   for (const kind of ["shift", "volunteer", "rule"] as const) {

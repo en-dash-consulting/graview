@@ -138,7 +138,7 @@ export function useSubject<S extends AnySchema>(): Subject {
 
   const name = (id: string): string | null => {
     const node = store.graph.getNode(id);
-    if (node) return labelOf(store.schema.tryDefinition(node.kind), node as never);
+    if (node) return labelOf(store.schema.tryDefinition(node.kind), node);
     const kind = kindOfCard(id) ?? (isAggregateId(id) ? id.slice("aggregate:".length) : null);
     if (kind) return store.schema.tryDefinition(kind)?.plural ?? kind;
     return null;
@@ -435,7 +435,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
                       >
                         {(() => {
                           const about = store.graph.getNode(one.at!);
-                          return about ? labelOf(store.schema.tryDefinition(about.kind), about as never) : "Show me";
+                          return about ? labelOf(store.schema.tryDefinition(about.kind), about) : "Show me";
                         })()}
                       </button>
                     ) : null}
@@ -464,12 +464,12 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
                           type="button"
                           data-testid="companion-show-me"
                           data-graview-show={first}
-                          aria-label={`Show me ${labelOf(store.schema.tryDefinition(node.kind), node as never)}`}
-                          title={`Show me ${labelOf(store.schema.tryDefinition(node.kind), node as never)}`}
+                          aria-label={`Show me ${labelOf(store.schema.tryDefinition(node.kind), node)}`}
+                          title={`Show me ${labelOf(store.schema.tryDefinition(node.kind), node)}`}
                           onClick={() => showMe(first!)}
                           style={{ font: "inherit", fontSize: "0.6875rem", minHeight: 24, padding: "0 8px", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                         >
-                          {labelOf(store.schema.tryDefinition(node.kind), node as never)}
+                          {labelOf(store.schema.tryDefinition(node.kind), node)}
                         </button>
                       ) : null}
                     </li>

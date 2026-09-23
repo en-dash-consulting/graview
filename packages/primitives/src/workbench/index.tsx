@@ -425,7 +425,7 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
   }
   const node = store.graph.getNode(id);
   if (!node) return id;
-  return labelOf(store.schema.tryDefinition(node.kind), node as never);
+  return labelOf(store.schema.tryDefinition(node.kind), node);
 }
 
 /* ---------------------------------------------------------------- inspector */

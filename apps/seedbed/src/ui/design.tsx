@@ -761,9 +761,9 @@ function Problems({ context }: { context: Ctx }) {
 
 /** The garden's own design: every surface and every page replaced, over the same store. */
 export function seedbedDesign(schema: AnySchema) {
-  const page = (component: (props: { context: Ctx }) => ReactNode) => component as unknown as PageComponent<S>;
+  const page = (component: (props: { context: Ctx }) => ReactNode) => component as PageComponent<S>;
   return createPageRegistry<S, PageComponent<S>>(schema as never)
-    .surface("shell", Shell as unknown as PageComponent<S>)
+    .surface("shell", Shell as PageComponent<S>)
     .surface("home", page(Home))
     .surface("problems", page(Problems))
     .register("plot", "list", page(Plots))

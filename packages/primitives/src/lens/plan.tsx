@@ -158,10 +158,10 @@ export function buildPlanLens<S extends AnySchema>(
   options: PlanLensOptions,
   schema?: S,
 ): PlanLensState {
-  const record = (node: NodeOfSchema<S>) => node as unknown as Record<string, unknown>;
+  const record = (node: NodeOfSchema<S>) => node as Record<string, unknown>;
   const name = (node: NodeOfSchema<S>) =>
     schema
-      ? labelOf(schema.tryDefinition(node.kind), node as never)
+      ? labelOf(schema.tryDefinition(node.kind), node)
       : String(record(node)["label"] ?? node.id);
 
   /*

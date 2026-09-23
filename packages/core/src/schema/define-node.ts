@@ -54,7 +54,7 @@ export function labelOf(
   node: { id: string; kind: string } & Record<string, unknown>,
 ): string {
   if (definition?.label) {
-    return definition.label(node as never);
+    return definition.label(node);
   }
   const own = node["label"];
   return typeof own === "string" && own.length > 0 ? own : node.id;
@@ -87,7 +87,7 @@ export function describeNode(
   node: { id: string; kind: string } & Record<string, unknown>,
 ): string {
   if (definition?.describe) {
-    return definition.describe(node as never);
+    return definition.describe(node);
   }
   return `${node.kind} ${labelOf(definition, node)}`;
 }

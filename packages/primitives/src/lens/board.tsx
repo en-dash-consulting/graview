@@ -91,10 +91,10 @@ export function buildBoard<S extends AnySchema>(
   options: BoardOptions,
   schema?: S,
 ): BoardState {
-  const record = (node: NodeOfSchema<S>) => node as unknown as Record<string, unknown>;
+  const record = (node: NodeOfSchema<S>) => node as Record<string, unknown>;
   const name = (node: NodeOfSchema<S>) =>
     schema
-      ? labelOf(schema.tryDefinition(node.kind), node as never)
+      ? labelOf(schema.tryDefinition(node.kind), node)
       : String(record(node)["label"] ?? node.id);
 
   /*
@@ -188,7 +188,7 @@ export function BoardView<S extends AnySchema>({
    * focused; it just does not decide what can be looked up.
    */
   const board = buildBoard<S>(
-    store.graph.allNodes() as never,
+    store.graph.allNodes(),
     store.graph.allEdges(),
     options,
     schema,

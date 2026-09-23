@@ -82,7 +82,7 @@ const opened: Opened = chapter
       seed: chapter.seed as never,
       fresh: chapter.stored ? false : !chapter.remembers || browserStartsFresh(),
       storeOptions: chapter.principal ? { principal: chapter.principal } : {},
-    } as never)) as unknown as Opened)
+    } as never)) as Opened)
   : await openStore({ app: seedbedApp, adapter, fresh: browserStartsFresh() });
 forgetFreshParam();
 const remembers = chapter ? chapter.remembers : true;

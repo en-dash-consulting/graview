@@ -156,7 +156,7 @@ function questionFor<S extends AnySchema>(
       for (const node of store.graph.allNodes()) {
         if (!field.kinds.includes("*") && !field.kinds.includes(node.kind as string)) continue;
         if (store.modules.disabledKinds.has(node.kind as string)) continue;
-        criteria[node.id] = `${withArticle(node.kind as string)}: ${labelOf(store.schema.tryDefinition(node.kind as string), node as never)}`;
+        criteria[node.id] = `${withArticle(node.kind as string)}: ${labelOf(store.schema.tryDefinition(node.kind as string), node)}`;
       }
       if (Object.keys(criteria).length === 0) return undefined;
       return { type: "choice", instructions: `Which ${humaniseField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria };
@@ -367,8 +367,8 @@ export function pairQuestion<S extends AnySchema>(
     (field) => field.control === "node" && field.name !== subject.arg && (field.kinds.includes("*") || field.kinds.includes(b.kind as string)),
   );
   if (!other) return undefined;
-  const labelA = labelOf(store.schema.tryDefinition(a.kind as string), a as never);
-  const labelB = labelOf(store.schema.tryDefinition(b.kind as string), b as never);
+  const labelA = labelOf(store.schema.tryDefinition(a.kind as string), a);
+  const labelB = labelOf(store.schema.tryDefinition(b.kind as string), b);
   const title = mutation.title ?? name;
   return {
     id: `pair:${name}:${subjectId}:${otherId}`,
@@ -399,24 +399,24 @@ export function nodeState<S extends AnySchema>(store: Store<S>, id: string): Rea
   if (!node) return undefined;
   const definition = store.schema.tryDefinition(node.kind as string);
   const fields: Record<string, unknown> = {};
-  for (const field of readableFields(node as never, definition)) fields[field.label] = field.value;
+  for (const field of readableFields(node, definition)) fields[field.label] = field.value;
   const joined: Record<string, string[]> = {};
   for (const edge of store.graph.outEdges(id)) {
     const other = store.graph.getNode(edge.to);
     if (!other) continue;
-    (joined[edge.kind] ??= []).push(labelOf(store.schema.tryDefinition(other.kind as string), other as never));
+    (joined[edge.kind] ??= []).push(labelOf(store.schema.tryDefinition(other.kind as string), other));
   }
   for (const edge of store.graph.inEdges(id)) {
     const other = store.graph.getNode(edge.from);
     if (!other) continue;
     const inverse = `${edge.kind} (from)`;
-    (joined[inverse] ??= []).push(labelOf(store.schema.tryDefinition(other.kind as string), other as never));
+    (joined[inverse] ??= []).push(labelOf(store.schema.tryDefinition(other.kind as string), other));
   }
   return {
     id,
     kind: node.kind,
     ...(definition?.description ? { "what the kind is": definition.description } : {}),
-    label: labelOf(definition, node as never),
+    label: labelOf(definition, node),
     fields,
     ...(Object.keys(joined).length > 0 ? { joined } : {}),
   };

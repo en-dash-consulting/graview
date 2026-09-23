@@ -113,7 +113,7 @@ export function Profile<S extends AnySchema>({
   const name =
     me === undefined
       ? (principal.id ?? "Nobody in particular")
-      : labelOf(store.schema.tryDefinition(me.kind as string), me as never);
+      : labelOf(store.schema.tryDefinition(me.kind as string), me);
   const roles = principal.roles ?? [];
 
   return (

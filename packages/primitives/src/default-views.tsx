@@ -98,7 +98,7 @@ const Picture = memo(
   }) {
     return (
       <Lens
-        nodes={nodes as never}
+        nodes={nodes}
         label={label}
         fidelity="full"
         cardinality="many"
@@ -312,7 +312,7 @@ export function registerDefaultViews<S extends AnySchema>(
           flagged={(props.nodes ?? []).some((member) => props.flagged?.includes(member.id))}
           items={(props.nodes ?? []).map((member) => ({
             id: member.id,
-            label: labelOf(schema.tryDefinition(member.kind), member as never),
+            label: labelOf(schema.tryDefinition(member.kind), member),
             hue: hueFor(member.kind, brand?.accents),
           }))}
         />
@@ -349,7 +349,7 @@ export function registerDefaultViews<S extends AnySchema>(
        * keeps the domain's declaration as the domain's.
        */
       const { brand } = useGraview();
-      const figure = hasFigure(String(kind), schema as never, brand);
+      const figure = hasFigure(String(kind), schema, brand);
       const flag = useKit().marks.flag;
       const { selection } = useSelection();
       const { toggle, view, go } = useNavigation();
@@ -780,7 +780,7 @@ export function registerDefaultViews<S extends AnySchema>(
                  * way; the members inside a district simply never asked.
                  */
                 const broken = props.flagged?.includes(member.id) ?? false;
-                const name = labelOf(definition, member as never);
+                const name = labelOf(definition, member);
                 return (
                   <Chip
                     key={member.id}
@@ -845,7 +845,7 @@ export function registerDefaultViews<S extends AnySchema>(
                           <span className="graview-drive-in-thumb-natural">
                             <Picture
                               lens={Lens}
-                              nodes={members as never}
+                              nodes={members}
                               label={place.title}
                               {...(props.flagged ? { flagged: props.flagged } : {})}
                             />
@@ -865,8 +865,8 @@ export function registerDefaultViews<S extends AnySchema>(
 
     // Marked so the interface can tell a view the app chose from one the
     // framework fell back to.
-    (Group as unknown as { generic?: boolean }).generic = true;
-    (GroupGlyph as unknown as { generic?: boolean }).generic = true;
+    (Group as { generic?: boolean }).generic = true;
+    (GroupGlyph as { generic?: boolean }).generic = true;
 
     registry
       .register(kind, { cardinality: "one", fidelity: "full" }, Full)

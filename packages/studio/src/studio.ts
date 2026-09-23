@@ -67,7 +67,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
     invariants: app.invariants ?? [],
     snapshot: seed as never,
     ...(options.principal ? { principal: options.principal } : {}),
-  } as never);
+  });
   const opened = store.batches().length;
   const declaration = () => graphToDeclaration(store.snapshot() as GraphSnapshot, { base: base as unknown as GraviewApp<AnySchema>, name: base.name });
   const isAgent = (batch: Batch) => batch.author.kind === "agent";
@@ -98,9 +98,9 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
         schema: app.schema,
         mutations: app.mutations ?? [],
         invariants: app.invariants ?? [],
-        snapshot: store.snapshot() as never,
+        snapshot: store.snapshot(),
         ...(options.principal ? { principal: options.principal } : {}),
-      } as never);
+      });
       /*
        * SEVERAL CALLS ARE JUDGED AS WHAT THEY MAKE TOGETHER. "Remove the
        * edge from the plot, add it to the planting" breaks the build after

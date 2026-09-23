@@ -119,7 +119,7 @@ export function resolveProposal<S extends AnySchema>(
     const found = [...store.graph.allNodes()].filter(
       (node) =>
         (field.kinds.includes("*") || field.kinds.includes(node.kind as string)) &&
-        labelOf(store.schema.tryDefinition(node.kind as string), node as never).trim().toLowerCase() === wanted,
+        labelOf(store.schema.tryDefinition(node.kind as string), node).trim().toLowerCase() === wanted,
     );
     if (found.length === 1) {
       args[field.name] = found[0]!.id;
@@ -211,7 +211,7 @@ export function llmIntelligence<S extends AnySchema>(options: {
       const kinds = (store.schema.kinds as readonly string[])
         .map((kind) => {
           const definition = store.schema.tryDefinition(kind);
-          const count = store.graph.nodesOfKind(kind as never).length;
+          const count = store.graph.nodesOfKind(kind).length;
           return `- ${kind} (${definition?.plural ?? `${kind}s`}, ${count} present): ${definition?.description ?? ""}`;
         })
         .join("\n");
@@ -306,7 +306,7 @@ export function templateIntelligence<S extends AnySchema>(
       for (const mutation of store.allMutations()) {
         const creates = mutation.creates ?? [];
         const empty = creates.filter(
-          (kind) => store.graph.nodesOfKind(kind as never).length === 0,
+          (kind) => store.graph.nodesOfKind(kind).length === 0,
         );
         if (empty.length === 0) continue;
         const args: Record<string, unknown> = {};
@@ -420,7 +420,7 @@ export function describeProposal<S extends AnySchema>(
       .safeParse?.(resolved.args);
     if (parsed?.success) {
       try {
-        return mutation.describe(parsed.data as never, store.graph as never);
+        return mutation.describe(parsed.data, store.graph);
       } catch {
         // A describe that cannot read this graph falls back to the title.
       }
@@ -431,7 +431,7 @@ export function describeProposal<S extends AnySchema>(
   const node = typeof id === "string" ? store.graph.getNode(id) : undefined;
   const title = mutation?.title ?? proposal.mutation;
   return node
-    ? `${title} — ${labelOf(store.schema.tryDefinition(node.kind), node as never)}`
+    ? `${title} — ${labelOf(store.schema.tryDefinition(node.kind), node)}`
     : title;
 }
 
@@ -498,7 +498,7 @@ export function stillNeeded<S extends AnySchema>(
             candidates: ref.kinds.includes("*")
               ? store.graph.allNodes().map((node) => node.id)
               : ref.kinds.flatMap((kind) =>
-                  store.graph.nodesOfKind(kind as never).map((node) => node.id),
+                  store.graph.nodesOfKind(kind).map((node) => node.id),
                 ),
           }
         : {}),

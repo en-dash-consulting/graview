@@ -1576,7 +1576,7 @@ if (window.location.pathname.startsWith("/pages")) {
 }
 
 // A flag a harness can wait for, rather than a timer and a hope.
-(window as unknown as Record<string, unknown>)["__graviewReady"] = { scheme };
+(window as Record<string, unknown>)["__graviewReady"] = { scheme };
 `;
 }
 

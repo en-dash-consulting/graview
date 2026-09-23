@@ -41,7 +41,7 @@ export const addTask = defineMutation("add-task", {
       label: args.label,
       done: false,
       ...(args.due ? { due: args.due } : {}),
-    } as never);
+    });
     ctx.addEdge({ kind: "holds", from: args.listId, to: id });
   },
 }) as M;
@@ -197,7 +197,7 @@ export const explain = defineMutation("explain", {
   describe: (args, graph) => `Why ${nameOf(graph as Reader, args.aboutId)} is here`,
   apply(ctx, args) {
     const id = ctx.freshId(args.text.slice(0, 24), "reason");
-    ctx.addNode({ id, kind: "reason", text: args.text } as never);
+    ctx.addNode({ id, kind: "reason", text: args.text });
     ctx.addEdge({ kind: "explains", from: id, to: args.aboutId });
   },
 }) as M;

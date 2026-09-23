@@ -221,7 +221,7 @@ function TidyButton({ onCall }: { onCall: (call: ToolCall) => void }) {
       store.graph
         .allNodes()
         .filter((node) => {
-          const task = node as unknown as { kind: string; done?: boolean; due?: string };
+          const task = node as { kind: string; done?: boolean; due?: string };
           return task.kind === "task" && !task.done && task.due !== undefined && task.due < today();
         }).length,
     [store, nodes],

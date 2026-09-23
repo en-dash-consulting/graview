@@ -18,9 +18,9 @@ import { EXAMPLE_TODAY } from "./ui/when.js";
  */
 const seat = { kind: "human" as const, id: "user-ada", roles: ["volunteer"] };
 const common = {
-  app: rotaApp as never,
-  seed: example as never,
-  views: () => rotaViews() as never,
+  app: rotaApp,
+  seed: example,
+  views: () => rotaViews(),
   principal: seat,
   storeOptions: { invariantOptions: { context: { today: EXAMPLE_TODAY } } },
 };
@@ -29,10 +29,10 @@ mount(document.getElementById("week")!, {
   ...common,
   stop: "#focus=agg:shift&in.view=the-week",
   label: "The week",
-} as never);
+});
 
 mount(document.getElementById("coverage")!, {
   ...common,
   stop: "#focus=agg:volunteer",
   label: "Who is covering what",
-} as never);
+});

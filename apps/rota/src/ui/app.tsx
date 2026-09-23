@@ -168,7 +168,7 @@ function FillTheGaps({ onCall }: { onCall: (call: ToolCall) => void }) {
  * turn is the same turn twice.
  */
 function roomiest(store: RotaStore): string | null {
-  const people = (store.graph.nodesOfKind("volunteer" as never) as unknown as {
+  const people = (store.graph.nodesOfKind("volunteer") as {
     id: string;
     status: string;
     limit: number;

@@ -14,7 +14,7 @@ type Reader = GraphReader<AnyNode>;
 type I = InvariantDefinition<RotaSchema>;
 
 const name = (node: AnyNode | undefined): string =>
-  node ? labelOf(rotaSchema.tryDefinition(node.kind), node as never) : "something";
+  node ? labelOf(rotaSchema.tryDefinition(node.kind), node) : "something";
 const nodesOf = (graph: Reader, kind: string): AnyNode[] =>
   graph.allNodes().filter((node) => node.kind === kind);
 
