@@ -115,6 +115,60 @@ const openProfile = async (page) => {
       !viewer.studio,
   };
 
+  /* ---------------- the coverage grid's column heads stand on their columns */
+  /*
+   * A NAME OVER THE COLUMN IT NAMES. The heads were a pixel narrower than
+   * the cells (a border outside one box and not the other) and started ten
+   * pixels short (padding outside the row names and not the corner), so the
+   * drift grew column by column; and a column scrolled under the sticky
+   * names kept its label, which leaned over the columns still in view. Read
+   * at rest, and scrolled sideways when the grid is wider than its panel,
+   * on a phone-width window so it is.
+   */
+  await page.setViewportSize({ width: 900, height: 900 });
+  await open(`/?${DAY}`);
+  await page.locator('nav[aria-label="Places"] button', { hasText: "Who is covering what" }).first().click();
+  await page.waitForTimeout(1200);
+  const headsOnColumns = () =>
+    page.evaluate(() => {
+      const heads = [...document.querySelectorAll("[data-graview-column]")];
+      const cells = [...document.querySelectorAll("div[title]")];
+      const drifts = heads.flatMap((head) => {
+        const cell = cells.find((el) => el.title.startsWith(`${head.title} `) && / (answers|does not answer) /.test(el.title));
+        if (!cell) return [];
+        const h = head.getBoundingClientRect();
+        const c = cell.getBoundingClientRect();
+        return [Math.abs(h.left + h.width / 2 - (c.left + c.width / 2))];
+      });
+      let scroller = heads[0]?.parentElement ?? null;
+      while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
+      return { columns: heads.length, worst: Math.round(Math.max(0, ...drifts)), scrolls: scroller ? scroller.scrollWidth > scroller.clientWidth : false };
+    });
+  const atRest = await headsOnColumns();
+  let scrolled = null;
+  if (atRest.scrolls) {
+    await page.evaluate(() => {
+      let scroller = document.querySelector("[data-graview-column]")?.parentElement ?? null;
+      while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
+      scroller.scrollLeft = 60;
+    });
+    await page.waitForTimeout(300);
+    scrolled = await page.evaluate(() => {
+      const corner = document.querySelector("[data-graview-column]")?.parentElement?.previousElementSibling?.getBoundingClientRect().right ?? 0;
+      // A label still showing whose column's middle is under the names is a label over the wrong column.
+      return [...document.querySelectorAll("[data-graview-column]")].filter((head) => {
+        const box = head.getBoundingClientRect();
+        return box.left + box.width / 2 < corner && getComputedStyle(head.querySelector(":scope > span")).visibility !== "hidden";
+      }).length;
+    });
+  }
+  report.checks.theCoverageHeadsStandOnTheirColumns = {
+    ...atRest,
+    labelsOverTheNamesWhenScrolled: scrolled,
+    ok: atRest.columns > 0 && atRest.worst <= 1 && (scrolled === null || scrolled === 0),
+  };
+  await page.setViewportSize({ width: 1560, height: 940 });
+
   /* ------------------ a roster stored before the rule existed still opens */
   await open(`/?${DAY}&stored=1`);
   const carried = await page.evaluate(() => window.__rotaReady.migrated);

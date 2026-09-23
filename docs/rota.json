@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-23T14:13:33.631Z",
+  "at": "2026-09-23T20:01:45.899Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
@@ -41,6 +41,13 @@
         "installation": false,
         "studio": false
       },
+      "ok": true
+    },
+    "theCoverageHeadsStandOnTheirColumns": {
+      "columns": 4,
+      "worst": 0,
+      "scrolls": false,
+      "labelsOverTheNamesWhenScrolled": null,
       "ok": true
     },
     "aStoredRosterIsCarriedForwardOnce": {

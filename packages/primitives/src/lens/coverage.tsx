@@ -1,6 +1,6 @@
 import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
-import type { CSSProperties, ReactElement } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster } from "../primitives/index.js";
 
@@ -416,6 +416,7 @@ export function CoverageView<S extends AnySchema>({
   flagged = [],
 }: CoverageViewProps<S>) {
   const { store } = useGraview<AnySchema>();
+  const under = useColumnsUnderTheNames();
   /*
    * The whole graph's rows and columns, not the aggregate's members.
    *
@@ -528,16 +529,18 @@ export function CoverageView<S extends AnySchema>({
           }}
         >
           <div
+            ref={under.corner}
             style={{
               width: ROW_LABEL_WIDTH,
               flex: "0 0 auto",
+              alignSelf: "stretch",
               position: "sticky",
               left: 0,
               zIndex: 1,
               background: "var(--graview-panel)",
             }}
           />
-          <div style={{ display: "flex", flex: 1, minWidth: 0, height: headerHeight }}>
+          <div ref={under.heads} style={{ display: "flex", flex: 1, minWidth: 0, height: headerHeight }}>
             {grid.columns.map((column) => (
               <div
                 key={column.id}
@@ -553,11 +556,15 @@ export function CoverageView<S extends AnySchema>({
                   lit.size === 0 ? "plain" : lit.has(column.id) ? "lit" : "dimmed"
                 }
                 title={column.label}
+                data-graview-column={column.id}
                 style={{
                   flex: 1,
                   // A column is a target: a fingertip wide at the least, and the
                   // grid scrolls rather than crushing its columns to nothing.
                   minWidth: 28,
+                  // The same box as the cells below it, border and all.
+                  boxSizing: "border-box",
+                  borderLeft: "1px solid transparent",
                   position: "relative",
                   display: "flex",
                   alignItems: "flex-end",
@@ -575,6 +582,14 @@ export function CoverageView<S extends AnySchema>({
                     position: "absolute",
                     bottom: 6,
                     left: "50%",
+                    /*
+                     * A COLUMN SCROLLED UNDER THE NAMES TAKES ITS NAME WITH IT.
+                     * Its cells go under the sticky names; its label did not,
+                     * and leaning up to the right it hung over the columns
+                     * still in view — so a grid scrolled four columns along
+                     * read as every label four columns out.
+                     */
+                    visibility: under.hidden.has(column.id) ? "hidden" : "visible",
                     transformOrigin: "left bottom",
                     transform: `rotate(-${HEADER_ANGLE}deg)`,
                     whiteSpace: "nowrap",
@@ -662,6 +677,8 @@ export function CoverageView<S extends AnySchema>({
                       alignItems: "center",
                       gap: 7,
                       padding: "6px 10px 6px 0",
+                      // Padding inside the width, so the cells start where the column heads do.
+                      boxSizing: "border-box",
                       fontSize: "0.75rem",
                       minWidth: 0,
                       color:
@@ -743,6 +760,7 @@ export function CoverageView<S extends AnySchema>({
                           style={{
                             flex: 1,
                             minWidth: 28,
+                            boxSizing: "border-box",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -872,4 +890,43 @@ export function createCoverageLens<S extends AnySchema>(
       return buildCoverage<S>(nodes, edges, options, schema);
     },
   };
+}
+
+/**
+ * The columns whose heads have scrolled under the sticky names, by id —
+ * measured against the corner the names sit in, on every sideways scroll.
+ */
+function useColumnsUnderTheNames() {
+  const corner = useRef<HTMLDivElement | null>(null);
+  const heads = useRef<HTMLDivElement | null>(null);
+  const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    const strip = heads.current;
+    if (!strip || typeof window === "undefined") return;
+    let scroller: HTMLElement | null = strip.parentElement;
+    while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
+    if (!scroller) return;
+    let queued = 0;
+    const measure = () => {
+      queued = 0;
+      const edge = corner.current?.getBoundingClientRect().right ?? 0;
+      const under = new Set<string>();
+      for (const head of strip.querySelectorAll<HTMLElement>("[data-graview-column]")) {
+        const box = head.getBoundingClientRect();
+        // Its label stands on the column's middle: under the names once that is.
+        if (box.left + box.width / 2 < edge) under.add(head.dataset["graviewColumn"]!);
+      }
+      setHidden((current) => (current.size === under.size && [...under].every((id) => current.has(id)) ? current : under));
+    };
+    const onScroll = () => {
+      if (queued === 0) queued = requestAnimationFrame(measure);
+    };
+    measure();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      if (queued !== 0) cancelAnimationFrame(queued);
+    };
+  }, []);
+  return { corner, heads, hidden };
 }
