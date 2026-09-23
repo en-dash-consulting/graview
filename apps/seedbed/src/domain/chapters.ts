@@ -12,7 +12,7 @@ import { z } from "zod";
 import { declarationToGraph, studioApp } from "@graview/studio";
 import { seedbedBrand } from "./brand.js";
 import { everyPlotTended } from "./invariants.js";
-import { addGardener, addPlot, adoptRule, harvest, rotate, sow, tend } from "./mutations.js";
+import { addGardener, addPlot, adoptRule, harvest, rotate, sow, sowInTurn, tend } from "./mutations.js";
 import { gardener, planting, plot, rotation, rule } from "./schema.js";
 
 /**
@@ -638,7 +638,8 @@ const chapterFifteen: Chapter = {
  * the framework has no opinion about that.
  */
 const sixteen = createSchema([gardener, plot, planting, rotation, rule, ...installation.kinds]);
-const turning = [...grown, rotate, ...installation.mutations] as never;
+// The rotation's garden sows under the turn a plot is in.
+const turning = [...(grown as readonly unknown[]).map((act) => (act === sow ? sowInTurn : act)), rotate, ...installation.mutations] as never;
 const turns: readonly { plot: string; family: string; year: number }[] = [
   { plot: "plot-1", family: "brassicas", year: 2026 },
   { plot: "plot-1", family: "legumes", year: 2027 },
@@ -658,7 +659,8 @@ const chapterSixteen: Chapter = {
     "A bed is turned through four families and comes back to the first four years later. The same calendar lens that drew the season draws the rotation, a month per cell over as many years as the garden says it turns through — and how far out that is is the garden's word, not the framework's.",
   adds: [
     'defineNode("rotation") with an appendOnly edge "turns-over" to the plot it turns',
-    'defineMutation("rotate") — which family a plot grows, and until when',
+    'an appendOnly edge "holds" from a rotation to what went in during it — so a turn and its plantings are connected, not strangers on the same plot',
+    'defineMutation("rotate") — which family a plot grows, and until when; it claims what is already in the ground, and sow puts new plantings under the turn',
     'the same calendar binding at range: "years" with horizon: { years: 4, title: "The rotation" }',
   ],
   app: asApp(
@@ -710,6 +712,17 @@ const chapterSixteen: Chapter = {
     edges: [
       ...chapterFourteen.seed.edges,
       ...turns.map(({ plot: where, year }) => ({ kind: "turns-over", from: `rot-${where}-${year}`, to: where })),
+      /*
+       * And what each turn held: every planting sown in that plot inside
+       * that turn's dates — the same join `rotate` and `sow` write.
+       */
+      ...chapterFourteen.seed.edges
+        .filter((edge) => edge.kind === "grows-in")
+        .flatMap((edge) => {
+          const sown = String(chapterFourteen.seed.nodes.find((node) => node.id === edge.from)?.["sown"] ?? "");
+          const turn = turns.find(({ plot: where, year }) => where === edge.to && `${year}-03-01` <= sown && sown <= `${year}-10-31`);
+          return turn ? [{ kind: "holds", from: `rot-${turn.plot}-${turn.year}`, to: edge.from }] : [];
+        }),
     ],
   },
   stop: "#focus=agg:rotation&in.view=the-rotation",

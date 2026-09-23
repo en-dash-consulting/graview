@@ -101,6 +101,21 @@ export const rotation = defineNode("rotation", {
       // moves.
       appendOnly: true,
     },
+    /*
+     * WHAT WENT IN DURING THIS TURN. A rotation and the plantings sown under
+     * it both pointed at the plot and never at each other, so the garden
+     * showed "brassicas in plot 1, 2026" and "beans in plot 1" side by side
+     * as strangers — the one question a rotation exists to answer, what did
+     * this bed grow that year, was a join the reader had to do in their
+     * head. Declared on the rotation, so the gardens that have no rotation
+     * yet declare nothing about it; written by the acts, never by hand.
+     */
+    holds: {
+      to: ["planting"],
+      description: "what went in during this turn",
+      inverse: "the turn of the rotation it went in under",
+      appendOnly: true,
+    },
   },
   plural: "Rotations",
   label: (node) => node.label,

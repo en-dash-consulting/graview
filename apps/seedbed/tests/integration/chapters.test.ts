@@ -274,6 +274,25 @@ describe("the garden, grown a chapter at a time", () => {
     expect(views.places().map((place) => place.title)).toEqual(["What the checker says"]);
   });
 
+  it("16 · a turn of the rotation holds what went in during it — the rotation and the plantings are connected", () => {
+    const store = storeOf(16);
+    const june = { author: { kind: "human" as const, id: "user-june", roles: ["coordinator"] } };
+    const held = (turn: string) => store.graph.out(turn, "holds").map((node) => node.id);
+    // The seed: what each 2026 turn held.
+    expect(held("rot-plot-1-2026")).toEqual(["beans"]);
+    expect(held("rot-plot-2-2026")).toEqual(["tomatoes"]);
+    // Sowing under a turn goes in under it; sowing outside every turn does not.
+    store.apply({ name: "sow", args: { label: "Kale", plotId: "plot-1", sown: "2027-05-01" } }, june);
+    const kale = [...store.graph.nodesOfKind("planting" as never)].find((node) => node["label"] === "Kale")!;
+    expect(store.graph.in(kale.id, "holds").map((node) => node.id)).toEqual(["rot-plot-1-2027"]);
+    store.apply({ name: "sow", args: { label: "Garlic", plotId: "plot-1", sown: "2027-11-20" } }, june);
+    const garlic = [...store.graph.nodesOfKind("planting" as never)].find((node) => node["label"] === "Garlic")!;
+    expect(store.graph.in(garlic.id, "holds")).toEqual([]);
+    // A turn put on afterwards claims what is already in the ground inside its dates.
+    store.apply({ name: "rotate", args: { plotId: "plot-1", family: "alliums", from: "2027-11-01", to: "2028-02-28" } }, june);
+    expect(store.graph.in(garlic.id, "holds").map((node) => node["family"])).toEqual(["alliums"]);
+  });
+
   it("16 · the rotation: one binding draws four years, a month per cell, with the span across them", async () => {
     const chapter = CHAPTERS[15]!;
     expect(checkApp(chapter.app).findings.filter((f) => f.severity === "error")).toEqual([]);

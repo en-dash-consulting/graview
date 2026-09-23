@@ -53,29 +53,51 @@ export const addPlot = defineMutation("add-plot", {
   },
 }) as M;
 
-export const sow = defineMutation("sow", {
-  title: "Sow something",
-  description: "Put a planting in the ground, in a plot.",
-  creates: ["planting"],
-  input: z.object({
-    label: z.string().min(1),
-    plotId: nodeRef(["plot"]),
-    sown: isoDate,
-  }),
-  connects: ["grows-in"],
-  describe: (args, graph) => `Sow ${args.label} in ${nameOf(graph as Reader, args.plotId)}`,
-  apply(ctx, args) {
-    const id = ctx.freshId(args.label, "planting");
-    ctx.addNode({
-      id,
-      kind: "planting",
-      label: args.label,
-      sown: args.sown,
-      status: "growing",
-    } as never);
-    ctx.addEdge({ kind: "grows-in", from: id, to: args.plotId });
-  },
-}) as M;
+/** The turn of the rotation a plot is in on a day, if the garden keeps one. */
+const turnOn = (graph: Reader, plotId: string, day: string): string | undefined =>
+  graph
+    .in(plotId, "turns-over")
+    .find((turn) => String(turn["from"]) <= day && day <= String(turn["to"]))?.id;
+
+/*
+ * SOWING, twice over: once for a garden that has no rotation, and once for
+ * one that does, where a planting also goes in under the turn its plot is
+ * in. Two declarations rather than one that reaches for an edge the
+ * earlier gardens never declared — `graview check` holds a mutation to
+ * the edges it claims to make.
+ */
+const sowing = (turns: boolean) =>
+  defineMutation("sow", {
+    title: "Sow something",
+    description: turns
+      ? "Put a planting in the ground, in a plot — under the turn of the rotation that plot is in."
+      : "Put a planting in the ground, in a plot.",
+    creates: ["planting"],
+    input: z.object({
+      label: z.string().min(1),
+      plotId: nodeRef(["plot"]),
+      sown: isoDate,
+    }),
+    connects: turns ? ["grows-in", "holds"] : ["grows-in"],
+    describe: (args, graph) => `Sow ${args.label} in ${nameOf(graph as Reader, args.plotId)}`,
+    apply(ctx, args) {
+      const id = ctx.freshId(args.label, "planting");
+      ctx.addNode({
+        id,
+        kind: "planting",
+        label: args.label,
+        sown: args.sown,
+        status: "growing",
+      } as never);
+      ctx.addEdge({ kind: "grows-in", from: id, to: args.plotId });
+      const turn = turns ? turnOn(ctx.graph as Reader, args.plotId, args.sown) : undefined;
+      if (turn) ctx.addEdge({ kind: "holds", from: turn, to: id });
+    },
+  }) as M;
+
+export const sow = sowing(false);
+/** Sowing in a garden that keeps a rotation. */
+export const sowInTurn = sowing(true);
 
 export const tend = defineMutation("tend", {
   title: "Name a caretaker",
@@ -120,7 +142,7 @@ export const rotate = defineMutation("rotate", {
   title: "Put a plot on the rotation",
   description: "Say which family a plot grows, and for how long, before it turns over.",
   creates: ["rotation"],
-  connects: ["turns-over"],
+  connects: ["turns-over", "holds"],
   fromTheOtherEnd: "Take a turn of the rotation",
   input: z.object({
     plotId: nodeRef(["plot"]),
@@ -135,6 +157,11 @@ export const rotate = defineMutation("rotate", {
     const id = ctx.freshId(label, "rotation");
     ctx.addNode({ id, kind: "rotation", label, family: args.family, from: args.from, to: args.to } as never);
     ctx.addEdge({ kind: "turns-over", from: id, to: args.plotId });
+    // What is already in the ground there, sown inside this turn, went in under it.
+    for (const planted of ctx.graph.in(args.plotId, "grows-in")) {
+      const sown = String((planted as Record<string, unknown>)["sown"] ?? "");
+      if (args.from <= sown && sown <= args.to) ctx.addEdge({ kind: "holds", from: id, to: planted.id });
+    }
   },
 }) as M;
 
@@ -154,4 +181,4 @@ export const adoptRule = defineMutation("adopt-rule", {
   },
 }) as M;
 
-export const seedbedMutations = [addGardener, addPlot, sow, tend, harvest, rotate, adoptRule];
+export const seedbedMutations = [addGardener, addPlot, sowInTurn, tend, harvest, rotate, adoptRule];
