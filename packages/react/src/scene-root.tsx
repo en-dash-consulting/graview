@@ -1,0 +1,1421 @@
+import { beginning, toIso } from "@graview/core";
+import type { AnySchema } from "@graview/core";
+import {
+  aggregateId,
+  cameraLimit,
+  panForZoom,
+  kindCardId,
+  kindOfCard,
+  kindsOf,
+  kindsOfAggregate,
+  layout,
+  withFocus,
+  withOverview,
+  withPan,
+  withPin,
+  panLayout,
+  withRelation,
+  type InterpolatedLayout,
+  type Layout,
+  type LayoutNode,
+  type LayoutOptions,
+  withJackIn,
+} from "@graview/layout";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
+import { useActivity, type ActivityMark } from "./activity.js";
+import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
+import { SeatMarks } from "./seat-marks.js";
+import { useViolations } from "./hooks.js";
+import { useGraph, useGraview } from "./context.js";
+import { isDefaultView } from "./view-registry.js";
+import { Plots } from "./plots.js";
+import { Occupants } from "./occupants.js";
+import { whereIsIn } from "./where-drawn.js";
+import { BeyondCard, SettledView } from "./resolved-view.js";
+import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
+import { Lines, RelationCaptions } from "./scene-lines.js";
+import { SceneViewHost } from "./view-host.js";
+
+export interface SceneProps {
+  readonly options?: LayoutOptions;
+  /**
+   * `gpu` composites through @graview/render; `dom` positions views with CSS
+   * transforms. `auto` picks gpu when the platform supports it.
+   *
+   * The DOM path is not a toy: the plane model is affine by design, so a CSS
+   * transform reproduces the geometry exactly. What it cannot do is per-plane
+   * blur and falloff — which is precisely the thing that justified the GPU
+   * pipeline, and precisely what is safe to lose when it is unavailable.
+   */
+  readonly renderer?: "gpu" | "dom" | "auto";
+  /**
+   * Wires a renderer to the canvas. Called whenever the layout changes, with
+   * the canvas and the current picture; return a cleanup.
+   *
+   * The binding stays out of the renderer's business deliberately: it hands
+   * over the canvas and what layout decided, and the renderer decides pixels.
+   */
+  readonly attachRenderer?: (scene: {
+    canvas: HTMLCanvasElement;
+    /**
+     * The picture as it is RIGHT NOW, which mid-transition is between two
+     * view states. Planes may be fractional and nodes may be part-faded.
+     */
+    layout: InterpolatedLayout;
+    /**
+     * Views whose CONTENT changed, so a cached texture must be retaken.
+     *
+     * Position and size changes the renderer can see for itself; a count
+     * inside an aggregate changing is invisible to it, and `glyph` fidelity
+     * would otherwise show the old number for ever.
+     */
+    dirty: ReadonlySet<string>;
+    /** The DOM host for a view id — what the capture API is given. */
+    hostOf(id: string): HTMLElement | null;
+  }) => (() => void) | void;
+  readonly className?: string;
+  readonly style?: CSSProperties;
+  /** Animate between view states. Off in tests and SSR. */
+  readonly animate?: boolean;
+  /** Rendered over the scene — an affordance surface, a header, a legend. */
+  readonly children?: ReactNode;
+}
+
+/**
+ * A node as the scene draws it: a laid-out node, possibly mid-transition, so
+ * its plane is fractional and it may be fading in or out.
+ */
+export type SceneNode = Omit<LayoutNode, "plane"> & {
+  readonly plane: number;
+  readonly opacity?: number;
+};
+
+/**
+ * The spatial scene: one `<canvas layoutsubtree>` with the views as its
+ * IMMEDIATE children.
+ *
+ * That flatness is a platform constraint, not a style: capture rejects
+ * anything deeper than a direct child of the canvas. Nesting happens inside a
+ * view, never between views.
+ */
+/**
+ * How far a pointer must travel before it is a drag rather than a click.
+ * Below this nothing has moved and the gesture is an ordinary selection.
+ */
+const DRAG_THRESHOLD = 4;
+
+export function Scene<S extends AnySchema>({
+  options,
+  renderer = "auto",
+  attachRenderer,
+  className,
+  style,
+  animate = true,
+  children,
+}: SceneProps) {
+  const {
+    store,
+    scheme,
+    views,
+    view,
+    setView,
+    selection,
+    setSelection,
+    setMenuAt,
+    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved, robots } = useGraview<S>();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const size = useElementSize(wrapperRef);
+  const unit = useRootUnit();
+
+  /*
+   * PINCH IS ALTITUDE. The camera has one axis, so the universal zoom
+   * gesture maps to it: fingers together rises to the Graview, fingers
+   * apart descends — one discrete step per gesture, with a cooldown so a
+   * long pinch does not bounce. Chromium and Firefox hand a trackpad
+   * pinch over as ctrl+wheel; Safari speaks GestureEvent. Both are
+   * claimed here so the browser's own page zoom never fires on the scene.
+   */
+  const altitude = useRef({ view, charge: 0, coolUntil: 0, lastScale: 1 });
+  altitude.current.view = view;
+  /*
+   * FROM ALTITUDE, PINCH AND CTRL+WHEEL ZOOM THE CITY — continuously, about
+   * the pointer, the way every map does — and the plain wheel pans the
+   * ground. Stepping the altitude once per gesture with a cooldown read as
+   * a zoom that sticks. From the ground, fingers together still rise: the
+   * way up is a gesture, the way down is the picture's own control.
+   */
+  const zoomAbout = useRef<(factor: number, clientX?: number, clientY?: number) => void>(() => {});
+  const panBy = useRef<(dx: number, dy: number) => void>(() => {});
+  useEffect(() => {
+    const element = wrapperRef.current;
+    if (!element) return;
+    const step = (rising: boolean, stamp: number) => {
+      const held = altitude.current;
+      if (stamp < held.coolUntil) return;
+      const up = held.view.overview ?? false;
+      if (rising === up) return;
+      held.coolUntil = stamp + 600;
+      held.charge = 0;
+      setView(withOverview(held.view, rising));
+    };
+    const onWheel = (event: WheelEvent) => {
+      const held = altitude.current;
+      const up = held.view.overview ?? false;
+      if (event.ctrlKey) {
+        event.preventDefault();
+        if (!up) {
+          held.charge += event.deltaY;
+          if (Math.abs(held.charge) < 60) return;
+          if (held.charge > 0) step(true, performance.now());
+          else held.charge = 0;
+          return;
+        }
+        // A mouse notch (a hundred) is a step and a half; a trackpad's few units are a nudge.
+        zoomAbout.current(Math.exp(-event.deltaY * 0.004), event.clientX, event.clientY);
+        return;
+      }
+      if (!up) return;
+      // Over the ground only: a lens, a scroll region or a pane keeps its own wheel.
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("[data-graview-view], .graview-scroll, [data-graview-overlay], .graview-zoom")) return;
+      event.preventDefault();
+      panBy.current(-event.deltaX, -event.deltaY);
+    };
+    const onGestureStart = (event: Event) => {
+      event.preventDefault();
+      altitude.current.lastScale = 1;
+    };
+    const onGesture = (event: Event) => {
+      event.preventDefault();
+      const held = altitude.current;
+      const scale = (event as Event & { scale?: number; clientX?: number; clientY?: number }).scale ?? 1;
+      if (!(held.view.overview ?? false)) {
+        if (scale < 0.72) step(true, performance.now());
+        return;
+      }
+      const ratio = scale / (held.lastScale || 1);
+      held.lastScale = scale;
+      const at = event as Event & { clientX?: number; clientY?: number };
+      zoomAbout.current(ratio, at.clientX, at.clientY);
+    };
+    element.addEventListener("wheel", onWheel, { passive: false });
+    element.addEventListener("gesturestart", onGestureStart);
+    element.addEventListener("gesturechange", onGesture);
+    return () => {
+      element.removeEventListener("wheel", onWheel);
+      element.removeEventListener("gesturestart", onGestureStart);
+      element.removeEventListener("gesturechange", onGesture);
+    };
+  }, [setView]);
+
+  // `nodes` is a cached snapshot that only changes when the graph does, so
+  // the layout is recomputed exactly when the picture could have changed.
+  const nodes = useGraph<S>();
+  // What each subject's violations name, so a rule's neighbourhood is what it judges.
+  const violations = useViolations<S>();
+  const judged = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const violation of violations) {
+      if (violation.subjectId === undefined) continue;
+      const list = (map[violation.subjectId] ??= []);
+      for (const id of violation.nodeIds) if (id !== violation.subjectId && !list.includes(id)) list.push(id);
+    }
+    return map;
+  }, [violations]);
+  // The scene is laid out to the space it actually has. A fixed canvas leaves
+  // dead ground on a wide screen and clips on a narrow one, and the plane
+  // bands are proportions rather than pixels, so they follow.
+  /*
+   * FLYING CLOSER. Choosing a picture from altitude brings the camera in:
+   * the city's cell grows, the villages and roads with it, the billboard
+   * bigger on its plot, and the camera keeps the picture in view. Derived
+   * from the stop, never stored: leaving the picture flies back out.
+   */
+  const closer = (view.overview ?? false) && view.within?.["view"] !== undefined ? 1.5 : 1;
+  /*
+   * ZOOM BY HAND. The fly-closer step above is the scene's own; this is the
+   * person's, changed continuously by pinch and ctrl+wheel about the
+   * pointer and by the controls in the ground's corner, multiplied in.
+   * Scene state like the camera, never the URL: an address says where you
+   * are, not how close you are standing. Reset on the way down — on the
+   * ground it means nothing, and rising again starts level.
+   */
+  const [zoom, setZoom] = useState(1);
+  const zoomLive = useRef(1);
+  useEffect(() => {
+    if (view.overview) return;
+    zoomLive.current = 1;
+    setZoom(1);
+  }, [view.overview]);
+  const cityZoom = closer * zoom;
+  /*
+   * THE BILLBOARD IS CUT TO ITS PICTURE. The lens draws in a box as tall as
+   * the window; the screen's host reports how much of it the lens actually
+   * used, and the layout sizes the billboard to that — so the picture's foot
+   * is on the kerb instead of a village's height above it. Whole pixels,
+   * and only a change re-lays the city.
+   */
+  /*
+   * Reported by the layout's CURRENT screen only. A billboard on its way
+   * into its village is still drawn as one, but for the length of the tween
+   * two hosts would report, the layout would flip between their two heights,
+   * and every flip restarted the tween from where it was — a crawl of a
+   * pixel a frame until the old picture had faded.
+   */
+  const [screenHeight, setScreenHeight] = useState<number | undefined>(undefined);
+  const noteScreenHeight = useCallback((height: number | undefined) => {
+    setScreenHeight((current) => {
+      const next = height === undefined ? undefined : Math.round(height);
+      return current === next ? current : next;
+    });
+  }, []);
+  const sized = useMemo<LayoutOptions>(
+    () => ({
+      ...options,
+      cityZoom,
+      ...(screenHeight !== undefined ? { screenHeight } : {}),
+      // What is not drawn for this seat at this stop: a workspace's disabled
+      // modules, and the administered ones this seat may not see or has not
+      // asked to — one set, from the provider, so every surface agrees.
+      ...(hiddenKinds.size > 0 ? { hiddenKinds: [...hiddenKinds].sort() } : {}),
+      ...(Object.keys(judged).length > 0 ? { judged } : {}),
+      /*
+       * THE LEFT RAIL. The relation key, the quick relations and the
+       * inspector live on the scene's left edge in every mode, and the
+       * picture used to run under them — a district beneath the pane at
+       * altitude, a lens's title under the quick relations in focus. The
+       * layout keeps every card to what is left. The altitude control sits
+       * in the top-right corner, where a full-width focus card's own corner
+       * used to be — so the right has a rail too.
+       */
+      // In proportion: an embed a paragraph wide cannot give a third of
+      // itself to chrome. From the default 1200 up these are 264 and 128.
+      inset: {
+        left: Math.round(Math.min(264, (size?.width ?? 1200) * 0.22)),
+        right: Math.round(Math.min(128, (size?.width ?? 1200) * 0.107)),
+      },
+      // The reader's own text size, which the cards are sized in: the city
+      // grows with the words rather than holding them at a fixed 230×97.
+      unit,
+      // Groups the framework's own list shows: from altitude those are
+      // districts, not scaled cards. A group with an app's view keeps its card.
+      plainGroups: (store.schema.kinds as readonly string[]).filter((kind) =>
+        isDefaultView(views.lookup(kind as never, { cardinality: "many", fidelity: "full" })),
+      ),
+      /*
+       * THE ORDER THE CITY IS WALKED IN: the chain a blank installation fills
+       * its kinds in, read from the store's own acts. The declaration's
+       * order, so the map is the declaration's map.
+       */
+      cityOrder: beginning({
+        name: "scene",
+        schema: store.schema,
+        mutations: store.allMutations().filter((mutation) => !mutation.derived),
+      }).order.map((entry) => entry.kind),
+      /*
+       * THE SHOWINGS, by kind: the named places the registry holds, so a
+       * focused picture stands on its kind's plot as a screen from altitude.
+       */
+      screens: views.places().reduce<Record<string, { as: string; title: string; across?: string }[]>>((held, place) => {
+        (held[place.kind] ??= []).push({ as: place.as, title: place.title, ...(place.across ? { across: place.across } : {}) });
+        return held;
+      }, {}),
+      ...(size
+        ? {
+            width: size.width,
+            /*
+             * The scene lays out into its WHOLE box. The actions strip is a
+             * transient elevated surface — it floats in front of the scene
+             * the way a menu floats in front of a page, and reserving a
+             * permanent band of the height for it squeezed every band on
+             * every screen for chrome that mostly is not there.
+             */
+            height: size.height,
+          }
+        : {}),
+    }),
+    [options, size, unit, store, views, hiddenKinds, judged, cityZoom, screenHeight],
+  );
+  /*
+   * THE CAMERA IS NOT A MOVE. A drive-in on the far side of a large city
+   * lights up off-screen unless the camera goes to it, and the camera's
+   * own offset is derived from the focus rather than made by a hand — so
+   * it lives here, added to whatever the person panned, and never in the
+   * URL. "Put it back" then clears the person's pan and leaves the camera
+   * on the screen, which is what putting it back means.
+   */
+  const [camera, setCamera] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  /** How long the focus stands where the village stood before the camera glides to rest. */
+  const GLIDE_AFTER_MS = 180;
+  const panned = useMemo(
+    () => ({ x: (view.pan?.x ?? 0) + camera.x, y: (view.pan?.y ?? 0) + camera.y }),
+    [view.pan, camera],
+  );
+  const seen = useMemo(
+    () => (camera.x === 0 && camera.y === 0 ? view : withPan(view, panned)),
+    [view, camera, panned],
+  );
+  /*
+   * THE WHOLE OFFSET IS WHAT IS CLAMPED. The person's pan and the camera's
+   * flight add up to where the city is; clamping the pan alone let the
+   * flight to a far village eat the room to pan back, and the far side of
+   * a flown-closer city could not be reached. Pan plus camera stays within
+   * the camera limit — a little way over a picture that fits, as far as the
+   * city reaches when it is bigger than the window — and every district is
+   * reachable.
+   */
+  const cameraLive = useRef(camera);
+  cameraLive.current = camera;
+  const panWithin = useCallback(
+    (limit: { x: number; y: number }, wanted: { x: number; y: number }): { x: number; y: number } => {
+      const cam = cameraLive.current;
+      /*
+       * AND THE CAMERA'S OWN FLIGHT IS INSIDE THE LIMIT, WHEREVER IT WENT.
+       *
+       * Flying closer to a picture takes the camera past what the limit
+       * allows on purpose — the billboard stands above the city's extent,
+       * and the limit does not know about it. Clamping the total offset to
+       * that limit afterwards meant every drag resolved to the same
+       * clamped number: the ground would not move at all once a lens had
+       * been chosen, which is the picture refusing to be looked around.
+       *
+       * The interval is the limit OR the camera, whichever reaches further
+       * — so at rest this is exactly the old rule, and after a flight you
+       * can pan back over the city and as far as the flight itself went,
+       * but never further out than either.
+       */
+      const room = (bound: number, at: number) => ({ low: Math.min(-bound, at), high: Math.max(bound, at) });
+      const across = room(limit.x, cam.x);
+      const down = room(limit.y, cam.y);
+      return {
+        x: Math.max(across.low, Math.min(across.high, wanted.x + cam.x)) - cam.x,
+        y: Math.max(down.low, Math.min(down.high, wanted.y + cam.y)) - cam.y,
+      };
+    },
+    [],
+  );
+  const pinnedIds = useMemo(() => new Set(Object.keys(view.pins)), [view.pins]);
+  /*
+   * THE WORLD IS LAID OUT AT REST, AND THEN MOVED.
+   *
+   * `layout` bakes the pan into every coordinate, which is what lets two
+   * layouts be interpolated into motion — but it does that at the very end,
+   * after it has decided communities, plots, band packing and the drive-in's
+   * own sizing loop. A drag changes nothing but the pan, and this memo was
+   * keyed on a view that carried it, so every pointer move ran all of that
+   * again to reach an answer that differed from the last one by a
+   * subtraction. Measured on rota's city: 169 of 467 frames dropped and ten
+   * seconds of blocked main thread in a two-second drag.
+   *
+   * So the pan comes off the key. The expensive half is held still while a
+   * hand is moving, and `panLayout` puts the world where the hand has taken
+   * it — the same object, held to that by `the-pan-is-a-translation`.
+   */
+  /*
+   * Keyed on the VIEW, not on the view-plus-camera: the camera is an offset
+   * the scene makes for itself — flying to a drive-in, landing a descent —
+   * and it is the same kind of thing as a pan. Keying this on `seen` meant a
+   * camera that moved by a pixel rebuilt the world exactly as a pan did.
+   */
+  const atRest = useMemo(() => (view.pan ? { ...view, pan: undefined } : view), [view]);
+  const still = useMemo<Layout>(
+    () => layout(store.graph, store.schema, atRest, sized),
+    [store, atRest, sized, nodes],
+  );
+  const result = useMemo<Layout>(
+    () => panLayout(still, seen.pan ?? { x: 0, y: 0 }),
+    [still, seen.pan],
+  );
+  const ZOOM_MIN = 0.6;
+  const ZOOM_MAX = 3;
+  zoomAbout.current = (factor, clientX, clientY) => {
+    if (!(view.overview ?? false)) return;
+    /*
+     * A ZOOM WRITES STATE, so any pan the wheel is still holding has to
+     * land first — zoom and pan share `steer`, and a zoom on top of an
+     * uncommitted offset would compute from a pan the view does not have.
+     */
+    settleLive.current();
+    const current = zoomLive.current;
+    const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, current * factor));
+    if (Math.abs(next - current) < 1e-4) return;
+    zoomLive.current = next;
+    steer();
+    setZoom(next);
+    const box = wrapperRef.current?.getBoundingClientRect();
+    const centre = { x: result.width / 2, y: result.height / 2 };
+    const pointer = box && clientX !== undefined && clientY !== undefined ? { x: clientX - box.left, y: clientY - box.top } : centre;
+    const ratio = next / current;
+    setView((current) => withPan(current, panForZoom(current.pan ?? { x: 0, y: 0 }, cameraLive.current, pointer, centre, ratio)));
+    noteMoved();
+  };
+  panBy.current = (dx, dy) => {
+    steer();
+    const limit = cameraLimit(result);
+    const pan = view.pan ?? { x: 0, y: 0 };
+    if (useDom) {
+      /*
+       * THE WHEEL IS A HAND TOO — so it moves the picture, and only the
+       * wheel coming to rest moves the world. It was left on the old road
+       * when the drag came off it: a `setView` per tick, which is a layout,
+       * a render of every context consumer and a DOM re-measure for each
+       * notch of a wheel.
+       */
+      const live = liveShift.current;
+      shiftTo(panWithin(limit, { x: pan.x + live.x + dx, y: pan.y + live.y + dy }), pan);
+    } else {
+      setView((current) =>
+        withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + dx, y: (current.pan?.y ?? 0) + dy })),
+      );
+    }
+    noteMoved();
+  };
+
+  /*
+   * A DRAG IS NOT A TRANSITION.
+   *
+   * Every pointer move writes a new view state, and easing toward each one
+   * over half a second made the scene chase the pointer — panning felt
+   * laggy because it literally lagged, by design meant for navigation. While
+   * a drag owns the pointer the picture snaps to it; the tween is for the
+   * moves you did not make with your own hand.
+   */
+  const [dragging, setDragging] = useState(false);
+  /*
+   * A WHEEL IS A HAND TOO. Zooming and panning by wheel arrive as a stream
+   * of small moves; tweening each one lagged the picture behind the fingers
+   * the way a tweened drag did. While the wheel is turning, and for a beat
+   * after, the picture snaps to it.
+   */
+  const [steering, setSteering] = useState(false);
+  const steeringUntil = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /*
+   * A WHEEL LETS GO TOO, and this is how it says so.
+   *
+   * The live-shift machinery is declared below — it needs the layout, which
+   * needs the view — and `steer` is needed above it, by the wheel and the
+   * zoom. A ref rather than a reordering: moving the declaration would drag
+   * `steering` and the tween's own `enabled` down with it, which is three
+   * hundred lines of unrelated motion for one call.
+   */
+  const settleLive = useRef<() => boolean>(() => false);
+  const steer = useCallback(() => {
+    setSteering(true);
+    if (steeringUntil.current) clearTimeout(steeringUntil.current);
+    steeringUntil.current = setTimeout(() => {
+      steeringUntil.current = null;
+      /*
+       * The wheel stops steering when the pan it made has been DRAWN, not
+       * when the wheel stops turning — clearing it here would re-enable the
+       * tween in the same breath as the commit, and the city would fly from
+       * where the wheel left it back to where it started. The same trap the
+       * drag fell into; the layout effect closes both.
+       */
+      if (settleLive.current()) return;
+      setSteering(false);
+    }, 160);
+  }, []);
+  // The picture as it is right now, part-way between the last view and this
+  // one. Everything downstream draws the tween, not the destination.
+  const frame = useAnimatedLayout(result, { enabled: animate && !dragging && !steering });
+  const touched = useTouched<S>();
+  const seatWork = useSeatWork<S>();
+
+  /*
+   * A DRIVE-IN ON THE FAR SIDE OF A LARGE CITY lights up off-screen unless
+   * the camera goes to it: focusing a screen re-centres the pan on its
+   * plot, still baked into the coordinates, still `pan` in the URL.
+   */
+  const screenId = result.nodes.find((node) => node.screenOf !== undefined)?.id ?? null;
+  /*
+   * THE DESCENT LANDS IN THE VILLAGE. Double-clicking a district from
+   * altitude used to fly it to the stage's centre while the rest
+   * reorganised around it — the picture rearranging rather than you coming
+   * down. The plot is the pivot now: the stack's focus is landed where the
+   * village stood, so it grows in place, and the camera then glides to
+   * rest so the world slides to meet it. Every way down — the Down
+   * control, a marquee's showing, Escape — is a change of view from
+   * outside the scene, so the scene watches the view itself: `stood`
+   * remembers where each district's plot was in the last altitude frame.
+   */
+  const stood = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const wasAloft = useRef(view.overview ?? false);
+  const glide = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!view.overview || !screenId || !result.city) {
+      if (wasAloft.current && !view.overview) return; // the descent effect below owns the camera on the way down
+      setCamera((current) => (current.x === 0 && current.y === 0 ? current : { x: 0, y: 0 }));
+      return;
+    }
+    const screen = result.nodes.find((node) => node.id === screenId);
+    if (!screen) return;
+    /*
+     * FLOWN CLOSER, the camera centres on the whole drive-in — the
+     * billboard and the village under it — rather than only keeping the
+     * picture inside the edge; a person chose that plot, and it is what
+     * they are looking at.
+     */
+    const village = closer > 1 && screen.screenOf ? result.nodes.find((node) => node.id === kindCardId(screen.screenOf!)) : undefined;
+    const want = village
+      ? {
+          x: Math.min(screen.x, village.x),
+          y: Math.min(screen.y, village.y),
+          width: Math.max(screen.x + screen.width, village.x + village.width) - Math.min(screen.x, village.x),
+          height: Math.max(screen.y + screen.height, village.y + village.height) - Math.min(screen.y, village.y),
+        }
+      : screen;
+    const inside = want.x >= 0 && want.y >= 0 && want.x + want.width <= result.width && want.y + want.height <= result.height;
+    if (inside && !village) return;
+    /*
+     * THE SMALLEST MOVE THAT BRINGS THE SCREEN IN. Centring it dragged the
+     * rest of the city off the far side — six districts fit the window and
+     * four of them left it — so the camera goes only as far as it must for
+     * the screen to clear the edge, and the rest stays where it was.
+     */
+    const EDGE = 24;
+    const shift = (start: number, size: number, span: number): number =>
+      start < EDGE ? EDGE - start : start + size > span - EDGE ? span - EDGE - (start + size) : 0;
+    // The whole offset — the person's pan plus the camera — stays inside the
+    // camera limit, so the screen can be reached and nothing is dropped off the edge.
+    const limit = cameraLimit(result);
+    const pan = view.pan ?? { x: 0, y: 0 };
+    const wantedX = village ? panned.x + (result.width / 2 - (want.x + want.width / 2)) : panned.x + shift(want.x, want.width, result.width);
+    // Centred on the drive-in — but the PICTURE is what was chosen, so when the
+    // drive-in is taller than the window the picture's top stays in and the
+    // village hangs below rather than the picture losing its head.
+    const centredY = result.height / 2 - (want.y + want.height / 2);
+    const wantedY = village
+      ? panned.y + (screen.y + centredY < EDGE ? EDGE - screen.y : centredY)
+      : panned.y + shift(want.y, want.height, result.height);
+    // Flown closer, the billboard stands above the city's extent, which the
+    // limit does not know about: the camera goes where the drive-in is.
+    setCamera({
+      x: (village ? wantedX : Math.max(-limit.x, Math.min(limit.x, wantedX))) - pan.x,
+      y: (village ? wantedY : Math.max(-limit.y, Math.min(limit.y, wantedY))) - pan.y,
+    });
+    // Only when the focus lands, or the camera flies closer: a person's own pan afterwards is theirs.
+  }, [screenId, view.overview, closer]);
+  if (frame.city) {
+    // Remembered every altitude frame: where each plot's centre is on the canvas right now.
+    const remembered = new Map<string, { x: number; y: number }>();
+    for (const node of frame.nodes) {
+      if (!node.plot || Math.round(node.plane) !== 2) continue;
+      const centre = toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell);
+      remembered.set(node.id, { x: frame.city.originX + panned.x + centre.x, y: frame.city.originY + panned.y + centre.y });
+    }
+    stood.current = remembered;
+  }
+  useEffect(() => {
+    const aloft = view.overview ?? false;
+    const descending = wasAloft.current && !aloft;
+    wasAloft.current = aloft;
+    if (aloft && glide.current) {
+      // Back up before the glide landed: the altitude camera owns the offset now.
+      clearTimeout(glide.current);
+      glide.current = null;
+    }
+    if (!descending) return;
+    const kind = view.focusId ? kindsOfAggregate(view.focusId)[0] : undefined;
+    const from = kind ? stood.current.get(kindCardId(kind)) : undefined;
+    const focus = result.nodes.find((node) => node.id === view.focusId);
+    if (!from || !focus) {
+      setCamera({ x: 0, y: 0 });
+      return;
+    }
+    // Land the focus where the village stood; then let go, and the world slides to meet it.
+    setCamera({ x: from.x - (focus.x + focus.width / 2), y: from.y - (focus.y + focus.height / 2) });
+    if (glide.current) clearTimeout(glide.current);
+    glide.current = setTimeout(() => {
+      glide.current = null;
+      setCamera({ x: 0, y: 0 });
+    }, GLIDE_AFTER_MS);
+    // Only when the altitude changes: a glide in progress is not restarted by what it moves.
+  }, [view.overview]);
+  useEffect(() => () => {
+    if (glide.current) clearTimeout(glide.current);
+  }, []);
+
+  /*
+   * WHERE IS: the scene lends the context its live frame. A ref, so the
+   * answer is the frame being drawn right now — mid-tween, mid-pan — and
+   * asking costs nobody a render.
+   */
+  const frameRef = useRef(frame);
+  frameRef.current = frame;
+  useEffect(() => {
+    registerScene({
+      whereIs: (id) => whereIsIn(frameRef.current, wrapperRef.current, scheme, views, id),
+    });
+    return () => registerScene(null);
+  }, [registerScene, scheme, views]);
+
+  /*
+   * THE POINTER, only while somebody is listening. The store tells the
+   * scene when its first subscriber arrives and its last leaves; between
+   * those two moments there is a listener, and outside them there is none.
+   */
+  useEffect(
+    () =>
+      pointer.onActive((active) => {
+        const element = wrapperRef.current;
+        if (!element) return;
+        const move = (event: PointerEvent) => {
+          const rect = element.getBoundingClientRect();
+          pointer.set({ x: event.clientX - rect.left, y: event.clientY - rect.top });
+        };
+        const leave = () => pointer.set(null);
+        if (active) {
+          element.addEventListener("pointermove", move);
+          element.addEventListener("pointerleave", leave);
+          (element as HTMLElement & { __graviewPointer?: () => void }).__graviewPointer = () => {
+            element.removeEventListener("pointermove", move);
+            element.removeEventListener("pointerleave", leave);
+          };
+        } else {
+          (element as HTMLElement & { __graviewPointer?: () => void }).__graviewPointer?.();
+          delete (element as HTMLElement & { __graviewPointer?: () => void }).__graviewPointer;
+        }
+      }),
+    [pointer],
+  );
+
+  useEffect(() => {
+    if (renderer === "dom") return;
+    const canvas = canvasRef.current;
+    if (!canvas || !attachRenderer) return;
+    // The renderer is handed the FRAME, not the target.
+    //
+    // Two reasons, both of which were bugs before: the DOM holds the tween,
+    // so a host for a node that has not entered yet does not exist to be
+    // captured; and drawing the target during a transition would snap every
+    // view to its final position while the DOM animated underneath it.
+    // A group is stale when any of its members changed, since its own view
+    // is a summary of them.
+    const dirty = new Set<string>();
+    for (const node of frame.nodes) {
+      if (touched.has(node.id)) dirty.add(node.id);
+      else if (node.aggregate?.memberIds.some((id) => touched.has(id))) dirty.add(node.id);
+    }
+
+    const detach = attachRenderer({
+      canvas,
+      layout: frame,
+      dirty,
+      hostOf: (id) =>
+        canvas.querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"]`),
+    });
+    return () => {
+      detach?.();
+    };
+  }, [renderer, attachRenderer, frame, touched]);
+
+  const useDom = renderer === "dom" || (renderer === "auto" && !attachRenderer);
+
+  /*
+   * What just happened, resolved onto whatever is DRAWN.
+   *
+   * The op log names node ids, and a node is not always on screen as itself:
+   * above the stack a duty is inside the Runs card, and inside the stack it
+   * may be its own panel. An edit should land on whichever of those the eye
+   * can actually see, which is the same rule the connectors follow — the
+   * node if it is placed, otherwise the group standing in for it.
+   */
+  const activity = useActivity<S>();
+  const activityOf = (node: SceneNode | undefined): ActivityMark | undefined => {
+    const own = node ? activity.get(node.id) : undefined;
+    const members = node?.aggregate?.memberIds ?? [];
+    if (!own && members.length === 0) return undefined;
+
+    let best: ActivityMark | undefined = own;
+    let wrote = own?.wrote ?? false;
+    let read = own?.read ?? false;
+    let broke = own?.broke ?? false;
+    for (const memberId of members) {
+      const mark = activity.get(memberId);
+      if (!mark) continue;
+      // A card standing for forty nodes reports the strongest thing that
+      // happened inside it, not the last one alphabetically — and a rule
+      // that broke in there is reported whichever member it landed on,
+      // because that is the news.
+      wrote ||= mark.wrote;
+      read ||= mark.read;
+      broke ||= mark.broke;
+      if (!best || mark.at > best.at || (mark.at === best.at && mark.wrote && !best.wrote)) {
+        best = mark;
+      }
+    }
+    return best ? { ...best, wrote, read, broke } : undefined;
+  };
+
+  /*
+   * DRAGGING.
+   *
+   * Two gestures, one mechanism. Drag the ground and the camera moves; drag a
+   * card and it stays where you put it. Both are ordinary view state — a pan
+   * and a pin — so both go in the URL, both interpolate, and both come back
+   * when someone opens the link. Neither is a mode: there is nothing to turn
+   * on and nothing to turn off.
+   *
+   * The threshold is what keeps a click a click. Below it nothing has
+   * happened and the pointer-up is an ordinary selection; above it the
+   * gesture owns the pointer and the click that follows is swallowed.
+   */
+  /*
+   * THE HAND MOVES THE PICTURE; ONLY LETTING GO MOVES THE WORLD.
+   *
+   * A pan used to write `view.pan` on every pointer move. That is one state
+   * change per frame at the very top of the scene, and `view` is part of the
+   * Graview context — so every consumer of that context re-rendered, memo or
+   * no memo, and the lenses inside the drive-in boards redrew themselves
+   * sixty times a second to show the same picture in a different place.
+   * Profiled over one drag across rota's city: a fifth of the main thread in
+   * the calendar, the coverage matrix and the timeline, another fifth in
+   * `getBoundingClientRect` re-measuring what had only been translated. 169
+   * of 442 frames missed.
+   *
+   * While a hand is on it, the offset it has made lives here and is painted
+   * straight onto the layers as a transform, once per animation frame,
+   * outside React entirely. Letting go writes it into the view, exactly as
+   * before, and the transform is cleared after that has been committed so
+   * the picture never jumps back for a frame.
+   *
+   * The GPU path keeps the old road: its stage is a `layoutsubtree` canvas,
+   * and combining that with CSS transforms crashes the renderer (see the
+   * DOM/GPU note where the stage is drawn). It is not the default path and
+   * it is not the measured one.
+   */
+  const liveShift = useRef({ x: 0, y: 0 });
+  const shiftPainting = useRef(0);
+  const shiftSettling = useRef(false);
+  const worldLayers = useCallback(
+    () => [...(wrapperRef.current?.querySelectorAll<HTMLElement>("[data-graview-world]") ?? [])],
+    [],
+  );
+  const paintShift = useCallback(() => {
+    if (shiftPainting.current !== 0) return;
+    shiftPainting.current = requestAnimationFrame(() => {
+      shiftPainting.current = 0;
+      const { x, y } = liveShift.current;
+      const move = x === 0 && y === 0 ? "" : `translate3d(${x}px, ${y}px, 0)`;
+      for (const layer of worldLayers()) layer.style.transform = move;
+    });
+  }, [worldLayers]);
+  /** Where the hand has taken the picture, against where the view says it is. */
+  const shiftTo = useCallback(
+    (wanted: { x: number; y: number }, from: { x: number; y: number }) => {
+      liveShift.current = { x: wanted.x - from.x, y: wanted.y - from.y };
+      paintShift();
+    },
+    [paintShift],
+  );
+  /** Letting go: the offset becomes the view's own pan, and the transform goes. */
+  const settleShift = useCallback((): boolean => {
+    const { x, y } = liveShift.current;
+    if (x === 0 && y === 0) return false;
+    liveShift.current = { x: 0, y: 0 };
+    shiftSettling.current = true;
+    setView((current) => {
+      const pan = current.pan ?? { x: 0, y: 0 };
+      return withPan(current, { x: pan.x + x, y: pan.y + y });
+    });
+    /*
+     * AND IF THE VIEW NEVER ARRIVES, LET GO ANYWAY.
+     *
+     * The transform is cleared by the layout effect below, the moment the
+     * new pan has actually been committed. This is only for the case where
+     * it never is — a scene whose view is controlled from outside may
+     * decline the change, and then nothing would ever clear the transform
+     * and the picture would stay shoved off to one side for good.
+     *
+     * LATE ON PURPOSE. It was a `requestAnimationFrame` first, and it beat
+     * React to the commit: the transform came off on the next frame while
+     * the cards were still at their old coordinates, so every release
+     * flashed the whole city back to where the drag had started and then
+     * snapped forward again. Traced at altitude — 811 to 411 under the
+     * hand, 809 for one frame on release, 411 after. A backstop that fires
+     * in the ordinary case is not a backstop, it is a race.
+     */
+    window.setTimeout(() => {
+      if (!shiftSettling.current) return;
+      shiftSettling.current = false;
+      for (const layer of worldLayers()) layer.style.transform = "";
+      setDragging(false);
+      setSteering(false);
+    }, 300);
+    return true;
+  }, [setView, worldLayers]);
+  // Wired here, where `settleShift` exists; see the ref's own note above.
+  settleLive.current = settleShift;
+  /*
+   * CLEARED ONLY ONCE THE WORLD HAS ACTUALLY MOVED. Clearing the transform
+   * in the same breath as the state change put the picture back where it
+   * started for one frame, because React had not committed the new pan yet.
+   */
+  useLayoutEffect(() => {
+    if (!shiftSettling.current) return;
+    shiftSettling.current = false;
+    for (const layer of worldLayers()) layer.style.transform = "";
+    // The gesture ends HERE, with the world already where the hand left it,
+    // so nothing tweens its way there afterwards — by drag or by wheel.
+    setDragging(false);
+    setSteering(false);
+  }, [view.pan, worldLayers]);
+
+  const swallow = useRef(false);
+  const gesture = useRef<{
+    kind: "pan" | "card";
+    id?: string;
+    fromX: number;
+    fromY: number;
+    baseX: number;
+    baseY: number;
+    moved: boolean;
+  } | null>(null);
+
+  const onGroundDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    // Only the ground itself. A card, a chip or anything a view drew keeps
+    // whatever meaning it already had.
+    if ((event.target as HTMLElement).closest("[data-graview-view]")) return;
+    const pan = view.pan ?? { x: 0, y: 0 };
+    gesture.current = {
+      kind: "pan",
+      fromX: event.clientX,
+      fromY: event.clientY,
+      baseX: pan.x,
+      baseY: pan.y,
+      moved: false,
+    };
+  };
+
+  const onCardDown = (node: SceneNode, event: ReactPointerEvent<HTMLElement>) => {
+    if (event.button !== 0) return;
+    /*
+     * A PICTURE IS NOT A THING YOU REARRANGE — you look around it.
+     *
+     * Choosing a lens from altitude puts a billboard in the middle of the
+     * window and flies the camera to it, and a drag that starts on it was
+     * a drag of the card: the biggest thing on screen, and the one most
+     * likely to be under the hand, did not pan. The picture reads as the
+     * view you are in, so dragging it moves the view; a district's own
+     * card keeps its drag, because placing a district by hand is a real
+     * gesture with a dashed kerb to show for it.
+     */
+    if (node.screenOf !== undefined) {
+      // Unless it started on the rail, which is the one part of a billboard
+      // that means "move the board" rather than "look around".
+      if (!(event.target as HTMLElement).closest("[data-graview-grip]")) {
+        const pan = view.pan ?? { x: 0, y: 0 };
+        gesture.current = { kind: "pan", fromX: event.clientX, fromY: event.clientY, baseX: pan.x, baseY: pan.y, moved: false };
+        return;
+      }
+    }
+    gesture.current = {
+      kind: "card",
+      id: node.id,
+      fromX: event.clientX,
+      fromY: event.clientY,
+      // Unpanned, because that is the space a pin is stored in.
+      baseX: node.x - panned.x,
+      baseY: node.y - panned.y,
+      moved: false,
+    };
+  };
+
+  const onDragMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const drag = gesture.current;
+    if (!drag) return;
+    const dx = event.clientX - drag.fromX;
+    const dy = event.clientY - drag.fromY;
+    if (!drag.moved) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      drag.moved = true;
+      setDragging(true);
+      /*
+       * Capture only once it IS a drag.
+       *
+       * Taken on pointer-down it broke every click on an inner target:
+       * pointer capture redirects the compatibility mouse events too, so the
+       * click and double-click that followed were reported against the host
+       * rather than the chip, `data-graview-pick` stopped resolving, and
+       * double-clicking a task opened the card instead of travelling into the
+       * task. Nothing had moved and the gesture had already changed meaning.
+       */
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    }
+    if (drag.kind === "pan") {
+      // A LITTLE way over a picture that fits, and as far as the city
+      // reaches when it is bigger than the window: every district can be
+      // reached, none can be dropped off the edge.
+      const limit = cameraLimit(result);
+      const wanted = panWithin(limit, { x: drag.baseX + dx, y: drag.baseY + dy });
+      if (useDom) shiftTo(wanted, view.pan ?? { x: 0, y: 0 });
+      else setView((current) => withPan(current, wanted));
+    } else if (drag.id) {
+      setView((current) =>
+        withPin(current, drag.id!, { x: drag.baseX + dx, y: drag.baseY + dy }),
+      );
+    }
+  };
+
+  const onDragUp = () => {
+    settleShift();
+    if (gesture.current?.moved) {
+      // Swallow the click this pointer-up is about to produce, so a drag that
+      // ends on a card does not also select it.
+      swallow.current = true;
+      setTimeout(() => (swallow.current = false), 0);
+      // And say a hand moved something, so the bar can offer to put it back.
+      noteMoved();
+    }
+    gesture.current = null;
+    /*
+     * THE COMMIT A HAND MADE IS NOT A TRANSITION EITHER.
+     *
+     * Letting go used to end the drag on the spot, which re-enabled the
+     * tween in the same breath as the pan landed — so the whole city flew
+     * from where the drag had started to where it had ended, over half a
+     * second, after the hand had already put it there. Traced at altitude:
+     * 811 under the hand, 411 at the end of the drag, and then 808 again
+     * for the length of a tween.
+     *
+     * So the drag stays open until the pan it made has been drawn. The
+     * layout effect that clears the transform closes it, in the same commit
+     * that moves the cards.
+     */
+    if (shiftSettling.current) return;
+    setDragging(false);
+  };
+
+  /*
+   * A CROWD drops to glyphs. A summary panel needs room, and a raised
+   * relation with many members divides the band until no card has any —
+   * ten titles wrapping to five lines in 130-pixel slivers. Below the
+   * legibility floor a card renders the kind's GLYPH instead, which is
+   * what the fidelity axis is for: legible at any width, still selectable,
+   * still the node. A band that WRAPPED into rows is a crowd by height: a
+   * summary card in a 46-pixel row showed its title cut at the second line.
+   */
+  const crowded = (node: SceneNode) => Math.round(node.plane) === 1 && (node.width < 175 || node.height < 64);
+
+  /*
+   * Whether this card stands for a kind the app gave a picture of its own —
+   * the same question `ResolvedView` asks to draw the ◆, asked here so the
+   * gesture and the mark cannot disagree.
+   */
+  const ownPictureOf = (node: SceneNode): boolean => {
+    if (kindOfCard(node.id) === null && !node.aggregate) return false;
+    const own = views.resolve(node.kind, { cardinality: "many", fidelity: "full" })?.view as
+      | { generic?: boolean }
+      | undefined;
+    return own !== undefined && own.generic !== true;
+  };
+
+  const hosts = frame.nodes.map((node) => (
+    <SceneViewHost
+      key={node.id}
+      node={node}
+      crowded={crowded(node)}
+      useDom={useDom}
+      {...(node.plot && frame.city && Math.round(node.plane) === 2
+        ? {
+            frontY: frame.city.originY + panned.y + toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side, frame.city.cell).y - node.y,
+            centreY: frame.city.originY + panned.y + toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell).y - node.y,
+          }
+        : {})}
+      {...(node.screenOf !== undefined ? { screen: true, ...(node.id === screenId ? { onDrawnHeight: noteScreenHeight } : {}) } : {})}
+      touched={touched.has(node.id)}
+      {...(activityOf(node) ? { activity: activityOf(node) } : {})}
+      scheme={scheme}
+      canvasWidth={result.width}
+      canvasHeight={result.height}
+      selected={selection.includes(node.id)}
+      onSelect={(additive) => {
+        /*
+         * A group is a PLACE; a node is a THING.
+         *
+         * Clicking a group raises its members onto plane 1 — which is what
+         * "open the People block" obviously means, and what the whole
+         * aggregate model is for. Before this, clicking a group silently
+         * selected members that were not on screen and looked like nothing
+         * had happened, and the only way to raise anything was a button in
+         * the far corner of the command bar.
+         *
+         * Hold shift or meta to select the members instead.
+         */
+        /*
+         * Above the stack, raising a relation means nothing.
+         *
+         * `withRelation` moves a kind's members onto plane 1, and the overview
+         * has no plane 1 — `relatedNodes` is hard-coded empty up there. So the
+         * gesture did nothing at all, and the emphasis this comment promised
+         * had no way to be triggered except through the legend. Selecting the
+         * card is what "what does this touch" means when the cards are kinds.
+         */
+        const kinds = node.aggregate ? kindsOf(node.id) : [];
+        if (view.overview) {
+          setSelection((current) => (additive ? [...new Set([...current, node.id])] : [node.id]));
+          return;
+        }
+        if (kinds.length === 1 && !additive && Math.round(node.plane) !== 0) {
+          const kind = kinds[0]!;
+          setView((current) => withRelation(current, current.relation === kind ? null : kind));
+          return;
+        }
+        setSelection((current) => selectionFor(node, current, additive));
+      }}
+      /*
+       * Picking a thing SELECTS it, and leaves the picture where it is.
+       *
+       * It used to travel, which is the wrong default: most of the time you
+       * want to act on the thing where it is — substitute a player without
+       * leaving the formation, move an event without leaving the week — and
+       * being thrown into a detail view to do it costs you the context that
+       * made the decision obvious. Travel is the deliberate second gesture.
+       */
+      onPick={(id, additive) =>
+        setSelection((current) =>
+          additive
+            ? current.includes(id)
+              ? current.filter((other) => other !== id)
+              : [...current, id]
+            : [id],
+        )
+      }
+      /*
+       * Double click means GO DEEPER, whatever it lands on: into the node a
+       * view nominated, or — where a view nominated nothing — into the view
+       * itself as a full page. One gesture, one meaning.
+       */
+      onTravel={(id) => {
+        setView((current) => ({ ...withFocus(current, id), relation: null }));
+        setSelection([id]);
+      }}
+      onMenu={setMenuAt}
+      selection={selection}
+      /*
+       * Jacking in ZOOMS: the same scene, the focus grown to most of it,
+       * shelf and relations receded but present. On the node already zoomed
+       * the same gesture zooms back out — in and out are one motion.
+       */
+      onJackIn={() => {
+        /*
+         * A kind with a lens over it goes INTO the lens; a kind without one
+         * explodes into its district. The card already draws a ◆ when it has
+         * a picture of its own, and used to burst into a ring of chips
+         * anyway — trading the designed view for the fallback it exists to
+         * improve on.
+         */
+        setView((current) => withJackIn(current, node.id, { ownPicture: ownPictureOf(node) }));
+        /*
+         * A zoomed RECORD is selected — reading closely is when you act.
+         * A zoomed PLACE starts quiet: the click half of the double-click
+         * had just selected every member, and arriving with the whole
+         * population selected buries the place under its own strip.
+         */
+        setSelection(node.aggregate ? [] : [node.id]);
+      }}
+      onDragStart={(event) => onCardDown(node, event)}
+      onDragMove={onDragMove}
+      onDragEnd={onDragUp}
+      swallowClick={swallow}
+    >
+      {node.screenOf !== undefined ? (
+        /*
+         * THE RAIL YOU MOVE THE BOARD BY.
+         *
+         * Dragging the picture itself looks around the city, and must go on
+         * doing so: the billboard is the biggest thing on screen and the one
+         * most likely to be under the hand, and taking panning away from it
+         * was how the far side of a city became unreachable once. So the
+         * board gets a rail along its top edge, the way a window has a title
+         * bar — the picture pans, the rail moves the board, and neither
+         * gesture has to be discovered from the other.
+         *
+         * How far it may go is not this rail's business: `layout` leashes
+         * the pin to its own plot, so a hand and a pasted link are held to
+         * the same distance.
+         */
+        <span
+          className="graview-screen-grip"
+          data-graview-grip={node.id}
+          data-testid="screen-grip"
+          title="Move this picture — it stays by its own village"
+          aria-hidden="true"
+        />
+      ) : null}
+      {node.screenOf !== undefined ? (
+        /* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */
+        <button
+          type="button"
+          className="graview-screen-fullscreen"
+          data-testid="screen-fullscreen"
+          title="Full screen — leave the graview with this picture"
+          onClick={(event) => {
+            event.stopPropagation();
+            setView((current) => withOverview(current, false));
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+        >
+          ⤢ Full screen
+        </button>
+      ) : null}
+      {node.beyond ? (
+        <BeyondCard kinds={node.beyond} />
+      ) : (
+        <SettledView
+          node={node}
+          mode="scene"
+          selected={selection.includes(node.id)}
+          {...(crowded(node) ? { fidelity: "glyph" as const } : {})}
+        />
+      )}
+    </SceneViewHost>
+  ));
+
+  return (
+    <div
+      ref={wrapperRef}
+      className={`graview-ground${className ? ` ${className}` : ""}`}
+      // From altitude the ground itself recedes; the theme reads this. The
+      // attribute flips the non-animatable modes; the NUMBER is what the
+      // grids, blocks and shadows actually ride, and it transitions — so
+      // rising is a morph, not a cut.
+      data-graview-altitude={view.overview ? "" : undefined}
+      /*
+       * HOW FAR THE CAMERA REACHES, said on the ground — so a harness that
+       * finds a district past the edge can tell "pannable to" from "lost":
+       * a city wider than a phone is reached by dragging the ground.
+       */
+      data-graview-reach={frame.city ? `${Math.round(cameraLimit(result).x)} ${Math.round(cameraLimit(result).y)}` : undefined}
+      // Nothing in motion: no tween running and no camera glide pending. A harness can wait on this rather than on a timer.
+      data-graview-settled={frame.t >= 1 && glide.current === null ? "" : undefined}
+      onPointerDown={onGroundDown}
+      onPointerMove={onDragMove}
+      onPointerUp={onDragUp}
+      onPointerCancel={onDragUp}
+      /*
+       * CLICKING EMPTY GROUND puts the selection down — the gesture every
+       * canvas tool teaches, and the graceful half of deselection the ×
+       * and Escape were carrying alone. Only the bare ground: a card, a
+       * control or a piece of chrome keeps its own meaning, and a drag
+       * that ends on the ground is still a pan, not a deselection.
+       */
+      onClick={(event) => {
+        if (swallow.current) return;
+        const target = event.target as HTMLElement;
+        if (target.closest("[data-graview-view], button, aside, a, input, select")) return;
+        setSelection([]);
+        setMenuAt(null);
+      }}
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        cursor: dragging ? "grabbing" : "grab",
+        touchAction: "none",
+        ["--graview-altitude" as string]: view.overview ? 1 : 0,
+        /*
+         * THE LATTICE THE CITY STANDS ON. The ground draws its diamonds at
+         * the cell the map was placed with, anchored where cell (0,0) meets
+         * the canvas — and the anchor pans with the picture, since the pan
+         * is baked into every coordinate — so a plot sits on a grid line a
+         * person can see. The kit's own size stands when no city is drawn.
+         */
+        ...(frame.city
+          ? {
+              ["--graview-lattice-cell" as string]: `${frame.city.cell.toFixed(2)}px`,
+              // The tween's own pan, not the live one: the ground moves with the cards it is under.
+              ["--graview-lattice-x" as string]: `${(frame.city.originX + frame.city.pan.x).toFixed(1)}px`,
+              ["--graview-lattice-y" as string]: `${(frame.city.originY + frame.city.pan.y).toFixed(1)}px`,
+            }
+          : {}),
+        ...(dragging ? { userSelect: "none" as const } : {}),
+
+        // The stage is sized to the measurement, but a stale measurement
+        // during a resize can briefly exceed it. Clipping keeps the scene
+        // inside its own bounds instead of pushing the page taller and
+        // cutting off anything floating over it.
+        overflow: "hidden",
+        ...style,
+      }}
+    >
+      {/*
+        * THE GROUND: every district's plot as a tile, under the cards and
+        * over the fields, from the same origin and pan the lattice rides.
+        */}
+      <Plots
+        frame={frame}
+        width={result.width}
+        height={result.height}
+        // The tween's own pan: the tiles, the villages and the roads move with the cards on them.
+        pan={frame.city ? frame.city.pan : panned}
+        brand={brand}
+        pinned={pinnedIds}
+        swallowed={swallow}
+        // A tile is its district: focusing it means the kind's aggregate, never the card's own id.
+        onFocus={(id) => {
+          const kind = kindOfCard(id);
+          if (kind !== null) setView((current) => withFocus(current, aggregateId(kind)));
+        }}
+      />
+      {useDom ? (
+        /*
+         * The DOM path uses an ORDINARY container, not a capture canvas.
+         *
+         * `layoutsubtree` exists so the GPU can capture these elements, and
+         * it changes how the browser lays them out. Combining it with the CSS
+         * transforms and filters this path applies crashes the renderer
+         * process in Chromium 154 — silently, on first paint. Since the DOM
+         * path never captures anything, the canvas has no job here, and not
+         * creating one removes the whole interaction.
+         */
+        <div
+          data-graview-stage="dom"
+          /* One of the layers the hand moves as a unit; see `liveShift`. */
+          data-graview-world=""
+          style={{
+            position: "relative",
+            zIndex: 1,
+            width: result.width,
+            height: result.height,
+            overflow: "hidden",
+          }}
+        >
+          {hosts}
+        </div>
+      ) : (
+        <canvas
+          ref={canvasRef}
+          data-graview-stage="gpu"
+          // The attribute form works before the property is available.
+          {...{ layoutsubtree: "" }}
+          width={result.width}
+          height={result.height}
+          style={{
+            display: "block",
+            position: "relative",
+            zIndex: 1,
+            width: result.width,
+            height: result.height,
+          }}
+        >
+          {hosts}
+        </canvas>
+      )}
+      {view.overview ? (
+        /* SCENE FURNITURE in the ground's other corner: the way a map carries its own zoom. */
+        <div
+          className="graview-zoom"
+          role="group"
+          aria-label="Zoom"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="graview-zoom-button"
+            data-testid="zoom-out"
+            aria-label="Zoom out"
+            title="Zoom out — or pinch, or ctrl+wheel"
+            disabled={zoom <= ZOOM_MIN + 1e-6}
+            onClick={() => zoomAbout.current(1 / 1.25)}
+          >
+            −
+          </button>
+          <span className="graview-zoom-level" data-testid="zoom-level" aria-live="polite">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            type="button"
+            className="graview-zoom-button"
+            data-testid="zoom-in"
+            aria-label="Zoom in"
+            title="Zoom in — or pinch, or ctrl+wheel"
+            disabled={zoom >= ZOOM_MAX - 1e-6}
+            onClick={() => zoomAbout.current(1.25)}
+          >
+            +
+          </button>
+        </div>
+      ) : null}
+      <Lines
+        frame={frame}
+        width={result.width}
+        height={result.height}
+        scheme={scheme}
+        overview={view.overview ?? false}
+        selection={selection}
+        emphasis={emphasis}
+        stageRef={wrapperRef}
+        store={store}
+        graphNodes={nodes}
+        /*
+         * A LINE IS A THING. Clicking one that stands for exactly one edge
+         * selects the relation itself — the inspector then says what it is
+         * and what may lawfully be done to it; right-click opens the same
+         * actions at the pointer. Bundled lines stay scenery: "some of
+         * these" is not an honest thing to act on.
+         */
+        onPickEdge={(edgeId, at) => {
+          // A pan that happened to start on a line is a pan, not a pick.
+          if (swallow.current) return;
+          setSelection([edgeId]);
+          setMenuAt(at ? { ...at, on: edgeId } : null);
+        }}
+        liveOf={(connector) => {
+          /*
+           * A relation PULSES where it was just made or broken.
+           *
+           * An edge write touches both of its ends, so a connector is live
+           * exactly when both of the things it joins were written in the same
+           * window — which is what making or breaking a relation looks like in
+           * the log, and is not what changing one node's field looks like.
+           */
+          const from = activityOf(frame.nodes.find((node) => node.id === connector.from));
+          const to = activityOf(frame.nodes.find((node) => node.id === connector.to));
+          return from?.wrote && to?.wrote ? (from.at > to.at ? from : to) : undefined;
+        }}
+      />
+      {/*
+        * THE OCCUPANTS — the robots — over the stage on both paths, placed
+        * from the frame being drawn. Never in layout(): a body stands where
+        * the fold says, at the box whereIs answers.
+        */}
+      <Occupants
+        width={result.width}
+        whereIs={(id) => whereIsIn(frame, wrapperRef.current, scheme, views, id)}
+      />
+      {/* What the seat just wrote, marked where it is — the attribution the figure used to carry. */}
+      <SeatMarks
+        marks={seatWork.marks}
+        questions={[...robots.values()]
+          .filter((one) => one.mode === "asking" && one.at !== null && one.say)
+          .map((one) => ({ id: one.at!, who: one.who, asks: one.say! }))}
+        whereIs={(id) => whereIsIn(frame, wrapperRef.current, scheme, views, id)}
+        stageRef={wrapperRef}
+        width={result.width}
+        height={result.height}
+      />
+      <RelationCaptions
+        nodes={frame.nodes}
+        scheme={scheme}
+        width={result.width}
+        stageRef={wrapperRef}
+      />
+      {children}
+    </div>
+  );
+}
