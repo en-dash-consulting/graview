@@ -1,4 +1,4 @@
-import { argShape, nodeRefArgs, type AnySchema } from "@graview/core";
+import { argShape, labelOf, nodeRefArgs, type AnySchema } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation } from "../types.js";
 
 const REPAIR_SCORE = 100;
@@ -16,6 +16,8 @@ export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> 
   return {
     name: "invariant",
     derive({ store, selection, nodes, violations }) {
+      // A node's name as its kind says it, not its label field alone.
+      const named = (node: { id: string; kind: string } & Record<string, unknown>) => labelOf(store.schema.tryDefinition(node.kind), node);
       const selected = new Set(selection);
       const touching = violations.filter(
         (violation) =>
@@ -112,7 +114,7 @@ export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> 
         if (touching.some((violation) => violation.subjectId === node.id)) continue;
         observations.push({
           id: `holds:${node.id}`,
-          text: `${labelOf(node)} holds — nothing currently breaks ${
+          text: `${named(node)} holds — nothing currently breaks ${
             judged.length === 1 ? "it" : `any of its ${judged.length} rules`
           }`,
           nodeIds: [node.id],
@@ -125,8 +127,3 @@ export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> 
 }
 
 /** A node's own label, falling back to its id. */
-function labelOf(node: { id: string } & Record<string, unknown>): string {
-  return typeof node["label"] === "string" && node["label"].length > 0
-    ? node["label"]
-    : node.id;
-}

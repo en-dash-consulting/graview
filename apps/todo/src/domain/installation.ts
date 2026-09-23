@@ -27,5 +27,3 @@ export const todoInstallation = declareInstallation({
   admin: "keeper",
 });
 
-export const KEEPER = "keeper";
-export const MEMBER = "member";

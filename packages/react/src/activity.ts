@@ -1,4 +1,4 @@
-import type { AnySchema, Author, Operation, Store, Violation } from "@graview/core";
+import { violationKey, type AnySchema, type Author, type Operation, type Store } from "@graview/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGraview } from "./context.js";
 
@@ -47,9 +47,6 @@ function mannerOf(participants: readonly string[], last: Operation["author"]["ki
   return last === "agent" ? "autonomous" : "directed";
 }
 
-export function violationKey(violation: Violation): string {
-  return `${violation.invariant}|${violation.subjectId ?? ""}|${violation.message}`;
-}
 
 /**
  * Folds one notification into the marks that are still current.

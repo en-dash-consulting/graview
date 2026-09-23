@@ -113,7 +113,8 @@ export type UndoPreview<S extends AnySchema> =
 
 const HUMAN: Author = { kind: "human" };
 
-function violationKey(v: Violation): string {
+/** A violation's identity across judgements: the rule, what it is about, and what it says. */
+export function violationKey(v: Violation): string {
   return `${v.invariant}|${v.subjectId ?? ""}|${v.message}`;
 }
 

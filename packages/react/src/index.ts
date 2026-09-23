@@ -44,7 +44,6 @@ export {
   markActivity,
   useActivity,
   useAttention,
-  violationKey,
 } from "./activity.js";
 export type { ActivityMark, Attention, Manner, ToolCallLike } from "./activity.js";
 export type { ResolvedViewProps, SceneProps } from "./scene.js";

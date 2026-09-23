@@ -170,7 +170,7 @@ export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal } from "./permissions/types.js";
 
 // Store — graph + log + mutations + invariants, one object.
-export { Store } from "./store.js";
+export { Store, violationKey } from "./store.js";
 export type {
   ApplyOptions,
   ApplyResult,

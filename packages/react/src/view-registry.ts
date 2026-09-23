@@ -86,11 +86,6 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
   readonly hasOwnView?: boolean;
 }
 
-/** A view the framework supplied because the app said nothing. */
-export interface GenericView {
-  generic?: boolean;
-}
-
 export type ViewComponent<
   S extends AnySchema,
   K extends KindOfSchema<S> = KindOfSchema<S>,

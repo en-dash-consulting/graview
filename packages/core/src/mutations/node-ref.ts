@@ -91,7 +91,7 @@ export type ArgShape =
   | { readonly type: "unknown" };
 
 /** Unwraps optional/default/nullable so a wrapped field still describes itself. */
-function unwrap(schema: unknown): unknown {
+export function unwrap(schema: unknown): unknown {
   const inner = (schema as { _def?: { innerType?: unknown } })._def?.innerType;
   return inner === undefined ? schema : unwrap(inner);
 }

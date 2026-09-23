@@ -69,19 +69,6 @@ export function blurIn(frame: number, start: number, dur = 18, from = 12) {
   });
 }
 
-export function scaleIn(
-  frame: number,
-  start: number,
-  dur = 20,
-  from = 0.94,
-  to = 1,
-) {
-  return interpolate(frame, [start, start + dur], [from, to], {
-    ...clamp,
-    easing: easings.softOut,
-  });
-}
-
 export function springProgress(
   frame: number,
   fps: number,

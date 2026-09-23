@@ -1,4 +1,4 @@
-import { nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { labelOf, nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation } from "../types.js";
 
 const SHARED_SCORE = 70;
@@ -20,6 +20,8 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
   return {
     name: "structure",
     derive({ store, nodes }) {
+      // A node's name as its kind says it, not its label field alone.
+      const named = (node: { id: string; kind: string } & Record<string, unknown>) => labelOf(store.schema.tryDefinition(node.kind), node);
       if (nodes.length < 2) return {};
       const observations: Observation[] = [];
       const affordances: Affordance[] = [];
@@ -41,7 +43,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
           if (!neighbour) continue;
           observations.push({
             id: `shared:${edgeKind}:${neighbourId}`,
-            text: `all ${nodes.length} share "${labelOf(neighbour)}" via ${edgeKind}`,
+            text: `all ${nodes.length} share "${named(neighbour)}" via ${edgeKind}`,
             nodeIds: [...ids, neighbourId],
           });
         }
@@ -71,7 +73,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
           if (!odd) continue;
           observations.push({
             id: `near-shared:${edgeKind}:${neighbourId}`,
-            text: `all but "${labelOf(odd)}" share "${labelOf(neighbour)}" via ${edgeKind}`,
+            text: `all but "${named(odd)}" share "${named(neighbour)}" via ${edgeKind}`,
             nodeIds: [...ids, neighbourId],
           });
           for (const mutation of store.allMutations()) {
@@ -84,13 +86,13 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
             if (!target) continue;
             affordances.push({
               id: `structure:join:${mutation.name}:${odd.id}:${neighbourId}`,
-              label: `${mutation.title ?? mutation.name}: bring "${labelOf(odd)}" in line with the others`,
+              label: `${mutation.title ?? mutation.name}: bring "${named(odd)}" in line with the others`,
               provider: "structure",
               mutation: mutation.name,
               args: { [subject.arg]: odd.id, [target]: neighbourId },
               open: [],
               score: SHARED_SCORE,
-              why: `every other selected node is connected to "${labelOf(neighbour)}"`,
+              why: `every other selected node is connected to "${named(neighbour)}"`,
               nodeIds: [odd.id, neighbourId],
             });
           }
@@ -137,7 +139,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
 
         observations.push({
           id: `odd-one-out:${field}`,
-          text: `${majority.length} share ${field} ${majorityKey}; "${labelOf(odd)}" does not`,
+          text: `${majority.length} share ${field} ${majorityKey}; "${named(odd)}" does not`,
           nodeIds: ids,
         });
 
@@ -171,7 +173,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
 
           affordances.push({
             id: `structure:align:${mutation.name}:${field}:${odd.id}`,
-            label: `Align "${labelOf(odd)}" ${field} with the other ${majority.length}`,
+            label: `Align "${named(odd)}" ${field} with the other ${majority.length}`,
             provider: "structure",
             mutation: mutation.name,
             args,
@@ -188,10 +190,6 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
   };
 }
 
-function labelOf(node: { id: string } & Record<string, unknown>): string {
-  const label = node["label"];
-  return typeof label === "string" && label.length > 0 ? label : node.id;
-}
 
 function intersect(sets: Set<string>[]): string[] {
   if (sets.length === 0) return [];

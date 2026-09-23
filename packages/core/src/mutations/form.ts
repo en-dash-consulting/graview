@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { describeArg, nodeRefKinds } from "./node-ref.js";
+import { describeArg, nodeRefKinds, unwrap } from "./node-ref.js";
 
 /**
  * A FORM, derived from a mutation's own input declaration.
@@ -54,11 +54,6 @@ type ZodLike = {
   };
   shape?: Record<string, unknown>;
   safeParse?: (value: unknown) => { success: boolean };
-};
-
-const unwrap = (schema: unknown): unknown => {
-  const inner = (schema as ZodLike)._def?.innerType;
-  return inner === undefined ? schema : unwrap(inner);
 };
 
 const isOptional = (schema: unknown): boolean =>
