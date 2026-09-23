@@ -40,7 +40,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The packages: layout, render, react, primitives and tools](./the-packages-layout-render-react/index.md) | completed |
 | [The pages face out of the box: the app's pictures, its relationships, and the assistant on every page](./the-pages-face-out-of-the-box-the-app/index.md) | completed |
 | [A calendar lens in the framework: month, week, day and agenda over real dates, with the demos scheduling through it](./a-calendar-lens-in-the-framework-month.md) | completed |
-| [A drag that starts on a kind card re-measures every connector against the DOM on every move](./a-drag-that-starts-on-a-kind-card-re.md) | in_progress |
+| [A drag that starts on a kind card re-measures every connector against the DOM on every move](./a-drag-that-starts-on-a-kind-card-re.md) | completed |
 | [A kind has a figure: a declared, blueprint-style 3D drawing of the thing, drawn wherever the kind is, and an agent can draw it](./a-kind-has-a-figure-a-declared.md) | completed |
 | [A UI kit for the picture: lines, boxes and marks are declared, customisable, and set up for styles nobody has asked for yet](./a-ui-kit-for-the-picture-lines-boxes.md) | completed |
 | [Longer horizons on the calendar lens: a quarter, a year, and a span of years the app names, with the demos scheduling across them](./longer-horizons-on-the-calendar-lens-a.md) | completed |
