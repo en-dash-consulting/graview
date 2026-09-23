@@ -91,13 +91,19 @@ function skills() {
   });
 }
 
+/** The checker's source: `check.ts` and the families it asks, in `check/`. */
+function checkerSource() {
+  const dir = at("packages/core/src/cli/check");
+  return [readFileSync(at("packages/core/src/cli/check.ts"), "utf8"), ...readdirSync(dir).map((name) => readFileSync(at("packages/core/src/cli/check", name), "utf8"))].join("\n");
+}
+
 /**
  * Every finding the checker can produce, with the sentence it says and the
  * fix it offers. Read out of the source, because a list of error codes
  * maintained by hand is a list of the error codes that existed once.
  */
 function findings() {
-  const source = readFileSync(at("packages/core/src/cli/check.ts"), "utf8");
+  const source = checkerSource();
   const out = new Map();
   for (const m of source.matchAll(/severity:\s*"(error|warning|note)",\s*\n\s*code:\s*"([a-z0-9-]+)"/g)) {
     if (!out.has(m[2])) out.set(m[2], { code: m[2], severity: m[1] });

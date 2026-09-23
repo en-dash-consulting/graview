@@ -23,7 +23,11 @@ const dirs = (path) => readdirSync(at(path)).filter((entry) => statSync(at(path,
 
 /** Every count the page may ask for, and how it is arrived at. */
 export function countOf() {
-  const check = readFileSync(at("packages/core/src/cli/check.ts"), "utf8");
+  // The checker is `check.ts` and the families it asks, in `check/`.
+  const check = [
+    readFileSync(at("packages/core/src/cli/check.ts"), "utf8"),
+    ...readdirSync(at("packages/core/src/cli/check")).map((name) => readFileSync(at("packages/core/src/cli/check", name), "utf8")),
+  ].join("\n");
   const codes = new Set([...check.matchAll(/code: "([a-z0-9-]+)"/g)].map((m) => m[1]));
   return {
     packages: dirs("packages").length,

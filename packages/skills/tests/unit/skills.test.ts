@@ -3,14 +3,15 @@ import { tmpdir } from "node:os";
 import { execFileSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { readSkills, SKILLS_DIR, SKILL_DESTINATIONS } from "../../src/index.js";
 
-/** The checker's own source, so a skill cannot name a finding it never emits. */
-const checkSource = readFileSync(
-  resolve(SKILLS_DIR, "../../core/src/cli/check.ts"),
-  "utf8",
-);
+/** The checker's own source — `check.ts` and its families — so a skill cannot name a finding it never emits. */
+const checkDir = resolve(SKILLS_DIR, "../../core/src/cli/check");
+const checkSource = [
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/cli/check.ts"), "utf8"),
+  ...readdirSync(checkDir).map((name) => readFileSync(resolve(checkDir, name), "utf8")),
+].join("\n");
 
 /**
  * The rule these skills exist to keep.
