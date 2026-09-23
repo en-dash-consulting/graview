@@ -6,7 +6,6 @@
       "from": 480,
       "until": 660,
       "day": "mon",
-      "place": "The hall",
       "id": "s-mon-open",
       "kind": "shift"
     },
@@ -16,7 +15,6 @@
       "from": 660,
       "until": 840,
       "day": "mon",
-      "place": "The kitchen",
       "id": "s-mon-lunch",
       "kind": "shift"
     },
@@ -26,7 +24,6 @@
       "from": 600,
       "until": 780,
       "day": "tue",
-      "place": "The hall",
       "id": "s-tue-craft",
       "kind": "shift"
     },
@@ -36,7 +33,6 @@
       "from": 540,
       "until": 780,
       "day": "wed",
-      "place": "The store",
       "id": "s-wed-food",
       "kind": "shift"
     },
@@ -46,7 +42,6 @@
       "from": 1020,
       "until": 1080,
       "day": "wed",
-      "place": "The hall",
       "id": "s-wed-close",
       "kind": "shift"
     },
@@ -56,7 +51,6 @@
       "from": 570,
       "until": 720,
       "day": "thu",
-      "place": "The hall",
       "id": "s-thu-baby",
       "kind": "shift"
     },
@@ -66,7 +60,6 @@
       "from": 840,
       "until": 1020,
       "day": "fri",
-      "place": "The workshop",
       "id": "s-fri-repair",
       "kind": "shift"
     },
@@ -76,7 +69,6 @@
       "from": 420,
       "until": 780,
       "day": "sat",
-      "place": "The yard",
       "id": "s-sat-market",
       "kind": "shift"
     },
@@ -86,7 +78,6 @@
       "from": 900,
       "until": 1080,
       "day": "sun",
-      "place": "The hall",
       "id": "s-sun-clean",
       "kind": "shift"
     },
@@ -96,7 +87,6 @@
       "from": 480,
       "until": 660,
       "day": "mon",
-      "place": "The hall",
       "id": "s-mon2-open",
       "kind": "shift"
     },
@@ -187,6 +177,31 @@
       "status": "pending",
       "id": "inv-lee",
       "kind": "invitation"
+    },
+    {
+      "label": "The hall",
+      "id": "loc-hall",
+      "kind": "location"
+    },
+    {
+      "label": "The kitchen",
+      "id": "loc-kitchen",
+      "kind": "location"
+    },
+    {
+      "label": "The store",
+      "id": "loc-store",
+      "kind": "location"
+    },
+    {
+      "label": "The workshop",
+      "id": "loc-workshop",
+      "kind": "location"
+    },
+    {
+      "label": "The yard",
+      "id": "loc-yard",
+      "kind": "location"
     }
   ],
   "edges": [
@@ -229,6 +244,56 @@
       "kind": "covered-by",
       "from": "s-fri-repair",
       "to": "v-ada"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-mon-open",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-mon-lunch",
+      "to": "loc-kitchen"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-tue-craft",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-wed-food",
+      "to": "loc-store"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-wed-close",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-thu-baby",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-fri-repair",
+      "to": "loc-workshop"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-sat-market",
+      "to": "loc-yard"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-sun-clean",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-mon2-open",
+      "to": "loc-hall"
     }
   ]
 }
