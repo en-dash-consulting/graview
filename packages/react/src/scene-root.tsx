@@ -26,10 +26,8 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useLayoutEffect,
   useState,
   type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import { useActivity, type ActivityMark } from "./activity.js";
@@ -40,6 +38,7 @@ import { useGraph, useGraview } from "./context.js";
 import { isDefaultView } from "./view-registry.js";
 import { Plots } from "./plots.js";
 import { Occupants } from "./occupants.js";
+import { useHeldDistrict, useSceneDrag, useWorldShift } from "./scene-hand.js";
 import { whereIsIn } from "./where-drawn.js";
 import { BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
@@ -112,7 +111,6 @@ export type SceneNode = Omit<LayoutNode, "plane"> & {
  * How far a pointer must travel before it is a drag rather than a click.
  * Below this nothing has moved and the gesture is an ordinary selection.
  */
-const DRAG_THRESHOLD = 4;
 
 export function Scene<S extends AnySchema>({
   options,
@@ -406,6 +404,9 @@ export function Scene<S extends AnySchema>({
     [],
   );
   const pinnedIds = useMemo(() => new Set(Object.keys(view.pins)), [view.pins]);
+  // A district under the hand is placed here while it is dragged, and written into the view on release.
+  const district = useHeldDistrict();
+  const held = district.held;
   /*
    * THE WORLD IS LAID OUT AT REST, AND THEN MOVED.
    *
@@ -428,16 +429,6 @@ export function Scene<S extends AnySchema>({
    * and it is the same kind of thing as a pan. Keying this on `seen` meant a
    * camera that moved by a pixel rebuilt the world exactly as a pan did.
    */
-  /*
-   * A DISTRICT UNDER THE HAND is placed here while it is being dragged, and
-   * written into the view once, when it is let go. Written on every pointer
-   * move, the view changed on every pointer move, and everything that reads
-   * it — every lens in the city — drew itself again for a district it was
-   * not about.
-   */
-  const [held, setHeld] = useState<{ readonly id: string; readonly x: number; readonly y: number } | null>(null);
-  const placing = useRef<{ readonly id: string; readonly x: number; readonly y: number } | null>(null);
-  const placeFrame = useRef(0);
   const atRest = useMemo(() => {
     const still = view.pan ? { ...view, pan: undefined } : view;
     return held ? withPin(still, held.id, { x: held.x, y: held.y }) : still;
@@ -485,8 +476,8 @@ export function Scene<S extends AnySchema>({
        * a render of every context consumer and a DOM re-measure for each
        * notch of a wheel.
        */
-      const live = liveShift.current;
-      shiftTo(panWithin(limit, { x: pan.x + live.x + dx, y: pan.y + live.y + dy }), pan);
+      const live = shift.offset();
+      shift.shiftTo(panWithin(limit, { x: pan.x + live.x + dx, y: pan.y + live.y + dy }), pan);
     } else {
       setView((current) =>
         withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + dx, y: (current.pan?.y ?? 0) + dy })),
@@ -771,259 +762,31 @@ export function Scene<S extends AnySchema>({
     return best ? { ...best, wrote, read, broke } : undefined;
   };
 
-  /*
-   * DRAGGING.
-   *
-   * Two gestures, one mechanism. Drag the ground and the camera moves; drag a
-   * card and it stays where you put it. Both are ordinary view state — a pan
-   * and a pin — so both go in the URL, both interpolate, and both come back
-   * when someone opens the link. Neither is a mode: there is nothing to turn
-   * on and nothing to turn off.
-   *
-   * The threshold is what keeps a click a click. Below it nothing has
-   * happened and the pointer-up is an ordinary selection; above it the
-   * gesture owns the pointer and the click that follows is swallowed.
-   */
-  /*
-   * THE HAND MOVES THE PICTURE; ONLY LETTING GO MOVES THE WORLD.
-   *
-   * A pan used to write `view.pan` on every pointer move. That is one state
-   * change per frame at the very top of the scene, and `view` is part of the
-   * Graview context — so every consumer of that context re-rendered, memo or
-   * no memo, and the lenses inside the drive-in boards redrew themselves
-   * sixty times a second to show the same picture in a different place.
-   * Profiled over one drag across rota's city: a fifth of the main thread in
-   * the calendar, the coverage matrix and the timeline, another fifth in
-   * `getBoundingClientRect` re-measuring what had only been translated. 169
-   * of 442 frames missed.
-   *
-   * While a hand is on it, the offset it has made lives here and is painted
-   * straight onto the layers as a transform, once per animation frame,
-   * outside React entirely. Letting go writes it into the view, exactly as
-   * before, and the transform is cleared after that has been committed so
-   * the picture never jumps back for a frame.
-   *
-   * The GPU path keeps the old road: its stage is a `layoutsubtree` canvas,
-   * and combining that with CSS transforms crashes the renderer (see the
-   * DOM/GPU note where the stage is drawn). It is not the default path and
-   * it is not the measured one.
-   */
-  const liveShift = useRef({ x: 0, y: 0 });
-  const shiftPainting = useRef(0);
-  const shiftSettling = useRef(false);
-  const worldLayers = useCallback(
-    () => [...(wrapperRef.current?.querySelectorAll<HTMLElement>("[data-graview-world]") ?? [])],
-    [],
-  );
-  const paintShift = useCallback(() => {
-    if (shiftPainting.current !== 0) return;
-    shiftPainting.current = requestAnimationFrame(() => {
-      shiftPainting.current = 0;
-      const { x, y } = liveShift.current;
-      const move = x === 0 && y === 0 ? "" : `translate3d(${x}px, ${y}px, 0)`;
-      for (const layer of worldLayers()) layer.style.transform = move;
-    });
-  }, [worldLayers]);
-  /** Where the hand has taken the picture, against where the view says it is. */
-  const shiftTo = useCallback(
-    (wanted: { x: number; y: number }, from: { x: number; y: number }) => {
-      liveShift.current = { x: wanted.x - from.x, y: wanted.y - from.y };
-      paintShift();
-    },
-    [paintShift],
-  );
-  /** Letting go: the offset becomes the view's own pan, and the transform goes. */
-  const settleShift = useCallback((): boolean => {
-    const { x, y } = liveShift.current;
-    if (x === 0 && y === 0) return false;
-    liveShift.current = { x: 0, y: 0 };
-    shiftSettling.current = true;
-    setView((current) => {
-      const pan = current.pan ?? { x: 0, y: 0 };
-      return withPan(current, { x: pan.x + x, y: pan.y + y });
-    });
-    /*
-     * AND IF THE VIEW NEVER ARRIVES, LET GO ANYWAY.
-     *
-     * The transform is cleared by the layout effect below, the moment the
-     * new pan has actually been committed. This is only for the case where
-     * it never is — a scene whose view is controlled from outside may
-     * decline the change, and then nothing would ever clear the transform
-     * and the picture would stay shoved off to one side for good.
-     *
-     * LATE ON PURPOSE. It was a `requestAnimationFrame` first, and it beat
-     * React to the commit: the transform came off on the next frame while
-     * the cards were still at their old coordinates, so every release
-     * flashed the whole city back to where the drag had started and then
-     * snapped forward again. Traced at altitude — 811 to 411 under the
-     * hand, 809 for one frame on release, 411 after. A backstop that fires
-     * in the ordinary case is not a backstop, it is a race.
-     */
-    window.setTimeout(() => {
-      if (!shiftSettling.current) return;
-      shiftSettling.current = false;
-      for (const layer of worldLayers()) layer.style.transform = "";
+  /* THE HAND: dragging the ground to look around and a district to place it — see scene-hand.ts. */
+  const shift = useWorldShift({
+    stage: wrapperRef,
+    pan: view.pan,
+    setView,
+    // The gesture ends with the world already where the hand left it, so nothing tweens there afterwards.
+    settled: () => {
       setDragging(false);
       setSteering(false);
-    }, 300);
-    return true;
-  }, [setView, worldLayers]);
-  // Wired here, where `settleShift` exists; see the ref's own note above.
-  settleLive.current = settleShift;
-  /*
-   * CLEARED ONLY ONCE THE WORLD HAS ACTUALLY MOVED. Clearing the transform
-   * in the same breath as the state change put the picture back where it
-   * started for one frame, because React had not committed the new pan yet.
-   */
-  useLayoutEffect(() => {
-    if (!shiftSettling.current) return;
-    shiftSettling.current = false;
-    for (const layer of worldLayers()) layer.style.transform = "";
-    // The gesture ends HERE, with the world already where the hand left it,
-    // so nothing tweens its way there afterwards — by drag or by wheel.
-    setDragging(false);
-    setSteering(false);
-  }, [view.pan, worldLayers]);
-
-  const swallow = useRef(false);
-  const gesture = useRef<{
-    kind: "pan" | "card";
-    id?: string;
-    fromX: number;
-    fromY: number;
-    baseX: number;
-    baseY: number;
-    moved: boolean;
-  } | null>(null);
-
-  const onGroundDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    // Only the ground itself. A card, a chip or anything a view drew keeps
-    // whatever meaning it already had.
-    if ((event.target as HTMLElement).closest("[data-graview-view]")) return;
-    const pan = view.pan ?? { x: 0, y: 0 };
-    gesture.current = {
-      kind: "pan",
-      fromX: event.clientX,
-      fromY: event.clientY,
-      baseX: pan.x,
-      baseY: pan.y,
-      moved: false,
-    };
-  };
-
-  const onCardDown = (node: SceneNode, event: ReactPointerEvent<HTMLElement>) => {
-    if (event.button !== 0) return;
-    /*
-     * A PICTURE IS NOT A THING YOU REARRANGE — you look around it.
-     *
-     * Choosing a lens from altitude puts a billboard in the middle of the
-     * window and flies the camera to it, and a drag that starts on it was
-     * a drag of the card: the biggest thing on screen, and the one most
-     * likely to be under the hand, did not pan. The picture reads as the
-     * view you are in, so dragging it moves the view; a district's own
-     * card keeps its drag, because placing a district by hand is a real
-     * gesture with a dashed kerb to show for it.
-     */
-    if (node.screenOf !== undefined) {
-      // Unless it started on the rail, which is the one part of a billboard
-      // that means "move the board" rather than "look around".
-      if (!(event.target as HTMLElement).closest("[data-graview-grip]")) {
-        const pan = view.pan ?? { x: 0, y: 0 };
-        gesture.current = { kind: "pan", fromX: event.clientX, fromY: event.clientY, baseX: pan.x, baseY: pan.y, moved: false };
-        return;
-      }
-    }
-    gesture.current = {
-      kind: "card",
-      id: node.id,
-      fromX: event.clientX,
-      fromY: event.clientY,
-      // Unpanned, because that is the space a pin is stored in.
-      baseX: node.x - panned.x,
-      baseY: node.y - panned.y,
-      moved: false,
-    };
-  };
-
-  const onDragMove = (event: ReactPointerEvent<HTMLElement>) => {
-    const drag = gesture.current;
-    if (!drag) return;
-    const dx = event.clientX - drag.fromX;
-    const dy = event.clientY - drag.fromY;
-    if (!drag.moved) {
-      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
-      drag.moved = true;
-      setDragging(true);
-      /*
-       * Capture only once it IS a drag.
-       *
-       * Taken on pointer-down it broke every click on an inner target:
-       * pointer capture redirects the compatibility mouse events too, so the
-       * click and double-click that followed were reported against the host
-       * rather than the chip, `data-graview-pick` stopped resolving, and
-       * double-clicking a task opened the card instead of travelling into the
-       * task. Nothing had moved and the gesture had already changed meaning.
-       */
-      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-    }
-    if (drag.kind === "pan") {
-      // A LITTLE way over a picture that fits, and as far as the city
-      // reaches when it is bigger than the window: every district can be
-      // reached, none can be dropped off the edge.
-      const limit = cameraLimit(result);
-      const wanted = panWithin(limit, { x: drag.baseX + dx, y: drag.baseY + dy });
-      if (useDom) shiftTo(wanted, view.pan ?? { x: 0, y: 0 });
-      else setView((current) => withPan(current, wanted));
-    } else if (drag.id) {
-      // At most one placement per frame: pointer events arrive faster than frames are drawn.
-      placing.current = { id: drag.id, x: drag.baseX + dx, y: drag.baseY + dy };
-      if (placeFrame.current === 0) {
-        placeFrame.current = requestAnimationFrame(() => {
-          placeFrame.current = 0;
-          setHeld(placing.current);
-        });
-      }
-    }
-  };
-
-  const onDragUp = () => {
-    settleShift();
-    // The district that was under the hand goes into the view, once, where the hand last put it.
-    if (placeFrame.current !== 0) cancelAnimationFrame(placeFrame.current);
-    placeFrame.current = 0;
-    const put = placing.current;
-    placing.current = null;
-    if (put) {
-      setView((current) => withPin(current, put.id, { x: put.x, y: put.y }));
-      setHeld(null);
-    }
-    if (gesture.current?.moved) {
-      // Swallow the click this pointer-up is about to produce, so a drag that
-      // ends on a card does not also select it.
-      swallow.current = true;
-      setTimeout(() => (swallow.current = false), 0);
-      // And say a hand moved something, so the bar can offer to put it back.
-      noteMoved();
-    }
-    gesture.current = null;
-    /*
-     * THE COMMIT A HAND MADE IS NOT A TRANSITION EITHER.
-     *
-     * Letting go used to end the drag on the spot, which re-enabled the
-     * tween in the same breath as the pan landed — so the whole city flew
-     * from where the drag had started to where it had ended, over half a
-     * second, after the hand had already put it there. Traced at altitude:
-     * 811 under the hand, 411 at the end of the drag, and then 808 again
-     * for the length of a tween.
-     *
-     * So the drag stays open until the pan it made has been drawn. The
-     * layout effect that clears the transform closes it, in the same commit
-     * that moves the cards.
-     */
-    if (shiftSettling.current) return;
-    setDragging(false);
-  };
+    },
+  });
+  // Wired here, where the shift exists; see the ref's own note above.
+  settleLive.current = shift.settle;
+  const { onGroundDown, onCardDown, onDragMove, onDragUp, swallow } = useSceneDrag({
+    view,
+    panned,
+    limit: () => cameraLimit(result),
+    panWithin,
+    moveByTransform: useDom,
+    setView,
+    setDragging,
+    noteMoved,
+    shift,
+    district,
+  });
 
   /*
    * A CROWD drops to glyphs. A summary panel needs room, and a raised
