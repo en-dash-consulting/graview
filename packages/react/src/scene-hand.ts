@@ -1,5 +1,5 @@
-import { withPan, withPin, type ViewState } from "@graview/layout";
-import { useCallback, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import { withOverview, withPan, withPin, type ViewState } from "@graview/layout";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import type { SceneNode } from "./scene-root.js";
 
 /*
@@ -281,4 +281,101 @@ export function useSceneDrag({
   };
 
   return { onGroundDown, onCardDown, onDragMove, onDragUp, swallow };
+}
+
+/**
+ * THE WHEEL AND THE PINCH. `zoomAbout` and `panBy` are filled in by the
+ * scene once it knows its city; the listeners call through them, so they
+ * are attached once rather than on every zoom.
+ */
+export function useWheelAndPinch({
+  stage,
+  view,
+  setView,
+}: {
+  readonly stage: RefObject<HTMLElement | null>;
+  readonly view: ViewState;
+  readonly setView: (next: ViewState) => void;
+}) {
+  /*
+   * PINCH IS ALTITUDE. The camera has one axis, so the universal zoom
+   * gesture maps to it: fingers together rises to the Graview, fingers
+   * apart descends — one discrete step per gesture, with a cooldown so a
+   * long pinch does not bounce. Chromium and Firefox hand a trackpad
+   * pinch over as ctrl+wheel; Safari speaks GestureEvent. Both are
+   * claimed here so the browser's own page zoom never fires on the scene.
+   */
+  const altitude = useRef({ view, charge: 0, coolUntil: 0, lastScale: 1 });
+  altitude.current.view = view;
+  /*
+   * FROM ALTITUDE, PINCH AND CTRL+WHEEL ZOOM THE CITY — continuously, about
+   * the pointer, the way every map does — and the plain wheel pans the
+   * ground. Stepping the altitude once per gesture with a cooldown read as
+   * a zoom that sticks. From the ground, fingers together still rise: the
+   * way up is a gesture, the way down is the picture's own control.
+   */
+  const zoomAbout = useRef<(factor: number, clientX?: number, clientY?: number) => void>(() => {});
+  const panBy = useRef<(dx: number, dy: number) => void>(() => {});
+  useEffect(() => {
+    const element = stage.current;
+    if (!element) return;
+    const step = (rising: boolean, stamp: number) => {
+      const held = altitude.current;
+      if (stamp < held.coolUntil) return;
+      const up = held.view.overview ?? false;
+      if (rising === up) return;
+      held.coolUntil = stamp + 600;
+      held.charge = 0;
+      setView(withOverview(held.view, rising));
+    };
+    const onWheel = (event: WheelEvent) => {
+      const held = altitude.current;
+      const up = held.view.overview ?? false;
+      if (event.ctrlKey) {
+        event.preventDefault();
+        if (!up) {
+          held.charge += event.deltaY;
+          if (Math.abs(held.charge) < 60) return;
+          if (held.charge > 0) step(true, performance.now());
+          else held.charge = 0;
+          return;
+        }
+        // A mouse notch (a hundred) is a step and a half; a trackpad's few units are a nudge.
+        zoomAbout.current(Math.exp(-event.deltaY * 0.004), event.clientX, event.clientY);
+        return;
+      }
+      if (!up) return;
+      // Over the ground only: a lens, a scroll region or a pane keeps its own wheel.
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("[data-graview-view], .graview-scroll, [data-graview-overlay], .graview-zoom")) return;
+      event.preventDefault();
+      panBy.current(-event.deltaX, -event.deltaY);
+    };
+    const onGestureStart = (event: Event) => {
+      event.preventDefault();
+      altitude.current.lastScale = 1;
+    };
+    const onGesture = (event: Event) => {
+      event.preventDefault();
+      const held = altitude.current;
+      const scale = (event as Event & { scale?: number; clientX?: number; clientY?: number }).scale ?? 1;
+      if (!(held.view.overview ?? false)) {
+        if (scale < 0.72) step(true, performance.now());
+        return;
+      }
+      const ratio = scale / (held.lastScale || 1);
+      held.lastScale = scale;
+      const at = event as Event & { clientX?: number; clientY?: number };
+      zoomAbout.current(ratio, at.clientX, at.clientY);
+    };
+    element.addEventListener("wheel", onWheel, { passive: false });
+    element.addEventListener("gesturestart", onGestureStart);
+    element.addEventListener("gesturechange", onGesture);
+    return () => {
+      element.removeEventListener("wheel", onWheel);
+      element.removeEventListener("gesturestart", onGestureStart);
+      element.removeEventListener("gesturechange", onGesture);
+    };
+  }, [setView, stage]);
+  return { zoomAbout, panBy };
 }
