@@ -59,7 +59,6 @@ export function useViolations<S extends AnySchema>() {
   const nodes = useGraph<S>();
   return useMemo(
     () => store.violations(),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, nodes],
   );
 }
@@ -111,7 +110,6 @@ export function useImplicated(): readonly string[] {
       }
     }
     return [...reached];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, selection, nodes]);
 }
 
@@ -155,7 +153,6 @@ export function useAffordances<S extends AnySchema>(
       ...(providers ? { providers } : {}),
       ...rest,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, selection, options, nodes, principal, providers]);
 }
 
@@ -252,7 +249,6 @@ export function useUrlSync(): void {
       setView(initial);
     }
     // Once, on mount: later changes are this hook's own writes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -495,7 +491,6 @@ export function useEditableFields<S extends AnySchema>(
   const nodes = useGraph<S>();
   const fields = useMemo(
     () => (id === null ? [] : editableFields(store, id)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, id, nodes],
   );
   const commit = useCallback(

@@ -338,7 +338,7 @@ function Slot({ shift, context }: { shift: ShiftNode; context: Ctx }) {
 
 function KindList({ context, kind }: { context: Ctx; kind: string }) {
   const { store, principal } = context;
-  useStoreTick(store);
+  const tick = useStoreTick(store);
   const [params, setParams] = useSearchParams();
   const flagged = flaggedIds(store.violations(context.invariantContext));
   const facts = useMemo(
@@ -347,8 +347,7 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
         ...(principal ? { principal } : {}),
         ...(context.invariantContext ? { context: context.invariantContext } : {}),
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, kind, principal, context.invariantContext, store.log.all().length],
+    [store, kind, principal, context.invariantContext, tick],
   );
 
   const group = params.get("group") ?? (kind === "shift" ? "place" : "none");
@@ -671,13 +670,13 @@ function InPlace({
   readonly plain?: boolean;
 }) {
   const { store, principal } = context;
+  const tick = useStoreTick(store);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [failed, setFailed] = useState<string | null>(null);
   const editable: EditableField | undefined = useMemo(
     () => editableFields(store, nodeId).find((candidate) => candidate.field === field),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, nodeId, field, store.log.all().length],
+    [store, nodeId, field, tick],
   );
   if (!editable) return <span className="ro-quiet">{value || "—"}</span>;
   const call = (next: unknown) => ({

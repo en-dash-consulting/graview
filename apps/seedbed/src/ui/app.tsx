@@ -31,7 +31,7 @@ export interface SeedbedAppProps {
   readonly initialView?: ViewState;
   readonly syncUrl?: boolean;
   readonly renderer?: "gpu" | "dom" | "auto";
-  readonly attachRenderer?: SceneProps<S>["attachRenderer"];
+  readonly attachRenderer?: SceneProps["attachRenderer"];
   readonly initialScheme?: Scheme;
   readonly onSchemeChange?: (scheme: Scheme) => void;
   /** Whether the store behind this app is remembered in the browser (see main.tsx). */

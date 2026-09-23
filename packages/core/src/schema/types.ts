@@ -48,7 +48,6 @@ export type EdgeMap = Readonly<Record<string, EdgeDeclaration>>;
  * the edge-target extraction below fall back to its constraint and silently
  * defeat the build-time check.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
 export type EmptyEdgeMap = {};
 
 /** A field role lets a lens ask for "the start time" without knowing the field name. */

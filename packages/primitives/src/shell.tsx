@@ -51,7 +51,7 @@ export interface ShellProps<S extends AnySchema> {
   /** Whether the view rides the URL. */
   readonly syncUrl?: boolean;
   readonly renderer?: "gpu" | "dom" | "auto";
-  readonly attachRenderer?: SceneProps<S>["attachRenderer"];
+  readonly attachRenderer?: SceneProps["attachRenderer"];
   readonly scheme: Scheme;
   readonly onScheme: (scheme: Scheme) => void;
   /**

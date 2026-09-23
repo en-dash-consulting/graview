@@ -122,7 +122,6 @@ function RouteSubject<S extends AnySchema>({ context }: { readonly context: Page
     setSelection((current) =>
       current.length === chosen.length && current.every((one, at) => one === chosen[at]) ? current : chosen,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
   void labelOf;
   return null;

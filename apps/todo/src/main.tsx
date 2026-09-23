@@ -5,7 +5,7 @@ import { PagesApp } from "@graview/pages";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
-import { openingSeat, today, TodoApp } from "./ui/app.js";
+import { today, TodoApp } from "./ui/app.js";
 import { thingsDesign } from "./ui/design.js";
 import { todoViews } from "./ui/views.js";
 

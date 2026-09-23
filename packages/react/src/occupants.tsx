@@ -1,32 +1,26 @@
-import { BLOCK, hueFor, toIso } from "@graview/core";
-import { kindCardId, type InterpolatedLayout } from "@graview/layout";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
-import { useGraview, useScenePointer, type DrawnBox } from "./context.js";
-import { pickedFrom } from "./picking.js";
+import type { ReactElement } from "react";
+import { useGraview, type DrawnBox } from "./context.js";
 import { placeOthers } from "./presence.js";
 import type { RobotState } from "./robot.js";
 
 /**
- * THE OCCUPANTS: the bodies in the city. One robot per agent participant,
- * drawn in an overlay OVER the stage on both renderer paths, positioned
- * from the frame being drawn — so it rides the tween and the pan for free
- * and never enters `layout()`. Where it stands is the fold's business
- * (`robot.ts`); this only draws what the fold says, where `whereIs` says
- * that is.
+ * THE OCCUPANTS: the other bodies in the city. People and their agents,
+ * drawn in an overlay OVER the stage on both renderer paths at the boxes
+ * `whereIs` gives for the frame being drawn — so they ride the tween and
+ * the pan for free and never enter `layout()`. Movement is a CSS
+ * transition on transform: a quiet city runs nothing.
  *
- * Movement is a CSS transition on transform. A quiet city runs nothing:
- * no frame loop, no pointer listener — the pointer store attaches one
- * only while a robot is following.
+ * This tab's own seat is not here. It used to stand on a pad, walk to what
+ * it wrote and follow the pointer — a thing in the middle of the picture
+ * that moved on its own, and nothing at all inside a full-screen lens. The
+ * companion on the frame says who it is and what it is doing, at every
+ * height; what it wrote is marked on the things themselves. Somebody
+ * else's agent keeps its body: that is how you see them at work.
  */
 
 export interface OccupantsProps {
-  readonly frame: InterpolatedLayout;
   readonly width: number;
-  readonly height: number;
   readonly whereIs: (id: string) => DrawnBox | null;
-  readonly stageRef: { readonly current: HTMLElement | null };
-  /** The pan baked into the frame, so the dock can be placed on the lattice. */
-  readonly pan: { readonly x: number; readonly y: number };
 }
 
 /**
@@ -100,55 +94,15 @@ export function PersonFigure({ hue }: { readonly hue: number }): ReactElement {
   );
 }
 
-/** A point on the ground for the pad: the street corner of the origin block. */
-function padAt(frame: InterpolatedLayout, pan: { x: number; y: number }): { x: number; y: number } | null {
-  if (!frame.city) return null;
-  const cell = toIso(BLOCK - 1 + 0.5, BLOCK - 1 + 0.5, frame.city.cell);
-  return { x: frame.city.originX + cell.x + pan.x, y: frame.city.originY + cell.y + pan.y };
-}
-
-const footOf = (box: DrawnBox): { x: number; y: number } => ({ x: box.x + box.width / 2, y: box.y + box.height - 4 });
-
-/*
- * A BODY STANDS WHERE IT CAN BE SEEN WHOLE. The figure is thirty pixels
- * above its foot and its name a dozen below, so a foot at the very edge of
- * the stage — a district in the last row of the stack, whose own foot IS
- * the stage's — put the name eight pixels past an edge that clips, which
- * the survey reported as the cut it was. A foot that is on the ground at
- * all is drawn far enough in for the whole body; one that is off the ground
- * is left where it is, so the edge marker still says which way it went.
+/**
+ * THE OTHERS, on this map: people as figures at the plots they are looking
+ * at, their agents as robots, and the ones elsewhere as a mark at the edge.
+ * Placed with this frame's own `whereIs`, so each viewer draws the same
+ * people at the same plots in its own pixels.
  */
-/** How close a hand has to come for a following robot to stand still. */
-const CATCH_REACH = 34;
-const BODY_ABOVE = 38;
-const NAME_BELOW = 16;
-const BODY_HALF = 18;
-function onGround(point: { x: number; y: number }, width: number, height: number): { x: number; y: number } {
-  const on = point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height;
-  if (!on || width < BODY_HALF * 2 || height < BODY_ABOVE + NAME_BELOW) return point;
-  return {
-    x: Math.min(Math.max(point.x, BODY_HALF), width - BODY_HALF),
-    y: Math.min(Math.max(point.y, BODY_ABOVE), height - NAME_BELOW),
-  };
-}
-
-/*
- * ONE COMPONENT NOW. There used to be two, so the pointer store was
- * subscribed to only while a robot was following — and nothing follows any
- * more: the seat lives on the frame, in the companion, and its subject is
- * read there.
- */
-export function Occupants(props: OccupantsProps): ReactElement | null {
-  return <OccupantsBody {...props} />;
-}
-
-function OccupantsBody({ frame, width, height, whereIs, stageRef, pan }: OccupantsProps): ReactElement | null {
-  const { robots, noteSeat, principal, store, administered, who, following, follow } = useGraview();
-  /*
-   * THE OTHERS, on this map. Placed here with this frame's own whereIs, so
-   * each viewer draws the same people at the same plots in its own pixels.
-   */
-  const others = placeOthers([...who.values()], whereIs, width, height);
+export function Occupants({ width, whereIs }: OccupantsProps): ReactElement | null {
+  const { who, following, follow } = useGraview();
+  const others = placeOthers([...who.values()], whereIs, width);
 
   if (others.length === 0) return null;
 
@@ -245,35 +199,6 @@ function OccupantsBody({ frame, width, height, whereIs, stageRef, pan }: Occupan
           </div>
         );
       })}
-      {/*
-        * THE SEAT HAS NO BODY IN THE PICTURE ANY MORE.
-        *
-        * It stood on a pad when idle, walked to what it wrote, and followed
-        * the pointer when pressed, with the chat anchored beside it as a
-        * bubble — a thing in the middle of the picture that moved on its
-        * own, and nothing at all inside a full-screen lens, where there is
-        * no ground to walk on. The companion on the frame says who the seat
-        * is, what it is about and what it is doing, at every height and in
-        * every mode. What it WROTE is marked on the things themselves.
-        *
-        * Other people's agents keep their figures: a body in the picture is
-        * how you see somebody else at work, which is the whole point of
-        * presence.
-        */}
     </div>
   );
-}
-
-/** The seat's author, rebuilt from the participant key the fold keeps. */
-function authorOf(robot: RobotState): { kind: "agent"; id: string; session: string } {
-  const [, id = "", session = ""] = robot.participant.split(":");
-  return { kind: "agent", id, session };
-}
-
-/** The pick target under a scene point, read from the DOM the way a click would. */
-function overAt(stage: HTMLElement | null, point: { x: number; y: number }): string | null {
-  if (!stage || typeof document === "undefined") return null;
-  const rect = stage.getBoundingClientRect();
-  const el = document.elementFromPoint(rect.left + point.x, rect.top + point.y);
-  return pickedFrom(el);
 }

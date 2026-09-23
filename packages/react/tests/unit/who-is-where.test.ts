@@ -34,7 +34,7 @@ describe("who is where", () => {
   });
 
   it("stands a person at the plot their stop focuses, in a row with the others there", () => {
-    const placed = placeOthers([here("human:nora:a", "#focus=aggregate%3Atask"), here("human:sam:b", "#focus=aggregate%3Atask")], whereIs, 800, 600);
+    const placed = placeOthers([here("human:nora:a", "#focus=aggregate%3Atask"), here("human:sam:b", "#focus=aggregate%3Atask")], whereIs, 800);
     const people = placed.filter((one) => one.kind === "person");
     expect(people.map((one) => one.kind === "person" && one.presence.name)).toEqual(["nora", "sam"]);
     expect(people.every((one) => one.kind === "person" && one.at === "aggregate:task" && !one.audience)).toBe(true);
@@ -45,25 +45,25 @@ describe("who is where", () => {
   });
 
   it("puts somebody watching a showing in the audience row in front of that screen", () => {
-    const [one] = placeOthers([here("human:nora:a", "#focus=aggregate%3Atask&in.view=week")], whereIs, 800, 600);
+    const [one] = placeOthers([here("human:nora:a", "#focus=aggregate%3Atask&in.view=week")], whereIs, 800);
     expect(one).toMatchObject({ kind: "person", at: "screen:task", audience: true });
     expect(one!.kind === "person" && one.point.y).toBe(drawn["screen:task"]!.y + 24);
   });
 
   it("draws a row and then a number: past the row, the rest are +n", () => {
     const many = Array.from({ length: AUDIENCE_ROW + 2 }, (_, i) => here(`human:p${i}:t`, "#focus=aggregate%3Atask&in.view=week"));
-    const placed = placeOthers(many, whereIs, 800, 600);
+    const placed = placeOthers(many, whereIs, 800);
     expect(placed.filter((one) => one.kind === "person")).toHaveLength(AUDIENCE_ROW);
     expect(placed.find((one) => one.kind === "count")).toMatchObject({ n: 2, at: "screen:task" });
   });
 
   it("counts an anonymous viewer at their plot rather than drawing a figure", () => {
-    const placed = placeOthers([here("human::x", "#focus=aggregate%3Atask", { name: undefined })], whereIs, 800, 600);
+    const placed = placeOthers([here("human::x", "#focus=aggregate%3Atask", { name: undefined })], whereIs, 800);
     expect(placed).toEqual([expect.objectContaining({ kind: "count", n: 1, at: "aggregate:task" })]);
   });
 
   it("names somebody whose stop is nowhere on this map at the edge", () => {
-    const placed = placeOthers([here("human:nora:a", "#focus=elsewhere")], whereIs, 800, 600);
+    const placed = placeOthers([here("human:nora:a", "#focus=elsewhere")], whereIs, 800);
     expect(placed).toEqual([expect.objectContaining({ kind: "edge" })]);
     expect(placed[0]!.kind === "edge" && placed[0].point.x).toBe(792);
   });
@@ -73,7 +73,6 @@ describe("who is where", () => {
       [here("human:nora:a", "#focus=aggregate%3Atask", { robot: { at: "t1", mode: "writing" }, over: "t1" })],
       whereIs,
       800,
-      600,
     );
     expect(placed.map((one) => one.kind)).toEqual(["person", "robot", "over"]);
     expect(placed[1]).toMatchObject({ kind: "robot", mode: "writing" });
@@ -81,7 +80,7 @@ describe("who is where", () => {
   });
 
   it("leaves a docked robot at home: only a body at work is worth drawing twice", () => {
-    const placed = placeOthers([here("human:nora:a", "#focus=t1", { robot: { at: null, mode: "docked" } })], whereIs, 800, 600);
+    const placed = placeOthers([here("human:nora:a", "#focus=t1", { robot: { at: null, mode: "docked" } })], whereIs, 800);
     expect(placed.map((one) => one.kind)).toEqual(["person"]);
   });
 });

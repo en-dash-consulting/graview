@@ -152,7 +152,6 @@ export function AnswerArgs({
     const term = among.trim().toLowerCase();
     if (term === "") return choices;
     return choices.filter((choice) => said(store, shape, choice).toLowerCase().includes(term));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [choices, among, store, shape]);
   /*
    * AN ARGUMENT THAT TAKES A LIST IS ANSWERED WITH A LIST.
@@ -585,7 +584,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
   const about = placement === "rail" && selection.length === 0 && subject.id ? [subject.id] : undefined;
   const deriveOptions = useMemo(
     () => ({ pins, ...(focus === undefined ? {} : { focus }), ...(about ? { about } : {}) }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `about` is a fresh array each render; the one id in it is what changes.
     [pins, focus, about?.[0]],
   );
   // Which acts the app itself pinned — the star on those demotes rather
@@ -1770,7 +1769,6 @@ export function useRecentChanges(limit = 4): readonly Change[] {
           touched: [...new Set(batch.ops.flatMap((op) => op.writes))],
           batch: batch.id,
         })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, nodes, limit],
   );
 }
@@ -1798,7 +1796,6 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
   const [refused, setRefused] = useState<string | null>(null);
   const check = useMemo(
     () => store.canUndo(batch),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, batch, nodes],
   );
 

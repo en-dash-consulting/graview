@@ -14,7 +14,6 @@ import {
   dependentsOf,
   deriveAffordances,
   firstJsonObject,
-  planFrom,
   validateProposals,
   without,
   type Affordance,
@@ -26,7 +25,7 @@ import {
 } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
 import { AnswerArgs } from "./workbench/index.js";
-import { MUTED_TEXT, Panel, VISUALLY_HIDDEN } from "./primitives/index.js";
+import { MUTED_TEXT, Panel } from "./primitives/index.js";
 
 /**
  * THE SURFACES A BLANK GRAPH NEEDS, derived like every other surface.
@@ -138,7 +137,6 @@ function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginPr
     const found: Record<string, number> = {};
     for (const entry of chain.order) found[entry.kind] = store.graph.nodesOfKind(entry.kind as never).length;
     return found;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chain, store, nodes]);
 
   /*
@@ -156,7 +154,6 @@ function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginPr
       });
     }
     return found;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, principal, chain, counts, nodes]);
 
   const empty = chain.order.filter((entry) => (counts[entry.kind] ?? 0) === 0);
@@ -213,7 +210,6 @@ function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginPr
   );
 }
 function BeginHere({ kind, derived }: { readonly kind: string; readonly derived: AffordanceSet }) {
-  const { store } = useGraview();
   const { affordances, withheld } = derived;
   const { apply } = useApplyAffordance();
   const [asking, setAsking] = useState<Affordance | null>(null);
@@ -826,7 +822,7 @@ export function Intake({
   );
 }
 
-export interface DoorProps<S extends AnySchema> {
+export interface DoorProps {
   /** The declared provider this door is for. */
   readonly provider: string;
   /** What to ask it, built by the app from its own graph. */
@@ -845,7 +841,7 @@ export interface DoorProps<S extends AnySchema> {
  * the machine under the dev server, offered only when something is actually
  * answering there. A door the provider did not declare is not drawn.
  */
-export function Door<S extends AnySchema>({ provider, prompt, photos = [], onProposals }: DoorProps<S>) {
+export function Door<S extends AnySchema>({ provider, prompt, photos = [], onProposals }: DoorProps) {
   const { store } = useGraview<S>();
   const declared = store.intelligence.find((candidate) => candidate.name === provider);
   const reach = declared?.reach ?? [];

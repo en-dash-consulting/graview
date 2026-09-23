@@ -56,7 +56,6 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
     return [...found.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([kind, entry]) => ({ kind, count: entry.count, ends: [...entry.ends] }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, nodes]);
 
   // A key that disappears mid-hover must not leave its question standing.

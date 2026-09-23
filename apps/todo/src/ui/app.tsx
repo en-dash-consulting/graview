@@ -3,7 +3,6 @@ import {
   GraviewProvider,
   useGraph,
   useGraview,
-  useNavigation,
   type Scheme,
   type SceneProps,
 } from "@graview/react";
@@ -88,7 +87,7 @@ export interface TodoAppProps {
   readonly initialView?: ViewState;
   readonly syncUrl?: boolean;
   readonly renderer?: "gpu" | "dom" | "auto";
-  readonly attachRenderer?: SceneProps<S>["attachRenderer"];
+  readonly attachRenderer?: SceneProps["attachRenderer"];
   readonly initialScheme?: Scheme;
   readonly onSchemeChange?: (scheme: Scheme) => void;
   /** Whether the store behind this app is remembered in the browser (see main.tsx). */
@@ -174,7 +173,7 @@ function TodoShell({
   renderer: "gpu" | "dom" | "auto";
   scheme: Scheme;
   onScheme: (scheme: Scheme) => void;
-  attachRenderer?: SceneProps<S>["attachRenderer"];
+  attachRenderer?: SceneProps["attachRenderer"];
 }) {
   const place = usePlace();
   return (
@@ -225,7 +224,6 @@ function TidyButton({ onCall }: { onCall: (call: ToolCall) => void }) {
           const task = node as unknown as { kind: string; done?: boolean; due?: string };
           return task.kind === "task" && !task.done && task.due !== undefined && task.due < today();
         }).length,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, nodes],
   );
 

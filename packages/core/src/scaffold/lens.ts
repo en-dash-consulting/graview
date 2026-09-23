@@ -73,7 +73,6 @@ function lensTsx(
   roles: readonly string[],
   binds: "fields" | "entities",
 ): string {
-  const first = roles[0] ?? "rows";
   return `import { Chip, Panel } from "@graview/primitives";
 import { useGraview, type ViewProps } from "@graview/react";
 import type { AnySchema } from "@graview/core";

@@ -116,7 +116,7 @@ export function formField(name: string, schema: unknown): FormField {
           name,
           optional,
           tag,
-          options: options.map((option, index) => ({
+          options: options.map((_, index) => ({
             value: literalValue(shapes[index]?.[tag]) ?? "",
             fields: Object.entries(shapes[index] ?? {})
               .filter(([key]) => key !== tag)

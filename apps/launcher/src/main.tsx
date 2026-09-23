@@ -141,7 +141,6 @@ function useShowing(): string | null {
   return useMemo(() => {
     const desk = store.graph.nodesOfKind("desk")[0];
     return desk ? (store.graph.out(desk.id, "showing")[0]?.id ?? null) : null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, nodes]);
 }
 

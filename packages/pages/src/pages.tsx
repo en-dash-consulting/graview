@@ -1,7 +1,6 @@
 import { KindFigure, LadderSetting, RelationMark, useMarkup } from "@graview/primitives";
 import {
   describeNode,
-  hueFor,
   humaniseField,
   isCurrent,
   labelOf,
@@ -811,7 +810,6 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
       </PageMain>
     );
   }
-  const definition = store.schema.tryDefinition(place.kind);
   const plural = pluralOf(store, place.kind);
   /** How much this picture is over, in the plurals the schema declares. */
   const held = membersOf(store, place.kind).length;

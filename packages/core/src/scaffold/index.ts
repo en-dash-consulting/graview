@@ -224,7 +224,7 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
 
   const files: ScaffoldFile[] = [
     { path: "package.json", contents: packageJson(ids, workspace) },
-    { path: "tsconfig.json", contents: tsconfig(ids, workspace) },
+    { path: "tsconfig.json", contents: tsconfig(workspace) },
     { path: "tsconfig.build.json", contents: tsconfigBuild() },
     { path: "vite.config.ts", contents: viteConfig(ids) },
     { path: "index.html", contents: indexHtml(ids) },
@@ -500,7 +500,7 @@ function packageJson(ids: Ids, workspace: boolean): string {
   return `${JSON.stringify(manifest, null, 2)}\n`;
 }
 
-function tsconfig(ids: Ids, workspace: boolean): string {
+function tsconfig(workspace: boolean): string {
   /*
    * NOTHING POINTS INTO ANOTHER REPOSITORY'S PACKAGE MANAGER.
    *

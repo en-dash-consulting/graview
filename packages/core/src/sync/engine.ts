@@ -5,7 +5,6 @@ import {
   EMPTY_SYNC_STATE,
   systemAuthor,
   type RemoteAck,
-  type RemoteChange,
   type RemoteLink,
   type RemoteSystem,
   type RemoteWrite,

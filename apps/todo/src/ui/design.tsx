@@ -16,7 +16,7 @@ import {
 } from "@graview/pages";
 import { editableFields, type Affordance, type AffordanceSet, type EditableField } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import type { TodoSchema } from "../domain/schema.js";
 import { today } from "./when.js";
 
@@ -418,14 +418,13 @@ function Home({ context }: { context: Ctx }) {
  */
 function KindList({ context, kind }: { context: Ctx; kind: string }) {
   const { store, principal } = context;
-  useStoreTick(store);
+  const tick = useStoreTick(store);
   const [params, setParams] = useSearchParams();
   const now = (context.invariantContext?.["today"] as string | undefined) ?? today();
   const flagged = flaggedIds(store.violations(context.invariantContext));
   const facts = useMemo(
     () => kindFacts(store, kind, { ...(principal ? { principal } : {}), ...(context.invariantContext ? { context: context.invariantContext } : {}) }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, kind, principal, context.invariantContext, store.log.all().length],
+    [store, kind, principal, context.invariantContext, tick],
   );
 
   const group = params.get("group") ?? (kind === "task" ? "list" : "none");
@@ -841,13 +840,13 @@ function InPlace({
   readonly plain?: boolean;
 }) {
   const { store, principal } = context;
+  const tick = useStoreTick(store);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [failed, setFailed] = useState<string | null>(null);
   const editable: EditableField | undefined = useMemo(
     () => editableFields(store, nodeId).find((candidate) => candidate.field === field),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, nodeId, field, store.log.all().length],
+    [store, nodeId, field, tick],
   );
   if (!editable) return <span className="th-quiet">{value || "—"}</span>;
   const call = (next: unknown) => ({

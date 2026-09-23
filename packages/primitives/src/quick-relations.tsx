@@ -80,7 +80,6 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
       }))
       .sort((a, b) => b.reach - a.reach)
       .slice(0, MOST_KINDS);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, nodes, view.focusId]);
 
   /*

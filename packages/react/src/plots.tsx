@@ -100,7 +100,7 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
       }),
     );
     return { roads, villages, corners: new Map(tiles.map((node) => [node.id, tileCorners(node.plot!, at0, none)] as const)) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `signature` stands for the tiles and the cell: the ground is redrawn only when it moves.
   }, [signature, store.schema]);
   if (!city || !still) return null;
   const chosen = new Set(selection);

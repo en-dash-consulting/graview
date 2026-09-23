@@ -123,7 +123,6 @@ export function placeOthers(
   who: readonly Presence[],
   whereIs: (id: string) => DrawnBox | null,
   width: number,
-  height: number,
 ): Placed[] {
   const placed: Placed[] = [];
   const rows = new Map<string, Presence[]>();
@@ -233,7 +232,6 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
       ...(robot ? { robot: { at: robot.at, mode: robot.mode } } : {}),
       at: new Date().toISOString(),
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel, shareWhere, shareOver, participant, name, principal.id, view, over, robot?.at, robot?.mode]);
 
   /* Say it: on change, and on the heartbeat while it stands. */

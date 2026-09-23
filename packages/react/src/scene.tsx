@@ -28,7 +28,6 @@ import {
 import {
   CONNECTOR_DASH,
   connectorStroke,
-  connectorStyle,
   connectorWidth,
   mixStyles,
   PLANE_STYLES,
@@ -64,7 +63,7 @@ import { clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolyli
 import { channelRoute } from "./channels.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 
-export interface SceneProps<S extends AnySchema> {
+export interface SceneProps {
   readonly options?: LayoutOptions;
   /**
    * `gpu` composites through @graview/render; `dom` positions views with CSS
@@ -140,7 +139,7 @@ export function Scene<S extends AnySchema>({
   style,
   animate = true,
   children,
-}: SceneProps<S>) {
+}: SceneProps) {
   const {
     store,
     scheme,
@@ -363,7 +362,6 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [options, size, unit, store, views, hiddenKinds, judged, cityZoom, screenHeight],
   );
   /*
@@ -450,7 +448,6 @@ export function Scene<S extends AnySchema>({
   const atRest = useMemo(() => (view.pan ? { ...view, pan: undefined } : view), [view]);
   const still = useMemo<Layout>(
     () => layout(store.graph, store.schema, atRest, sized),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, atRest, sized, nodes],
   );
   const result = useMemo<Layout>(
@@ -625,7 +622,6 @@ export function Scene<S extends AnySchema>({
       y: (village ? wantedY : Math.max(-limit.y, Math.min(limit.y, wantedY))) - pan.y,
     });
     // Only when the focus lands, or the camera flies closer: a person's own pan afterwards is theirs.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenId, view.overview, closer]);
   if (frame.city) {
     // Remembered every altitude frame: where each plot's centre is on the canvas right now.
@@ -661,7 +657,7 @@ export function Scene<S extends AnySchema>({
       glide.current = null;
       setCamera({ x: 0, y: 0 });
     }, GLIDE_AFTER_MS);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Only when the altitude changes: a glide in progress is not restarted by what it moves.
   }, [view.overview]);
   useEffect(() => () => {
     if (glide.current) clearTimeout(glide.current);
@@ -1416,12 +1412,8 @@ export function Scene<S extends AnySchema>({
         * the fold says, at the box whereIs answers.
         */}
       <Occupants
-        frame={frame}
         width={result.width}
-        height={result.height}
         whereIs={(id) => whereIsIn(frame, wrapperRef.current, scheme, views, id)}
-        stageRef={wrapperRef}
-        pan={panned}
       />
       {/* What the seat just wrote, marked where it is — the attribution the figure used to carry. */}
       <SeatMarks
@@ -1665,7 +1657,6 @@ function SelectionTies<S extends AnySchema>({
       .sort((a, b) => a.real - b.real || a.index - b.index)
       .slice(0, 14)
       .map(({ tie }) => tie);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, selection, graphNodes, nodes]);
 
   if (ties.length === 0 || typeof document === "undefined") return null;
@@ -3032,14 +3023,6 @@ export function whereIsIn(
   );
 }
 
-/** The centre of a node's box as DRAWN, after its plane's scale. */
-function drawnCentre(
-  node: SceneNode | undefined,
-  scheme: "light" | "dark",
-): { x: number; y: number } | null {
-  const box = drawnBox(node, scheme);
-  return box ? { x: box.x + box.width / 2, y: box.y + box.height / 2 } : null;
-}
 
 /**
  * Where a line toward `towards` should MEET a box: on its border, not at its
@@ -4021,7 +4004,7 @@ function Connectors({
   );
 }
 
-export interface ResolvedViewProps<S extends AnySchema> {
+export interface ResolvedViewProps {
   readonly node: SceneNode;
   readonly mode: ViewMode;
   readonly selected: boolean;
@@ -4125,7 +4108,7 @@ export function ResolvedView<S extends AnySchema>({
   mode,
   selected,
   fidelity,
-}: ResolvedViewProps<S>) {
+}: ResolvedViewProps) {
   const { store, views, view } = useGraview<S>();
   /* The graph's own version: a view redraws when the graph it is drawing changes. */
   const graph = useGraph<S>();

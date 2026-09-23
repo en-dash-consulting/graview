@@ -21,7 +21,6 @@ import {
   useGraview,
   useNavigation,
   type Scheme,
-  type ViewComponent,
   type ReactViewRegistry,
 } from "@graview/react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -172,7 +171,8 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
     [props.views, app.schema],
   );
   const kinds = app.schema.kinds as readonly string[];
-  const initialView = useMemo(() => viewFor(face, stop, kinds), []); // eslint-disable-line react-hooks/exhaustive-deps
+  // The first view only: after it, where the reader goes is theirs.
+  const initialView = useMemo(() => viewFor(face, stop, kinds), []);
   const scheme: Scheme = askedScheme === "auto" ? hostScheme() : askedScheme;
   const css = useMemo(() => themeCss(scheme, brand, { scope: `.${scope}` }), [scheme, brand, scope]);
 
