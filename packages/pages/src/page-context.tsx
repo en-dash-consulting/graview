@@ -1,0 +1,114 @@
+import type { AnySchema, Brand, Principal, Store, PresenceChannel, SettingDeclaration } from "@graview/core";
+import { useCallback, useRef, useSyncExternalStore } from "react";
+import type { ReactViewRegistry } from "@graview/react";
+
+
+/**
+ * The default pages: the product's own site, derived.
+ *
+ * Traditional on purpose — lists, records, links, forms, the paradigms
+ * people already know — but in the POSTURE of a good web page rather than a
+ * back office: every route opens with the thing itself, titled in the
+ * brand's display face and summarised in the app's own declared words, and
+ * the controls recede beneath the content. Nothing here is a template for
+ * any one app. It is all read off the declaration, which is what lets one
+ * component set read as a household's week, a bid document and a team
+ * sheet — and every component is a default registration an app can replace
+ * cell by cell, the same move as replacing a view.
+ */
+
+export interface PageContext<S extends AnySchema> {
+  readonly store: Store<S>;
+  readonly principal?: Principal;
+  readonly brand?: Brand;
+  /** Where the spatial face lives, for the cross-links. Default "/". */
+  readonly sceneHref?: string;
+  readonly invariantContext?: Readonly<Record<string, unknown>>;
+  /**
+   * Whether this browser remembers the edits (a ship browser adapter behind
+   * the store). When it does, the face says so and offers the way back to
+   * the example — the `fresh=1` address `@graview/ship` reads.
+   */
+  readonly remembers?: boolean;
+  /**
+   * Whether the face is inside somebody else's page. A standalone face owns
+   * its document and its pages are its <main>; embedded, the host owns the
+   * landmarks and the face's pages are plain regions of it.
+   */
+  readonly embedded?: boolean;
+  /**
+   * Whether a shell of the app's own is already around these pages.
+   *
+   * A design's shell owns the document's landmark — `graview-pages` says so
+   * in as many words — and the framework's own pages went on wrapping
+   * themselves in `PageMain` underneath it, so every route the design left
+   * derived had a main inside a main. Set by the router from the registry,
+   * never by an app: it is the same question `embedded` asks (does somebody
+   * above me own the landmark) with a different somebody.
+   */
+  readonly framed?: boolean;
+  /**
+   * THE APP'S PICTURES. The view registry the scene draws from; given, every
+   * registered place is a page on this face too — an index at `/places`,
+   * each lens at `/places/<as>` — the home leads with them, each kind's page
+   * lists its own, and the nav mirrors the scene's bar. Absent, the face is
+   * the derived site it always was. A registry means a provider under the
+   * routes (the same one the embed puts there), so a lens's hooks work with
+   * no scene at all.
+   */
+  readonly views?: ReactViewRegistry<S>;
+  /** The reader's own settings, for the provider under the pages when `views` is given. */
+  readonly settings?: readonly SettingDeclaration[];
+  /** Who else is here, for the same provider. */
+  readonly presence?: PresenceChannel;
+}
+
+/** The way back to the example, for a face whose browser remembers. */
+export function StartFreshLink() {
+  return (
+    <a
+      href="#fresh"
+      data-testid="start-fresh"
+      title="Forget every edit made in this browser and return to the example"
+      onClick={(event) => {
+        event.preventDefault();
+        const url = new URL(window.location.href);
+        url.searchParams.set("fresh", "1");
+        window.location.assign(url.toString());
+      }}
+      /*
+       * A TARGET, not just a phrase. Inline text at 12.5px is a 15-pixel
+       * target — under the 24 WCAG 2.2 asks for, and the only control on the
+       * routed face that was: it sits in the footer of every page of every
+       * app, so every page of the pages face had exactly one control too
+       * small to hit.
+       */
+      style={{
+        color: "inherit",
+        display: "inline-flex",
+        alignItems: "center",
+        minHeight: 24,
+        minWidth: 24,
+      }}
+    >
+      Start fresh
+    </a>
+  );
+}
+
+/** Re-render on every applied diff — the page face is as live as the scene. */
+export function useStoreTick<S extends AnySchema>(store: Store<S>): number {
+  // The version bumps INSIDE the subscription, so the snapshot is stable
+  // between diffs — a snapshot that changed on every read would re-render
+  // for ever.
+  const version = useRef(0);
+  const subscribe = useCallback(
+    (listener: () => void) =>
+      store.subscribe(() => {
+        version.current += 1;
+        listener();
+      }),
+    [store],
+  );
+  return useSyncExternalStore(subscribe, () => version.current, () => 0);
+}
