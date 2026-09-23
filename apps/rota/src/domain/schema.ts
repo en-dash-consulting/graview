@@ -12,7 +12,7 @@ import { rotaInstallation } from "./installation.js";
  * own, a stored history that outlives a deployment, and a face somebody
  * would put in front of a committee.
  *
- * Two kinds and one edge is the whole domain. Everything else this app
+ * Three kinds and two edges is the whole domain. Everything else this app
  * demonstrates — the installation, the policy, the migration, the studio —
  * is the framework, which is the point: a small domain carrying a large
  * platform is the honest demonstration of a platform.
@@ -30,8 +30,6 @@ export const shift = defineNode("shift", {
     until: z.number().int().min(0).max(1440),
     /** Which day of the week it falls on, for the week grid. */
     day: z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]),
-    /** Somewhere it happens. A roster with two rooms is a different roster. */
-    place: z.string().min(1),
     notes: z.string().optional(),
   }),
   plural: "Shifts",
@@ -48,15 +46,41 @@ export const shift = defineNode("shift", {
       // sentence works in both places.
       inverse: "what they are covering",
     },
+    /*
+     * WHERE IT HAPPENS, as a thing rather than a string. "The hall" typed
+     * into ten shifts was ten strings that happened to agree: nothing could
+     * say what goes on in the hall this week, a typo was a new room, and
+     * the picture drew no line from a shift to where it is.
+     */
+    "held-at": {
+      to: ["location"],
+      cardinality: "one",
+      description: "where it happens",
+      inverse: "what happens here",
+    },
   },
   display: {
-    labels: { on: "Date", from: "From", until: "Until", place: "Where", day: "Day" },
+    labels: { on: "Date", from: "From", until: "Until", day: "Day" },
     format: {
       from: (value) => clock(Number(value)),
       until: (value) => clock(Number(value)),
       day: (value) => String(value).toUpperCase(),
     },
   },
+});
+
+/** Somewhere shifts happen: a room, a yard, a van. */
+export const location = defineNode("location", {
+  description: "Somewhere shifts happen.",
+  fields: z.object({
+    label: z.string().min(1),
+    /** What a first-timer needs to find it and get in. */
+    directions: z.string().optional(),
+  }),
+  plural: "Locations",
+  label: (node) => node.label,
+  figure: "plot",
+  display: { labels: { directions: "How to get in" } },
 });
 
 /** Somebody who has said they will turn up. */
@@ -106,8 +130,8 @@ function clock(minutes: number): string {
 
 /*
  * The domain, and WHO IS HERE. The installation's kinds are ordinary kinds
- * and carry their own types, so `RotaSchema` names all five — see the same
+ * and carry their own types, so `RotaSchema` names all six — see the same
  * note in Things.
  */
-export const rotaSchema = createSchema([shift, volunteer, rule, ...rotaInstallation.kinds]);
+export const rotaSchema = createSchema([shift, location, volunteer, rule, ...rotaInstallation.kinds]);
 export type RotaSchema = typeof rotaSchema;

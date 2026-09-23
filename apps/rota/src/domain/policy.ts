@@ -23,8 +23,8 @@ const theRoster: Policy = {
   grants: [
     {
       roles: ["coordinator"],
-      mutations: ["add-shift", "add-volunteer", "move-shift", "drop-shift", "rename", "step-back", "step-up"],
-      describe: "The coordinator keeps the roster: what is on it, who is on it, and what it is called.",
+      mutations: ["add-shift", "add-location", "hold-at", "add-volunteer", "move-shift", "drop-shift", "rename", "step-back", "step-up"],
+      describe: "The coordinator keeps the roster: what is on it, where, who is on it, and what it is called.",
     },
     {
       roles: ["coordinator", "volunteer"],

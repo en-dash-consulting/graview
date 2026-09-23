@@ -264,7 +264,7 @@ function Home({ context }: { context: Ctx }) {
         </h1>
         <p className="ro-lede">
           {here.length} shift{here.length === 1 ? "" : "s"} this week, across{" "}
-          {new Set(here.map((shift) => shift.place)).size} places.
+          {new Set(here.map((shift) => whereOf(store, shift.id))).size} places.
         </p>
       </header>
 
@@ -326,7 +326,7 @@ function Slot({ shift, context }: { shift: ShiftNode; context: Ctx }) {
       to={recordPath(store.schema, "shift", shift.id)}
     >
       <span className="when">
-        {clock(shift.from)}–{clock(shift.until)} · {shift.place}
+        {clock(shift.from)}–{clock(shift.until)} · {whereOf(store, shift.id)}
       </span>
       <span className="what">{shift.label}</span>
       <span className="who">{who.length === 0 ? "Nobody yet" : who.map((one) => one.label ?? one.id).join(", ")}</span>
@@ -376,7 +376,7 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
         )
       : named(a).localeCompare(named(b)),
   );
-  const groups = groupBy(sorted, group, kind);
+  const groups = groupBy(sorted, group, kind, (id) => whereOf(store, id));
 
   return (
     <>
@@ -636,7 +636,12 @@ interface ShiftNode extends AnyNode {
   readonly on: string;
   readonly from: number;
   readonly until: number;
-  readonly place: string;
+}
+
+/** Where a shift happens: the location it is held at, by name. */
+function whereOf(store: Ctx["store"], shiftId: string): string {
+  const at = store.graph.out(shiftId, "held-at")[0] as unknown as AnyNode | undefined;
+  return at ? (at.label ?? at.id) : "Somewhere not yet said";
 }
 interface VolunteerNode extends AnyNode {
   readonly limit: number;
@@ -962,12 +967,13 @@ function groupBy(
   nodes: readonly AnyNode[],
   group: string,
   kind: string,
+  where: (shiftId: string) => string,
 ): readonly { title: string; members: readonly AnyNode[] }[] {
   if (group === "none" || kind !== "shift") return [{ title: "All", members: nodes }];
   const by = new Map<string, AnyNode[]>();
   for (const node of nodes) {
     const shift = node as ShiftNode;
-    const at = group === "day" ? longDay(shift.on) : shift.place;
+    const at = group === "day" ? longDay(shift.on) : where(shift.id);
     by.set(at, [...(by.get(at) ?? []), node]);
   }
   return [...by.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([title, members]) => ({ title, members }));

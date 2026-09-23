@@ -124,7 +124,12 @@ const openProfile = async (page) => {
   report.checks.aStoredRosterIsCarriedForwardOnce = {
     carried,
     again,
-    ok: carried.length === 1 && String(carried[0]).includes("1→2") && again.length === 0,
+    // Carried the whole way, in order: the limit rule, then places as locations.
+    ok:
+      carried.length === 2 &&
+      String(carried[0]).includes("1→2") &&
+      String(carried[1]).includes("2→3") &&
+      again.length === 0,
   };
 
   /* ---------------------------- the studio, over Rota's own declaration */

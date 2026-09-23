@@ -24,7 +24,7 @@ const store = () => createRotaUiStore(EXAMPLE_TODAY);
 
 describe("a roster is enough to show the whole platform", () => {
   it("declares its domain, its installation and its own check", () => {
-    expect(rotaApp.schema.kinds).toEqual(["shift", "volunteer", "rule", "user", "invitation"]);
+    expect(rotaApp.schema.kinds).toEqual(["shift", "location", "volunteer", "rule", "user", "invitation"]);
     /*
      * No errors and no warnings. The one NOTE it carries is the deliberate
      * answer to a real question: this app means two different things by the
@@ -46,8 +46,35 @@ describe("a roster is enough to show the whole platform", () => {
       "blank-graph-unreachable",
       "lens-binding-disagrees-with-field-role",
     ]);
-    expect(rotaApp.version).toBe(2);
-    expect(rotaApp.migrations).toHaveLength(1);
+    expect(rotaApp.version).toBe(3);
+    expect(rotaApp.migrations).toHaveLength(2);
+  });
+
+  it("carries a roster that said where as a string onto locations, one per place", () => {
+    const toThree = rotaApp.migrations!.find((one) => one.from === 2)!;
+    const steps = toThree.apply({
+      nodes: [
+        { id: "a", kind: "shift", label: "Open up", place: "The hall" },
+        { id: "b", kind: "shift", label: "Close up", place: "The hall" },
+        { id: "c", kind: "shift", label: "Lunch", place: "The kitchen" },
+      ],
+      edges: [],
+    } as never) as readonly { op: string; node?: { id: string }; edge?: { from: string; to: string } }[];
+    // Ten shifts that said "The hall" are ten lines to one hall.
+    expect(steps.filter((step) => step.op === "add-node").map((step) => step.node!.id)).toEqual(["loc-hall", "loc-kitchen"]);
+    expect(steps.filter((step) => step.op === "add-edge").map((step) => `${step.edge!.from}->${step.edge!.to}`)).toEqual([
+      "a->loc-hall",
+      "b->loc-hall",
+      "c->loc-kitchen",
+    ]);
+    expect(steps.filter((step) => step.op === "patch-node")).toHaveLength(3);
+  });
+
+  it("holds every shift it ships with somewhere", () => {
+    const roster = store();
+    for (const shift of roster.graph.nodesOfKind("shift" as never)) {
+      expect(roster.graph.out(shift.id, "held-at"), shift.id).toHaveLength(1);
+    }
   });
 
   it("declares a kit the checker has measured", () => {
@@ -94,7 +121,7 @@ describe("three roles, and the third is the point", () => {
   it("gives the coordinator the roster and the installation", () => {
     const s = store();
     for (const call of [
-      { name: "add-shift", args: { label: "x", on: EXAMPLE_TODAY, place: "The hall", day: "mon", from: 60, until: 120 } },
+      { name: "add-shift", args: { label: "x", on: EXAMPLE_TODAY, locationId: "loc-hall", day: "mon", from: 60, until: 120 } },
       { name: "drop-shift", args: { shiftId: "s-mon-open" } },
       { name: "invite", args: { email: "new@rota.test", roles: ["volunteer"] } },
       { name: "cover", args: { shiftId: "s-fri-repair", volunteerId: "v-ada" } },
@@ -115,7 +142,7 @@ describe("three roles, and the third is the point", () => {
     const s = store();
     for (const call of [
       { name: "cover", args: { shiftId: "s-fri-repair", volunteerId: "v-ada" } },
-      { name: "add-shift", args: { label: "x", on: EXAMPLE_TODAY, place: "The hall", day: "mon", from: 60, until: 120 } },
+      { name: "add-shift", args: { label: "x", on: EXAMPLE_TODAY, locationId: "loc-hall", day: "mon", from: 60, until: 120 } },
       { name: "rename", args: { id: "s-mon-open", label: "x" } },
     ]) {
       const verdict = s.permits(call, VIEWER);

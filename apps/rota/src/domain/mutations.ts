@@ -26,26 +26,64 @@ export const addShift = defineMutation("add-shift", {
   title: "Add a shift",
   description: "Put a stretch of time on the roster that somebody has to be there for.",
   creates: ["shift"],
+  connects: ["held-at"],
   input: z.object({
     label: z.string().min(1),
     on: isoDate,
-    place: z.string().min(1),
+    locationId: nodeRef(["location"]),
     day: z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]),
     from: z.number().int().min(0).max(1439),
     until: z.number().int().min(0).max(1440),
   }),
-  describe: (args) => `Add "${args.label}" on ${args.on}`,
+  describe: (args, graph) => `Add "${args.label}" on ${args.on} at ${nameOf(graph as Reader, args.locationId)}`,
   apply(ctx, args) {
+    const id = ctx.freshId(args.label, "shift");
     ctx.addNode({
-      id: ctx.freshId(args.label, "shift"),
+      id,
       kind: "shift",
       label: args.label,
       on: args.on,
-      place: args.place,
       day: args.day,
       from: args.from,
       until: args.until,
     } as never);
+    ctx.addEdge({ kind: "held-at", from: id, to: args.locationId });
+  },
+}) as M;
+
+export const addLocation = defineMutation("add-location", {
+  title: "Add a location",
+  description: "Somewhere new that shifts can happen.",
+  creates: ["location"],
+  input: z.object({ label: z.string().min(1), directions: z.string().optional() }),
+  describe: (args) => `Add ${args.label}`,
+  apply(ctx, args) {
+    ctx.addNode({
+      id: ctx.freshId(args.label, "location"),
+      kind: "location",
+      label: args.label,
+      ...(args.directions ? { directions: args.directions } : {}),
+    } as never);
+  },
+}) as M;
+
+export const holdAt = defineMutation("hold-at", {
+  title: "Hold it somewhere else",
+  description: "The same shift, in another location.",
+  subject: { kinds: ["shift"], arg: "shiftId" },
+  connects: ["held-at"],
+  severs: ["held-at"],
+  fromTheOtherEnd: "Hold a shift here",
+  input: z.object({ shiftId: nodeRef(["shift"]), locationId: nodeRef(["location"]) }),
+  describe: (args, graph) =>
+    `Hold "${nameOf(graph as Reader, args.shiftId)}" at ${nameOf(graph as Reader, args.locationId)}`,
+  apply(ctx, args) {
+    // One place per shift: moving it is leaving the old one.
+    for (const current of ctx.graph.out(args.shiftId, "held-at")) {
+      if (current.id === args.locationId) return;
+      ctx.removeEdge({ kind: "held-at", from: args.shiftId, to: current.id });
+    }
+    ctx.addEdge({ kind: "held-at", from: args.shiftId, to: args.locationId });
   },
 }) as M;
 
@@ -151,7 +189,7 @@ export const setLimit = defineMutation("set-limit", {
 
 export const rename = defineMutation("rename", {
   title: "Rename it",
-  description: "Give a shift, a volunteer or a rule another name.",
+  description: "Give a shift, a location, a volunteer or a rule another name.",
   subject: { kinds: "*", arg: "id" },
   writes: ["label"],
   input: z.object({ id: nodeRef(["*"]), label: z.string().min(1) }),
@@ -184,6 +222,8 @@ function weekdayOf(day: string): "mon" | "tue" | "wed" | "thu" | "fri" | "sat" |
 
 export const rotaMutations: M[] = [
   addShift,
+  addLocation,
+  holdAt,
   cover,
   uncover,
   moveShift,

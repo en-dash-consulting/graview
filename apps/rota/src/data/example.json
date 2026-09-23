@@ -7,8 +7,7 @@
       "on": "2026-09-14",
       "day": "mon",
       "from": 480,
-      "until": 660,
-      "place": "The hall"
+      "until": 660
     },
     {
       "id": "s-mon-lunch",
@@ -17,8 +16,7 @@
       "on": "2026-09-14",
       "day": "mon",
       "from": 660,
-      "until": 840,
-      "place": "The kitchen"
+      "until": 840
     },
     {
       "id": "s-tue-craft",
@@ -27,8 +25,7 @@
       "on": "2026-09-15",
       "day": "tue",
       "from": 600,
-      "until": 780,
-      "place": "The hall"
+      "until": 780
     },
     {
       "id": "s-wed-food",
@@ -37,8 +34,7 @@
       "on": "2026-09-16",
       "day": "wed",
       "from": 540,
-      "until": 780,
-      "place": "The store"
+      "until": 780
     },
     {
       "id": "s-wed-close",
@@ -47,8 +43,7 @@
       "on": "2026-09-16",
       "day": "wed",
       "from": 1020,
-      "until": 1080,
-      "place": "The hall"
+      "until": 1080
     },
     {
       "id": "s-thu-baby",
@@ -57,8 +52,7 @@
       "on": "2026-09-17",
       "day": "thu",
       "from": 570,
-      "until": 720,
-      "place": "The hall"
+      "until": 720
     },
     {
       "id": "s-fri-repair",
@@ -67,8 +61,7 @@
       "on": "2026-09-18",
       "day": "fri",
       "from": 840,
-      "until": 1020,
-      "place": "The workshop"
+      "until": 1020
     },
     {
       "id": "s-sat-market",
@@ -77,8 +70,7 @@
       "on": "2026-09-19",
       "day": "sat",
       "from": 420,
-      "until": 780,
-      "place": "The yard"
+      "until": 780
     },
     {
       "id": "s-sun-clean",
@@ -87,8 +79,7 @@
       "on": "2026-09-20",
       "day": "sun",
       "from": 900,
-      "until": 1080,
-      "place": "The hall"
+      "until": 1080
     },
     {
       "id": "s-mon2-open",
@@ -97,8 +88,34 @@
       "on": "2026-09-21",
       "day": "mon",
       "from": 480,
-      "until": 660,
-      "place": "The hall"
+      "until": 660
+    },
+    {
+      "id": "loc-hall",
+      "kind": "location",
+      "label": "The hall",
+      "directions": "Main doors on the high street; the key is in the office."
+    },
+    {
+      "id": "loc-kitchen",
+      "kind": "location",
+      "label": "The kitchen"
+    },
+    {
+      "id": "loc-store",
+      "kind": "location",
+      "label": "The store"
+    },
+    {
+      "id": "loc-workshop",
+      "kind": "location",
+      "label": "The workshop"
+    },
+    {
+      "id": "loc-yard",
+      "kind": "location",
+      "label": "The yard",
+      "directions": "Round the back, through the side gate."
     },
     {
       "id": "v-ada",
@@ -224,6 +241,56 @@
       "kind": "covered-by",
       "from": "s-sat-market",
       "to": "v-cass"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-mon-open",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-mon-lunch",
+      "to": "loc-kitchen"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-tue-craft",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-wed-food",
+      "to": "loc-store"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-wed-close",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-thu-baby",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-fri-repair",
+      "to": "loc-workshop"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-sat-market",
+      "to": "loc-yard"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-sun-clean",
+      "to": "loc-hall"
+    },
+    {
+      "kind": "held-at",
+      "from": "s-mon2-open",
+      "to": "loc-hall"
     }
   ]
 }

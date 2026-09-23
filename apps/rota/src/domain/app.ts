@@ -1,4 +1,4 @@
-import { defineApp, readerSettings, Store, type StoreOptions } from "@graview/core";
+import { defineApp, readerSettings, Store, UNSET, type Primitive, type StoreOptions } from "@graview/core";
 import { rotaBrand } from "./brand.js";
 import { rotaInstallation } from "./installation.js";
 import { rotaInvariants } from "./invariants.js";
@@ -13,7 +13,7 @@ export const rotaActs = [...rotaMutations, ...rotaInstallation.mutations] as typ
  * The whole app, in one object — and this one is the product-grade example,
  * so it carries everything a deployment does: a policy with three roles, an
  * installation, a brand with a kit, two lenses, the reader's own settings,
- * and a version with the migration that carries a roster stored before it
+ * and a version with the migrations that carry a roster stored before it
  * forward.
  */
 export const rotaApp = defineApp({
@@ -66,7 +66,7 @@ export const rotaApp = defineApp({
    * purpose: a migration answers in the same primitives every other change
    * speaks.
    */
-  version: 2,
+  version: 3,
   migrations: [
     {
       from: 1,
@@ -90,6 +90,34 @@ export const rotaApp = defineApp({
                 },
               },
             ],
+    },
+    {
+      from: 2,
+      to: 3,
+      title: "Where a shift happens is a location",
+      /*
+       * A roster stored when "where" was a string on each shift: every
+       * distinct string becomes one location, each shift is held at its
+       * own, and the string comes off the shift — so ten shifts that said
+       * "The hall" are ten lines to one hall.
+       */
+      apply: (snapshot) => {
+        const places = new Map<string, string>();
+        const steps: Primitive[] = [];
+        for (const node of snapshot.nodes) {
+          const place = (node as { place?: unknown }).place;
+          if (node.kind !== "shift" || typeof place !== "string" || place.length === 0) continue;
+          let id = places.get(place);
+          if (!id) {
+            id = `loc-${place.toLowerCase().replace(/^the\s+/, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+            places.set(place, id);
+            steps.push({ op: "add-node", node: { id, kind: "location", label: place } });
+          }
+          steps.push({ op: "add-edge", edge: { kind: "held-at", from: node.id, to: id } });
+          steps.push({ op: "patch-node", id: node.id, before: { place }, after: { place: UNSET } });
+        }
+        return steps;
+      },
     },
   ],
 });

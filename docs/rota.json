@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T15:38:45.028Z",
+  "at": "2026-09-23T03:55:03.125Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
@@ -16,7 +16,7 @@
     },
     "aGradientRatherThanADifference": {
       "coordinator": {
-        "offered": 5,
+        "offered": 6,
         "withheld": [],
         "installation": true,
         "studio": true
@@ -45,7 +45,8 @@
     },
     "aStoredRosterIsCarriedForwardOnce": {
       "carried": [
-        "migration 1→2: The roster adopts a limit"
+        "migration 1→2: The roster adopts a limit",
+        "migration 2→3: Where a shift happens is a location"
       ],
       "again": [],
       "ok": true
@@ -74,7 +75,7 @@
       "scoped": true,
       "views": [
         3,
-        3
+        4
       ],
       "ok": true
     },
