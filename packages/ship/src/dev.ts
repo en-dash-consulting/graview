@@ -447,5 +447,6 @@ export function decisionBridge(options: DecisionBridgeOptions = {}): DevServerPl
 
 export { studioDoor, studioDoorHandler } from "./studio-door.js";
 export type { StudioDoorOptions } from "./studio-door.js";
-export { editDeclaration } from "./source-edit.js";
+export { declaredCode, editDeclaration } from "./source-edit.js";
+export { typecheckWith } from "./typecheck.js";
 export type { SourceEdit, SourceText } from "./source-edit.js";

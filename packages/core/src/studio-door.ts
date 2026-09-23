@@ -38,7 +38,37 @@ export type DeclarationChange =
    * The same relation, declared on another kind. Carried as it is written —
    * its readings, its comments — and only its targets rewritten.
    */
-  | { readonly what: "move-edge"; readonly edge: string; readonly from: string; readonly to: string; readonly targets: string };
+  | { readonly what: "move-edge"; readonly edge: string; readonly from: string; readonly to: string; readonly targets: string }
+  /**
+   * An act or a rule, written afresh: `text` is the declaration object —
+   * everything inside `defineMutation("tend", { … })` — body and all. Its
+   * name is kept, and whatever wraps the call (`export const tend = …
+   * as M`) is left as it was.
+   */
+  | { readonly what: "replace-act"; readonly act: string; readonly text: string }
+  | { readonly what: "replace-rule"; readonly rule: string; readonly text: string }
+  /** A new act or rule: the whole statement, and the name it is bound to, which joins the app's list of them. */
+  | { readonly what: "add-act"; readonly act: string; readonly binding: string; readonly text: string }
+  | { readonly what: "add-rule"; readonly rule: string; readonly binding: string; readonly text: string }
+  | { readonly what: "remove-act"; readonly act: string }
+  | { readonly what: "remove-rule"; readonly rule: string };
+
+/**
+ * GET `${STUDIO_DOOR_PATH}/source` — the checkout's own acts and rules, each
+ * as the declaration object it is written as. What a person or a seat
+ * rewrites when a change leaves one of them saying something no longer true.
+ */
+export interface StudioDoorSource {
+  readonly acts: Readonly<Record<string, { readonly path: string; readonly text: string }>>;
+  readonly rules: Readonly<Record<string, { readonly path: string; readonly text: string }>>;
+}
+
+/** Where the compiler found something wrong in what would be written. */
+export interface StudioDoorDiagnostic {
+  readonly path: string;
+  readonly line: number;
+  readonly message: string;
+}
 
 /** GET — is the door open, and which files would it edit? */
 export type StudioDoorStatus =
@@ -52,12 +82,16 @@ export interface StudioDoorAsk {
   readonly dryRun?: boolean;
 }
 
+
 /**
  * What came back. All or nothing: a change the source cannot take — a kind
  * it cannot find, a field declared somewhere it cannot read — refuses the
- * whole request, naming why, and no file is touched.
+ * whole request, naming why, and no file is touched. So does one whose
+ * result does not type-check: the door compiles the app with the edited
+ * files in place of the real ones before a byte is written, and answers
+ * with the compiler's own words.
  */
 export type StudioDoorAnswer =
   | { readonly written: readonly string[]; readonly diff: readonly { readonly path: string; readonly before: string; readonly after: string }[] }
-  | { readonly refused: readonly string[] }
+  | { readonly refused: readonly string[]; readonly diagnostics?: readonly StudioDoorDiagnostic[] }
   | { readonly error: string };

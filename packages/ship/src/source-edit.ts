@@ -66,24 +66,41 @@ function visit(ts: Ts, node: TS.Node, found: (node: TS.Node) => boolean): TS.Nod
   return ts.forEachChild(node, (child) => visit(ts, child, found));
 }
 
+/** The declarations of each sort, by the function that declares them. */
+const DECLARERS = {
+  kind: ["defineNode"],
+  act: ["defineMutation"],
+  rule: ["defineInvariant", "defineGraphInvariant"],
+} as const;
+type Sort = keyof typeof DECLARERS;
+
+const declares = (ts: Ts, node: TS.Node, sort: Sort): node is TS.CallExpression =>
+  ts.isCallExpression(node) && DECLARERS[sort].some((name) => calleeIs(ts, node, name));
+
+/** `defineNode("plot", { … })` and its kin: the name, when it is a string literal, and the object. */
+function declared(ts: Ts, call: TS.CallExpression): { readonly name: string; readonly object: TS.ObjectLiteralExpression } | undefined {
+  const [name, body] = call.arguments;
+  return name && ts.isStringLiteralLike(name) && body && ts.isObjectLiteralExpression(body) ? { name: name.text, object: body } : undefined;
+}
+
 function defineNodeOf(ts: Ts, files: ReadonlyMap<string, string>, kind: string): Found | undefined {
+  return declarationOf(ts, files, "kind", kind);
+}
+
+function declarationOf(ts: Ts, files: ReadonlyMap<string, string>, sort: Sort, wanted: string): Found | undefined {
   for (const [path, text] of files) {
     const source = parse(ts, path, text);
-    const call = visit(ts, source, (node) => {
-      if (!ts.isCallExpression(node) || !calleeIs(ts, node, "defineNode")) return false;
-      const [name, body] = node.arguments;
-      return !!name && ts.isStringLiteralLike(name) && name.text === kind && !!body && ts.isObjectLiteralExpression(body);
-    }) as TS.CallExpression | undefined;
+    const call = visit(ts, source, (node) => declares(ts, node, sort) && declared(ts, node)?.name === wanted) as TS.CallExpression | undefined;
     if (!call) continue;
     let statement: TS.Node = call;
     while (statement.parent && !ts.isSourceFile(statement.parent)) statement = statement.parent;
-    const declared = ts.isVariableStatement(statement) ? statement.declarationList.declarations[0] : undefined;
+    const variable = ts.isVariableStatement(statement) ? statement.declarationList.declarations[0] : undefined;
     return {
       path,
       source,
-      object: call.arguments[1] as TS.ObjectLiteralExpression,
+      object: declared(ts, call)!.object,
       ...(ts.isVariableStatement(statement) ? { statement } : {}),
-      ...(declared && ts.isIdentifier(declared.name) ? { binding: declared.name.text } : {}),
+      ...(variable && ts.isIdentifier(variable.name) ? { binding: variable.name.text } : {}),
     };
   }
   return undefined;
@@ -104,6 +121,31 @@ function fieldsOf(ts: Ts, found: Found, kind: string): TS.ObjectLiteralExpressio
     if (shape && ts.isObjectLiteralExpression(shape)) return shape;
   }
   return `The fields of "${kind}" are not written as z.object({ … }) in ${found.path}, so the studio cannot edit them in place.`;
+}
+
+/**
+ * The checkout's own acts and rules, each as the object it is declared
+ * with: what a person or a seat rewrites when a change leaves one of them
+ * saying something that is no longer true.
+ */
+export function declaredCode(
+  ts: Ts,
+  files: readonly SourceText[],
+): { readonly acts: Record<string, { path: string; text: string }>; readonly rules: Record<string, { path: string; text: string }> } {
+  const acts: Record<string, { path: string; text: string }> = {};
+  const rules: Record<string, { path: string; text: string }> = {};
+  for (const file of files) {
+    const source = parse(ts, file.path, file.text);
+    const walk = (node: TS.Node): void => {
+      for (const [sort, into] of [["act", acts], ["rule", rules]] as const) {
+        const found = declares(ts, node, sort) ? declared(ts, node) : undefined;
+        if (found) into[found.name] = { path: file.path, text: file.text.slice(found.object.getStart(source), found.object.end) };
+      }
+      ts.forEachChild(node, walk);
+    };
+    walk(source);
+  }
+  return { acts, rules };
 }
 
 /* ------------------------------------------------------------ editing */
@@ -167,6 +209,36 @@ function replaceNode(text: string, node: TS.Node, source: TS.SourceFile, replace
 
 function applyChange(ts: Ts, files: Map<string, string>, change: DeclarationChange): string | undefined {
   if (change.what === "add-kind") return addKind(ts, files, change);
+  if (change.what === "replace-act" || change.what === "replace-rule") {
+    const sort = change.what === "replace-act" ? "act" : "rule";
+    const name = change.what === "replace-act" ? change.act : change.rule;
+    const found = declarationOf(ts, files, sort, name);
+    if (!found) return `No ${sort} "${name}" declared in ${[...files.keys()].join(", ")}.`;
+    const text = files.get(found.path)!;
+    files.set(found.path, replaceNode(text, found.object, found.source, reindent(change.text.trim(), "", indentAt(text, found.object.getStart(found.source))).trimStart()));
+    return undefined;
+  }
+  if (change.what === "add-act" || change.what === "add-rule") {
+    const sort = change.what === "add-act" ? "act" : "rule";
+    const name = change.what === "add-act" ? change.act : change.rule;
+    return addDeclaration(ts, files, sort, name, change.binding, change.text);
+  }
+  if (change.what === "remove-act" || change.what === "remove-rule") {
+    const sort = change.what === "remove-act" ? "act" : "rule";
+    const name = change.what === "remove-act" ? change.act : change.rule;
+    const found = declarationOf(ts, files, sort, name);
+    if (!found?.statement) return `No ${sort} "${name}" declared as a statement of its own.`;
+    let next = cut(files.get(found.path)!, spanOf(files.get(found.path)!, found.statement));
+    files.set(found.path, next);
+    // And out of whatever list gathers them, wherever that is.
+    if (found.binding) {
+      for (const [path, text] of files) {
+        next = removeFromList(ts, path, text, found.binding) ?? text;
+        files.set(path, next);
+      }
+    }
+    return undefined;
+  }
   const kind = change.what === "move-edge" ? change.from : change.kind;
   const found = defineNodeOf(ts, files, kind);
   if (!found) return `No defineNode("${kind}", { … }) in ${[...files.keys()].join(", ")}.`;
@@ -292,8 +364,24 @@ function schemaList(ts: Ts, path: string, text: string): { source: TS.SourceFile
 
 function removeFromSchema(ts: Ts, path: string, text: string, binding: string): string | undefined {
   const found = schemaList(ts, path, text);
-  const element = found?.list.elements.find((one) => ts.isIdentifier(one) && one.text === binding);
-  if (!found || !element) return undefined;
+  return found ? removeElement(ts, text, found.source, found.list, binding) : undefined;
+}
+
+/** The binding taken out of every array literal in the file that lists it by name. */
+function removeFromList(ts: Ts, path: string, text: string, binding: string): string | undefined {
+  const source = parse(ts, path, text);
+  const list = visit(
+    ts,
+    source,
+    (node) => ts.isArrayLiteralExpression(node) && node.elements.some((one) => ts.isIdentifier(one) && one.text === binding),
+  ) as TS.ArrayLiteralExpression | undefined;
+  return list ? removeElement(ts, text, source, list, binding) : undefined;
+}
+
+function removeElement(ts: Ts, text: string, source: TS.SourceFile, list: TS.ArrayLiteralExpression, binding: string): string | undefined {
+  const element = list.elements.find((one) => ts.isIdentifier(one) && one.text === binding);
+  if (!element) return undefined;
+  const found = { source, list };
   const elements = found.list.elements;
   const at = elements.indexOf(element);
   // With the comma on whichever side it sits.
@@ -324,4 +412,41 @@ function addKind(ts: Ts, files: Map<string, string>, change: Extract<Declaration
     return undefined;
   }
   return `No createSchema([ … ]) to add "${change.kind}" to.`;
+}
+
+/**
+ * A new act or rule: declared after the last of its sort, and added to the
+ * list that gathers the others — the array literal that already names them.
+ */
+function addDeclaration(ts: Ts, files: Map<string, string>, sort: "act" | "rule", name: string, binding: string, statement: string): string | undefined {
+  if (declarationOf(ts, files, sort, name)) return `The ${sort} "${name}" is already declared.`;
+  for (const [path, text] of files) {
+    const source = parse(ts, path, text);
+    const bindings = new Set<string>();
+    let last: TS.Statement | undefined;
+    for (const top of source.statements) {
+      const call = visit(ts, top, (node) => declares(ts, node, sort));
+      if (!call) continue;
+      last = top;
+      const bound = ts.isVariableStatement(top) ? top.declarationList.declarations[0]?.name : undefined;
+      if (bound && ts.isIdentifier(bound)) bindings.add(bound.text);
+    }
+    if (!last) continue;
+    const list = visit(
+      ts,
+      source,
+      (node) => ts.isArrayLiteralExpression(node) && node.elements.some((one) => ts.isIdentifier(one) && bindings.has(one.text)),
+    ) as TS.ArrayLiteralExpression | undefined;
+    if (!list) return `The ${sort}s in ${path} are not gathered in a list the studio can add "${binding}" to.`;
+    // The list first, since it comes after the declarations: an edit to it moves nothing above it.
+    const tail = list.elements[list.elements.length - 1]!;
+    const multiline = text.slice(list.getStart(source), list.end).includes("\n");
+    let next = multiline
+      ? `${text.slice(0, tail.end)},\n${indentAt(text, tail.getStart(source))}${binding}${text.slice(tail.end)}`
+      : `${text.slice(0, tail.end)}, ${binding}${text.slice(tail.end)}`;
+    next = `${next.slice(0, last.end)}\n\n${statement.trim()}${next.slice(last.end)}`;
+    files.set(path, next);
+    return undefined;
+  }
+  return `No file declares ${sort}s to add "${name}" beside.`;
 }

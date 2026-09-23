@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import { editDeclaration, studioDoorHandler } from "../../src/dev.js";
+import { declaredCode, editDeclaration, studioDoorHandler, typecheckWith } from "../../src/dev.js";
 
 /**
  * THE STUDIO'S CHANGE, MADE AS AN EDIT — held to "every other character
@@ -109,6 +109,59 @@ describe("a declaration change made inside the checkout's own source", () => {
   });
 });
 
+describe("an act or a rule, rewritten where it is written", () => {
+  const mutations = fileURLToPath(new URL("../../../../apps/seedbed/src/domain/mutations.ts", import.meta.url));
+  const invariants = fileURLToPath(new URL("../../../../apps/seedbed/src/domain/invariants.ts", import.meta.url));
+  const files = async () => [
+    { path: "src/domain/mutations.ts", text: await readFile(mutations, "utf8") },
+    { path: "src/domain/invariants.ts", text: await readFile(invariants, "utf8") },
+  ];
+
+  it("reads the checkout's acts and rules as the objects they are declared with", async () => {
+    const code = declaredCode(ts, await files());
+    expect(Object.keys(code.acts)).toEqual(expect.arrayContaining(["add-gardener", "sow", "tend", "rotate"]));
+    expect(code.acts["tend"]!.text).toMatch(/^\{\n\s+title: "Name a caretaker",/);
+    expect(code.acts["tend"]!.text).toContain('ctx.addEdge({ kind: "tended-by", from: args.plotId, to: args.gardenerId });');
+    expect(code.rules["every-plot-tended"]!.path).toBe("src/domain/invariants.ts");
+  });
+
+  it("replaces one act's declaration and leaves its binding, its cast and every other act alone", async () => {
+    const before = await files();
+    const edited = editDeclaration(ts, before, [
+      { what: "replace-act", act: "tend", text: '{\n  title: "Name a caretaker",\n  input: z.object({ plantingId: nodeRef(["planting"]) }),\n  apply() {},\n}' },
+    ]);
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    const after = edited.files[0]!.text;
+    expect(after).toContain('export const tend = defineMutation("tend", {\n  title: "Name a caretaker",\n  input: z.object({ plantingId: nodeRef(["planting"]) }),');
+    expect(after).toContain("}) as M;");
+    expect(after).not.toContain("One caretaker per plot");
+    expect(after).toContain(declaredCode(ts, before).acts["harvest"]!.text);
+  });
+
+  it("adds a new act beside the others and into the app's list of them", async () => {
+    const edited = editDeclaration(ts, await files(), [
+      {
+        what: "add-act",
+        act: "water",
+        binding: "water",
+        text: 'export const water = defineMutation("water", {\n  input: z.object({}),\n  apply() {},\n}) as M;',
+      },
+    ]);
+    expect(edited.ok && edited.files[0]!.text).toContain("adoptRule, water]");
+    expect(edited.ok && edited.files[0]!.text).toContain('export const water = defineMutation("water", {');
+  });
+
+  it("asks the app's own compiler, with the edit laid over the files, before anything is written", () => {
+    const root = fileURLToPath(new URL("../../../../apps/seedbed", import.meta.url));
+    const clean = typecheckWith(ts, root, new Map());
+    expect(clean).toEqual([]);
+    const broken = typecheckWith(ts, root, new Map([["src/domain/brand.ts", 'export const seedbedBrand: number = "not a number";\n']]));
+    expect(broken.length).toBeGreaterThan(0);
+    expect(broken.map((one) => one.path)).toContain("src/domain/brand.ts");
+  }, 60_000);
+});
+
 describe("the studio door", () => {
   const respond = () => {
     const sent: { status?: number; body?: string } = {};
@@ -136,7 +189,7 @@ describe("the studio door", () => {
     try {
       await mkdir(join(root, "src/domain"), { recursive: true });
       await writeFile(join(root, "src/domain/schema.ts"), await readFile(seedbed, "utf8"));
-      const door = studioDoorHandler({ root, typescript: ts });
+      const door = studioDoorHandler({ root, typescript: ts, typecheck: false });
 
       const probe = respond();
       await door(request("GET"), probe.res);

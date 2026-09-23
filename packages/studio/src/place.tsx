@@ -11,7 +11,8 @@ import { createStudioLens } from "./lens.js";
 import { studioApp, type StudioSchema } from "./meta.js";
 import { createStudio, type Studio } from "./studio.js";
 import type { WrittenFile } from "./source.js";
-import { useStudioDoor, writeInPlace, type InPlace } from "./write-in-place.js";
+import { Downloads, InPlaceWriter } from "./in-place.js";
+import { useStudioDoor } from "./write-in-place.js";
 
 /**
  * THE STUDIO IS A PLACE ON THE BAR, not a package you mount by hand.
@@ -262,15 +263,13 @@ function StudioOverlay<S extends AnySchema>({
         <button
           type="button"
           data-testid="studio-apply"
-          onClick={async () => {
+          onClick={() => {
             const result = studio.apply();
-            if (!result.ok) {
-              setApplied({ ok: false, check: result.check });
-              return;
-            }
-            const migration = result.migration?.title ?? null;
-            const inPlace = door ? await writeInPlace(studio as unknown as Studio<AnySchema>, migration) : null;
-            setApplied({ ok: true, files: studio.files(), migration, inPlace });
+            setApplied(
+              result.ok
+                ? { ok: true, files: studio.files(), migration: result.migration?.title ?? null, door: door !== null }
+                : { ok: false, check: result.check },
+            );
           }}
           style={{ padding: "3px 11px", fontSize: "0.78125rem" }}
         >
@@ -287,7 +286,7 @@ function StudioOverlay<S extends AnySchema>({
         </button>
       </header>
 
-      {applied ? <Written applied={applied} onDismiss={() => setApplied(null)} /> : null}
+      {applied ? <Written applied={applied} studio={studio as unknown as Studio<AnySchema>} onDismiss={() => setApplied(null)} /> : null}
 
       <main style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size" }}>
         <Scene renderer="dom" />
@@ -313,8 +312,8 @@ type Applied =
       readonly ok: true;
       readonly files: readonly WrittenFile[];
       readonly migration: string | null;
-      /** What the dev server's studio door made of it; `null` when there is no door to write through. */
-      readonly inPlace: InPlace | null;
+      /** Whether the dev server's studio door is open to write it through. */
+      readonly door: boolean;
     }
   | { readonly ok: false; readonly check: CheckResult };
 
@@ -330,7 +329,15 @@ type Applied =
  * and a button that claimed to would be the one lie in a flow whose whole
  * point is that nothing is hidden.
  */
-function Written({ applied, onDismiss }: { readonly applied: Applied; readonly onDismiss: () => void }): ReactNode {
+function Written({
+  applied,
+  studio,
+  onDismiss,
+}: {
+  readonly applied: Applied;
+  readonly studio: Studio<AnySchema>;
+  readonly onDismiss: () => void;
+}): ReactNode {
   return (
     <section
       data-testid="studio-applied"
@@ -344,17 +351,8 @@ function Written({ applied, onDismiss }: { readonly applied: Applied; readonly o
         background: applied.ok ? "var(--graview-panel)" : "var(--graview-panel-warning)",
       }}
     >
-      {applied.ok && applied.inPlace?.state === "written" ? (
-        /*
-         * WRITTEN, IN PLACE. The change is in the checkout's own files, made
-         * inside its own declarations; the dev server sees the files move and
-         * the app comes back up on the new declaration.
-         */
-        <>
-          <strong style={{ fontSize: "0.8125rem", fontWeight: 550 }}>
-            The checker is happy, and the change is written into {applied.inPlace.paths.join(", ")}. The app reloads onto it.
-          </strong>
-        </>
+      {applied.ok && applied.door ? (
+        <InPlaceWriter studio={studio} migration={applied.migration} files={applied.files} />
       ) : applied.ok ? (
         <>
           <strong style={{ fontSize: "0.8125rem", fontWeight: 550 }}>
@@ -362,41 +360,10 @@ function Written({ applied, onDismiss }: { readonly applied: Applied; readonly o
             {applied.files.length === 1 ? "" : "s"} to write
             {applied.migration ? `, and a migration: ${applied.migration}` : ", and no migration needed"}.
           </strong>
-          {/* Why it was not written in place — or that there is nowhere to write it. */}
-          {applied.inPlace?.state === "not-written" ? (
-            <ul data-testid="studio-not-written" style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 4, fontSize: "0.78125rem" }}>
-              {applied.inPlace.reasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-          ) : applied.inPlace === null ? (
-            <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
-              A browser cannot write your checkout. Run the app with the studio door (studioDoor() from @graview/ship/dev) and Apply writes the change in place.
-            </span>
-          ) : null}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {applied.files.map((file) => (
-              <a
-                key={file.path}
-                data-testid={`studio-file-${file.path}`}
-                download={file.path.split("/").pop()}
-                href={`data:text/plain;charset=utf-8,${encodeURIComponent(file.contents)}`}
-                style={{
-                  minHeight: 24,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  padding: "3px 10px",
-                  borderRadius: 999,
-                  border: "1px solid var(--graview-edge)",
-                  fontSize: "0.78125rem",
-                  color: "var(--graview-accent)",
-                  textDecoration: "none",
-                }}
-              >
-                {file.path} ↓
-              </a>
-            ))}
-          </div>
+          <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+            A browser cannot write your checkout. Run the app with the studio door (studioDoor() from @graview/ship/dev) and Apply writes the change in place.
+          </span>
+          <Downloads files={applied.files} />
         </>
       ) : (
         <>

@@ -5,11 +5,13 @@ import {
   STUDIO_DOOR_PATH,
   type StudioDoorAnswer,
   type StudioDoorAsk,
+  type StudioDoorSource,
   type StudioDoorStatus,
 } from "@graview/core";
 import type * as TS from "typescript";
 import { fromThisApp, readBody, sendJson, type DevServerPlugin } from "./door.js";
-import { editDeclaration } from "./source-edit.js";
+import { declaredCode, editDeclaration } from "./source-edit.js";
+import { typecheckWith } from "./typecheck.js";
 
 /**
  * THE STUDIO DOOR: the dev server writing the studio's change into the
@@ -34,6 +36,12 @@ export interface StudioDoorOptions {
   readonly path?: string;
   /** The parser. Loaded from the app's own `typescript` unless a test hands one over. */
   readonly typescript?: typeof TS;
+  /**
+   * Compile the app with the edit in place before writing it. On unless a
+   * test turns it off: a change that leaves the code around it wrong is
+   * refused with the compiler's own words, not written and found later.
+   */
+  readonly typecheck?: boolean;
 }
 
 const LIMIT = 2_000_000;
@@ -51,7 +59,7 @@ export function studioDoorHandler(options: StudioDoorOptions = {}) {
     options.typescript ?? ((await import("typescript")) as unknown as { default: typeof TS }).default;
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    const send = (status: number, body: StudioDoorStatus | StudioDoorAnswer) => sendJson(res, status, body);
+    const send = (status: number, body: StudioDoorStatus | StudioDoorAnswer | StudioDoorSource) => sendJson(res, status, body);
     if (!fromThisApp(req)) {
       send(403, { error: "The studio door answers this app only." });
       return;
@@ -62,6 +70,13 @@ export function studioDoorHandler(options: StudioDoorOptions = {}) {
       return;
     }
     const names = await domainFiles(folder);
+    const read = () =>
+      Promise.all(names.map(async (name) => ({ path: `${domain}/${name}`, text: await readFile(join(folder, name), "utf8") })));
+    // The checkout's own acts and rules, as they are written: what a rewrite starts from.
+    if (req.method === "GET" && req.url?.startsWith("/source")) {
+      send(200, declaredCode(await parser(), await read()));
+      return;
+    }
     if (req.method === "GET") {
       send(
         200,
@@ -81,10 +96,9 @@ export function studioDoorHandler(options: StudioDoorOptions = {}) {
         send(400, { error: "A request is { changes }." });
         return;
       }
-      const files = await Promise.all(
-        names.map(async (name) => ({ path: `${domain}/${name}`, text: await readFile(join(folder, name), "utf8") })),
-      );
-      const edited = editDeclaration(await parser(), files, ask.changes);
+      const files = await read();
+      const ts = await parser();
+      const edited = editDeclaration(ts, files, ask.changes);
       if (!edited.ok) {
         send(200, { refused: edited.refused });
         return;
@@ -93,6 +107,13 @@ export function studioDoorHandler(options: StudioDoorOptions = {}) {
         const before = files.find((one) => one.path === file.path)!.text;
         return before === file.text ? [] : [{ path: file.path, before, after: file.text }];
       });
+      if (options.typecheck !== false && diff.length > 0) {
+        const diagnostics = typecheckWith(ts, root, new Map(diff.map((changed) => [changed.path, changed.after])));
+        if (diagnostics.length > 0) {
+          send(200, { refused: [`It would not compile: ${diagnostics.length} error${diagnostics.length === 1 ? "" : "s"}.`], diagnostics });
+          return;
+        }
+      }
       if (!ask.dryRun) {
         for (const changed of diff) await writeFile(join(folder, changed.path.slice(domain.length + 1)), changed.after);
       }

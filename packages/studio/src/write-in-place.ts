@@ -1,6 +1,12 @@
-import { STUDIO_DOOR_PATH, type AnySchema, type StudioDoorAnswer, type StudioDoorStatus } from "@graview/core";
+import {
+  STUDIO_DOOR_PATH,
+  type DeclarationChange,
+  type StudioDoorAnswer,
+  type StudioDoorDiagnostic,
+  type StudioDoorSource,
+  type StudioDoorStatus,
+} from "@graview/core";
 import { useEffect, useState } from "react";
-import type { Studio } from "./studio.js";
 
 /**
  * APPLY, INTO THE CHECKOUT — when there is a checkout to write into.
@@ -32,23 +38,19 @@ export function useStudioDoor(path: string = STUDIO_DOOR_PATH): Extract<StudioDo
   return door;
 }
 
+/** The checkout's own acts and rules, as they are written. */
+export async function readCode(path: string = STUDIO_DOOR_PATH): Promise<StudioDoorSource> {
+  const response = await fetch(`${path}/source`);
+  if (!response.ok) throw new Error(`The studio door answered ${response.status}.`);
+  return (await response.json()) as StudioDoorSource;
+}
+
 export type InPlace =
   | { readonly state: "written"; readonly paths: readonly string[] }
-  | { readonly state: "not-written"; readonly reasons: readonly string[] };
+  | { readonly state: "not-written"; readonly reasons: readonly string[]; readonly diagnostics?: readonly StudioDoorDiagnostic[] };
 
-/**
- * The change, made in the checkout — or every reason it was not. A stored
- * graph that needs a migration is one of the reasons until the studio can
- * write the migration beside the change: a declaration that moved on over a
- * graph that did not is an app that fails to open.
- */
-export async function writeInPlace(studio: Studio<AnySchema>, migration: string | null, path: string = STUDIO_DOOR_PATH): Promise<InPlace> {
-  const { changes, unwritten } = studio.sourceChanges();
-  const reasons = [
-    ...unwritten,
-    ...(migration ? [`A stored graph needs a migration (${migration}) — the studio cannot yet write it into the checkout.`] : []),
-  ];
-  if (reasons.length > 0) return { state: "not-written", reasons };
+/** The changes, made in the checkout — or every reason, in the door's and the compiler's words, that they were not. */
+export async function writeChanges(changes: readonly DeclarationChange[], path: string = STUDIO_DOOR_PATH): Promise<InPlace> {
   if (changes.length === 0) return { state: "not-written", reasons: ["Nothing has changed since the studio opened."] };
   try {
     const response = await fetch(path, {
@@ -58,7 +60,7 @@ export async function writeInPlace(studio: Studio<AnySchema>, migration: string 
     });
     const answer = (await response.json()) as StudioDoorAnswer;
     if ("written" in answer) return { state: "written", paths: answer.written };
-    if ("refused" in answer) return { state: "not-written", reasons: answer.refused };
+    if ("refused" in answer) return { state: "not-written", reasons: answer.refused, ...(answer.diagnostics ? { diagnostics: answer.diagnostics } : {}) };
     return { state: "not-written", reasons: [answer.error] };
   } catch (error) {
     return { state: "not-written", reasons: [`The dev server did not answer: ${error instanceof Error ? error.message : String(error)}`] };

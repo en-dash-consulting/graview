@@ -1,5 +1,5 @@
-import type { AnySchema, DeclarationChange, GraviewApp } from "@graview/core";
-import { camel, edgeParts, fieldsOf, kindLines, label, q, Read, zodSource, type Node } from "./source.js";
+import type { AnySchema, DeclarationChange, GraviewApp, StudioDoorSource } from "@graview/core";
+import { actLines, camel, edgeParts, fieldsOf, kindLines, label, q, Read, ruleLines, zodSource, type Node } from "./source.js";
 import type { Reading } from "./to-declaration.js";
 
 /**
@@ -15,14 +15,24 @@ import type { Reading } from "./to-declaration.js";
  * declared again on the planting is one relation MOVED — and moves with its
  * comments — rather than one deleted and a stranger added.
  *
- * What the source cannot yet receive this way — an act, a rule, a role, a
- * grant, a renamed kind — is said, one sentence each, in `unwritten`. The
- * studio does not write anything while that list has something in it: half
- * a change applied is a checkout that disagrees with itself.
+ * An act or rule whose declaration changed is code the studio cannot write
+ * by itself: it is named in `rewrite`, to be rewritten by a person or a seat
+ * before anything is written. What the source cannot receive this way at
+ * all yet — a role, a grant, a renamed kind — is said, one sentence each,
+ * in `unwritten`, and nothing is written while that list has something in
+ * it: half a change applied is a checkout that disagrees with itself.
  */
 export interface SourceChanges {
   readonly changes: readonly DeclarationChange[];
+  readonly rewrite: readonly Rewrite[];
   readonly unwritten: readonly string[];
+}
+
+/** An act or rule that must be written afresh before the change can be, and why. */
+export interface Rewrite {
+  readonly sort: "act" | "rule";
+  readonly name: string;
+  readonly why: string;
 }
 
 const KIND_PROPERTIES = ["description", "plural", "figure"] as const;
@@ -31,6 +41,7 @@ export function sourceChanges(before: Reading, after: Reading, base?: GraviewApp
   const was = new Read(before);
   const now = new Read(after);
   const changes: DeclarationChange[] = [];
+  const rewrite: Rewrite[] = [];
   const unwritten: string[] = [];
 
   const kindsBefore = new Map(was.ofKind("kind").map((kind) => [kind.id, kind]));
@@ -110,26 +121,97 @@ export function sourceChanges(before: Reading, after: Reading, base?: GraviewApp
     if (!edgesBefore.has(name) && kindNamesBefore.has(later.on)) changes.push({ what: "add-edge", kind: later.on, edge: name, text: text(later.parts) });
   }
 
-  // Everything else is code the checkout wrote, or policy: said, not written.
-  for (const kind of ["act", "rule", "role", "grant", "lens", "brand"] as const) {
-    const signature = (read: Read, node: Node) =>
-      JSON.stringify([
-        Object.entries(node)
-          .filter(([key]) => key !== "id")
-          .sort(([a], [b]) => a.localeCompare(b)),
-        read.reading.edges
-          .filter((edge) => edge.from === node.id)
-          .map((edge) => `${edge.kind}->${label(read.node(edge.to) ?? { id: edge.to, kind: "" })}`)
-          .sort(),
-      ]);
+  /*
+   * ACTS AND RULES. A new one is written as the studio declares it — and a
+   * new rule judges nothing until somebody says what it judges. One whose
+   * declaration changed keeps a body that was written for the old one, so
+   * it is named for rewriting rather than half-updated.
+   */
+  const signature = (read: Read, node: Node) =>
+    JSON.stringify([
+      Object.entries(node)
+        .filter(([key]) => key !== "id")
+        .sort(([a], [b]) => a.localeCompare(b)),
+      read.reading.edges
+        .filter((edge) => edge.from === node.id)
+        .map((edge) => `${edge.kind}->${label(read.node(edge.to) ?? { id: edge.to, kind: "" })}`)
+        .sort(),
+    ]);
+  for (const sort of ["act", "rule"] as const) {
+    const then = new Map(was.ofKind(sort).map((node) => [label(node), signature(was, node)]));
+    for (const node of now.ofKind(sort)) {
+      const name = label(node);
+      if (sort === "act" && node["derived"] === true) continue;
+      if (!then.has(name)) {
+        const text = (sort === "act" ? actLines(now, node, false) : ruleLines(now, node, false)).join("\n");
+        changes.push(sort === "act" ? { what: "add-act", act: name, binding: camel(name), text } : { what: "add-rule", rule: name, binding: camel(name), text });
+        if (sort === "rule") rewrite.push({ sort, name, why: "It is new, and judges nothing until its evaluate says what breaks it." });
+      } else if (then.get(name) !== signature(now, node)) {
+        rewrite.push({ sort, name, why: `Its declaration changed in the studio, and its ${sort === "act" ? "body" : "judgement"} was written for the old one.` });
+      }
+    }
+    const later = new Set(now.ofKind(sort).map(label));
+    for (const name of then.keys()) {
+      if (!later.has(name)) changes.push(sort === "act" ? { what: "remove-act", act: name } : { what: "remove-rule", rule: name });
+    }
+  }
+
+  // Policy and presentation are declared elsewhere, in ways the studio cannot yet edit in place: said, not written.
+  for (const kind of ["role", "grant", "lens", "brand"] as const) {
     const then = new Map(was.ofKind(kind).map((node) => [label(node), signature(was, node)]));
     const later = new Map(now.ofKind(kind).map((node) => [label(node), signature(now, node)]));
     for (const [name, sig] of later) {
-      if (!then.has(name)) unwritten.push(`The ${kind} "${name}" is new — ${kind === "act" || kind === "rule" ? "its body is code, which" : "that"} the studio cannot yet write into the checkout.`);
+      if (!then.has(name)) unwritten.push(`The ${kind} "${name}" is new — the studio cannot yet write that into the checkout.`);
       else if (then.get(name) !== sig) unwritten.push(`The ${kind} "${name}" changed — the studio cannot yet write that into the checkout.`);
     }
     for (const name of then.keys()) if (!later.has(name)) unwritten.push(`The ${kind} "${name}" is gone — remove it in the checkout.`);
   }
 
-  return { changes, unwritten };
+  return { changes, rewrite, unwritten };
+}
+
+/**
+ * THE CODE A CHANGE LEAVES SAYING SOMETHING UNTRUE.
+ *
+ * The declaration moved `tended-by` from the plot to the planting; the act
+ * that ties a gardener to a plot still adds a `tended-by` edge FROM a plot,
+ * and the rule that every plot has a caretaker still reads one. Both
+ * compile. Both pass the checker, which judges declarations, not bodies.
+ * Both are wrong the moment the app runs.
+ *
+ * So every act and rule the checkout wrote is read for the names the change
+ * moved or took away, and each one that mentions them is named for
+ * rewriting — by a person, a seat, or a person saying it still holds.
+ */
+export function codeTouched(changes: readonly DeclarationChange[], code: StudioDoorSource): readonly Rewrite[] {
+  const literal = (name: string) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // A name said as a string — `"tended-by"` — or a field read as a property or a key.
+  const said = (name: string) => new RegExp(`["'\`]${literal(name)}["'\`]`);
+  const field = (name: string) => new RegExp(`(\\.|\\b)${literal(name)}\\b`);
+  const marks: { test: RegExp; why: string }[] = changes.flatMap((change) => {
+    switch (change.what) {
+      case "move-edge":
+        return [{ test: said(change.edge), why: `"${change.edge}" moved from ${change.from} to ${change.to}.` }];
+      case "remove-edge":
+        return [{ test: said(change.edge), why: `"${change.edge}" is no longer declared on ${change.kind}.` }];
+      case "change-edge":
+        return [{ test: said(change.edge), why: `"${change.edge}" on ${change.kind} changed.` }];
+      case "remove-field":
+        return [{ test: field(change.field), why: `${change.kind} no longer has "${change.field}".` }];
+      case "change-field":
+        return [{ test: field(change.field), why: `${change.kind}'s "${change.field}" changed type.` }];
+      case "remove-kind":
+        return [{ test: said(change.kind), why: `The kind "${change.kind}" is gone.` }];
+      default:
+        return [];
+    }
+  });
+  const touched: Rewrite[] = [];
+  for (const [sort, declared] of [["act", code.acts], ["rule", code.rules]] as const) {
+    for (const [name, { text }] of Object.entries(declared)) {
+      const reasons = marks.filter((mark) => mark.test.test(text)).map((mark) => mark.why);
+      if (reasons.length > 0) touched.push({ sort, name, why: `It mentions what changed: ${reasons.join(" ")}` });
+    }
+  }
+  return touched;
 }

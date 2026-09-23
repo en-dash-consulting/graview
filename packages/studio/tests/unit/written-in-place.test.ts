@@ -4,7 +4,8 @@ import ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { seedbedApp } from "../../../../apps/seedbed/src/domain/app.js";
 import { editDeclaration } from "../../../ship/src/source-edit.js";
-import { createStudio, writeInPlace } from "../../src/index.js";
+import { declaredCode } from "../../../ship/src/source-edit.js";
+import { codeTouched, createStudio, rewriteCode } from "../../src/index.js";
 
 /**
  * WHAT THE STUDIO SENDS THE CHECKOUT is the change a person made, said the
@@ -37,40 +38,36 @@ describe("the change, as the checkout's source receives it", () => {
       },
       as,
     );
-    const { changes, unwritten } = studio.sourceChanges();
+    const { changes, rewrite, unwritten } = studio.sourceChanges();
     expect(changes).toContainEqual({ what: "move-edge", edge: "tended-by", from: "plot", to: "planting", targets: '["gardener"]' });
-    // The act that makes the tie and the rule that judges it are code: said, not silently left behind.
-    expect(unwritten.join(" ")).toContain('"tend"');
+    // The act that makes the tie changed its declaration: it is named for rewriting, not left behind.
+    expect(unwritten).toEqual([]);
+    expect(rewrite.map((one) => one.name)).toContain("tend");
   });
 
   it("has nothing to say when nothing changed", () => {
-    expect(createStudio(seedbedApp).sourceChanges()).toEqual({ changes: [], unwritten: [] });
+    expect(createStudio(seedbedApp).sourceChanges()).toEqual({ changes: [], rewrite: [], unwritten: [] });
   });
 });
 
-describe("Apply, through the dev server's studio door", () => {
-  it("sends the change and reports what was written", async () => {
-    const studio = createStudio(seedbedApp);
-    studio.store.apply({ name: "add-field", args: { kind: "declared:gardener", label: "phone", type: "string", required: false } }, as);
-    const sent: unknown[] = [];
-    const real = globalThis.fetch;
-    globalThis.fetch = (async (_path: string, init: { body: string }) => {
-      sent.push(JSON.parse(init.body));
-      return { json: async () => ({ written: ["src/domain/schema.ts"], diff: [] }) };
-    }) as never;
-    try {
-      expect(await writeInPlace(studio as never, null)).toEqual({ state: "written", paths: ["src/domain/schema.ts"] });
-      expect(sent).toEqual([{ changes: studio.sourceChanges().changes }]);
-    } finally {
-      globalThis.fetch = real;
-    }
+describe("the code a change leaves saying something untrue", () => {
+  const code = async () =>
+    declaredCode(ts, [
+      { path: "src/domain/mutations.ts", text: await readFile(fileURLToPath(new URL("../../../../apps/seedbed/src/domain/mutations.ts", import.meta.url)), "utf8") },
+      { path: "src/domain/invariants.ts", text: await readFile(fileURLToPath(new URL("../../../../apps/seedbed/src/domain/invariants.ts", import.meta.url)), "utf8") },
+    ]);
+
+  it("finds every act and rule that mentions what moved, and no other", async () => {
+    const touched = codeTouched([{ what: "move-edge", edge: "tended-by", from: "plot", to: "planting", targets: '["gardener"]' }], await code());
+    expect(touched.map((one) => `${one.sort}:${one.name}`).sort()).toEqual(["act:tend", "rule:every-plot-tended"]);
+    expect(touched[0]!.why).toContain('"tended-by" moved from plot to planting');
   });
 
-  it("writes nothing while any part of the change cannot be written in place, and says why", async () => {
-    const studio = createStudio(seedbedApp);
-    studio.store.apply({ name: "add-field", args: { kind: "declared:gardener", label: "phone", type: "string", required: false } }, as);
-    const answer = await writeInPlace(studio as never, "plot tended-by edges go");
-    expect(answer.state).toBe("not-written");
-    expect(answer.state === "not-written" && answer.reasons.join(" ")).toContain("migration");
+  it("takes the seat's draft as the object it was asked for, whatever it was wrapped in", async () => {
+    const drafted = await rewriteCode(
+      async () => 'Here you go:\n```ts\n{\n  title: "Name a caretaker",\n  describe: (args) => `${args.label} {braces}`,\n}\n```\nHope that helps.',
+      { sort: "act", name: "tend", why: "it moved", text: "{}", changes: [] },
+    );
+    expect(drafted).toBe('{\n  title: "Name a caretaker",\n  describe: (args) => `${args.label} {braces}`,\n}');
   });
 });

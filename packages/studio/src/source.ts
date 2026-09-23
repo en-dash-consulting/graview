@@ -203,6 +203,124 @@ export function kindLines(read: Read, kind: Node, base: GraviewApp<AnySchema> | 
   return lines;
 }
 
+/**
+ * An act's whole `defineMutation` statement, as the graph holds it. `kept`
+ * is an act the checkout already wrote: its body is code the studio never
+ * saw, so the statement throws where the body belongs rather than doing
+ * something else quietly.
+ */
+export function actLines(read: Read, act: Node, kept: boolean): string[] {
+  const actName = label(act);
+  const on = read.out(act.id, "on").map((kind) => label(kind));
+  const creates = read.out(act.id, "creates").map((kind) => label(kind));
+  const connects = read.out(act.id, "connects");
+  const severs = read.out(act.id, "severs");
+  const writes = list(act, "writes") ?? [];
+  const arg = str(act, "subjectArg") ?? "id";
+  // The checkout's own word for the far end, kept; `to` only for an act the studio declared.
+  const far = str(act, "targetArg") ?? "to";
+  const onAny = bool(act, "onAny");
+  const subjectKinds = onAny ? '"*"' : `[${on.map(q).join(", ")}]`;
+  const lines = [`export const ${camel(actName)} = defineMutation(${q(actName)}, {`];
+  const body: string[] = [];
+  if (str(act, "title")) lines.push(`  title: ${q(str(act, "title")!)},`);
+  if (str(act, "fromTheOtherEnd")) lines.push(`  fromTheOtherEnd: ${q(str(act, "fromTheOtherEnd")!)},`);
+  if (str(act, "description")) lines.push(`  description: ${q(str(act, "description")!)},`);
+  if (bool(act, "destructive")) lines.push(`  destructive: true,`);
+  if (onAny || on.length > 0) lines.push(`  subject: { kinds: ${subjectKinds}, arg: ${q(arg)} },`);
+  if (creates.length > 0) lines.push(`  creates: [${creates.map(q).join(", ")}],`);
+  if (connects.length > 0) lines.push(`  connects: [${connects.map((edge) => q(label(edge))).join(", ")}],`);
+  if (severs.length > 0) lines.push(`  severs: [${severs.map((edge) => q(label(edge))).join(", ")}],`);
+  if (writes.length > 0) lines.push(`  writes: [${writes.map(q).join(", ")}],`);
+  if (creates.length > 0) {
+    const kind = creates[0]!;
+    const kindNode = read.ofKind("kind").find((node) => label(node) === kind);
+    const fields = kindNode ? fieldsOf(read, kindNode).filter((field) => field.name !== "label") : [];
+    const asked = fields.filter((field) => field.required && field.type !== "list");
+    lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options)}`).join("")} }),`);
+    lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.label}\`,`);
+    body.push(`    ctx.addNode({`);
+    body.push(`      id: ctx.freshId(args.label, ${q(kind)}),`);
+    body.push(`      kind: ${q(kind)},`);
+    body.push(`      label: args.label,`);
+    for (const field of fields) if (field.required) body.push(`      ${field.name}: args.${field.name} ?? ${defaultSource(field.type, field.options)},`);
+    body.push(`    });`);
+  } else if (connects[0] ?? severs[0]) {
+    const edge = (connects[0] ?? severs[0])!;
+    const targets = read.out(edge.id, "to-kind").map((target) => label(target));
+    const making = connects.length > 0;
+    lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds}), ${far}: nodeRef(${targets.length > 0 ? `[${targets.map(q).join(", ")}]` : '"*"'}) }),`);
+    lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})} ${making ? "→" : "⇸"} \${nameOf(graph as Reader, args.${far})}\`,`);
+    body.push(`    ctx.${making ? "addEdge" : "removeEdge"}({ kind: ${q(label(edge))}, from: args.${arg}, to: args.${far} });`);
+  } else {
+    const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
+    for (const kindNode of read.ofKind("kind")) if (on.includes(label(kindNode))) for (const field of fieldsOf(read, kindNode)) declared.set(field.name, { type: field.type, options: field.options });
+    lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options) : "z.string().optional()"}`).join("")} }),`);
+    lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})}\`,`);
+    if (writes.length > 0) {
+      body.push(`    const patch: Record<string, unknown> = {};`);
+      for (const field of writes) body.push(`    if (args.${field} !== undefined) patch[${q(field)}] = args.${field};`);
+      body.push(`    if (Object.keys(patch).length > 0) ctx.patchNode(args.${arg}, patch);`);
+    } else {
+      body.push(`    // Declared in the studio with no create, connect, sever or write: give it a body.`);
+      body.push(`    void ctx;`);
+      body.push(`    void args;`);
+    }
+  }
+  lines.push(`  apply(ctx, args) {`);
+  if (kept) {
+    /*
+     * AN ACT THE CHECKOUT WROTE keeps its declaration and loses its body
+     * here, because a body is code the studio never saw. A generated one
+     * that does something ELSE — "close it" patching only when a status
+     * is passed, a tie without the checkout's own guard — is worse than
+     * none, so the stub throws, naming what belongs here, and `kept`
+     * says so to whoever writes the files.
+     */
+    lines.push(`    // The checkout's own body belongs here: the studio cannot write what it never saw.`);
+    lines.push(`    void ctx;`);
+    lines.push(`    void args;`);
+    lines.push(`    throw new Error(${q(`${actName}: the checkout's apply belongs here — the studio cannot write a hand-written body`)});`);
+  } else {
+    lines.push(...body);
+  }
+  lines.push(`  },`);
+  lines.push(`});`);
+  return lines;
+}
+
+/** A rule's whole `defineInvariant` statement. `kept`: the checkout already judges it, so its evaluate is not the studio's to write. */
+export function ruleLines(read: Read, rule: Node, kept: boolean): string[] {
+  const ruleName = label(rule);
+  const over = read.out(rule.id, "over")[0];
+  const repairs = read.out(rule.id, "repairs").map(label);
+  const whole = bool(rule, "wholeGraph") || !over;
+  const lines = [`export const ${camel(ruleName)} = ${whole ? "defineGraphInvariant" : "defineInvariant"}(${q(ruleName)}, {`];
+  // The checkout's words for it, not its identifier.
+  lines.push(`  label: ${q(str(rule, "title") ?? ruleName)},`);
+  if (str(rule, "description")) lines.push(`  description: ${q(str(rule, "description")!)},`);
+  if (!whole) lines.push(`  scope: { kind: ${q(label(over!))} },`);
+  if (repairs.length > 0) lines.push(`  repairs: [${repairs.map(q).join(", ")}],`);
+  if (bool(rule, "judgesPast")) lines.push(`  judgesPast: true,`);
+  lines.push(`  evaluate(): Violation[] {`);
+  if (kept) {
+    /*
+     * A rule the checkout already judges: its evaluate is code the
+     * studio never saw. A stub that returns nothing would hold, and a
+     * rule that holds when it should not is a lie the interface tells
+     * with a green light. So it throws, naming what belongs here.
+     */
+    lines.push(`    // The checkout's own judgement belongs here: the studio cannot write what it never saw.`);
+    lines.push(`    throw new Error(${q(`${ruleName}: the checkout's evaluate belongs here — the studio cannot write a judgement`)});`);
+  } else {
+    lines.push(`    // The judgement: return a violation per subject that breaks the rule.`);
+    lines.push(`    return [];`);
+  }
+  lines.push(`  },`);
+  lines.push(`});`);
+  return lines;
+}
+
 /** `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles, `policy.ts`. */
 export function declarationFiles(snapshot: GraphSnapshot | Reading, options: SourceOptions = {}): WrittenFile[] {
   const read = new Read(snapshot as Reading);
@@ -214,7 +332,6 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const keptRules: string[] = [];
   const keptFormats: string[] = [];
   const kinds = read.ofKind("kind");
-  const kindName = new Map(kinds.map((kind) => [kind.id, label(kind)]));
 
   const schemaTs = [
     `import { createSchema, defineNode } from "@graview/core";`,
@@ -252,84 +369,9 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     ` * more, keep the checkout's body under the studio's declaration.`,
     ` */`,
     ...acts.flatMap((act) => {
-      const actName = label(act);
-      const on = read.out(act.id, "on").map((kind) => kindName.get(kind.id) ?? label(kind));
-      const creates = read.out(act.id, "creates").map((kind) => kindName.get(kind.id) ?? label(kind));
-      const connects = read.out(act.id, "connects");
-      const severs = read.out(act.id, "severs");
-      const writes = list(act, "writes") ?? [];
-      const arg = str(act, "subjectArg") ?? "id";
-      // The checkout's own word for the far end, kept; `to` only for an act the studio declared.
-      const far = str(act, "targetArg") ?? "to";
-      const onAny = bool(act, "onAny");
-      const subjectKinds = onAny ? '"*"' : `[${on.map(q).join(", ")}]`;
-      const lines = [``, `export const ${camel(actName)} = defineMutation(${q(actName)}, {`];
-      const body: string[] = [];
-      if (str(act, "title")) lines.push(`  title: ${q(str(act, "title")!)},`);
-      if (str(act, "fromTheOtherEnd")) lines.push(`  fromTheOtherEnd: ${q(str(act, "fromTheOtherEnd")!)},`);
-      if (str(act, "description")) lines.push(`  description: ${q(str(act, "description")!)},`);
-      if (bool(act, "destructive")) lines.push(`  destructive: true,`);
-      if (onAny || on.length > 0) lines.push(`  subject: { kinds: ${subjectKinds}, arg: ${q(arg)} },`);
-      if (creates.length > 0) lines.push(`  creates: [${creates.map(q).join(", ")}],`);
-      if (connects.length > 0) lines.push(`  connects: [${connects.map((edge) => q(label(edge))).join(", ")}],`);
-      if (severs.length > 0) lines.push(`  severs: [${severs.map((edge) => q(label(edge))).join(", ")}],`);
-      if (writes.length > 0) lines.push(`  writes: [${writes.map(q).join(", ")}],`);
-      if (creates.length > 0) {
-        const kind = creates[0]!;
-        const kindNode = kinds.find((node) => label(node) === kind);
-        const fields = kindNode ? fieldsOf(read, kindNode).filter((field) => field.name !== "label") : [];
-        const asked = fields.filter((field) => field.required && field.type !== "list");
-        lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options)}`).join("")} }),`);
-        lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.label}\`,`);
-        body.push(`    ctx.addNode({`);
-        body.push(`      id: ctx.freshId(args.label, ${q(kind)}),`);
-        body.push(`      kind: ${q(kind)},`);
-        body.push(`      label: args.label,`);
-        for (const field of fields) if (field.required) body.push(`      ${field.name}: args.${field.name} ?? ${defaultSource(field.type, field.options)},`);
-        body.push(`    });`);
-      } else if (connects[0] ?? severs[0]) {
-        const edge = (connects[0] ?? severs[0])!;
-        const targets = read.out(edge.id, "to-kind").map((target) => kindName.get(target.id) ?? label(target));
-        const making = connects.length > 0;
-        lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds}), ${far}: nodeRef(${targets.length > 0 ? `[${targets.map(q).join(", ")}]` : '"*"'}) }),`);
-        lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})} ${making ? "→" : "⇸"} \${nameOf(graph as Reader, args.${far})}\`,`);
-        body.push(`    ctx.${making ? "addEdge" : "removeEdge"}({ kind: ${q(label(edge))}, from: args.${arg}, to: args.${far} });`);
-      } else {
-        const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
-        for (const kindNode of kinds) if (on.includes(label(kindNode))) for (const field of fieldsOf(read, kindNode)) declared.set(field.name, { type: field.type, options: field.options });
-        lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options) : "z.string().optional()"}`).join("")} }),`);
-        lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})}\`,`);
-        if (writes.length > 0) {
-          body.push(`    const patch: Record<string, unknown> = {};`);
-          for (const field of writes) body.push(`    if (args.${field} !== undefined) patch[${q(field)}] = args.${field};`);
-          body.push(`    if (Object.keys(patch).length > 0) ctx.patchNode(args.${arg}, patch);`);
-        } else {
-          body.push(`    // Declared in the studio with no create, connect, sever or write: give it a body.`);
-          body.push(`    void ctx;`);
-          body.push(`    void args;`);
-        }
-      }
-      lines.push(`  apply(ctx, args) {`);
-      if (baseActs.has(actName)) {
-        /*
-         * AN ACT THE CHECKOUT WROTE keeps its declaration and loses its body
-         * here, because a body is code the studio never saw. A generated one
-         * that does something ELSE — "close it" patching only when a status
-         * is passed, a tie without the checkout's own guard — is worse than
-         * none, so the stub throws, naming what belongs here, and `kept`
-         * says so to whoever writes the files.
-         */
-        keptActs.push(actName);
-        lines.push(`    // The checkout's own body belongs here: the studio cannot write what it never saw.`);
-        lines.push(`    void ctx;`);
-        lines.push(`    void args;`);
-        lines.push(`    throw new Error(${q(`${actName}: the checkout's apply belongs here — the studio cannot write a hand-written body`)});`);
-      } else {
-        lines.push(...body);
-      }
-      lines.push(`  },`);
-      lines.push(`});`);
-      return lines;
+      const kept = baseActs.has(label(act));
+      if (kept) keptActs.push(label(act));
+      return ["", ...actLines(read, act, kept)];
     }),
     ``,
     `export const mutations = [${acts.map((act) => camel(label(act))).join(", ")}];`,
@@ -350,35 +392,9 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     ` * already judges keeps the checkout's evaluate.`,
     ` */`,
     ...rules.flatMap((rule) => {
-      const ruleName = label(rule);
-      const over = read.out(rule.id, "over")[0];
-      const repairs = read.out(rule.id, "repairs").map(label);
-      const whole = bool(rule, "wholeGraph") || !over;
-      const lines = [``, `export const ${camel(ruleName)} = ${whole ? "defineGraphInvariant" : "defineInvariant"}(${q(ruleName)}, {`];
-      // The checkout's words for it, not its identifier.
-      lines.push(`  label: ${q(str(rule, "title") ?? ruleName)},`);
-      if (str(rule, "description")) lines.push(`  description: ${q(str(rule, "description")!)},`);
-      if (!whole) lines.push(`  scope: { kind: ${q(kindName.get(over!.id) ?? label(over!))} },`);
-      if (repairs.length > 0) lines.push(`  repairs: [${repairs.map(q).join(", ")}],`);
-      if (bool(rule, "judgesPast")) lines.push(`  judgesPast: true,`);
-      lines.push(`  evaluate(): Violation[] {`);
-      if (baseRules.has(ruleName)) {
-        /*
-         * A rule the checkout already judges: its evaluate is code the
-         * studio never saw. A stub that returns nothing would hold, and a
-         * rule that holds when it should not is a lie the interface tells
-         * with a green light. So it throws, naming what belongs here.
-         */
-        keptRules.push(ruleName);
-        lines.push(`    // The checkout's own judgement belongs here: the studio cannot write what it never saw.`);
-        lines.push(`    throw new Error(${q(`${ruleName}: the checkout's evaluate belongs here — the studio cannot write a judgement`)});`);
-      } else {
-        lines.push(`    // The judgement: return a violation per subject that breaks the rule.`);
-        lines.push(`    return [];`);
-      }
-      lines.push(`  },`);
-      lines.push(`});`);
-      return lines;
+      const kept = baseRules.has(label(rule));
+      if (kept) keptRules.push(label(rule));
+      return ["", ...ruleLines(read, rule, kept)];
     }),
     ``,
     `export const invariants = [${rules.map((rule) => camel(label(rule))).join(", ")}];`,
@@ -404,7 +420,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
       ...grants.map((g) => {
         const lets = read.out(g.id, "lets").map(label);
         const may = read.out(g.id, "may").map(label);
-        const over = read.out(g.id, "over").map((kind) => kindName.get(kind.id) ?? label(kind));
+        const over = read.out(g.id, "over").map(label);
         const parts = [
           `roles: ${bool(g, "everyone") ? '"*"' : `[${lets.map(q).join(", ")}]`}`,
           `mutations: ${bool(g, "allActs") ? '"*"' : `[${may.map(q).join(", ")}]`}`,
