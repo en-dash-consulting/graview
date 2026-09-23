@@ -9,7 +9,7 @@ import type { FieldType } from "./meta.js";
  * where the checkout's own must be kept.
  */
 
-type Node = { readonly id: string; readonly kind: string } & Record<string, unknown>;
+export type Node = { readonly id: string; readonly kind: string } & Record<string, unknown>;
 interface Reading {
   readonly nodes: readonly Node[];
   readonly edges: readonly GraphEdge[];
@@ -38,21 +38,24 @@ export interface WrittenFile {
   readonly kept: readonly string[];
 }
 
-const q = (text: string): string => JSON.stringify(text);
-const camel = (slug: string): string => slug.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+export const q = (text: string): string => JSON.stringify(text);
+export const camel = (slug: string): string => slug.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 const pascal = (slug: string): string => {
   const c = camel(slug);
   return c.charAt(0).toUpperCase() + c.slice(1);
 };
-const label = (node: Node): string => String(node["label"] ?? node.id);
+export const label = (node: Node): string => String(node["label"] ?? node.id);
 const str = (node: Node, key: string): string | undefined => (typeof node[key] === "string" ? (node[key] as string) : undefined);
 const bool = (node: Node, key: string): boolean => node[key] === true;
 const list = (node: Node, key: string): string[] | undefined => (Array.isArray(node[key]) ? (node[key] as unknown[]).map(String) : undefined);
 
-class Read {
+export class Read {
   private readonly byId = new Map<string, Node>();
-  constructor(private readonly reading: Reading) {
+  constructor(readonly reading: Reading) {
     for (const node of reading.nodes) this.byId.set(node.id, node);
+  }
+  node(id: string): Node | undefined {
+    return this.byId.get(id);
   }
   ofKind(kind: string): Node[] {
     return this.reading.nodes.filter((node) => node.kind === kind);
@@ -65,7 +68,7 @@ class Read {
   }
 }
 
-function zodSource(type: FieldType, required: boolean, options?: readonly string[]): string {
+export function zodSource(type: FieldType, required: boolean, options?: readonly string[]): string {
   const base =
     type === "number"
       ? "z.number()"
@@ -140,6 +143,66 @@ function carried(
   return lines;
 }
 
+/** A kind's fields, as the graph holds them. */
+export function fieldsOf(read: Read, kind: Node): { name: string; type: FieldType; required: boolean; options: string[] | undefined }[] {
+  return read.in(kind.id, "of").map((field) => ({
+    name: label(field),
+    type: (str(field, "type") ?? "string") as FieldType,
+    required: bool(field, "required"),
+    options: list(field, "options"),
+  }));
+}
+
+/** An edge's declaration, one property per entry: `to: ["gardener"]`, `cardinality: "one"`, … */
+export function edgeParts(read: Read, edge: Node): string[] {
+  const targets = read.out(edge.id, "to-kind").map(label);
+  const parts = [`to: ${bool(edge, "toAny") ? '"*"' : `[${targets.map(q).join(", ")}]`}`];
+  if (str(edge, "cardinality") === "one") parts.push(`cardinality: "one"`);
+  if (str(edge, "description")) parts.push(`description: ${q(str(edge, "description")!)}`);
+  if (str(edge, "inverse")) parts.push(`inverse: ${q(str(edge, "inverse")!)}`);
+  if (bool(edge, "appendOnly")) parts.push(`appendOnly: true`);
+  return parts;
+}
+
+/** A kind's whole `defineNode` statement, as the graph holds it. */
+export function kindLines(read: Read, kind: Node, base: GraviewApp<AnySchema> | undefined, keptFormats: string[]): string[] {
+  const fields = fieldsOf(read, kind);
+  const edges = read.in(kind.id, "from-kind");
+  const lifecycleField = str(kind, "lifecycleField");
+  const retired = list(kind, "retired");
+  const lines = [`export const ${camel(label(kind))} = defineNode(${q(label(kind))}, {`];
+  if (str(kind, "description")) lines.push(`  description: ${q(str(kind, "description")!)},`);
+  lines.push(`  fields: z.object({`);
+  for (const field of fields) lines.push(`    ${/^[a-z_$][\w$]*$/i.test(field.name) ? field.name : q(field.name)}: ${zodSource(field.type, field.required, field.options)},`);
+  lines.push(`  }),`);
+  if (edges.length > 0) {
+    lines.push(`  edges: {`);
+    for (const edge of edges) {
+      lines.push(`    ${q(label(edge))}: {`, ...edgeParts(read, edge).map((part) => `      ${part},`), `    },`);
+    }
+    lines.push(`  },`);
+  }
+  if (str(kind, "plural")) lines.push(`  plural: ${q(str(kind, "plural")!)},`);
+  if (fields.some((field) => field.name === "label")) lines.push(`  label: (node) => node.label,`);
+  if (lifecycleField && retired) lines.push(`  lifecycle: { field: ${q(lifecycleField)}, retired: ${retired[0] === "date" ? '"date"' : `[${retired.map(q).join(", ")}]`} },`);
+  // The drawing is part of the declaration, so it is part of the file.
+  if (str(kind, "figure")) lines.push(`  figure: ${q(str(kind, "figure")!)},`);
+  /*
+   * WHAT THE STUDIO DOES NOT MODEL, IT WRITES BACK ANYWAY.
+   *
+   * How a field reads, what is fixed and which fields answer a lens's
+   * roles are decisions in the checkout that the studio has no act for.
+   * Rebuilding a kind from the graph alone dropped all of them — so
+   * applying would have turned "Blocked 09:00" back into
+   * `plannedAt: 540` on every card. The one thing that genuinely cannot
+   * be written is a `format` function; the file SAYS SO where it finds
+   * one rather than losing it silently.
+   */
+  lines.push(...carried(base, label(kind), new Set(fields.map((field) => field.name)), keptFormats));
+  lines.push(`});`);
+  return lines;
+}
+
 /** `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles, `policy.ts`. */
 export function declarationFiles(snapshot: GraphSnapshot | Reading, options: SourceOptions = {}): WrittenFile[] {
   const read = new Read(snapshot as Reading);
@@ -152,8 +215,6 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const keptFormats: string[] = [];
   const kinds = read.ofKind("kind");
   const kindName = new Map(kinds.map((kind) => [kind.id, label(kind)]));
-  const fieldsOf = (kind: Node) =>
-    read.in(kind.id, "of").map((field) => ({ name: label(field), type: (str(field, "type") ?? "string") as FieldType, required: bool(field, "required"), options: list(field, "options") }));
 
   const schemaTs = [
     `import { createSchema, defineNode } from "@graview/core";`,
@@ -163,50 +224,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     ` * ${name}'s kinds, written by the studio. The shape is the declaration's;`,
     ` * edit it here or there, and \`graview check\` judges either.`,
     ` */`,
-    ...kinds.flatMap((kind) => {
-      const fields = fieldsOf(kind);
-      const edges = read.in(kind.id, "from-kind");
-      const lifecycleField = str(kind, "lifecycleField");
-      const retired = list(kind, "retired");
-      const lines = [``, `export const ${camel(label(kind))} = defineNode(${q(label(kind))}, {`];
-      if (str(kind, "description")) lines.push(`  description: ${q(str(kind, "description")!)},`);
-      lines.push(`  fields: z.object({`);
-      for (const field of fields) lines.push(`    ${/^[a-z_$][\w$]*$/i.test(field.name) ? field.name : q(field.name)}: ${zodSource(field.type, field.required, field.options)},`);
-      lines.push(`  }),`);
-      if (edges.length > 0) {
-        lines.push(`  edges: {`);
-        for (const edge of edges) {
-          const targets = read.out(edge.id, "to-kind").map((target) => kindName.get(target.id) ?? label(target));
-          lines.push(`    ${q(label(edge))}: {`);
-          lines.push(`      to: ${bool(edge, "toAny") ? '"*"' : `[${targets.map(q).join(", ")}]`},`);
-          if (str(edge, "cardinality") === "one") lines.push(`      cardinality: "one",`);
-          if (str(edge, "description")) lines.push(`      description: ${q(str(edge, "description")!)},`);
-          if (str(edge, "inverse")) lines.push(`      inverse: ${q(str(edge, "inverse")!)},`);
-          if (bool(edge, "appendOnly")) lines.push(`      appendOnly: true,`);
-          lines.push(`    },`);
-        }
-        lines.push(`  },`);
-      }
-      if (str(kind, "plural")) lines.push(`  plural: ${q(str(kind, "plural")!)},`);
-      if (fields.some((field) => field.name === "label")) lines.push(`  label: (node) => node.label,`);
-      if (lifecycleField && retired) lines.push(`  lifecycle: { field: ${q(lifecycleField)}, retired: ${retired[0] === "date" ? '"date"' : `[${retired.map(q).join(", ")}]`} },`);
-      // The drawing is part of the declaration, so it is part of the file.
-      if (str(kind, "figure")) lines.push(`  figure: ${q(str(kind, "figure")!)},`);
-      /*
-       * WHAT THE STUDIO DOES NOT MODEL, IT WRITES BACK ANYWAY.
-       *
-       * How a field reads, what is fixed and which fields answer a lens's
-       * roles are decisions in the checkout that the studio has no act for.
-       * Rebuilding a kind from the graph alone dropped all of them — so
-       * applying would have turned "Blocked 09:00" back into
-       * `plannedAt: 540` on every card. The one thing that genuinely cannot
-       * be written is a `format` function; the file SAYS SO where it finds
-       * one rather than losing it silently.
-       */
-      lines.push(...carried(options.base, label(kind), new Set(fields.map((field) => field.name)), keptFormats));
-      lines.push(`});`);
-      return lines;
-    }),
+    ...kinds.flatMap((kind) => ["", ...kindLines(read, kind, options.base, keptFormats)]),
     ``,
     `export const ${schemaVar} = createSchema([${kinds.map((kind) => camel(label(kind))).join(", ")}]);`,
     `export type ${pascal(schemaVar)} = typeof ${schemaVar};`,
@@ -259,7 +277,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
       if (creates.length > 0) {
         const kind = creates[0]!;
         const kindNode = kinds.find((node) => label(node) === kind);
-        const fields = kindNode ? fieldsOf(kindNode).filter((field) => field.name !== "label") : [];
+        const fields = kindNode ? fieldsOf(read, kindNode).filter((field) => field.name !== "label") : [];
         const asked = fields.filter((field) => field.required && field.type !== "list");
         lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options)}`).join("")} }),`);
         lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.label}\`,`);
@@ -278,7 +296,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
         body.push(`    ctx.${making ? "addEdge" : "removeEdge"}({ kind: ${q(label(edge))}, from: args.${arg}, to: args.${far} });`);
       } else {
         const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
-        for (const kindNode of kinds) if (on.includes(label(kindNode))) for (const field of fieldsOf(kindNode)) declared.set(field.name, { type: field.type, options: field.options });
+        for (const kindNode of kinds) if (on.includes(label(kindNode))) for (const field of fieldsOf(read, kindNode)) declared.set(field.name, { type: field.type, options: field.options });
         lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options) : "z.string().optional()"}`).join("")} }),`);
         lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})}\`,`);
         if (writes.length > 0) {

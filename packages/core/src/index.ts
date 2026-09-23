@@ -232,6 +232,8 @@ export { undecidableArguments } from "./mutations/decidable.js";
 export type { UndecidableArgument } from "./mutations/decidable.js";
 export { motion, readerSettings, textSize } from "./settings.js";
 export { DECISION_BRIDGE_PATH, LOCAL_BRIDGE_PATH } from "./intelligence-bridge.js";
+export { STUDIO_DOOR_PATH } from "./studio-door.js";
+export type { DeclarationChange, StudioDoorAnswer, StudioDoorAsk, StudioDoorStatus } from "./studio-door.js";
 export type {
   DecisionBridgeAnswer,
   DecisionBridgeAsk,

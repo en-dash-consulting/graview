@@ -21,6 +21,10 @@ export { migrationBetween, migrationSteps, primitivesFor } from "./migration.js"
 export type { MigrationStep } from "./migration.js";
 export { declarationFiles } from "./source.js";
 export type { SourceOptions, WrittenFile } from "./source.js";
+export { sourceChanges } from "./changes.js";
+export type { SourceChanges } from "./changes.js";
+export { useStudioDoor, writeInPlace } from "./write-in-place.js";
+export type { InPlace } from "./write-in-place.js";
 export { createStudio } from "./studio.js";
 export type { Studio, StudioOptions } from "./studio.js";
 export { createStudioLens } from "./lens.js";

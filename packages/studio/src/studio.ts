@@ -1,5 +1,6 @@
 import { checkApp, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
 import { declarationToGraph } from "./from-declaration.js";
+import { sourceChanges, type SourceChanges } from "./changes.js";
 import { migrationBetween } from "./migration.js";
 import { studioApp, type StudioSchema } from "./meta.js";
 import { declarationFiles, type SourceOptions, type WrittenFile } from "./source.js";
@@ -47,6 +48,8 @@ export interface Studio<S extends AnySchema = AnySchema> {
   apply(): { readonly ok: true; readonly app: GraviewApp<AnySchema>; readonly migration: MigrationDeclaration | null } | { readonly ok: false; readonly check: CheckResult };
   /** The declaration as the files `graview create` writes. */
   files(options?: SourceOptions): readonly WrittenFile[];
+  /** What changed since the studio opened, as edits the checkout's own source can take — and what cannot be written that way yet. */
+  sourceChanges(): SourceChanges;
 }
 
 export interface StudioOptions {
@@ -127,5 +130,6 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
     },
     files: (sourceOptions) =>
       declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base as unknown as GraviewApp<AnySchema>, ...sourceOptions }),
+    sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base as unknown as GraviewApp<AnySchema>),
   };
 }

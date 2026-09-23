@@ -1,0 +1,327 @@
+import type { DeclarationChange } from "@graview/core";
+import type * as TS from "typescript";
+
+/**
+ * A DECLARATION CHANGE, MADE AS AN EDIT TO THE SOURCE.
+ *
+ * The studio can write a whole declaration from its graph, and for a new
+ * app that is right. For an app somebody has been writing for months it is
+ * a disaster with a green tick on it: the graph holds the shape, not the
+ * comments that say why, not the `describe` and `format` functions, not a
+ * single hand-written body — so a regenerated `schema.ts` is a smaller,
+ * poorer file that happens to type-check.
+ *
+ * So a change is carried as a change — "move `tended-by` from plot to
+ * planting" — and made here, inside the checkout's own `defineNode` calls,
+ * by the parser's positions: the property removed with the comment above
+ * it, carried to the other kind at that kind's indentation, and every other
+ * character left exactly where it was.
+ *
+ * All or nothing. A change the source cannot take — a kind it cannot find,
+ * fields written some way other than `z.object({ … })` — refuses the whole
+ * set, and says which and why, rather than writing half a declaration.
+ */
+
+export interface SourceText {
+  readonly path: string;
+  readonly text: string;
+}
+
+export type SourceEdit =
+  | { readonly ok: true; readonly files: readonly SourceText[] }
+  | { readonly ok: false; readonly refused: readonly string[] };
+
+type Ts = typeof TS;
+
+export function editDeclaration(ts: Ts, files: readonly SourceText[], changes: readonly DeclarationChange[]): SourceEdit {
+  const current = new Map(files.map((file) => [file.path, file.text]));
+  const refused: string[] = [];
+  for (const change of changes) {
+    const outcome = applyChange(ts, current, change);
+    if (typeof outcome === "string") refused.push(outcome);
+  }
+  if (refused.length > 0) return { ok: false, refused };
+  return { ok: true, files: files.map((file) => ({ path: file.path, text: current.get(file.path)! })) };
+}
+
+/* ------------------------------------------------------------ finding */
+
+interface Found {
+  readonly path: string;
+  readonly source: TS.SourceFile;
+  readonly object: TS.ObjectLiteralExpression;
+  /** The statement that binds it, when it is one: what removing the kind removes. */
+  readonly statement?: TS.Statement;
+  readonly binding?: string;
+}
+
+const parse = (ts: Ts, path: string, text: string) => ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+
+const calleeIs = (ts: Ts, call: TS.CallExpression, name: string): boolean =>
+  (ts.isIdentifier(call.expression) && call.expression.text === name) ||
+  (ts.isPropertyAccessExpression(call.expression) && call.expression.name.text === name);
+
+function visit(ts: Ts, node: TS.Node, found: (node: TS.Node) => boolean): TS.Node | undefined {
+  if (found(node)) return node;
+  return ts.forEachChild(node, (child) => visit(ts, child, found));
+}
+
+function defineNodeOf(ts: Ts, files: ReadonlyMap<string, string>, kind: string): Found | undefined {
+  for (const [path, text] of files) {
+    const source = parse(ts, path, text);
+    const call = visit(ts, source, (node) => {
+      if (!ts.isCallExpression(node) || !calleeIs(ts, node, "defineNode")) return false;
+      const [name, body] = node.arguments;
+      return !!name && ts.isStringLiteralLike(name) && name.text === kind && !!body && ts.isObjectLiteralExpression(body);
+    }) as TS.CallExpression | undefined;
+    if (!call) continue;
+    let statement: TS.Node = call;
+    while (statement.parent && !ts.isSourceFile(statement.parent)) statement = statement.parent;
+    const declared = ts.isVariableStatement(statement) ? statement.declarationList.declarations[0] : undefined;
+    return {
+      path,
+      source,
+      object: call.arguments[1] as TS.ObjectLiteralExpression,
+      ...(ts.isVariableStatement(statement) ? { statement } : {}),
+      ...(declared && ts.isIdentifier(declared.name) ? { binding: declared.name.text } : {}),
+    };
+  }
+  return undefined;
+}
+
+const propertyName = (ts: Ts, property: TS.ObjectLiteralElementLike): string | undefined =>
+  property.name && (ts.isIdentifier(property.name) || ts.isStringLiteralLike(property.name)) ? property.name.text : undefined;
+
+function property(ts: Ts, object: TS.ObjectLiteralExpression, name: string): TS.PropertyAssignment | undefined {
+  return object.properties.find((one): one is TS.PropertyAssignment => ts.isPropertyAssignment(one) && propertyName(ts, one) === name);
+}
+
+/** The object inside `fields: z.object({ … })`, or why there is none to edit. */
+function fieldsOf(ts: Ts, found: Found, kind: string): TS.ObjectLiteralExpression | string {
+  const fields = property(ts, found.object, "fields")?.initializer;
+  if (fields && ts.isCallExpression(fields) && calleeIs(ts, fields, "object")) {
+    const shape = fields.arguments[0];
+    if (shape && ts.isObjectLiteralExpression(shape)) return shape;
+  }
+  return `The fields of "${kind}" are not written as z.object({ … }) in ${found.path}, so the studio cannot edit them in place.`;
+}
+
+/* ------------------------------------------------------------ editing */
+
+/** The whitespace a line starts with. */
+const indentAt = (text: string, position: number): string => {
+  const start = text.lastIndexOf("\n", position - 1) + 1;
+  return /^[ \t]*/.exec(text.slice(start))![0];
+};
+
+/** One level deeper than `indent`, in the file's own step. */
+const deeper = (text: string, indent: string): string => indent + (/\n\t/.test(text) && !/\n {2}/.test(text) ? "\t" : "  ");
+
+const key = (name: string): string => (/^[A-Za-z_$][\w$]*$/.test(name) ? name : JSON.stringify(name));
+
+/** Re-indent a block of source from one indentation to another. */
+const reindent = (block: string, from: string, to: string): string =>
+  block
+    .split("\n")
+    .map((line) => (line.startsWith(from) ? to + line.slice(from.length) : line))
+    .join("\n");
+
+function insertProperty(text: string, object: TS.ObjectLiteralExpression, source: TS.SourceFile, entry: string): string {
+  const last = object.properties[object.properties.length - 1];
+  // An object written on one line stays on one line, when what joins it fits on one.
+  if (!text.slice(object.getStart(source), object.end).includes("\n") && !entry.includes("\n")) {
+    return last
+      ? `${text.slice(0, last.end)}, ${entry}${text.slice(last.end)}`
+      : `${text.slice(0, object.getStart(source))}{ ${entry} }${text.slice(object.end)}`;
+  }
+  if (!last) {
+    const outer = indentAt(text, object.getStart(source));
+    const inner = deeper(text, outer);
+    return `${text.slice(0, object.getStart(source))}{\n${inner}${reindent(entry, "", inner).trimStart()},\n${outer}}${text.slice(object.end)}`;
+  }
+  const indent = indentAt(text, last.getStart(source));
+  const body = reindent(entry, "", indent).trimStart();
+  if (object.properties.hasTrailingComma) {
+    const comma = text.indexOf(",", last.end);
+    return `${text.slice(0, comma + 1)}\n${indent}${body},${text.slice(comma + 1)}`;
+  }
+  return `${text.slice(0, last.end)},\n${indent}${body}${text.slice(last.end)}`;
+}
+
+/**
+ * The property's span: from the end of whatever came before it — so the
+ * comment above it goes with it — to the comma after it.
+ */
+function spanOf(text: string, element: TS.Node): { readonly start: number; readonly end: number } {
+  const comma = /^[ \t]*,/.exec(text.slice(element.end));
+  return { start: element.getFullStart(), end: element.end + (comma ? comma[0].length : 0) };
+}
+
+const cut = (text: string, span: { start: number; end: number }): string => text.slice(0, span.start) + text.slice(span.end);
+
+function replaceNode(text: string, node: TS.Node, source: TS.SourceFile, replacement: string): string {
+  return text.slice(0, node.getStart(source)) + replacement + text.slice(node.end);
+}
+
+/* ------------------------------------------------------------ changes */
+
+function applyChange(ts: Ts, files: Map<string, string>, change: DeclarationChange): string | undefined {
+  if (change.what === "add-kind") return addKind(ts, files, change);
+  const kind = change.what === "move-edge" ? change.from : change.kind;
+  const found = defineNodeOf(ts, files, kind);
+  if (!found) return `No defineNode("${kind}", { … }) in ${[...files.keys()].join(", ")}.`;
+  const text = files.get(found.path)!;
+
+  switch (change.what) {
+    case "remove-kind": {
+      if (!found.statement) return `defineNode("${kind}") in ${found.path} is not a statement of its own, so the studio cannot remove it.`;
+      let next = cut(text, spanOf(text, found.statement));
+      if (found.binding) next = removeFromSchema(ts, found.path, next, found.binding) ?? next;
+      files.set(found.path, next);
+      return undefined;
+    }
+    case "set-kind-property": {
+      const existing = property(ts, found.object, change.property);
+      if (change.text === null) {
+        if (existing) files.set(found.path, cut(text, spanOf(text, existing)));
+      } else if (existing) {
+        files.set(found.path, replaceNode(text, existing.initializer, found.source, change.text));
+      } else {
+        files.set(found.path, insertProperty(text, found.object, found.source, `${key(change.property)}: ${change.text}`));
+      }
+      return undefined;
+    }
+    case "add-field":
+    case "change-field":
+    case "remove-field": {
+      const shape = fieldsOf(ts, found, kind);
+      if (typeof shape === "string") return shape;
+      const existing = property(ts, shape, change.field);
+      if (change.what === "add-field") {
+        if (existing) return `"${kind}" already has a field "${change.field}" in ${found.path}.`;
+        files.set(found.path, insertProperty(text, shape, found.source, `${key(change.field)}: ${change.zod}`));
+      } else if (!existing) {
+        return `"${kind}" has no field "${change.field}" in ${found.path}.`;
+      } else if (change.what === "change-field") {
+        files.set(found.path, replaceNode(text, existing.initializer, found.source, change.zod));
+      } else {
+        files.set(found.path, cut(text, spanOf(text, existing)));
+      }
+      return undefined;
+    }
+    case "add-edge":
+    case "change-edge":
+    case "remove-edge": {
+      const edges = property(ts, found.object, "edges");
+      const object = edges && ts.isObjectLiteralExpression(edges.initializer) ? edges.initializer : undefined;
+      const existing = object ? property(ts, object, change.edge) : undefined;
+      if (change.what === "add-edge") {
+        if (existing) return `"${kind}" already declares "${change.edge}" in ${found.path}.`;
+        const entry = `${key(change.edge)}: ${change.text}`;
+        files.set(
+          found.path,
+          object ? insertProperty(text, object, found.source, entry) : insertProperty(text, found.object, found.source, `edges: {\n  ${entry.split("\n").join("\n  ")},\n}`),
+        );
+      } else if (!existing) {
+        return `"${kind}" declares no edge "${change.edge}" in ${found.path}.`;
+      } else if (change.what === "change-edge") {
+        files.set(found.path, replaceNode(text, existing.initializer, found.source, reindent(change.text, "", indentAt(text, existing.getStart(found.source)))));
+      } else {
+        files.set(found.path, cut(text, spanOf(text, existing)));
+      }
+      return undefined;
+    }
+    case "move-edge":
+      return moveEdge(ts, files, found, change);
+  }
+}
+
+/**
+ * THE SAME RELATION, ON ANOTHER KIND: carried as it was written. Its
+ * readings, its `appendOnly`, the comment that says why it exists all go
+ * with it; only where it points is rewritten.
+ */
+function moveEdge(ts: Ts, files: Map<string, string>, found: Found, change: Extract<DeclarationChange, { what: "move-edge" }>): string | undefined {
+  const text = files.get(found.path)!;
+  const edges = property(ts, found.object, "edges");
+  const object = edges && ts.isObjectLiteralExpression(edges.initializer) ? edges.initializer : undefined;
+  const existing = object ? property(ts, object, change.edge) : undefined;
+  if (!existing || !ts.isObjectLiteralExpression(existing.initializer)) return `"${change.from}" declares no edge "${change.edge}" in ${found.path}.`;
+  if (!defineNodeOf(ts, files, change.to)) return `No defineNode("${change.to}", { … }) to move "${change.edge}" onto.`;
+
+  // The property's own text, with its targets rewritten, and its comments above it.
+  const span = spanOf(text, existing);
+  const target = property(ts, existing.initializer, "to");
+  let carried = text.slice(span.start, existing.end);
+  if (target) {
+    const at = target.initializer.getStart(found.source) - span.start;
+    carried = carried.slice(0, at) + change.targets + carried.slice(target.initializer.end - span.start);
+  }
+  const from = indentAt(text, existing.getStart(found.source));
+  const block = carried.replace(/^\n/, "");
+  const withoutIndent = reindent(block, from, "");
+
+  // Removed from where it was — and an `edges: {}` left empty goes too.
+  let next = cut(text, span);
+  const after = defineNodeOf(ts, new Map([[found.path, next]]), change.from)!;
+  const left = property(ts, after.object, "edges");
+  if (left && ts.isObjectLiteralExpression(left.initializer) && left.initializer.properties.length === 0) {
+    next = cut(next, spanOf(next, left));
+  }
+  files.set(found.path, next);
+
+  const destination = defineNodeOf(ts, files, change.to)!;
+  const there = files.get(destination.path)!;
+  const edgesThere = property(ts, destination.object, "edges");
+  files.set(
+    destination.path,
+    edgesThere && ts.isObjectLiteralExpression(edgesThere.initializer)
+      ? insertProperty(there, edgesThere.initializer, destination.source, withoutIndent)
+      : insertProperty(there, destination.object, destination.source, `edges: {\n  ${withoutIndent.split("\n").join("\n  ")},\n}`),
+  );
+  return undefined;
+}
+
+/** The `createSchema([...])` array, wherever the kinds are gathered. */
+function schemaList(ts: Ts, path: string, text: string): { source: TS.SourceFile; list: TS.ArrayLiteralExpression } | undefined {
+  const source = parse(ts, path, text);
+  const call = visit(ts, source, (node) => ts.isCallExpression(node) && calleeIs(ts, node, "createSchema")) as TS.CallExpression | undefined;
+  const list = call?.arguments[0];
+  return list && ts.isArrayLiteralExpression(list) ? { source, list } : undefined;
+}
+
+function removeFromSchema(ts: Ts, path: string, text: string, binding: string): string | undefined {
+  const found = schemaList(ts, path, text);
+  const element = found?.list.elements.find((one) => ts.isIdentifier(one) && one.text === binding);
+  if (!found || !element) return undefined;
+  const elements = found.list.elements;
+  const at = elements.indexOf(element);
+  // With the comma on whichever side it sits.
+  const start = at > 0 ? elements[at - 1]!.end : element.getStart(found.source);
+  const end = at > 0 ? element.end : (elements[at + 1]?.getStart(found.source) ?? element.end);
+  return text.slice(0, start) + text.slice(end);
+}
+
+function addKind(ts: Ts, files: Map<string, string>, change: Extract<DeclarationChange, { what: "add-kind" }>): string | undefined {
+  if (defineNodeOf(ts, files, change.kind)) return `"${change.kind}" is already declared.`;
+  for (const [path, text] of files) {
+    const found = schemaList(ts, path, text);
+    if (!found) continue;
+    let statement: TS.Node = found.list;
+    while (statement.parent && !ts.isSourceFile(statement.parent)) statement = statement.parent;
+    // Into the list — ahead of any spread, so the app's own kinds stay together.
+    const spread = found.list.elements.find((one) => ts.isSpreadElement(one));
+    const last = found.list.elements[found.list.elements.length - 1];
+    let next = spread
+      ? `${text.slice(0, spread.getStart(found.source))}${change.binding}, ${text.slice(spread.getStart(found.source))}`
+      : last
+        ? `${text.slice(0, last.end)}, ${change.binding}${text.slice(last.end)}`
+        : `${text.slice(0, found.list.getStart(found.source) + 1)}${change.binding}${text.slice(found.list.getStart(found.source) + 1)}`;
+    // And declared just above where the schema gathers them.
+    const before = statement.getStart(found.source);
+    next = `${next.slice(0, before)}${change.text.trim()}\n\n${next.slice(before)}`;
+    files.set(path, next);
+    return undefined;
+  }
+  return `No createSchema([ … ]) to add "${change.kind}" to.`;
+}

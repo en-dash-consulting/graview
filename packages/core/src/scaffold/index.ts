@@ -567,10 +567,13 @@ function tsconfigBuild(): string {
 
 function viteConfig(ids: Ids): string {
   if (!ids.link) {
-    return `import { defineConfig } from "vitest/config";
+    return `import { studioDoor } from "@graview/ship/dev";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
+  // The studio writes a declaration change into src/domain through this, in development only.
+  plugins: [studioDoor()],
   // The declaration compiles to dist/ for \`graview check\`; the site goes
   // somewhere else so neither build overwrites the other. ES2022 because
   // main.tsx awaits the store at the top level, and every browser the
@@ -630,7 +633,8 @@ export default defineConfig({
 });
 `;
   }
-  return `import { searchForWorkspaceRoot } from "vite";
+  return `import { studioDoor } from "@graview/ship/dev";
+import { searchForWorkspaceRoot } from "vite";
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
@@ -647,6 +651,8 @@ const framework = (p: string) =>
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
+  // The studio writes a declaration change into src/domain through this, in development only.
+  plugins: [studioDoor()],
   /*
    * THE FRAMEWORK SPLIT FROM THE APP, ALONG THE FRAMEWORK'S OWN TIER
    * BOUNDARY.

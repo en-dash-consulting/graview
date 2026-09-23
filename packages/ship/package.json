@@ -44,5 +44,13 @@
   },
   "bin": {
     "graview-serve": "./dist/cli.js"
+  },
+  "peerDependencies": {
+    "typescript": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
   }
 }

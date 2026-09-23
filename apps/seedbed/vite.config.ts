@@ -1,3 +1,4 @@
+import { studioDoor } from "@graview/ship/dev";
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
 
@@ -6,6 +7,13 @@ const pkg = (name: string) =>
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
+  /*
+   * THE STUDIO WRITES INTO THIS APP'S OWN src/domain, in development: a
+   * change made in the studio is made in these files, inside their own
+   * declarations. The harnesses drive the studio over the todo app, so no
+   * check run edits this one.
+   */
+  plugins: [studioDoor({ root: fileURLToPath(new URL(".", import.meta.url)) })],
   resolve: {
     alias: {
       "@graview/core": pkg("core"),

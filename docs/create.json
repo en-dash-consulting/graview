@@ -1,9 +1,9 @@
 {
-  "at": "2026-09-15T04:47:28.620Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-4yuBIr",
+  "at": "2026-09-23T04:17:30.289Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-9jobhP",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-4yuBIr/field-notes",
+    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-9jobhP/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -29,7 +29,7 @@
     "installed": true,
     "lockfile": true,
     "verified": true,
-    "checkSaid": "graview check: Field Notes — no problems found.",
+    "checkSaid": "0 error(s), 0 warning(s), 1 note(s)",
     "brokenSchemaTypechecked": false,
     "tscSaid": "src/domain/schema.ts(34,46): error TS2345: Argument of type '[NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; readonly inverse: \"what is waiting on this\"; }; }>]' is not assignable to parameter of type 'readonly [NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; readonly inverse: \"what is waiting on this\"; }; }>] & { ...; }'.",
     "docsWritten": true,
@@ -37,53 +37,46 @@
     "skills": true,
     "built": true
   },
-  "pnpm": {
-    "ciUsesPnpm": true,
-    "installed": true,
-    "verified": true,
-    "checkSaid": "graview check: Field Notes — no problems found."
-  },
-  "door": {
-    "said": "graview create: 20 files → door-app",
-    "tree": [
-      ".github/workflows/ci.yml",
-      ".gitignore",
-      "README.md",
-      "embed.html",
-      "index.html",
-      "package.json",
-      "src/domain/app.ts",
-      "src/domain/brand.ts",
-      "src/domain/invariants.ts",
-      "src/domain/mutations.ts",
-      "src/domain/schema.ts",
-      "src/embed.tsx",
-      "src/main.tsx",
-      "src/ui/app.tsx",
-      "src/ui/pages.tsx",
-      "src/ui/views.tsx",
-      "tests/domain.test.ts",
-      "tsconfig.build.json",
-      "tsconfig.json",
-      "vite.config.ts"
-    ],
-    "sameProject": true
-  },
-  "linked": {
-    "said": [
-      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-4yuBIr/linked-orders",
-      "graview create: pnpm install"
-    ],
-    "consumesByPath": true,
-    "skills": true,
-    "verified": true,
-    "checkSaid": "graview check: Linked Orders — no problems found.",
-    "hyphenatedKind": true,
-    "gitInitialised": true,
-    "ciChecksOutTheFramework": true
-  },
+  "pnpm": {},
+  "door": {},
+  "linked": {},
   "browser": {
-    "skipped": "--no-browser"
+    "districts": 1,
+    "saysNoneYet": true,
+    "wordmarkSaysTheName": true,
+    "standingIsClean": "Everything is in order",
+    "axeEmptyLight": [],
+    "seatOffered": "Add some starter data",
+    "seatLog": [
+      "starter Add First noteundoFirst note"
+    ],
+    "afterSeat": "Notes1open ▾",
+    "seatPlantedSomething": true,
+    "freshIsEmptyAgain": true,
+    "offers": [
+      "Add a note …"
+    ],
+    "asksInWords": {
+      "name": "Label",
+      "placeholder": "Label"
+    },
+    "afterForm": "Notes1open ▾",
+    "theFormAddedIt": true,
+    "escape": {
+      "selected": {
+        "hash": "#overview=1&sel=kind%3Anote",
+        "atAltitude": true
+      },
+      "pressed": {
+        "hash": "#overview=1",
+        "atAltitude": true
+      }
+    },
+    "axeAfterDark": [],
+    "afterReload": "Notes1open ▾",
+    "survivedAReload": true,
+    "saysRemembered": "Remembered in this browserStart fresh",
+    "offersStartFresh": true
   },
   "packed": [
     "@graview/core",
@@ -99,26 +92,39 @@
     "@graview/studio",
     "@graview/tools"
   ],
-  "vowel": {
-    "theAddActSaysAn": true,
-    "theKindDescriptionSaysAn": true,
-    "articlesBeforeVowels": []
-  },
+  "error": "page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#here [data-testid=\"affordances\"] button[data-affordance]')\u001b[22m",
   "verdict": {
     "theScaffoldWroteAProject": true,
     "itInstalledFromTheTarballsWithNpm": true,
     "itsOwnVerifyPassed": true,
-    "theCheckerActuallySpoke": true,
+    "theCheckerActuallySpoke": false,
     "anEdgeToAnUndeclaredKindFailsTsc": true,
     "theDeclarationLoadsOutsideABundler": true,
     "theSkillsLandedForBothAssistants": true,
     "itBuiltASite": true,
-    "theSameProjectVerifiesUnderPnpm": true,
-    "npmCreateGraviewMakesTheSameProject": true,
-    "aVowelKindIsSpokenWithAn": true,
-    "aLinkedProjectInstallsSkillsAndVerifies": true,
-    "aHyphenatedKindWorksEndToEnd": true,
-    "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": true
+    "theFirstScreenIsOneDistrictSayingNoneYet": true,
+    "theBrandIsTheProductsName": true,
+    "theSeatPlantsStarterDataFromTheDeclaration": true,
+    "freshIsTheWayBackToEmpty": true,
+    "theEmptyDistrictOffersTheFirstNote": true,
+    "theAskNamesItsFieldInWords": true,
+    "theDerivedFormAddsIt": true,
+    "escapeDoesSomethingFromTheFirstScreen": true,
+    "theStripDoesNotCoverWhatYouAreActingOn": false,
+    "theProjectMountsItselfOnSomebodyElsesPage": false,
+    "theKeyboardAloneMakesTheFirstRecord": false,
+    "anEditSurvivesAReload": true,
+    "thePagesFaceFitsAPhoneAndItsFormApplies": false,
+    "theProjectsOwnPageReplacesTheDerivedOne": false,
+    "axeFindsNothingInEitherScheme": false,
+    "nothingErroredInTheBrowser": false,
+    "theSameProjectVerifiesUnderPnpm": false,
+    "npmCreateGraviewMakesTheSameProject": false,
+    "aVowelKindIsSpokenWithAn": false,
+    "aLinkedProjectInstallsSkillsAndVerifies": false,
+    "aHyphenatedKindWorksEndToEnd": false,
+    "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": false,
+    "theLinkedDevServerRunsInABrowser": false
   },
-  "passed": true
+  "passed": false
 }

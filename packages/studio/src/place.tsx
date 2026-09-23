@@ -11,6 +11,7 @@ import { createStudioLens } from "./lens.js";
 import { studioApp, type StudioSchema } from "./meta.js";
 import { createStudio, type Studio } from "./studio.js";
 import type { WrittenFile } from "./source.js";
+import { useStudioDoor, writeInPlace, type InPlace } from "./write-in-place.js";
 
 /**
  * THE STUDIO IS A PLACE ON THE BAR, not a package you mount by hand.
@@ -162,6 +163,7 @@ function StudioOverlay<S extends AnySchema>({
   const turn = useStoreTick(studio.store);
   const verdict: CheckResult = useMemo(() => studio.check(), [studio, turn]);
   const [applied, setApplied] = useState<Applied | null>(null);
+  const door = useStudioDoor();
   const [calls, setCalls] = useState<readonly ToolCall[]>(NO_CALLS);
   const noteCall = useCallback((call: ToolCall) => {
     setCalls((current) => {
@@ -260,13 +262,15 @@ function StudioOverlay<S extends AnySchema>({
         <button
           type="button"
           data-testid="studio-apply"
-          onClick={() => {
+          onClick={async () => {
             const result = studio.apply();
-            setApplied(
-              result.ok
-                ? { ok: true, files: studio.files(), migration: result.migration?.title ?? null }
-                : { ok: false, check: result.check },
-            );
+            if (!result.ok) {
+              setApplied({ ok: false, check: result.check });
+              return;
+            }
+            const migration = result.migration?.title ?? null;
+            const inPlace = door ? await writeInPlace(studio as unknown as Studio<AnySchema>, migration) : null;
+            setApplied({ ok: true, files: studio.files(), migration, inPlace });
           }}
           style={{ padding: "3px 11px", fontSize: "0.78125rem" }}
         >
@@ -305,7 +309,13 @@ const AT_ALTITUDE = { ...EMPTY_VIEW, overview: true };
 const NO_CALLS: readonly never[] = [];
 
 type Applied =
-  | { readonly ok: true; readonly files: readonly WrittenFile[]; readonly migration: string | null }
+  | {
+      readonly ok: true;
+      readonly files: readonly WrittenFile[];
+      readonly migration: string | null;
+      /** What the dev server's studio door made of it; `null` when there is no door to write through. */
+      readonly inPlace: InPlace | null;
+    }
   | { readonly ok: false; readonly check: CheckResult };
 
 /**
@@ -313,8 +323,10 @@ type Applied =
  *
  * On errors, the findings — each naming the thing to change, because the
  * checker's messages are written for somebody editing the declaration. On
- * success, the files `graview create` would write and the migration a
- * stored graph needs, as downloads: a browser cannot write your checkout,
+ * success, with the dev server's studio door open, the change written into
+ * the checkout's own files. Without it — a deployed app, or a change the
+ * studio cannot yet write in place, each reason said — the files `graview
+ * create` would write, as downloads: a browser cannot write your checkout,
  * and a button that claimed to would be the one lie in a flow whose whole
  * point is that nothing is hidden.
  */
@@ -332,13 +344,36 @@ function Written({ applied, onDismiss }: { readonly applied: Applied; readonly o
         background: applied.ok ? "var(--graview-panel)" : "var(--graview-panel-warning)",
       }}
     >
-      {applied.ok ? (
+      {applied.ok && applied.inPlace?.state === "written" ? (
+        /*
+         * WRITTEN, IN PLACE. The change is in the checkout's own files, made
+         * inside its own declarations; the dev server sees the files move and
+         * the app comes back up on the new declaration.
+         */
+        <>
+          <strong style={{ fontSize: "0.8125rem", fontWeight: 550 }}>
+            The checker is happy, and the change is written into {applied.inPlace.paths.join(", ")}. The app reloads onto it.
+          </strong>
+        </>
+      ) : applied.ok ? (
         <>
           <strong style={{ fontSize: "0.8125rem", fontWeight: 550 }}>
             The checker is happy. {applied.files.length} file
             {applied.files.length === 1 ? "" : "s"} to write
             {applied.migration ? `, and a migration: ${applied.migration}` : ", and no migration needed"}.
           </strong>
+          {/* Why it was not written in place — or that there is nowhere to write it. */}
+          {applied.inPlace?.state === "not-written" ? (
+            <ul data-testid="studio-not-written" style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 4, fontSize: "0.78125rem" }}>
+              {applied.inPlace.reasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          ) : applied.inPlace === null ? (
+            <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+              A browser cannot write your checkout. Run the app with the studio door (studioDoor() from @graview/ship/dev) and Apply writes the change in place.
+            </span>
+          ) : null}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {applied.files.map((file) => (
               <a

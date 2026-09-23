@@ -25,6 +25,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
+| [The studio applies a declaration change all the way: files written, bodies authored, the stored graph migrated — without leaving the studio](./the-studio-applies-a-declaration/index.md) | in_progress |
 | [A profile on the bar: who you are signed in as, and your settings, including your text size](./a-profile-on-the-bar-who-you-are.md) | completed |
 | [An agent in the studio: ask for a declaration change in words, see it checked, keep or discard it](./an-agent-in-the-studio-ask-for-a.md) | completed |
 | [Branding an installation without forking it](./branding-an-installation-without.md) | completed |
@@ -34,5 +35,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Systems of record: two-way sync with the world](./systems-of-record-two-way-sync-with.md) | completed |
 | [The demo app shows admin mode and profiles: the installation in the todo app, with seats to feel it](./the-demo-app-shows-admin-mode-and.md) | completed |
 | [The installation is in the graph: users, invitations and profiles as nodes, with an admin entrypoint in the app](./the-installation-is-in-the-graph-users.md) | completed |
-| [The studio applies a declaration change all the way: files written, bodies authored, the stored graph migrated — without leaving the studio](./the-studio-applies-a-declaration.md) | pending |
 | [Who may do what, derived and enforced](./who-may-do-what-derived-and-enforced.md) | completed |

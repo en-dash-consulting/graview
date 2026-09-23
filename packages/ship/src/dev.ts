@@ -13,6 +13,10 @@ import {
   type LocalBridgeAsk,
   type LocalBridgeStatus,
 } from "@graview/core";
+import { fromThisApp, readBody, sendJson, type DevServerPlugin } from "./door.js";
+
+export { sameOrigin } from "./door.js";
+export type { DevServerPlugin } from "./door.js";
 
 /**
  * THE FOURTH DOOR: a process on this machine, and the dev server as the
@@ -263,44 +267,12 @@ export function probeLocal(options: LocalIntelligenceOptions = {}): () => Promis
   };
 }
 
-/** Same origin, or no origin at all (curl, a test). Anything else is another site. */
-export function sameOrigin(headers: { readonly origin?: string; readonly host?: string }): boolean {
-  if (headers.origin === undefined) return true;
-  try {
-    return new URL(headers.origin).host === headers.host;
-  } catch {
-    return false;
-  }
-}
-
-function readBody(req: IncomingMessage, limit: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk: Buffer) => {
-      body += chunk.toString();
-      if (body.length > limit) {
-        reject(
-          new Error(
-            `That is more than ${Math.round(limit / 1_000_000)} MB of photographs — send fewer, or smaller.`,
-          ),
-        );
-        req.destroy();
-      }
-    });
-    req.on("end", () => resolve(body));
-    req.on("error", reject);
-  });
-}
-
-function send(
+/** What the local and decision doors answer with, and nothing else. */
+const send = (
   res: ServerResponse,
   status: number,
   body: LocalBridgeStatus | LocalBridgeAnswer | DecisionBridgeStatus | DecisionBridgeAnswer,
-): void {
-  res.statusCode = status;
-  res.setHeader("content-type", "application/json");
-  res.end(JSON.stringify(body));
-}
+): void => sendJson(res, status, body);
 
 /**
  * The request handler, without Vite around it — so a test can drive the door
@@ -310,8 +282,7 @@ function send(
 export function localIntelligenceHandler(options: LocalIntelligenceOptions = {}) {
   const probe = probeLocal(options);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    const { origin, host } = req.headers;
-    if (!sameOrigin({ ...(origin ? { origin } : {}), ...(host ? { host } : {}) })) {
+    if (!fromThisApp(req)) {
       send(res, 403, { error: "The local door answers this app only." });
       return;
     }
@@ -325,7 +296,7 @@ export function localIntelligenceHandler(options: LocalIntelligenceOptions = {})
     }
     try {
       const ask = JSON.parse(
-        await readBody(req, options.limitBytes ?? DEFAULTS.limitBytes),
+        await readBody(req, options.limitBytes ?? DEFAULTS.limitBytes, "photographs"),
       ) as Partial<LocalBridgeAsk>;
       if (typeof ask.prompt !== "string") {
         send(res, 400, { error: "A request is { prompt, photos }." });
@@ -337,15 +308,6 @@ export function localIntelligenceHandler(options: LocalIntelligenceOptions = {})
       send(res, 500, { error: error instanceof Error ? error.message : String(error) });
     }
   };
-}
-
-/** The shape of the Vite plugin object, without importing Vite to say it. */
-export interface DevServerPlugin {
-  readonly name: string;
-  readonly apply: "serve";
-  configureServer(server: {
-    middlewares: { use(path: string, handler: (req: IncomingMessage, res: ServerResponse) => void): void };
-  }): void;
 }
 
 /**
@@ -419,8 +381,7 @@ export function decisionBridgeHandler(options: DecisionBridgeOptions = {}) {
   const model = options.model ?? DECISION_DEFAULTS.model;
   const call = options.fetch ?? (globalThis.fetch as unknown as NonNullable<DecisionBridgeOptions["fetch"]>);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    const { origin, host } = req.headers;
-    if (!sameOrigin({ ...(origin ? { origin } : {}), ...(host ? { host } : {}) })) {
+    if (!fromThisApp(req)) {
       send(res, 403, { error: "The decision door answers this app only." });
       return;
     }
@@ -483,3 +444,8 @@ export function decisionBridge(options: DecisionBridgeOptions = {}): DevServerPl
     },
   };
 }
+
+export { studioDoor, studioDoorHandler } from "./studio-door.js";
+export type { StudioDoorOptions } from "./studio-door.js";
+export { editDeclaration } from "./source-edit.js";
+export type { SourceEdit, SourceText } from "./source-edit.js";
