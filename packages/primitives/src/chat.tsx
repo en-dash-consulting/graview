@@ -7,6 +7,7 @@ import {
   describeIntelligence,
   describeProposal,
   loadPins,
+  resolveProposal,
   stillNeeded,
   type ChatReply,
   type IntelligenceConfig,
@@ -39,6 +40,24 @@ interface Turn {
   /** Questions the seat is asking back, each at the node it is about. */
   readonly questions?: readonly OfferedQuestion[];
 }
+
+/**
+ * WHAT BECAME OF A PROPOSAL, said where it was offered. Each apply used to
+ * post a bubble of its own — "Done — Stake out a plot. Undo works." under
+ * "Stake out a plot …" — so one request read as five messages. The press
+ * becomes its own outcome instead, in place.
+ */
+type Outcome = { readonly ok: true; readonly said: string } | { readonly ok: false; readonly error: string };
+
+/**
+ * The seat's trailing aside — "(from the graph)", "(the local model is
+ * warming …)" — is which rung answered, not the answer: kept, and set
+ * quieter than what was said.
+ */
+const splitAside = (text: string): { said: string; aside?: string } => {
+  const match = /^([\s\S]*?)\s*(\((?:[^()]|\([^()]*\))*\))\s*$/.exec(text);
+  return match && match[1] ? { said: match[1], aside: match[2]! } : { said: text };
+};
 
 export interface ChatPanelProps<S extends AnySchema> {
   /**
@@ -80,6 +99,7 @@ export function ChatPanel<S extends AnySchema>({
   // Inside the rail there is nothing to open: the rail is what opens.
   const open = inside || shown;
   const [turns, setTurns] = useState<readonly Turn[]>([]);
+  const [outcomes, setOutcomes] = useState<ReadonlyMap<string, Outcome>>(new Map());
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   /*
@@ -183,7 +203,21 @@ export function ChatPanel<S extends AnySchema>({
     try {
       reply = await answer(store, text, {
         selection: referent,
-        history: turns.map((turn) => ({ role: turn.role, text: turn.text })),
+        /*
+         * WHAT WAS DONE is part of what was said. "Erin tends that plot"
+         * means the plot the last turn made — and the model only knows
+         * which if the history carries what landed, by name, not just the
+         * sentence that proposed it.
+         */
+        history: turns.map((turn, index) => {
+          const landed = (turn.proposals ?? [])
+            .map((_, at) => outcomes.get(`${index}:${at}`))
+            .flatMap((outcome) => (outcome?.ok ? [outcome.said] : []));
+          return {
+            role: turn.role,
+            text: landed.length > 0 ? `${turn.text} [applied: ${landed.join("; ")}]` : turn.text,
+          };
+        }),
       });
     } catch (error) {
       reply = {
@@ -236,9 +270,23 @@ export function ChatPanel<S extends AnySchema>({
    * The seat's proposals go the same way now — the same component, the same
    * questions, the model's own answers already filled in.
    */
-  const [answering, setAnswering] = useState<{ proposal: ProposedCall; open: ReturnType<typeof stillNeeded> } | null>(null);
+  const [answering, setAnswering] = useState<{
+    proposal: ProposedCall;
+    open: ReturnType<typeof stillNeeded>;
+    key: string;
+  } | null>(null);
 
-  const apply = async (proposal: ProposedCall) => {
+  const settle = (key: string, outcome: Outcome) =>
+    setOutcomes((current) => new Map(current).set(key, outcome));
+
+  const apply = async (offered: ProposedCall, key: string): Promise<boolean> => {
+    /*
+     * Resolved AT THE PRESS, not when it was offered: a sowing proposed in
+     * the same breath as its plot names a plot that exists only once the
+     * first press has landed.
+     */
+    const proposal = resolveProposal(store, offered);
+    const said = describeProposal(store, proposal);
     try {
       /*
        * The runtime RESOLVES refusals rather than throwing them — a
@@ -249,24 +297,37 @@ export function ChatPanel<S extends AnySchema>({
        */
       const result = await runtime.call(proposal.mutation, { ...proposal.args });
       if (!result.ok) {
-        setTurns((current) => [...current, { role: "seat", text: `Refused: ${result.error}` }]);
+        settle(key, { ok: false, error: result.error });
         const kinds = store.allMutations().find((m) => m.name === proposal.mutation)?.subject?.kinds;
         noteSeat({ type: "refused", author, where: Array.isArray(kinds) && kinds[0] ? kindCardId(kinds[0] as string) : null, say: result.error });
+        return false;
+      }
+      settle(key, { ok: true, said });
+      return true;
+    } catch (error) {
+      // A refusal is a result, where the ask was made.
+      settle(key, { ok: false, error: error instanceof Error ? error.message : String(error) });
+      return false;
+    }
+  };
+
+  /*
+   * ONE REQUEST, ONE PRESS. "Add a plot and put a sunflower in it" is two
+   * proposals and one intention; applied in order, each resolved after the
+   * one before it has landed, stopping at the first that still needs an
+   * answer (asked, as ever) or is refused.
+   */
+  const applyAll = async (turnIndex: number, proposals: readonly ProposedCall[]) => {
+    for (const [at, proposal] of proposals.entries()) {
+      const key = `${turnIndex}:${at}`;
+      if (outcomes.get(key)?.ok) continue;
+      if (!store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal).ok) continue;
+      const owed = stillNeeded(store, proposal);
+      if (owed.length > 0) {
+        setAnswering({ proposal, open: owed, key });
         return;
       }
-      setTurns((current) => [
-        ...current,
-        { role: "seat", text: `Done — ${describeProposal(store, proposal)}. Undo works.` },
-      ]);
-    } catch (error) {
-      // A refusal is a result, in the thread where the ask was made.
-      setTurns((current) => [
-        ...current,
-        {
-          role: "seat",
-          text: `Refused: ${error instanceof Error ? error.message : String(error)}`,
-        },
-      ]);
+      if (!(await apply(proposal, key))) return;
     }
   };
 
@@ -408,21 +469,38 @@ export function ChatPanel<S extends AnySchema>({
             ) : null}
             {turns.map((turn, index) => (
               <li key={index} style={{ display: "grid", gap: 6, justifyItems: turn.role === "person" ? "end" : "start" }}>
-                <p
-                  style={{
-                    margin: 0,
-                    maxWidth: 260,
-                    padding: "6px 10px",
-                    borderRadius: 10,
-                    fontSize: "0.78125rem",
-                    lineHeight: 1.45,
-                    background: turn.role === "person" ? "var(--graview-panel-muted)" : "var(--graview-panel)",
-                    border: "1px solid var(--graview-edge)",
-                    color: "var(--graview-ink)",
-                  }}
-                >
-                  {turn.text}
-                </p>
+                {/*
+                  * THE PERSON IN A BUBBLE, THE SEAT IN PROSE. Two boxes
+                  * that differed by a shade of grey read as one voice
+                  * talking to itself; the seat's words sit on the panel
+                  * like any other text there, and what it did sits under
+                  * them.
+                  */}
+                {turn.role === "person" ? (
+                  <p
+                    style={{
+                      margin: 0,
+                      maxWidth: "85%",
+                      padding: "6px 10px",
+                      borderRadius: "12px 12px 4px 12px",
+                      fontSize: "0.78125rem",
+                      lineHeight: 1.45,
+                      background: "var(--graview-panel-muted)",
+                      color: "var(--graview-ink)",
+                    }}
+                  >
+                    {turn.text}
+                  </p>
+                ) : (
+                  <p style={{ margin: 0, fontSize: "0.78125rem", lineHeight: 1.5, color: "var(--graview-ink)" }}>
+                    {splitAside(turn.text).said}
+                    {splitAside(turn.text).aside ? (
+                      <span style={{ display: "block", marginTop: 2, fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
+                        {splitAside(turn.text).aside}
+                      </span>
+                    ) : null}
+                  </p>
+                )}
                 {(turn.questions ?? []).map((asked) => (
                   /*
                    * A QUESTION STANDS AT ITS NODE. The seat was not sure
@@ -449,16 +527,20 @@ export function ChatPanel<S extends AnySchema>({
                           data-testid="chat-option"
                           disabled={!option.call}
                           title={option.call ? option.call.why ?? "Take this answer" : "Nothing to do for this answer"}
-                          onClick={() => (option.call ? void apply(option.call) : undefined)}
+                          onClick={() => (option.call ? void apply(option.call, `${index}:q:${asked.id}`) : undefined)}
                           style={{ fontSize: "0.75rem" }}
                         >
                           {option.value} {Math.round(option.probability * 100)}%
                         </button>
                       ))}
                     </div>
+                    <Landed outcome={outcomes.get(`${index}:q:${asked.id}`)} />
                   </div>
                 ))}
                 {(turn.proposals ?? []).map((proposal, at) => {
+                  const key = `${index}:${at}`;
+                  const outcome = outcomes.get(key);
+                  if (outcome) return <Landed key={at} outcome={outcome} />;
                   /*
                    * WITHHELD, NOT OFFERED — the same rule as the strip. The
                    * responder proposes from the graph and knows nothing of
@@ -481,27 +563,60 @@ export function ChatPanel<S extends AnySchema>({
                    * policy: has the responder actually said what this needs?
                    */
                   const owed = stillNeeded(store, proposal);
+                  /*
+                   * WAITING, NOT MISSING. A thing named by an earlier
+                   * proposal in this same reply — the plot it stakes out —
+                   * is an answer that has not landed yet, so the press
+                   * waits for that one rather than asking again.
+                   */
+                  const before = (turn.proposals ?? [])
+                    .slice(0, at)
+                    .filter((earlier, was) => !outcomes.get(`${index}:${was}`)?.ok)
+                    .find((earlier) =>
+                      owed.some((one) => one.kinds && typeof proposal.args[one.name] === "string" && earlier.args["label"] === proposal.args[one.name]),
+                    );
                   return (
                     <button
                       key={at}
                       type="button"
                       data-testid="chat-apply"
+                      disabled={before !== undefined}
                       data-graview-asks={owed.length > 0 ? owed.length : undefined}
                       onClick={() =>
-                        owed.length > 0 ? setAnswering({ proposal, open: owed }) : void apply(proposal)
+                        owed.length > 0 ? setAnswering({ proposal, open: owed, key }) : void apply(proposal, key)
                       }
                       title={
-                        owed.length > 0
+                        before
+                          ? `After “${describeProposal(store, before)}”`
+                          : owed.length > 0
                           ? `${proposal.why ?? "Apply this change"} — needs ${owed.map((one) => one.name).join(", ")}`
                           : (proposal.why ?? "Apply this change")
                       }
-                      style={{ fontSize: "0.75rem", justifySelf: "start" }}
+                      style={{ fontSize: "0.75rem", justifySelf: "start", textAlign: "start" }}
                     >
                       {describeProposal(store, proposal)}
-                      {owed.length > 0 ? " …" : ""}
+                      {owed.length > 0 && !before ? " …" : ""}
                     </button>
                   );
                 })}
+                {(() => {
+                  const pending = (turn.proposals ?? []).filter(
+                    (proposal, at) =>
+                      !outcomes.get(`${index}:${at}`)?.ok &&
+                      store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal).ok,
+                  );
+                  return pending.length >= 2 ? (
+                    <button
+                      type="button"
+                      data-testid="chat-apply-all"
+                      onClick={() => void applyAll(index, turn.proposals ?? [])}
+                      title="Apply these in order; anything still missing is asked for"
+                      style={{ fontSize: "0.75rem", justifySelf: "start", fontWeight: 600 }}
+                    >
+                      Apply all {pending.length}
+                    </button>
+                  ) : null;
+                })()}
               </li>
             ))}
             {busy ? (
@@ -536,7 +651,7 @@ export function ChatPanel<S extends AnySchema>({
                 onApply={(args) => {
                   const proposal = { ...answering.proposal, args: { ...answering.proposal.args, ...args } };
                   setAnswering(null);
-                  void apply(proposal);
+                  void apply(proposal, answering.key);
                 }}
                 onCancel={() => setAnswering(null)}
               />
@@ -589,6 +704,21 @@ export function ChatPanel<S extends AnySchema>({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** A proposal that landed, or was refused, in the place it was offered. */
+function Landed({ outcome }: { readonly outcome: Outcome | undefined }) {
+  if (!outcome) return null;
+  return outcome.ok ? (
+    <span data-testid="chat-applied" style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+      <span aria-hidden="true" style={{ color: "var(--graview-accent)" }}>✓ </span>
+      {outcome.said}
+    </span>
+  ) : (
+    <span data-testid="chat-refused" style={{ fontSize: "0.75rem", color: "var(--graview-warn)" }}>
+      Refused: {outcome.error}
+    </span>
   );
 }
 

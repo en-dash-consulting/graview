@@ -169,16 +169,17 @@ try {
   });
   await page
     .waitForFunction(
-      () => {
-        const rows = [...document.querySelectorAll('[data-testid="chat-panel"] ol li')];
-        const text = rows[rows.length - 1]?.textContent ?? "";
-        return text.startsWith("Done") || text.startsWith("Refused");
-      },
+      // The press becomes its own outcome, in place.
+      () => document.querySelector('[data-testid="chat-applied"], [data-testid="chat-refused"]') !== null,
       null,
       { timeout: 10_000 },
     )
     .catch(() => {});
-  const applyOutcome = await lastTurn(page);
+  const applyOutcome = await page.evaluate(() =>
+    document.querySelector('[data-testid="chat-applied"]')
+      ? `Done — ${document.querySelector('[data-testid="chat-applied"]')?.textContent ?? ""}`
+      : (document.querySelector('[data-testid="chat-refused"]')?.textContent ?? ""),
+  );
   const appliedInTheGraph = await page.evaluate(
     () => !(document.querySelector('[data-graview-pick="t-book"]')?.textContent ?? "").includes("09-01"),
   );

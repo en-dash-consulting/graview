@@ -73,6 +73,15 @@ describe("an act the responder under-specified", () => {
     expect(owed.map((one) => one.name).sort()).toEqual(["day", "from", "place", "until"]);
   });
 
+  it("counts a name as an answer only when something answers to it", () => {
+    const args = { label: "Soup kitchen", day: "mon", from: 9, until: 12 };
+    // The hall exists by that name: resolved, not asked.
+    expect(stillNeeded(store(), { mutation: "add-shift", args: { ...args, place: "The hall" } })).toEqual([]);
+    // A place proposed in the same breath, not made yet: still owed.
+    const owed = stillNeeded(store(), { mutation: "add-shift", args: { ...args, place: "The annex" } });
+    expect(owed.map((one) => one.name)).toEqual(["place"]);
+  });
+
   it("leaves optional arguments alone", () => {
     // `note` may be left out, so it is not a question anybody has to answer.
     expect(stillNeeded(store(), { mutation: "add-shift", args: {} }).map((one) => one.name)).not.toContain("note");

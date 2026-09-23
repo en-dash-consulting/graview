@@ -404,6 +404,28 @@ export function describeProposal<S extends AnySchema>(
   proposal: ProposedCall,
 ): string {
   const mutation = store.allMutations().find((m) => m.name === proposal.mutation);
+  /*
+   * IN THE ACT'S OWN WORDS, when it can say them. "Sow something" under a
+   * proposal that already says sunflower and the back bed is the title of
+   * the menu entry, not the change on offer — and the act's `describe` is
+   * the sentence the activity rail will use once it lands, so the offer
+   * and the record read alike. Only for arguments that would actually
+   * validate: a describe handed half an answer names "undefined". A name
+   * nothing answers to yet — the plot staked out in the same reply — is
+   * still a name, and reads as one.
+   */
+  if (mutation?.describe) {
+    const resolved = resolveProposal(store, proposal);
+    const parsed = (mutation.input as { safeParse?: (value: unknown) => { success: boolean; data?: unknown } })
+      .safeParse?.(resolved.args);
+    if (parsed?.success) {
+      try {
+        return mutation.describe(parsed.data as never, store.graph as never);
+      } catch {
+        // A describe that cannot read this graph falls back to the title.
+      }
+    }
+  }
   const subject = mutation?.subject?.arg;
   const id = subject ? proposal.args[subject] : undefined;
   const node = typeof id === "string" ? store.graph.getNode(id) : undefined;
@@ -442,6 +464,14 @@ export function stillNeeded<S extends AnySchema>(
 ): readonly OpenParameter[] {
   const mutation = store.allMutations().find((one) => one.name === proposal.mutation);
   if (!mutation) return [];
+  /*
+   * A NAME IS AN ANSWER ONLY WHEN SOMETHING ANSWERS TO IT. A model names
+   * things the way a person does, and a proposal to sow into "back bed"
+   * made in the same breath as staking it out names a plot that does not
+   * exist yet. Resolved now, it may; unresolved, it is still owed — asked
+   * for with the graph's candidates rather than refused by the store.
+   */
+  proposal = resolveProposal(store, proposal);
   const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
   const refs = nodeRefArgs(mutation.input);
   const owed: OpenParameter[] = [];
@@ -453,8 +483,13 @@ export function stillNeeded<S extends AnySchema>(
      * field has not answered it — and the empty string is the common one,
      * because a model asked for JSON fills every key it was shown.
      */
-    if (given !== undefined && given !== null && given !== "") continue;
     const ref = refs.find((candidate) => candidate.name === name);
+    const answered =
+      given !== undefined &&
+      given !== null &&
+      given !== "" &&
+      (!ref || typeof given !== "string" || store.graph.getNode(given) !== undefined);
+    if (answered) continue;
     owed.push({
       name,
       ...(ref ? { kinds: ref.kinds } : {}),

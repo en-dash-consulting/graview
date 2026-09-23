@@ -74,7 +74,8 @@ describe("the chat under a policy", () => {
     await act(async () => new Promise((r) => setTimeout(r, 20)));
     expect(host.querySelector('[data-testid="chat-apply"]'), "no press that would refuse").toBeNull();
     const withheld = host.querySelector('[data-testid="chat-withheld"]');
-    expect(withheld?.textContent).toContain("Add an item");
+    // Said in the act's own words, as the activity rail would say it.
+    expect(withheld?.textContent).toContain("Sneak one in");
     expect(withheld?.textContent).toContain("Not permitted");
     await unmount();
   });

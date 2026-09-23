@@ -153,6 +153,19 @@ describe("the graph answers for itself", () => {
     expect(reply.say).toContain("School run — a duty");
   });
 
+  it("does not answer a change that names a thing as a fact about the thing", async () => {
+    /*
+     * "Erin tends that plot" was answered "Erin — a gardener. Connected to
+     * nothing yet." and marked grounded, so no model ever read it. Naming a
+     * thing inside a change is not asking about it.
+     */
+    const said = await graphResponder()(store(), "Bo does the School run now");
+    expect(said.grounded).toBeUndefined();
+    // The bare name, or a question, still is a fact.
+    expect((await graphResponder()(store(), "Bo")).grounded).toBe(true);
+    expect((await graphResponder()(store(), "what about Bo?")).grounded).toBe(true);
+  });
+
   it('treats the selection as what "this" means', async () => {
     const reply = await graphResponder()(store(), "what is this?", { selection: ["ana"] });
     expect(reply.say).toContain("Ana — a person");
@@ -391,6 +404,20 @@ describe("a model holds the conversation through the same gate", () => {
      */
     expect(reply.say).toContain("reassign");
     expect(reply.say).toContain("not something this seat may run");
+  });
+
+  it("shows the model what each act takes and how things are connected", async () => {
+    let seen = "";
+    const model = llmResponder({
+      complete: async (prompt) => {
+        seen = prompt;
+        return '{"say":"Ok.","proposals":[]}';
+      },
+    });
+    await model(store(), "give the school run to Bo");
+    // A model shown only names and descriptions proposed acts with no arguments.
+    expect(seen).toContain("reassign(dutyId: name of duty, toPersonId: name of person)");
+    expect(seen).toContain("Ana —assigned-to→ School run");
   });
 
   it("degrades an unparseable answer to words, never to guesses", async () => {

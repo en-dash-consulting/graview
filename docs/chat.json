@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-22T20:30:44.525Z",
+  "at": "2026-09-23T03:16:40.556Z",
   "engine": "chromium",
   "checks": {
     "itLivesInTheRail": {
@@ -34,12 +34,12 @@
       "ok": true
     },
     "sayAChangeProposesOne": {
-      "reply": "I can do that. Review it below — it applies like any other change, and undo works.Mark it done — Book the van",
+      "reply": "I can do that. Review it below.Finish \"Book the van\"",
       "applies": 1,
       "ok": true
     },
     "applyIsRealAndUndoWorks": {
-      "outcome": "Done — Mark it done — Book the van. Undo works.",
+      "outcome": "Done — ✓ Finish \"Book the van\"",
       "appliedInTheGraph": true,
       "attributed": true,
       "undone": true,
@@ -47,8 +47,8 @@
     },
     "brokenModelDegradesToTheFloor": {
       "header": "m-test",
-      "grounded": " Find someone who moves pianosMark it done — Pay the deposit",
-      "floored": "ay a change in its own words — like \"Add a task\". (m-test did not answer — Failed to fetch. The graph answered instead.)",
+      "grounded": "someone who moves pianos\"Finish \"Pay the deposit\"Apply all 2",
+      "floored": "say a change in its own words — like \"Add a task\".(m-test did not answer — Failed to fetch. The graph answered instead.)",
       "ok": true
     },
     "keySurvivesRungSwitch": {
@@ -64,7 +64,7 @@
         "remote"
       ],
       "header": "jev — decides; the graph talks",
-      "reply": "her than talks — the graph is answering here.)Mark it done — Find someone who moves pianosMark it done — Pay the deposit",
+      "reply": "ther than talks — the graph is answering here.)Finish \"Find someone who moves pianos\"Finish \"Pay the deposit\"Apply all 2",
       "ok": true
     }
   },

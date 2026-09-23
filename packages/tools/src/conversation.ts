@@ -98,6 +98,9 @@ export type Responder<S extends AnySchema = AnySchema> = (
 
 const sentence = (parts: readonly string[]): string => parts.filter(Boolean).join(" ");
 
+/** The words around a bare name that still only ask about it: "tell me about the School run". */
+const ASKING_WORDS = new Set(["tell", "me", "about", "what", "how", "show", "describe", "the", "a", "an", "and", "please"]);
+
 /** "a person", "a person and a date" — a list a person would say out loud. */
 const withList = (words: readonly string[]): string =>
   words.length <= 1
@@ -274,7 +277,7 @@ export function graphResponder<S extends AnySchema>(
        */
       if (missing.length === 0) {
         return {
-          say: `I can do that. Review it below — it applies like any other change, and undo works.`,
+          say: `I can do that. Review it below.`,
           proposals: validateProposals(store, [
             { mutation: phrased.name, args, why: `you asked in words` },
           ]),
@@ -437,6 +440,17 @@ export function graphResponder<S extends AnySchema>(
     // ------------------------------------------------------ a named thing
     if (referents.length > 0) {
       const node = referents[0]!;
+      /*
+       * NAMING A THING IS NOT ASKING ABOUT IT. "Erin tends that plot" names
+       * Erin and says a change; answered as a fact — "Erin — a gardener.
+       * Connected to nothing yet." — and marked grounded, it kept the model
+       * from ever reading it, and the seat described the gardener it had
+       * just been told to connect. The description is still the floor's
+       * best answer, but only a question, or the bare name, is a FACT.
+       */
+      const own = new Set(name(node).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+      const bare = tokens.every((token) => own.has(token) || ASKING_WORDS.has(token));
+      const asking = question || bare;
       const definition = store.schema.tryDefinition(node.kind);
       const facts = readableFields(node, definition, { limit: 3 })
         .map((field) => `${field.label.toLowerCase()} ${field.value}`)
@@ -492,7 +506,7 @@ export function graphResponder<S extends AnySchema>(
             : "Nothing about it is broken.",
         ]),
         proposals: validateProposals(store, readyRepairs(touching).slice(0, 3)),
-        grounded: true,
+        ...(asking ? { grounded: true } : {}),
       };
     }
 
@@ -568,9 +582,31 @@ export function llmResponder<S extends AnySchema>(options: {
   readonly may?: readonly string[];
 }): Responder<S> {
   return async (store, text, context = {}) => {
+    /*
+     * EACH ACT WITH WHAT IT TAKES. Listed by name and description alone, a
+     * model proposed `add-plot` with no label and no beds, and the person
+     * was handed a form for what they had just said in words. The same
+     * form fields the menu asks with, said as a signature.
+     */
+    const argument = (field: FormField): string => {
+      const type =
+        field.control === "node"
+          ? `name of ${field.kinds.includes("*") ? "anything" : field.kinds.join(" or ")}`
+          : field.control === "choice"
+            ? (field.options ?? []).map((option) => JSON.stringify(option)).join(" | ")
+            : field.control === "date"
+              ? "YYYY-MM-DD"
+              : field.control === "text" || field.control === "number" || field.control === "boolean"
+                ? field.control
+                : "value";
+      return `${field.name}${field.optional ? "?" : ""}: ${type}`;
+    };
     const mutations = store
       .allMutations()
-      .map((mutation) => `- ${mutation.name}: ${mutation.description ?? mutation.title ?? ""}`)
+      .map(
+        (mutation) =>
+          `- ${mutation.name}(${formFields(mutation.input).map(argument).join(", ")}): ${mutation.description ?? mutation.title ?? ""}`,
+      )
       .join("\n");
     /*
      * WHAT IS ACTUALLY IN HERE, BY NAME.
@@ -592,6 +628,20 @@ export function llmResponder<S extends AnySchema>(options: {
           .join(", ");
         return `- ${kind} (${definition?.plural ?? `${kind}s`}, ${members.length}): ${names}${members.length > 12 ? ", …" : ""}`;
       })
+      .join("\n");
+    /*
+     * HOW THINGS ARE CONNECTED. A model told "move it to Erin" can only
+     * answer from connections it can see; a bounded list is enough for the
+     * graphs a conversation is held over.
+     */
+    const nameOf = (id: string): string => {
+      const node = store.graph.getNode(id);
+      return node ? labelOf(store.schema.tryDefinition(node.kind), node as never) : id;
+    };
+    const edges = [...store.graph.allEdges()];
+    const connections = edges
+      .slice(0, 40)
+      .map((edge) => `- ${nameOf(edge.from)} —${edge.kind}→ ${nameOf(edge.to)}`)
       .join("\n");
     const selected = (context.selection ?? [])
       .map((id) => {
@@ -616,9 +666,18 @@ export function llmResponder<S extends AnySchema>(options: {
       .map((proposal) => `- ${proposal.mutation} ${JSON.stringify(proposal.args)}`)
       .join("\n");
     const prompt = [
-      "You are the seat of a typed context graph. Answer briefly and propose only declared mutations.",
+      [
+        "You are the seat of a typed context graph. You answer questions about it and turn requests for change into proposals of its declared mutations, which the person reviews and applies.",
+        "- Fill every argument a mutation takes. Refer to things by their exact name as listed below.",
+        "- When a request needs something that does not exist yet, propose creating it first, then refer to it by the name you gave it. Choose sensible names and numbers rather than leaving them out.",
+        '- "it", "that" and "this" mean what the conversation or the selection points at.',
+        '- "say" is one short sentence in plain words. Do not restate the proposals in it; they are shown beneath it.',
+        "- A question gets an answer and no proposals.",
+      ].join("\n"),
+      `Today is ${new Date().toISOString().slice(0, 10)}.`,
       `Mutations:\n${mutations}`,
       shape ? `What is in the graph now:\n${shape}` : "",
+      connections ? `How they are connected:\n${connections}${edges.length > 40 ? "\n- …" : ""}` : "",
       reading
         ? `A first reading of this request, worked out from the graph:\n${reading}\nKeep it, correct it, or split it into several — one proposal per distinct change the person described.`
         : "Where a request describes several changes, answer with several proposals — one per distinct change.",

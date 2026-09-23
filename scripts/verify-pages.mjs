@@ -499,7 +499,7 @@ try {
     await asker.waitForTimeout(800);
     applied = await asker.evaluate(() => ({
       said: [...document.querySelectorAll('[data-testid="chat-panel"] ol li')].map((li) => li.textContent ?? "").join(" | ").slice(-160),
-      ok: [...document.querySelectorAll('[data-testid="chat-panel"] ol li')].some((li) => /Done —/.test(li.textContent ?? "")),
+      ok: document.querySelector('[data-testid="chat-applied"]') !== null,
     }));
   }
   report.checks.aProposalAppliesFromThePage = applied;
