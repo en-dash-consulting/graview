@@ -162,6 +162,38 @@ const openProfile = async (page) => {
       }).length;
     });
   }
+  /*
+   * AND A PRESS ON A NAME CHOOSES THAT NAME'S COLUMN. The label leans across
+   * the boxes of the columns after it, which were painted over it, so a
+   * press on a name picked a neighbour about half the time. Every point
+   * along every visible label, asked what a press there would pick.
+   */
+  const pressed = await page.evaluate(() => {
+    let scroller = document.querySelector("[data-graview-column]")?.parentElement ?? null;
+    while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
+    const view = scroller?.getBoundingClientRect();
+    let points = 0;
+    let right = 0;
+    for (const head of document.querySelectorAll("[data-graview-column]")) {
+      const span = head.querySelector(":scope > span");
+      if (!span || getComputedStyle(span).visibility === "hidden") continue;
+      // Along the words' own centre line: turned 58 degrees about the foot.
+      const box = span.getBoundingClientRect();
+      const a = (58 * Math.PI) / 180;
+      const foot = { x: box.left + span.offsetHeight * Math.sin(a), y: box.bottom };
+      const mid = { x: foot.x - (span.offsetHeight / 2) * Math.sin(a), y: foot.y - (span.offsetHeight / 2) * Math.cos(a) };
+      for (const t of [0.05, 0.35, 0.65, 0.95]) {
+        const x = mid.x + span.offsetWidth * t * Math.cos(a);
+        const y = mid.y - span.offsetWidth * t * Math.sin(a);
+        if (view && (x < view.left || x > view.right || y < view.top || y > view.bottom)) continue;
+        points += 1;
+        const picked = document.elementFromPoint(x, y)?.closest("[data-graview-pick]")?.getAttribute("data-graview-pick");
+        if (picked === head.getAttribute("data-graview-pick")) right += 1;
+      }
+    }
+    return { points, right };
+  });
+  report.checks.aPressOnAColumnNameChoosesThatColumn = { ...pressed, ok: pressed.points > 0 && pressed.right === pressed.points };
   report.checks.theCoverageHeadsStandOnTheirColumns = {
     ...atRest,
     labelsOverTheNamesWhenScrolled: scrolled,

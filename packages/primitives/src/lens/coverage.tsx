@@ -565,6 +565,14 @@ export function CoverageView<S extends AnySchema>({
                   // The same box as the cells below it, border and all.
                   boxSizing: "border-box",
                   borderLeft: "1px solid transparent",
+                  /*
+                   * THE NAME IS THE TARGET, NOT THE BOX IT STANDS IN. The
+                   * label leans up and to the right, across the boxes of
+                   * the columns after it, and those were painted over it:
+                   * a press on a name picked a neighbour more often than
+                   * not. The box lets presses through; the label takes them.
+                   */
+                  pointerEvents: "none",
                   position: "relative",
                   display: "flex",
                   alignItems: "flex-end",
@@ -580,7 +588,11 @@ export function CoverageView<S extends AnySchema>({
                 <span
                   style={{
                     position: "absolute",
-                    bottom: 6,
+                    // A little taller than the words, so the name is a target a pointer can find.
+                    bottom: 3,
+                    padding: "3px 0",
+                    pointerEvents: "auto",
+                    cursor: "pointer",
                     left: "50%",
                     /*
                      * A COLUMN SCROLLED UNDER THE NAMES TAKES ITS NAME WITH IT.
