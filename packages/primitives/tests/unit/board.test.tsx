@@ -86,6 +86,54 @@ describe("a slot that holds several", () => {
     // A slot with one occupant is still that occupant's disc.
     expect(html).toContain('data-graview-pick="g-bram"');
   });
+
+  it("shortens under-disc names to the given-name token when occupantLabel is given", () => {
+    const fullNameNodes = [
+      { id: "s1", kind: "seat", label: "Head of table", code: "1", x: 0.5, y: 0.1 },
+      { id: "s2", kind: "seat", label: "Window side", code: "2", x: 0.2, y: 0.5 },
+      { id: "g-nick", kind: "guest", label: "Nick Daniel" },
+      { id: "g-john", kind: "guest", label: "John Halberstadt" },
+    ] as never[];
+    const shared = [
+      { kind: "taken-by", from: "s1", to: "g-nick" },
+      { kind: "taken-by", from: "s1", to: "g-john" },
+    ];
+    const store = new Store({
+      schema,
+      mutations: [],
+      invariants: [],
+      snapshot: { nodes: fullNameNodes, edges: shared },
+    });
+    const lens = createBoardLens<typeof schema>({ ...options, occupantLabel: "given" });
+    const html = renderToStaticMarkup(
+      <GraviewProvider store={store} views={createViews(schema)} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("seat") }}>
+        <lens.View nodes={fullNameNodes as never} fidelity="full" cardinality="many" mode="scene" selected={false} />
+      </GraviewProvider>,
+    );
+    expect(html).toContain(">Nick<");
+    expect(html).toContain(">John<");
+    expect(html).not.toContain(">Nick Daniel<");
+    expect(html).not.toContain(">John Halberstadt<");
+    // Hover title still carries the full names for the seat.
+    expect(html).toContain("Nick Daniel, John Halberstadt at Head of table");
+  });
+
+  it("selects the slot itself when pickTarget is slot, even for a sole occupant", () => {
+    const store = new Store({ schema, mutations: [], invariants: [], snapshot: { nodes, edges } });
+    const lens = createBoardLens<typeof schema>({ ...options, pickTarget: "slot" });
+    const html = renderToStaticMarkup(
+      <GraviewProvider store={store} views={createViews(schema)} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("seat") }}>
+        <lens.View nodes={nodes as never} fidelity="full" cardinality="many" mode="scene" selected={false} />
+      </GraviewProvider>,
+    );
+    // Sole-filled seats pick the seat, not Bram / Ada.
+    expect(html).toContain('data-graview-pick="s1"');
+    expect(html).toContain('data-graview-pick="s3"');
+    expect(html).not.toContain('data-graview-pick="g-bram"');
+    expect(html).not.toContain('data-graview-pick="g-ada"');
+    // Empty seat still picks the slot.
+    expect(html).toContain('data-graview-pick="s2"');
+  });
 });
 
 describe("the board lens", () => {

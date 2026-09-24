@@ -48,6 +48,18 @@ export interface BoardOptions {
   readonly aspect?: number;
   /** What an empty slot is called, in the app's words. */
   readonly emptyLabel?: string;
+  /**
+   * What a chip click selects. Default `"occupant"`: a sole-filled slot's
+   * disc is that person (lineup / pitch). `"slot"` always selects the slot
+   * itself — Load map wants the component, not the sole owner.
+   */
+  readonly pickTarget?: "slot" | "occupant";
+  /**
+   * How occupant names render under a disc. Default `"full"`: the whole
+   * label. `"given"`: only the first whitespace-separated token — Load map
+   * shared seats put two full names under each chip and they collide.
+   */
+  readonly occupantLabel?: "full" | "given";
 }
 
 export interface BoardSlot {
@@ -80,6 +92,13 @@ export class BoardBindingError extends Error {
 }
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+
+/** Under-disc name: full label, or the given-name token when asked. */
+function displayOccupantLabel(label: string, mode: BoardOptions["occupantLabel"]): string {
+  if (mode !== "given") return label;
+  const token = label.trim().split(/\s+/)[0];
+  return token || label;
+}
 
 /**
  * Reads the arrangement out of the graph. Pure and exported, so a test can
@@ -638,16 +657,18 @@ export function BoardView<S extends AnySchema>({
               ...slot.occupants.flatMap((occupant) => reasons(occupant.id)),
             ];
             /*
-             * WHO THE DISC STANDS FOR. One occupant: the disc is them, as it
-             * always was. Several: the disc is the slot, and each name under
-             * it is its own target, so a click lands on the planting you
-             * meant and never on "the first one".
+             * WHO THE DISC STANDS FOR. Default (occupant): one occupant and
+             * the disc is them; several and the disc is the slot, each name
+             * its own target. pickTarget "slot" always selects the slot —
+             * names under a multi-occupant chip stay person targets.
              */
             const one = slot.occupants.length === 1 ? slot.occupants[0]! : null;
+            const pickId =
+              options.pickTarget === "slot" ? slot.id : one ? one.id : slot.id;
             return (
               <div
                 key={slot.id}
-                data-graview-pick={one ? one.id : slot.id}
+                data-graview-pick={pickId}
                 data-graview-slot={slot.id}
                 data-graview-flagged={
                   slotBad && occupantBad
@@ -764,7 +785,7 @@ export function BoardView<S extends AnySchema>({
                         color: broken.has(occupant.id) ? "var(--graview-warn)" : "var(--graview-ink-muted)",
                       }}
                     >
-                      {occupant.label}
+                      {displayOccupantLabel(occupant.label, options.occupantLabel)}
                       {broken.has(occupant.id) ? " ⚠" : ""}
                     </span>
                   ))
