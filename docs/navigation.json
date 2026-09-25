@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-23T14:12:20.576Z",
+  "at": "2026-09-25T20:15:03.383Z",
   "engine": "chromium",
   "steps": [
     {
@@ -219,15 +219,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 338.00006103515625,
-        "height": 171.99996948242188,
+        "width": 333,
+        "height": 173,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 277.9999694824219,
-        "height": 257,
-        "opacity": 0.469952
+        "width": 280.0000305175781,
+        "height": 258,
+        "opacity": 0.489915
       }
     ],
     "afterSwitch": [
@@ -262,9 +262,9 @@
       "up": true
     },
     "midway": {
-      "x": 772.357177734375,
-      "y": 287.17510986328125,
-      "width": 361
+      "x": 770.1676635742188,
+      "y": 293.3577117919922,
+      "width": 370
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -278,7 +278,7 @@
       "ok": true
     },
     "theGroundTravelsWithTheCards": {
-      "steps": 27,
+      "steps": 26,
       "jumps": 0,
       "first": 235,
       "last": 353,
@@ -299,7 +299,7 @@
     "zoomedIn": {
       "cell": 353.14,
       "latticeX": 1759.1,
-      "pan": "-96.63,323.61",
+      "pan": "-96.63,317.82",
       "level": "261%",
       "reach": [
         1519,
@@ -309,7 +309,7 @@
     "wheeled": {
       "cell": 353.14,
       "latticeX": 1699.1,
-      "pan": "-156.63,243.61",
+      "pan": "-156.63,237.82",
       "level": "261%",
       "reach": [
         1519,
@@ -319,7 +319,7 @@
     "buttonOut": {
       "cell": 282.51,
       "latticeX": 1528.9,
-      "pan": "-97.31,173.32",
+      "pan": "-97.31,169.41",
       "level": "209%",
       "reach": [
         1078,
@@ -329,7 +329,7 @@
     "buttonIn": {
       "cell": 353.14,
       "latticeX": 1699.1,
-      "pan": "-156.63,243.61",
+      "pan": "-156.63,237.82",
       "level": "261%",
       "reach": [
         1519,
@@ -339,7 +339,7 @@
     "dragged": {
       "cell": 353.14,
       "latticeX": 476.6,
-      "pan": "-1379.16,243.61",
+      "pan": "-1379.16,237.82",
       "level": "261%",
       "reach": [
         1519,

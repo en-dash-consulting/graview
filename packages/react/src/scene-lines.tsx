@@ -6,7 +6,7 @@ import type { ActivityMark } from "./activity.js";
 import { kitConnector, useKit } from "./kit.js";
 import { orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./routes.js";
 import { Connectors, connectorStrands, tieRoute } from "./connectors.js";
-import { drawnBox, measureVisible } from "./where-drawn.js";
+import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
 import type { SceneNode } from "./scene-root.js";
 
 /**
@@ -158,6 +158,7 @@ export function Lines<S extends AnySchema>({
         height={height}
         onPickEdge={onPickEdge}
         alreadyDrawn={drawnSingles}
+        tick={asked}
       />
     </>
   );
@@ -179,6 +180,22 @@ export function Lines<S extends AnySchema>({
  * Selecting a whole place selects its population, and forty fans of edges is
  * a hairball, not an answer.
  */
+type Box = { x: number; y: number; width: number; height: number };
+type TieLine = {
+  key: string;
+  kind: string;
+  endX: number;
+  endY: number;
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  control: { x: number; y: number };
+  fromBox: Box;
+  toBox: Box;
+  /** The far end is a stand-in (the kind's district), not the thing. */
+  proxy: boolean;
+  edgeId: string | null;
+};
+
 function SelectionTies<S extends AnySchema>({
   stageRef,
   nodes,
@@ -191,6 +208,7 @@ function SelectionTies<S extends AnySchema>({
   height,
   onPickEdge,
   alreadyDrawn,
+  tick,
 }: {
   /** Select the ONE edge a tie stands for; `at` means "and menu here". */
   readonly onPickEdge?: (edgeId: string, at?: { x: number; y: number }) => void;
@@ -206,6 +224,8 @@ function SelectionTies<S extends AnySchema>({
   readonly overview: boolean;
   readonly width: number;
   readonly height: number;
+  /** Bumped by the line layer after a scroll or a resize: measure again. */
+  readonly tick: number;
 }) {
   const kit = useKit();
   const ties = useMemo(() => {
@@ -245,16 +265,28 @@ function SelectionTies<S extends AnySchema>({
       .map(({ tie }) => tie);
   }, [store, selection, graphNodes, nodes]);
 
-  if (ties.length === 0 || typeof document === "undefined") return null;
+  /*
+   * MEASURED AFTER COMMIT, NOT DURING RENDER.
+   *
+   * These lines are anchored on the DOM, and the render that draws a frame
+   * runs before that frame's DOM exists — so every tie was measured against
+   * the frame before, and after the last frame of a navigation nothing
+   * rendered again: the lines stayed where the cards had been, dashes
+   * starting in the air at the edge of a card that had moved. The
+   * measurement is taken in a layout effect, after the boxes are where the
+   * frame put them and before paint, and again whenever the layer's tick
+   * says a scroll or a resize moved something.
+   */
+  const measure = (): TieLine[] => {
+  if (ties.length === 0 || typeof document === "undefined") return [];
   const stage = stageRef.current?.getBoundingClientRect();
-  if (!stage) return null;
+  if (!stage) return [];
 
   /*
    * The ELEMENT standing for an id, when the view drew one: a pick target,
    * or a board slot (an occupied slot's pick is its occupant, but the slot
    * itself is still a place a tie can land on).
    */
-  type Box = { x: number; y: number; width: number; height: number };
   /*
    * EVERY element wearing the id, as candidate anchors. One node can be
    * drawn several times — a chip in a card, a row label, a matrix dot per
@@ -273,13 +305,15 @@ function SelectionTies<S extends AnySchema>({
     for (const el of els ?? []) {
       if (el.closest("[data-graview-offstage]")) continue;
       if (insideOwnCard(el)) continue;
-      const rect = el.getBoundingClientRect();
-      if (rect.width <= 2 || rect.height <= 2) continue;
+      // What shows of it, not its whole rectangle: a chip scrolled off the
+      // end of its roster anchors nothing.
+      const rect = visibleRect(el, stageRef.current!);
+      if (!rect) continue;
       // A rotated header's bounding box is a huge diagonal rectangle whose
       // border is nowhere near the visible text — anything card-sized or
       // smaller stays; the degenerate stays out via the closest-pair pick
       // preferring compact boxes on ties below.
-      boxes.push({ x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height });
+      boxes.push(rect);
     }
     // Compact drawings first, so a distance tie resolves to the chip, not
     // the panel that contains it.
@@ -320,20 +354,7 @@ function SelectionTies<S extends AnySchema>({
   };
 
   const seen = new Set<string>();
-  const lines: {
-    key: string;
-    kind: string;
-    endX: number;
-    endY: number;
-    from: { x: number; y: number };
-    to: { x: number; y: number };
-    control: { x: number; y: number };
-    fromBox: { x: number; y: number; width: number; height: number };
-    toBox: { x: number; y: number; width: number; height: number };
-    /** The far end is a stand-in (the kind's district), not the thing. */
-    proxy: boolean;
-    edgeId: string | null;
-  }[] = [];
+  const found: TieLine[] = [];
   for (const tie of ties) {
     if (someViewDrawsBoth(tie.self, tie.other)) continue;
     const selfHost = hostOf(tie.self);
@@ -459,7 +480,7 @@ function SelectionTies<S extends AnySchema>({
         ((edge.from === tie.self && edge.to === tie.other) ||
           (edge.from === tie.other && edge.to === tie.self)),
     );
-    lines.push({
+    found.push({
       key: `${tie.kind}:${tie.self}:${tie.other}`,
       kind: tie.kind,
       endX: to.x,
@@ -473,6 +494,15 @@ function SelectionTies<S extends AnySchema>({
       edgeId: oriented ? edgeSelectionId(oriented.kind, oriented.from, oriented.to) : null,
     });
   }
+  return found;
+  };
+  const [lines, setLines] = useState<TieLine[]>([]);
+  useLayoutEffect(() => {
+    setLines(measure());
+    // The measurement depends on the DOM the frame committed, which these
+    // name; `measure` itself closes over nothing that changes without them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ties, nodes, overview, scheme, width, height, alreadyDrawn, tick, stageRef]);
   if (lines.length === 0) return null;
 
   return (
@@ -612,7 +642,16 @@ export function RelationCaptions({
   readonly stageRef: { current: HTMLElement | null };
 }) {
   const kit = useKit();
-  const runs: { key: string; text: string; left: number; right: number; top: number }[] = [];
+  type Run = { key: string; text: string; left: number; right: number; top: number };
+  /* Measured after commit, for the reason the ties are: a caption placed
+     over where a card WAS hung in open ground after every navigation. */
+  const [runs, setRuns] = useState<Run[]>([]);
+  useLayoutEffect(() => {
+    setRuns(placeCaptions());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, scheme, stageWidth, stageRef]);
+  function placeCaptions(): Run[] {
+  const runs: Run[] = [];
   for (const node of nodes) {
     if (!node.via || Math.round(node.plane) !== 1) continue;
     /*
@@ -639,6 +678,8 @@ export function RelationCaptions({
       right,
       top,
     });
+  }
+  return runs;
   }
   // The kit may keep the captions off: the edge's words stay on the inspector.
   if (runs.length === 0 || !kit.captions.visible) return null;

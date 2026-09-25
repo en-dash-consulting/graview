@@ -147,6 +147,54 @@ export function drawnBox(
  * Null when there is no DOM to measure (tests, SSR) — callers fall back to
  * the layout box.
  */
+/**
+ * WHAT A PERSON CAN SEE OF AN ELEMENT, in stage coordinates, or null.
+ *
+ * A line is anchored on a measured box, and a box has a rectangle whether
+ * or not anything of it is on screen: a chip scrolled off the end of a
+ * roster, a row under a panel's fold, a name behind the fade at the foot of
+ * a card. Anchoring there drew lines that began in the air at the edge of
+ * a card and read as the picture being wrong about the graph. The
+ * rectangle is cut down by every ancestor that clips — scrollers and
+ * overflow-hidden boxes alike — up to the stage, and nothing is left when
+ * nothing shows.
+ */
+export function visibleRect(
+  el: Element,
+  stageEl: HTMLElement,
+): { x: number; y: number; width: number; height: number } | null {
+  if (typeof getComputedStyle === "undefined") return null;
+  if (getComputedStyle(el).visibility === "hidden") return null;
+  let left = -Infinity;
+  let top = -Infinity;
+  let right = Infinity;
+  let bottom = Infinity;
+  const own = el.getBoundingClientRect();
+  left = Math.max(left, own.left);
+  top = Math.max(top, own.top);
+  right = Math.min(right, own.right);
+  bottom = Math.min(bottom, own.bottom);
+  let up: Element | null = el.parentElement;
+  while (up && up !== stageEl) {
+    const style = getComputedStyle(up);
+    if (style.overflowX !== "visible" || style.overflowY !== "visible") {
+      const box = up.getBoundingClientRect();
+      if (style.overflowX !== "visible") {
+        left = Math.max(left, box.left);
+        right = Math.min(right, box.right);
+      }
+      if (style.overflowY !== "visible") {
+        top = Math.max(top, box.top);
+        bottom = Math.min(bottom, box.bottom);
+      }
+    }
+    up = up.parentElement;
+  }
+  if (right - left <= 2 || bottom - top <= 2) return null;
+  const stage = stageEl.getBoundingClientRect();
+  return { x: left - stage.left, y: top - stage.top, width: right - left, height: bottom - top };
+}
+
 export function measureVisible(
   stageEl: HTMLElement | null,
   id: string,
@@ -159,10 +207,9 @@ export function measureVisible(
     (preferBlock ? host.querySelector(".graview-kind-block") : null) ??
     host.querySelector('[data-graview-primitive="panel"], .graview-kind-face, .graview-kind-card') ??
     host;
-  const rect = inner.getBoundingClientRect();
-  if (rect.width <= 2 || rect.height <= 2) return null;
-  const stage = stageEl.getBoundingClientRect();
-  return { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height };
+  // Cut down to what shows: a host half under a scroller's fold anchors a
+  // line where its visible half is, and one wholly under it anchors none.
+  return visibleRect(inner, stageEl);
 }
 
 /**
