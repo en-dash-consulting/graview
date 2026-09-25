@@ -774,6 +774,15 @@ export function CoverageView<S extends AnySchema>({
                         <div
                           key={column.id}
                           /*
+                           * A MARK OF A RELATION, NOT A DRAWING OF THE THING.
+                           * The cell wears the column's id so a press means
+                           * the column, but it stands at the crossing of a
+                           * row and a column: it is the edge. A line drawn
+                           * from elsewhere must not land on it as though it
+                           * were where the column's thing is.
+                           */
+                          data-graview-mark=""
+                          /*
                            * Only a FILLED cell is a target.
                            *
                            * An empty cell led to its own row, which the row

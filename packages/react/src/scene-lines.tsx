@@ -297,6 +297,23 @@ function SelectionTies<S extends AnySchema>({
    * the activity rail and inspector repeat node names as chips, and a tie
    * must never land on the furniture.
    */
+  /*
+   * A MARK IS NOT THE THING.
+   *
+   * A lens that draws a relation — a coverage matrix above all — marks the
+   * crossing of a row and a column, and the mark wears the column's id so
+   * a press on it means the column. Read as an anchor, that made a selected
+   * revenue stream fan five dashed lines up into the cells of somebody
+   * else's ownership matrix: lines that said nothing about ownership and
+   * crossed the whole picture to restate a fact the district below already
+   * held. The fundamental mistake was treating everything that wears an id
+   * as a place the thing is. A view says which of its drawings are marks
+   * (`data-graview-mark`) and a tie never lands on one; a thing drawn only
+   * as marks falls through to the district that holds it, which is where
+   * the thing is. Said explicitly rather than guessed from repetition: a
+   * planting drawn across five months of a calendar is drawn five times
+   * and is still the thing, every time.
+   */
   const elementBoxes = (id: string, insideOwnCard: (el: Element) => boolean): Box[] => {
     const els = stageRef.current?.querySelectorAll(
       `[data-graview-pick="${CSS.escape(id)}"], [data-graview-slot="${CSS.escape(id)}"]`,
@@ -305,6 +322,7 @@ function SelectionTies<S extends AnySchema>({
     for (const el of els ?? []) {
       if (el.closest("[data-graview-offstage]")) continue;
       if (insideOwnCard(el)) continue;
+      if (el.closest("[data-graview-mark]")) continue;
       // What shows of it, not its whole rectangle: a chip scrolled off the
       // end of its roster anchors nothing.
       const rect = visibleRect(el, stageRef.current!);
