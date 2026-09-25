@@ -11,10 +11,10 @@ import { clamp, easings, springProgress } from "../motion";
 import { colors, fonts, FEED_SAFE, feedBeats } from "../feedTheme";
 
 const NODES = [
-  { label: "Plot", x: 220, y: 320 },
-  { label: "Person", x: 820, y: 280 },
-  { label: "Rule", x: 260, y: 720 },
-  { label: "Action", x: 800, y: 760 },
+  { label: "Plot", x: 220, y: 300 },
+  { label: "Person", x: 820, y: 270 },
+  { label: "Rule", x: 250, y: 740 },
+  { label: "Action", x: 800, y: 770 },
 ] as const;
 
 const EDGES: Array<[number, number]> = [
@@ -23,37 +23,42 @@ const EDGES: Array<[number, number]> = [
   [1, 3],
   [2, 3],
   [0, 3],
-  [1, 2],
 ];
 
 /**
- * Magic first — typed chips snap, mint edges connect, glass UI erupts from the graph.
- * No pain slogan. Optional micro-caption: "One declaration."
+ * Magic first — ~4.5s. Chips land slowly, edges draw, plate fully settles,
+ * THEN caption “One declaration.” with room to breathe.
  */
 export const MagicHook: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const dur = feedBeats.magic.duration;
 
-  const exit = interpolate(frame, [dur - 8, dur], [1, 0], {
+  const exit = interpolate(frame, [dur - 16, dur], [1, 0], {
     ...clamp,
     easing: easings.softIn,
   });
-  const flash = interpolate(frame, [0, 3, 9], [0.4, 0.12, 0], clamp);
+  const flash = interpolate(frame, [0, 5, 18], [0.18, 0.05, 0], clamp);
 
-  const plateEnter = springProgress(frame, fps, 28, "premium");
-  const plateScale = interpolate(plateEnter, [0, 1], [0.55, 1]);
-  const plateY = interpolate(plateEnter, [0, 1], [80, 0]);
-  const plateRotate = interpolate(plateEnter, [0, 1], [4, -1.2]);
+  // Plate after chips + edges have settled (~1.8s in)
+  const plateEnter = springProgress(frame, fps, 52, "settle");
+  const plateOpacity = interpolate(frame, [52, 68], [0, 1], {
+    ...clamp,
+    easing: easings.softOut,
+  });
+  const plateScale = interpolate(plateEnter, [0, 1], [0.96, 1]);
+  const plateDrift = interpolate(frame, [68, dur], [1, 1.025], clamp);
 
-  const caption = springProgress(frame, fps, 36, "snap");
-  const captionOut = interpolate(frame, [dur - 12, dur - 4], [1, 0], clamp);
+  // Caption only after plate has fully settled (~3.1s)
+  const caption = springProgress(frame, fps, 92, "enter");
+  const captionOut = interpolate(frame, [dur - 20, dur - 8], [1, 0], clamp);
 
-  // Crossfade graph → zoomed punch near end of hook
-  const zoomCross = interpolate(frame, [42, 52], [0, 1], {
+  const zoomCross = interpolate(frame, [100, 118], [0, 1], {
     ...clamp,
     easing: easings.cross,
   });
+
+  const chipFade = interpolate(frame, [58, 78], [1, 0.3], clamp);
 
   return (
     <AbsoluteFill
@@ -63,7 +68,6 @@ export const MagicHook: React.FC = () => {
         overflow: "hidden",
       }}
     >
-      {/* Navy wash + mint bloom */}
       <AbsoluteFill
         style={{
           background:
@@ -74,7 +78,7 @@ export const MagicHook: React.FC = () => {
       <AbsoluteFill
         style={{
           background:
-            "radial-gradient(circle at 50% 42%, rgba(0,229,185,0.14) 0%, transparent 45%)",
+            "radial-gradient(circle at 50% 42%, rgba(0,229,185,0.12) 0%, transparent 45%)",
           pointerEvents: "none",
         }}
       />
@@ -86,25 +90,24 @@ export const MagicHook: React.FC = () => {
         }}
       />
 
-      {/* Soft constellation dots behind chips */}
       <svg
         width={1080}
         height={1080}
-        style={{ position: "absolute", inset: 0, opacity: 0.55 }}
+        style={{ position: "absolute", inset: 0, opacity: 0.4 }}
       >
-        {Array.from({ length: 28 }, (_, i) => {
+        {Array.from({ length: 20 }, (_, i) => {
           const seed = (i * 47) % 97;
           const x = 80 + ((seed * 37) % 920);
           const y = 80 + ((seed * 53) % 920);
           const o =
-            0.15 +
-            0.35 * (0.5 + 0.5 * Math.sin(frame * 0.08 + i * 0.7));
+            0.12 +
+            0.28 * (0.5 + 0.5 * Math.sin(frame * 0.05 + i * 0.7));
           return (
             <circle
               key={i}
               cx={x}
               cy={y}
-              r={1.5 + (i % 3)}
+              r={1.4 + (i % 3) * 0.6}
               fill={colors.mint}
               fillOpacity={o}
             />
@@ -112,16 +115,21 @@ export const MagicHook: React.FC = () => {
         })}
       </svg>
 
-      {/* Mint edges — draw on as chips land */}
       <svg
         width={1080}
         height={1080}
-        style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          opacity: chipFade,
+        }}
       >
         {EDGES.map(([a, b], i) => {
           const na = NODES[a]!;
           const nb = NODES[b]!;
-          const draw = springProgress(frame, fps, 10 + i * 3, "snap");
+          // Edges after chips start landing — unhurried draw
+          const draw = springProgress(frame, fps, 22 + i * 7, "enter");
           const len = Math.hypot(nb.x - na.x, nb.y - na.y);
           return (
             <line
@@ -132,7 +140,7 @@ export const MagicHook: React.FC = () => {
               y2={nb.y}
               stroke={colors.mint}
               strokeWidth={2}
-              strokeOpacity={0.55 * draw}
+              strokeOpacity={0.5 * draw}
               strokeLinecap="round"
               strokeDasharray={len}
               strokeDashoffset={len * (1 - draw)}
@@ -141,10 +149,10 @@ export const MagicHook: React.FC = () => {
         })}
       </svg>
 
-      {/* Typed node chips */}
       {NODES.map((node, i) => {
-        const enter = springProgress(frame, fps, 2 + i * 4, "snap");
-        const scale = interpolate(enter, [0, 1], [0.7, 1]);
+        // ~8–9f between chips — no rushed stagger
+        const enter = springProgress(frame, fps, 6 + i * 9, "enter");
+        const scale = interpolate(enter, [0, 1], [0.94, 1]);
         return (
           <div
             key={node.label}
@@ -153,13 +161,13 @@ export const MagicHook: React.FC = () => {
               left: node.x,
               top: node.y,
               transform: `translate(-50%, -50%) scale(${scale})`,
-              opacity: enter,
+              opacity: enter * chipFade,
               padding: "14px 26px",
               borderRadius: 999,
               backgroundColor: colors.fieldElevated,
-              border: `1.5px solid rgba(0,229,185,0.55)`,
+              border: `1.5px solid rgba(0,229,185,0.5)`,
               boxShadow:
-                "0 12px 40px rgba(0,0,0,0.45), 0 0 24px rgba(0,229,185,0.2)",
+                "0 12px 40px rgba(0,0,0,0.4), 0 0 20px rgba(0,229,185,0.15)",
               fontFamily: fonts.mono,
               fontWeight: 700,
               fontSize: 28,
@@ -173,23 +181,22 @@ export const MagicHook: React.FC = () => {
         );
       })}
 
-      {/* Glass UI plate erupting from center */}
       <div
         style={{
           position: "absolute",
           left: FEED_SAFE.side + 20,
           right: FEED_SAFE.side + 20,
           top: "50%",
-          height: 520,
-          marginTop: -260,
-          opacity: plateEnter,
-          transform: `translateY(${plateY}px) scale(${plateScale}) rotate(${plateRotate}deg)`,
+          height: 540,
+          marginTop: -270,
+          opacity: plateOpacity,
+          transform: `scale(${plateScale})`,
           borderRadius: 28,
           overflow: "hidden",
           backgroundColor: "rgba(14,26,54,0.85)",
           border: `2px solid rgba(0,229,185,0.5)`,
           boxShadow:
-            "0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,229,185,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
+            "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,229,185,0.12), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}
       >
         <div
@@ -210,10 +217,10 @@ export const MagicHook: React.FC = () => {
               height: "100%",
               objectFit: "cover",
               objectPosition: "50% 42%",
-              transform: "scale(1.85)",
+              transform: `scale(${2.05 * plateDrift})`,
               transformOrigin: "50% 42%",
               filter: "brightness(1.15) contrast(1.08)",
-              opacity: 1 - zoomCross * 0.15,
+              opacity: 1 - zoomCross,
             }}
           />
           <Img
@@ -225,7 +232,7 @@ export const MagicHook: React.FC = () => {
               height: "100%",
               objectFit: "cover",
               objectPosition: "48% 40%",
-              transform: `scale(${1.9 + zoomCross * 0.15})`,
+              transform: `scale(${2.15 * plateDrift})`,
               transformOrigin: "48% 40%",
               filter: "brightness(1.18) contrast(1.1)",
               opacity: zoomCross,
@@ -243,19 +250,18 @@ export const MagicHook: React.FC = () => {
         </div>
       </div>
 
-      {/* Micro caption */}
       <div
         style={{
           position: "absolute",
           left: FEED_SAFE.side,
           right: FEED_SAFE.side,
-          bottom: FEED_SAFE.bottom + 28,
+          bottom: FEED_SAFE.bottom + 36,
           textAlign: "center",
           opacity: caption * captionOut,
-          transform: `translateY(${(1 - caption) * 20}px)`,
+          transform: `translateY(${(1 - caption) * 10}px)`,
           fontFamily: fonts.display,
           fontWeight: 700,
-          fontSize: 36,
+          fontSize: 38,
           letterSpacing: -0.3,
           color: colors.offWhite,
           textShadow: "0 8px 28px rgba(0,0,0,0.7)",
@@ -264,7 +270,6 @@ export const MagicHook: React.FC = () => {
         One declaration.
       </div>
 
-      {/* Light vignette */}
       <AbsoluteFill
         style={{
           background:

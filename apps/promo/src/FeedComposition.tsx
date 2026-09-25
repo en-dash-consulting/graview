@@ -4,12 +4,13 @@ import { colors, feedBeats } from "./feedTheme";
 import { Cta } from "./feed/Cta";
 import { Lockup } from "./feed/Lockup";
 import { MagicHook } from "./feed/MagicHook";
+import { StepsBeat } from "./feed/StepsBeat";
 import { StoryMontage } from "./feed/StoryMontage";
 import { TaglinePayoff } from "./feed/TaglinePayoff";
 
 /**
- * GraviewFeed — square 1:1 mute-first social promo (~15s / 450f @ 30fps).
- * Kinetic product story: magic → tagline → montage → lock → CTA.
+ * GraviewFeed — square 1:1 mute-first social promo (~22s / 660f @ 30fps).
+ * Kinetic product story: magic → tagline → steps → montage → lock → CTA.
  * Landscape GraviewIntro stays untouched.
  */
 export const GraviewFeed: React.FC = () => {
@@ -32,9 +33,17 @@ export const GraviewFeed: React.FC = () => {
       </Sequence>
 
       <Sequence
+        from={feedBeats.steps.from}
+        durationInFrames={feedBeats.steps.duration}
+        name="2 Steps"
+      >
+        <StepsBeat />
+      </Sequence>
+
+      <Sequence
         from={feedBeats.montage.from}
         durationInFrames={feedBeats.montage.duration}
-        name="2 Story montage"
+        name="3 Story montage"
       >
         <StoryMontage />
       </Sequence>
@@ -42,7 +51,7 @@ export const GraviewFeed: React.FC = () => {
       <Sequence
         from={feedBeats.lockup.from}
         durationInFrames={feedBeats.lockup.duration}
-        name="3 Identity lock"
+        name="4 Identity lock"
       >
         <Lockup />
       </Sequence>
@@ -50,7 +59,7 @@ export const GraviewFeed: React.FC = () => {
       <Sequence
         from={feedBeats.cta.from}
         durationInFrames={feedBeats.cta.duration}
-        name="4 CTA"
+        name="5 CTA"
       >
         <Cta />
       </Sequence>

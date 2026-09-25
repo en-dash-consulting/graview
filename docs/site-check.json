@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-25T12:12:08.777Z",
+  "at": "2026-09-25T13:05:45.071Z",
   "engine": "chromium",
   "viewports": [
     {
@@ -1077,8 +1077,8 @@
       "small": [],
       "cut": [],
       "overlaps": [],
-      "live": 5,
-      "wanted": 5,
+      "live": 4,
+      "wanted": 4,
       "errors": []
     },
     {
@@ -1090,8 +1090,8 @@
       "small": [],
       "cut": [],
       "overlaps": [],
-      "live": 5,
-      "wanted": 5,
+      "live": 4,
+      "wanted": 4,
       "errors": []
     },
     {
@@ -1103,8 +1103,8 @@
       "small": [],
       "cut": [],
       "overlaps": [],
-      "live": 5,
-      "wanted": 5,
+      "live": 4,
+      "wanted": 4,
       "errors": []
     },
     {
@@ -1116,8 +1116,8 @@
       "small": [],
       "cut": [],
       "overlaps": [],
-      "live": 5,
-      "wanted": 5,
+      "live": 4,
+      "wanted": 4,
       "errors": []
     },
     {
@@ -1129,8 +1129,8 @@
       "small": [],
       "cut": [],
       "overlaps": [],
-      "live": 5,
-      "wanted": 5,
+      "live": 4,
+      "wanted": 4,
       "errors": []
     },
     {
@@ -1142,8 +1142,8 @@
       "small": [],
       "cut": [],
       "overlaps": [],
-      "live": 5,
-      "wanted": 5,
+      "live": 4,
+      "wanted": 4,
       "errors": []
     }
   ],

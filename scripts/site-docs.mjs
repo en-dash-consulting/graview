@@ -719,9 +719,7 @@ async function build() {
       section("city", "The city, at altitude",
         `      <p>Every kind is a district; every record a building on its own plot; every edge a road with its words on it. Drag the ground, press a district, come down to a plot.</p>\n` + frame(16, "The garden, grown", "The example garden at altitude, live", ' data-stop="#overview=1" data-settle="1"')) +
       section("pages", "The routed face",
-        `      <p>The same store as ordinary pages — here in the garden's own design, at phone width.</p>\n      <div class="chapter phone">\n` + frame(13, "The garden's own face", "The garden's routed pages, live", ' data-face="pages"') + `\n      </div>`) +
-      section("lens", "A lens over the garden",
-        `      <p>A calendar written for a rota, bound to roles rather than fields, over a four-year rotation of plantings.</p>\n` + frame(16, "The rotation", "The rotation calendar lens, live", ' data-settle="0"')) +
+        `      <p>The same store as ordinary pages — here in the garden's own design: an almanac over the same acts, rules and log.</p>\n` + frame(13, "The garden's own face", "The garden's routed pages, live", ' data-face="pages"')) +
       section("studio", "The studio",
         `      <p>The declaration itself, open as a graph, edited with ordinary acts and checked before the change lands.</p>\n` + frame(15, "Seedbed, in the studio", "The declaration open in the studio, live", ' data-settle="0"')) +
       section("seat", "A seat for an agent",

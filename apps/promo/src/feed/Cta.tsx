@@ -9,17 +9,17 @@ import { clamp, springProgress } from "../motion";
 import { colors, fonts, FEED_SAFE } from "../feedTheme";
 
 /**
- * Hard CTA — navy / mint-accent card.
+ * Hard CTA — unhurried navy / mint card.
  * npm create graview@latest · graview.dev
  */
 export const Cta: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const card = springProgress(frame, fps, 1, "premium");
-  const cmd = springProgress(frame, fps, 8, "snap");
-  const url = springProgress(frame, fps, 18, "enter");
-  const hold = interpolate(frame, [0, 4], [0, 1], clamp);
+  const card = springProgress(frame, fps, 2, "settle");
+  const cmd = springProgress(frame, fps, 12, "enter");
+  const url = springProgress(frame, fps, 24, "enter");
+  const hold = interpolate(frame, [0, 8], [0, 1], clamp);
 
   return (
     <AbsoluteFill
@@ -37,7 +37,7 @@ export const Cta: React.FC = () => {
       <AbsoluteFill
         style={{
           background:
-            "radial-gradient(ellipse at 50% 48%, rgba(0,229,185,0.2) 0%, transparent 52%)",
+            "radial-gradient(ellipse at 50% 48%, rgba(0,229,185,0.18) 0%, transparent 52%)",
           pointerEvents: "none",
         }}
       />
@@ -45,7 +45,7 @@ export const Cta: React.FC = () => {
       <div
         style={{
           opacity: card,
-          transform: `translateY(${(1 - card) * 28}px) scale(${0.94 + card * 0.06})`,
+          transform: `translateY(${(1 - card) * 16}px)`,
           width: "100%",
           maxWidth: 920,
           backgroundColor: colors.field,
@@ -53,7 +53,7 @@ export const Cta: React.FC = () => {
           borderRadius: 28,
           padding: "56px 48px",
           boxShadow:
-            "0 32px 80px rgba(0,0,0,0.45), 0 0 48px rgba(0,229,185,0.12)",
+            "0 32px 80px rgba(0,0,0,0.45), 0 0 48px rgba(0,229,185,0.1)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -83,7 +83,7 @@ export const Cta: React.FC = () => {
         <div
           style={{
             opacity: url,
-            transform: `translateY(${(1 - url) * 10}px)`,
+            transform: `translateY(${(1 - url) * 6}px)`,
             fontFamily: fonts.display,
             fontWeight: 700,
             fontSize: 42,

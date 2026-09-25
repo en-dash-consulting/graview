@@ -81,8 +81,8 @@ const PAGES = [
   { file: "docs/checks.html", name: "the findings list", live: 0, skip: "#main", widths: [320, 768, 1280] },
   { file: "docs/getting-started.html", name: "getting started", live: 0, skip: "#main", widths: [320, 768, 1280] },
   { file: "docs/agents.html", name: "working with a model", live: 0, skip: "#main", widths: [320, 768, 1280] },
-  /* Five live frames on a docs page, so it takes the same sweep the page does. */
-  { file: "docs/demos.html", name: "the demos", live: 5, skip: "#main", widths: [320, 768, 1280] },
+  /* Four live frames on a docs page, so it takes the same sweep the page does. */
+  { file: "docs/demos.html", name: "the demos", live: 4, skip: "#main", widths: [320, 768, 1280] },
 ];
 const PAGE = pageAt("index.html");
 const ENGINE = engineName();

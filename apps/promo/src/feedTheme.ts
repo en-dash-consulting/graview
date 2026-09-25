@@ -4,7 +4,7 @@ import { colors, fonts } from "./theme";
 export const FEED_WIDTH = 1080;
 export const FEED_HEIGHT = 1080;
 export const FEED_FPS = 30;
-export const FEED_DURATION = 450; // 15s
+export const FEED_DURATION = 660; // 22s — slower open + readable steps
 
 /** Safe margins for LinkedIn/IG crop (~48–64px). */
 export const FEED_SAFE = {
@@ -14,15 +14,16 @@ export const FEED_SAFE = {
 } as const;
 
 /**
- * Kinetic product story beats (magic → tagline → montage → lock → CTA).
- * Prefer 450 frames / 15s @ 30fps.
+ * Kinetic product story (magic → tagline → steps → montage → lock → CTA).
+ * 660 frames / 22s @ 30fps — open breathes; Declare/Derive/Ship are communication.
  */
 export const feedBeats = {
-  magic: { from: 0, duration: 60 }, // 0–2.0s
-  tagline: { from: 60, duration: 90 }, // 2.0–5.0s
-  montage: { from: 150, duration: 180 }, // 5.0–11.0s
-  lockup: { from: 330, duration: 66 }, // 11.0–13.2s
-  cta: { from: 396, duration: 54 }, // 13.2–15.0s
+  magic: { from: 0, duration: 135 }, // 0–4.5s
+  tagline: { from: 135, duration: 120 }, // 4.5–8.5s
+  steps: { from: 255, duration: 54 }, // 8.5–10.3s — big Declare → Derive → Ship
+  montage: { from: 309, duration: 252 }, // 10.3–18.7s
+  lockup: { from: 561, duration: 54 }, // 18.7–20.5s
+  cta: { from: 615, duration: 45 }, // 20.5–22.0s
 } as const;
 
 export { colors, fonts };

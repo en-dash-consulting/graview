@@ -9,17 +9,17 @@ import { clamp, easings, springProgress } from "../motion";
 import { colors, fonts, FEED_SAFE, feedBeats } from "../feedTheme";
 
 /**
- * Identity lock — GRAVIEW wordmark + thin credit line.
+ * Identity lock — unhurried GRAVIEW + credit.
  */
 export const Lockup: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const dur = feedBeats.lockup.duration;
 
-  const mark = springProgress(frame, fps, 2, "snap");
-  const line = springProgress(frame, fps, 14, "premium");
-  const credit = springProgress(frame, fps, 22, "enter");
-  const exit = interpolate(frame, [dur - 8, dur], [1, 0], {
+  const mark = springProgress(frame, fps, 4, "enter");
+  const line = springProgress(frame, fps, 18, "settle");
+  const credit = springProgress(frame, fps, 28, "enter");
+  const exit = interpolate(frame, [dur - 12, dur], [1, 0], {
     ...clamp,
     easing: easings.softIn,
   });
@@ -63,7 +63,7 @@ export const Lockup: React.FC = () => {
         <div
           style={{
             opacity: mark,
-            transform: `translateY(${(1 - mark) * 24}px) scale(${0.94 + mark * 0.06})`,
+            transform: `translateY(${(1 - mark) * 14}px)`,
             fontFamily: fonts.display,
             fontWeight: 800,
             fontSize: 108,
@@ -83,14 +83,14 @@ export const Lockup: React.FC = () => {
             backgroundColor: colors.mint,
             borderRadius: 1,
             opacity: line,
-            boxShadow: "0 0 16px rgba(0,229,185,0.5)",
+            boxShadow: "0 0 16px rgba(0,229,185,0.45)",
           }}
         />
 
         <div
           style={{
             opacity: credit,
-            transform: `translateY(${(1 - credit) * 12}px)`,
+            transform: `translateY(${(1 - credit) * 8}px)`,
             fontFamily: fonts.display,
             fontWeight: 500,
             fontSize: 28,
