@@ -1,18 +1,7 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type PresenceChannel, type Principal } from "@graview/core";
 import { EMPTY_VIEW, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PagesApp, type PageComponent, type PageRegistry } from "@graview/pages";
-import {
-  Companion,
-  Inspector,
-  OverviewButton,
-  Places,
-  Profile,
-  ShowInstallation,
-  Standing,
-  descentTarget,
-  registerDefaultViews,
-  themeCss,
-} from "@graview/primitives";
+import { Companion, Inspector, OverviewButton, Places, Profile, ShowInstallation, Standing, descentTarget, registerDefaultViews, themeCss, useWidth } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
 import {
   createViews,
@@ -313,6 +302,14 @@ function Strip({
 }) {
   const { brand } = useGraview();
   const sameSeat = (a: Principal | undefined, b: Principal) => a !== undefined && a.id === b.id && a.kind === b.kind;
+  /*
+   * COMPACT BELOW A PHONE'S WIDTH: the places and the seats as one select
+   * each rather than a pill per name. At 360px the pills wrapped to five
+   * rows and the strip was taller than the picture under it.
+   */
+  const strip = useRef<HTMLDivElement>(null);
+  const width = useWidth(strip);
+  const compact = width !== null && width < 560;
   // Two faces, not three: altitude is the scene's own control, on the
   // picture, and a third pill for it here said the same thing twice.
   const faces: readonly { id: EmbedFace; label: string; title: string; pressed: boolean }[] = [
@@ -321,9 +318,11 @@ function Strip({
   ];
   return (
     <div
+      ref={strip}
       role="group"
       aria-label="Face"
       data-testid="embed-faces"
+      data-embed-strip={compact ? "compact" : "full"}
       style={{
         display: "flex",
         alignItems: "center",
@@ -364,7 +363,7 @@ function Strip({
         </button>
       ))}
       {/* The named pictures over the graph — a lens is somewhere to go, by name. */}
-      {face !== "pages" ? <Places /> : null}
+      {face !== "pages" ? <Places compact={compact} /> : null}
       {face !== "pages" ? <ShowInstallation /> : null}
       {/* And the app's own declaration, for the seat that keeps it — inside
           the embed's box, because a studio that escaped onto somebody
@@ -374,7 +373,35 @@ function Strip({
           keep their own control beside it, because the HOST owns which one
           is taken here — the pane says who that turned out to be. */}
       <Profile />
-      {seats && seats.length > 1 ? (
+      {seats && seats.length > 1 && compact ? (
+        <select
+          aria-label="Seat"
+          data-testid="embed-seats"
+          value={seats.find((seat) => sameSeat(principal, seat.principal))?.principal.id ?? ""}
+          onChange={(event) => {
+            const seat = seats.find((candidate) => candidate.principal.id === event.target.value);
+            if (seat) onSeat?.(seat.principal);
+          }}
+          style={{
+            minHeight: 24,
+            maxWidth: "46%",
+            padding: "3px 8px",
+            borderRadius: 999,
+            fontSize: "0.78125rem",
+            borderWidth: 1,
+            borderStyle: "solid",
+            borderColor: "var(--graview-accent)",
+            color: "var(--graview-accent)",
+            background: "var(--graview-panel)",
+          }}
+        >
+          {seats.map((seat) => (
+            <option key={seat.principal.id} value={seat.principal.id}>
+              As {seat.label}
+            </option>
+          ))}
+        </select>
+      ) : seats && seats.length > 1 ? (
         <div role="group" aria-label="Seat" data-testid="embed-seats" style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 6 }}>
           <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>As</span>
           {seats.map((seat) => {

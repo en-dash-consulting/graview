@@ -1,9 +1,9 @@
 import type { AnySchema, NodeOfSchema } from "@graview/core";
 import { withWithin } from "@graview/layout";
 import { useGraview, useNavigation, type ViewProps } from "@graview/react";
-import { useState, type ReactElement } from "react";
+import { useRef, useState, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
-import { Chip, Panel, Roster } from "../primitives/index.js";
+import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
 import { addDays, addMonths, daysBetween, minutesOf } from "./calendar-dates.js";
 import { Agenda, Grid, PER_CELL, Step, longDay, stepStyle } from "./calendar-drawing.js";
 import {
@@ -220,6 +220,18 @@ function CalendarView<S extends AnySchema>({
     if (day !== undefined) next = withWithin(next, "at", day);
     go(next);
   };
+  /*
+   * THE RANGES AS ONE CONTROL WHEN THERE IS NO ROW FOR THEM. Six chips —
+   * Day, Week, Month, Quarter, Year, the horizon — wrapped to three rows in
+   * a 300px card and left the calendar itself a strip under them. A select
+   * says the same six things in one row; the buttons stay wherever a row
+   * holds them, since a row of pressable words is quicker to read.
+   */
+  const box = useRef<HTMLDivElement>(null);
+  const width = useWidth(box);
+  const rangesAsSelect = width !== null && width < 420;
+  const rangeName = (candidate: CalendarRange) =>
+    candidate === "years" ? (options.horizon?.title ?? "years") : candidate.charAt(0).toUpperCase() + candidate.slice(1);
 
   return (
     <Panel
@@ -228,6 +240,7 @@ function CalendarView<S extends AnySchema>({
       style={{ gap: 10, ...(page ? { flex: "1 1 auto", minHeight: 0, height: "100%" } : {}) }}
     >
       <div
+        ref={box}
         data-testid="calendar"
         data-calendar-range={range}
         data-calendar-at={at}
@@ -246,6 +259,21 @@ function CalendarView<S extends AnySchema>({
             </button>
             <Step label="Next" glyph="›" onPress={() => move(1)} />
           </nav>
+          {rangesAsSelect ? (
+            <select
+              aria-label="Range"
+              data-testid="calendar-ranges"
+              value={range}
+              onChange={(event) => show(event.target.value as CalendarRange)}
+              style={{ ...stepStyle, marginLeft: "auto", maxWidth: "50%" }}
+            >
+              {rangesOf(options).map((candidate) => (
+                <option key={candidate} value={candidate}>
+                  {rangeName(candidate)}
+                </option>
+              ))}
+            </select>
+          ) : (
           <div role="group" aria-label="Range" data-testid="calendar-ranges" style={{ display: "flex", flexWrap: "wrap", gap: 4, marginLeft: "auto" }}>
             {rangesOf(options).map((candidate) => (
               <button
@@ -269,6 +297,7 @@ function CalendarView<S extends AnySchema>({
               </button>
             ))}
           </div>
+          )}
         </div>
 
         {said ? (

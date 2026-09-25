@@ -56,7 +56,13 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
      * declaration passes its own typed registry with no cast at all — see
      * the `src/embed.tsx` every scaffolded project now starts with.
      */
-    views: (s) => seedbedViews(s as never, { lens: chapter.lens, board: chapter.board, map: chapter.map ?? false, reach: chapter.reach ?? false, ...(chapter.studioOf ? { studio: chapter.studioOf } : {}) }) as never,
+    /*
+     * EVERY FLAG THE VIEWS TAKE. The season and the rotation were declared
+     * on the chapters and never handed over, so on the page that explains
+     * this thing a focused rotation drew the default roster of chips and
+     * the calendar the chapter is about never appeared.
+     */
+    views: (s) => seedbedViews(s as never, { lens: chapter.lens, board: chapter.board, map: chapter.map ?? false, reach: chapter.reach ?? false, season: chapter.season ?? false, rotation: chapter.rotation ?? false, ...(chapter.studioOf ? { studio: chapter.studioOf } : {}) }) as never,
     ...(chapter.pages ? { pages: (chapter.design ? seedbedDesign(schema) : seedbedPages(schema)) as never } : {}),
     standing: chapter.studioOf ? "The declaration holds up" : "The garden keeps its agreements",
     // The page may name an embed itself: the opener carries chapter one

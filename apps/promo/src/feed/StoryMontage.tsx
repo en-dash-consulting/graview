@@ -1,62 +1,60 @@
 import React from "react";
 import {
   AbsoluteFill,
-  Img,
   interpolate,
-  staticFile,
   useCurrentFrame,
 } from "remotion";
 import { clamp, easings } from "../motion";
 import { colors, fonts, FEED_SAFE, feedBeats } from "../feedTheme";
+import { BeautyPlate } from "./BeautyPlate";
 
 /**
- * One plate at a time — hold ≥2.2s, crossfade 10f.
- * Big bottom bar: Declare → Derive → Ship (phone-legible primary UI).
- * Declare on graph, Derive on UI plates, Ship near end.
+ * Beauty montage — light Seedbed plates, slow crossfades (~2.4s+).
+ * Large framed light UI on navy. No dark ToDo harness crops.
  */
-const CROSS = 10;
+const CROSS = 12;
 
 const SHOTS = [
   {
-    src: "survey/todo-graview-dark.png",
-    caption: null as string | null,
+    src: "beauty/seedbed-planted-light.png",
+    caption: "The graph is the interface.",
     from: 0,
     hold: 72,
-    objectPosition: "50% 40%",
-    scale: 2.2,
+    objectPosition: "48% 42%",
+    scale: 1.12,
     step: 0, // Declare
   },
   {
-    src: "site/todo-week-dark.png",
-    caption: "Calendar from the graph.",
-    from: 62,
-    hold: 72,
-    objectPosition: "62% 42%",
-    scale: 2.15,
+    src: "beauty/13-the-gardens-own-face-light.png",
+    caption: "An ordinary web app — from the same declaration.",
+    from: 60,
+    hold: 74,
+    objectPosition: "50% 38%",
+    scale: 1.08,
     step: 1, // Derive
   },
   {
-    src: "site/todo-selected-dark.png",
+    src: "beauty/05-a-seat-light.png",
     caption: "Same buttons for you and your agent.",
-    from: 124,
+    from: 122,
     hold: 72,
-    objectPosition: "18% 38%",
-    scale: 2.35,
+    objectPosition: "42% 45%",
+    scale: 1.14,
     step: 1, // Derive
   },
   {
-    src: "site/coverage-dark.png",
-    caption: "Lenses that rebind.",
-    from: 186,
-    hold: 66,
-    objectPosition: "42% 52%",
-    scale: 2.4,
+    src: "beauty/03-the-agreement-light.png",
+    caption: "Rules that repair.",
+    from: 182,
+    hold: 70,
+    objectPosition: "50% 42%",
+    scale: 1.16,
     step: 2, // Ship
   },
 ] as const;
 
 const TICKS = ["Declare", "Derive", "Ship"] as const;
-const PLATE_H = 640; // slightly shorter to leave room for big step bar
+const PLATE_H = 700;
 
 export const StoryMontage: React.FC = () => {
   const frame = useCurrentFrame();
@@ -67,7 +65,6 @@ export const StoryMontage: React.FC = () => {
     easing: easings.softIn,
   });
 
-  // Active step from current dominant shot
   let activeStep = 0;
   for (const shot of SHOTS) {
     if (frame >= shot.from + CROSS / 2) {
@@ -86,7 +83,7 @@ export const StoryMontage: React.FC = () => {
       <AbsoluteFill
         style={{
           background:
-            "radial-gradient(ellipse at 50% 40%, rgba(14,26,54,0.95) 0%, transparent 70%)",
+            "radial-gradient(ellipse at 50% 38%, rgba(0,23,105,0.55) 0%, transparent 68%)",
           pointerEvents: "none",
         }}
       />
@@ -110,14 +107,7 @@ export const StoryMontage: React.FC = () => {
             });
         const opacity = enter * leave;
 
-        const drift = interpolate(
-          local,
-          [0, Math.max(1, shot.hold)],
-          [1, 1.025],
-          clamp,
-        );
-
-        const capIn = interpolate(local, [8, 18], [0, 1], {
+        const capIn = interpolate(local, [10, 22], [0, 1], {
           ...clamp,
           easing: easings.softOut,
         });
@@ -141,96 +131,59 @@ export const StoryMontage: React.FC = () => {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 18,
+                gap: 16,
               }}
             >
+              <BeautyPlate
+                src={shot.src}
+                scale={shot.scale}
+                objectPosition={shot.objectPosition}
+                driftTo={1.025}
+                driftFrames={shot.hold}
+                height={PLATE_H}
+                liveChip={i === 0}
+                borderRadius={18}
+                frameOffset={shot.from}
+              />
+
               <div
                 style={{
-                  width: "100%",
-                  height: PLATE_H,
-                  borderRadius: 28,
-                  overflow: "hidden",
-                  position: "relative",
-                  backgroundColor: "rgba(232,238,248,0.06)",
-                  border: "2px solid rgba(0,229,185,0.48)",
-                  boxShadow:
-                    "0 28px 72px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,229,185,0.1), inset 0 1px 0 rgba(255,255,255,0.08)",
+                  opacity: capIn,
+                  fontFamily: fonts.display,
+                  fontWeight: 800,
+                  fontSize: 34,
+                  lineHeight: 1.15,
+                  letterSpacing: -0.3,
+                  color: colors.white,
+                  textAlign: "center",
+                  maxWidth: 920,
+                  textShadow: "0 10px 36px rgba(0,0,0,0.75)",
+                  minHeight: 44,
+                  paddingLeft: 8,
+                  paddingRight: 8,
                 }}
               >
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 8,
-                    borderRadius: 20,
-                    overflow: "hidden",
-                    backgroundColor: colors.fieldElevated,
-                  }}
-                >
-                  <Img
-                    src={staticFile(shot.src)}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      objectPosition: shot.objectPosition,
-                      transform: `scale(${shot.scale * drift})`,
-                      transformOrigin: shot.objectPosition,
-                      filter: "brightness(1.18) contrast(1.1) saturate(1.05)",
-                      display: "block",
-                    }}
-                  />
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background:
-                        "linear-gradient(180deg, rgba(232,238,248,0.07) 0%, transparent 26%, transparent 70%, rgba(5,11,26,0.28) 100%)",
-                      pointerEvents: "none",
-                    }}
-                  />
-                </div>
+                {shot.caption}
               </div>
-
-              {shot.caption ? (
-                <div
-                  style={{
-                    opacity: capIn,
-                    fontFamily: fonts.display,
-                    fontWeight: 800,
-                    fontSize: 36,
-                    lineHeight: 1.12,
-                    letterSpacing: -0.4,
-                    color: colors.white,
-                    textAlign: "center",
-                    maxWidth: 920,
-                    textShadow: "0 10px 36px rgba(0,0,0,0.75)",
-                    minHeight: 44,
-                  }}
-                >
-                  {shot.caption}
-                </div>
-              ) : (
-                <div style={{ minHeight: 44 }} />
-              )}
             </div>
           </AbsoluteFill>
         );
       })}
 
-      {/* Big Declare → Derive → Ship bar — primary readable UI */}
+      {/* Big Declare → Derive → Ship bar */}
       <div
         style={{
           position: "absolute",
           left: FEED_SAFE.side,
           right: FEED_SAFE.side,
-          bottom: FEED_SAFE.bottom + 20,
+          bottom: FEED_SAFE.bottom + 16,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           gap: 12,
-          padding: "18px 28px",
+          padding: "16px 28px",
           borderRadius: 20,
-          backgroundColor: "rgba(5,11,26,0.82)",
+          backgroundColor: "rgba(5,11,26,0.88)",
           border: "1px solid rgba(0,229,185,0.28)",
           boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
           opacity: interpolate(frame, [4, 14], [0, 1], clamp),
@@ -284,7 +237,7 @@ export const StoryMontage: React.FC = () => {
       <AbsoluteFill
         style={{
           background:
-            "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.35) 100%)",
+            "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.32) 100%)",
           pointerEvents: "none",
         }}
       />

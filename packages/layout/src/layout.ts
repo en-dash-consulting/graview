@@ -352,12 +352,19 @@ export function layout<S extends AnySchema>(
    */
   // Zoomed, a group runs nearly wall to wall; a record stays a readable
   // column even with the room — 880 is a document's width, not a letterbox.
+  /*
+   * The margin a focused card keeps from the span's edges: six gaps on a
+   * screen with room, and never more than a tenth of a narrow one — 96
+   * pixels off a 240-pixel span left a lens too thin to draw its own
+   * label column, on a frame where the margin was buying nothing.
+   */
+  const focusMargin = (gaps: number) => Math.min(opts.gap * gaps, Math.round(spanW * 0.1));
   const detailWidth = zoomed
-    ? Math.min(880, spanW - opts.gap * 5)
-    : Math.min(700, spanW - opts.gap * 6);
+    ? Math.min(880, spanW - focusMargin(5))
+    : Math.min(700, spanW - focusMargin(6));
   const groupWidth = zoomed
-    ? spanW - opts.gap * 5
-    : Math.min(opts.focusSize.width, spanW - opts.gap * 6);
+    ? spanW - focusMargin(5)
+    : Math.min(opts.focusSize.width, spanW - focusMargin(6));
 
   /** Fits `count` boxes across the canvas, never wider than the cap. */
   const fit = (count: number, cap: number, height: number) => ({

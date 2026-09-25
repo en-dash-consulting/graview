@@ -3,6 +3,8 @@ import type { CalendarGrain, PlacedEntry } from "./calendar-options.js";
 import { entriesOn } from "./calendar-placing.js";
 import { type CalendarCell, type CalendarSpan, entriesIn } from "./calendar-spans.js";
 import type { Emphasis } from "./calendar-view.js";
+import { useRef } from "react";
+import { useWidth } from "../primitives/index.js";
 
 export const longDay = (day: string): string =>
   `${WEEKDAYS[weekdayOf(day)]} ${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1]!.slice(0, 3)}`;
@@ -70,16 +72,44 @@ export function Grid({
   // Weekday headings belong to a week of days and to nothing else: a row of
   // four week-cells under "Mon Tue Wed Thu" would be a caption for a
   // different picture.
+  /*
+   * THE ROOM DECIDES THE DRAWING. Seven day columns in a 300px box are
+   * 40px cells with three letters of each name in them — a grid nobody
+   * can read and nobody can drop onto. Below about 44px a column, a run
+   * of days becomes the agenda (the day view's own drawing, one day under
+   * the next), and a run of coarser cells — weeks, months — wraps into as
+   * many columns as the width holds, since those carry their own labels.
+   */
+  const box = useRef<HTMLDivElement>(null);
+  const width = useWidth(box);
+  const fits = width === null ? span.columns : Math.max(1, Math.floor(width / 44));
+  const narrow = fits < span.columns;
+  const columns = narrow ? fits : span.columns;
   const headers =
-    span.grain === "day" && span.columns === 7
+    !narrow && span.grain === "day" && span.columns === 7
       ? daysFrom(startOfWeek(span.cells[0]?.from ?? today, weekStartsOn), 7)
       : span.grain === "day" && span.columns === 1
         ? span.cells.map((cell) => cell.from)
         : null;
+  if (narrow && span.grain === "day" && span.columns > 1) {
+    return (
+      <div ref={box} data-calendar-shape="agenda" style={{ display: "grid", minHeight: 0, flex: 1 }}>
+        <Agenda
+          days={span.cells.map((cell) => cell.from)}
+          entries={entries}
+          today={today}
+          emphasisOf={emphasisOf}
+          broken={broken}
+          hue={hue}
+          onMove={(id, day) => onMove(id, { from: day, to: day, label: day }, "day")}
+        />
+      </div>
+    );
+  }
   return (
-    <div style={{ display: "grid", gap: 4, gridTemplateRows: headers ? "auto 1fr" : "1fr", minHeight: 0, flex: 1 }}>
+    <div ref={box} data-calendar-shape={narrow ? "wrapped" : "grid"} style={{ display: "grid", gap: 4, gridTemplateRows: headers ? "auto 1fr" : "1fr", minHeight: 0, flex: 1 }}>
       {headers ? (
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${span.columns}, minmax(0, 1fr))`, gap: 4 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 4 }}>
           {headers.map((day) => (
             <span
               key={day}
@@ -99,7 +129,7 @@ export function Grid({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${span.columns}, minmax(0, 1fr))`,
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
           gap: 4,
           minHeight: 0,
           overflow: "auto",
@@ -179,7 +209,7 @@ export function Grid({
                      ROW does: a rotation running March to October covers two
                      rows of a year, and the second row was four nameless bars.
                      This is what a wall calendar does with a fortnight. */
-                  rowStart={at % span.columns === 0}
+                  rowStart={at % columns === 0}
                   emphasis={emphasisOf(entry.id)}
                   flagged={broken.has(entry.id)}
                   hue={hue(entry)}
@@ -242,7 +272,7 @@ export function Agenda({
     );
   }
   return (
-    <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 10, overflow: "auto", minHeight: 0 }}>
+    <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", alignContent: "start", gap: 10, overflow: "auto", minHeight: 0 }}>
       {withSomething.map(({ day, here }) => (
         <li
           key={day}

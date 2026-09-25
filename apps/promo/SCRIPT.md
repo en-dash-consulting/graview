@@ -69,18 +69,19 @@ Render: `pnpm render:feed` → `out/graview-feed.mp4`.
 **Tagline:** *Declare the domain. The application follows.*
 **CTA:** `npm create graview@latest` · graview.dev
 
+**Visual:** Light **Seedbed** beauty plates on navy field (large framed cards). Dark ToDo harness crops retired from the hero path.
+
 | Time | Frames | Beat | On-screen / visual |
 |------|--------|------|--------------------|
-| 0–4.5s | 0–135 | Magic hook | Chips land slowly · edges · plate settles · then **One declaration.** |
-| 4.5–8.5s | 135–255 | Tagline payoff | Air after hook · **Declare the domain.** → **The application follows.** |
-| 8.5–10.3s | 255–309 | Steps | Big **Declare → Derive → Ship** (communication, not chrome) |
-| 10.3–18.7s | 309–561 | Story montage | One plate ≥2.2s · 10f crossfades · big bottom bar advances with plates |
+| 0–4.5s | 0–135 | Magic hook | `seedbed-planted-light` framed beauty · **One declaration.** |
+| 4.5–8.5s | 135–255 | Tagline payoff | Soft gardens-face underlay · **Declare the domain.** → **The application follows.** |
+| 8.5–10.3s | 255–309 | Steps | Big **Declare → Derive → Ship** |
+| 10.3–18.7s | 309–561 | Story montage | seedbed · gardens face · agent seat · agreement — slow crossfades · big step bar |
 | 18.7–20.5s | 561–615 | Identity lock | **GRAVIEW** · *A development kit from En Dash* |
 | 20.5–22.0s | 615–660 | CTA | `npm create graview@latest` · graview.dev |
 
 ## Feed notes
 
-- Open breathes (~4.5s magic); tagline delayed so it doesn’t slam after hook.
-- Declare / Derive / Ship: dedicated big-type beat + large Montserrat bottom bar in montage (active 36px / inactive 32px).
-- Punch-in UI plates; soft crossfades; no jumpy pops.
+- Desire framing: light UI on navy, ~56px margins, radius ~18, mild scale 1.08–1.16 (readable composition, not postage stamps).
+- Assets under `public/beauty/` (from `docs/survey` + `docs/progression` light shots).
 - Landscape `GraviewIntro` remains unchanged.

@@ -82,6 +82,7 @@ export {
   Prose,
   VISUALLY_HIDDEN,
   Roster,
+  useWidth,
 } from "./primitives/index.js";
 export type {
   AggregateProps,

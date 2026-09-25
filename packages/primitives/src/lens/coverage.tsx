@@ -2,7 +2,7 @@ import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
-import { Chip, Panel, Roster } from "../primitives/index.js";
+import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
 
 /**
  * The coverage lens: does everything on one side have something on the other?
@@ -417,6 +417,8 @@ export function CoverageView<S extends AnySchema>({
 }: CoverageViewProps<S>) {
   const { store } = useGraview<AnySchema>();
   const under = useColumnsUnderTheNames();
+  const box = useRef<HTMLDivElement>(null);
+  const width = useWidth(box);
   /*
    * The whole graph's rows and columns, not the aggregate's members.
    *
@@ -473,6 +475,18 @@ export function CoverageView<S extends AnySchema>({
   // thing a card-sized box was cramping.
   const page = mode === "fullscreen";
   const headerHeight = headerHeightFor(grid.columns.map((column) => column.label));
+  /*
+   * THE SHAPE FOLLOWS THE ROOM. A 316px label column in a 300px card put
+   * every column past the edge, behind a sideways scroll nothing announced
+   * — a matrix with names and no cells. The names take a share of the
+   * width rather than a fixed run; and where the columns still would not
+   * fit at a fingertip each, the matrix stacks: each row is its name and
+   * then its cells as labelled marks that wrap, which is a different
+   * drawing of the same facts rather than a smaller one.
+   */
+  const labelWidth = width === null ? ROW_LABEL_WIDTH : Math.max(96, Math.min(ROW_LABEL_WIDTH, Math.round(width * 0.36)));
+  const stacked =
+    width !== null && (width < 420 || labelWidth + grid.columns.length * 28 + HEADER_OVERHANG > width);
 
   return (
     <Panel
@@ -492,12 +506,14 @@ export function CoverageView<S extends AnySchema>({
       fit
     >
       <div
+        ref={box}
+        data-coverage-shape={stacked ? "stacked" : "matrix"}
         style={{
           display: "flex",
           flexDirection: "column",
           flex: "1 1 auto",
           minHeight: 0,
-          paddingRight: HEADER_OVERHANG,
+          paddingRight: stacked ? 0 : HEADER_OVERHANG,
         }}
       >
         {/*
@@ -513,7 +529,12 @@ export function CoverageView<S extends AnySchema>({
           *
           * Sticky, and opaque, because a translucent header with a grid
           * sliding under it is harder to read than no header at all.
+          *
+          * And absent when the matrix is stacked: the names sit beside
+          * their cells then, and a strip of rotated names over nothing
+          * would be a caption for a different picture.
           */}
+        {stacked ? null : (
         <div
           style={{
             display: "flex",
@@ -531,7 +552,7 @@ export function CoverageView<S extends AnySchema>({
           <div
             ref={under.corner}
             style={{
-              width: ROW_LABEL_WIDTH,
+              width: labelWidth,
               flex: "0 0 auto",
               alignSelf: "stretch",
               position: "sticky",
@@ -624,6 +645,7 @@ export function CoverageView<S extends AnySchema>({
             ))}
           </div>
         </div>
+        )}
 
         <div>
           {grid.rows.map((row, index) => {
@@ -665,6 +687,7 @@ export function CoverageView<S extends AnySchema>({
                 <div
                   style={{
                     display: "flex",
+                    flexDirection: stacked ? "column" : "row",
                     alignItems: "stretch",
                     borderTop: "1px solid var(--graview-edge)",
                     opacity: dim ? 0.72 : 1,
@@ -677,11 +700,11 @@ export function CoverageView<S extends AnySchema>({
                     data-graview-emphasis={lit.size === 0 ? "plain" : dim ? "dimmed" : "lit"}
                     title={row.label}
                     style={{
-                      width: ROW_LABEL_WIDTH,
+                      width: stacked ? "auto" : labelWidth,
                       flex: "0 0 auto",
                       /* And the row's name stays when the grid slides
                          sideways, for the same reason the column's does. */
-                      position: "sticky",
+                      position: stacked ? "static" : "sticky",
                       left: 0,
                       zIndex: 1,
                       background: "var(--graview-panel)",
@@ -735,7 +758,14 @@ export function CoverageView<S extends AnySchema>({
                     ) : null}
                   </div>
 
-                  <div style={{ display: "flex", flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flex: 1,
+                      minWidth: 0,
+                      ...(stacked ? { flexWrap: "wrap" as const, gap: 6, padding: "0 0 8px" } : {}),
+                    }}
+                  >
                     {grid.columns.map((column) => {
                       const filled = grid.cells.some(
                         (cell) => cell.rowId === row.id && cell.columnId === column.id,
@@ -769,17 +799,36 @@ export function CoverageView<S extends AnySchema>({
                               ? `${column.label} answers ${row.ref || row.label}`
                               : `${column.label} does not answer ${row.ref || row.label}`
                           }
-                          style={{
-                            flex: 1,
-                            minWidth: 28,
-                            boxSizing: "border-box",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            borderLeft: "1px solid var(--graview-edge)",
-                          }}
+                          style={
+                            stacked
+                              ? {
+                                  // A labelled mark: the column's name beside its cell,
+                                  // since there is no header strip to read it off.
+                                  flex: "0 0 auto",
+                                  minHeight: 24,
+                                  boxSizing: "border-box",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  padding: "2px 9px 2px 7px",
+                                  borderRadius: 999,
+                                  border: "1px solid var(--graview-edge)",
+                                  fontSize: "0.6875rem",
+                                  color: filled ? "var(--graview-ink)" : "var(--graview-ink-faint)",
+                                }
+                              : {
+                                  flex: 1,
+                                  minWidth: 28,
+                                  boxSizing: "border-box",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  borderLeft: "1px solid var(--graview-edge)",
+                                }
+                          }
                         >
                           <span style={cellStyle(filled, missing, lit.has(column.id) || lit.has(row.id), lit.size > 0)} />
+                          {stacked ? <span>{column.label}</span> : null}
                         </div>
                       );
                     })}

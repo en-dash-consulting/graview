@@ -44,6 +44,21 @@ import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
 import { Lines, RelationCaptions } from "./scene-lines.js";
 import { SceneViewHost } from "./view-host.js";
 
+
+/**
+ * The rail the layout keeps clear on each side of the picture, by width.
+ * A full-size scene reserves 264 and 128; a narrow one, where the panes
+ * are sheets rather than rails, keeps only the corner the altitude control
+ * stands in.
+ */
+export function railInset(width: number): { left: number; right: number } {
+  if (width < 640) return { left: 8, right: 56 };
+  return {
+    left: Math.round(Math.min(264, width * 0.22)),
+    right: Math.round(Math.min(128, width * 0.107)),
+  };
+}
+
 export interface SceneProps {
   readonly options?: LayoutOptions;
   /**
@@ -220,10 +235,13 @@ export function Scene<S extends AnySchema>({
        */
       // In proportion: an embed a paragraph wide cannot give a third of
       // itself to chrome. From the default 1200 up these are 264 and 128.
-      inset: {
-        left: Math.round(Math.min(264, (size?.width ?? 1200) * 0.22)),
-        right: Math.round(Math.min(128, (size?.width ?? 1200) * 0.107)),
-      },
+      //
+      // And below a phone's width there is no rail at all: the companion
+      // is a sheet at the foot, the inspector a sheet over the picture, and
+      // the only thing on the right is the altitude control's corner. A
+      // 360px frame that kept a fifth of itself for panes nobody drew there
+      // gave a focused lens 145 pixels, which is not a lens, it is a spine.
+      inset: railInset(size?.width ?? 1200),
       // The reader's own text size, which the cards are sized in: the city
       // grows with the words rather than holding them at a fixed 230×97.
       unit,

@@ -11,15 +11,13 @@ import { clamp, easings, springProgress } from "../motion";
 import { colors, fonts, FEED_SAFE, feedBeats } from "../feedTheme";
 
 /**
- * Payoff line — air after hook, then hold each line ~1.5–1.8s.
- * Soft product underlay so it isn't a dead title card.
+ * Payoff line — air after hook, soft Seedbed underlay (not empty navy).
  */
 export const TaglinePayoff: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const dur = feedBeats.tagline.duration;
 
-  // Delay first line so it doesn't slam on the heels of the hook
   const line1 = springProgress(frame, fps, 10, "enter");
   const underline = springProgress(frame, fps, 22, "settle");
   const line2 = springProgress(frame, fps, 58, "enter");
@@ -35,7 +33,7 @@ export const TaglinePayoff: React.FC = () => {
     ...clamp,
     easing: easings.softOut,
   });
-  const underDrift = interpolate(frame, [0, dur], [1.15, 1.22], clamp);
+  const underDrift = interpolate(frame, [0, dur], [1.08, 1.14], clamp);
 
   return (
     <AbsoluteFill
@@ -51,17 +49,17 @@ export const TaglinePayoff: React.FC = () => {
         overflow: "hidden",
       }}
     >
-      <AbsoluteFill style={{ opacity: 0.22 * under, pointerEvents: "none" }}>
+      <AbsoluteFill style={{ opacity: 0.28 * under, pointerEvents: "none" }}>
         <Img
-          src={staticFile("survey/todo-zoomed-dark.png")}
+          src={staticFile("beauty/13-the-gardens-own-face-light.png")}
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            objectPosition: "48% 40%",
+            objectPosition: "50% 35%",
             transform: `scale(${underDrift})`,
-            transformOrigin: "48% 40%",
-            filter: "brightness(0.7) contrast(1.05) saturate(0.9)",
+            transformOrigin: "50% 35%",
+            filter: "brightness(0.85) contrast(1.05) saturate(0.95)",
           }}
         />
       </AbsoluteFill>
@@ -69,7 +67,7 @@ export const TaglinePayoff: React.FC = () => {
       <AbsoluteFill
         style={{
           background:
-            "radial-gradient(ellipse at 50% 48%, rgba(0,23,105,0.72) 0%, rgba(5,11,26,0.88) 70%)",
+            "radial-gradient(ellipse at 50% 48%, rgba(0,23,105,0.78) 0%, rgba(5,11,26,0.9) 72%)",
           pointerEvents: "none",
         }}
       />

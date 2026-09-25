@@ -15,7 +15,13 @@ import { useGraview, useNavigation } from "@graview/react";
  * was registered on: click into one member and the picture was gone, with
  * nothing on the screen to say it had ever been there.
  */
-export function Places<S extends AnySchema>() {
+/**
+ * The named pictures over the graph, as pills — or, `compact`, as one
+ * select. Eight pills wrapped to four rows on a phone-width embed and took
+ * half its height before the picture began; a select says the same eight
+ * places in one row and opens to the same stops.
+ */
+export function Places<S extends AnySchema>({ compact = false }: { compact?: boolean } = {}) {
   const { views, hiddenKinds } = useGraview<S>();
   const { view, go } = useNavigation();
   /*
@@ -37,6 +43,46 @@ export function Places<S extends AnySchema>() {
    */
   const isDefault = (all: readonly Place[], place: Place): boolean =>
     all.filter((other) => other.kind === place.kind).at(-1)?.as === place.as;
+  const showing = view.within?.["view"];
+  const isHere = (place: Place) =>
+    !view.overview &&
+    view.focusId === aggregateId(place.kind) &&
+    (showing === undefined ? isDefault(places, place) : showing === place.as);
+  const goTo = (place: Place) =>
+    go(withWithin(withOverview(withFocus(view, aggregateId(place.kind)), false), "view", place.as));
+  if (compact) {
+    const here = places.find(isHere);
+    return (
+      <select
+        aria-label="Places"
+        data-testid="places"
+        value={here ? `${here.kind}:${here.as}` : ""}
+        onChange={(event) => {
+          const place = places.find((candidate) => `${candidate.kind}:${candidate.as}` === event.target.value);
+          if (place) goTo(place);
+        }}
+        style={{
+          minHeight: 24,
+          maxWidth: "46%",
+          padding: "3px 8px",
+          borderRadius: 999,
+          fontSize: "0.78125rem",
+          borderWidth: 1,
+          borderStyle: "solid",
+          borderColor: here ? "var(--graview-accent)" : "var(--graview-edge)",
+          color: here ? "var(--graview-accent)" : "var(--graview-ink-muted)",
+          background: "var(--graview-panel)",
+        }}
+      >
+        <option value="">Places…</option>
+        {places.map((place) => (
+          <option key={`${place.kind}:${place.as}`} value={`${place.kind}:${place.as}`} data-place-kind={place.kind}>
+            {place.title}
+          </option>
+        ))}
+      </select>
+    );
+  }
   return (
     <nav aria-label="Places" data-testid="places" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
       {places.map((place) => {
