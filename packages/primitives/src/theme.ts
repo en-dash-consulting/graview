@@ -897,44 +897,89 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 }
 
 /* THE DISTRICTS THE ROW COULD NOT HOLD.
-   Not a district: no figure, no count, no tint of its own. A quiet card that
-   says how many are missing and names them, each name a real control at a
-   real size — a district is read, not glanced at, and so is this. */
+   Not a district: no figure, no count, no tint of its own. A card that is
+   one control — how many more, and a press — and, open, a panel above the
+   row naming every district with what it holds. Solid rather than dashed
+   and faded: a dashed, translucent card read as a placeholder, and the only
+   way to five districts should not look like something that failed to load. */
 .graview-beyond {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  position: relative;
   height: 100%;
-  padding: var(--graview-pad-sm, 8px);
   box-sizing: border-box;
-  overflow: auto;
-  /* The same fade the panels have: a district name sliced flat across the
-     bottom of this card reads as broken, and it is only scrolled. */
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
   border-radius: var(--graview-radius-sm, 8px);
-  border: 1px dashed var(--graview-edge);
+  border: 1px solid var(--graview-edge);
   background: var(--graview-panel);
 }
+.graview-beyond-more {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  min-height: max(1.75rem, 28px);
+  padding: var(--graview-pad-sm, 8px);
+  box-sizing: border-box;
+  border: none;
+  border-radius: inherit;
+  background: none;
+  color: var(--graview-ink-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78125rem;
+  text-align: left;
+}
+.graview-beyond-more:hover,
+.graview-beyond[data-graview-beyond-open] .graview-beyond-more {
+  color: var(--graview-accent);
+  background: var(--graview-wash);
+}
 .graview-beyond-count {
-  flex: 0 0 auto;
+  font-family: var(--graview-font-display);
+  font-size: 1.125rem;
+  line-height: 1;
+  color: inherit;
+}
+.graview-beyond-word {
   font-size: 0.6875rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--graview-ink-faint);
 }
+.graview-beyond-chevron {
+  margin-left: auto;
+  font-size: 0.75rem;
+}
+/* The panel stands above the card, inside the scene, and never clips: the
+   card's box is a district's height, which holds a count and not a list. */
 .graview-beyond-list {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  /* On the ground, over every plane — the focused card on plane zero
+     painted over a panel drawn on plane two, and a menu under a card is
+     no menu. Above the zoom control too, which is the only other thing
+     that stands on the ground. */
+  z-index: 60;
   margin: 0;
-  padding: 0;
+  padding: 6px;
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 1px;
-  min-width: 0;
+  /* Its own width, not the ground's: portalled, a percentage here is the
+     whole scene. */
+  min-width: 200px;
+  max-width: min(280px, 92%);
+  max-height: 60vh;
+  overflow: auto;
+  border-radius: var(--graview-radius-sm, 8px);
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-panel);
+  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.45);
 }
 .graview-beyond-list button {
   display: flex;
   align-items: center;
+  gap: 10px;
   width: 100%;
   /* A FINGERTIP WHERE IT IS ACTUALLY DRAWN, not where it was designed.
      Every other control in this sheet is floored at 24 and the audit divides
@@ -945,19 +990,31 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
      drawn at 0.90 — so a designed 24 meets a finger as 21.7. Designed at 28
      it is drawn at 25, which is the number the floor was always about. */
   min-height: max(1.75rem, 28px);
-  padding: 0 4px;
+  padding: 0 8px;
   border: none;
   border-radius: var(--graview-radius-sm, 6px);
   background: none;
-  color: var(--graview-ink-muted);
+  color: var(--graview-ink);
   cursor: pointer;
+  font: inherit;
   font-size: 0.78125rem;
   text-align: left;
   overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 .graview-beyond-list button:hover {
   color: var(--graview-accent);
   background: var(--graview-wash);
+}
+.graview-beyond-list button[aria-current] {
+  color: var(--graview-ink-muted);
+  cursor: default;
+}
+.graview-beyond-tally {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--graview-ink-faint);
 }
 
 /* The way into the archive, on the card that fed it: quiet, but a real

@@ -54,12 +54,18 @@ const scene = async (width: number) => {
     );
   });
   const card = host.querySelector("[data-graview-beyond]");
+  /* The names are behind one press now: the card is a button that says how
+     many more, and the panel it opens names them. Open it before reading. */
+  await act(async () => {
+    card?.querySelector<HTMLButtonElement>(".graview-beyond-more")?.click();
+  });
   const said = {
     districts: host.querySelectorAll("[data-graview-view^='kind:']").length,
     beyond: card ? Number(card.getAttribute("data-graview-beyond")) : 0,
-    names: card ? [...card.querySelectorAll("button")].map((el) => el.textContent) : [],
+    /* The panel is portalled onto the ground, so it is read off the host. */
+    names: card ? [...host.querySelectorAll(".graview-beyond-list .graview-beyond-name")].map((el) => el.textContent) : [],
     label: host.querySelector("[data-graview-view='kinds:beyond']")?.getAttribute("aria-label") ?? null,
-    picks: card ? [...card.querySelectorAll("[data-graview-pick]")].map((el) => el.getAttribute("data-graview-pick")) : [],
+    picks: card ? [...host.querySelectorAll(".graview-beyond-list [data-graview-pick]")].map((el) => el.getAttribute("data-graview-pick")) : [],
   };
   await act(async () => root.unmount());
   return said;

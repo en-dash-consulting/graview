@@ -1,7 +1,8 @@
 import type { AnySchema, Fidelity, NodeOfSchema } from "@graview/core";
 import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout";
 import { PLANE_STYLES } from "@graview/render";
-import { memo, type ReactNode } from "react";
+import { memo, useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useFlagged, useImplicated, useNavigation } from "./hooks.js";
 import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
 import { ViewBoundary } from "./view-boundary.js";
@@ -17,44 +18,140 @@ export interface ResolvedViewProps {
 }
 
 /**
- * THE DISTRICTS THE ROW COULD NOT HOLD, NAMED.
+ * THE DISTRICTS THE ROW COULD NOT HOLD, NAMED — BEHIND ONE PRESS.
  *
- * A district is read rather than glanced at, so the row never squeezes a name
- * below a word: past what it can hold at a legible width it keeps the ones
- * that fit and hands the rest to this. Not a district — it has no members, no
- * figure and no count — a card that says what is missing and takes you there.
+ * A district is read rather than glanced at, so the row never squeezes a
+ * name below a word: past what it can hold at a legible width it keeps the
+ * ones that fit and hands the rest to this. Not a district — it has no
+ * members, no figure and no count of its own — a card that says how many
+ * are missing and takes you to any of them.
  *
- * Every name is a pick target, which is the same gesture the row offers: a
- * press goes to that district. No new vocabulary, and nothing behind a
- * control somebody has to discover.
+ * It used to list every name inside its own box, which is a district
+ * card's height: room for the count and nothing else, the names scrolled
+ * away under a fade, and "+6" over one clipped word read as a broken
+ * placeholder rather than the only way to five districts. So the card IS
+ * the control now — "+6 more" is a button — and pressing it opens a panel
+ * above the row that names every district with what it holds, each name
+ * a press to that district. The district you are already in, which lands
+ * here when the row has room for nothing else, is marked as here rather
+ * than offered as somewhere to go.
  */
 export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
   const { store } = useGraview();
   const { view, go } = useNavigation();
+  const [open, setOpen] = useState(false);
+  const card = useRef<HTMLDivElement>(null);
+  /*
+   * THE PANEL LEAVES THE PLANE. Drawn inside the card it sat on plane two,
+   * and the focused card on plane zero painted over it — a menu nobody
+   * could press. It is portalled onto the scene's ground, above every
+   * plane, and placed by the card's own screen rectangle at the moment it
+   * opens; a press anywhere else closes it before the scene can move.
+   */
+  const [anchor, setAnchor] = useState<{ into: HTMLElement; left: number; bottom: number } | null>(null);
+  const place = () => {
+    const box = card.current;
+    const into = box?.closest<HTMLElement>(".graview-ground");
+    if (!box || !into) return null;
+    const mine = box.getBoundingClientRect();
+    const ground = into.getBoundingClientRect();
+    return { into, left: mine.left - ground.left, bottom: ground.bottom - mine.top + 6 };
+  };
   const plural = (kind: string) => store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
+  const count = (kind: string) => store.graph.allNodes().filter((node) => node.kind === kind).length;
+  const here = (kind: string) => !view.overview && view.focusId === aggregateId(kind);
+  /* Escape, or a press anywhere else, closes it; the button keeps focus. */
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest(".graview-beyond-list, .graview-beyond")) return;
+      setOpen(false);
+      setAnchor(null);
+    };
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        card.current?.querySelector<HTMLButtonElement>(".graview-beyond-more")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", away, true);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("pointerdown", away, true);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
+  const going = kinds.filter((kind) => !here(kind));
   return (
     <div
+      ref={card}
       className="graview-beyond"
       data-graview-beyond={kinds.length}
+      data-graview-beyond-open={open ? "" : undefined}
     >
-      <span className="graview-beyond-count">+{kinds.length}</span>
-      <ul className="graview-beyond-list">
-        {kinds.map((kind) => (
-          <li key={kind}>
-            <button
-              type="button"
-              data-graview-pick={kindCardId(kind)}
-              title={`Go to ${plural(kind)}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                go(withFocus(view, aggregateId(kind)));
-              }}
-            >
-              {plural(kind)}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <button
+        type="button"
+        className="graview-beyond-more"
+        data-testid="beyond-more"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        title={`${going.length} more district${going.length === 1 ? "" : "s"} — press to see them`}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation();
+          const next = !open;
+          setAnchor(next ? place() : null);
+          setOpen(next);
+        }}
+      >
+        <span className="graview-beyond-count">+{going.length}</span>
+        <span className="graview-beyond-word">more</span>
+        <span className="graview-beyond-chevron" aria-hidden="true">{open ? "▾" : "▴"}</span>
+      </button>
+      {open && anchor ? createPortal(
+        <ul
+          className="graview-beyond-list"
+          role="menu"
+          aria-label="The other districts"
+          data-testid="beyond-list"
+          data-graview-overlay=""
+          style={{ left: anchor.left, bottom: anchor.bottom }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          {kinds.map((kind) => (
+            <li key={kind} role="none">
+              <button
+                type="button"
+                role="menuitem"
+                data-graview-pick={kindCardId(kind)}
+                aria-current={here(kind) ? "location" : undefined}
+                title={here(kind) ? `${plural(kind)} — where you are` : `Go to ${plural(kind)}`}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setOpen(false);
+                  if (!here(kind)) go(withFocus(view, aggregateId(kind)));
+                }}
+              >
+                <span className="graview-beyond-name">{plural(kind)}</span>
+                <span className="graview-beyond-tally">{here(kind) ? "here" : count(kind)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>,
+        anchor.into,
+      ) : open ? (
+        <ul className="graview-beyond-list" role="menu" aria-label="The other districts" data-testid="beyond-list">
+          {kinds.map((kind) => (
+            <li key={kind} role="none">
+              <button type="button" role="menuitem" data-graview-pick={kindCardId(kind)} onClick={() => { setOpen(false); if (!here(kind)) go(withFocus(view, aggregateId(kind))); }}>
+                {plural(kind)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }
