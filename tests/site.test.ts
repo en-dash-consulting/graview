@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -75,6 +75,29 @@ describe("what the pages promise each other", () => {
     expect(read("docs/index.html")).toContain('href="../progression.html"');
     expect(read("docs/index.html")).toContain('href="../index.html"');
     expect(read("progression.html")).toContain('href="index.html"');
+  });
+
+  it("sends a newcomer from the landing page to a getting-started page that exists", () => {
+    expect(read("index.html")).toContain('href="docs/getting-started.html"');
+    expect(existsSync(resolve(repoRoot, "docs/site/docs/getting-started.html"))).toBe(true);
+    expect(read("docs/index.html")).toContain('href="getting-started.html"');
+    expect(read("docs/index.html")).toContain('href="agents.html"');
+    expect(read("docs/index.html")).toContain('href="demos.html"');
+  });
+
+  it("is deployable to graview.dev as it stands", () => {
+    /* GitHub Pages reads these three off the published directory; the
+       sitemap lists every page the generator wrote. */
+    expect(read("CNAME").trim()).toBe("graview.dev");
+    expect(existsSync(resolve(repoRoot, "docs/site/.nojekyll"))).toBe(true);
+    expect(read("robots.txt")).toContain("https://graview.dev/sitemap.xml");
+    const sitemap = read("sitemap.xml");
+    for (const page of ["index.html", "getting-started.html", "agents.html", "demos.html", "packages/graview.html"]) {
+      expect(sitemap, page).toContain(`https://graview.dev/docs/${page}`);
+    }
+    expect(read("404.html")).toContain("site-css:start");
+    expect(read("index.html")).toContain('<link rel="canonical" href="https://graview.dev/">');
+    expect(read("docs/agents.html")).toContain('<link rel="canonical" href="https://graview.dev/docs/agents.html">');
   });
 
   it("gives every generated page the same accessibility floor as the page", () => {

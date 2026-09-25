@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>create-graview — Graview docs</title>
-<meta name="description" content="Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.">
+<title>Getting started — Graview docs</title>
+<meta name="description" content="From nothing to a running product on Graview, and the loop from there: declare, check, look, declare more.">
 <meta name="color-scheme" content="light dark">
-<meta property="og:title" content="create-graview — Graview docs">
-<meta property="og:description" content="Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.">
+<meta property="og:title" content="Getting started — Graview docs">
+<meta property="og:description" content="From nothing to a running product on Graview, and the loop from there: declare, check, look, declare more.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://graview.dev/docs/packages/create-graview.html">
+<meta property="og:url" content="https://graview.dev/docs/getting-started.html">
 <meta property="og:image" content="https://graview.dev/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://graview.dev/docs/packages/create-graview.html">
+<link rel="canonical" href="https://graview.dev/docs/getting-started.html">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzMwIiBoZWlnaHQ9IjMzMCIgdmlld0JveD0iMCAwIDMzMCAzMzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjcuNSIgeT0iNy41IiB3aWR0aD0iMzE1IiBoZWlnaHQ9IjMxNSIgc3Ryb2tlPSIjMDBFNUI5IiBzdHJva2Utd2lkdGg9IjE1Ii8+CjxwYXRoIGQ9Ik0zMTUgMTVIMTVWMzE1SDMxNVYxNVoiIGZpbGw9IiMwMDE3NjkiLz4KPHBhdGggZD0iTTMxNSAyMzIuMTE5SDQ3LjAwNzRWMjQ3LjcwNUgzMTVWMjMyLjExOVoiIGZpbGw9IiMwMEU1QjkiLz4KPHBhdGggZD0iTTEzOS43OTUgMTY0Ljk5N0wxNDUuMzI0IDE2OS44MzhDMTQwLjk0MiAxNzguMzcyIDEyNi4xOTEgMTkyLjg5NCAxMDAuNTg5IDE5Mi44OTRDNzEuNzc0IDE5Mi44OTQgNDUuMDI0OCAxNzQuNjc4IDQ1LjAyNDggMTM5LjYyNUM0NS4wMjQ4IDEwMy40MjQgNzMuNjEwMiA4NS40MzggMTAyLjQyNSA4NS40MzhDMTI3LjA4OCA4NS40MzggMTQ2LjQ3MSA5OC44MTI2IDE0Ni40NzEgMTE5LjMyM0MxNDYuNDcxIDEzNy41MzggMTMxLjI2MSAxNDAuMDg0IDEwNi44MDcgMTQxLjAwMkw4MS40NTU1IDE0MS45MkM3Ny4zMDMzIDE0Mi4xNSA3Ni4zODUzIDE0NS42MTMgNzcuNzYyNCAxNTAuOTEzQzgzLjUyMTIgMTY3LjUyMiA5Ni44OTU4IDE3Ni45NzQgMTEzLjk2NCAxNzYuOTc0QzEyMi43MjcgMTc2Ljk5NSAxMzEuNzIgMTc0LjY3OSAxMzkuNzk1IDE2NC45OTdaTTc0LjU0OTEgMTI0LjE4NUM3NC4zMTk2IDEzMS4xMTIgNzYuNjE0OCAxMzMuODY2IDgyLjYyNCAxMzMuODY2SDk0Ljg1MUMxMTQuNjczIDEzMy44NjYgMTIwLjY4MiAxMjcuNjQ4IDEyMC42ODIgMTE3LjAyOEMxMjAuNjgyIDEwNS4yNiAxMTIuODM3IDk0LjIwMTQgOTkuMDAzMSA5NC4yMDE0QzgzLjMxMjUgOTQuMjIyMiA3NS42OTY3IDEwNi42NTggNzQuNTQ5MSAxMjQuMTg1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0NC4yMjUgMTczLjUzMVYxMzEuNTcxQzI0NC4yMjUgMTE0LjUwMyAyMzcuMDY4IDEwMi45ODYgMjIzLjAwNSAxMDIuOTg2QzIwOC4yNTMgMTAyLjk4NiAxOTkuMjYxIDExNC41MjQgMTk5LjI2MSAxMzEuNTcxVjE2OS42MDhDMTk5LjI2MSAxNzkuNTE5IDIwMy4xODMgMTgyLjc1NCAyMTMuNzgzIDE4My42NzJWMTkxLjUxN0gxNTYuODQyVjE4My42NzJDMTY3LjY3MSAxODIuNzU0IDE3MS41OTMgMTc5LjUxOSAxNzEuNTkzIDE2OS42MDhWMTEyLjE4N0MxNzEuNTkzIDEwMS41ODggMTY3LjIxMiA5OC44MTI4IDE1Ni44NDIgOTkuNzMwOFY5MS44ODU1TDE4OS4xMiA4NS44OTcyQzE5NS43OTcgODQuNzQ5NiAxOTkuMjYxIDg3LjczMzMgMTk5LjI2MSA5My4wNTRDMTk5LjI2MSAxMDEuMzU4IDIwMi45NTQgMTAzLjQyNCAyMDUuOTM3IDk5Ljk4MTJDMjExLjAwOCA5NC40NTE5IDIyMC4yMyA4NSAyMzguNDQ1IDg1QzI1NS4yODQgODUgMjcxLjg3MSA5My4zMDQ0IDI3MS44NzEgMTI1LjU4M1YxNzEuMDA2QzI3MS44NzEgMTc4LjYyMiAyNzUuNzk0IDE4MS4zNzYgMjgzLjYzOSAxNzkuNzdWMTg3LjYxNUMyNzkuNDg3IDE5MC44NDkgMjcwLjk1MyAxOTIuNjg1IDI2NC4yNzcgMTkyLjY4NUMyNTEuNjExIDE5Mi42NjQgMjQ0LjIyNSAxODUuOTg4IDI0NC4yMjUgMTczLjUzMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -936,22 +936,22 @@ main.page footer { max-width: 100%; }
 <path d="M139.795 164.997L145.324 169.838C140.942 178.372 126.191 192.894 100.589 192.894C71.774 192.894 45.0248 174.678 45.0248 139.625C45.0248 103.424 73.6102 85.438 102.425 85.438C127.088 85.438 146.471 98.8126 146.471 119.323C146.471 137.538 131.261 140.084 106.807 141.002L81.4555 141.92C77.3033 142.15 76.3853 145.613 77.7624 150.913C83.5212 167.522 96.8958 176.974 113.964 176.974C122.727 176.995 131.72 174.679 139.795 164.997ZM74.5491 124.185C74.3196 131.112 76.6148 133.866 82.624 133.866H94.851C114.673 133.866 120.682 127.648 120.682 117.028C120.682 105.26 112.837 94.2014 99.0031 94.2014C83.3125 94.2222 75.6967 106.658 74.5491 124.185Z" fill="white"/>
 <path d="M244.225 173.531V131.571C244.225 114.503 237.068 102.986 223.005 102.986C208.253 102.986 199.261 114.524 199.261 131.571V169.608C199.261 179.519 203.183 182.754 213.783 183.672V191.517H156.842V183.672C167.671 182.754 171.593 179.519 171.593 169.608V112.187C171.593 101.588 167.212 98.8128 156.842 99.7308V91.8855L189.12 85.8972C195.797 84.7496 199.261 87.7333 199.261 93.054C199.261 101.358 202.954 103.424 205.937 99.9812C211.008 94.4519 220.23 85 238.445 85C255.284 85 271.871 93.3044 271.871 125.583V171.006C271.871 178.622 275.794 181.376 283.639 179.77V187.615C279.487 190.849 270.953 192.685 264.277 192.685C251.611 192.664 244.225 185.988 244.225 173.531Z" fill="white"/>
 </svg><span>En&nbsp;Dash</span></a>
-      <span class="it"><a href="../../index.html" style="color: inherit; text-decoration: none;">Graview</a></span>
+      <span class="it"><a href="../index.html" style="color: inherit; text-decoration: none;">Graview</a></span>
       <span class="sub">Documentation</span>
     </div>
 
     <div class="jump">
-      <a href="../index.html">Docs home</a>
-      <a href="../getting-started.html">Getting started</a>
-      <a href="../concepts.html">Concepts</a>
-      <a href="../packages.html" aria-current="page">Packages</a>
-      <a href="../cli.html">The CLI</a>
-      <a href="../agents.html">With a model</a>
-      <a href="../skills.html">Skills</a>
-      <a href="../checks.html">What check says</a>
-      <a href="../demos.html">Live demos</a>
-      <a href="../../progression.html">The garden, grown</a>
-      <a href="../../index.html">&larr; graview.dev</a>
+      <a href="index.html">Docs home</a>
+      <a href="getting-started.html" aria-current="page">Getting started</a>
+      <a href="concepts.html">Concepts</a>
+      <a href="packages.html">Packages</a>
+      <a href="cli.html">The CLI</a>
+      <a href="agents.html">With a model</a>
+      <a href="skills.html">Skills</a>
+      <a href="checks.html">What check says</a>
+      <a href="demos.html">Live demos</a>
+      <a href="../progression.html">The garden, grown</a>
+      <a href="../index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
@@ -963,27 +963,61 @@ main.page footer { max-width: 100%; }
 
   <main class="col" id="main">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
-      <h1 id="h-what">create-graview</h1>
-      <p class="lede" style="margin-top: 18px;">Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.</p>
-      <div class="cta"><div class="cta-line"><code>pnpm add create-graview</code><button type="button" class="copy" data-copy="pnpm add create-graview">Copy</button></div></div>
+      <h1 id="h-what">Getting started</h1>
+      <p class="lede" style="margin-top: 18px;">One command writes a running product for your own domain. Everything on this page below the command is read out of the generator that writes it, so it is what you will actually get.</p>
+      <div class="cta"><div class="cta-line"><code>npm create graview@latest my-app</code><button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button></div>
+      <p class="cta-sub sm dim">Or <code>pnpm create graview my-app</code>, or <code>npx graview create my-app</code>. Node 22 or later.</p></div>
     </section>
-    <section id="readme" aria-labelledby="h-readme">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
-<div class="code" data-scroller><pre><code>npm create graview@latest my-app
-pnpm create graview my-app</code></pre></div>
-<p>Once the packages are published. Until then, from a framework checkout: <code>pnpm graview create ../my-app --link .</code></p>
-<p>The conventional door to <code>graview create</code>. It writes a product on Graview — the declaration split into domain and UI, an eighty-line shell, a headless test and a CI workflow — installs it, and says what to do next. The generator and the command live in <code>@graview/core</code>; this package only makes <code>npm create</code> find them.</p>
-<div class="code" data-scroller><pre><code>--name "Field Notes"   the product's name (default: from the directory)
---kind note            the first node kind (default: item)
---link ../graview      consume the framework by path from a sibling checkout
---pm pnpm|npm          the package manager (default: whichever ran this)
---no-install           write the files and stop</code></pre></div>
-<p><code>scripts/smoke-create.mjs</code> in the framework repository is what keeps this honest: on every push it scaffolds a project from the packed tarballs, installs it the way a stranger would, runs the project's own <code>verify</code>, and opens it in a real browser.</p>
+    <section id="asks" aria-labelledby="h-asks">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-asks">What it asks</h2></div>
+      <p>The directory is the only thing it needs; the rest has a default it says out loud. Give it the product's name and the first kind of thing your domain has — <code>--kind shift</code>, <code>--kind work-order</code> — and it writes chapter one for that domain rather than for a placeholder.</p>
+      <div class="code" data-scroller aria-label="graview create, usage"><pre><code>graview create &lt;dir&gt; [--name "Field Notes"] [--kind note] [--plural notes]
+
+      --name &lt;text&gt;      the product's name (default: from &lt;dir&gt;)
+      --kind &lt;slug&gt;      the first node kind (default: item)
+      --plural &lt;slug&gt;    its plural (default: &lt;kind&gt;s)
+      --link &lt;path&gt;      consume the framework from a sibling checkout by
+                         path rather than from a registry
+      --pm pnpm|npm      the package manager (default: whichever ran this)
+      --port &lt;n&gt;         the dev server port (default: 5170)
+      --accent &lt;#hex&gt;    the brand accent (default: a worked green)
+      --no-install       write the files and stop
+      --no-skills        do not install the authoring skills
+      --no-git           do not initialise a git repository
+      --workspace        the layout every real product ends up with: a
+                         workspace root with the app under app/ and the
+                         harness scripts at the root
+      --merge            write only the files that do not exist yet, and
+                         name every collision without touching it
+      --force            write into a directory that is not empty
+</code></pre></div>
     </section>
-    <section id="api" aria-labelledby="h-api">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (1)</h2></div>
-      <p class="sm dim">Read off the package's own barrel, so this is what is there today.</p>
-      <ul class="names"><li><code>createGraview</code></li></ul>
+    <section id="writes" aria-labelledby="h-writes">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-writes">What it writes (20 files)</h2></div>
+      <p>The declaration split into domain and UI, so the domain has no React in it and <code>graview check</code> can read it headless. <code>src/domain/</code> is the whole surface you will work in; the shell in <code>src/ui/</code> is eighty lines made of framework parts, and every one of them can be replaced.</p>
+      <ul class="names" aria-label="The files graview create writes"><li><code>package.json</code></li><li><code>tsconfig.json</code></li><li><code>tsconfig.build.json</code></li><li><code>vite.config.ts</code></li><li><code>index.html</code></li><li><code>embed.html</code></li><li><code>.gitignore</code></li><li><code>README.md</code></li><li><code>src/domain/schema.ts</code></li><li><code>src/domain/mutations.ts</code></li><li><code>src/domain/invariants.ts</code></li><li><code>src/domain/brand.ts</code></li><li><code>src/domain/app.ts</code></li><li><code>src/ui/views.tsx</code></li><li><code>src/ui/app.tsx</code></li><li><code>src/ui/pages.tsx</code></li><li><code>src/main.tsx</code></li><li><code>src/embed.tsx</code></li><li><code>tests/domain.test.ts</code></li><li><code>.github/workflows/ci.yml</code></li></ul>
+      <p class="sm dim" style="margin-top: 14px;">Dependencies: <code>@graview/core</code>, <code>@graview/layout</code>, <code>@graview/tools</code>, <code>@graview/render</code>, <code>@graview/react</code>, <code>@graview/primitives</code>, <code>@graview/pages</code>, <code>@graview/ship</code>, <code>@graview/embed</code>, <code>@graview/studio</code>, <code>react</code>, <code>react-dom</code>, <code>react-router-dom</code>. Dev: <code>graview</code>, <code>@types/node</code>, <code>@types/react</code>, <code>@types/react-dom</code>, <code>typescript</code>, <code>vite</code>, <code>vitest</code>. No zod of your own — <code>@graview/core</code> re-exports <code>z</code>, so a kind's fields are built with exactly the copy the framework was built with.</p>
+    </section>
+    <section id="scripts" aria-labelledby="h-scripts">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-scripts">The scripts it gives you</h2></div>
+      <div class="tablewrap"><table><thead><tr><th scope="col">Script</th><th scope="col">Runs</th></tr></thead><tbody><tr><td><code>npm run dev</code></td><td><code>vite</code></td></tr><tr><td><code>npm run typecheck</code></td><td><code>tsc -p tsconfig.json</code></td></tr><tr><td><code>npm run test</code></td><td><code>vitest run</code></td></tr><tr><td><code>npm run build:domain</code></td><td><code>tsc -p tsconfig.build.json</code></td></tr><tr><td><code>npm run build</code></td><td><code>npm run build:domain &amp;&amp; vite build</code></td></tr><tr><td><code>npm run check</code></td><td><code>npm run build:domain &amp;&amp; graview check ./dist/domain/app.js</code></td></tr><tr><td><code>npm run docs</code></td><td><code>npm run build:domain &amp;&amp; graview docs ./dist/domain/app.js --out docs</code></td></tr><tr><td><code>npm run skills</code></td><td><code>graview skills install .</code></td></tr><tr><td><code>npm run verify</code></td><td><code>npm run typecheck &amp;&amp; npm run test &amp;&amp; npm run build &amp;&amp; npm run check</code></td></tr></tbody></table></div>
+      <p class="sm" style="margin-top: 14px;"><strong>Start with <code>verify</code></strong> — typecheck, tests, build and <code>graview check</code>, in that order — and then <code>dev</code>: the scene at the root, the routed face at <code>/pages</code>.</p>
+    </section>
+    <section id="loop" aria-labelledby="h-loop">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-loop">The loop from there</h2></div>
+      <p>Open a session beside the declaration. The skills are already installed where Claude Code and Codex look for them, and the first one to read is <a class="inl" href="skills/graview-node-kind.html"><code>graview-node-kind</code></a>. Describe a kind; let the model draft its fields, its edges, its acts and its rule; run <code>graview check</code>; look at the picture; declare more. The checker tells you both when a shape is wrong, in words, before a page does.</p>
+      <ul class="cards">
+        <li><a href="skills/graview-new-app.html"><strong>graview-new-app</strong><span>The shape of the declaration, the shell that comes for free, and the CI that keeps it honest.</span></a></li>
+        <li><a href="skills/graview-node-kind.html"><strong>graview-node-kind</strong><span>Add a kind — fields, edges, label, plural, roles — and verify it with graview check.</span></a></li>
+        <li><a href="skills/graview-invariant.html"><strong>graview-invariant</strong><span>A rule that names the acts that would repair it, then make it fire.</span></a></li>
+        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>The routed face, from the derived pages to a design of your own.</span></a></li>
+        <li><a href="skills/graview-ship.html"><strong>graview-ship</strong><span>Persistence, migrations, export and health, self-hosted or behind a service.</span></a></li>
+      </ul>
+    </section>
+    <section id="checkout" aria-labelledby="h-checkout">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-checkout">Working on the framework itself</h2></div>
+      <p>A product can consume a checkout of the framework by path instead of a registry, the way the first-party examples do: build the framework, then <code>pnpm graview create ../my-app --link .</code>. The project resolves every <code>@graview/*</code> import into the checkout's <code>dist/</code>, and its dev server rebuilds when the framework does.</p>
+      <div class="term" data-scroller aria-label="Commands to work on the framework itself"><div class="l"><span class="p">$</span><span class="c2">git clone https://github.com/en-dash-consulting/graview &amp;&amp; cd graview</span></div><div class="l"><span class="p">$</span><span class="c2">pnpm install &amp;&amp; pnpm build</span><span class="n2">every package</span></div><div class="l"><span class="p">$</span><span class="c2">pnpm graview create ../my-app --link . --name "My App" --kind thing</span></div><div class="l"><span class="p">$</span><span class="c2">pnpm dev:seedbed</span><span class="n2">the garden — ?chapter=N opens any chapter</span></div></div>
     </section>
 
   </main>

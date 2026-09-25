@@ -3,12 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Graview</title>
-<meta name="description" content="Graview is a development framework from En Dash. Declare your domain once — kinds, fields, edges, rules, mutations — and the interface, the legal actions, the agent's tools and the history all come from that one declaration.">
+<title>Graview — Declare the domain. The application follows.</title>
+<meta name="description" content="Graview is a development framework from En Dash. Declare your domain once — kinds, fields, edges, acts, rules, roles — and the spatial interface, the routed pages, the permissions, the checks and an agent's tools are derived from that one declaration. Open under the Elastic License 2.0.">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Graview">
 <meta property="og:description" content="Declare the domain. The application follows. A development framework built on a typed context graph, from En Dash.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://graview.dev/">
+<meta property="og:image" content="https://graview.dev/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://graview.dev/">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzMwIiBoZWlnaHQ9IjMzMCIgdmlld0JveD0iMCAwIDMzMCAzMzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjcuNSIgeT0iNy41IiB3aWR0aD0iMzE1IiBoZWlnaHQ9IjMxNSIgc3Ryb2tlPSIjMDBFNUI5IiBzdHJva2Utd2lkdGg9IjE1Ii8+CjxwYXRoIGQ9Ik0zMTUgMTVIMTVWMzE1SDMxNVYxNVoiIGZpbGw9IiMwMDE3NjkiLz4KPHBhdGggZD0iTTMxNSAyMzIuMTE5SDQ3LjAwNzRWMjQ3LjcwNUgzMTVWMjMyLjExOVoiIGZpbGw9IiMwMEU1QjkiLz4KPHBhdGggZD0iTTEzOS43OTUgMTY0Ljk5N0wxNDUuMzI0IDE2OS44MzhDMTQwLjk0MiAxNzguMzcyIDEyNi4xOTEgMTkyLjg5NCAxMDAuNTg5IDE5Mi44OTRDNzEuNzc0IDE5Mi44OTQgNDUuMDI0OCAxNzQuNjc4IDQ1LjAyNDggMTM5LjYyNUM0NS4wMjQ4IDEwMy40MjQgNzMuNjEwMiA4NS40MzggMTAyLjQyNSA4NS40MzhDMTI3LjA4OCA4NS40MzggMTQ2LjQ3MSA5OC44MTI2IDE0Ni40NzEgMTE5LjMyM0MxNDYuNDcxIDEzNy41MzggMTMxLjI2MSAxNDAuMDg0IDEwNi44MDcgMTQxLjAwMkw4MS40NTU1IDE0MS45MkM3Ny4zMDMzIDE0Mi4xNSA3Ni4zODUzIDE0NS42MTMgNzcuNzYyNCAxNTAuOTEzQzgzLjUyMTIgMTY3LjUyMiA5Ni44OTU4IDE3Ni45NzQgMTEzLjk2NCAxNzYuOTc0QzEyMi43MjcgMTc2Ljk5NSAxMzEuNzIgMTc0LjY3OSAxMzkuNzk1IDE2NC45OTdaTTc0LjU0OTEgMTI0LjE4NUM3NC4zMTk2IDEzMS4xMTIgNzYuNjE0OCAxMzMuODY2IDgyLjYyNCAxMzMuODY2SDk0Ljg1MUMxMTQuNjczIDEzMy44NjYgMTIwLjY4MiAxMjcuNjQ4IDEyMC42ODIgMTE3LjAyOEMxMjAuNjgyIDEwNS4yNiAxMTIuODM3IDk0LjIwMTQgOTkuMDAzMSA5NC4yMDE0QzgzLjMxMjUgOTQuMjIyMiA3NS42OTY3IDEwNi42NTggNzQuNTQ5MSAxMjQuMTg1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0NC4yMjUgMTczLjUzMVYxMzEuNTcxQzI0NC4yMjUgMTE0LjUwMyAyMzcuMDY4IDEwMi45ODYgMjIzLjAwNSAxMDIuOTg2QzIwOC4yNTMgMTAyLjk4NiAxOTkuMjYxIDExNC41MjQgMTk5LjI2MSAxMzEuNTcxVjE2OS42MDhDMTk5LjI2MSAxNzkuNTE5IDIwMy4xODMgMTgyLjc1NCAyMTMuNzgzIDE4My42NzJWMTkxLjUxN0gxNTYuODQyVjE4My42NzJDMTY3LjY3MSAxODIuNzU0IDE3MS41OTMgMTc5LjUxOSAxNzEuNTkzIDE2OS42MDhWMTEyLjE4N0MxNzEuNTkzIDEwMS41ODggMTY3LjIxMiA5OC44MTI4IDE1Ni44NDIgOTkuNzMwOFY5MS44ODU1TDE4OS4xMiA4NS44OTcyQzE5NS43OTcgODQuNzQ5NiAxOTkuMjYxIDg3LjczMzMgMTk5LjI2MSA5My4wNTRDMTk5LjI2MSAxMDEuMzU4IDIwMi45NTQgMTAzLjQyNCAyMDUuOTM3IDk5Ljk4MTJDMjExLjAwOCA5NC40NTE5IDIyMC4yMyA4NSAyMzguNDQ1IDg1QzI1NS4yODQgODUgMjcxLjg3MSA5My4zMDQ0IDI3MS44NzEgMTI1LjU4M1YxNzEuMDA2QzI3MS44NzEgMTc4LjYyMiAyNzUuNzk0IDE4MS4zNzYgMjgzLjYzOSAxNzkuNzdWMTg3LjYxNUMyNzkuNDg3IDE5MC44NDkgMjcwLjk1MyAxOTIuNjg1IDI2NC4yNzcgMTkyLjY4NUMyNTEuNjExIDE5Mi42NjQgMjQ0LjIyNSAxODUuOTg4IDI0NC4yMjUgMTczLjUzMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -293,7 +297,9 @@ strong { font-weight: 700; color: var(--ink); }
 code { font-family: var(--mono); font-size: 0.86em; }
 em { font-style: italic; }
 
-section { padding-top: 54px; scroll-margin-top: 24px; }
+/* The page's own sections, not an embed's: a mounted Graview is a <section>
+   too, and this rule reaching it put a blank band above every live frame. */
+section:where(:not([data-graview-embed], [data-graview-embed] *)) { padding-top: 54px; scroll-margin-top: 24px; }
 section > .head {
   display: flex;
   align-items: baseline;
@@ -758,89 +764,273 @@ main.col ul:not([class]) li, main.col ol:not([class]) li {
   margin-top: 6px; line-height: 1.62; color: var(--ink-2);
 }
 main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: anywhere; }
+
+/* ── The landing page, second cut ──────────────────────────────────────
+   The first cut was a docs page with a headline: a rail, a column, the
+   product in a 480px box halfway down. This one puts the running product
+   where the eye lands, gives every surface it derives a live frame, and
+   keeps the rule that nothing on it is a screenshot or a mock-up.
+   ─────────────────────────────────────────────────────────────────── */
+
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .topbar { background: color-mix(in srgb, var(--paper) 84%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+}
+.topbar-in {
+  max-width: 1280px; margin: 0 auto; padding: 0 var(--pad);
+  display: flex; align-items: center; gap: 16px; min-height: 58px;
+}
+.topbar .brand { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+/* Both are links, so both are targets: tall enough for a fingertip. */
+.topbar .brand .it { font-size: 19px; text-decoration: none; color: inherit; display: inline-flex; align-items: center; min-height: 32px; padding: 0 4px; }
+.topbar .brand .who { min-height: 32px; min-width: 32px; justify-content: center; }
+.topbar .brand .who svg { width: 18px; height: 18px; }
+.topbar .brand .who span { display: none; }
+.topbar .jump {
+  display: flex; gap: 2px; margin-left: auto; font-size: 13px;
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  padding: 4px 0;
+}
+.topbar .jump::-webkit-scrollbar { display: none; }
+.topbar .jump a {
+  flex: 0 0 auto; border-left: 0; margin: 0; padding: 6px 11px;
+  border-radius: 999px; white-space: nowrap; min-height: 32px;
+}
+.topbar .jump a:hover { color: var(--pine); background: var(--sunk); }
+.topbar .jump a.go { color: var(--panel); background: var(--pine); font-weight: 600; }
+.topbar .jump a.go:hover { background: var(--pine-2); color: var(--panel); }
+
+.page { max-width: 1280px; margin: 0 auto; padding: 0 var(--pad) 80px; min-width: 0; }
+/* Direct children only: an embed's root is a <section> too, and a rule that
+   reaches it puts ninety-six pixels of nothing above the product. */
+main.page > section { padding-top: 96px; scroll-margin-top: 70px; }
+main.page > section > .head h2 { font-size: clamp(26px, 3vw, 38px); letter-spacing: -0.035em; max-width: 22ch; }
+main.page > section > .head { margin-bottom: 16px; }
+main.page > section > .head .tick { transform: translateY(-9px); }
+main.page > section > .lede { max-width: 60ch; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3); margin: 0 0 18px;
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+}
+.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 3px var(--pine-wash); flex: 0 0 auto; }
+
+/* The hero: copy beside the running product, the product taller than the copy. */
+.hero {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 40px; align-items: center;
+  padding-top: 40px !important; min-height: calc(100vh - 58px);
+}
+.hero h1 { font-size: clamp(38px, 5.2vw, 70px); max-width: 12ch; }
+.hero .lede { margin-top: 22px; }
+.hero .cta { margin-top: 28px; max-width: 100%; }
+.hero .cta-line { padding: 14px 16px; }
+.hero .cta-line code { font-size: 15.5px; }
+.hero .copy { min-height: max(2rem, 34px); padding: 0 14px; font-size: 13px; }
+.hero-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-family: var(--sans); font-size: 14px; font-weight: 600; }
+.hero-links a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; gap: 6px; }
+.hero-links a:hover { text-decoration: underline; }
+.hero-stage { min-width: 0; display: grid; gap: 10px; }
+.hero-live {
+  height: min(660px, 74vh); min-height: 440px;
+  border-radius: 6px;
+  box-shadow: 0 40px 90px -40px rgba(0, 12, 48, 0.55), 0 0 0 1px var(--rule);
+}
+.stage-caption {
+  display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--ink-3); max-width: 100%;
+}
+.stage-caption .live { color: var(--pine); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+@media (max-width: 1000px) {
+  .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; gap: 28px; padding-top: 28px !important; }
+  .hero-live { height: 500px; min-height: 0; }
+}
+@media (max-width: 560px) { .hero-live { height: 440px; } .hero h1 { max-width: 14ch; } }
+
+/* Rises into place once, and not at all for anyone who asked for less motion. */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.hero-copy > * { animation: rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero-copy > :nth-child(2) { animation-delay: 80ms; }
+.hero-copy > :nth-child(3) { animation-delay: 160ms; }
+.hero-copy > :nth-child(4) { animation-delay: 240ms; }
+.hero-copy > :nth-child(5) { animation-delay: 320ms; }
+.hero-stage { animation: rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms both; }
+
+/* The numbers, as a band under the hero rather than a row in the corner. */
+.band {
+  margin: 48px 0 0; padding: 26px 0 0; border-top: 1px solid var(--rule);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.band strong { font-size: 40px; }
+
+/* Every surface, live, two up. */
+.faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 32px; margin-top: 30px; }
+.face { display: grid; gap: 12px; min-width: 0; align-content: start; }
+.face .chapter-live { height: 500px; border-radius: 4px; }
+.face.phone .chapter-live { max-width: 390px; height: 640px; }
+.face-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.face-n { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--pine); text-transform: uppercase; white-space: nowrap; }
+.face h3 { font-size: 19px; font-weight: 700; }
+.face p { font-size: 14.5px; line-height: 1.65; color: var(--ink-2); max-width: 54ch; }
+.face p code { font-size: 12.5px; }
+@media (max-width: 900px) { .faces { grid-template-columns: minmax(0, 1fr); } .face .chapter-live { height: 460px; } }
+
+/* Copy beside a frame. */
+.split { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 36px; align-items: start; margin-top: 26px; }
+.split > .stack { align-content: start; }
+@media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } }
+
+/* Two interfaces, side by side. */
+.hands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; margin-top: 28px; }
+.hand { display: grid; gap: 12px; align-content: start; min-width: 0; padding: 22px 24px; border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); }
+.hand h3 { font-size: 18px; }
+.hand .who-for { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pine); }
+.hand ul.plain li { font-size: 14px; }
+.hand .code { max-height: 300px; overflow: auto; }
+@media (max-width: 900px) { .hands { grid-template-columns: minmax(0, 1fr); } }
+
+/* The packages: the tool, then the framework. */
+.pkgs { list-style: none; margin: 26px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 12px; }
+.pkgs li { min-width: 0; display: grid; }
+.pkgs a {
+  display: grid; gap: 5px; align-content: start; padding: 15px 16px;
+  border: 1px solid var(--rule); border-radius: 4px; text-decoration: none; color: inherit; background: var(--panel);
+}
+.pkgs a:hover { border-color: var(--pine); }
+.pkgs code { color: var(--pine); font-size: 13px; font-weight: 500; }
+.pkgs span { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+.pkgs li.tool { grid-column: 1 / -1; }
+.pkgs li.tool a { border-color: var(--pine); background: var(--pine-wash); grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 6px 22px; align-items: baseline; }
+.pkgs li.tool code { font-size: 15px; }
+@media (max-width: 640px) { .pkgs li.tool a { grid-template-columns: minmax(0, 1fr); } }
+
+/* A wide, quiet line of claims under a heading. */
+.strip { margin: 22px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 28px; }
+.strip li { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); padding-top: 12px; border-top: 1px solid var(--rule); min-width: 0; }
+.strip li strong { display: block; color: var(--ink); margin-bottom: 2px; }
+
+/* The install section, two commands wide. */
+.install-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
+@media (max-width: 900px) { .install-two { grid-template-columns: minmax(0, 1fr); } }
+
+main.page footer { max-width: 100%; }
+@media (forced-colors: active) {
+  .topbar .jump a.go, .pkgs li.tool a { border: 1px solid CanvasText; }
+}
 /* site-css:end */
 </style>
 
 <a class="skip" href="#what">Skip to content</a>
 
-<div class="wrap" lang="en">
-
-  <nav class="rail" aria-label="Sections">
+<header class="topbar">
+  <div class="topbar-in" lang="en">
     <div class="brand">
-      <a class="who" href="https://endash.us"><svg viewBox="0 0 330 330" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <a class="who" href="https://endash.us" aria-label="En Dash"><svg viewBox="0 0 330 330" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
 <rect x="7.5" y="7.5" width="315" height="315" stroke="#00E5B9" stroke-width="15"/>
 <path d="M315 15H15V315H315V15Z" fill="#001769"/>
 <path d="M315 232.119H47.0074V247.705H315V232.119Z" fill="#00E5B9"/>
 <path d="M139.795 164.997L145.324 169.838C140.942 178.372 126.191 192.894 100.589 192.894C71.774 192.894 45.0248 174.678 45.0248 139.625C45.0248 103.424 73.6102 85.438 102.425 85.438C127.088 85.438 146.471 98.8126 146.471 119.323C146.471 137.538 131.261 140.084 106.807 141.002L81.4555 141.92C77.3033 142.15 76.3853 145.613 77.7624 150.913C83.5212 167.522 96.8958 176.974 113.964 176.974C122.727 176.995 131.72 174.679 139.795 164.997ZM74.5491 124.185C74.3196 131.112 76.6148 133.866 82.624 133.866H94.851C114.673 133.866 120.682 127.648 120.682 117.028C120.682 105.26 112.837 94.2014 99.0031 94.2014C83.3125 94.2222 75.6967 106.658 74.5491 124.185Z" fill="white"/>
 <path d="M244.225 173.531V131.571C244.225 114.503 237.068 102.986 223.005 102.986C208.253 102.986 199.261 114.524 199.261 131.571V169.608C199.261 179.519 203.183 182.754 213.783 183.672V191.517H156.842V183.672C167.671 182.754 171.593 179.519 171.593 169.608V112.187C171.593 101.588 167.212 98.8128 156.842 99.7308V91.8855L189.12 85.8972C195.797 84.7496 199.261 87.7333 199.261 93.054C199.261 101.358 202.954 103.424 205.937 99.9812C211.008 94.4519 220.23 85 238.445 85C255.284 85 271.871 93.3044 271.871 125.583V171.006C271.871 178.622 275.794 181.376 283.639 179.77V187.615C279.487 190.849 270.953 192.685 264.277 192.685C251.611 192.664 244.225 185.988 244.225 173.531Z" fill="white"/>
 </svg><span>En&nbsp;Dash</span></a>
-      <span class="it">Graview</span>
-      <span class="sub">A development framework built on a typed context graph.</span>
+      <a class="it" href="index.html">Graview</a>
     </div>
-
-    <div class="jump">
+    <nav class="jump" aria-label="Sections">
       <a href="#what">What it is</a>
       <a href="#grow">See it grow</a>
+      <a href="#faces">Every surface</a>
       <a href="#agent">With a model</a>
-      <a href="#free">What you get</a>
-      <a href="#checked">What is checked</a>
+      <a href="#checked">Checked</a>
       <a href="#install">Install</a>
-      <a href="progression.html">The long version &rarr;</a>
-      <a href="#endash">En&nbsp;Dash</a>
-    </div>
+      <a href="progression.html">The garden</a>
+      <a href="https://github.com/en-dash-consulting/graview">GitHub</a>
+      <a class="go" href="docs/index.html">Docs</a>
+    </nav>
+  </div>
+</header>
 
-    <div class="railfoot">
-      12 packages<br>
-      <span data-chapters-word>fifteen</span> chapters, live<br>
-      verified on every push
-    </div>
-  </nav>
+<main class="page col" id="main" lang="en">
 
-  <main class="col">
-
-    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
+  <!--
+    THE HERO IS THE PRODUCT. The first cut opened with a headline, an install
+    line and a table of numbers, and put the running application in a 480px
+    box under a code sample — a getting-started page. What persuades is the
+    thing itself: a city, live, with sixteen declarations behind it, that a
+    reader can drag before they have read a word.
+  -->
+  <section id="what" class="hero" aria-labelledby="h-what">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span>A development framework from En&nbsp;Dash</span><span>v0.1 · Elastic License 2.0</span></p>
       <h1 id="h-what">Declare the domain. The application follows.</h1>
-      <p class="lede" style="margin-top: 22px;">
-        Declare what your domain is made of — the kinds of thing, how they
-        connect, the acts that change them, the rules they must not break —
-        once, as code. The interface, the pages, the permissions, the checks
-        and an agent's tools all come from that one declaration.
+      <p class="lede">
+        Kinds, fields, edges, acts, rules and roles — declared once, in
+        TypeScript. From that one declaration Graview derives the city on the
+        right, the routed pages, the forms, the permissions, the checks and an
+        agent's tools. Nothing over there was drawn by hand.
       </p>
-
-      <!--
-        THE CALL TO ACTION AT THE TOP, not in section nine. A person deciding
-        whether to care should be able to start in the time it takes to read
-        one line, and a person who is not ready has lost nothing by seeing it.
-      -->
       <div class="cta">
         <div class="cta-line"><code>npm create graview@latest my-app</code>
           <button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button>
         </div>
         <p class="cta-sub sm dim">
-          Writes a running app with one kind, one act, one rule, a routed face,
-          a headless test, a CI workflow and the skills — then
-          <code>pnpm verify</code> tells you it works.
+          Writes a running product with one kind, one act, one rule, a routed
+          face, a headless test, a CI workflow and the skills — then
+          <code>npm run verify</code> tells you it works.
         </p>
       </div>
+      <p class="hero-links">
+        <a href="docs/getting-started.html">Read the docs &rarr;</a>
+        <a href="#grow">See it grow &darr;</a>
+        <a href="progression.html">The whole garden, live &rarr;</a>
+      </p>
+    </div>
+    <div class="hero-stage">
+      <div class="chapter-live hero-live" data-graview-chapter="16" data-stop="#overview=1" data-settle="hero" data-label="The garden, grown" role="region" aria-label="The example garden, running on this page">
+        <p class="chapter-loading">The garden, loading…</p>
+      </div>
+      <p class="stage-caption">
+        <span class="live">Live</span>
+        <span>the example garden, sixteen declarations in</span>
+        <span>drag the ground · zoom out · press a district · come down to a plot · switch it to Pages</span>
+      </p>
+    </div>
+  </section>
 
-      <!--
-        NUMBERS, NOT ADJECTIVES. Every one of these is counted out of the
-        repository by scripts/site-numbers.mjs, which fails the build when the
-        page and the repository disagree. A marketing page that rounds up is a
-        marketing page nobody on the team will defend.
-      -->
-      <ul class="numbers" aria-label="Graview by the numbers">
-        <li><strong data-number="packages">13</strong> <span>packages</span></li>
-        <li><strong data-number="lenses">5</strong> <span>lenses that rebind</span></li>
-        <li><strong data-number="skills">13</strong> <span>skills for your model</span></li>
-        <li><strong data-number="codes">74</strong> <span>things the checker can say</span></li>
-        <li><strong data-number="tests">1425</strong> <span>named tests, green</span></li>
-      </ul>
+  <!--
+    NUMBERS, NOT ADJECTIVES. Every one of these is counted out of the
+    repository by scripts/site-numbers.mjs, which fails the build when the
+    page and the repository disagree.
+  -->
+  <ul class="numbers band" aria-label="Graview by the numbers">
+    <li><strong data-number="packages">13</strong> <span>packages, one version</span></li>
+    <li><strong data-number="lenses">5</strong> <span>lenses that rebind to any domain</span></li>
+    <li><strong data-number="skills">13</strong> <span>skills your model reads before it writes</span></li>
+    <li><strong data-number="codes">74</strong> <span>things the checker can say, in words</span></li>
+    <li><strong data-number="tests">1427</strong> <span>named tests, green on every push</span></li>
+  </ul>
 
-      <figure class="chapter-shot hero-pair">
-        <p class="pair-says"><span>You write this</span><span class="pair-arrow" aria-hidden="true">&rarr;</span><span>You get this, running</span></p>
-        <div class="two">
-          <div class="code" data-scroller aria-label="Chapter one of the garden, as code">
+  <!--
+    SEE IT GROW. The single most persuasive thing this framework can do is
+    show the same app after one more line of declaration, so that is a
+    control rather than a paragraph: press a step, the left says what was
+    added and the right IS the application, mounted live at that chapter.
+  -->
+  <section id="grow" aria-labelledby="h-grow">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-grow">Add a line. Watch it grow.</h2></div>
+    <p class="lede">
+      One example — a community garden — declared a little at a time. Press a
+      step. The left is everything the declaration gained; the right is the
+      application, running on this page, at exactly that point. No screenshots,
+      no mock-ups: change the left and the right moves.
+    </p>
+
+    <figure class="chapter-shot hero-pair">
+      <p class="pair-says"><span>You write this</span><span class="pair-arrow" aria-hidden="true">&rarr;</span><span>You get this, running</span></p>
+      <div class="two">
+        <div class="code" data-scroller aria-label="Chapter one of the garden, as code">
 <pre><span class="c">// The whole of chapter one. Nothing else is written.</span>
 <span class="k">const</span> <span class="n">plot</span> = <span class="n">defineNode</span>(<span class="s">"plot"</span>, {
   description:
@@ -877,57 +1067,19 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
   mutations: [addPlot],
 });</pre>
           </div>
-          <div class="chapter-live" data-graview-chapter="1" data-label="The opener" role="region" aria-label="What chapter one makes, live">
-            <p class="chapter-loading">The garden after chapter 1, loading…</p>
-          </div>
+        <div class="chapter-live" data-graview-chapter="1" data-label="The opener" role="region" aria-label="What chapter one makes, live">
+          <p class="chapter-loading">The garden after chapter 1, loading…</p>
         </div>
-        <figcaption>
-          Left: the whole of chapter one — one kind, one act. Right: what it
-          makes, running on this page: a city with one district, the plots in
-          it, a form derived from the act, the same app as routed pages, a
-          checked declaration, and a typed tool an agent can take. Nothing on
-          the right was drawn by hand. Change the left and the right moves.
-        </figcaption>
-      </figure>
+      </div>
+      <figcaption>
+        Left: the whole of chapter one — one kind, one act. Right: what it
+        makes: a city with one district, the plots in it, a form derived from
+        the act, the same app as routed pages, a checked declaration, and a
+        typed tool an agent can take.
+      </figcaption>
+    </figure>
 
-      <ul class="derived" aria-label="What is derived from the declaration">
-        <li><strong>The picture.</strong> Every kind is a district of one city, standing on ground you can zoom and pan; every record is a building on its own plot, a card among its relations when you come down to it; the words on the lines are the declaration's own, read from whichever end you are standing on.</li>
-        <li><strong>The acts, and the checks.</strong> What a selection may have done to it comes from the mutations and the policy — a seat never sees a button that would fail. <code>graview check</code> reads the whole declaration and says what is wrong before a page does.</li>
-        <li><strong>The pages.</strong> The same declaration, routed: lists, records and forms for the person who wanted an ordinary web app — with the app's own pictures as pages, a map saying how the kinds fit together in the declaration's words, and the assistant on every route. Every surface is replaceable, up to <a class="inl" href="#chapter-13">a product design of the app's own</a> over the same store.</li>
-        <li><strong>The agent's seat.</strong> Every act is a typed tool with a sentence attached. A model works the same graph, in the same operation log, under the same policy, and its turns can be taken back. It sits in the frame's own rail — what you have in hand, what can be done with it, what it says — and marks what it just changed on the things themselves.</li>
-      </ul>
-
-      <p style="margin-top: 22px;">
-        <strong>It is built to be worked on with an agent.</strong> The
-        declaration is a context graph, and a context graph is the one thing
-        a model reads as well as a person does. Open a session beside the
-        declaration and work it together: describe a kind, let the model draft
-        its edges, its acts and its rule, run <code>graview check</code>, look
-        at the picture, declare more. The skills that ship with the framework
-        teach the model the shapes; the checker tells you both when a shape is
-        wrong; every act the model takes lands in the log with its author, its
-        intent and its inverse. It is not a UI layer bolted onto a store: the
-        graph, the rules, the log, the tool surface and the pictures are one
-        system, and they ship as packages you install.
-      </p>
-    </section>
-
-    <!--
-      SEE IT GROW. The single most persuasive thing this framework can do is
-      show the same app after one more line of declaration, so that is a
-      control rather than a paragraph: press a chapter, the left says what was
-      added and the right IS the application, mounted live at that chapter.
-      Nothing here is a screenshot and nothing is a mock-up.
-    -->
-    <section id="grow" aria-labelledby="h-grow">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-grow">Add a line. Watch it grow.</h2></div>
-      <p class="lede">
-        One example — a community garden — declared a little at a time. Press a
-        step. The left is everything the declaration gained; the right is the
-        application, running on this page, at exactly that point.
-      </p>
-
-      <div class="steps" role="tablist" aria-label="Steps in the garden's declaration">
+    <div class="steps" role="tablist" aria-label="Steps in the garden's declaration">
         <button type="button" role="tab" id="step-tab-1" aria-controls="step-panel-1" aria-selected="true" data-step="1">
           <span class="step-n">1</span> A plot
         </button>
@@ -1019,39 +1171,115 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
           </div>
         </div>
       </div>
+    <p class="sm dim" style="margin-top: 14px;">
+      Sixteen steps in all, each a real declaration that passes its own
+      check, opened in a real browser on every push. A step that stops
+      holding its claim fails the build.
+      <a class="inl" href="progression.html">Read all sixteen &rarr;</a>
+    </p>
+  </section>
 
-      <p class="sm dim" style="margin-top: 14px;">
-        Fifteen steps in all, each a real declaration that passes its own
-        check, opened in a real browser on every push. A step that stops
-        holding its claim fails the build.
-        <a class="inl" href="progression.html">Read all fifteen &rarr;</a>
-      </p>
-    </section>
+  <!--
+    EVERY SURFACE. A Graview product is not a UI over a store, and the way
+    to say so is to put each derived surface on the page, running, from the
+    same declaration the hero runs from.
+  -->
+  <section id="faces" aria-labelledby="h-faces">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-faces">One declaration. Every surface.</h2></div>
+    <p class="lede">
+      The scene above, the routed pages, the lenses, the studio and the
+      agent's seat are the same graph drawn differently. Each of these is
+      the garden, running on this page, from the declaration you saw grow.
+    </p>
+    <div class="faces">
+      <div class="face phone">
+        <div class="face-head"><span class="face-n">The pages</span><h3>An ordinary web app, for free — or in your own design</h3></div>
+        <p>
+          Lists, records, forms and problems, routed, at phone width, from the
+          same store. Any page can be replaced with one of your own; here the
+          garden replaced all of them with an almanac and kept the acts, the
+          rules and the log underneath.
+        </p>
+        <div class="chapter-live" data-graview-chapter="13" data-face="pages" data-label="The garden's own face" role="region" aria-label="The garden's routed pages, in its own design, live">
+          <p class="chapter-loading">The pages, loading…</p>
+        </div>
+      </div>
+      <div class="face">
+        <div class="face-head"><span class="face-n">A lens</span><h3>A calendar written for a rota, over a garden's rotation</h3></div>
+        <p>
+          Lenses bind <em>roles</em> — what starts, what ends, what is placed
+          where — rather than field names, so one written for your domain
+          works unchanged in somebody else's. This one runs at a four-year
+          horizon over plantings it was never written for.
+        </p>
+        <div class="chapter-live" data-graview-chapter="16" data-settle="lens" data-label="The rotation" role="region" aria-label="The rotation calendar lens over the garden, live">
+          <p class="chapter-loading">The rotation, loading…</p>
+        </div>
+      </div>
+      <div class="face">
+        <div class="face-head"><span class="face-n">The studio</span><h3>The declaration is itself a graph. Edit it in place.</h3></div>
+        <p>
+          Kinds, fields, edges, acts, rules, roles and grants as nodes, opened
+          in Graview's own interface. Change the declaration with ordinary acts,
+          let <code>graview check</code> judge the change before it is applied,
+          migrate the stored graph, and write the files back.
+        </p>
+        <div class="chapter-live" data-graview-chapter="15" data-settle="studio" data-label="The studio" role="region" aria-label="The garden's declaration open in the studio, live">
+          <p class="chapter-loading">The studio, loading…</p>
+        </div>
+      </div>
+      <div class="face">
+        <div class="face-head"><span class="face-n">The seat</span><h3>An agent with the same acts a person has</h3></div>
+        <p>
+          Every act is a typed tool with a sentence attached, narrowed by the
+          same policy a person is under. A model's turn lands in the same log
+          with its author and its intent, is watchable from altitude, and can
+          be taken back out of order.
+        </p>
+        <div class="chapter-live" data-graview-chapter="5" data-label="A seat for an agent" role="region" aria-label="The garden with an agent's seat, live">
+          <p class="chapter-loading">The seat, loading…</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!--
-      WITH A MODEL. This was one paragraph at the end of the first section,
-      which is where a thing goes when nobody has decided whether it matters.
-      It is the reason to choose this framework over a form library, so it is
-      a section, and everything in it is real output rather than a claim.
-    -->
-    <section id="agent" aria-labelledby="h-agent">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-agent">Built to be worked on with a model</h2></div>
-      <p class="lede">
-        A declaration is a context graph, and a context graph is the one thing
-        a model reads as well as a person does. Not a chat box bolted to a
-        CRUD app — the same object is the source for your interface, your
-        agent's tools and the checker that keeps them honest.
-      </p>
+  <!--
+    WITH A MODEL. The reason to choose this over a form library: the same
+    declaration is the interface a person uses and the interface a model
+    uses, and both are derived, so neither can drift from the other.
+  -->
+  <section id="agent" aria-labelledby="h-agent">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-agent">Two programming interfaces. One declaration.</h2></div>
+    <p class="lede">
+      A declaration is a context graph, and a context graph is the one thing
+      a model reads as well as a person does. Not a chat box bolted to a CRUD
+      app — the same object is the source for your interface, your agent's
+      tools and the checker that keeps them honest.
+    </p>
 
-      <div class="two ai-two">
-        <div class="stack">
-          <h3 class="minor">It can read the whole app</h3>
-          <p class="sm">
-            <code>graview describe</code> reads the declaration and says what
-            somebody opening the product for the first time can actually do —
-            derived, so it cannot drift. This is real output, from a real app:
-          </p>
-          <div class="code" data-scroller aria-label="graview describe, as an observer"><pre><code>$ graview describe app.js --as observer
+    <div class="hands">
+      <div class="hand">
+        <span class="who-for">For a person</span>
+        <h3>Surfaces, derived and replaceable</h3>
+        <ul class="plain">
+          <li><b>The scene.</b> Every kind a district, every record a building on its own plot, every edge a road with the words on it — zoom, pan, come down.</li>
+          <li><b>The pages.</b> Lists, records, forms and problems, routed. Replace one page or every surface with your own design over the same store.</li>
+          <li><b>The acts.</b> What a selection may have done to it comes from the mutations and the policy. A seat never sees a button that would fail.</li>
+          <li><b>The lenses.</b> A timeline, a calendar, a coverage matrix, a board and a plan, each bound to roles rather than field names — and the reach, which needs none.</li>
+          <li><b>The way in.</b> An empty installation says what can be made now and what the rest are waiting for, in the order the declaration already states.</li>
+        </ul>
+      </div>
+      <div class="hand">
+        <span class="who-for">For a model</span>
+        <h3>The whole app, readable and writable</h3>
+        <ul class="plain">
+          <li><b>Typed tools.</b> Every act is a tool with a schema and a sentence, narrowed by the same policy a person is under.</li>
+          <li><b><code>graview describe</code>.</b> What a seat can do on day one, derived, so it cannot drift — the rung between the checker and a browser for something that cannot see.</li>
+          <li><b><code>graview docs</code>.</b> An <code>llms.txt</code> and an <code>agents.md</code> written out of the declaration.</li>
+          <li><b>Thirteen skills.</b> Each teaches a model one shape of the declaration and ends in <code>graview check</code>, reporting what it actually said.</li>
+          <li><b>A plan before a change.</b> What comes back is one row per thing, what it was sure about, what goes with what if you decline something — then one batch, one undo.</li>
+        </ul>
+        <div class="code" data-scroller aria-label="graview describe, as an observer"><pre><code>$ graview describe app.js --as observer
 
 Groundskeeper — 12 kinds, 76 acts
   (64 declared, 12 derived).
@@ -1067,64 +1295,43 @@ are not permitted to it.
 ## Who may do what
 4 roles: steward, keeper, crew, observer.
 As observer: 2 of 76 acts permitted.</code></pre></div>
-        </div>
-
-        <div class="stack">
-          <h3 class="minor">It can write it, and you see what it would do first</h3>
-          <p class="sm">
-            Every act is a typed tool with a sentence attached, narrowed by the
-            same policy a person is under. What comes back is a
-            <strong>plan</strong> before it is a change: one row per thing, what
-            it was sure about, what goes with what if you decline something, and
-            then one batch with one undo.
-          </p>
-          <ul class="derived ai-derived" aria-label="What a model works through">
-            <li><strong>The same acts.</strong> No privileged write path. A model's edits produce the diffs a person's do, in the same log, under the same rules.</li>
-            <li><strong>Attributed and reversible.</strong> Every turn carries its author and its intent, and comes back out through the same control.</li>
-            <li><strong>Refused out loud.</strong> An act a seat may not take is struck through with the sentence saying who can — never a button that silently fails.</li>
-            <li><strong>13 skills ship with it.</strong> Each teaches a model one shape of the declaration and ends in <code>graview check</code>, reporting what it actually said.</li>
-          </ul>
-        </div>
       </div>
+    </div>
 
-      <p class="sm" style="margin-top: 20px; max-width: 74ch;">
-        The loop is the whole method, and it is the same loop whether the hands
-        are yours or a model's: <strong>describe a kind, let it draft the edges,
-        the acts and the rule, run <code>graview check</code>, look at the
-        picture, declare more.</strong> The checker tells you both when a shape
-        is wrong — 71 things it can say, in words, before a page does.
-      </p>
-    </section>
+    <p class="sm" style="margin-top: 22px; max-width: 74ch;">
+      The loop is the whole method, and it is the same loop whether the hands
+      are yours or a model's: <strong>describe a kind, let it draft the edges,
+      the acts and the rule, run <code>graview check</code>, look at the
+      picture, declare more.</strong> The checker tells you both when a shape
+      is wrong — in words, before a page does.
+    </p>
+  </section>
 
-    <!--
-      WHAT YOU GET. Moved out of the first section, where it was a list under
-      a wall of prose, and given the room to be the list of reasons it is.
-    -->
-    <section id="free" aria-labelledby="h-free">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-free">What you do not write</h2></div>
-      <p class="lede">
-        All of this is derived from the one declaration. Every piece of it is
-        replaceable, and none of it has to be.
-      </p>
-      <ul class="derived" aria-label="What is derived from the declaration">
+  <section id="free" aria-labelledby="h-free">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-free">What you do not write</h2></div>
+    <p class="lede">
+      All of this is derived from the one declaration. Every piece of it is
+      replaceable, and none of it has to be.
+    </p>
+    <ul class="derived" aria-label="What is derived from the declaration">
         <li><strong>The picture.</strong> Every kind is a district of one city, standing on ground you can zoom and pan; every record a building on its own plot, a card among its relations when you come down to it; the words on the lines are the declaration's own, read from whichever end you are standing on.</li>
         <li><strong>The acts, and the checks.</strong> What a selection may have done to it comes from the mutations and the policy — a seat never sees a button that would fail. <code>graview check</code> reads the whole declaration and says what is wrong before a page does.</li>
         <li><strong>The pages.</strong> The same declaration, routed: lists, records and forms for the person who wanted an ordinary web app — with the app's own pictures as pages, a map saying how the kinds fit together in the declaration's words, and the assistant on every route. Every surface is replaceable, up to <a class="inl" href="progression.html#chapter-13">a product design of the app's own</a> over the same store.</li>
         <li><strong>The agent's seat.</strong> Every act is a typed tool with a sentence attached. A model works the same graph, in the same operation log, under the same policy, and its turns can be taken back. It sits in the frame's own rail — what you have in hand, what can be done with it, what it says — and marks what it just changed on the things themselves.</li>
         <li><strong>The way in.</strong> An empty installation is the screen nobody designs. <code>beginning()</code> reads the chain out of the declaration and says what can be made now, what the rest are waiting for, and — for a seat that may not — who can.</li>
-        <li><strong>Six lenses.</strong> A timeline, a calendar, a matrix, a board, a reach and a plan. Each binds roles rather than field names, so one written for your domain works unchanged in somebody else's.</li>
+        <li><strong>Five lenses that rebind.</strong> A timeline, a calendar, a coverage matrix, a board and a plan, each binding roles rather than field names, so one written for your domain works unchanged in somebody else&rsquo;s. The reach — what a thing is connected to, at any distance — needs no binding at all.</li>
       </ul>
-    </section>
+  </section>
 
-
-    <section id="checked" aria-labelledby="h-checked">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-checked">What is checked</h2></div>
-      <p class="sm" style="margin-bottom: 16px; max-width: 62ch;">
-        Not "the tests pass". These are the claims that would be easy to write
-        down and hard to keep true, so each one is a test or a measurement, and
-        a failure names the claim rather than lowering a count.
-      </p>
-      <div class="scroll" data-scroller aria-label="Claims and their checks, as a table">
+  <section id="checked" aria-labelledby="h-checked">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-checked">Checked, not claimed</h2></div>
+    <p class="lede">
+      Not "the tests pass". These are the claims that would be easy to write
+      down and hard to keep true, so each one is a test or a measurement, and
+      a failure names the claim rather than lowering a count. This page is
+      one of them: ten widths, both schemes, a keyboard and axe-core, on every push.
+    </p>
+    <div class="scroll" data-scroller aria-label="Claims and their checks, as a table">
         <table>
           <caption class="sr-only">Claims this project makes, and the test or measurement behind each</caption>
             <thead><tr><th scope="col">Claim</th><th scope="col">Where</th></tr></thead>
@@ -1145,52 +1352,86 @@ As observer: 2 of 76 acts permitted.</code></pre></div>
             <tr><td>Every authoring skill ends in a check the checker can actually produce</td><td class="where">skills/tests/unit/skills</td></tr>
             <tr><td>A stranger can create an app from a checkout, and its own verify passes in three browsers</td><td class="where">scripts/smoke-create · 25 criteria</td></tr>
             <tr><td>Every chapter of the garden still holds its claim, in a real browser</td><td class="where">scripts/progression · 13 claims</td></tr>
-            <tr><td>The page that explains this holds up at ten widths, to axe and to a keyboard, with fourteen live Graviews on it</td><td class="where">scripts/verify-site · text over text is a failure</td></tr>
+            <tr><td>The page that explains this holds up at ten widths, to axe and to a keyboard, with every Graview on them live</td><td class="where">scripts/verify-site · text over text is a failure</td></tr>
             <tr><td>The capture path survives a pointer, and a click still reaches the node it drew</td><td class="where">scripts/verify-capture</td></tr>
           </tbody>
         </table>
       </div>
-    </section>
+    <p class="sm dim" style="margin-top: 14px;">
+      The checker's own vocabulary — every finding it can produce and how
+      loudly — is on <a class="inl" href="docs/checks.html">its own page</a>.
+    </p>
+  </section>
 
-    <section id="install" aria-labelledby="h-install">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-install">Install</h2></div>
-      <div class="two">
-        <div class="stack">
-          <div class="term" data-scroller aria-label="Commands to start a product from a checkout">
-            <div class="l"><span class="p">$</span><span class="c2">pnpm install &amp;&amp; pnpm build</span><span class="n2">the framework, first</span></div>
-            <div class="l"><span class="p">$</span><span class="c2">pnpm graview create ../my-app --link .</span><span class="n2">chapter one, written for you</span></div>
-            <div class="l"><span class="p">$</span><span class="c2">cd ../my-app &amp;&amp; pnpm verify</span><span class="n2">typecheck, tests, build, check</span></div>
-          </div>
-          <div class="term" data-scroller aria-label="Commands to run inside the repository">
-            <div class="l"><span class="p">$</span><span class="c2">pnpm dev:seedbed</span><span class="n2">the garden — ?chapter=N opens any chapter</span></div>
-            <div class="l"><span class="p">$</span><span class="c2">pnpm progression</span><span class="n2">every chapter, photographed</span></div>
-            <div class="l"><span class="p">$</span><span class="c2">pnpm test</span><span class="n2">headless, no browser</span></div>
-          </div>
-        </div>
-        <div class="stack">
-          <p class="sm">
-            <strong>Start with the garden.</strong> <a class="inl" href="#grown"><span data-chapters-word="title">Fifteen chapters</span></a>,
-            from one kind to a shipped, branded, permissioned application with a
-            lens and an agent's seat — each a real declaration you can open with
-            <code>?chapter=N</code>. <code>graview create</code> writes chapter one
-            for your own domain; the packages are not on a registry yet, so a
-            product starts from a checkout and consumes the framework by path.
-            The todo example is the second thing to read: four kinds, eleven acts,
-            three rules, a lens borrowed from a calendar.
-          </p>
-          <p class="sm">
-            The scene renders through the DOM by default. The plane model is
-            affine, so a CSS transform reproduces the geometry exactly; what it
-            cannot do is per-plane blur in a shader.
-            <code>?renderer=gpu</code> composites through WebGPU instead.
-          </p>
-        </div>
+  <!--
+    THE TOOL, AND THE FRAMEWORK. One rule, said once: `graview` is what a
+    person installs; `@graview/*` is what a product imports. All of them share
+    one version.
+  -->
+  <section id="packages" aria-labelledby="h-packages">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-packages">The tool, and the framework</h2></div>
+    <p class="lede">
+      <code>graview</code> is the command line a person installs.
+      <code>@graview/*</code> is the framework a product imports. Thirteen
+      packages, one version, each with its own page in the docs.
+    </p>
+    <ul class="pkgs" aria-label="The packages">
+      <li class="tool"><a href="docs/packages/graview.html"><code>graview</code><span>The one command line: <code>create</code>, <code>check</code>, <code>docs</code>, <code>describe</code>, <code>lens</code>, <code>figure</code>, <code>serve</code>, <code>skills</code>. Every subcommand lives in the package whose concern it is; this dispatches.</span></a></li>
+      <li><a href="docs/packages/core.html"><code>@graview/core</code><span>The graph, the log, the schema and the checker. Everything a product declares.</span></a></li>
+      <li><a href="docs/packages/layout.html"><code>@graview/layout</code><span>Where every node goes: three planes, one pure function of the graph and the view.</span></a></li>
+      <li><a href="docs/packages/tools.html"><code>@graview/tools</code><span>Derived affordances and the agent tool surface, from the same declaration.</span></a></li>
+      <li><a href="docs/packages/render.html"><code>@graview/render</code><span>The spatial renderer. The DOM path ships; the GPU capture path is opt-in.</span></a></li>
+      <li><a href="docs/packages/react.html"><code>@graview/react</code><span>The React binding: a provider, a scene, and the hooks an app builds on.</span></a></li>
+      <li><a href="docs/packages/primitives.html"><code>@graview/primitives</code><span>The primitive set, the lenses, the workbench and the visual system.</span></a></li>
+      <li><a href="docs/packages/pages.html"><code>@graview/pages</code><span>The routed face: an ordinary web app derived from the declaration that drives the scene.</span></a></li>
+      <li><a href="docs/packages/ship.html"><code>@graview/ship</code><span>Persistence wiring, op-log-native migrations, export, health — and <code>graview serve</code>.</span></a></li>
+      <li><a href="docs/packages/studio.html"><code>@graview/studio</code><span>The declaration as a graph, edited with ordinary acts and written back as files.</span></a></li>
+      <li><a href="docs/packages/embed.html"><code>@graview/embed</code><span>Mount a declared app into any element — the scene, the Graview or the pages — as this page does.</span></a></li>
+      <li><a href="docs/packages/skills.html"><code>@graview/skills</code><span>The authoring moves an assistant reads before it writes, each ending in a real check.</span></a></li>
+      <li><a href="docs/packages/create-graview.html"><code>create-graview</code><span>The door <code>npm create graview</code> walks through. Three lines, on purpose.</span></a></li>
+    </ul>
+    <ul class="strip" aria-label="Running it">
+      <li><strong>Run it anywhere.</strong> <code>graview serve</code> puts the store behind HTTP with the data in a folder you can open, or in SQLite. Migrations are operations in the same log. Export and health come with it.</li>
+      <li><strong>Self-hosted today.</strong> One declaration and one adapter, behind whatever you already run. Graview Cloud, which runs it for you, is on its way.</li>
+      <li><strong>Open under the Elastic License 2.0.</strong> Build products on it and ship them freely; what it withholds is offering Graview itself as a managed service to third parties.</li>
+    </ul>
+  </section>
+
+  <section id="install" aria-labelledby="h-install">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-install">Start a product</h2></div>
+    <p class="lede">
+      One command from anywhere. What it writes is chapter one for your own
+      domain: the declaration split into domain and UI, an eighty-line shell,
+      a headless test, a CI workflow, and the skills your assistant needs to
+      take it from there.
+    </p>
+    <div class="install-two">
+      <div class="term" data-scroller aria-label="Commands to start a product">
+        <div class="l"><span class="p">$</span><span class="c2">npm create graview@latest my-app</span><span class="n2">or: pnpm create graview my-app</span></div>
+        <div class="l"><span class="p">$</span><span class="c2">cd my-app &amp;&amp; npm run dev</span><span class="n2">the scene; /pages is the routed face</span></div>
+        <div class="l"><span class="p">$</span><span class="c2">npm run verify</span><span class="n2">typecheck, tests, build, graview check</span></div>
+        <div class="l"><span class="p">$</span><span class="c2">npx graview describe ./dist/domain/app.js</span><span class="n2">what a seat can do on day one</span></div>
       </div>
-    </section>
+      <div class="term" data-scroller aria-label="Commands to work on the framework itself">
+        <div class="l"><span class="p">$</span><span class="c2">git clone https://github.com/en-dash-consulting/graview</span><span class="n2">the framework, and the garden</span></div>
+        <div class="l"><span class="p">$</span><span class="c2">pnpm install &amp;&amp; pnpm build</span><span class="n2">every package</span></div>
+        <div class="l"><span class="p">$</span><span class="c2">pnpm graview create ../my-app --link .</span><span class="n2">a product consuming the checkout by path</span></div>
+        <div class="l"><span class="p">$</span><span class="c2">pnpm dev:seedbed</span><span class="n2">the garden — ?chapter=N opens any chapter</span></div>
+      </div>
+    </div>
+    <p class="sm" style="margin-top: 18px; max-width: 70ch;">
+      <strong>Then open a session beside the declaration.</strong> The skills
+      are already installed where Claude Code and Codex look for them; the
+      first one to read is <code>graview-node-kind</code>. Describe a kind, let
+      the model draft its edges, its acts and its rule, run
+      <code>graview check</code>, look at the picture, declare more.
+      <a class="inl" href="docs/getting-started.html">The first hour, written out &rarr;</a>
+    </p>
+  </section>
 
-    <section id="endash" aria-labelledby="h-endash">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-endash">Who builds it</h2></div>
-      <div class="endash">
+  <section id="endash" aria-labelledby="h-endash">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-endash">Who builds it</h2></div>
+    <div class="endash">
         <div class="lockup">
           <div class="dashmark"><svg viewBox="0 0 330 330" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
 <rect x="7.5" y="7.5" width="315" height="315" stroke="#00E5B9" stroke-width="15"/>
@@ -1222,37 +1463,32 @@ As observer: 2 of 76 acts permitted.</code></pre></div>
         </div>
         <p class="sm dim" style="margin-top: 2px;">Built for people everywhere, by people at En&nbsp;Dash.</p>
       </div>
-    </section>
+  </section>
 
-    <section id="status" aria-labelledby="h-status">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-status">Status</h2></div>
-      <div class="stack">
-        <div class="caveat">
-          <b>Private, and unpublishable on purpose.</b> Every package is
-          <code>private: true</code> and carries no licence. Publishing without
-          one would leave whoever installs it with no permission to use it. That
-          is a decision waiting to be made, not work waiting to be done.
-        </div>
-        <ul class="plain">
-          <li><b>The capture path is experimental.</b> Capture falls off a cliff past about 128 live captures a frame, and every claim above is measured against the DOM path. Use it for the per-plane blur, not because it is faster.</li>
-          <li><b>The calendar sync has never run against Google.</b> Echo suppression, conflict detection and offline reconciliation are covered against a scripted remote. A token that expires mid-run is not.</li>
-          <li><b>No screen-reader pass with real assistive technology.</b> The tree is populated and axe-core reports nothing. A populated tree is not proof that VoiceOver reads it well.</li>
-          <li><b>The public API is pre-1.0.</b> Every package exposes a single <code>src/index.ts</code> and nothing else is supported, but the surface still moves while nobody depends on it.</li>
-        </ul>
+  <section id="status" aria-labelledby="h-status">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-status">Where it stands</h2></div>
+    <div class="stack">
+      <div class="caveat">
+        <b>0.1, and pre-1.0 on purpose.</b> The packages are on npm under one
+        version and the public API is designed to be depended on — but it
+        still moves between minor versions while the shape settles, and the
+        changelogs say what changed and why.
       </div>
-    </section>
+      <ul class="plain">
+        <li><b>The capture path is experimental.</b> Capture falls off a cliff past about 128 live captures a frame, and every claim above is measured against the DOM path. Use it for the per-plane blur, not because it is the default.</li>
+        <li><b>The calendar sync has never run against Google.</b> Echo suppression, conflict detection and offline reconciliation are covered against a scripted remote. A token that expires mid-run is not.</li>
+        <li><b>No screen-reader pass with real assistive technology.</b> The tree is populated and axe-core reports nothing. A populated tree is not proof that VoiceOver reads it well.</li>
+      </ul>
+    </div>
+  </section>
 
-
-  </main>
-</div>
-
-<footer>
+  <footer>
     <span>Graview</span>
-    <span>core · layout · tools · render · react · primitives · pages · ship · embed · skills · create-graview</span>
+    <span>graview · @graview/core · layout · tools · render · react · primitives · pages · ship · studio · embed · skills · create-graview</span>
     <span style="flex: 1 1 auto;"></span>
-    <span><a href="https://endash.us" style="text-decoration: none;">En&nbsp;Dash</a> · Richmond, VA, and across the US</span>
+    <span><a href="https://github.com/en-dash-consulting/graview" style="text-decoration: none;">GitHub</a> · <a href="https://www.npmjs.com/package/graview" style="text-decoration: none;">npm</a> · <a href="https://endash.us" style="text-decoration: none;">En&nbsp;Dash</a>, Richmond, VA, and across the US</span>
   </footer>
-
+</main>
 
 <script>
 /*
@@ -1281,73 +1517,6 @@ function markScrollers() {
 markScrollers();
 window.addEventListener("resize", markScrollers);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScrollers);
-</script>
-<script>
-/*
- * THE KIT, LIVE. The form is a declaration: every change is read back into
- * `brand.kit`, laid over the chapter's own brand on the running embed, and
- * judged as `graview check` would judge it. Nothing here reaches into the
- * scene — the same `setBrand` a host app has is all the page uses.
- */
-(function () {
-  const form = document.getElementById("kit-form");
-  const live = document.querySelector('[data-graview-chapter="8"][data-stop]');
-  const decl = document.getElementById("kit-decl");
-  const verdict = document.getElementById("kit-verdict");
-  if (!form || !live || !decl || !verdict) return;
-  const CHAPTER = 8;
-  function read() {
-    const f = new FormData(form);
-    const kit = {};
-    const connectors = {};
-    const route = f.get("route");
-    if (route && route !== "curve") connectors.all = { route };
-    const tended = {};
-    if (!f.get("tended-visible")) tended.visible = false;
-    if (f.get("tended-pattern")) tended.pattern = f.get("tended-pattern");
-    if (f.get("tended-painted")) tended.colour = f.get("tended-colour");
-    if (Object.keys(tended).length) connectors.byEdge = { "tended-by": tended };
-    if (Object.keys(connectors).length) kit.connectors = connectors;
-    if (!f.get("grid")) kit.grid = { visible: false };
-    if (!f.get("lattice")) kit.lattice = { visible: false };
-    if (!f.get("tags")) kit.tags = { visible: false };
-    if (!f.get("captions")) kit.captions = { visible: false };
-    return kit;
-  }
-  function say(kit) {
-    const json = JSON.stringify(kit, null, 2).replace(/"([A-Za-z]+)":/g, "$1:");
-    decl.textContent = "kit: " + json;
-    const api = window.graviewChapters;
-    const findings = api ? api.kitFindings(CHAPTER, kit) : [];
-    if (findings.length === 0) {
-      verdict.dataset.clean = "true";
-      verdict.innerHTML = "<b>graview check:</b> the kit is clean.";
-      return;
-    }
-    verdict.dataset.clean = "false";
-    verdict.innerHTML = findings.map((finding) =>
-      finding.unreadable
-        ? "<b>kit-colour-unreadable</b> " + finding.edgeKind
-        : "<b>kit-contrast-below-aa</b> " + finding.edgeKind + " " + finding.ratio + ":1 against the " + finding.scheme + " ground, " + finding.requires + ":1 required",
-    ).join("<br>");
-  }
-  // The embed wears the chapter's own brand until the form says otherwise:
-  // re-dressing it in nothing new is a render for no reason.
-  let worn = "{}";
-  function apply() {
-    const kit = read();
-    say(kit);
-    const said = JSON.stringify(kit);
-    const api = window.graviewChapters;
-    if (said === worn || !api || !api.handles.get(live)) return;
-    worn = said;
-    api.dress(live, CHAPTER, kit);
-  }
-  form.addEventListener("input", apply);
-  form.addEventListener("submit", (event) => event.preventDefault());
-  document.addEventListener("graview:mounted", (event) => { if (event.target === live) apply(); });
-  say(read());
-})();
 </script>
 <!-- The garden's chapters, live: built by `pnpm site:build` from apps/seedbed. -->
 <script src="chapters.js"></script>
@@ -1451,6 +1620,33 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScroll
   });
 })();
 </script>
-
+<script>
+/*
+ * THE HERO, SETTLED. The garden mounts as any embed does — the seat open
+ * and listening, the city at 100% — and on a page whose first job is to
+ * show the city, a reader would put the seat away and step back once. So
+ * the page does exactly that, through the product's own two controls,
+ * once, after the mount; nothing here reaches past what a hand could press.
+ * The same for the frames whose subject is a lens or the studio rather
+ * than the seat.
+ */
+(function () {
+  /* No zoom-out: at 80% the buildings' own targets fall under a fingertip, which the site harness measures. The city runs past the frame's edge, and that is what the caption says to do about it. */
+  var settle = { hero: 0, lens: 0, studio: 0 };
+  function press(host, selector) {
+    var button = host.querySelector(selector);
+    if (button) button.click();
+  }
+  document.addEventListener("graview:mounted", function (event) {
+    var host = event.target;
+    if (!(host instanceof Element) || !host.hasAttribute("data-settle")) return;
+    var kind = host.getAttribute("data-settle");
+    setTimeout(function () {
+      press(host, '[data-graview-companion="open"] button[aria-expanded="true"]');
+      for (var i = 0; i < (settle[kind] || 0); i += 1) press(host, '[data-testid="zoom-out"]');
+    }, 250);
+  });
+})();
+</script>
 </body>
 </html>

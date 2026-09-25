@@ -5,9 +5,14 @@ written twice.**
 
 | | | |
 |---|---|---|
-| `index.html` | the landing page | makes the case in thirty seconds |
-| `progression.html` | the long version | fifteen live chapters, the packages, the lenses, the kit |
-| `docs/` | the reference | 31 pages, all written out of the repository |
+| `index.html` | the landing page | the product itself in the hero and four more frames, one per derived surface |
+| `progression.html` | the long version | sixteen live chapters, the packages, the lenses, the kit |
+| `docs/` | the reference | 36 pages, all written out of the repository: getting started, concepts, packages, the CLI, working with a model, skills, the findings, live demos |
+
+Published at [graview.dev](https://graview.dev) by `.github/workflows/pages.yml`
+on every push to `main` that touches this directory. `CNAME`, `.nojekyll`,
+`robots.txt`, `sitemap.xml` (written by `site-docs.mjs`), `404.html` and
+`og.png` are the deployment's own files.
 
 ```sh
 open docs/site/index.html
@@ -23,11 +28,13 @@ fifteen chapters and nine reference sections, which is documentation. A
 person deciding whether to use this had to read a tutorial; a person already
 using it had nothing to look anything up in.
 
-The landing page now answers one question — *what is this and why would I* —
-with the declaration and the application it produces side by side above the
-fold, a stepper that mounts the same app at five points in its own
-declaration, the case for working on it with a model, and one install line.
-Everything it used to carry is one click away.
+The landing page answers one question — *what is this and why would I* — and
+answers it by showing the thing: the example garden, live, in the hero at
+altitude with the seat put away; the stepper that mounts the same app at
+five points in its own declaration; four more live frames, one per derived
+surface (pages, a lens, the studio, the seat); the two programming
+interfaces side by side; and one install line. The second cut replaced a
+docs page with a headline. Nothing on it is a screenshot.
 
 ## What is generated, and what that buys
 
@@ -35,7 +42,7 @@ Everything it used to carry is one click away.
 |---|---|
 | `scripts/site-css.mjs` | the stylesheet, inlined into every page — the artifact host blocks a `<link>`, so it cannot live in one |
 | `scripts/site-numbers.mjs` | every number on the landing page, counted out of the tree |
-| `scripts/site-docs.mjs` | all 31 docs pages: a page per package, per skill, plus the CLI, the findings and the concepts |
+| `scripts/site-docs.mjs` | all 36 docs pages: a page per package, per skill, plus getting started (from what the scaffolder writes), the CLI (from its help), working with a model, the findings, live demos and the concepts — and the sitemap |
 | `scripts/site-progression.mjs` | the chapter records in `progression.html` |
 
 `tests/site.test.ts` runs each of them with `--check` and fails when a page

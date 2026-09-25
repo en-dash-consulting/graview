@@ -1,0 +1,51 @@
+# graview.dev — the site under docs/site, published by GitHub Pages.
+#
+# The site is committed, not built here: `pnpm site:build:all` writes the
+# stylesheet, the numbers and the docs pages out of the repository, and
+# tests/site.test.ts fails CI when any of them has gone stale. So a push to
+# main that passed CI already holds the site it should publish, and this job
+# only has to upload it. `apps/seedbed` builds docs/site/chapters.js the same
+# way (`pnpm site:build`), and it is committed too — a 900 KB script nobody
+# wants to rebuild on every deploy just to prove it is the same script.
+#
+# One-time setup in the repository: Settings → Pages → Source: "GitHub
+# Actions", and the custom domain graview.dev with a CNAME at the registrar
+# pointing at en-dash-consulting.github.io (docs/site/CNAME carries the name).
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Pages needs a public repository or a plan that allows private Pages;
+    # while the repository is private this job skips rather than failing
+    # every push. A manual run still goes ahead.
+    if: github.event_name == 'workflow_dispatch' || github.event.repository.visibility == 'public'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/site
+      - id: deployment
+        uses: actions/deploy-pages@v4

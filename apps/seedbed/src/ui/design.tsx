@@ -77,6 +77,8 @@ const CSS = `
 .sb-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--sb-line); min-width: 0; }
 .sb-row:first-of-type { border-top: none; }
 .sb-row .grow { flex: 1 1 auto; min-width: 0; }
+/* A name that is a link is a target, and a target is at least a fingertip: "Beans" alone is twenty-two pixels wide. */
+.sb-row a.grow, a.grow { display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; }
 .sb-row .k { font-size: 0.8125rem; color: var(--graview-ink-muted); }
 .sb-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.78125rem; border: 1px solid var(--sb-line); background: var(--sb-card); white-space: nowrap; min-height: 24px; }
 .sb-pill.warn { border-color: var(--graview-warn); color: var(--graview-warn); }

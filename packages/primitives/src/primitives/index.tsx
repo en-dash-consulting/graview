@@ -377,9 +377,12 @@ export interface ChipProps {
 
 /** One small labelled thing. The glyph-fidelity workhorse. */
 export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProps) {
-  // A capped chip must be able to say the rest somewhere, or capping it loses
-  // information rather than tidying it.
-  const full = typeof label === "string" && label.length > 28 ? label : undefined;
+  // A cut chip must be able to say the rest somewhere, or cutting it loses
+  // information rather than tidying it. Whether it is cut is the container's
+  // decision, not the label's length: an eighteen-character rotation in a
+  // twenty-five-pixel calendar cell was cut to "Br…" and carried no title,
+  // because only a label past twenty-eight characters used to get one.
+  const full = typeof label === "string" ? label : undefined;
   // Hue identifies the kind; luminance carries the reading. A chip is an
   // outline with a trace of its hue behind it, so a dozen of them together
   // stay a list rather than becoming confetti.

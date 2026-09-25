@@ -64,8 +64,10 @@ const arrive = async (page, url) => {
 };
 
 const PAGES = [
-  { file: "index.html", name: "the page", live: 2, skip: "#what" },
-  { file: "progression.html", name: "the long version", live: 16, skip: "#grown" },
+  /* The hero, chapter one beside its code, four surfaces, and the first step of the stepper. */
+  { file: "index.html", name: "the page", live: 7, skip: "#what" },
+  /* Sixteen chapters and the kit's own frame. */
+  { file: "progression.html", name: "the long version", live: 17, skip: "#grown" },
   /*
    * And a sample of the docs. Thirty-one pages at ten widths in two schemes
    * is six hundred page loads for thirty-one renderings of four templates,
@@ -77,6 +79,10 @@ const PAGES = [
   { file: "docs/packages/core.html", name: "a package page", live: 0, skip: "#main", widths: [320, 768, 1280] },
   { file: "docs/skills/graview-lens.html", name: "a skill page", live: 0, skip: "#main", widths: [320, 768, 1280] },
   { file: "docs/checks.html", name: "the findings list", live: 0, skip: "#main", widths: [320, 768, 1280] },
+  { file: "docs/getting-started.html", name: "getting started", live: 0, skip: "#main", widths: [320, 768, 1280] },
+  { file: "docs/agents.html", name: "working with a model", live: 0, skip: "#main", widths: [320, 768, 1280] },
+  /* Five live frames on a docs page, so it takes the same sweep the page does. */
+  { file: "docs/demos.html", name: "the demos", live: 5, skip: "#main", widths: [320, 768, 1280] },
 ];
 const PAGE = pageAt("index.html");
 const ENGINE = engineName();
@@ -171,6 +177,10 @@ try {
             const style = getComputedStyle(el);
             return style.display !== "none" && style.visibility !== "hidden";
           })
+          /* A picture of a lens on a district's board is drawn from the
+             same components and carries their roles, but it is `inert`:
+             out of the tab order and out of hit-testing. Not a target. */
+          .filter((el) => !el.closest("[inert]"))
           .map((el) => ({ el, box: el.getBoundingClientRect(), scale: scale(el) }))
           .filter(({ box, scale: s }) => box.width > 1 && (box.width / s < 23.5 || box.height / s < 23.5))
           .map(({ el, box }) => `${(el.textContent ?? "").trim().slice(0, 16)} ${Math.round(box.width)}x${Math.round(box.height)}`);
@@ -314,14 +324,28 @@ try {
   const kitPath = () => page.evaluate(() => document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null);
   const curved = await kitPath();
   await page.locator('#kit-form input[name="route"][value="orthogonal"]').check().catch(() => {});
-  await page.waitForTimeout(400);
+  /* The re-route lands on a frame of its own; wait for the path to change
+     rather than for a number of milliseconds that was right on one machine. */
+  await page.waitForFunction(
+    (was) => (document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null) !== was,
+    curved,
+    { timeout: 4_000 },
+  ).catch(() => {});
+  await page.waitForTimeout(200);
   const elbowed = await kitPath();
   await page.locator('#kit-form input[name="tended-visible"]').uncheck().catch(() => {});
   await page.waitForTimeout(400);
   const quiet = await kitPath();
   const declared = await page.evaluate(() => document.getElementById("kit-decl")?.textContent ?? "");
-  report.criteria.theKitRedressesTheLiveGarden =
-    curved !== null && curved.includes(" Q ") && elbowed !== null && elbowed.includes(" L ") && !elbowed.includes(" Q ") && quiet === null && declared.includes('visible: false');
+  /* Each half of the claim on its own, so a failure says which half. */
+  report.kit = {
+    connectorFound: curved !== null,
+    curvedAtFirst: curved?.includes(" Q ") ?? false,
+    elbowedAfter: elbowed !== null && elbowed.includes(" L ") && !elbowed.includes(" Q "),
+    goneWhenQuiet: quiet === null,
+    declarationSaysSo: declared.includes("visible: false"),
+  };
+  report.criteria.theKitRedressesTheLiveGarden = Object.values(report.kit).every(Boolean);
   await page.locator('#kit-form input[name="tended-visible"]').check().catch(() => {});
   await page.locator('#kit-form input[name="tended-painted"]').check().catch(() => {});
   await page.locator('#kit-form input[name="tended-colour"]').fill("#f4f4f4").catch(() => {});

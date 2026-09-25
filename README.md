@@ -391,6 +391,21 @@ anything about HTML-in-Canvas. The short version, measured in Chrome Canary
 - Inline SVG captures fine. Nested canvas and cross-origin frames capture
   **silently blank**, which is worse than throwing.
 
+## The site
+
+[graview.dev](https://graview.dev) is `docs/site`, published by GitHub Pages
+on every push to `main` (`.github/workflows/pages.yml`). The landing page
+is the product: the example garden mounted live in the hero and in four
+more frames, one per derived surface. The docs are written out of the
+repository by `scripts/site-docs.mjs` — a page per package from its README
+and barrel, a page per skill from its `SKILL.md`, the CLI page from the help
+the CLI prints, the findings page from the checker's source, getting
+started from what the scaffolder really writes — and `tests/site.test.ts`
+fails when any of it has gone stale. `pnpm site:build:all` regenerates the
+stylesheet, the numbers and the docs; `pnpm site:build` rebuilds the
+chapters bundle from `apps/seedbed`; `pnpm site` drives every page at ten
+widths in both schemes with axe-core and a keyboard.
+
 ## Shipping it
 
 The packages are the deliverable: an SDK someone builds a product on, in

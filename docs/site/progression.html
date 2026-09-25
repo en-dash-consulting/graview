@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graview — the garden, grown</title>
-<meta name="description" content="One example declared a little at a time: fifteen live chapters, the declaration in full, the twelve packages, the lenses, the kit and what an agent may do.">
+<meta name="description" content="One example declared a little at a time: sixteen live chapters, the declaration in full, the thirteen packages, the lenses, the kit and what an agent may do.">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Graview — the garden, grown">
 <meta property="og:description" content="Declare the domain. The application follows. A development framework built on a typed context graph, from En Dash.">
@@ -293,7 +293,9 @@ strong { font-weight: 700; color: var(--ink); }
 code { font-family: var(--mono); font-size: 0.86em; }
 em { font-style: italic; }
 
-section { padding-top: 54px; scroll-margin-top: 24px; }
+/* The page's own sections, not an embed's: a mounted Graview is a <section>
+   too, and this rule reaching it put a blank band above every live frame. */
+section:where(:not([data-graview-embed], [data-graview-embed] *)) { padding-top: 54px; scroll-margin-top: 24px; }
 section > .head {
   display: flex;
   align-items: baseline;
@@ -758,6 +760,163 @@ main.col ul:not([class]) li, main.col ol:not([class]) li {
   margin-top: 6px; line-height: 1.62; color: var(--ink-2);
 }
 main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: anywhere; }
+
+/* ── The landing page, second cut ──────────────────────────────────────
+   The first cut was a docs page with a headline: a rail, a column, the
+   product in a 480px box halfway down. This one puts the running product
+   where the eye lands, gives every surface it derives a live frame, and
+   keeps the rule that nothing on it is a screenshot or a mock-up.
+   ─────────────────────────────────────────────────────────────────── */
+
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .topbar { background: color-mix(in srgb, var(--paper) 84%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+}
+.topbar-in {
+  max-width: 1280px; margin: 0 auto; padding: 0 var(--pad);
+  display: flex; align-items: center; gap: 16px; min-height: 58px;
+}
+.topbar .brand { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+/* Both are links, so both are targets: tall enough for a fingertip. */
+.topbar .brand .it { font-size: 19px; text-decoration: none; color: inherit; display: inline-flex; align-items: center; min-height: 32px; padding: 0 4px; }
+.topbar .brand .who { min-height: 32px; min-width: 32px; justify-content: center; }
+.topbar .brand .who svg { width: 18px; height: 18px; }
+.topbar .brand .who span { display: none; }
+.topbar .jump {
+  display: flex; gap: 2px; margin-left: auto; font-size: 13px;
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  padding: 4px 0;
+}
+.topbar .jump::-webkit-scrollbar { display: none; }
+.topbar .jump a {
+  flex: 0 0 auto; border-left: 0; margin: 0; padding: 6px 11px;
+  border-radius: 999px; white-space: nowrap; min-height: 32px;
+}
+.topbar .jump a:hover { color: var(--pine); background: var(--sunk); }
+.topbar .jump a.go { color: var(--panel); background: var(--pine); font-weight: 600; }
+.topbar .jump a.go:hover { background: var(--pine-2); color: var(--panel); }
+
+.page { max-width: 1280px; margin: 0 auto; padding: 0 var(--pad) 80px; min-width: 0; }
+/* Direct children only: an embed's root is a <section> too, and a rule that
+   reaches it puts ninety-six pixels of nothing above the product. */
+main.page > section { padding-top: 96px; scroll-margin-top: 70px; }
+main.page > section > .head h2 { font-size: clamp(26px, 3vw, 38px); letter-spacing: -0.035em; max-width: 22ch; }
+main.page > section > .head { margin-bottom: 16px; }
+main.page > section > .head .tick { transform: translateY(-9px); }
+main.page > section > .lede { max-width: 60ch; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3); margin: 0 0 18px;
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+}
+.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 3px var(--pine-wash); flex: 0 0 auto; }
+
+/* The hero: copy beside the running product, the product taller than the copy. */
+.hero {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 40px; align-items: center;
+  padding-top: 40px !important; min-height: calc(100vh - 58px);
+}
+.hero h1 { font-size: clamp(38px, 5.2vw, 70px); max-width: 12ch; }
+.hero .lede { margin-top: 22px; }
+.hero .cta { margin-top: 28px; max-width: 100%; }
+.hero .cta-line { padding: 14px 16px; }
+.hero .cta-line code { font-size: 15.5px; }
+.hero .copy { min-height: max(2rem, 34px); padding: 0 14px; font-size: 13px; }
+.hero-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-family: var(--sans); font-size: 14px; font-weight: 600; }
+.hero-links a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; gap: 6px; }
+.hero-links a:hover { text-decoration: underline; }
+.hero-stage { min-width: 0; display: grid; gap: 10px; }
+.hero-live {
+  height: min(660px, 74vh); min-height: 440px;
+  border-radius: 6px;
+  box-shadow: 0 40px 90px -40px rgba(0, 12, 48, 0.55), 0 0 0 1px var(--rule);
+}
+.stage-caption {
+  display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--ink-3); max-width: 100%;
+}
+.stage-caption .live { color: var(--pine); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+@media (max-width: 1000px) {
+  .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; gap: 28px; padding-top: 28px !important; }
+  .hero-live { height: 500px; min-height: 0; }
+}
+@media (max-width: 560px) { .hero-live { height: 440px; } .hero h1 { max-width: 14ch; } }
+
+/* Rises into place once, and not at all for anyone who asked for less motion. */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.hero-copy > * { animation: rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero-copy > :nth-child(2) { animation-delay: 80ms; }
+.hero-copy > :nth-child(3) { animation-delay: 160ms; }
+.hero-copy > :nth-child(4) { animation-delay: 240ms; }
+.hero-copy > :nth-child(5) { animation-delay: 320ms; }
+.hero-stage { animation: rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms both; }
+
+/* The numbers, as a band under the hero rather than a row in the corner. */
+.band {
+  margin: 48px 0 0; padding: 26px 0 0; border-top: 1px solid var(--rule);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.band strong { font-size: 40px; }
+
+/* Every surface, live, two up. */
+.faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 32px; margin-top: 30px; }
+.face { display: grid; gap: 12px; min-width: 0; align-content: start; }
+.face .chapter-live { height: 500px; border-radius: 4px; }
+.face.phone .chapter-live { max-width: 390px; height: 640px; }
+.face-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.face-n { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--pine); text-transform: uppercase; white-space: nowrap; }
+.face h3 { font-size: 19px; font-weight: 700; }
+.face p { font-size: 14.5px; line-height: 1.65; color: var(--ink-2); max-width: 54ch; }
+.face p code { font-size: 12.5px; }
+@media (max-width: 900px) { .faces { grid-template-columns: minmax(0, 1fr); } .face .chapter-live { height: 460px; } }
+
+/* Copy beside a frame. */
+.split { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 36px; align-items: start; margin-top: 26px; }
+.split > .stack { align-content: start; }
+@media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } }
+
+/* Two interfaces, side by side. */
+.hands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; margin-top: 28px; }
+.hand { display: grid; gap: 12px; align-content: start; min-width: 0; padding: 22px 24px; border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); }
+.hand h3 { font-size: 18px; }
+.hand .who-for { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pine); }
+.hand ul.plain li { font-size: 14px; }
+.hand .code { max-height: 300px; overflow: auto; }
+@media (max-width: 900px) { .hands { grid-template-columns: minmax(0, 1fr); } }
+
+/* The packages: the tool, then the framework. */
+.pkgs { list-style: none; margin: 26px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 12px; }
+.pkgs li { min-width: 0; display: grid; }
+.pkgs a {
+  display: grid; gap: 5px; align-content: start; padding: 15px 16px;
+  border: 1px solid var(--rule); border-radius: 4px; text-decoration: none; color: inherit; background: var(--panel);
+}
+.pkgs a:hover { border-color: var(--pine); }
+.pkgs code { color: var(--pine); font-size: 13px; font-weight: 500; }
+.pkgs span { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+.pkgs li.tool { grid-column: 1 / -1; }
+.pkgs li.tool a { border-color: var(--pine); background: var(--pine-wash); grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 6px 22px; align-items: baseline; }
+.pkgs li.tool code { font-size: 15px; }
+@media (max-width: 640px) { .pkgs li.tool a { grid-template-columns: minmax(0, 1fr); } }
+
+/* A wide, quiet line of claims under a heading. */
+.strip { margin: 22px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 28px; }
+.strip li { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); padding-top: 12px; border-top: 1px solid var(--rule); min-width: 0; }
+.strip li strong { display: block; color: var(--ink); margin-bottom: 2px; }
+
+/* The install section, two commands wide. */
+.install-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
+@media (max-width: 900px) { .install-two { grid-template-columns: minmax(0, 1fr); } }
+
+main.page footer { max-width: 100%; }
+@media (forced-colors: active) {
+  .topbar .jump a.go, .pkgs li.tool a { border: 1px solid CanvasText; }
+}
 /* site-css:end */
 </style>
 
@@ -789,8 +948,8 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
     </div>
 
     <div class="railfoot">
-      12 packages<br>
-      <span data-chapters-word>fifteen</span> chapters, live<br>
+      13 packages<br>
+      <span data-chapters-word>sixteen</span> chapters, live<br>
       verified on every push
     </div>
   </nav>
@@ -1082,6 +1241,23 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
           <ul><li><code>createStudio(app) — the declaration as a store of the meta-schema; studio.check(), studio.apply(), studio.files()</code></li><li><code>add-kind, add-field, add-edge, add-act, add-rule, name-repair, add-role, grant — acts on the declaration, undone like any other</code></li><li><code>createStudioLens(app) registered over the kinds as "What the checker says"</code></li></ul>
         </div>
       </article>
+      <article class="chapter" id="chapter-16" aria-labelledby="h-chapter-16">
+        <div class="chapter-head">
+          <span class="chapter-n" aria-hidden="true">16</span>
+          <h3 id="h-chapter-16">The years it turns through</h3>
+        </div>
+        <p class="chapter-claim">A bed is turned through four families and comes back to the first four years later. The same calendar lens that drew the season draws the rotation, a month per cell over as many years as the garden says it turns through — and how far out that is is the garden's word, not the framework's.</p>
+        <figure class="chapter-shot">
+          <div class="chapter-live" data-graview-chapter="16" role="region" aria-label="The rotation, live">
+            <p class="chapter-loading">The garden after chapter 16, loading…</p>
+          </div>
+          <figcaption>Standing says “The garden keeps its agreements”. graview check: Seedbed — no problems found. This is the app itself: the rotation is the season's calendar at a four-year horizon; switch its face, click a district, take an act.</figcaption>
+        </figure>
+        <div class="chapter-adds">
+          <span class="chapter-label">The declaration gained</span>
+          <ul><li><code>defineNode("rotation") with an appendOnly edge "turns-over" to the plot it turns</code></li><li><code>an appendOnly edge "holds" from a rotation to what went in during it — so a turn and its plantings are connected, not strangers on the same plot</code></li><li><code>defineMutation("rotate") — which family a plot grows, and until when; it claims what is already in the ground, and sow puts new plantings under the turn</code></li><li><code>the same calendar binding at range: "years" with horizon: { years: 4, title: "The rotation" }</code></li></ul>
+        </div>
+      </article>
       </div>
     </section>
     <!-- progression:end -->
@@ -1141,9 +1317,10 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
       </p>
       <div class="scroll" data-scroller aria-label="The packages, as a table">
         <table>
-          <caption class="sr-only">The twelve packages and what each contains</caption>
+          <caption class="sr-only">The thirteen packages and what each contains</caption>
             <thead><tr><th scope="col">Package</th><th scope="col">What is in it</th></tr></thead>
           <tbody>
+            <tr><td class="pkg">graview</td><td>The command line a person installs: <code>create</code>, <code>check</code>, <code>docs</code>, <code>describe</code>, <code>lens</code>, <code>figure</code>, <code>serve</code>, <code>skills</code>. It dispatches; every subcommand lives in the package whose concern it is.</td></tr>
             <tr><td class="pkg">@graview/core</td><td>Schema, graph, invariants, mutations, the operation log, persistence and sync adapters, the installation as a module, the brand and its kit, and the <code>graview check</code> CLI.</td></tr>
             <tr><td class="pkg">@graview/layout</td><td>Where everything sits. Headless and pure. No DOM, no framework.</td></tr>
             <tr><td class="pkg">@graview/tools</td><td>Derived affordances, and one tool surface an agent and an interface both use.</td></tr>
@@ -1290,7 +1467,7 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
         checker's verdict on any colour you pick is under that.
       </p>
       <div class="two">
-        <div class="chapter-live" data-graview-chapter="8" data-stop="#overview=1" data-label="The dressed garden" role="region" aria-label="The kit's garden, live">
+        <div class="chapter-live" data-graview-chapter="8" data-stop="#focus=plot-1" data-label="The dressed garden" role="region" aria-label="The kit's garden, live">
           <p class="chapter-loading">The garden after chapter 8, loading…</p>
         </div>
         <form class="kit-controls" id="kit-form" aria-label="Dress the garden">

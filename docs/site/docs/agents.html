@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>create-graview — Graview docs</title>
-<meta name="description" content="Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.">
+<title>Working with a model — Graview docs</title>
+<meta name="description" content="The declaration is the interface a person uses and the interface a model uses. What a model gets, how it is narrowed, and what it reads before it writes.">
 <meta name="color-scheme" content="light dark">
-<meta property="og:title" content="create-graview — Graview docs">
-<meta property="og:description" content="Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.">
+<meta property="og:title" content="Working with a model — Graview docs">
+<meta property="og:description" content="The declaration is the interface a person uses and the interface a model uses. What a model gets, how it is narrowed, and what it reads before it writes.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://graview.dev/docs/packages/create-graview.html">
+<meta property="og:url" content="https://graview.dev/docs/agents.html">
 <meta property="og:image" content="https://graview.dev/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://graview.dev/docs/packages/create-graview.html">
+<link rel="canonical" href="https://graview.dev/docs/agents.html">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzMwIiBoZWlnaHQ9IjMzMCIgdmlld0JveD0iMCAwIDMzMCAzMzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjcuNSIgeT0iNy41IiB3aWR0aD0iMzE1IiBoZWlnaHQ9IjMxNSIgc3Ryb2tlPSIjMDBFNUI5IiBzdHJva2Utd2lkdGg9IjE1Ii8+CjxwYXRoIGQ9Ik0zMTUgMTVIMTVWMzE1SDMxNVYxNVoiIGZpbGw9IiMwMDE3NjkiLz4KPHBhdGggZD0iTTMxNSAyMzIuMTE5SDQ3LjAwNzRWMjQ3LjcwNUgzMTVWMjMyLjExOVoiIGZpbGw9IiMwMEU1QjkiLz4KPHBhdGggZD0iTTEzOS43OTUgMTY0Ljk5N0wxNDUuMzI0IDE2OS44MzhDMTQwLjk0MiAxNzguMzcyIDEyNi4xOTEgMTkyLjg5NCAxMDAuNTg5IDE5Mi44OTRDNzEuNzc0IDE5Mi44OTQgNDUuMDI0OCAxNzQuNjc4IDQ1LjAyNDggMTM5LjYyNUM0NS4wMjQ4IDEwMy40MjQgNzMuNjEwMiA4NS40MzggMTAyLjQyNSA4NS40MzhDMTI3LjA4OCA4NS40MzggMTQ2LjQ3MSA5OC44MTI2IDE0Ni40NzEgMTE5LjMyM0MxNDYuNDcxIDEzNy41MzggMTMxLjI2MSAxNDAuMDg0IDEwNi44MDcgMTQxLjAwMkw4MS40NTU1IDE0MS45MkM3Ny4zMDMzIDE0Mi4xNSA3Ni4zODUzIDE0NS42MTMgNzcuNzYyNCAxNTAuOTEzQzgzLjUyMTIgMTY3LjUyMiA5Ni44OTU4IDE3Ni45NzQgMTEzLjk2NCAxNzYuOTc0QzEyMi43MjcgMTc2Ljk5NSAxMzEuNzIgMTc0LjY3OSAxMzkuNzk1IDE2NC45OTdaTTc0LjU0OTEgMTI0LjE4NUM3NC4zMTk2IDEzMS4xMTIgNzYuNjE0OCAxMzMuODY2IDgyLjYyNCAxMzMuODY2SDk0Ljg1MUMxMTQuNjczIDEzMy44NjYgMTIwLjY4MiAxMjcuNjQ4IDEyMC42ODIgMTE3LjAyOEMxMjAuNjgyIDEwNS4yNiAxMTIuODM3IDk0LjIwMTQgOTkuMDAzMSA5NC4yMDE0QzgzLjMxMjUgOTQuMjIyMiA3NS42OTY3IDEwNi42NTggNzQuNTQ5MSAxMjQuMTg1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0NC4yMjUgMTczLjUzMVYxMzEuNTcxQzI0NC4yMjUgMTE0LjUwMyAyMzcuMDY4IDEwMi45ODYgMjIzLjAwNSAxMDIuOTg2QzIwOC4yNTMgMTAyLjk4NiAxOTkuMjYxIDExNC41MjQgMTk5LjI2MSAxMzEuNTcxVjE2OS42MDhDMTk5LjI2MSAxNzkuNTE5IDIwMy4xODMgMTgyLjc1NCAyMTMuNzgzIDE4My42NzJWMTkxLjUxN0gxNTYuODQyVjE4My42NzJDMTY3LjY3MSAxODIuNzU0IDE3MS41OTMgMTc5LjUxOSAxNzEuNTkzIDE2OS42MDhWMTEyLjE4N0MxNzEuNTkzIDEwMS41ODggMTY3LjIxMiA5OC44MTI4IDE1Ni44NDIgOTkuNzMwOFY5MS44ODU1TDE4OS4xMiA4NS44OTcyQzE5NS43OTcgODQuNzQ5NiAxOTkuMjYxIDg3LjczMzMgMTk5LjI2MSA5My4wNTRDMTk5LjI2MSAxMDEuMzU4IDIwMi45NTQgMTAzLjQyNCAyMDUuOTM3IDk5Ljk4MTJDMjExLjAwOCA5NC40NTE5IDIyMC4yMyA4NSAyMzguNDQ1IDg1QzI1NS4yODQgODUgMjcxLjg3MSA5My4zMDQ0IDI3MS44NzEgMTI1LjU4M1YxNzEuMDA2QzI3MS44NzEgMTc4LjYyMiAyNzUuNzk0IDE4MS4zNzYgMjgzLjYzOSAxNzkuNzdWMTg3LjYxNUMyNzkuNDg3IDE5MC44NDkgMjcwLjk1MyAxOTIuNjg1IDI2NC4yNzcgMTkyLjY4NUMyNTEuNjExIDE5Mi42NjQgMjQ0LjIyNSAxODUuOTg4IDI0NC4yMjUgMTczLjUzMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -936,22 +936,22 @@ main.page footer { max-width: 100%; }
 <path d="M139.795 164.997L145.324 169.838C140.942 178.372 126.191 192.894 100.589 192.894C71.774 192.894 45.0248 174.678 45.0248 139.625C45.0248 103.424 73.6102 85.438 102.425 85.438C127.088 85.438 146.471 98.8126 146.471 119.323C146.471 137.538 131.261 140.084 106.807 141.002L81.4555 141.92C77.3033 142.15 76.3853 145.613 77.7624 150.913C83.5212 167.522 96.8958 176.974 113.964 176.974C122.727 176.995 131.72 174.679 139.795 164.997ZM74.5491 124.185C74.3196 131.112 76.6148 133.866 82.624 133.866H94.851C114.673 133.866 120.682 127.648 120.682 117.028C120.682 105.26 112.837 94.2014 99.0031 94.2014C83.3125 94.2222 75.6967 106.658 74.5491 124.185Z" fill="white"/>
 <path d="M244.225 173.531V131.571C244.225 114.503 237.068 102.986 223.005 102.986C208.253 102.986 199.261 114.524 199.261 131.571V169.608C199.261 179.519 203.183 182.754 213.783 183.672V191.517H156.842V183.672C167.671 182.754 171.593 179.519 171.593 169.608V112.187C171.593 101.588 167.212 98.8128 156.842 99.7308V91.8855L189.12 85.8972C195.797 84.7496 199.261 87.7333 199.261 93.054C199.261 101.358 202.954 103.424 205.937 99.9812C211.008 94.4519 220.23 85 238.445 85C255.284 85 271.871 93.3044 271.871 125.583V171.006C271.871 178.622 275.794 181.376 283.639 179.77V187.615C279.487 190.849 270.953 192.685 264.277 192.685C251.611 192.664 244.225 185.988 244.225 173.531Z" fill="white"/>
 </svg><span>En&nbsp;Dash</span></a>
-      <span class="it"><a href="../../index.html" style="color: inherit; text-decoration: none;">Graview</a></span>
+      <span class="it"><a href="../index.html" style="color: inherit; text-decoration: none;">Graview</a></span>
       <span class="sub">Documentation</span>
     </div>
 
     <div class="jump">
-      <a href="../index.html">Docs home</a>
-      <a href="../getting-started.html">Getting started</a>
-      <a href="../concepts.html">Concepts</a>
-      <a href="../packages.html" aria-current="page">Packages</a>
-      <a href="../cli.html">The CLI</a>
-      <a href="../agents.html">With a model</a>
-      <a href="../skills.html">Skills</a>
-      <a href="../checks.html">What check says</a>
-      <a href="../demos.html">Live demos</a>
-      <a href="../../progression.html">The garden, grown</a>
-      <a href="../../index.html">&larr; graview.dev</a>
+      <a href="index.html">Docs home</a>
+      <a href="getting-started.html">Getting started</a>
+      <a href="concepts.html">Concepts</a>
+      <a href="packages.html">Packages</a>
+      <a href="cli.html">The CLI</a>
+      <a href="agents.html" aria-current="page">With a model</a>
+      <a href="skills.html">Skills</a>
+      <a href="checks.html">What check says</a>
+      <a href="demos.html">Live demos</a>
+      <a href="../progression.html">The garden, grown</a>
+      <a href="../index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
@@ -963,27 +963,56 @@ main.page footer { max-width: 100%; }
 
   <main class="col" id="main">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
-      <h1 id="h-what">create-graview</h1>
-      <p class="lede" style="margin-top: 18px;">Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.</p>
-      <div class="cta"><div class="cta-line"><code>pnpm add create-graview</code><button type="button" class="copy" data-copy="pnpm add create-graview">Copy</button></div></div>
+      <h1 id="h-what">Working with a model</h1>
+      <p class="lede" style="margin-top: 18px;">A declaration is a context graph, and a context graph is the one thing a model reads as well as a person does. Graview has two programming interfaces over one declaration: the surfaces a person uses, and the tools, descriptions and skills a model uses. Neither can drift from the other, because both are derived.</p>
     </section>
-    <section id="readme" aria-labelledby="h-readme">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
-<div class="code" data-scroller><pre><code>npm create graview@latest my-app
-pnpm create graview my-app</code></pre></div>
-<p>Once the packages are published. Until then, from a framework checkout: <code>pnpm graview create ../my-app --link .</code></p>
-<p>The conventional door to <code>graview create</code>. It writes a product on Graview — the declaration split into domain and UI, an eighty-line shell, a headless test and a CI workflow — installs it, and says what to do next. The generator and the command live in <code>@graview/core</code>; this package only makes <code>npm create</code> find them.</p>
-<div class="code" data-scroller><pre><code>--name "Field Notes"   the product's name (default: from the directory)
---kind note            the first node kind (default: item)
---link ../graview      consume the framework by path from a sibling checkout
---pm pnpm|npm          the package manager (default: whichever ran this)
---no-install           write the files and stop</code></pre></div>
-<p><code>scripts/smoke-create.mjs</code> in the framework repository is what keeps this honest: on every push it scaffolds a project from the packed tarballs, installs it the way a stranger would, runs the project's own <code>verify</code>, and opens it in a real browser.</p>
+    <section id="seat" aria-labelledby="h-seat">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-seat">The seat</h2></div>
+      <p>An intelligence provider in the declaration says what a model may do and how words and pictures reach it. The seat gets the same acts a person has, narrowed by the same policy, and its turns land in the same operation log with an author and an intent — watchable from altitude, and undoable out of order. What comes back from a model is a plan before it is a change: one row per thing, what it was sure about, what goes with what if you decline something, then one batch with one undo.</p>
+      <ul class="cards">
+        <li><a href="skills/graview-agent-seat.html"><strong>graview-agent-seat</strong><span>Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.</span></a></li>
+        <li><a href="skills/graview-permissions.html"><strong>graview-permissions</strong><span>Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.</span></a></li>
+        <li><a href="skills/graview-desk.html"><strong>graview-desk</strong><span>Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.</span></a></li>
+      </ul>
     </section>
-    <section id="api" aria-labelledby="h-api">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (1)</h2></div>
-      <p class="sm dim">Read off the package's own barrel, so this is what is there today.</p>
-      <ul class="names"><li><code>createGraview</code></li></ul>
+    <section id="tools" aria-labelledby="h-tools">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-tools">Typed tools, derived</h2></div>
+      <p>Derived affordances and the agent tool surface, generated from the same declarations. Every act is a tool with a schema and a sentence attached; the tool surface is generated from the declaration and narrowed by the seat's role, so a model is never offered an act it may not take.</p>
+      <p class="sm dim">The package: <a class="inl" href="packages/tools.html"><code>@graview/tools</code></a>.</p>
+    </section>
+    <section id="read" aria-labelledby="h-read">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-read">What a model can read</h2></div>
+      <p><code>graview describe</code> reads the declaration out for something that cannot see: what a blank installation meets and in what order, what is drawn and what falls back, what a seat may do, how a model is reached, what is judged. <code>graview docs</code> writes an <code>llms.txt</code> and an <code>agents.md</code> beside the entry, derived, so they cannot drift.</p>
+      <div class="code" data-scroller aria-label="graview describe, usage"><pre><code>graview describe &lt;entry&gt; [--as &lt;role&gt;] [--views &lt;module&gt;]</code></pre></div>
+      <div class="code" data-scroller aria-label="graview docs, usage" style="margin-top: 10px;"><pre><code>graview docs &lt;entry&gt; [--out &lt;dir&gt;] [--views &lt;module&gt;]</code></pre></div>
+    </section>
+    <section id="skills" aria-labelledby="h-skills">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-skills">What a model reads before it writes (13 skills)</h2></div>
+      <p>Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by <code>graview skills install .</code> — which <code>graview create</code> runs for you — into <code>.claude/skills</code> and <code>.agents/skills</code>, so Claude Code and Codex find the same instructions.</p>
+      <ul class="cards">
+        <li><a href="skills/graview-agent-seat.html"><strong>graview-agent-seat</strong><span>Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.</span></a></li>
+        <li><a href="skills/graview-brand.html"><strong>graview-brand</strong><span>Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.</span></a></li>
+        <li><a href="skills/graview-desk.html"><strong>graview-desk</strong><span>Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.</span></a></li>
+        <li><a href="skills/graview-invariant.html"><strong>graview-invariant</strong><span>Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.</span></a></li>
+        <li><a href="skills/graview-lens.html"><strong>graview-lens</strong><span>Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.</span></a></li>
+        <li><a href="skills/graview-new-app.html"><strong>graview-new-app</strong><span>Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.</span></a></li>
+        <li><a href="skills/graview-node-kind.html"><strong>graview-node-kind</strong><span>Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.</span></a></li>
+        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface — and put the app on somebody else's page with the embed.</span></a></li>
+        <li><a href="skills/graview-permissions.html"><strong>graview-permissions</strong><span>Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.</span></a></li>
+        <li><a href="skills/graview-port-app.html"><strong>graview-port-app</strong><span>Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.</span></a></li>
+        <li><a href="skills/graview-seed.html"><strong>graview-seed</strong><span>Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.</span></a></li>
+        <li><a href="skills/graview-ship.html"><strong>graview-ship</strong><span>Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.</span></a></li>
+        <li><a href="skills/graview-studio.html"><strong>graview-studio</strong><span>Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.</span></a></li>
+      </ul>
+    </section>
+    <section id="studio" aria-labelledby="h-studio">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-studio">The studio: a model edits the declaration itself</h2></div>
+      <p>The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.</p>
+      <ul class="cards">
+        <li><a href="skills/graview-studio.html"><strong>graview-studio</strong><span>Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.</span></a></li>
+        <li><a href="skills/graview-seed.html"><strong>graview-seed</strong><span>Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.</span></a></li>
+      </ul>
+      <p class="sm dim">The package: <a class="inl" href="packages/studio.html"><code>@graview/studio</code></a>.</p>
     </section>
 
   </main>

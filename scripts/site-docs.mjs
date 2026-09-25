@@ -20,10 +20,39 @@
  */
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const at = (...parts) => resolve(repoRoot, ...parts);
+
+/**
+ * WHAT `graview create` WRITES, from the generator itself rather than from
+ * a list somebody typed. The docs page for starting a product shows the
+ * files and the scripts a stranger will actually get, so the build has to
+ * have run; that is already true of everything else here.
+ */
+async function scaffolded() {
+  const { scaffoldProject } = await import(pathToFileURL(at("packages/core/dist/scaffold/index.js")).href);
+  const scaffold = scaffoldProject({ name: "Field Notes", kind: "note", packageManager: "npm", range: "^0.1.0" });
+  const manifest = JSON.parse(scaffold.files.find((f) => f.path === "package.json").contents);
+  return {
+    files: scaffold.files.map((f) => f.path),
+    scripts: Object.entries(manifest.scripts),
+    dependencies: Object.keys(manifest.dependencies),
+    devDependencies: Object.keys(manifest.devDependencies),
+  };
+}
+
+/** The example apps, described by their own manifests. */
+function apps() {
+  return dirsIn("apps")
+    .map((dir) => {
+      const json = JSON.parse(readFileSync(at("apps", dir, "package.json"), "utf8"));
+      return { dir, name: json.name ?? dir, description: json.description ?? "" };
+    })
+    .filter((app) => app.description && !["spike", "promo"].includes(app.dir));
+}
 const OUT = at("docs/site/docs");
 
 /* ── reading the repository ───────────────────────────────────────────── */
@@ -130,7 +159,9 @@ function commands() {
   const body = /const USAGE = `([\s\S]*?)\n`;/.exec(index)?.[1] ?? "";
   const create = /export const CREATE_USAGE = `([\s\S]*?)\n`;/
     .exec(readFileSync(at("packages/core/src/cli/create.ts"), "utf8"))?.[1] ?? "";
-  const whole = body.replace("${CREATE_USAGE}", create).replace(/\\`/g, "`");
+  const serve = /export const SERVE_USAGE = `([\s\S]*?)\n`;/
+    .exec(readFileSync(at("packages/ship/src/cli.ts"), "utf8"))?.[1] ?? "";
+  const whole = [body.replace("${CREATE_USAGE}", create), serve].join("\n").replace(/\\`/g, "`");
 
   /* Each command starts at its own `graview <name>` line, two spaces in. */
   const out = [];
@@ -156,6 +187,18 @@ function commands() {
     else if (line.trim() !== "") current.usage.push(line.trim());
   }
   if (current) out.push(current);
+  /*
+   * `skills` prints three one-line forms rather than a usage and a blurb,
+   * and lives in its own package; it is read from there and shaped here.
+   */
+  const skillsUsage = /export const SKILLS_USAGE = `([\s\S]*?)\n`;/
+    .exec(readFileSync(at("packages/skills/src/cli.ts"), "utf8"))?.[1] ?? "";
+  out.push({
+    name: "skills",
+    usage: skillsUsage.split("\n").map((line) => line.trim()),
+    blurb: ["Copies the authoring skills into `.claude/skills` and `.agents/skills`, where Claude Code and Codex look for them; `list` says what ships and `path` says where the files live. `graview create` runs the install for you."],
+    table: [],
+  });
   return out
     .map((c) => ({
       name: c.name,
@@ -298,20 +341,27 @@ const css = readFileSync(at("docs/site/site.css"), "utf8").trimEnd();
  * scheme cannot drift; `..` gets the stylesheet and the mark right from one
  * directory down.
  */
-function shell({ title, blurb, here, body, up = ".." }) {
+function shell({ title, blurb, here, body, up = "..", scripts = [] }) {
   const meta = head
     .slice(HEAD_START, HEAD_END)
     .replace(/<title>[\s\S]*?<\/title>/, `<title>${escape(title)} — Graview docs</title>`)
     .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escape(blurb)}">`)
     .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escape(title)} — Graview docs">`)
     .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${escape(blurb)}">`);
+  /* A package's or a skill's page is one directory down, so the nav's
+     links to the docs root are one `../` longer there — a nav that forgot
+     this sent every nested page's "Docs home" to a file that does not exist. */
+  const docsRoot = up === ".." ? "" : "../";
   const nav = [
     ["index.html", "Docs home"],
+    ["getting-started.html", "Getting started"],
     ["concepts.html", "Concepts"],
     ["packages.html", "Packages"],
-    ["skills.html", "Skills"],
     ["cli.html", "The CLI"],
+    ["agents.html", "With a model"],
+    ["skills.html", "Skills"],
     ["checks.html", "What check says"],
+    ["demos.html", "Live demos"],
   ];
   return `${meta}<a class="skip" href="#main">Skip to content</a>
 
@@ -324,9 +374,9 @@ function shell({ title, blurb, here, body, up = ".." }) {
     </div>
 
     <div class="jump">
-${nav.map(([href, label]) => `      <a href="${href}"${href === here ? ' aria-current="page"' : ""}>${label}</a>`).join("\n")}
+${nav.map(([href, label]) => `      <a href="${docsRoot}${href}"${href === here ? ' aria-current="page"' : ""}>${label}</a>`).join("\n")}
       <a href="${up}/progression.html">The garden, grown</a>
-      <a href="${up}/index.html">&larr; The page</a>
+      <a href="${up}/index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
@@ -403,6 +453,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
   });
 });
 </script>
+${scripts.map((src) => `<script src="${src}"></script>`).join("\n")}
 <style>
 ${CSS_START}
 ${css}
@@ -420,7 +471,9 @@ const slug = (text) => text.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").t
 
 /* ── the pages ────────────────────────────────────────────────────────── */
 
-function build() {
+async function build() {
+  const made = await scaffolded();
+  const examples = apps();
   const pkgs = packages();
   const sks = skills();
   const codes = findings();
@@ -477,7 +530,7 @@ function build() {
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">The packages</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">Twelve, in tier order. Each depends only on the ones above it, and a product takes as many as it needs.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;"><code>graview</code> is the tool a person installs; <code>@graview/*</code> is the framework a product imports. ${pkgs.length} packages, one version, each depending only on the ones beneath it.</p>\n` +
       `    </section>\n` +
       section("all", "All of them",
         `      <ul class="cards">\n` +
@@ -504,11 +557,13 @@ function build() {
 
   files.set("cli.html", shell({
     title: "The CLI", here: "cli.html",
-    blurb: "graview check, describe, docs and create — what each reads and what each says.",
+    blurb: "graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">The CLI</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">Every one of these reads the declaration and nothing else. None of them needs a browser, a server or a running app.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">One command line, <code>graview</code>, and every subcommand lives in the package whose concern it is: the generator and the checker in <code>@graview/core</code>, <code>serve</code> in <code>@graview/ship</code>, <code>skills</code> in <code>@graview/skills</code>. None of them needs a browser.</p>\n` +
+      `      <div class="cta"><div class="cta-line"><code>npm install -g graview</code><button type="button" class="copy" data-copy="npm install -g graview">Copy</button></div>\n` +
+      `      <p class="cta-sub sm dim">Or not at all: a project made by <code>graview create</code> has it as a devDependency, so <code>npx graview check</code> works from inside one, and <code>npx graview create</code> works from nowhere.</p></div>\n` +
       `    </section>\n` +
       cmds.map((c) => section(`cli-${c.name}`, `graview ${c.name}`,
         (c.usage ? `      <div class="code" data-scroller aria-label="graview ${c.name}, usage"><pre><code>${escape(c.usage)}</code></pre></div>\n` : "") +
@@ -569,6 +624,126 @@ function build() {
       )).join(""),
   }));
 
+  /* Starting a product: what the command asks, what it writes, what to do next. */
+  const create = cmds.find((c) => c.name === "create");
+  files.set("getting-started.html", shell({
+    title: "Getting started", here: "getting-started.html",
+    blurb: "From nothing to a running product on Graview, and the loop from there: declare, check, look, declare more.",
+    body:
+      `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
+      `      <h1 id="h-what">Getting started</h1>\n` +
+      `      <p class="lede" style="margin-top: 18px;">One command writes a running product for your own domain. Everything on this page below the command is read out of the generator that writes it, so it is what you will actually get.</p>\n` +
+      `      <div class="cta"><div class="cta-line"><code>npm create graview@latest my-app</code><button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button></div>\n` +
+      `      <p class="cta-sub sm dim">Or <code>pnpm create graview my-app</code>, or <code>npx graview create my-app</code>. Node 22 or later.</p></div>\n` +
+      `    </section>\n` +
+      section("asks", "What it asks",
+        `      <p>The directory is the only thing it needs; the rest has a default it says out loud. Give it the product's name and the first kind of thing your domain has — <code>--kind shift</code>, <code>--kind work-order</code> — and it writes chapter one for that domain rather than for a placeholder.</p>\n` +
+        (create ? `      <div class="code" data-scroller aria-label="graview create, usage"><pre><code>${escape(create.usage)}</code></pre></div>` : "")) +
+      section("writes", `What it writes (${made.files.length} files)`,
+        `      <p>The declaration split into domain and UI, so the domain has no React in it and <code>graview check</code> can read it headless. <code>src/domain/</code> is the whole surface you will work in; the shell in <code>src/ui/</code> is eighty lines made of framework parts, and every one of them can be replaced.</p>\n` +
+        `      <ul class="names" aria-label="The files graview create writes">${made.files.map((f) => `<li><code>${escape(f)}</code></li>`).join("")}</ul>\n` +
+        `      <p class="sm dim" style="margin-top: 14px;">Dependencies: ${made.dependencies.map((d) => `<code>${escape(d)}</code>`).join(", ")}. Dev: ${made.devDependencies.map((d) => `<code>${escape(d)}</code>`).join(", ")}. No zod of your own — <code>@graview/core</code> re-exports <code>z</code>, so a kind's fields are built with exactly the copy the framework was built with.</p>`) +
+      section("scripts", "The scripts it gives you",
+        `      <div class="tablewrap"><table><thead><tr><th scope="col">Script</th><th scope="col">Runs</th></tr></thead><tbody>` +
+        made.scripts.map(([name, cmd]) => `<tr><td><code>npm run ${escape(name)}</code></td><td><code>${escape(cmd)}</code></td></tr>`).join("") +
+        `</tbody></table></div>\n` +
+        `      <p class="sm" style="margin-top: 14px;"><strong>Start with <code>verify</code></strong> — typecheck, tests, build and <code>graview check</code>, in that order — and then <code>dev</code>: the scene at the root, the routed face at <code>/pages</code>.</p>`) +
+      section("loop", "The loop from there",
+        `      <p>Open a session beside the declaration. The skills are already installed where Claude Code and Codex look for them, and the first one to read is <a class="inl" href="skills/graview-node-kind.html"><code>graview-node-kind</code></a>. Describe a kind; let the model draft its fields, its edges, its acts and its rule; run <code>graview check</code>; look at the picture; declare more. The checker tells you both when a shape is wrong, in words, before a page does.</p>\n` +
+        `      <ul class="cards">\n` +
+        `        <li><a href="skills/graview-new-app.html"><strong>graview-new-app</strong><span>The shape of the declaration, the shell that comes for free, and the CI that keeps it honest.</span></a></li>\n` +
+        `        <li><a href="skills/graview-node-kind.html"><strong>graview-node-kind</strong><span>Add a kind — fields, edges, label, plural, roles — and verify it with graview check.</span></a></li>\n` +
+        `        <li><a href="skills/graview-invariant.html"><strong>graview-invariant</strong><span>A rule that names the acts that would repair it, then make it fire.</span></a></li>\n` +
+        `        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>The routed face, from the derived pages to a design of your own.</span></a></li>\n` +
+        `        <li><a href="skills/graview-ship.html"><strong>graview-ship</strong><span>Persistence, migrations, export and health, self-hosted or behind a service.</span></a></li>\n` +
+        `      </ul>`) +
+      section("checkout", "Working on the framework itself",
+        `      <p>A product can consume a checkout of the framework by path instead of a registry, the way the first-party examples do: build the framework, then <code>pnpm graview create ../my-app --link .</code>. The project resolves every <code>@graview/*</code> import into the checkout's <code>dist/</code>, and its dev server rebuilds when the framework does.</p>\n` +
+        `      <div class="term" data-scroller aria-label="Commands to work on the framework itself">` +
+        `<div class="l"><span class="p">$</span><span class="c2">git clone https://github.com/en-dash-consulting/graview &amp;&amp; cd graview</span></div>` +
+        `<div class="l"><span class="p">$</span><span class="c2">pnpm install &amp;&amp; pnpm build</span><span class="n2">every package</span></div>` +
+        `<div class="l"><span class="p">$</span><span class="c2">pnpm graview create ../my-app --link . --name "My App" --kind thing</span></div>` +
+        `<div class="l"><span class="p">$</span><span class="c2">pnpm dev:seedbed</span><span class="n2">the garden — ?chapter=N opens any chapter</span></div>` +
+        `</div>`),
+  }));
+
+  /* Working with a model: the second programming interface, and where each piece of it is documented. */
+  const describe = cmds.find((c) => c.name === "describe");
+  const docsCmd = cmds.find((c) => c.name === "docs");
+  const toolsPkg = pkgs.find((p) => p.dir === "tools");
+  const studioPkg = pkgs.find((p) => p.dir === "studio");
+  const skillsPkg = pkgs.find((p) => p.dir === "skills");
+  const skillCard = (name) => {
+    const skill = sks.find((s) => s.dir === name);
+    return skill ? `        <li><a href="skills/${skill.dir}.html"><strong>${escape(skill.name)}</strong><span>${escape(skill.description)}</span></a></li>\n` : "";
+  };
+  files.set("agents.html", shell({
+    title: "Working with a model", here: "agents.html",
+    blurb: "The declaration is the interface a person uses and the interface a model uses. What a model gets, how it is narrowed, and what it reads before it writes.",
+    body:
+      `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
+      `      <h1 id="h-what">Working with a model</h1>\n` +
+      `      <p class="lede" style="margin-top: 18px;">A declaration is a context graph, and a context graph is the one thing a model reads as well as a person does. Graview has two programming interfaces over one declaration: the surfaces a person uses, and the tools, descriptions and skills a model uses. Neither can drift from the other, because both are derived.</p>\n` +
+      `    </section>\n` +
+      section("seat", "The seat",
+        `      <p>An intelligence provider in the declaration says what a model may do and how words and pictures reach it. The seat gets the same acts a person has, narrowed by the same policy, and its turns land in the same operation log with an author and an intent — watchable from altitude, and undoable out of order. What comes back from a model is a plan before it is a change: one row per thing, what it was sure about, what goes with what if you decline something, then one batch with one undo.</p>\n` +
+        `      <ul class="cards">\n${skillCard("graview-agent-seat")}${skillCard("graview-permissions")}${skillCard("graview-desk")}      </ul>`) +
+      section("tools", "Typed tools, derived",
+        `      <p>${escape(toolsPkg?.description ?? "")} Every act is a tool with a schema and a sentence attached; the tool surface is generated from the declaration and narrowed by the seat's role, so a model is never offered an act it may not take.</p>\n` +
+        `      <p class="sm dim">The package: <a class="inl" href="packages/tools.html"><code>@graview/tools</code></a>.</p>`) +
+      section("read", "What a model can read",
+        `      <p><code>graview describe</code> reads the declaration out for something that cannot see: what a blank installation meets and in what order, what is drawn and what falls back, what a seat may do, how a model is reached, what is judged. <code>graview docs</code> writes an <code>llms.txt</code> and an <code>agents.md</code> beside the entry, derived, so they cannot drift.</p>\n` +
+        (describe ? `      <div class="code" data-scroller aria-label="graview describe, usage"><pre><code>${escape(describe.usage)}</code></pre></div>\n` : "") +
+        (docsCmd ? `      <div class="code" data-scroller aria-label="graview docs, usage" style="margin-top: 10px;"><pre><code>${escape(docsCmd.usage)}</code></pre></div>` : "")) +
+      section("skills", `What a model reads before it writes (${sks.length} skills)`,
+        `      <p>${escape(skillsPkg?.description ?? "")} Installed into a product by <code>graview skills install .</code> — which <code>graview create</code> runs for you — into <code>.claude/skills</code> and <code>.agents/skills</code>, so Claude Code and Codex find the same instructions.</p>\n` +
+        `      <ul class="cards">\n` + sks.map((sk) => skillCard(sk.dir)).join("") + `      </ul>`) +
+      section("studio", "The studio: a model edits the declaration itself",
+        `      <p>${escape(studioPkg?.description ?? "")}</p>\n` +
+        `      <ul class="cards">\n${skillCard("graview-studio")}${skillCard("graview-seed")}      </ul>\n` +
+        `      <p class="sm dim">The package: <a class="inl" href="packages/studio.html"><code>@graview/studio</code></a>.</p>`),
+  }));
+
+  /* The demos: the garden's surfaces, live, and the example apps. */
+  const frame = (n, label, aria, extra = "") =>
+    `      <div class="chapter-live" data-graview-chapter="${n}" data-label="${escape(label)}" role="region" aria-label="${escape(aria)}"${extra}><p class="chapter-loading">${escape(label)}, loading…</p></div>`;
+  files.set("demos.html", shell({
+    title: "Live demos", here: "demos.html",
+    blurb: "The example garden's surfaces, running on this page, and the example apps in the repository.",
+    scripts: ["../chapters.js"],
+    body:
+      `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
+      `      <h1 id="h-what">Live demos</h1>\n` +
+      `      <p class="lede" style="margin-top: 18px;">Nothing here is a screenshot. Each frame is the example garden, mounted on this page by <code>@graview/embed</code> from the same declaration, at a different place in it. <a class="inl" href="../progression.html">The garden, grown</a> has all sixteen chapters, each with what the declaration gained.</p>\n` +
+      `    </section>\n` +
+      section("city", "The city, at altitude",
+        `      <p>Every kind is a district; every record a building on its own plot; every edge a road with its words on it. Drag the ground, press a district, come down to a plot.</p>\n` + frame(16, "The garden, grown", "The example garden at altitude, live", ' data-stop="#overview=1" data-settle="1"')) +
+      section("pages", "The routed face",
+        `      <p>The same store as ordinary pages — here in the garden's own design, at phone width.</p>\n      <div class="chapter phone">\n` + frame(13, "The garden's own face", "The garden's routed pages, live", ' data-face="pages"') + `\n      </div>`) +
+      section("lens", "A lens over the garden",
+        `      <p>A calendar written for a rota, bound to roles rather than fields, over a four-year rotation of plantings.</p>\n` + frame(16, "The rotation", "The rotation calendar lens, live", ' data-settle="0"')) +
+      section("studio", "The studio",
+        `      <p>The declaration itself, open as a graph, edited with ordinary acts and checked before the change lands.</p>\n` + frame(15, "Seedbed, in the studio", "The declaration open in the studio, live", ' data-settle="0"')) +
+      section("seat", "A seat for an agent",
+        `      <p>The same acts a person has, narrowed by the same policy, attributed in the same log.</p>\n` + frame(5, "Seedbed, with a seat", "The garden with an agent's seat, live")) +
+      section("apps", "The example apps",
+        `      <p>Each was built to prove a claim the others could not, and each is opened in a real browser on every push. They live under <code>apps/</code> in the repository; <code>pnpm apps</code> opens the desk, which opens the rest.</p>\n` +
+        `      <ul class="cards">\n` + examples.map((app) => `        <li><a href="https://github.com/en-dash-consulting/graview/tree/main/apps/${app.dir}"><strong>${escape(app.dir)}</strong><span>${escape(app.description)}</span></a></li>`).join("\n") + `\n      </ul>`) +
+      /* The city and the lens settle the way the landing page's do: the seat put away, the city stepped back once, through the product's own controls. */
+      `    <script>
+    document.addEventListener("graview:mounted", function (event) {
+      var host = event.target;
+      if (!(host instanceof Element) || !host.hasAttribute("data-settle")) return;
+      var presses = Number(host.getAttribute("data-settle")) || 0;
+      setTimeout(function () {
+        var seat = host.querySelector('[data-graview-companion="open"] button[aria-expanded="true"]');
+        if (seat) seat.click();
+        for (var i = 0; i < presses; i += 1) { var out = host.querySelector('[data-testid="zoom-out"]'); if (out) out.click(); }
+      }, 250);
+    });
+    </script>`,
+  }));
+
   files.set("index.html", shell({
     title: "Docs", here: "index.html",
     blurb: "Graview's documentation: the concepts, the packages, the skills, the CLI and everything the checker can say.",
@@ -577,26 +752,43 @@ function build() {
       `      <h1 id="h-what">Documentation</h1>\n` +
       `      <p class="lede" style="margin-top: 18px;">Everything here except the concepts is written out of the repository, so none of it can disagree with the code it describes.</p>\n` +
       `      <div class="cta"><div class="cta-line"><code>npm create graview@latest my-app</code><button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button></div>\n` +
-      `      <p class="cta-sub sm dim">New here? <a class="inl" href="../progression.html">The garden, grown</a> is the whole framework in fifteen live steps.</p></div>\n` +
+      `      <p class="cta-sub sm dim">New here? <a class="inl" href="getting-started.html">Getting started</a> is the first hour; <a class="inl" href="../progression.html">the garden, grown</a> is the whole framework in sixteen live steps.</p></div>\n` +
       `    </section>\n` +
       section("map", "Where things are",
         `      <ul class="cards">\n` +
+        `        <li><a href="getting-started.html"><strong>Getting started</strong><span>One command to a running product, what it writes, and the loop from there.</span></a></li>\n` +
         `        <li><a href="concepts.html"><strong>Concepts</strong><span>The declaration, and the seven things in it.</span></a></li>\n` +
+        `        <li><a href="agents.html"><strong>Working with a model</strong><span>The seat, the typed tools, what a model reads, and the studio.</span></a></li>\n` +
+        `        <li><a href="demos.html"><strong>Live demos</strong><span>Every surface of the garden, running on the page, and the example apps.</span></a></li>\n` +
         `        <li><a href="packages.html"><strong>Packages (${pkgs.length})</strong><span>What each ships and what each exports.</span></a></li>\n` +
         `        <li><a href="skills.html"><strong>Skills (${sks.length})</strong><span>What your assistant reads before it writes.</span></a></li>\n` +
-        `        <li><a href="cli.html"><strong>The CLI</strong><span>check, describe, docs, create.</span></a></li>\n` +
+        `        <li><a href="cli.html"><strong>The CLI</strong><span>create, check, docs, describe, lens, figure, serve, skills.</span></a></li>\n` +
         `        <li><a href="checks.html"><strong>What check says (${codes.length})</strong><span>Every finding, and how loudly.</span></a></li>\n` +
-        `        <li><a href="../progression.html"><strong>The garden, grown</strong><span>Fifteen live chapters, from one kind to a product.</span></a></li>\n` +
+        `        <li><a href="../progression.html"><strong>The garden, grown</strong><span>Sixteen live chapters, from one kind to a product.</span></a></li>\n` +
         `      </ul>`),
   }));
 
+  /* Each page carries its own address, not the landing page's. */
+  for (const [name, html] of files) {
+    const url = `https://graview.dev/docs/${name}`;
+    files.set(name, html
+      .replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${url}">`)
+      .replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${url}">`));
+  }
   return files;
+}
+
+/** Every page on the site, for the crawlers, in one place. */
+function sitemap(files) {
+  const urls = ["https://graview.dev/", "https://graview.dev/progression.html", ...[...files.keys()].sort().map((name) => `https://graview.dev/docs/${name}`)];
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")}\n</urlset>\n`;
 }
 
 /* ── writing it out ───────────────────────────────────────────────────── */
 
 const checking = process.argv.includes("--check");
-const files = build();
+const files = await build();
+files.set("../sitemap.xml", sitemap(files));
 let stale = 0;
 
 for (const [name, html] of files) {
