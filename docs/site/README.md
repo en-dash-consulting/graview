@@ -5,7 +5,7 @@ written twice.**
 
 | | | |
 |---|---|---|
-| `index.html` | the landing page | the product itself in the hero and four more frames, one per derived surface |
+| `index.html` | the landing page | what the kit does and who it is for, one picture per claim, the product live where it fits |
 | `progression.html` | the long version | sixteen live chapters, the packages, the lenses, the kit |
 | `docs/` | the reference | 36 pages, all written out of the repository: getting started, concepts, packages, the CLI, working with a model, skills, the findings, live demos |
 
@@ -28,13 +28,15 @@ fifteen chapters and nine reference sections, which is documentation. A
 person deciding whether to use this had to read a tutorial; a person already
 using it had nothing to look anything up in.
 
-The landing page answers one question — *what is this and why would I* — and
-answers it by showing the thing: the example garden, live, in the hero at
-altitude with the seat put away; the stepper that mounts the same app at
-five points in its own declaration; four more live frames, one per derived
-surface (pages, a lens, the studio, the seat); the two programming
-interfaces side by side; and one install line. The second cut replaced a
-docs page with a headline. Nothing on it is a screenshot.
+The landing page is a marketing page, and answers one question — *what is
+this and why would I* — in plain words with one picture per claim: the
+example garden live in the hero; how it works in three moves; one feature
+per section (the routed face, rules that repair, lenses, the seat, the
+studio, actions and permissions) with a live frame where a frame can hold
+the picture and a photograph from the harness where it cannot; the stepper;
+four use cases from the products built on it; and one install line. No code
+on it but that line. The first cut was a docs page with a headline; the
+second showed the product but argued like documentation.
 
 ## What is generated, and what that buys
 

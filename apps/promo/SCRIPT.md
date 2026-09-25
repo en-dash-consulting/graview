@@ -55,3 +55,34 @@ Supporting chrome (not hero titles): `typed context graph` · `owns` / `routes` 
 - Outro: `OffthreadVideo` `playbackRate={1.6}`; `OUTRO_FRAMES = 300`; dip-to-white → white bumper stitch preserved.
 - RelationsDemo: center **todo-graview** iso behind calendar + procedure panels; removed errant dashed step→part SVG; “typed context graph” pill sits upper-third and fades before mid titles; agent rail cleared above title band.
 - No “house brand” copy — BrandMorph is **En Dash** only.
+
+---
+
+# GraviewFeed — square social promo
+
+Mute-first **1:1** cut for LinkedIn / Instagram feed (also works cropped to Stories).
+Composition: **15s @ 30fps = 450 frames**, **1080×1080**. No En Dash outro bumper.
+Render: `pnpm render:feed` → `out/graview-feed.mp4`.
+
+**Pitch:** Graview is a **development kit from En Dash**. Declare entities + relationships (typed context graph) → kit auto-builds the AI-ready app (spatial UI / city, routed pages, forms, permissions, checks, agent tools).
+
+**Tagline:** *Declare the domain. The application follows.*
+**CTA:** `npm create graview@latest` · graview.dev
+
+| Time | Frames | Beat | On-screen / visual |
+|------|--------|------|--------------------|
+| 0–2.0s | 0–60 | Magic hook | Typed chips (Plot · Person · Rule · Action) snap + mint edges → glass UI plate erupts from graph · micro: **One declaration.** |
+| 2.0–5.0s | 60–150 | Tagline payoff | **Declare the domain.** → **The application follows.** (huge type, mint underline / flash) |
+| 5.0–11.0s | 150–330 | Story montage | Graph / zoom → week (**Calendar from the graph.**) → selected (**Same buttons for you and your agent.**) → coverage (**Lenses that rebind.**) · Declare/Derive/Ship ticks as chrome |
+| 11.0–13.2s | 330–396 | Identity lock | **GRAVIEW** · *A development kit from En Dash* |
+| 13.2–15.0s | 396–450 | CTA | `npm create graview@latest` · graview.dev |
+
+## Feed notes
+
+- Magic first, teach second — open on the product transforming, not a pain slogan.
+- Captions are the VO — assume silent scroll; safe margins ~56px (LinkedIn/IG crop).
+- Punch-in every UI plate (object-fit cover + scale ~1.7–2.3) so it reads on a phone in square.
+- Declare → Derive → Ship lives inside motion as chrome ticks, never as three static pitch cards.
+- CTA ≤2s; no 10s En Dash outro.
+- Assets: `public/survey/` + `public/site/` dark harness stills.
+- Landscape `GraviewIntro` remains unchanged.

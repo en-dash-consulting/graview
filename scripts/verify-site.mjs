@@ -64,8 +64,8 @@ const arrive = async (page, url) => {
 };
 
 const PAGES = [
-  /* The hero, chapter one beside its code, four surfaces, and the first step of the stepper. */
-  { file: "index.html", name: "the page", live: 7, skip: "#what" },
+  /* The hero, four feature frames, and the first step of the stepper. */
+  { file: "index.html", name: "the page", live: 6, skip: "#what" },
   /* Sixteen chapters and the kit's own frame. */
   { file: "progression.html", name: "the long version", live: 17, skip: "#grown" },
   /*

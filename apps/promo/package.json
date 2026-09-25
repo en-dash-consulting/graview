@@ -3,13 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Graview 45s intro — motion-graphics-led promo cut",
+  "description": "Graview promo \u2014 landscape intro + square feed cut",
   "scripts": {
     "dev": "remotion studio",
     "build": "remotion bundle",
     "render": "remotion render GraviewIntro out/graview-intro.mp4",
     "upgrade": "remotion upgrade",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "render:feed": "remotion render GraviewFeed out/graview-feed.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.340",
