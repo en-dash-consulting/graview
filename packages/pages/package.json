@@ -1,7 +1,6 @@
 {
   "name": "@graview/pages",
   "version": "0.0.1",
-  "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -36,10 +35,14 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/endash/graview.git",
+    "url": "git+https://github.com/en-dash-consulting/graview.git",
     "directory": "packages/pages"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "license": "Elastic-2.0",
+  "engines": {
+    "node": ">=22"
   }
 }

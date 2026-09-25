@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { GRAVIEW_PACKAGES, scaffoldProject, validateScaffoldOptions, type ScaffoldOptions } from "../scaffold/index.js";
+import { LINKED_PACKAGES, scaffoldProject, validateScaffoldOptions, type ScaffoldOptions } from "../scaffold/index.js";
 
 /**
  * `graview create <dir>`: a product on Graview, started.
@@ -64,19 +64,18 @@ export function packageManagerFromEnv(env: NodeJS.ProcessEnv = process.env): "pn
 }
 
 /**
- * The core that is running: its version, so a project pins what made it,
- * and whether it is published at all. A version number says nothing about
- * that — the packages were 0.0.1 and on no registry — but \`private: true\`
- * is exactly the flag that keeps them off one.
+ * The core that is running: its version, so a project pins what made it.
+ * Every @graview/* package and the `graview` tool share one version (a
+ * changesets fixed group), so `^<this>` names a version of each that exists.
  */
-function ownManifest(): { version: string; unpublished: boolean } {
+function ownManifest(): { version: string } {
   try {
     const manifest = JSON.parse(
       readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../../package.json"), "utf8"),
-    ) as { version?: string; private?: boolean };
-    return { version: manifest.version ?? "0.0.0", unpublished: manifest.private === true };
+    ) as { version?: string };
+    return { version: manifest.version ?? "0.0.0" };
   } catch {
-    return { version: "0.0.0", unpublished: true };
+    return { version: "0.0.0" };
   }
 }
 
@@ -110,7 +109,7 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     return 2;
   }
 
-  const { version, unpublished } = ownManifest();
+  const { version } = ownManifest();
   const pmFlag = flag(argv, "--pm");
   const packageManager: "pnpm" | "npm" =
     pmFlag === "pnpm" || pmFlag === "npm" ? pmFlag : packageManagerFromEnv();
@@ -137,7 +136,7 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     } else {
       // A linked project resolves every type from the framework's dist, so
       // an unbuilt framework fails later, in tsc, one package at a time.
-      const unbuilt = [...GRAVIEW_PACKAGES, "skills"].filter(
+      const unbuilt = LINKED_PACKAGES.filter(
         (pkg) => !existsSync(resolve(checkout, "packages", pkg, "dist/index.js")),
       );
       if (unbuilt.length > 0) {
@@ -176,14 +175,6 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     ...(frameworkRepo ? { frameworkRepo } : {}),
   };
 
-  if (link === undefined && unpublished) {
-    io.stderr(
-      `graview create: this copy of @graview/core (${version}) is unpublished, so the project's\n` +
-        "dependencies cannot resolve from a registry. Pass --link <path-to-framework> to consume\n" +
-        "the framework by path, or install from a published version.\n",
-    );
-  }
-
   const scaffold = scaffoldProject(options);
   const collisions: string[] = [];
   let written = 0;
@@ -218,11 +209,11 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
       return 1;
     }
     if (skills) {
-      const bin = resolve(target, "node_modules/.bin/graview-skills");
+      const bin = resolve(target, "node_modules/.bin/graview");
       if (existsSync(bin)) {
-        io.run(bin, ["install", "."], target);
+        io.run(bin, ["skills", "install", "."], target);
       } else {
-        io.stderr("graview create: @graview/skills did not install, so the authoring skills were not written.\n");
+        io.stderr("graview create: graview did not install, so the authoring skills were not written.\n");
       }
     }
   } else if (skills) {

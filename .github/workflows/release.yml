@@ -1,52 +1,106 @@
+# Releases, through changesets.
+#
+# 1. A pull request merged to main with a `.changeset/` file runs this.
+# 2. It opens or updates the "Version packages" pull request: the bumps and
+#    the changelog entries, reviewable before anything is released.
+# 3. Merging that pull request runs this again with nothing pending, and the
+#    packages are published, tagged, and given a GitHub release each.
+#
+# The thirteen packages are one changesets `fixed` group, so they share a
+# version and `graview create` can write `^<version>` for every one of them
+# and name a version that exists.
+#
+# Publishing is by npm Trusted Publishing (OIDC): no long-lived token in this
+# repository. Each package carries its own trusted-publisher configuration at
+# npmjs.com pointing at this repository, this file, and the "npm" environment
+# — it is per package, not per scope, and it can only be set on a package
+# that already exists on the registry, which is why 0.1.0 was published by
+# hand from a laptop and every version after it by this workflow.
+#
+# changesets/action@v2, not v1: v1 learned what was published by scraping
+# `New tag:` lines that @changesets/cli v3 no longer prints, and so pushed no
+# tags and made no releases while reporting green. v2 reads the CLI's
+# CHANGESETS_OUTPUT side-channel instead.
+
 name: Release
 
 on:
   push:
     branches: [main]
 
-concurrency: release-${{ github.ref }}
-
-permissions:
-  contents: write
-  pull-requests: write
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  version:
+  release:
     runs-on: ubuntu-latest
+    environment: npm
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing and provenance need npm 11.5.1 or later; node 22
+      # ships 10.x. Pinned to 11.15.0 because 11.16.0 broke `npm info`
+      # against npmjs.org metadata, which `changeset publish` relies on.
+      - name: npm that can do trusted publishing
+        run: npm install -g npm@11.15.0
+
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
 
-      # Collects the pending changesets into one pull request: the version
-      # bumps and the changelog entries, reviewable before anything is
-      # released rather than after.
-      - uses: changesets/action@v1
+      - name: Version packages, or publish them
+        id: changesets
+        uses: changesets/action@v2
         with:
-          version: pnpm changeset version
-          commit: "Version packages"
-          title: "Version packages"
+          version-script: pnpm exec changeset version
+          publish-script: pnpm exec changeset publish
+          pr-title: "Version packages"
+          commit-message: "Version packages"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No NPM_TOKEN: the runner's OIDC token is exchanged for a
+          # short-lived publish credential, and the tarballs carry provenance.
+          NPM_CONFIG_PROVENANCE: true
 
-      # PUBLISHING IS DELIBERATELY ABSENT.
-      #
-      # Every package is `private: true` and carries no licence, which is a
-      # decision rather than an oversight: publishing without one leaves
-      # whoever installs it with no permission to use it, and picking a licence
-      # on someone else's behalf is not a thing to do quietly.
-      #
-      # When there is one, this becomes:
-      #
-      #   publish: pnpm changeset publish
-      #
-      # with NPM_TOKEN in the environment, `private` dropped from each
-      # package.json, and a LICENSE file added to every `files` allowlist. CI
-      # already proves the rest — that the tarballs contain what they should
-      # and that a stranger can install and build from them.
+      - name: The tags and releases match what npm has
+        # Only on a publish run. Fails when npm has this version but origin
+        # lacks a tag or GitHub lacks a release for any package — the exact
+        # symptom v1 of the action let through.
+        if: steps.changesets.outputs.has-changesets == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./packages/graview/package.json').version")
+          if ! npm view "graview@${VERSION}" version >/dev/null 2>&1; then
+            echo "graview@${VERSION} is not on npm; nothing to verify."
+            exit 0
+          fi
+          FAILED=0
+          for dir in packages/*/; do
+            NAME=$(node -p "require('./${dir}package.json').name")
+            TAG="${NAME}@${VERSION}"
+            if ! git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
+              echo "::error::no tag ${TAG} on origin"; FAILED=1
+            fi
+            if ! gh release view "${TAG}" >/dev/null 2>&1; then
+              echo "::error::no GitHub release ${TAG}"; FAILED=1
+            fi
+          done
+          exit $FAILED

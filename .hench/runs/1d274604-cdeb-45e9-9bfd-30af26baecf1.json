@@ -1,7 +1,7 @@
 {
   "id": "1d274604-cdeb-45e9-9bfd-30af26baecf1",
   "taskId": "72d54344-4080-443b-b94d-af96f4634f35",
-  "taskTitle": "F-008 · The reuse test is the skill's best idea and the easiest to skip",
+  "taskTitle": "F-008 \u00b7 The reuse test is the skill's best idea and the easiest to skip",
   "startedAt": "2026-09-15T00:53:26.566Z",
   "finishedAt": "2026-09-15T00:53:26.566Z",
   "status": "completed",
@@ -18,7 +18,6 @@
   "invocationContext": "api",
   "assisted": true,
   "actor": "Nick Daniel <nick@endash.us>",
-  "host": "host",
   "ndxVersion": "0.6.0",
   "cliPath": "n-dx/packages/hench/dist/cli/index.js",
   "tokens": {

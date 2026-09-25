@@ -237,7 +237,7 @@ describe("installing them", () => {
     try {
       execFileSync(
         process.execPath,
-        [resolve(SKILLS_DIR, "../dist/cli.js"), "install", scratch],
+        [resolve(SKILLS_DIR, "../../graview/dist/cli.js"), "skills", "install", scratch],
         { encoding: "utf8" },
       );
       for (const destination of SKILL_DESTINATIONS) {

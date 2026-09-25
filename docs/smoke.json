@@ -1,11 +1,12 @@
 {
-  "at": "2026-09-12T01:22:49.119Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-rTYoun",
+  "at": "2026-09-25T04:59:30.356Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-pyJWEg",
   "steps": {
     "packed": [
       "@graview/core",
       "create-graview",
       "@graview/embed",
+      "graview",
       "@graview/layout",
       "@graview/pages",
       "@graview/primitives",
@@ -13,6 +14,7 @@
       "@graview/render",
       "@graview/ship",
       "@graview/skills",
+      "@graview/studio",
       "@graview/tools"
     ],
     "installing": true,
@@ -28,7 +30,7 @@
     "affordances": 2,
     "tools": 8,
     "draws": 3,
-    "cssBytes": 23009,
+    "cssBytes": 55408,
     "palettes": [
       "#6fdcea",
       "#0c6e78"

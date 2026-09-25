@@ -800,12 +800,14 @@ main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: an
       <h1 id="h-what">@graview/skills</h1>
       <p class="lede" style="margin-top: 18px;">Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/skills</code><button type="button" class="copy" data-copy="pnpm add @graview/skills">Copy</button></div></div>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/skills</code>, <code>@graview/skills/cli</code></p>
     </section>
     <section id="readme" aria-labelledby="h-readme">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
 <p>Skills that teach an assistant how to build with Graview — and, more usefully, how to find out whether it worked.</p>
-<div class="code" data-scroller><pre><code>npx graview-skills install      # into .claude/skills and .agents/skills
-npx graview-skills list</code></pre></div>
+<div class="code" data-scroller><pre><code>npx graview skills install .    # into .claude/skills and .agents/skills
+npx graview skills list</code></pre></div>
+<p>The command line is the <code>graview</code> package; this one ships the skills and the move, and <code>graview skills</code> dispatches here.</p>
 <h3>Why this framework is worth having skills for</h3>
 <p>Most skills end in a claim: "you have added a node kind." That is worth very little, because the assistant writing it is the same one that just decided it was done.</p>
 <p>Graview can answer the question itself. <code>graview check</code> reads the declaration and reports an edge to a kind nobody wrote, an invariant scoped to a kind that does not exist, a repair naming a mutation nobody registered, a lens role bound to a missing field, a mutation with no title, a palette pair that fails WCAG AA, a role that may do nothing. So every skill here <strong>ends in a check and reports the real verdict</strong> — including when the verdict is bad.</p>

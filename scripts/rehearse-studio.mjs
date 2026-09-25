@@ -288,7 +288,7 @@ try {
   };
   report.checks.itCompiles = run("npx", ["tsc", "-p", scratch]);
   report.checks.graviewCheckPasses = report.checks.itCompiles.ok
-    ? run("node", ["packages/core/dist/cli/index.js", "check", resolve(scratch, "dist/domain/app.js")])
+    ? run("node", ["packages/graview/dist/cli.js", "check", resolve(scratch, "dist/domain/app.js")])
     : { ok: false, said: "it did not compile" };
   report.checks.nothingErroredInTheBrowser = { errors, ok: errors.length === 0 };
   report.prompts = prompts.length;

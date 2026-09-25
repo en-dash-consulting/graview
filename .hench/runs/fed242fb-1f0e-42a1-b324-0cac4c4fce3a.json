@@ -1,7 +1,7 @@
 {
   "id": "fed242fb-1f0e-42a1-b324-0cac4c4fce3a",
   "taskId": "0f19a121-a05e-4288-878c-4e6c313e9a4f",
-  "taskTitle": "F-022 · The scene's own district controls are 22px tall",
+  "taskTitle": "F-022 \u00b7 The scene's own district controls are 22px tall",
   "startedAt": "2026-09-15T00:53:29.438Z",
   "finishedAt": "2026-09-15T00:53:29.438Z",
   "status": "completed",
@@ -18,7 +18,6 @@
   "invocationContext": "api",
   "assisted": true,
   "actor": "Nick Daniel <nick@endash.us>",
-  "host": "host",
   "ndxVersion": "0.6.0",
   "cliPath": "n-dx/packages/hench/dist/cli/index.js",
   "tokens": {

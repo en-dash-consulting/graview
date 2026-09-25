@@ -23,6 +23,13 @@ export const GRAVIEW_PACKAGES = [
   "studio",
 ] as const;
 
+/**
+ * Everything a linked project resolves from the framework checkout: the
+ * packages a product imports, plus the skills and the tool it takes as
+ * devDependencies. Each must be built before `--link` can work.
+ */
+export const LINKED_PACKAGES: readonly string[] = [...GRAVIEW_PACKAGES, "skills", "graview"];
+
 /*
  * THE PROJECT AROUND THE APP: its manifest, its compilers, its dev server,
  * its README, its CI and the harnesses its own verify runs.
@@ -173,7 +180,7 @@ export function packageJson(ids: Ids, workspace: boolean): string {
       // Each of these builds what it needs, so any one works cold.
       check: `${run} build:domain && graview check ./dist/domain/app.js`,
       docs: `${run} build:domain && graview docs ./dist/domain/app.js --out docs`,
-      skills: "graview-skills install .",
+      skills: "graview skills install .",
       verify: `${run} typecheck && ${run} test && ${run} build && ${run} check`,
     },
     /*
@@ -199,7 +206,9 @@ export function packageJson(ids: Ids, workspace: boolean): string {
        */
     },
     devDependencies: {
-      "@graview/skills": dep("skills"),
+      // The tool: `graview check`, `graview docs`, `graview skills`. The
+      // framework is the @graview/* above; this is the command line over it.
+      graview: dep("graview"),
       "@types/node": "^22.10.0",
       "@types/react": "^19.2.0",
       "@types/react-dom": "^19.2.0",

@@ -11,7 +11,7 @@ import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
 import { figureBrief, figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
 import { scaffoldLens, validateLensOptions, type LensScaffoldOptions } from "../scaffold/lens.js";
 
-const USAGE = `graview — start a product, check its declaration, write its agent docs
+export const USAGE = `graview — start a product, check its declaration, write its agent docs
 
 ${CREATE_USAGE}
 

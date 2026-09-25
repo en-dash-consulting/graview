@@ -18,7 +18,6 @@
   "invocationContext": "api",
   "assisted": true,
   "actor": "Nick Daniel <nick@endash.us>",
-  "host": "host",
   "tokens": {
     "input": 190,
     "output": 76164,

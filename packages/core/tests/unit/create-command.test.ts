@@ -1,4 +1,4 @@
-import { GRAVIEW_PACKAGES } from "../../src/scaffold/index.js";
+import { LINKED_PACKAGES } from "../../src/scaffold/index.js";
 import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -61,13 +61,13 @@ describe("graview create", () => {
   it("initialises a repository, installs with the package manager, then the skills", async () => {
     const t = io();
     mkdirSync(resolve(scratch, "app/node_modules/.bin"), { recursive: true });
-    writeFileSync(resolve(scratch, "app/node_modules/.bin/graview-skills"), "");
+    writeFileSync(resolve(scratch, "app/node_modules/.bin/graview"), "");
     const code = await create(["app", "--pm", "pnpm", "--force"], t.handle);
     expect(code).toBe(0);
     expect(t.ran.map((r) => [r.command.split("/").pop(), ...r.args])).toEqual([
       ["git", "init", "--quiet"],
       ["pnpm", "install"],
-      ["graview-skills", "install", "."],
+      ["graview", "skills", "install", "."],
     ]);
     expect(t.out()).toContain("git add -A && git commit");
   });
@@ -108,18 +108,12 @@ describe("graview create", () => {
     expect(readdirSync(scratch)).toEqual([]);
   });
 
-  it("warns that a private core cannot be installed from a registry, whatever its version", async () => {
-    const t = io();
-    await create(["plain", "--no-install"], t.handle);
-    expect(t.err()).toMatch(/unpublished|--link/);
-  });
-
   it("in link mode, writes a relative path and pins nothing into the framework's store", async () => {
     // A pretend framework checkout beside the project, with pnpm's symlinked zod.
     mkdirSync(resolve(scratch, "fw/node_modules/.pnpm/zod@4.4.3/node_modules/zod"), { recursive: true });
     mkdirSync(resolve(scratch, "fw/packages/core/node_modules"), { recursive: true });
     symlinkSync("../../../node_modules/.pnpm/zod@4.4.3/node_modules/zod", resolve(scratch, "fw/packages/core/node_modules/zod"));
-    for (const pkg of [...GRAVIEW_PACKAGES, "skills"]) {
+    for (const pkg of LINKED_PACKAGES) {
       mkdirSync(resolve(scratch, `fw/packages/${pkg}/dist`), { recursive: true });
       writeFileSync(resolve(scratch, `fw/packages/${pkg}/dist/index.js`), "");
     }
@@ -130,7 +124,6 @@ describe("graview create", () => {
       dependencies: Record<string, string>;
     };
     expect(manifest.dependencies["@graview/core"]).toBe("link:../fw/packages/core");
-    expect(t.err()).not.toMatch(/unpublished/);
     /*
      * NOTHING POINTS INTO ANOTHER REPOSITORY'S PACKAGE MANAGER. This used to
      * write a `paths` entry naming an exact zod version inside the
@@ -161,7 +154,7 @@ describe("graview create", () => {
 
   it("warns when the project would land inside the framework's own tree", async () => {
     mkdirSync(resolve(scratch, "fw/packages/core/node_modules"), { recursive: true });
-    for (const pkg of [...GRAVIEW_PACKAGES, "skills"]) {
+    for (const pkg of LINKED_PACKAGES) {
       mkdirSync(resolve(scratch, `fw/packages/${pkg}/dist`), { recursive: true });
       writeFileSync(resolve(scratch, `fw/packages/${pkg}/dist/index.js`), "");
     }

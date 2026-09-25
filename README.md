@@ -9,15 +9,20 @@ agent tool schemas and accessibility labels from it.
 
 ```
 packages/
-  core/        @graview/core        schema, graph, invariants, op log, adapters, CLI
+  graview/     graview              THE TOOL: create, check, docs, describe, lens, figure, serve, skills
+  create-graview/                   `npm create graview` — the door to `graview create`
+
+  core/        @graview/core        schema, graph, invariants, op log, adapters, the checker
   layout/      @graview/layout      positions and planes — headless, pure
   tools/       @graview/tools       derived affordances, one agent tool surface
   render/      @graview/render      capture, composite at depth, pointer routing
   react/       @graview/react       the only UI binding, deliberately thin
   primitives/  @graview/primitives  view primitives, three lenses, the workbench
-  skills/      @graview/skills      the authoring moves, each ending in a check
+  pages/       @graview/pages       the routed face, derived from the same declaration
+  ship/        @graview/ship        persistence wiring, op-log-native migrations, export, health
+  studio/      @graview/studio      the declaration itself as a graph, edited in Graview's own interface
   embed/       @graview/embed       mount an app into any element: scene, Graview or pages, no Shell
-  create-graview/                   `npm create graview` — the door to `graview create`
+  skills/      @graview/skills      the authoring moves, each ending in a check
 apps/
   todo/        THE EXAMPLE — a todo list, because nobody has to be taught one
   seedbed/     the example that starts EMPTY — a declared graph and no data
@@ -25,7 +30,9 @@ apps/
   spike/       platform capability validation, run against a real browser
 ```
 
-**The packages are what ships. The apps are examples.**
+**The packages are what ships. The apps are examples.** `graview` is the
+tool a person installs; `@graview/*` is the framework a product imports. All
+of them share one version.
 
 **Start with `apps/todo`.** Four kinds, ten named mutations, three rules that
 name their own repairs, the timeline lens bound to a task's own fields, a
@@ -54,16 +61,11 @@ in CI with no browser flag.
 
 ## Start a project
 
-The packages are not published yet, so today a product starts from a checkout
-of this repository and consumes the framework **by path**, the way the
-first-party products do:
-
 ```sh
-pnpm install && pnpm build                      # the framework, first
-pnpm graview create ../my-app --link . --name "My App" --kind thing
-cd ../my-app
-pnpm dev                                        # http://localhost:5170 — the scene; /pages is the routed face
-pnpm verify                                     # typecheck, tests, build, graview check
+npm create graview@latest my-app     # or: pnpm create graview my-app, or: npx graview create my-app
+cd my-app
+npm run dev                          # http://localhost:5170 — the scene; /pages is the routed face
+npm run verify                       # typecheck, tests, build, graview check
 ```
 
 That is a product on Graview: one declared kind with its fields, an edge, a
@@ -73,11 +75,12 @@ a headless test, a git repository and a CI workflow that checks the framework
 out beside the app. `src/domain/` is the whole surface; the loop from there
 is declare → `graview check` → look at it → declare more.
 
-Once the packages are published, the same project is one command from
-anywhere, with no checkout:
+To work on the framework and a product at once, a project can consume this
+checkout **by path** instead, the way the first-party products do:
 
 ```sh
-npm create graview@latest my-app     # or: pnpm create graview my-app
+pnpm install && pnpm build                      # the framework, first
+pnpm graview create ../my-app --link . --name "My App" --kind thing
 ```
 
 The chapters on the page are the app itself, not pictures of it:
@@ -125,7 +128,7 @@ and paper where depth loses contrast and gains haze. Inverting one to get the
 other gives grey-on-grey mush, because glow does not exist in daylight.
 
 ```sh
-pnpm test          # 483 tests, no GPU, no browser
+pnpm test          # 1,435 tests, no GPU, no browser
 pnpm typecheck
 pnpm check         # `graview check` against every declaration here
 ```
@@ -391,22 +394,23 @@ anything about HTML-in-Canvas. The short version, measured in Chrome Canary
 ## Shipping it
 
 The packages are the deliverable: an SDK someone builds a product on, in
-their own repository. Everything needed for that exists and runs on every push
-— `pnpm changeset` for versioning, `pnpm pack:inspect` for what goes in the
-tarball, `pnpm smoke` for whether a stranger can install and build from it —
-with one deliberate gap.
+their own repository. Every change to `packages/` carries a changeset
+(`pnpm changeset`; CI refuses a pull request without one), and the thirteen
+packages are one fixed group, so they share a version and `graview create`
+can pin `^<version>` for each of them and name one that exists. On every
+push, `pnpm pack:inspect` says what goes in each tarball and `pnpm smoke`
+proves a stranger can install and build from them; `pnpm smoke:create`
+proves the onboarding in a browser.
 
-**Publishing is deliberately absent.** Every package is `private: true` and
-carries no licence, because publishing without one leaves whoever installs it
-with no permission to use it. `.github/workflows/release.yml` collects
-changesets into a version pull request today and says exactly what turning
-publishing on requires. That is a decision waiting to be made rather than work
-waiting to be done.
+`.github/workflows/release.yml` turns merged changesets into a "Version
+packages" pull request, and merging that publishes to npm by trusted
+publishing, tags each package, and writes a GitHub release per package.
 
 ## Status
 
-Private. The public API is designed as though it will be published — clean
-seams, honest boundaries — but it breaks freely while nobody depends on it.
+0.x. The public API is designed to be depended on — clean seams, honest
+boundaries — and it will still move between minor versions while the shape
+settles; the changelogs say what changed and why.
 
 **Outstanding:**
 
@@ -423,3 +427,9 @@ seams, honest boundaries — but it breaks freely while nobody depends on it.
   is populated, every view is exposed by name, the keyboard reaches all three
   planes and axe-core reports nothing — but a populated tree is not proof that
   VoiceOver reads it well.
+
+## License
+
+[Elastic License 2.0](LICENSE). Build on it, ship products with it, run it
+for your own installations freely; what it withholds is offering Graview
+itself as a managed service to third parties, which is what Graview Cloud is.

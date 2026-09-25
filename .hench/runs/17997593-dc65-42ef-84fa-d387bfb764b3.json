@@ -1,7 +1,7 @@
 {
   "id": "17997593-dc65-42ef-84fa-d387bfb764b3",
   "taskId": "bd973f98-8ed7-4e26-9dc9-727159cb3ab8",
-  "taskTitle": "F-013 · usePickTargets grants role=button to no SVG element",
+  "taskTitle": "F-013 \u00b7 usePickTargets grants role=button to no SVG element",
   "startedAt": "2026-09-15T00:53:27.605Z",
   "finishedAt": "2026-09-15T00:53:27.605Z",
   "status": "completed",
@@ -18,7 +18,6 @@
   "invocationContext": "api",
   "assisted": true,
   "actor": "Nick Daniel <nick@endash.us>",
-  "host": "host",
   "ndxVersion": "0.6.0",
   "cliPath": "n-dx/packages/hench/dist/cli/index.js",
   "tokens": {

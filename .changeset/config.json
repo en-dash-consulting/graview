@@ -2,7 +2,23 @@
   "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [],
+  "fixed": [
+    [
+      "graview",
+      "create-graview",
+      "@graview/core",
+      "@graview/layout",
+      "@graview/tools",
+      "@graview/render",
+      "@graview/react",
+      "@graview/primitives",
+      "@graview/pages",
+      "@graview/ship",
+      "@graview/studio",
+      "@graview/embed",
+      "@graview/skills"
+    ]
+  ],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
@@ -12,10 +28,7 @@
     "@graview/spike",
     "@graview/todo",
     "@graview/seedbed",
-    "@graview/promo"
-  ],
-  "privatePackages": {
-    "version": true,
-    "tag": false
-  }
+    "@graview/promo",
+    "@graview/rota"
+  ]
 }

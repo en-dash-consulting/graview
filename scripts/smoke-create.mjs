@@ -33,7 +33,7 @@ import { packTarballs, pinToTarballs } from "./lib/tarballs.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
 const scratch = mkdtempSync(join(tmpdir(), "graview-create-"));
-const cli = resolve(repoRoot, "packages/core/dist/cli/index.js");
+const cli = resolve(repoRoot, "packages/graview/dist/cli.js");
 const withBrowser = !process.argv.includes("--no-browser");
 const report = { at: new Date().toISOString(), scratch, engine: engineName(), npm: {}, pnpm: {}, door: {}, linked: {}, browser: {} };
 

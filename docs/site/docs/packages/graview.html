@@ -1,0 +1,1629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>graview — Graview docs</title>
+<meta name="description" content="The Graview command line: start a product, check its declaration, write its agent docs, serve its store, install the authoring skills. The tool; @graview/* is the framework.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="graview — Graview docs">
+<meta property="og:description" content="The Graview command line: start a product, check its declaration, write its agent docs, serve its store, install the authoring skills. The tool; @graview/* is the framework.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzMwIiBoZWlnaHQ9IjMzMCIgdmlld0JveD0iMCAwIDMzMCAzMzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjcuNSIgeT0iNy41IiB3aWR0aD0iMzE1IiBoZWlnaHQ9IjMxNSIgc3Ryb2tlPSIjMDBFNUI5IiBzdHJva2Utd2lkdGg9IjE1Ii8+CjxwYXRoIGQ9Ik0zMTUgMTVIMTVWMzE1SDMxNVYxNVoiIGZpbGw9IiMwMDE3NjkiLz4KPHBhdGggZD0iTTMxNSAyMzIuMTE5SDQ3LjAwNzRWMjQ3LjcwNUgzMTVWMjMyLjExOVoiIGZpbGw9IiMwMEU1QjkiLz4KPHBhdGggZD0iTTEzOS43OTUgMTY0Ljk5N0wxNDUuMzI0IDE2OS44MzhDMTQwLjk0MiAxNzguMzcyIDEyNi4xOTEgMTkyLjg5NCAxMDAuNTg5IDE5Mi44OTRDNzEuNzc0IDE5Mi44OTQgNDUuMDI0OCAxNzQuNjc4IDQ1LjAyNDggMTM5LjYyNUM0NS4wMjQ4IDEwMy40MjQgNzMuNjEwMiA4NS40MzggMTAyLjQyNSA4NS40MzhDMTI3LjA4OCA4NS40MzggMTQ2LjQ3MSA5OC44MTI2IDE0Ni40NzEgMTE5LjMyM0MxNDYuNDcxIDEzNy41MzggMTMxLjI2MSAxNDAuMDg0IDEwNi44MDcgMTQxLjAwMkw4MS40NTU1IDE0MS45MkM3Ny4zMDMzIDE0Mi4xNSA3Ni4zODUzIDE0NS42MTMgNzcuNzYyNCAxNTAuOTEzQzgzLjUyMTIgMTY3LjUyMiA5Ni44OTU4IDE3Ni45NzQgMTEzLjk2NCAxNzYuOTc0QzEyMi43MjcgMTc2Ljk5NSAxMzEuNzIgMTc0LjY3OSAxMzkuNzk1IDE2NC45OTdaTTc0LjU0OTEgMTI0LjE4NUM3NC4zMTk2IDEzMS4xMTIgNzYuNjE0OCAxMzMuODY2IDgyLjYyNCAxMzMuODY2SDk0Ljg1MUMxMTQuNjczIDEzMy44NjYgMTIwLjY4MiAxMjcuNjQ4IDEyMC42ODIgMTE3LjAyOEMxMjAuNjgyIDEwNS4yNiAxMTIuODM3IDk0LjIwMTQgOTkuMDAzMSA5NC4yMDE0QzgzLjMxMjUgOTQuMjIyMiA3NS42OTY3IDEwNi42NTggNzQuNTQ5MSAxMjQuMTg1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0NC4yMjUgMTczLjUzMVYxMzEuNTcxQzI0NC4yMjUgMTE0LjUwMyAyMzcuMDY4IDEwMi45ODYgMjIzLjAwNSAxMDIuOTg2QzIwOC4yNTMgMTAyLjk4NiAxOTkuMjYxIDExNC41MjQgMTk5LjI2MSAxMzEuNTcxVjE2OS42MDhDMTk5LjI2MSAxNzkuNTE5IDIwMy4xODMgMTgyLjc1NCAyMTMuNzgzIDE4My42NzJWMTkxLjUxN0gxNTYuODQyVjE4My42NzJDMTY3LjY3MSAxODIuNzU0IDE3MS41OTMgMTc5LjUxOSAxNzEuNTkzIDE2OS42MDhWMTEyLjE4N0MxNzEuNTkzIDEwMS41ODggMTY3LjIxMiA5OC44MTI4IDE1Ni44NDIgOTkuNzMwOFY5MS44ODU1TDE4OS4xMiA4NS44OTcyQzE5NS43OTcgODQuNzQ5NiAxOTkuMjYxIDg3LjczMzMgMTk5LjI2MSA5My4wNTRDMTk5LjI2MSAxMDEuMzU4IDIwMi45NTQgMTAzLjQyNCAyMDUuOTM3IDk5Ljk4MTJDMjExLjAwOCA5NC40NTE5IDIyMC4yMyA4NSAyMzguNDQ1IDg1QzI1NS4yODQgODUgMjcxLjg3MSA5My4zMDQ0IDI3MS44NzEgMTI1LjU4M1YxNzEuMDA2QzI3MS44NzEgMTc4LjYyMiAyNzUuNzk0IDE4MS4zNzYgMjgzLjYzOSAxNzkuNzdWMTg3LjYxNUMyNzkuNDg3IDE5MC44NDkgMjcwLjk1MyAxOTIuNjg1IDI2NC4yNzcgMTkyLjY4NUMyNTEuNjExIDE5Mi42NjQgMjQ0LjIyNSAxODUuOTg4IDI0NC4yMjUgMTczLjUzMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* The host that publishes this as an artifact supplies a small reset; a
+   standalone page has to supply its own, so the two render identically. */
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<style>
+/* site-css:start — written by scripts/site-css.mjs. Edit docs/site/site.css. */
+/*
+ * ONE STYLESHEET, TWO PAGES, AND A THIRD THAT IS NOT A FILE.
+ *
+ * The landing page is also published as a Claude artifact, whose host
+ * supplies the document and rejects a page that brings its own — and blocks
+ * an external stylesheet outright. So the styles cannot live in a <link>,
+ * and the moment there was a second page they could not live in one page's
+ * <style> either.
+ *
+ * They live here, and `node scripts/site-css.mjs` writes them into every
+ * page between its markers. One source, several renderings, and a test that
+ * fails when a page's copy has gone stale — the same shape the chapters
+ * already use.
+ */
+:root {
+  color-scheme: light;
+
+  --paper:     #F5F6F8;
+  --panel:     #FFFFFF;
+  --sunk:      #ECEEF3;
+  --ink:       #0C1226;
+  --ink-2:     #3A4257;
+  --ink-3:     #5C6479;
+  --rule:      #D9DCE5;
+  --rule-2:    #E6E8EE;
+
+  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+     brilliant #00E5B9 that only reads on the navy, so it carries the dark
+     theme and the navy carries the light one. */
+  --navy:      #001769;
+  --mint:      #00E5B9;
+  --pine:      #14307F;
+  --pine-2:    #001769;
+  --pine-wash: #E6EAF5;
+  --amber:     #8A5A12;
+  --amber-wash:#F4EBDC;
+
+  --sans:  "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Merriweather", Georgia, "Times New Roman", serif;
+  --mono:  "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --rail: 234px;
+  --pad: clamp(22px, 4vw, 56px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper:     #070E22;
+    --panel:     #0D1730;
+    --sunk:      #101B37;
+    --ink:       #E7EAF3;
+    --ink-2:     #AFB7CC;
+    --ink-3:     #7E88A2;
+    --rule:      #1E2A4A;
+    --rule-2:    #16203A;
+    --navy:      #001769;
+    --mint:      #00E5B9;
+    --pine:      #00E5B9;
+    --pine-2:    #6BF3D6;
+    --pine-wash: #0B2A3F;
+    --amber:     #D4A162;
+    --amber-wash:#2A2115;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper:     #070E22;
+  --panel:     #0D1730;
+  --sunk:      #101B37;
+  --ink:       #E7EAF3;
+  --ink-2:     #AFB7CC;
+  --ink-3:     #7E88A2;
+  --rule:      #1E2A4A;
+  --rule-2:    #16203A;
+  --navy:      #001769;
+  --mint:      #00E5B9;
+  --pine:      #00E5B9;
+  --pine-2:    #6BF3D6;
+  --pine-wash: #0B2A3F;
+  --amber:     #D4A162;
+  --amber-wash:#2A2115;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible { outline: 3px solid var(--pine); outline-offset: 2px; border-radius: 2px; }
+
+/* Text for assistive technology only. Not `display: none`, which removes it
+   from the accessibility tree along with everything else. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The first thing the keyboard reaches is the way past the navigation. */
+.skip {
+  position: absolute;
+  left: 8px; top: -60px;
+  z-index: 20;
+  padding: 10px 16px;
+  background: var(--panel);
+  border: 1px solid var(--pine);
+  color: var(--pine);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 120ms ease;
+}
+.skip:focus { top: 8px; }
+
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Someone who has asked for more contrast gets firmer edges, not a different
+   design. */
+@media (prefers-contrast: more) {
+  :root { --rule: #6B7285; --rule-2: #8A90A0; --ink-2: #1A2033; --ink-3: #3A4257; }
+  :root:not([data-theme="light"]) { --rule: #7C8AA8; --rule-2: #5E6C88; --ink-2: #DCE2EF; --ink-3: #B9C2D6; }
+}
+
+/* Windows High Contrast throws the palette away, so anything carrying meaning
+   in a border or a fill has to say so in system colours too. */
+@media (forced-colors: active) {
+  .code, .term, .endash, .lens figure { border-color: CanvasText; }
+  .caveat { border-left-color: LinkText; }
+  section > .head .tick, .plane .no i { background: CanvasText; forced-color-adjust: none; }
+}
+
+a { color: var(--pine); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--pine-2); }
+
+/* ── shell ─────────────────────────────────────────────────────────── */
+
+.wrap {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  align-items: start;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 30px var(--pad) 30px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  border-right: 1px solid var(--rule);
+  margin-left: var(--pad);
+}
+
+.col {
+  padding: 30px var(--pad) 90px;
+  min-width: 0;
+}
+
+/* ── rail contents ─────────────────────────────────────────────────── */
+
+.brand { display: grid; gap: 3px; }
+.brand .who { display: inline-flex; align-items: center; gap: 8px; min-height: 26px; }
+.brand .who svg { width: 20px; height: 20px; flex: 0 0 auto; display: block; }
+.brand .who {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-decoration: none;
+}
+.brand .who:hover { color: var(--pine); }
+.brand .it {
+  font-family: var(--sans);
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.brand .sub {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.jump { display: grid; gap: 0; font-family: var(--sans); font-size: 12.5px; }
+.jump a {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 0;
+  color: var(--ink-2);
+  text-decoration: none;
+  font-weight: 500;
+  border-left: 2px solid transparent;
+  padding-left: 10px;
+  margin-left: -12px;
+}
+.jump a:hover { color: var(--pine); border-left-color: var(--pine); }
+
+.railfoot {
+  margin-top: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+@media (max-width: 900px) { .railfoot { display: none; } }
+
+/* ── type ──────────────────────────────────────────────────────────── */
+
+h1, h2, h3 { font-family: var(--sans); margin: 0; text-wrap: balance; }
+
+h1 {
+  font-size: clamp(34px, 4.6vw, 58px);
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -0.04em;
+  max-width: 15ch;
+}
+
+h2 {
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -0.012em; line-height: 1.4; }
+
+p { margin: 0; max-width: 66ch; }
+.lede { font-size: 18.5px; line-height: 1.62; color: var(--ink-2); max-width: 54ch; }
+.sm { font-size: 14px; line-height: 1.7; color: var(--ink-2); }
+.dim { color: var(--ink-3); }
+strong { font-weight: 700; color: var(--ink); }
+code { font-family: var(--mono); font-size: 0.86em; }
+em { font-style: italic; }
+
+section { padding-top: 54px; scroll-margin-top: 24px; }
+section > .head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+section > .head .tick {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 1px;
+  background: var(--pine);
+  transform: translateY(-6px);
+}
+.stack { display: grid; gap: 16px; align-items: start; }
+
+/* ── code ──────────────────────────────────────────────────────────── */
+
+.code {
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--pine);
+  background: var(--panel);
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  padding: 15px 17px;
+  color: var(--ink-2);
+}
+.code pre { margin: 0; }
+
+/* The garden, grown: one article per chapter, one picture each. */
+.chapter-shot { margin: 22px 0 0; }
+.chapter-shot img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 2px; background: var(--sunk); }
+.chapter-shot figcaption { font-size: 12.5px; line-height: 1.6; color: var(--ink-3); margin-top: 8px; max-width: 70ch; }
+.hero-shot { margin-top: 28px; }
+/* minmax(0, 1fr) and min-width: 0, or a grid item's automatic minimum is
+   the picture's intrinsic 1280 pixels and the whole page scrolls sideways. */
+.hero-pair { margin-top: 30px; }
+.hero-pair .two { align-items: stretch; }
+.hero-pair .code { max-height: 480px; overflow: auto; }
+.hero-pair .chapter-live { height: 480px; }
+@media (max-width: 820px) { .hero-pair .code { max-height: 320px; } }
+.derived { margin: 26px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; }
+.derived li { font-size: 15px; line-height: 1.6; color: var(--ink-2); padding-top: 12px; border-top: 1px solid var(--rule); min-width: 0; }
+.derived li strong { color: var(--ink); }
+@media (max-width: 640px) { .derived { grid-template-columns: minmax(0, 1fr); } }
+.chapters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; margin-top: 30px; }
+.chapter { min-width: 0; }
+.chapter.phone .chapter-shot img { max-width: 390px; }
+/* The chapter itself, mounted by chapters.js: sized here, themed within. */
+.chapter-live { position: relative; height: 480px; border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; background: var(--sunk); }
+.chapter.phone .chapter-live { max-width: 390px; height: 640px; }
+.chapter-loading { margin: 0; padding: 18px; font-size: 13px; color: var(--ink-3); }
+@media (max-width: 560px) { .chapter-live { height: 420px; } }
+/* An inline link is still a target: tall enough for a fingertip without leaving the line. */
+.inl { display: inline-flex; align-items: center; min-height: 24px; }
+.chapter-head { display: flex; align-items: baseline; gap: 12px; }
+.chapter-n { font-family: var(--serif); font-size: 26px; color: var(--pine); font-variant-numeric: tabular-nums; min-width: 28px; }
+.chapter-head h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.chapter-claim { margin: 8px 0 0 40px; max-width: 62ch; color: var(--ink-2); line-height: 1.6; }
+.chapter-adds { margin: 12px 0 0 40px; font-size: 13px; }
+.chapter-label { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
+.chapter-adds ul { margin: 0; padding-left: 18px; }
+.chapter-adds li { margin-top: 3px; }
+.chapter-adds code { font-size: 12px; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .chapter-claim, .chapter-adds { margin-left: 0; } }
+.k { color: var(--pine); }
+.s { color: var(--amber); }
+.c { color: var(--ink-3); }
+.n { color: var(--ink); font-weight: 500; }
+
+.two {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 26px;
+  align-items: start;
+}
+@media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── plain lists ───────────────────────────────────────────────────── */
+
+ul.plain { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
+ul.plain li {
+  padding: 9px 0;
+  border-top: 1px solid var(--rule-2);
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: var(--ink-2);
+}
+ul.plain li:first-child { border-top: none; padding-top: 0; }
+ul.plain b { color: var(--ink); font-weight: 700; }
+
+/* ── the kit's controls ─────────────────────────────────────────────── */
+
+.kit-controls { display: grid; gap: 14px; margin: 0; min-width: 0; }
+.kit-controls fieldset { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: 2px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.kit-controls legend { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); padding: 0 6px; }
+.kit-controls label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-2); min-height: 24px; }
+.kit-controls select, .kit-controls input[type="color"] { font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 2px; padding: 3px 6px; min-height: 28px; }
+.kit-controls input[type="color"] { width: 40px; padding: 2px; }
+.kit-controls input:focus-visible, .kit-controls select:focus-visible { outline: 2px solid var(--pine); outline-offset: 2px; }
+.kit-decl { margin: 0; padding: 12px 14px; background: var(--sunk); border: 1px solid var(--rule); border-radius: 2px; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink); overflow-x: auto; }
+.kit-verdict { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+.kit-verdict b { color: var(--ink); font-weight: 700; }
+.kit-verdict[data-clean="false"] b { color: var(--amber); }
+
+/* ── tables ────────────────────────────────────────────────────────── */
+
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th {
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0 16px 8px 0;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+td {
+  padding: 9px 16px 9px 0;
+  border-bottom: 1px solid var(--rule-2);
+  vertical-align: top;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+td:last-child, th:last-child { padding-right: 0; }
+td.pkg { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+td.where { font-family: var(--mono); font-size: 11.5px; }
+
+/* ── planes ────────────────────────────────────────────────────────── */
+
+.planes { display: grid; gap: 0; }
+.plane {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 20px;
+  padding: 14px 0;
+  border-top: 1px solid var(--rule-2);
+  align-items: start;
+}
+.plane:first-child { border-top: none; }
+.plane .no {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--pine);
+  padding-top: 3px;
+}
+.plane .no i { display: block; height: 2px; background: var(--pine); margin-top: 7px; font-style: normal; }
+.plane:nth-child(2) .no i { opacity: 0.5; }
+.plane:nth-child(3) .no i { opacity: 0.22; }
+.plane p { font-size: 14px; color: var(--ink-2); margin-top: 2px; }
+
+/* ── lenses ────────────────────────────────────────────────────────── */
+
+.lenses { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
+.lens { display: grid; gap: 10px; align-content: start; }
+.lens figure { margin: 0; border: 1px solid var(--rule); background: var(--panel); padding: 11px; }
+.lens svg { display: block; width: 100%; height: auto; }
+.lens p { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+
+/* ── terminal ──────────────────────────────────────────────────────── */
+
+.term {
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  overflow-x: auto;
+}
+.term .l {
+  /* The command keeps its width and the note takes what is left, right-
+     aligned; a row wider than the box scrolls the box (data-scroller)
+     instead of drawing the note over the command. */
+  display: flex;
+  gap: 11px 18px;
+  padding: 8px 15px;
+  border-top: 1px solid var(--rule-2);
+  white-space: nowrap;
+  align-items: baseline;
+}
+.term .p, .term .c2 { flex: 0 0 auto; }
+.term .n2 { flex: 0 0 auto; margin-left: auto; }
+.term .l:first-child { border-top: none; }
+.term .p { color: var(--pine); }
+.term .c2 { color: var(--ink); }
+.term .n2 { color: var(--ink-3); font-size: 11px; }
+
+/* ── en dash block ─────────────────────────────────────────────────── */
+
+.endash {
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  padding: 24px 26px;
+  display: grid;
+  gap: 18px;
+}
+.endash .lockup {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.endash .dashmark { width: 62px; }
+.endash .dashmark svg { width: 100%; height: auto; display: block; }
+@media (max-width: 620px) {
+  .endash .lockup { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+.sibs { display: grid; gap: 0; }
+.sib {
+  display: grid;
+  grid-template-columns: minmax(0, 168px) minmax(0, 1fr);
+  gap: 18px;
+  padding: 11px 0;
+  border-top: 1px solid var(--rule-2);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.sib:first-child { border-top: none; }
+.sib a {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+.sib a:hover { text-decoration: underline; }
+@media (max-width: 620px) { .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* ── caveats ───────────────────────────────────────────────────────── */
+
+.caveat {
+  border-left: 2px solid var(--amber);
+  background: var(--amber-wash);
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.62;
+  color: var(--ink-2);
+}
+.caveat b { color: var(--amber); }
+
+footer a { display: inline-flex; align-items: center; min-height: 24px; }
+footer {
+  margin-top: 60px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+
+/* ── responsive ──────────────────────────────────────────────────────
+   Last on purpose. These override base rules of equal specificity, and an
+   override that comes first is not an override — it is a rule the cascade
+   throws away. The mobile navigation lost exactly that fight and stacked
+   eleven full-width pills down the first screen of a phone.
+   ─────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); }
+  .rail {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: auto;
+    gap: 14px;
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    margin: 0;
+    padding: 18px var(--pad) 12px;
+    background: var(--paper);
+  }
+  .col { padding: 22px var(--pad) 64px; }
+  /* The header is sticky here, so an anchor that scrolls to the top of a
+     section would put its heading underneath it. */
+  section { scroll-margin-top: 132px; }
+  /* Eleven links stacked is a page of navigation before the page. A row that
+     scrolls is one line, and every link is still a link. */
+  .jump {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
+    margin: 0 calc(var(--pad) * -1);
+    padding-left: var(--pad);
+    padding-right: var(--pad);
+  }
+  .jump a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border: 1px solid var(--rule);
+    border-left-width: 1px;
+    border-radius: 999px;
+    margin-left: 0;
+    padding: 5px 12px;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .jump a:hover { border-color: var(--pine); }
+  .brand .sub { max-width: 46ch; }
+}
+
+@media (max-width: 560px) {
+  .plane { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .plane .no { padding-top: 0; }
+  .plane .no i { max-width: 92px; }
+  .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .two { gap: 20px; }
+  section { padding-top: 42px; }
+}
+
+/* ── The landing page ─────────────────────────────────────────────────────
+   A page whose job is thirty seconds, not fifteen chapters. Everything
+   below exists because the page had the right content in the wrong order:
+   the call to action was in section nine, the proof was prose, and the
+   reason to choose this over a form library was one paragraph at the end of
+   the introduction. */
+
+/* The install line, at the top, where somebody deciding can reach it. */
+.cta { margin-top: 26px; display: grid; gap: 8px; max-width: 62ch; }
+.cta-line {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 12px 14px; border: 1px solid var(--rule); border-radius: 2px;
+  background: var(--sunk);
+}
+.cta-line code { font-family: var(--mono); font-size: 14.5px; color: var(--ink); overflow-wrap: anywhere; }
+.copy {
+  font: inherit; font-family: var(--sans); font-size: 12.5px; font-weight: 600;
+  min-height: max(1.75rem, 28px); padding: 0 12px; margin-left: auto;
+  color: var(--panel); background: var(--pine); border: 1px solid transparent;
+  border-radius: 2px; cursor: pointer;
+}
+.copy:hover { background: var(--pine-2); }
+.copy[data-copied] { background: var(--amber); }
+.cta-sub { margin: 0; max-width: 62ch; }
+
+/* Numbers, counted out of the repository rather than asserted. */
+.numbers {
+  margin: 26px 0 0; padding: 0; list-style: none;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 16px 22px;
+}
+.numbers li { display: grid; gap: 1px; border-top: 1px solid var(--rule); padding-top: 10px; min-width: 0; }
+.numbers strong {
+  font-family: var(--serif); font-size: 30px; line-height: 1.05; color: var(--pine);
+  font-variant-numeric: tabular-nums;
+}
+.numbers span { font-size: 12.5px; line-height: 1.45; color: var(--ink-3); }
+
+/* The causal arrow over the hero pair, said rather than implied.
+   A FLEX ROW, not a three-column grid: the grid version overlapped its own
+   spans at every width the harness measured, because a `1fr auto 1fr` whose
+   middle cell is a rotated glyph is a promise about boxes that rotation
+   does not keep. Flex items cannot overlap. */
+.pair-says {
+  margin: 0 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.pair-says .pair-arrow { font-size: 14px; color: var(--pine); letter-spacing: 0; }
+
+/* The stepper: press a step, the left says what was added, the right is the
+   application at exactly that point. */
+.steps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.steps button {
+  font: inherit; font-family: var(--sans); font-size: 13.5px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: max(2rem, 32px); padding: 0 14px;
+  color: var(--ink-2); background: var(--panel);
+  border: 1px solid var(--rule); border-radius: 2px; cursor: pointer;
+}
+.steps button:hover { color: var(--pine); border-color: var(--pine); }
+.steps button[aria-selected="true"] {
+  color: var(--panel); background: var(--pine); border-color: var(--pine);
+}
+.steps .step-n {
+  font-family: var(--serif); font-variant-numeric: tabular-nums; font-size: 15px;
+  opacity: 0.75;
+}
+.step-panel { margin-top: 20px; }
+.step-panel:focus-visible { outline: 2px solid var(--pine); outline-offset: 6px; }
+.step-two { align-items: stretch; }
+/* The left column packs to the top. A grid that stretches two rows over a
+   460px panel puts a hundred and eighty pixels of nothing between a claim
+   and the list under it, which reads as two unrelated things. */
+.step-two > .stack { align-content: start; }
+.step-two .chapter-live { height: 460px; }
+@media (max-width: 560px) { .step-two .chapter-live { height: 400px; } }
+.step-claim { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2); max-width: 46ch; }
+.step-adds ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.step-adds li { margin-top: 4px; }
+.step-adds code { font-size: 12px; overflow-wrap: anywhere; }
+
+/* The model section, which used to be a paragraph. */
+.minor { margin: 0; font-size: 16px; font-weight: 600; }
+.ai-two .code { max-height: 340px; overflow: auto; }
+.ai-derived { grid-template-columns: minmax(0, 1fr); margin-top: 16px; gap: 12px; }
+
+/* ── The docs ─────────────────────────────────────────────────────────────
+   Thirty pages written out of the repository, so these have to hold whatever
+   a README, a SKILL.md or a barrel turns out to contain. */
+
+/* A list of things to go to: the title, and why you would. */
+.cards { margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.cards a {
+  display: grid; gap: 3px; min-width: 0;
+  padding: 12px 14px; border: 1px solid var(--rule); border-radius: 2px;
+  color: inherit; text-decoration: none; background: var(--panel);
+}
+.cards a:hover { border-color: var(--pine); }
+.cards strong { font-size: 15.5px; color: var(--pine); }
+.cards span { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+
+/* A plain list of names — exports, finding codes. Wraps, never scrolls. */
+.names {
+  margin: 14px 0 0; padding: 0; list-style: none;
+  display: flex; flex-wrap: wrap; gap: 6px 10px;
+}
+.names li { min-width: 0; }
+.names code { font-size: 12.5px; overflow-wrap: anywhere; }
+
+/* A README's table, which may be any width at all. */
+.tablewrap { margin-top: 16px; max-width: 100%; overflow-x: auto; }
+.tablewrap table { border-collapse: collapse; font-size: 13.5px; }
+.tablewrap th, .tablewrap td {
+  text-align: left; vertical-align: top;
+  padding: 7px 14px 7px 0; border-bottom: 1px solid var(--rule-2);
+}
+.tablewrap th { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+
+main.col hr { margin: 26px 0; border: 0; border-top: 1px solid var(--rule); }
+main.col blockquote {
+  margin: 16px 0; padding-left: 16px; border-left: 2px solid var(--rule);
+  color: var(--ink-2);
+}
+main.col h3 { margin: 24px 0 0; font-size: 17px; font-weight: 600; }
+main.col h4 { margin: 20px 0 0; font-size: 15px; font-weight: 600; }
+main.col .jump a[aria-current="page"] { color: var(--pine); border-left-color: var(--pine); font-weight: 600; }
+.jump a[aria-current="page"] { color: var(--pine); border-left-color: var(--pine); font-weight: 600; }
+
+/* A list the markdown renderer made, which carries no class of its own.
+   The page's other lists (.derived, .cards, .names, .chapter-adds) set
+   their own; these get the hanging indent a bulleted list is supposed to
+   have, which is the thing a reader notices missing without knowing why. */
+main.col ul:not([class]), main.col ol:not([class]) {
+  margin: 12px 0 0; padding-left: 22px;
+  list-style-position: outside;
+}
+main.col ul:not([class]) li, main.col ol:not([class]) li {
+  margin-top: 6px; line-height: 1.62; color: var(--ink-2);
+}
+main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: anywhere; }
+/* site-css:end */
+</style>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="wrap" lang="en">
+  <nav class="rail" aria-label="Documentation">
+    <div class="brand">
+      <a class="who" href="https://endash.us"><svg viewBox="0 0 330 330" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+<rect x="7.5" y="7.5" width="315" height="315" stroke="#00E5B9" stroke-width="15"/>
+<path d="M315 15H15V315H315V15Z" fill="#001769"/>
+<path d="M315 232.119H47.0074V247.705H315V232.119Z" fill="#00E5B9"/>
+<path d="M139.795 164.997L145.324 169.838C140.942 178.372 126.191 192.894 100.589 192.894C71.774 192.894 45.0248 174.678 45.0248 139.625C45.0248 103.424 73.6102 85.438 102.425 85.438C127.088 85.438 146.471 98.8126 146.471 119.323C146.471 137.538 131.261 140.084 106.807 141.002L81.4555 141.92C77.3033 142.15 76.3853 145.613 77.7624 150.913C83.5212 167.522 96.8958 176.974 113.964 176.974C122.727 176.995 131.72 174.679 139.795 164.997ZM74.5491 124.185C74.3196 131.112 76.6148 133.866 82.624 133.866H94.851C114.673 133.866 120.682 127.648 120.682 117.028C120.682 105.26 112.837 94.2014 99.0031 94.2014C83.3125 94.2222 75.6967 106.658 74.5491 124.185Z" fill="white"/>
+<path d="M244.225 173.531V131.571C244.225 114.503 237.068 102.986 223.005 102.986C208.253 102.986 199.261 114.524 199.261 131.571V169.608C199.261 179.519 203.183 182.754 213.783 183.672V191.517H156.842V183.672C167.671 182.754 171.593 179.519 171.593 169.608V112.187C171.593 101.588 167.212 98.8128 156.842 99.7308V91.8855L189.12 85.8972C195.797 84.7496 199.261 87.7333 199.261 93.054C199.261 101.358 202.954 103.424 205.937 99.9812C211.008 94.4519 220.23 85 238.445 85C255.284 85 271.871 93.3044 271.871 125.583V171.006C271.871 178.622 275.794 181.376 283.639 179.77V187.615C279.487 190.849 270.953 192.685 264.277 192.685C251.611 192.664 244.225 185.988 244.225 173.531Z" fill="white"/>
+</svg><span>En&nbsp;Dash</span></a>
+      <span class="it"><a href="../../index.html" style="color: inherit; text-decoration: none;">Graview</a></span>
+      <span class="sub">Documentation</span>
+    </div>
+
+    <div class="jump">
+      <a href="index.html">Docs home</a>
+      <a href="concepts.html">Concepts</a>
+      <a href="packages.html" aria-current="page">Packages</a>
+      <a href="skills.html">Skills</a>
+      <a href="cli.html">The CLI</a>
+      <a href="checks.html">What check says</a>
+      <a href="../../progression.html">The garden, grown</a>
+      <a href="../../index.html">&larr; The page</a>
+    </div>
+
+    <div class="railfoot">
+      written out of the repository<br>
+      by scripts/site-docs.mjs<br>
+      never by hand
+    </div>
+  </nav>
+
+  <main class="col" id="main">
+    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
+      <h1 id="h-what">graview</h1>
+      <p class="lede" style="margin-top: 18px;">The Graview command line: start a product, check its declaration, write its agent docs, serve its store, install the authoring skills. The tool; @graview/* is the framework.</p>
+      <div class="cta"><div class="cta-line"><code>pnpm add graview</code><button type="button" class="copy" data-copy="pnpm add graview">Copy</button></div></div>
+    </section>
+    <section id="readme" aria-labelledby="h-readme">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
+<p>The Graview command line. <code>graview</code> is the tool; <code>@graview/*</code> is the framework a product imports.</p>
+<div class="code" data-scroller><pre><code>npx graview create my-app          # a product on Graview, from nothing
+npm create graview my-app          # the same, by npm's convention
+
+graview check ./dist/domain/app.js    # the declaration, judged
+graview docs ./dist/domain/app.js     # llms.txt and agents.md, derived
+graview describe ./dist/domain/app.js # the app read out, for something that cannot see
+graview lens &lt;name&gt; --roles a,b       # a lens that compiles, with its reuse test red
+graview figure &lt;entry&gt; --kind &lt;kind&gt;  # the figure line for a kind
+graview serve ./dist/domain/app.js    # the store behind HTTP, data in a folder
+graview skills install .              # the authoring skills, for Claude Code and Codex</code></pre></div>
+<p>A project made by <code>graview create</code> has this package as a devDependency, so <code>npm run check</code>, <code>npm run docs</code> and <code>npm run skills</code> reach the same version of the tool the project was scaffolded with.</p>
+<p>Every subcommand is implemented in the package whose concern it is: <code>create</code>, <code>check</code>, <code>docs</code>, <code>describe</code>, <code>lens</code> and <code>figure</code> in <code>@graview/core</code>, <code>serve</code> in <code>@graview/ship</code>, <code>skills</code> in <code>@graview/skills</code>. This package dispatches and nothing else.</p>
+    </section>
+    <section id="api" aria-labelledby="h-api">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (1)</h2></div>
+      <p class="sm dim">Read off the package's own barrel, so this is what is there today.</p>
+      <ul class="names"><li><code>main</code></li></ul>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <p class="sm dim">
+    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>. These pages are
+    generated from the repository — <code>node scripts/site-docs.mjs</code> — so nothing
+    on them can disagree with the code they describe.
+  </p>
+</footer>
+<script>
+/*
+ * A REGION THAT SCROLLS NEEDS A WAY INTO IT.
+ *
+ * A code block narrower than its content scrolls sideways, and a keyboard
+ * cannot reach it without a tab stop — axe calls it
+ * scrollable-region-focusable, and at 320px every page with a wide code
+ * sample failed it the day these pages appeared. The landing page has done
+ * this since it was audited. Conditional, and re-asked on resize, because a
+ * tab stop on something that does NOT scroll is a stop that goes nowhere.
+ */
+(function () {
+  var scrollers = [].slice.call(document.querySelectorAll("[data-scroller]"));
+  function mark() {
+    scrollers.forEach(function (el) {
+      var scrolls = el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
+      if (scrolls) {
+        el.setAttribute("tabindex", "0");
+        /*
+         * A REGION NEEDS A NAME, so only the ones that have one get the
+         * role. Promoting every scrolling code block to a region put two
+         * unnamed landmarks on the same page and axe said so — a landmark
+         * a screen reader lists as "region, region" is worse than no
+         * landmark, and the tab stop is what the keyboard actually needed.
+         */
+        if (el.getAttribute("aria-label")) el.setAttribute("role", "region");
+      } else {
+        el.removeAttribute("tabindex");
+        el.removeAttribute("role");
+      }
+    });
+  }
+  mark();
+  addEventListener("resize", mark);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(mark);
+})();
+
+/* The same copy button the landing page has, and the same promise: where
+   the clipboard is refused the command is still on the page, selectable. */
+document.querySelectorAll("[data-copy]").forEach(function (button) {
+  button.addEventListener("click", function () {
+    var said = button.textContent;
+    function done(word) {
+      button.textContent = word;
+      button.setAttribute("data-copied", "");
+      setTimeout(function () { button.textContent = said; button.removeAttribute("data-copied"); }, 1600);
+    }
+    if (!navigator.clipboard) { done("Select it"); return; }
+    navigator.clipboard.writeText(button.dataset.copy).then(
+      function () { done("Copied"); },
+      function () { done("Select it"); }
+    );
+  });
+});
+</script>
+<style>
+/* site-css:start — written by scripts/site-css.mjs. Edit docs/site/site.css. */
+/*
+ * ONE STYLESHEET, TWO PAGES, AND A THIRD THAT IS NOT A FILE.
+ *
+ * The landing page is also published as a Claude artifact, whose host
+ * supplies the document and rejects a page that brings its own — and blocks
+ * an external stylesheet outright. So the styles cannot live in a <link>,
+ * and the moment there was a second page they could not live in one page's
+ * <style> either.
+ *
+ * They live here, and `node scripts/site-css.mjs` writes them into every
+ * page between its markers. One source, several renderings, and a test that
+ * fails when a page's copy has gone stale — the same shape the chapters
+ * already use.
+ */
+:root {
+  color-scheme: light;
+
+  --paper:     #F5F6F8;
+  --panel:     #FFFFFF;
+  --sunk:      #ECEEF3;
+  --ink:       #0C1226;
+  --ink-2:     #3A4257;
+  --ink-3:     #5C6479;
+  --rule:      #D9DCE5;
+  --rule-2:    #E6E8EE;
+
+  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+     brilliant #00E5B9 that only reads on the navy, so it carries the dark
+     theme and the navy carries the light one. */
+  --navy:      #001769;
+  --mint:      #00E5B9;
+  --pine:      #14307F;
+  --pine-2:    #001769;
+  --pine-wash: #E6EAF5;
+  --amber:     #8A5A12;
+  --amber-wash:#F4EBDC;
+
+  --sans:  "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Merriweather", Georgia, "Times New Roman", serif;
+  --mono:  "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --rail: 234px;
+  --pad: clamp(22px, 4vw, 56px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper:     #070E22;
+    --panel:     #0D1730;
+    --sunk:      #101B37;
+    --ink:       #E7EAF3;
+    --ink-2:     #AFB7CC;
+    --ink-3:     #7E88A2;
+    --rule:      #1E2A4A;
+    --rule-2:    #16203A;
+    --navy:      #001769;
+    --mint:      #00E5B9;
+    --pine:      #00E5B9;
+    --pine-2:    #6BF3D6;
+    --pine-wash: #0B2A3F;
+    --amber:     #D4A162;
+    --amber-wash:#2A2115;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper:     #070E22;
+  --panel:     #0D1730;
+  --sunk:      #101B37;
+  --ink:       #E7EAF3;
+  --ink-2:     #AFB7CC;
+  --ink-3:     #7E88A2;
+  --rule:      #1E2A4A;
+  --rule-2:    #16203A;
+  --navy:      #001769;
+  --mint:      #00E5B9;
+  --pine:      #00E5B9;
+  --pine-2:    #6BF3D6;
+  --pine-wash: #0B2A3F;
+  --amber:     #D4A162;
+  --amber-wash:#2A2115;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible { outline: 3px solid var(--pine); outline-offset: 2px; border-radius: 2px; }
+
+/* Text for assistive technology only. Not `display: none`, which removes it
+   from the accessibility tree along with everything else. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The first thing the keyboard reaches is the way past the navigation. */
+.skip {
+  position: absolute;
+  left: 8px; top: -60px;
+  z-index: 20;
+  padding: 10px 16px;
+  background: var(--panel);
+  border: 1px solid var(--pine);
+  color: var(--pine);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 120ms ease;
+}
+.skip:focus { top: 8px; }
+
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Someone who has asked for more contrast gets firmer edges, not a different
+   design. */
+@media (prefers-contrast: more) {
+  :root { --rule: #6B7285; --rule-2: #8A90A0; --ink-2: #1A2033; --ink-3: #3A4257; }
+  :root:not([data-theme="light"]) { --rule: #7C8AA8; --rule-2: #5E6C88; --ink-2: #DCE2EF; --ink-3: #B9C2D6; }
+}
+
+/* Windows High Contrast throws the palette away, so anything carrying meaning
+   in a border or a fill has to say so in system colours too. */
+@media (forced-colors: active) {
+  .code, .term, .endash, .lens figure { border-color: CanvasText; }
+  .caveat { border-left-color: LinkText; }
+  section > .head .tick, .plane .no i { background: CanvasText; forced-color-adjust: none; }
+}
+
+a { color: var(--pine); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--pine-2); }
+
+/* ── shell ─────────────────────────────────────────────────────────── */
+
+.wrap {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  align-items: start;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 30px var(--pad) 30px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  border-right: 1px solid var(--rule);
+  margin-left: var(--pad);
+}
+
+.col {
+  padding: 30px var(--pad) 90px;
+  min-width: 0;
+}
+
+/* ── rail contents ─────────────────────────────────────────────────── */
+
+.brand { display: grid; gap: 3px; }
+.brand .who { display: inline-flex; align-items: center; gap: 8px; min-height: 26px; }
+.brand .who svg { width: 20px; height: 20px; flex: 0 0 auto; display: block; }
+.brand .who {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-decoration: none;
+}
+.brand .who:hover { color: var(--pine); }
+.brand .it {
+  font-family: var(--sans);
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.brand .sub {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.jump { display: grid; gap: 0; font-family: var(--sans); font-size: 12.5px; }
+.jump a {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 0;
+  color: var(--ink-2);
+  text-decoration: none;
+  font-weight: 500;
+  border-left: 2px solid transparent;
+  padding-left: 10px;
+  margin-left: -12px;
+}
+.jump a:hover { color: var(--pine); border-left-color: var(--pine); }
+
+.railfoot {
+  margin-top: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+@media (max-width: 900px) { .railfoot { display: none; } }
+
+/* ── type ──────────────────────────────────────────────────────────── */
+
+h1, h2, h3 { font-family: var(--sans); margin: 0; text-wrap: balance; }
+
+h1 {
+  font-size: clamp(34px, 4.6vw, 58px);
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -0.04em;
+  max-width: 15ch;
+}
+
+h2 {
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -0.012em; line-height: 1.4; }
+
+p { margin: 0; max-width: 66ch; }
+.lede { font-size: 18.5px; line-height: 1.62; color: var(--ink-2); max-width: 54ch; }
+.sm { font-size: 14px; line-height: 1.7; color: var(--ink-2); }
+.dim { color: var(--ink-3); }
+strong { font-weight: 700; color: var(--ink); }
+code { font-family: var(--mono); font-size: 0.86em; }
+em { font-style: italic; }
+
+section { padding-top: 54px; scroll-margin-top: 24px; }
+section > .head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+section > .head .tick {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 1px;
+  background: var(--pine);
+  transform: translateY(-6px);
+}
+.stack { display: grid; gap: 16px; align-items: start; }
+
+/* ── code ──────────────────────────────────────────────────────────── */
+
+.code {
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--pine);
+  background: var(--panel);
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  padding: 15px 17px;
+  color: var(--ink-2);
+}
+.code pre { margin: 0; }
+
+/* The garden, grown: one article per chapter, one picture each. */
+.chapter-shot { margin: 22px 0 0; }
+.chapter-shot img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 2px; background: var(--sunk); }
+.chapter-shot figcaption { font-size: 12.5px; line-height: 1.6; color: var(--ink-3); margin-top: 8px; max-width: 70ch; }
+.hero-shot { margin-top: 28px; }
+/* minmax(0, 1fr) and min-width: 0, or a grid item's automatic minimum is
+   the picture's intrinsic 1280 pixels and the whole page scrolls sideways. */
+.hero-pair { margin-top: 30px; }
+.hero-pair .two { align-items: stretch; }
+.hero-pair .code { max-height: 480px; overflow: auto; }
+.hero-pair .chapter-live { height: 480px; }
+@media (max-width: 820px) { .hero-pair .code { max-height: 320px; } }
+.derived { margin: 26px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; }
+.derived li { font-size: 15px; line-height: 1.6; color: var(--ink-2); padding-top: 12px; border-top: 1px solid var(--rule); min-width: 0; }
+.derived li strong { color: var(--ink); }
+@media (max-width: 640px) { .derived { grid-template-columns: minmax(0, 1fr); } }
+.chapters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; margin-top: 30px; }
+.chapter { min-width: 0; }
+.chapter.phone .chapter-shot img { max-width: 390px; }
+/* The chapter itself, mounted by chapters.js: sized here, themed within. */
+.chapter-live { position: relative; height: 480px; border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; background: var(--sunk); }
+.chapter.phone .chapter-live { max-width: 390px; height: 640px; }
+.chapter-loading { margin: 0; padding: 18px; font-size: 13px; color: var(--ink-3); }
+@media (max-width: 560px) { .chapter-live { height: 420px; } }
+/* An inline link is still a target: tall enough for a fingertip without leaving the line. */
+.inl { display: inline-flex; align-items: center; min-height: 24px; }
+.chapter-head { display: flex; align-items: baseline; gap: 12px; }
+.chapter-n { font-family: var(--serif); font-size: 26px; color: var(--pine); font-variant-numeric: tabular-nums; min-width: 28px; }
+.chapter-head h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.chapter-claim { margin: 8px 0 0 40px; max-width: 62ch; color: var(--ink-2); line-height: 1.6; }
+.chapter-adds { margin: 12px 0 0 40px; font-size: 13px; }
+.chapter-label { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
+.chapter-adds ul { margin: 0; padding-left: 18px; }
+.chapter-adds li { margin-top: 3px; }
+.chapter-adds code { font-size: 12px; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .chapter-claim, .chapter-adds { margin-left: 0; } }
+.k { color: var(--pine); }
+.s { color: var(--amber); }
+.c { color: var(--ink-3); }
+.n { color: var(--ink); font-weight: 500; }
+
+.two {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 26px;
+  align-items: start;
+}
+@media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── plain lists ───────────────────────────────────────────────────── */
+
+ul.plain { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
+ul.plain li {
+  padding: 9px 0;
+  border-top: 1px solid var(--rule-2);
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: var(--ink-2);
+}
+ul.plain li:first-child { border-top: none; padding-top: 0; }
+ul.plain b { color: var(--ink); font-weight: 700; }
+
+/* ── the kit's controls ─────────────────────────────────────────────── */
+
+.kit-controls { display: grid; gap: 14px; margin: 0; min-width: 0; }
+.kit-controls fieldset { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: 2px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.kit-controls legend { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); padding: 0 6px; }
+.kit-controls label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-2); min-height: 24px; }
+.kit-controls select, .kit-controls input[type="color"] { font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 2px; padding: 3px 6px; min-height: 28px; }
+.kit-controls input[type="color"] { width: 40px; padding: 2px; }
+.kit-controls input:focus-visible, .kit-controls select:focus-visible { outline: 2px solid var(--pine); outline-offset: 2px; }
+.kit-decl { margin: 0; padding: 12px 14px; background: var(--sunk); border: 1px solid var(--rule); border-radius: 2px; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink); overflow-x: auto; }
+.kit-verdict { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+.kit-verdict b { color: var(--ink); font-weight: 700; }
+.kit-verdict[data-clean="false"] b { color: var(--amber); }
+
+/* ── tables ────────────────────────────────────────────────────────── */
+
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th {
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0 16px 8px 0;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+td {
+  padding: 9px 16px 9px 0;
+  border-bottom: 1px solid var(--rule-2);
+  vertical-align: top;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+td:last-child, th:last-child { padding-right: 0; }
+td.pkg { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+td.where { font-family: var(--mono); font-size: 11.5px; }
+
+/* ── planes ────────────────────────────────────────────────────────── */
+
+.planes { display: grid; gap: 0; }
+.plane {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 20px;
+  padding: 14px 0;
+  border-top: 1px solid var(--rule-2);
+  align-items: start;
+}
+.plane:first-child { border-top: none; }
+.plane .no {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--pine);
+  padding-top: 3px;
+}
+.plane .no i { display: block; height: 2px; background: var(--pine); margin-top: 7px; font-style: normal; }
+.plane:nth-child(2) .no i { opacity: 0.5; }
+.plane:nth-child(3) .no i { opacity: 0.22; }
+.plane p { font-size: 14px; color: var(--ink-2); margin-top: 2px; }
+
+/* ── lenses ────────────────────────────────────────────────────────── */
+
+.lenses { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
+.lens { display: grid; gap: 10px; align-content: start; }
+.lens figure { margin: 0; border: 1px solid var(--rule); background: var(--panel); padding: 11px; }
+.lens svg { display: block; width: 100%; height: auto; }
+.lens p { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+
+/* ── terminal ──────────────────────────────────────────────────────── */
+
+.term {
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  overflow-x: auto;
+}
+.term .l {
+  /* The command keeps its width and the note takes what is left, right-
+     aligned; a row wider than the box scrolls the box (data-scroller)
+     instead of drawing the note over the command. */
+  display: flex;
+  gap: 11px 18px;
+  padding: 8px 15px;
+  border-top: 1px solid var(--rule-2);
+  white-space: nowrap;
+  align-items: baseline;
+}
+.term .p, .term .c2 { flex: 0 0 auto; }
+.term .n2 { flex: 0 0 auto; margin-left: auto; }
+.term .l:first-child { border-top: none; }
+.term .p { color: var(--pine); }
+.term .c2 { color: var(--ink); }
+.term .n2 { color: var(--ink-3); font-size: 11px; }
+
+/* ── en dash block ─────────────────────────────────────────────────── */
+
+.endash {
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  padding: 24px 26px;
+  display: grid;
+  gap: 18px;
+}
+.endash .lockup {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.endash .dashmark { width: 62px; }
+.endash .dashmark svg { width: 100%; height: auto; display: block; }
+@media (max-width: 620px) {
+  .endash .lockup { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+.sibs { display: grid; gap: 0; }
+.sib {
+  display: grid;
+  grid-template-columns: minmax(0, 168px) minmax(0, 1fr);
+  gap: 18px;
+  padding: 11px 0;
+  border-top: 1px solid var(--rule-2);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.sib:first-child { border-top: none; }
+.sib a {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+.sib a:hover { text-decoration: underline; }
+@media (max-width: 620px) { .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* ── caveats ───────────────────────────────────────────────────────── */
+
+.caveat {
+  border-left: 2px solid var(--amber);
+  background: var(--amber-wash);
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.62;
+  color: var(--ink-2);
+}
+.caveat b { color: var(--amber); }
+
+footer a { display: inline-flex; align-items: center; min-height: 24px; }
+footer {
+  margin-top: 60px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+
+/* ── responsive ──────────────────────────────────────────────────────
+   Last on purpose. These override base rules of equal specificity, and an
+   override that comes first is not an override — it is a rule the cascade
+   throws away. The mobile navigation lost exactly that fight and stacked
+   eleven full-width pills down the first screen of a phone.
+   ─────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); }
+  .rail {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: auto;
+    gap: 14px;
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    margin: 0;
+    padding: 18px var(--pad) 12px;
+    background: var(--paper);
+  }
+  .col { padding: 22px var(--pad) 64px; }
+  /* The header is sticky here, so an anchor that scrolls to the top of a
+     section would put its heading underneath it. */
+  section { scroll-margin-top: 132px; }
+  /* Eleven links stacked is a page of navigation before the page. A row that
+     scrolls is one line, and every link is still a link. */
+  .jump {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
+    margin: 0 calc(var(--pad) * -1);
+    padding-left: var(--pad);
+    padding-right: var(--pad);
+  }
+  .jump a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border: 1px solid var(--rule);
+    border-left-width: 1px;
+    border-radius: 999px;
+    margin-left: 0;
+    padding: 5px 12px;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .jump a:hover { border-color: var(--pine); }
+  .brand .sub { max-width: 46ch; }
+}
+
+@media (max-width: 560px) {
+  .plane { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .plane .no { padding-top: 0; }
+  .plane .no i { max-width: 92px; }
+  .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .two { gap: 20px; }
+  section { padding-top: 42px; }
+}
+
+/* ── The landing page ─────────────────────────────────────────────────────
+   A page whose job is thirty seconds, not fifteen chapters. Everything
+   below exists because the page had the right content in the wrong order:
+   the call to action was in section nine, the proof was prose, and the
+   reason to choose this over a form library was one paragraph at the end of
+   the introduction. */
+
+/* The install line, at the top, where somebody deciding can reach it. */
+.cta { margin-top: 26px; display: grid; gap: 8px; max-width: 62ch; }
+.cta-line {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 12px 14px; border: 1px solid var(--rule); border-radius: 2px;
+  background: var(--sunk);
+}
+.cta-line code { font-family: var(--mono); font-size: 14.5px; color: var(--ink); overflow-wrap: anywhere; }
+.copy {
+  font: inherit; font-family: var(--sans); font-size: 12.5px; font-weight: 600;
+  min-height: max(1.75rem, 28px); padding: 0 12px; margin-left: auto;
+  color: var(--panel); background: var(--pine); border: 1px solid transparent;
+  border-radius: 2px; cursor: pointer;
+}
+.copy:hover { background: var(--pine-2); }
+.copy[data-copied] { background: var(--amber); }
+.cta-sub { margin: 0; max-width: 62ch; }
+
+/* Numbers, counted out of the repository rather than asserted. */
+.numbers {
+  margin: 26px 0 0; padding: 0; list-style: none;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 16px 22px;
+}
+.numbers li { display: grid; gap: 1px; border-top: 1px solid var(--rule); padding-top: 10px; min-width: 0; }
+.numbers strong {
+  font-family: var(--serif); font-size: 30px; line-height: 1.05; color: var(--pine);
+  font-variant-numeric: tabular-nums;
+}
+.numbers span { font-size: 12.5px; line-height: 1.45; color: var(--ink-3); }
+
+/* The causal arrow over the hero pair, said rather than implied.
+   A FLEX ROW, not a three-column grid: the grid version overlapped its own
+   spans at every width the harness measured, because a `1fr auto 1fr` whose
+   middle cell is a rotated glyph is a promise about boxes that rotation
+   does not keep. Flex items cannot overlap. */
+.pair-says {
+  margin: 0 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.pair-says .pair-arrow { font-size: 14px; color: var(--pine); letter-spacing: 0; }
+
+/* The stepper: press a step, the left says what was added, the right is the
+   application at exactly that point. */
+.steps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.steps button {
+  font: inherit; font-family: var(--sans); font-size: 13.5px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: max(2rem, 32px); padding: 0 14px;
+  color: var(--ink-2); background: var(--panel);
+  border: 1px solid var(--rule); border-radius: 2px; cursor: pointer;
+}
+.steps button:hover { color: var(--pine); border-color: var(--pine); }
+.steps button[aria-selected="true"] {
+  color: var(--panel); background: var(--pine); border-color: var(--pine);
+}
+.steps .step-n {
+  font-family: var(--serif); font-variant-numeric: tabular-nums; font-size: 15px;
+  opacity: 0.75;
+}
+.step-panel { margin-top: 20px; }
+.step-panel:focus-visible { outline: 2px solid var(--pine); outline-offset: 6px; }
+.step-two { align-items: stretch; }
+/* The left column packs to the top. A grid that stretches two rows over a
+   460px panel puts a hundred and eighty pixels of nothing between a claim
+   and the list under it, which reads as two unrelated things. */
+.step-two > .stack { align-content: start; }
+.step-two .chapter-live { height: 460px; }
+@media (max-width: 560px) { .step-two .chapter-live { height: 400px; } }
+.step-claim { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2); max-width: 46ch; }
+.step-adds ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.step-adds li { margin-top: 4px; }
+.step-adds code { font-size: 12px; overflow-wrap: anywhere; }
+
+/* The model section, which used to be a paragraph. */
+.minor { margin: 0; font-size: 16px; font-weight: 600; }
+.ai-two .code { max-height: 340px; overflow: auto; }
+.ai-derived { grid-template-columns: minmax(0, 1fr); margin-top: 16px; gap: 12px; }
+
+/* ── The docs ─────────────────────────────────────────────────────────────
+   Thirty pages written out of the repository, so these have to hold whatever
+   a README, a SKILL.md or a barrel turns out to contain. */
+
+/* A list of things to go to: the title, and why you would. */
+.cards { margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.cards a {
+  display: grid; gap: 3px; min-width: 0;
+  padding: 12px 14px; border: 1px solid var(--rule); border-radius: 2px;
+  color: inherit; text-decoration: none; background: var(--panel);
+}
+.cards a:hover { border-color: var(--pine); }
+.cards strong { font-size: 15.5px; color: var(--pine); }
+.cards span { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+
+/* A plain list of names — exports, finding codes. Wraps, never scrolls. */
+.names {
+  margin: 14px 0 0; padding: 0; list-style: none;
+  display: flex; flex-wrap: wrap; gap: 6px 10px;
+}
+.names li { min-width: 0; }
+.names code { font-size: 12.5px; overflow-wrap: anywhere; }
+
+/* A README's table, which may be any width at all. */
+.tablewrap { margin-top: 16px; max-width: 100%; overflow-x: auto; }
+.tablewrap table { border-collapse: collapse; font-size: 13.5px; }
+.tablewrap th, .tablewrap td {
+  text-align: left; vertical-align: top;
+  padding: 7px 14px 7px 0; border-bottom: 1px solid var(--rule-2);
+}
+.tablewrap th { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+
+main.col hr { margin: 26px 0; border: 0; border-top: 1px solid var(--rule); }
+main.col blockquote {
+  margin: 16px 0; padding-left: 16px; border-left: 2px solid var(--rule);
+  color: var(--ink-2);
+}
+main.col h3 { margin: 24px 0 0; font-size: 17px; font-weight: 600; }
+main.col h4 { margin: 20px 0 0; font-size: 15px; font-weight: 600; }
+main.col .jump a[aria-current="page"] { color: var(--pine); border-left-color: var(--pine); font-weight: 600; }
+.jump a[aria-current="page"] { color: var(--pine); border-left-color: var(--pine); font-weight: 600; }
+
+/* A list the markdown renderer made, which carries no class of its own.
+   The page's other lists (.derived, .cards, .names, .chapter-adds) set
+   their own; these get the hanging indent a bulleted list is supposed to
+   have, which is the thing a reader notices missing without knowing why. */
+main.col ul:not([class]), main.col ol:not([class]) {
+  margin: 12px 0 0; padding-left: 22px;
+  list-style-position: outside;
+}
+main.col ul:not([class]) li, main.col ol:not([class]) li {
+  margin-top: 6px; line-height: 1.62; color: var(--ink-2);
+}
+main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: anywhere; }
+/* site-css:end */
+</style>
+</body>
+</html>

@@ -1,7 +1,6 @@
 {
   "name": "@graview/embed",
   "version": "0.0.1",
-  "private": true,
   "type": "module",
   "description": "Mount a declared Graview app into any element \u2014 the scene, the Graview, or the routed pages \u2014 without the Shell, sized and themed within the element.",
   "main": "./dist/index.js",
@@ -35,10 +34,14 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/endash/graview.git",
+    "url": "git+https://github.com/en-dash-consulting/graview.git",
     "directory": "packages/embed"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "license": "Elastic-2.0",
+  "engines": {
+    "node": ">=22"
   }
 }

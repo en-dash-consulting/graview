@@ -18,12 +18,12 @@ describe("create-graview", () => {
     };
     expect(manifest.name).toBe("create-graview");
     expect(manifest.bin["create-graview"]).toBe("./dist/cli.js");
-    expect(Object.keys(manifest.dependencies)).toEqual(["@graview/core"]);
+    expect(Object.keys(manifest.dependencies)).toEqual(["graview"]);
   });
 
   it("delegates to graview create, and only that", () => {
     const source = readFileSync(resolve(here, "src/index.ts"), "utf8");
-    expect(source).toContain('from "@graview/core/cli"');
+    expect(source).toContain('from "graview"');
     expect(source).toContain('main(["create", ...argv])');
     expect(source).not.toMatch(/writeFileSync|scaffoldProject/);
   });

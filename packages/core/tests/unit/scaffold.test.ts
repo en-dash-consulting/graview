@@ -150,7 +150,7 @@ describe("what a project starts with", () => {
     };
     expect(manifest.name).toBe("field-notes");
     for (const pkg of GRAVIEW_PACKAGES) expect(manifest.dependencies[`@graview/${pkg}`]).toBeDefined();
-    expect(manifest.devDependencies["@graview/skills"]).toBeDefined();
+    expect(manifest.devDependencies["graview"]).toBeDefined();
     expect(manifest.scripts["check"]).toBe("pnpm build:domain && graview check ./dist/domain/app.js");
     expect((manifest as { engines: { node: string } }).engines.node).toBe(">=22");
     expect((manifest as { pnpm?: { onlyBuiltDependencies: string[] } }).pnpm?.onlyBuiltDependencies).toEqual(["esbuild"]);

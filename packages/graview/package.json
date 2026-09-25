@@ -1,0 +1,42 @@
+{
+  "name": "graview",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "The Graview command line: start a product, check its declaration, write its agent docs, serve its store, install the authoring skills. The tool; @graview/* is the framework.",
+  "license": "Elastic-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "graview": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*",
+    "@graview/ship": "workspace:*",
+    "@graview/skills": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/en-dash-consulting/graview.git",
+    "directory": "packages/graview"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

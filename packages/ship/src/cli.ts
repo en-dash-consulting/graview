@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { GraviewApp } from "@graview/core";
@@ -88,13 +87,4 @@ async function sqliteAdapter(file: string) {
   // `createTables` because this is the "point it at a file" case: an app
   // with its own Drizzle schema passes its own database and leaves it alone.
   return createSqliteAdapter({ database: new Database(file), createTables: true });
-}
-
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const [, , command, ...rest] = process.argv;
-  if (command !== "serve") {
-    process.stderr.write(`graview-serve: unknown command "${command ?? ""}"\n\n${SERVE_USAGE}`);
-    process.exit(2);
-  }
-  process.exitCode = await serve(rest);
 }

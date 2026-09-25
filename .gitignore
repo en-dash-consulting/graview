@@ -13,3 +13,8 @@ apps/*/generated/
 .generated/
 .n-dx-web.pid
 apps/.studio-rehearsal/
+
+# Machine-specific or logged, not metadata: the codex MCP config carries
+# absolute paths, and the command log is a transcript.
+.codex/config.toml
+claude_commands.log

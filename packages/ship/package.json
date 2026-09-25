@@ -1,7 +1,6 @@
 {
   "name": "@graview/ship",
   "version": "0.0.1",
-  "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,6 +16,10 @@
     "./dev": {
       "types": "./dist/dev.d.ts",
       "default": "./dist/dev.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "default": "./dist/cli.js"
     }
   },
   "scripts": {
@@ -36,14 +39,11 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/endash/graview.git",
+    "url": "git+https://github.com/en-dash-consulting/graview.git",
     "directory": "packages/ship"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "bin": {
-    "graview-serve": "./dist/cli.js"
   },
   "peerDependencies": {
     "typescript": ">=5"
@@ -52,5 +52,9 @@
     "typescript": {
       "optional": true
     }
+  },
+  "license": "Elastic-2.0",
+  "engines": {
+    "node": ">=22"
   }
 }

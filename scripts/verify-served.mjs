@@ -12,7 +12,7 @@
  */
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
@@ -30,7 +30,7 @@ function startServer() {
   const child = spawn(
     "node",
     [
-      "packages/ship/dist/cli.js",
+      "packages/graview/dist/cli.js",
       "serve",
       "apps/rota/dist/domain/app.js",
       "--data",
@@ -92,7 +92,7 @@ try {
   report.checks.theDataIsAFolderYouCanOpen = {
     ...onDisk,
     // `log.jsonl` only exists once something has happened, which is honest.
-    ok: onDisk.files.includes("snapshot.json") && onDisk.files.includes("meta.json") && onDisk.version === 2,
+    ok: onDisk.files.includes("snapshot.json") && onDisk.files.includes("meta.json") && onDisk.version === 3,
   };
 
   /* ---------------------------- one browser acts, another one sees it */
@@ -156,7 +156,7 @@ try {
     edges: after.snapshot.edges.length,
     log: after.log.length,
     version: after.version,
-    ok: after.log.length === 1 && after.version === 2 && after.snapshot.edges.length === 8,
+    ok: after.log.length === 1 && after.version === 3 && after.snapshot.edges.length === 18,
   };
 
   /* ------------------------------ the policy judges there too, in its words */
@@ -176,7 +176,8 @@ try {
   const health = await (await fetch(`${SERVER}/graview/health`)).json();
   report.checks.itSaysWhereTheDataIs = {
     adapter: health.adapter,
-    where: health.where,
+    // Relative, so the verdict does not record whose machine it ran on.
+    where: relative(repoRoot, health.where),
     ok: health.ok === true && health.adapter === "file" && String(health.where).endsWith("apps/rota/data"),
   };
 

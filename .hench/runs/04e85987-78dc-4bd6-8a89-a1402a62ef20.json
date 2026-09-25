@@ -1,7 +1,7 @@
 {
   "id": "04e85987-78dc-4bd6-8a89-a1402a62ef20",
   "taskId": "e82e0c45-b43d-4b01-8827-f5fcc3d1563e",
-  "taskTitle": "F-011 · The scaffold pins zod's types to an exact path inside the framework's pnpm store",
+  "taskTitle": "F-011 \u00b7 The scaffold pins zod's types to an exact path inside the framework's pnpm store",
   "startedAt": "2026-09-15T00:53:27.193Z",
   "finishedAt": "2026-09-15T00:53:27.193Z",
   "status": "completed",
@@ -18,7 +18,6 @@
   "invocationContext": "api",
   "assisted": true,
   "actor": "Nick Daniel <nick@endash.us>",
-  "host": "host",
   "ndxVersion": "0.6.0",
   "cliPath": "n-dx/packages/hench/dist/cli/index.js",
   "tokens": {

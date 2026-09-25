@@ -317,9 +317,9 @@ importers:
 
   packages/create-graview:
     dependencies:
-      '@graview/core':
+      graview:
         specifier: workspace:*
-        version: link:../core
+        version: link:../graview
 
   packages/embed:
     dependencies:
@@ -350,6 +350,18 @@ importers:
       react-dom:
         specifier: '>=18'
         version: 19.2.8(react@19.2.8)
+
+  packages/graview:
+    dependencies:
+      '@graview/core':
+        specifier: workspace:*
+        version: link:../core
+      '@graview/ship':
+        specifier: workspace:*
+        version: link:../ship
+      '@graview/skills':
+        specifier: workspace:*
+        version: link:../skills
 
   packages/layout:
     dependencies:

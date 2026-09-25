@@ -66,9 +66,13 @@ describe("what the browser entry reaches", () => {
 });
 
 describe("the main entry, which a page may not import", () => {
-  it("really does reach the shebang, so the guard above is not guarding nothing", () => {
+  it("really does reach a node: builtin, so the guard above is not guarding nothing", () => {
+    /*
+     * The shebang itself lives in the `graview` package now; what stays here
+     * is the file adapter and the server, which a page cannot run either.
+     */
     const graph = reached("index.js");
-    const shebanged = [...graph].filter(([, source]) => source.startsWith("#!"));
-    expect(shebanged.length, "if this is 0 the CLI moved and the browser guard is theatre").toBeGreaterThan(0);
+    const nodeOnly = [...graph].filter(([, source]) => /from\s+"node:/.test(source));
+    expect(nodeOnly.length, "if this is 0 the Node half moved and the browser guard is theatre").toBeGreaterThan(0);
   });
 });

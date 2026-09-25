@@ -4,9 +4,12 @@ Skills that teach an assistant how to build with Graview — and, more usefully,
 how to find out whether it worked.
 
 ```sh
-npx graview-skills install      # into .claude/skills and .agents/skills
-npx graview-skills list
+npx graview skills install .    # into .claude/skills and .agents/skills
+npx graview skills list
 ```
+
+The command line is the `graview` package; this one ships the skills and
+the move, and `graview skills` dispatches here.
 
 ## Why this framework is worth having skills for
 

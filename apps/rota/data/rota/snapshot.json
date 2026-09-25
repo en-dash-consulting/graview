@@ -91,6 +91,33 @@
       "kind": "shift"
     },
     {
+      "label": "The hall",
+      "directions": "Main doors on the high street; the key is in the office.",
+      "id": "loc-hall",
+      "kind": "location"
+    },
+    {
+      "label": "The kitchen",
+      "id": "loc-kitchen",
+      "kind": "location"
+    },
+    {
+      "label": "The store",
+      "id": "loc-store",
+      "kind": "location"
+    },
+    {
+      "label": "The workshop",
+      "id": "loc-workshop",
+      "kind": "location"
+    },
+    {
+      "label": "The yard",
+      "directions": "Round the back, through the side gate.",
+      "id": "loc-yard",
+      "kind": "location"
+    },
+    {
       "label": "Ada Nowak",
       "phone": "07700 900101",
       "limit": 3,
@@ -177,31 +204,6 @@
       "status": "pending",
       "id": "inv-lee",
       "kind": "invitation"
-    },
-    {
-      "label": "The hall",
-      "id": "loc-hall",
-      "kind": "location"
-    },
-    {
-      "label": "The kitchen",
-      "id": "loc-kitchen",
-      "kind": "location"
-    },
-    {
-      "label": "The store",
-      "id": "loc-store",
-      "kind": "location"
-    },
-    {
-      "label": "The workshop",
-      "id": "loc-workshop",
-      "kind": "location"
-    },
-    {
-      "label": "The yard",
-      "id": "loc-yard",
-      "kind": "location"
     }
   ],
   "edges": [
@@ -239,11 +241,6 @@
       "kind": "covered-by",
       "from": "s-sat-market",
       "to": "v-cass"
-    },
-    {
-      "kind": "covered-by",
-      "from": "s-fri-repair",
-      "to": "v-ada"
     },
     {
       "kind": "held-at",
@@ -294,6 +291,11 @@
       "kind": "held-at",
       "from": "s-mon2-open",
       "to": "loc-hall"
+    },
+    {
+      "kind": "covered-by",
+      "from": "s-fri-repair",
+      "to": "v-ada"
     }
   ]
 }

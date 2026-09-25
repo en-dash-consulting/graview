@@ -1,22 +1,39 @@
 {
   "name": "@graview/skills",
   "version": "0.0.1",
-  "private": true,
   "type": "module",
   "description": "Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": { "graview-skills": "./dist/cli.js" },
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "default": "./dist/cli.js"
+    }
   },
-  "files": ["dist", "skills", "README.md"],
+  "files": [
+    "dist",
+    "skills",
+    "README.md"
+  ],
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/endash/graview.git",
+    "url": "git+https://github.com/en-dash-consulting/graview.git",
     "directory": "packages/skills"
   },
-  "publishConfig": { "access": "public" },
-  "scripts": { "build": "tsc -b" }
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "license": "Elastic-2.0",
+  "engines": {
+    "node": ">=22"
+  }
 }

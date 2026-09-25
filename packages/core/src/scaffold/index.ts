@@ -34,7 +34,7 @@ import { schemaTs, mutationsTs, invariantsTs, brandTs, appTs, domainTest } from 
 import { indexHtml, embedHtml, embedTsx, viewsTsx, uiAppTsx, pagesTsx, mainTsx } from "./ui.js";
 
 export { pascal, slugify, titleCase, validateScaffoldOptions } from "./names.js";
-export { GRAVIEW_PACKAGES } from "./project.js";
+export { GRAVIEW_PACKAGES, LINKED_PACKAGES } from "./project.js";
 
 export interface ScaffoldOptions {
   /** The product's name, as a person would say it: "Field Notes". */

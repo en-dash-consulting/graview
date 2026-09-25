@@ -43,7 +43,7 @@ const READY = { todo: "__todoReady", rota: "__rotaReady", seedbed: "__seedbedRea
 const store = spawn(
   "node",
   [
-    "packages/ship/dist/cli.js",
+    "packages/graview/dist/cli.js",
     "serve",
     "apps/rota/dist/domain/app.js",
     "--data",

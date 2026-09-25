@@ -464,7 +464,7 @@ function build() {
         `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
         `      <h1 id="h-what">${escape(skill.name)}</h1>\n` +
         `      <p class="lede" style="margin-top: 18px;">${escape(skill.description)}</p>\n` +
-        `      <p class="sm dim">Installed into a project by <code>graview-skills install .</code>, and read by whichever assistant is working beside you.</p>\n` +
+        `      <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>\n` +
         `    </section>\n` +
         section("skill", "The skill", render(skill.body)),
     }));
@@ -493,7 +493,7 @@ function build() {
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">The skills</h1>\n` +
       `      <p class="lede" style="margin-top: 18px;">Each teaches a model one shape of the declaration, and each ends in <code>graview check</code> — reporting what it actually said, rather than claiming the work is done.</p>\n` +
-      `      <div class="cta"><div class="cta-line"><code>graview-skills install .</code><button type="button" class="copy" data-copy="graview-skills install .">Copy</button></div></div>\n` +
+      `      <div class="cta"><div class="cta-line"><code>graview skills install .</code><button type="button" class="copy" data-copy="graview skills install .">Copy</button></div></div>\n` +
       `    </section>\n` +
       section("all", "All of them",
         `      <ul class="cards">\n` +
