@@ -133,7 +133,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
       >
         <Link
           to={recordPath(store.schema, kind, node.id)}
-          style={{ ...plain, fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, lineHeight: 1.3 }}
+          style={{ ...plain, fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, lineHeight: 1.3 }}
         >
           {flagged.has(node.id) ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
           {label}
@@ -241,7 +241,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         </form>
       ) : null}
       {members.length === 0 ? (
-        <p style={{ ...lede, fontSize: "1rem" }} data-testid="none-yet">
+        <p style={{ ...lede, fontSize: "1.0625rem" }} data-testid="none-yet">
           {narrowing.length > 0 || withEdge !== null ? "None of them." : "None yet"}
           {narrowing.length === 0 && withEdge === null && creators.length > 0
             ? ` — the first one starts below, with “${creators[0]?.mutation.title ?? creators[0]?.mutation.name}”.`
@@ -262,7 +262,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
             <div style={{ display: "grid", gap: 18 }} data-testid="records" data-grouped={grouping}>
               {ordered.map(([key, nodes]) => (
                 <section key={key || "-"} style={{ display: "grid", gap: 0 }} data-testid="list-group">
-                  <h2 style={{ ...h2, fontSize: "1rem", marginBottom: 4 }}>
+                  <h2 style={{ ...h2, fontSize: "1.0625rem", marginBottom: 4 }}>
                     {key || `No ${humaniseField(grouping).toLowerCase()}`} <span style={quiet}>{nodes.length}</span>
                   </h2>
                   <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 0 }}>{nodes.map(row)}</ul>

@@ -22,7 +22,7 @@ export const stepStyle = {
   minWidth: 24,
   padding: "2px 9px",
   borderRadius: 999,
-  fontSize: "0.75rem",
+  fontSize: "0.8125rem",
   borderWidth: 1,
   borderStyle: "solid" as const,
   borderColor: "var(--graview-edge)",
@@ -114,7 +114,7 @@ export function Grid({
             <span
               key={day}
               style={{
-                fontSize: "0.625rem",
+                fontSize: "0.75rem",
                 letterSpacing: "0.16em",
                 textTransform: "uppercase",
                 color: "var(--graview-ink-muted)",
@@ -184,7 +184,7 @@ export function Grid({
               <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                 <span
                   style={{
-                    fontSize: "0.65625rem",
+                    fontSize: "0.75rem",
                     fontVariantNumeric: "tabular-nums",
                     color: now ? "var(--graview-accent)" : "var(--graview-ink-faint)",
                   }}
@@ -195,7 +195,7 @@ export function Grid({
                     the only honest thing a cell that holds forty entries
                     can say about all of them. */}
                 {span.grain !== "day" && here.length > 0 ? (
-                  <span style={{ fontSize: "0.625rem", color: "var(--graview-ink-faint)", marginLeft: "auto" }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", marginLeft: "auto" }}>
                     {here.length}
                   </span>
                 ) : null}
@@ -224,7 +224,7 @@ export function Grid({
                   style={{
                     minHeight: 24,
                     padding: "1px 5px",
-                    fontSize: "0.625rem",
+                    fontSize: "0.75rem",
                     borderRadius: 5,
                     border: "1px dashed var(--graview-edge)",
                     background: "transparent",
@@ -266,7 +266,7 @@ export function Agenda({
     .filter(({ here }) => here.length > 0);
   if (withSomething.length === 0) {
     return (
-      <p data-testid="calendar-empty" style={{ margin: 0, fontSize: "0.78125rem", color: "var(--graview-ink-muted)" }}>
+      <p data-testid="calendar-empty" style={{ margin: 0, fontSize: "0.875rem", color: "var(--graview-ink-muted)" }}>
         Nothing is scheduled in the next six weeks.
       </p>
     );
@@ -293,7 +293,7 @@ export function Agenda({
         >
           <span
             style={{
-              fontSize: "0.65625rem",
+              fontSize: "0.75rem",
               letterSpacing: "0.16em",
               textTransform: "uppercase",
               color: day === today ? "var(--graview-accent)" : "var(--graview-ink-muted)",
@@ -381,7 +381,7 @@ function Entry({
         minHeight: 24,
         boxSizing: "border-box",
         padding: "3px 6px",
-        fontSize: "0.65625rem",
+        fontSize: "0.75rem",
         lineHeight: 1.35,
         borderRadius: spanning ? (opens ? "5px 0 0 5px" : closes ? "0 5px 5px 0" : 0) : 5,
         overflow: "hidden",

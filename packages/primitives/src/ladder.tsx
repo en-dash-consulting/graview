@@ -24,7 +24,7 @@ const RUNGS: readonly { readonly value: IntelligenceConfig["source"]; readonly l
 
 const field: CSSProperties = {
   font: "inherit",
-  fontSize: "0.78125rem",
+  fontSize: "0.875rem",
   padding: "5px 9px",
   minHeight: 24,
   borderRadius: 8,
@@ -34,7 +34,7 @@ const field: CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
 };
-const hint: CSSProperties = { fontSize: "0.71875rem", color: "var(--graview-ink-muted)", lineHeight: 1.4 };
+const hint: CSSProperties = { fontSize: "0.8125rem", color: "var(--graview-ink-muted)", lineHeight: 1.4 };
 
 export function LadderSetting() {
   const { intelligence, chooseIntelligence } = useGraview();
@@ -42,7 +42,7 @@ export function LadderSetting() {
   const remote = intelligence.remote ?? { preset: "xai" as const, apiKey: "" };
   return (
     <fieldset data-testid="setting-intelligence" style={{ border: 0, margin: 0, padding: 0, display: "grid", gap: 5 }}>
-      <legend style={{ fontSize: "0.625rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--graview-ink-faint)", padding: 0 }}>
+      <legend style={{ fontSize: "0.75rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--graview-ink-faint)", padding: 0 }}>
         Answers come from
       </legend>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
@@ -60,7 +60,7 @@ export function LadderSetting() {
                 minHeight: 24,
                 padding: "3px 10px",
                 borderRadius: 999,
-                fontSize: "0.78125rem",
+                fontSize: "0.875rem",
                 borderWidth: 1,
                 borderStyle: "solid",
                 borderColor: chosen ? "var(--graview-accent)" : "var(--graview-edge)",

@@ -144,8 +144,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           >
             {facts.fields.map((field) => (
               <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0 }}>
-                <dt style={{ ...eyebrow, fontSize: "0.6875rem" }}>{field.label}</dt>
-                <dd style={{ margin: 0, fontSize: "1.0625rem", overflowWrap: "anywhere" }}>{field.value}</dd>
+                <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
+                <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere" }}>{field.value}</dd>
               </div>
             ))}
           </dl>
@@ -175,7 +175,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             {group.targets.map((target) => (
               <li key={target.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 <KindMark kind={target.kind} brand={brand} schema={store.schema} size={7} />
-                <Link to={recordPath(store.schema, target.kind, target.id)} style={{ ...link, fontSize: "1.0625rem" }}>
+                <Link to={recordPath(store.schema, target.kind, target.id)} style={{ ...link, fontSize: "1.125rem" }}>
                   {target.label}
                 </Link>
               </li>
@@ -244,7 +244,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   background: "var(--graview-panel)",
                 }}
               >
-                <h3 style={{ ...h2, fontSize: "1.125rem" }}>{affordance.label}</h3>
+                <h3 style={{ ...h2, fontSize: "1.1875rem" }}>{affordance.label}</h3>
                 {mutation.description ? <p style={{ ...quiet, margin: 0 }}>{mutation.description}</p> : null}
                 <DerivedForm
                   store={store}

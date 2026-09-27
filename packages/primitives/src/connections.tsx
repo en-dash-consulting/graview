@@ -42,7 +42,7 @@ export function Connections({ id, max = 8, empty }: ConnectionsProps) {
 
   if (groups.length === 0) {
     return empty ? (
-      <p style={{ margin: 0, fontSize: "0.78125rem", color: "var(--graview-ink-faint)" }}>{empty}</p>
+      <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--graview-ink-faint)" }}>{empty}</p>
     ) : null;
   }
 
@@ -68,7 +68,7 @@ export function Connections({ id, max = 8, empty }: ConnectionsProps) {
             <h2
               style={{
                 margin: 0,
-                fontSize: "0.625rem",
+                fontSize: "0.75rem",
                 fontWeight: 600,
                 letterSpacing: "0.09em",
                 textTransform: "uppercase",

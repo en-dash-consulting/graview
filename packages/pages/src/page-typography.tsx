@@ -50,26 +50,26 @@ export const h1: React.CSSProperties = {
 export const h2: React.CSSProperties = {
   margin: 0,
   fontFamily: DISPLAY,
-  fontSize: "1.375rem",
+  fontSize: "1.4375rem",
   lineHeight: 1.25,
   fontWeight: 600,
   letterSpacing: "-0.006em",
 };
 export const eyebrow: React.CSSProperties = {
   margin: 0,
-  fontSize: "0.75rem",
+  fontSize: "0.8125rem",
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: "var(--graview-ink-muted)",
 };
 export const lede: React.CSSProperties = {
   margin: 0,
-  fontSize: "1.125rem",
+  fontSize: "1.1875rem",
   lineHeight: 1.5,
   color: "var(--graview-ink-muted)",
   maxWidth: "58ch",
 };
-export const quiet: React.CSSProperties = { color: "var(--graview-ink-muted)", fontSize: "0.875rem" };
+export const quiet: React.CSSProperties = { color: "var(--graview-ink-muted)", fontSize: "0.9375rem" };
 export const rule: React.CSSProperties = { borderTop: "1px solid var(--graview-edge)", paddingTop: 24 };
 // A link is a target: tall enough for a fingertip without leaving the line.
 export const link: React.CSSProperties = {
@@ -98,7 +98,7 @@ export const plain: React.CSSProperties = {
 };
 export const button: React.CSSProperties = {
   font: "inherit",
-  fontSize: "0.875rem",
+  fontSize: "0.9375rem",
   padding: "8px 14px",
   borderRadius: "var(--graview-radius-sm, 8px)",
   border: "1px solid var(--graview-edge-bright)",

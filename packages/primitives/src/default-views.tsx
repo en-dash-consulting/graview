@@ -236,7 +236,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 margin: "14px 0 0",
                 paddingTop: 12,
                 borderTop: "1px solid var(--graview-edge)",
-                fontSize: "0.8125rem",
+                fontSize: "0.875rem",
                 color: "var(--graview-warn)",
               }}
             >
@@ -641,7 +641,7 @@ export function registerDefaultViews<S extends AnySchema>(
             name
           )}
 
-          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78125rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.875rem" }}>
             <span
               style={{
                 fontVariantNumeric: "tabular-nums",
@@ -680,7 +680,7 @@ export function registerDefaultViews<S extends AnySchema>(
             ) : null}
             {/* The selection's reach into this kind, said in place. */}
             {tied > 0 ? (
-              <span style={{ fontSize: "0.71875rem", color: "var(--graview-accent)" }}>
+              <span style={{ fontSize: "0.8125rem", color: "var(--graview-accent)" }}>
                 {tied} tied
               </span>
             ) : null}
@@ -693,7 +693,7 @@ export function registerDefaultViews<S extends AnySchema>(
               <span
                 title={`${plural} has a view of its own`}
                 aria-label="has its own view"
-                style={{ fontSize: "0.59375rem", color: "var(--graview-accent)" }}
+                style={{ fontSize: "0.6875rem", color: "var(--graview-accent)" }}
               >
                 ◆
               </span>
@@ -793,7 +793,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 );
               })}
               {members.length > buildingsCap(props.plot?.side, members.length) ? (
-                <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)", padding: "2px 4px", gridColumn: "1 / -1" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", padding: "2px 4px", gridColumn: "1 / -1" }}>
                   +{members.length - buildingsCap(props.plot?.side, members.length)} more — double-click to go in
                 </span>
               ) : null}

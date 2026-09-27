@@ -118,11 +118,11 @@ export function InPlaceWriter({
     setAsking(null);
   };
 
-  const quiet = { fontSize: "0.75rem", color: "var(--graview-ink-muted)" } as const;
+  const quiet = { fontSize: "0.8125rem", color: "var(--graview-ink-muted)" } as const;
 
   if (outcome?.state === "written") {
     return (
-      <strong data-testid="studio-written" style={{ fontSize: "0.8125rem", fontWeight: 550 }}>
+      <strong data-testid="studio-written" style={{ fontSize: "0.875rem", fontWeight: 550 }}>
         The checker is happy, and the change is written into {outcome.paths.join(", ")}. The app reloads onto it
         {migration ? `, and a stored graph is carried forward: ${migration}` : ""}.
       </strong>
@@ -138,7 +138,7 @@ export function InPlaceWriter({
           A stored graph is carried forward when it next opens: {migration}.
         </span>
       ) : null}
-      <strong style={{ fontSize: "0.8125rem", fontWeight: 550 }}>
+      <strong style={{ fontSize: "0.875rem", fontWeight: 550 }}>
         {blockers.length > 0
           ? "The checker is happy, but this cannot be written into the checkout yet:"
           : rewrites.length > 0
@@ -148,7 +148,7 @@ export function InPlaceWriter({
               : "The checker is happy."}
       </strong>
       {reasons.length > 0 ? (
-        <ul data-testid="studio-not-written" style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 4, fontSize: "0.78125rem" }}>
+        <ul data-testid="studio-not-written" style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 4, fontSize: "0.875rem" }}>
           {reasons.map((reason) => (
             <li key={reason}>{reason}</li>
           ))}
@@ -167,7 +167,7 @@ export function InPlaceWriter({
       {blockers.length === 0
         ? rewrites.map((rewrite) => (
             <div key={keyOf(rewrite)} data-testid="studio-rewrite" data-name={rewrite.name} style={{ display: "grid", gap: 6 }}>
-              <span style={{ fontSize: "0.78125rem" }}>
+              <span style={{ fontSize: "0.875rem" }}>
                 <strong>
                   The {rewrite.sort} “{rewrite.name}”
                 </strong>{" "}
@@ -197,7 +197,7 @@ export function InPlaceWriter({
                   disabled={!complete || asking !== null}
                   title={complete ? "A first draft from the model the ladder has chosen — yours to read and correct" : "Choose a model from the seat's gear to have it draft this"}
                   onClick={() => void ask(rewrite)}
-                  style={{ fontSize: "0.75rem" }}
+                  style={{ fontSize: "0.8125rem" }}
                 >
                   {asking === keyOf(rewrite) ? "Asking…" : "Ask the seat to rewrite it"}
                 </button>
@@ -228,7 +228,7 @@ export function InPlaceWriter({
           disabled={writing || !rewrites.every(settled)}
           title={rewrites.every(settled) ? "Write the change and these into the checkout, once the compiler agrees" : "Each piece of code above needs rewriting, or saying it still holds"}
           onClick={() => void write()}
-          style={{ justifySelf: "start", fontSize: "0.78125rem", fontWeight: 600 }}
+          style={{ justifySelf: "start", fontSize: "0.875rem", fontWeight: 600 }}
         >
           {writing ? "Writing…" : "Write it into the checkout"}
         </button>
@@ -255,7 +255,7 @@ export function Downloads({ files }: { readonly files: readonly WrittenFile[] })
             padding: "3px 10px",
             borderRadius: 999,
             border: "1px solid var(--graview-edge)",
-            fontSize: "0.78125rem",
+            fontSize: "0.875rem",
             color: "var(--graview-accent)",
             textDecoration: "none",
           }}

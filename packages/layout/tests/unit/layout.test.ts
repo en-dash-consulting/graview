@@ -1378,7 +1378,7 @@ describe("a row of districts that cannot hold them all", () => {
   it("gives every card it draws a width its name can be read at", () => {
     for (const width of [390, 700, 1000, 1560]) {
       for (const card of districts(width)) {
-        expect(card.width, `${width}px`).toBeGreaterThanOrEqual(132);
+        expect(card.width, `${width}px`).toBeGreaterThanOrEqual(160);
       }
     }
   });

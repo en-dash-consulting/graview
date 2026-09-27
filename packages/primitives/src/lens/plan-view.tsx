@@ -85,7 +85,7 @@ const TOOL = {
   background: "var(--graview-panel)",
   color: "var(--graview-ink)",
   font: "inherit",
-  fontSize: ".82rem",
+  fontSize: "0.9375rem",
   cursor: "pointer",
 } as const;
 
@@ -849,7 +849,7 @@ export function PlanView<S extends AnySchema>({
             display: "flex",
             flexWrap: "wrap",
             gap: ".2rem .75rem",
-            fontSize: ".78rem",
+            fontSize: "0.875rem",
           }}
         >
           {unsaid.map((one) => (
@@ -895,7 +895,7 @@ export function PlanView<S extends AnySchema>({
       {drawing !== null ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: ".5rem", marginTop: ".5rem", alignItems: "center" }}>
           {map.regions.length > 0 && hint !== null ? (
-            <span style={{ fontSize: ".82rem", opacity: 0.8, flexBasis: "100%" }} aria-live="polite">
+            <span style={{ fontSize: "0.9375rem", opacity: 0.8, flexBasis: "100%" }} aria-live="polite">
               {hint}
             </span>
           ) : null}
@@ -927,7 +927,7 @@ export function PlanView<S extends AnySchema>({
         <>
           {canDraw && map.undrawn.length > 0 ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: ".4rem", marginTop: ".5rem", alignItems: "center" }}>
-              <span style={{ fontSize: ".8rem", opacity: 0.75 }}>{options.undrawnLabel ?? "Not drawn yet"}:</span>
+              <span style={{ fontSize: "0.875rem", opacity: 0.75 }}>{options.undrawnLabel ?? "Not drawn yet"}:</span>
               {map.undrawn.map((region) => (
                 <button
                   key={region.id}
@@ -943,7 +943,7 @@ export function PlanView<S extends AnySchema>({
           ) : null}
           {canPlace && map.strays.length > 0 ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: ".4rem", marginTop: ".5rem", alignItems: "center" }}>
-              <span style={{ fontSize: ".8rem", opacity: 0.75 }}>{options.strayLabel ?? "Not placed"}:</span>
+              <span style={{ fontSize: "0.875rem", opacity: 0.75 }}>{options.strayLabel ?? "Not placed"}:</span>
               {map.strays.map((stray) => (
                 <button
                   key={stray.id}
@@ -958,14 +958,14 @@ export function PlanView<S extends AnySchema>({
             </div>
           ) : null}
           {options.help !== undefined && (map.undrawn.length > 0 || map.strays.length > 0) ? (
-            <p style={{ margin: ".5rem 0 0", fontSize: ".8rem" }}>
+            <p style={{ margin: ".5rem 0 0", fontSize: "0.875rem" }}>
               <a href={options.help.href} data-testid="map-help">
                 {options.help.label}
               </a>
             </p>
           ) : null}
           {!canDraw && (map.undrawn.length > 0 || map.strays.length > 0) ? (
-            <p style={{ margin: ".5rem 0 0", fontSize: ".8rem", opacity: 0.75 }}>
+            <p style={{ margin: ".5rem 0 0", fontSize: "0.875rem", opacity: 0.75 }}>
               {map.undrawn.map((r) => r.label).join(", ")}
               {map.undrawn.length > 0 ? ` — ${options.undrawnLabel ?? "not drawn yet"}. ` : ""}
               {map.strays.map((s) => s.label).join(", ")}

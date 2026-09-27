@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-25T20:40:31.912Z",
+  "at": "2026-09-27T03:44:52.922Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565533,
+      "wingOpacity": 0.589002,
       "registered": true
     },
     "groundAgain": {
@@ -107,12 +107,12 @@
   },
   "hitArea": {
     "host": [
-      499,
+      515,
       424
     ],
     "drawn": [
-      499,
-      143
+      515,
+      147
     ],
     "onContent": "t-deposit",
     "belowContent": null
@@ -213,21 +213,21 @@
     ],
     "liveInsideAPicture": 0,
     "leavingBefore": {
-      "width": 329,
+      "width": 339,
       "height": 279
     },
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 329.00006103515625,
-        "height": 174,
+        "width": 337,
+        "height": 170,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 282,
-        "height": 258.9999694824219,
-        "opacity": 0.503623
+        "width": 283.0000305175781,
+        "height": 257.0000305175781,
+        "opacity": 0.471512
       }
     ],
     "afterSwitch": [
@@ -236,14 +236,14 @@
     "noteDriveIn": false,
     "standing": {
       "screen": {
-        "x": 615.4932250976562,
+        "x": 610.4315185546875,
         "y": 209.0810089111328,
-        "width": 329,
+        "width": 339,
         "height": 279,
         "top": 209.0810089111328,
-        "right": 944.4932250976562,
+        "right": 949.4315185546875,
         "bottom": 488.0810089111328,
-        "left": 615.4932250976562
+        "left": 610.4315185546875
       },
       "card": {
         "x": 663.2000122070312,
@@ -262,9 +262,9 @@
       "up": true
     },
     "midway": {
-      "x": 771.4853515625,
-      "y": 290.27928161621094,
-      "width": 366
+      "x": 771.532958984375,
+      "y": 288.0201110839844,
+      "width": 376
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -278,7 +278,7 @@
       "ok": true
     },
     "theGroundTravelsWithTheCards": {
-      "steps": 27,
+      "steps": 26,
       "jumps": 0,
       "first": 235,
       "last": 353,

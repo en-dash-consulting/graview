@@ -79,7 +79,7 @@ export function StudioPlace<S extends AnySchema>({
         style={{
           padding: "3px 11px",
           borderRadius: 999,
-          fontSize: "0.78125rem",
+          fontSize: "0.875rem",
           whiteSpace: "nowrap",
           borderWidth: 1,
           borderStyle: "solid",
@@ -226,8 +226,8 @@ function StudioOverlay<S extends AnySchema>({
           background: "var(--graview-bar)",
         }}
       >
-        <strong style={{ fontSize: "0.875rem", fontWeight: 550 }}>Studio</strong>
-        <span style={{ fontSize: "0.78125rem", color: "var(--graview-ink-muted)" }}>{app.name}</span>
+        <strong style={{ fontSize: "0.9375rem", fontWeight: 550 }}>Studio</strong>
+        <span style={{ fontSize: "0.875rem", color: "var(--graview-ink-muted)" }}>{app.name}</span>
         <Places<StudioSchema> />
         <span
           data-testid="studio-verdict"
@@ -235,7 +235,7 @@ function StudioOverlay<S extends AnySchema>({
           data-warnings={verdict.warnings}
           style={{
             marginLeft: "auto",
-            fontSize: "0.78125rem",
+            fontSize: "0.875rem",
             color: verdict.errors > 0 ? "var(--graview-warn)" : "var(--graview-ink-muted)",
           }}
         >
@@ -271,7 +271,7 @@ function StudioOverlay<S extends AnySchema>({
                 : { ok: false, check: result.check },
             );
           }}
-          style={{ padding: "3px 11px", fontSize: "0.78125rem" }}
+          style={{ padding: "3px 11px", fontSize: "0.875rem" }}
         >
           Apply
         </button>
@@ -280,7 +280,7 @@ function StudioOverlay<S extends AnySchema>({
           data-testid="studio-close"
           onClick={onClose}
           aria-label="Close the studio"
-          style={{ padding: "3px 11px", fontSize: "0.78125rem" }}
+          style={{ padding: "3px 11px", fontSize: "0.875rem" }}
         >
           Close
         </button>
@@ -355,19 +355,19 @@ function Written({
         <InPlaceWriter studio={studio} migration={applied.migration} files={applied.files} />
       ) : applied.ok ? (
         <>
-          <strong style={{ fontSize: "0.8125rem", fontWeight: 550 }}>
+          <strong style={{ fontSize: "0.875rem", fontWeight: 550 }}>
             The checker is happy. {applied.files.length} file
             {applied.files.length === 1 ? "" : "s"} to write
             {applied.migration ? `, and a migration: ${applied.migration}` : ", and no migration needed"}.
           </strong>
-          <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+          <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
             A browser cannot write your checkout. Run the app with the studio door (studioDoor() from @graview/ship/dev) and Apply writes the change in place.
           </span>
           <Downloads files={applied.files} />
         </>
       ) : (
         <>
-          <strong style={{ fontSize: "0.8125rem", fontWeight: 550, color: "var(--graview-warn)" }}>
+          <strong style={{ fontSize: "0.875rem", fontWeight: 550, color: "var(--graview-warn)" }}>
             Not applied — {applied.check.errors} error
             {applied.check.errors === 1 ? "" : "s"} in the declaration as it stands.
           </strong>
@@ -376,7 +376,7 @@ function Written({
               .filter((finding) => finding.severity === "error")
               .slice(0, 6)
               .map((finding) => (
-                <li key={`${finding.code}:${finding.where}`} style={{ fontSize: "0.78125rem" }}>
+                <li key={`${finding.code}:${finding.where}`} style={{ fontSize: "0.875rem" }}>
                   <code>{finding.where}</code> — {finding.message} <em>{finding.fix}</em>
                 </li>
               ))}
@@ -386,7 +386,7 @@ function Written({
       <button
         type="button"
         onClick={onDismiss}
-        style={{ justifySelf: "start", padding: "3px 10px", fontSize: "0.75rem" }}
+        style={{ justifySelf: "start", padding: "3px 10px", fontSize: "0.8125rem" }}
       >
         Dismiss
       </button>

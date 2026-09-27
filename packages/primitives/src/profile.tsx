@@ -130,7 +130,7 @@ export function Profile<S extends AnySchema>({
           gap: 7,
           padding: "4px 11px",
           borderRadius: 999,
-          fontSize: "0.78125rem",
+          fontSize: "0.875rem",
           whiteSpace: "nowrap",
           /* In em, so the room for a name grows with the name. At 220px a
              reader on Largest got "Nobody in p…" — the setting made the
@@ -152,7 +152,7 @@ export function Profile<S extends AnySchema>({
             width: "1.35em",
             height: "1.35em",
             borderRadius: 999,
-            fontSize: "0.625rem",
+            fontSize: "0.75rem",
             background: "var(--graview-panel-muted)",
             color: "var(--graview-ink-muted)",
           }}
@@ -169,7 +169,7 @@ export function Profile<S extends AnySchema>({
           * opened, which is the difference between finding them and being
           * told where they were.
           */}
-        <span aria-hidden="true" data-testid="profile-gear" style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
+        <span aria-hidden="true" data-testid="profile-gear" style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
           ⚙
         </span>
       </button>
@@ -221,8 +221,8 @@ export function Profile<S extends AnySchema>({
         >
           <div style={{ display: "grid", gap: 3 }}>
             <span style={eyebrow}>Signed in as</span>
-            <strong style={{ fontSize: "0.9375rem", fontWeight: 550 }}>{name}</strong>
-            <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+            <strong style={{ fontSize: "1rem", fontWeight: 550 }}>{name}</strong>
+            <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
               {/* An app with no policy has no roles to name, and saying
                   "no roles" would read as a deprivation rather than as the
                   absence of a permission system. */}
@@ -247,7 +247,7 @@ export function Profile<S extends AnySchema>({
                   alignItems: "center",
                   minHeight: 24,
                   justifySelf: "start",
-                  fontSize: "0.78125rem",
+                  fontSize: "0.875rem",
                   color: "var(--graview-accent)",
                 }}
               >
@@ -256,7 +256,7 @@ export function Profile<S extends AnySchema>({
             ) : null}
             {sharing ? (
               /* How the others here see you — the name on the figure that stands where you are. */
-              <span data-testid="profile-seen-as" style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+              <span data-testid="profile-seen-as" style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
                 Seen by others as {sharing.name}
               </span>
             ) : null}
@@ -305,7 +305,7 @@ export function Profile<S extends AnySchema>({
                 >
                   <legend style={{ ...eyebrow, padding: 0 }}>{setting.title}</legend>
                   {setting.description ? (
-                    <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+                    <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
                       {setting.description}
                     </span>
                   ) : null}
@@ -328,7 +328,7 @@ export function Profile<S extends AnySchema>({
                             minHeight: 24,
                             padding: "3px 10px",
                             borderRadius: 999,
-                            fontSize: "0.78125rem",
+                            fontSize: "0.875rem",
                             borderWidth: 1,
                             borderStyle: "solid",
                             borderColor: chosen ? "var(--graview-accent)" : "var(--graview-edge)",
@@ -361,7 +361,7 @@ export function Profile<S extends AnySchema>({
                     minHeight: 24,
                     padding: "3px 10px",
                     borderRadius: 999,
-                    fontSize: "0.78125rem",
+                    fontSize: "0.875rem",
                     borderWidth: 1,
                     borderStyle: "solid",
                     borderColor: scheme === candidate ? "var(--graview-accent)" : "var(--graview-edge)",
@@ -382,7 +382,7 @@ export function Profile<S extends AnySchema>({
 }
 
 const eyebrow = {
-  fontSize: "0.625rem",
+  fontSize: "0.75rem",
   letterSpacing: "0.14em",
   textTransform: "uppercase" as const,
   color: "var(--graview-ink-faint)",

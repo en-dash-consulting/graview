@@ -119,7 +119,7 @@ export function Repairs<S extends AnySchema>({
                 key={at}
                 data-testid="withheld"
                 data-withheld={verdict.refusal.wouldNeed.join(",") || "nobody"}
-                style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}
+                style={{ margin: 0, fontSize: "0.875rem", color: "var(--graview-ink-muted)" }}
               >
                 <s>{repair.label}</s> — {verdict.refusal.message}
               </p>
@@ -165,12 +165,12 @@ export function Repairs<S extends AnySchema>({
         />
       ) : null}
       {opened && !asking && (opened.missing ?? []).length > 0 ? (
-        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.8125rem" }}>
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.875rem" }}>
           “{opened.label}” names {opened.mutation}, which this app does not declare.
         </p>
       ) : null}
       {failed ? (
-        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.8125rem" }}>
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.875rem" }}>
           {failed}
         </p>
       ) : null}

@@ -26,7 +26,7 @@ export function DefaultShell<S extends AnySchema>({
     location.pathname === path || location.pathname.startsWith(`${path}/`);
   const navLink = (path: string): React.CSSProperties => ({
     ...plain,
-    fontSize: "0.875rem",
+    fontSize: "0.9375rem",
     padding: "6px 0",
     color: current(path) ? "var(--graview-ink)" : "var(--graview-ink-muted)",
     borderBottom: current(path) ? "2px solid var(--graview-accent)" : "2px solid transparent",
@@ -40,7 +40,7 @@ export function DefaultShell<S extends AnySchema>({
         background: "var(--graview-ground)",
         color: "var(--graview-ink)",
         fontFamily: "var(--graview-font-body, system-ui)",
-        fontSize: "1rem",
+        fontSize: "1.0625rem",
         lineHeight: 1.6,
       }}
     >
@@ -66,7 +66,7 @@ export function DefaultShell<S extends AnySchema>({
                 alignItems: "center",
                 gap: 10,
                 fontFamily: DISPLAY,
-                fontSize: "1.25rem",
+                fontSize: "1.3125rem",
                 fontWeight: 600,
                 letterSpacing: "-0.01em",
                 minHeight: 32,
@@ -138,7 +138,7 @@ export function DefaultShell<S extends AnySchema>({
                 <span
                   data-testid="problems-count"
                   style={{
-                    fontSize: "0.75rem",
+                    fontSize: "0.8125rem",
                     lineHeight: 1,
                     padding: "3px 7px",
                     borderRadius: 999,
@@ -159,7 +159,7 @@ export function DefaultShell<S extends AnySchema>({
           borderTop: "1px solid var(--graview-edge)",
           padding: "18px 20px 28px",
           ...quiet,
-          fontSize: "0.8125rem",
+          fontSize: "0.875rem",
         }}
       >
         <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>

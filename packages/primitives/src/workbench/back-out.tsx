@@ -188,7 +188,7 @@ export function OverviewButton() {
         height: 38,
         padding: "0 13px 0 11px",
         borderRadius: 999,
-        fontSize: "0.78125rem",
+        fontSize: "0.875rem",
         whiteSpace: "nowrap",
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-low)",

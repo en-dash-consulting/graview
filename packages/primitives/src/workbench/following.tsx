@@ -26,7 +26,7 @@ export function FollowingLine() {
         border: "1px solid var(--graview-accent)",
         background: "transparent",
         color: "var(--graview-accent)",
-        fontSize: "0.78125rem",
+        fontSize: "0.875rem",
         whiteSpace: "nowrap",
       }}
     >

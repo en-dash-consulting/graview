@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-23T13:43:56.789Z",
+  "at": "2026-09-27T03:42:33.352Z",
   "engine": "chromium",
   "screens": [
     {
@@ -19,11 +19,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "238x59",
+        "size": "238x64",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -46,11 +46,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 63,
+      "fill": 66,
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "238x181",
+        "size": "238x195",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -73,7 +73,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": null,
       "led": null,
       "figures": []
@@ -92,14 +92,16 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [],
+      "offscreen": [
+        "waits-for3 at 27..265"
+      ],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "238x375",
+        "size": "238x400",
         "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
       },
       "led": null,
@@ -122,11 +124,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 59,
+      "fill": 61,
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "238x59",
+        "size": "238x64",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -149,11 +151,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "238x59",
+        "size": "238x64",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -176,7 +178,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 59,
+      "fill": 61,
       "inspector": null,
       "led": null,
       "figures": []
@@ -198,7 +200,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": null,
       "led": null,
       "figures": []
@@ -220,11 +222,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": {
         "shown": 1,
         "hidden": 0,
-        "size": "238x38",
+        "size": "238x41",
         "text": "Add a task …☆"
       },
       "led": null,
@@ -247,11 +249,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 54,
+      "fill": 55,
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "238x59",
+        "size": "238x64",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -274,11 +276,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 43,
+      "fill": 44,
       "inspector": {
         "shown": 6,
         "hidden": 0,
-        "size": "238x247",
+        "size": "238x265",
         "text": "Nothing done before what it waits for is connected to nothing yet⚠ \"Order boxes\" is done, "
       },
       "led": null,
@@ -305,7 +307,7 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "238x59",
+        "size": "238x64",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -328,7 +330,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": null,
       "led": {
         "first": "A new date for \"Redirect the post\" …",
@@ -351,14 +353,16 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [],
+      "offscreen": [
+        "waits-for3 at 27..265"
+      ],
       "asking": [],
       "board": [],
       "fill": 34,
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "238x375",
+        "size": "238x400",
         "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
       },
       "led": null,
@@ -429,7 +433,7 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "238x59",
+        "size": "238x64",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -452,7 +456,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 39,
+      "fill": 68,
       "inspector": null,
       "led": null,
       "figures": []
@@ -474,11 +478,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": {
         "shown": 11,
         "hidden": 0,
-        "size": "238x342",
+        "size": "238x366",
         "text": "Put it back☆Rename …☆Move the date …☆Change the task …☆Block time for it …☆its tiesNote wh"
       },
       "led": null,
@@ -499,15 +503,17 @@
       "articles": [],
       "covered": [],
       "offscreen": [
+        "explains1 at 27..265",
+        "holds12 at 27..265",
         "waits-for3 at 27..265"
       ],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": {
         "shown": 13,
         "hidden": 0,
-        "size": "238x444",
+        "size": "238x473",
         "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
       },
       "led": null,
@@ -530,11 +536,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": {
         "shown": 1,
         "hidden": 0,
-        "size": "238x38",
+        "size": "238x41",
         "text": "Add a shift …☆"
       },
       "led": null,
@@ -557,7 +563,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": null,
       "led": null,
       "figures": []
@@ -579,7 +585,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": null,
       "led": null,
       "figures": []
@@ -601,7 +607,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": null,
       "led": null,
       "figures": []
@@ -623,11 +629,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": {
         "shown": 9,
         "hidden": 0,
-        "size": "238x317",
+        "size": "238x341",
         "text": "⚠ Nobody is covering \"Friday repair cafe\" on 2026-09-18Find somebody for \"Friday repair ca"
       },
       "led": null,
@@ -650,11 +656,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "238x437",
+        "size": "238x518",
         "text": "Nobody is covering \"Friday repair cafe\" on 2026-09-18Nothing you may do with a shift — 6 a"
       },
       "led": null,
@@ -677,11 +683,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 59,
+      "fill": 61,
       "inspector": {
         "shown": 1,
         "hidden": 0,
-        "size": "238x38",
+        "size": "238x41",
         "text": "Add a shift …☆"
       },
       "led": null,
@@ -704,7 +710,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 11,
+      "fill": 12,
       "inspector": null,
       "led": null,
       "figures": []
@@ -726,7 +732,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 21,
+      "fill": 32,
       "inspector": null,
       "led": null,
       "figures": []
@@ -770,7 +776,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": null,
       "led": null,
       "figures": []
@@ -792,7 +798,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": null,
       "led": null,
       "figures": []
@@ -814,7 +820,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 61,
+      "fill": 62,
       "inspector": null,
       "led": null,
       "figures": []
@@ -884,7 +890,7 @@
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "238x170",
+        "size": "238x180",
         "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆ApplySkip"
       },
       "led": null,
@@ -907,7 +913,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 60,
+      "fill": 62,
       "inspector": null,
       "led": null,
       "figures": []
@@ -929,11 +935,11 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 24,
+      "fill": 31,
       "inspector": {
         "shown": 3,
         "hidden": 0,
-        "size": "344x170",
+        "size": "344x180",
         "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆ApplySkip"
       },
       "led": null,

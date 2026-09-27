@@ -29,7 +29,7 @@ const field: React.CSSProperties = {
   gap: 4,
 };
 const labelStyle: React.CSSProperties = {
-  fontSize: "0.75rem",
+  fontSize: "0.8125rem",
   color: "var(--graview-ink-muted)",
 };
 const controlStyle: React.CSSProperties = {
@@ -77,7 +77,7 @@ function Picker({ children }: { children: React.ReactNode }) {
           right: 10,
           top: "50%",
           transform: "translateY(-50%)",
-          fontSize: "0.6875rem",
+          fontSize: "0.75rem",
           lineHeight: 1,
           color: "var(--graview-ink-muted)",
           pointerEvents: "none",
@@ -406,7 +406,7 @@ export function DerivedForm<S extends AnySchema>({
         />
       ))}
       {failed ? (
-        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.8125rem" }}>
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.875rem" }}>
           {failed}
         </p>
       ) : null}

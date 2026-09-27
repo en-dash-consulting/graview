@@ -192,13 +192,13 @@ function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginPr
                 {has === 0 ? "none yet" : has}
               </span>
               {entry.depth === null ? (
-                <div style={{ fontSize: "0.8125rem", ...MUTED_TEXT }}>
+                <div style={{ fontSize: "0.875rem", ...MUTED_TEXT }}>
                   Nothing here makes {plural.toLowerCase()} — they arrive with the data.
                 </div>
               ) : has > 0 ? null : ready ? (
                 <BeginHere kind={entry.kind} derived={ways[entry.kind]!} />
               ) : (
-                <div style={{ fontSize: "0.8125rem", ...MUTED_TEXT }}>
+                <div style={{ fontSize: "0.875rem", ...MUTED_TEXT }}>
                   Waiting for {entry.needs.map((kind) => store.schema.tryDefinition(kind)?.plural ?? kind).join(" and ")}.
                 </div>
               )}
@@ -224,7 +224,7 @@ function BeginHere({ kind, derived }: { readonly kind: string; readonly derived:
    */
   if (affordances.length === 0 && withheld.length > 0) {
     return (
-      <div data-testid={`begin-withheld-${kind}`} style={{ fontSize: "0.8125rem", marginTop: 4, ...MUTED_TEXT }}>
+      <div data-testid={`begin-withheld-${kind}`} style={{ fontSize: "0.875rem", marginTop: 4, ...MUTED_TEXT }}>
         {withheld[0]!.refusal.message}
       </div>
     );
@@ -250,7 +250,7 @@ function BeginHere({ kind, derived }: { readonly kind: string; readonly derived:
           type="button"
           data-testid={`begin-${affordance.mutation}`}
           onClick={() => (affordance.open.length === 0 ? apply(affordance, {}) : setAsking(affordance))}
-          style={{ minHeight: "max(1.5rem, 24px)", padding: "2px 10px", fontSize: "0.8125rem" }}
+          style={{ minHeight: "max(1.5rem, 24px)", padding: "2px 10px", fontSize: "0.875rem" }}
         >
           {affordance.label}
         </button>
@@ -485,7 +485,7 @@ function PlanReviewInside<S extends AnySchema>({
   const Frame = bare
     ? ({ children }: { readonly children: ReactNode }) => (
         <div>
-          <p style={{ margin: "0 0 .4rem", fontSize: "0.8125rem", ...MUTED_TEXT }}>
+          <p style={{ margin: "0 0 .4rem", fontSize: "0.875rem", ...MUTED_TEXT }}>
             {`${live} of ${rows.length} to run${makes ? `, making ${makes}` : ""}.`}
           </p>
           {children}
@@ -501,7 +501,7 @@ function PlanReviewInside<S extends AnySchema>({
     <Frame>
       {header}
       {anySure ? (
-        <p data-testid="plan-least-sure" style={{ margin: "0 0 .4rem", fontSize: "0.75rem", ...MUTED_TEXT }}>
+        <p data-testid="plan-least-sure" style={{ margin: "0 0 .4rem", fontSize: "0.8125rem", ...MUTED_TEXT }}>
           Least sure first.
         </p>
       ) : null}
@@ -546,7 +546,7 @@ function PlanReviewInside<S extends AnySchema>({
                   data-testid="plan-sure"
                   data-plan-sure={sure.toFixed(2)}
                   title="How sure the proposer was"
-                  style={{ marginLeft: 6, fontSize: "0.6875rem", color: sure < 0.5 ? "var(--graview-warn)" : "var(--graview-ink-faint)" }}
+                  style={{ marginLeft: 6, fontSize: "0.75rem", color: sure < 0.5 ? "var(--graview-warn)" : "var(--graview-ink-faint)" }}
                 >
                   {Math.round(sure * 100)}% sure
                 </span>
@@ -569,7 +569,7 @@ function PlanReviewInside<S extends AnySchema>({
                     marginLeft: 8,
                     minHeight: "max(1.5rem, 24px)",
                     padding: "0 8px",
-                    fontSize: "0.75rem",
+                    fontSize: "0.8125rem",
                     textDecoration: "none",
                   }}
                 >
@@ -577,25 +577,25 @@ function PlanReviewInside<S extends AnySchema>({
                 </button>
               ) : null}
               {rest ? (
-                <div data-testid={`plan-also-${row.key}`} style={{ fontSize: "0.75rem", textDecoration: "none", ...MUTED_TEXT }}>
+                <div data-testid={`plan-also-${row.key}`} style={{ fontSize: "0.8125rem", textDecoration: "none", ...MUTED_TEXT }}>
                   {rest}
                 </div>
               ) : null}
               {declinable && carriedBy.has(row.key) ? (
                 <div
                   data-testid={`plan-carried-${row.key}`}
-                  style={{ fontSize: "0.75rem", textDecoration: "none", ...MUTED_TEXT }}
+                  style={{ fontSize: "0.8125rem", textDecoration: "none", ...MUTED_TEXT }}
                 >
                   goes with {names.get(carriedBy.get(row.key)!) ?? carriedBy.get(row.key)}
                 </div>
               ) : null}
               {declinable && goesWith.length > 0 && !refused ? (
-                <div data-testid="plan-goes-with" style={{ fontSize: "0.75rem", textDecoration: "none", ...MUTED_TEXT }}>
+                <div data-testid="plan-goes-with" style={{ fontSize: "0.8125rem", textDecoration: "none", ...MUTED_TEXT }}>
                   {goesWith.length} {goesWith.length === 1 ? "other goes" : "others go"} with it.
                 </div>
               ) : null}
               {refused ? (
-                <div data-testid="plan-refusal" style={{ fontSize: "0.75rem", color: "var(--graview-warn)", textDecoration: "none" }}>
+                <div data-testid="plan-refusal" style={{ fontSize: "0.8125rem", color: "var(--graview-warn)", textDecoration: "none" }}>
                   {refused.refusal!.message}
                 </div>
               ) : null}
@@ -604,7 +604,7 @@ function PlanReviewInside<S extends AnySchema>({
         })}
       </ol>
       {done ? (
-        <p data-testid="plan-done" style={{ margin: 0, fontSize: "0.8125rem", ...MUTED_TEXT }}>
+        <p data-testid="plan-done" style={{ margin: 0, fontSize: "0.875rem", ...MUTED_TEXT }}>
           {done.why
             ? `Stopped after ${done.applied}: ${done.why}`
             : `Done — ${done.applied} applied as one turn.`}
@@ -783,12 +783,12 @@ export function Intake({
         border: `1px dashed ${over ? "var(--graview-accent)" : "var(--graview-edge)"}`,
         borderRadius: "var(--graview-radius-sm, 8px)",
         color: "var(--graview-ink-muted)",
-        fontSize: "0.8125rem",
+        fontSize: "0.875rem",
         cursor: "pointer",
       }}
     >
       <span>{label} — drop them here, or choose</span>
-      <span data-testid="intake-terms" style={{ fontSize: "0.75rem" }}>
+      <span data-testid="intake-terms" style={{ fontSize: "0.8125rem" }}>
         {most === undefined ? "" : `${chosen} of ${most} chosen — `}each is made smaller before it is sent, and none
         is kept
       </span>
@@ -894,7 +894,7 @@ export function Door<S extends AnySchema>({ provider, prompt, photos = [], onPro
             {local.state === "open" ? `Ask ${provider} on this machine` : "Nothing running on this machine"}
           </button>
           {local.state === "closed" ? (
-            <div style={{ fontSize: "0.75rem", ...MUTED_TEXT }}>{local.reason}</div>
+            <div style={{ fontSize: "0.8125rem", ...MUTED_TEXT }}>{local.reason}</div>
           ) : null}
         </div>
       ) : null}
@@ -909,7 +909,7 @@ export function Door<S extends AnySchema>({ provider, prompt, photos = [], onPro
           >
             Copy the prompt
           </button>
-          <label style={{ display: "grid", gap: 4, fontSize: "0.8125rem", ...MUTED_TEXT }}>
+          <label style={{ display: "grid", gap: 4, fontSize: "0.875rem", ...MUTED_TEXT }}>
             Paste the answer
             <textarea
               data-testid="door-paste"
@@ -932,7 +932,7 @@ export function Door<S extends AnySchema>({ provider, prompt, photos = [], onPro
       ) : null}
 
       {said ? (
-        <p data-testid="door-said" style={{ margin: 0, fontSize: "0.75rem", color: "var(--graview-warn)" }}>
+        <p data-testid="door-said" style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-warn)" }}>
           {said}
         </p>
       ) : null}

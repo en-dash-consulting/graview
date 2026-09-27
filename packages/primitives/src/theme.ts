@@ -438,7 +438,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 .graview-building[data-graview-selected] polygon { stroke: var(--graview-accent); stroke-width: 1.4; }
 .graview-building[data-graview-selected] .graview-iso-roof { fill: color-mix(in oklab, var(--graview-accent) 45%, var(--graview-panel)); }
 .graview-village-rest {
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   letter-spacing: 0.06em;
   fill: var(--graview-ink-muted);
 }
@@ -537,7 +537,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
      "open" stayed ten pixels tall. A size a person chose and a control that
      will not take it is the accessibility setting failing on its own
      surface. */
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1;
@@ -628,7 +628,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   transform: scale(0.1208);
 }
 .graview-drive-in-thumb-title {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1.2;
   white-space: nowrap;
   max-width: 116px;
@@ -686,12 +686,12 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   border: 1px solid var(--graview-edge);
   background: var(--graview-float);
   color: var(--graview-ink);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   cursor: pointer;
   z-index: 4;
 }
 .graview-drive-in-marquee > button.graview-drive-in-thumb {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1.2;
   min-height: max(1.75rem, 28px);
   cursor: pointer;
@@ -759,7 +759,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   top: 2px;
   transform: translateX(-50%);
   white-space: nowrap;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--graview-ink-muted);
@@ -795,7 +795,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   border: 1px solid var(--graview-edge);
   background: var(--graview-float);
   color: var(--graview-ink-muted);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   white-space: nowrap;
   pointer-events: auto;
 }
@@ -817,7 +817,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   border: 1px solid var(--graview-edge);
   background: var(--graview-float);
   color: var(--graview-ink-muted);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   white-space: nowrap;
   pointer-events: auto;
   cursor: pointer;
@@ -881,7 +881,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   color: hsl(var(--graview-hue, 200) 45% calc(var(--graview-tint-lightness) + ${scheme === "light" ? "-32%" : "28%"}));
   background: var(--graview-float);
   box-shadow: var(--graview-lift-low);
-  font-size: 0.59375rem;
+  font-size: 0.6875rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--graview-ink-faint);
@@ -925,7 +925,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   color: var(--graview-ink-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 0.78125rem;
+  font-size: 0.875rem;
   text-align: left;
 }
 .graview-beyond-more:hover,
@@ -935,18 +935,18 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 }
 .graview-beyond-count {
   font-family: var(--graview-font-display);
-  font-size: 1.125rem;
+  font-size: 1.1875rem;
   line-height: 1;
   color: inherit;
 }
 .graview-beyond-word {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .graview-beyond-chevron {
   margin-left: auto;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 /* The panel stands above the card, inside the scene, and never clips: the
    card's box is a district's height, which holds a count and not a list. */
@@ -997,7 +997,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   color: var(--graview-ink);
   cursor: pointer;
   font: inherit;
-  font-size: 0.78125rem;
+  font-size: 0.875rem;
   text-align: left;
   overflow-wrap: anywhere;
   white-space: nowrap;
@@ -1012,7 +1012,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 }
 .graview-beyond-tally {
   margin-left: auto;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   color: var(--graview-ink-faint);
 }
@@ -1033,7 +1033,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   box-shadow: none;
   color: var(--graview-ink-faint);
   cursor: pointer;
-  font-size: 0.65625rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 .graview-kind-past:hover {
@@ -1249,7 +1249,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   background: transparent;
   color: var(--graview-ink);
   font: inherit;
-  font-size: 1rem;
+  font-size: 1.0625rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -1263,7 +1263,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 .graview-zoom-level {
   min-width: 3.2em;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--graview-ink-faint);
   font-variant-numeric: tabular-nums;
 }
@@ -1390,7 +1390,7 @@ button:focus-visible {
 }
 button:disabled { opacity: 0.45; cursor: default; }
 
-code { color: var(--graview-ink-muted); font-size: 0.75rem; letter-spacing: 0.02em; }
+code { color: var(--graview-ink-muted); font-size: 0.8125rem; letter-spacing: 0.02em; }
 
 /* A view host, once the scene has placed it. The transition is on filter
    only — never on layout properties, which would make every navigation
@@ -1445,7 +1445,7 @@ code { color: var(--graview-ink-muted); font-size: 0.75rem; letter-spacing: 0.02
   border: 1px solid var(--graview-edge);
   background: var(--graview-float);
   color: oklch(0.62 0.16 var(--graview-hue, 250));
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
   line-height: 1;
   box-shadow: var(--graview-lift-low);
   animation: graview-seat-mark 4000ms ease-out forwards;
@@ -1465,7 +1465,7 @@ code { color: var(--graview-ink-muted); font-size: 0.75rem; letter-spacing: 0.02
   border: 1px solid var(--graview-accent);
   background: var(--graview-float);
   color: var(--graview-ink);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1.3;
   box-shadow: var(--graview-lift-low);
   pointer-events: auto;
@@ -1478,7 +1478,7 @@ code { color: var(--graview-ink-muted); font-size: 0.75rem; letter-spacing: 0.02
   border-radius: 999px;
   background: var(--graview-accent);
   color: var(--graview-panel);
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
 }
 .graview-seat-asking-said {
   overflow: hidden;

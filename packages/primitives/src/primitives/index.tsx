@@ -251,7 +251,7 @@ export function Panel({
             <span
               style={{
                 marginLeft: "auto",
-                fontSize: "0.6875rem",
+                fontSize: "0.75rem",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 minWidth: 0,
@@ -343,7 +343,7 @@ export function Prose({ children, style }: { readonly children: ReactNode; reado
   return (
     <div
       data-graview-primitive="prose"
-      style={{ fontSize: "0.9375rem", lineHeight: 1.6, ...style }}
+      style={{ fontSize: "1rem", lineHeight: 1.6, ...style }}
     >
       <style>{`[data-graview-primitive="prose"] a { display: inline-flex; align-items: center; min-height: max(1.5rem, 24px); }`}</style>
       {children}
@@ -432,7 +432,7 @@ export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProp
         boxSizing: "border-box",
         padding: "3px 9px",
         borderRadius: 999,
-        fontSize: "0.75rem",
+        fontSize: "0.8125rem",
         lineHeight: 1.5,
         whiteSpace: "nowrap",
         /*
@@ -584,7 +584,7 @@ export function Axis({ ticks, orientation = "vertical", extent }: AxisProps) {
   return (
     <div
       data-graview-primitive="axis"
-      style={{ position: "relative", width: "100%", height: "100%", fontSize: "0.6875rem", ...FAINT_TEXT }}
+      style={{ position: "relative", width: "100%", height: "100%", fontSize: "0.75rem", ...FAINT_TEXT }}
     >
       {ticks.map((tick) => (
         <div
@@ -632,7 +632,7 @@ export function Grid({ columns, extent, gutter = 46, children }: GridProps) {
             key={column.id}
             style={{
               flex: 1,
-              fontSize: "0.6875rem",
+              fontSize: "0.75rem",
               letterSpacing: "0.14em",
               textTransform: "uppercase",
               textAlign: "center",

@@ -182,7 +182,7 @@ export function AgentSeat<S extends AnySchema>({
       {!permitted || refused ? (
         <span
           data-testid={`${testId}-why`}
-          style={{ fontSize: "0.71875rem", lineHeight: 1.4, color: "var(--graview-ink-muted)", maxWidth: 260 }}
+          style={{ fontSize: "0.8125rem", lineHeight: 1.4, color: "var(--graview-ink-muted)", maxWidth: 260 }}
         >
           {refused ?? why}
         </span>

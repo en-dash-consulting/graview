@@ -611,14 +611,14 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
           */}
         {!named ? null : (
           <>
-            <strong style={{ fontSize: "0.84375rem", whiteSpace: "nowrap" }}>
+            <strong style={{ fontSize: "0.9375rem", whiteSpace: "nowrap" }}>
               {selection.length === 1
                 ? nameOf(store, selection[0]!)
                 : `${selection.length} selected`}
             </strong>
             {kinds.length > 0 || edge ? (
               <span
-                style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
+                style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
                 {edge ? "relation" : kinds.join(" · ")}
               </span>
@@ -629,7 +629,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                 after you had already found out. */}
             {selection.length === 1 && !edge ? (
               <span
-                style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
+                style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
                 {/* Said for the state the thing is in: on a district already
                     opened, the same gesture closes it. */}
@@ -670,7 +670,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
             display: "grid",
             placeItems: "center",
             padding: 0,
-            fontSize: "0.8125rem",
+            fontSize: "0.875rem",
             lineHeight: 1,
             borderRadius: 7,
           }}
@@ -688,7 +688,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
           {edgeSaid ? (
             <p
               data-testid="edge-said"
-              style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
+              style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
             >
               {edgeSaid}
             </p>
@@ -710,12 +710,12 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                     data-testid={`edge-${which}`}
                     onClick={() => set([end.id])}
                     title={`Select ${nameOf(store, end.id)}`}
-                    style={{ fontSize: "0.75rem", padding: "3px 9px", borderRadius: 999 }}
+                    style={{ fontSize: "0.8125rem", padding: "3px 9px", borderRadius: 999 }}
                   >
                     {nameOf(store, end.id)}
                   </button>
                 ) : (
-                  <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>gone</span>
+                  <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink-faint)" }}>gone</span>
                 )}
               </Fragment>
             ))}
@@ -737,7 +737,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
               key={observation.id}
               style={{
                 margin: 0,
-                fontSize: "0.75rem",
+                fontSize: "0.8125rem",
                 lineHeight: 1.45,
                 color: "var(--graview-ink-muted)",
               }}
@@ -754,7 +754,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
       {failed ? (
         <p
           data-testid="refused"
-          style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-warn)" }}
+          style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-warn)" }}
         >
           {failed}
         </p>
@@ -789,7 +789,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
           }}
           style={{
             font: "inherit",
-            fontSize: "0.78125rem",
+            fontSize: "0.875rem",
             padding: "5px 9px",
             borderRadius: 8,
             border: "1px solid var(--graview-edge)",
@@ -801,7 +801,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
       {matched !== null && matched.length === 0 ? (
         <p
           data-testid="no-matches"
-          style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
+          style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
         >
           Nothing offered here matches “{query.trim()}”.
         </p>
@@ -819,7 +819,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
          */
         <p
           data-testid="no-affordances"
-          style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
+          style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
         >
           {withheld.length > 0
             ? // "Nothing can be done" would be a lie here: things can be
@@ -866,14 +866,14 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                 <li
                   data-graview-heading={section.tone}
                   style={{
-                    fontSize: "0.6875rem",
+                    fontSize: "0.75rem",
                     lineHeight: 1.4,
                     color:
                       section.tone === "violation"
                         ? "var(--graview-warn)"
                         : "var(--graview-ink-faint)",
                     ...(section.tone !== "violation"
-                      ? { letterSpacing: "0.12em", textTransform: "uppercase" as const, fontSize: "0.625rem" }
+                      ? { letterSpacing: "0.12em", textTransform: "uppercase" as const, fontSize: "0.75rem" }
                       : {}),
                     padding: "2px 2px 1px",
                     marginTop: index > 0 ? 6 : 0,
@@ -906,7 +906,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                     title={affordance.why}
                     style={{
                       padding: "5px 10px",
-                      fontSize: "0.78125rem",
+                      fontSize: "0.875rem",
                       borderRadius: 8,
                       width: "100%",
                       textAlign: "left",
@@ -956,7 +956,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                       <span
                         aria-hidden="true"
                         title="Enter runs it"
-                        style={{ float: "right", color: "var(--graview-ink-faint)", fontSize: "0.6875rem" }}
+                        style={{ float: "right", color: "var(--graview-ink-faint)", fontSize: "0.75rem" }}
                       >
                         ↵
                       </span>
@@ -995,7 +995,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                       display: "grid",
                       placeItems: "center",
                       padding: 0,
-                      fontSize: "0.6875rem",
+                      fontSize: "0.75rem",
                       border: "1px solid transparent",
                       background: "none",
                       boxShadow: "none",
@@ -1029,7 +1029,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                 // on a quantity; this is a control, and a control says what
                 // pressing it will do.
                 title={`Show all ${affordances.length} actions`}
-                style={{ padding: "4px 10px", fontSize: "0.78125rem", borderRadius: 8 }}
+                style={{ padding: "4px 10px", fontSize: "0.875rem", borderRadius: 8 }}
               >
                 Show {hidden} more
               </button>
@@ -1070,7 +1070,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                 data-withheld={action.refusal.wouldNeed.join(",") || "nobody"}
                 style={{
                   padding: "4px 10px",
-                  fontSize: "0.78125rem",
+                  fontSize: "0.875rem",
                   borderRadius: 8,
                   borderStyle: "dashed",
                   width: "100%",
@@ -1090,7 +1090,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
               <span
                 data-testid="withheld-why"
                 style={{
-                  fontSize: "0.71875rem",
+                  fontSize: "0.8125rem",
                   lineHeight: 1.4,
                   color: "var(--graview-ink-muted)",
                   padding: "0 10px",

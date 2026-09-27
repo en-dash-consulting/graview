@@ -114,7 +114,7 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
               zIndex: 5,
               display: "grid",
               gap: 5,
-              maxWidth: 250,
+              maxWidth: "min(250px, 21cqw)",
               padding: "8px 10px",
               borderRadius: 10,
               border: "1px solid var(--graview-edge)",
@@ -128,7 +128,7 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
         <div key={row.kind} style={{ display: "grid", gap: 5 }}>
           <span
             style={{
-              fontSize: "0.625rem",
+              fontSize: "0.75rem",
               letterSpacing: "0.16em",
               textTransform: "uppercase",
               color: "var(--graview-ink-faint)",
@@ -156,7 +156,7 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
                   gap: 5,
                   minHeight: 24,
                   padding: "2px 9px",
-                  fontSize: "0.71875rem",
+                  fontSize: "0.8125rem",
                   borderRadius: 999,
                   cursor: "pointer",
                   border: "1px solid var(--graview-edge)",

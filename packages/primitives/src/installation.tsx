@@ -38,7 +38,7 @@ export function ShowInstallation<S extends AnySchema>() {
           style={{
             padding: "3px 11px",
             borderRadius: 999,
-            fontSize: "0.78125rem",
+            fontSize: "0.875rem",
             borderWidth: 1,
             borderStyle: "solid",
             borderColor: module.shown ? "var(--graview-accent)" : "var(--graview-edge)",

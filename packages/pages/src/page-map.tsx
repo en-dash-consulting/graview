@@ -39,7 +39,7 @@ function RelationLine<S extends AnySchema>({ context, relation }: { context: Pag
           {end(from)} <span style={quiet}>{humaniseField(relation.edgeKind)}</span> {end(to)}
         </span>
         {relation.description || relation.inverse ? (
-          <span style={{ ...quiet, fontSize: "0.875rem" }}>
+          <span style={{ ...quiet, fontSize: "0.9375rem" }}>
             {relation.description ? capitalise(relation.description) : null}
             {relation.description && relation.inverse ? " · " : null}
             {relation.inverse ? `from the other end, ${relation.inverse}` : null}

@@ -269,7 +269,7 @@ export function ChatPanel<S extends AnySchema>({
     const verdict = store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal);
     if (!verdict.ok) {
       return (
-        <span data-testid={`${testId}-withheld`} style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+        <span data-testid={`${testId}-withheld`} style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
           <s>{describeProposal(store, proposal)}</s> — {verdict.refusal.message}
         </span>
       );
@@ -301,7 +301,7 @@ export function ChatPanel<S extends AnySchema>({
               ? `${proposal.why ?? "Apply this change"} — needs ${owed.map((one) => one.name).join(", ")}`
               : (proposal.why ?? "Apply this change")
         }
-        style={{ fontSize: "0.75rem", textAlign: "start" }}
+        style={{ fontSize: "0.8125rem", textAlign: "start" }}
       >
         {describeProposal(store, proposal)}
         {owed.length > 0 && !before ? " …" : ""}
@@ -321,7 +321,7 @@ export function ChatPanel<S extends AnySchema>({
              * conversation is a second chance for the two to disagree about
              * how tall it is. It passes its own row straight through.
              */
-            { display: "grid", gridTemplateRows: "min-content", minHeight: "min-content" }
+            { display: "grid", gridTemplateRows: "min-content", gridTemplateColumns: "minmax(0, 1fr)", minWidth: 0, minHeight: "min-content" }
           : { position: "relative" }
       }
     >
@@ -332,7 +332,7 @@ export function ChatPanel<S extends AnySchema>({
           aria-expanded={open}
           onClick={() => setOpen((current) => !current)}
           title="Talk to the seat: ask about anything here, or say a change in words"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.78125rem" }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.875rem" }}
         >
           <span aria-hidden="true">◆</span>
           Ask
@@ -371,6 +371,15 @@ export function ChatPanel<S extends AnySchema>({
                   boxShadow: "var(--graview-lift-high)",
                 }),
             display: "grid",
+            /*
+             * ONE COLUMN THAT TAKES THE PANE'S WIDTH, no more. A grid column
+             * sizes to its content by default, and an input's own idea of
+             * its width is about 180px: in a pane the rail's share of a
+             * 1000px scene made 220px wide, the conversation ran fifty
+             * pixels past the edge and was clipped mid-word.
+             */
+            gridTemplateColumns: "minmax(0, 1fr)",
+            minWidth: 0,
             ...(inside ? {} : { gridTemplateRows: "auto 1fr auto" }),
             /*
              * CLIPPED, EVEN IN THE RAIL: across engines, a squeezed box
@@ -423,7 +432,7 @@ export function ChatPanel<S extends AnySchema>({
                       data-chat-question-node={asked.nodeId}
                       style={{ display: "grid", gap: 4, justifySelf: "start", maxWidth: 260 }}
                     >
-                      <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+                      <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
                         {asked.nodeLabel ? <strong>{asked.nodeLabel}: </strong> : null}
                         {asked.asks}
                         {asked.because === "split" ? " (it could be either)" : " (it was not sure)"}
@@ -437,7 +446,7 @@ export function ChatPanel<S extends AnySchema>({
                             disabled={!option.call}
                             title={option.call ? option.call.why ?? "Take this answer" : "Nothing to do for this answer"}
                             onClick={() => (option.call ? void apply(option.call, key) : undefined)}
-                            style={{ fontSize: "0.75rem" }}
+                            style={{ fontSize: "0.8125rem" }}
                           >
                             {option.value} {Math.round(option.probability * 100)}%
                           </button>
@@ -490,7 +499,7 @@ export function ChatPanel<S extends AnySchema>({
                   data-testid={`${testId}-offer`}
                   disabled={conversation.busy}
                   onClick={() => void conversation.send(question)}
-                  style={{ font: "inherit", fontSize: "0.6875rem", minHeight: 24, padding: "0 8px", borderRadius: 999 }}
+                  style={{ font: "inherit", fontSize: "0.75rem", minHeight: 24, padding: "0 8px", borderRadius: 999 }}
                 >
                   {question}
                 </button>

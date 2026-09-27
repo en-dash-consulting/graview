@@ -306,7 +306,7 @@ function CalendarView<S extends AnySchema>({
             role="status"
             style={{
               margin: 0,
-              fontSize: "0.75rem",
+              fontSize: "0.8125rem",
               color: said.tone === "refused" ? "var(--graview-warn)" : "var(--graview-ink-muted)",
             }}
           >

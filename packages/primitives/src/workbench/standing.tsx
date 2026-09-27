@@ -60,7 +60,7 @@ export function Standing({
           display: "inline-flex",
           alignItems: "center",
           gap: 7,
-          fontSize: "0.78125rem",
+          fontSize: "0.875rem",
           whiteSpace: "nowrap",
           // The longhand both ways: switching between a `border` shorthand
           // and `borderColor` across renders is a React warning, and the
@@ -125,7 +125,7 @@ export function Standing({
                 style={{
                   width: "100%",
                   textAlign: "left",
-                  fontSize: "0.75rem",
+                  fontSize: "0.8125rem",
                   lineHeight: 1.4,
                   padding: "7px 8px",
                   border: "1px solid transparent",
@@ -137,7 +137,7 @@ export function Standing({
                 <span style={{ display: "block", color: "var(--graview-ink)" }}>
                   {violation.message}
                 </span>
-                <span style={{ color: "var(--graview-ink-faint)", fontSize: "0.6875rem" }}>
+                <span style={{ color: "var(--graview-ink-faint)", fontSize: "0.75rem" }}>
                   {violation.label}
                   {violation.repairs.length > 0
                     ? ` · ${violation.repairs.length} ${violation.repairs.length === 1 ? "way" : "ways"} to fix`

@@ -31,7 +31,7 @@ const SHELF_DEPTH = 0.85;
  * about the height that will be DRAWN, which is this one whenever its own
  * proportional answer lands under it.
  */
-const CARD_MIN_HEIGHT = 56;
+const CARD_MIN_HEIGHT = 60;
 
 /*
  * The width a district card needs to hold its own name on one line.
@@ -42,7 +42,10 @@ const CARD_MIN_HEIGHT = 56;
  * the figure, the count and the padding. In the reader's own unit, like
  * everything else here.
  */
-const DISTRICT_MIN_WIDTH = 132;
+/* 160, not 132: the type scale went up a step, and "COMPONENTS" in 14px
+   capitals — drawn at plane two's 0.9, so 12.6 — needs the room 11.25px
+   did not. */
+const DISTRICT_MIN_WIDTH = 160;
 
 /**
  * A billboard cut to its picture is never shorter than this, in the lens's

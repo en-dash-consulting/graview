@@ -205,7 +205,7 @@ export function StudioAgentPanel({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
         title="Ask for a change to this declaration in words, see what the checker makes of it, and keep or discard it"
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 11px", fontSize: "0.78125rem" }}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 11px", fontSize: "0.875rem" }}
       >
         <span aria-hidden="true">◆</span>
         Ask
@@ -327,7 +327,7 @@ function Offered<S extends AnySchema>({
   readonly onKeep: () => void;
   readonly onDiscard: () => void;
 }) {
-  const faint = { fontSize: "0.75rem", color: "var(--graview-ink-muted)" } as const;
+  const faint = { fontSize: "0.8125rem", color: "var(--graview-ink-muted)" } as const;
   const declared = store.allMutations().find((one) => one.name === offer.proposal.mutation);
   const fields = declared ? formFields(declared.input) : [];
   const breaks = offer.verdict.ok && offer.verdict.breaks;
@@ -376,7 +376,7 @@ function Offered<S extends AnySchema>({
       }}
     >
       <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <strong style={{ fontSize: "0.78125rem", fontWeight: 550 }}>{declared?.title ?? offer.proposal.mutation}</strong>
+        <strong style={{ fontSize: "0.875rem", fontWeight: 550 }}>{declared?.title ?? offer.proposal.mutation}</strong>
         <ProposedDrawing offer={offer} />
       </span>
 
@@ -412,11 +412,11 @@ function Offered<S extends AnySchema>({
           disabled={breaks || refused}
           onClick={onKeep}
           title={breaks ? "The checker refuses this one" : (offer.proposal.why ?? "Keep this change")}
-          style={{ fontSize: "0.75rem" }}
+          style={{ fontSize: "0.8125rem" }}
         >
           Keep
         </button>
-        <button type="button" data-testid={`${testId}-discard`} onClick={onDiscard} style={{ fontSize: "0.75rem" }}>
+        <button type="button" data-testid={`${testId}-discard`} onClick={onDiscard} style={{ fontSize: "0.8125rem" }}>
           Discard
         </button>
       </span>
@@ -448,7 +448,7 @@ function Argument<S extends AnySchema>({
   const label = humaniseField(field.name);
   const box: React.CSSProperties = {
     font: "inherit",
-    fontSize: "0.75rem",
+    fontSize: "0.8125rem",
     padding: "3px 6px",
     minHeight: 24,
     borderRadius: 6,
@@ -459,7 +459,7 @@ function Argument<S extends AnySchema>({
   };
   const row = (control: ReactNode) => (
     <label style={{ display: "grid", gridTemplateColumns: "minmax(0, 5.5rem) minmax(0, 1fr)", alignItems: "center", gap: 6 }}>
-      <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-muted)" }}>{label}</span>
+      <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>{label}</span>
       {control}
     </label>
   );
@@ -544,7 +544,7 @@ function Argument<S extends AnySchema>({
     );
   }
   // Anything the framework cannot draw is said rather than silently dropped.
-  return row(<span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>{String(value ?? "—")}</span>);
+  return row(<span style={{ fontSize: "0.8125rem", color: "var(--graview-ink-faint)" }}>{String(value ?? "—")}</span>);
 }
 
 /**

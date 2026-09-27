@@ -140,10 +140,10 @@ export function SeatHeader({
         borderBottom: "1px solid var(--graview-edge)",
       }}
     >
-      <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
+      <span style={{ fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
         {label}
       </span>
-      <span data-testid={`${testId}-source`} title={sourceTitle} style={{ fontSize: "0.6875rem", color: "var(--graview-ink-muted)" }}>
+      <span data-testid={`${testId}-source`} title={sourceTitle} style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
         {source}
       </span>
       <span style={{ flex: "1 1 auto" }} />
@@ -154,7 +154,7 @@ export function SeatHeader({
           aria-expanded={settings ?? false}
           onClick={onSettings}
           title="Choose what answers: the graph itself, a model in this browser, a decision provider, or your own key"
-          style={{ fontSize: "0.75rem", padding: "2px 8px", minHeight: 24 }}
+          style={{ fontSize: "0.8125rem", padding: "2px 8px", minHeight: 24 }}
         >
           ⚙
         </button>
@@ -230,7 +230,7 @@ export function SeatThread({
       }}
     >
       {turns.length === 0 ? (
-        <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)", lineHeight: 1.5 }}>{empty}</li>
+        <li style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)", lineHeight: 1.5 }}>{empty}</li>
       ) : null}
       {turns.map((turn, index) => {
         const proposals = turn.proposals ?? [];
@@ -255,7 +255,7 @@ export function SeatThread({
                   maxWidth: "85%",
                   padding: "6px 10px",
                   borderRadius: "12px 12px 4px 12px",
-                  fontSize: "0.78125rem",
+                  fontSize: "0.875rem",
                   lineHeight: 1.45,
                   background: "var(--graview-panel-muted)",
                   color: "var(--graview-ink)",
@@ -264,10 +264,10 @@ export function SeatThread({
                 {turn.text}
               </p>
             ) : (
-              <p style={{ margin: 0, fontSize: "0.78125rem", lineHeight: 1.5, color: "var(--graview-ink)" }}>
+              <p style={{ margin: 0, fontSize: "0.875rem", lineHeight: 1.5, color: "var(--graview-ink)" }}>
                 {aside.said}
                 {aside.aside ? (
-                  <span style={{ display: "block", marginTop: 2, fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
+                  <span style={{ display: "block", marginTop: 2, fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
                     {aside.aside}
                   </span>
                 ) : null}
@@ -279,7 +279,7 @@ export function SeatThread({
                 data-testid={`${testId}-offer-model`}
                 onClick={onChooseModel}
                 title="A model reads a sentence however it is phrased, and proposes the acts it describes"
-                style={{ fontSize: "0.75rem", justifySelf: "start" }}
+                style={{ fontSize: "0.8125rem", justifySelf: "start" }}
               >
                 Let a model read it →
               </button>
@@ -304,7 +304,7 @@ export function SeatThread({
                 data-testid={`${testId}-apply-all`}
                 onClick={() => onApplyAll(index, proposals)}
                 title="Take these in order; anything still missing is asked for"
-                style={{ fontSize: "0.75rem", justifySelf: "start", fontWeight: 600 }}
+                style={{ fontSize: "0.8125rem", justifySelf: "start", fontWeight: 600 }}
               >
                 {applyAllLabel} {open.length}
               </button>
@@ -312,7 +312,7 @@ export function SeatThread({
           </li>
         );
       })}
-      {busy ? <li style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>thinking…</li> : null}
+      {busy ? <li style={{ fontSize: "0.8125rem", color: "var(--graview-ink-faint)" }}>thinking…</li> : null}
     </ol>
   );
 }
@@ -321,7 +321,7 @@ export function SeatThread({
 export function Settled({ outcome, testId }: { readonly outcome: SeatOutcome; readonly testId: string }) {
   if (outcome.state === "refused") {
     return (
-      <span data-testid={`${testId}-refused`} style={{ fontSize: "0.75rem", color: "var(--graview-warn)" }}>
+      <span data-testid={`${testId}-refused`} style={{ fontSize: "0.8125rem", color: "var(--graview-warn)" }}>
         Refused: {outcome.error}
       </span>
     );
@@ -330,7 +330,7 @@ export function Settled({ outcome, testId }: { readonly outcome: SeatOutcome; re
   return (
     <span
       data-testid={`${testId}-${outcome.state}`}
-      style={{ fontSize: "0.75rem", color: applied ? "var(--graview-ink-muted)" : "var(--graview-ink-faint)" }}
+      style={{ fontSize: "0.8125rem", color: applied ? "var(--graview-ink-muted)" : "var(--graview-ink-faint)" }}
     >
       {applied ? <span aria-hidden="true" style={{ color: "var(--graview-accent)" }}>✓ </span> : null}
       {applied ? outcome.said : <s>{outcome.said}</s>}
@@ -370,8 +370,10 @@ export function SeatComposer({
         data-testid={`${testId}-draft`}
         style={{
           flex: 1,
+          // An input's own minimum is about 180px; in a narrow pane it must give way.
+          minWidth: 0,
           font: "inherit",
-          fontSize: "0.78125rem",
+          fontSize: "0.875rem",
           padding: "6px 9px",
           borderRadius: 8,
           border: "1px solid var(--graview-edge)",
@@ -379,7 +381,7 @@ export function SeatComposer({
           color: "var(--graview-ink)",
         }}
       />
-      <button type="submit" data-testid={`${testId}-send`} disabled={busy || draft.trim().length === 0} style={{ fontSize: "0.78125rem" }}>
+      <button type="submit" data-testid={`${testId}-send`} disabled={busy || draft.trim().length === 0} style={{ fontSize: "0.875rem" }}>
         Send
       </button>
     </form>
@@ -396,7 +398,7 @@ export function SeatSettings({ testId, onDone }: { readonly testId: string; read
   return (
     <div data-testid={`${testId}-ladder`} style={{ display: "grid", gap: 10, padding: 12 }}>
       <LadderSetting />
-      <button type="button" onClick={onDone} style={{ justifySelf: "start", fontSize: "0.78125rem" }}>
+      <button type="button" onClick={onDone} style={{ justifySelf: "start", fontSize: "0.875rem" }}>
         Back to the conversation
       </button>
     </div>

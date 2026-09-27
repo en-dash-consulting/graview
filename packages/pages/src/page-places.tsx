@@ -121,7 +121,7 @@ export function PlaceCard<S extends AnySchema>({ context, place }: { context: Pa
         </span>
       </span>
       <span style={{ display: "grid", gap: 1 }}>
-        <span style={{ fontFamily: DISPLAY, fontSize: "1.0625rem", fontWeight: 600, lineHeight: 1.3 }}>{place.title}</span>
+        <span style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600, lineHeight: 1.3 }}>{place.title}</span>
         <span style={quiet}>{pictureOf(store, place)}</span>
       </span>
     </Link>

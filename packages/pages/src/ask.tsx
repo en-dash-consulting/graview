@@ -50,7 +50,7 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
           background: "var(--graview-float)",
           color: "var(--graview-ink)",
           font: "inherit",
-          fontSize: "0.875rem",
+          fontSize: "0.9375rem",
           boxShadow: "var(--graview-lift-low)",
           cursor: "pointer",
         }}

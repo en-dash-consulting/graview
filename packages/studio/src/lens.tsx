@@ -24,7 +24,7 @@ export function createStudioLens<S extends AnySchema>(base: GraviewApp<S>): { re
     const verdict = result.ok ? "no problems found" : `${result.errors} ${result.errors === 1 ? "error" : "errors"}, ${result.warnings} ${result.warnings === 1 ? "warning" : "warnings"}`;
     if (fidelity === "glyph") {
       return (
-        <span data-testid="studio-check" data-graview-check={result.ok ? "ok" : "failed"} style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+        <span data-testid="studio-check" data-graview-check={result.ok ? "ok" : "failed"} style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
           {title} · {verdict}
         </span>
       );
@@ -46,19 +46,19 @@ export function createStudioLens<S extends AnySchema>(base: GraviewApp<S>): { re
         }}
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-          <span style={{ fontFamily: "var(--graview-font-display)", fontSize: "1.0625rem", fontWeight: 600 }}>{title}</span>
-          <span style={{ marginLeft: "auto", fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
+          <span style={{ fontFamily: "var(--graview-font-display)", fontSize: "1.125rem", fontWeight: 600 }}>{title}</span>
+          <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
             {kinds} {kinds === 1 ? "kind" : "kinds"} · {acts} {acts === 1 ? "act" : "acts"} · {rules} {rules === 1 ? "rule" : "rules"}
           </span>
         </div>
-        <p style={{ margin: 0, fontSize: "0.8125rem", color: result.ok ? "var(--graview-ink-muted)" : "var(--graview-warn)" }}>
+        <p style={{ margin: 0, fontSize: "0.875rem", color: result.ok ? "var(--graview-ink-muted)" : "var(--graview-warn)" }}>
           graview check: {result.app} — {verdict}.
         </p>
         {result.findings.length > 0 ? (
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
             {result.findings.map((finding, index) => (
-              <li key={`${finding.code}:${finding.where}:${index}`} data-graview-finding={finding.code} style={{ fontSize: "0.78125rem", lineHeight: 1.5, borderTop: "1px solid var(--graview-edge)", paddingTop: 6 }}>
-                <code style={{ fontSize: "0.71875rem", color: finding.severity === "error" ? "var(--graview-warn)" : "var(--graview-ink-muted)" }}>{finding.code}</code>{" "}
+              <li key={`${finding.code}:${finding.where}:${index}`} data-graview-finding={finding.code} style={{ fontSize: "0.875rem", lineHeight: 1.5, borderTop: "1px solid var(--graview-edge)", paddingTop: 6 }}>
+                <code style={{ fontSize: "0.8125rem", color: finding.severity === "error" ? "var(--graview-warn)" : "var(--graview-ink-muted)" }}>{finding.code}</code>{" "}
                 <span style={{ color: "var(--graview-ink-faint)" }}>{finding.where}</span>
                 <div>{finding.message}</div>
                 <div style={{ color: "var(--graview-ink-muted)" }}>{finding.fix}</div>

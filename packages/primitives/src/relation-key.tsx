@@ -132,7 +132,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
     >
       <span
         style={{
-          fontSize: "0.625rem",
+          fontSize: "0.75rem",
           letterSpacing: "0.16em",
           textTransform: "uppercase",
           color: "var(--graview-ink-faint)",
@@ -199,16 +199,16 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
                 strokeLinecap="round"
               />
             </svg>
-            <span style={{ fontSize: "0.71875rem", color: "var(--graview-ink)" }}>{edgeKind}</span>
+            <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink)" }}>{edgeKind}</span>
             {/* A kind the kit keeps quiet says so here, the one place it is still listed. */}
             {connector.visible ? null : (
-              <span data-graview-quiet={edgeKind} style={{ fontSize: "0.625rem", color: "var(--graview-ink-faint)", fontStyle: "italic" }}>
+              <span data-graview-quiet={edgeKind} style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", fontStyle: "italic" }}>
                 not drawn
               </span>
             )}
             <span
               style={{
-                fontSize: "0.6875rem",
+                fontSize: "0.75rem",
                 color: "var(--graview-ink-faint)",
                 fontVariantNumeric: "tabular-nums",
               }}

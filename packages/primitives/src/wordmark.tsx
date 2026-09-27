@@ -40,7 +40,7 @@ export function Wordmark<S extends AnySchema>() {
         display: "inline-flex",
         alignItems: "center",
         gap: 7,
-        fontSize: "0.6875rem",
+        fontSize: "0.75rem",
         letterSpacing: "0.3em",
         textTransform: "uppercase",
         color: "var(--graview-ink-muted)",

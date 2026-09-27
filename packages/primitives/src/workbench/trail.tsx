@@ -30,7 +30,7 @@ export function Backtrack() {
     display: "inline-grid",
     placeItems: "center",
     padding: "0 9px",
-    fontSize: "0.8125rem",
+    fontSize: "0.875rem",
     lineHeight: 1,
     borderRadius: 999,
   } as const;
@@ -99,7 +99,7 @@ export function Trail({
     // A crumb is a control, and a control is at least a fingertip tall.
     minHeight: 24,
     padding: "3px 9px",
-    fontSize: "0.8125rem",
+    fontSize: "0.875rem",
     borderRadius: 999,
     borderColor: "var(--graview-accent)",
     color: "var(--graview-accent)",
@@ -242,7 +242,7 @@ export function Trail({
   return (
     <nav
       aria-label="View"
-      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.8125rem", minWidth: 0 }}
+      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.875rem", minWidth: 0 }}
     >
       {crumb ? (
         <button

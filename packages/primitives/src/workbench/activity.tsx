@@ -119,7 +119,7 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
         minHeight: 24,
         minWidth: 24,
         padding: "1px 8px",
-        fontSize: "0.6875rem",
+        fontSize: "0.75rem",
         ...(blocked ? { borderColor: "var(--graview-warn)", color: "var(--graview-warn)" } : {}),
       }}
     >
@@ -129,7 +129,7 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
         <span
           data-testid="undo-refused"
           role="alert"
-          style={{ fontSize: "0.6875rem", lineHeight: 1.4, color: "var(--graview-warn)", maxWidth: 260, textAlign: "right" }}
+          style={{ fontSize: "0.75rem", lineHeight: 1.4, color: "var(--graview-warn)", maxWidth: 260, textAlign: "right" }}
         >
           {refused}
         </span>
@@ -182,7 +182,7 @@ export function StartFresh() {
         alignItems: "center",
         minHeight: 24,
         minWidth: 24,
-        fontSize: "0.75rem",
+        fontSize: "0.8125rem",
         color: "var(--graview-ink-muted)",
         textDecoration: "underline",
         textDecorationColor: "var(--graview-edge-bright)",
@@ -263,7 +263,7 @@ export function ActivityRail({
           gap: 6,
           padding: "4px 11px",
           borderRadius: 999,
-          fontSize: "0.78125rem",
+          fontSize: "0.875rem",
           whiteSpace: "nowrap",
           ...(running ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" } : {}),
         }}
@@ -329,7 +329,7 @@ export function ActivityRail({
             >
               <span
                 style={{
-                  fontSize: "0.625rem",
+                  fontSize: "0.75rem",
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
                   color: "var(--graview-ink-faint)",
@@ -345,7 +345,7 @@ export function ActivityRail({
               {calls.slice(0, 6).map((call, index) => (
                 <li
                   key={`${call.at}:${index}`}
-                  style={{ display: "grid", gap: 2, fontSize: "0.75rem", lineHeight: 1.45 }}
+                  style={{ display: "grid", gap: 2, fontSize: "0.8125rem", lineHeight: 1.45 }}
                 >
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                     <span
@@ -405,7 +405,7 @@ export function ActivityRail({
                 listStyle: "none",
                 display: "grid",
                 gap: 6,
-                fontSize: "0.75rem",
+                fontSize: "0.8125rem",
               }}
             >
               {changes.map((change, index) => (
@@ -452,7 +452,7 @@ export function ActivityRail({
                 gap: 10,
                 paddingTop: 8,
                 borderTop: "1px solid var(--graview-edge)",
-                fontSize: "0.75rem",
+                fontSize: "0.8125rem",
                 color: "var(--graview-ink-faint)",
               }}
             >

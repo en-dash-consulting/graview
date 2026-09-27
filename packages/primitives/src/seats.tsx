@@ -37,7 +37,7 @@ export function Seats<S extends AnySchema>() {
     >
       <span
         style={{
-          fontSize: "0.6875rem",
+          fontSize: "0.75rem",
           letterSpacing: "0.12em",
           textTransform: "uppercase",
           color: "var(--graview-ink-faint)",
@@ -58,7 +58,7 @@ export function Seats<S extends AnySchema>() {
             style={{
               padding: "3px 11px",
               borderRadius: 999,
-              fontSize: "0.78125rem",
+              fontSize: "0.875rem",
               whiteSpace: "nowrap",
               borderWidth: 1,
               borderStyle: "solid",

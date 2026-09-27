@@ -79,7 +79,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
       <header style={{ display: "grid", gap: 14 }}>
         <h1 style={h1}>{brand?.name ?? "Graview"}</h1>
         <p style={lede}>{summary}</p>
-        <p style={{ margin: 0, fontSize: "0.9375rem" }} data-testid="standing-card">
+        <p style={{ margin: 0, fontSize: "1rem" }} data-testid="standing-card">
           {violations.length === 0 ? (
             <span style={quiet}>All rules hold.</span>
           ) : (

@@ -330,7 +330,7 @@ export interface LayoutOptions {
 export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "cityOrder" | "plots" | "screens" | "cityZoom" | "screenHeight">> = {
   width: 1200,
   height: 760,
-  focusSize: { width: 1040, height: 420 },
+  focusSize: { width: 1200, height: 420 },
   relationSize: { width: 240, height: 140 },
   /*
    * A kind card is a GLYPH: a name, a count, and how much of it is in
@@ -338,7 +338,7 @@ export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" |
    * since moved to the tooltip, and the band it sits in took a fifth of the
    * window to hold cards covering a tenth of it.
    */
-  contextSize: { width: 300, height: 96 },
+  contextSize: { width: 300, height: 104 },
   gap: 16,
   unit: 16,
 };

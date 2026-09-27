@@ -82,7 +82,7 @@ export class ViewBoundary extends Component<ViewBoundaryProps, ViewBoundaryState
           background: "var(--graview-panel-warning, #fdf3ec)",
           color: "var(--graview-ink, #1a1a1a)",
           font: "var(--graview-font-body, 13px/1.45 system-ui)",
-          fontSize: "0.8125rem",
+          fontSize: "0.875rem",
           lineHeight: 1.45,
         }}
       >

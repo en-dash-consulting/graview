@@ -629,7 +629,7 @@ export function CoverageView<S extends AnySchema>({
                     maxWidth: HEADER_MAX,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    fontSize: "0.65625rem",
+                    fontSize: "0.75rem",
                     letterSpacing: "0.005em",
                     color: column.used
                       ? lit.size > 0 && !lit.has(column.id)
@@ -658,7 +658,7 @@ export function CoverageView<S extends AnySchema>({
                 {startsGroup && row.group ? (
                   <div
                     style={{
-                      fontSize: "0.59375rem",
+                      fontSize: "0.6875rem",
                       letterSpacing: "0.16em",
                       textTransform: "uppercase",
                       color: "var(--graview-ink-faint)",
@@ -714,7 +714,7 @@ export function CoverageView<S extends AnySchema>({
                       padding: "6px 10px 6px 0",
                       // Padding inside the width, so the cells start where the column heads do.
                       boxSizing: "border-box",
-                      fontSize: "0.75rem",
+                      fontSize: "0.8125rem",
                       minWidth: 0,
                       color:
                         missing || broken.has(row.id) ? "var(--graview-warn)" : "var(--graview-ink)",
@@ -747,7 +747,7 @@ export function CoverageView<S extends AnySchema>({
                         style={{
                           marginLeft: "auto",
                           flex: "0 0 auto",
-                          fontSize: "0.6875rem",
+                          fontSize: "0.75rem",
                           color: row.badged
                             ? "var(--graview-ink-faint)"
                             : "var(--graview-warn)",
@@ -822,7 +822,7 @@ export function CoverageView<S extends AnySchema>({
                                   padding: "2px 9px 2px 7px",
                                   borderRadius: 999,
                                   border: "1px solid var(--graview-edge)",
-                                  fontSize: "0.6875rem",
+                                  fontSize: "0.75rem",
                                   color: filled ? "var(--graview-ink)" : "var(--graview-ink-faint)",
                                 }
                               : {

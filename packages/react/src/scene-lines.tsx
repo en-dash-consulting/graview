@@ -733,7 +733,7 @@ export function RelationCaptions({
               textAlign: "center",
               // Sits in the gutter above the run, not on top of the cards.
               top: Math.max(0, run.top - 19),
-              fontSize: "0.625rem",
+              fontSize: "0.75rem",
               letterSpacing: "0.09em",
               textTransform: "uppercase",
               color: "var(--graview-ink-faint)",

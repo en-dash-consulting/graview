@@ -67,7 +67,7 @@ export function ReachView<S extends AnySchema>({ label, fidelity, mode }: ViewPr
   const title = label ?? "Who may do what";
   if (!policy || roles.length === 0) {
     return (
-      <div data-testid="reach-lens" style={{ padding: 14, color: "var(--graview-ink-muted)", fontSize: "0.8125rem" }}>
+      <div data-testid="reach-lens" style={{ padding: 14, color: "var(--graview-ink-muted)", fontSize: "0.875rem" }}>
         {title}: this installation has no policy, so everyone may do everything.
       </div>
     );
@@ -97,16 +97,16 @@ export function ReachView<S extends AnySchema>({ label, fidelity, mode }: ViewPr
       }}
     >
       <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-        <span style={{ fontFamily: "var(--graview-font-display)", fontSize: "1.0625rem", fontWeight: 600 }}>{title}</span>
-        <span style={{ marginLeft: "auto", fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
+        <span style={{ fontFamily: "var(--graview-font-display)", fontSize: "1.125rem", fontWeight: 600 }}>{title}</span>
+        <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
           ● may · ◐ on their own record · read from the policy
         </span>
       </div>
       <div data-scroller style={{ overflowX: "auto" }}>
-        <table style={{ borderCollapse: "collapse", fontSize: "0.78125rem", minWidth: "100%" }}>
+        <table style={{ borderCollapse: "collapse", fontSize: "0.875rem", minWidth: "100%" }}>
           <thead>
             <tr>
-              <th scope="col" style={{ textAlign: "left", padding: "4px 10px 6px 0", fontWeight: 500, color: "var(--graview-ink-faint)", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+              <th scope="col" style={{ textAlign: "left", padding: "4px 10px 6px 0", fontWeight: 500, color: "var(--graview-ink-faint)", fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 Role
               </th>
               {reach.acts.map((act) => (
@@ -114,7 +114,7 @@ export function ReachView<S extends AnySchema>({ label, fidelity, mode }: ViewPr
                   key={`${act.name}|${act.kind ?? ""}`}
                   scope="col"
                   title={act.kind ? `${act.title}, on ${withArticle(act.kind)}` : act.title}
-                  style={{ textAlign: "left", padding: "4px 10px 6px", fontWeight: 500, whiteSpace: "nowrap", color: "var(--graview-ink-muted)", fontSize: "0.71875rem" }}
+                  style={{ textAlign: "left", padding: "4px 10px 6px", fontWeight: 500, whiteSpace: "nowrap", color: "var(--graview-ink-muted)", fontSize: "0.8125rem" }}
                 >
                   {act.title}
                   {act.kind ? <span style={{ color: "var(--graview-ink-faint)" }}> · {act.kind}</span> : null}

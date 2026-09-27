@@ -315,7 +315,10 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
               position: "absolute" as const,
               left: 14,
               top: 14,
-              width: 264,
+              // The rail the layout keeps clear is a share of a narrow scene
+              // (see railInset); the pane keeps to the same share, or it
+              // stands over the picture it was meant to sit beside.
+              width: "min(264px, 22cqw)",
               maxHeight: "calc(100% - 28px)",
               padding: open ? "10px 12px" : "6px 10px",
             }),
@@ -340,23 +343,23 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
           minHeight: 32,
         }}
       >
-        <span aria-hidden="true" style={{ fontSize: "0.9375rem", color: state.tone }}>
+        <span aria-hidden="true" style={{ fontSize: "1rem", color: state.tone }}>
           ◆
         </span>
         <span style={{ display: "grid", gap: 0, minWidth: 0 }}>
-          <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: "0.875rem", color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             <span data-testid="companion-subject">{subject.name}</span>
           </span>
-          <span data-testid="companion-state" style={{ fontSize: "0.6875rem", color: state.tone, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span data-testid="companion-state" style={{ fontSize: "0.75rem", color: state.tone, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {name} · {state.word}
           </span>
         </span>
-        <span aria-hidden="true" style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
+        <span aria-hidden="true" style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
           {open ? "▾" : "▸"}
         </span>
       </button>
       {open && said && (robot?.mode === "refused" || robot?.mode === "asking") ? (
-        <p data-testid="companion-said" style={{ margin: 0, fontSize: "0.75rem", color: state.tone }}>
+        <p data-testid="companion-said" style={{ margin: 0, fontSize: "0.8125rem", color: state.tone }}>
           {said}
         </p>
       ) : null}
@@ -414,13 +417,13 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
             */}
           {asking.length > 0 ? (
             <section data-testid="companion-asking" style={{ display: "grid", gap: 6 }}>
-              <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-accent)" }}>
+              <span style={{ fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-accent)" }}>
                 {asking.length === 1 ? "It asked" : `It asked ${asking.length} things`}
               </span>
               <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
                 {asking.map((one) => (
                   <li key={one.participant} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 6, alignItems: "baseline" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={one.say}>
+                    <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={one.say}>
                       {one.say}
                     </span>
                     {one.at ? (
@@ -431,7 +434,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
                         aria-label={`Show me what ${one.who} is asking about`}
                         title="Show me what it is asking about"
                         onClick={() => showMe(one.at!)}
-                        style={{ font: "inherit", fontSize: "0.6875rem", minHeight: 24, padding: "0 8px", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                        style={{ font: "inherit", fontSize: "0.75rem", minHeight: 24, padding: "0 8px", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                       >
                         {(() => {
                           const about = store.graph.getNode(one.at!);
@@ -446,7 +449,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
           ) : null}
           {work.acts.length > 0 ? (
             <section data-testid="companion-log" style={{ display: "grid", gap: 6 }}>
-              <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
+              <span style={{ fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
                 What it did
               </span>
               <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
@@ -455,7 +458,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
                   const node = first ? store.graph.getNode(first) : undefined;
                   return (
                     <li key={act.batch} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 6, alignItems: "baseline" }}>
-                      <span style={{ fontSize: "0.75rem", color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={act.intent}>
+                      <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={act.intent}>
                         {act.intent}
                       </span>
                       {node ? (
@@ -467,7 +470,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
                           aria-label={`Show me ${labelOf(store.schema.tryDefinition(node.kind), node)}`}
                           title={`Show me ${labelOf(store.schema.tryDefinition(node.kind), node)}`}
                           onClick={() => showMe(first!)}
-                          style={{ font: "inherit", fontSize: "0.6875rem", minHeight: 24, padding: "0 8px", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                          style={{ font: "inherit", fontSize: "0.75rem", minHeight: 24, padding: "0 8px", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                         >
                           {labelOf(store.schema.tryDefinition(node.kind), node)}
                         </button>
@@ -481,7 +484,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
           {/* WHAT THE LINES MEAN, at the foot, where a map keeps its key. */}
           {anything ? (
             <details data-testid="companion-key">
-              <summary style={{ cursor: "pointer", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)", minHeight: 24 }}>
+              <summary style={{ cursor: "pointer", fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)", minHeight: 24 }}>
                 What the lines mean
               </summary>
               <RelationKey<S> inside />

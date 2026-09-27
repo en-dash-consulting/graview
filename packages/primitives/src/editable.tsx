@@ -149,7 +149,7 @@ export function EditableValue<S extends AnySchema>({
               const next = event.relatedTarget as Node | null;
               if (!next || !event.currentTarget.parentElement?.contains(next)) close(false);
             }}
-            style={{ padding: "2px 9px", fontSize: "0.75rem", borderRadius: 999 }}
+            style={{ padding: "2px 9px", fontSize: "0.8125rem", borderRadius: 999 }}
           >
             {act.title}
           </button>
@@ -221,7 +221,7 @@ export function EditableValue<S extends AnySchema>({
         * that happens, and there must not be two renderings of an action.
         */}
       {editable.open.length > 0 ? (
-        <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>
+        <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
           also needs {editable.open.map((parameter) => parameter.name).join(", ")}
         </span>
       ) : null}
@@ -289,7 +289,7 @@ export function Fields<S extends AnySchema>({
         display: "grid",
         gridTemplateColumns: "auto 1fr",
         gap: "5px 16px",
-        fontSize: "0.8125rem",
+        fontSize: "0.875rem",
         alignContent: "start",
       }}
     >
@@ -301,7 +301,7 @@ export function Fields<S extends AnySchema>({
               whiteSpace: "nowrap",
               // A field name is a label, not a heading: it should read as
               // quieter than its value rather than competing with it.
-              fontSize: "0.75rem",
+              fontSize: "0.8125rem",
             }}
           >
             {labels[field.key] ?? field.label}

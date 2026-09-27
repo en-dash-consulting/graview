@@ -334,10 +334,10 @@ function Strip({
         flex: "0 0 auto",
         borderBottom: "1px solid var(--graview-edge)",
         background: "var(--graview-bar)",
-        fontSize: "0.78125rem",
+        fontSize: "0.875rem",
       }}
     >
-      <span style={{ fontFamily: "var(--graview-font-display)", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: "0.6875rem", marginRight: 6 }}>
+      <span style={{ fontFamily: "var(--graview-font-display)", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: "0.75rem", marginRight: 6 }}>
         {brand?.name ?? "Graview"}
       </span>
       {faces.map((candidate) => (
@@ -351,7 +351,7 @@ function Strip({
           style={{
             padding: "3px 11px",
             borderRadius: 999,
-            fontSize: "0.78125rem",
+            fontSize: "0.875rem",
             borderWidth: 1,
             borderStyle: "solid",
             borderColor: candidate.pressed ? "var(--graview-accent)" : "var(--graview-edge)",
@@ -387,7 +387,7 @@ function Strip({
             maxWidth: "46%",
             padding: "3px 8px",
             borderRadius: 999,
-            fontSize: "0.78125rem",
+            fontSize: "0.875rem",
             borderWidth: 1,
             borderStyle: "solid",
             borderColor: "var(--graview-accent)",
@@ -403,7 +403,7 @@ function Strip({
         </select>
       ) : seats && seats.length > 1 ? (
         <div role="group" aria-label="Seat" data-testid="embed-seats" style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 6 }}>
-          <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>As</span>
+          <span style={{ fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>As</span>
           {seats.map((seat) => {
             const pressed = sameSeat(principal, seat.principal);
             return (
@@ -417,7 +417,7 @@ function Strip({
                 style={{
                   padding: "3px 11px",
                   borderRadius: 999,
-                  fontSize: "0.78125rem",
+                  fontSize: "0.875rem",
                   borderWidth: 1,
                   borderStyle: "solid",
                   borderColor: pressed ? "var(--graview-accent)" : "var(--graview-edge)",

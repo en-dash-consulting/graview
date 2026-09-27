@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-19T07:11:42.070Z",
+  "at": "2026-09-27T03:45:43.288Z",
   "browser": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
   "flags": [
     "--enable-blink-features=CanvasDrawElement",
@@ -9,7 +9,7 @@
   ],
   "scheme": "dark",
   "renderer": "dom",
-  "axNodeCount": 345,
+  "axNodeCount": 376,
   "drawnViews": 8,
   "viewsInAxTree": [
     {
@@ -71,28 +71,28 @@
     "navigation: View",
     "navigation: Places",
     "link: Pages",
-    "button: Graview",
-    "complementary: Inspector",
+    "button: Up",
+    "complementary: The seat — about Pay the deposit",
     "StaticText: Things",
     "StaticText: THINGS",
     "button: Pay the deposit",
     "button: The lists",
     "button: The month",
+    "button: What is left",
     "button: The week",
     "StaticText: Pages",
     "button: 2 problems",
-    "button: Ask",
     "button: Activity",
     "button: Nora",
-    "StaticText: Graview",
-    "button: Clear selection",
-    "InlineTextBox: Things",
-    "InlineTextBox: THINGS",
-    "StaticText: Pay the deposit",
-    "StaticText: The lists",
-    "StaticText: The month",
-    "StaticText: The week",
-    "InlineTextBox: Pages"
+    "StaticText: Up",
+    "button: Pay the deposit tidy · listening",
+    "complementary: Inspector",
+    "StaticText: SEAT",
+    "StaticText: graph-native",
+    "button: What's wrong?",
+    "button: Tell me about Pay the deposit",
+    "button: What is here?",
+    "InlineTextBox: Things"
   ],
   "listContentExposed": true,
   "tasksExposed": [
@@ -263,15 +263,5 @@
   "axe": {
     "violations": []
   },
-  "robot": {
-    "docked": {
-      "inTree": true,
-      "name": "tidy — at its dock. Press to have it follow you"
-    },
-    "following": {
-      "inTree": true,
-      "name": "tidy — following you. Press to release",
-      "violations": []
-    }
-  }
+  "error": "TimeoutError: page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-graview-figure=\"agent:tidy:ui\"] .graview-figure-body')\u001b[22m\n"
 }

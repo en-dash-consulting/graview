@@ -73,7 +73,7 @@ export function AnswerArgs({
     } else setAnswers(next);
   };
   const skip = parameter.optional ? (
-    <button type="button" onClick={() => answer(undefined)} style={{ fontSize: "0.75rem" }}>
+    <button type="button" onClick={() => answer(undefined)} style={{ fontSize: "0.8125rem" }}>
       Skip
     </button>
   ) : null;
@@ -172,7 +172,7 @@ export function AnswerArgs({
       {/* A single text field is named by the field itself; naming it twice
           over is the same sentence twice. Anything else needs the question. */}
       {affordance.open.length > 1 || choices.length > 0 ? (
-        <span id={promptId} style={{ fontSize: "0.65625rem", color: "var(--graview-ink-faint)" }}>
+        <span id={promptId} style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
           {step}
         </span>
       ) : null}
@@ -185,7 +185,7 @@ export function AnswerArgs({
           placeholder={`Filter ${choices.length}…`}
           aria-label={`Filter ${asking}`}
           data-testid="ask-filter"
-          style={{ font: "inherit", fontSize: "0.75rem", minWidth: 0, padding: "3px 7px" }}
+          style={{ font: "inherit", fontSize: "0.8125rem", minWidth: 0, padding: "3px 7px" }}
         />
       ) : null}
 
@@ -207,7 +207,7 @@ export function AnswerArgs({
                 {...(several ? { "aria-pressed": held } : {})}
                 style={{
                   padding: "3px 9px",
-                  fontSize: "0.75rem",
+                  fontSize: "0.8125rem",
                   ...(held
                     ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
                     : {}),
@@ -229,7 +229,7 @@ export function AnswerArgs({
           {matching.length > SHOWN ? (
             <span
               data-testid="ask-more"
-              style={{ alignSelf: "center", fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}
+              style={{ alignSelf: "center", fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}
             >
               {matching.length - SHOWN} more — type to narrow
             </span>
@@ -237,7 +237,7 @@ export function AnswerArgs({
           {matching.length === 0 ? (
             <span
               data-testid="ask-none"
-              style={{ alignSelf: "center", fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}
+              style={{ alignSelf: "center", fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}
             >
               None of the {choices.length} match that.
             </span>
@@ -246,7 +246,7 @@ export function AnswerArgs({
             <button
               type="button"
               disabled={picked.length === 0}
-              style={{ fontSize: "0.75rem" }}
+              style={{ fontSize: "0.8125rem" }}
               onClick={() => {
                 const chosen = picked;
                 setPicked(NOTHING_PICKED);
@@ -292,7 +292,7 @@ export function AnswerArgs({
               flex: 1,
               minWidth: 0,
               font: "inherit",
-              fontSize: "0.8125rem",
+              fontSize: "0.875rem",
               padding: "5px 8px",
               borderRadius: 7,
               border: "1px solid var(--graview-edge)",
@@ -300,7 +300,7 @@ export function AnswerArgs({
               color: "var(--graview-ink)",
             }}
           />
-          <button type="submit" disabled={draft.trim().length === 0} style={{ fontSize: "0.75rem" }}>
+          <button type="submit" disabled={draft.trim().length === 0} style={{ fontSize: "0.8125rem" }}>
             {remaining.length > 1 ? "Next" : "Apply"}
           </button>
           {skip}
