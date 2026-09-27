@@ -249,6 +249,21 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
     };
   });
   const anything = store.graph.allEdges().length > 0;
+  const docked = !narrow && !framed;
+  /* The conversation, rendered once and placed by the pane's shape. */
+  const conversation = (
+    <ChatPanel<S>
+      inside
+      /* What the graph can answer about THIS, offered before anybody types. */
+      offer={[
+        "What's wrong?",
+        ...(subject.id && store.graph.getNode(subject.id) ? [`Tell me about ${subject.name}`] : []),
+        "What is here?",
+      ]}
+      {...(respond ? { respond } : {})}
+      {...(onCall ? { onCall } : {})}
+    />
+  );
   const work = useSeatWork<S>();
   /* Questions back, from every seat in this tab: they wait for an answer, so they are listed until answered. */
   const asking = [...robots.values()].filter((one) => one.mode === "asking" && one.say);
@@ -312,15 +327,26 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
           : narrow
           ? { position: "absolute" as const, left: 10, right: 10, bottom: 10, maxHeight: open ? "min(58cqh, 420px)" : undefined, padding: open ? "10px 12px" : "6px 10px" }
           : {
+              /*
+               * DOCKED, NOT FLOATING. The layout keeps this rail clear of the
+               * picture in every mode (see railInset), so the pane stands in
+               * it as a column of the interface — the scene's height, a rule
+               * down its right edge, no shadow — rather than as a card
+               * dropped over the corner of the picture. The width is the
+               * rail's share, so the two can never disagree.
+               */
               position: "absolute" as const,
-              left: 14,
-              top: 14,
-              // The rail the layout keeps clear is a share of a narrow scene
-              // (see railInset); the pane keeps to the same share, or it
-              // stands over the picture it was meant to sit beside.
+              left: 0,
+              top: 0,
+              bottom: 0,
               width: "min(264px, 22cqw)",
-              maxHeight: "calc(100% - 28px)",
-              padding: open ? "10px 12px" : "6px 10px",
+              padding: open ? "12px 12px 10px" : "10px 12px",
+              borderRadius: 0,
+              border: "none",
+              borderRight: "1px solid var(--graview-edge)",
+              boxShadow: "none",
+              background: "var(--graview-bar)",
+              ...(open ? { display: "grid" as const, gridTemplateRows: "auto minmax(0, 1fr) auto" } : {}),
             }),
         overflow: "hidden",
       }}
@@ -343,14 +369,28 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
           minHeight: 32,
         }}
       >
-        <span aria-hidden="true" style={{ fontSize: "1rem", color: state.tone }}>
-          ◆
-        </span>
-        <span style={{ display: "grid", gap: 0, minWidth: 0 }}>
-          <span style={{ fontSize: "0.875rem", color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {/*
+          * WHAT THIS IS ABOUT, said as a title with a word above it for why:
+          * the thing you selected, the thing under the pointer, or the place
+          * you are in. The seat's own state — "starter · listening" — was the
+          * second line of every header and true of nothing a person needed;
+          * it shows only while the seat is doing something.
+          */}
+        <span style={{ display: "grid", gap: 1, minWidth: 0 }}>
+          <span style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: subject.because === "selection" ? "var(--graview-accent)" : "var(--graview-ink-faint)" }}>
+            {subject.because === "selection" ? "Selected" : subject.because === "hover" ? "Under the pointer" : "In view"}
+          </span>
+          <span style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--graview-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             <span data-testid="companion-subject">{subject.name}</span>
           </span>
-          <span data-testid="companion-state" style={{ fontSize: "0.75rem", color: state.tone, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span
+            data-testid="companion-state"
+            style={
+              state.word === "listening"
+                ? { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }
+                : { fontSize: "0.75rem", color: state.tone, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
+            }
+          >
             {name} · {state.word}
           </span>
         </span>
@@ -389,20 +429,8 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
           <Inspector placement="rail" />
           {/* WHAT IT RELATES TO. */}
           <QuickRelations<S> inside />
-          {/* WHAT THE SEAT SAYS, with "this" meaning the subject above. */}
-          {chat ? (
-            <ChatPanel<S>
-              inside
-              /* What the graph can answer about THIS, offered before anybody types. */
-              offer={[
-                "What's wrong?",
-                ...(subject.id && store.graph.getNode(subject.id) ? [`Tell me about ${subject.name}`] : []),
-                "What is here?",
-              ]}
-              {...(respond ? { respond } : {})}
-              {...(onCall ? { onCall } : {})}
-            />
-          ) : null}
+          {/* WHAT THE SEAT SAYS, with "this" meaning the subject above — in the column where the pane is a sheet; pinned at the foot where it is a rail. */}
+          {chat && !docked ? conversation : null}
           {/*
             * WHAT THE SEAT DID, and the way back to it. The figure used to
             * walk to what it wrote and stand there; the marks say the same
@@ -491,6 +519,9 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
             </details>
           ) : null}
         </div>
+      ) : null}
+      {open && chat && docked ? (
+        <div style={{ paddingTop: 8, borderTop: "1px solid var(--graview-edge)", minWidth: 0 }}>{conversation}</div>
       ) : null}
     </aside>
   );

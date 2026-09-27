@@ -1,9 +1,9 @@
 import type { AnySchema } from "@graview/core";
 import { Scene, useGraview, UrlSync, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode, useRef } from "react";
 import { Companion } from "./companion.js";
-import { VISUALLY_HIDDEN } from "./primitives/index.js";
+import { VISUALLY_HIDDEN, useWidth } from "./primitives/index.js";
 import { ShowInstallation } from "./installation.js";
 import { Profile } from "./profile.js";
 import { Places } from "./places.js";
@@ -104,6 +104,23 @@ export function Shell<S extends AnySchema>({
   studio,
 }: ShellProps<S>) {
   const { brand } = useGraview<S>();
+  // Below a laptop's width the standing and the profile keep their marks and
+  // give up their words; the words are their titles either way.
+  const bar = useRef<HTMLElement>(null);
+  const barWidth = useWidth(bar);
+  // The standing's sentence goes first — the app's own places are worth
+  // more than "everything is in order" said in words — and the name behind
+  // the profile's mark goes at a laptop's width.
+  const quiet = barWidth !== null && barWidth < 1560;
+  const compact = barWidth !== null && barWidth < 1100;
+  /*
+   * A PHONE GETS TWO ROWS. One row that hides what it cannot hold is the
+   * failure the old bar was built against: at 390 a scaffolded app had no
+   * undo, no activity and no way back to light, painted off the edge with
+   * nothing to say so. Below a tablet's width the bar wraps — the places
+   * as one menu on their own line — and the picture starts under it.
+   */
+  const narrow = barWidth !== null && barWidth < 720;
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);
   const onCall = useCallback((call: ToolCall) => {
     setCalls((current) => {
@@ -118,114 +135,91 @@ export function Shell<S extends AnySchema>({
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <header
+        ref={bar}
         /*
-         * THE BAR WRAPS RATHER THAN RUNNING OFF THE EDGE.
-         *
-         * One unwrapping row, a fixed 56 high, inside a wrapper that clips:
-         * at 390 the row wanted 649, so the standing sentence was cut and
-         * Ask, Activity and the scheme toggle were painted entirely off the
-         * right — with `canScrollX` false, because the wrapper hides the
-         * overflow. On a phone a scaffolded app had no undo, no activity, no
-         * chat and no way back to light, and nothing said so.
-         *
-         * Wrapping is the same answer as the strip's at W-029: where there
-         * is no room beside something, it goes underneath, and the layout
-         * re-runs into what is left. The height is a MINIMUM now, so one row
-         * is unchanged on any screen with the room for it.
+         * ONE ROW. Three regions: who this is and the way back, on the
+         * left; the app's own places, in the middle, as one segmented
+         * control that hands what it cannot hold to a menu rather than
+         * wrapping; and what is true and who you are, on the right, which
+         * shed their words before the bar sheds anything else. The bar
+         * used to wrap into two rows of equal pills at a laptop's width,
+         * and a bar that is two rows tall is a picture that starts lower.
          */
         style={{
           display: "flex",
           alignItems: "center",
-          flexWrap: "wrap",
-          gap: 16,
-          rowGap: 6,
-          // Vertical padding the one-row bar never feels: border-box, so
-          // 4 + 35 + 4 + the rule is under the minimum and a bar with room
-          // is exactly the 57 it always was.
+          flexWrap: narrow ? "wrap" : "nowrap",
+          gap: narrow ? "6px 10px" : 14,
           boxSizing: "border-box",
-          padding: "4px 22px",
-          minHeight: 57,
+          padding: narrow ? "8px 12px" : "0 16px",
+          ...(narrow ? { minHeight: 54 } : { height: 54 }),
           flex: "0 0 auto",
           borderBottom: "1px solid var(--graview-edge)",
           background: "var(--graview-bar)",
           backdropFilter: "blur(14px)",
           position: "relative",
           zIndex: 20,
+          // Never clipped: the profile, the standing and the activity hang
+          // their panes from this bar, and a clip here cut them off at the
+          // bar's foot. The places row keeps its own overflow.
         }}
       >
         {syncUrl ? <UrlSync /> : null}
         <h1 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>
           {brand?.name ?? "Graview"}
         </h1>
-        <Wordmark<S> />
-        {/* Every stop is a URL, so back and forward are the browser's. This
-            only makes them visible, because nobody should have to know that. */}
-        <Backtrack />
-        {nav}
-        <Trail home={home} {...(homeLabel !== undefined ? { homeLabel } : {})} />
-        {/* The named pictures over the graph, if the app registered any. */}
-        <Places<S> />
-        {/*
-          * The installation and the studio used to stand here, beside the
-          * places — so every reader met "Show the installation" and
-          * "Studio" in the same row as "The week", and the two controls
-          * only the KEEPER can use sat where the app's own pictures go.
-          * They are behind the profile now, with the other things that are
-          * about you rather than about the graph.
-          */}
-        {/* The right-hand group wraps for the same reason the bar does: as one
-            unwrapping unit it carried the whole overflow across the edge by
-            itself, so the bar wrapped and the controls were still gone. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, ...(narrow ? { flexWrap: "wrap" as const, flex: "1 1 auto", rowGap: 6 } : { flex: "0 0 auto" }) }}>
+          <Wordmark<S> />
+          {/* Every stop is a URL, so back and forward are the browser's. This
+              only makes them visible, because nobody should have to know that. */}
+          <Backtrack />
+          {pagesHref ? (
+            // THE TWO FACES, as one switch: the scene, and the same app as pages.
+            <div role="group" aria-label="Face" data-testid="faces" style={{ display: "inline-flex", padding: 3, gap: 2, borderRadius: 999, border: "1px solid var(--graview-edge)", background: "var(--graview-panel-muted)", flex: "0 0 auto" }}>
+              <span aria-current="page" style={{ display: "inline-flex", alignItems: "center", minHeight: 26, padding: "2px 11px", borderRadius: 999, fontSize: "0.8125rem", fontWeight: 600, color: "var(--graview-ink)", background: "var(--graview-panel)", border: "1px solid var(--graview-edge)" }}>
+                Scene
+              </span>
+              <a
+                href={pagesHref}
+                data-testid="pages-link"
+                title="The same app, as ordinary pages"
+                style={{ display: "inline-flex", alignItems: "center", minHeight: 26, padding: "2px 11px", borderRadius: 999, fontSize: "0.8125rem", fontWeight: 500, color: "var(--graview-ink-muted)", textDecoration: "none" }}
+              >
+                Pages
+              </a>
+            </div>
+          ) : null}
+          {nav}
+          <Trail home={home} {...(homeLabel !== undefined ? { homeLabel } : {})} />
+        </div>
+        {/* The named pictures over the graph, if the app registered any: the middle, and the room. */}
+        <div style={narrow ? { flex: "1 1 100%", order: 3, minWidth: 0, display: "flex" } : { flex: "1 1 auto", minWidth: 0, display: "flex", justifyContent: "center" }}>
+          <Places<S> compact={narrow} />
+        </div>
         <div
           style={{
-            marginLeft: "auto",
             display: "flex",
             alignItems: "center",
-            flexWrap: "wrap",
             justifyContent: "flex-end",
-            gap: 12,
-            rowGap: 6,
+            gap: 8,
+            flex: narrow ? "1 1 auto" : "0 0 auto",
             minWidth: 0,
           }}
         >
-          {pagesHref ? (
-            // The scene offering the page face: two faces, one application.
-            <a
-              href={pagesHref}
-              data-testid="pages-link"
-              title="The same app, as ordinary pages"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                minHeight: 24,
-                padding: "2px 8px",
-                fontSize: "0.875rem",
-                color: "var(--graview-ink-muted)",
-                textDecoration: "none",
-              }}
-            >
-              Pages
-            </a>
-          ) : null}
-          <Standing clean={standing} />
+          <Standing clean={standing} compact={quiet} />
           <FollowingLine />
           <ActivityRail remembers={remembers} calls={calls} seat={seat?.(onCall)} />
           {/*
-            * The scheme lives in the profile, with the other things that
-            * are the reader's own — it was BOTH here and there, so the bar
-            * carried a toggle that duplicated a pair of buttons one press
-            * away, and two controls for one setting is one too many.
-            */}
-          {/*
             * WHO YOU ARE, AND WHAT YOU SET FOR YOURSELF — last on the bar,
             * where every application in the world puts it. The seat
-            * switcher lives inside it now: "who am I" and "be somebody
-            * else" are one question, and two separate controls for them
-            * was the bar answering it twice.
+            * switcher lives inside it: "who am I" and "be somebody else"
+            * are one question. The installation and the studio are behind
+            * it too, with the other things only the keeper can use.
             */}
           <Profile<S>
             scheme={scheme}
             onScheme={onScheme}
+            compact={compact}
             {...(profileHref ? { profileHref } : {})}
             keeping={
               <>

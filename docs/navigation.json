@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-27T03:44:52.922Z",
+  "at": "2026-09-27T04:54:33.313Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.589002,
+      "wingOpacity": 0.565435,
       "registered": true
     },
     "groundAgain": {
@@ -108,7 +108,7 @@
   "hitArea": {
     "host": [
       515,
-      424
+      425
     ],
     "drawn": [
       515,
@@ -119,7 +119,7 @@
   },
   "moves": {
     "arranged": {
-      "url": "#focus=t-deposit&sel=t-deposit&pin.t-deposit=562%2C3.32",
+      "url": "#focus=t-deposit&sel=t-deposit&pin.t-deposit=562%2C3.44",
       "pinned": [
         "t-deposit"
       ]
@@ -129,7 +129,7 @@
       "pinned": []
     },
     "back": {
-      "url": "#focus=t-deposit&sel=reason-deposit&pin.t-deposit=562%2C3.32",
+      "url": "#focus=t-deposit&sel=reason-deposit&pin.t-deposit=562%2C3.44",
       "pinned": [
         "t-deposit"
       ]
@@ -214,20 +214,20 @@
     "liveInsideAPicture": 0,
     "leavingBefore": {
       "width": 339,
-      "height": 279
+      "height": 280
     },
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 337,
-        "height": 170,
+        "width": 343.99993896484375,
+        "height": 169.00003051757812,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 283.0000305175781,
+        "width": 281.0000305175781,
         "height": 257.0000305175781,
-        "opacity": 0.471512
+        "opacity": 0.451005
       }
     ],
     "afterSwitch": [
@@ -237,22 +237,22 @@
     "standing": {
       "screen": {
         "x": 610.4315185546875,
-        "y": 209.0810089111328,
+        "y": 206.8528594970703,
         "width": 339,
-        "height": 279,
-        "top": 209.0810089111328,
+        "height": 280,
+        "top": 206.8528594970703,
         "right": 949.4315185546875,
-        "bottom": 488.0810089111328,
+        "bottom": 486.8528594970703,
         "left": 610.4315185546875
       },
       "card": {
         "x": 663.2000122070312,
-        "y": 550.3189697265625,
+        "y": 549.547119140625,
         "width": 214.78271484375,
         "height": 218.45428466796875,
-        "top": 550.3189697265625,
+        "top": 549.547119140625,
         "right": 877.9827270507812,
-        "bottom": 768.7732543945312,
+        "bottom": 768.0014038085938,
         "left": 663.2000122070312
       },
       "url": "#focus=aggregate%3Atask&overview=1&in.view=the-week"
@@ -262,9 +262,9 @@
       "up": true
     },
     "midway": {
-      "x": 771.532958984375,
-      "y": 288.0201110839844,
-      "width": 376
+      "x": 770.997314453125,
+      "y": 287.79547119140625,
+      "width": 379
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -278,72 +278,72 @@
       "ok": true
     },
     "theGroundTravelsWithTheCards": {
-      "steps": 26,
+      "steps": 27,
       "jumps": 0,
-      "first": 235,
-      "last": 353,
+      "first": 236,
+      "last": 355,
       "ok": true
     }
   },
   "camera": {
     "start": {
-      "cell": 135.21,
-      "latticeX": 1147.5,
+      "cell": 135.78,
+      "latticeX": 1149.3,
       "pan": null,
       "level": "100%",
       "reach": [
         702,
-        397
+        399
       ]
     },
     "zoomedIn": {
-      "cell": 353.14,
-      "latticeX": 1759.1,
-      "pan": "-96.63,317.82",
+      "cell": 354.61,
+      "latticeX": 1763.9,
+      "pan": "-96.63,315.4",
       "level": "261%",
       "reach": [
-        1519,
-        713
+        1528,
+        716
       ]
     },
     "wheeled": {
-      "cell": 353.14,
-      "latticeX": 1699.1,
-      "pan": "-156.63,237.82",
+      "cell": 354.61,
+      "latticeX": 1703.9,
+      "pan": "-156.63,235.4",
       "level": "261%",
       "reach": [
-        1519,
-        713
+        1528,
+        716
       ]
     },
     "buttonOut": {
-      "cell": 282.51,
-      "latticeX": 1528.9,
-      "pan": "-97.31,169.41",
+      "cell": 283.69,
+      "latticeX": 1532.7,
+      "pan": "-97.31,167.47",
       "level": "209%",
       "reach": [
-        1078,
-        492
+        1085,
+        494
       ]
     },
     "buttonIn": {
-      "cell": 353.14,
-      "latticeX": 1699.1,
-      "pan": "-156.63,237.82",
+      "cell": 354.61,
+      "latticeX": 1703.9,
+      "pan": "-156.63,235.4",
       "level": "261%",
       "reach": [
-        1519,
-        713
+        1528,
+        716
       ]
     },
     "dragged": {
-      "cell": 353.14,
-      "latticeX": 476.6,
-      "pan": "-1379.16,237.82",
+      "cell": 354.61,
+      "latticeX": 472.2,
+      "pan": "-1388.36,235.4",
       "level": "261%",
       "reach": [
-        1519,
-        713
+        1528,
+        716
       ]
     },
     "onThePicture": {

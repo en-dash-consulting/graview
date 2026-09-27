@@ -14,9 +14,12 @@ import { useEffect, useRef, useState } from "react";
  */
 export function Standing({
   clean = "All rules hold",
+  compact = false,
 }: {
   /** What to say when nothing is broken, in the app's own words. */
   readonly clean?: string;
+  /** Just the dot: the sentence is the title. For a bar without the room. */
+  readonly compact?: boolean;
 }) {
   const violations = useViolations<AnySchema>();
   const { set } = useSelection();
@@ -59,9 +62,11 @@ export function Standing({
         style={{
           display: "inline-flex",
           alignItems: "center",
+          justifyContent: "center",
           gap: 7,
           fontSize: "0.875rem",
           whiteSpace: "nowrap",
+          ...(compact && count === 0 ? { minWidth: 28, minHeight: 28, padding: 0 } : {}),
           // The longhand both ways: switching between a `border` shorthand
           // and `borderColor` across renders is a React warning, and the
           // width and style already come from the button rule in the theme.
@@ -79,7 +84,7 @@ export function Standing({
             background: count === 0 ? "var(--graview-edge-bright)" : "var(--graview-warn)",
           }}
         />
-        {count === 0 ? clean : `${count} ${count === 1 ? "problem" : "problems"}`}
+        {compact && count === 0 ? <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>{clean}</span> : count === 0 ? clean : `${count} ${count === 1 ? "problem" : "problems"}`}
       </button>
 
       {open && count > 0 ? (

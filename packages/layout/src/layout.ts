@@ -1199,9 +1199,22 @@ export function layout<S extends AnySchema>(
           ? Math.min(naturalH, Math.max(SCREEN_MIN_NATURAL_HEIGHT, Math.round(opts.screenHeight)))
           : naturalH;
       const aspect = drawnH / naturalW;
+      /*
+       * THE BILLBOARD IS THE POINT OF FLYING CLOSER. Chosen from altitude,
+       * a lens is what the reader came to see, and it was capped at half
+       * the span and under half the height — a window into the picture
+       * rather than the picture — and the caps were the window's, so
+       * zooming grew the city under it and never the board. It may take
+       * most of the span now, and the caps grow with the zoom past the
+       * "closer" the choice already brought, so zooming in enlarges the
+       * board the way it enlarges everything else.
+       */
+      const grown = Math.max(1, (options.cityZoom ?? 1) / 1.5);
+      const roomW = spanW * 0.78 * grown;
+      const roomH = opts.height * 0.72 * grown;
       const floor = Math.min(DRIVE_IN_MIN_WIDTH * unit, spanW * 0.5);
-      let width = Math.max(floor, Math.min(spanW * 0.5, own.side * frame.cell * 1.7));
-      if (width * aspect > opts.height * 0.48) width = (opts.height * 0.48) / aspect;
+      let width = Math.max(floor, Math.min(roomW, own.side * frame.cell * 2.4));
+      if (width * aspect > roomH) width = roomH / aspect;
       const others = [...placed.values()].filter((node) => node.plane === 2 && node.id !== kindCardId(screenKind!));
       const boxAt = (w: number) => {
         const h = w * aspect;

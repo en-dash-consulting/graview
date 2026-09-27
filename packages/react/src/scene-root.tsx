@@ -764,30 +764,36 @@ export function Scene<S extends AnySchema>({
          * the pin to its own plot, so a hand and a pasted link are held to
          * the same distance.
          */
-        <span
+        /*
+         * A TITLE BAR, not a grey strip with a pill floating over it: the
+         * picture's name on the left, the one way down on the right, and
+         * the whole bar the handle that moves the board.
+         */
+        <div
           className="graview-screen-grip"
           data-graview-grip={node.id}
           data-testid="screen-grip"
           title="Move this picture — it stays by its own village"
-          aria-hidden="true"
-        />
-      ) : null}
-      {node.screenOf !== undefined ? (
-        /* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */
-        <button
-          type="button"
-          className="graview-screen-fullscreen"
-          data-testid="screen-fullscreen"
-          title="Full screen — leave the graview with this picture"
-          onClick={(event) => {
-            event.stopPropagation();
-            setView((current) => withOverview(current, false));
-          }}
-          onPointerDown={(event) => event.stopPropagation()}
-          onDoubleClick={(event) => event.stopPropagation()}
         >
-          ⤢ Full screen
-        </button>
+          <span className="graview-screen-title" aria-hidden="true">
+            {views.places().find((place) => place.as === view.within?.["view"] && place.kind === node.screenOf)?.title ?? ""}
+          </span>
+          {/* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */}
+          <button
+            type="button"
+            className="graview-screen-fullscreen"
+            data-testid="screen-fullscreen"
+            title="Open this picture on its own — leave the graview with it"
+            onClick={(event) => {
+              event.stopPropagation();
+              setView((current) => withOverview(current, false));
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+            onDoubleClick={(event) => event.stopPropagation()}
+          >
+            Open ↗
+          </button>
+        </div>
       ) : null}
       {node.beyond ? (
         <BeyondCard kinds={node.beyond} />

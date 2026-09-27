@@ -120,6 +120,7 @@ export function SeatHeader({
   testId,
   settings,
   onSettings,
+  foot = false,
 }: {
   /** What the seat talks about: "Seat" in the app, "Declaration" in the studio. */
   readonly label: string;
@@ -127,6 +128,8 @@ export function SeatHeader({
   readonly sourceTitle?: string;
   readonly testId: string;
   readonly settings?: boolean;
+  /** Under the composer rather than over the thread: a status line, not a title. */
+  readonly foot?: boolean;
   /** Absent when the ladder is not the reader's to set — a host answers for them. */
   readonly onSettings?: () => void;
 }) {
@@ -136,13 +139,15 @@ export function SeatHeader({
         display: "flex",
         alignItems: "center",
         gap: 8,
-        padding: "6px 8px 6px 12px",
-        borderBottom: "1px solid var(--graview-edge)",
+        padding: foot ? "4px 4px 0 6px" : "6px 8px 6px 12px",
+        ...(foot ? {} : { borderBottom: "1px solid var(--graview-edge)" }),
       }}
     >
-      <span style={{ fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
-        {label}
-      </span>
+      {foot ? null : (
+        <span style={{ fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
+          {label}
+        </span>
+      )}
       <span data-testid={`${testId}-source`} title={sourceTitle} style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
         {source}
       </span>
@@ -230,7 +235,7 @@ export function SeatThread({
       }}
     >
       {turns.length === 0 ? (
-        <li style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)", lineHeight: 1.5 }}>{empty}</li>
+        empty === null ? null : <li style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)", lineHeight: 1.5 }}>{empty}</li>
       ) : null}
       {turns.map((turn, index) => {
         const proposals = turn.proposals ?? [];

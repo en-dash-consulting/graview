@@ -24,15 +24,20 @@ import { nameOf } from "./answer-args.js";
  */
 export function Backtrack() {
   const { canGoBack, canGoForward, back, forward } = useBacktrack();
+  // Ghost buttons: the way back is furniture, not a call to action.
   const style = {
     minWidth: 30,
-    height: 26,
+    height: 30,
     display: "inline-grid",
     placeItems: "center",
-    padding: "0 9px",
-    fontSize: "0.875rem",
+    padding: "0 8px",
+    fontSize: "0.9375rem",
     lineHeight: 1,
     borderRadius: 999,
+    border: "1px solid transparent",
+    background: "transparent",
+    boxShadow: "none",
+    color: "var(--graview-ink-muted)",
   } as const;
   return (
     <div style={{ display: "inline-flex", gap: 2 }} data-testid="backtrack">
@@ -97,12 +102,16 @@ export function Trail({
     alignItems: "center",
     gap: 6,
     // A crumb is a control, and a control is at least a fingertip tall.
-    minHeight: 24,
-    padding: "3px 9px",
-    fontSize: "0.875rem",
+    // A crumb of where you are: quiet, since the picture already shows it.
+    minHeight: 26,
+    padding: "2px 10px",
+    fontSize: "0.8125rem",
     borderRadius: 999,
-    borderColor: "var(--graview-accent)",
-    color: "var(--graview-accent)",
+    border: "1px solid transparent",
+    boxShadow: "none",
+    background: "var(--graview-panel-muted)",
+    color: "var(--graview-ink-muted)",
+    whiteSpace: "nowrap",
   } as const;
 
   /*

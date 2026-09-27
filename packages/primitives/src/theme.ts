@@ -647,7 +647,9 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   display: none;
 }
 [data-graview-altitude] [data-graview-screen] .graview-screen-grip {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   position: absolute;
   left: 0;
   right: 0;
@@ -655,40 +657,45 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   /* Drawn height, not CSS height: a district's plane is scaled down at
      altitude, and 14 here reached the screen as an eight-pixel strip that
      took three attempts to catch. */
-  height: 24px;
+  height: 32px;
+  padding: 0 6px 0 12px;
+  box-sizing: border-box;
   cursor: grab;
-  background: color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
+  /* A title bar in the panel's own colours, not a grey strip: the board is
+     a window onto the picture, and its bar reads as the window's. */
+  background: var(--graview-panel-muted);
+  border-bottom: 1px solid var(--graview-edge);
   z-index: 3;
+}
+[data-graview-altitude] [data-graview-screen] .graview-screen-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--graview-ink);
 }
 [data-graview-altitude] [data-graview-screen] .graview-screen-grip:active {
   cursor: grabbing;
 }
-/* Two nicks in the rail, so it reads as a handle rather than as a bar the
-   frame happened to grow. */
-[data-graview-altitude] [data-graview-screen] .graview-screen-grip::after {
-  content: "";
-  position: absolute;
-  inset: 9px calc(50% - 14px);
-  border-top: 1px solid var(--graview-panel);
-  border-bottom: 1px solid var(--graview-panel);
-  opacity: 0.55;
-}
-
 .graview-screen-fullscreen {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: max-content;
-  top: -30px;
+  flex: 0 0 auto;
   min-height: max(1.5rem, 24px);
-  padding: 2px 9px;
+  padding: 1px 10px;
   border-radius: 999px;
   border: 1px solid var(--graview-edge);
-  background: var(--graview-float);
-  color: var(--graview-ink);
+  background: var(--graview-panel);
+  color: var(--graview-accent);
   font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  z-index: 4;
+  box-shadow: none;
+}
+.graview-screen-fullscreen:hover:not(:disabled) {
+  border-color: var(--graview-accent);
 }
 .graview-drive-in-marquee > button.graview-drive-in-thumb {
   font-size: 0.75rem;

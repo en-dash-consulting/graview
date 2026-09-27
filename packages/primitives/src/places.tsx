@@ -1,6 +1,7 @@
 import type { AnySchema, Place } from "@graview/core";
 import { aggregateId, withFocus, withOverview, withWithin } from "@graview/layout";
 import { useGraview, useNavigation } from "@graview/react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 /**
  * THE NAMED PLACES, as pills.
@@ -35,6 +36,38 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
    * once, for the scene and the shelf; the bar reads the same answer.
    */
   const places = views.places().filter((place) => !hiddenKinds.has(place.kind));
+  /* Hooks first, before any early return: a bar whose places arrive a
+     render later must not change how many hooks it calls. */
+  const row = useRef<HTMLElement>(null);
+  const widths = useRef<number[]>([]);
+  const [shown, setShown] = useState(places.length);
+  const MORE = 92;
+  useLayoutEffect(() => {
+    const element = row.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      // The ROOM is the region the row stands in, not the row's own width:
+      // the row shrinks to what it shows, and measuring it could only ever
+      // agree with what was already shown.
+      const room = (element.parentElement ?? element).getBoundingClientRect().width - 8;
+      const sizes = widths.current;
+      if (sizes.length < places.length) return;
+      let used = 0;
+      let fit = 0;
+      for (let i = 0; i < places.length; i += 1) {
+        const next = used + (sizes[i] ?? 0) + (i > 0 ? 2 : 0);
+        const reserve = i < places.length - 1 ? MORE : 0;
+        if (next + reserve > room) break;
+        used = next;
+        fit = i + 1;
+      }
+      setShown((was) => (was === fit ? was : fit));
+    };
+    measure();
+    const watch = new ResizeObserver(measure);
+    watch.observe(element.parentElement ?? element);
+    return () => watch.disconnect();
+  }, [places.length]);
   if (places.length === 0) return null;
   /*
    * Which picture a group draws when the address names none: the LAST
@@ -62,8 +95,8 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
           if (place) goTo(place);
         }}
         style={{
-          minHeight: 24,
-          maxWidth: "46%",
+          minHeight: 28,
+          maxWidth: "100%",
           padding: "3px 8px",
           borderRadius: 999,
           fontSize: "0.875rem",
@@ -83,51 +116,111 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
       </select>
     );
   }
+  /*
+   * ONE ROW, WHATEVER THE WIDTH. The places are the app's own navigation
+   * and read as one control — a segmented row with the current picture
+   * filled — rather than a run of loose pills. What the row cannot hold
+   * goes into a "More" menu at its end instead of wrapping the bar into a
+   * second line: the bar is one line, and the picture starts under it.
+   */
+  const rest = places.slice(shown);
+  const restHere = rest.find(isHere);
   return (
-    <nav aria-label="Places" data-testid="places" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-      {places.map((place) => {
-        const stop = aggregateId(place.kind);
-        /*
-         * A KIND MAY HAVE SEVERAL PICTURES, so being "here" is the group AND
-         * the picture. The week and the month are two questions about one
-         * pile of tasks; a pill that lit up for both would be saying you
-         * were in two places at once.
-         */
-        const showing = view.within?.["view"];
-        const here =
-          !view.overview &&
-          view.focusId === stop &&
-          (showing === undefined ? isDefault(places, place) : showing === place.as);
+    <nav
+      ref={row}
+      aria-label="Places"
+      data-testid="places"
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        padding: 3,
+        minWidth: 0,
+        maxWidth: "100%",
+        borderRadius: 999,
+        border: "1px solid var(--graview-edge)",
+        background: "var(--graview-panel-muted)",
+        overflow: "hidden",
+      }}
+    >
+      {places.map((place, index) => {
+        const here = isHere(place);
         return (
           <button
             key={`${place.kind}:${place.as}`}
+            ref={(el) => {
+              if (el) widths.current[index] = el.getBoundingClientRect().width;
+            }}
             type="button"
             aria-pressed={here}
             data-testid={`place-${place.as}`}
-            /* Which group it is a picture OF. The testid names the picture
-               now that a kind may have several, so the kind is said
-               separately rather than parsed back out of a slug. */
             data-place-kind={place.kind}
             title={`${place.title} — a picture over the ${place.kind}s`}
-            onClick={() => go(withWithin(withOverview(withFocus(view, stop), false), "view", place.as))}
+            onClick={() => goTo(place)}
             style={{
               // A full fingertip whatever the brand's line height: Groundskeeper's
               // pills measured 22px and its audit counted every one.
-              minHeight: 24,
-              padding: "3px 11px",
+              minHeight: 28,
+              padding: "3px 13px",
               borderRadius: 999,
               fontSize: "0.875rem",
-              borderWidth: 1,
-              borderStyle: "solid",
-              borderColor: here ? "var(--graview-accent)" : "var(--graview-edge)",
-              color: here ? "var(--graview-accent)" : "var(--graview-ink-muted)",
+              fontWeight: here ? 600 : 500,
+              border: "1px solid transparent",
+              boxShadow: "none",
+              whiteSpace: "nowrap",
+              flex: "0 0 auto",
+              color: here ? "var(--graview-ink)" : "var(--graview-ink-muted)",
               background: here ? "var(--graview-panel)" : "transparent",
+              ...(here ? { borderColor: "var(--graview-edge)" } : {}),
+              // Measured at full width, then parked off the row's left edge
+              // if the row cannot hold it: still measurable, never part of
+              // anything's scrollable overflow (which only extends rightward),
+              // so no box on the bar reads as cut.
+              ...(index >= shown ? { position: "absolute" as const, left: -9999, top: 0, visibility: "hidden" as const } : {}),
             }}
           >
             {place.title}
           </button>
         );
       })}
+      {rest.length > 0 ? (
+        <select
+          aria-label="More places"
+          data-testid="places-more"
+          value={restHere ? `${restHere.kind}:${restHere.as}` : ""}
+          onChange={(event) => {
+            const place = rest.find((candidate) => `${candidate.kind}:${candidate.as}` === event.target.value);
+            if (place) goTo(place);
+          }}
+          style={{
+            minHeight: 28,
+            padding: "3px 22px 3px 12px",
+            borderRadius: 999,
+            fontSize: "0.875rem",
+            fontWeight: restHere ? 600 : 500,
+            border: "1px solid transparent",
+            flex: "0 0 auto",
+            color: restHere ? "var(--graview-ink)" : "var(--graview-ink-muted)",
+            background: restHere ? "var(--graview-panel)" : "transparent",
+            // The browser's own arrow is wide and grey; a small chevron of the text's colour instead.
+            appearance: "none",
+            WebkitAppearance: "none",
+            backgroundImage: "linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%)",
+            backgroundPosition: "calc(100% - 13px) 55%, calc(100% - 9px) 55%",
+            backgroundSize: "4px 4px, 4px 4px",
+            backgroundRepeat: "no-repeat",
+            ...(restHere ? { borderColor: "var(--graview-edge)" } : {}),
+          }}
+        >
+          <option value="">{restHere ? restHere.title : `+${rest.length} more`}</option>
+          {rest.map((place) => (
+            <option key={`${place.kind}:${place.as}`} value={`${place.kind}:${place.as}`}>
+              {place.title}
+            </option>
+          ))}
+        </select>
+      ) : null}
     </nav>
   );
 }

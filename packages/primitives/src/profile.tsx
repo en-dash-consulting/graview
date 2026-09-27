@@ -55,7 +55,10 @@ export function Profile<S extends AnySchema>({
    * and the block they sit in hides itself when they do.
    */
   keeping,
+  compact = false,
 }: {
+  /** Just the mark: the name is the title. For a bar without the room. */
+  readonly compact?: boolean;
   /**
    * The scheme, where this surface owns it. An embed wears the scheme its
    * host chose and has no business offering to change it, so both are
@@ -159,7 +162,7 @@ export function Profile<S extends AnySchema>({
         >
           {initial(name)}
         </span>
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+        <span style={compact ? { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" } : { overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
         {/*
           * A GEAR, because this is where the settings are.
           *

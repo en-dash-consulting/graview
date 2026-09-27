@@ -16,6 +16,7 @@
  *
  *   node scripts/verify-calendar.mjs [--engine=chromium|webkit|firefox]
  */
+import { pressPlace } from "./lib/places.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -55,7 +56,7 @@ try {
   const places = await page.evaluate(() =>
     [...document.querySelectorAll('nav[aria-label="Places"] button')].map((b) => b.textContent?.trim()),
   );
-  await page.locator('nav[aria-label="Places"] button', { hasText: "The month" }).first().click();
+  await pressPlace(page, "The month");
   await page.waitForSelector('[data-testid="calendar"]', { timeout: 20_000 });
   await page.waitForTimeout(700);
   const opened = await showing(page);

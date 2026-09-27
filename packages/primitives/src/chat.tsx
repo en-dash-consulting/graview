@@ -390,12 +390,14 @@ export function ChatPanel<S extends AnySchema>({
             overflow: "hidden",
           }}
         >
-          <SeatHeader
-            label="Seat"
-            testId={testId}
-            source={respond ? "app-provided" : describeSource(describeIntelligence(config), warmth)}
-            {...(warmth?.state === "failed" && warmth.detail ? { sourceTitle: warmth.detail } : {})}
-          />
+          {inside ? null : (
+            <SeatHeader
+              label="Seat"
+              testId={testId}
+              source={respond ? "app-provided" : describeSource(describeIntelligence(config), warmth)}
+              {...(warmth?.state === "failed" && warmth.detail ? { sourceTitle: warmth.detail } : {})}
+            />
+          )}
           {settings && !respond ? (
             <SeatSettings testId={testId} onDone={() => setSettings(false)} />
           ) : (
@@ -404,12 +406,14 @@ export function ChatPanel<S extends AnySchema>({
               outcomes={outcomes}
               busy={conversation.busy}
               testId={testId}
-              minHeight={inside ? 64 : 120}
+              minHeight={inside ? 0 : 120}
               empty={
-                <>
-                  Ask what's wrong, ask about anything by name, or say a change in its own words.
-                  {selection.length > 0 ? " “This” means what you have selected." : ""}
-                </>
+                inside ? null : (
+                  <>
+                    Ask what's wrong, ask about anything by name, or say a change in its own words.
+                    {selection.length > 0 ? " “This” means what you have selected." : ""}
+                  </>
+                )
               }
               renderProposal={(proposal, { key, turn, at }) => offerOne(turn, at, proposal, key)}
               ready={(proposal) => permitted(proposal)}
@@ -508,11 +512,28 @@ export function ChatPanel<S extends AnySchema>({
           ) : null}
           <SeatComposer
             busy={conversation.busy}
-            placeholder="Ask, or say a change…"
+            placeholder={inside && selection.length > 0 ? "Ask about this…" : "Ask, or say a change…"}
             ariaLabel="Message the seat"
             testId={testId}
             onSend={(text) => void conversation.send(text)}
           />
+          {/*
+            * IN THE RAIL, WHAT ANSWERS IS A LINE UNDER THE FIELD, not a
+            * title over the thread: "SEAT · graph-native" over a paragraph
+            * explaining what to type was the pane's tallest thing and the
+            * least often read. The field says what to do, the offers say
+            * what it can answer, and this says who is answering.
+            */}
+          {inside ? (
+            <SeatHeader
+              foot
+              label="Seat"
+              testId={testId}
+              source={respond ? "app-provided" : describeSource(describeIntelligence(config), warmth)}
+              {...(warmth?.state === "failed" && warmth.detail ? { sourceTitle: warmth.detail } : {})}
+              {...(!respond ? { settings, onSettings: () => setSettings((was) => !was) } : {})}
+            />
+          ) : null}
         </div>
       ) : null}
     </div>

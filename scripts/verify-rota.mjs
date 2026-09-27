@@ -12,6 +12,7 @@
  *
  *   node scripts/verify-rota.mjs [--engine=chromium|webkit|firefox]
  */
+import { pressPlace } from "./lib/places.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -127,7 +128,7 @@ const openProfile = async (page) => {
    */
   await page.setViewportSize({ width: 900, height: 900 });
   await open(`/?${DAY}`);
-  await page.locator('nav[aria-label="Places"] button', { hasText: "Who is covering what" }).first().click();
+  await pressPlace(page, "Who is covering what");
   await page.waitForTimeout(1200);
   const headsOnColumns = () =>
     page.evaluate(() => {

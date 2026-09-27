@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-24T13:06:53.196Z",
+  "at": "2026-09-27T05:37:54.695Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
@@ -44,9 +44,9 @@
       "ok": true
     },
     "aPressOnAColumnNameChoosesThatColumn": {
-      "points": 16,
-      "right": 11,
-      "ok": false
+      "points": 15,
+      "right": 15,
+      "ok": true
     },
     "theCoverageHeadsStandOnTheirColumns": {
       "columns": 4,
@@ -124,5 +124,5 @@
     }
   },
   "pageErrors": [],
-  "passed": false
+  "passed": true
 }
