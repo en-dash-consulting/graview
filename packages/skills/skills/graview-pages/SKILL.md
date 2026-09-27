@@ -23,22 +23,30 @@ if (location.pathname.startsWith("/pages")) {
 
 `PagesApp` renders with no registry at all:
 
-- `/` — a home saying what is here, and on an empty installation which act
-  begins it.
+- `/` — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and
+  1 planting.", or "Nothing here yet." and which act begins it), then every
+  picture as a large live card, two across at a desk, one on a phone; then
+  the kinds as a row of counts, a line to the map, and Recently. A kind
+  with no titled lens is drawn anyway — a contact sheet of its members — so
+  a new app lands on a gallery; titling a lens replaces that card with the
+  lens by its name. An empty picture says what would fill it.
 - `/<plural>` — a list per kind, marking trouble, with the creating acts
   beneath it.
 - `/<plural>/<id>` — a record: its facts, its relations captioned in the
   declaration's words, what can be done, what has happened.
 - `/problems` — every broken rule with its repairs.
+
+The shell is one row — pictures (home), kinds, Map, Problems — and scrolls
+sideways on a phone. Shell and gallery are 1160px wide; read pages, 760.
+
 **Hand it `views`** (the scene's own registry, plus `settings`/`presence`)
-and the face puts the scene's provider under its routes, which buys three
-things at once:
+— `graview create` already does — and the face puts the scene's provider
+under its routes, which buys three things at once:
 
 - `/places`, `/places/<as>` — every named lens as a page (fullscreen mode,
-  over the kind's members, the kind's beginning acts beneath) and an index
-  drawing each one small and live. The home leads with them, a kind's page
-  lists its own, the nav mirrors the bar, and a pick inside a lens travels
-  to the record.
+  over the kind's members, its siblings one press away, the beginning acts
+  beneath) and the home's gallery again. A kind's page lists its own
+  pictures; a pick inside a lens travels to the record.
 - `/map` — `kindMap(store)`: every declared relation in its own words with
   its live count, also a section on the home page. A kind's list says what
   it relates to, groups by a relation (`?by=<edge>`) and narrows by one

@@ -571,6 +571,75 @@ try {
     await small.close();
     return seen;
   })();
+  /* ------------------------------------------- the landing is a gallery */
+  /*
+   * THE HOME IS THE PICTURES, LARGE AND LIVE — measured, not asserted.
+   *
+   * The derived home read as a readme: a sentence of counts, the relations,
+   * a section per kind, with the app's own pictures as two 288-pixel cards
+   * between them. On the framework's default face — seedbed's finished
+   * garden, which registers no shell of its own — the gallery has to be the
+   * first thing after the header (chapter sixteen, the garden with every
+   * lens it ever grew), two across at a desk and one on a phone,
+   * every card wide enough to see into and every frame with something drawn
+   * in it. Chapter nine has no titled lens at all, so it proves the other
+   * half: a kind with no picture is drawn anyway.
+   */
+  const gallery = async (page, path) => {
+    await page.goto(`http://localhost:5194${path}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(600);
+    return page.evaluate(() => {
+      const main = document.querySelector("main");
+      const sections = [...(main?.children ?? [])];
+      const gallery = document.querySelector('[data-testid="gallery"]');
+      const cards = [...document.querySelectorAll('[data-testid="place-card"], [data-testid="kind-card"]')];
+      const tops = cards.map((card) => Math.round(card.getBoundingClientRect().top));
+      const navTops = [...document.querySelectorAll('[data-testid="shell-nav"] a')].map((a) => Math.round(a.getBoundingClientRect().top));
+      return {
+        headerThenGallery: sections[0]?.tagName === "HEADER" && sections[1] === gallery,
+        cards: cards.length,
+        placeCards: document.querySelectorAll('[data-testid="place-card"]').length,
+        kindCards: document.querySelectorAll('[data-testid="kind-card"]').length,
+        narrowest: Math.min(...cards.map((card) => Math.round(card.getBoundingClientRect().width))),
+        // Two cards sharing a top are two cards in one row.
+        rows: new Set(tops).size,
+        drawn: cards.every((card) => card.querySelector('[data-testid$="-picture"] > span > *') !== null),
+        navRows: new Set(navTops).size,
+        noSideScroll: document.documentElement.scrollWidth <= window.innerWidth + 1,
+        readmeGone: !document.querySelector('main [data-testid="kind-map"]') && !/none yet<\/span><\/div><p/.test(main?.innerHTML ?? ""),
+      };
+    });
+  };
+  const wideDesk = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const deskGallery = await gallery(wideDesk, "/pages?chapter=16");
+  const deskNine = await gallery(wideDesk, "/pages?chapter=9");
+  await wideDesk.close();
+  const narrow = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const phoneGallery = await gallery(narrow, "/pages?chapter=16");
+  await narrow.close();
+  report.checks.theLandingIsAGallery = {
+    desk: deskGallery,
+    phone: phoneGallery,
+    chapterNine: deskNine,
+    ok:
+      deskGallery.headerThenGallery &&
+      deskGallery.placeCards >= 4 &&
+      deskGallery.narrowest >= 420 &&
+      deskGallery.rows < deskGallery.cards &&
+      deskGallery.drawn &&
+      deskGallery.readmeGone &&
+      phoneGallery.headerThenGallery &&
+      phoneGallery.rows === phoneGallery.cards &&
+      phoneGallery.noSideScroll &&
+      deskNine.placeCards === 0 &&
+      deskNine.kindCards >= 4 &&
+      deskNine.drawn,
+  };
+  report.checks.theNavIsOneRow = {
+    desk: deskGallery.navRows,
+    phone: phoneGallery.navRows,
+    ok: deskGallery.navRows === 1 && phoneGallery.navRows === 1 && phoneGallery.noSideScroll,
+  };
   await bed.close();
 /* ------------------- a page draws with whatever the picture needs */
 /*

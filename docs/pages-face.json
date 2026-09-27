@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-27T05:00:02.691Z",
+  "at": "2026-09-27T06:13:44.850Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -235,6 +235,50 @@
       "namedLinks": true,
       "labelledInputs": true,
       "bigEnoughToHit": []
+    },
+    "theLandingIsAGallery": {
+      "desk": {
+        "headerThenGallery": true,
+        "cards": 8,
+        "placeCards": 6,
+        "kindCards": 2,
+        "narrowest": 566,
+        "rows": 4,
+        "drawn": true,
+        "navRows": 1,
+        "noSideScroll": true,
+        "readmeGone": true
+      },
+      "phone": {
+        "headerThenGallery": true,
+        "cards": 8,
+        "placeCards": 6,
+        "kindCards": 2,
+        "narrowest": 350,
+        "rows": 8,
+        "drawn": true,
+        "navRows": 1,
+        "noSideScroll": true,
+        "readmeGone": true
+      },
+      "chapterNine": {
+        "headerThenGallery": true,
+        "cards": 4,
+        "placeCards": 0,
+        "kindCards": 4,
+        "narrowest": 566,
+        "rows": 2,
+        "drawn": true,
+        "navRows": 1,
+        "noSideScroll": true,
+        "readmeGone": true
+      },
+      "ok": true
+    },
+    "theNavIsOneRow": {
+      "desk": 1,
+      "phone": 1,
+      "ok": true
     },
     "aPageDrawsWithWhatThePictureNeeds": {
       "drawnAt390": {

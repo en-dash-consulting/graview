@@ -68,7 +68,7 @@ describe("a chapter, embedded", () => {
     expect(element.querySelector("[data-graview-altitude]")).toBeNull();
     expect(element.querySelectorAll("[data-graview-view]").length).toBeGreaterThan(0);
     handle.setFace("pages");
-    expect(element.querySelector('nav[aria-label="Kinds"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="shell-nav"]')).not.toBeNull();
     expect(element.textContent).toContain("Plots");
     handle.setStop("#focus=plot-2");
     handle.setFace("scene");

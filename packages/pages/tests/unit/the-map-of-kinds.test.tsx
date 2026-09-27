@@ -62,17 +62,25 @@ describe("the map of kinds", () => {
     ]);
   });
 
-  it("draws the map on the home page and at /map, one line per relation, in the declaration's words", () => {
-    for (const html of [draw("/"), draw("/map")]) {
-      expect(html).toContain('data-testid="kind-map"');
-      expect(html.match(/data-testid="relation"/g)).toHaveLength(2);
-      expect(html).toContain("What they do");
-      expect(html).toContain("from the other end, who does it");
-      // The count opens the far kind's list narrowed to the ones that have it.
-      expect(html).toContain('href="/duties?with=does"');
-      expect(html).toContain('data-graview-relation="does"');
-    }
-    expect(draw("/")).toContain(">Map<");
+  it("draws the map at /map, one line per relation, in the declaration's words — and the home offers the way to it in one line", () => {
+    const html = draw("/map");
+    expect(html).toContain('data-testid="kind-map"');
+    expect(html.match(/data-testid="relation"/g)).toHaveLength(2);
+    expect(html).toContain("What they do");
+    expect(html).toContain("from the other end, who does it");
+    // The count opens the far kind's list narrowed to the ones that have it.
+    expect(html).toContain('href="/duties?with=does"');
+    expect(html).toContain('data-graview-relation="does"');
+    /*
+     * The home used to carry the whole list under the pictures, and read as
+     * a readme for it. It is a gallery now: the relations are one line that
+     * says how many there are and opens the map.
+     */
+    const home = draw("/");
+    expect(home).not.toContain('data-testid="kind-map"');
+    expect(home).toContain('data-testid="map-link"');
+    expect(home).toContain("How it fits together · 2 relations");
+    expect(home).toContain(">Map<");
   });
 
   it("says on a kind's page what it relates to, and groups the list by a relation from the address", () => {

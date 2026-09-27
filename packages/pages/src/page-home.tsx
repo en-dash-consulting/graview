@@ -1,12 +1,12 @@
-import { isCurrent, labelOf, type AnySchema } from "@graview/core";
+import { isCurrent, type AnySchema } from "@graview/core";
 import { Link } from "react-router-dom";
-import { pluralSlug, recordPath } from "./registry.js";
+import { kindMap } from "./facts.js";
+import { pluralSlug } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { KindMapSection } from "./page-map.js";
-import { PlaceCard, cards, placesOf } from "./page-places.js";
+import { Gallery } from "./page-places.js";
 import {
   KindMark,
-  glance,
+  eyebrow,
   h1,
   h2,
   lede,
@@ -17,15 +17,23 @@ import {
   quiet,
   rule,
   whoDid,
+  wide,
 } from "./page-typography.js";
 import { PageMain } from "./page-shell.js";
 
 
 /**
- * The front page opens with the thing itself: what this installation is
- * and what it holds, in a sentence made of its own plurals — then each kind
- * as a section, a few of its members with a line of their own facts, and
- * the way to the rest. The standing is a sentence, not a widget.
+ * THE FRONT PAGE IS THE GALLERY.
+ *
+ * It opens with the standing as its headline — what this installation holds,
+ * in a sentence made of its own plurals, and whether its rules hold — and
+ * then the pictures: every lens the app named, large and live, and a card
+ * for every kind that has none, so no app lands on an empty page. What used
+ * to follow — one section per kind with its description and four members,
+ * the relations in full — read as a readme under two small cards, and it
+ * has gone to where it is read: the kinds are one row of counts that opens
+ * each list, the relations live at /map, and Recently stays short at the
+ * foot.
  */
 export function DefaultHomePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { principal } = context;
@@ -36,7 +44,6 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   const kinds = liveKinds(store, context.principal);
   const counted = kinds.map((kind) => ({
     kind,
-    definition: store.schema.tryDefinition(kind),
     members: store.graph
       .nodesOfKind(kind)
       .filter((node) => isCurrent(store.schema.tryDefinition(kind), node)),
@@ -58,9 +65,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
     .find((candidate) => candidate.creator !== undefined);
   const summary =
     present.length === 0
-      ? beginning
-        ? `Nothing here yet. Begin with “${beginning.creator?.title ?? beginning.creator?.name}”, under ${pluralOf(store, beginning.entry.kind)}.`
-        : "Nothing here yet."
+      ? "Nothing here yet."
       : `${present
           .map(
             (entry) =>
@@ -72,16 +77,27 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
           )
           .join(", ")
           .replace(/, ([^,]*)$/, " and $1")}.`;
-  const flagged = new Set(violations.flatMap((violation) => violation.nodeIds));
+  const live = new Set(kinds);
+  const relations = kindMap(store).relations.filter((relation) => live.has(relation.from) && (relation.to === "*" || live.has(relation.to)));
 
   return (
-    <PageMain context={context}>
-      <header style={{ display: "grid", gap: 14 }}>
-        <h1 style={h1}>{brand?.name ?? "Graview"}</h1>
-        <p style={lede}>{summary}</p>
-        <p style={{ margin: 0, fontSize: "1rem" }} data-testid="standing-card">
+    <PageMain context={context} style={wide}>
+      <header style={{ display: "grid", gap: 12 }}>
+        <p style={eyebrow}>{brand?.name ?? "Graview"}</p>
+        {/* THE NUMBERS ARE THE HEADLINE: what is here, said once, as big as the page says anything. */}
+        <h1 style={h1} data-testid="standing">{summary}</h1>
+        <p style={{ ...lede, display: "grid", gap: 4 }} data-testid="standing-card">
+          {present.length === 0 && beginning ? (
+            <span>
+              Begin with “{beginning.creator?.title ?? beginning.creator?.name}”, under{" "}
+              <Link to={`/${pluralSlug(store.schema, beginning.entry.kind)}`} style={link}>
+                {pluralOf(store, beginning.entry.kind)}
+              </Link>
+              .
+            </span>
+          ) : null}
           {violations.length === 0 ? (
-            <span style={quiet}>All rules hold.</span>
+            <span>All rules hold.</span>
           ) : (
             <Link to="/problems" style={{ ...link, color: "var(--graview-warn)" }}>
               {violations.length} {violations.length === 1 ? "problem" : "problems"} — see what is
@@ -91,69 +107,40 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         </p>
       </header>
 
-      {placesOf(context).length > 0 ? (
-        /* THE PICTURES FIRST: what this installation looks at, before the piles it looks at it through. */
-        <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="pictures">
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-            <h2 style={h2}>
-              <Link to="/places" style={plain}>
-                Pictures
-              </Link>
-            </h2>
-            <span style={quiet}>{placesOf(context).length}</span>
-          </div>
-          <div style={cards}>
-            {placesOf(context).map((place) => (
-              <PlaceCard key={place.as} context={context} place={place} />
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <Gallery context={context} />
 
-      <KindMapSection context={context} />
-
-      {counted.map(({ kind, definition, members }) => {
-        const path = `/${pluralSlug(store.schema, kind)}`;
-        const shown = members.slice(0, 4);
-        return (
-          <section key={kind} style={{ ...rule, display: "grid", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-              <KindMark kind={kind} brand={brand} schema={store.schema} />
-              <h2 style={h2}>
-                <Link to={path} style={plain}>
-                  {pluralOf(store, kind)}
-                </Link>
-              </h2>
-              <span style={quiet}>{members.length === 0 ? "none yet" : members.length}</span>
-            </div>
-            {definition?.description ? (
-              <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{definition.description}</p>
-            ) : null}
-            {shown.length > 0 ? (
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
-                {shown.map((node) => {
-                  const label = labelOf(definition, node);
-                  const facts = glance(node as Record<string, unknown>, definition, label);
-                  return (
-                    <li key={node.id} style={{ display: "grid", gap: 1 }}>
-                      <Link to={recordPath(store.schema, kind, node.id)} style={{ ...link, fontWeight: 550 }}>
-                        {flagged.has(node.id) ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
-                        {label}
-                      </Link>
-                      {facts ? <span style={quiet}>{facts}</span> : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : null}
-            {members.length > shown.length ? (
-              <Link to={path} style={{ ...link, ...quiet }}>
-                All {members.length} {pluralOf(store, kind).toLowerCase()} →
+      {/* THE KINDS, AS ONE ROW OF COUNTS: each the way into its list; the rest of what a kind is, is said there. */}
+      <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="kinds">
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+          <h2 style={h2}>What is here</h2>
+          {relations.length > 0 ? (
+            <Link to="/map" style={{ ...link, ...quiet, marginLeft: "auto" }} data-testid="map-link">
+              How it fits together · {relations.length === 1 ? "1 relation" : `${relations.length} relations`} →
+            </Link>
+          ) : null}
+        </div>
+        <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "8px 10px" }}>
+          {counted.map(({ kind, members }) => (
+            <li key={kind}>
+              <Link
+                to={`/${pluralSlug(store.schema, kind)}`}
+                style={{
+                  ...plain,
+                  gap: 8,
+                  padding: "6px 14px 6px 10px",
+                  borderRadius: 999,
+                  border: "1px solid var(--graview-edge-bright)",
+                  background: "var(--graview-panel)",
+                }}
+              >
+                <KindMark kind={kind} brand={brand} schema={store.schema} size={7} />
+                <span style={{ fontWeight: 550 }}>{pluralOf(store, kind)}</span>
+                <span style={{ ...quiet, fontVariantNumeric: "tabular-nums" }}>{members.length === 0 ? "none yet" : members.length}</span>
               </Link>
-            ) : null}
-          </section>
-        );
-      })}
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {recent.length > 0 ? (
         <section style={{ ...rule, display: "grid", gap: 10 }}>

@@ -1,20 +1,25 @@
 import { createSchema, defineNode, Store } from "@graview/core";
 import { createViews, type ViewComponent } from "@graview/react";
+import { registerDefaultViews } from "@graview/primitives";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { PagesApp, placePath, type PageContext } from "../../src/index.js";
 
 /**
- * THE APP'S PICTURES ARE PAGES. The scene shows each kind's named lenses on
- * its district's board; the routed face showed piles and records and no
- * pictures at all. Given the view registry, every place is a page at its
- * name, an index lands you among them, the home leads with them, a kind's
- * page lists its own, and the nav is the scene's bar in the page's idiom.
+ * THE APP'S PICTURES ARE PAGES, AND THE HOME IS A GALLERY OF THEM.
+ *
+ * The scene shows each kind's named lenses on its district's board; the
+ * routed face showed piles and records and, once it had pictures, two
+ * small cards a third of the way down a readme. Given the view registry,
+ * every place is a page at its name, the home LANDS on the pictures — large,
+ * live, before anything else — and a kind that has no picture of its own is
+ * drawn anyway, so no app opens on an empty page.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks", description: "Things to do." });
-const schema = createSchema([task]);
-const store = () =>
+const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes", description: "Something written down." });
+const schema = createSchema([task, note]);
+const store = (notes: readonly string[] = []) =>
   new Store({
     schema,
     mutations: [],
@@ -22,6 +27,7 @@ const store = () =>
       nodes: [
         { id: "t1", kind: "task", label: "Pay the deposit" },
         { id: "t2", kind: "task", label: "Book the van" },
+        ...notes.map((label, index) => ({ id: `n${index}`, kind: "note", label })),
       ] as never,
       edges: [],
     },
@@ -39,29 +45,66 @@ const Board: ViewComponent<typeof schema> = ({ nodes, label, mode }) => (
   </div>
 );
 const views = () =>
-  createViews(schema)
+  registerDefaultViews(schema, createViews(schema))
     .register("task", { cardinality: "many", fidelity: "full" }, Board, { title: "The board" })
     .register("task", { cardinality: "many", fidelity: "full" }, Board, { title: "The week" });
 
-const draw = (path: string, withViews = true) => {
-  const context: PageContext<typeof schema> = { store: store(), ...(withViews ? { views: views() } : {}) };
+const draw = (path: string, withViews = true, notes: readonly string[] = ["Milk"]) => {
+  const context: PageContext<typeof schema> = { store: store(notes), ...(withViews ? { views: views() } : {}) };
   return renderToStaticMarkup(<PagesApp context={context} initialPath={path} />);
 };
 
 describe("the pictures on pages", () => {
-  it("lists every place on the index, each drawn small and inert, and links it by name", () => {
-    const html = draw("/places");
-    expect(html).toContain("Pictures");
+  it("lands on the gallery: the standing as the headline, then every picture, large and live, before anything else", () => {
+    const html = draw("/");
+    const at = (text: string) => html.indexOf(text);
+    expect(html).toContain('data-testid="standing">2 tasks and 1 note.</h1>');
+    expect(html).toContain('data-testid="gallery"');
     expect(html.match(/data-testid="place-card"/g)).toHaveLength(2);
     expect(html).toContain(`href="${placePath("the-board")}"`);
     expect(html).toContain(`href="${placePath("the-week")}"`);
-    // The lens itself, drawn small: its own words are in the card, and the card takes no pointer.
+    // The lens itself, drawn live: its own words are in the card, and the card takes no pointer.
     expect(html).toContain("The board: 2 on the board");
     expect(html.match(/data-testid="place-picture"[^>]*inert/g)).toHaveLength(2);
-    expect(html).toContain("A picture of tasks");
+    // The gallery comes before the row of kinds, which comes before anything recent.
+    expect(at('data-testid="gallery"')).toBeLessThan(at('data-testid="kinds"'));
+    // What used to be the readme is gone from the home: no section per kind with its description.
+    expect(html).not.toContain("Things to do.</p>");
   });
 
-  it("draws one place full width in fullscreen mode, over the kind's members, with the way to the scene and the way to the list", () => {
+  it("draws a kind with no picture of its own as a card anyway — a contact sheet of its members — so naming a lens replaces the card rather than adding to it", () => {
+    const html = draw("/");
+    // Tasks have two pictures and so no card of their own; notes have none and get one.
+    expect(html.match(/data-testid="kind-card"/g)).toHaveLength(1);
+    expect(html).toContain('href="/notes"');
+    expect(html).toContain('data-testid="kind-sheet"');
+    expect(html).toContain("Milk");
+    expect(html).toContain("1 note · Something written down.");
+  });
+
+  it("says on an empty picture what would fill it, rather than showing a blank frame", () => {
+    const html = draw("/", true, []);
+    expect(html).toContain('data-testid="picture-empty"');
+    expect(html).toContain("No notes yet");
+  });
+
+  it("puts the kinds under the gallery as one row of counts, with the way to the map when there are relations", () => {
+    const html = draw("/");
+    expect(html).toContain('data-testid="kinds"');
+    expect(html).toContain(">Tasks</span><span");
+    expect(html).toContain(">Notes</span><span");
+    // No relations declared here, so no way to a map is offered.
+    expect(html).not.toContain('data-testid="map-link"');
+  });
+
+  it("lists every place on the index at /places too, the same gallery", () => {
+    const html = draw("/places");
+    expect(html).toContain("Pictures");
+    expect(html.match(/data-testid="place-card"/g)).toHaveLength(2);
+    expect(html).toContain("2 tasks");
+  });
+
+  it("draws one place full width in fullscreen mode, over the kind's members, with its siblings, the way to the scene and the way to the list", () => {
     const html = draw("/places/the-week");
     expect(html).toContain('data-testid="place-lens"');
     expect(html).toContain('data-mode="fullscreen"');
@@ -70,21 +113,28 @@ describe("the pictures on pages", () => {
     expect(html).toContain('data-testid="place-stop"');
     expect(html).toContain('href="/#view=the-week"');
     expect(html).toContain("All tasks as a list");
+    // The other pictures, one press away — and not this one.
+    expect(html).toContain('data-testid="sibling-pictures"');
+    expect(html).toContain(`href="${placePath("the-board")}"`);
+    expect(html.match(new RegExp(`href="${placePath("the-week")}"`, "g"))).toBeNull();
   });
 
   it("says so when no picture is called that", () => {
     expect(draw("/places/the-year")).toContain("No picture is called that");
   });
 
-  it("mirrors the scene's bar: the pictures first, then the kinds, then Problems — and the home leads with the pictures", () => {
+  it("has one row of navigation: the pictures first, then the kinds, then Problems", () => {
     const html = draw("/");
-    const at = (text: string) => html.indexOf(text);
-    expect(at(">The board<")).toBeGreaterThan(-1);
-    expect(at(">The board<")).toBeLessThan(at(">Tasks<"));
+    const nav = html.slice(html.indexOf('data-testid="shell-nav"'), html.indexOf("</nav>"));
+    const at = (text: string) => nav.indexOf(text);
+    expect(at(">Pictures<")).toBeGreaterThan(-1);
+    expect(at(">Pictures<")).toBeLessThan(at(">Tasks<"));
     expect(at(">Tasks<")).toBeLessThan(at("Problems"));
-    expect(html).toContain('data-testid="pictures"');
-    // Pictures before the kind sections on the home page.
-    expect(at('data-testid="pictures"')).toBeLessThan(at("Things to do."));
+    // The pictures are the home, not a second row of the nav.
+    expect(html).not.toContain('aria-label="Pictures"');
+    expect(html.match(/<nav /g)).toHaveLength(1);
+    // Without any picture the first tab is simply the home.
+    expect(draw("/", false)).toContain(">Home<");
   });
 
   it("gives a kind's page its own pictures, by name", () => {
@@ -95,11 +145,12 @@ describe("the pictures on pages", () => {
     expect(html).toContain(">The week<");
   });
 
-  it("is the derived site it always was when the face is given no views", () => {
+  it("still lands on a gallery when the face is given no views: every kind a card of its members' names", () => {
     const html = draw("/", false);
     expect(html).not.toContain('data-testid="place-card"');
-    expect(html).not.toContain('data-testid="pictures"');
-    expect(html).not.toContain("Pictures");
-    expect(draw("/places", false)).toContain("None yet");
+    expect(html.match(/data-testid="kind-card"/g)).toHaveLength(2);
+    expect(html).toContain("Pay the deposit");
+    expect(html).toContain("Milk");
+    expect(draw("/places", false)).toContain("None of its own yet");
   });
 });

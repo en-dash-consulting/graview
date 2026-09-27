@@ -3,13 +3,19 @@ import type { AnySchema } from "@graview/core";
 import { Link, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { kindMap } from "./facts.js";
-import { placePath, pluralSlug } from "./registry.js";
+import { pluralSlug } from "./registry.js";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { placesOf } from "./page-places.js";
-import { DISPLAY, column, liveKinds, plain, pluralOf, quiet } from "./page-typography.js";
+import { DISPLAY, WIDE, column, liveKinds, plain, pluralOf, quiet } from "./page-typography.js";
 
 
-/** The shell: the installation's masthead, the kinds as its sections, the way to the scene. */
+/**
+ * The shell: the installation's masthead, one row of navigation, the way to
+ * the scene. The pictures are the home, so they are not also a row of the
+ * nav — the row is the kinds, the map and the standing, and on a phone it
+ * scrolls sideways inside itself rather than wrapping to three rows over
+ * the page.
+ */
 export function DefaultShell<S extends AnySchema>({
   context,
   children,
@@ -23,14 +29,22 @@ export function DefaultShell<S extends AnySchema>({
   const location = useLocation();
   const problems = store.violations(invariantContext).length;
   const current = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(`${path}/`);
+    path === "/"
+      ? location.pathname === "/" || location.pathname === "/places" || location.pathname.startsWith("/places/")
+      : location.pathname === path || location.pathname.startsWith(`${path}/`);
   const navLink = (path: string): React.CSSProperties => ({
     ...plain,
     fontSize: "0.9375rem",
-    padding: "6px 0",
+    padding: "8px 0",
+    flexShrink: 0,
     color: current(path) ? "var(--graview-ink)" : "var(--graview-ink-muted)",
     borderBottom: current(path) ? "2px solid var(--graview-accent)" : "2px solid transparent",
   });
+  const tab = (path: string, label: ReactNode, extra?: React.CSSProperties) => (
+    <Link key={path} to={path} style={{ ...navLink(path), ...extra }} {...(current(path) ? { "aria-current": "page" as const } : {})}>
+      {label}
+    </Link>
+  );
   return (
     <div
       style={{
@@ -47,12 +61,12 @@ export function DefaultShell<S extends AnySchema>({
       <header style={{ borderBottom: "1px solid var(--graview-edge)", background: "var(--graview-bar)" }}>
         <div
           style={{
-            maxWidth: 760,
+            maxWidth: WIDE,
             margin: "0 auto",
             padding: "14px 20px 0",
             display: "flex",
             flexDirection: "column",
-            gap: 4,
+            gap: 2,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
@@ -91,65 +105,51 @@ export function DefaultShell<S extends AnySchema>({
               Open the scene ↗
             </a>
           </div>
-          {/* THE SCENE'S BAR, MIRRORED: the app's pictures first, in its own words, then the kinds. */}
-          {placesOf(context).length > 0 ? (
-            <nav aria-label="Pictures" style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "baseline" }}>
-              {placesOf(context).map((place) => {
-                const path = placePath(place.as);
-                return (
-                  <Link key={place.as} to={path} style={navLink(path)} {...(current(path) ? { "aria-current": "page" as const } : {})}>
-                    {place.title}
-                  </Link>
-                );
-              })}
-            </nav>
-          ) : null}
+          {/*
+            * ONE ROW. The home first — it is the pictures, when the face has
+            * any — then the kinds, the map, and the standing at the end. On
+            * a phone the row scrolls inside itself; `verify-pages` tells a
+            * row that scrolls on purpose from a page that scrolls by accident.
+            */}
           <nav
-            aria-label="Kinds"
-            style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "baseline" }}
+            aria-label="Pages"
+            data-testid="shell-nav"
+            style={{
+              display: "flex",
+              gap: 18,
+              alignItems: "baseline",
+              overflowX: "auto",
+              whiteSpace: "nowrap",
+              scrollbarWidth: "thin",
+              minWidth: 0,
+            }}
           >
-            {liveKinds(store, context.principal).map((kind) => {
-              const path = `/${pluralSlug(store.schema, kind)}`;
-              return (
-                <Link
-                  key={kind}
-                  to={path}
-                  style={navLink(path)}
-                  {...(current(path) ? { "aria-current": "page" as const } : {})}
-                >
-                  {pluralOf(store, kind)}
-                </Link>
-              );
-            })}
-            {kindMap(store).relations.length > 0 ? (
-              <Link to="/map" style={navLink("/map")} {...(current("/map") ? { "aria-current": "page" as const } : {})}>
-                Map
-              </Link>
-            ) : null}
-            <Link
-              to="/problems"
-              // At the end of the row, and at the end of the last row when
-              // the kinds wrap: the standing, set apart from the sections.
-              style={{ ...navLink("/problems"), display: "inline-flex", alignItems: "center", gap: 6, marginLeft: "auto" }}
-              {...(current("/problems") ? { "aria-current": "page" as const } : {})}
-            >
-              Problems
-              {problems > 0 ? (
-                <span
-                  data-testid="problems-count"
-                  style={{
-                    fontSize: "0.8125rem",
-                    lineHeight: 1,
-                    padding: "3px 7px",
-                    borderRadius: 999,
-                    color: "var(--graview-warn)",
-                    border: "1px solid var(--graview-warn)",
-                  }}
-                >
-                  {problems}
-                </span>
-              ) : null}
-            </Link>
+            {tab("/", placesOf(context).length > 0 ? "Pictures" : "Home")}
+            {liveKinds(store, context.principal).map((kind) => tab(`/${pluralSlug(store.schema, kind)}`, pluralOf(store, kind)))}
+            {kindMap(store).relations.length > 0 ? tab("/map", "Map") : null}
+            {tab(
+              "/problems",
+              <>
+                Problems
+                {problems > 0 ? (
+                  <span
+                    data-testid="problems-count"
+                    style={{
+                      fontSize: "0.8125rem",
+                      lineHeight: 1,
+                      padding: "3px 7px",
+                      borderRadius: 999,
+                      color: "var(--graview-warn)",
+                      border: "1px solid var(--graview-warn)",
+                    }}
+                  >
+                    {problems}
+                  </span>
+                ) : null}
+              </>,
+              // At the end of the row, set apart from the sections: the standing.
+              { display: "inline-flex", alignItems: "center", gap: 6, marginLeft: "auto" },
+            )}
           </nav>
         </div>
       </header>
@@ -162,7 +162,7 @@ export function DefaultShell<S extends AnySchema>({
           fontSize: "0.875rem",
         }}
       >
-        <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ maxWidth: WIDE, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
           <span>{brand?.name ?? "Graview"}</span>
           {/* Which rung answers, chosen here as it is in the scene's profile: the reader's own setting. */}
           {context.views ? <LadderSetting /> : null}

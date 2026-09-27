@@ -38,6 +38,15 @@ export const column: React.CSSProperties = {
   gridTemplateColumns: "minmax(0, 1fr)",
   gap: 40,
 };
+/*
+ * TWO WIDTHS, ONE FACE. A page that is READ keeps the 760 measure above; a
+ * page that is LOOKED AT — the home's gallery, a picture at full width, the
+ * shell that frames both — takes the room a desk has. The pictures were the
+ * one thing on the face that was the app's own, and at 288 pixels in a 760
+ * column they were the smallest thing on it.
+ */
+export const WIDE = 1160;
+export const wide: React.CSSProperties = { ...column, maxWidth: WIDE };
 export const h1: React.CSSProperties = {
   margin: 0,
   fontFamily: DISPLAY,

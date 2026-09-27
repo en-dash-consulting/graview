@@ -1064,14 +1064,15 @@ if (location.pathname.startsWith("/pages")) {
 }</code></pre></div>
 <p><code>PagesApp</code> renders with no registry at all:</p>
 <ul>
-<li><code>/</code> — a home saying what is here, and on an empty installation which act begins it.</li>
+<li><code>/</code> — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and 1 planting.", or "Nothing here yet." and which act begins it), then every picture as a large live card, two across at a desk, one on a phone; then the kinds as a row of counts, a line to the map, and Recently. A kind with no titled lens is drawn anyway — a contact sheet of its members — so a new app lands on a gallery; titling a lens replaces that card with the lens by its name. An empty picture says what would fill it.</li>
 <li><code>/&lt;plural&gt;</code> — a list per kind, marking trouble, with the creating acts beneath it.</li>
 <li><code>/&lt;plural&gt;/&lt;id&gt;</code> — a record: its facts, its relations captioned in the declaration's words, what can be done, what has happened.</li>
 <li><code>/problems</code> — every broken rule with its repairs.</li>
 </ul>
-<p><strong>Hand it <code>views</code></strong> (the scene's own registry, plus <code>settings</code>/<code>presence</code>) and the face puts the scene's provider under its routes, which buys three things at once:</p>
+<p>The shell is one row — pictures (home), kinds, Map, Problems — and scrolls sideways on a phone. Shell and gallery are 1160px wide; read pages, 760.</p>
+<p><strong>Hand it <code>views</code></strong> (the scene's own registry, plus <code>settings</code>/<code>presence</code>) — <code>graview create</code> already does — and the face puts the scene's provider under its routes, which buys three things at once:</p>
 <ul>
-<li><code>/places</code>, <code>/places/&lt;as&gt;</code> — every named lens as a page (fullscreen mode, over the kind's members, the kind's beginning acts beneath) and an index drawing each one small and live. The home leads with them, a kind's page lists its own, the nav mirrors the bar, and a pick inside a lens travels to the record.</li>
+<li><code>/places</code>, <code>/places/&lt;as&gt;</code> — every named lens as a page (fullscreen mode, over the kind's members, its siblings one press away, the beginning acts beneath) and the home's gallery again. A kind's page lists its own pictures; a pick inside a lens travels to the record.</li>
 <li><code>/map</code> — <code>kindMap(store)</code>: every declared relation in its own words with its live count, also a section on the home page. A kind's list says what it relates to, groups by a relation (<code>?by=&lt;edge&gt;</code>) and narrows by one (<code>?&lt;edge&gt;=&lt;id&gt;</code>, or <code>?with=&lt;edge&gt;</code> for having it at all) — in the URL, so an arrangement is a link. A record links the other way round and says which pictures it is seen in.</li>
 <li><strong>The assistant</strong>, on every route: one control opens the scene's own <code>Companion</code> in a drawer, and the ROUTE is what "this" means. Grounded questions before anybody types; proposals apply through the same runtime, attributed and undoable, withheld ones struck through. Open questions are listed on <code>/problems</code>; the rung that answers is chosen in the footer. Mounted by the router, so a design that replaces every surface keeps it.</li>
 </ul>

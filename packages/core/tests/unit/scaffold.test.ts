@@ -71,6 +71,13 @@ describe("what a project starts with", () => {
     expect(file("Field Notes", "src/main.tsx")).toContain("registry={pages()}");
   });
 
+  it("hands the pages face the same views the scene draws from, so a new app lands on a gallery", () => {
+    const main = file("Field Notes", "src/main.tsx");
+    expect(main).toContain('import { views } from "./ui/views.js";');
+    expect(main).toContain("views: views(),");
+    expect(main).toContain("settings: fieldNotesApp.settings ?? []");
+  });
+
   /*
    * The page it writes claims, in its own comment, that "everything it shows
    * still comes from the same derivations, so a page you write cannot drift

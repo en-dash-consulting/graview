@@ -421,6 +421,7 @@ import { ${ids.appVar} } from "./domain/app.js";
 import { ${ids.brandVar} } from "./domain/brand.js";
 import { ${ids.AppComponent} } from "./ui/app.js";
 import { pages } from "./ui/pages.js";
+import { views } from "./ui/views.js";
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -474,7 +475,20 @@ if (window.location.pathname.startsWith("/pages")) {
   createRoot(root).render(
     <PagesApp
       basename="/pages"
-      context={{ store: opened.store, brand: ${ids.brandVar}, sceneHref: "/", remembers: true }}
+      context={{
+        store: opened.store,
+        brand: ${ids.brandVar},
+        sceneHref: "/",
+        remembers: true,
+        /*
+         * THE SAME PICTURES ON BOTH FACES. Handed the registry the scene
+         * draws from, the pages land on a gallery of them — every kind as
+         * a card until you title a lens, then the lens by its name — with
+         * the map of the kinds and the seat on every route.
+         */
+        views: views(),
+        settings: ${ids.appVar}.settings ?? [],
+      }}
       // Your own pages over the derived ones: see ui/pages.tsx.
       registry={pages()}
     />,
