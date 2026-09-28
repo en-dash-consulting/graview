@@ -18,6 +18,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSubject } from "./companion.js";
 import { describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, useSeatConversation } from "./seat.js";
 import { AnswerArgs } from "./workbench/index.js";
+import { closeToTrigger } from "./popover.js";
 
 /**
  * A SEAT YOU CAN TALK TO.
@@ -151,7 +152,7 @@ export function ChatPanel<S extends AnySchema>({
       if (!anchor.current?.contains(event.target as Node)) setOpen(false);
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") closeToTrigger(anchor.current, () => setOpen(false));
     };
     document.addEventListener("mousedown", away);
     document.addEventListener("keydown", key);

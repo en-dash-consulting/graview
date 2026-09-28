@@ -4,6 +4,7 @@ import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chip } from "../primitives/index.js";
 import { nameOf } from "./answer-args.js";
+import { closeToTrigger } from "../popover.js";
 
 
 export interface Change {
@@ -237,7 +238,7 @@ export function ActivityRail({
       if (!anchor.current?.contains(event.target as Node)) setOpen(false);
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") closeToTrigger(anchor.current, () => setOpen(false));
     };
     document.addEventListener("mousedown", away);
     document.addEventListener("keydown", key);

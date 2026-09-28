@@ -1,6 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import { useSelection, useViolations } from "@graview/react";
 import { useEffect, useRef, useState } from "react";
+import { closeToTrigger } from "../popover.js";
 
 
 /**
@@ -40,7 +41,7 @@ export function Standing({
       if (!anchor.current?.contains(event.target as Node)) setOpen(false);
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") closeToTrigger(anchor.current, () => setOpen(false));
     };
     document.addEventListener("mousedown", away);
     document.addEventListener("keydown", key);

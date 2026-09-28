@@ -3,6 +3,7 @@ import { useGraview } from "@graview/react";
 import { LadderSetting } from "./ladder.js";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Seats } from "./seats.js";
+import { closeToTrigger } from "./popover.js";
 
 /**
  * WHO YOU ARE AT THIS KEYBOARD, AND WHAT YOU SET FOR YOURSELF.
@@ -93,7 +94,7 @@ export function Profile<S extends AnySchema>({
       setOpen(false);
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") closeToTrigger(anchor.current, () => setOpen(false));
     };
     document.addEventListener("mousedown", away);
     document.addEventListener("keydown", key);

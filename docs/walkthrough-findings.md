@@ -2524,3 +2524,35 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 - where it belongs: `packages/react/src/scene.tsx` (the strands), `packages/primitives/src/lens/timeline.tsx` (the moment), `apps/todo/src/data/example.json`
 - harness that should have caught it: `verify-navigation` had the lists-in-focus stop (W-088) but not the week-in-focus one; the timeline's test asserted a moment's time and never its name
 - status: fixed in "the focus that draws both ends has drawn the relation; a moment has a name" · only the FOCUS restating a relation silences a line, a band card summarising its members does not; a line to a member the focus's view does not draw is not drawn; a moment carries its name between its time and its dot, cut with an ellipsis before the time gives way; Today's tasks are on Tuesday. Criteria: verify-navigation `aCardsChipsDoNotSilenceItsLines` (nine entries on the week, at least nine lines), primitives timeline test asserts the moment's name.
+
+## The fifth walk — a Discography (2026-09-28)
+
+The fifth walk replaced the generic subject with a real domain: songs,
+releases, artists who record, feature on and produce them, themes and an
+era, scaffolded with `graview create ../walk5 --name "Discography" --kind
+song --plural songs` and seeded with a fictional artist's four releases,
+two singles and thirty-five songs.
+
+### W-090 · Escape closes a popover and leaves the keyboard on the body
+- stage: A · face: scene · width: 1280 · scheme: light
+- expected: open Activity, press "undo", press Escape — the list closes and
+  the keyboard is back on the Activity button, one Tab from where it was
+- actual: the list closed and `document.activeElement` was `<body>`: the
+  undo button the keyboard stood on went with the pane. The problems list,
+  the chat panel and the profile pane did the same — each closes on Escape
+  with a listener of its own and none of them asked where the keyboard was.
+  Opening and closing without going inside was fine, which is the only case
+  anything had tried.
+- where it belongs: `packages/primitives/src/workbench/activity.tsx`,
+  `workbench/standing.tsx`, `chat.tsx`, `profile.tsx` — one helper,
+  `popover.ts` (`closeToTrigger`)
+- harness that should have caught it: `verify-remember` presses Escape on
+  the rail and reads only the address; W-072's back-out test asks what the
+  ladder did, not where the keyboard went
+- status: fixed in "walkthrough: A · Escape gives the keyboard back to what
+  opened the popover" · Escape closes through `closeToTrigger`, which puts
+  the keyboard on the popover's own `aria-expanded` button when it was
+  inside the pane and leaves it alone otherwise. Criterion: primitives
+  `escape-gives-the-keyboard-back.test.tsx` (the activity list and the
+  problems list; verified failing without the fix: `expected <body> to be
+  <button>`).
