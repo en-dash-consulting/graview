@@ -62,6 +62,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      # The apps compile under typecheck (`tsc -b` over packages and apps), and
+      # tests that typecheck Seedbed or read the launcher need the rota app's
+      # output. CI runs it first; without it here, `pnpm test` failed on a
+      # clean runner with "Cannot find module '@graview/rota'".
+      - run: pnpm typecheck
       - run: pnpm test
 
       - name: Version packages, or publish them

@@ -37,7 +37,10 @@ const { aggregateId } = await import(pathToFileURL(resolve(repoRoot, "packages/l
  * whenever anyone had the app open.
  */
 function startVite() {
-  return serving("todo", 5193, repoRoot);
+  // Seedbed, on the port the chapters are photographed at. This started Things
+  // on 5193 for two weeks, and passed only where a Seedbed dev server already
+  // held 5194 — which is every laptop, and never CI.
+  return serving("seedbed", port, repoRoot);
 }
 
 const report = { at: new Date().toISOString(), engine: engineName(), chapters: [] };
