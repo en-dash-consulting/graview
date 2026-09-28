@@ -19,6 +19,8 @@ Read one before writing your own:
 - `packages/primitives/src/lens/calendar.tsx` — the same intervals, by date
 - `packages/primitives/src/lens/coverage.tsx` — a bipartite mapping
 - `packages/primitives/src/lens/board.tsx` — position given by the domain
+  (discs for codes of three characters, tokens for words; `arrange: "shelf"`
+  when the x and y are categories rather than coordinates)
 - `packages/primitives/src/lens/plan.tsx` — an outline, with points inside it
 
 (`reach.tsx` sits beside them and is not one: no factory, no roles to

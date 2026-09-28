@@ -85,9 +85,12 @@ drag a UI package into the checker.
    you are probably rebuilding something derived.
 
    The routed face is one branch in `main.tsx`: when the path starts with
-   `/pages`, render `<PagesApp basename="/pages" context={{ store, brand }} />`
-   from `@graview/pages` — lists, records, forms and problems derived from
-   the same declaration, at phone widths.
+   `/pages`, render `<PagesApp basename="/pages" context={{ store, brand,
+   views: views(), settings }} />` from `@graview/pages`. It lands on a
+   gallery of the app's pictures — every kind drawn as a card until you title
+   a lens, then the lens by its name — with a list, a record and a form per
+   kind, the problems and the map, at phone widths. Hand it the same `views`
+   the scene draws from, or it has no pictures to land on.
 
 6. **Register default views first, override later.** `registerDefaultViews`
    means a new kind renders sensibly at all three fidelities before you write

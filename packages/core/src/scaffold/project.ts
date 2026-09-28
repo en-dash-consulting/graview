@@ -540,9 +540,11 @@ the interface, or an agent reads a tool schema.
 - **A seat, a chat, a tool surface.** The agent seat in the activity rail, the
   chat panel and the derived tool schemas all read the same declaration.
 - **Two faces.** \`/\` is the spatial workbench; \`/pages\` is the same app as
-  ordinary routed pages, at phone widths — lists, records, forms and problems
-  derived from the declaration, and any of them replaceable with a page you
-  write (see \`src/ui/pages.tsx\`).
+  ordinary routed pages, at phone widths. It lands on a gallery of the app's
+  pictures — every kind drawn as a card until you title a lens, then the lens
+  by its name — with lists, records, forms, the map and the problems derived
+  from the declaration, and any of them replaceable with a page you write
+  (see \`src/ui/pages.tsx\`).
 - **It remembers.** Edits persist in this browser, attributed and undoable;
   "Start fresh" is the way back.
 `;

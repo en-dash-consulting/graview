@@ -1,16 +1,19 @@
 # @graview/primitives
 
-A rich primitive set, three lenses, the workbench and the visual system.
+A rich primitive set, five lenses, the workbench and the visual system.
 
 **Primitives** — `Panel`, `Chip`, `Roster`, `Grid`, `Axis`, `Connector`,
 `Aggregate`, `Fields`. Enough that a new node kind renders sensibly at all
 three fidelities before anyone writes a view for it.
 
-**Lenses** — a timeline, a coverage matrix and a board. Each binds ROLES to an
-app's own fields or kinds, so a lens written for one domain is reused by
-another without learning anything about it. All three are built from the
-public primitives, which makes them the worked example of the authoring API
-rather than privileged insiders.
+**Lenses** — a timeline, a calendar, a coverage matrix, a board and a plan.
+Each binds ROLES to an app's own fields or kinds, so a lens written for one
+domain is reused by another without learning anything about it. All five are
+built from the public primitives, which makes them the worked example of the
+authoring API rather than privileged insiders. The board draws discs when
+every slot's code is three characters or fewer and tokens — a pill sized to
+the word, the occupants inside it — when any code is longer; `arrange:
+"shelf"` lays a board whose x and y are categories out as headed bands.
 
 **Workbench** — the parts of an interface that are not about the domain: what
 is selected and what can be done with it, whether the rules hold, what just

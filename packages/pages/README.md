@@ -3,7 +3,8 @@
 The traditional face: a routed webapp derived from the same declaration that drives the
 spatial scene. From one `defineApp` — schema, mutations, invariants, permissions, op log —
 this package serves lists, records, forms, problems and history as ordinary linked pages:
-`/` home, `/:plural` per kind, `/:plural/:id` per node, `/problems`.
+`/` the gallery, `/:plural` per kind, `/:plural/:id` per node, `/places/:as` per picture,
+`/map` the relations, `/problems`.
 
 - **One store, no second path.** Pages read through the same `Store` and write through the
   same mutations with the same principal; withheld actions render disabled with their
@@ -25,13 +26,22 @@ this package serves lists, records, forms, problems and history as ordinary link
   (390×844): no sideways scroll, named links, labelled controls, and a derived form that
   actually applies.
 
-- **It reads like the product's own site.** The default pages open with the thing itself —
-  the installation's name and a summary in its own declared words on the front page, the
-  plural and its description on a list, the record's title and its kind's `describe` on a
-  record — with controls receding below the content. Typography rides the brand's display
-  and body faces at a real scale; the brand's mark, name and per-kind accents (`hueFor`,
-  from `@graview/core`) carry through every page. Still derivation: nothing here is a
-  per-app template, and an app overrides a cell the same way it overrides a view.
+- **It lands on a gallery.** The home opens with the standing as its headline — "2 gardeners,
+  3 plots and 1 planting.", or "Nothing here yet." and which act begins it — then every
+  picture the app has as a large live card, two across at a desk and one on a phone: the
+  lens itself, drawn inert at a scale measured from the card, captioned with its name and how
+  much it is over. Handed the scene's view registry (`views` in the context), every titled
+  lens is a page at `/places/<as>` and a card on the home; a kind with no titled lens is
+  drawn anyway, as a contact sheet of its members, so a new app lands on a gallery on its
+  first afternoon. The kinds follow as one row of counts, the relations as one line that
+  opens `/map`, and Recently stays short at the foot. The shell is one row of navigation
+  that scrolls sideways on a phone; a new address opens at its top.
+- **It reads like the product's own site.** A list opens with the plural and its
+  description, a record with its title and its kind's `describe`, controls receding below
+  the content. Typography rides the brand's display and body faces at a real scale; the
+  brand's mark, name and per-kind accents (`hueFor`, from `@graview/core`) carry through
+  every page. Still derivation: nothing here is a per-app template, and an app overrides a
+  cell the same way it overrides a view.
 
 The host applies `themeCss` from `@graview/primitives` (or supplies its own `--graview-*`
 tokens); the default pages render entirely from those tokens.
