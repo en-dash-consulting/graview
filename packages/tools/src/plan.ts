@@ -315,9 +315,10 @@ export function applyPlan<S extends AnySchema>(
         sure !== undefined && !/\d+% sure/.test(entry.call.why ?? "")
           ? `${entry.call.why ?? ""} (${Math.round(sure * 100)}% sure)`.trim()
           : (entry.call.why ?? "");
+      // A plan with no `why` keeps the act's own sentence; an empty intent would silence it.
       const result = store.apply(
         { name: entry.call.mutation, args },
-        { ...(options.author ? { author: options.author } : {}), batch, intent },
+        { ...(options.author ? { author: options.author } : {}), batch, ...(intent ? { intent } : {}) },
       );
       applied += 1;
       if (entry.call.as !== undefined) {

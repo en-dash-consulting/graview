@@ -8,18 +8,23 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "default": "./dist/cli.js"
     }
   },
   "scripts": {
     "build": "tsc -b"
   },
   "dependencies": {
-    "@graview/core": "workspace:*"
+    "@graview/core": "workspace:*",
+    "@graview/ship": "workspace:*"
   },
   "devDependencies": {
     "zod": "^4.4.3"
   },
-  "description": "Derived affordances and the agent tool surface, generated from the same declarations.",
+  "description": "Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.",
   "files": [
     "dist",
     "README.md"
