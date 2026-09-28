@@ -5,10 +5,12 @@ import type {
   Presence,
   PresenceChannel,
   Principal,
+  SearchResult,
   SettingDeclaration,
   Store,
   ViewRegistry,
 } from "@graview/core";
+import { search } from "@graview/core";
 import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools";
 import { honourSetting, loadSetting, rememberSetting } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
@@ -784,9 +786,45 @@ export function GraviewProvider<S extends AnySchema>({
 
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
-      {children}
+      <FoundProvider>{children}</FoundProvider>
     </GraviewContext.Provider>
   );
+}
+
+/*
+ * WHAT THE WORDS FIND, once for the whole scene.
+ *
+ * Every view reads the hits — to light them, to count them on a district —
+ * and a search per view per render would be the same scan dozens of times.
+ * So it runs here, once per change of the words, the graph, the seat or
+ * the selection (nearness ranks by it), and only over the districts this
+ * seat has drawn.
+ */
+const FoundContext = createContext<SearchResult | null>(null);
+
+function FoundProvider({ children }: { children: ReactNode }) {
+  const { store, view, views, principal, hiddenKinds, selection } = useGraview();
+  const nodes = useGraph();
+  const q = view.q;
+  const focusId = view.focusId;
+  const found = useMemo(() => {
+    if (!q || q.trim().length === 0) return null;
+    return search(store, q, {
+      principal,
+      places: views.places(),
+      kinds: (store.schema.kinds as readonly string[]).filter((kind) => !hiddenKinds.has(kind)),
+      from: [...selection, ...(focusId && store.graph.has(focusId) ? [focusId] : [])],
+      limit: 200,
+    });
+    // `nodes` is the graph's tick: a change to the graph is a new answer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, q, principal, views, hiddenKinds, selection, focusId, nodes]);
+  return <FoundContext.Provider value={found}>{children}</FoundContext.Provider>;
+}
+
+/** The scene's search, when `#q=` says there is one; null otherwise. */
+export function useFound(): SearchResult | null {
+  return useContext(FoundContext);
 }
 
 export function useGraview<S extends AnySchema>(): GraviewContextValue<S> {

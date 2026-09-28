@@ -32,7 +32,7 @@ import { useActivity, type ActivityMark } from "./activity.js";
 import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
 import { SeatMarks } from "./seat-marks.js";
 import { useViolations } from "./hooks.js";
-import { useGraph, useGraview } from "./context.js";
+import { useFound, useGraph, useGraview } from "./context.js";
 import { isDefaultView } from "./view-registry.js";
 import { Plots } from "./plots.js";
 import { Occupants } from "./occupants.js";
@@ -145,6 +145,7 @@ export function Scene<S extends AnySchema>({
     setSelection,
     setMenuAt,
     emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved, robots } = useGraview<S>();
+  const found = useFound();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -734,7 +735,12 @@ export function Scene<S extends AnySchema>({
          * anyway — trading the designed view for the fallback it exists to
          * improve on.
          */
-        setView((current) => withJackIn(current, node.id, { ownPicture: ownPictureOf(node) }));
+        // A district the search lit opens narrowed by the same words.
+        const card = kindOfCard(node.id);
+        const lit = card !== null && (found?.byKind[card] ?? 0) > 0;
+        setView((current) =>
+          withJackIn(current, node.id, { ownPicture: ownPictureOf(node), ...(lit && current.q ? { carry: current.q } : {}) }),
+        );
         /*
          * A zoomed RECORD is selected — reading closely is when you act.
          * A zoomed PLACE starts quiet: the click half of the double-click

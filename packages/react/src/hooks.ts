@@ -25,7 +25,7 @@ import {
   type EditableField,
 } from "@graview/tools";
 import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import { useGraph, useGraview } from "./context.js";
+import { useFound, useGraph, useGraview } from "./context.js";
 
 /** The current selection, and the ways an interface changes it. */
 export function useSelection() {
@@ -86,6 +86,28 @@ export function useFlagged(): readonly string[] {
  * emphasis" rather than "nothing is related".
  */
 export function useImplicated(): readonly string[] {
+  const reachedBySelection = useReached();
+  const found = useFound();
+  /*
+   * AND WHAT THE WORDS FIND. A search lights its hits in whatever picture
+   * is open, through the same set every view already dims by — so a lens
+   * learns nothing new to take part. Words that find nothing dim it all:
+   * the one id nothing is called keeps the set non-empty.
+   */
+  return useMemo(() => {
+    if (!found) return reachedBySelection;
+    const hits = found.hits.flatMap((hit) => (hit.about === "node" ? [hit.id] : []));
+    if (hits.length === 0 && reachedBySelection.length === 0) return [NOTHING_FOUND];
+    return [...new Set([...reachedBySelection, ...hits])];
+  }, [found, reachedBySelection]);
+}
+
+/**
+ * What the SELECTION alone reaches — `useImplicated` without the search.
+ * For the one reading that must not confuse the two: a district's "tied"
+ * count is about what you picked, not what you typed.
+ */
+export function useReached(): readonly string[] {
   const { store, selection } = useGraview();
   const nodes = useGraph();
   return useMemo(() => {
@@ -112,6 +134,9 @@ export function useImplicated(): readonly string[] {
     return [...reached];
   }, [store, selection, nodes]);
 }
+
+/** Stands in the implicated set when a search found nothing, so every view dims. */
+export const NOTHING_FOUND = "search:nothing";
 
 /**
  * What can be done with the current selection, recomputed whenever the
@@ -383,7 +408,19 @@ function sameWithin(
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, value]) => `${key}=${value}`)
       .join("&");
-  return say(before) === say(after);
+  return say(withoutWords(before)) === say(withoutWords(after));
+}
+
+/*
+ * TYPING IS NOT TRAVELLING. The words a row narrows by (`in.q`) change on
+ * every keystroke, and each one pushed a history entry — five letters, five
+ * Backs to leave a list. The scene's own `q` was never compared; the row's
+ * words are the same act and read the same way.
+ */
+function withoutWords(held: Readonly<Record<string, string>> | undefined): Readonly<Record<string, string>> | undefined {
+  if (!held || !("q" in held)) return held;
+  const { q: _words, ...rest } = held;
+  return rest;
 }
 
 const trail = {

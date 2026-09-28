@@ -595,8 +595,23 @@ try {
   await cam.keyboard.up("Control");
   await cam.waitForTimeout(400);
   const zoomedIn = await ground();
-  // The plain wheel over the ground pans.
-  await cam.mouse.move(400, 300);
+  /*
+   * The plain wheel over the ground pans. OVER THE GROUND: a fixed point
+   * was (400, 300) until the lists' picture grew over it, and a wheel over
+   * a scrolling list scrolls the list — rightly. So the point is found, not
+   * assumed: the first on a coarse grid with no picture or card under it.
+   */
+  const open = await cam.evaluate(() => {
+    for (let y = 160; y < innerHeight - 60; y += 40) {
+      for (let x = 120; x < innerWidth - 120; x += 40) {
+        const el = document.elementFromPoint(x, y);
+        // On the ground — the element the wheel is heard on — and not on anything drawn over it.
+        if (el?.closest(".graview-ground") && !el.closest("[data-graview-view], .graview-scroll, [data-graview-overlay], .graview-zoom, button, a, input")) return { x, y };
+      }
+    }
+    return { x: 400, y: 300 };
+  });
+  await cam.mouse.move(open.x, open.y);
   await cam.mouse.wheel(60, 80);
   await cam.waitForTimeout(400);
   const wheeled = await ground();
@@ -678,10 +693,122 @@ try {
     // Many small steps and no leap: the ground eased from one cell to the other.
     theGroundTravelsWithTheCards: { ...travel, ok: travel.steps >= 5 && travel.jumps === 0 && travel.last !== travel.first },
   };
-  report.camera = { start, zoomedIn, wheeled, buttonOut, buttonIn, dragged, onThePicture };
+  report.camera = { start, zoomedIn, wheelAt: open, wheeled, buttonOut, buttonIn, dragged, onThePicture };
   await cam.close();
 } catch (error) {
   report.camera = { error: String(error).slice(0, 2000) };
+}
+
+/*
+ * A SEARCH IS A STOP, AND THE PICTURE IS THE RESULT LIST. `/` reaches the
+ * Find box from the city; typing lights the districts the words found and
+ * dims the rest, without piling up history; the strip names the hits as a
+ * listbox; pressing a lit district's count lands inside it narrowed by the
+ * same words; Back returns to the lit city; Escape clears the words. And
+ * on a phone at a 32px root font the strip is a sheet, nothing scrolls
+ * sideways, and nothing in the box is under 24px.
+ */
+try {
+  const find = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  find.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await find.goto("http://localhost:5193/?today=2026-09-01#overview=1", { waitUntil: "load" });
+  await find.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await find.waitForTimeout(1200);
+  const history = () => find.evaluate(() => window.history.length);
+  const before = await history();
+  await find.keyboard.press("/");
+  const reached = await find.evaluate(() => document.activeElement?.getAttribute("data-testid"));
+  await find.keyboard.type("deposit", { delay: 40 });
+  await find.waitForTimeout(700);
+  const lit = await find.evaluate(() => {
+    const cards = [...document.querySelectorAll(".graview-kind-card[data-graview-emphasis]")];
+    const box = document.querySelector('[data-testid="find-box"]');
+    return {
+      url: location.hash,
+      lit: cards.filter((el) => el.getAttribute("data-graview-emphasis") === "lit").map((el) => el.closest("[data-graview-view]")?.getAttribute("data-graview-view")),
+      dimmed: cards.filter((el) => el.getAttribute("data-graview-emphasis") === "dimmed").length,
+      hits: [...document.querySelectorAll('[data-testid="find-hit"]')].map((el) => el.getAttribute("data-about")),
+      role: box?.getAttribute("role"),
+      expanded: box?.getAttribute("aria-expanded"),
+      controls: box?.getAttribute("aria-controls") === document.querySelector('[data-testid="find-strip"]')?.id,
+      count: document.querySelector('[data-testid="find-count"]')?.textContent ?? "",
+    };
+  });
+  const typedHistory = await history();
+  await find.keyboard.press("ArrowDown");
+  await find.waitForTimeout(250);
+  const active = await find.evaluate(() => {
+    const id = document.querySelector('[data-testid="find-box"]')?.getAttribute("aria-activedescendant");
+    return id ? document.getElementById(id)?.getAttribute("aria-selected") : null;
+  });
+  // Out of the box, then the lit district's count: into it, narrowed.
+  await find.evaluate(() => document.activeElement?.blur());
+  await find.click('[data-testid="hits-task"]');
+  await find.waitForTimeout(1200);
+  const landed = await find.evaluate(() => ({
+    url: location.hash,
+    row: document.querySelector('[data-testid="arrange-query"]')?.value ?? null,
+    tasks: [...new Set([...document.querySelectorAll("[data-graview-pick^='t-']")].map((el) => el.getAttribute("data-graview-pick")))],
+  }));
+  await find.goBack();
+  await find.waitForTimeout(900);
+  const back = await find.evaluate(() => ({
+    url: location.hash,
+    box: document.querySelector('[data-testid="find-box"]')?.value,
+    lit: document.querySelectorAll('.graview-kind-card[data-graview-emphasis="lit"]').length,
+  }));
+  await find.evaluate(() => document.activeElement?.blur());
+  await find.keyboard.press("Escape");
+  await find.waitForTimeout(500);
+  const cleared = await find.evaluate(() => ({
+    url: location.hash,
+    lit: document.querySelectorAll(".graview-kind-card[data-graview-emphasis]").length,
+  }));
+  await find.close();
+
+  const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  phone.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await phone.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+  await phone.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await phone.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
+  await phone.waitForTimeout(1200);
+  await phone.focus('[data-testid="find-box"]');
+  await phone.keyboard.type("move", { delay: 40 });
+  await phone.waitForTimeout(700);
+  const onAPhone = await phone.evaluate(() => {
+    const strip = document.querySelector('[data-testid="find-strip"]').getBoundingClientRect();
+    const box = document.querySelector('[data-testid="find-box"]').getBoundingClientRect();
+    const small = [...document.querySelectorAll('[data-testid="find-box"], [data-testid="find-hit"]')]
+      .map((el) => el.getBoundingClientRect())
+      .filter((r) => r.width > 0 && (r.height < 23.5 || r.width < 23.5)).length;
+    return {
+      scrollWidth: document.documentElement.scrollWidth,
+      width: innerWidth,
+      strip: { left: Math.round(strip.left), top: Math.round(strip.top), width: Math.round(strip.width) },
+      boxBottom: Math.round(box.bottom),
+      boxWidth: Math.round(box.width),
+      small,
+    };
+  });
+  await phone.close();
+
+  report.search = {
+    reached, lit, before, typedHistory, active, landed, back, cleared, onAPhone,
+    ok:
+      reached === "find-box" &&
+      lit.url.includes("q=deposit") &&
+      lit.lit.includes("kind:task") &&
+      lit.dimmed > 0 &&
+      typedHistory === before &&
+      landed.url.includes("focus=aggregate%3Atask") &&
+      landed.url.includes("in.q=deposit") &&
+      back.url.includes("q=deposit") &&
+      !back.url.includes("focus=aggregate%3Atask") &&
+      back.lit > 0 &&
+      !cleared.url.includes("q="),
+  };
+} catch (error) {
+  report.search = { error: String(error).slice(0, 2000) };
 }
 
 } catch (error) {
@@ -817,6 +944,28 @@ report.verdict = {
   aDistrictWithoutOneOpensInPlace:
     (report.districts?.withoutOne ?? "").includes("expand=kind%3Areason") &&
     !(report.districts?.withoutOne ?? "").includes("focus=aggregate"),
+  // Typing lights the districts the words found and dims the rest, as an adjustment rather than a stop per letter;
+  // pressing a lit district lands inside it narrowed by the same words; Back returns to the lit city; Escape clears.
+  typingLightsAndALitDistrictLandsNarrowed: report.search?.ok === true,
+  // The box is a combobox over a listbox, ↓ moves an active descendant, and a live region says the count.
+  theFindBoxIsACombobox:
+    report.search?.lit?.role === "combobox" &&
+    report.search?.lit?.expanded === "true" &&
+    report.search?.lit?.controls === true &&
+    report.search?.active === "true" &&
+    /found/.test(report.search?.lit?.count ?? ""),
+  // Inside the district only what the words found is drawn, and its row says the words.
+  theDistrictOpensNarrowed:
+    report.search?.landed?.row === "deposit" &&
+    (report.search?.landed?.tasks ?? []).length === 1 &&
+    report.search?.landed?.tasks?.[0] === "t-deposit",
+  // At 390 and a 32px root font: a sheet the screen's width under the box, no sideways scroll, no target under 24px.
+  theStripIsASheetOnAPhone:
+    report.search?.onAPhone?.scrollWidth <= report.search?.onAPhone?.width &&
+    report.search?.onAPhone?.strip?.left === 0 &&
+    report.search?.onAPhone?.strip?.width >= report.search?.onAPhone?.width - 1 &&
+    report.search?.onAPhone?.strip?.top >= report.search?.onAPhone?.boxBottom - 1 &&
+    report.search?.onAPhone?.small === 0,
   // The act that removes what you are standing in leaves you somewhere real.
   theStopSurvivesWhatItNames: report.removed?.ok === true,
   whatYouCanPressIsWhatYouCanSee:

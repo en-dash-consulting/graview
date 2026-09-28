@@ -66,6 +66,7 @@ export {
 export type { SeatAnswer, SeatOutcome, SeatTurn } from "./seat.js";
 export { Wordmark } from "./wordmark.js";
 export { Places } from "./places.js";
+export { FindBox } from "./find.js";
 export { ShowInstallation } from "./installation.js";
 export { Seats } from "./seats.js";
 export { Profile } from "./profile.js";

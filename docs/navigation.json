@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-27T04:54:33.313Z",
+  "at": "2026-09-28T21:51:20.095Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565435,
+      "wingOpacity": 0.565533,
       "registered": true
     },
     "groundAgain": {
@@ -213,21 +213,21 @@
     ],
     "liveInsideAPicture": 0,
     "leavingBefore": {
-      "width": 339,
-      "height": 280
+      "width": 335,
+      "height": 277
     },
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 343.99993896484375,
-        "height": 169.00003051757812,
+        "width": 416,
+        "height": 193,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 281.0000305175781,
-        "height": 257.0000305175781,
-        "opacity": 0.451005
+        "width": 279.9999694824219,
+        "height": 256,
+        "opacity": 0.458607
       }
     ],
     "afterSwitch": [
@@ -236,23 +236,23 @@
     "noteDriveIn": false,
     "standing": {
       "screen": {
-        "x": 610.4315185546875,
-        "y": 206.8528594970703,
-        "width": 339,
-        "height": 280,
-        "top": 206.8528594970703,
-        "right": 949.4315185546875,
-        "bottom": 486.8528594970703,
-        "left": 610.4315185546875
+        "x": 612.3607788085938,
+        "y": 208.44741821289062,
+        "width": 335,
+        "height": 277,
+        "top": 208.44741821289062,
+        "right": 947.3607788085938,
+        "bottom": 485.4474182128906,
+        "left": 612.3607788085938
       },
       "card": {
         "x": 663.2000122070312,
-        "y": 549.547119140625,
+        "y": 547.9525756835938,
         "width": 214.78271484375,
         "height": 218.45428466796875,
-        "top": 549.547119140625,
+        "top": 547.9525756835938,
         "right": 877.9827270507812,
-        "bottom": 768.0014038085938,
+        "bottom": 766.4068603515625,
         "left": 663.2000122070312
       },
       "url": "#focus=aggregate%3Atask&overview=1&in.view=the-week"
@@ -262,9 +262,9 @@
       "up": true
     },
     "midway": {
-      "x": 770.997314453125,
-      "y": 287.79547119140625,
-      "width": 379
+      "x": 771.2752685546875,
+      "y": 285.31895446777344,
+      "width": 373
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -299,17 +299,21 @@
     "zoomedIn": {
       "cell": 354.61,
       "latticeX": 1763.9,
-      "pan": "-96.63,315.4",
+      "pan": "-96.63,296.29",
       "level": "261%",
       "reach": [
         1528,
         716
       ]
     },
+    "wheelAt": {
+      "x": 280,
+      "y": 160
+    },
     "wheeled": {
       "cell": 354.61,
       "latticeX": 1703.9,
-      "pan": "-156.63,235.4",
+      "pan": "-156.63,216.29",
       "level": "261%",
       "reach": [
         1528,
@@ -319,7 +323,7 @@
     "buttonOut": {
       "cell": 283.69,
       "latticeX": 1532.7,
-      "pan": "-97.31,167.47",
+      "pan": "-97.31,154.56",
       "level": "209%",
       "reach": [
         1085,
@@ -329,7 +333,7 @@
     "buttonIn": {
       "cell": 354.61,
       "latticeX": 1703.9,
-      "pan": "-156.63,235.4",
+      "pan": "-156.63,216.29",
       "level": "261%",
       "reach": [
         1528,
@@ -339,7 +343,7 @@
     "dragged": {
       "cell": 354.61,
       "latticeX": 472.2,
-      "pan": "-1388.36,235.4",
+      "pan": "-1388.36,216.29",
       "level": "261%",
       "reach": [
         1528,
@@ -350,6 +354,57 @@
       "moved": 240,
       "ok": true
     }
+  },
+  "search": {
+    "reached": "find-box",
+    "lit": {
+      "url": "#overview=1&q=deposit",
+      "lit": [
+        "kind:reason",
+        "kind:task"
+      ],
+      "dimmed": 2,
+      "hits": [
+        "node",
+        "node"
+      ],
+      "role": "combobox",
+      "expanded": "true",
+      "controls": true,
+      "count": "1 task, 1 reason found"
+    },
+    "before": 3,
+    "typedHistory": 3,
+    "active": "true",
+    "landed": {
+      "url": "#focus=aggregate%3Atask&in.q=deposit&q=deposit",
+      "row": "deposit",
+      "tasks": [
+        "t-deposit"
+      ]
+    },
+    "back": {
+      "url": "#overview=1&q=deposit",
+      "box": "deposit",
+      "lit": 2
+    },
+    "cleared": {
+      "url": "#overview=1",
+      "lit": 0
+    },
+    "onAPhone": {
+      "scrollWidth": 390,
+      "width": 390,
+      "strip": {
+        "left": 0,
+        "top": 277,
+        "width": 390
+      },
+      "boxBottom": 277,
+      "boxWidth": 366,
+      "small": 0
+    },
+    "ok": true
   },
   "verdict": {
     "aDriveInHasAMarquee": true,
@@ -387,6 +442,10 @@
     "aNewStopStartsWhereTheLayoutPutsThings": true,
     "aDistrictWithAPictureGoesIntoIt": true,
     "aDistrictWithoutOneOpensInPlace": true,
+    "typingLightsAndALitDistrictLandsNarrowed": true,
+    "theFindBoxIsACombobox": true,
+    "theDistrictOpensNarrowed": true,
+    "theStripIsASheetOnAPhone": true,
     "theStopSurvivesWhatItNames": true,
     "whatYouCanPressIsWhatYouCanSee": true
   },

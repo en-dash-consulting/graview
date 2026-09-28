@@ -1,4 +1,4 @@
-export { GraviewProvider, ROBOT_REST_MS, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export { GraviewProvider, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { Figure, Occupants, PersonFigure } from "./occupants.js";
 export { anchorOf, AUDIENCE_ROW, HEARTBEAT_MS, placeOthers, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
 export type { Placed, PresenceInputs, PresenceState } from "./presence.js";
@@ -49,7 +49,7 @@ export type { ActivityMark, Attention, Manner, ToolCallLike } from "./activity.j
 export type { ResolvedViewProps, SceneProps } from "./scene.js";
 
 
-export { useFlagged, useImplicated, useViolations } from "./hooks.js";
+export { NOTHING_FOUND, useFlagged, useImplicated, useReached, useViolations } from "./hooks.js";
 export { useLocalIntelligence } from "./local-intelligence.js";
 export type { Ask, LocalIntelligence } from "./local-intelligence.js";
 export { kitConnector, useKit } from "./kit.js";

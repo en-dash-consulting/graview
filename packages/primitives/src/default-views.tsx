@@ -11,9 +11,11 @@ import {
 import { aggregateId, kindCardId, marqueeHeightFor, withFocus, withOverview, withPast, withWithin } from "@graview/layout";
 import {
   createViews,
+  useFound,
   useGraview,
   useKit,
   useNavigation,
+  useReached,
   useSelection,
   useViolations,
   type ReactViewRegistry,
@@ -424,11 +426,20 @@ export function registerDefaultViews<S extends AnySchema>(
        * announce a tie to the thing that IS the selection.
        */
       const chosen = new Set(selection);
+      // What the selection reaches — never what a search lit, which is counted apart below.
+      const reached = useReached();
       const tied = accent
         ? 0
-        : members.filter(
-            (member) => props.implicated?.includes(member.id) && !chosen.has(member.id),
-          ).length;
+        : members.filter((member) => reached.includes(member.id) && !chosen.has(member.id)).length;
+      /*
+       * WHAT THE WORDS FOUND HERE. With a search open, a district with hits
+       * is lit and says how many; one with none recedes. Pressing the count
+       * descends into the district already narrowed by the same words — the
+       * arrangement's `in.q` — so search hands off to the arrangement rather
+       * than competing with it.
+       */
+      const found = useFound();
+      const hits = found && !nested ? (found.byKind[String(kind)] ?? 0) : 0;
       /*
        * The block's height from altitude, in viewBox units: population under
        * a square root, so one giant kind is a tall building rather than a
@@ -482,6 +493,8 @@ export function registerDefaultViews<S extends AnySchema>(
           data-graview-landmark={figure || undefined}
           data-graview-nested={nested || undefined}
           data-graview-tied={tied || undefined}
+          data-graview-hits={found && !nested ? hits : undefined}
+          data-graview-emphasis={found && !nested ? (hits > 0 ? "lit" : "dimmed") : undefined}
           /*
            * The description lives in the TOOLTIP, on every card.
            *
@@ -712,6 +725,22 @@ export function registerDefaultViews<S extends AnySchema>(
                 onPointerDown={(event) => event.stopPropagation()}
               >
                 +{props.retired} past
+              </button>
+            ) : null}
+            {hits > 0 ? (
+              <button
+                type="button"
+                className="graview-kind-hits"
+                data-testid={`hits-${String(kind)}`}
+                title={`${hits} ${hits === 1 ? "match" : "matches"} for “${view.q ?? ""}” — press to go in, narrowed`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  go(withWithin(withFocus(withOverview(view, false), aggregateId(String(kind))), "q", view.q ?? ""));
+                }}
+                onDoubleClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                {hits} match
               </button>
             ) : null}
             {/* The selection's reach into this kind, said in place. */}

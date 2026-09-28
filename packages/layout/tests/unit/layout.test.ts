@@ -2,6 +2,7 @@ import { createSchema, defineNode, Graph } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  withQuery,
   withWithin,
   cameraLimit,
   aggregateId,
@@ -261,6 +262,23 @@ describe("a drive-in's showing is a stop", () => {
     const switched = withWithin(back, "view", "the-week");
     expect(switched.overview).toBe(true);
     expect(fromUrl(toUrl(switched)).within?.["view"]).toBe("the-week");
+  });
+});
+
+describe("a search is a stop", () => {
+  it("round-trips q through the address, beside the focus and the within keys, and blank is no search", () => {
+    const stop = withQuery(withWithin(view({ focusId: aggregateId("duty") }), "q", "van"), "van done:false");
+    const url = toUrl(stop);
+    expect(url).toContain("q=van+done%3Afalse");
+    expect(url).toContain("in.q=van");
+    const back = fromUrl(url);
+    expect(back.q).toBe("van done:false");
+    expect(back.within?.["q"]).toBe("van");
+    // Changing the focus keeps the search: the city stays lit behind you.
+    expect(withFocus(back, "week-1").q).toBe("van done:false");
+    expect(withQuery(back, "  ").q).toBeUndefined();
+    expect(toUrl(withQuery(back, null))).not.toMatch(/(^|[#&])q=/);
+    expect(fromUrl("#q=%20%20").q).toBeUndefined();
   });
 });
 

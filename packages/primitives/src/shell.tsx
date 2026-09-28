@@ -4,6 +4,7 @@ import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode, useRef } from "react";
 import { Companion } from "./companion.js";
 import { VISUALLY_HIDDEN, useWidth } from "./primitives/index.js";
+import { FindBox } from "./find.js";
 import { ShowInstallation } from "./installation.js";
 import { Profile } from "./profile.js";
 import { Places } from "./places.js";
@@ -195,6 +196,15 @@ export function Shell<S extends AnySchema>({
         {/* The named pictures over the graph, if the app registered any: the middle, and the room. */}
         <div style={narrow ? { flex: "1 1 100%", order: 3, minWidth: 0, display: "flex" } : { flex: "1 1 auto", minWidth: 0, display: "flex", justifyContent: "center" }}>
           <Places<S> compact={narrow} />
+        </div>
+        {/*
+          * THE FIND BOX: / or ⌘K from anywhere, and the picture is the result
+          * list. On a phone it takes a row of its own under the places — a
+          * box squeezed between the standing and the profile is a box nobody
+          * can type in — and its strip becomes a sheet the screen's width.
+          */}
+        <div style={narrow ? { flex: "1 1 100%", order: 4, minWidth: 0, display: "flex" } : { flex: "0 1 15rem", minWidth: 0, display: "flex" }}>
+          <FindBox<S> compact={narrow} />
         </div>
         <div
           style={{

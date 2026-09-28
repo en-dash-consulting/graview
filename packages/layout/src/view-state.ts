@@ -91,6 +91,18 @@ export interface ViewState {
    * back button silently loses.
    */
   readonly within?: Readonly<Record<string, string>>;
+  /**
+   * WHAT IS BEING LOOKED FOR, over the whole picture.
+   *
+   * A search is a stop: `#q=van` lights what the words find and dims the
+   * rest wherever you are looking, a link carries it, and Back returns to
+   * it. Not a key of `within`, because it is not one view's business — it
+   * applies to every district at once — and it outlives a change of focus,
+   * so descending into a lit district keeps the rest of the city lit
+   * behind you. Typing is an ADJUSTMENT of the stop, like a pan: the
+   * address is replaced on each keystroke rather than pushed.
+   */
+  readonly q?: string;
 }
 
 export const EMPTY_VIEW: ViewState = {
@@ -135,6 +147,7 @@ export function toUrl(state: ViewState): string {
     const value = state.within![key]!;
     if (value.length > 0) params.set(`in.${key}`, value);
   }
+  if (state.q && state.q.trim().length > 0) params.set("q", state.q);
   const query = params.toString();
   return query ? `#${query}` : "#";
 }
@@ -212,6 +225,7 @@ export function fromUrl(url: string): ViewState {
       : {}),
     ...(panX !== null && panY !== null ? { pan: { x: panX, y: panY } } : {}),
     ...(Object.keys(within).length > 0 ? { within } : {}),
+    ...(params.get("q")?.trim() ? { q: params.get("q")! } : {}),
     focusId: unabbreviated(params.get("focus")),
     relation: params.get("relation"),
     expanded: (params.get("expand") ?? "")
@@ -349,6 +363,15 @@ export function withShown(state: ViewState, module: string, shown: boolean): Vie
     return rest;
   }
   return { ...state, shown: [...held].sort() };
+}
+
+/** Look for words across the picture, or stop looking. Blank is no search. */
+export function withQuery(state: ViewState, q: string | null): ViewState {
+  if (q === null || q.trim().length === 0) {
+    const { q: _drop, ...rest } = state;
+    return rest;
+  }
+  return { ...state, q };
 }
 
 /** Widen the horizon to include the past, or narrow it back to now. */

@@ -1048,6 +1048,42 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   border-color: var(--graview-accent-dim);
 }
 
+/* A SEARCH OVER THE CITY. The districts the words found are lit and say how
+   many; the rest recede — the same dimming a selection's reach has always
+   used, so a search reads as "where the thing is", not as a new mode. The
+   count is the way in: a real control, the words carried down. */
+.graview-kind-card[data-graview-emphasis="dimmed"] {
+  opacity: 0.42;
+  transition: opacity 160ms ease;
+}
+.graview-kind-card[data-graview-emphasis="lit"] {
+  z-index: 1;
+}
+.graview-kind-card[data-graview-emphasis="lit"] .graview-kind-face {
+  border-color: var(--graview-accent) !important;
+  box-shadow: 0 0 0 1px var(--graview-accent-dim);
+}
+.graview-kind-hits {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: max(1.5rem, 24px);
+  padding: 1px 8px;
+  margin: -3px 0;
+  border-radius: 999px;
+  border: 1px solid var(--graview-accent);
+  background: none;
+  box-shadow: none;
+  color: var(--graview-accent);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .graview-kind-card[data-graview-emphasis="dimmed"] { transition: none; }
+}
+
 /* Chrome that arrives with a state settles in rather than popping. */
 @keyframes graview-settle {
   from { opacity: 0; transform: translateY(7px); }

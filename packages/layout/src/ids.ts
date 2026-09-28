@@ -1,4 +1,4 @@
-import { toggleExpanded, withFocus, withZoom, type ViewState } from "./view-state.js";
+import { toggleExpanded, withFocus, withWithin, withZoom, type ViewState } from "./view-state.js";
 
 /*
  * WHAT AN ID MEANS in the picture. A node's id is its own; the picture adds
@@ -88,16 +88,24 @@ export function kindsOfAggregate(id: string): string[] {
 export function withJackIn(
   state: ViewState,
   id: string,
-  options: { readonly ownPicture?: boolean } = {},
+  options: {
+    readonly ownPicture?: boolean;
+    /**
+     * Words to carry into a district: the search that lit it. Descending
+     * into a lit district opens it already narrowed — the arrangement's own
+     * `in.q` — so the row shows why, and clearing the row clears only that.
+     */
+    readonly carry?: string;
+  } = {},
 ): ViewState {
   const kind = kindOfCard(id);
   if (kind !== null && state.overview && options.ownPicture !== true) {
     return toggleExpanded(state, id);
   }
   const target = kind !== null ? aggregateId(kind) : id;
-  return state.zoom && state.focusId === target
-    ? withZoom(state, false)
-    : withZoom({ ...withFocus(state, target), relation: null }, true);
+  if (state.zoom && state.focusId === target) return withZoom(state, false);
+  const entered = withZoom({ ...withFocus(state, target), relation: null }, true);
+  return kind !== null && options.carry ? withWithin(entered, "q", options.carry) : entered;
 }
 
 /**

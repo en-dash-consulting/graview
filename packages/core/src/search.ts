@@ -117,6 +117,11 @@ export interface SearchOptions {
   readonly flagged?: ReadonlySet<string>;
   /** YYYY-MM-DD, for the lifecycle. */
   readonly today?: string;
+  /**
+   * The kinds to look in, when fewer than all the seat may see: the scene
+   * looks only in the districts it draws. Never widens past the policy.
+   */
+  readonly kinds?: readonly string[];
   /** Most hits returned; counts are taken before it. 50 when unsaid. */
   readonly limit?: number;
 }
@@ -354,7 +359,11 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     return squeeze(kind) === asked || squeeze(pluralOf(definition, kind)) === asked;
   };
   const kinds = (schema.kinds as readonly string[]).filter(
-    (kind) => !kept.has(kind) && !off.has(kind) && (kindWords.length === 0 || kindWords.some((value) => named(kind, value))),
+    (kind) =>
+      !kept.has(kind) &&
+      !off.has(kind) &&
+      (options.kinds === undefined || options.kinds.includes(kind)) &&
+      (kindWords.length === 0 || kindWords.some((value) => named(kind, value))),
   );
 
   // The rest of the conditions narrow the kinds whose declaration offers them.
