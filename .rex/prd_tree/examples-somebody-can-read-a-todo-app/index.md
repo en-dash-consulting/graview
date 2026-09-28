@@ -17,7 +17,7 @@ acceptanceCriteria:
   - "graview check is clean on it, and it is covered by the same harnesses as everything else"
   - "Nothing about it is a special case: it goes through the same declarations, the same defaults and the same checks"
 description: "Graview will be open-sourced as an SDK. The four apps here were each built to prove something about the framework, and they are the wrong front door for a stranger: the household example is a household scheduling domain with temporal effectivity and recurrence, the bid desk is a tender-response coverage problem, the coaching example is a three-lens chain across a football club. Every one of them asks a reader to learn a domain before they can learn the framework.\n\nThe first example somebody meets should be a TODO APP — not because it is impressive but because nobody has to be taught what it is. A task, a list, done or not, maybe a due date. Small enough to read in one sitting, and still enough to show the whole shape: a kind, a mutation, an invariant that names its repair, a lens, an agent seat.\n\nThe four existing apps stay as fixtures — they drive the browser harnesses and they prove claims no toy can — but they should stop being what the README points at first, and the household example and the coaching example are being rebuilt in their own repositories anyway."
-lastModified: "2026-09-13T07:36:31.744Z"
+lastModified: "2026-09-28T04:00:00.000Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -25,6 +25,8 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
+| [A plot on the garden map is sized to the ground it lies on, contents included](./a-plot-on-the-garden-map-is-sized-to.md) | completed |
+| [The landing page is live all the way down, and a plot can be sown from its own page](./the-landing-page-is-live-all-the-way.md) | completed |
 | [The launcher is the front door: the platform's real capabilities, in onboarding order, each shown by a demo at a stop](./the-launcher-is-the-front-door-the/index.md) | completed |
 | [A third demo, the product-grade one: Rota — branded, permissioned, remembered, embedded, with the installation, a profile and the studio](./a-third-demo-the-product-grade-one.md) | completed |
 | [Product-grade routed faces: Things and Rota wear refined, interactive Pages that look shipped](./product-grade-routed-faces-things-and.md) | completed |

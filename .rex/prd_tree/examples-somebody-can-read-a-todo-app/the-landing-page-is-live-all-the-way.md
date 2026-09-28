@@ -1,0 +1,26 @@
+---
+id: "c3e8a5d2-9f1b-4d7e-8a2c-3b4d5e6f7a8b"
+level: "task"
+title: "The landing page is live all the way down, and a plot can be sown from its own page"
+status: "completed"
+priority: "medium"
+tags:
+  - "site"
+  - "seedbed"
+  - "embed"
+  - "bug"
+source: "Nick, 2026-09-28: \"why am i not able to sow something here? this is in the docs landing page\" and \"why do we have any photographed pages on that page.. as opposed to everything being live rendered and interactive? any good reason?\""
+startedAt: "2026-09-28T03:00:00.000Z"
+completedAt: "2026-09-28T04:00:00.000Z"
+endedAt: "2026-09-28T04:00:00.000Z"
+resolutionType: "code-change"
+resolutionDetail: "sow declares the plot as its subject, so a selected plot is offered it with the plot prefilled on both faces (the almanac's \"Sow something here\" section had rendered a heading over nothing, because the derivation offers a selected node only subject-bearing acts). The three photographs on docs/site/index.html — the todo week lens, the coverage matrix, a selected task — were the only stills left because the site bundle carries seedbed and not todo; each is now live and makes the same claim: the lenses section shows the calendar in BOTH domains — the rota's own week, mounted from apps/rota's declaration, seed and views which now ride in the site bundle (+24 KB), beside the garden's season (chapter 16) — then the coverage matrix (10), all three on the embed's new picture face (one named lens, no bar, rail or standing), because three whole apps stacked in one column were three windows with a calendar somewhere in each; the permissions section shows a selected plot with its acts and seats (7). Two framework fixes that surfaced: the embed resolves a place stop (#view=the-season) as the URL sync does; the board lens sizes by width in a room with no height, where it had collapsed to six by four pixels. verify-site expects ten live frames on the page and waits for [data-graview-app] frames as it does chapters."
+acceptanceCriteria:
+  - "On the landing page's almanac, a plot's page offers Sow something with the plot prefilled, for a seat the policy allows"
+  - "No photograph remains on docs/site/index.html; every visual is live at a stop that shows the claim beside it, and the one-lens-two-domains claim shows both domains"
+  - "An embed given data-stop=\"#view=<place>\" opens on that place with its pill pressed; given face=\"picture\" it shows that lens alone"
+  - "The board lens has a readable size inside a chapter embed at 320px"
+description: "There was no good reason for the stills: they were todo-app photographs from before the chapters bundle existed, and the garden has the same lenses. The sow gap was a declaration gap surfaced by the almanac's page being derivation-driven."
+lastModified: "2026-09-28T04:00:00.000Z"
+lastModifiedBy: "Nick Daniel <nick@endash.us>"
+---
