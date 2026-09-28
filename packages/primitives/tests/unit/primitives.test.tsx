@@ -282,6 +282,8 @@ describe("the timeline lens", () => {
     expect(imports.sort()).toEqual([
       "../default-views.js",
       "../primitives/index.js",
+      // The arranging hook is exported from the package: an app's lens reaches it the same way.
+      "./arranging.js",
       "@graview/core",
       "@graview/react",
       "react",

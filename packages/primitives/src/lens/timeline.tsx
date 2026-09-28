@@ -1,4 +1,5 @@
-import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { labelOf, type AnySchema, type ArrangeOption, type Arrangement, type NodeOfSchema } from "@graview/core";
+import { useArranging } from "./arranging.js";
 import { useGraview, type ViewProps } from "@graview/react";
 import type { CSSProperties, ReactElement } from "react";
 import { hueFor } from "../default-views.js";
@@ -61,6 +62,13 @@ export interface TimelineOptions {
    * a wall of empty evening. The right answer is the app's, not the lens's.
    */
   readonly minWindow?: number;
+  /**
+   * Whether the spans may be sorted and filtered from the picture. On
+   * unless declined; a timeline's rows are its columns, so grouping is
+   * never offered. `arrangedBy` is what it opens arranged by.
+   */
+  readonly arranging?: ArrangeOption;
+  readonly arrangedBy?: Arrangement;
 }
 
 export interface PlacedSpan {
@@ -669,7 +677,22 @@ export function createTimelineLens<S extends AnySchema>(
     // rendered through the registry ran without it and every schema-aware
     // decision inside quietly took its fallback path.
     const { store } = useGraview<S>();
-    return <TimelineView<S> schema={store.schema} {...props} options={options} />;
+    const bound = Object.keys(options.bindings);
+    const { nodes, bar } = useArranging<S>(props, {
+      ...(options.arranging !== undefined ? { allow: options.arranging } : {}),
+      lensAllows: { group: false },
+      ...(options.arrangedBy ? { arrangedBy: options.arrangedBy } : {}),
+      ...(bound[0] ? { kind: (props.nodes ?? []).find((node) => bound.includes(String(node.kind)))?.kind as string | undefined ?? bound[0] } : {}),
+    });
+    const view = <TimelineView<S> schema={store.schema} {...props} nodes={nodes} options={options} />;
+    return bar ? (
+      <div style={{ display: "grid", gap: 6, height: "100%", minHeight: 0, gridTemplateRows: "auto 1fr" }}>
+        {bar}
+        {view}
+      </div>
+    ) : (
+      view
+    );
   }
 
   return {

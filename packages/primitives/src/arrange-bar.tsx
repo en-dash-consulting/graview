@@ -9,8 +9,8 @@ import {
   type ArrangeOffer,
   type ArrangeOption,
   type Arrangement,
+  type ArrangeGraph,
   type Condition,
-  type GraphReader,
 } from "@graview/core";
 import { withWithin, type ViewState } from "@graview/layout";
 import type { CSSProperties, ReactNode } from "react";
@@ -29,7 +29,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 export interface ArrangeBarProps {
   readonly schema: AnySchema;
-  readonly graph: GraphReader;
+  readonly graph: ArrangeGraph;
   readonly kind: string;
   readonly arrangement: Arrangement;
   readonly onChange: (next: Arrangement) => void;
@@ -44,20 +44,33 @@ export interface ArrangeBarProps {
   readonly style?: CSSProperties;
 }
 
+/*
+ * NOTHING HERE MAY WIDEN THE PAGE. A select is as wide as its longest
+ * option, and at a reader's own text size — 32px root on a 390px phone —
+ * "as declared (due date)" alone pushed the tasks page sideways. Every
+ * control caps at the row's width and the row wraps; a long option is cut
+ * inside its box rather than carried outside it.
+ */
 const control: CSSProperties = {
   font: "inherit",
   fontSize: "0.875rem",
   minHeight: 32,
+  minWidth: 0,
+  maxWidth: "100%",
   padding: "4px 8px",
   borderRadius: 8,
   border: "1px solid var(--graview-edge)",
   background: "var(--graview-panel)",
   color: "var(--graview-ink)",
+  textOverflow: "ellipsis",
 };
 const label: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
+  flexWrap: "wrap",
   gap: 6,
+  minWidth: 0,
+  maxWidth: "100%",
   fontSize: "0.875rem",
   color: "var(--graview-ink-muted)",
 };
@@ -66,7 +79,7 @@ const chip: CSSProperties = {
   alignItems: "center",
   gap: 6,
   minHeight: 28,
-  padding: "2px 6px 2px 10px",
+  padding: "0 2px 0 10px",
   borderRadius: 999,
   border: "1px solid var(--graview-edge)",
   background: "var(--graview-panel)",
@@ -75,7 +88,7 @@ const chip: CSSProperties = {
 };
 
 /** The far ends an edge condition may name, from the graph. */
-function farEndsOf(schema: AnySchema, graph: GraphReader, offer: ArrangeOffer): readonly { id: string; label: string }[] {
+function farEndsOf(schema: AnySchema, graph: ArrangeGraph, offer: ArrangeOffer): readonly { id: string; label: string }[] {
   const kinds = offer.far ?? [];
   const seen = new Map<string, string>();
   const wanted = new Set(kinds);
@@ -87,7 +100,7 @@ function farEndsOf(schema: AnySchema, graph: GraphReader, offer: ArrangeOffer): 
 }
 
 /** A condition in words: "Due date before 2026-10-01", "The list it is on: Today", "Past". */
-export function sayCondition(schema: AnySchema, graph: GraphReader, offers: Arrangeable, condition: Condition): string {
+export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arrangeable, condition: Condition): string {
   const offer = offers.filters.find((candidate) => candidate.key === condition.key);
   if (!offer) return `${condition.key}: ${condition.value}`;
   if (offer.about === "is") return condition.value.charAt(0).toUpperCase() + condition.value.slice(1);
@@ -132,7 +145,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
       data-testid={`${id}-bar`}
       role="group"
       aria-label="Arrange"
-      style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 14px", ...props.style }}
+      style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 14px", minWidth: 0, maxWidth: "100%", ...props.style }}
     >
       {words ? (
         <label style={label}>
@@ -145,7 +158,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
             value={arrangement.query ?? ""}
             placeholder="Find…"
             onChange={(event) => set({ query: event.target.value.length > 0 ? event.target.value : undefined })}
-            style={{ ...control, minWidth: 140 }}
+            style={{ ...control, width: "min(100%, 220px)" }}
           />
         </label>
       ) : null}
@@ -160,7 +173,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
                 sort: event.target.value ? { by: event.target.value, direction: arrangement.sort?.direction ?? "asc" } : undefined,
               })
             }
-            style={control}
+            style={{ ...control, maxWidth: "min(100%, 60vw)" }}
           >
             <option value="">{offers.natural ? `as declared (${offers.sorts.find((o) => o.key === offers.natural!.by)?.label.toLowerCase() ?? offers.natural.by})` : "as they come"}</option>
             {offers.sorts.map((offer) => (
@@ -190,7 +203,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
             data-testid={`${id}-group`}
             value={arrangement.group?.by ?? ""}
             onChange={(event) => set({ group: event.target.value ? { by: event.target.value } : undefined })}
-            style={control}
+            style={{ ...control, maxWidth: "min(100%, 60vw)" }}
           >
             <option value="">nothing</option>
             {offers.groups.map((offer) => (
@@ -225,7 +238,8 @@ export function ArrangeBar(props: ArrangeBarProps) {
                 type="button"
                 aria-label={`Remove: ${sayCondition(schema, graph, offers, condition)}`}
                 onClick={() => without(at)}
-                style={{ font: "inherit", border: 0, background: "transparent", color: "inherit", cursor: "pointer", padding: "0 4px", lineHeight: 1 }}
+                // A control big enough to hit: 24px is the floor the face is held to, and a bare "×" glyph is 16 by 13.
+                style={{ font: "inherit", border: 0, background: "transparent", color: "inherit", cursor: "pointer", padding: 0, lineHeight: 1, minWidth: 24, minHeight: 24, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 999 }}
               >
                 ×
               </button>
@@ -253,7 +267,7 @@ function AddCondition({
   onAdd,
 }: {
   schema: AnySchema;
-  graph: GraphReader;
+  graph: ArrangeGraph;
   offers: Arrangeable;
   testId: string;
   onAdd: (condition: Condition) => void;
@@ -299,7 +313,7 @@ function AddCondition({
         }}
         style={control}
       >
-        <option value="">add a condition…</option>
+        <option value="">only…</option>
         {groups.map((group) => (
           <optgroup key={group} label={group}>
             {entries

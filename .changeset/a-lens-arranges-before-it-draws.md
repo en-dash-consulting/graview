@@ -1,0 +1,5 @@
+---
+"@graview/primitives": patch
+---
+
+A lens arranges before it draws. `useArranging(props, options)` reads the arrangement out of the stop, applies it to the nodes a lens is about to draw, and hands back the row to draw above them; the board, the timeline and the calendar take it. Each says what it has no place for — a board has nowhere to group, a timeline's rows are its columns, a calendar's order is its dates — and an app declines the rest with `arranging: false` (or per part) on the lens options, and says what a picture opens arranged by with `arrangedBy`. The board arranges its occupants and keeps every slot, drawing them within a slot in the order the arrangement put them; the timeline filters and sorts its spans; the calendar filters everywhere and, in the agenda, groups the entries under headings by a far end. Rota's fortnight opens its agenda by where each shift happens. Things' own list page arranges through the same module under the same words, opening its tasks by list, open ones only, by name.

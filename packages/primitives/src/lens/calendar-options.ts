@@ -1,3 +1,4 @@
+import type { ArrangeOption, Arrangement } from "@graview/core";
 
 export interface CalendarRoles {
   /** Field holding the date (or date-time) the entry starts. */
@@ -100,6 +101,13 @@ export interface CalendarOptions {
   readonly hueOf?: (entry: PlacedEntry) => number;
   /** How many entries a cell shows before the rest become a count. Per grain, by default. */
   readonly perCell?: number;
+  /**
+   * Whether the entries may be filtered — and, in the agenda, grouped —
+   * from the picture. On unless declined; a calendar's order is its dates,
+   * so sorting is never offered. `arrangedBy` is what it opens arranged by.
+   */
+  readonly arranging?: ArrangeOption;
+  readonly arrangedBy?: Arrangement;
 }
 
 export interface PlacedEntry {

@@ -204,7 +204,7 @@ try {
   await desk2.goto("http://localhost:5193/pages/tasks?today=2026-09-01&fresh=1", { waitUntil: "networkidle" });
   await desk2.waitForSelector('[data-testid="list-controls"]', { timeout: 20_000 });
   await desk2.selectOption('[data-testid="list-group"]', "due");
-  await desk2.fill('[data-testid="list-filter"]', "the");
+  await desk2.fill('[data-testid="list-query"]', "the");
   await desk2.waitForTimeout(400);
   const arranged = await desk2.evaluate(() => ({
     url: location.search,
@@ -216,7 +216,7 @@ try {
   await desk2.waitForTimeout(300);
   const reopened = await desk2.evaluate(() => ({
     group: document.querySelector('[data-testid="list-group"]')?.value,
-    query: document.querySelector('[data-testid="list-filter"]')?.value,
+    query: document.querySelector('[data-testid="list-query"]')?.value,
     rows: document.querySelectorAll('[data-testid="records"] li').length,
   }));
   report.checks.aListYouArrangedIsALinkYouCanSend = {
@@ -231,7 +231,7 @@ try {
   };
 
   /* An empty state that says what to do next, rather than a blank page. */
-  await desk2.fill('[data-testid="list-filter"]', "zzzz");
+  await desk2.fill('[data-testid="list-query"]', "zzzz");
   await desk2.waitForTimeout(400);
   const empty = await desk2.evaluate(() => ({
     said: document.querySelector('[data-testid="empty"]')?.textContent?.trim() ?? null,

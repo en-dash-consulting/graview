@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-28T20:38:10.560Z",
+  "at": "2026-09-28T20:57:35.348Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -72,7 +72,7 @@
     },
     "aListYouArrangedIsALinkYouCanSend": {
       "arranged": {
-        "url": "?today=2026-09-01&group=due&q=the",
+        "url": "?today=2026-09-01&sort=label&filter=done%3Afalse&group=due&q=the",
         "rows": 9
       },
       "reopened": {

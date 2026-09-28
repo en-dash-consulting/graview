@@ -1,4 +1,5 @@
-import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { labelOf, type AnySchema, type ArrangeOption, type Arrangement, type NodeOfSchema } from "@graview/core";
+import { useArranging } from "./arranging.js";
 import { useGraview, useViolations, type ViewProps } from "@graview/react";
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
@@ -66,6 +67,13 @@ export interface BoardOptions {
    * itself — Load map wants the component, not the sole owner.
    */
   readonly pickTarget?: "slot" | "occupant";
+  /**
+   * Whether the occupants may be sorted and filtered from the picture.
+   * On unless declined; a board has no place to GROUP, so that part is
+   * never offered. `arrangedBy` is what it opens arranged by.
+   */
+  readonly arranging?: ArrangeOption;
+  readonly arrangedBy?: Arrangement;
   /**
    * HOW THE SLOTS ARE LAID OUT. Default `"exact"`: each slot at the point
    * its x and y name, which is a pitch, a seating plan, a warehouse floor —
@@ -149,6 +157,9 @@ export function buildBoard<S extends AnySchema>(
 
   const filling = edges.filter((edge) => edge.kind === options.fill);
   const byId = new Map(nodes.map((node) => [node.id, node]));
+  // Occupants are drawn in the order the nodes came: an arrangement that
+  // sorted them holds within a slot, and the graph's order otherwise.
+  const rank = new Map(nodes.map((node, index) => [node.id, index]));
 
   const slots = slotNodes
     .map((node): BoardSlot => {
@@ -158,6 +169,7 @@ export function buildBoard<S extends AnySchema>(
         .filter((candidate) => (fromOccupant ? candidate.to : candidate.from) === node.id)
         .map((edge) => byId.get(fromOccupant ? edge.from : edge.to))
         .filter((occupant): occupant is NodeOfSchema<S> => occupant !== undefined)
+        .sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0))
         .map((occupant) => ({ id: occupant.id, label: name(occupant) }));
       return {
         id: node.id,
@@ -194,10 +206,13 @@ export function buildBoard<S extends AnySchema>(
 export interface BoardViewProps<S extends AnySchema> extends ViewProps<S> {
   readonly options: BoardOptions;
   readonly schema?: S;
+  /** The occupants to draw, in the order to draw them. Everyone, when unsaid. */
+  readonly occupants?: readonly string[];
 }
 
 export function BoardView<S extends AnySchema>({
   nodes,
+  occupants,
   label,
   fidelity,
   mode,
@@ -217,8 +232,20 @@ export function BoardView<S extends AnySchema>({
    * aggregate; a board never can. The aggregate still decides what is
    * focused; it just does not decide what can be looked up.
    */
+  /*
+   * WHO IS DRAWN. Every slot, always — a filter that hid a seat would redraw
+   * the room — and the occupants an arrangement kept, in the order it put
+   * them; everyone, when nothing was asked.
+   */
+  const everyone = store.graph.allNodes();
+  const forBoard = occupants
+    ? [
+        ...everyone.filter((node) => node.kind === options.slots),
+        ...occupants.map((id) => store.graph.getNode(id)).filter((node): node is NonNullable<typeof node> => node !== undefined),
+      ]
+    : everyone;
   const board = buildBoard<S>(
-    store.graph.allNodes(),
+    forBoard,
     store.graph.allEdges(),
     options,
     schema,
@@ -1022,7 +1049,41 @@ export function createBoardLens<S extends AnySchema>(options: BoardOptions): Boa
     // rendered through the registry ran without it and every schema-aware
     // decision inside quietly took its fallback path.
     const { store } = useGraview<S>();
-    return <BoardView<S> schema={store.schema} {...props} options={options} />;
+    /*
+     * THE OCCUPANTS ARRANGE; THE SLOTS STAY. A filter that hid a slot would
+     * redraw the pitch; a sort within a slot's occupants and a filter over
+     * who is shown are what a board has room for.
+     */
+    /*
+     * The occupants come from the STORE, not from `props.nodes`: in a scene
+     * a board stands for its slots' kind, so the nodes it is handed are the
+     * seats, and the people in them are found by the fill edge.
+     */
+    const state = buildBoard<S>(store.graph.allNodes(), store.graph.allEdges(), options, store.schema);
+    const seated = [...state.slots.flatMap((slot) => slot.occupants.map((occupant) => occupant.id)), ...state.spare.map((spare) => spare.id)];
+    const subject = seated.map((id) => store.graph.getNode(id)).filter((node): node is NonNullable<typeof node> => node !== undefined);
+    const { arranged, bar } = useArranging<S>(props, {
+      ...(options.arranging !== undefined ? { allow: options.arranging } : {}),
+      lensAllows: { group: false },
+      ...(options.arrangedBy ? { arrangedBy: options.arrangedBy } : {}),
+      subject,
+    });
+    const view = (
+      <BoardView<S>
+        schema={store.schema}
+        {...props}
+        options={options}
+        {...(options.arranging === false ? {} : { occupants: arranged.nodes.map((node) => node.id) })}
+      />
+    );
+    return bar ? (
+      <div style={{ display: "grid", gap: 6, height: "100%", minHeight: 0, gridTemplateRows: "auto 1fr" }}>
+        {bar}
+        {view}
+      </div>
+    ) : (
+      view
+    );
   }
 
   return {

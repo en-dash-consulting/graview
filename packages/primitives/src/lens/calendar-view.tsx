@@ -1,7 +1,8 @@
 import type { AnySchema, NodeOfSchema } from "@graview/core";
 import { withWithin } from "@graview/layout";
 import { useGraview, useNavigation, type ViewProps } from "@graview/react";
-import { useRef, useState, type ReactElement } from "react";
+import { useArranging } from "./arranging.js";
+import { useRef, useState, type ReactElement, type ReactNode } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
 import { addDays, addMonths, daysBetween, minutesOf } from "./calendar-dates.js";
@@ -52,11 +53,30 @@ export function createCalendarLens<S extends AnySchema>(options: CalendarOptions
   const bound = (opening?: CalendarRange) =>
     function Bound(props: ViewProps<S>) {
       const { store } = useGraview<S>();
+      const { view } = useNavigation();
+      const here = opening ? { ...options, range: opening } : options;
+      const range = (view.within?.["range"] as CalendarRange | undefined) ?? here.range ?? "month";
+      /*
+       * FILTERED EVERYWHERE, GROUPED WHERE THERE IS A PLACE. A month grid has
+       * no room for group headings; the agenda is a list and does. Sorting
+       * is the dates' business and is never offered.
+       */
+      const kinds = Object.keys(options.bindings);
+      const { nodes, arranged, arrangement, bar } = useArranging<S>(props, {
+        ...(options.arranging !== undefined ? { allow: options.arranging } : {}),
+        lensAllows: { sort: false, group: range === "agenda" },
+        ...(options.arrangedBy ? { arrangedBy: options.arrangedBy } : {}),
+        ...(kinds[0] ? { kind: ((props.nodes ?? []).find((node) => kinds.includes(String(node.kind)))?.kind as string | undefined) ?? kinds[0] } : {}),
+      });
+      const groups = range === "agenda" && arranged.grouped && arrangement.group ? arranged.groups.map((group) => ({ label: group.label, ids: new Set(group.nodes.map((node) => node.id)) })) : undefined;
       return (
         <CalendarView<S>
           schema={store.schema}
           {...props}
-          options={opening ? { ...options, range: opening } : options}
+          nodes={nodes}
+          options={here}
+          {...(bar ? { bar } : {})}
+          {...(groups ? { groups } : {})}
         />
       );
     };
@@ -81,6 +101,10 @@ interface CalendarViewProps<S extends AnySchema> extends ViewProps<S> {
   readonly schema?: S;
   /** Kept for a host driving the lens directly, outside a scene. */
   readonly selectedIds?: readonly string[];
+  /** The arrangement row, drawn in the calendar's own chrome. */
+  readonly bar?: ReactNode;
+  /** The agenda's groups, when one was asked for: a heading each, the entries under it. */
+  readonly groups?: readonly { readonly label: string; readonly ids: ReadonlySet<string> }[];
 }
 
 function CalendarView<S extends AnySchema>({
@@ -93,6 +117,8 @@ function CalendarView<S extends AnySchema>({
   selectedIds = [],
   implicated = [],
   flagged = [],
+  bar,
+  groups,
 }: CalendarViewProps<S>) {
   /*
    * WHERE THE CALENDAR IS, IN THE STOP.
@@ -334,7 +360,27 @@ function CalendarView<S extends AnySchema>({
           </nav>
         ) : null}
 
-        {range === "agenda" ? (
+        {bar}
+        {range === "agenda" && groups ? (
+          <div data-testid="calendar-groups" style={{ display: "grid", gap: 10, minHeight: 0, overflow: "auto" }}>
+            {groups.map((group) => (
+              <section key={group.label} data-testid="calendar-group" style={{ display: "grid", gap: 4 }}>
+                <h3 style={{ margin: 0, fontSize: "0.8125rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--graview-ink-muted)" }}>
+                  {group.label} <span style={{ fontWeight: 400 }}>{group.ids.size}</span>
+                </h3>
+                <Agenda
+                  days={span.cells.map((cell) => cell.from)}
+                  entries={entries.filter((entry) => group.ids.has(entry.id))}
+                  today={options.today}
+                  emphasisOf={emphasisOf}
+                  broken={broken}
+                  hue={hue}
+                  onMove={(id, day) => moveTo(id, { from: day, to: day, label: day }, "day")}
+                />
+              </section>
+            ))}
+          </div>
+        ) : range === "agenda" ? (
           <Agenda
             days={span.cells.map((cell) => cell.from)}
             entries={entries}

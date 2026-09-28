@@ -78,6 +78,37 @@ const openProfile = async (page) => {
       opened.installation,
   };
 
+  /* ------------------------- the agenda opens by where each shift happens */
+  /*
+   * The fortnight declares `arrangedBy: { group: { by: "held-at" } }`, so
+   * opened as a list it reads by location before anyone touches the row;
+   * and the row's own words in the stop override it — grouped by who is
+   * covering, the same picture reads by volunteer. An arranged picture is a
+   * link, opened cold.
+   */
+  const agendaSays = async (within) => {
+    await open(`/?${DAY}&fresh=1#focus=aggregate:shift&in.view=the-fortnight&in.range=agenda${within}`);
+    await page.waitForTimeout(500);
+    return page.evaluate(() => ({
+      groups: [...document.querySelectorAll('[data-testid="calendar-group"] h3')].map((h) => (h.textContent ?? "").trim()),
+      groupedBy: document.querySelector('[data-testid="arrange-group"]')?.value ?? null,
+      sortOffered: document.querySelector('[data-testid="arrange-sort"]') !== null,
+    }));
+  };
+  const byPlace = await agendaSays("");
+  const byPerson = await agendaSays("&in.group=covered-by&in.filter=is:any");
+  report.checks.theAgendaOpensByWhereEachShiftHappens = {
+    byPlace,
+    byPerson,
+    ok:
+      byPlace.groupedBy === "held-at" &&
+      byPlace.groups.length >= 2 &&
+      !byPlace.sortOffered &&
+      byPerson.groupedBy === "covered-by" &&
+      byPerson.groups.length >= 2 &&
+      byPerson.groups.join(" ") !== byPlace.groups.join(" "),
+  };
+
   /* ------------------------------- three seats, and the third is the point */
   const seatSays = async (as) => {
     await open(`/?${DAY}&fresh=1&as=${as}#focus=aggregate:shift&sel=s-fri-repair`);

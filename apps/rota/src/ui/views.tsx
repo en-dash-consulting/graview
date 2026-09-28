@@ -49,6 +49,8 @@ export const week = createTimelineLens<S>({
 /** And the month, over the dates the shifts actually fall on. */
 export const month = createCalendarLens<S>({
   bindings: { shift: { start: "on", label: "label" } },
+  // Opened as a list, the shifts read by where they happen.
+  arrangedBy: { group: { by: "held-at" } },
   today: EXAMPLE_TODAY,
   range: "month",
 });

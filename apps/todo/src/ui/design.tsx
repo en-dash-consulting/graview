@@ -1,5 +1,5 @@
-import { humaniseField, labelOf, type Principal, type Violation } from "@graview/core";
-import { KindFigure, useMarkup } from "@graview/primitives";
+import { admitArrangement, arrange, arrangeable, formatArrangement, humaniseField, labelOf, parseArrangement, type Arrangement, type Principal, type Violation } from "@graview/core";
+import { ArrangeBar, KindFigure, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,
   StartFreshLink,
@@ -52,18 +52,6 @@ type Ctx = PageContext<S>;
  * on a phone; drawn the way the framework draws its own selects, it is
  * the same control the rest of the face has.
  */
-const filterSelect: React.CSSProperties = {
-  font: "inherit",
-  minHeight: 24,
-  boxSizing: "border-box",
-  padding: "3px 24px 3px 8px",
-  borderRadius: 8,
-  border: "1px solid var(--graview-edge)",
-  background: "var(--graview-panel)",
-  color: "var(--graview-ink)",
-  appearance: "none",
-};
-
 const CSS = `
 .th {
   --th-paper: color-mix(in oklab, var(--graview-ground) 92%, var(--graview-accent) 8%);
@@ -427,28 +415,48 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
     [store, kind, principal, context.invariantContext, tick],
   );
 
-  const group = params.get("group") ?? (kind === "task" ? "list" : "none");
-  const sort = params.get("sort") ?? "name";
-  const query = params.get("q") ?? "";
-  const show = params.get("show") ?? (kind === "task" ? "open" : "all");
-  const set = (key: string, value: string) => {
-    const next = new URLSearchParams(params);
-    if (value === "") next.delete(key);
-    else next.set(key, value);
-    setParams(next, { replace: false });
+  /*
+   * ARRANGED THROUGH THE FRAMEWORK'S OWN MODULE, in its words. This page
+   * had a group select, a sort select, a show select and a search box of
+   * its own, each written for tasks and useless for lists. The offers now
+   * come from the declaration and the choice travels in the search as
+   * `sort`, `filter`, `group` and `q` — the same grammar every lens carries
+   * in its fragment — so a list you arranged is still a link you can send,
+   * and a person who arranged the week can ask the list the same thing.
+   * Things opens its tasks by list, open ones only, by name.
+   */
+  const offers = arrangeable(store.schema, kind);
+  const said = ["sort", "filter", "group", "q"].some((word) => params.get(word) !== null);
+  const opening: Arrangement =
+    kind === "task"
+      ? { group: { by: "holds" }, filter: [{ key: "done", value: "false" }], sort: { by: "label", direction: "asc" } }
+      : { sort: { by: "label", direction: "asc" } };
+  const asked = said
+    ? parseArrangement({
+        ...(params.get("sort") ? { sort: params.get("sort")! } : {}),
+        ...(params.get("filter") ? { filter: params.get("filter")! } : {}),
+        ...(params.get("group") ? { group: params.get("group")! } : {}),
+        ...(params.get("q") ? { q: params.get("q")! } : {}),
+      })
+    : opening;
+  const arrangement = admitArrangement(asked, offers).arrangement;
+  const rearrange = (next: Arrangement) => {
+    const words = formatArrangement(next);
+    const search = new URLSearchParams(params);
+    for (const word of ["sort", "filter", "group", "q"] as const) {
+      if (words[word]) search.set(word, words[word]!);
+      else search.delete(word);
+    }
+    // Everything cleared is still a choice, and not the opening one.
+    if (!words.sort && !words.filter && !words.group && !words.q) search.set("filter", "is:any");
+    setParams(search, { replace: false });
   };
 
   const all = store.graph.nodesOfKind(kind as never) as NamedNode[];
   const named = (node: NamedNode) => labelOf(store.schema.tryDefinition(kind), node as never);
-  const matching = all
-    .filter((node) => (show === "open" ? (node as TaskNode).done !== true : true))
-    .filter((node) => query === "" || named(node).toLowerCase().includes(query.toLowerCase()));
-  const sorted = [...matching].sort((a, b) =>
-    sort === "due"
-      ? ((a as TaskNode).due ?? "9999").localeCompare((b as TaskNode).due ?? "9999")
-      : named(a).localeCompare(named(b)),
-  );
-  const groups = groupBy(sorted, group, store, kind);
+  const arranged = arrange(all, arrangement, { schema: store.schema, graph: store.graph, flagged: new Set(flagged), today: now });
+  const shown = arranged.nodes;
+  const groups = arranged.grouped ? arranged.groups.map((group) => ({ title: group.label, members: group.nodes })) : [{ title: plural(store, kind), members: shown }];
 
   return (
     <>
@@ -456,76 +464,43 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
         <p className="th-eyebrow">{plural(store, kind)}</p>
         <h1 className="th-h1">{plural(store, kind)}</h1>
         <p className="th-lede">
-          {matching.length} of {all.length} shown.
+          {shown.length} of {all.length} shown.
         </p>
       </header>
 
       <div className="th-section">
         <div className="th-controls" data-testid="list-controls">
-          <label>
-            Find
-            <input
-              type="search"
-              data-testid="list-filter"
-              value={query}
-              placeholder={`Search ${plural(store, kind).toLowerCase()}`}
-              onChange={(event) => set("q", event.target.value)}
-            />
-          </label>
-          {kind === "task" ? (
-            <>
-              <label>
-                Show
-                <select data-testid="list-show" style={filterSelect} value={show} onChange={(event) => set("show", event.target.value)}>
-                  <option value="open">Open</option>
-                  <option value="all">Everything</option>
-                </select>
-              </label>
-              <label>
-                Group
-                <select data-testid="list-group" style={filterSelect} value={group} onChange={(event) => set("group", event.target.value)}>
-                  <option value="list">By list</option>
-                  <option value="due">By date</option>
-                  <option value="none">Not at all</option>
-                </select>
-              </label>
-              <label>
-                Sort
-                <select data-testid="list-sort" style={filterSelect} value={sort} onChange={(event) => set("sort", event.target.value)}>
-                  <option value="name">By name</option>
-                  <option value="due">By date</option>
-                </select>
-              </label>
-            </>
-          ) : null}
+          <ArrangeBar schema={store.schema} graph={store.graph} kind={kind} arrangement={arrangement} onChange={rearrange} testId="list" />
         </div>
 
-        {sorted.length === 0 ? (
+        {shown.length === 0 ? (
           <Empty
             said={
-              query === ""
-                ? `No ${plural(store, kind).toLowerCase()} yet.`
-                : `Nothing here is called “${query}”.`
+              arrangement.query
+                ? `Nothing here is called “${arrangement.query}”.`
+                : arrangement.filter?.length
+                  ? `None of the ${plural(store, kind).toLowerCase()} fit.`
+                  : `No ${plural(store, kind).toLowerCase()} yet.`
             }
             next={
-              query === "" ? null : (
-                <button type="button" className="th-btn" onClick={() => set("q", "")}>
-                  Clear the search
+              arrangement.query || arrangement.filter?.length ? (
+                <button type="button" className="th-btn" onClick={() => rearrange({ ...(arrangement.sort ? { sort: arrangement.sort } : {}), ...(arrangement.group ? { group: arrangement.group } : {}) })}>
+                  {arrangement.query ? "Clear the search" : "Show every one"}
                 </button>
-              )
+              ) : null
             }
           />
         ) : (
           groups.map(({ title, members }) => (
-            <section key={title} className="th-section" style={{ marginTop: 0 }}>
-              {groups.length > 1 ? (
+            <section key={title} className="th-section" style={{ marginTop: 0 }} data-testid={arranged.grouped ? "list-group" : undefined}>
+              {groups.length > 1 || arranged.grouped ? (
                 <header>
                   <h2 className="th-h2">{title}</h2>
                   <span className="th-quiet">{members.length}</span>
                 </header>
               ) : null}
               {kind === "task" ? (
-                <Rows tasks={members as TaskNode[]} context={context} flagged={flagged} now={now} />
+                <Rows tasks={[...members] as unknown as TaskNode[]} context={context} flagged={flagged} now={now} />
               ) : (
                 <ul className="th-list" data-testid="records">
                   {members.map((node) => (
@@ -1124,40 +1099,6 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const shortDate = (day: string): string => `${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1]}`;
 const longDate = (day: string): string =>
   `${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1]} ${day.slice(0, 4)}`;
-
-/** The groups a list is shown in, derived rather than written per kind. */
-function groupBy(
-  nodes: readonly NamedNode[],
-  group: string,
-  store: Ctx["store"],
-  kind: string,
-): readonly { title: string; members: readonly NamedNode[] }[] {
-  if (group === "none" || kind !== "task") return [{ title: plural(store, kind), members: nodes }];
-  if (group === "due") {
-    const by = new Map<string, NamedNode[]>();
-    for (const node of nodes) {
-      const due = (node as TaskNode).due;
-      const at = due ? longDate(due) : "No date";
-      by.set(at, [...(by.get(at) ?? []), node]);
-    }
-    return [...by.entries()].sort(([a], [b]) => (a === "No date" ? 1 : b === "No date" ? -1 : a.localeCompare(b))).map(([title, members]) => ({ title, members }));
-  }
-  const lists = store.graph.nodesOfKind("list") as NamedNode[];
-  const held = new Map<string, NamedNode[]>();
-  for (const list of lists) {
-    const on = store.graph.out(list.id, "holds").map((task) => task.id);
-    held.set(
-      labelOf(store.schema.tryDefinition("list"), list as never),
-      nodes.filter((node) => on.includes(node.id)),
-    );
-  }
-  const placed = new Set([...held.values()].flat().map((node) => node.id));
-  const loose = nodes.filter((node) => !placed.has(node.id));
-  return [
-    ...[...held.entries()].filter(([, members]) => members.length > 0).map(([title, members]) => ({ title, members })),
-    ...(loose.length > 0 ? [{ title: "On no list", members: loose }] : []),
-  ];
-}
 
 /* ------------------------------------------------------------ the design */
 

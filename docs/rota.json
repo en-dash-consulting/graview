@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-28T20:13:22.419Z",
+  "at": "2026-09-28T20:53:15.099Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
@@ -12,6 +12,30 @@
       "studio": true,
       "installation": true,
       "connector": "",
+      "ok": true
+    },
+    "theAgendaOpensByWhereEachShiftHappens": {
+      "byPlace": {
+        "groups": [
+          "The hall 6",
+          "The kitchen 1",
+          "The store 1",
+          "The workshop 1",
+          "The yard 1"
+        ],
+        "groupedBy": "held-at",
+        "sortOffered": false
+      },
+      "byPerson": {
+        "groups": [
+          "Ada Nowak 2",
+          "Bo Ferreira 3",
+          "Cass Whitley 2",
+          "Without who is covering it 3"
+        ],
+        "groupedBy": "covered-by",
+        "sortOffered": false
+      },
       "ok": true
     },
     "aGradientRatherThanADifference": {
