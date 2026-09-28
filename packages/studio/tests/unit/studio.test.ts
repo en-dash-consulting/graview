@@ -125,7 +125,7 @@ describe("the declaration is a graph", () => {
         { kind: "repairs", from: "rule:every-plot-tended", to: "act:tend" },
         { kind: "lets", from: "grant:2", to: "role:gardener" },
         { kind: "may", from: "grant:2", to: "act:tend" },
-        { kind: "over", from: "grant:2", to: "declared:plot" },
+        { kind: "allows-on", from: "grant:2", to: "declared:plot" },
       ]),
     );
     expect(graph.nodes.find((node) => node.id === "grant:1")).toMatchObject({ allActs: true, everyone: false, allKinds: true });

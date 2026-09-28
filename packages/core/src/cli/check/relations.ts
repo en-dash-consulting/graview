@@ -49,6 +49,44 @@ export function checkReadings<S extends AnySchema>(ctx: CheckContext<S>): void {
   }
 }
 
+/**
+ * ONE EDGE NAME, ONE RELATION. Every surface treats an edge kind as a single
+ * relation: the connections on a record, the pages' groups, the captions
+ * over a band, the arrangement's `by:` all key on its name. Declared on two
+ * kinds with two sets of words — `by` on a song ("the artist whose song it
+ * is" / "their songs") and on an album ("the artist whose release it is" /
+ * "their releases") — the artist's page listed thirty-five songs and six
+ * albums together under "Their releases". Declaring the same relation from
+ * several kinds in the SAME words is fine and is left alone.
+ */
+export function checkEdgeNamesAgree<S extends AnySchema>(ctx: CheckContext<S>): void {
+  const { app, add } = ctx;
+  const declared = new Map<string, { kind: string; description?: string; inverse?: string }[]>();
+  for (const definition of app.schema.definitions) {
+    for (const [edgeKind, edge] of Object.entries(definition.edges)) {
+      const held = declared.get(edgeKind) ?? [];
+      held.push({ kind: definition.kind, ...(edge.description ? { description: edge.description } : {}), ...(edge.inverse ? { inverse: edge.inverse } : {}) });
+      declared.set(edgeKind, held);
+    }
+  }
+  for (const [edgeKind, ends] of declared) {
+    if (ends.length < 2) continue;
+    const words = new Set(ends.map((end) => `${end.description ?? ""}|${end.inverse ?? ""}`));
+    if (words.size < 2) continue;
+    const said = ends
+      .map((end) => `on ${withArticle(end.kind)} ("${end.description ?? edgeKind}" / "${end.inverse ?? edgeKind}")`)
+      .join(" and ");
+    const [first, second] = ends;
+    add({
+      severity: "error",
+      code: "edge-name-shared",
+      where: ends.map((end) => `defineNode("${end.kind}").edges["${edgeKind}"]`).join(", "),
+      message: `"${edgeKind}" is declared ${said}, but to every surface an edge name is ONE relation: from the far end both are listed together under ${JSON.stringify(first!.inverse ?? edgeKind)}, including the ${second!.kind === first!.kind ? "second" : `${second!.kind}s`}.`,
+      fix: `Give each relation its own name (say "${edgeKind}" on ${withArticle(first!.kind)} and "${second!.kind}-${edgeKind}" on ${withArticle(second!.kind)}), or give every declaration the same description and inverse.`,
+    });
+  }
+}
+
 export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, writtenByAModel: ReadonlySet<string>): void {
   const { app, kinds, mutations, add } = ctx;
   /*

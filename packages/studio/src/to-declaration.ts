@@ -281,7 +281,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
   const grants: Grant[] = read.ofKind("grant").map((g) => {
     const lets = read.out(g.id, "lets").map(name);
     const may = read.out(g.id, "may").map(name);
-    const over = read.out(g.id, "over").map((kind) => kindName.get(kind.id) ?? name(kind));
+    const over = read.out(g.id, "allows-on").map((kind) => kindName.get(kind.id) ?? name(kind));
     return {
       roles: bool(g, "everyone") ? "*" : lets,
       mutations: bool(g, "allActs") ? "*" : may,

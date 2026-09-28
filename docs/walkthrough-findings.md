@@ -2686,3 +2686,34 @@ two singles and thirty-five songs.
   a yes/no as "Explicit: yes". The card's chips and the list lines both
   read it. Criterion: primitives `a-chip-says-what-it-is.test.tsx` (the
   field's own reading, and the summary card's chips).
+
+### W-097 · One edge name on two kinds lists an artist's songs under "Their releases"
+- stage: B · face: both · width: any · scheme: both
+- expected: an artist's record says "their songs" of the songs and "their
+  releases" of the releases, as each declaration reads from the far end
+- actual: `by` was declared on a song ("the artist whose song it is" /
+  "their songs") and on an album ("the artist whose release it is" /
+  "their releases"). Every surface keys a relation on the edge name, so the
+  artist's card, its pages record ("SONGS AND ALBUMS · Their releases",
+  forty-one names) and the band's caption put both under whichever
+  declaration came first. `createSchema` also kept the FIRST declaration's
+  targets for the name, so `edgeAllowed` judged the second kind's edge
+  against the first kind's `to`. `graview check` said nothing. The
+  framework's own studio did the same: `over` on a rule ("the rules over
+  it") and on a grant ("who may act on it"), so a kind's page in the studio
+  listed its grants as rules.
+- where it belongs: `packages/core/src/cli/check/relations.ts` (a new
+  check), `packages/core/src/schema/schema.ts` (`edgeAllowed`, the edge's
+  `to`), `packages/studio/src/meta.ts` (the grant's edge is `allows-on`),
+  the `graview-node-kind` skill
+- harness that should have caught it: no app declared an edge name twice;
+  the check's own tests had the same name on two kinds only without words
+- status: fixed in "walkthrough: B · one edge name is one relation" ·
+  `graview check` refuses `edge-name-shared` when one name is declared on
+  several kinds in different words (the same words stay legal), naming both
+  readings and what the far end will say; `edgeAllowed` asks the declaring
+  kind's own declaration and an edge's `to` is every declaration's targets;
+  the studio's grant edge is renamed. Criteria: core `check.test.ts` "one
+  edge name is one relation" (refuses the discography's two `by`s, quiet on
+  identical words, each kind its own targets); the studio's own
+  `graview check` test now holds it to the same rule.

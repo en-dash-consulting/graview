@@ -95,10 +95,12 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
 
   const edgeInfo = new Map<string, EdgeKindInfo>();
   for (const [kind, { from, decl }] of edges) {
+    // Every declaring kind's targets, not only the first's.
+    const targets = from.map((one) => (byKind.get(one)!.edges[kind] as EdgeDeclaration).to);
     edgeInfo.set(kind, {
       kind,
       from,
-      to: decl.to,
+      to: targets.includes("*") ? "*" : [...new Set(targets.flat() as string[])],
       cardinality: decl.cardinality ?? "many",
       ...(decl.description === undefined ? {} : { description: decl.description }),
     });
@@ -133,10 +135,15 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
       return edgeInfo.get(kind);
     },
     edgeAllowed(kind, fromKind, toKind) {
-      const info = edgeInfo.get(kind);
-      if (!info) return false;
-      if (!info.from.includes(fromKind)) return false;
-      return info.to === "*" || info.to.includes(toKind);
+      /*
+       * Asked of the DECLARING kind's own declaration. An edge name two
+       * kinds both declare kept the first one's targets for both, so the
+       * second kind's edge was refused to its own declared targets and
+       * allowed to the first kind's.
+       */
+      const declared = byKind.get(fromKind)?.edges[kind] as EdgeDeclaration | undefined;
+      if (!declared) return false;
+      return declared.to === "*" || declared.to.includes(toKind);
     },
     parseNode(node) {
       const kind = (node as { kind?: unknown })?.kind;

@@ -180,7 +180,8 @@ export const grantNode = defineNode("grant", {
   edges: {
     lets: { to: ["role"], description: "the roles it lets", inverse: "what they are let do" },
     may: { to: ["act"], description: "the acts it allows", inverse: "who may take it" },
-    over: { to: ["kind"], description: "the kinds it allows those acts on", inverse: "who may act on it" },
+    // Its own name: `over` is the rule's, and one name is one relation.
+    "allows-on": { to: ["kind"], description: "the kinds it allows those acts on", inverse: "who may act on it" },
   },
   label: (node) => node.label,
   display: { labels: { self: "on their own record only", allActs: "every act", allKinds: "every kind" } },
@@ -534,7 +535,7 @@ export const grant = act("grant", {
   description: "Let a role take an act, on one kind or on all of them.",
   subject: { kinds: ["role"], arg: "role" },
   creates: ["grant"],
-  connects: ["lets", "may", "over"],
+  connects: ["lets", "may", "allows-on"],
   fromTheOtherEnd: "lets",
   input: z.object({ role: nodeRef(["role"]), act: nodeRef(["act"]), kind: nodeRef(["kind"]).optional(), self: z.boolean().optional() }),
   describe: (args, graph) =>
@@ -546,7 +547,7 @@ export const grant = act("grant", {
     ctx.addNode({ id, kind: "grant", label: `${role} may ${actName}`, self: args.self ?? false, everyone: false, allActs: false, allKinds: !args.kind });
     ctx.addEdge({ kind: "lets", from: id, to: args.role });
     ctx.addEdge({ kind: "may", from: id, to: args.act });
-    if (args.kind) ctx.addEdge({ kind: "over", from: id, to: args.kind });
+    if (args.kind) ctx.addEdge({ kind: "allows-on", from: id, to: args.kind });
   },
 });
 
@@ -555,7 +556,7 @@ export const revokeGrant = act("revoke-grant", {
   description: "Take a permission back.",
   subject: { kinds: ["grant"], arg: "id" },
   destructive: true,
-  severs: ["lets", "may", "over"],
+  severs: ["lets", "may", "allows-on"],
   input: z.object({ id: nodeRef(["grant"]) }),
   describe: (args, graph) => `Revoke ${(graph.getNode(args.id) as { label?: string } | undefined)?.label ?? args.id}`,
   apply(ctx, args) {

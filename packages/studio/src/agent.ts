@@ -226,7 +226,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
       const lines = grants.map((g) => {
         const roles = g["everyone"] === true ? "everyone" : list(out(g.id, "lets").map((role) => label(role)));
         const acts = g["allActs"] === true ? "every act" : list(out(g.id, "may").map((one) => String(one["title"] ?? label(one))));
-        const kinds = g["allKinds"] === true ? "" : ` on ${list(out(g.id, "over").map((one) => label(one)))}`;
+        const kinds = g["allKinds"] === true ? "" : ` on ${list(out(g.id, "allows-on").map((one) => label(one)))}`;
         return `${roles} may ${acts}${kinds}${g["self"] === true ? ", on their own record only" : ""}`;
       });
       return grounded(`${lines.join("; ")}.`);

@@ -420,7 +420,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
       ...grants.map((g) => {
         const lets = read.out(g.id, "lets").map(label);
         const may = read.out(g.id, "may").map(label);
-        const over = read.out(g.id, "over").map(label);
+        const over = read.out(g.id, "allows-on").map(label);
         const parts = [
           `roles: ${bool(g, "everyone") ? '"*"' : `[${lets.map(q).join(", ")}]`}`,
           `mutations: ${bool(g, "allActs") ? '"*"' : `[${may.map(q).join(", ")}]`}`,

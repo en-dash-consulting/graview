@@ -137,6 +137,9 @@ Report **the actual output**, including warnings. What it catches here:
 
 - `edge-target-undeclared` — an edge to a kind nobody declared
 - `edge-without-inverse` — a relation with words for one of its two readings
+- `edge-name-shared` — one edge name declared on two kinds in two sets of
+  words (`by` on a song and on an album); every surface treats a name as ONE
+  relation, so name each its own
 - `act-without-far-end-reading` — an act offered on an end it has no words for
 - `field-role-missing-field` — a role pointing at a field that is not there
 - `required-invariant-unregistered` — `requiresInvariant` naming no rule

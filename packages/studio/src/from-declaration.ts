@@ -188,7 +188,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
     });
     if (g.roles !== "*") for (const role of g.roles) edges.push({ kind: "lets", from: id, to: roleId(role) });
     if (g.mutations !== "*") for (const name of g.mutations) edges.push({ kind: "may", from: id, to: actId(name) });
-    if (g.kinds && g.kinds !== "*") for (const kind of g.kinds) edges.push({ kind: "over", from: id, to: kindId(kind) });
+    if (g.kinds && g.kinds !== "*") for (const kind of g.kinds) edges.push({ kind: "allows-on", from: id, to: kindId(kind) });
   });
 
   for (const lens of app.lenses ?? []) {

@@ -604,3 +604,42 @@ describe("what the checker says out loud without failing", () => {
     expect(findings(app)).not.toContain("note:lens-binding-disagrees-with-field-role");
   });
 });
+
+describe("one edge name is one relation", () => {
+  const artist = defineNode("artist", { fields: z.object({ label: z.string() }) });
+  it("refuses one name declared on two kinds in two sets of words", () => {
+    const song = defineNode("song", {
+      fields: z.object({ label: z.string() }),
+      edges: { by: { to: ["artist"], description: "the artist whose song it is", inverse: "their songs" } },
+    });
+    const album = defineNode("album", {
+      fields: z.object({ label: z.string() }),
+      edges: { by: { to: ["artist"], description: "the artist whose release it is", inverse: "their releases" } },
+    });
+    const app = defineApp({ name: "test", schema: createSchema([song, album, artist]), mutations: [] });
+    const finding = checkApp(app).findings.find((f) => f.code === "edge-name-shared")!;
+    expect(finding.severity).toBe("error");
+    expect(finding.message).toContain("their songs");
+    expect(finding.message).toContain("their releases");
+    expect(finding.fix).toContain("its own name");
+  });
+
+  it("is quiet when every declaration says the same thing", () => {
+    const words = { to: ["artist"] as ["artist"], description: "who made it", inverse: "what they made" };
+    const song = defineNode("song", { fields: z.object({ label: z.string() }), edges: { by: words } });
+    const album = defineNode("album", { fields: z.object({ label: z.string() }), edges: { by: words } });
+    const app = defineApp({ name: "test", schema: createSchema([song, album, artist]), mutations: [] });
+    expect(findings(app)).not.toContain("error:edge-name-shared");
+  });
+
+  it("allows each declaring kind its own targets", () => {
+    const label = defineNode("label", { fields: z.object({ label: z.string() }) });
+    const song = defineNode("song", { fields: z.object({ label: z.string() }), edges: { by: { to: ["artist"] } } });
+    const album = defineNode("album", { fields: z.object({ label: z.string() }), edges: { by: { to: ["label"] } } });
+    const shared = createSchema([song, album, artist, label]);
+    expect(shared.edgeAllowed("by", "album", "label")).toBe(true);
+    expect(shared.edgeAllowed("by", "album", "artist")).toBe(false);
+    expect(shared.edgeAllowed("by", "song", "artist")).toBe(true);
+    expect(shared.edge("by")!.to).toEqual(["artist", "label"]);
+  });
+});
