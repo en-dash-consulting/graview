@@ -36,8 +36,10 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Every kind is a picture by default, and the scaffolder hands the face its views](./every-kind-is-a-picture-by-default.md) | completed |
 | [One row of navigation that scrolls on a phone, and a picture's page offers its siblings](./one-row-of-navigation-that-scrolls-on.md) | completed |
 | [The harness measures the gallery, and the skill, the chapter and the site say what comes for free](./the-harness-measures-the-gallery-and.md) | completed |
+| [A new page opens at its top: the routed face resets the scroll on a new address, and leaves Back to the browser](./a-new-page-opens-at-its-top.md) | completed |
 
 ## Log
 
 - 2026-09-27 — Captured from conversation. Rex's MCP endpoint answered 409 (this project is not among the ones registered on the running `ndx start`), so the item was written straight into the tree in rex's own shape.
 - 2026-09-27 — Done. Decisions: the h1 is the standing sentence rather than the brand name (the masthead already says it); default kind cards are a contact sheet of summary views rather than the framework's group panel, which sat as six chips in the corner of a frame; the gallery claim is measured on chapter sixteen because the default seedbed registers only two titled lenses; the previous feature's record is left completed with a log entry rather than flipped. Rex MCP still 409 at the end, so the tree was edited by hand throughout.
+- 2026-09-27 — Nick: "scroll reset in Pages views isn't working". The face had never reset the scroll; the gallery exposed it. Fixed as a fifth task under this feature.
