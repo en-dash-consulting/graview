@@ -168,22 +168,21 @@ derived already (`beginning(app)`, `DerivedForm`, the policy).
   it. If products want named searches, they are stops with titles — the
   same shape as a named place — and can be added then.
 
-## Open questions
+## Decisions (2026-09-28)
 
-1. **`/` or ⌘K**, or both? `/` is the web's reading convention and cheap on
-   a phone keyboard; ⌘K is what people who live in editors expect. Both is
-   the likely answer, with `/` shown in the box's placeholder.
-2. **Should an act be a hit at all**, or only appear once a node is chosen?
-   Showing "Finish it" for the words "finish" with no subject is a promise
-   the strip cannot keep; showing it once a task is highlighted is honest.
-   The design above takes the second reading.
-3. **Does `q` dim the rest, or hide it?** Dim keeps the map legible and is
-   what emphasis already does; hide is what a list does. The scene dims, a
-   list hides — same as today.
-4. **Where does search go in the four faces' harnesses?** One claim each:
-   the scene lights and descends with `in.q`; the pages route lands cold;
-   the companion answers with hits; the agent's `search_graph` counts its
-   reads.
+The four open questions, answered as recommended and agreed:
+
+1. **Both `/` and ⌘K** focus the Find box; the placeholder shows `/`.
+2. **An act is a hit only once a node hit is highlighted**, offered with
+   that node as its subject and read with the act's own title. Never
+   subjectless.
+3. **The scene dims, a list hides.** Emphasis already dims what a selection
+   does not reach; a list already hides what a filter drops. Same as today.
+4. **One harness claim per face:** the scene lights and descends carrying
+   `in.q` (`verify-navigation`); the pages route lands cold and the list
+   narrows (`verify-pages`); the companion answers a no-act message with
+   hits (`verify-chat`); the agent's `search_graph` reports its reads
+   (`verify-seat`, plus the tools unit test).
 
 ## Sequencing (four tasks, when captured)
 
