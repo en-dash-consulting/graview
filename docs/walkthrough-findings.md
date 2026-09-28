@@ -2738,3 +2738,25 @@ two singles and thirty-five songs.
   brackets when the group holds more than one kind. Criterion:
   `the-map-of-kinds.test.tsx` "links a record the other way round" now
   reads the words, and refuses the edge name as a verb.
+
+### W-099 · The project's own record page says "Still open." of a released song
+- stage: B · face: pages · width: any · scheme: both
+- expected: the record page `graview create` writes stays true when the
+  kind's lifecycle changes, or the typecheck says it no longer is
+- actual: the scaffold's page cast the node to `{ label: string; status:
+  "open" | "closed" }` and printed `status === "closed" ? "Closed." : "Still
+  open."`. The discography's songs are released, demos or scrapped, so every
+  song's page — Cobalt, released in 2018 — said "Still open.", and the cast
+  kept `tsc` silent. The cast was the only reason the page compiled against
+  a schema it did not know.
+- where it belongs: `packages/core/src/scaffold/ui.ts` (the record page the
+  scaffold writes)
+- harness that should have caught it: `smoke-create` runs the scaffold as
+  written, before anybody changes its first kind
+- status: fixed in "walkthrough: B · the project's own record page reads the
+  lifecycle" · no cast: the heading is `facts.label` and the lede asks
+  `isCurrent` of the kind's declared lifecycle ("Current." or "In the past:
+  out of the picture, never out of the record."), so renaming the states or
+  retiring by date keeps it true. Criterion: core `scaffold.test.ts` "reads
+  the record's place on the horizon from the lifecycle" (no status cast, no
+  "closed", `isCurrent`); the generated project typechecks.

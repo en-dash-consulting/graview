@@ -232,7 +232,8 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
 }
 
 export function pagesTsx(ids: Ids): string {
-  return `import { Begin } from "@graview/primitives";
+  return `import { isCurrent } from "@graview/core";
+import { Begin } from "@graview/primitives";
 import {
   createPageRegistry,
   DefaultHomePage,
@@ -269,7 +270,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
     ...(principal ? { principal } : {}),
     ...(invariantContext ? { context: invariantContext } : {}),
   });
-  const node = store.graph.getNode(id) as { label: string; status: "open" | "closed" } | undefined;
+  const node = store.graph.getNode(id);
   if (!facts || !node) {
     return (
       <PageMain context={context}>
@@ -302,9 +303,14 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
     <PageMain context={context} data-testid="${ids.kind}-page">
       <header style={{ display: "grid", gap: 10 }}>
         <p style={pageStyles.eyebrow}>${ids.ASpoken} in ${escapeTemplate(ids.name)}</p>
-        <h1 style={pageStyles.h1}>{node.label}</h1>
+        <h1 style={pageStyles.h1}>{facts.label}</h1>
+        {/*
+          * WHERE IT IS ON THE HORIZON, asked of the declaration's own
+          * lifecycle rather than of a status word written here: rename the
+          * states, or retire by a date, and this still tells the truth.
+          */}
         <p style={pageStyles.lede}>
-          {node.status === "closed" ? "Closed." : "Still open."}{" "}
+          {isCurrent(store.schema.tryDefinition(node.kind), node) ? "Current." : "In the past: out of the picture, never out of the record."}{" "}
           {ties.length === 0 ? "Connected to nothing yet." : null}
         </p>
         <a href={spatialHref(id)} style={{ ...pageStyles.link, ...pageStyles.quiet }} data-testid="spatial-link">

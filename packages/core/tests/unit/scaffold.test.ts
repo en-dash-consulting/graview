@@ -29,6 +29,16 @@ describe("what a project starts with passes its own checks", () => {
     expect(file("Field Notes", "src/ui/pages.tsx")).toMatch(/<Begin\s+store=\{context\.store\}/);
   });
 
+  it("reads the record's place on the horizon from the lifecycle, not from status words it casts to", () => {
+    // A discography renamed "open"/"closed" to "released"/"demo"/"scrapped"
+    // and its own record page went on saying "Still open." of a released
+    // song, the cast keeping the typecheck quiet (W-099).
+    const pages = file("Field Notes", "src/ui/pages.tsx");
+    expect(pages).not.toMatch(/as \{[^}]*status/);
+    expect(pages).not.toContain('"closed"');
+    expect(pages).toContain("isCurrent(store.schema.tryDefinition(node.kind), node)");
+  });
+
   it("frames only Begin's own door, so the derived home comes back as the whole page it is", () => {
     const pages = file("Field Notes", "src/ui/pages.tsx");
     expect(pages).toContain("frame={(door) => (");
