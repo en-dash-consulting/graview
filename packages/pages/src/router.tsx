@@ -1,11 +1,11 @@
 import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
-import type { ComponentType, ReactNode } from "react";
+import { useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
 import { GraviewProvider } from "@graview/react";
 import { PageAsk } from "./ask.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultShell, type PageContext } from "./pages.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
-import { useParams } from "react-router-dom";
+import { useLocation, useNavigationType, useParams } from "react-router-dom";
 
 /**
  * The routed face, assembled: `/` home, `/:plural` a list per kind,
@@ -49,6 +49,43 @@ function KindSwitch<S extends AnySchema>({
   return <Component context={context} />;
 }
 
+/*
+ * A NEW PAGE OPENS AT ITS TOP.
+ *
+ * The router keeps the document where it was: press a card at the foot of
+ * the gallery and the picture's page opened already scrolled to its own
+ * foot, with the heading somewhere above the window. A browser resets the
+ * scroll on a full navigation and this face never had one, which the
+ * readme-shaped home was short enough to hide.
+ *
+ * Reset on a NEW address only: Back and Forward are left to the browser,
+ * which restores the position it recorded for that entry, and a change of
+ * search alone — the list page writes `?q=` as you type — is an adjustment
+ * of the page you are on, not a page. What scrolls is whatever holds the
+ * face: the window when it owns the document, the nearest ancestor that
+ * scrolls when it is inside an embed's frame or a shell's own region — so
+ * a host page with three embeds is never yanked to the top of one of them.
+ */
+function ScrollReset() {
+  const { pathname } = useLocation();
+  const type = useNavigationType();
+  const mark = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    if (type === "POP") return;
+    for (let at = mark.current?.parentElement; at; at = at.parentElement) {
+      const { overflowY } = getComputedStyle(at);
+      if ((overflowY === "auto" || overflowY === "scroll") && at.scrollHeight > at.clientHeight) {
+        at.scrollTop = 0;
+        return;
+      }
+    }
+    window.scrollTo(0, 0);
+    // The address is the page; its search and hash are where you are on it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+  return <span ref={mark} hidden data-graview-scroll-reset="" />;
+}
+
 export function PagesRoutes<S extends AnySchema>({
   context,
   registry,
@@ -76,6 +113,7 @@ export function PagesRoutes<S extends AnySchema>({
   const inside: PageContext<S> = own ? { ...context, framed: true } : context;
   return (
     <Shell context={context}>
+      <ScrollReset />
       <Routes>
         {/*
           * THE APP'S OWN ROUTES FIRST — a survey desk, an onboarding, a

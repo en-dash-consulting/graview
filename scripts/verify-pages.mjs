@@ -635,6 +635,27 @@ try {
       deskNine.kindCards >= 4 &&
       deskNine.drawn,
   };
+  /* A new page opens at its top, however far down the gallery the press was. */
+  const scroller = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await scroller.goto("http://localhost:5194/pages?chapter=16", { waitUntil: "networkidle" });
+  await scroller.waitForTimeout(500);
+  await scroller.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await scroller.waitForTimeout(200);
+  const pressedFrom = await scroller.evaluate(() => window.scrollY);
+  await scroller.click('[data-testid="kinds"] a[href="/pages/rules"]');
+  await scroller.waitForTimeout(500);
+  const landedAt = await scroller.evaluate(() => ({ path: location.pathname, scrollY: window.scrollY }));
+  // And Back is left to the browser, which puts the gallery where it was left.
+  await scroller.goBack({ waitUntil: "networkidle" });
+  await scroller.waitForTimeout(500);
+  const cameBackTo = await scroller.evaluate(() => window.scrollY);
+  await scroller.close();
+  report.checks.aNewPageOpensAtItsTop = {
+    pressedFrom,
+    landedAt,
+    cameBackTo,
+    ok: pressedFrom > 400 && landedAt.path === "/pages/rules" && landedAt.scrollY === 0 && cameBackTo > 400,
+  };
   report.checks.theNavIsOneRow = {
     desk: deskGallery.navRows,
     phone: phoneGallery.navRows,
