@@ -180,6 +180,10 @@ export function packageJson(ids: Ids, workspace: boolean): string {
       // Each of these builds what it needs, so any one works cold.
       check: `${run} build:domain && graview check ./dist/domain/app.js`,
       docs: `${run} build:domain && graview docs ./dist/domain/app.js --out docs`,
+      // The store where the data is, and the door an agent comes in by. Both
+      // build the declaration first, so either works cold.
+      serve: `${run} build:domain && graview serve ./dist/domain/app.js --data data`,
+      mcp: `${run} build:domain && graview mcp ./dist/domain/app.js --data data`,
       skills: "graview skills install .",
       verify: `${run} typecheck && ${run} test && ${run} build && ${run} check`,
     },
@@ -469,6 +473,7 @@ export function gitignore(): string {
   return `node_modules/
 dist/
 build/
+data/
 docs/llms.txt
 docs/agents.md
 *.tsbuildinfo

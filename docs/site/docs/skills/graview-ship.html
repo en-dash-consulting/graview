@@ -1073,6 +1073,9 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <p>```ts    import { browserStartsFresh, createBrowserAdapter, forgetFreshParam, openStore }      from "@graview/ship/browser";</p>
 <p>const opened = await openStore({      app, adapter: createBrowserAdapter(), seed,      fresh: browserStartsFresh(),   // ?fresh=1 asks; a driven browser gets it unless ?remember=1    });    forgetFreshParam();              // the seed is the FIRST load, not every load    ```</p>
 <p>Reopened, the store carries its persisted history: earlier edits are in    the activity, attributed, and undoable. Give the person a visible way    back — <code>StartFresh</code> from <code>@graview/primitives</code>, or <code>remembers: true</code> on    the pages context — because a demo that can be edited into a corner with    no exit teaches distrust. The sample apps' <code>main.tsx</code> files are the    worked examples; <code>pnpm remember</code> is the harness that holds them to it.</p>
+<p><strong>The seed is read once</strong>, into an empty store. When the default content    moves afterwards, do not delete the store to see it — diff and land it:</p>
+<p>``<code>sh    graview sync-seed ./dist/domain/app.js --seed ./src/data/example.json --data ./data    graview sync-seed ./dist/domain/app.js --seed ./src/data/example.json --data ./data --apply    </code>``</p>
+<p>The first prints the content steps — <code>task t-van is put</code>, <code>today is    patched: label</code>, <code>today holds t-van is tied</code> — and writes nothing; the    second lands them as one operation authored <code>system · ship:sync-seed</code>,    logged, undoable, leaving what people made alone unless <code>--prune</code> says    otherwise. The same five steps (<code>put-node</code>, <code>patch-node</code>, <code>drop-node</code>,    <code>put-edge</code>, <code>drop-edge</code>) go in <code>migrations[]</code> through <code>stepsMigration</code>    when every installation should get them.</p>
 <ol>
 <li><strong>Version the declaration, and migrate in primitives.</strong> When the schema changes shape:</li>
 </ol>
@@ -1097,8 +1100,11 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li>Whether the adapter's storage location survives your deployment story (containers with ephemeral disks lose a file adapter's whole point).</li>
 <li>Whether the export actually round-trips: rehearse import into a fresh deployment, the way the framework's smoke run does — do not assume it.</li>
 </ul>
+<ol>
+<li><strong>Serve it, and let an agent in.</strong> <code>graview serve &lt;entry&gt; --data ./data</code> puts the store behind HTTP with the op log as the wire; `graview mcp &lt;entry&gt; --remote-url &lt;url&gt;<code> and </code>graview apply … --remote-url &lt;url&gt;` are the same commands an agent uses against a folder, now against the server, judged under the seat the request carries. Put <code>serve</code> and <code>mcp</code> in the app's scripts. The routes are <code>WIRE</code>, exported and pinned by a test, and <code>serveStore({ seatOf })</code> is where a host reads its own credential — <code>openRemote({ headers })</code> carries whatever it asks for.</li>
+</ol>
 <h3>The boundary</h3>
-<p>Anything ONE deployment needs belongs in ship. Tenancy, provisioning, deploy-to-URL, billing and fleet upgrades belong to the operator of many — a separate service consuming ship like any customer.</p>
+<p>Anything ONE deployment needs belongs in ship: the op log, the snapshot, migrating on open, the wire, a principal on every apply, the seed at first install, content steps, and the agent's door. Tenancy, provisioning, deploy-to-URL, billing, quotas and fleet upgrades belong to the operator of many — a separate service consuming ship like any customer, with its own <code>seatOf</code> mapping people and keys to principals. The concern table is in <code>@graview/ship</code>'s README; a third party can stand up their own host from it without forking anything.</p>
     </section>
 
   </main>

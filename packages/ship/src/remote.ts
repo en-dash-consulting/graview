@@ -43,6 +43,13 @@ export interface RemoteOptions<S extends AnySchema> {
   readonly pollMs?: number;
   readonly fetch?: typeof fetch;
   readonly storeOptions?: Record<string, unknown>;
+  /**
+   * Headers sent with every request — a gateway's `authorization`, a
+   * tenant, whatever the host in front of `graview serve` asks for. The
+   * framework never reads them; the host's `seatOf` does. This is the seam
+   * where a hosted store's own auth goes without the framework knowing it.
+   */
+  readonly headers?: Readonly<Record<string, string>>;
 }
 
 export interface RemoteStore<S extends AnySchema> {
@@ -60,6 +67,13 @@ export interface RemoteStore<S extends AnySchema> {
    * saying so, in the policy's own words.
    */
   onRefusal(listener: (reason: string) => void): () => void;
+  /**
+   * Resolves once every call sent so far has been answered — accepted and
+   * landed, or refused and taken back. A browser never waits for this; a
+   * host that must report the server's verdict before it exits (an MCP
+   * seat, `graview apply`) does.
+   */
+  settled(): Promise<void>;
   /**
    * WHO IS HERE, over the same poll. Saying where you are rides on the next
    * heartbeat and the answer carries everybody else — no round trip of its
@@ -85,7 +99,7 @@ function localIds(): () => string {
 
 export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>): Promise<RemoteStore<S>> {
   const call = options.fetch ?? fetch;
-  const headers: Record<string, string> = { "content-type": "application/json" };
+  const headers: Record<string, string> = { "content-type": "application/json", ...(options.headers ?? {}) };
   if (options.principal?.id) headers["x-graview-seat"] = options.principal.id;
   if (options.principal?.roles?.length) headers["x-graview-roles"] = options.principal.roles.join(",");
 
@@ -147,10 +161,10 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     for (const listener of whoListeners) listener([...known.values()]);
   };
 
-  const land = (ops: readonly Operation[]): readonly Operation[] => {
+  const land = (ops: readonly Operation[], applied = false): readonly Operation[] => {
     if (ops.length === 0) return [];
     seen = Math.max(seen, ...ops.map((op) => op.seq));
-    return store.receive(ops);
+    return store.receive(ops, { applied });
   };
 
   const pull = async (): Promise<readonly Operation[]> => {
@@ -192,9 +206,23 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
 
   /** The server's batch for each provisional one this browser minted, so an undo names what the server has. */
   const batches = new Map<string, string>();
+  /** Every post not yet answered, so `settled` can wait for the verdicts. */
+  const inFlight = new Set<Promise<unknown>>();
+  const track = <T>(promise: Promise<T>): Promise<T> => {
+    inFlight.add(promise);
+    void promise.finally(() => inFlight.delete(promise)).catch(() => {});
+    return promise;
+  };
 
+  /*
+   * `applied` says the local store already holds this change — it was
+   * applied optimistically before the post — so the server's op is
+   * recorded rather than re-applied. `send` never applies first, so its
+   * answer lands in full.
+   */
   const post = async (
     body: { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string },
+    applied = false,
   ): Promise<{ ops: readonly Operation[]; batch?: string }> => {
     const response = await call(`${options.url}/graview/ops`, {
       method: "POST",
@@ -208,7 +236,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       throw new Error(answer.error ?? `The server refused (${response.status})`);
     }
     const ops = answer.ops ?? [];
-    land(ops);
+    land(ops, applied);
     return { ops, ...(answer.batch ? { batch: answer.batch } : {}) };
   };
 
@@ -274,11 +302,13 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       ...(options.principal ? { author: options.principal } : {}),
       ...applyOptions,
     });
-    void post({ calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}) })
-      .then((answer) => {
-        if (answer.batch) batches.set(result.batch, answer.batch);
-      })
-      .catch((error: unknown) => takeBack(result.batch, error));
+    track(
+      post({ calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}) }, true)
+        .then((answer) => {
+          if (answer.batch) batches.set(result.batch, answer.batch);
+        })
+        .catch((error: unknown) => takeBack(result.batch, error)),
+    );
     return result;
   }) as typeof store.applyAll;
   // `apply` is `applyAll` of one — and it must go through the patched one.
@@ -291,11 +321,13 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     });
     // Named as the server knows them: a provisional batch by the one it became.
     const theirs = ids.map((id) => batches.get(id) ?? id);
-    void post({ undo: theirs, ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}) })
-      .then((answer) => {
-        if (answer.batch) batches.set(result.batch, answer.batch);
-      })
-      .catch((error: unknown) => takeBack(result.batch, error));
+    track(
+      post({ undo: theirs, ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}) }, true)
+        .then((answer) => {
+          if (answer.batch) batches.set(result.batch, answer.batch);
+        })
+        .catch((error: unknown) => takeBack(result.batch, error)),
+    );
     return result;
   }) as typeof store.undo;
 
@@ -320,6 +352,10 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     onRefusal(listener) {
       refusals.add(listener);
       return () => refusals.delete(listener);
+    },
+    async settled() {
+      // Whatever is in flight now — and whatever a settling handler put in flight after it.
+      while (inFlight.size > 0) await Promise.allSettled([...inFlight]);
     },
     presence,
     close() {

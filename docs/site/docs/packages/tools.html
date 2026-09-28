@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@graview/tools — Graview docs</title>
-<meta name="description" content="Derived affordances and the agent tool surface, generated from the same declarations.">
+<meta name="description" content="Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="@graview/tools — Graview docs">
-<meta property="og:description" content="Derived affordances and the agent tool surface, generated from the same declarations.">
+<meta property="og:description" content="Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://graview.dev/docs/packages/tools.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -1055,8 +1055,9 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
   <main class="col" id="main">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">@graview/tools</h1>
-      <p class="lede" style="margin-top: 18px;">Derived affordances and the agent tool surface, generated from the same declarations.</p>
+      <p class="lede" style="margin-top: 18px;">Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/tools</code><button type="button" class="copy" data-copy="pnpm add @graview/tools">Copy</button></div></div>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/tools</code>, <code>@graview/tools/cli</code></p>
     </section>
     <section id="readme" aria-labelledby="h-readme">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
@@ -1064,6 +1065,17 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <p>Nobody authors an affordance. Providers notice things — a violation and the repairs it names, a mutation whose subject accepts every selected kind, a neighbour all but one of them share — and the results merge into one ranked set. An LLM is one optional provider among these rather than the mechanism.</p>
 <p><code>createToolRuntime</code> generates a tool per mutation from the same declarations, so an external agent over MCP and a seat inside the interface use literally the same actions and produce literally the same diffs. That is why watching an agent work needs no bespoke observability layer.</p>
 <p>Read-only calls report the nodes they looked at, which is the half a diff cannot show. A seat holding a principal gets tools for what that principal may run, and is told plainly about the ones it may not.</p>
+<h3>The host: <code>graview mcp</code> and <code>graview apply</code></h3>
+<p>An external agent — an editor's assistant, a worker on a schedule — used to edit the seed file, because the seed was the only thing it could reach. These two commands put the runtime where the data is, so it evolves the live graph the way a person does: through <code>store.apply</code>, under its own seat, judged by the same policy, logged with its name.</p>
+<div class="code" data-scroller><pre><code>graview mcp ./dist/domain/app.js --data ./data --as cursor --roles keeper
+graview mcp ./dist/domain/app.js --remote-url https://host.example/app --header "authorization: Bearer …"
+graview mcp ./dist/domain/app.js --list --roles keeper        # the seat's tools as tools/list JSON
+
+graview apply ./dist/domain/app.js --data ./data --roles keeper \
+  --call add-task --args '{"listId":"today","label":"Book the van","id":"t-van"}'
+graview apply ./dist/domain/app.js --data ./data --roles keeper --plan ./plan.json --preview
+graview apply ./dist/domain/app.js --data ./data --roles keeper --undo batch:7</code></pre></div>
+<p><code>mcp</code> speaks MCP over stdio — JSON-RPC, one message per line, no SDK — around <code>createToolRuntime</code> and <code>createMcpAdapter</code>; a reply waits for the write to land, or for the server's verdict against a remote, so "done" is never said before it is true. <code>apply</code> is one act, a plan of many as one batch (<code>[{ mutation, args, as? }]</code>, a later call naming an earlier one's node as <code>{ "$plan": "&lt;as&gt;" }</code>), or a take-back; <code>--preview</code> writes nothing. Both take the store backends <code>graview serve</code> takes — <code>--data</code>, <code>--sqlite</code>, <code>--remote-url</code> — and the seat flags <code>--as</code> and <code>--roles</code>. Every act that creates a kind accepts an optional <code>id</code> for the node it makes; every kind has a derived <code>remove-&lt;kind&gt;</code>, permitted through the acts that create it.</p>
     </section>
     <section id="api" aria-labelledby="h-api">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (83)</h2></div>

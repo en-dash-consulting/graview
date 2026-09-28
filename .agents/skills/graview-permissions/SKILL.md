@@ -44,6 +44,12 @@ yesterday and now the button is gone.
 2. **Hand it to both `defineApp` and the `Store`.** `defineApp` is what
    `graview check` reads; the `Store` is what enforces.
 
+   The derived acts ride your grants rather than needing their own line:
+   `edit-<kind>` is permitted to whoever may change or make the kind,
+   `remove-<kind>` to whoever may make it — or to any grant that names the
+   act or says `*`. A refusal names who could, so a seat told no learns what
+   it lacks rather than concluding the capability is missing.
+
 3. **Give the provider a principal.** `<GraviewProvider principal={{ kind:
    "human", id: me.id, roles: me.roles }}>`. The interface reads it to decide
    what to OFFER; the store decides what to allow; the log attributes to it.

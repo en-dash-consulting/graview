@@ -1,5 +1,5 @@
 import type { GraviewApp } from "../app.js";
-import { deriveEditMutations } from "../mutations/derive-edits.js";
+import { deriveMutations } from "../mutations/derive-edits.js";
 import { mutationToolSchema } from "../schema/json-schema.js";
 import type { AnySchema } from "../schema/schema.js";
 
@@ -66,6 +66,35 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
     lines.push("```", "");
   }
 
+  lines.push(
+    "Two things the framework adds to every act above. An act that creates a kind",
+    "takes an optional `id`: the id of the node it makes, refused if the graph",
+    "already has it. And every kind has `remove-<kind>`, derived: it takes the",
+    "node and its ties out, and is permitted through the acts that create the",
+    "kind or a grant naming it.",
+    "",
+  );
+
+  lines.push("## Attaching an agent", "");
+  lines.push(
+    "The live graph is not the seed file. Do not edit the seed to change what",
+    "the app shows; act on the store where it is:",
+    "",
+    "```sh",
+    `graview mcp <entry> --data ./data --as <you> --roles <role,…>      # MCP over stdio, the tools above`,
+    `graview mcp <entry> --remote-url <url> --header "authorization: …"   # the same, against graview serve`,
+    `graview apply <entry> --data ./data --roles <role> --call <act> --args '{…}'`,
+    `graview apply <entry> --data ./data --roles <role> --plan plan.json [--preview]`,
+    `graview sync-seed <entry> --seed <file> --data ./data [--apply]     # default content, moved without a wipe`,
+    "```",
+    "",
+    "Every change goes through `store.apply` under your seat and is judged by the",
+    "policy, logged with your name, previewable first and undoable after. A plan",
+    "is a JSON array of `{ mutation, args, as? }`; a later call names an earlier",
+    "one's node as `{ \"$plan\": \"<as>\" }` and the whole plan is one batch.",
+    "",
+  );
+
   lines.push("## Invariants", "");
   for (const invariant of app.invariants ?? []) {
     const scope =
@@ -116,7 +145,7 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
 
 /** Declared and derived alike: the surface an agent seat actually gets. */
 function allMutationsOf<S extends AnySchema>(app: GraviewApp<S>) {
-  return [...(app.mutations ?? []), ...deriveEditMutations(app.schema, app.mutations ?? [])];
+  return [...(app.mutations ?? []), ...deriveMutations(app.schema, app.mutations ?? [])];
 }
 
 /** The agent-facing instruction file, generated from the same declarations. */
@@ -140,6 +169,28 @@ export function generateAgentsMd<S extends AnySchema>(app: GraviewApp<S>): strin
     "",
     "Run `graview check` after editing any declaration. It reports schema",
     "problems in terms of the declaration to change.",
+    "",
+    "## Evolving a live store",
+    "",
+    "- **The seed is a bootstrap snapshot,** read once into an empty store. To",
+    "  change what a running app shows, act on its store — `graview mcp`,",
+    "  `graview apply`, or the interface — never by editing the seed and wiping.",
+    "  When the default content itself moves, `graview sync-seed` lands the",
+    "  difference as one undoable operation; export a snapshot back into the seed",
+    "  only when shipping a new default.",
+    "- **Declare `version` and `migrations` when the schema moves.** A stored",
+    "  graph at an older version has to reach the new one; `graview check` refuses",
+    "  a gap.",
+    "- **Name nodes by id when you will refer to them.** Every creating act takes an",
+    "  optional `id`; a plan names an earlier call's node as `{ \"$plan\": name }`.",
+    "  Do not hardcode a bootstrap id inside a mutation body or an invariant —",
+    "  bind a role or a flag, so a store seeded differently still works.",
+    "- **Prefer the derived acts over reaching around them.** `edit-<kind>` changes",
+    "  what was set at creation; `remove-<kind>` takes a node out. Both flow",
+    "  through the policy.",
+    "- **Wire `serve` and `mcp` into the app's scripts** so an agent loop has a",
+    "  door, and keep a declared provider's `may` list wide enough for redesign,",
+    "  not only for filling an empty graph.",
     "",
     "See `llms.txt` for the full node, edge, mutation and invariant reference.",
     "",

@@ -58,6 +58,15 @@ agent tool that walks the graph.
    then to the id. An id in the interface is a bug you shipped, not a
    placeholder.
 
+   An id is still a name a caller may choose: every act that declares
+   `creates: ["fixture"]` takes an optional `id` argument the framework adds,
+   so a seed being synced or an agent that will refer to the node next call
+   gets exactly the id it asked for, or a refusal by name. Never hardcode a
+   bootstrap id — `"today"`, `"u-nick"` — inside a mutation body or an
+   invariant; bind a role, a flag or an edge instead, so a store seeded
+   differently still works. And every kind gets `remove-<kind>` derived,
+   permitted through the acts that create it.
+
 5. **Give it verbs.** A kind with no mutation naming it as a subject renders
    fine and can have nothing done to it, and the actions strip will say so out
    loud. If that is not what you meant, see `graview-invariant` for the rule

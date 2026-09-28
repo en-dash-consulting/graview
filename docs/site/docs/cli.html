@@ -1120,6 +1120,11 @@ graview skills list            what is in this package
 graview skills path            where the skill files live</code></pre></div>
       <p>Copies the authoring skills into <code>.claude/skills</code> and <code>.agents/skills</code>, where Claude Code and Codex look for them; <code>list</code> says what ships and <code>path</code> says where the files live. <code>graview create</code> runs the install for you.</p>
     </section>
+    <section id="cli-sync" aria-labelledby="h-cli-sync">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-sync">graview sync</h2></div>
+      <div class="code" data-scroller aria-label="graview sync, usage"><pre><code>graview sync-seed &lt;entry&gt; --seed &lt;file&gt; [--data &lt;dir&gt; | --sqlite &lt;file&gt;]</code></pre></div>
+      <p>[--apply] [--prune] [--json] Diffs the bootstrap seed against the live store and says, as content steps, what would bring the store in step with it: records put, fields patched, ties made. Prints and exits by default; --apply lands the steps as one logged, undoable operation; --prune also drops what the seed no longer has. The seed itself is only ever read at first install — this is how default content moves afterwards, in place of deleting the store.</p>
+    </section>
 
   </main>
 </div>

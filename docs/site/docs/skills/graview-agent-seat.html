@@ -1080,6 +1080,11 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <ol>
 <li><strong>Prefer <code>get_affordances</code> over composing calls by hand.</strong> The tool descriptions say so, and it matters: derived affordances cannot name an action that does not exist or is not legal on this selection.</li>
 </ol>
+<ol>
+<li><strong>Host the seat where the data is, for an agent outside the page.</strong> An editor's assistant or a scheduled worker does not need glue of its own:</li>
+</ol>
+<p>``<code>sh    graview mcp ./dist/domain/app.js --data ./data --as cursor --roles keeper    graview mcp ./dist/domain/app.js --remote-url http://localhost:5196 --roles keeper    graview apply ./dist/domain/app.js --data ./data --roles keeper \      --call add-task --args '{"listId":"today","label":"Book the van","id":"t-van"}'    </code>``</p>
+<p><code>mcp</code> is MCP over stdio around this same runtime; <code>apply</code> is one act, a    plan of many as one batch, or an undo, from a shell. Both open the store    <code>graview serve</code> opens — a folder, SQLite, or a running server — and act    under the seat you name, so the policy refuses there what it refuses here.    Put <code>serve</code> and <code>mcp</code> in the app's scripts so the door is always there,    and tell the agent the seed is a first-install snapshot: it changes the    live graph through these, never by editing <code>example.json</code> and wiping.    <code>graview mcp &lt;entry&gt; --list --roles …</code> prints the seat's tools as    <code>tools/list</code> JSON — the catalog a host registers without writing one.</p>
 <h3>Worked examples</h3>
 <ul>
 <li><code>apps/todo/src/ui/app.tsx</code> — the seat, the runtime, and an agent that reads the graph before it moves</li>

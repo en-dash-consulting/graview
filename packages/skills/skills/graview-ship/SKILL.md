@@ -49,6 +49,22 @@ here requires a service.
    no exit teaches distrust. The sample apps' `main.tsx` files are the
    worked examples; `pnpm remember` is the harness that holds them to it.
 
+   **The seed is read once**, into an empty store. When the default content
+   moves afterwards, do not delete the store to see it — diff and land it:
+
+   ```sh
+   graview sync-seed ./dist/domain/app.js --seed ./src/data/example.json --data ./data
+   graview sync-seed ./dist/domain/app.js --seed ./src/data/example.json --data ./data --apply
+   ```
+
+   The first prints the content steps — `task t-van is put`, `today is
+   patched: label`, `today holds t-van is tied` — and writes nothing; the
+   second lands them as one operation authored `system · ship:sync-seed`,
+   logged, undoable, leaving what people made alone unless `--prune` says
+   otherwise. The same five steps (`put-node`, `patch-node`, `drop-node`,
+   `put-edge`, `drop-edge`) go in `migrations[]` through `stepsMigration`
+   when every installation should get them.
+
 2. **Version the declaration, and migrate in primitives.** When the schema
    changes shape:
 
@@ -117,8 +133,22 @@ own rehearsal (`pnpm smoke`) does exactly this from packed tarballs —
 - Whether the export actually round-trips: rehearse import into a fresh
   deployment, the way the framework's smoke run does — do not assume it.
 
+6. **Serve it, and let an agent in.** `graview serve <entry> --data ./data`
+   puts the store behind HTTP with the op log as the wire; `graview mcp
+   <entry> --remote-url <url>` and `graview apply … --remote-url <url>` are
+   the same commands an agent uses against a folder, now against the server,
+   judged under the seat the request carries. Put `serve` and `mcp` in the
+   app's scripts. The routes are `WIRE`, exported and pinned by a test, and
+   `serveStore({ seatOf })` is where a host reads its own credential —
+   `openRemote({ headers })` carries whatever it asks for.
+
 ## The boundary
 
-Anything ONE deployment needs belongs in ship. Tenancy, provisioning,
-deploy-to-URL, billing and fleet upgrades belong to the operator of many —
-a separate service consuming ship like any customer.
+Anything ONE deployment needs belongs in ship: the op log, the snapshot,
+migrating on open, the wire, a principal on every apply, the seed at first
+install, content steps, and the agent's door. Tenancy, provisioning,
+deploy-to-URL, billing, quotas and fleet upgrades belong to the operator of
+many — a separate service consuming ship like any customer, with its own
+`seatOf` mapping people and keys to principals. The concern table is in
+`@graview/ship`'s README; a third party can stand up their own host from
+it without forking anything.
