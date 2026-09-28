@@ -2613,3 +2613,24 @@ two singles and thirty-five songs.
   with no Latin form are kept. Criterion: core
   `an-id-is-the-name-folded.test.ts` ("zoe-lamarre", "beyonce", "сплин",
   and the plain names unchanged).
+
+### W-094 · At altitude a fifth district stands under the inspector
+- stage: B · face: scene · width: 1280 and 1560 · scheme: both
+- expected: every district is on ground the reader can see — right of the
+  left rail, left of the right one
+- actual: with five kinds (songs, albums, artists, themes, eras) the Eras
+  district stood at x=241 with the rail ending at 264; its nameplate read
+  "RAS 1". The city is centred on its lattice's bounding diamond, and the
+  cards are centred on their plots, which do not fill it; once the city grew
+  to give every name its ground it was exactly as wide as the room and 25px
+  left of it. The "how much is off the edge" measure counted a card under
+  the rail as seen, so nothing tried to move it.
+- where it belongs: `packages/layout/src/city.ts` (`placeCity`)
+- harness that should have caught it: `the-city-at-altitude.test.ts` uses
+  four kinds and no rails; `audit-ui` photographs todo's four districts
+- status: fixed in "walkthrough: B · the city stands beside the rails" ·
+  out of sight now means under a rail as well as off the canvas, and a city
+  whose districts fit between the rails slides the least distance that puts
+  every one of them there (carried through a zoom). Criterion: layout
+  `the-city-stays-beside-the-rail.test.ts` at 1280 and 1560 (verified
+  failing without the fix: `kind:era: expected 241.08 to be ≥ 264`).

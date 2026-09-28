@@ -119,8 +119,10 @@ export function placeCity(
   const scale = options.scale ?? 1;
   const minHeight = options.minHeight ?? 0;
   const avoid = options.avoid ?? [];
+  /** Where the whole city is slid to stand beside the rails rather than under them (see below). */
+  let nudge = 0;
   const at = (cell: number, asked: number, openedShare = 1, shift = { x: 0, y: 0 }): PlacedCard[] => {
-    const originX = cx - ((minX + maxX) / 2) * cell + shift.x;
+    const originX = cx - ((minX + maxX) / 2) * cell + shift.x + nudge;
     const originY = cy - ((minY + maxY) / 2) * cell + shift.y;
     const size = { width: base.width * asked, height: base.height * asked };
     const rows = cards.map((card) => centreOf(map.get(card.kind)!, cell).y);
@@ -196,10 +198,18 @@ export function placeCity(
     }
     return out;
   };
-  /** How much of the city is off the canvas: the shift that shows the most is the one kept. */
+  /**
+   * How much of the city is out of sight: the shift that shows the most is
+   * the one kept. OUT OF SIGHT IS UNDER A RAIL AS WELL AS OFF THE CANVAS —
+   * the inspector and the relation key cover the left of the scene, and a
+   * district laid under them was counted as seen. A discography's fifth
+   * district stood a hundred pixels under the pane at 1280 and at 1560,
+   * its nameplate cut to "RAS 1", and nothing here asked.
+   */
+  const right = canvas.width - (inset.right ?? 0);
   const outside = (placed: readonly PlacedCard[]): number =>
     placed.reduce((sum, card) => {
-      const visibleW = Math.max(0, Math.min(card.x + card.width, canvas.width) - Math.max(card.x, 0));
+      const visibleW = Math.max(0, Math.min(card.x + card.width, right) - Math.max(card.x, left));
       const visibleH = Math.max(0, Math.min(card.y + card.height, canvas.height) - Math.max(card.y, 0));
       return sum + card.width * card.height - visibleW * visibleH;
     }, 0);
@@ -266,6 +276,25 @@ export function placeCity(
     settled = settle(cell, asked, openedShare);
   }
   /*
+   * BESIDE THE RAILS, NOT UNDER THEM. The map is centred on its lattice's
+   * bounding diamond, and the districts are not: a card is centred on its
+   * plot and the plots do not fill the diamond, so a city grown just wide
+   * enough for its names stood twenty-five pixels left of the room it
+   * fitted — and the leftmost district under the inspector. When the
+   * districts fit between the rails, the city slides the least distance
+   * that puts every one of them there; when they do not, the camera pans
+   * to them, as before.
+   */
+  {
+    const lowX = Math.min(...settled.placed.map((card) => card.x));
+    const highX = Math.max(...settled.placed.map((card) => card.x + card.width));
+    const slide = highX - lowX > right - left ? 0 : lowX < left ? left - lowX : highX > right ? right - highX : 0;
+    if (slide !== 0) {
+      nudge = slide;
+      settled = settle(cell, asked, openedShare);
+    }
+  }
+  /*
    * FLYING CLOSER. The fit above is the whole map in the window; a zoom is
    * the camera brought in afterwards, so the map keeps its shape and only
    * the cell grows — the city may run past the window, and the camera
@@ -273,10 +302,11 @@ export function placeCity(
    */
   if (options.zoom && options.zoom !== 1) {
     cell *= options.zoom;
+    nudge *= options.zoom;
     settled = settle(cell, asked, openedShare);
   }
   const placed = settled.placed;
-  const originX = cx - ((minX + maxX) / 2) * cell + settled.shift.x;
+  const originX = cx - ((minX + maxX) / 2) * cell + settled.shift.x + nudge;
   const originY = cy - ((minY + maxY) / 2) * cell + settled.shift.y;
 
   const frame: CityFrame = {
