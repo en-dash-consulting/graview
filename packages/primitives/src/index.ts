@@ -38,6 +38,8 @@ export type {
   CoverageRoles,
   CoverageViewProps,
 } from "./lens/coverage.js";
+export { ArrangeBar, arrangementCaption, arrangementOf, sayCondition, withArrangement } from "./arrange-bar.js";
+export type { ArrangeBarProps } from "./arrange-bar.js";
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
 export { EditableTitle, EditableValue, Fields, humanise } from "./editable.js";

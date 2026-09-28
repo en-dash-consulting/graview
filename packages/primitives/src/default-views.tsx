@@ -1,4 +1,5 @@
 import {
+  arrange,
   describeNode,
   labelOf,
   readableFields,
@@ -19,6 +20,7 @@ import {
   type ViewProps,
  markDefaultView } from "@graview/react";
 import { memo, type ReactNode } from "react";
+import { ArrangeBar, arrangementOf, withArrangement } from "./arrange-bar.js";
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -302,20 +304,54 @@ export function registerDefaultViews<S extends AnySchema>(
     };
 
     const Group = (props: ViewProps<S>) => {
-      const { brand } = useGraview();
+      const { brand, store } = useGraview<S>();
+      const { view, go } = useNavigation();
+      const members = props.nodes ?? [];
+      /*
+       * THE DEFAULT PICTURE ARRANGES TOO. What a kind can be sorted, filtered
+       * and grouped by is in its declaration, and the choice travels in the
+       * stop (`in.sort`, `in.filter`, `in.group`, `in.q`) like the calendar's
+       * month does — so an arranged district is a link, and Back restores it.
+       * The row is drawn at full fidelity, where there is room to read it;
+       * the arrangement holds at every fidelity, because the stop does.
+       */
+      const arrangement = arrangementOf(view);
+      const arranged = arrange(members, arrangement, { schema, graph: store.graph, flagged: new Set(props.flagged ?? []) });
+      const item = (member: (typeof members)[number]) => ({
+        id: member.id,
+        label: labelOf(schema.tryDefinition(member.kind), member),
+        hue: hueFor(member.kind, brand?.accents),
+      });
+      const bar =
+        props.fidelity === "full" && members.length > 1 ? (
+          <ArrangeBar
+            schema={schema}
+            graph={store.graph}
+            kind={String(kind)}
+            arrangement={arrangement}
+            onChange={(next) => go(withArrangement(view, next))}
+            kept={{ shown: arranged.nodes.length, of: members.length }}
+            style={{ marginBottom: 8 }}
+          />
+        ) : null;
+      // A receded group still has to report trouble inside it, or the only
+      // way to find a problem is to open every group in turn.
+      const flagged = (nodes: readonly { id: string }[]) => nodes.some((member) => props.flagged?.includes(member.id));
+      if (!arranged.grouped) {
+        return (
+          <div style={{ display: "grid", gap: 4 }}>
+            {bar}
+            <Aggregate label={props.label ?? plural} count={arranged.nodes.length} flagged={flagged(arranged.nodes)} items={arranged.nodes.map(item)} />
+          </div>
+        );
+      }
       return (
-        <Aggregate
-          label={props.label ?? plural}
-          count={props.nodes?.length ?? 0}
-          // A receded group still has to report trouble inside it, or the only
-          // way to find a problem is to open every group in turn.
-          flagged={(props.nodes ?? []).some((member) => props.flagged?.includes(member.id))}
-          items={(props.nodes ?? []).map((member) => ({
-            id: member.id,
-            label: labelOf(schema.tryDefinition(member.kind), member),
-            hue: hueFor(member.kind, brand?.accents),
-          }))}
-        />
+        <div style={{ display: "grid", gap: 8 }} data-graview-grouped={arrangement.group?.by}>
+          {bar}
+          {arranged.groups.map((group) => (
+            <Aggregate key={group.key || "-"} label={`${props.label ?? plural} · ${group.label}`} count={group.nodes.length} flagged={flagged(group.nodes)} items={group.nodes.map(item)} />
+          ))}
+        </div>
       );
     };
 

@@ -540,7 +540,7 @@ try {
   await bed.waitForTimeout(500);
   const grouped = await bed.evaluate(() => ({
     groups: [...document.querySelectorAll('[data-testid="list-group"] h2')].map((h) => (h.textContent ?? "").trim()),
-    by: document.querySelector('[data-testid="list-by"]')?.value ?? null,
+    by: document.querySelector('[data-testid="arrange-group"]')?.value ?? null,
     related: document.querySelector('[data-testid="kind-relations"]') !== null,
   }));
   report.checks.aListGroupsByARelation = {

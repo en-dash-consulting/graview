@@ -88,7 +88,7 @@ describe("the map of kinds", () => {
     expect(plain).toContain('data-testid="kind-relations"');
     expect(plain).toContain('href="/people"');
     expect(plain).toContain('href="/weeks"');
-    expect(plain).toContain('data-testid="list-by"');
+    expect(plain).toContain('data-testid="arrange-group"');
     const grouped = draw("/duties?by=does");
     expect(grouped).toContain('data-grouped="does"');
     expect(grouped.match(/data-testid="list-group"/g)).toHaveLength(2);

@@ -53,6 +53,12 @@ export interface Arrangement {
   readonly sort?: Sort;
   readonly filter?: readonly Condition[];
   readonly group?: Grouping;
+  /**
+   * Words to look for: a node stays when its label or any scalar field
+   * contains them, case aside. The narrowing a person types, beside the
+   * conditions a person picks — and the same matcher a search would use.
+   */
+  readonly query?: string;
 }
 
 export const NO_ARRANGEMENT: Arrangement = {};
@@ -221,12 +227,14 @@ export interface ArrangementWords {
   readonly sort?: string;
   readonly filter?: string;
   readonly group?: string;
+  readonly q?: string;
 }
 
 const BUCKETS: readonly DateBucket[] = ["day", "week", "month"];
 
 export function parseArrangement(words: ArrangementWords): Arrangement {
-  const out: { sort?: Sort; filter?: Condition[]; group?: Grouping } = {};
+  const out: { sort?: Sort; filter?: Condition[]; group?: Grouping; query?: string } = {};
+  if (words.q && words.q.trim().length > 0) out.query = words.q;
   if (words.sort) {
     const [by, direction] = words.sort.split(":");
     if (by) out.sort = { by, direction: direction === "desc" ? "desc" : "asc" };
@@ -248,7 +256,8 @@ export function parseArrangement(words: ArrangementWords): Arrangement {
 }
 
 export function formatArrangement(arrangement: Arrangement): ArrangementWords {
-  const out: { sort?: string; filter?: string; group?: string } = {};
+  const out: { sort?: string; filter?: string; group?: string; q?: string } = {};
+  if (arrangement.query && arrangement.query.trim().length > 0) out.q = arrangement.query;
   if (arrangement.sort) {
     out.sort = arrangement.sort.direction === "desc" ? `${arrangement.sort.by}:desc` : arrangement.sort.by;
   }
@@ -271,7 +280,8 @@ export function admitArrangement(
   offers: Arrangeable,
 ): { readonly arrangement: Arrangement; readonly dropped: readonly string[] } {
   const dropped: string[] = [];
-  const out: { sort?: Sort; filter?: Condition[]; group?: Grouping } = {};
+  const out: { sort?: Sort; filter?: Condition[]; group?: Grouping; query?: string } = {};
+  if (arrangement.query) out.query = arrangement.query;
   if (arrangement.sort) {
     if (offers.sorts.some((offer) => offer.key === arrangement.sort!.by)) out.sort = arrangement.sort;
     else dropped.push(`sort ${arrangement.sort.by}`);
@@ -414,15 +424,33 @@ function holds(ctx: ArrangeContext, node: ArrangeNode, condition: Condition): bo
   return ends.some((end) => end.id === condition.value);
 }
 
+/** Whether the words appear in the node's label or any scalar field, case aside. */
+export function matches(ctx: ArrangeContext, node: ArrangeNode, query: string): boolean {
+  const wanted = query.trim().toLowerCase();
+  if (wanted.length === 0) return true;
+  if (labelFor(ctx, node).toLowerCase().includes(wanted)) return true;
+  const definition = ctx.schema.tryDefinition(node.kind);
+  const hidden = new Set(definition?.display?.hide ?? []);
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "id" || key === "kind" || hidden.has(key)) continue;
+    if (typeof value === "string" || typeof value === "number") {
+      if (String(value).toLowerCase().includes(wanted)) return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Filters, sorts and groups. The filter is a conjunction; the sort is
  * stable; a grouping puts the group with nothing to say last. Nodes whose
  * kind the context cannot describe are kept and sort by what they carry.
  */
 export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement: Arrangement, ctx: ArrangeContext): Arranged<N> {
+  const query = arrangement.query?.trim().toLowerCase();
+  const found = query ? nodes.filter((node) => matches(ctx, node, query)) : nodes;
   const kept = arrangement.filter?.length
-    ? nodes.filter((node) => arrangement.filter!.every((condition) => holds(ctx, node, condition)))
-    : [...nodes];
+    ? found.filter((node) => arrangement.filter!.every((condition) => holds(ctx, node, condition)))
+    : [...found];
 
   const sort = arrangement.sort;
   const ordered = sort

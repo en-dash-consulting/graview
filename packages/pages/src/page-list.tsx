@@ -1,5 +1,18 @@
-import { RelationMark } from "@graview/primitives";
-import { humaniseField, isCurrent, labelOf, type AnySchema } from "@graview/core";
+import { ArrangeBar, RelationMark } from "@graview/primitives";
+import {
+  admitArrangement,
+  arrange,
+  arrangeable,
+  formatArrangement,
+  humaniseField,
+  isCurrent,
+  labelOf,
+  parseArrangement,
+  type AnySchema,
+  type Arrangeable,
+  type Arrangement,
+  type Condition,
+} from "@graview/core";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts, kindMap } from "./facts.js";
 import { DerivedForm } from "./form.js";
@@ -44,48 +57,47 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
     );
   }
   const definition = store.schema.tryDefinition(kind);
-  const past = search.get("past") === "1";
   const all = store.graph.nodesOfKind(kind);
-  const current = past ? all : all.filter((node) => isCurrent(definition, node));
-  const retired = all.length - current.length;
-  /*
-   * RELATIONS ARE STRUCTURE HERE TOO. A list can be NARROWED by a relation —
-   * `?<edge>=<id>` keeps the members joined to that one node by that edge,
-   * either way round, which is what a record's "all the tasks on this list"
-   * links to; `?with=<edge>` keeps the ones that have the relation at all,
-   * which is what the map's counts open — and GROUPED by one: `?by=<edge>`
-   * reads the pile as piles-per-far-end, in the URL like every arrangement
-   * on this face, so a list you arranged is a link you can send.
-   */
-  const edges = store.graph.allEdges();
   const relations = kindMap(store).relations.filter((relation) => relation.from === kind || relation.to === kind);
-  const relatedTo = (memberId: string, edgeKind: string, otherId?: string) =>
-    edges.some(
-      (edge) =>
-        edge.kind === edgeKind &&
-        ((edge.from === memberId && (otherId === undefined || edge.to === otherId)) ||
-          (edge.to === memberId && (otherId === undefined || edge.from === otherId))),
-    );
-  const narrowing = [...search.entries()].filter(([key, value]) => !["past", "by", "with", "q", "group"].includes(key) && relations.some((relation) => relation.edgeKind === key) && value.length > 0);
-  const withEdge = search.get("with");
-  const members = current.filter(
-    (node) =>
-      narrowing.every(([edgeKind, otherId]) => relatedTo(node.id, edgeKind, otherId)) &&
-      (withEdge === null || relatedTo(node.id, withEdge)),
-  );
-  const by = search.get("by");
-  const grouping = by && relations.some((relation) => relation.edgeKind === by) ? by : null;
-  const farEnds = (memberId: string, edgeKind: string): string[] =>
-    [...new Set(edges.filter((edge) => edge.kind === edgeKind && (edge.from === memberId || edge.to === memberId)).map((edge) => (edge.from === memberId ? edge.to : edge.from)))]
-      .map((otherId) => store.graph.getNode(otherId))
-      .filter((other): other is NonNullable<typeof other> => other !== undefined)
-      .map((other) => labelOf(store.schema.tryDefinition(other.kind), other))
-      .sort();
+  const flagged = new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds));
+  /*
+   * ARRANGED THROUGH THE SHARED MODULE, in the shared words. `sort`, `filter`,
+   * `group` and `q` in the search are the same grammar a lens carries in its
+   * fragment, so what a person arranged here is what an agent can ask a
+   * picture for. The keys this page grew before the module existed still
+   * land — `?by=<edge>` groups, `?<edge>=<id>` and `?with=<edge>` narrow,
+   * `?past=1` widens the horizon — because a record's "all the tasks on this
+   * list" is a link somebody may have sent.
+   */
+  const offers = arrangeable(store.schema, kind);
+  const asked = arrangementFromSearch(search, offers, relations.map((relation) => relation.edgeKind));
+  const arrangement = asked.arrangement;
+  const showingPast = arrangement.filter?.some((condition) => condition.key === "is" && (condition.value === "past" || condition.value === "any")) ?? false;
+  const effective: Arrangement = showingPast || !definition?.lifecycle
+    ? arrangement
+    : { ...arrangement, filter: [...(arrangement.filter ?? []), { key: "is", value: "current" }] };
+  const arranged = arrange(all, effective, {
+    schema: store.schema,
+    graph: store.graph,
+    flagged,
+    ...(typeof invariantContext?.["today"] === "string" ? { today: invariantContext["today"] as string } : {}),
+  });
+  const members = arranged.nodes;
+  const current = definition?.lifecycle && !showingPast ? all.filter((node) => isCurrent(definition, node)) : all;
+  const retired = all.length - current.length;
+  const narrowing = (arrangement.filter ?? []).filter((condition) => condition.key !== "is" && relations.some((relation) => relation.edgeKind === condition.key));
+  const grouping = arrangement.group?.by ?? null;
   const named = (id: string): string => {
     const node = store.graph.getNode(id);
     return node ? labelOf(store.schema.tryDefinition(node.kind), node) : id;
   };
-  const flagged = new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds));
+  const rearrange = (next: Arrangement) => {
+    const params = new URLSearchParams(search);
+    for (const key of ["sort", "filter", "group", "q", "by", "with", "past", ...relations.map((relation) => relation.edgeKind)]) params.delete(key);
+    const words = formatArrangement(next);
+    for (const key of ["sort", "filter", "group", "q"] as const) if (words[key]) params.set(key, words[key]!);
+    setSearch(params);
+  };
   /*
    * AN ACT THE SEAT MAY NOT TAKE IS STATED, NOT OFFERED. The strip and the
    * record page already withhold by the policy; the list page offered every
@@ -195,82 +207,67 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         ) : null}
       </header>
 
-      {narrowing.length > 0 || withEdge !== null ? (
+      {narrowing.length > 0 ? (
         <p style={{ ...quiet, margin: 0 }} data-testid="list-filter-note">
           {[
             `Only the ${plural.toLowerCase()}`,
-            ...(withEdge !== null ? [`that ${humaniseField(withEdge).toLowerCase()} anything`] : []),
-            ...narrowing.map(([edgeKind, otherId]) => `${humaniseField(edgeKind).toLowerCase()} ${named(otherId)}`),
+            ...narrowing.map((condition) =>
+              condition.value === "*"
+                ? `that ${humaniseField(condition.key).toLowerCase()} anything`
+                : condition.value === "none"
+                  ? `that ${humaniseField(condition.key).toLowerCase()} nothing`
+                  : `${humaniseField(condition.key).toLowerCase()} ${named(condition.value)}`,
+            ),
           ].join(" ")}
           {" · "}
-          <Link to={past ? "?past=1" : "?"} style={link}>
+          <Link to={showingPast ? "?filter=is:any" : "?"} style={link}>
             All {plural.toLowerCase()}
           </Link>
         </p>
       ) : null}
-      {relations.length > 0 && current.length > 1 ? (
-        <form
-          style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
-          data-testid="list-by-controls"
-          onSubmit={(event) => event.preventDefault()}
-        >
-          <label style={{ ...quiet, display: "inline-flex", alignItems: "center", gap: 6 }}>
-            Group by
-            <select
-              data-testid="list-by"
-              value={grouping ?? ""}
-              onChange={(event) => {
-                const next = new URLSearchParams(search);
-                if (event.target.value) next.set("by", event.target.value);
-                else next.delete("by");
-                setSearch(next);
-              }}
-              style={{ font: "inherit", minHeight: 32, padding: "4px 8px", borderRadius: 8, border: "1px solid var(--graview-edge)", background: "var(--graview-panel)", color: "var(--graview-ink)" }}
-            >
-              <option value="">nothing</option>
-              {[...new Map(relations.map((relation) => [relation.edgeKind, relation])).values()].map((relation) => {
-                const far = relation.from === kind ? relation.to : relation.from;
-                return (
-                  <option key={relation.edgeKind} value={relation.edgeKind}>
-                    {humaniseField(relation.edgeKind)} — {far === "*" ? "anything" : pluralOf(store, far).toLowerCase()}
-                  </option>
-                );
-              })}
-            </select>
-          </label>
-        </form>
+      {asked.dropped.length > 0 ? (
+        <p style={{ ...quiet, margin: 0 }} data-testid="list-dropped">
+          This link asked for {asked.dropped.join(", ")}, which {plural.toLowerCase()} cannot be arranged by; the rest is shown.
+        </p>
+      ) : null}
+      {all.length > 1 ? (
+        <ArrangeBar
+          schema={store.schema}
+          graph={store.graph}
+          kind={kind}
+          arrangement={arrangement}
+          onChange={rearrange}
+          kept={{ shown: members.length, of: all.length }}
+        />
       ) : null}
       {members.length === 0 ? (
         <p style={{ ...lede, fontSize: "1.0625rem" }} data-testid="none-yet">
-          {narrowing.length > 0 || withEdge !== null ? "None of them." : "None yet"}
-          {narrowing.length === 0 && withEdge === null && creators.length > 0
+          {arrangement.filter?.length || arrangement.query ? "None of them." : "None yet"}
+          {!arrangement.filter?.length && !arrangement.query && creators.length > 0
             ? ` — the first one starts below, with “${creators[0]?.mutation.title ?? creators[0]?.mutation.name}”.`
-            : narrowing.length === 0 && withEdge === null
+            : !arrangement.filter?.length && !arrangement.query
               ? "."
               : ""}
+          {arrangement.filter?.length || arrangement.query ? (
+            <>
+              {" "}
+              <Link to="?" style={link}>
+                Show every one
+              </Link>
+            </>
+          ) : null}
         </p>
-      ) : grouping ? (
-        (() => {
-          const groups = new Map<string, typeof members>();
-          for (const node of members) {
-            const ends = farEnds(node.id, grouping);
-            const key = ends.length > 0 ? ends.join(", ") : "";
-            groups.set(key, [...(groups.get(key) ?? []), node]);
-          }
-          const ordered = [...groups.entries()].sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)));
-          return (
-            <div style={{ display: "grid", gap: 18 }} data-testid="records" data-grouped={grouping}>
-              {ordered.map(([key, nodes]) => (
-                <section key={key || "-"} style={{ display: "grid", gap: 0 }} data-testid="list-group">
-                  <h2 style={{ ...h2, fontSize: "1.0625rem", marginBottom: 4 }}>
-                    {key || `No ${humaniseField(grouping).toLowerCase()}`} <span style={quiet}>{nodes.length}</span>
-                  </h2>
-                  <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 0 }}>{nodes.map(row)}</ul>
-                </section>
-              ))}
-            </div>
-          );
-        })()
+      ) : arranged.grouped && grouping ? (
+        <div style={{ display: "grid", gap: 18 }} data-testid="records" data-grouped={grouping}>
+          {arranged.groups.map((group) => (
+            <section key={group.key || "-"} style={{ display: "grid", gap: 0 }} data-testid="list-group">
+              <h2 style={{ ...h2, fontSize: "1.0625rem", marginBottom: 4 }}>
+                {group.label} <span style={quiet}>{group.nodes.length}</span>
+              </h2>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 0 }}>{group.nodes.map(row)}</ul>
+            </section>
+          ))}
+        </div>
       ) : (
         <ul
           style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 0 }}
@@ -280,7 +277,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         </ul>
       )}
       {retired > 0 ? (
-        <Link to={`?past=1`} style={{ ...link, ...quiet }} data-testid="past-link">
+        <Link to={withWord(search, "filter", "is:any")} style={{ ...link, ...quiet }} data-testid="past-link">
           +{retired} past
         </Link>
       ) : null}
@@ -304,4 +301,51 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
       ) : null}
     </PageMain>
   );
+}
+
+/**
+ * The search, read as an arrangement — the shared words first, then the
+ * keys this page grew before there was a shared module, folded in so every
+ * link that ever worked still lands: `by` is a grouping, an edge kind names
+ * a far end to keep, `with` keeps the ones tied to anything, `past` widens
+ * the horizon. What the kind cannot be arranged by is named, not thrown.
+ */
+export function arrangementFromSearch(
+  search: URLSearchParams,
+  offers: Arrangeable,
+  edgeKinds: readonly string[],
+): { readonly arrangement: Arrangement; readonly dropped: readonly string[] } {
+  const parsed = parseArrangement({
+    ...(search.get("sort") ? { sort: search.get("sort")! } : {}),
+    ...(search.get("filter") ? { filter: search.get("filter")! } : {}),
+    ...(search.get("group") ? { group: search.get("group")! } : {}),
+    ...(search.get("q") ? { q: search.get("q")! } : {}),
+  });
+  const conditions: Condition[] = [...(parsed.filter ?? [])];
+  const by = search.get("by");
+  const group = parsed.group ?? (by ? { by } : undefined);
+  for (const edgeKind of edgeKinds) {
+    const otherId = search.get(edgeKind);
+    if (otherId) conditions.push({ key: edgeKind, value: otherId });
+  }
+  const withEdge = search.get("with");
+  if (withEdge) conditions.push({ key: withEdge, value: "*" });
+  if (search.get("past") === "1" && !conditions.some((condition) => condition.key === "is")) conditions.push({ key: "is", value: "any" });
+  return admitArrangement(
+    {
+      ...(parsed.sort ? { sort: parsed.sort } : {}),
+      ...(parsed.query ? { query: parsed.query } : {}),
+      ...(conditions.length > 0 ? { filter: conditions } : {}),
+      ...(group ? { group } : {}),
+    },
+    offers,
+  );
+}
+
+/** The current search with one word set — a link to the same list, arranged one step differently. */
+function withWord(search: URLSearchParams, key: string, value: string): string {
+  const next = new URLSearchParams(search);
+  next.set(key, value);
+  next.delete("past");
+  return `?${next.toString()}`;
 }

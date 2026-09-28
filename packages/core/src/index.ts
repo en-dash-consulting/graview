@@ -87,6 +87,7 @@ export {
   bucketStart,
   edgesOf,
   formatArrangement,
+  matches,
   NO_ARRANGEMENT,
   parseArrangement,
 } from "./arrange.js";
