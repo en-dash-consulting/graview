@@ -586,6 +586,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
    component at a fraction of its size, cut to a thumbnail — with its name
    under it. The picture takes no pointer; the button around it does. */
 .graview-drive-in-thumb {
+  position: relative;
   display: grid;
   gap: 2px;
   justify-items: center;
@@ -596,11 +597,29 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   background: var(--graview-panel);
   color: var(--graview-ink);
   font: inherit;
-  cursor: pointer;
 }
-.graview-drive-in-thumb[aria-pressed="true"] {
+.graview-drive-in-thumb[data-graview-pressed] {
   border-color: var(--graview-accent);
   color: var(--graview-accent);
+}
+/* The press: the whole frame, laid over the picture and the title rather than
+   around them, so the lens drawn small never sits inside a button. */
+.graview-drive-in-thumb-press {
+  position: absolute;
+  inset: -1px;
+  /* It fills its frame, and says the frame's floor itself: a target is sized where it is declared. */
+  min-height: max(1.75rem, 28px);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+.graview-drive-in-thumb-press:focus-visible {
+  outline: 2px solid var(--graview-accent);
+  outline-offset: 1px;
 }
 .graview-drive-in-thumb-picture {
   display: block;

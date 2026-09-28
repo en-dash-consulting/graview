@@ -889,23 +889,16 @@ export function registerDefaultViews<S extends AnySchema>(
                   const registration = views.resolve(String(kind), { cardinality: "many", fidelity: "full" }, place.as);
                   const Lens = registration?.view as ((p: ViewProps<S>) => ReactNode) | undefined;
                   return (
-                    <button
-                      key={place.as}
-                      type="button"
-                      className="graview-drive-in-thumb"
-                      data-testid={`showing-${place.as}`}
-                      aria-label={`${plural}: ${place.title}`}
-                      aria-pressed={showing}
-                      title={showing ? `${place.title} is showing` : `Show ${place.title} on the billboard`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        if (showing && props.focused) return;
-                        go(withWithin(withFocus(withOverview(view, true), aggregateId(String(kind))), "view", place.as));
-                      }}
-                    >
-                      {/* A picture, not a panel: the lens drawn small keeps its own buttons in the
-                          tree, and a button inside a button is a control the marquee never meant
-                          to offer — inert takes them out of the tab order and out of hit-testing. */}
+                    /*
+                     * A FRAME HOLDING A PICTURE AND A BUTTON, not a button
+                     * holding a picture. The lens drawn small keeps its own
+                     * controls — a calendar's Previous and Next — and a
+                     * button inside a button is invalid HTML however inert
+                     * the inner one is: React said so on every chapter
+                     * with a calendar. The press lies over the picture, so
+                     * the whole thumbnail is still one target.
+                     */
+                    <div key={place.as} className="graview-drive-in-thumb" data-graview-pressed={showing || undefined}>
                       <span className="graview-drive-in-thumb-picture" aria-hidden="true" inert>
                         {Lens ? (
                           <span className="graview-drive-in-thumb-natural">
@@ -918,8 +911,21 @@ export function registerDefaultViews<S extends AnySchema>(
                           </span>
                         ) : null}
                       </span>
-                      <span className="graview-drive-in-thumb-title">{place.title}</span>
-                    </button>
+                      <span className="graview-drive-in-thumb-title" aria-hidden="true">{place.title}</span>
+                      <button
+                        type="button"
+                        className="graview-drive-in-thumb-press"
+                        data-testid={`showing-${place.as}`}
+                        aria-label={`${plural}: ${place.title}`}
+                        aria-pressed={showing}
+                        title={showing ? `${place.title} is showing` : `Show ${place.title} on the billboard`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (showing && props.focused) return;
+                          go(withWithin(withFocus(withOverview(view, true), aggregateId(String(kind))), "view", place.as));
+                        }}
+                      />
+                    </div>
                   );
                 })}
               </div>

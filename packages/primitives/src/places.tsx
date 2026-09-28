@@ -166,13 +166,14 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
               borderRadius: 999,
               fontSize: "0.875rem",
               fontWeight: here ? 600 : 500,
-              border: "1px solid transparent",
+              borderWidth: 1,
+              borderStyle: "solid",
               boxShadow: "none",
               whiteSpace: "nowrap",
               flex: "0 0 auto",
               color: here ? "var(--graview-ink)" : "var(--graview-ink-muted)",
               background: here ? "var(--graview-panel)" : "transparent",
-              ...(here ? { borderColor: "var(--graview-edge)" } : {}),
+              borderColor: here ? "var(--graview-edge)" : "transparent",
               // Measured at full width, then parked off the row's left edge
               // if the row cannot hold it: still measurable, never part of
               // anything's scrollable overflow (which only extends rightward),
@@ -199,10 +200,13 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
             borderRadius: 999,
             fontSize: "0.875rem",
             fontWeight: restHere ? 600 : 500,
-            border: "1px solid transparent",
+            borderWidth: 1,
+            borderStyle: "solid",
             flex: "0 0 auto",
             color: restHere ? "var(--graview-ink)" : "var(--graview-ink-muted)",
-            background: restHere ? "var(--graview-panel)" : "transparent",
+            // backgroundColor, not background: the shorthand beside the chevron's
+            // backgroundImage and friends is overwritten by them on every change of place.
+            backgroundColor: restHere ? "var(--graview-panel)" : "transparent",
             // The browser's own arrow is wide and grey; a small chevron of the text's colour instead.
             appearance: "none",
             WebkitAppearance: "none",
@@ -210,7 +214,7 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
             backgroundPosition: "calc(100% - 13px) 55%, calc(100% - 9px) 55%",
             backgroundSize: "4px 4px, 4px 4px",
             backgroundRepeat: "no-repeat",
-            ...(restHere ? { borderColor: "var(--graview-edge)" } : {}),
+            borderColor: restHere ? "var(--graview-edge)" : "transparent",
           }}
         >
           <option value="">{restHere ? restHere.title : `+${rest.length} more`}</option>

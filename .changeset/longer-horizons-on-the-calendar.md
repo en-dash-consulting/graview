@@ -1,8 +1,5 @@
 ---
 "@graview/primitives": patch
-"@graview/seedbed": patch
-"@graview/rota": patch
-"@graview/launcher": patch
 ---
 
 Longer horizons on the calendar lens: a quarter, a year, and a span of years the app names.

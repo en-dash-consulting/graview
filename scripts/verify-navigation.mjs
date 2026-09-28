@@ -476,7 +476,7 @@ try {
   await drive.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await drive.waitForTimeout(1200);
   const marquee = await drive.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-marquee > button')].map((el) => ({
+    [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb-press')].map((el) => ({
       label: el.getAttribute("aria-label"),
       focusable: el.tabIndex >= 0 && !el.disabled,
     })),

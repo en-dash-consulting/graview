@@ -1,9 +1,6 @@
 ---
 "@graview/primitives": patch
 "@graview/embed": patch
-"@graview/seedbed": patch
-"@graview/todo": patch
-"@graview/launcher": patch
 ---
 
 Every size the framework draws is the reader's to change, and a test says so.

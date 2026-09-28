@@ -20,7 +20,12 @@ import { registerDefaultViews } from "../../src/index.js";
 const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks" });
 const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes" });
 const schema = createSchema([task, note]);
-const Week: ViewComponent<typeof schema> = () => <div>the week</div>;
+// A lens with controls of its own, as a calendar has: its Previous must never end up inside the marquee's button.
+const Week: ViewComponent<typeof schema> = () => (
+  <div>
+    the week <button type="button">Previous</button>
+  </div>
+);
 const views = () =>
   registerDefaultViews(schema, createViews(schema))
     .register("task", { cardinality: "many", fidelity: "full" }, Week, { title: "The week" })
@@ -56,8 +61,10 @@ describe("the marquee", () => {
     expect(marquee).not.toBeNull();
     // No stand-in screen: the marquee is the sign. A dark slab read as a broken picture.
     expect(marquee.querySelector(".graview-drive-in-screen")).toBeNull();
-    const buttons = [...marquee.querySelectorAll("button")];
+    const buttons = [...marquee.querySelectorAll("button[aria-label]")];
     expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual(["Tasks: The week", "Tasks: The month"]);
+    // The lens drawn small keeps its own buttons, and none of them is inside the press: a button in a button is invalid HTML.
+    expect(marquee.querySelector("button button")).toBeNull();
     expect(host.querySelector('[data-testid="drive-in-note"]')).toBeNull();
     await unmount();
   });

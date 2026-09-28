@@ -180,9 +180,26 @@ try {
          * MEMBER, after the picture is safely taken.
          */
         if (chapter.principal) {
-          await page.click('[data-testid="overview"]').catch(() => {});
+          // Up, and only up: the control is a toggle, and a chapter that already
+          // opens at altitude was being taken DOWN, to a ground with nothing on it.
+          const up = await page.evaluate(() => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true");
+          if (!up) await page.click('[data-testid="overview"]').catch(() => {});
           await page.waitForTimeout(700);
-          const member = await page.$("[data-graview-pick]");
+          // A city with every district shut draws no members to press: open one.
+          const pickable = () =>
+            page.evaluate(() => [...document.querySelectorAll("[data-graview-stage] [data-graview-pick]")].some((el) => !el.closest("[inert]")));
+          if (!(await pickable())) {
+            await page.click('[data-testid^="open-"]').catch(() => {});
+            await page.waitForTimeout(700);
+          }
+          // A member DRAWN IN THE SCENE, and one a person can press: a chapter that
+          // opened the activity rail has chips there too (a log entry, not a thing),
+          // and a drive-in's thumbnail draws its lens small and inert.
+          const member = (
+            await page.evaluateHandle(() =>
+              [...document.querySelectorAll("[data-graview-stage] [data-graview-pick]")].find((el) => !el.closest("[inert]")) ?? null,
+            )
+          ).asElement();
           if (member) {
             await member.click();
             await page.waitForTimeout(600);
