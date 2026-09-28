@@ -4,7 +4,7 @@ import {
   withFocus,
   withoutMoves,
   withOverview,
-  withQuery,
+  withoutSearch,
   type ViewState,
   kindsOfAggregate,
 } from "@graview/layout";
@@ -71,7 +71,7 @@ export function BackOut({ home }: { readonly home: string | null }) {
       if (isJackedIn) exit();
       // A search lights the whole picture, so it comes off first, and the
       // emphasis goes back to what the selection reaches.
-      else if (view.q) go(withQuery(view, null));
+      else if (view.q) go(withoutSearch(view));
       // Then the Graview: rising is the biggest change of place Escape can
       // undo, and it should not also drop a selection on the way past.
       else if (overview) go(withOverview(view, false));

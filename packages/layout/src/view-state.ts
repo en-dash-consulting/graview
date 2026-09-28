@@ -308,7 +308,14 @@ function leavingTheStop(state: ViewState): ViewState {
 
 export function withFocus(state: ViewState, focusId: string | null): ViewState {
   if (focusId === state.focusId) return { ...state, focusId };
-  return { ...leavingTheStop(state), focusId };
+  /*
+   * A ROW'S WORDS BELONG TO THE PICTURE THEY NARROW. `in.q` carried into a
+   * lit district narrowed THAT district; kept across a change of focus it
+   * opened the next one — People, say — narrowed by "van" with no search
+   * in sight. The search itself (`q`) is the whole picture's and stays.
+   */
+  const left = leavingTheStop(state);
+  return { ...(left.within?.["q"] !== undefined ? withWithin(left, "q", null) : left), focusId };
 }
 
 export function withRelation(state: ViewState, relation: string | null): ViewState {
@@ -372,6 +379,15 @@ export function withQuery(state: ViewState, q: string | null): ViewState {
     return rest;
   }
   return { ...state, q };
+}
+
+/**
+ * Stop looking: the search, and the words it carried into the district it
+ * lit. A row's own words — typed there, different from the search — stay.
+ */
+export function withoutSearch(state: ViewState): ViewState {
+  const carried = state.q !== undefined && state.within?.["q"] === state.q;
+  return withQuery(carried ? withWithin(state, "q", null) : state, null);
 }
 
 /** Widen the horizon to include the past, or narrow it back to now. */

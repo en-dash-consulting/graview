@@ -46,6 +46,12 @@ export interface ChatPanelProps<S extends AnySchema> {
   /** How the seat answers. Defaults to the graph's own responder. */
   readonly respond?: Responder<S>;
   /**
+   * Where a pick goes — a thing the words found, pressed. The scene focuses
+   * and selects it; a face with no scene to move (the pages' drawer) goes
+   * to the record's page instead.
+   */
+  readonly onPick?: (id: string) => void;
+  /**
    * GROUNDED QUESTIONS, OFFERED BEFORE ANYBODY TYPES. A panel showing an
    * empty field asks the person to guess what it can answer; these are
    * questions the graph's own responder can answer about what is in front
@@ -62,6 +68,7 @@ export function ChatPanel<S extends AnySchema>({
   offer,
   respond,
   onCall,
+  onPick,
   testId = "chat",
 }: ChatPanelProps<S>) {
   const { store, views, principal, setView, seatWho, noteSeat, session, intelligence: config, registerHostAnswers } = useGraview<S>();
@@ -440,7 +447,9 @@ export function ChatPanel<S extends AnySchema>({
                             data-testid={`${testId}-pick`}
                             data-chat-pick={hit.id}
                             title={hit.why.field === "label" ? `Go to ${hit.label}` : `${hit.why.reading}: ${hit.why.fragment}`}
-                            onClick={() => setView((stop) => withSelection(withFocus(withOverview(stop, false), hit.id), [hit.id]))}
+                            onClick={() =>
+                              onPick ? onPick(hit.id) : setView((stop) => withSelection(withFocus(withOverview(stop, false), hit.id), [hit.id]))
+                            }
                             style={{ fontSize: "0.8125rem", minHeight: 28 }}
                           >
                             {hit.label}

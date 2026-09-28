@@ -1,4 +1,4 @@
-import { toggleExpanded, withFocus, withWithin, withZoom, type ViewState } from "./view-state.js";
+import { toggleExpanded, withFocus, withOverview, withWithin, withZoom, type ViewState } from "./view-state.js";
 
 /*
  * WHAT AN ID MEANS in the picture. A node's id is its own; the picture adds
@@ -104,8 +104,17 @@ export function withJackIn(
   }
   const target = kind !== null ? aggregateId(kind) : id;
   if (state.zoom && state.focusId === target) return withZoom(state, false);
-  const entered = withZoom({ ...withFocus(state, target), relation: null }, true);
-  return kind !== null && options.carry ? withWithin(entered, "q", options.carry) : entered;
+  if (kind !== null && options.carry) {
+    /*
+     * A SEARCH'S DESCENT COMES DOWN. From altitude every village still
+     * stands, every member a building, and a district "opened narrowed"
+     * up there reads as not narrowed at all. The words took you to it, so
+     * it opens on the ground, close, with only what they found.
+     */
+    const down = withOverview({ ...withFocus(state, target), relation: null }, false);
+    return withWithin(withZoom(down, true), "q", options.carry);
+  }
+  return withZoom({ ...withFocus(state, target), relation: null }, true);
 }
 
 /**

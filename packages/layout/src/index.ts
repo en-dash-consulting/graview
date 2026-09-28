@@ -38,6 +38,7 @@ export {
   withPan,
   withPast,
   withQuery,
+  withoutSearch,
   withShown,
   withPin,
   withoutMoves,

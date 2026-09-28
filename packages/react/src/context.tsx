@@ -10,7 +10,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { search } from "@graview/core";
+import { search, touchWeights } from "@graview/core";
 import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools";
 import { honourSetting, loadSetting, rememberSetting } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
@@ -807,18 +807,35 @@ function FoundProvider({ children }: { children: ReactNode }) {
   const nodes = useGraph();
   const q = view.q;
   const focusId = view.focusId;
+  /*
+   * What the rules flag and what the log touched change only with the
+   * graph, so they are worked out once per graph change — not re-run, every
+   * invariant and the whole log, on every keystroke.
+   */
+  const searching = Boolean(q && q.trim().length > 0);
+  const standing = useMemo(
+    () =>
+      searching
+        ? { flagged: new Set(store.violations().flatMap((violation) => violation.nodeIds)), touched: touchWeights(store.log.all()) }
+        : null,
+    // `nodes` is the graph's tick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, nodes, searching],
+  );
   const found = useMemo(() => {
-    if (!q || q.trim().length === 0) return null;
+    if (!q || !standing) return null;
     return search(store, q, {
       principal,
       places: views.places(),
       kinds: (store.schema.kinds as readonly string[]).filter((kind) => !hiddenKinds.has(kind)),
       from: [...selection, ...(focusId && store.graph.has(focusId) ? [focusId] : [])],
+      flagged: standing.flagged,
+      touched: standing.touched,
+      // The strip reads this many; the picture lights every match through `matched`.
       limit: 200,
     });
-    // `nodes` is the graph's tick: a change to the graph is a new answer.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, q, principal, views, hiddenKinds, selection, focusId, nodes]);
+  }, [store, q, principal, views, hiddenKinds, selection, focusId, standing]);
   return <FoundContext.Provider value={found}>{children}</FoundContext.Provider>;
 }
 

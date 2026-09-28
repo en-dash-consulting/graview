@@ -190,6 +190,8 @@ export interface CompanionProps<S extends AnySchema> {
   /** How the seat answers; passed through to the conversation. */
   readonly respond?: Parameters<typeof ChatPanel<S>>[0]["respond"];
   readonly onCall?: Parameters<typeof ChatPanel<S>>[0]["onCall"];
+  /** Where a pick in the conversation goes; the scene's own travel when unsaid. */
+  readonly onPick?: Parameters<typeof ChatPanel<S>>[0]["onPick"];
   /** Whether a conversation is offered at all. An app with no seat still gets the acts and the relations. */
   readonly chat?: boolean;
   /**
@@ -201,7 +203,7 @@ export interface CompanionProps<S extends AnySchema> {
   readonly framed?: boolean;
 }
 
-export function Companion<S extends AnySchema>({ respond, onCall, chat = true, framed = false }: CompanionProps<S> = {}) {
+export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat = true, framed = false }: CompanionProps<S> = {}) {
   const { seatWho, robots, session, store, setView: setViewOf } = useGraview<S>();
   const { set: chooseOf } = useSelection();
   const subject = useSubject<S>();
@@ -254,6 +256,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, chat = true, f
   const conversation = (
     <ChatPanel<S>
       inside
+      {...(onPick ? { onPick } : {})}
       /* What the graph can answer about THIS, offered before anybody types. */
       offer={[
         "What's wrong?",

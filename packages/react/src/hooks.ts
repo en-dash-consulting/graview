@@ -96,7 +96,8 @@ export function useImplicated(): readonly string[] {
    */
   return useMemo(() => {
     if (!found) return reachedBySelection;
-    const hits = found.hits.flatMap((hit) => (hit.about === "node" ? [hit.id] : []));
+    // Every match, not the strip's capped index: a real hit is never drawn dimmed.
+    const hits = found.matched;
     if (hits.length === 0 && reachedBySelection.length === 0) return [NOTHING_FOUND];
     return [...new Set([...reachedBySelection, ...hits])];
   }, [found, reachedBySelection]);

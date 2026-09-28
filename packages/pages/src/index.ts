@@ -24,6 +24,7 @@ export {
   PageFind,
   SearchToCreate,
   beginningsFor,
+  beginningsFrom,
   WhyLine,
   StartFreshLink,
   useStoreTick,

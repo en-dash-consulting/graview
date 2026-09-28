@@ -181,23 +181,38 @@ export function beginningsFor<S extends AnySchema>(
   options: { readonly principal?: Principal; readonly invariantContext?: Readonly<Record<string, unknown>> } = {},
 ): readonly Beginning<S>[] {
   const out: Beginning<S>[] = [];
-  const seen = new Set<string>();
   for (const kind of kinds) {
     const facts = kindFacts(store, kind, {
       ...(options.principal ? { principal: options.principal } : {}),
       ...(options.invariantContext ? { context: options.invariantContext } : {}),
     });
-    const named = store.schema.tryDefinition(kind)?.fieldRoles?.["label"];
-    for (const affordance of facts.actions.affordances) {
-      const mutation = store.allMutations().find((candidate) => candidate.name === affordance.mutation);
-      if (!mutation || !(mutation.creates as readonly string[] | undefined)?.includes(kind)) continue;
-      if (seen.has(mutation.name)) continue;
-      const args = formFields(mutation.input).map((field) => field.name);
-      const arg = args.includes("label") ? "label" : named && args.includes(named) ? named : undefined;
-      if (!arg || affordance.args[arg] !== undefined) continue;
-      seen.add(mutation.name);
-      out.push({ kind, affordance, mutation, arg });
+    for (const beginning of beginningsFrom(store, kind, facts.actions.affordances)) {
+      if (!out.some((held) => held.mutation.name === beginning.mutation.name)) out.push(beginning);
     }
+  }
+  return out;
+}
+
+/**
+ * The same, from affordances a page already derived for the kind — a list
+ * page has asked `kindFacts` once, and asking again on every keystroke of
+ * its box is work for nothing.
+ */
+export function beginningsFrom<S extends AnySchema>(
+  store: Store<S>,
+  kind: string,
+  affordances: readonly Affordance[],
+): readonly Beginning<S>[] {
+  const named = store.schema.tryDefinition(kind)?.fieldRoles?.["label"];
+  const out: Beginning<S>[] = [];
+  for (const affordance of affordances) {
+    const mutation = store.allMutations().find((candidate) => candidate.name === affordance.mutation);
+    if (!mutation || !(mutation.creates as readonly string[] | undefined)?.includes(kind)) continue;
+    if (out.some((held) => held.mutation.name === mutation.name)) continue;
+    const args = formFields(mutation.input).map((field) => field.name);
+    const arg = args.includes("label") ? "label" : named && args.includes(named) ? named : undefined;
+    if (!arg || affordance.args[arg] !== undefined) continue;
+    out.push({ kind, affordance, mutation, arg });
   }
   return out;
 }

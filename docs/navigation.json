@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-28T21:51:20.095Z",
+  "at": "2026-09-28T22:17:34.087Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565533,
+      "wingOpacity": 0.589002,
       "registered": true
     },
     "groundAgain": {
@@ -219,15 +219,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 416,
+        "width": 423.99993896484375,
         "height": 193,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 279.9999694824219,
-        "height": 256,
-        "opacity": 0.458607
+        "width": 278.0000305175781,
+        "height": 255.00006103515625,
+        "opacity": 0.438734
       }
     ],
     "afterSwitch": [
@@ -262,9 +262,9 @@
       "up": true
     },
     "midway": {
-      "x": 771.2752685546875,
-      "y": 285.31895446777344,
-      "width": 373
+      "x": 771.0896606445312,
+      "y": 286.1395568847656,
+      "width": 374
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -377,7 +377,7 @@
     "typedHistory": 3,
     "active": "true",
     "landed": {
-      "url": "#focus=aggregate%3Atask&in.q=deposit&q=deposit",
+      "url": "#focus=aggregate%3Atask&zoom=1&in.q=deposit&q=deposit",
       "row": "deposit",
       "tasks": [
         "t-deposit"

@@ -2,6 +2,7 @@ import { createSchema, defineNode, Graph } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  withoutSearch,
   withQuery,
   withWithin,
   cameraLimit,
@@ -274,8 +275,20 @@ describe("a search is a stop", () => {
     const back = fromUrl(url);
     expect(back.q).toBe("van done:false");
     expect(back.within?.["q"]).toBe("van");
-    // Changing the focus keeps the search: the city stays lit behind you.
+    // Changing the focus keeps the search — the city stays lit behind you —
+    // and drops the row's words, which narrowed the picture being left.
     expect(withFocus(back, "week-1").q).toBe("van done:false");
+    expect(withFocus(back, "week-1").within?.["q"]).toBeUndefined();
+    // Stopping looking takes the words the search carried into a district, and leaves a row's own.
+    const carried = withWithin(withQuery(view({ focusId: aggregateId("duty") }), "van"), "q", "van");
+    expect(withoutSearch(carried).within?.["q"]).toBeUndefined();
+    expect(withoutSearch(carried).q).toBeUndefined();
+    expect(withoutSearch(withWithin(carried, "q", "vans")).within?.["q"]).toBe("vans");
+    // A lit district's descent — double-click, its count, or Enter on the kind — is one transition: down, close, narrowed.
+    const lit = withQuery(view({ overview: true }), "van");
+    const entered = withJackIn(lit, kindCardId("duty"), { ownPicture: true, carry: "van" });
+    expect(entered).toMatchObject({ focusId: aggregateId("duty"), zoom: true, q: "van", within: { q: "van" } });
+    expect(entered.overview).toBeFalsy();
     expect(withQuery(back, "  ").q).toBeUndefined();
     expect(toUrl(withQuery(back, null))).not.toMatch(/(^|[#&])q=/);
     expect(fromUrl("#q=%20%20").q).toBeUndefined();

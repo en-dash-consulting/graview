@@ -22,7 +22,7 @@ import { DerivedForm } from "./form.js";
 import { kindOfSlug, placePath, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { placesOf } from "./page-places.js";
-import { beginningsFor, WhyLine } from "./page-search.js";
+import { beginningsFrom, WhyLine } from "./page-search.js";
 import {
   DISPLAY,
   KindMark,
@@ -138,14 +138,10 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
     );
   const withheld = facts.actions.withheld;
   // Search-to-create: when the words found nothing, the beginnings start with them as the name.
-  const startsWith: Record<string, string> = typed.words
-    ? Object.fromEntries(
-        beginningsFor(store, [kind], {
-          ...(principal ? { principal } : {}),
-          ...(invariantContext ? { invariantContext } : {}),
-        }).map((beginning) => [beginning.mutation.name, beginning.arg]),
-      )
-    : {};
+  const startsWith: Record<string, string> =
+    typed.words && members.length === 0
+      ? Object.fromEntries(beginningsFrom(store, kind, facts.actions.affordances).map((beginning) => [beginning.mutation.name, beginning.arg]))
+      : {};
   const plural = pluralOf(store, kind);
   const row = (node: (typeof members)[number]) => {
     const label = labelOf(definition, node);

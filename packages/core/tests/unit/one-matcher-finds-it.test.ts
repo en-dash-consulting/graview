@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  actsOn,
   arrange,
   bindSchema,
   createSchema,
@@ -214,6 +215,48 @@ describe("the worked example", () => {
   });
 });
 
+describe("what the review found", () => {
+  const store = make();
+
+  it("never finds a record by the Yes or No a boolean reads as", () => {
+    // "n" is the first letter of anything; every open task reads "Done: No".
+    expect(nodes(search(store, "n", { today }).hits)).toEqual(["t-cafe"]);
+    expect(nodes(search(store, "no", { today }).hits)).toEqual(["t-cafe"]);
+    const graph = Graph.from(schema, snapshot as never);
+    expect(arrange(graph.nodesOfKind("task"), { query: "no" }, { schema, graph, today }).nodes.map((node) => node.id)).toEqual(["t-cafe"]);
+  });
+
+  it("counts and names every match in `matched`, past the strip's limit", () => {
+    const few = search(store, "the", { today, limit: 2 });
+    expect(few.hits.filter((hit) => hit.about === "node")).toHaveLength(2);
+    expect(few.matched).toHaveLength(few.total);
+    expect(few.matched).toEqual(nodes(search(store, "the", { today, limit: 100 }).hits));
+  });
+
+  it("agrees with a list's q on words made only of conditions", () => {
+    const graph = Graph.from(schema, snapshot as never);
+    const ctx = { schema, graph, today, flagged: new Set(["t-call"]) };
+    const tasks = graph.nodesOfKind("task");
+    const listed = (query: string) => arrange(tasks, { query }, ctx).nodes.map((node) => node.id);
+    // A token nothing here offers finds nothing, in both — not everything in one of them.
+    expect(search(store, "foo:bar", { today }).hits).toEqual([]);
+    expect(listed("foo:bar")).toEqual([]);
+    expect(listed("https://example.com")).toEqual([]);
+    // A lone is:flagged narrows in both.
+    expect(nodes(search(store, "is:flagged", { today }).hits)).toEqual(["t-call"]);
+    expect(listed("is:flagged")).toEqual(["t-call"]);
+    // is:any alone is a horizon, not a search: a list keeps everything, the Find box finds nothing.
+    expect(listed("is:any")).toHaveLength(tasks.length);
+    expect(search(store, "is:any", { today }).hits).toEqual([]);
+  });
+
+  it("lists a record's acts on their own, without a search of the graph", () => {
+    expect(actsOn(store, "t-van", "finish").map((hit) => hit.name)).toEqual(["finish", "edit-task", "drop", "remove-task"]);
+    expect(actsOn(store, "t-van", "", { limit: 2 })).toHaveLength(2);
+    expect(actsOn(store, "nobody", "finish")).toEqual([]);
+  });
+});
+
 describe("held to properties over the awkward declaration", () => {
   const app = awkwardApp({ kinds: 8 });
   const graph = awkwardGraph(app, 3);
@@ -287,17 +330,18 @@ describe("an agent that cannot see is told what the words reach", () => {
   const app = defineApp({ name: "lists", schema, mutations: [finish, drop, addTask], invariants: [overdue], version: 1 });
 
   it("derives the searchable fields: the name and what a person reads, never what is hidden", () => {
-    expect(searchableFields(schema, "task").map((field) => field.key)).toEqual(["label", "done", "due", "notes"]);
+    // A boolean is a state asked as a condition (done:false), not a word to find.
+    expect(searchableFields(schema, "task").map((field) => field.key)).toEqual(["label", "due", "notes"]);
     expect(searchableFields(schema, "list").map((field) => field.key)).toEqual(["label"]);
   });
 
   it("says so in describe and llms.txt, with is:any for the past", () => {
     const said = describeApp(app);
     expect(said).toContain("## What can be found");
-    expect(said).toContain("task: label (name), done (done), due (due) and notes (notes); past records only with is:any.");
+    expect(said).toContain("task: label (name), due (due) and notes (notes); past records only with is:any.");
     expect(said).toContain("list: label (name).");
     const llms = generateLlmsTxt(app);
-    expect(llms).toContain("- searched by: label, done, due, notes; past records only with is:any");
+    expect(llms).toContain("- searched by: label, due, notes; past records only with is:any");
     expect(llms).toContain("## Finding a thing");
     expect(llms).toContain("`search_graph`");
   });

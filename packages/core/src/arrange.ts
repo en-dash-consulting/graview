@@ -447,16 +447,35 @@ export function conditionHolds(ctx: ArrangeContext, node: ArrangeNode, condition
  * label or a readable field, case, diacritics and punctuation aside.
  */
 export function matches(ctx: ArrangeContext, node: ArrangeNode, query: string): boolean {
+  return matcherFor(ctx, query)(node);
+}
+
+/**
+ * The words, read once for a whole list. `key:value` tokens are conditions,
+ * as in the Find box: judged where the kind offers them, ignored where it
+ * does not — and words made ONLY of tokens nothing here offers (a pasted
+ * `https://…`, a `foo:bar`) find nothing, as `search()` says, rather than
+ * everything. `is:any` alone is a horizon, not a search: it keeps all.
+ */
+function matcherFor(ctx: ArrangeContext, query: string): (node: ArrangeNode) => boolean {
   const { words, conditions } = parseQuery(query);
-  // `key:value` tokens in the words are conditions, as in the Find box: judged
-  // where the kind offers them, ignored where it does not.
-  const offered = conditions.length > 0 ? arrangeable(ctx.schema, node.kind).filters : [];
-  for (const condition of conditions) {
-    if (!offered.some((offer) => offer.key === condition.key)) continue;
-    if (!conditionHolds(ctx, node, condition)) return false;
-  }
-  if (words.length === 0) return true;
-  return matchNode(ctx.schema.tryDefinition(node.kind), asRecord(node), words) !== undefined;
+  if (words.length === 0 && conditions.length === 0) return () => true;
+  const offers = new Map<string, ReadonlySet<string>>();
+  const offered = (kind: string): ReadonlySet<string> => {
+    let held = offers.get(kind);
+    if (!held) {
+      held = new Set(arrangeable(ctx.schema, kind).filters.map((offer) => offer.key));
+      offers.set(kind, held);
+    }
+    return held;
+  };
+  return (node) => {
+    const keys = offered(node.kind);
+    const applied = conditions.filter((condition) => keys.has(condition.key));
+    if (!applied.every((condition) => conditionHolds(ctx, node, condition))) return false;
+    if (words.length > 0) return matchNode(ctx.schema.tryDefinition(node.kind), asRecord(node), words) !== undefined;
+    return applied.length > 0;
+  };
 }
 
 /**
@@ -466,7 +485,7 @@ export function matches(ctx: ArrangeContext, node: ArrangeNode, query: string): 
  */
 export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement: Arrangement, ctx: ArrangeContext): Arranged<N> {
   const query = arrangement.query?.trim();
-  const found = query ? nodes.filter((node) => matches(ctx, node, query)) : nodes;
+  const found = query ? nodes.filter(matcherFor(ctx, query)) : nodes;
   const kept = arrangement.filter?.length
     ? found.filter((node) => arrangement.filter!.every((condition) => conditionHolds(ctx, node, condition)))
     : [...found];

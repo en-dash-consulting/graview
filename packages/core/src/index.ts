@@ -113,6 +113,7 @@ export type {
 
 // Search — one matcher finds a record, a kind, a place, an act or a rule; the graph is the result list.
 export {
+  actsOn,
   describeSearched,
   fold,
   fragmentOf,

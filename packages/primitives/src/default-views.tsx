@@ -8,7 +8,7 @@ import {
   type NodeOfSchema,
   violationsTouching,
 } from "@graview/core";
-import { aggregateId, kindCardId, marqueeHeightFor, withFocus, withOverview, withPast, withWithin } from "@graview/layout";
+import { aggregateId, kindCardId, marqueeHeightFor, withFocus, withJackIn, withOverview, withPast, withWithin } from "@graview/layout";
 import {
   createViews,
   useFound,
@@ -735,7 +735,8 @@ export function registerDefaultViews<S extends AnySchema>(
                 title={`${hits} ${hits === 1 ? "match" : "matches"} for “${view.q ?? ""}” — press to go in, narrowed`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  go(withWithin(withFocus(withOverview(view, false), aggregateId(String(kind))), "q", view.q ?? ""));
+                  // The same descent a double-click on the lit district makes: one transition, not three.
+                  go(withJackIn(view, kindCardId(String(kind)), { ownPicture: true, ...(view.q ? { carry: view.q } : {}) }));
                 }}
                 onDoubleClick={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}

@@ -3,8 +3,8 @@ import { aggregateId, kindCardId } from "@graview/layout";
 import { Companion } from "@graview/primitives";
 import { useGraviewIfAny } from "@graview/react";
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { kindOfSlug } from "./registry.js";
+import { useLocation, useNavigate } from "react-router-dom";
+import { kindOfSlug, recordPath } from "./registry.js";
 import type { PageContext } from "./pages.js";
 
 /**
@@ -24,6 +24,7 @@ import type { PageContext } from "./pages.js";
  */
 export function PageAsk<S extends AnySchema>({ context }: { readonly context: PageContext<S> }) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const here = useGraviewIfAny<S>();
   if (!here) return null;
   return (
@@ -77,7 +78,14 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
           }}
         >
           <div style={{ position: "absolute", inset: "12px 12px 64px 12px", pointerEvents: "auto", display: "grid" }}>
-            <Companion<S> framed />
+            {/* A pick goes to the record's page: there is no scene here to move. */}
+            <Companion<S>
+              framed
+              onPick={(id) => {
+                const node = context.store.graph.getNode(id);
+                if (node) navigate(recordPath(context.store.schema, node.kind as string, id));
+              }}
+            />
           </div>
         </div>
       ) : null}

@@ -102,6 +102,12 @@ export interface SearchResult {
   readonly byKind: Readonly<Record<string, number>>;
   /** Node hits in all, before the limit. */
   readonly total: number;
+  /**
+   * Every matching record's id, in rank order, before the limit — what a
+   * picture lights. The hits are an index to read; this is the answer to
+   * "is this one of them", and a capped list would dim real matches.
+   */
+  readonly matched: readonly string[];
 }
 
 export interface SearchOptions {
@@ -117,6 +123,12 @@ export interface SearchOptions {
   readonly flagged?: ReadonlySet<string>;
   /** YYYY-MM-DD, for the lifecycle. */
   readonly today?: string;
+  /**
+   * What the op log touched lately (`touchWeights`), when the caller holds
+   * it — a Find box asks on every keystroke, and the log only changes when
+   * the graph does.
+   */
+  readonly touched?: ReadonlyMap<string, number>;
   /**
    * The kinds to look in, when fewer than all the seat may see: the scene
    * looks only in the districts it draws. Never widens past the policy.
@@ -235,6 +247,12 @@ function textsOf(definition: AnyNodeDefinition | undefined, node: { id: string; 
   const texts: Text[] = [{ field: "label", reading: "Name", text: label }];
   for (const field of readableFields(node, definition, { limit: Number.POSITIVE_INFINITY })) {
     if (field.key === "label" || field.value === label) continue;
+    /*
+     * A BOOLEAN IS A STATE, NOT A WORD. It reads as "Yes" or "No", and
+     * searching that made "n" — the first letter of anything — find every
+     * open task. A state is asked for as a condition: `done:false`.
+     */
+    if (typeof node[field.key] === "boolean") continue;
     texts.push({ field: field.key, reading: field.label, text: field.value });
   }
   return texts;
@@ -253,7 +271,10 @@ export function searchableFields(schema: AnySchema, kind: string): readonly { re
   const fields = [{ key: "label", reading: "Name" }];
   for (const [key, field] of Object.entries((definition.fields.shape ?? {}) as Record<string, unknown>)) {
     if (key === "id" || key === "kind" || key === "label" || hidden.has(key)) continue;
-    if (describeArg(field).type === "unknown" && definition.display?.format?.[key] === undefined) continue;
+    const type = describeArg(field).type;
+    // A state is a condition (`done:false`), not a word to find; see textsOf.
+    if (type === "boolean") continue;
+    if (type === "unknown" && definition.display?.format?.[key] === undefined) continue;
     fields.push({ key, reading: definition.display?.labels?.[key] ?? humaniseField(key) });
   }
   return fields;
@@ -326,6 +347,16 @@ function kindStrength(schema: AnySchema, kind: string, words: readonly string[])
 
 type Ranked = { hit: Hit; tier: number; near: number; past: number; touched: number; flagged: number; name: string; id: string };
 
+/** The ranking, as one comparison: how it matched, near, current, touched, flagged, alphabetical, id. */
+const byRank = (a: Ranked, b: Ranked): number =>
+  a.tier - b.tier ||
+  a.near - b.near ||
+  a.past - b.past ||
+  a.touched - b.touched ||
+  a.flagged - b.flagged ||
+  a.name.localeCompare(b.name, undefined, { sensitivity: "base", numeric: true }) ||
+  (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+
 /**
  * Finds what the words name, anywhere in the graph, for one seat.
  *
@@ -373,14 +404,16 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     admittedBy: kinds.filter((kind) => arrangeable(schema, kind).filters.some((offer) => offer.key === condition.key)),
   }));
   const fieldConditions = conditions.filter((condition) => condition.key !== "is");
+  // `is:flagged`, `is:clear` and `is:past` narrow on their own; `is:any` and `is:current` only say which horizon.
+  const narrowingIs = isWords.filter((word) => word === "flagged" || word === "clear" || word === "past");
 
   const searched = { kinds, past };
-  const empty: SearchResult = { hits: [], words: parsed.words, conditions, searched, byKind: {}, total: 0 };
-  if (words.length === 0 && fieldConditions.length === 0) return empty;
+  const empty: SearchResult = { hits: [], words: parsed.words, conditions, searched, byKind: {}, total: 0, matched: [] };
+  if (words.length === 0 && fieldConditions.length === 0 && narrowingIs.length === 0) return empty;
 
   const today = options.today;
   const flagged = options.flagged ?? new Set(store.violations().flatMap((violation) => violation.nodeIds));
-  const touched = touchWeights(store.log.all());
+  const touched = options.touched ?? touchWeights(store.log.all());
   const near = new Set<string>();
   for (const id of options.from ?? []) {
     near.add(id);
@@ -396,7 +429,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     const definition = schema.tryDefinition(kind);
     const own = conditions.filter((condition) => condition.key !== "is" && condition.admittedBy.includes(kind));
     // Conditions alone find only in the kinds that can be narrowed by them.
-    if (words.length === 0 && own.length === 0) continue;
+    if (words.length === 0 && own.length === 0 && narrowingIs.length === 0) continue;
     for (const node of store.graph.nodesOfKind(kind as never) as unknown as ({ id: string; kind: string } & Record<string, unknown>)[]) {
       const current = isCurrent(definition, node, today);
       if (!past && !current) continue;
@@ -407,7 +440,9 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
       const why =
         words.length > 0
           ? matchNode(definition, node, parsed.words)
-          : { field: own[0]!.key, reading: humaniseField(own[0]!.key), fragment: `${own[0]!.key}:${own[0]!.value}`, strength: "field" as const };
+          : own[0]
+            ? { field: own[0].key, reading: humaniseField(own[0].key), fragment: `${own[0].key}:${own[0].value}`, strength: "field" as const }
+            : { field: "is", reading: "Is", fragment: `is:${narrowingIs[0]!}`, strength: "field" as const };
       if (!why) continue;
       const label = labelOf(definition, node);
       byKind[kind] = (byKind[kind] ?? 0) + 1;
@@ -471,64 +506,72 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     }
   }
 
-  /*
-   * WHAT CAN BE DONE ABOUT IT. An act is a hit only once a node hit is
-   * highlighted, and it is offered on that node with its own title: the
-   * acts whose title the words name come first, then the rest the seat may
-   * run on it, the destructive ones last.
-   */
-  const acts: Ranked[] = [];
-  const subject = options.subject ? store.graph.getNode(options.subject) : undefined;
-  if (subject && kinds.includes(subject.kind as string)) {
-    for (const mutation of store.allMutations()) {
-      const binding = mutation.subject;
-      if (!binding) continue;
-      if (binding.kinds !== "*" && !(binding.kinds as readonly string[]).includes(subject.kind as string)) continue;
-      if (!store.permits({ name: mutation.name, args: { [binding.arg]: subject.id } }, principal).ok) continue;
-      const title = mutation.title ?? humaniseField(mutation.name);
-      // The words name the node AND the act — "van finish" — so an act is
-      // judged on the words its own title carries.
-      const titled = tokensOf(title);
-      const own = words.filter((word) => titled.some((token) => token.startsWith(word)));
-      const strength = own.length > 0 ? strengthOf(title, own) : undefined;
-      const why: Why = strength
-        ? { field: "title", reading: "Act", fragment: title, strength }
-        : { field: "subject", reading: "On", fragment: labelOf(schema.tryDefinition(subject.kind as string), subject as never), strength: "field" };
-      acts.push({
-        hit: { about: "act", name: mutation.name, title, subject: subject.id, why, destructive: mutation.destructive === true },
-        tier: strength ? TIER[strength] : TIER.field + 1,
-        near: 0,
-        past: mutation.destructive ? 1 : 0,
-        touched: 0,
-        flagged: mutation.pinned ? 0 : 1,
-        name: title,
-        id: `act:${mutation.name}`,
-      });
-    }
-  }
-
-  const order = (a: Ranked, b: Ranked) =>
-    a.tier - b.tier ||
-    a.near - b.near ||
-    a.past - b.past ||
-    a.touched - b.touched ||
-    a.flagged - b.flagged ||
-    a.name.localeCompare(b.name, undefined, { sensitivity: "base", numeric: true }) ||
-    (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
-
-  ranked.sort(order);
-  acts.sort(order);
+  ranked.sort(byRank);
   const limit = options.limit ?? 50;
   const hits = ranked.slice(0, limit).map((entry) => entry.hit);
   const total = Object.values(byKind).reduce((sum, count) => sum + count, 0);
+  const matched = ranked.flatMap((entry) => (entry.hit.about === "node" ? [entry.hit.id] : []));
+  const acts = options.subject && kinds.includes(String(store.graph.getNode(options.subject)?.kind)) ? actsOn(store, options.subject, parsed.words, { principal }) : [];
   return {
-    hits: [...hits, ...acts.map((entry) => entry.hit)],
+    hits: [...hits, ...acts],
     words: parsed.words,
     conditions,
     searched,
     byKind,
     total,
+    matched,
   };
+}
+
+/**
+ * WHAT CAN BE DONE ABOUT IT: the acts a seat may run on one record, as
+ * hits. An act is never a subjectless hit — it is offered on the thing the
+ * person highlighted, with its own title — and the words that name the
+ * record may name the act too ("van finish"), so each act is judged on the
+ * words its own title carries. The named first, the destructive last.
+ *
+ * Its own function because a Find box asks it for a highlighted row on
+ * every keystroke, and has no need to rescan the graph to get it.
+ */
+export function actsOn<S extends AnySchema>(
+  store: Store<S>,
+  subjectId: string,
+  words: string,
+  options: { readonly principal?: Principal; readonly limit?: number } = {},
+): readonly Extract<Hit, { about: "act" }>[] {
+  const subject = store.graph.getNode(subjectId);
+  if (!subject) return [];
+  const principal = options.principal ?? { kind: "human" };
+  if (store.kindsKeptFrom(principal).has(subject.kind as string)) return [];
+  const asked = tokensOf(words);
+  const said = labelOf(store.schema.tryDefinition(subject.kind as string), subject as never);
+  const ranked: Ranked[] = [];
+  for (const mutation of store.allMutations()) {
+    const binding = mutation.subject;
+    if (!binding) continue;
+    if (binding.kinds !== "*" && !(binding.kinds as readonly string[]).includes(subject.kind as string)) continue;
+    if (!store.permits({ name: mutation.name, args: { [binding.arg]: subject.id } }, principal).ok) continue;
+    const title = mutation.title ?? humaniseField(mutation.name);
+    const titled = tokensOf(title);
+    const own = asked.filter((word) => titled.some((token) => token.startsWith(word)));
+    const strength = own.length > 0 ? strengthOf(title, own) : undefined;
+    const why: Why = strength
+      ? { field: "title", reading: "Act", fragment: title, strength }
+      : { field: "subject", reading: "On", fragment: said, strength: "field" };
+    ranked.push({
+      hit: { about: "act", name: mutation.name, title, subject: subject.id, why, destructive: mutation.destructive === true },
+      tier: strength ? TIER[strength] : TIER.field + 1,
+      near: 0,
+      past: mutation.destructive ? 1 : 0,
+      touched: 0,
+      flagged: mutation.pinned ? 0 : 1,
+      name: title,
+      id: `act:${mutation.name}`,
+    });
+  }
+  ranked.sort(byRank);
+  const acts = ranked.map((entry) => entry.hit as Extract<Hit, { about: "act" }>);
+  return options.limit === undefined ? acts : acts.slice(0, options.limit);
 }
 
 /**

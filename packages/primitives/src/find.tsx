@@ -1,5 +1,5 @@
-import { search, type AnySchema, type Hit } from "@graview/core";
-import { aggregateId, withFocus, withOverview, withQuery, withSelection, withWithin } from "@graview/layout";
+import { actsOn, type AnySchema, type Hit } from "@graview/core";
+import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withQuery, withSelection, withWithin } from "@graview/layout";
 import { useFound, useGraview, useKit, useViolations } from "@graview/react";
 import { hueFor } from "@graview/render";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -30,7 +30,7 @@ interface Row {
 const groupOf = (hit: Hit): string => (hit.about === "rule" ? "rule:" : hit.about === "act" ? "act:" : hit.kind);
 
 export function FindBox<S extends AnySchema>({ compact = false }: { readonly compact?: boolean }) {
-  const { store, view, setView, principal, hiddenKinds, setMenuAt, brand } = useGraview<S>();
+  const { store, view, setView, principal, setMenuAt, brand } = useGraview<S>();
   const found = useFound();
   const violations = useViolations<S>();
   const flag = useKit().marks.flag;
@@ -72,17 +72,10 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
    * WHAT CAN BE DONE ABOUT IT: the acts on the highlighted record, from the
    * same matcher asked with that record as the subject — never subjectless.
    */
-  const acts = useMemo(() => {
-    if (!anchor || !q.trim()) return [];
-    return search(store, q, {
-      principal,
-      subject: anchor,
-      kinds: (store.schema.kinds as readonly string[]).filter((kind) => !hiddenKinds.has(kind)),
-      limit: 0,
-    }).hits
-      .filter((hit) => hit.about === "act")
-      .slice(0, 4);
-  }, [store, q, anchor, principal, hiddenKinds]);
+  const acts = useMemo(
+    () => (anchor && q.trim() ? actsOn(store, anchor, found?.words ?? q, { principal, limit: 4 }) : []),
+    [store, q, found, anchor, principal],
+  );
 
   const groups = useMemo(() => {
     const held = new Map<string, Row[]>();
@@ -122,8 +115,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
         setView((stop) => withSelection(withFocus(withOverview(stop, false), hit.id), [hit.id]));
         break;
       case "kind":
-        // Into the district, narrowed by the same words: search hands off to the arrangement.
-        setView((stop) => withWithin(withFocus(withOverview(stop, false), aggregateId(hit.kind)), "q", stop.q ?? ""));
+        // Into the district, narrowed by the same words — the same descent a double-click on the lit district makes.
+        setView((stop) => withJackIn(stop, kindCardId(hit.kind), { ownPicture: true, ...(stop.q ? { carry: stop.q } : {}) }));
         break;
       case "place":
         setView((stop) => withWithin(withOverview(withFocus(stop, aggregateId(hit.kind)), false), "view", hit.as));
@@ -185,7 +178,7 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
           } else if (event.key === "Escape") {
             event.preventDefault();
             // The words first; an empty box lets go of the keys.
-            if (q) setView((stop) => withQuery(stop, null));
+            if (q) setView((stop) => withoutSearch(stop));
             else input.current?.blur();
           }
         }}
