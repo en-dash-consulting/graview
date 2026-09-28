@@ -2717,3 +2717,24 @@ two singles and thirty-five songs.
   edge name is one relation" (refuses the discography's two `by`s, quiet on
   identical words, each kind its own targets); the studio's own
   `graview check` test now holds it to the same rule.
+
+### W-098 · "All artists by Blue Hour →", "All songs tracks Blue Hour →"
+- stage: B · face: pages · width: any · scheme: both
+- expected: the link from a record to the far kind's list, narrowed to this
+  record, says what it lists in the words the section above already uses
+- actual: it was `All {far plural} {edge kind} {this record}` — the edge's
+  NAME read as a verb from whichever end it happened to fit. On an artist's
+  page "All songs by Mara Vey" was right by luck; on an album's page the
+  same template said "All artists by Blue Hour", "All songs tracks Blue
+  Hour" and "All eras spans Blue Hour". Words from the wrong end, one layer
+  under the heading that W-044 had already fixed.
+- where it belongs: `packages/pages/src/page-record.tsx`
+- harness that should have caught it: `the-map-of-kinds.test.tsx` asserted
+  the link's href and never its words; the fixture's edge is "does", which
+  reads as a verb from one end
+- status: fixed in "walkthrough: B · the way to the list says what it
+  lists" · "Sort and filter {this end's description}" — "Sort and filter the
+  songs on it", "Sort and filter their songs" — with the far plural in
+  brackets when the group holds more than one kind. Criterion:
+  `the-map-of-kinds.test.tsx` "links a record the other way round" now
+  reads the words, and refuses the edge name as a verb.

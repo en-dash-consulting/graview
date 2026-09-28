@@ -114,6 +114,9 @@ describe("the map of kinds", () => {
     const ana = draw("/people/ana");
     expect(ana).toContain('data-testid="related-all"');
     expect(ana).toContain('href="/duties?does=ana"');
+    // In this end's words, never the edge's name read as a verb (W-098).
+    expect(ana).toContain("Sort and filter what they do");
+    expect(ana).not.toMatch(/All duties does/);
     const morning = draw("/duties/m");
     expect(morning).toContain('href="/people?does=m"');
     expect(morning).toContain('data-testid="seen-in"');

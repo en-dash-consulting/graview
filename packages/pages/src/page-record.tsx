@@ -189,7 +189,14 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               style={{ ...link, ...quiet }}
               data-testid="related-all"
             >
-              All {pluralOf(store, farKind).toLowerCase()} {humaniseField(group.edgeKind).toLowerCase()} {facts.label} →
+              {/*
+                * The relation in THIS end's words, not the edge's name: "All
+                * artists by Blue Hour", "All songs tracks Blue Hour" and "All
+                * eras spans Blue Hour" were the edge kind read as a verb from
+                * whichever end it happened to fit.
+                */}
+              Sort and filter {group.description ?? `these ${pluralOf(store, farKind).toLowerCase()}`}
+              {group.targets.some((target) => target.kind !== farKind) ? ` (${pluralOf(store, farKind).toLowerCase()})` : ""} →
             </Link>
           ))}
         </section>
