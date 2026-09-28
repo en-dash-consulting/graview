@@ -78,6 +78,36 @@ export type {
   Violation,
 } from "./invariants/types.js";
 
+// Arrangement — what a kind can be sorted, filtered and grouped by, and the grammar that carries it.
+export {
+  admitArrangement,
+  arrange,
+  arrangeable,
+  arrangeAllows,
+  bucketStart,
+  edgesOf,
+  formatArrangement,
+  NO_ARRANGEMENT,
+  parseArrangement,
+} from "./arrange.js";
+export type {
+  Arrangeable,
+  ArrangeContext,
+  Arranged,
+  ArrangedGroup,
+  Arrangement,
+  ArrangementWords,
+  ArrangeNode,
+  ArrangeOffer,
+  ArrangeOption,
+  Condition,
+  DateBucket,
+  Grouping,
+  OfferType,
+  Sort,
+  SortDirection,
+} from "./arrange.js";
+
 // Mutations — the only writes.
 export { compileMutation, defineMutation, takesAnId } from "./mutations/define-mutation.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
