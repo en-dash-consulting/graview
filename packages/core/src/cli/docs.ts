@@ -1,4 +1,5 @@
 import { arrangeable } from "../arrange.js";
+import { searchableFields } from "../search.js";
 import type { GraviewApp } from "../app.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
 import { mutationToolSchema } from "../schema/json-schema.js";
@@ -47,8 +48,24 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
     lines.push(
       `- arranged by: sort ${offers.sorts.map((offer) => offer.key).join(" | ")}; filter ${offers.filters.map((offer) => offer.key).join(" | ")}; group ${offers.groups.map((offer) => offer.key).join(" | ") || "nothing"}${offers.natural ? `; ${offers.natural.by} unless asked` : ""}`,
     );
+    lines.push(
+      `- searched by: ${searchableFields(app.schema, definition.kind).map((field) => field.key).join(", ")}${definition.lifecycle ? "; past records only with is:any" : ""}`,
+    );
     lines.push("");
   }
+
+  lines.push("## Finding a thing", "");
+  lines.push(
+    "One matcher answers the Find box in the scene (`/` or ⌘K; `#q=` in the stop), the",
+    "`/search?q=` page, a list page's `?q=`, and the `search_graph` tool — reach for",
+    "that before `get_graph` when you know what a thing is called. Words match the start",
+    "of words in a record's name and in the fields each kind above is searched by, case,",
+    "accents and punctuation aside; not fuzzy. It also names kinds by their plural,",
+    "places by their title and rules by their name. `key:value` tokens are the",
+    "arrangement's conditions, applied to the kinds that offer them (`van done:false`);",
+    "`kind:<kind>` narrows to a kind; past records are found only with `is:any`.",
+    "",
+  );
 
   lines.push("## Arranging a picture", "");
   lines.push(

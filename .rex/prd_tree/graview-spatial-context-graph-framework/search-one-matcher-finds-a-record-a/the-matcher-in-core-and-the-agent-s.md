@@ -2,8 +2,13 @@
 id: "5b35ff0b-e2b8-435f-a968-167c628c84ee"
 level: "task"
 title: "The matcher in core, and the agent's search_graph tool"
-status: "pending"
+status: "completed"
 priority: "high"
+startedAt: "2026-09-28T21:33:03.904Z"
+completedAt: "2026-09-28T21:33:04.410Z"
+endedAt: "2026-09-28T21:33:04.410Z"
+resolutionType: "code-change"
+resolutionDetail: "packages/core/src/search.ts: search(store, query, {principal, from, subject, places, flagged, today, limit}) \u2192 {hits (node|kind|place|act|rule, each with why {field, reading, fragment, strength}), words, conditions (admittedBy), searched {kinds, past}, byKind, total}. fold/squeeze/strengthOf (every word the start of a word; exact/prefix on the squeezed whole), parseQuery (key:value \u2192 arrangement conditions via conditionHolds, kind:, is:), matchNode over label + readableFields, touchWeights (op-log writes, decayed), searchableFields. Past excluded unless is:any/is:past. Acts only with subject, judged on the words their title carries. arrange's matches() now uses matchNode + q conditions. search_graph first read tool (reads = node hit ids; places option on the runtime, wired in chat, agent seat and graview mcp); MCP instructions say search before get_graph. describe '## What can be found', llms.txt 'searched by' + '## Finding a thing'. Tests: core one-matcher-finds-it (worked example + awkwardApp properties), tools an-agent-finds-by-name."
 acceptanceCriteria:
   - "search() returns hits typed node | kind | place | act | rule, each with a why naming the matched field and fragment, ranked exact label → prefix → whole word → field, then near the subject, current before past, recently touched, flagged as tiebreak, alphabetical, stable by id"
   - "Matching is squeezed (case, diacritics, punctuation aside) and not fuzzy; key:value tokens are conditions admitted per hit kind, the rest are the words; hits the seat may not see are not returned"
@@ -11,6 +16,6 @@ acceptanceCriteria:
   - "describe and llms.txt say, per kind, which fields are searchable and that past records need is:any"
   - "Unit tests hold the ranking to properties over the awkward declaration and to a worked example"
 description: "search(store, query, { principal, from, limit, today }) in @graview/core returns ranked hits — node, kind, place, act, rule — each with a why naming the matched field and fragment, plus what was searched. Squeezed matching (case, diacritics, punctuation aside), no fuzz. Words and key:value conditions split by the arrangement parser, conditions admitted per hit kind. Ranking: exact label, prefix, whole word, field; near the subject; current before past; recently touched (usageWeights); flagged as tiebreak; alphabetical. Hits the seat may not see (kindsKeptFrom) are not hits. search_graph joins the read tools with reads counted; describe and llms.txt say what is searchable per kind. Held to properties over the awkward declaration."
-lastModified: "2026-09-28T21:09:32.654Z"
+lastModified: "2026-09-28T21:33:04.477Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

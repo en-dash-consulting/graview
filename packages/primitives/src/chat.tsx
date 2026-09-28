@@ -64,7 +64,7 @@ export function ChatPanel<S extends AnySchema>({
   onCall,
   testId = "chat",
 }: ChatPanelProps<S>) {
-  const { store, principal, seatWho, noteSeat, session, intelligence: config, registerHostAnswers } = useGraview<S>();
+  const { store, views, principal, seatWho, noteSeat, session, intelligence: config, registerHostAnswers } = useGraview<S>();
   const { selection } = useSelection();
   const subject = useSubject<S>();
   /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
@@ -100,8 +100,9 @@ export function ChatPanel<S extends AnySchema>({
         // toggled in the menu reorders the chat's tool list without a
         // rebuild. No surface may disagree with another about the acts.
         derive: () => ({ pins: loadPins() }),
+        places: () => views.places(),
       }),
-    [store, principal, author],
+    [store, principal, author, views],
   );
   const statusToken = useRef(0);
   /*

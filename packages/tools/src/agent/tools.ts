@@ -1,9 +1,11 @@
 import {
   mutationToolSchema,
+  search,
   type AnySchema,
   type GraphDiff,
   type JsonSchema,
   type NodeOfSchema,
+  type Place,
   type Principal,
   type Store,
 } from "@graview/core";
@@ -57,9 +59,31 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
   readonly derive?: DeriveOptions<S> | (() => DeriveOptions<S>);
   /** Refuse every mutating tool. Useful for a read-only agent seat. */
   readonly readOnly?: boolean;
+  /**
+   * The places the app's pictures name, so `search_graph` can answer "where
+   * do I go for X" as well as "where is X". The store cannot see pictures;
+   * whoever built the runtime beside a view registry can.
+   */
+  readonly places?: readonly Place[] | (() => readonly Place[]);
 }
 
 const READ_TOOLS: readonly ToolDefinition[] = [
+  {
+    name: "search_graph",
+    description:
+      "Find things by name: records whose name or readable fields carry the words, and the kinds, places and rules the words name — each with why it matched. Reach for this before get_graph when you know what something is called. Words match the start of words, case and accents aside; key:value tokens narrow as a list's filter does (done:false, is:any for past records, kind:<kind>). Pass subject (a node id) to get the acts you may run on it as hits too.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Words, with optional key:value conditions." },
+        limit: { type: "number", description: "Most hits to return; 20 when unsaid." },
+        subject: { type: "string", description: "A node id whose acts to include." },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+    mutating: false,
+  },
   {
     name: "get_graph",
     description:
@@ -271,6 +295,23 @@ export function createToolRuntime<S extends AnySchema>(
       }
 
       switch (name) {
+        case "search_graph": {
+          const places = typeof options.places === "function" ? options.places() : options.places;
+          const subject = typeof args["subject"] === "string" ? args["subject"] : undefined;
+          const found = search(store, String(args["query"] ?? ""), {
+            principal: options.author ?? { kind: "agent" },
+            limit: typeof args["limit"] === "number" ? args["limit"] : 20,
+            ...(places ? { places } : {}),
+            ...(subject ? { subject, from: [subject] } : {}),
+          });
+          return {
+            ok: true,
+            data: found,
+            // What came back was looked at: the records named, and nothing else.
+            reads: found.hits.flatMap((hit) => (hit.about === "node" ? [hit.id] : [])),
+          };
+        }
+
         case "get_graph": {
           const snapshot = store.graph.snapshot();
           return {

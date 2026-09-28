@@ -1,4 +1,5 @@
 import { arrangeable } from "../arrange.js";
+import { searchableFields } from "../search.js";
 import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceProviderDeclaration } from "../app.js";
 import { beginning } from "../beginning.js";
 import { cityMap, roadsOf } from "../city.js";
@@ -165,6 +166,20 @@ export function describeApp<S extends AnySchema>(
     const words = Object.entries(lens.arrangedBy).map(([part, value]) => `${part}=${value}`);
     lines.push(`  The ${lens.name} lens opens with ${list(words)}.`);
   }
+
+  /*
+   * WHAT THE WORDS REACH. The Find box, `/search` and `search_graph` read the
+   * name and every field a person reads on a record; an agent that knows
+   * which is an agent that searches rather than reading the whole graph.
+   */
+  lines.push("", "## What can be found");
+  lines.push("The Find box (/ or ⌘K), /search?q= and the search_graph tool match the start of words in:");
+  for (const kind of kinds) {
+    const fields = searchableFields(app.schema, kind).map((field) => `${field.key} (${field.reading.toLowerCase()})`);
+    const lifecycle = app.schema.tryDefinition(kind)?.lifecycle;
+    lines.push(`  ${kind}: ${list(fields)}${lifecycle ? "; past records only with is:any" : ""}.`);
+  }
+  lines.push("  key:value tokens narrow as a list's filter does, and kind:<kind> to one kind.");
 
   const authored = (app.lenses ?? []).filter(
     (lens) => !["timeline", "coverage", "board", "calendar", "reach"].includes(lens.name),

@@ -15,6 +15,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [Skills and docs know search: pages, agent seat, new app](./skills-and-docs-know-search-pages.md) | pending |
-| [The matcher in core, and the agent's search_graph tool](./the-matcher-in-core-and-the-agent-s.md) | pending |
+| [The matcher in core, and the agent's search_graph tool](./the-matcher-in-core-and-the-agent-s.md) | completed |
 | [The pages face and the companion: /search, the nav box, list pages on the shared matcher, search-to-create, the conversation's fallback](./the-pages-face-and-the-companion.md) | pending |
 | [The scene: q in the view state, the Find box in the Shell, hits lit and the rest dimmed, descent carrying in.q](./the-scene-q-in-the-view-state-the-find.md) | pending |

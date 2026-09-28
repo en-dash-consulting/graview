@@ -85,6 +85,7 @@ export {
   arrangeable,
   arrangeAllows,
   bucketStart,
+  conditionHolds,
   edgesOf,
   formatArrangement,
   matches,
@@ -109,6 +110,30 @@ export type {
   Sort,
   SortDirection,
 } from "./arrange.js";
+
+// Search — one matcher finds a record, a kind, a place, an act or a rule; the graph is the result list.
+export {
+  describeSearched,
+  fold,
+  fragmentOf,
+  matchNode,
+  parseQuery,
+  search,
+  searchableFields,
+  squeeze,
+  strengthOf,
+  touchWeights,
+} from "./search.js";
+export type {
+  Hit,
+  HitAbout,
+  MatchStrength,
+  ParsedQuery,
+  SearchCondition,
+  SearchOptions,
+  SearchResult,
+  Why,
+} from "./search.js";
 
 // Mutations — the only writes.
 export { compileMutation, defineMutation, takesAnId } from "./mutations/define-mutation.js";

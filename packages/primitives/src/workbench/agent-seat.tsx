@@ -71,7 +71,7 @@ export function AgentSeat<S extends AnySchema>({
   onCall,
   run,
 }: AgentSeatProps<S>) {
-  const { store, principal, registerSeatWho, noteSeat, session } = useGraview<S>();
+  const { store, views, principal, registerSeatWho, noteSeat, session } = useGraview<S>();
   /*
    * ONE ROBOT for the tab's seat and its chat: the seat registers its name
    * and the chat writes as it, so the two surfaces are one body in the city.
@@ -94,8 +94,9 @@ export function AgentSeat<S extends AnySchema>({
         // built must still reach the seat's tool list — the strip, the
         // pointer menu and the agent must never disagree about the acts.
         derive: () => ({ pins: loadPins() }),
+        places: () => views.places(),
       }),
-    [store, principal, who, session],
+    [store, principal, who, session, views],
   );
   const agent = useMemo(() => createInAppAdapter(runtime), [runtime]);
   const [busy, setBusy] = useState(false);

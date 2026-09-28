@@ -1,4 +1,5 @@
 import { describeArg } from "./mutations/node-ref.js";
+import { matchNode, parseQuery } from "./search.js";
 import { humaniseField, isCurrent, labelOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
@@ -401,7 +402,8 @@ function bucketLabel(start: string, bucket: DateBucket): string {
   return start;
 }
 
-function holds(ctx: ArrangeContext, node: ArrangeNode, condition: Condition): boolean {
+/** Whether a node meets one condition of a filter. Search judges its `key:value` tokens with this too. */
+export function conditionHolds(ctx: ArrangeContext, node: ArrangeNode, condition: Condition): boolean {
   const definition = ctx.schema.tryDefinition(node.kind);
   if (condition.key === "is") {
     switch (condition.value) {
@@ -439,20 +441,22 @@ function holds(ctx: ArrangeContext, node: ArrangeNode, condition: Condition): bo
   return ends.some((end) => end.id === condition.value);
 }
 
-/** Whether the words appear in the node's label or any scalar field, case aside. */
+/**
+ * Whether the words find the node — search's own matcher, so a list's `q`
+ * and the Find box never disagree: every word the start of a word in the
+ * label or a readable field, case, diacritics and punctuation aside.
+ */
 export function matches(ctx: ArrangeContext, node: ArrangeNode, query: string): boolean {
-  const wanted = query.trim().toLowerCase();
-  if (wanted.length === 0) return true;
-  if (labelFor(ctx, node).toLowerCase().includes(wanted)) return true;
-  const definition = ctx.schema.tryDefinition(node.kind);
-  const hidden = new Set(definition?.display?.hide ?? []);
-  for (const [key, value] of Object.entries(fields(node))) {
-    if (key === "id" || key === "kind" || hidden.has(key)) continue;
-    if (typeof value === "string" || typeof value === "number") {
-      if (String(value).toLowerCase().includes(wanted)) return true;
-    }
+  const { words, conditions } = parseQuery(query);
+  // `key:value` tokens in the words are conditions, as in the Find box: judged
+  // where the kind offers them, ignored where it does not.
+  const offered = conditions.length > 0 ? arrangeable(ctx.schema, node.kind).filters : [];
+  for (const condition of conditions) {
+    if (!offered.some((offer) => offer.key === condition.key)) continue;
+    if (!conditionHolds(ctx, node, condition)) return false;
   }
-  return false;
+  if (words.length === 0) return true;
+  return matchNode(ctx.schema.tryDefinition(node.kind), asRecord(node), words) !== undefined;
 }
 
 /**
@@ -461,10 +465,10 @@ export function matches(ctx: ArrangeContext, node: ArrangeNode, query: string): 
  * kind the context cannot describe are kept and sort by what they carry.
  */
 export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement: Arrangement, ctx: ArrangeContext): Arranged<N> {
-  const query = arrangement.query?.trim().toLowerCase();
+  const query = arrangement.query?.trim();
   const found = query ? nodes.filter((node) => matches(ctx, node, query)) : nodes;
   const kept = arrangement.filter?.length
-    ? found.filter((node) => arrangement.filter!.every((condition) => holds(ctx, node, condition)))
+    ? found.filter((node) => arrangement.filter!.every((condition) => conditionHolds(ctx, node, condition)))
     : [...found];
 
   const sort = arrangement.sort;

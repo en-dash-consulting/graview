@@ -143,7 +143,7 @@ export function instructionsFor(app: GraviewApp, principal: Principal, where: st
   return (
     `${app.name} is a Graview app; its graph is the interface and this seat (${principal.id ?? "an agent"}` +
     `${principal.roles?.length ? `, roles ${principal.roles.join(", ")}` : ""}) acts on the store at ${where}. ` +
-    `Read with get_graph, get_node and get_violations; ask get_affordances what is legal on a selection; ` +
+    `Find a thing by name with search_graph before reaching for get_graph; read with get_node and get_violations; ask get_affordances what is legal on a selection; ` +
     `change the graph only through the named mutation tools, which are every write there is. preview_mutation first when unsure; ` +
     `undo_batch takes a batch back. An act that creates a kind takes an optional id for the node it makes; remove-<kind> takes one out. ` +
     `Every change is judged under this seat's principal, logged with your name, and shown to everyone else within a second.`
@@ -164,13 +164,13 @@ export async function mcp(argv: readonly string[]): Promise<number> {
      * exist yet.
      */
     const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(app.intelligence ? { intelligence: app.intelligence } : {}) });
-    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly }));
+    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, places: () => app.views?.places?.() ?? [] }));
     process.stdout.write(`${JSON.stringify({ tools: adapter.listTools() }, null, 2)}\n`);
     return 0;
   }
 
   const host = await openHost(app, argv, principal);
-  const runtime = createToolRuntime(host.store, { author: principal, readOnly });
+  const runtime = createToolRuntime(host.store, { author: principal, readOnly, places: () => app.views?.places?.() ?? [] });
   const inner = createMcpAdapter(runtime);
   say(`graview mcp: ${app.name} as ${principal.id} on ${host.where} — ${inner.listTools().length} tools\n`);
 
