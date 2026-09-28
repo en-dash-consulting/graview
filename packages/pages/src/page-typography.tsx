@@ -174,16 +174,10 @@ export function glance(
   definition: AnyNodeDefinition | undefined,
   said: string,
 ): string {
-  const raw = (key: string) => node[key];
+  // A bare number says nothing on its own — "12 · 8" is not a sentence —
+  // so each fact is read the way it stands alone, the same words a card uses.
   return readableFields(node, definition, { limit: 3, said: [said] })
-    .map((field) => {
-      // A bare number says nothing on its own — "12 · 8" is not a sentence.
-      // The label the declaration already gave it makes it one.
-      const value = raw(field.key);
-      if (typeof value === "number") return `${field.value} ${field.label.toLowerCase()}`;
-      if (typeof value === "boolean") return `${field.label}: ${field.value.toLowerCase()}`;
-      return field.value;
-    })
+    .map((field) => field.alone)
     .join(" · ");
 }
 

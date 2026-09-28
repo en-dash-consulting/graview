@@ -2663,3 +2663,26 @@ two singles and thirty-five songs.
   caption per relation however sorted; spans its first row; neighbours
   never overlap; out from under the rail) and verify-navigation
   `everyRelationIsCaptionedOnce` at every stop it walks.
+
+### W-096 · A song's card reads "8 · 4:27 · Yes"
+- stage: B · face: both · width: any · scheme: both
+- expected: a card at summary, and the pages' gallery, say which fact is
+  which — a track number, a length, whether it is explicit
+- actual: the summary card's chips were the bare values — `8`, `4:27`,
+  `Yes` — under every song in a band, and the routed face's home gallery
+  said "Porch Light | 1 | 3:48 | No". The routed face's list lines had
+  already learned this (`glance` put the label on a number or a boolean);
+  the scene's default card and the gallery, which draws it, had not. A
+  to-do's `done` is hidden or a status in every example, so no example had
+  a number or a yes/no on a card.
+- where it belongs: `packages/core/src/schema/define-node.ts`
+  (`ReadableField.alone`), `packages/primitives/src/default-views.tsx`
+  (`Summary`), `packages/pages/src/page-typography.tsx` (`glance`)
+- harness that should have caught it: nothing asserted the words on a
+  summary card
+- status: fixed in "walkthrough: B · a chip says what it is" · every
+  readable field carries `alone`, its reading without a label beside it: a
+  word as itself, a number with its label first ("Track 8", "Length 4:27"),
+  a yes/no as "Explicit: yes". The card's chips and the list lines both
+  read it. Criterion: primitives `a-chip-says-what-it-is.test.tsx` (the
+  field's own reading, and the summary card's chips).

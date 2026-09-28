@@ -99,6 +99,14 @@ export interface ReadableField {
   readonly label: string;
   /** The value in words, after `display.format` and the built-in defaults. */
   readonly value: string;
+  /**
+   * The value as it reads WITHOUT its label beside it — on a chip, in a
+   * list line, on a card at summary. A word says what it is ("released");
+   * a number or a yes/no does not, so it carries the label: "Track 8",
+   * "Length 4:27", "Explicit: yes". A song's card read "8 · 4:27 · Yes",
+   * which is three facts and no sentence.
+   */
+  readonly alone: string;
 }
 
 /** Never shown: identity and the name, which the heading already is. */
@@ -215,7 +223,10 @@ export function readableFields(
           : String(value);
 
     if (said.includes(text) || stems.some((stem) => text.startsWith(stem))) continue;
-    fields.push({ key, label: display?.labels?.[key] ?? humaniseField(key), value: text });
+    const label = display?.labels?.[key] ?? humaniseField(key);
+    const alone =
+      typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" ? `${label}: ${text.toLowerCase()}` : text;
+    fields.push({ key, label, value: text, alone });
     if (fields.length >= (options.limit ?? 10)) break;
   }
   return fields;

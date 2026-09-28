@@ -279,7 +279,8 @@ export function registerDefaultViews<S extends AnySchema>(
           <Roster
             items={fields.map((field) => ({
               id: field.key,
-              label: field.value,
+              // Alone on a chip a number or a yes/no is no fact at all.
+              label: field.alone,
               hue,
             }))}
             max={3}
