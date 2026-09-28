@@ -53,11 +53,22 @@ function withoutId(args: Record<string, unknown>): Record<string, unknown> {
   return rest;
 }
 
-function slug(label: string): string {
+/**
+ * An id from a name: the name's own letters, folded and hyphenated.
+ *
+ * It kept ASCII and dropped everything else, so "Zoë Lamarré" became
+ * `artist:zo-lamarr` — an address that is neither her name nor anybody's —
+ * and a name in any script without Latin letters became `item`. Accents are
+ * folded the way search folds them (`zoe-lamarre`, the id a person would
+ * guess), and a letter with no Latin form is kept as the letter it is.
+ */
+export function slug(label: string): string {
   return (
     label
+      .normalize("NFKD")
+      .replace(/\p{M}/gu, "")
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/[^\p{L}\p{N}]+/gu, "-")
       .replace(/^-+|-+$/g, "") || "item"
   );
 }

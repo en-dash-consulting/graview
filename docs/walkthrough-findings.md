@@ -2595,3 +2595,21 @@ two singles and thirty-five songs.
   `the-door-keeps-the-keyboard.test.tsx` "hands the keyboard to the home it
   stands down for" and "hands it to the next way in while the door is still
   up" (both verified failing without the fix).
+
+### W-093 · A name with an accent mints an id that is nobody's name
+- stage: B · face: both · width: any · scheme: both
+- expected: "Add an artist" named "Zoë Lamarré" makes `artist:zoe-lamarre`,
+  the address a person would guess and the one search folds to
+- actual: `artist:zo-lamarr`. `freshId`'s slug kept `[a-z0-9]` and dropped
+  every other letter, so each accented letter vanished rather than folding,
+  and a name written wholly in another script became `item`. The id is in
+  every address (`#focus=artist%3Azo-lamarr`) and every agent tool call; a
+  link typed by hand to `zoe-lamarre` laid out the whole city instead.
+- where it belongs: `packages/core/src/mutations/define-mutation.ts` (`slug`)
+- harness that should have caught it: no seed or test anywhere names a
+  thing with a letter outside ASCII
+- status: fixed in "walkthrough: B · an id is the name, folded" · accents
+  are folded (NFKD, marks removed) the way `search` squeezes, and letters
+  with no Latin form are kept. Criterion: core
+  `an-id-is-the-name-folded.test.ts` ("zoe-lamarre", "beyonce", "сплин",
+  and the plain names unchanged).
