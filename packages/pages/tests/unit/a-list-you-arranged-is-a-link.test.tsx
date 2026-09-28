@@ -65,7 +65,10 @@ describe("a list you arranged is a link", () => {
     expect(headings(draw("/tasks?group=due:month&filter=is:any"))).toEqual(["August 2026", "September 2026"]);
     expect(rows(draw("/tasks?q=tape"))).toEqual(["t-tape"]);
     const html = draw("/tasks");
-    for (const control of ["arrange-bar", "arrange-query", "arrange-sort", "arrange-group", "arrange-add"]) expect(html).toContain(`data-testid="${control}"`);
+    for (const control of ["arrange-bar", "arrange-sort", "arrange-group", "arrange-add"]) expect(html).toContain(`data-testid="${control}"`);
+    // The words have one box: the nav's, which narrows the list it is on — not a second one in the row.
+    expect(html).toContain('data-testid="nav-find"');
+    expect(html).not.toContain('data-testid="arrange-query"');
     // Every condition reads as a chip, in the declaration's words.
     expect(draw("/tasks?filter=holds:today")).toContain("The list it is on: Today");
   });
@@ -98,8 +101,18 @@ describe("a list you arranged is a link", () => {
   });
 
   it("says None of them, with a way back, when the arrangement leaves nothing", () => {
-    const html = draw("/tasks?q=zzzz");
+    const html = draw("/tasks?filter=holds:none");
     expect(html).toContain("None of them.");
     expect(html).toContain("Show every one");
+  });
+
+  it("says what was searched when the words find nothing, and that the past needs is:any", () => {
+    const html = draw("/tasks?q=zzzz");
+    expect(html).toContain("Nothing here is called “zzzz”.");
+    expect(html).toContain("Tasks, current ones; add is:any for past ones.");
+    expect(html).toContain("Show every one");
+    // The words may widen the horizon themselves, as in the Find box.
+    expect(rows(draw("/tasks?q=milk"))).toEqual([]);
+    expect(rows(draw("/tasks?q=milk%20is:any"))).toEqual(["t-milk"]);
   });
 });

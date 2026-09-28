@@ -85,10 +85,10 @@ export function createPageRegistry<S extends AnySchema, P = ComponentType<never>
       const shadowed = (schema.kinds as readonly string[]).find(
         (kind) => pluralSlug(schema, kind) === head,
       );
-      if (shadowed !== undefined || head === "problems") {
+      if (shadowed !== undefined || head === "problems" || head === "search") {
         console.warn(
           `[graview] route("${at}") shadows the derived ${
-            shadowed === undefined ? "problems page" : `list of ${shadowed}`
+            shadowed === undefined ? `${head} page` : `list of ${shadowed}`
           }. Use register("${shadowed ?? ""}", "list", …) to replace it, or choose another path.`,
         );
       }

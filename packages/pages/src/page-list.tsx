@@ -3,11 +3,14 @@ import {
   admitArrangement,
   arrange,
   arrangeable,
+  describeSearched,
   formatArrangement,
   humaniseField,
   isCurrent,
   labelOf,
+  matchNode,
   parseArrangement,
+  parseQuery,
   type AnySchema,
   type Arrangeable,
   type Arrangement,
@@ -19,6 +22,7 @@ import { DerivedForm } from "./form.js";
 import { kindOfSlug, placePath, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { placesOf } from "./page-places.js";
+import { beginningsFor, WhyLine } from "./page-search.js";
 import {
   DISPLAY,
   KindMark,
@@ -72,7 +76,11 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   const offers = arrangeable(store.schema, kind);
   const asked = arrangementFromSearch(search, offers, relations.map((relation) => relation.edgeKind));
   const arrangement = asked.arrangement;
-  const showingPast = arrangement.filter?.some((condition) => condition.key === "is" && (condition.value === "past" || condition.value === "any")) ?? false;
+  // The words may say `is:any` too, as they do in the Find box.
+  const typed = parseQuery(arrangement.query ?? "");
+  const showingPast = [...(arrangement.filter ?? []), ...typed.conditions].some(
+    (condition) => condition.key === "is" && (condition.value === "past" || condition.value === "any"),
+  );
   const effective: Arrangement = showingPast || !definition?.lifecycle
     ? arrangement
     : { ...arrangement, filter: [...(arrangement.filter ?? []), { key: "is", value: "current" }] };
@@ -129,10 +137,21 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
       entry.mutation !== undefined,
     );
   const withheld = facts.actions.withheld;
+  // Search-to-create: when the words found nothing, the beginnings start with them as the name.
+  const startsWith: Record<string, string> = typed.words
+    ? Object.fromEntries(
+        beginningsFor(store, [kind], {
+          ...(principal ? { principal } : {}),
+          ...(invariantContext ? { invariantContext } : {}),
+        }).map((beginning) => [beginning.mutation.name, beginning.arg]),
+      )
+    : {};
   const plural = pluralOf(store, kind);
   const row = (node: (typeof members)[number]) => {
     const label = labelOf(definition, node);
     const said = glance(node as Record<string, unknown>, definition, label);
+    // Found by the words in a field rather than the name: say which, as the Find box does.
+    const why = typed.words ? matchNode(definition, node, typed.words) : undefined;
     return (
       <li
         key={node.id}
@@ -151,6 +170,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
           {label}
         </Link>
         {said ? <span style={quiet}>{said}</span> : null}
+        {why ? <WhyLine why={why} /> : null}
       </li>
     );
   };
@@ -238,9 +258,24 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
           arrangement={arrangement}
           onChange={rearrange}
           kept={{ shown: members.length, of: all.length }}
+          // The nav's Find box narrows this list; a second box for the same
+          // `?q=` would be two answers to one question. An app's own shell
+          // has no such box, so there the row keeps its own.
+          query={context.framed === true}
         />
       ) : null}
-      {members.length === 0 ? (
+      {members.length === 0 && typed.words ? (
+        /* Honest about nothing: what was searched, and the way forward below — the name already in it. */
+        <p style={{ ...lede, fontSize: "1.0625rem" }} data-testid="none-yet">
+          Nothing here is called “{typed.words}”.{" "}
+          <span style={quiet} data-testid="list-searched">
+            {describeSearched(store.schema, { kinds: [kind], past: showingPast })}
+          </span>{" "}
+          <Link to="?" style={link}>
+            Show every one
+          </Link>
+        </p>
+      ) : members.length === 0 ? (
         <p style={{ ...lede, fontSize: "1.0625rem" }} data-testid="none-yet">
           {arrangement.filter?.length || arrangement.query ? "None of them." : "None yet"}
           {!arrangement.filter?.length && !arrangement.query && creators.length > 0
@@ -287,7 +322,15 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
           <h2 style={h2}>{mutation.title ?? mutation.name}</h2>
           {mutation.description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{mutation.description}</p> : null}
           {/* The candidates the derivation narrowed, not every node. */}
-          <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} {...(context.principal ? { principal: context.principal } : {})} />
+          <DerivedForm
+            key={startsWith[mutation.name] && members.length === 0 ? `${mutation.name}|${typed.words}` : mutation.name}
+            store={store}
+            mutation={mutation}
+            prefilled={affordance.args}
+            open={affordance.open}
+            {...(startsWith[mutation.name] && members.length === 0 ? { initial: { [startsWith[mutation.name]!]: typed.words } } : {})}
+            {...(context.principal ? { principal: context.principal } : {})}
+          />
         </section>
       ))}
       {withheld.length > 0 ? (

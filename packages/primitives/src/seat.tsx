@@ -28,6 +28,8 @@ export interface SeatTurn {
   readonly questions?: readonly OfferedQuestion[];
   /** The rung could not read the sentence: a model would, one press away. */
   readonly unsure?: boolean;
+  /** What the words found, when that was the answer: each a way to go there. */
+  readonly picks?: ChatReply["picks"];
 }
 
 /**
@@ -94,6 +96,7 @@ export function useSeatConversation({
         text: reply.say,
         proposals: reply.proposals,
         ...(reply.questions ? { questions: reply.questions } : {}),
+        ...(reply.picks?.length ? { picks: reply.picks } : {}),
         ...(reply.unsure ? { unsure: true } : {}),
       },
     ]);

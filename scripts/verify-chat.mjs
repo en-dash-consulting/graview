@@ -146,6 +146,42 @@ try {
     ok: overview.text.includes("This graph holds") && overview.applies === 0,
   };
 
+  /* ---------------- no act and no fact: the words' hits, each a press */
+  /*
+   * "Where is the van" names nothing by its whole name and asks for no
+   * change. The Find box would have answered it, so the seat does: the
+   * strip in prose, and each thing a press that goes there. Back returns,
+   * so the claims after this one start where they always did.
+   */
+  const looked = await send(page, "where is the van?");
+  const picks = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="chat-panel"] ol li')].at(-1)?.querySelectorAll('[data-testid="chat-pick"]').length ?? 0,
+  );
+  const target = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="chat-panel"] ol li')].at(-1)?.querySelector('[data-testid="chat-pick"]')?.getAttribute("data-chat-pick") ?? null,
+  );
+  let went = null;
+  if (target) {
+    await page.evaluate(() => [...document.querySelectorAll('[data-testid="chat-panel"] ol li')].at(-1)?.querySelector('[data-testid="chat-pick"]')?.click());
+    await page.waitForTimeout(700);
+    went = await page.evaluate(() => location.hash);
+    await page.goBack();
+    await page.waitForTimeout(700);
+  }
+  report.checks.noActAndNoFactAnswersWithWhatTheWordsFind = {
+    reply: looked.text.slice(0, 160),
+    picks,
+    target,
+    went,
+    ok:
+      /called “van”/.test(looked.text) &&
+      looked.text.includes("Book the van") &&
+      looked.applies === 0 &&
+      picks >= 1 &&
+      target === "t-book" &&
+      (went ?? "").includes("sel=t-book"),
+  };
+
   /* ----------------------- trouble arrives carrying the rules' own repairs */
   const wrong = await send(page, "what's wrong?");
   report.checks.problemsProposeRepairs = {

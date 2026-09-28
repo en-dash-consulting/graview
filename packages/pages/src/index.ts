@@ -19,14 +19,19 @@ export {
   KindMapSection,
   DefaultProblemsPage,
   DefaultRecordPage,
+  DefaultSearchPage,
   DefaultShell,
+  PageFind,
+  SearchToCreate,
+  beginningsFor,
+  WhyLine,
   StartFreshLink,
   useStoreTick,
   pageStyles,
   PageMain,
   Repairs,
 } from "./pages.js";
-export type { PageContext, GalleryEntry } from "./pages.js";
+export type { PageContext, GalleryEntry, Beginning } from "./pages.js";
 export { PageAsk } from "./ask.js";
 export { PagesApp, PagesRoutes } from "./router.js";
 export type { PagesAppProps, PageComponent } from "./router.js";

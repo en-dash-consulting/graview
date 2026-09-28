@@ -242,6 +242,81 @@ try {
     ok: empty.said !== null && empty.away > 0,
   };
 
+  /*
+   * SEARCH, ON A PAGE. `/search?q=` is the Find box's matcher at an address:
+   * opened cold it lists what the words find grouped by kind, each heading
+   * a link to its list with the words carried — and the list opens already
+   * narrowed. The box on the rail goes there from anywhere; words that find
+   * nothing say what was searched and offer the beginnings, the words
+   * already in the name. On a phone at a 32px root font it neither scrolls
+   * sideways nor offers a target under 24px.
+   */
+  const finder = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await finder.goto("http://localhost:5193/pages/search?q=the&today=2026-09-01", { waitUntil: "networkidle" });
+  await finder.waitForSelector('[data-testid="search-heading"]', { timeout: 20_000 });
+  const cold = await finder.evaluate(() => ({
+    heading: document.querySelector('[data-testid="search-heading"]')?.textContent?.trim() ?? "",
+    groups: [...document.querySelectorAll('[data-testid="search-group"]')].map((el) => el.getAttribute("data-kind")),
+    hits: document.querySelectorAll('[data-testid="search-hit"][data-about="node"]').length,
+    why: document.querySelectorAll('[data-testid="search-why"]').length,
+    taskList: document.querySelector('[data-testid="search-group"][data-kind="task"] [data-testid="search-kind-link"]')?.getAttribute("href") ?? null,
+  }));
+  await finder.click('[data-testid="search-group"][data-kind="task"] [data-testid="search-kind-link"]');
+  await finder.waitForSelector('[data-testid="list-controls"]', { timeout: 20_000 });
+  await finder.waitForTimeout(300);
+  const intoTheList = await finder.evaluate(() => ({
+    url: location.pathname + location.search,
+    query: document.querySelector('[data-testid="list-query"]')?.value ?? null,
+    rows: document.querySelectorAll('[data-testid="records"] li').length,
+  }));
+  await finder.goto("http://localhost:5193/pages/?today=2026-09-01", { waitUntil: "networkidle" });
+  await finder.waitForSelector('[data-testid="nav-find"]', { timeout: 20_000 });
+  await finder.fill('[data-testid="nav-find"]', "deposit");
+  await finder.waitForSelector('[data-testid="search-heading"]', { timeout: 20_000 });
+  await finder.waitForTimeout(300);
+  const typed = await finder.evaluate(() => ({
+    url: location.pathname + location.search,
+    hits: [...document.querySelectorAll('[data-testid="search-hit"][data-about="node"] a')].map((a) => a.textContent?.trim()),
+  }));
+  await finder.goto("http://localhost:5193/pages/search?q=zzzz&today=2026-09-01", { waitUntil: "networkidle" });
+  await finder.waitForSelector('[data-testid="search-heading"]', { timeout: 20_000 });
+  const nothing = await finder.evaluate(() => ({
+    heading: document.querySelector('[data-testid="search-heading"]')?.textContent?.trim() ?? "",
+    searched: document.querySelector('[data-testid="search-searched"]')?.textContent?.trim() ?? "",
+    beginnings: [...document.querySelectorAll('[data-testid="search-to-create"] h2')].map((h) => h.textContent?.trim()),
+    prefilled: [...document.querySelectorAll('[data-testid="search-to-create"] input')].some((input) => input.value === "zzzz"),
+  }));
+  await finder.close();
+  const phoneFinder = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await phoneFinder.goto("http://localhost:5193/pages/search?q=the&today=2026-09-01", { waitUntil: "networkidle" });
+  await phoneFinder.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
+  await phoneFinder.waitForSelector('[data-testid="search-heading"]', { timeout: 20_000 });
+  await phoneFinder.waitForTimeout(300);
+  const onAPhone = await hygiene(phoneFinder);
+  await phoneFinder.close();
+  report.checks.theWordsFindItOnAPage = {
+    cold,
+    intoTheList,
+    typed,
+    nothing,
+    bigEnoughToHit: onAPhone.bigEnoughToHit,
+    ok:
+      cold.groups.includes("task") &&
+      cold.hits > 3 &&
+      (cold.taskList ?? "").endsWith("/tasks?q=the") &&
+      intoTheList.url.endsWith("/tasks?q=the") &&
+      intoTheList.query === "the" &&
+      intoTheList.rows > 0 &&
+      intoTheList.rows <= cold.hits &&
+      typed.url.endsWith("/search?q=deposit") &&
+      typed.hits.some((label) => /deposit/i.test(label ?? "")) &&
+      /Nothing here is called/.test(nothing.heading) &&
+      /is:any/.test(nothing.searched) &&
+      nothing.beginnings.length > 0 &&
+      nothing.prefilled &&
+      onAPhone.noSideScroll,
+  };
+
   /* A record edits where it is shown, through the act the framework found. */
   await desk2.goto("http://localhost:5193/pages/tasks/t-deposit?today=2026-09-01", { waitUntil: "networkidle" });
   await desk2.waitForSelector('[data-testid="record-fields"]', { timeout: 20_000 });

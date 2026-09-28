@@ -3,7 +3,7 @@ import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
 import { useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
 import { GraviewProvider } from "@graview/react";
 import { PageAsk } from "./ask.js";
-import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultShell, type PageContext } from "./pages.js";
+import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useLocation, useNavigationType, useParams } from "react-router-dom";
 
@@ -126,6 +126,8 @@ export function PagesRoutes<S extends AnySchema>({
         })}
         <Route path="/" element={<Home context={inside} />} />
         <Route path="/problems" element={<Problems context={inside} />} />
+        {/* What the words find, anywhere: the Find box's matcher at an address. */}
+        <Route path="/search" element={<DefaultSearchPage context={inside} />} />
         {/* The app's pictures, when it handed the face its views: an index, and each lens at its name. */}
         <Route path="/map" element={<DefaultMapPage context={inside} />} />
         <Route path="/places" element={<DefaultPlacesPage context={inside} />} />

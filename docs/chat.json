@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-27T04:56:42.587Z",
+  "at": "2026-09-28T21:58:30.956Z",
   "engine": "chromium",
   "checks": {
     "itLivesInTheRail": {
@@ -26,6 +26,13 @@
     },
     "groundedOverview": {
       "reply": "This graph holds 3 Lists, 12 Tasks, 3 Rules, 1 Reasons, 2 People, 1 Invitations. Ask about anything by name, ask what's ",
+      "ok": true
+    },
+    "noActAndNoFactAnswersWithWhatTheWordsFind": {
+      "reply": "One thing is called “van” — Book the van (task).Book the van",
+      "picks": 1,
+      "target": "t-book",
+      "went": "#focus=t-book&sel=t-book",
       "ok": true
     },
     "problemsProposeRepairs": {

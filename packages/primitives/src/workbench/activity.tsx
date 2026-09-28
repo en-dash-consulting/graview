@@ -378,7 +378,20 @@ export function ActivityRail({
                         humaniseField(call.name)}
                     </span>
                   </div>
-                  {Object.values(call.args).some((value) => typeof value === "string") ? (
+                  {/*
+                    * WHAT A READ LOOKED AT, where it said: a search names
+                    * records, and its query is words, not a thing to point
+                    * at. A change, or a read that reports nothing, shows the
+                    * ids it was handed.
+                    */}
+                  {!call.mutating && call.reads && call.reads.length > 0 ? (
+                    <div data-testid="activity-reads" style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
+                      {call.reads.slice(0, 3).map((id) => (
+                        <Chip key={id} label={nameOf(store, id)} pickId={id} />
+                      ))}
+                      {call.reads.length > 3 ? <span style={{ color: "var(--graview-ink-muted)" }}>+{call.reads.length - 3}</span> : null}
+                    </div>
+                  ) : Object.values(call.args).some((value) => typeof value === "string") ? (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
                       {Object.values(call.args)
                         .filter((value): value is string => typeof value === "string")

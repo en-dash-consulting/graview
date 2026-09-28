@@ -2,6 +2,7 @@ import { admitArrangement, arrange, arrangeable, formatArrangement, humaniseFiel
 import { ArrangeBar, KindFigure, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,
+  PageFind,
   StartFreshLink,
   createPageRegistry,
   kindFacts,
@@ -247,6 +248,8 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
           <span aria-hidden="true" dangerouslySetInnerHTML={logo} />
           {brand?.name ?? "Things"}
         </Link>
+        {/* Find anything by name — the scene's Find box, on a page. The lists keep their own box for their words. */}
+        <PageFind context={context} narrowsLists={false} />
         {/* THE PICTURES FIRST, as the scene's bar has them: the app's own ways of looking, by name. */}
         {(context.views?.places() ?? []).length > 0 ? (
           <nav className="th-nav" aria-label="Pictures">

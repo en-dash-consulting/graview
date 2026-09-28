@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import { useAttention, useGraview, useSelection } from "@graview/react";
-import { kindCardId } from "@graview/layout";
+import { kindCardId, withFocus, withOverview, withSelection } from "@graview/layout";
 import {
   configuredResponder,
   createToolRuntime,
@@ -64,7 +64,7 @@ export function ChatPanel<S extends AnySchema>({
   onCall,
   testId = "chat",
 }: ChatPanelProps<S>) {
-  const { store, views, principal, seatWho, noteSeat, session, intelligence: config, registerHostAnswers } = useGraview<S>();
+  const { store, views, principal, setView, seatWho, noteSeat, session, intelligence: config, registerHostAnswers } = useGraview<S>();
   const { selection } = useSelection();
   const subject = useSubject<S>();
   /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
@@ -160,7 +160,12 @@ export function ChatPanel<S extends AnySchema>({
      * pointer has settled on, else where you are. One answer for the whole
      * frame, so the panel and the header above it cannot disagree.
      */
-    answer: (text, context) => answer(store, text, { ...context, selection: subject.id ? [subject.id] : selection }),
+    answer: (text, context) =>
+      answer(store, text, {
+        ...context,
+        selection: subject.id ? [subject.id] : selection,
+        principal: { ...author, ...(principal.roles ? { roles: principal.roles } : {}) },
+      }),
     onReply: (reply) => {
       /*
        * SAID FROM THE BODY TOO. The reply — prose, the graph's answer, or a
@@ -420,8 +425,31 @@ export function ChatPanel<S extends AnySchema>({
               ready={(proposal) => permitted(proposal)}
               onApplyAll={(turn, proposals) => void applyAll(turn, proposals)}
               {...(respond || config.source !== "graph" ? {} : { onChooseModel: () => setSettings(true) })}
-              renderAfter={(turn, index) =>
-                (turn.questions ?? []).map((asked) => {
+              renderAfter={(turn, index) => [
+                /*
+                 * WHAT THE WORDS FOUND, each a press that goes there — the
+                 * Find box's strip, answered in the thread.
+                 */
+                ...(turn.picks?.length
+                  ? [
+                      <div key={`${index}:picks`} data-testid={`${testId}-picks`} style={{ display: "flex", flexWrap: "wrap", gap: 4, justifySelf: "start" }}>
+                        {turn.picks.map((hit) => (
+                          <button
+                            key={hit.id}
+                            type="button"
+                            data-testid={`${testId}-pick`}
+                            data-chat-pick={hit.id}
+                            title={hit.why.field === "label" ? `Go to ${hit.label}` : `${hit.why.reading}: ${hit.why.fragment}`}
+                            onClick={() => setView((stop) => withSelection(withFocus(withOverview(stop, false), hit.id), [hit.id]))}
+                            style={{ fontSize: "0.8125rem", minHeight: 28 }}
+                          >
+                            {hit.label}
+                          </button>
+                        ))}
+                      </div>,
+                    ]
+                  : []),
+                ...(turn.questions ?? []).map((asked) => {
                   const key = `${index}:q:${asked.id}`;
                   const outcome = outcomes.get(key);
                   /*
@@ -460,8 +488,8 @@ export function ChatPanel<S extends AnySchema>({
                       {outcome ? <Settled outcome={outcome} testId={testId} /> : null}
                     </div>
                   );
-                })
-              }
+                }),
+              ]}
             />
           )}
           {/*

@@ -238,6 +238,12 @@ function TidyButton({ onCall }: { onCall: (call: ToolCall) => void }) {
       idle="Nothing is overdue"
       onCall={onCall}
       run={async (agent) => {
+        /*
+         * FOUND BY WHAT THEY ARE, not by reading the whole list: the open
+         * tasks due before today, through the same matcher as the Find box.
+         * What it names is what the seat looked at, and the picture says so.
+         */
+        await agent.run("search_graph", { query: `kind:task done:false due:before:${today()}`, limit: 50 });
         const violations = (await agent.run("get_violations", {
           context: { today: today() },
         })) as {

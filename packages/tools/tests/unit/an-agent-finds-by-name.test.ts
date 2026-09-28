@@ -1,7 +1,7 @@
 import { createSchema, defineMutation, defineNode, nodeRef, Store } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createMcpAdapter, createToolRuntime, type ToolCall } from "../../src/index.js";
+import { createMcpAdapter, createToolRuntime, graphResponder, type ToolCall } from "../../src/index.js";
 
 /**
  * AN AGENT FINDS A THING BY ITS NAME, not by reading the whole graph and
@@ -87,5 +87,24 @@ describe("search_graph", () => {
     const answer = await mcp.callTool("search_graph", { query: "week" });
     expect(answer.isError).toBeUndefined();
     expect(answer.content[0]?.text).toContain('"about": "place"');
+  });
+});
+
+describe("the conversation, when a message names no act and no fact", () => {
+  it("answers with what the words find, each a pick, and not as a grounded fact", async () => {
+    const reply = await graphResponder()(store(), "where is the van?");
+    expect(reply.say).toBe("Two things are called “van” — Book the van (task); Call the agent (task, notes: about the van).");
+    expect(reply.picks?.map((hit) => hit.id)).toEqual(["t-van", "t-call"]);
+    expect(reply.proposals).toEqual([]);
+    expect(reply.grounded).toBeUndefined();
+  });
+
+  it("still answers a whole name as the fact it is, and the shape when nothing is found", async () => {
+    const named = await graphResponder()(store(), "tell me about Book the van");
+    expect(named.grounded).toBe(true);
+    expect(named.picks).toBeUndefined();
+    const nothing = await graphResponder()(store(), "where are the zebras");
+    expect(nothing.picks).toBeUndefined();
+    expect(nothing.say).toContain("This graph holds");
   });
 });

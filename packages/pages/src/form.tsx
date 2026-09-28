@@ -350,6 +350,13 @@ export interface DerivedFormProps<S extends AnySchema> {
   readonly open?: readonly OpenParameter[];
   readonly onDone?: () => void;
   /**
+   * Where the fields START, still editable — unlike `prefilled`, which is
+   * decided and not asked. Search-to-create begins "A task called “zzz”"
+   * with the words already in the name, and the person may still fix the
+   * typo that found nothing.
+   */
+  readonly initial?: Readonly<Record<string, unknown>>;
+  /**
    * WHO IS SUBMITTING. The store judges every change against its author
    * and the log attributes to it; a form that applied with no author acted
    * as the anonymous human — who, under a policy, may do nothing — so on
@@ -368,8 +375,9 @@ export function DerivedForm<S extends AnySchema>({
   open = [],
   onDone,
   principal,
+  initial,
 }: DerivedFormProps<S>) {
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...initial }));
   const [failed, setFailed] = useState<string | null>(null);
   const fields = formFields(mutation.input);
 

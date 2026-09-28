@@ -16,3 +16,4 @@ export * from "./page-home.js";
 export * from "./page-list.js";
 export * from "./page-record.js";
 export * from "./page-problems.js";
+export * from "./page-search.js";

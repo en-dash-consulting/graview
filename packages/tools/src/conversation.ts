@@ -3,10 +3,13 @@ import {
   humaniseField,
   labelOf,
   readableFields,
+  search,
   violationsTouching,
   withArticle,
   type AnySchema,
   type FormField,
+  type Hit,
+  type Principal,
   type Store,
 } from "@graview/core";
 import {
@@ -71,6 +74,12 @@ export interface ChatReply {
    * when the city has one.
    */
   readonly questions?: readonly OfferedQuestion[];
+  /**
+   * THINGS THE WORDS FOUND, each a press. A message that named no act and
+   * no fact but matched records is answered with them — the Find box's
+   * strip, in prose — and a surface draws each as a way to go there.
+   */
+  readonly picks?: readonly Extract<Hit, { about: "node" }>[];
 }
 
 export interface ChatContext {
@@ -88,6 +97,8 @@ export interface ChatContext {
    * model that answers with nothing does not get to replace it.
    */
   readonly reading?: readonly ProposedCall[];
+  /** Who is asking, so what the words find is only what this seat may see. */
+  readonly principal?: Principal;
 }
 
 export type Responder<S extends AnySchema = AnySchema> = (
@@ -100,6 +111,18 @@ const sentence = (parts: readonly string[]): string => parts.filter(Boolean).joi
 
 /** The words around a bare name that still only ask about it: "tell me about the School run". */
 const ASKING_WORDS = new Set(["tell", "me", "about", "what", "how", "show", "describe", "the", "a", "an", "and", "please"]);
+
+/*
+ * The words around what is being looked for: "where is the van", "anything
+ * about moving". Dropped before the search, so the matcher is handed the
+ * thing and not the asking.
+ */
+const LOOKING_WORDS = new Set([
+  ...ASKING_WORDS,
+  "where", "is", "are", "was", "find", "any", "anything", "something", "things", "called", "named",
+  "which", "who", "of", "for", "with", "to", "in", "on", "i", "my", "do", "does", "have", "has",
+  "can", "you", "it", "that", "this", "there", "we", "our", "got", "be",
+]);
 
 /** "a person", "a person and a date" — a list a person would say out loud. */
 const withList = (words: readonly string[]): string =>
@@ -510,6 +533,38 @@ export function graphResponder<S extends AnySchema>(
       };
     }
 
+    // --------------------------------------------------- what the words find
+    /*
+     * NO ACT AND NO FACT, BUT THE WORDS FIND THINGS. "Where is the van" names
+     * nothing by its whole name and asks for no change — and the Find box
+     * would have answered it at once. The same matcher, the same seat's
+     * view: the reply is the strip in prose, each thing a press. Not a
+     * grounded answer — a model may yet read the sentence better.
+     */
+    {
+      const words = asked.split(/[^\p{L}\p{N}]+/u).filter((word) => word.length > 1 && !LOOKING_WORDS.has(word));
+      if (words.length > 0) {
+        const found = search(store, words.join(" "), {
+          ...(context.principal ? { principal: context.principal } : {}),
+          ...(context.selection ? { from: context.selection } : {}),
+          ...(options.today ? { today: options.today } : {}),
+          limit: 6,
+        });
+        const picks = found.hits.filter((hit): hit is Extract<Hit, { about: "node" }> => hit.about === "node");
+        if (picks.length > 0) {
+          const said = picks.map((hit) =>
+            `${hit.label} (${humaniseField(hit.kind).toLowerCase()}${hit.why.field === "label" ? "" : `, ${hit.why.reading.toLowerCase()}: ${hit.why.fragment}`})`,
+          );
+          const how = found.total === 1 ? "One thing is" : `${numberWord(found.total)} things are`;
+          return {
+            say: `${how} called “${found.words}” — ${said.join("; ")}${found.total > picks.length ? `; and ${found.total - picks.length} more` : ""}.`,
+            proposals: [],
+            picks,
+          };
+        }
+      }
+    }
+
     // ------------------------------------------------------------ the shape
     const counts = (store.schema.kinds as readonly string[])
       .filter((kind) => !store.modules.disabledKinds.has(kind))
@@ -528,6 +583,9 @@ export function graphResponder<S extends AnySchema>(
     };
   };
 }
+
+const NUMBER_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+const numberWord = (count: number): string => NUMBER_WORDS[count] ?? String(count);
 
 /** One honest answer for one form field, or undefined — never a guess. */
 function answerFrom(

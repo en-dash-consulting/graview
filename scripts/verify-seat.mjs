@@ -97,6 +97,20 @@ try {
           .filter((text) => /^(changed|read) · /.test(text))
           .map((text) => text.replace(/^(changed|read) · /, "")),
       );
+      /*
+       * IT FOUND WHAT IT CHANGED BY NAME, and said what it looked at. The
+       * seat's first call is `search_graph` for the overdue tasks; a read's
+       * records reach the rail as chips and the picture as attention.
+       */
+      const searched = await page.evaluate(() => {
+        const rows = [...document.querySelectorAll('[data-testid="activity"] li')];
+        const row = rows.find((li) => /^read · Search graph/.test((li.querySelector("span:not([aria-hidden])")?.textContent ?? "").trim()));
+        const reads = row ? [...row.querySelectorAll('[data-testid="activity-reads"] [data-graview-pick]')].map((chip) => chip.getAttribute("data-graview-pick")) : [];
+        return { listed: Boolean(row), reads, all: rows.map((li) => (li.textContent ?? "").trim().slice(0, 60)).slice(0, 6) };
+      });
+      check(`${app}: the seat finds what it changes with search_graph, and the rail shows what it read`,
+        searched.listed && searched.reads.includes("t-deposit"),
+        `${searched.reads.join(", ") || "no reads"} · ${searched.all.join(" | ")}`);
       check(`${app}: the rail says what the act is called, not what it is registered as`,
         said.length > 0 && said.every((name) => /^[A-Z]/.test(name) && !/[-_]/.test(name)),
         said.join(" | ") || "no calls listed");

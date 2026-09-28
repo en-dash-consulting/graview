@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-28T20:57:35.348Z",
+  "at": "2026-09-28T22:00:59.021Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -85,6 +85,41 @@
     "anEmptyStateSaysWhatToDoNext": {
       "said": "Nothing here is called “zzzz”.Clear the search",
       "away": 1,
+      "ok": true
+    },
+    "theWordsFindItOnAPage": {
+      "cold": {
+        "heading": "10 tasks and 1 reason for “the”",
+        "groups": [
+          "reason",
+          "task"
+        ],
+        "hits": 11,
+        "why": 0,
+        "taskList": "/pages/tasks?q=the"
+      },
+      "intoTheList": {
+        "url": "/pages/tasks?q=the",
+        "query": "the",
+        "rows": 10
+      },
+      "typed": {
+        "url": "/pages/search?q=deposit",
+        "hits": [
+          "⚠ Pay the deposit",
+          "The landlord holds the date for 48 hours once the deposit…"
+        ]
+      },
+      "nothing": {
+        "heading": "Nothing here is called “zzzz”.",
+        "searched": "Lists, tasks, rules, reasons, people and invitations, current ones; add is:any for past ones.",
+        "beginnings": [
+          "A task called “zzzz”",
+          "A user called “zzzz”"
+        ],
+        "prefilled": true
+      },
+      "bigEnoughToHit": [],
       "ok": true
     },
     "aRecordEditsWhereItIsShown": {
@@ -276,12 +311,12 @@
       "ok": true
     },
     "aNewPageOpensAtItsTop": {
-      "pressedFrom": 1567,
+      "pressedFrom": 1568,
       "landedAt": {
         "path": "/pages/rules",
         "scrollY": 0
       },
-      "cameBackTo": 1567,
+      "cameBackTo": 1568,
       "ok": true
     },
     "theNavIsOneRow": {

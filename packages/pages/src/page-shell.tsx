@@ -1,9 +1,10 @@
 import { LadderSetting, useMarkup } from "@graview/primitives";
 import type { AnySchema } from "@graview/core";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { kindMap } from "./facts.js";
-import { pluralSlug } from "./registry.js";
+import { kindOfSlug, pluralSlug } from "./registry.js";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { placesOf } from "./page-places.js";
 import { DISPLAY, WIDE, column, liveKinds, plain, pluralOf, quiet } from "./page-typography.js";
@@ -97,9 +98,10 @@ export function DefaultShell<S extends AnySchema>({
               ) : null}
               {brand?.name ?? "Graview"}
             </Link>
+            <PageFind context={context} />
             <a
               href={sceneHref}
-              style={{ ...plain, ...quiet, marginLeft: "auto", whiteSpace: "nowrap" }}
+              style={{ ...plain, ...quiet, whiteSpace: "nowrap" }}
               title="The same thing, as a scene"
             >
               Open the scene ↗
@@ -194,5 +196,80 @@ export function PageMain<S extends AnySchema>({
     <Tag style={{ ...column, ...style }} {...rest}>
       {children}
     </Tag>
+  );
+}
+
+/**
+ * THE NAV'S FIND BOX. On a kind's list it narrows that list — `?q=` is the
+ * list's own word — and anywhere else it goes to `/search`. Typing is an
+ * adjustment of the page you are on, so each keystroke replaces the address
+ * rather than piling up history; the first keystroke away from a list or
+ * the search page is the one step Back undoes.
+ *
+ * Exported for a shell an app draws itself. `narrowsLists: false` is for an
+ * app whose own list pages already carry a box for their words: then this
+ * one always goes to `/search`, and a list never has two.
+ */
+export function PageFind<S extends AnySchema>({
+  context,
+  narrowsLists = true,
+}: {
+  context: PageContext<S>;
+  narrowsLists?: boolean;
+}) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const segments = location.pathname.split("/").filter(Boolean);
+  const onList = narrowsLists && segments.length === 1 && kindOfSlug(context.store.schema, segments[0]!) !== undefined;
+  const onSearch = location.pathname === "/search";
+  const addressed = onList || onSearch ? (params.get("q") ?? "") : "";
+  const [typed, setTyped] = useState(addressed);
+  // Back, a link, or the list's own row changed the words: the box follows the address.
+  useEffect(() => setTyped(addressed), [addressed]);
+  const go = (words: string) => {
+    setTyped(words);
+    if (onList) {
+      const next = new URLSearchParams(params);
+      if (words.trim()) next.set("q", words);
+      else next.delete("q");
+      setParams(next, { replace: true });
+      return;
+    }
+    const to = words.trim() ? `/search?${new URLSearchParams({ q: words }).toString()}` : "/search";
+    navigate(to, { replace: onSearch });
+  };
+  return (
+    <form
+      role="search"
+      aria-label={onList ? "Narrow this list" : "Find anything"}
+      style={{ marginLeft: "auto", display: "flex", minWidth: 0, flex: "0 1 16rem" }}
+      onSubmit={(event) => {
+        event.preventDefault();
+        // Enter from a list widens the look to everything the words find.
+        if (onList && typed.trim()) navigate(`/search?${new URLSearchParams({ q: typed }).toString()}`);
+      }}
+    >
+      <input
+        type="search"
+        data-testid="nav-find"
+        value={typed}
+        onChange={(event) => go(event.target.value)}
+        placeholder={onList ? "Narrow…" : "Find…"}
+        aria-label={onList ? "Narrow this list" : "Find anything"}
+        style={{
+          width: "100%",
+          minWidth: 0,
+          minHeight: 32,
+          padding: "4px 10px",
+          font: "inherit",
+          fontSize: "0.9375rem",
+          color: "var(--graview-ink)",
+          background: "var(--graview-ground)",
+          border: "1px solid var(--graview-edge)",
+          borderRadius: 8,
+        }}
+      />
+    </form>
   );
 }
