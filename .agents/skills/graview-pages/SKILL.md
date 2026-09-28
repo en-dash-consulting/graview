@@ -53,6 +53,8 @@ under its routes, which buys three things at once:
   `?filter=done:false`, `?group=due:month`, `?q=tape`) a lens carries in
   its fragment, so an arrangement is a link; `?by=`, `?<edge>=<id>`,
   `?with=` and `?past=1` still land. A record links back.
+- `/search?q=` — the Find box's matcher: hits by kind, each with why; a
+  nav box narrows a list, else lands here. Own shell? Add `<PageFind>`.
 - **The assistant**, on every route: one control opens the scene's own
   `Companion` in a drawer, and the ROUTE is what "this" means. Grounded
   questions before anybody types; proposals apply through the same runtime,
@@ -64,7 +66,7 @@ Everything a page shows is a derivation the scene also uses: `recordFacts`,
 or who may take it** — it strikes through what the seat may not, and says why.
 
 **At a phone's width this face is the answer.** The scene still holds there —
-districts stay legible, panels scroll, measured at 390px by `audit-ui` — but
+districts stay legible, panels scroll — but
 a 134px card in a 390px viewport is a city through a letterbox. `Shell`
 carries `pagesHref`.
 
@@ -114,17 +116,15 @@ Rules for a page at this rung:
    refuses on submit is the bug this prevents.
 6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the
    scene on one thing; `placeHref(as)` — `/#view=the-grounds`, the title
-   through `placeSlug` — opens it on one named place, group in focus. A link
-   that lands on the default view and says "press The grounds" is the
-   pasted-link problem one rung up.
+   through `placeSlug` — opens it on one named place, group in focus, not on
+   a default view that says "press The grounds".
 7. **Take the act LIST from the derivation, not from the mutations.**
    `recordFacts(store, id, { principal }).actions` is the same `AffordanceSet`
    the scene's strip reads: `affordances` are the acts that can actually act
    here, each with its `args` already decided and its `open` questions left,
    and `withheld` are the ones this seat may not take, with the reason.
-   Filtering `store.allMutations()` looks equivalent and is not: it offers
-   "Take it back" on a record with nothing attached, and a picker with no
-   candidates. A **list** page asks it of a kind instead —
+   Filtering `store.allMutations()` is not equivalent: it offers acts with
+   nothing to act on. A **list** page asks it of a kind instead —
    `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN it.
 
 ## Rung two: a product design

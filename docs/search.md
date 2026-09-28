@@ -149,7 +149,7 @@ same words handed to the same matcher.
 "Tasks, lists and rules, current ones; add `is:any` for past ones." Then
 the beginnings: every creating act the seat may run whose input has a
 `label` (or the field `fieldRoles.label` names), offered with the words
-prefilled — "Add a task called “zzz”". Search-to-create is the cheapest
+prefilled — "A task called “zzz”", pressed with the act's own title. Search-to-create is the cheapest
 good empty state a graph interface can have, and every piece of it is
 derived already (`beginning(app)`, `DerivedForm`, the policy).
 

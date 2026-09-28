@@ -84,6 +84,11 @@ drag a UI package into the checker.
    graph with no API key. A shell is about eighty lines; if yours is longer,
    you are probably rebuilding something derived.
 
+   Search comes with `Shell`: its `FindBox` answers `/` or ⌘K from
+   anywhere, lights what the words find in whatever picture is open and
+   dims the rest, and `#q=` makes a search a stop Back returns to. A shell
+   of your own puts `<FindBox />` in its bar; nothing is declared per kind.
+
    The routed face is one branch in `main.tsx`: when the path starts with
    `/pages`, render `<PagesApp basename="/pages" context={{ store, brand,
    views: views(), settings }} />` from `@graview/pages`. It lands on a

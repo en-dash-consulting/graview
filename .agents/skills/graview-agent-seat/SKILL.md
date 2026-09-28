@@ -40,11 +40,17 @@ for the agent, stop: that path is the one that will drift.
    looked. That is the half a diff cannot show, and the half that says whether
    to trust what it then did.
 
-5. **Prefer `get_affordances` over composing calls by hand.** The tool
+5. **Find by name with `search_graph`, before `get_graph`.** It is the Find
+   box's matcher: hits with why they matched, `key:value` conditions
+   (`done:false`, `is:any` for the past, `kind:task`), and the records it
+   names counted as reads. Reading the whole graph to scan it is the move a
+   person with a search box never makes.
+
+6. **Prefer `get_affordances` over composing calls by hand.** The tool
    descriptions say so, and it matters: derived affordances cannot name an
    action that does not exist or is not legal on this selection.
 
-6. **Host the seat where the data is, for an agent outside the page.** An
+7. **Host the seat where the data is, for an agent outside the page.** An
    editor's assistant or a scheduled worker does not need glue of its own:
 
    ```sh
@@ -66,8 +72,8 @@ for the agent, stop: that path is the one that will drift.
 
 ## Worked examples
 
-- `apps/todo/src/ui/app.tsx` — the seat, the runtime, and an agent that reads
-  the graph before it moves
+- `apps/todo/src/ui/app.tsx` — the seat, the runtime, and an agent that finds
+  what it will change with `search_graph` before it moves
 - `packages/tools/src/agent/tools.ts` — how the tools generate, and what a
   read-only call reports about what it looked at
 

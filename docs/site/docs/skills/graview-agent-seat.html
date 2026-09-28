@@ -1078,6 +1078,9 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>Report what it READ.</strong> <code>useAttention(runtime)</code> pipes a settled read-only call's node ids into the picture, so a kind lights faintly where the agent looked. That is the half a diff cannot show, and the half that says whether to trust what it then did.</li>
 </ol>
 <ol>
+<li><strong>Find by name with <code>search_graph</code>, before <code>get_graph</code>.</strong> It is the Find box's matcher: hits with why they matched, <code>key:value</code> conditions (<code>done:false</code>, <code>is:any</code> for the past, <code>kind:task</code>), and the records it names counted as reads. Reading the whole graph to scan it is the move a person with a search box never makes.</li>
+</ol>
+<ol>
 <li><strong>Prefer <code>get_affordances</code> over composing calls by hand.</strong> The tool descriptions say so, and it matters: derived affordances cannot name an action that does not exist or is not legal on this selection.</li>
 </ol>
 <ol>
@@ -1087,7 +1090,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <p><code>mcp</code> is MCP over stdio around this same runtime; <code>apply</code> is one act, a    plan of many as one batch, or an undo, from a shell. Both open the store    <code>graview serve</code> opens — a folder, SQLite, or a running server — and act    under the seat you name, so the policy refuses there what it refuses here.    Put <code>serve</code> and <code>mcp</code> in the app's scripts so the door is always there,    and tell the agent the seed is a first-install snapshot: it changes the    live graph through these, never by editing <code>example.json</code> and wiping.    <code>graview mcp &lt;entry&gt; --list --roles …</code> prints the seat's tools as    <code>tools/list</code> JSON — the catalog a host registers without writing one.</p>
 <h3>Worked examples</h3>
 <ul>
-<li><code>apps/todo/src/ui/app.tsx</code> — the seat, the runtime, and an agent that reads the graph before it moves</li>
+<li><code>apps/todo/src/ui/app.tsx</code> — the seat, the runtime, and an agent that finds what it will change with <code>search_graph</code> before it moves</li>
 <li><code>packages/tools/src/agent/tools.ts</code> — how the tools generate, and what a read-only call reports about what it looked at</li>
 </ul>
 <h3>Then find out whether it worked</h3>
