@@ -1,9 +1,9 @@
 ---
 name: graview-pages
-description: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface — and put the app on somebody else's page with the embed.
+description: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
 ---
 
-# The pages face, and the embed
+# The pages face
 
 A Graview app has two faces over one store. The scene is the picture. The
 pages face is the same declaration routed as an ordinary web application:
@@ -175,22 +175,10 @@ What every design must keep doing:
 - **Withhold, do not hide.** Rule 7 again, at every surface: struck through
   with the policy's own sentence rather than dropped.
 
-## The embed
+## On somebody else's page
 
-`@graview/embed` mounts an app into any element on any page: its own theme
-scoped to the element, fonts, a strip with the faces and places, no chrome.
-
-```ts
-import { mount } from "@graview/embed";
-const handle = mount(el, { app, seed, stop: "#focus=agg:plot", principal, views, pages, label: "Chapter 13" });
-handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
-```
-
-- `face` follows the stop; `"picture"` is one named lens alone
-  (`stop: "#view=the-week"`); `scheme` follows the host page; `label`
-  names the landmarks, so two embeds are two regions with two names.
-- `mountWhenNear(elements, mountOne)` mounts many as a reader scrolls near
-  them. The strip shows the app's places (`graview-lens`, step 8).
+The embed mounts the app — this face included (`face: "pages"`, `path`) —
+into one element of any page. That is its own skill: `graview-embed`.
 
 ## Then find out whether it worked
 

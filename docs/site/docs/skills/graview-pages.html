@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>graview-pages — Graview docs</title>
-<meta name="description" content="Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface — and put the app on somebody else's page with the embed.">
+<meta name="description" content="Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="graview-pages — Graview docs">
-<meta property="og:description" content="Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface — and put the app on somebody else's page with the embed.">
+<meta property="og:description" content="Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://graview.dev/docs/skills/graview-pages.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -1055,12 +1055,12 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
   <main class="col" id="main">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-pages</h1>
-      <p class="lede" style="margin-top: 18px;">Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface — and put the app on somebody else's page with the embed.</p>
+      <p class="lede" style="margin-top: 18px;">Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-skill">The skill</h2></div>
-<h2>The pages face, and the embed</h2>
+<h2>The pages face</h2>
 <p>A Graview app has two faces over one store. The scene is the picture. The pages face is the same declaration routed as an ordinary web application: a home, a list per kind, a record per node, forms for every act, and a problems page — derived, then replaceable one surface at a time, all the way to a product design of its own. The ladder ends where the framework's own example does: <code>apps/seedbed</code>, chapters nine and thirteen.</p>
 <h3>What comes for free</h3>
 <div class="code" data-scroller><pre><code>// main.tsx — one branch: the path decides the face
@@ -1133,15 +1133,8 @@ export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
 <li><strong>Keep landmarks and targets honest.</strong> One <code>main</code> — a <code>section</code> when <code>context.embedded</code>, and UNNAMED, or a page holding two embeds has two regions with one name. Controls at least 24px, AA contrast. Every size in <code>rem</code>: at 200% text a flex or grid item's automatic minimum is its CONTENT's, so one un-wrappable row pushes the whole column off the screen — <code>minmax(0, 1fr)</code> and <code>min-width: 0</code> on the column, <code>flex-wrap</code> on the row. Measure rather than trust: <code>-ink-faint</code> fails AA on an 11px label, and the accent fails on the warning ground. `node scripts/verify-pages.mjs` runs axe over every route, both widths, both schemes.</li>
 <li><strong>Withhold, do not hide.</strong> Rule 7 again, at every surface: struck through with the policy's own sentence rather than dropped.</li>
 </ul>
-<h3>The embed</h3>
-<p><code>@graview/embed</code> mounts an app into any element on any page: its own theme scoped to the element, fonts, a strip with the faces and places, no chrome.</p>
-<div class="code" data-scroller><pre><code>import { mount } from "@graview/embed";
-const handle = mount(el, { app, seed, stop: "#focus=agg:plot", principal, views, pages, label: "Chapter 13" });
-handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();</code></pre></div>
-<ul>
-<li><code>face</code> follows the stop; <code>"picture"</code> is one named lens alone (<code>stop: "#view=the-week"</code>); <code>scheme</code> follows the host page; <code>label</code> names the landmarks, so two embeds are two regions with two names.</li>
-<li><code>mountWhenNear(elements, mountOne)</code> mounts many as a reader scrolls near them. The strip shows the app's places (<code>graview-lens</code>, step 8).</li>
-</ul>
+<h3>On somebody else's page</h3>
+<p>The embed mounts the app — this face included (<code>face: "pages"</code>, <code>path</code>) — into one element of any page. That is its own skill: <code>graview-embed</code>.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code>pnpm build &amp;&amp; npx graview check ./dist/domain/app.js   # the declaration is still whole
 pnpm test                                               # render every page you registered</code></pre></div>

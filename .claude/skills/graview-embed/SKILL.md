@@ -1,0 +1,86 @@
+---
+name: graview-embed
+description: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
+---
+
+# The embed: an app on somebody else's page
+
+`@graview/embed` mounts an app into any element on any page. It brings its
+own theme scoped to that element, the brand's fonts, and a strip with the
+faces and the places — no `Shell`, no router, nothing of the host's styled
+or listened to. It is the same declaration, the same store and the same acts
+as the app itself; only the frame is the host's.
+
+```ts
+import { mount } from "@graview/embed";
+
+const handle = mount(el, {
+  app, store,                     // or `seed`, and one is made
+  views,                          // the app's own registry, in its own schema
+  stop: "#focus=agg:plot",        // the fragment the app would put in its address bar
+  scheme: "auto",                 // the host's data-theme, else the system's
+  label: "Chapter 13",            // names every landmark inside
+});
+handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
+```
+
+`graview create` writes this as `src/embed.tsx` and an `embed.html` host, so
+the project's own `pnpm typecheck` covers the embed surface from day one.
+
+## The moves
+
+1. **Say where it opens with the stop, not with code.** `stop` is exactly
+   the fragment the app writes — `#overview=1`, `#focus=agg:plot`,
+   `#view=the-week` — so a link you copied from the app is an embed's
+   starting point. `face` follows the stop unless you name one.
+2. **Pick the face for the page.** `"scene"` and `"graview"` are the app;
+   `"pages"` is the routed face, opened at `path`; `"picture"` is ONE named
+   lens alone (`stop: "#view=the-week"`), no bar and no rail — a page
+   about a lens shows the lens. `toggle: false` drops the strip too.
+3. **Name it.** Two embeds on one page carry the same landmarks — the
+   relation key, the inspector, the pages' navigation — and a landmark must
+   be unique by role and name. `label` names every one of them after the
+   embed; leave it off and two embeds are one confusing region twice.
+4. **Let the host decide the look.** `scheme: "auto"` follows the host's
+   `data-theme` stamp; `setScheme` follows a host toggle; `fonts: false`
+   when the host already loads them; `brand` / `setBrand` to dress it.
+5. **Make the policy felt, if the page is about it.** `seats` lists the
+   principals a reader may take — each a label and a `Principal` — on the
+   strip; the acts, the pages and the strip narrow the moment one sits
+   down, and `setSeat` does it from the host. See `graview-permissions`.
+6. **Many on one page: mount when near.** `mountWhenNear(elements,
+   mountOne)` mounts each as the reader scrolls toward it, so a page of
+   sixteen chapters costs one at a time. Share a `store` between embeds
+   only when they are meant to be one app seen twice.
+7. **Presence is opt-in.** An embed broadcasts nothing and draws nobody
+   unless it is handed a `presence` channel: putting a graph on a page does
+   not tell its readers about each other.
+
+## Worked examples
+
+- `apps/seedbed/src/site-embed.ts` — the docs site's chapters, many to a
+  page, mounted as the reader nears them, the rota's seats on the strip
+- `apps/rota/src/embed.ts` — two embeds of one app on one host page, each
+  named for what it shows
+- `packages/core/src/scaffold/ui.ts` — what `graview create` writes
+
+## Then find out whether it worked
+
+```sh
+pnpm build && npx graview check ./dist/domain/app.js   # the declaration is still whole
+pnpm typecheck                                          # the embed takes the app's own views, no casts
+```
+
+Then open the host page at a phone's width and with two embeds on it: each
+names its own landmarks, neither pushes the page sideways, and pressing a
+place in one moves only that one. `packages/embed/tests/unit/embed.test.ts`
+holds the contracts; copy its shape for a host of your own.
+
+## What the check cannot see
+
+- Whether the host's CSS reaches in. The embed scopes its own theme; a host
+  rule like `button { … }` on the whole page still applies, and only looking
+  at the page finds it.
+- Whether the stop still lands. A stop names ids and places; rename a place
+  or seed different ids and an embed opens somewhere it resolves to rather
+  than where the article says it does.

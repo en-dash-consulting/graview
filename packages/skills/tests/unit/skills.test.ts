@@ -34,6 +34,7 @@ describe("the skills package", () => {
       "graview-agent-seat",
       "graview-brand",
       "graview-desk",
+      "graview-embed",
       "graview-invariant",
       "graview-lens",
       "graview-new-app",
@@ -218,8 +219,10 @@ describe("the skills package", () => {
        * being read.
        *
        * Raised deliberately rather than removed. `graview-pages` is the
-       * largest because it covers three rungs and the embed, and at 11k it
-       * is still a quarter of the app it describes.
+       * largest because it covers three rungs, and at 11k it is still a
+       * quarter of the app it describes. When a skill nears the number the
+       * answer is a job of its own, not shaving: the embed was one, and is
+       * `graview-embed` now.
        */
       expect(skill.body.length, skill.name).toBeLessThan(11_000);
     }

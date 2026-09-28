@@ -22,7 +22,7 @@ export function indexHtml(ids: Ids): string {
 }
 
 /**
- * SOMEBODY ELSE'S PAGE. The last rung of the `graview-pages` skill, shipped
+ * SOMEBODY ELSE'S PAGE. The `graview-embed` skill, shipped
  * as a page rather than as a paragraph — so a project has a place to put an
  * embed, and so the project's own `pnpm typecheck` covers the embed surface.
  * Delete both files if the app is never going anywhere but its own address.
