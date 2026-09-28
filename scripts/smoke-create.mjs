@@ -442,6 +442,17 @@ try {
     b.theKeyboardAloneAddedIt = !b.afterKeyboard.includes("none yet");
     await keys.close();
 
+    /*
+     * ---- the routed face's FIRST screen: an empty graph, the way in alone
+     * on a page. axe had never seen it — every pass below seeds first — and
+     * it had no level-one heading (W-091).
+     */
+    const blank = watch(await browser.newPage({ viewport: { width: 390, height: 844 } }));
+    await blank.goto(`${base}/pages`, { waitUntil: "networkidle" });
+    await blank.waitForTimeout(500);
+    b.axePagesEmpty = await axe(blank);
+    await blank.close();
+
     /* ---- the routed face, from the same declaration, at phone width */
     const phone = watch(await browser.newPage({ viewport: { width: 390, height: 844 } }));
     await phone.goto(`${base}/pages?remember=1`, { waitUntil: "networkidle" });
@@ -632,7 +643,7 @@ report.verdict = {
         anEditSurvivesAReload: b.survivedAReload === true && b.offersStartFresh === true,
         thePagesFaceFitsAPhoneAndItsFormApplies: b.pagesHome === true && b.pagesFitsAPhone === true && b.pagesFormApplied === true,
         theProjectsOwnPageReplacesTheDerivedOne: b.ownRecordPage === true,
-        axeFindsNothingInEitherScheme: clean(b.axeEmptyLight) && clean(b.axeAfterDark) && clean(b.axePagesLight) && clean(b.axePagesDark),
+        axeFindsNothingInEitherScheme: clean(b.axeEmptyLight) && clean(b.axeAfterDark) && clean(b.axePagesLight) && clean(b.axePagesDark) && clean(b.axePagesEmpty),
         nothingErroredInTheBrowser: Array.isArray(b.errors) && b.errors.length === 0,
       }
     : {}),

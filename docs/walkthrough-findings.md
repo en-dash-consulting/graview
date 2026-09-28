@@ -2556,3 +2556,42 @@ two singles and thirty-five songs.
   `escape-gives-the-keyboard-back.test.tsx` (the activity list and the
   problems list; verified failing without the fix: `expected <body> to be
   <button>`).
+
+### W-091 · The routed face's first screen has no heading
+- stage: A · face: pages · width: 390 and 1280 · scheme: both
+- expected: axe reports nothing on either face
+- actual: on an empty graph `/pages` is the way in alone — `<Begin>` in the
+  scaffold's home, framed in `PageMain` — and axe reported
+  `page-has-heading-one`. The door's title "Begin" is a panel title, and a
+  panel title is a `<strong>` styled as a heading: every other page has an
+  `h1`, this one had none. Every axe pass of the routed face seeds first, so
+  none had ever seen the page a product ships as.
+- where it belongs: `packages/primitives/src/primitives/index.tsx` (`Panel`
+  gains `heading`), `packages/primitives/src/seeding.tsx` (`Begin`)
+- harness that should have caught it: `scripts/smoke-create.mjs` axes the
+  routed face only after its seat has seeded the graph
+- status: fixed in "walkthrough: A · the way in is a page with a heading,
+  and keeps the keyboard" · a panel's title can be a heading of a stated
+  level; a framed door is its page's `h1` unless told otherwise. Criteria:
+  primitives `the-door-keeps-the-keyboard.test.tsx` "is the page's
+  level-one heading when it is framed as the page" (verified failing
+  without the fix), and smoke-create's `axeFindsNothingInEitherScheme` now
+  includes `axePagesEmpty`, the empty `/pages` at phone width.
+
+### W-092 · Answering the way in from the keyboard ends on <body>
+- stage: A · face: pages · width: 1280 · scheme: light
+- expected: add the first song through the pages form and the keyboard is
+  still somewhere on the page
+- actual: `activeElement` was `<body>` after Apply. The ask belongs to a
+  row that goes away once its kind has a member — and on a one-kind app the
+  whole door stands down for the derived home — so the element the keyboard
+  stood on left the document. W-053 and W-083's shape on the fourth surface.
+- where it belongs: `packages/primitives/src/seeding.tsx` (`Begin`)
+- harness that should have caught it: `the-way-in.test.tsx` asserts what the
+  door offers and what applying makes, never where the keyboard is after
+- status: fixed in the same commit · the door remembers where the keyboard
+  was; when that element is gone it lands on the next way in, else on the
+  heading of what now stands there (the home's `h1`). Criteria:
+  `the-door-keeps-the-keyboard.test.tsx` "hands the keyboard to the home it
+  stands down for" and "hands it to the next way in while the door is still
+  up" (both verified failing without the fix).

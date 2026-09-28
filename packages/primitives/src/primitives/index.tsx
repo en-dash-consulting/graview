@@ -31,6 +31,13 @@ export interface PanelProps {
    */
   readonly fit?: boolean;
   /**
+   * The title as a HEADING of this level, where the panel is what a page is
+   * about. A panel's title is drawn as a heading and was never one to a
+   * screen reader: the routed face's first screen — the way in, alone on a
+   * page — had no level-one heading at all, and axe said so.
+   */
+  readonly heading?: 1 | 2 | 3 | 4;
+  /**
    * A card in the scene; a DOCUMENT on a page.
    *
    * The same component renders in both places — that is the two-mode contract
@@ -127,6 +134,13 @@ export function useWidth(ref: { current: HTMLElement | null }): number | null {
 }
 
 /** The default container: a titled box. Most views are one of these. */
+/** A panel's title: a heading of the level asked for, else the label it has always been. */
+function Title({ level, style, children }: { readonly level: 1 | 2 | 3 | 4 | undefined; readonly style: CSSProperties; readonly children: ReactNode }) {
+  if (level === undefined) return <strong style={style}>{children}</strong>;
+  const Tag = `h${level}` as const;
+  return <Tag style={{ margin: 0, ...style }}>{children}</Tag>;
+}
+
 export function Panel({
   title,
   subtitle,
@@ -137,6 +151,7 @@ export function Panel({
   style,
   fit = false,
   variant,
+  heading,
 }: PanelProps) {
   const scroller = useRef<HTMLDivElement | null>(null);
   const overflowing = useOverflowing(scroller);
@@ -223,7 +238,8 @@ export function Panel({
               ⚠
             </span>
           ) : null}
-          <strong
+          <Title
+            level={heading}
             style={{
               /*
                * A panel's title is the HEADING of this product.
@@ -246,7 +262,7 @@ export function Panel({
             }}
           >
             {title}
-          </strong>
+          </Title>
           {meta === undefined ? null : (
             <span
               style={{

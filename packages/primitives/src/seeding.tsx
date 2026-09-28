@@ -23,7 +23,7 @@ import {
   type PlanOptions,
   type PlannedCall,
 } from "@graview/tools";
-import { useMemo, useState, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnswerArgs } from "./workbench/index.js";
 import { MUTED_TEXT, Panel } from "./primitives/index.js";
 
@@ -63,6 +63,12 @@ export interface BeginProps<S extends AnySchema = AnySchema> {
    */
   readonly frame?: (door: ReactNode) => ReactNode;
   readonly title?: string;
+  /**
+   * The level of the door's heading. A framed door is a page of its own —
+   * the routed face's first screen on an empty graph — so it is the page's
+   * level-one heading unless this says otherwise.
+   */
+  readonly heading?: 1 | 2 | 3 | 4;
   /**
    * The store, for a face that has no provider.
    *
@@ -140,7 +146,7 @@ export function Begin<S extends AnySchema>(props: BeginProps<S> = {}) {
   );
 }
 
-function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin" }: BeginProps<S>) {
+function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", heading = frame ? 1 : undefined }: BeginProps<S>) {
   const { store, principal } = useGraview<S>();
   const nodes = useGraph();
   const chain = useMemo(() => chainOf(store), [store]);
@@ -187,10 +193,45 @@ function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin" }: 
    * sentence on the screen, and hiding it would put a person in front of a
    * blank page with no explanation, which is the wall this exists to end.
    */
-  if (empty.length === 0 || (!startable && standing)) return whenFull === undefined ? null : <>{whenFull}</>;
+  /*
+   * THE KEYBOARD OUTLIVES THE DOOR IT WENT THROUGH.
+   *
+   * Answering "Add a song" from the keyboard made the first song — and the
+   * row that asked went away with it, or the whole door did, standing down
+   * for the home it hands back to. Either way the element the keyboard was
+   * on left the document and took focus to <body>. So the door remembers
+   * where the keyboard was, and when that is gone it lands on the next way
+   * in, else on the heading of whatever now stands here.
+   */
+  const box = useRef<HTMLDivElement | null>(null);
+  const kept = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const was = kept.current;
+    if (!was || was.isConnected || document.activeElement !== document.body) return;
+    kept.current = null;
+    const next =
+      box.current?.querySelector<HTMLElement>('[data-testid^="begin-"]:is(button, a):not([disabled])') ??
+      box.current?.querySelector<HTMLElement>("h1, h2, h3");
+    if (!next) return;
+    if (!next.matches("button, a, input, select, textarea, [tabindex]")) next.tabIndex = -1;
+    next.focus();
+  });
+  const held = (children: ReactNode) => (
+    <div
+      ref={box}
+      style={{ display: "contents" }}
+      onFocus={(event) => {
+        kept.current = event.target as HTMLElement;
+      }}
+    >
+      {children}
+    </div>
+  );
+
+  if (empty.length === 0 || (!startable && standing)) return whenFull === undefined ? null : held(whenFull);
 
   const door = (
-    <Panel title={title} subtitle="What has to exist before the rest of it can." fit>
+    <Panel title={title} subtitle="What has to exist before the rest of it can." fit {...(heading ? { heading } : {})}>
       <ol data-testid="begin" style={{ margin: 0, paddingLeft: "1.25rem", display: "grid", gap: 10 }}>
         {chain.order.map((entry) => {
           const has = counts[entry.kind] ?? 0;
@@ -219,7 +260,7 @@ function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin" }: 
       </ol>
     </Panel>
   );
-  return <>{frame ? frame(door) : door}</>;
+  return held(frame ? frame(door) : door);
 }
 function BeginHere({ kind, derived }: { readonly kind: string; readonly derived: AffordanceSet }) {
   const { affordances, withheld } = derived;
