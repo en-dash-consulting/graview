@@ -2,8 +2,13 @@
 id: "286f8662-3524-451a-a855-b4afed3ef0e4"
 level: "task"
 title: "graview mcp and graview apply host the agent tool surface against a file, SQLite or remote store"
-status: "pending"
+status: "completed"
 priority: "critical"
+startedAt: "2026-09-28T20:12:34.087Z"
+completedAt: "2026-09-28T20:12:34.087Z"
+endedAt: "2026-09-28T20:12:34.087Z"
+resolutionType: "code-change"
+resolutionDetail: "packages/tools/src/cli.ts + mcp-stdio.ts: `graview mcp <entry>` (stdio JSON-RPC, no SDK; --data/--sqlite/--remote-url; --as/--roles/--header; --read-only; --list prints tools/list JSON without opening a store) and `graview apply <entry>` (--call/--args, --plan as one batch via planFrom/applyPlan with $plan refs, --undo, --preview). Replies wait for flush or the server's verdict; refusals are the tool's error. Dispatched from packages/graview. Driven end to end against apps/todo on a scratch folder and against graview serve; test an-agent-attaches-with-a-shell.test.ts. Commit b3502a9."
 acceptanceCriteria:
   - "graview mcp <entry> --data <dir> answers initialize, tools/list and tools/call over stdio; a mutating call lands in the file adapter's log.jsonl and snapshot.json and is undoable from a later session"
   - "graview apply <entry> --call add-task --args '{...}' --as agent-x --roles owner applies through store.apply under that principal; a seat the policy refuses gets the policy's own sentence and exit code 1"
@@ -12,6 +17,6 @@ acceptanceCriteria:
   - "graview mcp <entry> --list prints the seat's tools as MCP tools/list JSON; every mutation tool there is one the seat may run"
   - "A test drives the stdio protocol end to end against a temp directory; no MCP SDK dependency is added"
 description: "A coding agent with only a shell or MCP attaches to a persisted store with no custom glue. graview mcp <entry> speaks MCP over stdio around createToolRuntime + createMcpAdapter; graview apply <entry> --call <name> --args '{...}' applies one act and --plan <file> applies many as one batch (planFrom/applyPlan, $plan references honoured); --preview dry-runs. Both take the same store backends as serve — --data <dir> (file), --sqlite <file>, --remote-url <url> against a running graview serve — and the same seat flags (--as, --roles). Everything goes through store.apply under the seat's principal, so the policy refuses on the host exactly what it refuses in the browser. --list prints the seat's tools as MCP tools/list JSON, the catalog artifact a host registers without hand-writing schemas."
-lastModified: "2026-09-28T19:46:12.332Z"
+lastModified: "2026-09-28T20:12:34.151Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
