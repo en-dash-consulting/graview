@@ -55,6 +55,10 @@ const note = async (page, step) =>
     trail: await page.evaluate(
       () => document.querySelector('nav[aria-label="View"]')?.textContent?.trim() ?? null,
     ),
+    // Each relation's caption, as drawn over the band — once each (W-095).
+    captions: await page.evaluate(() =>
+      [...document.querySelectorAll("[data-graview-relation]")].map((el) => el.textContent.trim()),
+    ),
   });
 
 try {
@@ -835,6 +839,15 @@ const placeOf = (hash) => {
   return params.toString();
 };
 report.verdict = {
+  /*
+   * A RELATION IS CAPTIONED ONCE at every stop walked. A caption per run of
+   * the id-sorted frame said "the songs they are featured on" twice over one
+   * artist, and — keyed by edge kind alone — left an old stop's captions on
+   * the next one (W-095).
+   */
+  everyRelationIsCaptionedOnce:
+    report.steps.length > 0 &&
+    report.steps.every((step) => new Set(step.captions ?? []).size === (step.captions ?? []).length),
   // A kind with named pictures has a drive-in whose showings are real, labelled, focusable buttons; a kind with only defaults has none.
   aDriveInHasAMarquee:
     (report.driveIn?.marquee?.length ?? 0) >= 2 &&

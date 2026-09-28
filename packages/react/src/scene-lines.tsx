@@ -8,6 +8,8 @@ import { orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./rout
 import { Connectors, connectorStrands, tieRoute } from "./connectors.js";
 import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
 import type { SceneNode } from "./scene-root.js";
+import { captionRuns, type CaptionEntry, type CaptionRun } from "./captions.js";
+import { railInset } from "./rails.js";
 
 /**
  * EVERY LINE IN THE SCENE, measured against the DOM it is drawn over.
@@ -645,8 +647,6 @@ function SelectionTies<S extends AnySchema>({
  * by edge kind, so each caption spans one contiguous run rather than
  * repeating itself once per card.
  */
-/** Wide enough for a full edge description before anything is cut. */
-const MIN_CAPTION = 300;
 
 export function RelationCaptions({
   nodes,
@@ -660,44 +660,35 @@ export function RelationCaptions({
   readonly stageRef: { current: HTMLElement | null };
 }) {
   const kit = useKit();
-  type Run = { key: string; text: string; left: number; right: number; top: number };
   /* Measured after commit, for the reason the ties are: a caption placed
      over where a card WAS hung in open ground after every navigation. */
-  const [runs, setRuns] = useState<Run[]>([]);
+  const [runs, setRuns] = useState<CaptionRun[]>([]);
   useLayoutEffect(() => {
     setRuns(placeCaptions());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, scheme, stageWidth, stageRef]);
-  function placeCaptions(): Run[] {
-  const runs: Run[] = [];
-  for (const node of nodes) {
-    if (!node.via || Math.round(node.plane) !== 1) continue;
-    /*
-     * Above the PANEL someone can see, not the band slot the layout allots:
-     * a raised card centres its panel in a taller host, so a caption hung
-     * from the host's top floated in open ground half a band above the
-     * cards it captions.
-     */
-    const measured = measureVisible(stageRef.current, node.id, false);
-    const { scale } = styleFor(1, scheme);
-    const left = measured?.x ?? node.x;
-    const right = measured ? measured.x + measured.width : node.x + node.width * scale;
-    const top = measured?.y ?? node.y;
-    const last = runs[runs.length - 1];
-    if (last && last.key === node.via.edgeKind) {
-      last.right = Math.max(last.right, right);
-      last.top = Math.min(last.top, top);
-      continue;
+  function placeCaptions(): CaptionRun[] {
+    const entries: CaptionEntry[] = [];
+    for (const node of nodes) {
+      if (!node.via || Math.round(node.plane) !== 1) continue;
+      /*
+       * Above the PANEL someone can see, not the band slot the layout allots:
+       * a raised card centres its panel in a taller host, so a caption hung
+       * from the host's top floated in open ground half a band above the
+       * cards it captions.
+       */
+      const measured = measureVisible(stageRef.current, node.id, false);
+      const { scale } = styleFor(1, scheme);
+      entries.push({
+        key: `${node.via.edgeKind}|${node.via.direction}`,
+        text: node.via.description ?? node.via.edgeKind.replace(/-/g, " "),
+        left: measured?.x ?? node.x,
+        right: measured ? measured.x + measured.width : node.x + node.width * scale,
+        top: measured?.y ?? node.y,
+      });
     }
-    runs.push({
-      key: node.via.edgeKind,
-      text: node.via.description ?? node.via.edgeKind.replace(/-/g, " "),
-      left,
-      right,
-      top,
-    });
-  }
-  return runs;
+    const rails = railInset(stageWidth);
+    return captionRuns(entries, { left: rails.left, right: stageWidth - rails.right });
   }
   // The kit may keep the captions off: the edge's words stay on the inspector.
   if (runs.length === 0 || !kit.captions.visible) return null;
@@ -718,9 +709,7 @@ export function RelationCaptions({
          * ground on both sides of it. It is centred over the run and clamped
          * to the stage instead, so it borrows the gutter when it needs it.
          */
-        const mid = (run.left + run.right) / 2;
-        const span = Math.max(run.right - run.left, MIN_CAPTION);
-        const left = Math.max(4, Math.min(mid - span / 2, stageWidth - span - 4));
+        const { left, width: span } = run;
         return (
           <div
             key={run.key}

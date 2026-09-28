@@ -2634,3 +2634,32 @@ two singles and thirty-five songs.
   every one of them there (carried through a zoom). Criterion: layout
   `the-city-stays-beside-the-rail.test.ts` at 1280 and 1560 (verified
   failing without the fix: `kind:era: expected 241.08 to be ≥ 264`).
+
+### W-095 · A relation is captioned twice over one artist, and an old stop's captions stay on the next
+- stage: B · face: scene · width: 1280 · scheme: light
+- expected: focus an artist who is featured on two songs and produced five:
+  one caption per relation, over the row it starts in; travel to an album
+  and its captions are the album's
+- actual: "THE SONGS THEY ARE FEATURED ON" twice — the first cut off under
+  the rail, both overlapping — and "THE SONGS THEY PRODUCED" over only the
+  first row. A caption was a run of CONSECUTIVE nodes in the frame, and the
+  frame is sorted by id, so After Midnight (featured), Blue Hour (produced),
+  Rent Is Due (featured) made three runs. Keyed by edge kind alone, the two
+  "features" captions shared a React key; after travelling to the album
+  "Blue Hour", five stale "THEIR SONGS" captions from the artist stayed on
+  top of the album's cards for as long as it was open. A narrow run
+  borrowed 300px whatever stood beside it, so neighbouring captions lay
+  across each other, clamped to the stage rather than the rails.
+- where it belongs: `packages/react/src/scene-lines.tsx`
+  (`RelationCaptions`), now placing through `packages/react/src/captions.ts`
+- harness that should have caught it: nothing captioned a neighbourhood with
+  two relations whose members interleave by id; todo's neighbourhoods are
+  one relation each
+- status: fixed in "walkthrough: B · a relation is captioned once" · entries
+  are grouped by relation and end (`edgeKind|direction`) whatever their
+  order, each captioned once over the first row it stands in, borrowing at
+  most half the gutter to each neighbour and never past the rails; keys are
+  unique. Criteria: react `a-relation-is-captioned-once.test.ts` (one
+  caption per relation however sorted; spans its first row; neighbours
+  never overlap; out from under the rail) and verify-navigation
+  `everyRelationIsCaptionedOnce` at every stop it walks.
