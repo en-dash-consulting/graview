@@ -12,7 +12,7 @@ import type {
   Violation,
 } from "./invariants/types.js";
 import { compileMutation } from "./mutations/define-mutation.js";
-import { deriveEditMutations, editVia } from "./mutations/derive-edits.js";
+import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog } from "./ops/log.js";
 import type { Author, Batch, Operation } from "./ops/types.js";
@@ -173,13 +173,14 @@ export class Store<S extends AnySchema> {
       this.mutations.set(mutation.name, mutation);
     }
     /*
-     * THE DERIVED EDITS, registered like any other act. A field you could
-     * set at creation, you can change: each kind with settable fields nobody
-     * writes gets `edit-<kind>`, titled, logged, undoable, judged by the
+     * THE DERIVED ACTS, registered like any other. A field you could set at
+     * creation, you can change: each kind with settable fields nobody writes
+     * gets `edit-<kind>`. What was made can be unmade: each kind gets
+     * `remove-<kind>`. Both titled, logged, undoable, judged by the
      * invariants — and by the policy, through the acts that already write or
      * create the kind (see `permits`). Nothing an app declares is replaced.
      */
-    for (const mutation of deriveEditMutations(options.schema, options.mutations ?? [])) {
+    for (const mutation of deriveMutations(options.schema, options.mutations ?? [])) {
       this.mutations.set(mutation.name, mutation);
     }
 
@@ -243,20 +244,20 @@ export class Store<S extends AnySchema> {
     return found;
   }
 
-  /** Off by module, or a derived edit of a kind the workspace has off. */
+  /** Off by module, or a derived act of a kind the workspace has off. */
   private mutationDisabled(mutation: AnyMutationDefinition<S>): boolean {
     if (this.modules.disabledMutations.has(mutation.name)) return true;
-    return mutation.derived !== undefined && this.modules.disabledKinds.has(mutation.derived.edit);
+    return mutation.derived !== undefined && this.modules.disabledKinds.has(mutation.derived.kind);
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
     return [...this.mutations.values()].filter((mutation) => !this.mutationDisabled(mutation));
   }
 
-  /** The declared acts a derived edit resolves its permission through. */
+  /** The declared acts a derived act resolves its permission through. */
   private viaOf(mutation: AnyMutationDefinition<S> | undefined): readonly string[] | undefined {
     if (!mutation?.derived) return undefined;
-    return editVia(this.schema, [...this.mutations.values()], mutation.derived.edit);
+    return derivedVia(this.schema, [...this.mutations.values()], mutation);
   }
 
   allInvariants(): readonly InvariantDefinition<S>[] {
@@ -371,11 +372,11 @@ export class Store<S extends AnySchema> {
       principal,
       all.filter((mutation) => !mutation.derived),
     );
-    // A derived edit is offered when its kind's own acts are.
+    // A derived act is offered when the kind's own acts it rides are.
     const derived = all.filter(
       (mutation) =>
         mutation.derived !== undefined &&
-        permits(this.policy, principal, mutation.name, mutation.derived.edit, this.viaOf(mutation)).ok,
+        permits(this.policy, principal, mutation.name, mutation.derived.kind, this.viaOf(mutation)).ok,
     );
     return [...declared, ...derived];
   }
@@ -617,7 +618,7 @@ export class Store<S extends AnySchema> {
    * store has applied anything of its own. Whoever is tracking the sender's
    * sequence must keep it themselves; `openRemote` does.
    */
-  receive(ops: readonly Operation[]): readonly Operation[] {
+  receive(ops: readonly Operation[], options: { readonly applied?: boolean } = {}): readonly Operation[] {
     const known = new Set(this.log.all().map((op) => op.id));
     const fresh = ops.filter((op) => !known.has(op.id));
     if (fresh.length === 0) return [];
@@ -625,7 +626,14 @@ export class Store<S extends AnySchema> {
     const landed: Operation[] = [];
     for (const op of fresh) {
       const here = { ...op, seq: this.log.all().length };
-      this.graph.applyPrimitives(here.primitives);
+      /*
+       * ALREADY IN EFFECT HERE. A client that applied a call provisionally
+       * and is now handed the server's op for it has the graph the op
+       * describes; applying the primitives again would add the node twice.
+       * The op still joins the log — it is the one everybody else has — so
+       * undo names it and the activity shows it, and the graph stays put.
+       */
+      if (!options.applied) this.graph.applyPrimitives(here.primitives);
       this.log.append(here);
       landed.push(here);
     }

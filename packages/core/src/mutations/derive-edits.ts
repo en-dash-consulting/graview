@@ -145,7 +145,7 @@ export function deriveEditMutations<S extends AnySchema>(
     const said = fields.map((field) => humaniseField(field).toLowerCase());
     derived.push({
       name,
-      derived: { edit: kind },
+      derived: { kind, act: "edit" },
       title: `Change the ${noun}`,
       description: `Change what was set when this ${noun} was made: ${said.join(", ")}.`,
       subject: { kinds: [kind], arg: "id" },
@@ -181,4 +181,86 @@ export function deriveEditMutations<S extends AnySchema>(
     } as AnyMutationDefinition<S>);
   }
   return derived;
+}
+
+/** The name the derived remove act for a kind carries. */
+export const removeMutationName = (kind: string): string => `remove-${kind}`;
+
+/**
+ * The declared acts a derived remove resolves its PERMISSION through: the
+ * ones that bring the kind into being. Who may make a plot may take one
+ * out — narrower than the edit's reading on purpose, because a role that
+ * may re-time a drill has not been trusted with losing it.
+ */
+export function removeVia<S extends AnySchema>(
+  mutations: readonly AnyMutationDefinition<S>[],
+  kind: string,
+): readonly string[] {
+  return mutations
+    .filter((mutation) => !mutation.derived && (mutation.creates ?? []).includes(kind))
+    .map((mutation) => mutation.name);
+}
+
+/** The declared acts a derived act rides, whichever act it is. */
+export function derivedVia<S extends AnySchema>(
+  schema: S,
+  mutations: readonly AnyMutationDefinition<S>[],
+  mutation: AnyMutationDefinition<S>,
+): readonly string[] | undefined {
+  if (!mutation.derived) return undefined;
+  return mutation.derived.act === "edit"
+    ? editVia(schema, mutations, mutation.derived.kind)
+    : removeVia(mutations, mutation.derived.kind);
+}
+
+/**
+ * WHAT WAS MADE CAN BE UNMADE.
+ *
+ * Every app had a way to add a task and, mostly, no way to lose one — so an
+ * agent redesigning a board, or a seed being brought in step with a live
+ * store, had nothing to call and rewrote the seed instead. The culture is
+ * right that every change is a named act, so the fix is a DERIVED, titled
+ * remove act per kind: destructive, so it ranks last and is marked; taking
+ * the node's edges with it, as `removeNode` does; logged and undoable like
+ * everything else; and permitted through the acts that create the kind.
+ * An app that declares its own `remove-<kind>` keeps it.
+ */
+export function deriveRemoveMutations<S extends AnySchema>(
+  schema: S,
+  mutations: readonly AnyMutationDefinition<S>[],
+): AnyMutationDefinition<S>[] {
+  const taken = new Set(mutations.map((mutation) => mutation.name));
+  const derived: AnyMutationDefinition<S>[] = [];
+  for (const definition of schema.definitions) {
+    const kind = definition.kind;
+    const name = removeMutationName(kind);
+    if (taken.has(name)) continue;
+    const noun = humaniseField(kind).toLowerCase();
+    derived.push({
+      name,
+      derived: { kind, act: "remove" },
+      title: `Remove the ${noun}`,
+      description: `Take this ${noun} out of the graph, with every tie it has. Undo puts it back.`,
+      subject: { kinds: [kind], arg: "id" },
+      destructive: true,
+      input: z.object({ id: nodeRef([kind]) }),
+      describe: (args, graph) => {
+        const id = (args as { id: string }).id;
+        const node = graph.getNode(id);
+        return `Remove ${node ? labelOf(definition, node) : id}`;
+      },
+      apply(ctx, args) {
+        ctx.removeNode((args as { id: string }).id);
+      },
+    } as AnyMutationDefinition<S>);
+  }
+  return derived;
+}
+
+/** Every act the framework derives for a declaration: the edits, then the removes. */
+export function deriveMutations<S extends AnySchema>(
+  schema: S,
+  mutations: readonly AnyMutationDefinition<S>[],
+): AnyMutationDefinition<S>[] {
+  return [...deriveEditMutations(schema, mutations), ...deriveRemoveMutations(schema, mutations)];
 }

@@ -1,4 +1,5 @@
 import { permits, rolesOf } from "../../permissions/policy.js";
+import { derivedVia } from "../../mutations/derive-edits.js";
 import type { AnySchema } from "../../schema/schema.js";
 
 /**
@@ -70,11 +71,7 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
           mutation.subject && mutation.subject.kinds !== "*"
             ? (mutation.subject.kinds as readonly string[])
             : [undefined];
-        const via = mutation.derived
-          ? declaredMutations
-              .filter((m) => (m.creates ?? []).includes(mutation.derived!.edit) || (m.writes ?? []).length > 0)
-              .map((m) => m.name)
-          : undefined;
+        const via = derivedVia(app.schema, declaredMutations, mutation);
         return subjectKinds.some(
           (kind) =>
             permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, via, "themselves").ok,

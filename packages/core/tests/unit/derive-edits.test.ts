@@ -114,7 +114,7 @@ describe("the derived edit act", () => {
     expect(edit.description).toBe("Change what was set when this drill was made: min players, intensity.");
     expect(edit.subject).toEqual({ kinds: ["drill"], arg: "id" });
     expect(edit.writes).toEqual(["minPlayers", "intensity"]);
-    expect(edit.derived).toEqual({ edit: "drill" });
+    expect(edit.derived).toEqual({ kind: "drill", act: "edit" });
   });
 
   it("is registered by the store and lands in the log as a named act", () => {

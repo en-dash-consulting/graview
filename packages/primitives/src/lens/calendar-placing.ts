@@ -117,6 +117,6 @@ export function actThatMoves<S extends AnySchema>(
   }
   // Every kind has a derived edit; it is the honest fallback, and the policy
   // reads it through whatever declared acts it rides.
-  const edit = store.allMutations().find((mutation) => mutation.derived?.edit === kind);
+  const edit = store.allMutations().find((mutation) => mutation.derived?.act === "edit" && mutation.derived.kind === kind);
   return edit?.subject ? { name: edit.name, arg: edit.subject.arg } : null;
 }

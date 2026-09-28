@@ -29,6 +29,7 @@ export interface CheckContext<S extends AnySchema> {
   readonly kinds: ReadonlySet<string>;
   readonly declaredMutations: readonly AnyMutationDefinition<S>[];
   readonly derivedEdits: readonly AnyMutationDefinition<S>[];
+  readonly derivedRemoves: readonly AnyMutationDefinition<S>[];
   readonly mutations: ReadonlyMap<string, AnyMutationDefinition<S>>;
   readonly invariants: ReadonlyMap<string, NonNullable<GraviewApp<S>["invariants"]>[number]>;
   add(finding: Finding): void;

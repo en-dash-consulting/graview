@@ -1,7 +1,7 @@
 import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceProviderDeclaration } from "../app.js";
 import { beginning } from "../beginning.js";
 import { cityMap, roadsOf } from "../city.js";
-import { deriveEditMutations } from "../mutations/derive-edits.js";
+import { deriveMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 import { hueFor } from "../theme/derive.js";
 import { withArticle } from "../schema/define-node.js";
@@ -59,7 +59,7 @@ export function describeApp<S extends AnySchema>(
 ): string {
   const kinds = [...(app.schema.kinds as readonly string[])];
   const declared = app.mutations ?? [];
-  const acts = [...declared, ...deriveEditMutations(app.schema, declared)];
+  const acts = [...declared, ...deriveMutations(app.schema, declared)];
   const lines: string[] = [`${app.name} — ${kinds.length} kinds, ${acts.length} acts (${declared.length} declared, ${acts.length - declared.length} derived).`];
 
   /*

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import type { AnySchema } from "./schema.js";
 import type { AnyNodeDefinition } from "./types.js";
@@ -51,10 +52,26 @@ export function mutationToolSchema(mutation: {
   title?: string;
   description?: string;
   input: z.ZodType;
+  creates?: readonly string[];
 }): MutationToolSchema {
   const refs = nodeRefArgs(mutation.input);
   const base = toJsonSchema(mutation.input);
   const properties = (base["properties"] ?? {}) as Record<string, JsonSchema>;
+  /*
+   * THE ID A CALLER MAY BRING. An act that creates takes it beside its own
+   * arguments (`compileMutation` lifts it before the input parses), so the
+   * tool says so — an agent that will name the node in its next call, or a
+   * seed being synced, asks for the id it needs rather than reading one back.
+   */
+  if (takesAnId(mutation)) {
+    const made = mutation.creates!.join(" | ");
+    properties["id"] = {
+      type: "string",
+      minLength: 1,
+      description: `Optional: the id for the ${made} this makes. Refused if the graph already has it; left out, one is minted from the label.`,
+    };
+    base["properties"] = properties;
+  }
   for (const ref of refs) {
     const property = properties[ref.name];
     if (!property) continue;

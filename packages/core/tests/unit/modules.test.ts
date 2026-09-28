@@ -136,8 +136,10 @@ describe("resolveModules", () => {
 describe("a store with a module off", () => {
   it("stops offering its mutations, and refuses them with the module's name", () => {
     const store = makeStore([]);
-    expect(store.allMutations().map((m) => m.name)).toEqual(["rename"]);
+    // The derived remove of a kind still on stays; the one for the kind that is off goes with it.
+    expect(store.allMutations().map((m) => m.name)).toEqual(["rename", "remove-person"]);
     expect(() => store.mutation("add-vehicle")).toThrow(/module/i);
+    expect(() => store.mutation("remove-vehicle")).toThrow(/module/i);
     // Core is untouched.
     expect(() => store.mutation("rename")).not.toThrow();
   });

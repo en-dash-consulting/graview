@@ -31,6 +31,28 @@ export interface CompiledMutation {
   readonly intent: string;
 }
 
+/** Whether an act takes the framework's `id` argument: it creates, and has no `id` of its own. */
+export function takesAnId(definition: Pick<AnyMutationDefinition, "creates" | "input">): boolean {
+  if (!definition.creates?.length) return false;
+  const shape = (definition.input as { shape?: Record<string, unknown> }).shape;
+  return shape === undefined || !("id" in shape);
+}
+
+function requestedId(rawArgs: unknown): string | undefined {
+  if (typeof rawArgs !== "object" || rawArgs === null) return undefined;
+  const id = (rawArgs as Record<string, unknown>)["id"];
+  if (id === undefined) return undefined;
+  if (typeof id !== "string" || id.trim().length === 0) {
+    throw new GraphError("An id must be a non-empty string", `Got ${JSON.stringify(id)}.`);
+  }
+  return id;
+}
+
+function withoutId(args: Record<string, unknown>): Record<string, unknown> {
+  const { id: _id, ...rest } = args;
+  return rest;
+}
+
 function slug(label: string): string {
   return (
     label
@@ -50,7 +72,19 @@ export function compileMutation<S extends AnySchema>(
   definition: AnyMutationDefinition<S>,
   rawArgs: unknown,
 ): CompiledMutation {
-  const parsed = definition.input.safeParse(rawArgs);
+  /*
+   * THE ID A CALLER BROUGHT. An act that creates a kind takes an optional
+   * `id` the framework adds beside its own arguments (see `takesAnId`):
+   * lifted here, before the declaration's own schema parses the rest, so a
+   * strict input is not asked about an argument it never declared. It goes
+   * to the first node `freshId` mints, and an id already in the graph is a
+   * refusal — a seed being synced, or an agent that will name this node in
+   * its next call, needs exactly the id it asked for or an honest no.
+   */
+  const requested = takesAnId(definition) ? requestedId(rawArgs) : undefined;
+  const parsed = definition.input.safeParse(
+    requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>),
+  );
   if (!parsed.success) {
     throw new GraphError(
       `Invalid arguments for mutation "${definition.name}"`,
@@ -118,6 +152,16 @@ export function compileMutation<S extends AnySchema>(
       }
     },
     freshId(label, prefix) {
+      if (requested !== undefined && !minted.has(requested)) {
+        if (reader.has(requested)) {
+          throw new GraphError(
+            `Id "${requested}" is already taken`,
+            `"${definition.name}" was asked to make a node with that id, and the graph has one. Pick another, or leave id out and let the act mint one.`,
+          );
+        }
+        minted.add(requested);
+        return requested;
+      }
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);
       if (!reader.has(base) && !minted.has(base)) {
         minted.add(base);

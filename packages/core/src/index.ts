@@ -79,12 +79,17 @@ export type {
 } from "./invariants/types.js";
 
 // Mutations — the only writes.
-export { compileMutation, defineMutation } from "./mutations/define-mutation.js";
+export { compileMutation, defineMutation, takesAnId } from "./mutations/define-mutation.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
 export {
   deriveEditMutations,
+  deriveMutations,
+  deriveRemoveMutations,
+  derivedVia,
   editMutationName,
   editVia,
+  removeMutationName,
+  removeVia,
   fieldWriters,
   fieldsWrittenBy,
   settableFields,

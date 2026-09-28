@@ -62,7 +62,7 @@ export function permits(
     const who =
       wouldNeed.length === 0
         ? via.length === 0
-          ? "no declared act writes or creates it, so no role can"
+          ? "no declared act creates or changes it, so no role can"
           : "no role can"
         : `${wouldNeed.length === 1 ? "" : "one of "}${wouldNeed.join(", ")} can`;
     return {

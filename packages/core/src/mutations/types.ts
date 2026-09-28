@@ -55,6 +55,12 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    * poses — "how does the first one get here". Declared rather than
    * inferred, because what `apply` adds is not statically knowable, and the
    * empty state is exactly where a wrong guess would strand someone.
+   *
+   * An act that declares this also takes an optional `id` argument the
+   * framework adds: the id of the node it makes, when the caller has one —
+   * a seed being synced, an agent that will refer to the node in its next
+   * call. `freshId` hands it out first; an id already in the graph is
+   * refused by name rather than quietly suffixed.
    */
   readonly creates?: readonly KindOfSchema<S>[];
   /**
@@ -117,11 +123,13 @@ export interface MutationDefinition<
   readonly name: Name;
   /**
    * Set by the framework on a mutation it derived rather than an app
-   * declared: the per-kind edit act. Its permission resolves through the
-   * declared acts that already write or create the kind, so a policy needs
-   * no second list.
+   * declared: the per-kind edit act, or the per-kind remove act. An edit's
+   * permission resolves through the declared acts that already write or
+   * create the kind; a remove's through the acts that create it — who may
+   * bring a thing into being may take it out — so a policy needs no second
+   * list for either.
    */
-  readonly derived?: { readonly edit: string };
+  readonly derived?: { readonly kind: string; readonly act: "edit" | "remove" };
 }
 
 export type AnyMutationDefinition<S extends AnySchema = AnySchema> =

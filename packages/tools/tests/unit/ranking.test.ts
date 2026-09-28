@@ -126,9 +126,10 @@ describe("pins and bands", () => {
 
   it("keeps repairs first and destructive last, with the declared pin between", () => {
     const order = select(withThing());
-    // The repair (alpha, via the invariant) leads; the destructive act ends.
+    // The repair (alpha, via the invariant) leads; the destructive acts end —
+    // the declared drop and the framework's own derived remove, together.
     expect(order[0]).toBe("alpha");
-    expect(order[order.length - 1]).toBe("drop");
+    expect(order.slice(-2).sort()).toEqual(["drop", "remove-thing"]);
     // The declared pin ranks above its unpinned peer.
     expect(order.indexOf("gamma")).toBeLessThan(order.indexOf("beta"));
   });
@@ -136,7 +137,7 @@ describe("pins and bands", () => {
   it("lets a person's pin outrank the dev's, without crossing a band", () => {
     const order = select(withThing(), { pins: { pinned: ["beta"] } });
     expect(order[0]).toBe("alpha"); // repairs still first
-    expect(order[order.length - 1]).toBe("drop"); // destructive still last
+    expect(order.slice(-2).sort()).toEqual(["drop", "remove-thing"]); // destructive still last
     // User pin (beta) above dev pin (gamma), both above nothing pinned.
     expect(order.indexOf("beta")).toBeLessThan(order.indexOf("gamma"));
   });
@@ -177,7 +178,7 @@ describe("pins and bands", () => {
       store.apply({ name: "drop", args: { id: "t1" } }, { intent: "spam" });
     }
     const after = select(store);
-    expect(after[after.length - 1]).toBe("drop");
+    expect(after.slice(-2)).toContain("drop");
   });
 
   it("does not count an act the person took back", () => {
