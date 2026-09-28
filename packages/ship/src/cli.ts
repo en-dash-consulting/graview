@@ -1,8 +1,13 @@
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
-import type { GraviewApp } from "@graview/core";
+import { loadApp } from "@graview/core/cli";
+import type { GraviewApp, PersistenceAdapter } from "@graview/core";
 import { createFileAdapter } from "./file-adapter.js";
+import { openStore } from "./open-store.js";
 import { serveStore } from "./serve.js";
+import type { GraphSnapshot } from "./snapshot.js";
+import { sayStep } from "./steps.js";
+import { applySteps, seedSteps } from "./sync-seed.js";
 
 /**
  * `graview serve` — the store behind HTTP, and the data in a folder you can
@@ -19,48 +24,89 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       sends calls, the store judges them under the caller's own seat, and
       the ops come back. Data lives in <dir> (default ./data) as readable
       JSON, or in a SQLite file with --sqlite.
+
+  graview sync-seed <entry> --seed <file> [--data <dir> | --sqlite <file>]
+                            [--apply] [--prune] [--json]
+      Diffs the bootstrap seed against the live store and says, as content
+      steps, what would bring the store in step with it: records put,
+      fields patched, ties made. Prints and exits by default; --apply lands
+      the steps as one logged, undoable operation; --prune also drops what
+      the seed no longer has. The seed itself is only ever read at first
+      install — this is how default content moves afterwards, in place of
+      deleting the store.
 `;
 
-function flag(argv: readonly string[], name: string): string | undefined {
+/** The same store, whichever command asked: parsed from the flags every store command shares. */
+export const STORE_FLAGS = `--data <dir> (default ./data) | --sqlite <file>, and --seed <file> for a first install`;
+
+export function flag(argv: readonly string[], name: string): string | undefined {
   const at = argv.indexOf(name);
   if (at === -1) return undefined;
   return argv[at + 1];
 }
 
-export async function serve(argv: readonly string[]): Promise<number> {
+export interface StoreBackend {
+  readonly adapter: PersistenceAdapter<string> & {
+    loadMeta?(scope: string): { version: number } | null;
+    saveMeta?(scope: string, meta: { version: number }): void;
+  };
+  /** Where the data is, in words a person can open. */
+  readonly where: string;
+  readonly seed?: GraphSnapshot;
+}
+
+/**
+ * THE BACKEND FLAGS, PARSED ONCE. `serve`, `sync-seed`, `mcp` and `apply`
+ * all take the same store: a folder of readable JSON, or a SQLite file, and
+ * a seed for a first install. One parser, so the four commands cannot come
+ * to mean different things by the same words.
+ */
+export async function backendFrom(argv: readonly string[], cwd = process.cwd()): Promise<StoreBackend> {
+  const sqlite = flag(argv, "--sqlite");
+  const data = resolve(cwd, flag(argv, "--data") ?? "data");
+  const seedFile = flag(argv, "--seed");
+  const seed = seedFile ? readSeed(resolve(cwd, seedFile)) : undefined;
+  if (sqlite) {
+    const file = resolve(cwd, sqlite);
+    return { adapter: await sqliteAdapter(file), where: file, ...(seed ? { seed } : {}) };
+  }
+  return { adapter: createFileAdapter(data), where: data, ...(seed ? { seed } : {}) };
+}
+
+function readSeed(file: string): GraphSnapshot {
+  const parsed = JSON.parse(readFileSync(file, "utf8")) as Partial<GraphSnapshot>;
+  if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
+    throw new Error(`${file} is not a graph snapshot: it needs "nodes" and "edges" arrays.`);
+  }
+  return parsed as GraphSnapshot;
+}
+
+/** The entry module, or the reason it is not one — said before anything is opened. */
+async function entryOf(argv: readonly string[], command: string, usage: string): Promise<GraviewApp | number> {
   const entry = argv[0];
   if (!entry || entry.startsWith("--")) {
-    process.stderr.write(`graview serve: an entry module is required\n\n${SERVE_USAGE}`);
+    process.stderr.write(`graview ${command}: an entry module is required\n\n${usage}`);
     return 2;
   }
-  const module = (await import(pathToFileURL(resolve(process.cwd(), entry)).href)) as Record<string, unknown>;
-  const app = (module["default"] ?? module["app"]) as GraviewApp | undefined;
-  if (!app || typeof app !== "object" || !("schema" in app)) {
-    throw new Error(`${entry} does not export a GraviewApp. Export it as default, or as \`app\`.`);
-  }
+  return loadApp(entry);
+}
 
-  const data = resolve(process.cwd(), flag(argv, "--data") ?? "data");
-  const sqlite = flag(argv, "--sqlite");
+export async function serve(argv: readonly string[]): Promise<number> {
+  const app = await entryOf(argv, "serve", SERVE_USAGE);
+  if (typeof app === "number") return app;
   const port = Number(flag(argv, "--port") ?? 5196);
-  const seedFile = flag(argv, "--seed");
-  const seed = seedFile
-    ? ((await import(pathToFileURL(resolve(process.cwd(), seedFile)).href, { with: { type: "json" } })) as {
-        default: unknown;
-      }).default
-    : undefined;
-
-  const adapter = sqlite ? await sqliteAdapter(resolve(process.cwd(), sqlite)) : createFileAdapter(data);
+  const backend = await backendFrom(argv);
   const served = await serveStore({
     app: app as never,
-    adapter,
-    ...(seed ? { seed: seed as never } : {}),
+    adapter: backend.adapter,
+    ...(backend.seed ? { seed: backend.seed } : {}),
     port,
-    where: sqlite ? resolve(process.cwd(), sqlite) : data,
+    where: backend.where,
   });
 
   process.stdout.write(
     `graview serve: ${app.name} on ${served.url}\n` +
-      `  data: ${sqlite ? resolve(process.cwd(), sqlite) : data}  (${adapter.name})\n` +
+      `  data: ${backend.where}  (${backend.adapter.name})\n` +
       `  ${served.store.graph.allNodes().length} nodes, ${served.opened.store.log.all().length} operations` +
       `${served.opened.migrated.length > 0 ? `, migrated: ${served.opened.migrated.map((op) => op.intent).join("; ")}` : ""}\n`,
   );
@@ -70,6 +116,67 @@ export async function serve(argv: readonly string[]): Promise<number> {
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
   return 0;
+}
+
+/**
+ * `graview sync-seed` — default content moves without a wipe.
+ *
+ * Read-only unless `--apply` is said, because the steps are the product: a
+ * person or an agent reads what WOULD change and decides. Applying lands
+ * them through `applySteps`, which is `receive` on the open store — the
+ * adapter hears it like any change, the log carries it with its inverse,
+ * and undo is the ordinary undo.
+ */
+export async function syncSeed(argv: readonly string[]): Promise<number> {
+  const app = await entryOf(argv, "sync-seed", SERVE_USAGE);
+  if (typeof app === "number") return app;
+  if (flag(argv, "--remote-url")) {
+    process.stderr.write(
+      `graview sync-seed: runs where the data is — against --data or --sqlite on the host, not a remote URL.\n`,
+    );
+    return 2;
+  }
+  const backend = await backendFrom(argv);
+  if (!backend.seed) {
+    process.stderr.write(`graview sync-seed: --seed <file> is required\n\n${SERVE_USAGE}`);
+    return 2;
+  }
+  const opened = await openStore({ app: app as never, adapter: backend.adapter, scope: app.name, seed: backend.seed });
+  try {
+    const live = opened.store.graph.snapshot() as GraphSnapshot;
+    const steps = seedSteps(backend.seed, live, { prune: argv.includes("--prune") });
+    const json = argv.includes("--json");
+    if (steps.length === 0) {
+      process.stdout.write(json ? `{"steps":[],"applied":null}\n` : `graview sync-seed: ${backend.where} already has everything the seed has.\n`);
+      return 0;
+    }
+    if (!argv.includes("--apply")) {
+      process.stdout.write(
+        json
+          ? `${JSON.stringify({ steps, applied: null }, null, 2)}\n`
+          : `graview sync-seed: ${steps.length} step${steps.length === 1 ? "" : "s"} would bring ${backend.where} in step with the seed:\n` +
+              steps.map((step) => `  ${sayStep(step)}\n`).join("") +
+              `Nothing was written. Add --apply to land them as one undoable operation.\n`,
+      );
+      return 0;
+    }
+    const landed = applySteps(opened.store, steps);
+    await opened.flush();
+    if (!landed) {
+      process.stdout.write(json ? `{"steps":[],"applied":null}\n` : `graview sync-seed: the steps came to nothing against ${backend.where}.\n`);
+      return 0;
+    }
+    process.stdout.write(
+      json
+        ? `${JSON.stringify({ steps, applied: { id: landed.id, batch: landed.batch, primitives: landed.primitives.length } }, null, 2)}\n`
+        : `graview sync-seed: landed ${landed.primitives.length} change${landed.primitives.length === 1 ? "" : "s"} on ${backend.where} as batch ${landed.batch}.\n` +
+            steps.map((step) => `  ${sayStep(step)}\n`).join("") +
+            `Undo with: graview apply <entry> --undo ${JSON.stringify(landed.batch)} [--data|--sqlite as above]\n`,
+    );
+    return 0;
+  } finally {
+    opened.close();
+  }
 }
 
 /**
@@ -88,3 +195,4 @@ async function sqliteAdapter(file: string) {
   // with its own Drizzle schema passes its own database and leaves it alone.
   return createSqliteAdapter({ database: new Database(file), createTables: true });
 }
+

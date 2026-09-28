@@ -54,6 +54,28 @@ import type { GraphSnapshot } from "./snapshot.js";
  * lifecycles, and a poll is a thing a person can reproduce with `curl`.
  */
 
+/**
+ * THE WIRE, AS A CONTRACT. Every route `serveStore` answers, in one place a
+ * test pins and a README repeats: what a host in front of this — Graview
+ * Cloud, or anybody's — must keep answering for `openRemote`, `graview mcp
+ * --remote-url` and `graview apply --remote-url` to work unchanged. What a
+ * host adds (who a bearer token is, which tenant, how much) goes in
+ * `seatOf` and around these routes, never inside them.
+ */
+export const WIRE = [
+  { method: "GET", path: "/graview/state", says: "the graph, the log and the stored version" },
+  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; 409 with the policy's sentence when refused" },
+  { method: "GET", path: "/graview/since", says: "the ops appended after ?seq=N — everyone else's" },
+  { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
+  { method: "GET", path: "/graview/export", says: "the whole store as one bundle, the way out" },
+  { method: "POST", path: "/graview/here", says: "say where you are; answers with who else is, and the ops since `seq`" },
+  { method: "GET", path: "/graview/who", says: "who is here right now" },
+  { method: "POST", path: "/graview/leave", says: "say you have gone" },
+] as const;
+
+/** The headers a request carries its seat in. A host's `seatOf` may read others; these are what the framework's clients send. */
+export const SEAT_HEADERS = { seat: "x-graview-seat", roles: "x-graview-roles" } as const;
+
 export interface ServeOptions<S extends AnySchema> {
   readonly app: GraviewApp<S>;
   /** Where the graph lives. The file adapter by default — see `createFileAdapter`. */
@@ -149,7 +171,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
   async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     // A browser on another origin is the ordinary case for an embed.
     response.setHeader("access-control-allow-origin", "*");
-    response.setHeader("access-control-allow-headers", "content-type, x-graview-seat, x-graview-roles");
+    response.setHeader("access-control-allow-headers", "content-type, authorization, x-graview-seat, x-graview-roles");
     response.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
     if (request.method === "OPTIONS") {
       response.writeHead(204).end();

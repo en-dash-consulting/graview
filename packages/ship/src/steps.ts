@@ -1,5 +1,5 @@
 import { UNSET, type MigrationDeclaration, type Primitive } from "@graview/core";
-import type { GraphSnapshot } from "./snapshot.js";
+import { applyToSnapshot, type GraphSnapshot } from "./snapshot.js";
 
 /**
  * A MIGRATION AS DATA: what a stored graph needs when the declaration
@@ -24,7 +24,28 @@ export type MigrationStep =
    * a gardener who tended a plot tends each planting in it — and taken off
    * the old end. Where nothing of the new kind is tied to it, it goes.
    */
-  | { readonly what: "move-edge"; readonly kind: string; readonly edge: string; readonly to: string };
+  | { readonly what: "move-edge"; readonly kind: string; readonly edge: string; readonly to: string }
+  /*
+   * CONTENT STEPS. The ones above move a stored graph when the DECLARATION
+   * moves; these move it when the DEFAULT CONTENT does — a new question in
+   * the interview, a renamed list, a plot the example no longer has. Each
+   * is said by id and judged against the stored graph at the moment it
+   * runs, so it is idempotent: a node already there is not put twice, a
+   * patch that changes nothing emits nothing, a drop of what is gone is
+   * silent. That is what lets a seed be brought in step with a live store
+   * without deleting the store first — and what lets the same steps sit in
+   * `migrations[]`, versioned with the app, for every installation.
+   */
+  /** A record the graph should have. Left alone when it already does. */
+  | { readonly what: "put-node"; readonly node: GraphSnapshot["nodes"][number] }
+  /** Fields a record should carry. Only what differs is written. */
+  | { readonly what: "patch-node"; readonly id: string; readonly fields: Readonly<Record<string, unknown>> }
+  /** A record the graph should no longer have, with every tie it has. */
+  | { readonly what: "drop-node"; readonly id: string }
+  /** A tie the graph should have. Left alone when it does, or when either end is missing. */
+  | { readonly what: "put-edge"; readonly edge: GraphSnapshot["edges"][number] }
+  /** A tie the graph should no longer have. */
+  | { readonly what: "drop-edge"; readonly edge: GraphSnapshot["edges"][number] };
 
 /** One sentence for a step, for the migration's title and for the person about to apply it. */
 export function sayStep(step: MigrationStep): string {
@@ -41,8 +62,21 @@ export function sayStep(step: MigrationStep): string {
       return `${step.kind} ${step.edge} edges go`;
     case "move-edge":
       return `${step.kind} ${step.edge} edges move to the ${step.to} records tied to each ${step.kind}`;
+    case "put-node":
+      return `${step.node.kind} ${step.node.id} is put`;
+    case "patch-node":
+      return `${step.id} is patched: ${Object.keys(step.fields).join(", ") || "nothing"}`;
+    case "drop-node":
+      return `${step.id} goes`;
+    case "put-edge":
+      return `${step.edge.from} ${step.edge.kind} ${step.edge.to} is tied`;
+    case "drop-edge":
+      return `${step.edge.from} ${step.edge.kind} ${step.edge.to} is cut`;
   }
 }
+
+const sameEdge = (a: GraphSnapshot["edges"][number], b: GraphSnapshot["edges"][number]): boolean =>
+  a.kind === b.kind && a.from === b.from && a.to === b.to;
 
 /** The primitives one step needs against this stored graph. */
 export function primitivesFor(step: MigrationStep, stored: GraphSnapshot): Primitive[] {
@@ -85,6 +119,44 @@ export function primitivesFor(step: MigrationStep, stored: GraphSnapshot): Primi
       for (const edge of stored.edges) if (edge.kind === step.edge && froms.has(edge.from)) out.push({ op: "remove-edge", edge });
       return out;
     }
+    case "put-node": {
+      if (stored.nodes.some((node) => node.id === step.node.id)) return out;
+      out.push({ op: "add-node", node: step.node });
+      return out;
+    }
+    case "patch-node": {
+      const node = stored.nodes.find((candidate) => candidate.id === step.id);
+      if (!node) return out;
+      const before: Record<string, unknown> = {};
+      const after: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(step.fields)) {
+        if (key === "id" || key === "kind") continue;
+        if (JSON.stringify(node[key]) === JSON.stringify(value)) continue;
+        before[key] = node[key] === undefined ? UNSET : node[key];
+        after[key] = value === undefined ? UNSET : value;
+      }
+      if (Object.keys(after).length > 0) out.push({ op: "patch-node", id: step.id, before, after });
+      return out;
+    }
+    case "drop-node": {
+      const node = stored.nodes.find((candidate) => candidate.id === step.id);
+      if (!node) return out;
+      for (const edge of stored.edges) if (edge.from === step.id || edge.to === step.id) out.push({ op: "remove-edge", edge });
+      out.push({ op: "remove-node", node });
+      return out;
+    }
+    case "put-edge": {
+      const has = (id: string) => stored.nodes.some((node) => node.id === id);
+      if (!has(step.edge.from) || !has(step.edge.to)) return out;
+      if (stored.edges.some((edge) => sameEdge(edge, step.edge))) return out;
+      out.push({ op: "add-edge", edge: step.edge });
+      return out;
+    }
+    case "drop-edge": {
+      if (!stored.edges.some((edge) => sameEdge(edge, step.edge))) return out;
+      out.push({ op: "remove-edge", edge: step.edge });
+      return out;
+    }
     case "move-edge": {
       const froms = ofKind(step.kind);
       const heirs = ofKind(step.to);
@@ -119,21 +191,36 @@ export function stepsMigration(declared: {
     from: declared.from,
     to: declared.to,
     title: declared.title ?? declared.steps.map(sayStep).join("; "),
-    apply: (snapshot) => {
-      const seen = new Set<string>();
-      return declared.steps
-        .flatMap((step) => primitivesFor(step, snapshot as GraphSnapshot))
-        .filter((primitive) => {
-          const key =
-            primitive.op === "remove-edge" || primitive.op === "add-edge"
-              ? `${primitive.op} ${primitive.edge.kind} ${primitive.edge.from} ${primitive.edge.to}`
-              : primitive.op === "patch-node"
-                ? `${primitive.op} ${primitive.id} ${Object.keys(primitive.after).join(",")}`
-                : `${primitive.op} ${primitive.node.id}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-    },
+    apply: (snapshot) => primitivesForSteps(declared.steps, snapshot as GraphSnapshot),
   };
+}
+
+/**
+ * Every step's primitives against one stored graph, IN SEQUENCE: each step
+ * is judged against the graph as the steps before it leave it. That is
+ * what the studio already assumes — it renames a kind and then says its
+ * field steps by the new name — and what a content run needs, where the
+ * record is put and then tied in the same breath. Each edge and node still
+ * goes once whichever steps reach it.
+ */
+export function primitivesForSteps(steps: readonly MigrationStep[], stored: GraphSnapshot): Primitive[] {
+  const seen = new Set<string>();
+  let running = stored;
+  return steps
+    .flatMap((step) => {
+      const out = primitivesFor(step, running);
+      running = applyToSnapshot(running, out);
+      return out;
+    })
+    .filter((primitive) => {
+      const key =
+        primitive.op === "remove-edge" || primitive.op === "add-edge"
+          ? `${primitive.op} ${primitive.edge.kind} ${primitive.edge.from} ${primitive.edge.to}`
+          : primitive.op === "patch-node"
+            ? `${primitive.op} ${primitive.id} ${Object.keys(primitive.after).join(",")}`
+            : `${primitive.op} ${primitive.node.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }

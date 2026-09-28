@@ -17,8 +17,11 @@ export default defineConfig({
       "@graview/core/testing": fileURLToPath(
         new URL("./packages/core/src/testing.ts", import.meta.url),
       ),
+      // The command lines, reached by the packages that dispatch to one another.
+      "@graview/core/cli": fileURLToPath(new URL("./packages/core/src/cli/index.ts", import.meta.url)),
       "@graview/core": src("core"),
       "@graview/layout": src("layout"),
+      "@graview/tools/cli": fileURLToPath(new URL("./packages/tools/src/cli.ts", import.meta.url)),
       "@graview/tools": src("tools"),
       // The subpath first, or the bare-name alias swallows it.
       "@graview/render/gpu": fileURLToPath(
@@ -29,6 +32,7 @@ export default defineConfig({
       "@graview/primitives": src("primitives"),
       "@graview/pages": src("pages"),
       "@graview/ship/browser": fileURLToPath(new URL("./packages/ship/src/browser.ts", import.meta.url)),
+      "@graview/ship/cli": fileURLToPath(new URL("./packages/ship/src/cli.ts", import.meta.url)),
       "@graview/ship": src("ship"),
       "@graview/embed": src("embed"),
       "@graview/studio": src("studio"),

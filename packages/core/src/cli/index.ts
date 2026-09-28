@@ -46,7 +46,7 @@ ${CREATE_USAGE}
       not a vocabulary to finish in.
 `;
 
-async function loadApp(entry: string): Promise<GraviewApp> {
+export async function loadApp(entry: string): Promise<GraviewApp> {
   const path = resolve(process.cwd(), entry);
   const module = (await import(pathToFileURL(path).href)) as Record<string, unknown>;
   const app = (module["default"] ?? module["app"]) as GraviewApp | undefined;

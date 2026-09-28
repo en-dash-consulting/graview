@@ -8,7 +8,9 @@ export {
 } from "./browser-adapter.js";
 export type { BrowserAdapter, BrowserAdapterOptions, StorageLike } from "./browser-adapter.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
-export { primitivesFor, sayStep, stepsMigration } from "./steps.js";
+export { primitivesFor, primitivesForSteps, sayStep, stepsMigration } from "./steps.js";
+export { applySteps, contentOperation, SEED_SYNC_AUTHOR, seedSteps } from "./sync-seed.js";
+export type { SeedSyncOptions } from "./sync-seed.js";
 export type { MigrationStep } from "./steps.js";
 export type { MigrationRun } from "./migrations.js";
 export { openStore } from "./open-store.js";
@@ -23,9 +25,10 @@ export { openRemote } from "./remote.js";
 export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
 export type { RemoteOptions, RemoteStore } from "./remote.js";
-export { serveStore } from "./serve.js";
+export { SEAT_HEADERS, serveStore, WIRE } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";
-export { serve, SERVE_USAGE } from "./cli.js";
+export { backendFrom, serve, SERVE_USAGE, syncSeed } from "./cli.js";
+export type { StoreBackend } from "./cli.js";
 export {
   assertPhotoFits,
   photosUsed,
