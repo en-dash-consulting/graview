@@ -1,0 +1,21 @@
+{
+  "id": "primitives/workbench",
+  "name": "Workbench",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/workbench/activity.tsx",
+    "packages/primitives/src/workbench/answer-args.tsx",
+    "packages/primitives/src/workbench/inspector.tsx",
+    "packages/primitives/src/workbench/trail.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/workbench/activity.tsx",
+    "packages/primitives/src/workbench/answer-args.tsx",
+    "packages/primitives/src/workbench/inspector.tsx",
+    "packages/primitives/src/workbench/trail.tsx"
+  ],
+  "cohesion": 0.5,
+  "coupling": 0.5,
+  "fileCount": 4,
+  "lineCount": 2249
+}

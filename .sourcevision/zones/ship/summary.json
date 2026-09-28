@@ -1,0 +1,48 @@
+{
+  "id": "ship",
+  "name": "Ship",
+  "description": "20 files, mostly utilities and services; entry points file-adapter.ts, remote.ts, serve.ts; imported by Packages and Packages.",
+  "files": [
+    "packages/ship/src/browser-adapter.ts",
+    "packages/ship/src/browser.ts",
+    "packages/ship/src/cli.ts",
+    "packages/ship/src/dev.ts",
+    "packages/ship/src/door.ts",
+    "packages/ship/src/export.ts",
+    "packages/ship/src/file-adapter.ts",
+    "packages/ship/src/health.ts",
+    "packages/ship/src/index.ts",
+    "packages/ship/src/migrations.ts",
+    "packages/ship/src/open-store.ts",
+    "packages/ship/src/photos.ts",
+    "packages/ship/src/presence.ts",
+    "packages/ship/src/remote.ts",
+    "packages/ship/src/serve.ts",
+    "packages/ship/src/snapshot.ts",
+    "packages/ship/src/source-edit.ts",
+    "packages/ship/src/steps.ts",
+    "packages/ship/src/studio-door.ts",
+    "packages/ship/src/typecheck.ts"
+  ],
+  "entryPoints": [
+    "packages/ship/src/browser.ts",
+    "packages/ship/src/dev.ts",
+    "packages/ship/src/file-adapter.ts",
+    "packages/ship/src/index.ts",
+    "packages/ship/src/presence.ts",
+    "packages/ship/src/remote.ts",
+    "packages/ship/src/serve.ts",
+    "packages/ship/src/source-edit.ts"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 20,
+  "lineCount": 3099,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

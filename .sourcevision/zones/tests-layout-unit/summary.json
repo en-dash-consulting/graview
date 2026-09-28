@@ -1,0 +1,26 @@
+{
+  "id": "tests-layout-unit",
+  "name": "Tests Layout Unit",
+  "description": "Non-source files in packages: a-name-that-fits.test.ts, layout.test.ts, properties.test.ts (+4 more)",
+  "files": [
+    "packages/layout/tests/unit/a-name-that-fits.test.ts",
+    "packages/layout/tests/unit/layout.test.ts",
+    "packages/layout/tests/unit/properties.test.ts",
+    "packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts",
+    "packages/layout/tests/unit/the-city-at-altitude.test.ts",
+    "packages/layout/tests/unit/the-drive-in.test.ts",
+    "packages/layout/tests/unit/the-pan-is-a-translation.test.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 7,
+  "lineCount": 2281,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

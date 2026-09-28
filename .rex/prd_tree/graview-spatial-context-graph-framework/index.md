@@ -39,17 +39,17 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The constellation: the graph seen from outside, and jacking in from it](./the-constellation-the-graph-seen-from/index.md) | completed |
 | [The declaration grows: modules, horizon, derived edits and theming](./the-declaration-grows-modules-horizon/index.md) | completed |
 | [The packages: layout, render, react, primitives and tools](./the-packages-layout-render-react/index.md) | completed |
-| [The pages face out of the box: the app's pictures, its relationships, and the assistant on every page](./the-pages-face-out-of-the-box-the-app/index.md) | completed |
 | [The pages face lands on a gallery: every picture large and live, every kind a picture by default, and the reading matter on its own pages](./the-pages-face-lands-on-a-gallery/index.md) | completed |
+| [The pages face out of the box: the app's pictures, its relationships, and the assistant on every page](./the-pages-face-out-of-the-box-the-app/index.md) | completed |
 | [A calendar lens in the framework: month, week, day and agenda over real dates, with the demos scheduling through it](./a-calendar-lens-in-the-framework-month.md) | completed |
 | [A drag that starts on a kind card re-measures every connector against the DOM on every move](./a-drag-that-starts-on-a-kind-card-re.md) | completed |
 | [A kind has a figure: a declared, blueprint-style 3D drawing of the thing, drawn wherever the kind is, and an agent can draw it](./a-kind-has-a-figure-a-declared.md) | completed |
 | [A UI kit for the picture: lines, boxes and marks are declared, customisable, and set up for styles nobody has asked for yet](./a-ui-kit-for-the-picture-lines-boxes.md) | completed |
 | [Longer horizons on the calendar lens: a quarter, a year, and a span of years the app names, with the demos scheduling across them](./longer-horizons-on-the-calendar-lens-a.md) | completed |
 | [smoke-create fails on main: the scaffolded project's strip never offers a first act](./smoke-create-fails-on-main-the.md) | completed |
+| [The board lens draws a token when a code is a word, and shelves a zone's slots when the arrangement is categories](./the-board-lens-draws-a-token-when-a.md) | completed |
 | [The modules still over a thousand lines are split along their own seams](./the-modules-still-over-a-thousand.md) | completed |
 | [The pointer menu leads with the thing you clicked: its own repair first, then its acts, then the rest](./the-pointer-menu-leads-with-the-thing.md) | completed |
-| [The board lens draws a token when a code is a word, and shelves a zone's slots when the arrangement is categories](./the-board-lens-draws-a-token-when-a.md) | completed |
 | [Three harnesses are failing on main and nobody is being told](./three-harnesses-are-failing-on-main.md) | completed |
 | [Two product repos drifted off the framework without anything saying so](./two-product-repos-drifted-off-the.md) | completed |
 | [verify-site fails inside the chain and passes on its own](./verify-site-fails-inside-the-chain-and.md) | completed |

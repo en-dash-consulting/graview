@@ -1,0 +1,26 @@
+{
+  "id": "core-mutations",
+  "name": "Core Mutations",
+  "description": "3 files, mostly utilities and types; entry points types.ts, derive-edits.ts, fields.ts; imports Core and Core Schema; imported by Core and Core Cli.",
+  "files": [
+    "packages/core/src/cli/check/fields.ts",
+    "packages/core/src/mutations/derive-edits.ts",
+    "packages/core/src/mutations/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/cli/check/fields.ts",
+    "packages/core/src/mutations/derive-edits.ts",
+    "packages/core/src/mutations/types.ts"
+  ],
+  "cohesion": 0.12,
+  "coupling": 0.88,
+  "fileCount": 3,
+  "lineCount": 572,
+  "riskMetrics": {
+    "cohesion": 0.12,
+    "coupling": 0.88,
+    "riskScore": 0.88,
+    "riskLevel": "catastrophic",
+    "failsThreshold": true
+  }
+}

@@ -32,7 +32,3 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Pictures on pages: every place is a page, an index lands you among them, and the nav mirrors the scene's bar](./pictures-on-pages-every-place-is-a.md) | completed |
 | [Relationships as structure on pages: a map of the kinds, lists that group by relation, and records that link both ways](./relationships-as-structure-on-pages-a.md) | completed |
 | [The assistant on every page: Ask in the shell with the page's subject as "this", grounded chips, proposals as prefilled forms, and the seat's questions at the record](./the-assistant-on-every-page-ask-in-the.md) | completed |
-
-## Log
-
-- 2026-09-27 — Judged against the running app: "an index lands you among them" was true of /places and not of the home, which led with a sentence of counts, then the relations, then a section per kind, with the pictures as 288px cards between them; an app with no titled lens had no pictures at all. Reopened as [The pages face lands on a gallery](../the-pages-face-lands-on-a-gallery/index.md) (1e155ee2) rather than by flipping this record: what shipped here is still in place and the new feature builds on it.

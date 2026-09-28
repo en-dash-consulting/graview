@@ -1,0 +1,24 @@
+{
+  "id": "embed",
+  "name": "Embed",
+  "description": "3 files, mostly components and utilities; entry points index.ts; imported by Packages.",
+  "files": [
+    "packages/embed/src/embed.tsx",
+    "packages/embed/src/fonts.ts",
+    "packages/embed/src/index.ts"
+  ],
+  "entryPoints": [
+    "packages/embed/src/index.ts"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 3,
+  "lineCount": 609,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

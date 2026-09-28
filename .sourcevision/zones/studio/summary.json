@@ -1,0 +1,37 @@
+{
+  "id": "studio",
+  "name": "Studio",
+  "description": "15 files, mostly utilities and components; entry points index.ts, meta.ts; imported by Packages.",
+  "files": [
+    "packages/studio/src/agent-panel.tsx",
+    "packages/studio/src/agent.ts",
+    "packages/studio/src/changes.ts",
+    "packages/studio/src/from-declaration.ts",
+    "packages/studio/src/in-place.tsx",
+    "packages/studio/src/index.ts",
+    "packages/studio/src/lens.tsx",
+    "packages/studio/src/meta.ts",
+    "packages/studio/src/migration.ts",
+    "packages/studio/src/place.tsx",
+    "packages/studio/src/rewrite.ts",
+    "packages/studio/src/source.ts",
+    "packages/studio/src/studio.ts",
+    "packages/studio/src/to-declaration.ts",
+    "packages/studio/src/write-in-place.ts"
+  ],
+  "entryPoints": [
+    "packages/studio/src/index.ts",
+    "packages/studio/src/meta.ts"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 15,
+  "lineCount": 4270,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

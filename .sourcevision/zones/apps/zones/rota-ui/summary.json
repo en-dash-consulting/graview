@@ -1,0 +1,22 @@
+{
+  "id": "apps/rota-ui",
+  "name": "Rota Interface",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "apps/rota/src/domain/brand.ts",
+    "apps/rota/src/main.tsx",
+    "apps/rota/src/open.ts",
+    "apps/rota/src/ui/app.tsx",
+    "apps/rota/src/ui/design.tsx",
+    "apps/rota/src/ui/when.ts"
+  ],
+  "entryPoints": [
+    "apps/rota/src/domain/brand.ts",
+    "apps/rota/src/ui/app.tsx",
+    "apps/rota/src/ui/when.ts"
+  ],
+  "cohesion": 0.6,
+  "coupling": 0.4,
+  "fileCount": 6,
+  "lineCount": 1461
+}

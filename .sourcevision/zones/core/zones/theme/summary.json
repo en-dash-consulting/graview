@@ -1,0 +1,25 @@
+{
+  "id": "core/theme",
+  "name": "Theme",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/cli/check/brand.ts",
+    "packages/core/src/theme/contrast.ts",
+    "packages/core/src/theme/derive.ts",
+    "packages/core/src/theme/kit.ts",
+    "packages/core/src/theme/palettes.ts",
+    "packages/core/src/theme/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/cli/check/brand.ts",
+    "packages/core/src/theme/contrast.ts",
+    "packages/core/src/theme/derive.ts",
+    "packages/core/src/theme/kit.ts",
+    "packages/core/src/theme/palettes.ts",
+    "packages/core/src/theme/types.ts"
+  ],
+  "cohesion": 0.67,
+  "coupling": 0.33,
+  "fileCount": 6,
+  "lineCount": 1058
+}

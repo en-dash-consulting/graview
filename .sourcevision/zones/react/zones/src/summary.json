@@ -1,0 +1,31 @@
+{
+  "id": "react/src",
+  "name": "Src",
+  "description": "9 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/activity.ts",
+    "packages/react/src/context.tsx",
+    "packages/react/src/hooks.ts",
+    "packages/react/src/occupants.tsx",
+    "packages/react/src/plots.tsx",
+    "packages/react/src/pointer.ts",
+    "packages/react/src/presence.ts",
+    "packages/react/src/robot.ts",
+    "packages/react/src/settings.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/activity.ts",
+    "packages/react/src/context.tsx",
+    "packages/react/src/hooks.ts",
+    "packages/react/src/occupants.tsx",
+    "packages/react/src/plots.tsx",
+    "packages/react/src/pointer.ts",
+    "packages/react/src/presence.ts",
+    "packages/react/src/robot.ts",
+    "packages/react/src/settings.ts"
+  ],
+  "cohesion": 0.48,
+  "coupling": 0.52,
+  "fileCount": 9,
+  "lineCount": 3001
+}

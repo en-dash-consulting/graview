@@ -1,0 +1,26 @@
+{
+  "id": "core-ops",
+  "name": "Core Ops",
+  "description": "3 files, mostly utilities and types; entry points log.ts, types.ts, undo.ts; imports Core and Core Mutations; imported by Core and Core Sync.",
+  "files": [
+    "packages/core/src/ops/log.ts",
+    "packages/core/src/ops/types.ts",
+    "packages/core/src/ops/undo.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/ops/log.ts",
+    "packages/core/src/ops/types.ts",
+    "packages/core/src/ops/undo.ts"
+  ],
+  "cohesion": 0.29,
+  "coupling": 0.71,
+  "fileCount": 3,
+  "lineCount": 260,
+  "riskMetrics": {
+    "cohesion": 0.29,
+    "coupling": 0.71,
+    "riskScore": 0.71,
+    "riskLevel": "catastrophic",
+    "failsThreshold": true
+  }
+}

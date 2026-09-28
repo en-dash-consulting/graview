@@ -1,10 +1,39 @@
 {
   "schemaVersion": "1.0.0",
-  "primaryLanguage": "unknown",
-  "languages": [],
-  "frameworks": [],
-  "releaseInfrastructure": [],
-  "buildSurfaces": [],
-  "ciSurfaces": [],
-  "importGraphQuality": "absent"
+  "primaryLanguage": "typescript",
+  "languages": [
+    "typescript",
+    "javascript"
+  ],
+  "frameworks": [
+    "react",
+    "vitest"
+  ],
+  "releaseInfrastructure": [
+    {
+      "kind": "changesets",
+      "evidence": ".changeset"
+    }
+  ],
+  "buildSurfaces": [
+    {
+      "path": "pnpm-workspace.yaml",
+      "kind": "pnpm workspace"
+    }
+  ],
+  "ciSurfaces": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "kind": "GitHub Actions"
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "kind": "GitHub Actions"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "kind": "GitHub Actions"
+    }
+  ],
+  "importGraphQuality": "rich"
 }

@@ -1,0 +1,23 @@
+{
+  "id": "tests-apps",
+  "name": "Tests Apps",
+  "description": "Non-source files in apps: acceptance.test.ts, acceptance.test.ts, acceptance.test.tsx (+1 more)",
+  "files": [
+    "apps/launcher/tests/integration/acceptance.test.ts",
+    "apps/rota/tests/integration/acceptance.test.ts",
+    "apps/todo/tests/integration/acceptance.test.tsx",
+    "apps/todo/tests/integration/who-is-here.test.tsx"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 4,
+  "lineCount": 657,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "apps-rota",
+  "name": "Apps Rota",
+  "description": "Project configuration and manifest files: vite.config.ts",
+  "files": [
+    "apps/rota/vite.config.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 1,
+  "lineCount": 48,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

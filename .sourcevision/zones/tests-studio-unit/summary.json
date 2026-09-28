@@ -1,0 +1,27 @@
+{
+  "id": "tests-studio-unit",
+  "name": "Tests Studio Unit",
+  "description": "Non-source files in packages: an-agent-in-the-studio.test.ts, one-seat-one-conversation.test.tsx, rewrite-before-writing.test.tsx (+5 more)",
+  "files": [
+    "packages/studio/tests/unit/an-agent-in-the-studio.test.ts",
+    "packages/studio/tests/unit/one-seat-one-conversation.test.tsx",
+    "packages/studio/tests/unit/rewrite-before-writing.test.tsx",
+    "packages/studio/tests/unit/studio.test.ts",
+    "packages/studio/tests/unit/the-studio-agent-panel.test.tsx",
+    "packages/studio/tests/unit/what-it-does-not-model.test.ts",
+    "packages/studio/tests/unit/written-back.test.ts",
+    "packages/studio/tests/unit/written-in-place.test.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 8,
+  "lineCount": 1443,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

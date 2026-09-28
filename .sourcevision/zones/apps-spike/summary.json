@@ -1,0 +1,21 @@
+{
+  "id": "apps-spike",
+  "name": "Spike",
+  "description": "2 files, mostly entry points.",
+  "files": [
+    "apps/spike/src/main.ts",
+    "apps/spike/src/three-planes.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 2,
+  "lineCount": 182,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

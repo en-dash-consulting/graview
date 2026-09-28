@@ -1,0 +1,26 @@
+{
+  "id": "core/src",
+  "name": "Src",
+  "description": "7 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/app.ts",
+    "packages/core/src/cli/docs.ts",
+    "packages/core/src/cli/index.ts",
+    "packages/core/src/scaffold/lens.ts",
+    "packages/core/src/schema/figures.ts",
+    "packages/core/src/settings.ts",
+    "packages/core/src/testing.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/app.ts",
+    "packages/core/src/cli/docs.ts",
+    "packages/core/src/cli/index.ts",
+    "packages/core/src/scaffold/lens.ts",
+    "packages/core/src/schema/figures.ts",
+    "packages/core/src/settings.ts"
+  ],
+  "cohesion": 0.34,
+  "coupling": 0.66,
+  "fileCount": 7,
+  "lineCount": 1565
+}

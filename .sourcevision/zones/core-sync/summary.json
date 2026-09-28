@@ -1,0 +1,26 @@
+{
+  "id": "core-sync",
+  "name": "Core Sync",
+  "description": "3 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core and Core Ops; imported by Core.",
+  "files": [
+    "packages/core/src/sync/engine.ts",
+    "packages/core/src/sync/google-calendar.ts",
+    "packages/core/src/sync/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/sync/engine.ts",
+    "packages/core/src/sync/google-calendar.ts",
+    "packages/core/src/sync/types.ts"
+  ],
+  "cohesion": 0.33,
+  "coupling": 0.67,
+  "fileCount": 3,
+  "lineCount": 801,
+  "riskMetrics": {
+    "cohesion": 0.33,
+    "coupling": 0.67,
+    "riskScore": 0.6699999999999999,
+    "riskLevel": "critical",
+    "failsThreshold": true
+  }
+}

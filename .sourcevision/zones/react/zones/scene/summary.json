@@ -1,0 +1,23 @@
+{
+  "id": "react/scene",
+  "name": "Scene Renderer",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/picking.ts",
+    "packages/react/src/scene-camera.ts",
+    "packages/react/src/scene-hand.ts",
+    "packages/react/src/scene-helpers.tsx",
+    "packages/react/src/scene-root.tsx",
+    "packages/react/src/view-host.tsx"
+  ],
+  "entryPoints": [
+    "packages/react/src/picking.ts",
+    "packages/react/src/scene-helpers.tsx",
+    "packages/react/src/scene-root.tsx",
+    "packages/react/src/view-host.tsx"
+  ],
+  "cohesion": 0.39,
+  "coupling": 0.61,
+  "fileCount": 6,
+  "lineCount": 2385
+}

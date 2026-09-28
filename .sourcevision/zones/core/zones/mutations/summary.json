@@ -1,0 +1,19 @@
+{
+  "id": "core/mutations",
+  "name": "Mutations",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/mutations/decidable.ts",
+    "packages/core/src/mutations/form.ts",
+    "packages/core/src/mutations/node-ref.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/mutations/decidable.ts",
+    "packages/core/src/mutations/form.ts",
+    "packages/core/src/mutations/node-ref.ts"
+  ],
+  "cohesion": 0.31,
+  "coupling": 0.69,
+  "fileCount": 3,
+  "lineCount": 392
+}

@@ -1,0 +1,15 @@
+{
+  "id": "apps/apps",
+  "name": "Apps",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "apps/promo/src/FeedComposition.tsx",
+    "apps/promo/src/Root.tsx",
+    "apps/promo/src/index.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 0.29,
+  "coupling": 0.71,
+  "fileCount": 3,
+  "lineCount": 106
+}

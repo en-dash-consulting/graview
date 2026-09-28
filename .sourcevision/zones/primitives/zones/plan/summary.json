@@ -1,0 +1,18 @@
+{
+  "id": "primitives/plan",
+  "name": "Plan",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/lens/plan-lens.tsx",
+    "packages/primitives/src/lens/plan-state.ts",
+    "packages/primitives/src/lens/plan-view.tsx",
+    "packages/primitives/src/lens/plan.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/lens/plan.tsx"
+  ],
+  "cohesion": 0.8,
+  "coupling": 0.2,
+  "fileCount": 4,
+  "lineCount": 1305
+}

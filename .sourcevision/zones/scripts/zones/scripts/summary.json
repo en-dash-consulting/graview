@@ -1,0 +1,40 @@
+{
+  "id": "scripts/scripts",
+  "name": "Verification Suite",
+  "description": "25 files, primarily JavaScript",
+  "files": [
+    "apps/todo/scripts/run-a11y.mjs",
+    "scripts/audit-ui.mjs",
+    "scripts/lib/engine.mjs",
+    "scripts/lib/serve.mjs",
+    "scripts/lib/tarballs.mjs",
+    "scripts/progression.mjs",
+    "scripts/rehearse-studio.mjs",
+    "scripts/smoke-create.mjs",
+    "scripts/survey-ui.mjs",
+    "scripts/verify-chat.mjs",
+    "scripts/verify-companion.mjs",
+    "scripts/verify-desk.mjs",
+    "scripts/verify-engines.mjs",
+    "scripts/verify-lines.mjs",
+    "scripts/verify-menu.mjs",
+    "scripts/verify-navigation.mjs",
+    "scripts/verify-pages.mjs",
+    "scripts/verify-panning.mjs",
+    "scripts/verify-remember.mjs",
+    "scripts/verify-seat.mjs",
+    "scripts/verify-served.mjs",
+    "scripts/verify-shrunk.mjs",
+    "scripts/verify-site.mjs",
+    "scripts/verify-studio.mjs",
+    "scripts/verify-who.mjs"
+  ],
+  "entryPoints": [
+    "scripts/lib/engine.mjs",
+    "scripts/lib/serve.mjs"
+  ],
+  "cohesion": 0.95,
+  "coupling": 0.05,
+  "fileCount": 25,
+  "lineCount": 9208
+}

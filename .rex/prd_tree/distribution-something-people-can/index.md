@@ -2,14 +2,13 @@
 id: "68b2b2e0-2aa9-489a-9dba-83be3975ba99"
 level: "epic"
 title: "Distribution: something people can install, extend and trust"
-status: "completed"
+status: "pending"
 priority: "high"
 tags:
   - "release"
   - "dx"
 source: "Session: skills package, changesets, GitHub CI to npm"
 startedAt: "2026-08-31T03:42:03.600Z"
-completedAt: "2026-09-15T17:12:08.912Z"
 endedAt: "2026-09-15T17:12:08.912Z"
 acceptanceCriteria:
   - "A person can npm install a Graview package and build an app from the published artefacts alone"
@@ -17,7 +16,7 @@ acceptanceCriteria:
   - "The public surface is a deliberate decision, written down, not whatever happened to be exported"
   - "An assistant helping someone build on Graview has skills that teach the authoring moves and end in a check"
 description: "Six packages, every one `private: true`, no licence, no `files`, no changesets and no CI. Nothing here has ever been installed by anyone, which means every claim about the public API is currently untested by the only test that matters.\n\nTwo halves: getting the packages out (versioning, licensing, publishing, and deciding what is actually public) and giving people something to build WITH once they have them."
-lastModified: "2026-09-15T17:12:08.923Z"
+lastModified: "2026-09-28T19:45:32.280Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -26,6 +25,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [A seamless app-creation flow: the walkthrough](./a-seamless-app-creation-flow-the/index.md) | completed |
+| [An external agent evolves a live store the way a person does: through store.apply, never by editing the seed](./an-external-agent-evolves-a-live-store/index.md) | pending |
 | [Live, embeddable chapters: mount a Graview app into any element, with a face toggle](./live-embeddable-chapters-mount-a/index.md) | completed |
 | [The site: a page that sells it, and docs that hold it](./the-site-a-page-that-sells-it-and-docs/index.md) | completed |
 | [A skills package for building with Graview](./a-skills-package-for-building-with.md) | completed |

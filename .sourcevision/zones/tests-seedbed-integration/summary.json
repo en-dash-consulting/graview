@@ -1,0 +1,23 @@
+{
+  "id": "tests-seedbed-integration",
+  "name": "Tests Seedbed Integration",
+  "description": "Non-source files in apps: acceptance.test.tsx, chapters.test.ts, design-keyboard.test.tsx (+1 more)",
+  "files": [
+    "apps/seedbed/tests/integration/acceptance.test.tsx",
+    "apps/seedbed/tests/integration/chapters.test.ts",
+    "apps/seedbed/tests/integration/design-keyboard.test.tsx",
+    "apps/seedbed/tests/integration/embed.test.tsx"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 4,
+  "lineCount": 854,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

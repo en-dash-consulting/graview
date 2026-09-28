@@ -5,15 +5,927 @@
 
 ## Project Overview
 
-- **Files**: 0
-- **Lines of code**: 0
-- **Languages**: 
-- **Zones**: 0 (0 with descriptions)
-- **Analyzed**: 2026-08-30T01:55:43.118Z
+- **Files**: 572
+- **Lines of code**: 120,052
+- **Languages**: TypeScript (528), JavaScript (44)
+- **Zones**: 42 (42 with descriptions)
+- **Avg cohesion**: 0.98, **avg coupling**: 0.02 (weighted by file count, 22 zones with ≥5 files)
+- **Small zones**: 20 excluded from averages (<5 files)
+- **Git**: main @ ae34c95
+- **Analyzed**: 2026-09-28T19:40:47.765Z
+
+## Architecture Zones
+
+### Apps (`apps`)
+
+60 files, mostly components and schemas; entry points app.ts, survey.ts, app.ts; imported by Apps.
+
+- Files: 60
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: apps/launcher/src/domain/app.ts, apps/launcher/src/domain/survey.ts, apps/rota/src/domain/app.ts, apps/rota/src/domain/policy.ts, apps/rota/src/ui/app.tsx (+1 more)
+- Detail: `.sourcevision/zones/apps/context.md`
+
+### Apps Config (`apps-launcher`)
+
+Project configuration and manifest files: vite.config.ts, remotion.config.ts
+
+- Files: 2
+- Cohesion: 0.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/apps-launcher/context.md`
+
+### Apps Rota (`apps-rota`)
+
+Project configuration and manifest files: vite.config.ts
+
+- Files: 1
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/apps-rota/context.md`
+
+### Seedbed (`apps-seedbed`)
+
+15 files, mostly components and schemas; entry points app.ts, schema.ts, app.tsx; imported by Apps and Packages.
+
+- Files: 15
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx (+2 more)
+- Detail: `.sourcevision/zones/apps-seedbed/context.md`
+
+### Spike (`apps-spike`)
+
+2 files, mostly entry points.
+
+- Files: 2
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/apps-spike/context.md`
+
+### Todo (`apps-todo`)
+
+14 files, mostly components and entry points; entry points app.ts, schema.ts, app.tsx; imported by Apps.
+
+- Files: 14
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: apps/todo/src/domain/app.ts, apps/todo/src/domain/policy.ts, apps/todo/src/domain/schema.ts, apps/todo/src/ui/app.tsx, apps/todo/src/ui/views.tsx
+- Detail: `.sourcevision/zones/apps-todo/context.md`
+
+### Core (`core`)
+
+60 files, mostly utilities and types; entry points app.ts, context.ts, schema.ts; imports Core Mutations and Core Schema; imported by Packages and Core Cli.
+
+- Files: 60
+- Cohesion: 0.82, Coupling: 0.18
+- Entry points: packages/core/src/app.ts, packages/core/src/cli/check/beginnings.ts, packages/core/src/cli/check/brand.ts, packages/core/src/cli/check/city.ts, packages/core/src/cli/check/context.ts (+20 more)
+- Detail: `.sourcevision/zones/core/context.md`
+
+### Core Cli (`core-cli`)
+
+4 files, mostly utilities and entry points; entry points check.ts; imports Core and Core Mutations; imported by Core.
+
+- Files: 4
+- Cohesion: 0.23, Coupling: 0.77
+- Entry points: packages/core/src/cli/check.ts
+- Detail: `.sourcevision/zones/core-cli/context.md`
+
+### Core Mutations (`core-mutations`)
+
+3 files, mostly utilities and types; entry points types.ts, derive-edits.ts, fields.ts; imports Core and Core Schema; imported by Core and Core Cli.
+
+- Files: 3
+- Cohesion: 0.12, Coupling: 0.88
+- Entry points: packages/core/src/cli/check/fields.ts, packages/core/src/mutations/derive-edits.ts, packages/core/src/mutations/types.ts
+- Detail: `.sourcevision/zones/core-mutations/context.md`
+
+### Core Ops (`core-ops`)
+
+3 files, mostly utilities and types; entry points log.ts, types.ts, undo.ts; imports Core and Core Mutations; imported by Core and Core Sync.
+
+- Files: 3
+- Cohesion: 0.29, Coupling: 0.71
+- Entry points: packages/core/src/ops/log.ts, packages/core/src/ops/types.ts, packages/core/src/ops/undo.ts
+- Detail: `.sourcevision/zones/core-ops/context.md`
+
+### Core Schema (`core-schema`)
+
+3 files, mostly utilities and types; entry points define-node.ts, relations.ts, types.ts; imports Core; imported by Core and Core Mutations.
+
+- Files: 3
+- Cohesion: 0.17, Coupling: 0.83
+- Entry points: packages/core/src/cli/check/relations.ts, packages/core/src/schema/define-node.ts, packages/core/src/schema/types.ts
+- Detail: `.sourcevision/zones/core-schema/context.md`
+
+### Core Sync (`core-sync`)
+
+3 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core and Core Ops; imported by Core.
+
+- Files: 3
+- Cohesion: 0.33, Coupling: 0.67
+- Entry points: packages/core/src/sync/engine.ts, packages/core/src/sync/google-calendar.ts, packages/core/src/sync/types.ts
+- Detail: `.sourcevision/zones/core-sync/context.md`
+
+### Create Graview (`create-graview`)
+
+2 files, mostly entry points.
+
+- Files: 2
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/create-graview/context.md`
+
+### Documentation Site (`docs`)
+
+Documentation and static-site assets: chapters.js
+
+- Files: 1
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/docs/context.md`
+
+### Embed (`embed`)
+
+3 files, mostly components and utilities; entry points index.ts; imported by Packages.
+
+- Files: 3
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/embed/src/index.ts
+- Detail: `.sourcevision/zones/embed/context.md`
+
+### Graview (`graview`)
+
+2 files, mostly entry points.
+
+- Files: 2
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/graview/context.md`
+
+### Layout (`layout`)
+
+10 files, mostly utilities and entry points; entry points index.ts, layout.ts; imported by Packages.
+
+- Files: 10
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/layout/src/index.ts, packages/layout/src/layout.ts
+- Detail: `.sourcevision/zones/layout/context.md`
+
+### Pages (`pages`)
+
+16 files, mostly pages and entry points; entry points index.ts; imported by Packages.
+
+- Files: 16
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/pages/src/index.ts
+- Detail: `.sourcevision/zones/pages/context.md`
+
+### Primitives (`primitives`)
+
+45 files, mostly components and utilities; entry points index.ts, chat.tsx, ladder.tsx; imported by Packages.
+
+- Files: 45
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/primitives/src/chat.tsx, packages/primitives/src/index.ts, packages/primitives/src/ladder.tsx
+- Detail: `.sourcevision/zones/primitives/context.md`
+
+### React (`react`)
+
+30 files, mostly components and utilities; entry points index.ts, local-intelligence.ts, picking.ts; imported by Packages.
+
+- Files: 30
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/react/src/activity.ts, packages/react/src/animation.ts, packages/react/src/channels.ts, packages/react/src/context.tsx, packages/react/src/index.ts (+8 more)
+- Detail: `.sourcevision/zones/react/context.md`
+
+### Render (`render`)
+
+11 files, mostly utilities and entry points; entry points gpu.ts, index.ts, pointer-router.ts; imported by Packages.
+
+- Files: 11
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/render/src/gpu.ts, packages/render/src/index.ts, packages/render/src/interaction/pointer-router.ts, packages/render/src/scene/plane.ts
+- Detail: `.sourcevision/zones/render/context.md`
+
+### Project Root (`root`)
+
+Project configuration and manifest files: vitest.config.ts
+
+- Files: 1
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/root/context.md`
+
+### Build & CI Scripts (`scripts`)
+
+Build, packaging, and CI scripts: run-a11y.mjs, audit-ui.mjs, eval-elm.mjs (+36 more)
+
+- Files: 39
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/scripts/context.md`
+
+### Seedbed (`seedbed`)
+
+Project configuration and manifest files: vite.config.ts, vite.site.config.ts
+
+- Files: 2
+- Cohesion: 0.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/seedbed/context.md`
+
+### Ship (`ship`)
+
+20 files, mostly utilities and services; entry points file-adapter.ts, remote.ts, serve.ts; imported by Packages and Packages.
+
+- Files: 20
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/ship/src/browser.ts, packages/ship/src/dev.ts, packages/ship/src/file-adapter.ts, packages/ship/src/index.ts, packages/ship/src/presence.ts (+3 more)
+- Detail: `.sourcevision/zones/ship/context.md`
+
+### Skills (`skills`)
+
+2 files, mostly entry points; entry points index.ts; imported by Packages.
+
+- Files: 2
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/skills/src/index.ts
+- Detail: `.sourcevision/zones/skills/context.md`
+
+### Spike (`spike`)
+
+Project configuration and manifest files: vite.config.ts
+
+- Files: 1
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/spike/context.md`
+
+### Studio (`studio`)
+
+15 files, mostly utilities and components; entry points index.ts, meta.ts; imported by Packages.
+
+- Files: 15
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/studio/src/index.ts, packages/studio/src/meta.ts
+- Detail: `.sourcevision/zones/studio/context.md`
+
+### Tests (`tests`)
+
+Non-source files in tests: setup.test.ts, site.test.ts
+
+- Files: 2
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests/context.md`
+
+### Tests Apps (`tests-apps`)
+
+Non-source files in apps: acceptance.test.ts, acceptance.test.ts, acceptance.test.tsx (+1 more)
+
+- Files: 4
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-apps/context.md`
+
+### Tests Core Unit (`tests-core-unit`)
+
+Non-source files in packages: a-described-node-ref.test.ts, a-hue-is-degrees.test.ts, a-lens-started.test.ts (+30 more)
+
+- Files: 33
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-core-unit/context.md`
+
+### Tests Layout Unit (`tests-layout-unit`)
+
+Non-source files in packages: a-name-that-fits.test.ts, layout.test.ts, properties.test.ts (+4 more)
+
+- Files: 7
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-layout-unit/context.md`
+
+### Tests Packages (`tests-packages`)
+
+Non-source files in packages: persistence.test.ts, sync.test.ts, door.test.ts (+5 more)
+
+- Files: 8
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-packages/context.md`
+
+### Tests Pages Unit (`tests-pages-unit`)
+
+Non-source files in packages: a-link-a-browser-would-render.test.tsx, a-page-draws-with-what-it-needs.test.tsx, a-page-links-to-a-picture.test.ts (+10 more)
+
+- Files: 13
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-pages-unit/context.md`
+
+### Packages (`tests-primitives-unit`)
+
+Non-source files in packages: a-companion-names-its-subject.test.tsx, a-district-offers-what-it-can-do.test.tsx, a-district-stands-as-its-figure.test.tsx (+33 more)
+
+- Files: 36
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-primitives-unit/context.md`
+
+### Tests React Unit (`tests-react-unit`)
+
+Non-source files in packages: a-chosen-member-is-not-its-district.test.ts, a-door-that-is-not-there.test.tsx, a-door-the-back-button-knows.test.ts (+21 more)
+
+- Files: 24
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-react-unit/context.md`
+
+### Tests Seedbed Integration (`tests-seedbed-integration`)
+
+Non-source files in apps: acceptance.test.tsx, chapters.test.ts, design-keyboard.test.tsx (+1 more)
+
+- Files: 4
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-seedbed-integration/context.md`
+
+### Tests Ship Unit (`tests-ship-unit`)
+
+Non-source files in packages: a-migration-is-data.test.ts, browser-adapter.test.ts, ship.test.ts (+5 more)
+
+- Files: 8
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-ship-unit/context.md`
+
+### Tests Studio Unit (`tests-studio-unit`)
+
+Non-source files in packages: an-agent-in-the-studio.test.ts, one-seat-one-conversation.test.tsx, rewrite-before-writing.test.tsx (+5 more)
+
+- Files: 8
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-studio-unit/context.md`
+
+### Tests Tools Unit (`tests-tools-unit`)
+
+Non-source files in packages: a-district-that-waits.test.ts, a-loop-knows-when-to-stop.test.ts, a-plan-is-an-object.test.ts (+26 more)
+
+- Files: 29
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-tools-unit/context.md`
+
+### Todo (`todo`)
+
+Project configuration and manifest files: vite.config.ts
+
+- Files: 1
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/todo/context.md`
+
+### Tools (`tools`)
+
+25 files, mostly utilities and services; entry points index.ts, local.ts, derive.ts; imported by Packages.
+
+- Files: 25
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/tools/src/derive.ts, packages/tools/src/index.ts, packages/tools/src/local.ts, packages/tools/src/pins.ts, packages/tools/src/usage.ts
+- Detail: `.sourcevision/zones/tools/context.md`
 
 ## Key Dependencies
+
+### Most-Imported Files
+
+- `packages/primitives/src/index.ts` (36 imports)
+- `packages/core/src/index.ts` (31 imports)
+- `packages/tools/src/index.ts` (25 imports)
+- `apps/promo/src/motion.ts` (23 imports)
+- `scripts/lib/engine.mjs` (23 imports)
+- `scripts/lib/serve.mjs` (21 imports)
+- `apps/promo/src/theme.ts` (20 imports)
+- `packages/react/src/index.ts` (14 imports)
+- `packages/pages/src/index.ts` (13 imports)
+- `packages/primitives/src/primitives/index.tsx` (13 imports)
+
+### External Packages
+
+- `@graview/core` (used by 267 files)
+- `vitest` (used by 177 files)
+- `zod` (used by 142 files)
+- `react` (used by 135 files)
+- `@graview/react` (used by 89 files)
+- `@graview/layout` (used by 83 files)
+- `react-dom` (used by 67 files)
+- `@graview/tools` (used by 38 files)
+- `remotion` (used by 30 files)
+- `@graview/primitives` (used by 27 files)
+
+### Circular Dependencies
+
+Found 25 circular dependency chain(s):
+
+- `packages/core/src/cli/check.ts` → `packages/core/src/cli/check/index.ts` → `packages/core/src/cli/check/routes.ts` → `packages/core/src/cli/check/context.ts`
+- `packages/core/src/scaffold/index.ts` → `packages/core/src/scaffold/names.ts`
+- `packages/core/src/theme/types.ts` → `packages/core/src/theme/kit.ts`
+- `packages/core/src/theme/types.ts` → `packages/core/src/theme/kit.ts` → `packages/core/src/theme/contrast.ts`
+- `packages/core/src/theme/types.ts` → `packages/core/src/theme/kit.ts` → `packages/core/src/theme/contrast.ts`
+- ... and 20 more
+
+## Findings
+
+### Anti-patterns
+
+- God function: <module> in docs/site/chapters.js calls 527 unique functions — consider decomposing into smaller, focused functions [critical]
+- cli/check/*.ts (beginnings, brand, city, context, fields, intelligence, policy, relations, migrations, routes, settings, modules, lenses) each import directly from internal submodules — schema/schema.ts, mutations/{derive-edits,node-ref,decidable}.ts, permissions/policy.ts, theme/{derive,kit,types}.ts, city.ts, beginning.ts, schema/{figures,define-node}.ts — by relative path rather than through a single check-facing seam or core's own index.ts barrel. The checker suite therefore has no boundary from core internals: renaming or moving any of those ~9 internal modules ripples across every check/*.ts file individually, and the 'core-cli → core: 15 imports' crossing is really many independent point-to-point reaches rather than one interface. [warning] (core)
+
+### Patterns
+
+- Consumers of core-ops (store.ts, persistence/{sqlite,memory,types}.ts, permissions/types.ts, sync/types.ts) sit strictly downstream — no file inside ops/ imports any of them back — so despite the high raw coupling number the dependency shape is a clean, acyclic layer rather than a leak. [info] (core-ops)
+
+### Relationships
+
+- Tightly coupled modules: packages/studio/src/changes.ts and packages/studio/src/source.ts — 33 cross-file calls (unidirectional). Consider extracting shared interface or merging [info]
+
+### Observations
+
+- High cohesion (1) — files are tightly interconnected [info] (apps)
+- Isolated files — no import edges between 2 files, cohesion is unmeasurable (reported as 0) [info] (apps-launcher)
+- High cohesion (1) — files are tightly interconnected [info] (apps-rota)
+- High cohesion (1) — files are tightly interconnected [info] (apps-seedbed)
+- High cohesion (1) — files are tightly interconnected [info] (apps-spike)
+- High cohesion (1) — files are tightly interconnected [info] (apps-todo)
+- 25 entry points — wide API surface, consider consolidating exports [warning] (core)
+- High cohesion (0.82) — files are tightly interconnected [info] (core)
+- Zones "Core" and "Core Cli" may be one architectural concept; the import graph links them but the judgment was undecided. [info] (core)
+- High coupling (0.77) — 15 imports target "core" [warning] (core-cli)
+- ... and 43 more
+
+### Suggestions
+
+- Zone "apps" has files across 11 directories — consider consolidating under a dedicated directory [info] (apps)
+- Zone "core" has files across 14 directories — consider consolidating under a dedicated directory [info] (core)
+- packages/core/src/cli/check/ contains files from 4 zones (core, core-cli, core-mutations, core-schema) — consider grouping into subdirectories to clarify architectural boundaries [info]
+- Hub function: launchEngine in scripts/lib/engine.mjs is called from 22 files (high fan-in expected for this module type) — changes here have wide impact, consider if responsibilities can be narrowed [info]
+- Hub function: useGraview in packages/react/src/context.tsx is called from 10 files — changes here have wide impact, consider if responsibilities can be narrowed [info]
+- 5 potentially unused exports in packages/pages/src/page-places.tsx have no incoming calls: PlacePicture, GalleryCard, PlaceCard, DefaultPlacesPage, DefaultPlacePage [warning]
+- 3 potentially unused exports in packages/core/src/cli/check/relations.ts have no incoming calls: checkReadings, checkActsFromEnds, checkUnmakeable [info]
+- 3 potentially unused exports in packages/primitives/src/workbench/activity.tsx have no incoming calls: UndoTurn, StartFresh, ActivityRail [info]
+- 2 potentially unused exports in packages/core/src/testing.ts have no incoming calls: awkwardApp, awkwardGraph [info]
+- 2 potentially unused exports in packages/pages/src/page-map.tsx have no incoming calls: KindMapSection, DefaultMapPage [info]
+- ... and 9 more
+
+## Next Steps
+
+Prioritized work items derived from analysis:
+
+### High Priority
+
+1. **9 imports target "core"**
+   Files: `packages/core/src/cli/check/fields.ts`, `packages/core/src/mutations/derive-edits.ts`, `packages/core/src/mutations/types.ts`
+
+1. **5 imports target "core"**
+   Files: `packages/core/src/cli/check/relations.ts`, `packages/core/src/schema/define-node.ts`, `packages/core/src/schema/types.ts`
+
+1. **15 imports target "core"**
+   Files: `packages/core/src/cli/check.ts`, `packages/core/src/cli/check/index.ts`, `packages/core/src/cli/check/migrations.ts`
+
+1. **Files are loosely related, consider splitting this zone**
+   Files: `packages/core/src/cli/check.ts`, `packages/core/src/cli/check/index.ts`, `packages/core/src/cli/check/migrations.ts`
+
+1. **3 imports target "core"**
+   Files: `packages/core/src/ops/log.ts`, `packages/core/src/ops/types.ts`, `packages/core/src/ops/undo.ts`
+
+1. **3 imports target "core"**
+   Files: `packages/core/src/sync/engine.ts`, `packages/core/src/sync/google-calendar.ts`, `packages/core/src/sync/types.ts`
+
+1. **<module> in docs/site/chapters.js calls 527 unique functions**
+
+### Medium Priority
+
+1. **5 potentially unused exports in packages/pages/src/page-places.tsx have no inco…**
+
+1. **cli/check/*.ts (beginnings, brand, city, context, fields, intelligence, policy,…**
+   Files: `packages/core/src/app.ts`, `packages/core/src/beginning.ts`, `packages/core/src/bind.ts`
+
+1. **25 entry points**
+   Files: `packages/core/src/app.ts`, `packages/core/src/beginning.ts`, `packages/core/src/bind.ts`
+
+1. **25 circular dependency chains detected**
+
+1. **"core" ↔ "core-mutations" (15+9 crossings)**
+
+1. **13 entry points**
+   Files: `packages/react/src/activity.ts`, `packages/react/src/animation.ts`, `packages/react/src/channels.ts`
+
+### Low Priority
+
+1. **LaunchEngine in scripts/lib/engine.mjs is called from 22 files (high fan-in exp…**
+
+1. **UseGraview in packages/react/src/context.tsx is called from 10 files**
+
+1. **Zone "Core Mutations" has an unreliable risk reading: only 3 files tracked (min…**
+   Files: `packages/core/src/cli/check/fields.ts`, `packages/core/src/mutations/derive-edits.ts`, `packages/core/src/mutations/types.ts`
+
+1. **Zone "Core Schema" has an unreliable risk reading: only 3 files tracked (minimu…**
+   Files: `packages/core/src/cli/check/relations.ts`, `packages/core/src/schema/define-node.ts`, `packages/core/src/schema/types.ts`
+
+1. **Zone "Core Cli" has an unreliable risk reading: only 4 files tracked (minimum 5…**
+   Files: `packages/core/src/cli/check.ts`, `packages/core/src/cli/check/index.ts`, `packages/core/src/cli/check/migrations.ts`
+
+1. **Zone "Core Ops" has an unreliable risk reading: only 3 files tracked (minimum 5…**
+   Files: `packages/core/src/ops/log.ts`, `packages/core/src/ops/types.ts`, `packages/core/src/ops/undo.ts`
+
+1. **Zone "Core Sync" has an unreliable risk reading: only 3 files tracked (minimum …**
+   Files: `packages/core/src/sync/engine.ts`, `packages/core/src/sync/google-calendar.ts`, `packages/core/src/sync/types.ts`
+
+1. **3 potentially unused exports in packages/core/src/cli/check/relations.ts have n…**
+
+1. **3 potentially unused exports in packages/primitives/src/workbench/activity.tsx …**
+
+1. **2 potentially unused exports in packages/core/src/testing.ts have no incoming c…**
 
 ## File Inventory
 
 | Path | Role | Archetype | Zone |
 |------|------|-----------|------|
+| `apps/launcher/src/domain/app.ts` | source | schema | apps |
+| `apps/launcher/src/domain/invariants.ts` | source | types | apps |
+| `apps/launcher/src/domain/mutations.ts` | source | schema | apps |
+| `apps/launcher/src/domain/schema.ts` | source | schema | apps |
+| `apps/launcher/src/domain/survey.ts` | source | model | apps |
+| `apps/launcher/src/index.ts` | source | entrypoint | apps |
+| `apps/launcher/src/main.tsx` | source | entrypoint | apps |
+| `apps/launcher/src/ui/liveness.tsx` | source | component | apps |
+| `apps/launcher/src/ui/views.tsx` | source | component | apps |
+| `apps/launcher/tests/integration/acceptance.test.ts` | test |  | tests-apps |
+| `apps/launcher/vite.config.ts` | config |  | apps-launcher |
+| `apps/promo/remotion.config.ts` | config |  | apps-launcher |
+| `apps/promo/src/Composition.tsx` | source | component | apps |
+| `apps/promo/src/FeedComposition.tsx` | source | component | apps |
+| `apps/promo/src/Root.tsx` | source | component | apps |
+| `apps/promo/src/camera.ts` | source |  | apps |
+| `apps/promo/src/components/BigTitle.tsx` | source | component | apps |
+| `apps/promo/src/components/BrandPresence.tsx` | source | component | apps |
+| `apps/promo/src/components/CameraRig.tsx` | source | component | apps |
+| `apps/promo/src/components/CodeGlyphs.tsx` | source | component | apps |
+| `apps/promo/src/components/Constellation.tsx` | source | component | apps |
+| `apps/promo/src/components/Field.tsx` | source | component | apps |
+| `apps/promo/src/components/LightCharacter.tsx` | source | component | apps |
+| `apps/promo/src/components/SurveyInsert.tsx` | source | component | apps |
+| `apps/promo/src/components/TypePlate.tsx` | source | component | apps |
+| `apps/promo/src/feed/BeautyPlate.tsx` | source | component | apps |
+| `apps/promo/src/feed/Cta.tsx` | source | component | apps |
+| `apps/promo/src/feed/Lockup.tsx` | source | component | apps |
+| `apps/promo/src/feed/MagicHook.tsx` | source | component | apps |
+| `apps/promo/src/feed/StepsBeat.tsx` | source | component | apps |
+| `apps/promo/src/feed/StoryMontage.tsx` | source | component | apps |
+| `apps/promo/src/feed/TaglinePayoff.tsx` | source | component | apps |
+| `apps/promo/src/feedTheme.ts` | source | config | apps |
+| `apps/promo/src/index.ts` | source | entrypoint | apps |
+| `apps/promo/src/motion.ts` | source | utility | apps |
+| `apps/promo/src/scenes/BrandMorph.tsx` | source | component | apps |
+| `apps/promo/src/scenes/CityAltitude.tsx` | source | component | apps |
+| `apps/promo/src/scenes/GlyphsBloom.tsx` | source | component | apps |
+| `apps/promo/src/scenes/GraphInterface.tsx` | source | component | apps |
+| `apps/promo/src/scenes/OpenBrand.tsx` | source | component | apps |
+| `apps/promo/src/scenes/OutroBumper.tsx` | source | component | apps |
+| `apps/promo/src/scenes/RelationsDemo.tsx` | source | component | apps |
+| `apps/promo/src/scenes/SettleLockup.tsx` | source | component | apps |
+| `apps/promo/src/theme.ts` | source | config | apps |
+| `apps/rota/src/domain/app.ts` | source | schema | apps |
+| `apps/rota/src/domain/brand.ts` | source | model | apps |
+| `apps/rota/src/domain/installation.ts` | source | model | apps |
+| `apps/rota/src/domain/invariants.ts` | source | types | apps |
+| `apps/rota/src/domain/mutations.ts` | source | schema | apps |
+| `apps/rota/src/domain/policy.ts` | source | schema | apps |
+| `apps/rota/src/domain/schema.ts` | source | schema | apps |
+| `apps/rota/src/embed.ts` | source | entrypoint | apps |
+| `apps/rota/src/index.ts` | source | entrypoint | apps |
+| `apps/rota/src/main.tsx` | source | entrypoint | apps |
+| `apps/rota/src/open.ts` | source | entrypoint | apps |
+| `apps/rota/src/ui/app.tsx` | source | component | apps |
+| `apps/rota/src/ui/design.tsx` | source | component | apps |
+| `apps/rota/src/ui/views.tsx` | source | component | apps |
+| `apps/rota/src/ui/when.ts` | source | component | apps |
+| `apps/rota/tests/integration/acceptance.test.ts` | test |  | tests-apps |
+| `apps/rota/vite.config.ts` | config |  | apps-rota |
+| `apps/seedbed/src/domain/app.ts` | source | schema | apps-seedbed |
+| `apps/seedbed/src/domain/brand.ts` | source | types | apps-seedbed |
+| `apps/seedbed/src/domain/chapters.ts` | source | model | apps-seedbed |
+| `apps/seedbed/src/domain/invariants.ts` | source | schema | apps-seedbed |
+| `apps/seedbed/src/domain/mutations.ts` | source | schema | apps-seedbed |
+| `apps/seedbed/src/domain/schema.ts` | source | schema | apps-seedbed |
+| `apps/seedbed/src/index.ts` | source | entrypoint | apps-seedbed |
+| `apps/seedbed/src/main.tsx` | source | entrypoint | apps-seedbed |
+| `apps/seedbed/src/open.ts` | source | entrypoint | apps-seedbed |
+| `apps/seedbed/src/site-embed.ts` | source | entrypoint | apps-seedbed |
+| `apps/seedbed/src/ui/app.tsx` | source | component | apps-seedbed |
+| `apps/seedbed/src/ui/design.tsx` | source | component | apps-seedbed |
+| `apps/seedbed/src/ui/garden-map.tsx` | source | component | apps-seedbed |
+| `apps/seedbed/src/ui/pages.tsx` | source | component | apps-seedbed |
+| `apps/seedbed/src/ui/views.tsx` | source | component | apps-seedbed |
+| `apps/seedbed/tests/integration/acceptance.test.tsx` | test |  | tests-seedbed-integration |
+| `apps/seedbed/tests/integration/chapters.test.ts` | test |  | tests-seedbed-integration |
+| `apps/seedbed/tests/integration/design-keyboard.test.tsx` | test |  | tests-seedbed-integration |
+| `apps/seedbed/tests/integration/embed.test.tsx` | test |  | tests-seedbed-integration |
+| `apps/seedbed/vite.config.ts` | config |  | seedbed |
+| `apps/seedbed/vite.site.config.ts` | config |  | seedbed |
+| `apps/spike/scripts/introspect4.mjs` | build |  | apps |
+| `apps/spike/scripts/run-probe.mjs` | build |  | apps |
+| `apps/spike/scripts/run-restrictions.mjs` | build |  | apps |
+| `apps/spike/scripts/run-spike.mjs` | build |  | apps |
+| `apps/spike/src/main.ts` | source | entrypoint | apps-spike |
+| `apps/spike/src/three-planes.ts` | source |  | apps-spike |
+| `apps/spike/vite.config.ts` | config |  | spike |
+| `apps/todo/scripts/run-a11y.mjs` | build |  | scripts |
+| `apps/todo/src/domain/app.ts` | source | schema | apps-todo |
+| `apps/todo/src/domain/brand.ts` | source | types | apps-todo |
+| `apps/todo/src/domain/installation.ts` | source | model | apps-todo |
+| `apps/todo/src/domain/invariants.ts` | source | types | apps-todo |
+| `apps/todo/src/domain/mutations.ts` | source | service | apps-todo |
+| `apps/todo/src/domain/policy.ts` | source |  | apps-todo |
+| `apps/todo/src/domain/schema.ts` | source | model | apps-todo |
+| `apps/todo/src/index.ts` | source | entrypoint | apps-todo |
+| `apps/todo/src/main.tsx` | source | entrypoint | apps-todo |
+| `apps/todo/src/open.ts` | source | entrypoint | apps-todo |
+| `apps/todo/src/ui/app.tsx` | source | component | apps-todo |
+| `apps/todo/src/ui/design.tsx` | source | component | apps-todo |
+| `apps/todo/src/ui/views.tsx` | source | component | apps-todo |
+| `apps/todo/src/ui/when.ts` | source | component | apps-todo |
+| `apps/todo/tests/integration/acceptance.test.tsx` | test |  | tests-apps |
+| `apps/todo/tests/integration/who-is-here.test.tsx` | test |  | tests-apps |
+| `apps/todo/vite.config.ts` | config |  | todo |
+| `docs/site/chapters.js` | docs |  | docs |
+| `packages/core/src/app.ts` | source | utility | core |
+| `packages/core/src/beginning.ts` | source | utility | core |
+| `packages/core/src/bind.ts` | source | utility | core |
+| `packages/core/src/city.ts` | source | utility | core |
+| `packages/core/src/cli/check.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/beginnings.ts` | source | utility | core |
+| `packages/core/src/cli/check/brand.ts` | source | utility | core |
+| `packages/core/src/cli/check/city.ts` | source | utility | core |
+| `packages/core/src/cli/check/context.ts` | source | utility | core |
+| `packages/core/src/cli/check/fields.ts` | source | utility | core-mutations |
+| `packages/core/src/cli/check/index.ts` | source | entrypoint | core-cli |
+| `packages/core/src/cli/check/intelligence.ts` | source | utility | core |
+| `packages/core/src/cli/check/lenses.ts` | source | utility | core |
+| `packages/core/src/cli/check/migrations.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/modules.ts` | source | utility | core |
+| `packages/core/src/cli/check/policy.ts` | source | utility | core |
+| `packages/core/src/cli/check/relations.ts` | source | utility | core-schema |
+| `packages/core/src/cli/check/routes.ts` | source | route-handler | core-cli |
+| `packages/core/src/cli/check/settings.ts` | source | utility | core |
+| `packages/core/src/cli/create.ts` | source | utility | core |
+| `packages/core/src/cli/describe.ts` | source | utility | core |
+| `packages/core/src/cli/docs.ts` | source | utility | core |
+| `packages/core/src/cli/index.ts` | source | entrypoint | core |
+| `packages/core/src/extend.ts` | source | utility | core |
+| `packages/core/src/graph/diff.ts` | source | utility | core |
+| `packages/core/src/graph/graph.ts` | source | utility | core |
+| `packages/core/src/graph/primitives.ts` | source | utility | core |
+| `packages/core/src/graph/tracked.ts` | source | utility | core |
+| `packages/core/src/graph/types.ts` | source | types | core |
+| `packages/core/src/index.ts` | source | entrypoint | core |
+| `packages/core/src/installation.ts` | source | utility | core |
+| `packages/core/src/intelligence-bridge.ts` | source | utility | core |
+| `packages/core/src/invariants/engine.ts` | source | utility | core |
+| `packages/core/src/invariants/types.ts` | source | types | core |
+| `packages/core/src/modules.ts` | source | utility | core |
+| `packages/core/src/mutations/decidable.ts` | source | utility | core |
+| `packages/core/src/mutations/define-mutation.ts` | source | utility | core |
+| `packages/core/src/mutations/derive-edits.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/form.ts` | source | utility | core |
+| `packages/core/src/mutations/node-ref.ts` | source | utility | core |
+| `packages/core/src/mutations/types.ts` | source | types | core-mutations |
+| `packages/core/src/ops/log.ts` | source | utility | core-ops |
+| `packages/core/src/ops/types.ts` | source | types | core-ops |
+| `packages/core/src/ops/undo.ts` | source | utility | core-ops |
+| `packages/core/src/permissions/policy.ts` | source | utility | core |
+| `packages/core/src/permissions/types.ts` | source | types | core |
+| `packages/core/src/persistence/memory.ts` | source | utility | core |
+| `packages/core/src/persistence/sqlite.ts` | source | utility | core |
+| `packages/core/src/persistence/types.ts` | source | types | core |
+| `packages/core/src/presence.ts` | source | utility | core |
+| `packages/core/src/scaffold/domain.ts` | source | utility | core |
+| `packages/core/src/scaffold/index.ts` | source | entrypoint | core |
+| `packages/core/src/scaffold/lens.ts` | source | utility | core |
+| `packages/core/src/scaffold/names.ts` | source | utility | core |
+| `packages/core/src/scaffold/project.ts` | source | utility | core |
+| `packages/core/src/scaffold/ui.ts` | source | utility | core |
+| `packages/core/src/schema/define-node.ts` | source | utility | core-schema |
+| `packages/core/src/schema/figures.ts` | source | utility | core |
+| `packages/core/src/schema/json-schema.ts` | source | utility | core |
+| `packages/core/src/schema/schema.ts` | source | utility | core |
+| `packages/core/src/schema/types.ts` | source | types | core-schema |
+| `packages/core/src/settings.ts` | source | utility | core |
+| `packages/core/src/store.ts` | source | utility | core |
+| `packages/core/src/studio-door.ts` | source | utility | core |
+| `packages/core/src/sync/conflict.ts` | source | utility | core |
+| `packages/core/src/sync/engine.ts` | source | utility | core-sync |
+| `packages/core/src/sync/google-calendar.ts` | source | utility | core-sync |
+| `packages/core/src/sync/types.ts` | source | types | core-sync |
+| `packages/core/src/temporal/effectivity.ts` | source | utility | core |
+| `packages/core/src/testing.ts` | source | utility | core |
+| `packages/core/src/theme/contrast.ts` | source | utility | core |
+| `packages/core/src/theme/derive.ts` | source | utility | core |
+| `packages/core/src/theme/kit.ts` | source | utility | core |
+| `packages/core/src/theme/palettes.ts` | source | utility | core |
+| `packages/core/src/theme/types.ts` | source | types | core |
+| `packages/core/src/views/types.ts` | source | types | core |
+| `packages/core/tests/integration/persistence.test.ts` | test |  | tests-packages |
+| `packages/core/tests/integration/sync.test.ts` | test |  | tests-packages |
+| `packages/core/tests/unit/a-described-node-ref.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/a-hue-is-degrees.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/a-lens-started.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/a-module-that-is-never-off.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/a-third-kind-decides.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/an-edge-to-a-person.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/check.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/create-command.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/derive-edits.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/figures.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/form.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/graph.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/installation.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/kit.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/lifecycle.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/modules.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/mutations.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/op-log.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/permissions.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/places.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/reading-an-app-out.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/scaffold.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/schema.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/settings.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/store-hydrate.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/temporal.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/the-city-is-a-map.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/the-doors-a-provider-has.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/the-order-things-are-made-in.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/the-pictures-from-where-they-live.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/theme.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/what-an-agent-may-do.test.ts` | test |  | tests-core-unit |
+| `packages/core/tests/unit/who-is-here.test.ts` | test |  | tests-core-unit |
+| `packages/create-graview/src/cli.ts` | source | entrypoint | create-graview |
+| `packages/create-graview/src/index.ts` | source | entrypoint | create-graview |
+| `packages/create-graview/tests/unit/door.test.ts` | test |  | tests-packages |
+| `packages/embed/src/embed.tsx` | source | component | embed |
+| `packages/embed/src/fonts.ts` | source | utility | embed |
+| `packages/embed/src/index.ts` | source | entrypoint | embed |
+| `packages/embed/tests/unit/embed.test.ts` | test |  | tests-packages |
+| `packages/graview/src/cli.ts` | source | entrypoint | graview |
+| `packages/graview/src/index.ts` | source | entrypoint | graview |
+| `packages/layout/src/city.ts` | source | utility | layout |
+| `packages/layout/src/ids.ts` | source | utility | layout |
+| `packages/layout/src/index.ts` | source | entrypoint | layout |
+| `packages/layout/src/interpolate.ts` | source | utility | layout |
+| `packages/layout/src/label-fit.ts` | source | utility | layout |
+| `packages/layout/src/layout.ts` | source | utility | layout |
+| `packages/layout/src/rank.ts` | source | utility | layout |
+| `packages/layout/src/related.ts` | source | utility | layout |
+| `packages/layout/src/types.ts` | source | types | layout |
+| `packages/layout/src/view-state.ts` | source | store | layout |
+| `packages/layout/tests/unit/a-name-that-fits.test.ts` | test |  | tests-layout-unit |
+| `packages/layout/tests/unit/layout.test.ts` | test |  | tests-layout-unit |
+| `packages/layout/tests/unit/properties.test.ts` | test |  | tests-layout-unit |
+| `packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts` | test |  | tests-layout-unit |
+| `packages/layout/tests/unit/the-city-at-altitude.test.ts` | test |  | tests-layout-unit |
+| `packages/layout/tests/unit/the-drive-in.test.ts` | test |  | tests-layout-unit |
+| `packages/layout/tests/unit/the-pan-is-a-translation.test.ts` | test |  | tests-layout-unit |
+| `packages/pages/src/ask.tsx` | source | page | pages |
+| `packages/pages/src/facts.ts` | source | page | pages |
+| `packages/pages/src/form.tsx` | source | page | pages |
+| `packages/pages/src/index.ts` | source | entrypoint | pages |
+| `packages/pages/src/page-context.tsx` | source | page | pages |
+| `packages/pages/src/page-home.tsx` | source | page | pages |
+| `packages/pages/src/page-list.tsx` | source | page | pages |
+| `packages/pages/src/page-map.tsx` | source | page | pages |
+| `packages/pages/src/page-places.tsx` | source | page | pages |
+| `packages/pages/src/page-problems.tsx` | source | page | pages |
+| `packages/pages/src/page-record.tsx` | source | page | pages |
+| `packages/pages/src/page-shell.tsx` | source | page | pages |
+| `packages/pages/src/page-typography.tsx` | source | page | pages |
+| `packages/pages/src/pages.tsx` | source | page | pages |
+| `packages/pages/src/registry.ts` | source | page | pages |
+| `packages/pages/src/router.tsx` | source | route-handler | pages |
+| `packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/a-page-links-to-a-picture.test.ts` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/asked-as-the-person.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/its-own-far-end.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/one-main-under-a-shell.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/parity.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/the-assistant-on-every-page.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/the-map-of-kinds.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/the-pictures-on-pages.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/what-begins-a-kind.test.tsx` | test |  | tests-pages-unit |
+| `packages/pages/tests/unit/whose-work.test.tsx` | test |  | tests-pages-unit |
+| `packages/primitives/src/chat.tsx` | source | component | primitives |
+| `packages/primitives/src/companion.tsx` | source | component | primitives |
+| `packages/primitives/src/connections.tsx` | source | component | primitives |
+| `packages/primitives/src/default-views.tsx` | source | component | primitives |
+| `packages/primitives/src/editable.tsx` | source | component | primitives |
+| `packages/primitives/src/figure.tsx` | source | component | primitives |
+| `packages/primitives/src/index.ts` | source | entrypoint | primitives |
+| `packages/primitives/src/installation.tsx` | source | component | primitives |
+| `packages/primitives/src/ladder.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/board.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/calendar-dates.ts` | source | utility | primitives |
+| `packages/primitives/src/lens/calendar-drawing.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/calendar-options.ts` | source | types | primitives |
+| `packages/primitives/src/lens/calendar-placing.ts` | source | utility | primitives |
+| `packages/primitives/src/lens/calendar-spans.ts` | source | utility | primitives |
+| `packages/primitives/src/lens/calendar-view.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/calendar.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/coverage.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/plan-lens.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/plan-state.ts` | source | store | primitives |
+| `packages/primitives/src/lens/plan-view.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/plan.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/reach.tsx` | source | component | primitives |
+| `packages/primitives/src/lens/timeline.tsx` | source | component | primitives |
+| `packages/primitives/src/markup.ts` | source | utility | primitives |
+| `packages/primitives/src/places.tsx` | source | component | primitives |
+| `packages/primitives/src/primitives/index.tsx` | source | entrypoint | primitives |
+| `packages/primitives/src/profile.tsx` | source | component | primitives |
+| `packages/primitives/src/quick-relations.tsx` | source | component | primitives |
+| `packages/primitives/src/relation-key.tsx` | source | component | primitives |
+| `packages/primitives/src/seat.tsx` | source | component | primitives |
+| `packages/primitives/src/seats.tsx` | source | component | primitives |
+| `packages/primitives/src/seeding.tsx` | source | component | primitives |
+| `packages/primitives/src/shell.tsx` | source | component | primitives |
+| `packages/primitives/src/theme.ts` | source | types | primitives |
+| `packages/primitives/src/wordmark.tsx` | source | component | primitives |
+| `packages/primitives/src/workbench/activity.tsx` | source | component | primitives |
+| `packages/primitives/src/workbench/agent-seat.tsx` | source | component | primitives |
+| `packages/primitives/src/workbench/answer-args.tsx` | source | component | primitives |
+| `packages/primitives/src/workbench/back-out.tsx` | source | component | primitives |
+| `packages/primitives/src/workbench/following.tsx` | source | component | primitives |
+| `packages/primitives/src/workbench/index.tsx` | source | entrypoint | primitives |
+| `packages/primitives/src/workbench/inspector.tsx` | source | component | primitives |
+| `packages/primitives/src/workbench/standing.tsx` | source | component | primitives |
+| `packages/primitives/src/workbench/trail.tsx` | source | component | primitives |
+| `packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/a-mark-can-say-so.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/a-panel-that-scrolls-is-a-stop.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/a-plan-places-by-shape.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/back-out.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/board.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/calendar.test.ts` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/chat.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/coverage.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/edge-inspector.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/every-size-is-the-readers.test.ts` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/installation.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/no-control-under-a-fingertip.test.ts` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/one-request-one-press.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/places.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/primitives.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/quick-relations.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/rename-in-place.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/shell.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-doors-drawn.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-drawing-stays-put.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-drive-in-marquee.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-kit-is-in-the-theme.test.ts` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-pane-keeps-its-hands-off.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-readers-own-text-size.test.ts` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/the-way-in.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/undo-turn.test.tsx` | test |  | tests-primitives-unit |
+| `packages/primitives/tests/unit/what-it-finds-wrong.test.tsx` | test |  | tests-primitives-unit |
+| `packages/react/src/activity.ts` | source | service | react |
+| `packages/react/src/animation.ts` | source | utility | react |
+| `packages/react/src/channels.ts` | source | utility | react |
+| `packages/react/src/connectors.tsx` | source | component | react |
+| `packages/react/src/context.tsx` | source | component | react |
+| `packages/react/src/drawn.ts` | source | utility | react |
+| `packages/react/src/hooks.ts` | source | hook | react |
+| `packages/react/src/index.ts` | source | entrypoint | react |
+| `packages/react/src/kit.ts` | source | gateway | react |
+| `packages/react/src/local-intelligence.ts` | source | service | react |
+| `packages/react/src/occupants.tsx` | source | component | react |
+| `packages/react/src/picking.ts` | source | utility | react |
+| `packages/react/src/plots.tsx` | source | component | react |
+| `packages/react/src/pointer.ts` | source | utility | react |
+| `packages/react/src/presence.ts` | source | service | react |
+| `packages/react/src/resolved-view.tsx` | source | component | react |
+| `packages/react/src/robot.ts` | source | service | react |
+| `packages/react/src/routes.ts` | source | route-handler | react |
+| `packages/react/src/scene-camera.ts` | source | component | react |
+| `packages/react/src/scene-hand.ts` | source | component | react |
+| `packages/react/src/scene-helpers.tsx` | source | component | react |
+| `packages/react/src/scene-lines.tsx` | source | component | react |
+| `packages/react/src/scene-root.tsx` | source | component | react |
+| `packages/react/src/scene.tsx` | source | component | react |
+| `packages/react/src/seat-marks.tsx` | source | component | react |
+| `packages/react/src/settings.ts` | source | config | react |
+| `packages/react/src/view-boundary.tsx` | source | component | react |
+| `packages/react/src/view-host.tsx` | source | component | react |
+| `packages/react/src/view-registry.ts` | source | utility | react |
+| `packages/react/src/where-drawn.tsx` | source | component | react |
+| `packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts` | test |  | tests-react-unit |
+| `packages/react/tests/unit/a-door-that-is-not-there.test.tsx` | test |  | tests-react-unit |
+| `packages/react/tests/unit/a-door-the-back-button-knows.test.ts` | test |  | tests-react-unit |
+| `packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx` | test |  | tests-react-unit |
+| `packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts` | test |  | tests-react-unit |
+| `packages/react/tests/unit/a-link-to-a-picture.test.tsx` | test |  | tests-react-unit |
+| `packages/react/tests/unit/a-stop-that-still-exists.test.tsx` | test |  | tests-react-unit |
+| `packages/react/tests/unit/a-tile-is-its-district.test.tsx` | test |  | tests-react-unit |
+| `packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx` | test |  | tests-react-unit |
+| `packages/react/tests/unit/activity.test.ts` | test |  | tests-react-unit |
+| `packages/react/tests/unit/administered.test.tsx` | test |  | tests-react-unit |
+| `packages/react/tests/unit/binding.test.tsx` | test |  | tests-react-unit |
+| `packages/react/tests/unit/channels.test.ts` | test |  | tests-react-unit |
+| `packages/react/tests/unit/routes.test.ts` | test |  | tests-react-unit |
+| `packages/react/tests/unit/strands.test.ts` | test |  | tests-react-unit |
+
+_172 of 572 files not listed (table capped at 400 rows). Use the sourcevision `search_files` or `get_file_info` tools for the rest._

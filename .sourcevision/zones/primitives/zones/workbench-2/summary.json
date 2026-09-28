@@ -1,0 +1,19 @@
+{
+  "id": "primitives/workbench-2",
+  "name": "Workbench",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/workbench/agent-seat.tsx",
+    "packages/primitives/src/workbench/back-out.tsx",
+    "packages/primitives/src/workbench/following.tsx",
+    "packages/primitives/src/workbench/index.tsx",
+    "packages/primitives/src/workbench/standing.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/workbench/index.tsx"
+  ],
+  "cohesion": 0.47,
+  "coupling": 0.53,
+  "fileCount": 5,
+  "lineCount": 654
+}

@@ -1,0 +1,20 @@
+{
+  "id": "scripts/site",
+  "name": "Site",
+  "description": "8 files, primarily JavaScript",
+  "files": [
+    "scripts/eval-elm.mjs",
+    "scripts/inspect-pack.mjs",
+    "scripts/require-changeset.mjs",
+    "scripts/site-artifact.mjs",
+    "scripts/site-css.mjs",
+    "scripts/site-docs.mjs",
+    "scripts/site-numbers.mjs",
+    "scripts/site-progression.mjs"
+  ],
+  "entryPoints": [],
+  "cohesion": 0,
+  "coupling": 0,
+  "fileCount": 8,
+  "lineCount": 1561
+}

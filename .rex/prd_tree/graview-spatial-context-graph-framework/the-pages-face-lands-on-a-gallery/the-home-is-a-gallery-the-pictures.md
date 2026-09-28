@@ -4,14 +4,14 @@ level: "task"
 title: "The home is a gallery: the pictures large and live in a wide grid, the standing as the headline, an empty picture says what would fill it, and the reading matter moves to /map and a row of counts"
 status: "completed"
 priority: "high"
+tags:
+  - "pages"
+  - "design"
 startedAt: "2026-09-27T06:05:00.000Z"
 completedAt: "2026-09-27T07:05:00.000Z"
 endedAt: "2026-09-27T07:05:00.000Z"
 resolutionType: "code-change"
 resolutionDetail: "DefaultHomePage: standing sentence as h1, Gallery (GalleryCard measured at 0.72 scale, inert, empty legend naming the beginning act), one row of kind counts with a line to /map, Recently. `wide` column (1160) for shell, home, /places and a picture page; reading pages keep 760. the-map-of-kinds and the-pictures-on-pages rewritten; 111 pages tests pass."
-tags:
-  - "pages"
-  - "design"
 acceptanceCriteria:
   - "DefaultHomePage renders, in order: a header whose h1 is the standing sentence (counts, or \"Nothing here yet.\") with the problems link or \"All rules hold\" as its lede; the gallery (`data-testid=\"gallery\"`); one row of kinds with counts (`data-testid=\"kinds\"`) and a one-line link to /map when relations exist; Recently"
   - "The home and the shell use a 1160px column; list, record, map, problems and place pages keep 760"

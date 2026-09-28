@@ -1,0 +1,21 @@
+{
+  "id": "graview",
+  "name": "Graview",
+  "description": "2 files, mostly entry points.",
+  "files": [
+    "packages/graview/src/cli.ts",
+    "packages/graview/src/index.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 2,
+  "lineCount": 51,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

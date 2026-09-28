@@ -1,0 +1,37 @@
+{
+  "id": "apps/promo",
+  "name": "Promo",
+  "description": "21 files, primarily TypeScript",
+  "files": [
+    "apps/promo/src/Composition.tsx",
+    "apps/promo/src/camera.ts",
+    "apps/promo/src/components/BigTitle.tsx",
+    "apps/promo/src/components/BrandPresence.tsx",
+    "apps/promo/src/components/CameraRig.tsx",
+    "apps/promo/src/components/CodeGlyphs.tsx",
+    "apps/promo/src/components/Constellation.tsx",
+    "apps/promo/src/components/Field.tsx",
+    "apps/promo/src/components/LightCharacter.tsx",
+    "apps/promo/src/components/SurveyInsert.tsx",
+    "apps/promo/src/components/TypePlate.tsx",
+    "apps/promo/src/motion.ts",
+    "apps/promo/src/scenes/BrandMorph.tsx",
+    "apps/promo/src/scenes/CityAltitude.tsx",
+    "apps/promo/src/scenes/GlyphsBloom.tsx",
+    "apps/promo/src/scenes/GraphInterface.tsx",
+    "apps/promo/src/scenes/OpenBrand.tsx",
+    "apps/promo/src/scenes/OutroBumper.tsx",
+    "apps/promo/src/scenes/RelationsDemo.tsx",
+    "apps/promo/src/scenes/SettleLockup.tsx",
+    "apps/promo/src/theme.ts"
+  ],
+  "entryPoints": [
+    "apps/promo/src/Composition.tsx",
+    "apps/promo/src/motion.ts",
+    "apps/promo/src/theme.ts"
+  ],
+  "cohesion": 0.93,
+  "coupling": 0.07,
+  "fileCount": 21,
+  "lineCount": 3391
+}

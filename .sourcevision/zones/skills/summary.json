@@ -1,0 +1,23 @@
+{
+  "id": "skills",
+  "name": "Skills",
+  "description": "2 files, mostly entry points; entry points index.ts; imported by Packages.",
+  "files": [
+    "packages/skills/src/cli.ts",
+    "packages/skills/src/index.ts"
+  ],
+  "entryPoints": [
+    "packages/skills/src/index.ts"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 2,
+  "lineCount": 120,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

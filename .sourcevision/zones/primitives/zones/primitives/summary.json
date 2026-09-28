@@ -1,0 +1,25 @@
+{
+  "id": "primitives/primitives",
+  "name": "UI Primitives",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/installation.tsx",
+    "packages/primitives/src/ladder.tsx",
+    "packages/primitives/src/places.tsx",
+    "packages/primitives/src/profile.tsx",
+    "packages/primitives/src/seats.tsx",
+    "packages/primitives/src/shell.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/installation.tsx",
+    "packages/primitives/src/ladder.tsx",
+    "packages/primitives/src/places.tsx",
+    "packages/primitives/src/profile.tsx",
+    "packages/primitives/src/seats.tsx",
+    "packages/primitives/src/shell.tsx"
+  ],
+  "cohesion": 0.48,
+  "coupling": 0.52,
+  "fileCount": 6,
+  "lineCount": 1175
+}

@@ -1,0 +1,21 @@
+{
+  "id": "apps-launcher",
+  "name": "Apps Config",
+  "description": "Project configuration and manifest files: vite.config.ts, remotion.config.ts",
+  "files": [
+    "apps/launcher/vite.config.ts",
+    "apps/promo/remotion.config.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 0,
+  "coupling": 0,
+  "fileCount": 2,
+  "lineCount": 119,
+  "riskMetrics": {
+    "cohesion": 0,
+    "coupling": 0,
+    "riskScore": 0.5,
+    "riskLevel": "at-risk",
+    "failsThreshold": false
+  }
+}

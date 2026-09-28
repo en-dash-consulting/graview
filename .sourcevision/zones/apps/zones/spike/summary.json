@@ -1,0 +1,16 @@
+{
+  "id": "apps/spike",
+  "name": "Spike Scripts",
+  "description": "4 files, primarily JavaScript",
+  "files": [
+    "apps/spike/scripts/introspect4.mjs",
+    "apps/spike/scripts/run-probe.mjs",
+    "apps/spike/scripts/run-restrictions.mjs",
+    "apps/spike/scripts/run-spike.mjs"
+  ],
+  "entryPoints": [],
+  "cohesion": 0,
+  "coupling": 0,
+  "fileCount": 4,
+  "lineCount": 646
+}

@@ -25,8 +25,8 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [A plot on the garden map is sized to the ground it lies on, contents included](./a-plot-on-the-garden-map-is-sized-to.md) | completed |
-| [The landing page is live all the way down, and a plot can be sown from its own page](./the-landing-page-is-live-all-the-way.md) | completed |
 | [The launcher is the front door: the platform's real capabilities, in onboarding order, each shown by a demo at a stop](./the-launcher-is-the-front-door-the/index.md) | completed |
+| [A plot on the garden map is sized to the ground it lies on, contents included](./a-plot-on-the-garden-map-is-sized-to.md) | completed |
 | [A third demo, the product-grade one: Rota — branded, permissioned, remembered, embedded, with the installation, a profile and the studio](./a-third-demo-the-product-grade-one.md) | completed |
 | [Product-grade routed faces: Things and Rota wear refined, interactive Pages that look shipped](./product-grade-routed-faces-things-and.md) | completed |
+| [The landing page is live all the way down, and a plot can be sown from its own page](./the-landing-page-is-live-all-the-way.md) | completed |

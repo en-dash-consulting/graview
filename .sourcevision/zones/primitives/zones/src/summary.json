@@ -1,0 +1,23 @@
+{
+  "id": "primitives/src",
+  "name": "Src",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/chat.tsx",
+    "packages/primitives/src/companion.tsx",
+    "packages/primitives/src/quick-relations.tsx",
+    "packages/primitives/src/relation-key.tsx",
+    "packages/primitives/src/seat.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/chat.tsx",
+    "packages/primitives/src/companion.tsx",
+    "packages/primitives/src/quick-relations.tsx",
+    "packages/primitives/src/relation-key.tsx",
+    "packages/primitives/src/seat.tsx"
+  ],
+  "cohesion": 0.42,
+  "coupling": 0.58,
+  "fileCount": 5,
+  "lineCount": 1907
+}

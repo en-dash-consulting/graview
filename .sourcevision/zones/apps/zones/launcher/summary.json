@@ -1,0 +1,24 @@
+{
+  "id": "apps/launcher",
+  "name": "App Launcher",
+  "description": "9 files, primarily TypeScript",
+  "files": [
+    "apps/launcher/src/domain/app.ts",
+    "apps/launcher/src/domain/invariants.ts",
+    "apps/launcher/src/domain/mutations.ts",
+    "apps/launcher/src/domain/schema.ts",
+    "apps/launcher/src/domain/survey.ts",
+    "apps/launcher/src/index.ts",
+    "apps/launcher/src/main.tsx",
+    "apps/launcher/src/ui/liveness.tsx",
+    "apps/launcher/src/ui/views.tsx"
+  ],
+  "entryPoints": [
+    "apps/launcher/src/domain/app.ts",
+    "apps/launcher/src/domain/survey.ts"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 9,
+  "lineCount": 1765
+}

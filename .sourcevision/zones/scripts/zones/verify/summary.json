@@ -1,0 +1,15 @@
+{
+  "id": "scripts/verify",
+  "name": "Verify",
+  "description": "3 files, primarily JavaScript",
+  "files": [
+    "scripts/lib/places.mjs",
+    "scripts/verify-calendar.mjs",
+    "scripts/verify-rota.mjs"
+  ],
+  "entryPoints": [],
+  "cohesion": 0.5,
+  "coupling": 0.5,
+  "fileCount": 3,
+  "lineCount": 794
+}

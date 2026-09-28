@@ -1,0 +1,19 @@
+{
+  "id": "react/view",
+  "name": "View System",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/resolved-view.tsx",
+    "packages/react/src/view-boundary.tsx",
+    "packages/react/src/view-registry.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/resolved-view.tsx",
+    "packages/react/src/view-boundary.tsx",
+    "packages/react/src/view-registry.ts"
+  ],
+  "cohesion": 0.33,
+  "coupling": 0.67,
+  "fileCount": 3,
+  "lineCount": 626
+}

@@ -1,16 +1,3147 @@
 {
-  "components": [],
-  "usageEdges": [],
+  "components": [
+    {
+      "file": "apps/launcher/src/main.tsx",
+      "name": "AuditButton",
+      "kind": "function",
+      "line": 358,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/launcher/src/main.tsx",
+      "name": "CommandBar",
+      "kind": "function",
+      "line": 252,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/launcher/src/main.tsx",
+      "name": "Desk",
+      "kind": "function",
+      "line": 165,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/launcher/src/main.tsx",
+      "name": "Launcher",
+      "kind": "function",
+      "line": 494,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/launcher/src/main.tsx",
+      "name": "Switcher",
+      "kind": "function",
+      "line": 406,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/launcher/src/ui/liveness.tsx",
+      "name": "LivenessProvider",
+      "kind": "function",
+      "line": 34,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/launcher/src/ui/views.tsx",
+      "name": "AppView",
+      "kind": "function",
+      "line": 53,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/launcher/src/ui/views.tsx",
+      "name": "CapabilityView",
+      "kind": "function",
+      "line": 138,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/launcher/src/ui/views.tsx",
+      "name": "RuleView",
+      "kind": "function",
+      "line": 220,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/launcher/src/ui/views.tsx",
+      "name": "ShowMe",
+      "kind": "function",
+      "line": 185,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/Composition.tsx",
+      "name": "GraviewIntro",
+      "kind": "arrow",
+      "line": 38,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/FeedComposition.tsx",
+      "name": "GraviewFeed",
+      "kind": "arrow",
+      "line": 16,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/Root.tsx",
+      "name": "RemotionRoot",
+      "kind": "arrow",
+      "line": 13,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/components/BigTitle.tsx",
+      "name": "BigTitle",
+      "kind": "arrow",
+      "line": 22,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/components/BrandPresence.tsx",
+      "name": "BrandPresence",
+      "kind": "arrow",
+      "line": 15,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/components/CameraRig.tsx",
+      "name": "CameraRig",
+      "kind": "arrow",
+      "line": 14,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/components/CodeGlyphs.tsx",
+      "name": "CodeGlyphs",
+      "kind": "arrow",
+      "line": 47,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/components/Constellation.tsx",
+      "name": "Constellation",
+      "kind": "arrow",
+      "line": 44,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/components/Field.tsx",
+      "name": "Field",
+      "kind": "arrow",
+      "line": 23,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/components/LightCharacter.tsx",
+      "name": "LightCharacter",
+      "kind": "arrow",
+      "line": 6,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/components/SurveyInsert.tsx",
+      "name": "SurveyInsert",
+      "kind": "arrow",
+      "line": 45,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/components/TypePlate.tsx",
+      "name": "TypePlate",
+      "kind": "arrow",
+      "line": 21,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/feed/BeautyPlate.tsx",
+      "name": "BeautyPlate",
+      "kind": "arrow",
+      "line": 28,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/feed/Cta.tsx",
+      "name": "Cta",
+      "kind": "arrow",
+      "line": 15,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/feed/Lockup.tsx",
+      "name": "Lockup",
+      "kind": "arrow",
+      "line": 14,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/feed/MagicHook.tsx",
+      "name": "MagicHook",
+      "kind": "arrow",
+      "line": 16,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/feed/StepsBeat.tsx",
+      "name": "StepsBeat",
+      "kind": "arrow",
+      "line": 17,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/feed/StoryMontage.tsx",
+      "name": "StoryMontage",
+      "kind": "arrow",
+      "line": 59,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/feed/TaglinePayoff.tsx",
+      "name": "TaglinePayoff",
+      "kind": "arrow",
+      "line": 16,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/scenes/BrandMorph.tsx",
+      "name": "BrandMorph",
+      "kind": "arrow",
+      "line": 18,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/scenes/CityAltitude.tsx",
+      "name": "CityAltitude",
+      "kind": "arrow",
+      "line": 16,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/scenes/GlyphsBloom.tsx",
+      "name": "GlyphsBloom",
+      "kind": "arrow",
+      "line": 15,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/scenes/GraphInterface.tsx",
+      "name": "GraphInterface",
+      "kind": "arrow",
+      "line": 32,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/scenes/OpenBrand.tsx",
+      "name": "OpenBrand",
+      "kind": "arrow",
+      "line": 15,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/scenes/OutroBumper.tsx",
+      "name": "OutroBumper",
+      "kind": "arrow",
+      "line": 10,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/scenes/RelationsDemo.tsx",
+      "name": "RelationsDemo",
+      "kind": "arrow",
+      "line": 62,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/promo/src/scenes/SettleLockup.tsx",
+      "name": "SettleLockup",
+      "kind": "arrow",
+      "line": 14,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/app.tsx",
+      "name": "FillTheGaps",
+      "kind": "function",
+      "line": 128,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/app.tsx",
+      "name": "RotaApp",
+      "kind": "function",
+      "line": 70,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "About",
+      "kind": "function",
+      "line": 610,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "Acts",
+      "kind": "function",
+      "line": 761,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "Ask",
+      "kind": "function",
+      "line": 841,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "Empty",
+      "kind": "function",
+      "line": 649,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "Home",
+      "kind": "function",
+      "line": 245,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "InPlace",
+      "kind": "function",
+      "line": 659,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "KindList",
+      "kind": "function",
+      "line": 339,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "KindRecord",
+      "kind": "function",
+      "line": 489,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "Problems",
+      "kind": "function",
+      "line": 578,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "Rail",
+      "kind": "function",
+      "line": 212,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "Repairs",
+      "kind": "function",
+      "line": 859,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "Shell",
+      "kind": "function",
+      "line": 155,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/rota/src/ui/design.tsx",
+      "name": "Slot",
+      "kind": "function",
+      "line": 319,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/app.tsx",
+      "name": "SeedbedApp",
+      "kind": "function",
+      "line": 72,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/app.tsx",
+      "name": "StarterGarden",
+      "kind": "function",
+      "line": 151,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Acts",
+      "kind": "function",
+      "line": 205,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Beds",
+      "kind": "function",
+      "line": 305,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "GardenerRecord",
+      "kind": "function",
+      "line": 630,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Gardeners",
+      "kind": "function",
+      "line": 464,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Home",
+      "kind": "function",
+      "line": 340,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Missing",
+      "kind": "function",
+      "line": 558,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "PlantingRecord",
+      "kind": "function",
+      "line": 671,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Plantings",
+      "kind": "function",
+      "line": 492,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "PlotCard",
+      "kind": "function",
+      "line": 320,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "PlotRecord",
+      "kind": "function",
+      "line": 562,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Plots",
+      "kind": "function",
+      "line": 442,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Problems",
+      "kind": "function",
+      "line": 736,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "RuleRecord",
+      "kind": "function",
+      "line": 701,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Rules",
+      "kind": "function",
+      "line": 525,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/design.tsx",
+      "name": "Shell",
+      "kind": "function",
+      "line": 129,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/garden-map.tsx",
+      "name": "GardenMapPicture",
+      "kind": "function",
+      "line": 155,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/garden-map.tsx",
+      "name": "Sprout",
+      "kind": "function",
+      "line": 132,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/pages.tsx",
+      "name": "PlotPage",
+      "kind": "function",
+      "line": 27,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/seedbed/src/ui/views.tsx",
+      "name": "PlotView",
+      "kind": "function",
+      "line": 28,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/app.tsx",
+      "name": "TidyButton",
+      "kind": "function",
+      "line": 216,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/app.tsx",
+      "name": "TodoApp",
+      "kind": "function",
+      "line": 103,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/app.tsx",
+      "name": "TodoShell",
+      "kind": "function",
+      "line": 163,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "About",
+      "kind": "function",
+      "line": 688,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Acts",
+      "kind": "function",
+      "line": 935,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Ask",
+      "kind": "function",
+      "line": 1011,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Empty",
+      "kind": "function",
+      "line": 735,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Home",
+      "kind": "function",
+      "line": 352,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "InPlace",
+      "kind": "function",
+      "line": 828,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "KindList",
+      "kind": "function",
+      "line": 419,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "KindRecord",
+      "kind": "function",
+      "line": 552,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Problems",
+      "kind": "function",
+      "line": 656,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Rail",
+      "kind": "function",
+      "line": 317,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Repairs",
+      "kind": "function",
+      "line": 1037,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Rows",
+      "kind": "function",
+      "line": 751,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Section",
+      "kind": "function",
+      "line": 723,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Shell",
+      "kind": "function",
+      "line": 233,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/design.tsx",
+      "name": "Tick",
+      "kind": "function",
+      "line": 786,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/views.tsx",
+      "name": "BurndownView",
+      "kind": "function",
+      "line": 377,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "apps/todo/src/ui/views.tsx",
+      "name": "TaskView",
+      "kind": "function",
+      "line": 68,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/embed/src/embed.tsx",
+      "name": "Embed",
+      "kind": "function",
+      "line": 156,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/embed/src/embed.tsx",
+      "name": "Strip",
+      "kind": "function",
+      "line": 329,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/ask.tsx",
+      "name": "PageAsk",
+      "kind": "function",
+      "line": 25,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/form.tsx",
+      "name": "Control",
+      "kind": "function",
+      "line": 92,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/form.tsx",
+      "name": "DerivedForm",
+      "kind": "function",
+      "line": 364,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/form.tsx",
+      "name": "Picker",
+      "kind": "function",
+      "line": 69,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-context.tsx",
+      "name": "StartFreshLink",
+      "kind": "function",
+      "line": 67,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-home.tsx",
+      "name": "DefaultHomePage",
+      "kind": "function",
+      "line": 38,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-list.tsx",
+      "name": "DefaultListPage",
+      "kind": "function",
+      "line": 33,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-map.tsx",
+      "name": "DefaultMapPage",
+      "kind": "function",
+      "line": 97,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-map.tsx",
+      "name": "KindMapSection",
+      "kind": "function",
+      "line": 71,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-map.tsx",
+      "name": "RelationLine",
+      "kind": "function",
+      "line": 25,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-map.tsx",
+      "name": "SeatQuestions",
+      "kind": "function",
+      "line": 133,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-places.tsx",
+      "name": "DefaultPlacePage",
+      "kind": "function",
+      "line": 418,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-places.tsx",
+      "name": "DefaultPlacesPage",
+      "kind": "function",
+      "line": 384,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-places.tsx",
+      "name": "Gallery",
+      "kind": "function",
+      "line": 366,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-places.tsx",
+      "name": "GalleryCard",
+      "kind": "function",
+      "line": 239,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-places.tsx",
+      "name": "KindOnPage",
+      "kind": "function",
+      "line": 116,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-places.tsx",
+      "name": "LensOnPage",
+      "kind": "function",
+      "line": 60,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-places.tsx",
+      "name": "PlaceCard",
+      "kind": "function",
+      "line": 339,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-places.tsx",
+      "name": "PlacePicture",
+      "kind": "function",
+      "line": 86,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-problems.tsx",
+      "name": "DefaultProblemsPage",
+      "kind": "function",
+      "line": 16,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-problems.tsx",
+      "name": "Repairs",
+      "kind": "function",
+      "line": 86,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-record.tsx",
+      "name": "DefaultRecordPage",
+      "kind": "function",
+      "line": 37,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-shell.tsx",
+      "name": "DefaultShell",
+      "kind": "function",
+      "line": 19,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-shell.tsx",
+      "name": "PageMain",
+      "kind": "function",
+      "line": 185,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-typography.tsx",
+      "name": "KindMark",
+      "kind": "function",
+      "line": 128,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/router.tsx",
+      "name": "KindSwitch",
+      "kind": "function",
+      "line": 35,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/router.tsx",
+      "name": "PagesApp",
+      "kind": "function",
+      "line": 143,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/router.tsx",
+      "name": "PagesRoutes",
+      "kind": "function",
+      "line": 89,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/router.tsx",
+      "name": "ScrollReset",
+      "kind": "function",
+      "line": 69,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx",
+      "name": "Linky",
+      "kind": "arrow",
+      "line": 31,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx",
+      "name": "Trace",
+      "kind": "arrow",
+      "line": 52,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx",
+      "name": "Desk",
+      "kind": "arrow",
+      "line": 26,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
+      "name": "Items",
+      "kind": "function",
+      "line": 55,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
+      "name": "Shell",
+      "kind": "function",
+      "line": 45,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/tests/unit/the-assistant-on-every-page.test.tsx",
+      "name": "Board",
+      "kind": "arrow",
+      "line": 33,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/tests/unit/the-map-of-kinds.test.tsx",
+      "name": "Rota",
+      "kind": "arrow",
+      "line": 48,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/tests/unit/the-pictures-on-pages.test.tsx",
+      "name": "Board",
+      "kind": "arrow",
+      "line": 37,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/chat.tsx",
+      "name": "ChatPanel",
+      "kind": "function",
+      "line": 60,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/companion.tsx",
+      "name": "Companion",
+      "kind": "function",
+      "line": 204,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/connections.tsx",
+      "name": "Connections",
+      "kind": "function",
+      "line": 34,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/editable.tsx",
+      "name": "EditableTitle",
+      "kind": "function",
+      "line": 331,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/editable.tsx",
+      "name": "EditableValue",
+      "kind": "function",
+      "line": 20,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/editable.tsx",
+      "name": "Fields",
+      "kind": "function",
+      "line": 255,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/figure.tsx",
+      "name": "KindFigure",
+      "kind": "function",
+      "line": 20,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/installation.tsx",
+      "name": "ShowInstallation",
+      "kind": "function",
+      "line": 19,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/ladder.tsx",
+      "name": "LadderSetting",
+      "kind": "function",
+      "line": 39,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/board.tsx",
+      "name": "BoardView",
+      "kind": "function",
+      "line": 199,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/calendar-drawing.tsx",
+      "name": "Agenda",
+      "kind": "function",
+      "line": 256,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/calendar-drawing.tsx",
+      "name": "Entry",
+      "kind": "function",
+      "line": 347,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/calendar-drawing.tsx",
+      "name": "Grid",
+      "kind": "function",
+      "line": 49,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/calendar-drawing.tsx",
+      "name": "Step",
+      "kind": "function",
+      "line": 12,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/calendar-view.tsx",
+      "name": "CalendarView",
+      "kind": "function",
+      "line": 86,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/coverage.tsx",
+      "name": "CoverageBar",
+      "kind": "function",
+      "line": 885,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/coverage.tsx",
+      "name": "CoverageView",
+      "kind": "function",
+      "line": 408,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/plan-view.tsx",
+      "name": "PlanView",
+      "kind": "function",
+      "line": 137,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/plan-view.tsx",
+      "name": "Roster",
+      "kind": "function",
+      "line": 19,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/reach.tsx",
+      "name": "ReachView",
+      "kind": "function",
+      "line": 58,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/timeline.tsx",
+      "name": "Column",
+      "kind": "function",
+      "line": 459,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/timeline.tsx",
+      "name": "TimelineView",
+      "kind": "function",
+      "line": 298,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/places.tsx",
+      "name": "Places",
+      "kind": "function",
+      "line": 25,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/primitives/index.tsx",
+      "name": "Aggregate",
+      "kind": "function",
+      "line": 561,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/primitives/index.tsx",
+      "name": "Axis",
+      "kind": "function",
+      "line": 582,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/primitives/index.tsx",
+      "name": "Chip",
+      "kind": "function",
+      "line": 402,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/primitives/index.tsx",
+      "name": "Connector",
+      "kind": "function",
+      "line": 684,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/primitives/index.tsx",
+      "name": "Grid",
+      "kind": "function",
+      "line": 616,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/primitives/index.tsx",
+      "name": "Panel",
+      "kind": "function",
+      "line": 130,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/primitives/index.tsx",
+      "name": "Prose",
+      "kind": "function",
+      "line": 342,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/primitives/index.tsx",
+      "name": "Roster",
+      "kind": "function",
+      "line": 523,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/profile.tsx",
+      "name": "Profile",
+      "kind": "function",
+      "line": 43,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/quick-relations.tsx",
+      "name": "QuickRelations",
+      "kind": "function",
+      "line": 39,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/relation-key.tsx",
+      "name": "RelationKey",
+      "kind": "function",
+      "line": 27,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/relation-key.tsx",
+      "name": "RelationMark",
+      "kind": "function",
+      "line": 232,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seat.tsx",
+      "name": "SeatComposer",
+      "kind": "function",
+      "line": 346,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seat.tsx",
+      "name": "SeatHeader",
+      "kind": "function",
+      "line": 116,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seat.tsx",
+      "name": "SeatSettings",
+      "kind": "function",
+      "line": 402,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seat.tsx",
+      "name": "SeatThread",
+      "kind": "function",
+      "line": 181,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seat.tsx",
+      "name": "Settled",
+      "kind": "function",
+      "line": 326,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seats.tsx",
+      "name": "Seats",
+      "kind": "function",
+      "line": 22,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seeding.tsx",
+      "name": "Begin",
+      "kind": "function",
+      "line": 135,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seeding.tsx",
+      "name": "BeginHere",
+      "kind": "function",
+      "line": 224,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seeding.tsx",
+      "name": "BeginInside",
+      "kind": "function",
+      "line": 143,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seeding.tsx",
+      "name": "Door",
+      "kind": "function",
+      "line": 856,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seeding.tsx",
+      "name": "Intake",
+      "kind": "function",
+      "line": 739,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seeding.tsx",
+      "name": "Lifted",
+      "kind": "function",
+      "line": 110,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seeding.tsx",
+      "name": "PlanReview",
+      "kind": "function",
+      "line": 414,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/seeding.tsx",
+      "name": "PlanReviewInside",
+      "kind": "function",
+      "line": 422,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/shell.tsx",
+      "name": "Shell",
+      "kind": "function",
+      "line": 89,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/wordmark.tsx",
+      "name": "Wordmark",
+      "kind": "function",
+      "line": 18,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/activity.tsx",
+      "name": "ActivityRail",
+      "kind": "function",
+      "line": 197,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/activity.tsx",
+      "name": "StartFresh",
+      "kind": "function",
+      "line": 160,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/activity.tsx",
+      "name": "UndoTurn",
+      "kind": "function",
+      "line": 59,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/agent-seat.tsx",
+      "name": "AgentSeat",
+      "kind": "function",
+      "line": 63,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/answer-args.tsx",
+      "name": "AnswerArgs",
+      "kind": "function",
+      "line": 18,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/back-out.tsx",
+      "name": "OverviewButton",
+      "kind": "function",
+      "line": 129,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/following.tsx",
+      "name": "FollowingLine",
+      "kind": "function",
+      "line": 10,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/inspector.tsx",
+      "name": "Inspector",
+      "kind": "function",
+      "line": 34,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/standing.tsx",
+      "name": "Standing",
+      "kind": "function",
+      "line": 15,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/trail.tsx",
+      "name": "Backtrack",
+      "kind": "function",
+      "line": 25,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/trail.tsx",
+      "name": "Trail",
+      "kind": "function",
+      "line": 68,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/tests/unit/the-drive-in-marquee.test.tsx",
+      "name": "Week",
+      "kind": "arrow",
+      "line": 23,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/connectors.tsx",
+      "name": "Connectors",
+      "kind": "function",
+      "line": 579,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/context.tsx",
+      "name": "GraviewProvider",
+      "kind": "function",
+      "line": 354,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/context.tsx",
+      "name": "ViewModeProvider",
+      "kind": "function",
+      "line": 268,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/occupants.tsx",
+      "name": "Figure",
+      "kind": "function",
+      "line": 34,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/occupants.tsx",
+      "name": "Occupants",
+      "kind": "function",
+      "line": 103,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/occupants.tsx",
+      "name": "PersonFigure",
+      "kind": "function",
+      "line": 85,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/plots.tsx",
+      "name": "Plots",
+      "kind": "function",
+      "line": 76,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/resolved-view.tsx",
+      "name": "BeyondCard",
+      "kind": "function",
+      "line": 39,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/resolved-view.tsx",
+      "name": "MissingView",
+      "kind": "function",
+      "line": 376,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/resolved-view.tsx",
+      "name": "ResolvedView",
+      "kind": "function",
+      "line": 226,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/scene-lines.tsx",
+      "name": "Lines",
+      "kind": "function",
+      "line": 35,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/scene-lines.tsx",
+      "name": "RelationCaptions",
+      "kind": "function",
+      "line": 651,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/scene-lines.tsx",
+      "name": "SelectionTies",
+      "kind": "function",
+      "line": 199,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/scene-root.tsx",
+      "name": "Scene",
+      "kind": "function",
+      "line": 129,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/seat-marks.tsx",
+      "name": "SeatMarks",
+      "kind": "function",
+      "line": 38,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/view-boundary.tsx",
+      "name": "ViewBoundary",
+      "kind": "class",
+      "line": 45,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/view-host.tsx",
+      "name": "SceneViewHost",
+      "kind": "function",
+      "line": 66,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/tests/unit/a-door-that-is-not-there.test.tsx",
+      "name": "Probe",
+      "kind": "function",
+      "line": 20,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx",
+      "name": "Host",
+      "kind": "function",
+      "line": 23,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/tests/unit/a-link-to-a-picture.test.tsx",
+      "name": "List",
+      "kind": "arrow",
+      "line": 31,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/tests/unit/a-link-to-a-picture.test.tsx",
+      "name": "Where",
+      "kind": "function",
+      "line": 47,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
+      "name": "Tasks",
+      "kind": "function",
+      "line": 36,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/tests/unit/administered.test.tsx",
+      "name": "Probe",
+      "kind": "function",
+      "line": 23,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/tests/unit/binding.test.tsx",
+      "name": "PeopleView",
+      "kind": "function",
+      "line": 76,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/tests/unit/binding.test.tsx",
+      "name": "PersonView",
+      "kind": "function",
+      "line": 64,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/agent-panel.tsx",
+      "name": "Argument",
+      "kind": "function",
+      "line": 435,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/agent-panel.tsx",
+      "name": "Offered",
+      "kind": "function",
+      "line": 315,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/agent-panel.tsx",
+      "name": "ProposedDrawing",
+      "kind": "function",
+      "line": 559,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/agent-panel.tsx",
+      "name": "StudioAgentPanel",
+      "kind": "function",
+      "line": 61,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/in-place.tsx",
+      "name": "Downloads",
+      "kind": "function",
+      "line": 242,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/in-place.tsx",
+      "name": "InPlaceWriter",
+      "kind": "function",
+      "line": 24,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/place.tsx",
+      "name": "StudioOverlay",
+      "kind": "function",
+      "line": 145,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/place.tsx",
+      "name": "StudioPlace",
+      "kind": "function",
+      "line": 44,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/place.tsx",
+      "name": "StudioSeat",
+      "kind": "function",
+      "line": 412,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/studio/src/place.tsx",
+      "name": "Written",
+      "kind": "function",
+      "line": 332,
+      "isDefaultExport": false,
+      "conventionExports": []
+    }
+  ],
+  "usageEdges": [
+    {
+      "from": "apps/launcher/src/main.tsx",
+      "to": "apps/launcher/src/ui/liveness.tsx",
+      "componentName": "LivenessProvider",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/components/BrandPresence.tsx",
+      "componentName": "BrandPresence",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/components/CameraRig.tsx",
+      "componentName": "CameraRig",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/components/Constellation.tsx",
+      "componentName": "Constellation",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/components/Field.tsx",
+      "componentName": "Field",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/components/LightCharacter.tsx",
+      "componentName": "LightCharacter",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/scenes/BrandMorph.tsx",
+      "componentName": "BrandMorph",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/scenes/CityAltitude.tsx",
+      "componentName": "CityAltitude",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/scenes/GlyphsBloom.tsx",
+      "componentName": "GlyphsBloom",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/scenes/GraphInterface.tsx",
+      "componentName": "GraphInterface",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/scenes/OpenBrand.tsx",
+      "componentName": "OpenBrand",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/scenes/OutroBumper.tsx",
+      "componentName": "OutroBumper",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/scenes/RelationsDemo.tsx",
+      "componentName": "RelationsDemo",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/Composition.tsx",
+      "to": "apps/promo/src/scenes/SettleLockup.tsx",
+      "componentName": "SettleLockup",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/FeedComposition.tsx",
+      "to": "apps/promo/src/feed/Cta.tsx",
+      "componentName": "Cta",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/FeedComposition.tsx",
+      "to": "apps/promo/src/feed/Lockup.tsx",
+      "componentName": "Lockup",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/FeedComposition.tsx",
+      "to": "apps/promo/src/feed/MagicHook.tsx",
+      "componentName": "MagicHook",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/FeedComposition.tsx",
+      "to": "apps/promo/src/feed/StepsBeat.tsx",
+      "componentName": "StepsBeat",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/FeedComposition.tsx",
+      "to": "apps/promo/src/feed/StoryMontage.tsx",
+      "componentName": "StoryMontage",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/FeedComposition.tsx",
+      "to": "apps/promo/src/feed/TaglinePayoff.tsx",
+      "componentName": "TaglinePayoff",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/feed/MagicHook.tsx",
+      "to": "apps/promo/src/feed/BeautyPlate.tsx",
+      "componentName": "BeautyPlate",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/feed/StoryMontage.tsx",
+      "to": "apps/promo/src/feed/BeautyPlate.tsx",
+      "componentName": "BeautyPlate",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/scenes/CityAltitude.tsx",
+      "to": "apps/promo/src/components/SurveyInsert.tsx",
+      "componentName": "SurveyInsert",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/scenes/GlyphsBloom.tsx",
+      "to": "apps/promo/src/components/BigTitle.tsx",
+      "componentName": "BigTitle",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/scenes/GlyphsBloom.tsx",
+      "to": "apps/promo/src/components/CodeGlyphs.tsx",
+      "componentName": "CodeGlyphs",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/promo/src/scenes/GraphInterface.tsx",
+      "to": "apps/promo/src/components/BigTitle.tsx",
+      "componentName": "BigTitle",
+      "usageCount": 2
+    },
+    {
+      "from": "apps/promo/src/scenes/GraphInterface.tsx",
+      "to": "apps/promo/src/components/SurveyInsert.tsx",
+      "componentName": "SurveyInsert",
+      "usageCount": 7
+    },
+    {
+      "from": "apps/promo/src/scenes/RelationsDemo.tsx",
+      "to": "apps/promo/src/components/BigTitle.tsx",
+      "componentName": "BigTitle",
+      "usageCount": 4
+    },
+    {
+      "from": "apps/promo/src/scenes/RelationsDemo.tsx",
+      "to": "apps/promo/src/components/SurveyInsert.tsx",
+      "componentName": "SurveyInsert",
+      "usageCount": 3
+    },
+    {
+      "from": "apps/rota/src/main.tsx",
+      "to": "apps/rota/src/ui/app.tsx",
+      "componentName": "RotaApp",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/seedbed/src/main.tsx",
+      "to": "apps/seedbed/src/ui/app.tsx",
+      "componentName": "SeedbedApp",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/seedbed/src/ui/design.tsx",
+      "to": "apps/seedbed/src/ui/garden-map.tsx",
+      "componentName": "GardenMapPicture",
+      "usageCount": 1
+    },
+    {
+      "from": "apps/seedbed/src/ui/design.tsx",
+      "to": "apps/seedbed/src/ui/garden-map.tsx",
+      "componentName": "Sprout",
+      "usageCount": 5
+    },
+    {
+      "from": "apps/todo/src/main.tsx",
+      "to": "apps/todo/src/ui/app.tsx",
+      "componentName": "TodoApp",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-home.tsx",
+      "to": "packages/pages/src/page-places.tsx",
+      "componentName": "Gallery",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-home.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageMain",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-home.tsx",
+      "to": "packages/pages/src/page-typography.tsx",
+      "componentName": "KindMark",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-list.tsx",
+      "to": "packages/pages/src/form.tsx",
+      "componentName": "DerivedForm",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-list.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageMain",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/src/page-list.tsx",
+      "to": "packages/pages/src/page-typography.tsx",
+      "componentName": "KindMark",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-map.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageMain",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-map.tsx",
+      "to": "packages/pages/src/page-typography.tsx",
+      "componentName": "KindMark",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-places.tsx",
+      "to": "packages/pages/src/form.tsx",
+      "componentName": "DerivedForm",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-places.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageMain",
+      "usageCount": 3
+    },
+    {
+      "from": "packages/pages/src/page-places.tsx",
+      "to": "packages/pages/src/page-typography.tsx",
+      "componentName": "KindMark",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/src/page-problems.tsx",
+      "to": "packages/pages/src/form.tsx",
+      "componentName": "DerivedForm",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-problems.tsx",
+      "to": "packages/pages/src/page-map.tsx",
+      "componentName": "SeatQuestions",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-problems.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageMain",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-problems.tsx",
+      "to": "packages/pages/src/page-typography.tsx",
+      "componentName": "KindMark",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-record.tsx",
+      "to": "packages/pages/src/form.tsx",
+      "componentName": "DerivedForm",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-record.tsx",
+      "to": "packages/pages/src/page-problems.tsx",
+      "componentName": "Repairs",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-record.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageMain",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/src/page-record.tsx",
+      "to": "packages/pages/src/page-typography.tsx",
+      "componentName": "KindMark",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/src/page-shell.tsx",
+      "to": "packages/pages/src/page-context.tsx",
+      "componentName": "StartFreshLink",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/router.tsx",
+      "to": "packages/pages/src/ask.tsx",
+      "componentName": "PageAsk",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/router.tsx",
+      "to": "packages/pages/src/pages.tsx",
+      "componentName": "DefaultMapPage",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/router.tsx",
+      "to": "packages/pages/src/pages.tsx",
+      "componentName": "DefaultPlacePage",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/router.tsx",
+      "to": "packages/pages/src/pages.tsx",
+      "componentName": "DefaultPlacesPage",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/asked-as-the-person.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "DerivedForm",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/asked-as-the-person.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "Repairs",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/its-own-far-end.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "DerivedForm",
+      "usageCount": 3
+    },
+    {
+      "from": "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PageMain",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/tests/unit/parity.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "DerivedForm",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/tests/unit/parity.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 10
+    },
+    {
+      "from": "packages/pages/tests/unit/the-assistant-on-every-page.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/the-map-of-kinds.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/the-pictures-on-pages.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/what-begins-a-kind.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/whose-work.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/chat.tsx",
+      "to": "packages/primitives/src/seat.tsx",
+      "componentName": "SeatComposer",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/chat.tsx",
+      "to": "packages/primitives/src/seat.tsx",
+      "componentName": "SeatHeader",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/chat.tsx",
+      "to": "packages/primitives/src/seat.tsx",
+      "componentName": "SeatSettings",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/chat.tsx",
+      "to": "packages/primitives/src/seat.tsx",
+      "componentName": "SeatThread",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/chat.tsx",
+      "to": "packages/primitives/src/seat.tsx",
+      "componentName": "Settled",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/chat.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "AnswerArgs",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/companion.tsx",
+      "to": "packages/primitives/src/chat.tsx",
+      "componentName": "ChatPanel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/companion.tsx",
+      "to": "packages/primitives/src/quick-relations.tsx",
+      "componentName": "QuickRelations",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/companion.tsx",
+      "to": "packages/primitives/src/relation-key.tsx",
+      "componentName": "RelationKey",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/companion.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "Inspector",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/connections.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/default-views.tsx",
+      "to": "packages/primitives/src/connections.tsx",
+      "componentName": "Connections",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/default-views.tsx",
+      "to": "packages/primitives/src/editable.tsx",
+      "componentName": "EditableTitle",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/default-views.tsx",
+      "to": "packages/primitives/src/editable.tsx",
+      "componentName": "Fields",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/default-views.tsx",
+      "to": "packages/primitives/src/figure.tsx",
+      "componentName": "KindFigure",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/default-views.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Aggregate",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/default-views.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/default-views.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Panel",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/default-views.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Roster",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/board.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/board.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Panel",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/lens/board.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Roster",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/lens/calendar-view.tsx",
+      "to": "packages/primitives/src/lens/calendar-drawing.tsx",
+      "componentName": "Agenda",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/calendar-view.tsx",
+      "to": "packages/primitives/src/lens/calendar-drawing.tsx",
+      "componentName": "Grid",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/calendar-view.tsx",
+      "to": "packages/primitives/src/lens/calendar-drawing.tsx",
+      "componentName": "Step",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/lens/calendar-view.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/calendar-view.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Panel",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/lens/calendar-view.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Roster",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/coverage.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/coverage.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Panel",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/lens/coverage.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Roster",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/plan-lens.tsx",
+      "to": "packages/primitives/src/lens/plan-view.tsx",
+      "componentName": "PlanView",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/plan-view.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/plan-view.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Panel",
+      "usageCount": 3
+    },
+    {
+      "from": "packages/primitives/src/lens/reach.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/timeline.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/timeline.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Panel",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/lens/timeline.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Roster",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/profile.tsx",
+      "to": "packages/primitives/src/ladder.tsx",
+      "componentName": "LadderSetting",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/profile.tsx",
+      "to": "packages/primitives/src/seats.tsx",
+      "componentName": "Seats",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/seat.tsx",
+      "to": "packages/primitives/src/ladder.tsx",
+      "componentName": "LadderSetting",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/seeding.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Panel",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/seeding.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "AnswerArgs",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/companion.tsx",
+      "componentName": "Companion",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/installation.tsx",
+      "componentName": "ShowInstallation",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/places.tsx",
+      "componentName": "Places",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/profile.tsx",
+      "componentName": "Profile",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/wordmark.tsx",
+      "componentName": "Wordmark",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "ActivityRail",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "BackOut",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "Backtrack",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "FollowingLine",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "Inspector",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "OverviewButton",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "Standing",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/workbench/index.tsx",
+      "componentName": "Trail",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/workbench/activity.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/workbench/inspector.tsx",
+      "to": "packages/primitives/src/workbench/answer-args.tsx",
+      "componentName": "AnswerArgs",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Companion",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-mark-can-say-so.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Chip",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-mark-can-say-so.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Roster",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-panel-that-scrolls-is-a-stop.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Panel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "ChatPanel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "PlanReview",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/back-out.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "BackOut",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/chat.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "ChatPanel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/edge-inspector.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Inspector",
+      "usageCount": 6
+    },
+    {
+      "from": "packages/primitives/tests/unit/installation.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "ReachView",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/installation.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Shell",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/installation.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "ShowInstallation",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/one-request-one-press.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "ChatPanel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/places.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Places",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/places.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Shell",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/primitives.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "TimelineView",
+      "usageCount": 5
+    },
+    {
+      "from": "packages/primitives/tests/unit/quick-relations.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "QuickRelations",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/shell.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "AgentSeat",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/shell.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Shell",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Inspector",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-doors-drawn.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Door",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-doors-drawn.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Intake",
+      "usageCount": 3
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-drawing-stays-put.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "KindFigure",
+      "usageCount": 3
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "RelationKey",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx",
+      "to": "packages/primitives/src/chat.tsx",
+      "componentName": "ChatPanel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx",
+      "to": "packages/primitives/src/ladder.tsx",
+      "componentName": "LadderSetting",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-pane-keeps-its-hands-off.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Inspector",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "ActivityRail",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "ChatPanel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Shell",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-way-in.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Begin",
+      "usageCount": 6
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-way-in.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "PlanReview",
+      "usageCount": 6
+    },
+    {
+      "from": "packages/primitives/tests/unit/undo-turn.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "UndoTurn",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/what-it-finds-wrong.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Connections",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/react/src/resolved-view.tsx",
+      "to": "packages/react/src/context.tsx",
+      "componentName": "ViewModeProvider",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/resolved-view.tsx",
+      "to": "packages/react/src/view-boundary.tsx",
+      "componentName": "ViewBoundary",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/scene-lines.tsx",
+      "to": "packages/react/src/connectors.tsx",
+      "componentName": "Connectors",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/occupants.tsx",
+      "componentName": "Occupants",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/plots.tsx",
+      "componentName": "Plots",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/resolved-view.tsx",
+      "componentName": "BeyondCard",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/resolved-view.tsx",
+      "componentName": "SettledView",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/scene-lines.tsx",
+      "componentName": "Lines",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/scene-lines.tsx",
+      "componentName": "RelationCaptions",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/seat-marks.tsx",
+      "componentName": "SeatMarks",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/view-host.tsx",
+      "componentName": "SceneViewHost",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/a-link-to-a-picture.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "GraviewProvider",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/a-link-to-a-picture.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "UrlSync",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/a-stop-that-still-exists.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "GraviewProvider",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/a-tile-is-its-district.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "GraviewProvider",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/a-tile-is-its-district.test.tsx",
+      "to": "packages/react/src/plots.tsx",
+      "componentName": "Plots",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "GraviewProvider",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "ResolvedView",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "Scene",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/administered.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "GraviewProvider",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/binding.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "GraviewProvider",
+      "usageCount": 5
+    },
+    {
+      "from": "packages/react/tests/unit/binding.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "Scene",
+      "usageCount": 19
+    },
+    {
+      "from": "packages/react/tests/unit/the-occupants.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "GraviewProvider",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/the-occupants.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "Occupants",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/the-row-that-sheds.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "GraviewProvider",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/the-row-that-sheds.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "Scene",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx",
+      "to": "packages/react/src/context.tsx",
+      "componentName": "GraviewProvider",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/studio/src/place.tsx",
+      "to": "packages/studio/src/agent-panel.tsx",
+      "componentName": "StudioAgentPanel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/studio/src/place.tsx",
+      "to": "packages/studio/src/in-place.tsx",
+      "componentName": "Downloads",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/studio/src/place.tsx",
+      "to": "packages/studio/src/in-place.tsx",
+      "componentName": "InPlaceWriter",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/studio/tests/unit/one-seat-one-conversation.test.tsx",
+      "to": "packages/studio/src/index.ts",
+      "componentName": "StudioAgentPanel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/studio/tests/unit/rewrite-before-writing.test.tsx",
+      "to": "packages/studio/src/index.ts",
+      "componentName": "InPlaceWriter",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/studio/tests/unit/the-studio-agent-panel.test.tsx",
+      "to": "packages/studio/src/index.ts",
+      "componentName": "StudioAgentPanel",
+      "usageCount": 1
+    }
+  ],
   "routeModules": [],
   "routeTree": [],
   "serverRoutes": [],
   "summary": {
-    "totalComponents": 0,
+    "totalComponents": 230,
     "totalRouteModules": 0,
-    "totalUsageEdges": 0,
+    "totalUsageEdges": 198,
     "totalServerRoutes": 0,
     "routeConventions": {},
-    "mostUsedComponents": [],
+    "mostUsedComponents": [
+      {
+        "name": "PagesApp",
+        "file": "packages/pages/src/index.ts",
+        "usageCount": 22
+      },
+      {
+        "name": "Scene",
+        "file": "packages/react/src/index.ts",
+        "usageCount": 21
+      },
+      {
+        "name": "Panel",
+        "file": "packages/primitives/src/primitives/index.tsx",
+        "usageCount": 15
+      },
+      {
+        "name": "GraviewProvider",
+        "file": "packages/react/src/index.ts",
+        "usageCount": 13
+      },
+      {
+        "name": "Chip",
+        "file": "packages/primitives/src/primitives/index.tsx",
+        "usageCount": 12
+      },
+      {
+        "name": "SurveyInsert",
+        "file": "apps/promo/src/components/SurveyInsert.tsx",
+        "usageCount": 11
+      },
+      {
+        "name": "PageMain",
+        "file": "packages/pages/src/page-shell.tsx",
+        "usageCount": 10
+      },
+      {
+        "name": "KindMark",
+        "file": "packages/pages/src/page-typography.tsx",
+        "usageCount": 8
+      },
+      {
+        "name": "PlanReview",
+        "file": "packages/primitives/src/index.ts",
+        "usageCount": 8
+      },
+      {
+        "name": "Inspector",
+        "file": "packages/primitives/src/index.ts",
+        "usageCount": 8
+      },
+      {
+        "name": "BigTitle",
+        "file": "apps/promo/src/components/BigTitle.tsx",
+        "usageCount": 7
+      },
+      {
+        "name": "DerivedForm",
+        "file": "packages/pages/src/index.ts",
+        "usageCount": 6
+      },
+      {
+        "name": "Roster",
+        "file": "packages/primitives/src/primitives/index.tsx",
+        "usageCount": 6
+      },
+      {
+        "name": "Begin",
+        "file": "packages/primitives/src/index.ts",
+        "usageCount": 6
+      },
+      {
+        "name": "Sprout",
+        "file": "apps/seedbed/src/ui/garden-map.tsx",
+        "usageCount": 5
+      },
+      {
+        "name": "Shell",
+        "file": "packages/primitives/src/index.ts",
+        "usageCount": 5
+      },
+      {
+        "name": "TimelineView",
+        "file": "packages/primitives/src/index.ts",
+        "usageCount": 5
+      },
+      {
+        "name": "DerivedForm",
+        "file": "packages/pages/src/form.tsx",
+        "usageCount": 4
+      },
+      {
+        "name": "ChatPanel",
+        "file": "packages/primitives/src/index.ts",
+        "usageCount": 4
+      },
+      {
+        "name": "LadderSetting",
+        "file": "packages/primitives/src/ladder.tsx",
+        "usageCount": 3
+      }
+    ],
     "layoutDepth": 0
   }
 }

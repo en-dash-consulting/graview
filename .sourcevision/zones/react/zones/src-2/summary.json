@@ -1,0 +1,25 @@
+{
+  "id": "react/src-2",
+  "name": "Src 2",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/channels.ts",
+    "packages/react/src/connectors.tsx",
+    "packages/react/src/kit.ts",
+    "packages/react/src/routes.ts",
+    "packages/react/src/scene-lines.tsx",
+    "packages/react/src/where-drawn.tsx"
+  ],
+  "entryPoints": [
+    "packages/react/src/channels.ts",
+    "packages/react/src/connectors.tsx",
+    "packages/react/src/kit.ts",
+    "packages/react/src/routes.ts",
+    "packages/react/src/scene-lines.tsx",
+    "packages/react/src/where-drawn.tsx"
+  ],
+  "cohesion": 0.55,
+  "coupling": 0.45,
+  "fileCount": 6,
+  "lineCount": 2380
+}

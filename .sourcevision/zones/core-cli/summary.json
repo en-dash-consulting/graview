@@ -1,0 +1,25 @@
+{
+  "id": "core-cli",
+  "name": "Core Cli",
+  "description": "4 files, mostly utilities and entry points; entry points check.ts; imports Core and Core Mutations; imported by Core.",
+  "files": [
+    "packages/core/src/cli/check.ts",
+    "packages/core/src/cli/check/index.ts",
+    "packages/core/src/cli/check/migrations.ts",
+    "packages/core/src/cli/check/routes.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/cli/check.ts"
+  ],
+  "cohesion": 0.23,
+  "coupling": 0.77,
+  "fileCount": 4,
+  "lineCount": 243,
+  "riskMetrics": {
+    "cohesion": 0.23,
+    "coupling": 0.77,
+    "riskScore": 0.77,
+    "riskLevel": "catastrophic",
+    "failsThreshold": true
+  }
+}

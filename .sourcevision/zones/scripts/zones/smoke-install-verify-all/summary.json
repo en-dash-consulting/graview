@@ -1,0 +1,15 @@
+{
+  "id": "scripts/smoke-install-verify-all",
+  "name": "Smoke Install Verify All",
+  "description": "3 files, primarily JavaScript",
+  "files": [
+    "scripts/smoke-install.mjs",
+    "scripts/verify-all.mjs",
+    "scripts/verify-products.mjs"
+  ],
+  "entryPoints": [],
+  "cohesion": 0,
+  "coupling": 0,
+  "fileCount": 3,
+  "lineCount": 645
+}
