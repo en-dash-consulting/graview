@@ -1005,6 +1005,7 @@ function Ask({
         mutation={mutation}
         prefilled={affordance.args}
         open={affordance.open}
+        label={affordance.label}
         {...(principal ? { principal } : {})}
         onDone={onDone}
       />

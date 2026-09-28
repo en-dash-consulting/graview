@@ -529,7 +529,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           <section key={affordance.id} style={{ ...rule, display: "grid", gap: 14 }}>
             <h2 style={h2}>{mutation.title ?? mutation.name}</h2>
             {mutation.description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{mutation.description}</p> : null}
-            <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} {...(principal ? { principal } : {})} />
+            <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} label={affordance.label} {...(principal ? { principal } : {})} />
           </section>
         ))}
       </div>

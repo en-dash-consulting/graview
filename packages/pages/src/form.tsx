@@ -365,6 +365,15 @@ export interface DerivedFormProps<S extends AnySchema> {
    * asked "may I?" with is the one that presses submit.
    */
   readonly principal?: Principal;
+  /**
+   * What the submit button says, when the form is an act offered from where
+   * the page stands. An act that `connects` is offered from both ends, and
+   * its `title` is written from the subject's: on a song's page the form
+   * for putting it in an era was headed "Place it in an era" — the
+   * affordance's words from the song's end — and its button said "Put it in
+   * the era", the era's. Hand it the affordance's label and they agree.
+   */
+  readonly label?: string;
 }
 
 /** The submit path is the ordinary one: `store.apply`, refusals shown. */
@@ -376,6 +385,7 @@ export function DerivedForm<S extends AnySchema>({
   onDone,
   principal,
   initial,
+  label,
 }: DerivedFormProps<S>) {
   const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...initial }));
   const [failed, setFailed] = useState<string | null>(null);
@@ -419,7 +429,7 @@ export function DerivedForm<S extends AnySchema>({
         </p>
       ) : null}
       <button type="submit" style={{ justifySelf: "start" }}>
-        {mutation.title ?? mutation.name}
+        {label ?? mutation.title ?? mutation.name}
       </button>
     </form>
   );

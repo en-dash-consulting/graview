@@ -39,6 +39,10 @@ describe("what a project starts with passes its own checks", () => {
     expect(pages).toContain("isCurrent(store.schema.tryDefinition(node.kind), node)");
   });
 
+  it("submits a tie under the words its heading uses, from this end (W-100)", () => {
+    expect(file("Field Notes", "src/ui/pages.tsx")).toMatch(/<DerivedForm<S>[^>]*label=\{affordance\.label\}/);
+  });
+
   it("frames only Begin's own door, so the derived home comes back as the whole page it is", () => {
     const pages = file("Field Notes", "src/ui/pages.tsx");
     expect(pages).toContain("frame={(door) => (");

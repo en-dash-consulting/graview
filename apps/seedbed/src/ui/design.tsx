@@ -275,7 +275,7 @@ function Acts({ context, actions, only }: { context: Ctx; actions: AffordanceSet
         <div className="sb-form">
           <span className="sb-tag">{opened.label}</span>
           {mutation.description ? <p style={{ margin: 0, color: "var(--graview-ink-muted)", fontSize: "0.875rem" }}>{mutation.description}</p> : null}
-          <DerivedForm<S> store={store} mutation={mutation} prefilled={opened.args} {...(context.principal ? { principal: context.principal as Principal } : {})} open={opened.open} onDone={() => done(opened.id)} />
+          <DerivedForm<S> store={store} mutation={mutation} prefilled={opened.args} {...(context.principal ? { principal: context.principal as Principal } : {})} open={opened.open} label={opened.label} onDone={() => done(opened.id)} />
         </div>
       ) : null}
     </div>

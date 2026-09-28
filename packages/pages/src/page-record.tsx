@@ -259,6 +259,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   prefilled={affordance.args}
                   // The candidates the derivation narrowed, not every node.
                   open={affordance.open}
+                  // The button says what the heading says: this end's words.
+                  label={affordance.label}
                   onDone={() => setOpen(null)}
                   {...(principal ? { principal } : {})}
                 />

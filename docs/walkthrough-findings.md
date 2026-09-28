@@ -2760,3 +2760,24 @@ two singles and thirty-five songs.
   retiring by date keeps it true. Criterion: core `scaffold.test.ts` "reads
   the record's place on the horizon from the lifecycle" (no status cast, no
   "closed", `isCurrent`); the generated project typechecks.
+
+### W-100 · A form headed "Place it in an era" submits with "Put it in the era"
+- stage: B · face: pages · width: any · scheme: both
+- expected: an act offered from the far end of a tie reads from where the
+  page stands, heading and button alike
+- actual: on a song's page the act that puts it in an era (subject: the
+  era) was headed with the affordance's label, "Place it in an era" — the
+  `fromTheOtherEnd` words — and `DerivedForm`'s button said the act's
+  `title`, "Put it in the era", which is the era's side. The same on the
+  derived record page, the places page, the scaffold's own record page and
+  the three example designs.
+- where it belongs: `packages/pages/src/form.tsx` (`DerivedForm` takes
+  `label`), `page-record.tsx`, `page-places.tsx`, the scaffold's page
+  (`packages/core/src/scaffold/ui.ts`), and the examples' designs
+- harness that should have caught it: `act-without-far-end-reading` checks
+  that the words exist; nothing checked the form used them
+- status: fixed in "walkthrough: B · the button says what the heading says" ·
+  a form opened for an affordance submits under the affordance's label;
+  without one it says the title as before. Criteria: pages
+  `the-button-says-the-heading.test.tsx`, and core `scaffold.test.ts`
+  "submits a tie under the words its heading uses".
