@@ -76,6 +76,46 @@ describe("a chapter, embedded", () => {
     handle.unmount();
   });
 
+  it("shows one named lens and nothing else on the picture face", () => {
+    const element = into();
+    const handle = mount(element, {
+      app: chapter.app,
+      seed: chapter.seed,
+      face: "picture",
+      stop: "#view=who-tends-what",
+      principal: chapter.principal,
+      views: (schema) => seedbedViews(schema, { lens: true, board: true }),
+    });
+    expect(element.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")).toBe("picture");
+    // The lens, at full size, over the gardeners — and no strip, no scene, no rail around it.
+    expect(element.querySelector('[data-testid="embed-picture"]')).not.toBeNull();
+    expect(element.textContent).toContain("Who tends what");
+    expect(element.querySelector('[data-testid="embed-face-pages"]')).toBeNull();
+    expect(element.querySelector("[data-graview-view]")).toBeNull();
+    handle.unmount();
+  });
+
+  it("goes to a place named by its stop, the way a page can write it", () => {
+    /*
+     * `#view=who-tends-what` is the link a page can actually write — the
+     * page knows the picture, not how the layout spells the aggregate id
+     * behind it. The scene's URL sync resolved it; the embed's `stop` did
+     * not, so a host page naming a place landed at the default view with
+     * the place's pill unpressed.
+     */
+    const element = into();
+    const handle = mount(element, {
+      app: chapter.app,
+      seed: chapter.seed,
+      face: "scene",
+      stop: "#view=who-tends-what",
+      principal: chapter.principal,
+      views: (schema) => seedbedViews(schema, { lens: true, board: true }),
+    });
+    expect(element.querySelector('[data-testid="place-who-tends-what"]')?.getAttribute("aria-pressed")).toBe("true");
+    handle.unmount();
+  });
+
   it("names the lenses on the strip, and a lens is a place you can get back to", async () => {
     const element = into();
     const handle = mount(element, {

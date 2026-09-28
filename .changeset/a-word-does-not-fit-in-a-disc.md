@@ -8,3 +8,5 @@ The board lens draws a token when a code is a word, and shelves a zone's slots w
 `arrange: "shelf"` is for a board whose x and y are categories rather than coordinates — a load map whose rows are "still owns", "shared", "handoff". Each zone becomes a band with its name as a heading row of its own, and its slots flow into rows in the domain's order, sized to what they hold; nothing on a shelf can overlap anything, and a zone's name can no longer be clipped to the middle of the word by a fifteen-pixel rail. The default, `"exact"`, is unchanged for a pitch or a seating plan, and its rail now ends a name that does not fit with an ellipsis and carries it whole in the title.
 
 The `graview-lens` and `graview-new-app` skills and the package READMEs say so: the board's two marks and its two arrangements, and that a new app's pages face wants the scene's `views` to land on its gallery.
+
+A placed mark is as wide as what it holds: an absolutely placed token with no width of its own shrank to the room between its point and the field's edge, so on a phone-width board a token at 82% was 22 pixels wide with its word broken inside it.

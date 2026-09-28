@@ -25,29 +25,29 @@ if (location.pathname.startsWith("/pages")) {
 
 - `/` — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and
   1 planting.", or "Nothing here yet." and which act begins it), then every
-  picture as a large live card, two across at a desk, one on a phone; then
+  picture as a large live card, two across at a desk, one on a phone, then
   the kinds as a row of counts, a line to the map, and Recently. A kind
-  with no titled lens is drawn anyway — a contact sheet of its members — so
-  a new app lands on a gallery; titling a lens replaces that card with the
-  lens by its name. An empty picture says what would fill it.
+  with no titled lens gets a contact sheet of its members, so a new app
+  lands on a gallery; titling a lens replaces that card with the
+  lens by its name. An empty picture names the act that fills it.
 - `/<plural>` — a list per kind, marking trouble, with the creating acts
   beneath it.
 - `/<plural>/<id>` — a record: its facts, its relations captioned in the
   declaration's words, what can be done, what has happened.
 - `/problems` — every broken rule with its repairs.
 
-The shell is one row — pictures (home), kinds, Map, Problems — and scrolls
+The shell is one row — pictures (home), kinds, Map, Problems — scrolling
 sideways on a phone. Shell and gallery are 1160px wide; read pages, 760.
 
-**Hand it `views`** (the scene's own registry, plus `settings`/`presence`)
-— `graview create` already does — and the face puts the scene's provider
+**Hand it `views`** (the scene's registry, plus `settings`/`presence`) —
+`graview create` does — and the face puts the scene's provider
 under its routes, which buys three things at once:
 
-- `/places`, `/places/<as>` — every named lens as a page (fullscreen mode,
-  over the kind's members, its siblings one press away, the beginning acts
-  beneath) and the home's gallery again. A kind's page lists its own
-  pictures; a pick inside a lens travels to the record.
-- `/map` — `kindMap(store)`: every declared relation in its own words with
+- `/places`, `/places/<as>` — every named lens as a page (fullscreen, over
+  the kind's members, siblings one press away, the beginning acts beneath)
+  and the gallery again. A kind's page lists its pictures; a pick in a lens
+  travels to the record.
+- `/map` — `kindMap(store)`: every declared relation in its words with
   its live count, also a section on the home page. A kind's list says what
   it relates to, groups by a relation (`?by=<edge>`) and narrows by one
   (`?<edge>=<id>`, or `?with=<edge>` for having it at all) — in the URL, so
@@ -58,7 +58,6 @@ under its routes, which buys three things at once:
   questions before anybody types; proposals apply through the same runtime,
   attributed and undoable, withheld ones struck through. Open questions are
   listed on `/problems`; the rung that answers is chosen in the footer.
-  Mounted by the router, so a design that replaces every surface keeps it.
 
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
@@ -187,7 +186,8 @@ const handle = mount(el, { app, seed, stop: "#focus=agg:plot", principal, views,
 handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
 ```
 
-- `face` is inferred from the stop, `scheme` from the host page; `label`
+- `face` follows the stop; `"picture"` is one named lens alone
+  (`stop: "#view=the-week"`); `scheme` follows the host page; `label`
   names the landmarks, so two embeds are two regions with two names.
 - `mountWhenNear(elements, mountOne)` mounts many as a reader scrolls near
   them. The strip shows the app's places (`graview-lens`, step 8).

@@ -17,6 +17,10 @@
     "./open": {
       "types": "./dist/open.d.ts",
       "default": "./dist/open.js"
+    },
+    "./views": {
+      "types": "./dist/ui/views.d.ts",
+      "default": "./dist/ui/views.js"
     }
   },
   "scripts": {

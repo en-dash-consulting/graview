@@ -1,5 +1,8 @@
-import { checkKitContrast, resolveKit, type KitOverrides } from "@graview/core";
+import { checkKitContrast, resolveKit, type KitOverrides, type Principal } from "@graview/core";
 import { mount, mountWhenNear, type EmbedFace, type EmbedHandle } from "@graview/embed";
+import { rotaApp } from "@graview/rota";
+import { rotaViews } from "@graview/rota/views";
+import rotaSeed from "../../rota/src/data/example.json";
 import { seedbedBrand as SEEDBED_BRAND } from "./domain/brand.js";
 import { CHAPTERS, type Chapter } from "./domain/chapters.js";
 import { seedbedDesign } from "./ui/design.js";
@@ -20,6 +23,7 @@ declare global {
   interface Window {
     graviewChapters?: {
       mount: typeof mountChapter;
+      mountRota: typeof mountRota;
       mountAll: typeof mountAll;
       chapters: readonly Chapter[];
       /** Every embed the page has mounted, by its element, so the page can re-dress or re-seat one. */
@@ -100,14 +104,56 @@ export function kitFindings(n: number, kit: KitOverrides): readonly { readonly e
   );
 }
 
-/** Every `[data-graview-chapter]` on the page, mounted as the reader comes near. */
+/*
+ * THE ROTA, LIVE, BESIDE THE GARDEN.
+ *
+ * The lenses section claims one calendar over two domains: written for
+ * the rota, unchanged over the garden. The page made the first half with
+ * a photograph, because this bundle carried the garden's chapters alone.
+ * The rota is the other product in the tree — a shift roster with a
+ * policy, three seats and the same calendar lens — so it mounts here the
+ * way a chapter does: its declaration, its example week, its own pictures,
+ * its seats on the strip. The seats are the rota's own, restated rather
+ * than imported, because importing its `ui` entry would bring the whole
+ * app's interface into a bundle that only needs its declaration.
+ */
+const ROTA_SEATS: readonly { readonly label: string; readonly principal: Principal }[] = [
+  { label: "Jo, coordinator", principal: { kind: "human", id: "user-jo", roles: ["coordinator"] } },
+  { label: "Ada, volunteer", principal: { kind: "human", id: "user-ada", roles: ["volunteer"] } },
+  { label: "Sam, viewer", principal: { kind: "human", id: "user-sam", roles: ["viewer"] } },
+];
+/** The rota's example week: the seed's shifts fall in it, so the calendar opens on something. */
+const ROTA_WEEK = "2026-09-14";
+
+export function mountRota(element: HTMLElement, stop?: string, label?: string, face?: EmbedFace): EmbedHandle {
+  const handle = mount(element, {
+    app: rotaApp as never,
+    seed: rotaSeed as never,
+    ...(face ? { face } : {}),
+    stop: stop ?? `#view=the-week&in.at=${ROTA_WEEK}`,
+    principal: ROTA_SEATS[0]!.principal,
+    seats: ROTA_SEATS,
+    views: () => rotaViews() as never,
+    standing: "Every shift is covered",
+    label: label ?? "The rota",
+  });
+  handles.set(element, handle);
+  element.dispatchEvent(new CustomEvent("graview:mounted", { bubbles: true, detail: { app: "rota", handle } }));
+  return handle;
+}
+
+/** Every `[data-graview-chapter]` and `[data-graview-app]` on the page, mounted as the reader comes near. */
 export function mountAll(root: ParentNode = document): void {
-  mountWhenNear([...root.querySelectorAll<HTMLElement>("[data-graview-chapter]")], (element) => {
+  mountWhenNear([...root.querySelectorAll<HTMLElement>("[data-graview-chapter], [data-graview-app]")], (element) => {
     element.replaceChildren();
+    if (element.dataset["graviewApp"] === "rota") {
+      mountRota(element, element.dataset["stop"], element.dataset["label"], element.dataset["face"] as EmbedFace | undefined);
+      return;
+    }
     mountChapter(element, Number(element.dataset["graviewChapter"]), element.dataset["face"] as EmbedFace | undefined, element.dataset["label"], element.dataset["stop"]);
   });
 }
 
-window.graviewChapters = { mount: mountChapter, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
+window.graviewChapters = { mount: mountChapter, mountRota, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => mountAll());
 else mountAll();

@@ -73,6 +73,15 @@ const sowing = (turns: boolean) =>
       ? "Put a planting in the ground, in a plot — under the turn of the rotation that plot is in."
       : "Put a planting in the ground, in a plot.",
     creates: ["planting"],
+    /*
+     * SOWING IS ABOUT THE PLOT. A creating act with no subject is offered
+     * only where its kind begins — the plantings' card — and never on the
+     * thing it is done TO: the almanac's plot page had a "Sow something
+     * here" heading with nothing under it, on both faces, because the
+     * derivation offers a selected node only the acts that name it as
+     * their subject. The plot is what you stand in front of when you sow.
+     */
+    subject: { kinds: ["plot"], arg: "plotId" },
     input: z.object({
       label: z.string().min(1),
       plotId: nodeRef(["plot"]),

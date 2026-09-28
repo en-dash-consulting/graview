@@ -305,14 +305,29 @@ export function BoardView<S extends AnySchema>({
    * the room, so the width is set from the same measurement.
    */
   const [tall, setTall] = useState<number | null>(null);
+  /*
+   * A ROOM WITH NO HEIGHT OF ITS OWN drives the board by its WIDTH.
+   *
+   * The height-driven sizing above assumes the room was given a height — a
+   * band in the scene, a page region. In a chapter embed on the docs site
+   * the panel sits in a column that is as tall as its content, so the room
+   * measured four pixels, the board became six by four, and every slot on
+   * it was a four-pixel target hanging off a nothing. Below a height a
+   * board could be read at, the board takes the room's width instead and
+   * its aspect gives it a height, which is what a board in a document is.
+   */
+  const LEAST_HEIGHT = 160;
+  const [byWidth, setByWidth] = useState(false);
   useEffect(() => {
     const element = room.current;
     if (!element || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver((entries) => {
       const box = entries[0]?.contentRect;
-      if (!box || box.height === 0) return;
-      setTurned(aspect < 1 && box.width / box.height > 1.3);
-      setTall(box.height);
+      if (!box) return;
+      const shallow = box.height < LEAST_HEIGHT;
+      setByWidth(shallow);
+      setTurned(!shallow && aspect < 1 && box.width / box.height > 1.3);
+      setTall(shallow ? null : box.height);
     });
     observer.observe(element);
     return () => observer.disconnect();
@@ -811,7 +826,7 @@ export function BoardView<S extends AnySchema>({
         /* The rail belongs TO the field, so it travels with it rather than
             sitting a gap away looking like a separate column. Turned, it
             lies along the bottom edge instead of standing beside the left. */
-        <div style={{ display: "flex", gap: 5, alignItems: "stretch", minWidth: 0 }}>
+        <div style={{ display: "flex", gap: 5, alignItems: "stretch", minWidth: 0, ...(byWidth ? { flex: "1 1 auto", alignSelf: "flex-start" } : {}) }}>
         {!turned && zones.length > 0 ? (
           <div
             aria-hidden="true"
@@ -854,12 +869,19 @@ export function BoardView<S extends AnySchema>({
           style={{
             ...field,
             position: "relative",
-            height: "100%",
-            flex: "0 1 auto",
             aspectRatio: `${turned ? 1 / aspect : aspect}`,
-            // The measured width, once the room has spoken — see `tall`.
-            // The aspect ratio above stays as the first-paint estimate.
-            ...(tall !== null ? { width: Math.round(tall * (turned ? 1 / aspect : aspect)) } : {}),
+            ...(byWidth
+              ? // The room's width, and the aspect gives the height — see `byWidth`.
+                // Not stretched: a stretched flex item takes the row's height, and
+                // the row's height is the four pixels this is escaping from.
+                { width: "100%", height: "auto", flex: "1 1 auto", minWidth: 0, alignSelf: "flex-start" }
+              : {
+                  height: "100%",
+                  flex: "0 1 auto",
+                  // The measured width, once the room has spoken — see `tall`.
+                  // The aspect ratio above stays as the first-paint estimate.
+                  ...(tall !== null ? { width: Math.round(tall * (turned ? 1 / aspect : aspect)) } : {}),
+                }),
             maxWidth: "100%",
           }}
         >
@@ -921,6 +943,16 @@ export function BoardView<S extends AnySchema>({
               left: `${at(slot.x, slot.y).x * 100}%`,
               top: `${at(slot.x, slot.y).y * 100}%`,
               transform: "translate(-50%, -50%)",
+              /*
+               * AS WIDE AS WHAT IT HOLDS. An absolutely placed box with no
+               * width shrinks to the room between its `left` and the
+               * field's edge, so a token placed at 82% of a phone-width
+               * board was 22 pixels wide with its word broken inside it —
+               * and 22 pixels is not a target. A disc never noticed, being
+               * 34 pixels by declaration.
+               */
+              width: "max-content",
+              maxWidth: "100%",
             }),
           )}
         </div>

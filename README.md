@@ -179,7 +179,7 @@ The walk that finds what is still weird between `graview create` and a
 seamless app is `docs/walkthrough.md`: nine stages with acceptance criteria,
 a findings log, and the rule that every finding is fixed in a package with
 the criterion that would have caught it.
-pnpm site:build    # the chapters' bundle: apps/seedbed → docs/site/chapters.js
+pnpm site:build    # the chapters' bundle: apps/seedbed (and the rota's week) → docs/site/chapters.js
 
 pnpm pack:inspect  # what would actually go in each tarball
 pnpm smoke         # install the tarballs into a scratch project and build

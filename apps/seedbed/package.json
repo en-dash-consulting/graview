@@ -32,6 +32,7 @@
     "@graview/primitives": "workspace:*",
     "@graview/react": "workspace:*",
     "@graview/render": "workspace:*",
+    "@graview/rota": "workspace:*",
     "@graview/ship": "workspace:*",
     "@graview/studio": "workspace:*",
     "@graview/tools": "workspace:*",

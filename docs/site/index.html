@@ -926,8 +926,9 @@ main.page footer { max-width: 100%; }
    The second cut showed the product but argued like documentation: code
    beside every frame, a checks table, a packages grid. This one says what
    the kit does and who it is for, in words a developer skims, with one
-   large legible picture per claim — live where a frame can hold the
-   picture, a photograph from the harness where it cannot.
+   large legible picture per claim — every one of them the example itself,
+   live, opened at the stop that shows the claim. The last photographs
+   went when the garden could make each claim in a frame of its own.
    ─────────────────────────────────────────────────────────────────── */
 
 main.page > section.feature, main.page > section.how, main.page > section.cases,
@@ -953,6 +954,10 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 .feature.flip .feature-grid > .claim { order: 2; }
 .feature .visual { min-width: 0; display: grid; gap: 10px; }
 .feature .chapter-live { height: 580px; border-radius: 6px; box-shadow: 0 40px 90px -40px rgba(0, 12, 48, 0.55), 0 0 0 1px var(--rule); }
+/* A picture is one lens with no chrome: a calendar wants a month's height, a matrix a third of it. */
+.feature .chapter-live.picture { height: 440px; }
+.feature .chapter-live.picture.short { height: 250px; }
+.feature .chapter-live.picture + .stage-caption { margin-bottom: 28px; }
 .shot { margin: 0; display: grid; gap: 10px; }
 .shot img { display: block; width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--rule); box-shadow: 0 40px 90px -40px rgba(0, 12, 48, 0.55); background: var(--sunk); }
 .shot .light, .shot .dark { display: none; }
@@ -1087,7 +1092,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
     <li><strong data-number="lenses">5</strong> <span>lenses that rebind to any domain</span></li>
     <li><strong data-number="skills">13</strong> <span>skills your assistant reads before it writes</span></li>
     <li><strong data-number="codes">74</strong> <span>things the checker can tell you, in words</span></li>
-    <li><strong data-number="tests">1436</strong> <span>named tests, green on every push</span></li>
+    <li><strong data-number="tests">1438</strong> <span>named tests, green on every push</span></li>
   </ul>
 
   <section id="how" class="how" aria-labelledby="h-how">
@@ -1197,16 +1202,18 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
         <p class="more"><a href="docs/skills/graview-lens.html">Building a lens that rebinds &rarr;</a></p>
       </div>
       <div class="visual">
-        <figure class="shot">
-          <img class="dark" src="img/todo-week-dark.png" width="1400" height="843" alt="The week lens over a todo list: seven columns, tasks placed by their times, two problems flagged in the corner." loading="lazy">
-          <img class="light" src="img/todo-week-light.png" width="1400" height="843" alt="The week lens over a todo list, in the light scheme." loading="lazy">
-          <figcaption>Photographed by the harness · the week lens, bound to a todo list's own fields</figcaption>
-        </figure>
-        <figure class="shot">
-          <img class="dark" src="img/coverage-dark.png" width="1400" height="306" alt="The coverage lens over the garden: gardeners as rows, plots as columns, one unanswered and one unasked." loading="lazy">
-          <img class="light" src="img/coverage-light.png" width="1400" height="306" alt="The coverage lens over the garden, in the light scheme." loading="lazy">
-          <figcaption>Photographed by the harness · the coverage matrix, written for a tender response, over who tends what</figcaption>
-        </figure>
+        <div class="chapter-live picture" data-graview-app="rota" data-face="picture" data-stop="#view=the-week&amp;in.at=2026-09-14" data-label="The rota's week" role="region" aria-label="The calendar lens over a volunteer rota's shifts, live">
+          <p class="chapter-loading">The rota's week, loading…</p>
+        </div>
+        <p class="stage-caption"><span class="live">Live</span><span>the calendar lens where it was written: a volunteer rota's week</span></p>
+        <div class="chapter-live picture" data-graview-chapter="16" data-face="picture" data-stop="#view=the-season" data-label="The season" role="region" aria-label="The calendar lens over the garden's plantings, live">
+          <p class="chapter-loading">The season, loading…</p>
+        </div>
+        <p class="stage-caption"><span class="live">Live</span><span>the same lens, unchanged, over what is in a garden's ground</span></p>
+        <div class="chapter-live picture short" data-graview-chapter="10" data-face="picture" data-stop="#view=who-tends-what" data-label="Who tends what" role="region" aria-label="The coverage lens over gardeners and plots, live">
+          <p class="chapter-loading">The coverage matrix, loading…</p>
+        </div>
+        <p class="stage-caption"><span class="live">Live</span><span>a second lens, the coverage matrix — written for a tender response, here over who tends what</span></p>
       </div>
     </div>
   </section>
@@ -1286,11 +1293,10 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
         <p class="more"><a href="docs/skills/graview-permissions.html">Declaring who may do what &rarr;</a></p>
       </div>
       <div class="visual">
-        <figure class="shot">
-          <img class="dark" src="img/todo-selected-dark.png" width="1400" height="843" alt="A task selected in the lists lens: its actions ranked in the rail, its ties drawn, the seat listening beneath." loading="lazy">
-          <img class="light" src="img/todo-selected-light.png" width="1400" height="843" alt="A task selected in the lists lens, in the light scheme." loading="lazy">
-          <figcaption>Photographed by the harness · one selection, its actions, its ties, and the seat</figcaption>
-        </figure>
+        <div class="chapter-live" data-graview-chapter="7" data-stop="#focus=plot-1" data-label="Who may do what" role="region" aria-label="A plot selected in the garden, with the acts its seat may take, live">
+          <p class="chapter-loading">The garden, loading…</p>
+        </div>
+        <p class="stage-caption"><span class="live">Live</span><span>one plot selected: its acts ranked, its ties drawn, and the ones this seat may not take struck through — change seats above it</span></p>
       </div>
     </div>
   </section>

@@ -45,6 +45,9 @@
     },
     {
       "path": "../../packages/studio"
+    },
+    {
+      "path": "../rota"
     }
   ]
 }

@@ -65,7 +65,7 @@ const arrive = async (page, url) => {
 
 const PAGES = [
   /* The hero, four feature frames, and the first step of the stepper. */
-  { file: "index.html", name: "the page", live: 6, skip: "#what" },
+  { file: "index.html", name: "the page", live: 10, skip: "#what" },
   /* Sixteen chapters and the kit's own frame. */
   { file: "progression.html", name: "the long version", live: 17, skip: "#grown" },
   /*
@@ -129,7 +129,7 @@ try {
       if (sheet.live > 0) {
         await page
           .waitForFunction(
-            () => [...document.querySelectorAll("[data-graview-chapter]")].every((el) => el.querySelector("[data-graview-embed]") !== null),
+            () => [...document.querySelectorAll("[data-graview-chapter], [data-graview-app]")].every((el) => el.querySelector("[data-graview-embed]") !== null),
             null,
             { timeout: 20_000 },
           )

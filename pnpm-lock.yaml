@@ -212,6 +212,9 @@ importers:
       '@graview/render':
         specifier: workspace:*
         version: link:../../packages/render
+      '@graview/rota':
+        specifier: workspace:*
+        version: link:../rota
       '@graview/ship':
         specifier: workspace:*
         version: link:../../packages/ship
@@ -443,6 +446,9 @@ importers:
       react:
         specifier: '>=18'
         version: 19.2.8
+      react-dom:
+        specifier: '>=18'
+        version: 19.2.8(react@19.2.8)
     devDependencies:
       zod:
         specifier: ^4.4.3

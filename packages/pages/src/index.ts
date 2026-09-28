@@ -15,6 +15,7 @@ export {
   Gallery,
   GalleryCard,
   galleryOf,
+  PlacePicture,
   KindMapSection,
   DefaultProblemsPage,
   DefaultRecordPage,

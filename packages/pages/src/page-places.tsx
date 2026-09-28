@@ -77,6 +77,30 @@ function LensOnPage<S extends AnySchema>({ context, place }: { context: PageCont
   );
 }
 
+/**
+ * ONE NAMED PICTURE, AND NOTHING ELSE: the lens registered under `as`, at
+ * full size, over the kind's current members — for a host that wants the
+ * picture without the app around it. The embed's picture face is this; a
+ * page of the app's own may use it the same way.
+ */
+export function PlacePicture<S extends AnySchema>({
+  store,
+  views,
+  as,
+  invariantContext,
+}: {
+  readonly store: Store<S>;
+  readonly views: NonNullable<PageContext<S>["views"]>;
+  readonly as: string;
+  readonly invariantContext?: PageContext<S>["invariantContext"];
+}) {
+  useStoreTick(store);
+  const context: PageContext<S> = { store, views, ...(invariantContext ? { invariantContext } : {}) };
+  const place = views.places().find((candidate) => candidate.as === as);
+  if (!place) return null;
+  return <LensOnPage context={context} place={place} />;
+}
+
 /*
  * A KIND WITH NO PICTURE OF ITS OWN, DRAWN ANYWAY.
  *

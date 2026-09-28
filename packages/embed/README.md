@@ -10,7 +10,7 @@ import { mount } from "@graview/embed";
 const handle = mount(document.querySelector("#garden")!, {
   app,                        // defineApp(...)
   seed,                       // the graph to open with, or nothing
-  face: "graview",            // "scene" | "graview" | "pages"
+  face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"
   stop: "#focus=plot-1",      // the scene's view state, as its URL fragment
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
   toggle: true,               // the face switcher and Standing, above the picture

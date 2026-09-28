@@ -129,7 +129,7 @@ export const initials = (label: string): string =>
     .toUpperCase();
 
 /** A sprout: one stem, two first leaves. The brand's own mark, small. */
-export function Sprout({ size = 14 }: { size?: number }) {
+export function Sprout({ size = 14 }: { size?: number | string }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 21V10" />
@@ -154,12 +154,46 @@ const HUE = { gardener: 28, plot: 42, planting: 122, rule: 210 } as const;
 /** The drawing itself. Pure: everything it needs is in `garden`. */
 export function GardenMapPicture({ garden, plot: wrapPlot, lit, aspect = 2.2, dense = false }: GardenMapPictureProps) {
   const emphasis = (ids: readonly string[]) => (!lit || lit.size === 0 ? "plain" : ids.some((id) => lit.has(id)) ? "lit" : "dimmed");
+  /*
+   * A PLOT IS NEVER NARROWER THAN ITS OWN NAME, and the ground scrolls
+   * before the type shrinks.
+   *
+   * A plot's width was a share of the map and everything inside it — the
+   * label's type, the caretaker's badge, each bed — a fixed number of
+   * pixels. On a wide page that was fine. In the almanac's home the map
+   * shares its column with a sidebar, and inside a chapter embed that
+   * column is about 330 pixels: a four-bed plot came out 70 pixels wide
+   * holding 90 pixels of content, so its label was cut to "Plo…", the
+   * badge hung off its right edge and the last bed sat outside it.
+   *
+   * Scaling the contents down with the ground fixed the spill and made the
+   * type nine pixels, which is not a fix: a name nobody can read is not
+   * accessible however neatly it fits. So the floor is legibility. A plot's
+   * width is a share of the ground OR the width of its name at eleven
+   * pixels with its badge and beds beside it, whichever is more; and the
+   * ground itself has a least width, past which the picture stops shrinking
+   * and swipes sideways instead — a scroll region of its own, never the
+   * page. The contents still take a share of a WIDE ground (a real patch on
+   * a real page), clamped between that floor and what a wide page needs.
+   * `dense` — the summary card in the scene, a shrunk picture that is not
+   * read — keeps the proportional drawing and no least width.
+   */
+  const k = dense ? 0.72 : 1;
+  const cq = (min: number, share: number, max: number) => `clamp(${min * k}px, ${share}cqw, ${max * k}px)`;
+  /** The ground below which the plots would no longer be legible, so it scrolls instead. */
+  const LEAST_GROUND = 340;
   return (
+    <div style={dense ? undefined : { overflowX: "auto", maxWidth: "100%", scrollbarWidth: "thin" }} data-testid="garden-ground">
     <div
       data-testid="garden-map"
       style={{
         position: "relative",
         width: "100%",
+        ...(dense ? {} : { minWidth: LEAST_GROUND }),
+        // Its border counts inside the hundred percent, or a ground that fits its column
+        // is two pixels wider than it and grows a scrollbar for nothing.
+        boxSizing: "border-box",
+        containerType: "inline-size",
         aspectRatio: String(aspect),
         borderRadius: 14,
         border: "1px solid var(--graview-edge)",
@@ -176,7 +210,7 @@ export function GardenMapPicture({ garden, plot: wrapPlot, lit, aspect = 2.2, de
         // a wide page and a legible one in a card: a share of the width,
         // wider with more beds, and never a fixed number of pixels.
         const width = `${(dense ? 9 : 11) + plot.beds * (dense ? 2 : 2.6)}%`;
-        const height = dense ? 44 : 72;
+        const height = cq(56, 11.5, 72);
         const state = emphasis([plot.id, ...(plot.caretaker ? [plot.caretaker.id] : []), ...plot.growing.map((p) => p.id)]);
         const untended = plot.caretaker === null;
         const drawn = (
@@ -196,9 +230,12 @@ export function GardenMapPicture({ garden, plot: wrapPlot, lit, aspect = 2.2, de
               height,
               boxSizing: "border-box",
               borderRadius: 8,
-              padding: dense ? "3px 6px" : "5px 8px",
+              padding: `${cq(4, 0.8, 5)} ${cq(6, 1.25, 8)}`,
               display: "grid",
               alignContent: "space-between",
+              // The floor: its name, its badge and its beds, at a size a person can read.
+              minWidth: dense ? 0 : "max-content",
+              overflow: "hidden",
               // A plot is a rectangle of turned earth; an untended one is
               // ringed in the rule's amber, dashed, because the ring is the
               // rule speaking and not the soil.
@@ -209,11 +246,11 @@ export function GardenMapPicture({ garden, plot: wrapPlot, lit, aspect = 2.2, de
               opacity: state === "dimmed" ? 0.5 : 1,
               transition: "opacity 160ms ease, box-shadow 160ms ease",
               cursor: "pointer",
-              fontSize: dense ? 10 : 11.5,
+              fontSize: cq(11, 1.8, 11.5),
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-              <strong style={{ fontFamily: "var(--graview-font-display)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: cq(5, 0.9, 6), minWidth: 0 }}>
+              <strong style={{ fontFamily: "var(--graview-font-display)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
                 {plot.label}
               </strong>
               <span
@@ -221,12 +258,13 @@ export function GardenMapPicture({ garden, plot: wrapPlot, lit, aspect = 2.2, de
                 title={plot.caretaker ? plot.caretaker.label : "nobody"}
                 style={{
                   marginLeft: "auto",
-                  width: dense ? 16 : 20,
-                  height: dense ? 16 : 20,
+                  flex: "0 0 auto",
+                  width: cq(18, 3.1, 20),
+                  height: cq(18, 3.1, 20),
                   borderRadius: 999,
                   display: "grid",
                   placeItems: "center",
-                  fontSize: dense ? 8 : 9,
+                  fontSize: cq(8.5, 1.4, 9),
                   fontWeight: 700,
                   letterSpacing: "0.04em",
                   background: plot.caretaker ? `hsl(${HUE.gardener} 55% 45%)` : "transparent",
@@ -237,7 +275,7 @@ export function GardenMapPicture({ garden, plot: wrapPlot, lit, aspect = 2.2, de
                 {plot.caretaker ? initials(plot.caretaker.label) : "?"}
               </span>
             </div>
-            <div style={{ display: "flex", gap: 4, alignItems: "flex-end", minHeight: dense ? 12 : 18 }}>
+            <div style={{ display: "flex", gap: cq(3, 0.6, 4), alignItems: "flex-end", minHeight: cq(14, 2.8, 18) }}>
               {Array.from({ length: plot.beds }, (_, bed) => {
                 const sown = plot.growing[bed];
                 const sprout = (
@@ -248,14 +286,20 @@ export function GardenMapPicture({ garden, plot: wrapPlot, lit, aspect = 2.2, de
                       display: "inline-flex",
                       alignItems: "flex-end",
                       justifyContent: "center",
-                      width: dense ? 12 : 16,
-                      height: dense ? 12 : 18,
+                      flex: "0 0 auto",
+                      width: cq(13, 2.5, 16),
+                      height: cq(14, 2.8, 18),
                       borderRadius: 3,
                       background: sown ? "transparent" : "hsl(40 25% 20% / 0.5)",
                       color: `hsl(${HUE.planting} 55% 62%)`,
                     }}
                   >
-                    {sown ? <Sprout size={dense ? 11 : 15} /> : null}
+                    {/* The sprout fills its bed: a fixed-size mark in a bed sized to the ground would poke out of a small one. */}
+                    {sown ? (
+                      <span style={{ display: "grid", width: "92%", aspectRatio: "1" }}>
+                        <Sprout size="100%" />
+                      </span>
+                    ) : null}
                   </span>
                 );
                 return sprout;
@@ -265,6 +309,7 @@ export function GardenMapPicture({ garden, plot: wrapPlot, lit, aspect = 2.2, de
         );
         return <span key={plot.id}>{wrapPlot ? wrapPlot(plot, drawn) : drawn}</span>;
       })}
+    </div>
     </div>
   );
 }

@@ -32,8 +32,8 @@ The landing page is a marketing page, and answers one question — *what is
 this and why would I* — in plain words with one picture per claim: the
 example garden live in the hero; how it works in three moves; one feature
 per section (the routed face, rules that repair, lenses, the seat, the
-studio, actions and permissions) with a live frame where a frame can hold
-the picture and a photograph from the harness where it cannot; the stepper;
+studio, actions and permissions), each a live frame of the example opened at
+the stop that shows the claim — no photographs remain; the stepper;
 four use cases from the products built on it; and one install line. No code
 on it but that line. The first cut was a docs page with a headline; the
 second showed the product but argued like documentation.

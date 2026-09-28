@@ -25,6 +25,16 @@ export default defineConfig({
       "@graview/ship/browser": fileURLToPath(new URL("../../packages/ship/src/browser.ts", import.meta.url)),
       "@graview/ship": pkg("ship"),
       "@graview/embed": pkg("embed"),
+      /*
+       * THE ROTA RIDES ALONG. The lenses section's claim is one calendar
+       * over two domains — written for the rota, unchanged over the garden
+       * — and the page used to make the first half with a photograph
+       * because this bundle carried the garden alone. The rota's
+       * declaration, seed and views come from its source, as the
+       * framework's do.
+       */
+      "@graview/rota/views": fileURLToPath(new URL("../rota/src/ui/views.tsx", import.meta.url)),
+      "@graview/rota": fileURLToPath(new URL("../rota/src/index.ts", import.meta.url)),
     },
   },
   build: {

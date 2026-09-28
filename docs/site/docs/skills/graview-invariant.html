@@ -926,8 +926,9 @@ main.page footer { max-width: 100%; }
    The second cut showed the product but argued like documentation: code
    beside every frame, a checks table, a packages grid. This one says what
    the kit does and who it is for, in words a developer skims, with one
-   large legible picture per claim — live where a frame can hold the
-   picture, a photograph from the harness where it cannot.
+   large legible picture per claim — every one of them the example itself,
+   live, opened at the stop that shows the claim. The last photographs
+   went when the garden could make each claim in a frame of its own.
    ─────────────────────────────────────────────────────────────────── */
 
 main.page > section.feature, main.page > section.how, main.page > section.cases,
@@ -953,6 +954,10 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 .feature.flip .feature-grid > .claim { order: 2; }
 .feature .visual { min-width: 0; display: grid; gap: 10px; }
 .feature .chapter-live { height: 580px; border-radius: 6px; box-shadow: 0 40px 90px -40px rgba(0, 12, 48, 0.55), 0 0 0 1px var(--rule); }
+/* A picture is one lens with no chrome: a calendar wants a month's height, a matrix a third of it. */
+.feature .chapter-live.picture { height: 440px; }
+.feature .chapter-live.picture.short { height: 250px; }
+.feature .chapter-live.picture + .stage-caption { margin-bottom: 28px; }
 .shot { margin: 0; display: grid; gap: 10px; }
 .shot img { display: block; width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--rule); box-shadow: 0 40px 90px -40px rgba(0, 12, 48, 0.55); background: var(--sunk); }
 .shot .light, .shot .dark { display: none; }
@@ -2064,8 +2069,9 @@ main.page footer { max-width: 100%; }
    The second cut showed the product but argued like documentation: code
    beside every frame, a checks table, a packages grid. This one says what
    the kit does and who it is for, in words a developer skims, with one
-   large legible picture per claim — live where a frame can hold the
-   picture, a photograph from the harness where it cannot.
+   large legible picture per claim — every one of them the example itself,
+   live, opened at the stop that shows the claim. The last photographs
+   went when the garden could make each claim in a frame of its own.
    ─────────────────────────────────────────────────────────────────── */
 
 main.page > section.feature, main.page > section.how, main.page > section.cases,
@@ -2091,6 +2097,10 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 .feature.flip .feature-grid > .claim { order: 2; }
 .feature .visual { min-width: 0; display: grid; gap: 10px; }
 .feature .chapter-live { height: 580px; border-radius: 6px; box-shadow: 0 40px 90px -40px rgba(0, 12, 48, 0.55), 0 0 0 1px var(--rule); }
+/* A picture is one lens with no chrome: a calendar wants a month's height, a matrix a third of it. */
+.feature .chapter-live.picture { height: 440px; }
+.feature .chapter-live.picture.short { height: 250px; }
+.feature .chapter-live.picture + .stage-caption { margin-bottom: 28px; }
 .shot { margin: 0; display: grid; gap: 10px; }
 .shot img { display: block; width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--rule); box-shadow: 0 40px 90px -40px rgba(0, 12, 48, 0.55); background: var(--sunk); }
 .shot .light, .shot .dark { display: none; }

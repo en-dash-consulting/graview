@@ -127,6 +127,15 @@ export function Grid({
         </div>
       ) : null}
       <div
+        /*
+         * A REGION THAT SCROLLS IS A STOP FOR THE KEYBOARD. Given less height
+         * than its rows — a month in a picture frame, a fortnight in a card —
+         * this grid scrolls inside itself, and a region that scrolls with no
+         * focusable element in it is one a keyboard cannot scroll at all
+         * (axe: scrollable-region-focusable). A stop with the span's own name.
+         */
+        tabIndex={0}
+        aria-label={`The days of ${span.title}`}
         style={{
           display: "grid",
           gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
@@ -272,7 +281,12 @@ export function Agenda({
     );
   }
   return (
-    <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", alignContent: "start", gap: 10, overflow: "auto", minHeight: 0 }}>
+    <ol
+      // The same stop the day grid has: an agenda longer than its frame scrolls, and the keyboard needs a way in.
+      tabIndex={0}
+      aria-label="What is scheduled"
+      style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", alignContent: "start", gap: 10, overflow: "auto", minHeight: 0 }}
+    >
       {withSomething.map(({ day, here }) => (
         <li
           key={day}

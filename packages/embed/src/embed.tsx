@@ -1,6 +1,6 @@
-import { Store, type AnySchema, type Brand, type GraviewApp, type PresenceChannel, type Principal } from "@graview/core";
-import { EMPTY_VIEW, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
-import { PagesApp, type PageComponent, type PageRegistry } from "@graview/pages";
+import { Store, type AnySchema, type Brand, type GraviewApp, type Place, type PresenceChannel, type Principal } from "@graview/core";
+import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
+import { PagesApp, PlacePicture, type PageComponent, type PageRegistry } from "@graview/pages";
 import { Companion, Inspector, OverviewButton, Places, Profile, ShowInstallation, Standing, descentTarget, registerDefaultViews, themeCss, useWidth } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
 import {
@@ -28,7 +28,13 @@ import { fontsLink } from "./fonts.js";
  * a prop rather than a URL. Everything else — the scene, the rails, the
  * inspector, the pages — is the framework's own, unchanged.
  */
-export type EmbedFace = "scene" | "graview" | "pages";
+/**
+ * The faces. `picture` is ONE NAMED LENS AND NOTHING ELSE — the place the
+ * stop names (`#view=the-week`), drawn at full size over the kind's current
+ * members, with no bar, no rail, no standing: a page that is about a lens
+ * shows the lens, not an app with the lens somewhere inside it.
+ */
+export type EmbedFace = "scene" | "graview" | "pages" | "picture";
 
 export interface EmbedOptions<S extends AnySchema = AnySchema> {
   readonly app: GraviewApp<S>;
@@ -114,9 +120,21 @@ function storeOf<S extends AnySchema>(app: GraviewApp<S>, seed: EmbedOptions<S>[
   } as never);
 }
 
-/** The scene's view for a face and a stop. */
-function viewFor(face: EmbedFace, stop: string | undefined, kinds: readonly string[]): ViewState {
-  const asked = stop ? fromUrl(stop) : EMPTY_VIEW;
+/**
+ * The scene's view for a face and a stop.
+ *
+ * A STOP THAT NAMES A PLACE GOES THERE HERE TOO. `#view=the-season` is the
+ * link a page can write — `placeHref` spells it — and the scene's URL sync
+ * has resolved it to the group the place is a picture of since it existed.
+ * The embed read its `stop` through `fromUrl` alone, so a host page saying
+ * `data-stop="#view=the-season"` landed at the default view with the
+ * season's pill unpressed: the pasted-link problem, one level up again.
+ */
+function viewFor(face: EmbedFace, stop: string | undefined, kinds: readonly string[], places: readonly Place[]): ViewState {
+  const parsed = stop ? fromUrl(stop) : EMPTY_VIEW;
+  const named = parsed.within?.["view"];
+  const place = named !== undefined && !parsed.focusId ? places.find((candidate) => candidate.as === named) : undefined;
+  const asked = place ? { ...parsed, focusId: aggregateId(place.kind) } : parsed;
   if (face === "graview") return withOverview(asked, true);
   if (asked.overview) return withFocus(withOverview(asked, false), descentTarget(asked, kinds));
   return asked;
@@ -161,7 +179,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   );
   const kinds = app.schema.kinds as readonly string[];
   // The first view only: after it, where the reader goes is theirs.
-  const initialView = useMemo(() => viewFor(face, stop, kinds), []);
+  const initialView = useMemo(() => viewFor(face, stop, kinds, (views as ReactViewRegistry<S>).places()), []);
   const scheme: Scheme = askedScheme === "auto" ? hostScheme() : askedScheme;
   const css = useMemo(() => themeCss(scheme, brand, { scope: `.${scope}` }), [scheme, brand, scope]);
 
@@ -229,9 +247,35 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
            too: the answer lives on the browser, not on the installation. */
         settings={app.settings ?? []}
       >
-        <Faces face={face} stop={stop} kinds={kinds} />
-        {toggle ? <Strip app={app as unknown as GraviewApp<AnySchema>} face={face} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} /> : null}
-        {face === "pages" ? (
+        <Faces face={face} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
+        {toggle && face !== "picture" ? <Strip app={app as unknown as GraviewApp<AnySchema>} face={face} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} /> : null}
+        {face === "picture" ? (
+          /*
+           * The lens fills the frame: a one-row grid stretches it to the
+           * height it was given, and it scrolls inside itself past that.
+           */
+          <div
+            data-testid="embed-picture"
+            // A region that may scroll has to be reachable by keyboard, and a
+            // reachable region has to say what it is: the picture's own name.
+            tabIndex={0}
+            aria-label={
+              (views as ReactViewRegistry<S>).places().find((place) => place.as === (stop ? fromUrl(stop).within?.["view"] : undefined))?.title ?? "The picture"
+            }
+            style={{
+              flex: "1 1 auto",
+              minHeight: 0,
+              display: "grid",
+              gridTemplateRows: "minmax(0, 1fr)",
+              overflow: "auto",
+              background: "var(--graview-ground)",
+              color: "var(--graview-ink)",
+              fontFamily: "var(--graview-font-body, system-ui)",
+            }}
+          >
+            <PlacePicture<S> store={store} views={views as ReactViewRegistry<S>} as={(stop ? fromUrl(stop).within?.["view"] : undefined) ?? ""} />
+          </div>
+        ) : face === "pages" ? (
           <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "auto" }}>
             <PagesApp<S>
               context={{ store, embedded: true, ...(brand ? { brand } : {}), ...(principal ? { principal } : {}) }}
@@ -254,7 +298,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
 }
 
 /** Keeps the scene's view in step with the face and stop props. */
-function Faces({ face, stop, kinds }: { face: EmbedFace; stop: string | undefined; kinds: readonly string[] }) {
+function Faces({ face, stop, kinds, places }: { face: EmbedFace; stop: string | undefined; kinds: readonly string[]; places: readonly Place[] }) {
   const { view, go } = useNavigation();
   const last = useRef({ face, stop });
   // A layout effect, so a face set through the handle is on the page when
@@ -265,13 +309,13 @@ function Faces({ face, stop, kinds }: { face: EmbedFace; stop: string | undefine
     const wasPages = last.current.face === "pages";
     last.current = { face, stop };
     if (!stopChanged && !faceChanged) return;
-    // The pages face has no view; a stop set while there lands when the
-    // scene comes back. Otherwise a face change keeps where you were and
-    // only rises or descends.
-    if (face === "pages") return;
+    // The pages face has no view, and a picture is its stop; a stop set
+    // while there lands when the scene comes back. Otherwise a face change
+    // keeps where you were and only rises or descends.
+    if (face === "pages" || face === "picture") return;
     const next =
       (stopChanged || wasPages) && stop !== undefined
-        ? viewFor(face, stop, kinds)
+        ? viewFor(face, stop, kinds, places)
         : face === "graview"
           ? withOverview(view, true)
           : view.overview
