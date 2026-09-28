@@ -29,6 +29,12 @@ describe("what a project starts with passes its own checks", () => {
     expect(file("Field Notes", "src/ui/pages.tsx")).toMatch(/<Begin\s+store=\{context\.store\}/);
   });
 
+  it("frames only Begin's own door, so the derived home comes back as the whole page it is", () => {
+    const pages = file("Field Notes", "src/ui/pages.tsx");
+    expect(pages).toContain("frame={(door) => (");
+    expect(pages).not.toMatch(/<PageMain[^>]*>\s*<Begin/);
+  });
+
   it("opens the studio door in development, so Apply writes into src/domain", () => {
     const config = file("Field Notes", "vite.config.ts");
     expect(config).toContain('import { studioDoor } from "@graview/ship/dev";');

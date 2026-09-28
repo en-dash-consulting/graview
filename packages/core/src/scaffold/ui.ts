@@ -392,14 +392,20 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
 function Home({ context }: { context: PageContext<S> }) {
   useStoreTick(context.store);
   return (
-    <PageMain context={context} data-testid="home">
-      {/* The routed face has no provider around it, so the store is handed over. */}
-      <Begin
-        store={context.store}
-        {...(context.principal ? { principal: context.principal } : {})}
-        whenFull={<DefaultHomePage context={context} />}
-      />
-    </PageMain>
+    // The routed face has no provider around it, so the store is handed over.
+    <Begin
+      store={context.store}
+      {...(context.principal ? { principal: context.principal } : {})}
+      // The derived home is a whole page — the gallery, at a page's width,
+      // in its own landmark — and comes back exactly as given.
+      whenFull={<DefaultHomePage context={context} />}
+      // The door alone gets a page's column and landmark around it.
+      frame={(door) => (
+        <PageMain context={context} data-testid="home">
+          {door}
+        </PageMain>
+      )}
+    />
   );
 }
 

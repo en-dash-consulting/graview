@@ -40,7 +40,19 @@ export interface BoardOptions {
    * only knew one of them would make a domain redraw its edges to fit.
    */
   readonly fillFrom?: "slot" | "occupant";
-  /** Field holding a short code for the slot, e.g. "LB". */
+  /**
+   * Field holding a short code for the slot, e.g. "LB".
+   *
+   * WHAT THE CODE IS DECIDES WHAT THE MARK IS. A board whose every code is
+   * three characters or fewer — "GK", "LB", "7" — draws discs, the pitch's
+   * own idiom. Any code longer than that is a WORD, and a word does not fit
+   * in a 34-pixel circle however the circle is drawn: "Outbound" spilled
+   * past its ring and "Prop-fin" wrapped at the hyphen inside it. So a board
+   * of words draws tokens — a pill sized to its code, the occupants inside
+   * it — and it decides once, for the whole board, because a picture that
+   * mixed discs and pills would be two pictures. Unbound, the code is the
+   * slot's label, which is nearly always a word.
+   */
   readonly slotCode?: string;
   /** Bands drawn behind the slots, in the same 0..1 space. */
   readonly zones?: readonly { readonly label: string; readonly from: number; readonly to: number }[];
@@ -55,11 +67,17 @@ export interface BoardOptions {
    */
   readonly pickTarget?: "slot" | "occupant";
   /**
-   * How occupant names render under a disc. Default `"full"`: the whole
-   * label. `"given"`: only the first whitespace-separated token — Load map
-   * shared seats put two full names under each chip and they collide.
+   * HOW THE SLOTS ARE LAID OUT. Default `"exact"`: each slot at the point
+   * its x and y name, which is a pitch, a seating plan, a warehouse floor —
+   * an arrangement whose geometry means something. `"shelf"`: the x and y
+   * are CATEGORIES, not coordinates — a load map whose rows are "still
+   * owns", "shared", "handoff" — so each zone becomes a band with its name
+   * as a heading, and its slots flow into rows in the domain's order, sized
+   * to what they hold. Nothing on a shelf can overlap anything, which on a
+   * load map with shared seats is the difference between a picture and a
+   * collision. The order is still the domain's; only the pixels are not.
    */
-  readonly occupantLabel?: "full" | "given";
+  readonly arrange?: "exact" | "shelf";
 }
 
 export interface BoardSlot {
@@ -92,13 +110,6 @@ export class BoardBindingError extends Error {
 }
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
-
-/** Under-disc name: full label, or the given-name token when asked. */
-function displayOccupantLabel(label: string, mode: BoardOptions["occupantLabel"]): string {
-  if (mode !== "given") return label;
-  const token = label.trim().split(/\s+/)[0];
-  return token || label;
-}
 
 /**
  * Reads the arrangement out of the graph. Pure and exported, so a test can
@@ -442,6 +453,225 @@ export function BoardView<S extends AnySchema>({
         </ul>
     );
 
+  const shelf = options.arrange === "shelf";
+  /** Discs hold three characters; anything longer is a word, and a word gets a token. */
+  const discs = board.slots.every((slot) => slot.code.length <= 3 && !/\s/.test(slot.code));
+
+  /**
+   * ONE SLOT, DRAWN. The mark is a disc or a token — decided for the whole
+   * board above — and the wrapper takes its place from the caller: a point on
+   * the field, or a spot in a shelf's row.
+   */
+  const renderSlot = (slot: BoardSlot, placement: React.CSSProperties) => {
+    const hole = slot.occupants.length === 0;
+    const dim =
+      lit.size > 0 && !lit.has(slot.id) && !slot.occupants.some((occupant) => lit.has(occupant.id));
+    /*
+     * TWO different marks, because they are two different facts.
+     *
+     * The disc is the SLOT and the name under it is the PERSON, so a
+     * rule that fails about the position must not paint the person's
+     * badge — that is what made a midfielder look injured when what
+     * was actually wrong was that nothing in the week trained the
+     * skill her position demands. Marking both the same way was a
+     * picture stating something untrue.
+     */
+    const slotBad = broken.has(slot.id);
+    const occupantBad = slot.occupants.some((occupant) => broken.has(occupant.id));
+    const bad = slotBad;
+    const said = [
+      ...reasons(slot.id),
+      ...slot.occupants.flatMap((occupant) => reasons(occupant.id)),
+    ];
+    /*
+     * WHO THE MARK STANDS FOR. Default (occupant): one occupant and
+     * the mark is them; several and the mark is the slot, each name
+     * its own target. pickTarget "slot" always selects the slot —
+     * names on a multi-occupant mark stay person targets.
+     */
+    const one = slot.occupants.length === 1 ? slot.occupants[0]! : null;
+    const pickId = options.pickTarget === "slot" ? slot.id : one ? one.id : slot.id;
+    const nameProps = (occupant: { id: string }) =>
+      one
+        ? {}
+        : {
+            "data-graview-pick": occupant.id,
+            /*
+             * A MARK SAYS WHAT IT CLAIMS. The names on a slot holding
+             * SEVERAL occupants are targets of their own, and they say
+             * so in the tree, not only in opacity.
+             */
+            "data-graview-emphasis": lit.size === 0 ? "plain" : dim ? "dimmed" : "lit",
+          };
+    // The NAME carries the person's own trouble — an injury, a suspension —
+    // and nothing else. A rule about the position has no business marking
+    // the person in it.
+    const nameColor = (occupant: { id: string }) =>
+      broken.has(occupant.id) ? "var(--graview-warn)" : "var(--graview-ink-muted)";
+    const emptyWord = options.emptyLabel ?? "empty";
+    return (
+      <div
+        key={slot.id}
+        data-graview-pick={pickId}
+        data-graview-slot={slot.id}
+        data-graview-mark={discs ? "disc" : "token"}
+        data-graview-flagged={
+          slotBad && occupantBad ? "both" : slotBad ? "slot" : occupantBad ? "occupant" : undefined
+        }
+        /*
+         * Emphasis in the DOM as well as in the paint. A claim about
+         * a picture that exists only as a colour cannot be checked by
+         * anything — not a test, not a person reading the tree.
+         */
+        data-graview-emphasis={lit.size === 0 ? "plain" : dim ? "dimmed" : "lit"}
+        title={[
+          hole
+            ? `${slot.label} — nobody in it`
+            : `${slot.occupants.map((occupant) => occupant.label).join(", ")} at ${slot.label}`,
+          ...said,
+        ].join("\n")}
+        style={{
+          ...placement,
+          display: "grid",
+          justifyItems: discs ? "center" : "start",
+          gap: 3,
+          opacity: dim ? 0.5 : 1,
+          transition: "opacity 160ms ease",
+        }}
+      >
+        {discs ? (
+          <span
+            style={{
+              position: "relative",
+              width: 34,
+              height: 34,
+              borderRadius: 999,
+              display: "grid",
+              placeItems: "center",
+              fontSize: "0.75rem",
+              letterSpacing: "0.02em",
+              // An empty slot is drawn as an OUTLINE, not as a filled
+              // shape with no name: the hole should look like a hole.
+              border: hole
+                ? "1.5px dashed var(--graview-warn)"
+                : `1px solid ${bad ? "var(--graview-warn)" : "var(--graview-edge-bright)"}`,
+              background: hole ? "transparent" : bad ? "var(--graview-panel-warning)" : "var(--graview-panel)",
+              color: hole || bad ? "var(--graview-warn)" : "var(--graview-ink)",
+              boxShadow: hole ? undefined : "var(--graview-lift-low)",
+            }}
+          >
+            {slot.code}
+            {/*
+              * A MARK, not only a tint. Colour alone says "this one is
+              * different" and leaves the reader to guess at what and at
+              * whom; it is also the one channel a person with a colour
+              * deficiency does not have. The badge sits on the disc
+              * because the disc is the slot. Never on a hole: a dashed
+              * ring has already said it.
+              */}
+            {slotBad && !hole ? (
+              <span
+                aria-hidden="true"
+                style={{ position: "absolute", top: -3, right: -3, fontSize: "0.6875rem", lineHeight: 1, color: "var(--graview-warn)" }}
+              >
+                ⚠
+              </span>
+            ) : null}
+          </span>
+        ) : (
+          /*
+           * THE TOKEN: the code on one line, cut with an ellipsis past the
+           * width of a long word and carried whole in the title; who is in
+           * it on the line beneath, INSIDE the mark, so the mark is one box
+           * whose size is known and nothing under it can collide with the
+           * row below.
+           */
+          <span
+            style={{
+              display: "grid",
+              gap: 1,
+              minWidth: 0,
+              maxWidth: 180,
+              padding: "5px 10px 6px",
+              borderRadius: 8,
+              border: hole
+                ? "1.5px dashed var(--graview-warn)"
+                : `1px solid ${bad ? "var(--graview-warn)" : "var(--graview-edge-bright)"}`,
+              background: hole ? "transparent" : bad ? "var(--graview-panel-warning)" : "var(--graview-panel)",
+              boxShadow: hole ? undefined : "var(--graview-lift-low)",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "0.8125rem",
+                fontWeight: 550,
+                lineHeight: 1.25,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                color: hole || bad ? "var(--graview-warn)" : "var(--graview-ink)",
+              }}
+            >
+              {slot.code}
+              {slotBad && !hole ? " ⚠" : null}
+            </span>
+            {hole ? (
+              <span style={{ fontSize: "0.75rem", lineHeight: 1.3, color: "var(--graview-warn)" }}>{emptyWord}</span>
+            ) : (
+              <span style={{ display: "flex", flexWrap: "wrap", gap: "0 8px", fontSize: "0.75rem", lineHeight: 1.3 }}>
+                {slot.occupants.map((occupant) => (
+                  <span key={occupant.id} {...nameProps(occupant)} style={{ whiteSpace: "nowrap", color: nameColor(occupant) }}>
+                    {occupant.label}
+                    {broken.has(occupant.id) ? " ⚠" : ""}
+                  </span>
+                ))}
+              </span>
+            )}
+          </span>
+        )}
+        {discs ? (
+          hole ? (
+            <span style={{ fontSize: "0.75rem", whiteSpace: "nowrap", color: "var(--graview-warn)" }}>{emptyWord}</span>
+          ) : (
+            slot.occupants.map((occupant) => (
+              <span key={occupant.id} {...nameProps(occupant)} style={{ fontSize: "0.75rem", whiteSpace: "nowrap", color: nameColor(occupant) }}>
+                {occupant.label}
+                {broken.has(occupant.id) ? " ⚠" : ""}
+              </span>
+            ))
+          )
+        ) : null}
+      </div>
+    );
+  };
+
+  /**
+   * THE SHELF'S BANDS: each zone with the slots whose y falls in it, in the
+   * order the domain gave them (top to bottom, then left to right — the
+   * board is already sorted so). A slot no zone claims, or a board with no
+   * zones, goes in one band with no heading.
+   */
+  const zones = options.zones ?? [];
+  const bands = zones.map((zone, index) => ({
+    label: zone.label,
+    slots: board.slots.filter(
+      (slot) => slot.y >= zone.from && (slot.y < zone.to || (index === zones.length - 1 && slot.y <= zone.to)),
+    ),
+  }));
+  const claimed = new Set(bands.flatMap((band) => band.slots.map((slot) => slot.id)));
+  const unclaimed = board.slots.filter((slot) => !claimed.has(slot.id));
+  if (unclaimed.length > 0 || bands.length === 0) bands.push({ label: "", slots: unclaimed });
+
+  const field = {
+    boxSizing: "border-box" as const,
+    borderRadius: 12,
+    border: "1px solid var(--graview-edge)",
+    // A ground of its own, so the arrangement reads as a place rather
+    // than as dots floating on the panel.
+    background: "linear-gradient(var(--graview-panel-muted), var(--graview-panel-muted)), var(--graview-panel)",
+    overflow: "hidden" as const,
+  };
+
   return (
     <Panel
       title={label ?? "Board"}
@@ -467,7 +697,8 @@ export function BoardView<S extends AnySchema>({
         * screen it ran past its band and the defence disappeared, which for
         * a view whose entire content is "where things are" is the worst
         * possible failure. Height drives it and the aspect ratio follows, so
-        * the formation stays a formation at any size.
+        * the formation stays a formation at any size. A shelf has no aspect:
+        * it is as tall as its rows and scrolls inside itself past that.
         */}
       <div
         ref={room}
@@ -513,7 +744,60 @@ export function BoardView<S extends AnySchema>({
             {keyList}
           </div>
         ) : null}
-        {/*
+        {shelf ? (
+          /*
+           * THE SHELF. Each zone is a band with its name as a heading —
+           * a heading row of its own, so it can never sit on a slot — and
+           * its slots flow into rows sized to what they hold.
+           */
+          <div
+            data-graview-primitive="board"
+            data-graview-arrange="shelf"
+            style={{
+              ...field,
+              overflow: "auto",
+              flex: "1 1 auto",
+              minWidth: 0,
+              alignSelf: "stretch",
+              display: "grid",
+              alignContent: "start",
+            }}
+          >
+            {bands.map((band, index) => (
+              <section
+                key={band.label || `band-${index}`}
+                data-graview-zone={band.label || undefined}
+                style={{
+                  display: "grid",
+                  gap: 8,
+                  padding: "10px 14px 14px",
+                  ...(index > 0 ? { borderTop: "1px dashed var(--graview-edge)" } : {}),
+                }}
+              >
+                {band.label ? (
+                  <span
+                    style={{
+                      fontSize: "0.6875rem",
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                      color: "var(--graview-ink-faint)",
+                    }}
+                  >
+                    {band.label}
+                  </span>
+                ) : null}
+                {band.slots.length > 0 ? (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 12px", alignItems: "flex-start" }}>
+                    {band.slots.map((slot) => renderSlot(slot, {}))}
+                  </div>
+                ) : (
+                  <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>nothing here</span>
+                )}
+              </section>
+            ))}
+          </div>
+        ) : (
+        /*
           * The zone names live OUTSIDE the field.
           *
           * Inside, they were absolutely positioned at the top-left of each
@@ -523,19 +807,20 @@ export function BoardView<S extends AnySchema>({
           * go is the DOMAIN's decision and the label has no claim on it. A
           * rail beside the field can never collide with anything, and the
           * field stays purely what the graph says.
-          */}
-        {/* The rail belongs TO the field, so it travels with it rather than
+          */
+        /* The rail belongs TO the field, so it travels with it rather than
             sitting a gap away looking like a separate column. Turned, it
-            lies along the bottom edge instead of standing beside the left. */}
+            lies along the bottom edge instead of standing beside the left. */
         <div style={{ display: "flex", gap: 5, alignItems: "stretch", minWidth: 0 }}>
-        {!turned && (options.zones ?? []).length > 0 ? (
+        {!turned && zones.length > 0 ? (
           <div
             aria-hidden="true"
             style={{ position: "relative", width: 15, flex: "0 0 auto", alignSelf: "stretch" }}
           >
-            {(options.zones ?? []).map((zone) => (
+            {zones.map((zone) => (
               <span
                 key={zone.label}
+                title={zone.label}
                 style={{
                   position: "absolute",
                   top: `${zone.from * 100}%`,
@@ -550,7 +835,10 @@ export function BoardView<S extends AnySchema>({
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
                   whiteSpace: "nowrap",
+                  // A band shorter than its name shows what fits and says
+                  // so, rather than the middle of the word.
                   overflow: "hidden",
+                  textOverflow: "ellipsis",
                   color: "var(--graview-ink-faint)",
                 }}
               >
@@ -562,7 +850,9 @@ export function BoardView<S extends AnySchema>({
 
         <div
           data-graview-primitive="board"
+          data-graview-arrange="exact"
           style={{
+            ...field,
             position: "relative",
             height: "100%",
             flex: "0 1 auto",
@@ -571,21 +861,9 @@ export function BoardView<S extends AnySchema>({
             // The aspect ratio above stays as the first-paint estimate.
             ...(tall !== null ? { width: Math.round(tall * (turned ? 1 / aspect : aspect)) } : {}),
             maxWidth: "100%",
-            // Its own border counts INSIDE the hundred percent. Without this
-            // the pitch is two pixels taller than the box it was told to
-            // fill, which is enough to put a scroll region on a board that
-            // fits — visible as a sliver of the bench cut off at the bottom.
-            boxSizing: "border-box",
-            borderRadius: 12,
-            border: "1px solid var(--graview-edge)",
-            // A ground of its own, so the arrangement reads as a place rather
-            // than as dots floating on the panel.
-            background:
-              "linear-gradient(var(--graview-panel-muted), var(--graview-panel-muted)), var(--graview-panel)",
-            overflow: "hidden",
           }}
         >
-          {(options.zones ?? []).map((zone) => (
+          {zones.map((zone) => (
             <div
               key={zone.label}
               aria-hidden="true"
@@ -612,10 +890,11 @@ export function BoardView<S extends AnySchema>({
           {/* Turned, the zone names lie along the field's own bottom edge —
               a rail beside a landscape pitch would push it off its height. */}
           {turned
-            ? (options.zones ?? []).map((zone) => (
+            ? zones.map((zone) => (
                 <span
                   key={`label-${zone.label}`}
                   aria-hidden="true"
+                  title={zone.label}
                   style={{
                     position: "absolute",
                     bottom: 3,
@@ -627,6 +906,7 @@ export function BoardView<S extends AnySchema>({
                     textTransform: "uppercase",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
+                    textOverflow: "ellipsis",
                     color: "var(--graview-ink-faint)",
                   }}
                 >
@@ -635,166 +915,17 @@ export function BoardView<S extends AnySchema>({
               ))
             : null}
 
-          {board.slots.map((slot) => {
-            const hole = slot.occupants.length === 0;
-            const dim =
-              lit.size > 0 && !lit.has(slot.id) && !slot.occupants.some((occupant) => lit.has(occupant.id));
-            /*
-             * TWO different marks, because they are two different facts.
-             *
-             * The disc is the SLOT and the name under it is the PERSON, so a
-             * rule that fails about the position must not paint the person's
-             * badge — that is what made a midfielder look injured when what
-             * was actually wrong was that nothing in the week trained the
-             * skill her position demands. Marking both the same way was a
-             * picture stating something untrue.
-             */
-            const slotBad = broken.has(slot.id);
-            const occupantBad = slot.occupants.some((occupant) => broken.has(occupant.id));
-            const bad = slotBad;
-            const said = [
-              ...reasons(slot.id),
-              ...slot.occupants.flatMap((occupant) => reasons(occupant.id)),
-            ];
-            /*
-             * WHO THE DISC STANDS FOR. Default (occupant): one occupant and
-             * the disc is them; several and the disc is the slot, each name
-             * its own target. pickTarget "slot" always selects the slot —
-             * names under a multi-occupant chip stay person targets.
-             */
-            const one = slot.occupants.length === 1 ? slot.occupants[0]! : null;
-            const pickId =
-              options.pickTarget === "slot" ? slot.id : one ? one.id : slot.id;
-            return (
-              <div
-                key={slot.id}
-                data-graview-pick={pickId}
-                data-graview-slot={slot.id}
-                data-graview-flagged={
-                  slotBad && occupantBad
-                    ? "both"
-                    : slotBad
-                      ? "slot"
-                      : occupantBad
-                        ? "occupant"
-                        : undefined
-                }
-                /*
-                 * Emphasis in the DOM as well as in the paint. A claim about
-                 * a picture that exists only as a colour cannot be checked by
-                 * anything — not a test, not a person reading the tree.
-                 */
-                data-graview-emphasis={lit.size === 0 ? "plain" : dim ? "dimmed" : "lit"}
-                title={[
-                  hole
-                    ? `${slot.label} — nobody in it`
-                    : `${slot.occupants.map((occupant) => occupant.label).join(", ")} at ${slot.label}`,
-                  ...said,
-                ].join("\n")}
-                style={{
-                  position: "absolute",
-                  left: `${at(slot.x, slot.y).x * 100}%`,
-                  top: `${at(slot.x, slot.y).y * 100}%`,
-                  transform: "translate(-50%, -50%)",
-                  display: "grid",
-                  justifyItems: "center",
-                  gap: 3,
-                  opacity: dim ? 0.5 : 1,
-                  transition: "opacity 160ms ease",
-                }}
-              >
-                <span
-                  style={{
-                    position: "relative",
-                    width: 34,
-                    height: 34,
-                    borderRadius: 999,
-                    display: "grid",
-                    placeItems: "center",
-                    fontSize: "0.75rem",
-                    letterSpacing: "0.02em",
-                    // An empty slot is drawn as an OUTLINE, not as a filled
-                    // shape with no name: the hole should look like a hole.
-                    border: hole
-                      ? "1.5px dashed var(--graview-warn)"
-                      : `1px solid ${bad ? "var(--graview-warn)" : "var(--graview-edge-bright)"}`,
-                    background: hole
-                      ? "transparent"
-                      : bad
-                        ? "var(--graview-panel-warning)"
-                        : "var(--graview-panel)",
-                    color: hole || bad ? "var(--graview-warn)" : "var(--graview-ink)",
-                    boxShadow: hole ? undefined : "var(--graview-lift-low)",
-                  }}
-                >
-                  {slot.code}
-                  {/*
-                    * A MARK, not only a tint.
-                    *
-                    * Colour alone says "this one is different" and leaves the
-                    * reader to guess at what and at whom; it is also the one
-                    * channel a person with a colour deficiency does not have.
-                    * The badge sits on the disc because the disc is the slot.
-                    */}
-                  {/* Never on a hole: a dashed ring over the word "nobody"
-                      has already said it, and a badge on top is the same
-                      fact drawn twice. */}
-                  {slotBad && !hole ? (
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        position: "absolute",
-                        top: -3,
-                        right: -3,
-                        fontSize: "0.6875rem",
-                        lineHeight: 1,
-                        color: "var(--graview-warn)",
-                      }}
-                    >
-                      ⚠
-                    </span>
-                  ) : null}
-                </span>
-                {hole ? (
-                  <span style={{ fontSize: "0.75rem", whiteSpace: "nowrap", color: "var(--graview-warn)" }}>
-                    {options.emptyLabel ?? "empty"}
-                  </span>
-                ) : (
-                  slot.occupants.map((occupant) => (
-                    <span
-                      key={occupant.id}
-                      {...(one
-                        ? {}
-                        : {
-                            "data-graview-pick": occupant.id,
-                            /*
-                             * A MARK SAYS WHAT IT CLAIMS. The slot's disc has
-                             * said this since W-014; the names under a slot
-                             * holding SEVERAL occupants are targets of their
-                             * own and said nothing, so half this picture's
-                             * marks made a claim only in opacity.
-                             */
-                            "data-graview-emphasis": lit.size === 0 ? "plain" : dim ? "dimmed" : "lit",
-                          })}
-                      style={{
-                        fontSize: "0.75rem",
-                        whiteSpace: "nowrap",
-                        // The NAME carries the person's own trouble — an injury,
-                        // a suspension — and nothing else. A rule about the
-                        // position has no business marking the person in it.
-                        color: broken.has(occupant.id) ? "var(--graview-warn)" : "var(--graview-ink-muted)",
-                      }}
-                    >
-                      {displayOccupantLabel(occupant.label, options.occupantLabel)}
-                      {broken.has(occupant.id) ? " ⚠" : ""}
-                    </span>
-                  ))
-                )}
-              </div>
-            );
-          })}
+          {board.slots.map((slot) =>
+            renderSlot(slot, {
+              position: "absolute",
+              left: `${at(slot.x, slot.y).x * 100}%`,
+              top: `${at(slot.x, slot.y).y * 100}%`,
+              transform: "translate(-50%, -50%)",
+            }),
+          )}
         </div>
         </div>
+        )}
 
         {board.spare.length > 0 ? (
           <div style={{ display: "grid", gap: 6, alignContent: "start", minWidth: 0 }}>

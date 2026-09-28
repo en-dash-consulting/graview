@@ -51,6 +51,17 @@ function chainOf<S extends AnySchema>(store: { schema: S; allMutations: () => re
 export interface BeginProps<S extends AnySchema = AnySchema> {
   /** What to say once every kind has something in it. Absent, it says nothing. */
   readonly whenFull?: ReactNode;
+  /**
+   * What goes around the DOOR, and only the door.
+   *
+   * On the routed face the door wants a page's column and landmark around
+   * it — `PageMain` — and `whenFull` is a whole page that brings its own.
+   * A Home that wrapped the two together put the derived home's `main`
+   * inside a second `main` and its gallery inside a reading column, one
+   * card wide at a desk. The frame is applied to the door alone; what
+   * comes when the graph is full is returned exactly as it was given.
+   */
+  readonly frame?: (door: ReactNode) => ReactNode;
   readonly title?: string;
   /**
    * The store, for a face that has no provider.
@@ -129,7 +140,7 @@ export function Begin<S extends AnySchema>(props: BeginProps<S> = {}) {
   );
 }
 
-function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginProps<S>) {
+function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin" }: BeginProps<S>) {
   const { store, principal } = useGraview<S>();
   const nodes = useGraph();
   const chain = useMemo(() => chainOf(store), [store]);
@@ -178,7 +189,7 @@ function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginPr
    */
   if (empty.length === 0 || (!startable && standing)) return whenFull === undefined ? null : <>{whenFull}</>;
 
-  return (
+  const door = (
     <Panel title={title} subtitle="What has to exist before the rest of it can." fit>
       <ol data-testid="begin" style={{ margin: 0, paddingLeft: "1.25rem", display: "grid", gap: 10 }}>
         {chain.order.map((entry) => {
@@ -208,6 +219,7 @@ function BeginInside<S extends AnySchema>({ whenFull, title = "Begin" }: BeginPr
       </ol>
     </Panel>
   );
+  return <>{frame ? frame(door) : door}</>;
 }
 function BeginHere({ kind, derived }: { readonly kind: string; readonly derived: AffordanceSet }) {
   const { affordances, withheld } = derived;

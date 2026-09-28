@@ -87,35 +87,87 @@ describe("a slot that holds several", () => {
     expect(html).toContain('data-graview-pick="g-bram"');
   });
 
-  it("shortens under-disc names to the given-name token when occupantLabel is given", () => {
-    const fullNameNodes = [
-      { id: "s1", kind: "seat", label: "Head of table", code: "1", x: 0.5, y: 0.1 },
-      { id: "s2", kind: "seat", label: "Window side", code: "2", x: 0.2, y: 0.5 },
-      { id: "g-nick", kind: "guest", label: "Nick Daniel" },
-      { id: "g-john", kind: "guest", label: "John Halberstadt" },
-    ] as never[];
-    const shared = [
-      { kind: "taken-by", from: "s1", to: "g-nick" },
-      { kind: "taken-by", from: "s1", to: "g-john" },
-    ];
-    const store = new Store({
-      schema,
-      mutations: [],
-      invariants: [],
-      snapshot: { nodes: fullNameNodes, edges: shared },
-    });
-    const lens = createBoardLens<typeof schema>({ ...options, occupantLabel: "given" });
-    const html = renderToStaticMarkup(
+  /*
+   * A WORD DOES NOT FIT IN A DISC. Load map's codes were "Outbound" and
+   * "Prop-fin", drawn in 34-pixel circles; the two full names under a
+   * shared seat landed on the row beneath. A board of words draws tokens,
+   * with the names inside the mark.
+   */
+  const wordNodes = [
+    { id: "s1", kind: "seat", label: "Proposal finalization", code: "Prop-fin", x: 0.2, y: 0.2 },
+    { id: "s2", kind: "seat", label: "Outbound hunt", code: "Outbound", x: 0.6, y: 0.2 },
+    { id: "s3", kind: "seat", label: "Pricing", code: "Price", x: 0.4, y: 0.7 },
+    { id: "g-nick", kind: "guest", label: "Nick Daniel" },
+    { id: "g-john", kind: "guest", label: "John Halberstadt" },
+  ] as never[];
+  const wordEdges = [
+    { kind: "taken-by", from: "s1", to: "g-nick" },
+    { kind: "taken-by", from: "s1", to: "g-john" },
+    { kind: "taken-by", from: "s3", to: "g-john" },
+  ];
+  const drawWords = (extra: Partial<Parameters<typeof createBoardLens>[0]> = {}) => {
+    const store = new Store({ schema, mutations: [], invariants: [], snapshot: { nodes: wordNodes, edges: wordEdges } });
+    const lens = createBoardLens<typeof schema>({ ...options, emptyLabel: "open", ...extra });
+    return renderToStaticMarkup(
       <GraviewProvider store={store} views={createViews(schema)} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("seat") }}>
-        <lens.View nodes={fullNameNodes as never} fidelity="full" cardinality="many" mode="scene" selected={false} />
+        <lens.View nodes={wordNodes as never} fidelity="full" cardinality="many" mode="scene" selected={false} />
       </GraviewProvider>,
     );
-    expect(html).toContain(">Nick<");
-    expect(html).toContain(">John<");
-    expect(html).not.toContain(">Nick Daniel<");
-    expect(html).not.toContain(">John Halberstadt<");
-    // Hover title still carries the full names for the seat.
-    expect(html).toContain("Nick Daniel, John Halberstadt at Head of table");
+  };
+
+  it("draws discs when every code is three characters, and tokens when any code is a word", () => {
+    const store = new Store({ schema, mutations: [], invariants: [], snapshot: { nodes, edges } });
+    const lens = createBoardLens<typeof schema>(options);
+    const discs = renderToStaticMarkup(
+      <GraviewProvider store={store} views={createViews(schema)} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("seat") }}>
+        <lens.View nodes={nodes as never} fidelity="full" cardinality="many" mode="scene" selected={false} />
+      </GraviewProvider>,
+    );
+    expect(discs.match(/data-graview-mark="disc"/g)).toHaveLength(3);
+    expect(discs).not.toContain('data-graview-mark="token"');
+    const tokens = drawWords();
+    expect(tokens.match(/data-graview-mark="token"/g)).toHaveLength(3);
+    expect(tokens).not.toContain('data-graview-mark="disc"');
+    // The whole code, never cut in the markup — the ellipsis is the box's.
+    expect(tokens).toContain(">Prop-fin<");
+    expect(tokens).toContain(">Outbound<");
+  });
+
+  it("puts the occupants inside a token, whole, each their own target when the mark is the slot's", () => {
+    const html = drawWords();
+    expect(html).toContain(">Nick Daniel<");
+    expect(html).toContain(">John Halberstadt<");
+    expect(html).toContain('data-graview-pick="g-nick"');
+    expect(html).toContain('data-graview-pick="g-john"');
+    expect(html).toContain("Nick Daniel, John Halberstadt at Proposal finalization");
+    // A hole is a dashed token saying what an empty one is called here.
+    expect(html).toContain(">open<");
+  });
+
+  it("shelves the slots by zone in the domain's order, each zone headed by its whole name, when the arrangement is categories", () => {
+    const html = drawWords({
+      arrange: "shelf",
+      zones: [
+        { label: "Nick still owns", from: 0, to: 0.5 },
+        { label: "Elsewhere / handoff runway", from: 0.5, to: 1 },
+      ],
+    });
+    expect(html).toContain('data-graview-arrange="shelf"');
+    const at = (text: string) => html.indexOf(text);
+    expect(at('data-graview-zone="Nick still owns"')).toBeGreaterThan(-1);
+    expect(at('data-graview-zone="Elsewhere / handoff runway"')).toBeGreaterThan(at('data-graview-zone="Nick still owns"'));
+    expect(html).toContain(">Elsewhere / handoff runway<");
+    // Top row left to right, then the next zone — and nothing placed by pixel.
+    expect(at('data-graview-slot="s1"')).toBeLessThan(at('data-graview-slot="s2"'));
+    expect(at('data-graview-slot="s2"')).toBeLessThan(at('data-graview-slot="s3"'));
+    expect(html).not.toContain("position:absolute;left:");
+  });
+
+  it("keeps a slot no zone claims, in a band of its own", () => {
+    const html = drawWords({ arrange: "shelf", zones: [{ label: "Top", from: 0, to: 0.5 }] });
+    expect(html).toContain('data-graview-zone="Top"');
+    expect(html).toContain('data-graview-slot="s3"');
+    expect(html.match(/<section/g)).toHaveLength(2);
   });
 
   it("selects the slot itself when pickTarget is slot, even for a sole occupant", () => {
