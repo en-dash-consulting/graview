@@ -2781,3 +2781,25 @@ two singles and thirty-five songs.
   without one it says the title as before. Criteria: pages
   `the-button-says-the-heading.test.tsx`, and core `scaffold.test.ts`
   "submits a tie under the words its heading uses".
+
+### W-101 · A song by and produced by the same artist draws one line, and only one can be picked
+- stage: B · face: scene · width: 1280 · scheme: light
+- expected: "Selecting the line offers the severing act; severing from
+  either end removes exactly that line" — for every relation drawn
+- actual: Gold Tooth is by Mara Vey and produced by Mara Vey. The `by` and
+  `produced-by` lines had the identical path (`M 617.9 377.7 Q 600.8
+  434.2 …` both), so the picture showed one line for two relations and the
+  pointer only ever reached the one on top: clicking where "by" was drawn
+  opened "Take a production credit away". The credit could only be taken
+  away from the strip, never from its line. Nothing an item app has ties
+  one thing to another twice.
+- where it belongs: `packages/react/src/connectors.tsx` (the bow), a helper
+  of its own, `packages/react/src/parallel.ts`
+- harness that should have caught it: `verify-lines` counts lines and their
+  edges in todo, where no pair shares two relations
+- status: fixed in "walkthrough: B · two relations are two lines" · lines
+  that share both ends fan about the curve one line would take, each bowed
+  by its own offset; the hit path follows the drawn one, so each is picked
+  on its own and its menu offers its own severing act (measured: the
+  midpoint of each opens `edge:by…` and `edge:produced-by…` respectively).
+  Criterion: react `two-relations-are-two-lines.test.ts`.

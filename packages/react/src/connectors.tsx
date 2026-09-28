@@ -11,6 +11,7 @@ import {
   routedQuadratic,
 } from "./routes.js";
 import { channelRoute } from "./channels.js";
+import { parallelOffsets } from "./parallel.js";
 import { altitudeOpacity, drawnBox, measureVisible, onScreen, stackOpacity } from "./where-drawn.js";
 import type { SceneNode } from "./scene-root.js";
 
@@ -682,6 +683,11 @@ export function Connectors({
   const siblings = new Map<string, number>();
   for (const strand of strands) siblings.set(strand.connector.id, (siblings.get(strand.connector.id) ?? 0) + 1);
 
+  // Lines that share both ends, fanned so each is its own line (see parallel.ts).
+  const fanned = parallelOffsets(
+    strands.map((strand) => ({ key: strand.key, a: strand.fromAnchor, b: strand.toAnchor })),
+  );
+
   const drawn = strands.map((strand, lane) => {
         const { connector, fromBox, toBox } = strand;
         const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
@@ -769,6 +775,8 @@ export function Connectors({
             ny = -ny;
           }
         }
+        // A second relation between the same two ends bows beside the first.
+        bow += 2 * (fanned.get(strand.key) ?? 0);
         // The route is the kit's call: the bowed arc, its chord, or two elbows.
         const curve: Quadratic = routedQuadratic(kitLine.route, { p0: from, c: { x: midX + nx * bow, y: midY + ny * bow }, p1: to });
         /* A road runs between two districts on the lattice; a line to the
