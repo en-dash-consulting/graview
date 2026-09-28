@@ -289,6 +289,11 @@ describe("a search is a stop", () => {
     const entered = withJackIn(lit, kindCardId("duty"), { ownPicture: true, carry: "van" });
     expect(entered).toMatchObject({ focusId: aggregateId("duty"), zoom: true, q: "van", within: { q: "van" } });
     expect(entered.overview).toBeFalsy();
+    // Already zoomed in that district: the words narrow it where you stand, never zoom you out.
+    const again = withJackIn(withQuery(entered, "vans"), kindCardId("duty"), { ownPicture: true, carry: "vans" });
+    expect(again).toMatchObject({ focusId: aggregateId("duty"), zoom: true, within: { q: "vans" } });
+    // A bare jack-in on the zoomed district is still the toggle out.
+    expect(withJackIn(entered, kindCardId("duty"), { ownPicture: true }).zoom).toBeFalsy();
     expect(withQuery(back, "  ").q).toBeUndefined();
     expect(toUrl(withQuery(back, null))).not.toMatch(/(^|[#&])q=/);
     expect(fromUrl("#q=%20%20").q).toBeUndefined();

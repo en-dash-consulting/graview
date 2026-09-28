@@ -103,7 +103,12 @@ export function withJackIn(
     return toggleExpanded(state, id);
   }
   const target = kind !== null ? aggregateId(kind) : id;
-  if (state.zoom && state.focusId === target) return withZoom(state, false);
+  /*
+   * Carrying words is never the way back out. Standing zoomed in the very
+   * district the search lit, its count or its row narrows it where you are;
+   * only a bare jack-in on the zoomed district is the toggle out.
+   */
+  if (state.zoom && state.focusId === target && !(kind !== null && options.carry)) return withZoom(state, false);
   if (kind !== null && options.carry) {
     /*
      * A SEARCH'S DESCENT COMES DOWN. From altitude every village still

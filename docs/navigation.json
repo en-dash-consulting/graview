@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-28T22:17:34.087Z",
+  "at": "2026-09-28T22:27:13.857Z",
   "engine": "chromium",
   "steps": [
     {
@@ -94,7 +94,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.589002,
+      "wingOpacity": 0.58909,
       "registered": true
     },
     "groundAgain": {
@@ -219,15 +219,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 423.99993896484375,
+        "width": 420.99993896484375,
         "height": 193,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 278.0000305175781,
-        "height": 255.00006103515625,
-        "opacity": 0.438734
+        "width": 279,
+        "height": 255,
+        "opacity": 0.447769
       }
     ],
     "afterSwitch": [
@@ -262,9 +262,9 @@
       "up": true
     },
     "midway": {
-      "x": 771.0896606445312,
-      "y": 286.1395568847656,
-      "width": 374
+      "x": 770.233642578125,
+      "y": 288.47503662109375,
+      "width": 378
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
