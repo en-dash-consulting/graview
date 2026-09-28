@@ -10,3 +10,4 @@ export * from "./modules.js";
 export * from "./relations.js";
 export * from "./fields.js";
 export * from "./policy.js";
+export * from "./arrangement.js";

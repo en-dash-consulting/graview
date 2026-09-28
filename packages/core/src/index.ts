@@ -95,6 +95,7 @@ export type {
   Arrangeable,
   ArrangeContext,
   Arranged,
+  ArrangeGraph,
   ArrangedGroup,
   Arrangement,
   ArrangementWords,

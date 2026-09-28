@@ -1,4 +1,3 @@
-import type { GraphReader } from "./graph/types.js";
 import { describeArg } from "./mutations/node-ref.js";
 import { humaniseField, isCurrent, labelOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -308,11 +307,27 @@ export function admitArrangement(
  * ARRANGING. Pure over the nodes it is handed and the graph it may read.
  */
 
-export type ArrangeNode = { readonly id: string; readonly kind: string } & Record<string, unknown>;
+/** What arranging needs of a node: its identity. Fields are read off it by name. */
+export type ArrangeNode = { readonly id: string; readonly kind: string };
+
+const fields = (node: ArrangeNode): Record<string, unknown> => node as unknown as Record<string, unknown>;
+const asRecord = (node: ArrangeNode) => node as ArrangeNode & Record<string, unknown>;
+
+/**
+ * The little of a graph arranging needs, said structurally so a `Graph<S>`
+ * over any concrete schema fits — `GraphReader`'s generic `nodesOfKind`
+ * does not, once the kinds are literal.
+ */
+export interface ArrangeGraph {
+  getNode(id: string): ArrangeNode | undefined;
+  allNodes(): readonly ArrangeNode[];
+  out(id: string, kind?: string): readonly ArrangeNode[];
+  in(id: string, kind?: string): readonly ArrangeNode[];
+}
 
 export interface ArrangeContext {
   readonly schema: AnySchema;
-  readonly graph: GraphReader;
+  readonly graph: ArrangeGraph;
   /** Node ids the rules currently implicate, for `is:flagged` and `is:clear`. */
   readonly flagged?: ReadonlySet<string>;
   /** For the lifecycle: today, as YYYY-MM-DD. */
@@ -336,14 +351,14 @@ export interface Arranged<N extends ArrangeNode = ArrangeNode> {
 }
 
 /** The far ends of `edgeKind` from `id`, either way round, as nodes. */
-function farEnds(graph: GraphReader, id: string, edgeKind: string): ArrangeNode[] {
+function farEnds(graph: ArrangeGraph, id: string, edgeKind: string): ArrangeNode[] {
   const seen = new Map<string, ArrangeNode>();
   for (const node of [...graph.out(id, edgeKind), ...graph.in(id, edgeKind)]) seen.set(node.id, node as ArrangeNode);
   return [...seen.values()];
 }
 
 function labelFor(ctx: ArrangeContext, node: ArrangeNode): string {
-  return labelOf(ctx.schema.tryDefinition(node.kind), node);
+  return labelOf(ctx.schema.tryDefinition(node.kind), asRecord(node));
 }
 
 const compare = (a: unknown, b: unknown): number => {
@@ -358,7 +373,7 @@ const compare = (a: unknown, b: unknown): number => {
 function sortValue(ctx: ArrangeContext, node: ArrangeNode, by: string): unknown {
   if (by === "label") return labelFor(ctx, node);
   const definition = ctx.schema.tryDefinition(node.kind);
-  if (definition && by in ((definition.fields.shape ?? {}) as Record<string, unknown>)) return node[by];
+  if (definition && by in ((definition.fields.shape ?? {}) as Record<string, unknown>)) return fields(node)[by];
   const ends = farEnds(ctx.graph, node.id, by).map((end) => labelFor(ctx, end)).sort();
   return ends[0];
 }
@@ -391,9 +406,9 @@ function holds(ctx: ArrangeContext, node: ArrangeNode, condition: Condition): bo
   if (condition.key === "is") {
     switch (condition.value) {
       case "current":
-        return isCurrent(definition, node, ctx.today);
+        return isCurrent(definition, asRecord(node), ctx.today);
       case "past":
-        return !isCurrent(definition, node, ctx.today);
+        return !isCurrent(definition, asRecord(node), ctx.today);
       case "any":
         return true;
       case "flagged":
@@ -406,7 +421,7 @@ function holds(ctx: ArrangeContext, node: ArrangeNode, condition: Condition): bo
   }
   const shape = (definition?.fields.shape ?? {}) as Record<string, unknown>;
   if (condition.key in shape) {
-    const value = node[condition.key];
+    const value = fields(node)[condition.key];
     const type = fieldType(shape[condition.key]);
     if (type === "date") {
       const [op, date] = condition.value.split(":");
@@ -431,7 +446,7 @@ export function matches(ctx: ArrangeContext, node: ArrangeNode, query: string): 
   if (labelFor(ctx, node).toLowerCase().includes(wanted)) return true;
   const definition = ctx.schema.tryDefinition(node.kind);
   const hidden = new Set(definition?.display?.hide ?? []);
-  for (const [key, value] of Object.entries(node)) {
+  for (const [key, value] of Object.entries(fields(node))) {
     if (key === "id" || key === "kind" || hidden.has(key)) continue;
     if (typeof value === "string" || typeof value === "number") {
       if (String(value).toLowerCase().includes(wanted)) return true;
@@ -487,7 +502,7 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
 
   for (const node of ordered) {
     if (isField) {
-      const value = node[grouping.by];
+      const value = fields(node)[grouping.by];
       if (value === undefined || value === null || value === "") {
         put("", none, node);
       } else if (type === "date") {

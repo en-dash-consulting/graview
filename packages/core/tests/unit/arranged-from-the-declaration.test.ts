@@ -185,3 +185,38 @@ describe("arranging", () => {
     expect(flat.groups).toHaveLength(1);
   });
 });
+
+describe("the checker and the readers", () => {
+  it("warns about an order role the kind lacks, notes a lens arrangement the bound kind cannot take, and says what can be arranged", async () => {
+    const { checkApp, defineApp } = await import("../../src/index.js");
+    const { describeApp } = await import("../../src/cli/describe.js");
+    const { generateLlmsTxt } = await import("../../src/cli/docs.js");
+    const lost = defineNode("lost", { fields: z.object({ label: z.string() }), fieldRoles: { order: "priority" } });
+    const app = defineApp({
+      name: "arranged",
+      schema: createSchema([list, task, lost]),
+      mutations: [],
+      invariants: [],
+      lenses: [
+        { name: "calendar", requiredRoles: ["start"], bindings: { task: { start: "due" } }, arrangedBy: { group: "holds", sort: "colour" } },
+        { name: "board", requiredRoles: [], binds: "entities", bindings: { slots: { kind: "list" } }, arrangedBy: { filter: "is:flagged" } },
+      ],
+    });
+    const result = checkApp(app);
+    const codes = result.findings.map((finding) => `${finding.code} @ ${finding.where}`);
+    expect(codes).toContain('order-role-unknown @ defineNode("lost").fieldRoles.order');
+    expect(codes).toContain('lens-arrangement-unknown @ lens "calendar" arrangedBy');
+    expect(result.findings.find((finding) => finding.code === "lens-arrangement-unknown")?.message).toMatch(/sort colour/);
+    // The board's `is:flagged` is something every kind offers: nothing to say.
+    expect(codes.filter((code) => code.includes('lens "board"'))).toEqual([]);
+
+    const described = describeApp(app);
+    expect(described).toContain("## What can be arranged");
+    expect(described).toMatch(/task: sort by label \(name\), done \(done\), due \(due date\)/);
+    expect(described).toContain("sorted by due unless asked");
+    expect(described).toContain("The calendar lens opens with group=holds and sort=colour.");
+    const llms = generateLlmsTxt(app);
+    expect(llms).toContain("## Arranging a picture");
+    expect(llms).toMatch(/- arranged by: sort label \| done \| due \| size \| notes \| holds; filter done \| due \| size \| holds \| is; group done \| due \| size \| holds; due unless asked/);
+  });
+});

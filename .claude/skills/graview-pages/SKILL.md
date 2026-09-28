@@ -49,10 +49,10 @@ under its routes, which buys three things at once:
   travels to the record.
 - `/map` — `kindMap(store)`: every declared relation in its words with
   its live count, also a section on the home page. A kind's list says what
-  it relates to, groups by a relation (`?by=<edge>`) and narrows by one
-  (`?<edge>=<id>`, or `?with=<edge>` for having it at all) — in the URL, so
-  an arrangement is a link. A record links the other way round and says
-  which pictures it is seen in.
+  it relates to and arranges itself in the shared words (`?sort=due:desc`,
+  `?filter=done:false`, `?group=due:month`, `?q=tape`) a lens carries in
+  its fragment, so an arrangement is a link; `?by=`, `?<edge>=<id>`,
+  `?with=` and `?past=1` still land. A record links back.
 - **The assistant**, on every route: one control opens the scene's own
   `Companion` in a drawer, and the ROUTE is what "this" means. Grounded
   questions before anybody types; proposals apply through the same runtime,
@@ -144,8 +144,8 @@ createPageRegistry<S, PageComponent<S>>(schema)
 
 The shell surface receives `{ context, children }`. Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, and
 what makes it finished is not the type — it is that everything a person
-tries there works: the grouping, sort and filter live in `useSearchParams`
-(a list you arranged is a link you can send); a record edits where it is
+tries there works: sort, filter and group come from `ArrangeBar` and live
+in `useSearchParams` in the shared words (a list you arranged is a link); a record edits where it is
 shown, heading included, through `editableFields(store, id)`; an act's form
 opens where the act is, prefilled, with the store's own refusal said at the
 press; the problems page is an inbox, its repairs ordered by

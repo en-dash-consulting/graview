@@ -1,3 +1,4 @@
+import { arrangeable } from "../arrange.js";
 import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceProviderDeclaration } from "../app.js";
 import { beginning } from "../beginning.js";
 import { cityMap, roadsOf } from "../city.js";
@@ -144,6 +145,27 @@ export function describeApp<S extends AnySchema>(
       lines.push(`  Drive-ins from altitude: ${list(driveIns)}; the rest open in place.`);
     }
   }
+  /*
+   * WHAT A PICTURE CAN BE ASKED TO DO. An agent that cannot see the row can
+   * still write the stop — `in.sort=due:desc`, `in.group=held-at` — if it
+   * knows the words; and the words are the declaration's.
+   */
+  lines.push("", "## What can be arranged");
+  lines.push("Any picture over a kind sorts, filters and groups it through in.sort, in.filter and in.group in the stop (a page's ?sort, ?filter, ?group, ?q):");
+  for (const kind of kinds) {
+    const offers = arrangeable(app.schema, kind);
+    const say = (entries: readonly { key: string; label: string }[]) => entries.map((offer) => `${offer.key} (${offer.label.toLowerCase()})`);
+    lines.push(
+      `  ${kind}: sort by ${list(say(offers.sorts))}; filter by ${list(say(offers.filters))}; group by ${offers.groups.length === 0 ? "nothing" : list(say(offers.groups))}` +
+        `${offers.natural ? `; sorted by ${offers.natural.by} unless asked` : ""}.`,
+    );
+  }
+  for (const lens of app.lenses ?? []) {
+    if (!lens.arrangedBy) continue;
+    const words = Object.entries(lens.arrangedBy).map(([part, value]) => `${part}=${value}`);
+    lines.push(`  The ${lens.name} lens opens with ${list(words)}.`);
+  }
+
   const authored = (app.lenses ?? []).filter(
     (lens) => !["timeline", "coverage", "board", "calendar", "reach"].includes(lens.name),
   );

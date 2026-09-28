@@ -101,7 +101,31 @@ the reuse test beside it, red on purpose.
    which is the worst failure a lens has. The framework's own board lens had
    this exact bug.
 
-8. **Give it a name when you register it.** A lens mounted over a group is
+8. **Take an arrangement, and say what you have no place for.** Every
+   picture over a kind can be sorted, filtered and grouped from the
+   declaration alone — `arrangeable(schema, kind)` offers the fields by
+   type, the edges by far end, the lifecycle and the standing — and the
+   choice travels in the stop as `in.sort`, `in.filter`, `in.group` and
+   `in.q`, beside the calendar's own `in.at`. In your lens's component:
+
+   ```tsx
+   const { nodes, arranged, bar } = useArranging(props, {
+     lensAllows: { group: false },        // a board has nowhere to group
+     allow: options.arranging,            // the app's say: false, or per part
+     arrangedBy: options.arrangedBy,      // how the picture opens
+   });
+   return <>{bar}<Picture nodes={nodes} /></>;
+   ```
+
+   `bar` is the framework's own row (`ArrangeBar`), drawn at full fidelity
+   unless declined; `nodes` are the members as arranged; `arranged.groups`
+   are there when the picture has a place for headings, as the calendar's
+   agenda does. Declare `arrangedBy` on the app's `lenses` entry too, in the
+   grammar (`{ group: "held-at" }`), so `graview check` holds it to the
+   bound kind and `graview describe` can say it. A person who arranged the
+   list can ask your picture the same thing in the same words.
+
+9. **Give it a name when you register it.** A lens mounted over a group is
    registered on that kind's `many` cells, and the fourth argument names it:
    `registry.register("gardener", { cardinality: "many", fidelity: "full" },
    TendingView, { title: "Who tends what" })`. A titled group view is a

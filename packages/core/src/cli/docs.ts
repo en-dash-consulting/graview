@@ -1,3 +1,4 @@
+import { arrangeable } from "../arrange.js";
 import type { GraviewApp } from "../app.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
 import { mutationToolSchema } from "../schema/json-schema.js";
@@ -42,8 +43,25 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
           .join(", ")}`,
       );
     }
+    const offers = arrangeable(app.schema, definition.kind);
+    lines.push(
+      `- arranged by: sort ${offers.sorts.map((offer) => offer.key).join(" | ")}; filter ${offers.filters.map((offer) => offer.key).join(" | ")}; group ${offers.groups.map((offer) => offer.key).join(" | ") || "nothing"}${offers.natural ? `; ${offers.natural.by} unless asked` : ""}`,
+    );
     lines.push("");
   }
+
+  lines.push("## Arranging a picture", "");
+  lines.push(
+    "Every picture over a kind — the list page, a board, a calendar — takes an",
+    "arrangement in its address, in one grammar: `sort=<key>[:desc]`,",
+    "`filter=<key>:<value>[,<key>:<value>]`, `group=<key>[:day|week|month]`, `q=<words>`.",
+    "A page carries them in its search (`/tasks?sort=due:desc&filter=done:false`);",
+    "a picture in the scene carries them in the fragment as `in.sort`, `in.filter`,",
+    "`in.group`, `in.q`. A filter value is a field's value, `before:`/`after:`/`on:` a",
+    "date, a node id, `*` or `none` for an edge, and `current`/`past`/`any`/`flagged`/",
+    "`clear` for `is`. Each kind above says what it offers.",
+    "",
+  );
 
   lines.push("## Mutations", "");
   lines.push(

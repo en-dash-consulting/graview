@@ -1,3 +1,4 @@
+import type { ArrangementWords } from "./arrange.js";
 import type { InvariantDefinition } from "./invariants/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import type { Policy } from "./permissions/types.js";
@@ -74,6 +75,13 @@ export interface LensDeclaration {
   readonly provenBy?: string;
   /** Defaults to `fields`, which is what every lens did before there were two. */
   readonly binds?: "fields" | "entities";
+  /**
+   * What the picture opens arranged by, in the arrangement grammar —
+   * `{ group: "held-at", filter: "is:current" }` — so the checker can hold
+   * it to the bound kind's declaration and `describe` can say it. The lens
+   * options carry the same words to the picture (`arrangedBy`).
+   */
+  readonly arrangedBy?: ArrangementWords;
   readonly bindings?:
     | Readonly<Record<string, Readonly<Record<string, string>>>>
     | Readonly<Record<string, EntityBinding>>;
