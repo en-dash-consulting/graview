@@ -2987,7 +2987,9 @@ two singles and thirty-five songs.
   repair's own label, and hands the keyboard back to the repair's button —
   or, when the problem went with it, to the page's heading. Criterion:
   pages `a-repair-asks-what-it-left-open.test.tsx` (verified failing
-  without the fix: `['label', 'released', 'type']`).
+  without the fix: `['label', 'released', 'type']`). The worked examples
+  the pages skill points at — todo's and rota's designs — carried their own
+  copy of the same form and now pass `only` and the repair's label too.
 
 ### W-110 · The chat offers a repair its own seat may not make, and it refuses on press
 - stage: C · face: scene (the chat) · width: 1280 · scheme: light

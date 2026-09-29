@@ -1070,6 +1070,9 @@ function Repairs({ context, repairs }: { context: Ctx; repairs: readonly { mutat
             mutation={asking}
             prefilled={opened.args ?? {}}
             open={(opened.missing ?? []).map((name) => ({ name }))}
+            // What the rule left open, and only that, under the repair's own words (W-109).
+            only={opened.missing ?? []}
+            label={opened.label}
             {...(principal ? { principal } : {})}
             onDone={() => setOpen(null)}
           />
