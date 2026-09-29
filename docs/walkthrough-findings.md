@@ -2633,7 +2633,11 @@ two singles and thirty-five songs.
   whose districts fit between the rails slides the least distance that puts
   every one of them there (carried through a zoom). Criterion: layout
   `the-city-stays-beside-the-rail.test.ts` at 1280 and 1560 (verified
-  failing without the fix: `kind:era: expected 241.08 to be ≥ 264`).
+  failing without the fix: `kind:era: expected 241.08 to be ≥ 264`). The
+  first cut also re-chose the city's step aside when a record stood in the
+  middle, which sent todo's districts off the left of the canvas and failed
+  verify-navigation's `aDistrictWithAPictureGoesIntoIt`; the slide now only
+  moves a city with nothing standing in it, keeping the shift it chose.
 
 ### W-095 · A relation is captioned twice over one artist, and an old stop's captions stay on the next
 - stage: B · face: scene · width: 1280 · scheme: light

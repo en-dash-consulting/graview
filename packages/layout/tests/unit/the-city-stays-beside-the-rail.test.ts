@@ -45,3 +45,19 @@ describe("the city beside the rail", () => {
     });
   }
 });
+
+describe("the city beside the rail, with a record standing in the middle", () => {
+  it("never slides a district under the picture it stepped aside for", () => {
+    const result = layout(
+      graph(),
+      schema,
+      { ...EMPTY_VIEW, overview: true, focusId: "song-3" },
+      { width: 1560, height: 940, inset: { left: 264, right: 128 }, unit: 16, cityOrder: ["album", "artist", "era", "song", "theme"] },
+    );
+    const stamp = result.nodes.find((node) => node.plane === 0 && node.id === "song-3")!;
+    expect(stamp).toBeDefined();
+    const overlaps = (a: { x: number; y: number; width: number; height: number }, b: typeof a) =>
+      a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    for (const card of result.nodes.filter((node) => node.plane === 2)) expect(overlaps(card, stamp), card.id).toBe(false);
+  });
+});

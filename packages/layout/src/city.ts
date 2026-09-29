@@ -198,18 +198,11 @@ export function placeCity(
     }
     return out;
   };
-  /**
-   * How much of the city is out of sight: the shift that shows the most is
-   * the one kept. OUT OF SIGHT IS UNDER A RAIL AS WELL AS OFF THE CANVAS —
-   * the inspector and the relation key cover the left of the scene, and a
-   * district laid under them was counted as seen. A discography's fifth
-   * district stood a hundred pixels under the pane at 1280 and at 1560,
-   * its nameplate cut to "RAS 1", and nothing here asked.
-   */
+  /** How much of the city is off the canvas: the shift that shows the most is the one kept. */
   const right = canvas.width - (inset.right ?? 0);
   const outside = (placed: readonly PlacedCard[]): number =>
     placed.reduce((sum, card) => {
-      const visibleW = Math.max(0, Math.min(card.x + card.width, right) - Math.max(card.x, left));
+      const visibleW = Math.max(0, Math.min(card.x + card.width, canvas.width) - Math.max(card.x, 0));
       const visibleH = Math.max(0, Math.min(card.y + card.height, canvas.height) - Math.max(card.y, 0));
       return sum + card.width * card.height - visibleW * visibleH;
     }, 0);
@@ -285,13 +278,16 @@ export function placeCity(
    * that puts every one of them there; when they do not, the camera pans
    * to them, as before.
    */
-  {
+  // With a picture standing in the middle the city has already stepped aside for it, and that placement stands.
+  if (avoid.length === 0) {
     const lowX = Math.min(...settled.placed.map((card) => card.x));
     const highX = Math.max(...settled.placed.map((card) => card.x + card.width));
     const slide = highX - lowX > right - left ? 0 : lowX < left ? left - lowX : highX > right ? right - highX : 0;
     if (slide !== 0) {
       nudge = slide;
-      settled = settle(cell, asked, openedShare);
+      const slid = at(cell, asked, openedShare, settled.shift);
+      if (crowded(slid)) nudge = 0;
+      else settled = { placed: slid, shift: settled.shift };
     }
   }
   /*
