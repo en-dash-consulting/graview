@@ -111,7 +111,13 @@ export function invariantProvider<S extends AnySchema>(): AffordanceProvider<S> 
             return scope.match ? scope.match(node as never) : true;
           });
         if (judged.length === 0) continue;
-        if (touching.some((violation) => violation.subjectId === node.id)) continue;
+        /*
+         * Not while ANY rule names it. A song implicated in its single's
+         * rule — the subject is the single — read "Kerosene holds — nothing
+         * currently breaks it" directly above the rule saying what was wrong
+         * with it.
+         */
+        if (touching.some((violation) => violation.subjectId === node.id || violation.nodeIds.includes(node.id))) continue;
         observations.push({
           id: `holds:${node.id}`,
           text: `${named(node)} holds — nothing currently breaks ${

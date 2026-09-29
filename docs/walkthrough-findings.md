@@ -2927,3 +2927,22 @@ two singles and thirty-five songs.
   one kind both ways, "5 with none across · 2 with none down". Criterion:
   primitives `a-lens-keeps-the-horizon.test.tsx` "what the coverage says is
   missing".
+
+### W-107 · "Kerosene holds — nothing currently breaks it", above the rule that breaks it
+- stage: C · face: scene · width: 1280 · scheme: light
+- expected: the pane says what is wrong with the record in front of you,
+  and never the opposite in the line above
+- actual: select the song Kerosene: the pane read "Kerosene holds —
+  nothing currently breaks it" and, under it, "⚠ The single Kerosene
+  (2023-06-30) came out after Salt & Static…". A song is judged by a rule
+  scoped to songs, which holds; the single's rule — whose subject is the
+  single — names the song. The "holds" line checked only whether the node
+  was a violation's SUBJECT.
+- where it belongs: `packages/tools/src/providers/invariant.ts`
+- harness that should have caught it: the "holds" test is a rule node with
+  one rule; no fixture had a record named by a rule about something else
+- status: fixed in "walkthrough: C · a record named by a rule does not
+  hold" · no "holds" line while any violation names the node, as subject or
+  among what it implicates. Criterion: tools `affordances.test.ts` "never
+  says a node holds while another rule names it" (verified failing without
+  the fix).

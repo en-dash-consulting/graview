@@ -1,6 +1,7 @@
 import {
   bindSchema,
   createSchema,
+  defineInvariant,
   defineNode,
   nodeRef,
   Store,
@@ -254,6 +255,41 @@ describe("selecting a rule says what it judges", () => {
     expect(derived.observations.map((observation) => observation.text)).toContain(
       "Two runs each holds — nothing currently breaks it",
     );
+  });
+
+  it("never says a node holds while another rule names it (W-107)", () => {
+    // A single's rule names the song on it; the song's own rule holds. The
+    // song read "Kerosene holds — nothing currently breaks it" above the
+    // single's rule saying what was wrong with it.
+    const song = defineNode("song", { fields: z.object({ label: z.string(), explicit: z.boolean() }), edges: {} });
+    const single = defineNode("single", { fields: z.object({ label: z.string(), late: z.boolean() }), edges: { holds: { to: ["song"] } } });
+    const both = createSchema([song, single]);
+    const clean = defineInvariant("clean", {
+      scope: { kind: "song" },
+      evaluate: ({ subject }) => ((subject as { explicit: boolean }).explicit ? [{ invariant: "clean", subjectId: subject.id, message: "explicit", nodeIds: [subject.id], repairs: [] }] : []),
+    });
+    const onTime = defineInvariant("on-time", {
+      scope: { kind: "single" },
+      evaluate: ({ subject, graph }) =>
+        (subject as { late: boolean }).late
+          ? [{ invariant: "on-time", subjectId: subject.id, message: "The single came out after its album", nodeIds: [subject.id, ...graph.out(subject.id, "holds").map((one) => one.id)], repairs: [] }]
+          : [],
+    });
+    const held = new Store({
+      schema: both,
+      mutations: [],
+      invariants: [clean, onTime] as never,
+      snapshot: {
+        nodes: [
+          { id: "kerosene", kind: "song", label: "Kerosene", explicit: false },
+          { id: "the-single", kind: "single", label: "Kerosene (single)", late: true },
+        ] as never,
+        edges: [{ kind: "holds", from: "the-single", to: "kerosene" }],
+      },
+    });
+    const said = deriveAffordances(held, ["kerosene"]).observations.map((observation) => observation.text);
+    expect(said).toContain("The single came out after its album");
+    expect(said.some((text) => text.includes("holds — nothing currently breaks"))).toBe(false);
   });
 
   it("says nothing of the sort about a node no rule judges", () => {
