@@ -3163,3 +3163,28 @@ two singles and thirty-five songs.
   repair that names a derived act" (verified failing without the fix). The
   rest of the round trip with a policy held: `policy.ts` came back as
   declared, and the files typecheck in a copy of the app.
+
+### W-118 · At altitude a showing's button holds its lens's own buttons
+- stage: G (seen on every reload) · face: scene · width: 1280 · scheme: light
+- expected: the marquee's pictures are pictures — nothing inside one is a
+  control, and the DOM is valid
+- actual: React logged "In HTML, <button> cannot be a descendant of
+  <button>" on every visit to altitude: "The releases" is a calendar, which
+  has ‹, Today, › and a year strip, and the showing that drew it small was
+  a `<button>` with the picture inside. The picture was `inert`, so axe and
+  the keyboard were satisfied — and the HTML was still invalid, a nesting a
+  parser repairs by closing the outer button early. Todo's month is a
+  calendar too; nothing listened to the console.
+- where it belongs: `packages/primitives/src/default-views.tsx` (the drive-in
+  marquee), `packages/primitives/src/theme.ts`
+- harness that should have caught it: `the-drive-in-marquee.test.tsx`'s
+  lens was a `<div>` of text; `verify-navigation` checks the pictures are
+  inert, not where they sit
+- status: fixed in "The release can version, and the progression renders
+  every chapter without a console error" (found the same night by CI's
+  progression; this walk's fix was the same design and is folded into it) · the
+  card is a frame holding the inert picture and its name, and the press is
+  a button laid over the whole card (`graview-drive-in-thumb-press`).
+  Criterion: `the-drive-in-marquee.test.tsx` with a lens that has a button
+  of its own: no `button button`, and the presses are labelled (verified
+  failing without the fix); verify-navigation reads the presses by class.
