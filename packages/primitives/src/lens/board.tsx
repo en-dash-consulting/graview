@@ -1,3 +1,4 @@
+import { withMore } from "./more.js";
 import { labelOf, type AnySchema, type ArrangeOption, type Arrangement, type NodeOfSchema } from "@graview/core";
 import { useArranging } from "./arranging.js";
 import { useGraview, useViolations, type ViewProps } from "@graview/react";
@@ -1076,13 +1077,17 @@ export function createBoardLens<S extends AnySchema>(options: BoardOptions): Boa
         {...(options.arranging === false ? {} : { occupants: arranged.nodes.map((node) => node.id) })}
       />
     );
-    return bar ? (
-      <div style={{ display: "grid", gap: 6, height: "100%", minHeight: 0, gridTemplateRows: "auto 1fr" }}>
-        {bar}
-        {view}
-      </div>
-    ) : (
-      view
+    return withMore(
+      props,
+      store.schema,
+      bar ? (
+        <div style={{ display: "grid", gap: 6, height: "100%", minHeight: 0, gridTemplateRows: "auto 1fr" }}>
+          {bar}
+          {view}
+        </div>
+      ) : (
+        view
+      ),
     );
   }
 

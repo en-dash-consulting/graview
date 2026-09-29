@@ -68,9 +68,11 @@ app sets:
   crowded band already draws its cards as chips, so a chip is the floor. At
   1440 wide that is about 20; on a phone, 4–6. The row height never falls
   below a chip's (it went negative before).
-- **A drive-in thumbnail** is handed at most 24 members — enough for a lens
-  to draw its shape, never the population. It is a picture of the lens,
-  not the lens.
+- **A drive-in thumbnail** is handed at most 12 members — enough for a lens
+  to draw its shape, never the population (it is 58 pixels wide; a matrix
+  of 12 × 12 is 144 cells where 24 × 24 was 576). It is a picture of the
+  lens, not the lens, and the thumbnails mount one per frame once the
+  scene is still.
 - **An opened district, a Group view, a village** keep the caps they have
   (16, 6, 24) — they were already right.
 - **A focused picture** — a lens drawn full size — is the person's chosen

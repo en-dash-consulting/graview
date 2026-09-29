@@ -77,6 +77,8 @@ describe("the marquee", () => {
 
   it("draws each showing as a small picture of its lens, named", async () => {
     const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true });
+    // Thumbnails mount one a frame, once the scene is still.
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 80)));
     const thumbs = [...host.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb')];
     expect(thumbs).toHaveLength(2);
     // The lens itself, drawn small: the Week component's own words are in the thumbnail.

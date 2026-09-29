@@ -1,3 +1,4 @@
+import { withMore } from "./more.js";
 import { labelOf, type AnySchema, type ArrangeOption, type Arrangement, type NodeOfSchema } from "@graview/core";
 import { useArranging } from "./arranging.js";
 import { useGraview, type ViewProps } from "@graview/react";
@@ -685,13 +686,17 @@ export function createTimelineLens<S extends AnySchema>(
       ...(bound[0] ? { kind: (props.nodes ?? []).find((node) => bound.includes(String(node.kind)))?.kind as string | undefined ?? bound[0] } : {}),
     });
     const view = <TimelineView<S> schema={store.schema} {...props} nodes={nodes} options={options} />;
-    return bar ? (
-      <div style={{ display: "grid", gap: 6, height: "100%", minHeight: 0, gridTemplateRows: "auto 1fr" }}>
-        {bar}
-        {view}
-      </div>
-    ) : (
-      view
+    return withMore(
+      props,
+      store.schema,
+      bar ? (
+        <div style={{ display: "grid", gap: 6, height: "100%", minHeight: 0, gridTemplateRows: "auto 1fr" }}>
+          {bar}
+          {view}
+        </div>
+      ) : (
+        view
+      ),
     );
   }
 

@@ -29,6 +29,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
+import { createMotionStore, type MotionStore } from "./motion.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
 import type { ViewComponent } from "./view-registry.js";
 
@@ -124,6 +125,8 @@ export interface GraviewContextValue<S extends AnySchema> {
    * attaches on the first, detaches on the last.
    */
   readonly pointer: PointerStore;
+  /** Whether the scene is moving: set by the scene, read with `useSceneStill`. */
+  readonly motion: MotionStore;
   /** The scene says what it is drawing. Nobody else calls this. */
   registerScene(handle: SceneHandle | null): void;
   /**
@@ -402,6 +405,7 @@ export function GraviewProvider<S extends AnySchema>({
   }, []);
   const whereIs = useCallback((id: string): DrawnBox | null => sceneHandle.current?.whereIs(id) ?? null, []);
   const [pointer] = useState<PointerStore>(() => createPointerStore());
+  const [motion] = useState<MotionStore>(() => createMotionStore());
   const [seatWho, setSeatWho] = useState<string | null>(null);
   /*
    * THE ROBOTS' STATE, folded here beside the activity marks, from the same
@@ -710,6 +714,7 @@ export function GraviewProvider<S extends AnySchema>({
       setMenuAt,
       whereIs,
       pointer,
+      motion,
       registerScene,
       robots,
       noteSeat,
@@ -752,6 +757,7 @@ export function GraviewProvider<S extends AnySchema>({
       menuAt,
       whereIs,
       pointer,
+      motion,
       registerScene,
       robots,
       noteSeat,

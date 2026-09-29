@@ -28,6 +28,17 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
   readonly nodes?: readonly NodeOfSchema<S>[];
   /** Plural label for an aggregate, from the kind's declaration. */
   readonly label?: string;
+  /**
+   * THE MOST THIS PICTURE SHOULD DRAW (docs/scale.md). Set where the room is
+   * small — a drive-in's thumbnail hands a lens its 24 most relevant members
+   * and says so. A lens that reads the store for more than `nodes` (a
+   * coverage's columns) holds itself to it; any lens handed fewer than
+   * `total` says how many more there are. Absent: the picture is the
+   * person's, and draws what it draws.
+   */
+  readonly budget?: number;
+  /** How many members there are in all, when `nodes` is fewer. */
+  readonly total?: number;
   readonly fidelity: Fidelity;
   readonly cardinality: Cardinality;
   /**

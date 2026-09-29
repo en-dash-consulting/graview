@@ -16,12 +16,13 @@ import {
   useKit,
   useNavigation,
   useReached,
+  useSceneStill,
   useSelection,
   useViolations,
   type ReactViewRegistry,
   type ViewProps,
  markDefaultView } from "@graview/react";
-import { memo, type ReactNode } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrangeBar, arrangementOf, withArrangement } from "./arrange-bar.js";
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
@@ -79,6 +80,99 @@ function buildingsCap(side: number | undefined, count: number): number {
 }
 
 /**
+ * How many members a drive-in's thumbnail hands its lens: enough for its
+ * shape, never the population. A thumbnail is 58 pixels wide: twelve rows
+ * is already more than it can show, and a matrix of 12 × 12 is 144 cells
+ * where 24 × 24 was 576.
+ */
+export const THUMBNAIL_BUDGET = 12;
+
+/*
+ * ONE THUMBNAIL A FRAME. A city of districts with named pictures would build
+ * them all in the frame the scene came to rest in — four lenses in one long
+ * task. Each waits its turn, one per animation frame.
+ */
+const turns: (() => void)[] = [];
+let turning = false;
+function takeTurn(mount: () => void): () => void {
+  turns.push(mount);
+  const next = () => {
+    const run = turns.shift();
+    if (!run) {
+      turning = false;
+      return;
+    }
+    run();
+    requestAnimationFrame(next);
+  };
+  if (!turning && typeof requestAnimationFrame !== "undefined") {
+    turning = true;
+    requestAnimationFrame(next);
+  } else if (typeof requestAnimationFrame === "undefined") next();
+  return () => {
+    const at = turns.indexOf(mount);
+    if (at >= 0) turns.splice(at, 1);
+  };
+}
+
+/**
+ * The members worth drawing when not all can be: the flagged first, then
+ * the most connected, in their own order otherwise — the same reading the
+ * relation band's relevance gives (docs/scale.md).
+ */
+function mostRelevant<N extends { readonly id: string }>(
+  members: readonly N[],
+  budget: number,
+  flagged: readonly string[] | undefined,
+  graph: { neighbors(id: string): readonly unknown[] },
+): readonly N[] {
+  if (members.length <= budget) return members;
+  const trouble = new Set(flagged ?? []);
+  return members
+    .map((node, index) => ({ node, index, trouble: trouble.has(node.id) ? 0 : 1, ties: -graph.neighbors(node.id).length }))
+    .sort((a, b) => a.trouble - b.trouble || a.ties - b.ties || a.index - b.index)
+    .slice(0, budget)
+    .sort((a, b) => a.index - b.index)
+    .map((entry) => entry.node);
+}
+
+/**
+ * DRAWN WHEN SEEN, AND WHEN STILL. A thumbnail off the screen, or built
+ * while the camera flies, spends a frame on a picture nobody can read. It
+ * mounts the first time it is on screen with the scene at rest, and then
+ * stays — unmounting on every flight would rebuild it on every landing.
+ */
+function WhenSeen({ children }: { readonly children: ReactNode }) {
+  const still = useSceneStill();
+  const box = useRef<HTMLSpanElement>(null);
+  const [seen, setSeen] = useState(false);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const element = box.current;
+    if (!element || seen) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setSeen(true);
+      return;
+    }
+    const watch = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) setSeen(true);
+    }, { rootMargin: "120px" });
+    watch.observe(element);
+    return () => watch.disconnect();
+  }, [seen]);
+  useEffect(() => {
+    if (!seen || !still || shown) return;
+    return takeTurn(() => setShown(true));
+  }, [seen, still, shown]);
+  return (
+    // A real box, not `display: contents`: an element with no box never intersects anything.
+    <span ref={box} style={{ display: "block", minHeight: 1 }} data-graview-thumbnail={shown ? "drawn" : "waiting"}>
+      {shown ? children : null}
+    </span>
+  );
+}
+
+/**
  * A LENS DRAWN SMALL, AND ONLY WHEN WHAT IT DRAWS CHANGES.
  *
  * The board renders the real component for every showing a kind has, and
@@ -94,16 +188,22 @@ const Picture = memo(
     nodes,
     label,
     flagged,
+    budget,
+    total,
   }: {
     readonly lens: (props: ViewProps<S>) => ReactNode;
     readonly nodes: readonly NodeOfSchema<S>[];
     readonly label: string;
     readonly flagged?: readonly string[];
+    readonly budget?: number;
+    readonly total?: number;
   }) {
     return (
       <Lens
         nodes={nodes}
         label={label}
+        {...(budget !== undefined ? { budget } : {})}
+        {...(total !== undefined ? { total } : {})}
         fidelity="full"
         cardinality="many"
         mode="scene"
@@ -115,6 +215,7 @@ const Picture = memo(
   (was, now) =>
     was.lens === now.lens &&
     was.label === now.label &&
+    was.total === now.total &&
     was.nodes.length === now.nodes.length &&
     was.nodes.every((node, at) => node === now.nodes[at]) &&
     (was.flagged ?? []).length === (now.flagged ?? []).length &&
@@ -124,6 +225,8 @@ const Picture = memo(
   readonly nodes: readonly NodeOfSchema<S>[];
   readonly label: string;
   readonly flagged?: readonly string[];
+  readonly budget?: number;
+  readonly total?: number;
 }) => ReactNode;
 
 export function registerDefaultViews<S extends AnySchema>(
@@ -392,7 +495,7 @@ export function registerDefaultViews<S extends AnySchema>(
       const flag = useKit().marks.flag;
       const { selection } = useSelection();
       const { toggle, view, go } = useNavigation();
-      const { views, hiddenKinds } = useGraview<S>();
+      const { views, hiddenKinds, store } = useGraview<S>();
       /*
        * THE DRIVE-IN'S MARQUEE. A kind with a named picture has a drive-in
        * from altitude: a dark screen on its plot and, under it, the showings
@@ -404,6 +507,12 @@ export function registerDefaultViews<S extends AnySchema>(
        */
       const showings = view.overview && !hiddenKinds.has(String(kind)) ? views.places().filter((place) => place.kind === String(kind)) : [];
       const showingNow = props.focused ? (view.within?.["view"] ?? showings[0]?.as) : undefined;
+      // A thumbnail is a picture of the lens, not the lens: its most relevant members, never the population.
+      const thumbnailMembers = useMemo(
+        () => (showings.length > 0 ? mostRelevant(members, THUMBNAIL_BUDGET, props.flagged, store.graph) : []),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [showings.length, members, props.flagged, store],
+      );
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
       const accent = props.focused || props.raised;
@@ -903,12 +1012,16 @@ export function registerDefaultViews<S extends AnySchema>(
                       <span className="graview-drive-in-thumb-picture" aria-hidden="true" inert>
                         {Lens ? (
                           <span className="graview-drive-in-thumb-natural">
-                            <Picture
-                              lens={Lens}
-                              nodes={members}
-                              label={place.title}
-                              {...(props.flagged ? { flagged: props.flagged } : {})}
-                            />
+                            <WhenSeen>
+                              <Picture
+                                lens={Lens}
+                                nodes={thumbnailMembers}
+                                label={place.title}
+                                budget={THUMBNAIL_BUDGET}
+                                total={members.length}
+                                {...(props.flagged ? { flagged: props.flagged } : {})}
+                              />
+                            </WhenSeen>
                           </span>
                         ) : null}
                       </span>

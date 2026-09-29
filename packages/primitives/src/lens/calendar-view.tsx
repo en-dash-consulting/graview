@@ -1,3 +1,4 @@
+import { withMore } from "./more.js";
 import type { AnySchema, NodeOfSchema } from "@graview/core";
 import { withWithin } from "@graview/layout";
 import { useGraview, useNavigation, type ViewProps } from "@graview/react";
@@ -69,7 +70,9 @@ export function createCalendarLens<S extends AnySchema>(options: CalendarOptions
         ...(kinds[0] ? { kind: ((props.nodes ?? []).find((node) => kinds.includes(String(node.kind)))?.kind as string | undefined) ?? kinds[0] } : {}),
       });
       const groups = range === "agenda" && arranged.grouped && arrangement.group ? arranged.groups.map((group) => ({ label: group.label, ids: new Set(group.nodes.map((node) => node.id)) })) : undefined;
-      return (
+      return withMore(
+        props,
+        store.schema,
         <CalendarView<S>
           schema={store.schema}
           {...props}
@@ -77,7 +80,7 @@ export function createCalendarLens<S extends AnySchema>(options: CalendarOptions
           options={here}
           {...(bar ? { bar } : {})}
           {...(groups ? { groups } : {})}
-        />
+        />,
       );
     };
   return {

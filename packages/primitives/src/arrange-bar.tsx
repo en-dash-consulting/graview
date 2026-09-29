@@ -108,6 +108,14 @@ const chip: CSSProperties = {
 };
 
 /** The far ends an edge condition may name, from the graph. */
+/**
+ * The far ends a menu offers to narrow by. A menu is for choosing, not for
+ * reading a catalogue: past FAR_ENDS it holds the most connected (the ones a
+ * person most likely means), and the search reaches the rest — a select of
+ * 1,177 songs was 1,177 elements in every row that offered it (docs/scale.md).
+ */
+export const FAR_ENDS = 40;
+
 function farEndsOf(schema: AnySchema, graph: ArrangeGraph, offer: ArrangeOffer): readonly { id: string; label: string }[] {
   const kinds = offer.far ?? [];
   const seen = new Map<string, string>();
@@ -116,7 +124,16 @@ function farEndsOf(schema: AnySchema, graph: ArrangeGraph, offer: ArrangeOffer):
     if (!wanted.has(node.kind)) continue;
     seen.set(node.id, labelOf(schema.tryDefinition(node.kind), node));
   }
-  return [...seen.entries()].map(([id, text]) => ({ id, label: text })).sort((a, b) => a.label.localeCompare(b.label));
+  const ends = [...seen.entries()].map(([id, text]) => ({ id, label: text }));
+  const kept =
+    ends.length <= FAR_ENDS
+      ? ends
+      : ends
+          .map((end) => ({ end, ties: graph.out(end.id).length + graph.in(end.id).length }))
+          .sort((a, b) => b.ties - a.ties || a.end.label.localeCompare(b.end.label))
+          .slice(0, FAR_ENDS)
+          .map((entry) => entry.end);
+  return kept.sort((a, b) => a.label.localeCompare(b.label));
 }
 
 /** A condition in words: "Due date before 2026-10-01", "The list it is on: Today", "Past". */

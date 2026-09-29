@@ -74,6 +74,9 @@ try {
         dom: document.querySelectorAll("*").length,
         hosts: document.querySelectorAll("[data-graview-view]").length,
         strands: document.querySelectorAll("[data-graview-connector]").length,
+        // Thumbnails drawn once the scene is still and they are on screen, and those still waiting.
+        thumbnails: document.querySelectorAll('[data-graview-thumbnail="drawn"]').length,
+        waiting: document.querySelectorAll('[data-graview-thumbnail="waiting"]').length,
       };
     };
   });
@@ -171,8 +174,9 @@ try {
   const holds = (stop) => stop && stop.p95 <= 20 && stop.worst <= 50;
   const quiet = (stop) => stop && stop.worst <= 50;
   report.verdict = {
-    // The city at altitude is a map of districts, not every member of every lens drawn small.
-    theCityAtAltitudeIsLight: city.dom < 3000,
+    // The city at altitude is a map of districts, not every member of every lens drawn small —
+    // and the thumbnails are still drawn, once it is still: light by budget, not by drawing nothing.
+    theCityAtAltitudeIsLight: city.dom < 3000 && city.thumbnails > 0,
     // Focusing a hub draws what the band can hold, and says what the rest are.
     aHubStopIsBounded: hub.hosts <= 60 && hub.strands <= 120 && groups.length > 0,
     // A group is a real place: a stop whose members take the band, and Back closes it.

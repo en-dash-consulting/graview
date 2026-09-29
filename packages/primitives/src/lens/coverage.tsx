@@ -487,6 +487,7 @@ export function CoverageView<S extends AnySchema>({
   schema,
   implicated = [],
   flagged = [],
+  budget,
 }: CoverageViewProps<S>) {
   const { store } = useGraview<AnySchema>();
   const under = useColumnsUnderTheNames();
@@ -510,7 +511,8 @@ export function CoverageView<S extends AnySchema>({
     schema,
   );
   // The glyph and the summary count; only the full picture draws cells, and only as many as it can.
-  const grid: CappedCoverage = fidelity === "full" ? capCoverage(whole) : whole;
+  // A budget (a thumbnail's) holds rows and columns to it; otherwise the page's own limits.
+  const grid: CappedCoverage = fidelity === "full" ? capCoverage(whole, budget !== undefined ? { rows: budget, columns: budget } : {}) : whole;
 
   if (fidelity === "glyph") {
     return (

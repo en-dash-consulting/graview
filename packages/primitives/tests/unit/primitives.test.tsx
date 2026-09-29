@@ -284,6 +284,8 @@ describe("the timeline lens", () => {
       "../primitives/index.js",
       // The arranging hook is exported from the package: an app's lens reaches it the same way.
       "./arranging.js",
+      // So is "+N more": `withMore` is exported, and an app's lens says it the same way.
+      "./more.js",
       "@graview/core",
       "@graview/react",
       "react",

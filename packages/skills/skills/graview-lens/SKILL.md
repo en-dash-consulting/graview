@@ -101,6 +101,11 @@ the reuse test beside it, red on purpose.
    which is the worst failure a lens has. The framework's own board lens had
    this exact bug.
 
+   **`budget` is the most to draw.** A drive-in thumbnail hands a lens its 12
+   most relevant members with `budget` and `total`: hold what you read from
+   the store to it too, and say "+N more" (`withMore` does). A real catalogue
+   is thousands; a lens that draws them all at 6% stalls the city.
+
 8. **Take an arrangement, and say what you have no place for.** Every
    picture over a kind can be sorted, filtered and grouped from the
    declaration alone — `arrangeable(schema, kind)` offers the fields by

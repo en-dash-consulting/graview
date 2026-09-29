@@ -481,6 +481,10 @@ export function Scene<S extends AnySchema>({
   // The picture as it is right now, part-way between the last view and this
   // one. Everything downstream draws the tween, not the destination.
   const frame = useAnimatedLayout(result, { enabled: animate && !dragging && !steering });
+  // Whether anything is moving: the hand, the wheel, or a transition not yet landed.
+  const { motion } = useGraview<S>();
+  // `t` is the tween's progress: a landed frame is at 1 (the frame is always a fresh object, never `result`).
+  useEffect(() => motion.set(dragging || steering || frame.t < 1), [motion, dragging, steering, frame]);
   const touched = useTouched<S>();
   const seatWork = useSeatWork<S>();
 
