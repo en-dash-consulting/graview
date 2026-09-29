@@ -2662,7 +2662,10 @@ two singles and thirty-five songs.
   unique. Criteria: react `a-relation-is-captioned-once.test.ts` (one
   caption per relation however sorted; spans its first row; neighbours
   never overlap; out from under the rail) and verify-navigation
-  `everyRelationIsCaptionedOnce` at every stop it walks.
+  `everyRelationIsCaptionedOnce` at every stop it walks. A first cut of the
+  fix split every gutter in half and so cut "THE ARTIST WHOSE SONG I…"
+  between two short neighbours; a caption now borrows as far as its
+  neighbours' own words do not reach ("a long caption beside short ones").
 
 ### W-096 · A song's card reads "8 · 4:27 · Yes"
 - stage: B · face: both · width: any · scheme: both

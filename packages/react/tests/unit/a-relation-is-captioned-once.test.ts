@@ -51,3 +51,21 @@ describe("the captions over a relation band", () => {
     expect(only!.width).toBeGreaterThanOrEqual(190);
   });
 });
+
+describe("a long caption beside short ones", () => {
+  it("borrows the room its neighbours do not need, so its words are not cut", () => {
+    const runs = captionRuns(
+      [
+        card("about|out", "what it is about", 280, 100),
+        card("by|out", "the artist whose song it is", 498, 100),
+        card("produced-by|out", "who produced it", 716, 100),
+      ],
+      room,
+    );
+    const long = runs.find((run) => run.key === "by|out")!;
+    expect(long.width).toBeGreaterThanOrEqual("the artist whose song it is".length * 8.4);
+    for (let i = 1; i < runs.length; i++) {
+      expect(runs[i]!.left).toBeGreaterThanOrEqual(runs[i - 1]!.left + runs[i - 1]!.width);
+    }
+  });
+});

@@ -41,6 +41,8 @@ export const MIN_CAPTION = 300;
 /** Cards in one row are within this many pixels of each other's top. */
 const SAME_ROW = 12;
 const GAP = 8;
+/** About how wide a caption's words are drawn: 0.75rem capitals, letter-spaced, on a padded ground. */
+const wordsWidth = (text: string): number => text.length * 8.4 + 16;
 
 export function captionRuns(
   entries: readonly CaptionEntry[],
@@ -65,13 +67,32 @@ export function captionRuns(
     };
   });
   runs.sort((a, b) => a.top - b.top || a.left - b.left);
-  return runs.map((run) => {
-    // What it may borrow: half the gutter to each neighbour in the same row, and the rails.
-    const beside = runs.filter((other) => other !== run && Math.abs(other.top - run.top) <= SAME_ROW);
-    const floor = Math.max(room.left, ...beside.filter((other) => other.right <= run.left).map((other) => (other.right + run.left + GAP) / 2));
-    const ceiling = Math.min(room.right, ...beside.filter((other) => other.left >= run.right).map((other) => (run.right + other.left - GAP) / 2));
+  /*
+   * What each caption WANTS: its own run, or its words, whichever is wider,
+   * centred on the run. A neighbour's ground is borrowed only as far as the
+   * neighbour does not want it; where both want the gutter between them,
+   * they split it.
+   */
+  const want = runs.map((run) => {
+    const width = Math.max(run.right - run.left, Math.min(MIN_CAPTION, wordsWidth(run.text)));
+    const mid = (run.left + run.right) / 2;
+    return { left: mid - width / 2, right: mid + width / 2 };
+  });
+  return runs.map((run, index) => {
+    const beside = runs
+      .map((other, at) => ({ other, at }))
+      .filter(({ other }) => other !== run && Math.abs(other.top - run.top) <= SAME_ROW);
+    const floors = beside
+      .filter(({ other }) => other.right <= run.left)
+      .map(({ other, at }) => (want[at]!.right + GAP <= (other.right + run.left) / 2 ? want[at]!.right + GAP : (other.right + run.left + GAP) / 2));
+    const ceilings = beside
+      .filter(({ other }) => other.left >= run.right)
+      .map(({ other, at }) => (want[at]!.left - GAP >= (run.right + other.left) / 2 ? want[at]!.left - GAP : (run.right + other.left - GAP) / 2));
+    const floor = Math.max(room.left, ...floors);
+    const ceiling = Math.min(room.right, ...ceilings);
     const own = run.right - run.left;
-    const width = Math.max(own, Math.min(MIN_CAPTION, ceiling - floor));
+    const desired = want[index]!.right - want[index]!.left;
+    const width = Math.max(own, Math.min(desired, ceiling - floor));
     const mid = (run.left + run.right) / 2;
     const left = own >= width ? run.left : Math.max(floor, Math.min(mid - width / 2, ceiling - width));
     return { key: run.key, text: run.text, left, width, top: run.top };
