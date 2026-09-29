@@ -84,6 +84,7 @@ export {
   arrange,
   arrangeable,
   arrangeAllows,
+  asksForThePast,
   bucketStart,
   conditionHolds,
   edgesOf,

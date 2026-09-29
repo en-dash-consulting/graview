@@ -6,6 +6,7 @@ import {
   describeSearched,
   formatArrangement,
   humaniseField,
+  asksForThePast,
   isCurrent,
   labelOf,
   matchNode,
@@ -78,9 +79,12 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   const arrangement = asked.arrangement;
   // The words may say `is:any` too, as they do in the Find box.
   const typed = parseQuery(arrangement.query ?? "");
-  const showingPast = [...(arrangement.filter ?? []), ...typed.conditions].some(
-    (condition) => condition.key === "is" && (condition.value === "past" || condition.value === "any"),
-  );
+  const showingPast =
+    [...(arrangement.filter ?? []), ...typed.conditions].some(
+      (condition) => condition.key === "is" && (condition.value === "past" || condition.value === "any"),
+    ) ||
+    // `status:demo` where demos are past is the past, asked for by name.
+    asksForThePast(definition, [...(arrangement.filter ?? []), ...typed.conditions]);
   const effective: Arrangement = showingPast || !definition?.lifecycle
     ? arrangement
     : { ...arrangement, filter: [...(arrangement.filter ?? []), { key: "is", value: "current" }] };

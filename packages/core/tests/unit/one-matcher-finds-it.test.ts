@@ -150,6 +150,14 @@ describe("the worked example", () => {
     );
   });
 
+  it("reads a condition that names a retired state as asking for the past (W-104)", () => {
+    // "status:demo" on a discography whose demos are past found nothing, and
+    // told somebody who had just named the past to add is:any.
+    expect(nodes(search(store, "done:true", { today }).hits)).toEqual(["t-milk"]);
+    expect(nodes(search(store, "milk done:true", { today }).hits)).toEqual(["t-milk"]);
+    expect(nodes(search(store, "done:false milk", { today }).hits)).toEqual([]);
+  });
+
   it("reads key:value tokens as the arrangement's conditions, admitted per kind", () => {
     const narrowed = search(store, "the holds:week", { today });
     expect(nodes(narrowed.hits)).toEqual(["t-call"]);

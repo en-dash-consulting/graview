@@ -1,4 +1,4 @@
-import { arrangeable, conditionHolds, type ArrangeContext, type ArrangeGraph, type Condition } from "./arrange.js";
+import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type ArrangeGraph, type Condition } from "./arrange.js";
 import { describeArg } from "./mutations/node-ref.js";
 import type { Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
@@ -430,9 +430,15 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     const own = conditions.filter((condition) => condition.key !== "is" && condition.admittedBy.includes(kind));
     // Conditions alone find only in the kinds that can be narrowed by them.
     if (words.length === 0 && own.length === 0 && narrowingIs.length === 0) continue;
+    /*
+     * A CONDITION THAT NAMES A RETIRED STATE ASKS FOR THE PAST. `status:demo`
+     * on a discography whose demos are behind the horizon found nothing and
+     * said "add is:any" — to somebody who had just named the past by name.
+     */
+    const namesThePast = asksForThePast(definition, own);
     for (const node of store.graph.nodesOfKind(kind as never) as unknown as ({ id: string; kind: string } & Record<string, unknown>)[]) {
       const current = isCurrent(definition, node, today);
-      if (!past && !current) continue;
+      if (!past && !namesThePast && !current) continue;
       if (onlyPast && current) continue;
       if (!own.every((condition) => conditionHolds(ctx, node, condition))) continue;
       if (isWords.includes("flagged") && !flagged.has(node.id)) continue;

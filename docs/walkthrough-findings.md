@@ -2861,3 +2861,25 @@ two singles and thirty-five songs.
   skill's own example to the letter" reads the skill and applies every
   `studio.store.apply` call in it to a garden (verified failing on the old
   skill).
+
+### W-104 · `status:demo` finds nothing, and tells you to ask for the past you just named
+- stage: B (search) · face: both · width: any · scheme: both
+- expected: the arrangement grammar's `key:value` means the same in the
+  Find box and on a list; `status:demo` finds the demos
+- actual: demos and scrapped songs are the kind's retired states, so the
+  matcher and the list page left them out before the condition was read:
+  `search(store, "status:demo")` returned nothing and the strip said
+  "current ones; add is:any for past ones"; `/pages/songs?filter=status:demo`
+  was an empty list under a "+3 past" link. A condition that names a
+  retired state is the past, asked for by name.
+- where it belongs: `packages/core/src/arrange.ts` (`asksForThePast`),
+  `packages/core/src/search.ts`, `packages/pages/src/page-list.tsx`
+- harness that should have caught it: `one-matcher-finds-it.test.ts` asked
+  for the past only through `is:any` and `is:past`
+- status: fixed in "walkthrough: B · naming a retired state asks for the
+  past" · a condition on a kind's lifecycle field whose value is one of its
+  retired states widens that kind's horizon, in search and on the list
+  page. Criteria: core `one-matcher-finds-it.test.ts` "reads a condition
+  that names a retired state as asking for the past" (verified failing
+  without the fix), pages `a-list-you-arranged-is-a-link.test.tsx`
+  (`?filter=done:true` lists the done task).

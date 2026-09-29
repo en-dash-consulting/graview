@@ -151,6 +151,22 @@ const capitalise = (text: string): string => text.charAt(0).toUpperCase() + text
 const IS_WORDS = ["current", "past", "any", "flagged", "clear"] as const;
 
 /**
+ * Whether a condition names one of a kind's RETIRED states — `status:demo`
+ * where demos are behind the horizon — which is asking for the past by
+ * name. The search box and the list page both left the past out for it and
+ * found nothing.
+ */
+export function asksForThePast(
+  definition: { readonly lifecycle?: { readonly field: string; readonly retired: readonly unknown[] | "date" } } | undefined,
+  conditions: readonly { readonly key: string; readonly value: string }[],
+): boolean {
+  const lifecycle = definition?.lifecycle;
+  if (!lifecycle || lifecycle.retired === "date") return false;
+  const retired = (lifecycle.retired as readonly unknown[]).map(String);
+  return conditions.some((condition) => condition.key === lifecycle.field && retired.includes(condition.value));
+}
+
+/**
  * What a kind can be arranged by, derived from its declaration alone.
  *
  * Sorts: the label, every field with a scalar type, every edge (by the far

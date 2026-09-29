@@ -55,6 +55,8 @@ describe("a list you arranged is a link", () => {
     expect(rows(draw("/tasks?filter=is:any"))).toEqual(["t-van", "t-milk", "t-tape"]);
     expect(rows(draw("/tasks?past=1"))).toEqual(["t-van", "t-milk", "t-tape"]);
     expect(draw("/tasks")).toContain('data-testid="past-link"');
+    // A filter that names the retired state is the past, asked for by name (W-104).
+    expect(rows(draw("/tasks?filter=done:true"))).toEqual(["t-milk"]);
   });
 
   it("sorts, groups and finds through the shared grammar, and draws the row", () => {
