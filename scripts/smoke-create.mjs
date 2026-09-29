@@ -379,6 +379,20 @@ try {
         inside: a.left >= stage.left - 1 && a.right <= stage.right + 1 && a.bottom <= stage.bottom + 1,
       };
     });
+    /*
+     * THE PROFILE STAYS IN THE EMBED (W-119). It hung from its button's
+     * right edge, 280 wide: in a 350-wide embed it began off the screen,
+     * and the embed's own `overflow: hidden` cut it.
+     */
+    await narrow.click('#here [data-testid="profile-button"]');
+    await narrow.waitForTimeout(400);
+    b.profileInEmbed = await narrow.evaluate(() => {
+      const box = document.querySelector("#here").getBoundingClientRect();
+      const pane = document.querySelector('#here [data-testid="profile"]');
+      if (!pane) return { pane: false };
+      const r = pane.getBoundingClientRect();
+      return { pane: true, inside: r.left >= box.left - 1 && r.right <= box.right + 1 && r.top >= box.top - 1 && r.bottom <= box.bottom + 1 };
+    });
     await narrow.close();
 
     /* ---- somebody else's page: the embed the project ships with */
@@ -596,6 +610,8 @@ try {
 const b = report.browser;
 const clean = (violations) => Array.isArray(violations) && violations.length === 0;
 report.verdict = {
+  // The profile pane opens inside a narrow embed's box, not off its side (W-119).
+  theProfileStaysInTheEmbed: b.profileInEmbed?.pane === true && b.profileInEmbed?.inside === true,
   theScaffoldWroteAProject: (report.npm.tree ?? []).length === 20,
   itInstalledFromTheTarballsWithNpm: report.npm.installed === true && report.npm.lockfile === true,
   itsOwnVerifyPassed: report.npm.verified === true,

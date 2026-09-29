@@ -1,9 +1,9 @@
 import { labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
 import { useGraview } from "@graview/react";
 import { LadderSetting } from "./ladder.js";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Seats } from "./seats.js";
-import { closeToTrigger } from "./popover.js";
+import { closeToTrigger, keepInside } from "./popover.js";
 
 /**
  * WHO YOU ARE AT THIS KEYBOARD, AND WHAT YOU SET FOR YOURSELF.
@@ -113,6 +113,11 @@ export function Profile<S extends AnySchema>({
    * pane says who you are from the principal alone rather than inventing a
    * name.
    */
+  // Inside an embed the pane stays inside the embed's box (see `keepInside`).
+  const pane = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (open) keepInside(pane.current);
+  }, [open]);
   const me = principal.id === undefined ? undefined : store.graph.getNode(principal.id);
   const name =
     me === undefined
@@ -191,6 +196,9 @@ export function Profile<S extends AnySchema>({
         * picture and out of the accessibility tree both.
         */}
       <aside
+          ref={(element) => {
+            pane.current = element;
+          }}
           aria-label="Profile"
           data-testid="profile"
           data-graview-offstage=""

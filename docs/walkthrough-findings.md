@@ -3188,3 +3188,23 @@ two singles and thirty-five songs.
   Criterion: `the-drive-in-marquee.test.tsx` with a lens that has a button
   of its own: no `button button`, and the presses are labelled (verified
   failing without the fix); verify-navigation reads the presses by class.
+
+### W-119 · The profile opens off the side of an embed, and the embed cuts it
+- stage: H · face: embed · width: 1280 and 390 · scheme: light and dark
+- expected: "nothing in either embed escapes its box: menus, inspector,
+  popovers"
+- actual: the profile pane hangs from its button's right edge and is 280
+  wide. On the embed's strip the button sits left of centre, so at 1280 the
+  pane ran from x=149 with the embed starting at 288, and at 390 it began at
+  x=−119; it also ran 150px below the embed's bottom. The embed's root is
+  `overflow: hidden`, so the text-size and motion settings were cut in half.
+  The problems list and the pointer menu stayed inside; they are placed from
+  the right of the strip or clamped to the stage.
+- where it belongs: `packages/primitives/src/popover.ts` (`keepInside`),
+  `packages/primitives/src/profile.tsx`
+- harness that should have caught it: `smoke-create` opens the embed at 390
+  and checks the strip and the actions sheet, never the profile
+- status: fixed in "walkthrough: H · a popover stays in the box it opened
+  in" · inside an embed the pane is slid back inside the embed's box and no
+  taller than the room under its top (measured: inside at 1280 and 390, both
+  embeds). Criterion: smoke-create `theProfileStaysInTheEmbed` at 390.
