@@ -659,7 +659,7 @@ export function Scene<S extends AnySchema>({
    * still the node. A band that WRAPPED into rows is a crowd by height: a
    * summary card in a 46-pixel row showed its title cut at the second line.
    */
-  const crowded = (node: SceneNode) => Math.round(node.plane) === 1 && (node.width < 175 || node.height < 64);
+  const crowded = (node: SceneNode) => Math.round(node.plane) === 1 && (node.compact === true || node.width < 175 || node.height < 64);
 
   /*
    * Whether this card stands for a kind the app gave a picture of its own —

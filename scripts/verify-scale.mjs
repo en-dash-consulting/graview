@@ -188,6 +188,31 @@ try {
     await drag(heldAt.x + 120, heldAt.y + 60, -120, -60, 24);
   });
   const hubWheel = await measure("hub, wheel", () => wheel(700, 420, 60));
+  /*
+   * THE BAND READS, measured on what is drawn. The first cut held every
+   * other claim here while its captions sat on the cards of the row above,
+   * its group cards were cut to their names and a chip ran over its
+   * neighbour — the harness counted hosts and never looked at them.
+   */
+  const readable = () =>
+    page.evaluate(() => {
+      const hosts = [...document.querySelectorAll('[data-graview-plane="1"][data-graview-view]')].map((el) => ({ el, box: el.getBoundingClientRect() }));
+      const overlaps = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+      const captions = [...document.querySelectorAll("[data-graview-relation]")].map((el) => {
+        const span = el.firstElementChild ?? el;
+        return span.getBoundingClientRect();
+      });
+      const captionOnACard = captions.filter((caption) => caption.width > 0 && hosts.some(({ box }) => overlaps(caption, box))).length;
+      const cutGroups = [...document.querySelectorAll(".graview-band-group")].filter((el) => el.getBoundingClientRect().height < 44).length;
+      const spilledChips = hosts.filter(({ el, box }) => [...el.querySelectorAll('[data-graview-primitive="chip"]')].some((chip) => chip.getBoundingClientRect().right > box.right + 1)).length;
+      return { captions: captions.length, captionOnACard, cutGroups, spilledChips };
+    });
+  const hubReads = await readable();
+  await travel("#focus=artist%3Akrizz-kaliko");
+  await page.waitForTimeout(2000);
+  const guestReads = await readable();
+  report.reads = { hub: hubReads, guest: guestReads };
+
   // The hub as it first lands: the drag above panned the band under the rail.
   await travel("#focus=artist%3Atech-n9ne");
   await page.waitForTimeout(1500);
@@ -259,6 +284,8 @@ try {
       // first click does anywhere, so Back lands on it selected rather than on the address before.
       !opened.after.includes("expand=") &&
       opened.after.split("&")[0] === opened.before.split("&")[0],
+    // A crowded band reads: no caption on a card, no group card cut to its name, no chip over its slot.
+    theBandReads: [hubReads, guestReads].every((seen) => seen.captions > 0 && seen.captionOnACard === 0 && seen.cutGroups === 0 && seen.spilledChips === 0),
     // Dragging the ground holds sixty frames a second, up high and at the hub.
     panningHolds60: holds(cityDrag) && holds(hubDrag),
     // A card held by the hand follows it at sixty, and landing it is one frame.

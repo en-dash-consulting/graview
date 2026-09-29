@@ -1,6 +1,6 @@
 import { createSchema, defineNode, Graph, isoDate, z } from "@graview/core";
 import { describe, expect, it } from "vitest";
-import { bandOf, chooseGrouping, EMPTY_VIEW, layout, shares, toggleExpanded, type BandItem } from "../../src/index.js";
+import { bandCaps, bandOf, chooseGrouping, EMPTY_VIEW, layout, packRuns, shares, toggleExpanded, type BandItem } from "../../src/index.js";
 
 /**
  * THE BAND DRAWS WHAT A PERSON CAN READ (docs/scale.md). Below its budget
@@ -132,5 +132,41 @@ describe("the band's budget", () => {
     const group = band1.find((node) => node.aggregate?.opens?.in === "place")!;
     const opened = layout(graph, schema, toggleExpanded(stop, group.id), { width: 1200, height: 760 });
     expect(opened.nodes.filter((node) => node.plane === 1).every((node) => node.height >= 26)).toBe(true);
+  });
+});
+
+describe("a crowded band is laid out by relation", () => {
+  it("starts a relation on its own row unless all of it fits the rest of the row", () => {
+    expect(packRuns([5, 5, 5], 5)).toEqual([[0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [2, 2, 2, 2, 2]]);
+    expect(packRuns([3, 2, 4], 5)).toEqual([[0, 0, 0, 1, 1], [2, 2, 2, 2]]);
+    expect(packRuns([3, 3], 5)).toEqual([[0, 0, 0], [1, 1, 1]]);
+  });
+
+  it("gives each relation what the rows can hold, packed", () => {
+    const caps = bandCaps([800, 330, 130, 3], 5, 3);
+    expect(packRuns(caps, 5).length).toBeLessThanOrEqual(3);
+    expect(caps.every((cap) => cap >= 1)).toBe(true);
+    expect(caps[3]).toBe(3);
+  });
+
+  it("does not group a relation by what nearly all of it shares", () => {
+    const lopsided = [...related(["by"]).map((entry) => entry.node)];
+    // Every song is by the hub: a grouping by it would be one group of everything.
+    expect(chooseGrouping(lopsided, 6, { schema, graph })?.by).not.toBe("by");
+  });
+
+  it("draws each relation's rows as tall as a group card, with a caption's gutter between them", () => {
+    const stop = { ...EMPTY_VIEW, focusId: "hub" };
+    const drawn = layout(graph, schema, stop, { width: 1200, height: 760 });
+    const band1 = drawn.nodes.filter((node) => node.plane === 1);
+    const rows = [...new Set(band1.map((node) => Math.round(node.y)))].sort((a, b) => a - b);
+    expect(band1.every((node) => node.height >= 52)).toBe(true);
+    for (let i = 1; i < rows.length; i++) expect(rows[i]! - rows[i - 1]! - band1[0]!.height).toBeGreaterThanOrEqual(21);
+    // No row holds the end of one relation and the start of another that does not fit whole.
+    for (const y of rows) {
+      const inRow = band1.filter((node) => Math.round(node.y) === y).sort((a, b) => a.x - b.x);
+      const runs = inRow.map((node) => node.via?.edgeKind);
+      expect(runs).toEqual([...runs].sort((a, b) => runs.indexOf(a) - runs.indexOf(b)));
+    }
   });
 });

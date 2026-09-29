@@ -462,8 +462,11 @@ export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProp
          * nothing and the text was cut mid-word with no mark at all — which is
          * worse than not capping it, since a hard edge reads as a bug and an
          * ellipsis reads as a decision.
+         *
+         * And never wider than what holds it: a chip standing for a record in
+         * a band slot 175 pixels wide ran 28ch over the next slot's chip.
          */
-        maxWidth: "28ch",
+        maxWidth: "min(28ch, 100%)",
         overflow: "hidden",
         letterSpacing: "0.01em",
         // Lightness and alpha come from the THEME: the same tint that reads

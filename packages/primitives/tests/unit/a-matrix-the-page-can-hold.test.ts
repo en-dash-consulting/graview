@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { capCoverage, type CoverageGrid } from "../../src/index.js";
+import { capCoverage, COVERAGE_MAX_COLUMNS, COVERAGE_MAX_ROWS, type CoverageGrid } from "../../src/index.js";
 
 /**
  * A MATRIX THE PAGE CAN HOLD. A real discography's "who worked with whom"
@@ -39,7 +39,8 @@ describe("a coverage the page can hold", () => {
   it("draws at most the default limits of a third of a million cells", () => {
     const ties: [number, number][] = Array.from({ length: 2000 }, (_, i) => [i % 568, (i * 7) % 568]);
     const capped = capCoverage(grid(568, 568, ties));
-    expect(capped.rows.length).toBe(80);
-    expect(capped.columns.length).toBe(48);
+    expect(capped.rows.length).toBe(COVERAGE_MAX_ROWS);
+    expect(capped.columns.length).toBe(COVERAGE_MAX_COLUMNS);
+    expect(COVERAGE_MAX_ROWS * COVERAGE_MAX_COLUMNS).toBeLessThanOrEqual(1000);
   });
 });

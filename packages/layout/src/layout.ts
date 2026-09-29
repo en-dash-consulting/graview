@@ -7,7 +7,7 @@ import {
   type LayoutOptions,
   type Plane,
 } from "./types.js";
-import { bandOf } from "./band.js";
+import { bandCaps, bandOf, packRuns, runOf, type BandItem } from "./band.js";
 import { placeCity } from "./city.js";
 import { rankKinds } from "./rank.js";
 import type { ViewState } from "./view-state.js";
@@ -606,43 +606,76 @@ export function layout<S extends AnySchema>(
    */
   /** The least a band row can be and still be read: a chip's height at a 16px rem. */
   const READABLE_ROW = 26;
+  /** A crowded band's row: a group card's name and count, and the first of its members. */
+  const READABLE_CARD = 52;
+  /** The ground a caption needs above a crowded band's row. */
+  const CAPTION_GUTTER = 22;
   const minRelationW = Math.round(opts.relationSize.width * 0.75);
   const perRow = Math.max(1, Math.floor((spanW - opts.gap) / (minRelationW + opts.gap)));
   /*
-   * THE BAND'S BUDGET: the cards a row holds at a readable width, times the
-   * rows the band holds at a readable height — a chip's, since a crowded
-   * band draws its cards as chips (docs/scale.md). Past it
-   * each relation is drawn within its share — as itself, as groups in its
-   * own declaration's words, or as the most relevant and one "+N more" —
-   * so the band never wraps into rows it cannot hold, and an artist with a
-   * thousand songs is a band a person can read.
+   * THE BAND'S BUDGET (docs/scale.md). Everything the focus touches is drawn
+   * as itself while it fits as chips — a chip's height a row — and small
+   * apps keep exactly the band they had.
+   *
+   * Past that the band is CROWDED, and it is laid out for reading rather
+   * than for fitting: a row is as tall as a group card needs to say its
+   * name, its count and the first of its members; the gutter between rows
+   * is as tall as a caption; and each relation starts its own row unless
+   * all of it fits the rest of the current one. Each relation gets the
+   * cards the rows can give it, drawn as itself, as groups in its own
+   * declaration's words, or as its most relevant and one "+N more" — so an
+   * artist with a thousand songs is three captioned rows a person can read.
    */
-  const drawn = bandOf(related, {
+  const scaleUnit = opts.unit / 16;
+  const chipRows = Math.max(2, Math.floor((band.relationH + opts.gap) / (READABLE_ROW * scaleUnit + opts.gap)));
+  const crowded = related.length > perRow * chipRows;
+  const bandOptions = {
     schema,
     graph,
-    // `unit` is the reader's rem in pixels (16 by default): the chip grows with the words.
-    budget: perRow * Math.max(2, Math.floor((band.relationH + opts.gap) / (READABLE_ROW * (opts.unit / 16) + opts.gap))),
     focusId: focus?.id,
     expanded,
     ...(opts.relevance ? { relevance: opts.relevance } : {}),
     ...(state.selection ? { selection: state.selection } : {}),
-    plural: (kind) => pluralOf(schema, kind),
+    plural: (kind: string) => pluralOf(schema, kind),
     ...(opts.today ? { today: opts.today } : {}),
-  });
-  const relationRows = Math.max(1, Math.ceil(drawn.length / perRow));
-  const rowH = relationRows === 1 ? band.relationH : (band.relationH - opts.gap * (relationRows - 1)) / relationRows;
+  };
+  const rowGap = crowded ? Math.max(opts.gap, CAPTION_GUTTER * scaleUnit) : opts.gap;
+  let drawn: BandItem<NodeOfSchema<S>>[];
+  let rowsOf: number[][];
+  if (!crowded) {
+    drawn = related.map((entry) => ({ id: entry.node.id, kind: entry.node.kind, node: entry.node, ...(entry.via ? { via: entry.via } : {}) }));
+    rowsOf = Array.from({ length: Math.max(1, Math.ceil(drawn.length / perRow)) }, (_, r) =>
+      Array.from({ length: Math.min(perRow, drawn.length - r * perRow) }, (_, i) => r * perRow + i),
+    );
+  } else {
+    const cardRows = Math.max(1, Math.floor((band.relationH + rowGap) / (READABLE_CARD * scaleUnit + rowGap)));
+    const runs = new Map<string, typeof related>();
+    for (const entry of related) {
+      const key = runOf(entry);
+      const run = runs.get(key);
+      if (run) run.push(entry);
+      else runs.set(key, [entry]);
+    }
+    const caps = bandCaps([...runs.values()].map((run) => run.length), perRow, cardRows);
+    const byRun = [...runs.values()].map((run, index) => bandOf(run, { ...bandOptions, budget: caps[index]! }));
+    drawn = byRun.flat();
+    // Rows of indices into `drawn`, relation by relation.
+    const starts = byRun.map((_, index) => byRun.slice(0, index).reduce((sum, items) => sum + items.length, 0));
+    const seen = byRun.map(() => 0);
+    rowsOf = packRuns(byRun.map((items) => items.length), perRow).map((row) => row.map((run) => starts[run]! + seen[run]!++));
+  }
+  const relationRows = rowsOf.length;
+  const rowH = relationRows === 1 ? band.relationH : (band.relationH - rowGap * (relationRows - 1)) / relationRows;
   const relationSize = fit(
-    Math.min(drawn.length, perRow),
+    Math.max(...rowsOf.map((items) => items.length), 1),
     drawn.length <= 2 ? Math.round(opts.relationSize.width * 1.35) : opts.relationSize.width,
     rowH,
   );
   const relationPositions: { x: number; y: number }[] = [];
-  for (let r = 0; r < relationRows; r++) {
-    const inRow = Math.min(perRow, drawn.length - r * perRow);
-    for (const position of row(inRow, relationSize, opts.gap, spanW, band.relationY + r * (rowH + opts.gap))) {
-      relationPositions.push({ ...position, x: position.x + railLeft });
-    }
-  }
+  rowsOf.forEach((items, r) => {
+    const positions = row(items.length, relationSize, opts.gap, spanW, band.relationY + r * (rowH + rowGap));
+    items.forEach((index, i) => (relationPositions[index] = { ...positions[i]!, x: positions[i]!.x + railLeft }));
+  });
   drawn.forEach((entry, index) => {
     const position = relationPositions[index]!;
     push({
@@ -655,6 +688,7 @@ export function layout<S extends AnySchema>(
       height: relationSize.height,
       ...(entry.via ? { via: entry.via } : {}),
       ...(entry.aggregate ? { aggregate: entry.aggregate } : {}),
+      ...(crowded && !entry.aggregate ? { compact: true } : {}),
     });
   });
 

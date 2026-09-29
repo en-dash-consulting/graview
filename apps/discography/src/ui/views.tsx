@@ -11,12 +11,17 @@ export const aboutLens = createCoverageLens<S>({ rows: "song", columns: "theme",
 /** Who worked with whom: an artist featured (column) on a song by another (row). */
 export const togetherLens = createCoverageLens<S>({ rows: "artist", columns: "artist", link: { path: ["features", "by"] } });
 
-/** The releases, on the calendar, across the whole career. */
+/**
+ * The releases, on the calendar, across the whole career: it opens where the
+ * catalogue starts (the first release is October 1997) and looks out thirty
+ * years, to the last. Eight years from 2023 showed a career that had barely
+ * begun and four empty years to come.
+ */
 export const releasesLens = createCalendarLens<S>({
   bindings: { album: { start: "released" } },
-  today: "2023-12-31",
+  today: "1997-01-01",
   range: "years",
-  horizon: { years: 8, title: "The discography" },
+  horizon: { years: 30, title: "The career" },
 });
 
 /** Every release, its songs in track order. */

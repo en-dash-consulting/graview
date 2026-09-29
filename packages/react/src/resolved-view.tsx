@@ -403,6 +403,7 @@ export const BandCard = memo(function BandCard({ node }: { readonly node: SceneN
   const opens = aggregate.opens!;
   const count = aggregate.memberIds.length;
   const plural = (store.schema.tryDefinition(aggregate.kind)?.plural ?? `${aggregate.kind}s`).toLowerCase();
+  const counted = `${count} ${count === 1 ? aggregate.kind.replace(/-/g, " ") : plural}`;
   const names = aggregate.memberIds.slice(0, 3).map((id) => {
     const member = store.graph.getNode(id);
     const definition = member ? store.schema.tryDefinition(member.kind) : undefined;
@@ -410,27 +411,36 @@ export const BandCard = memo(function BandCard({ node }: { readonly node: SceneN
   });
   const hits = found ? aggregate.memberIds.filter(new Set(found.matched).has, new Set(found.matched)).length : 0;
   const door = opens.in === "picture";
+  /*
+   * TWO LINES, read at a glance: what the group is and which way it opens,
+   * then how many and the first of them. A card stacked four lines deep
+   * was cut to its name in a band row, and the count — the one thing a
+   * group says that a member cannot — was the line that went.
+   */
   return (
     <div
       className="graview-band-group"
       data-graview-band={opens.in}
       data-graview-band-count={count}
       data-graview-emphasis={found ? (hits > 0 ? "lit" : "dimmed") : undefined}
-      title={door ? `${aggregate.label} — press twice to see them all, arranged` : `${aggregate.label}: ${count} ${plural} — press twice to open`}
+      title={door ? `${aggregate.label} — press twice to see them all, arranged` : `${aggregate.label}: ${counted} — press twice to open`}
     >
-      <span className="graview-band-group-name">{aggregate.label}</span>
-      {door ? null : (
-        <span className="graview-band-group-count">
-          {count} {plural}
-          {hits > 0 ? ` · ${hits} match` : ""}
+      <span className="graview-band-group-head">
+        <span className="graview-band-group-name">{aggregate.label}</span>
+        <span className="graview-band-group-open" aria-hidden="true">
+          {door ? "↗" : "▾"}
         </span>
-      )}
+      </span>
       <span className="graview-band-group-names">
+        {door ? null : (
+          <span className="graview-band-group-count">
+            {counted}
+            {hits > 0 ? ` · ${hits} match` : ""}
+            {" · "}
+          </span>
+        )}
         {names.join(" · ")}
         {count > names.length ? " …" : ""}
-      </span>
-      <span className="graview-band-group-open" aria-hidden="true">
-        {door ? "see them ↗" : "open ▾"}
       </span>
     </div>
   );

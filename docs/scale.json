@@ -1,13 +1,13 @@
 {
-  "at": "2026-09-29T08:08:51.507Z",
+  "at": "2026-09-29T13:51:49.326Z",
   "engine": "chromium",
   "stops": {
     "altitude, still": {
       "frames": 15,
-      "first": 20,
-      "p50": 19.1,
-      "p95": 19.6,
-      "worst": 20,
+      "first": 18,
+      "p50": 18.2,
+      "p95": 18.4,
+      "worst": 18,
       "slow": [],
       "longTasks": 0,
       "dom": 1161,
@@ -17,17 +17,12 @@
       "waiting": 2
     },
     "altitude, drag": {
-      "frames": 132,
-      "first": 37,
-      "p50": 18.7,
-      "p95": 19.6,
-      "worst": 37,
-      "slow": [
-        [
-          1228,
-          37
-        ]
-      ],
+      "frames": 130,
+      "first": 36,
+      "p50": 17.8,
+      "p95": 18.5,
+      "worst": 19,
+      "slow": [],
       "longTasks": 0,
       "dom": 1163,
       "hosts": 5,
@@ -36,11 +31,11 @@
       "waiting": 2
     },
     "altitude, wheel": {
-      "frames": 687,
-      "first": 8,
+      "frames": 685,
+      "first": 12,
       "p50": 0.3,
-      "p95": 18.4,
-      "worst": 20,
+      "p95": 18.1,
+      "worst": 19,
       "slow": [],
       "longTasks": 0,
       "dom": 1171,
@@ -50,139 +45,134 @@
       "waiting": 2
     },
     "descend": {
-      "frames": 210,
-      "first": 19,
-      "p50": 5.5,
-      "p95": 19.1,
-      "worst": 20,
+      "frames": 225,
+      "first": 18,
+      "p50": 5.2,
+      "p95": 18.2,
+      "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 632,
+      "dom": 432,
       "hosts": 6,
       "strands": 0,
       "thumbnails": 0,
       "waiting": 0
     },
     "focus the hub": {
-      "frames": 583,
-      "first": 36,
-      "p50": 1.4,
-      "p95": 19.1,
-      "worst": 20,
+      "frames": 735,
+      "first": 54,
+      "p50": 1,
+      "p95": 18.1,
+      "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 646,
-      "hosts": 36,
-      "strands": 50,
+      "dom": 521,
+      "hosts": 21,
+      "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, drag": {
       "frames": 123,
       "first": 19,
-      "p50": 18.2,
-      "p95": 19.5,
-      "worst": 38,
-      "slow": [
-        [
-          1007,
-          38
-        ]
-      ],
+      "p50": 17.7,
+      "p95": 18.5,
+      "worst": 19,
+      "slow": [],
       "longTasks": 0,
-      "dom": 650,
-      "hosts": 36,
-      "strands": 50,
+      "dom": 525,
+      "hosts": 21,
+      "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, move a card": {
-      "frames": 148,
-      "first": 20,
-      "p50": 18.9,
-      "p95": 19.6,
-      "worst": 20,
+      "frames": 151,
+      "first": 19,
+      "p50": 18,
+      "p95": 18.6,
+      "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 650,
-      "hosts": 36,
-      "strands": 50,
+      "dom": 525,
+      "hosts": 21,
+      "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, wheel": {
-      "frames": 167,
-      "first": 20,
-      "p50": 17.2,
-      "p95": 19.4,
-      "worst": 20,
+      "frames": 158,
+      "first": 18,
+      "p50": 17.3,
+      "p95": 18.6,
+      "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 654,
-      "hosts": 36,
-      "strands": 50,
+      "dom": 525,
+      "hosts": 21,
+      "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, select": {
-      "frames": 67,
-      "first": 112,
-      "p50": 19.1,
-      "p95": 19.5,
-      "worst": 20,
+      "frames": 70,
+      "first": 72,
+      "p50": 18.1,
+      "p95": 18.5,
+      "worst": 19,
       "slow": [],
       "longTasks": 1,
-      "dom": 609,
-      "hosts": 36,
-      "strands": 50,
+      "dom": 484,
+      "hosts": 21,
+      "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, type in Find": {
-      "frames": 348,
-      "first": 56,
-      "p50": 1.5,
-      "p95": 19.3,
-      "worst": 39,
+      "frames": 662,
+      "first": 36,
+      "p50": 0.8,
+      "p95": 18.1,
+      "worst": 37,
       "slow": [
         [
-          115,
+          183,
           37
         ],
         [
-          190,
-          39
-        ],
-        [
-          315,
+          308,
           37
         ]
       ],
       "longTasks": 1,
-      "dom": 1045,
-      "hosts": 36,
-      "strands": 56,
+      "dom": 902,
+      "hosts": 21,
+      "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "rise": {
-      "frames": 3419,
-      "first": 39,
+      "frames": 2970,
+      "first": 17,
       "p50": 0.1,
-      "p95": 0.7,
-      "worst": 38,
+      "p95": 0.9,
+      "worst": 45,
       "slow": [
         [
-          852,
-          36
+          823,
+          42
         ],
         [
-          908,
-          38
+          888,
+          45
+        ],
+        [
+          953,
+          45
         ]
       ],
       "longTasks": 0,
-      "dom": 2455,
+      "dom": 3287,
       "hosts": 6,
       "strands": 0,
       "thumbnails": 4,
@@ -190,47 +180,61 @@
     }
   },
   "pageErrors": [],
+  "reads": {
+    "hub": {
+      "captions": 3,
+      "captionOnACard": 0,
+      "cutGroups": 0,
+      "spilledChips": 0
+    },
+    "guest": {
+      "captions": 4,
+      "captionOnACard": 0,
+      "cutGroups": 0,
+      "spilledChips": 0
+    }
+  },
   "groups": [
     {
       "id": "aggregate:album|released-by|in|type=album",
       "opens": "place",
-      "text": "Album29 albumsThe Storm · Everready: The Religion · Killer …open ▾",
+      "text": "Album▾29 albums · The Storm · Everready: The Religion · Killer …",
       "reachable": true
     },
     {
       "id": "aggregate:album|released-by|in|type=compilation",
       "opens": "place",
-      "text": "Compilation5 albumsTech N9ne: The Box Set · Strange Days Tour: A Decade Of Excel",
+      "text": "Compilation▾5 albums · Tech N9ne: The Box Set · Strange Days Tour: A Decade Of E",
       "reachable": true
     },
     {
       "id": "aggregate:album|released-by|in|type=ep",
       "opens": "place",
-      "text": "Ep13 albumsTherapy · E.B.A.H. · FEAR EXODUS …open ▾",
+      "text": "Ep▾13 albums · Therapy · E.B.A.H. · FEAR EXODUS …",
       "reachable": true
     },
     {
       "id": "aggregate:album|released-by|in|type=mixtape",
       "opens": "place",
-      "text": "Mixtape2 albumsMadness Unleashed · Bad Seasonopen ▾",
+      "text": "Mixtape▾2 albums · Madness Unleashed · Bad Season",
       "reachable": true
     },
     {
       "id": "aggregate:album|released-by|in|type=single",
       "opens": "place",
-      "text": "Single80 albumsOverdrive · John Doe (Chopped Up Not Slopped Up Version) · Bass …",
+      "text": "Single▾80 albums · Overdrive · John Doe (Chopped Up Not Slopped Up Version) · Ba",
       "reachable": true
     },
     {
       "id": "aggregate:song|by|in|more:by:artist:tech-n9ne",
       "opens": "picture",
-      "text": "783 more songsOverdrive · Rock The Bells Anthem · 2 Piece …see them ↗",
+      "text": "791 more songs↗Assassin's Creed [Remix] · Grammys (skit) · EMJ …",
       "reachable": true
     },
     {
       "id": "aggregate:song|features|in|more:features:artist:tech-n9ne",
       "opens": "picture",
-      "text": "318 more songsCold Piece of Work · Crew Cut · Don’t Worry Momma, It’s Just Bleed",
+      "text": "325 more songs↗The Anthem (radio) · Reel Wolf: The Underworld · Thanos …",
       "reachable": true
     }
   ],
@@ -239,7 +243,7 @@
     "before": "#focus=artist%3Atech-n9ne",
     "during": {
       "hash": "#focus=artist%3Atech-n9ne&expand=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum",
-      "band": 30
+      "band": 15
     },
     "after": "#focus=artist%3Atech-n9ne&sel=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum"
   },
@@ -247,6 +251,7 @@
     "theCityAtAltitudeIsLight": true,
     "aHubStopIsBounded": true,
     "everyGroupOpens": true,
+    "theBandReads": true,
     "panningHolds60": true,
     "aHeldCardFollowsTheHand": true,
     "wheelHolds60": true,

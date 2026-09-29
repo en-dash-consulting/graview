@@ -53,6 +53,6 @@ export type { FitOptions, FitPoint, FittedLabel, LabelBox, Measure } from "./lab
 export { cameraLimit, collides, panForZoom, placeCity } from "./city.js";
 export type { CityCard, PlacedCard } from "./city.js";
 export type { CityFrame } from "./types.js";
-export { bandOf, chooseGrouping, isBandAggregate, shares } from "./band.js";
+export { bandCaps, bandOf, chooseGrouping, isBandAggregate, packRuns, runOf, shares } from "./band.js";
 export type { BandItem, BandOptions, Relevance } from "./band.js";
 export type { Opens } from "./types.js";

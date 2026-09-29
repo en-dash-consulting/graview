@@ -93,6 +93,61 @@ export function shares(sizes: readonly number[], budget: number): number[] {
   return out;
 }
 
+/** The relation a related node is on: one edge kind in one direction, or a raised kind. */
+export function runOf(entry: { readonly node: { readonly kind: string }; readonly via?: Via | undefined }): string {
+  return runKey(entry.via, entry.node.kind);
+}
+
+/*
+ * A CROWDED BAND IS LAID OUT BY RELATION (docs/scale.md, "What a crowd
+ * taught the band"). Relations filled one grid in turn, so a relation began
+ * wherever the last one ended — mid-row — and its caption, hung in the
+ * gutter above its first card, sat on the cards of the row before. A
+ * relation starts its own row unless all of it fits in what is left of the
+ * current one; then every caption has open ground above it.
+ */
+
+/** Rows of `perRow`, each relation in order starting a row unless it fits the rest of the current one. */
+export function packRuns(counts: readonly number[], perRow: number): number[][] {
+  const rows: number[][] = [];
+  let left = 0;
+  counts.forEach((count, run) => {
+    if (count <= 0) return;
+    if (rows.length > 0 && count <= left) {
+      for (let i = 0; i < count; i++) rows[rows.length - 1]!.push(run);
+      left -= count;
+      return;
+    }
+    let rest = count;
+    while (rest > 0) {
+      const take = Math.min(perRow, rest);
+      rows.push(Array.from({ length: take }, () => run));
+      rest -= take;
+      left = perRow - take;
+    }
+  });
+  return rows;
+}
+
+/**
+ * The cards each relation may draw so that, packed by relation, the band
+ * holds `rows` rows of `perRow`: water-filled as `shares` does, then the
+ * largest trimmed until the packing fits. Arithmetic only — the band is
+ * planned once, not tried.
+ */
+export function bandCaps(sizes: readonly number[], perRow: number, rows: number): number[] {
+  const caps = shares(sizes, perRow * rows);
+  while (packRuns(caps, perRow).length > rows) {
+    let largest = -1;
+    caps.forEach((cap, index) => {
+      if (cap > 1 && (largest < 0 || cap > caps[largest]!)) largest = index;
+    });
+    if (largest < 0) break;
+    caps[largest] = caps[largest]! - 1;
+  }
+  return caps;
+}
+
 /** Relevance as a sort key: lower first. Deterministic, stable by the given order. */
 function byRelevance<N extends ArrangeNode>(members: readonly N[], relevance: Relevance, graph: GraphReader<N>): N[] {
   const score = (node: N) => [
@@ -154,7 +209,13 @@ export function chooseGrouping<N extends ArrangeNode>(
     const named = groups.filter((group) => group.key !== "").reduce((sum, group) => sum + group.nodes.length, 0);
     const coverage = named / members.length;
     if (coverage < 0.5) return;
-    if (groups.some((group) => group.nodes.length === members.length)) return;
+    /*
+     * Not one group holding nearly all of them either. An album's songs by
+     * artist were "Tech N9ne, 38 songs" and six cards of "1 song": a
+     * grouping that says what everyone already knew, in seven cards that
+     * could have been seven songs.
+     */
+    if (groups.some((group) => group.nodes.length > members.length * 0.75)) return;
     // Most in named groups, then nearest the five a glance takes in, then the declaration's order.
     const score = [-Math.round(coverage * 100), Math.abs(groups.length - READABLE_GROUPS), order];
     if (!best || before(score, best.score)) {

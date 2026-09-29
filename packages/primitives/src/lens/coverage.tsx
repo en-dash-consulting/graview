@@ -148,9 +148,14 @@ const text = (node: Record<string, unknown>, field: string | undefined): string 
  * them. Past the limit the picture keeps the rows and columns with the
  * most ties — in their own order — and says how many it left out. What is
  * missing (`gaps`, `unasked`) is still counted over all of it.
+ *
+ * Forty by twenty-four: at eighty by forty-eight, "who worked with whom"
+ * drew 3,840 cells — twelve thousand elements and a quarter-second task —
+ * and every row repeated the same forty-eight names past the point anyone
+ * reads them. The search and the row's "only…" reach the rest.
  */
-export const COVERAGE_MAX_ROWS = 80;
-export const COVERAGE_MAX_COLUMNS = 48;
+export const COVERAGE_MAX_ROWS = 40;
+export const COVERAGE_MAX_COLUMNS = 24;
 
 export interface CappedCoverage extends CoverageGrid {
   /** How many rows and columns there are in all, when fewer are drawn. */

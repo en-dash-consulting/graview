@@ -234,6 +234,39 @@ Where the build departed from the design, and why:
 - **The gate was not taken.** With the rest done every transition's p95
   fits, so the tween stays in React.
 
+## What a crowd taught the band
+
+The first cut held every claim in `docs/scale.json` and still struggled in
+the running app, because the harness measured frames and counted hosts and
+nobody looked at the band. Walked stop by stop, with screenshots:
+
+- **The rows were a chip's height, and so were the group cards.** The
+  budget counted chip rows, and every slot in a crowded band was drawn at
+  that height — "Draped Up and" and "Strange Days Tour: A", names cut, the
+  count gone. A crowded row is now as tall as a group card's two lines
+  (52 px at a 16 px rem), and the card is two lines: name and ▾ or ↗, then
+  "29 albums · The Storm · Everready …".
+- **Relations began mid-row, and their captions sat on the row above.**
+  A relation now starts its own row unless all of it fits the rest of the
+  current one, and the gutter between rows is a caption's height (22 px).
+  The rows are planned by `packRuns` and `bandCaps` before anything is
+  drawn: water-filled shares, trimmed until the packing fits.
+- **A song in a crowded row drew its summary card, cut to a sliver.** A
+  record standing in a crowded band is `compact` and drawn as a chip, and a
+  chip is never wider than its slot.
+- **An album's songs grouped by artist** read "Tech N9ne, 38 songs" and six
+  cards of "1 songs". A grouping where one group holds three quarters of
+  the members is not offered; the most relevant stand beside "35 more songs".
+- **"Who worked with whom" drew 80 by 48** — 12,000 elements and a
+  quarter-second task, every row repeating the same 48 names. The coverage
+  matrix now draws 40 by 24.
+- **The calendar's months spilled into each other.** In a grid held to the
+  lens's height an auto row is sized to a cell's minimum; rows are now as
+  tall as what is in them. The example's horizon covers the career.
+
+Small apps keep exactly the band they had: all of this applies only past
+what fits as chips.
+
 ## Not in this
 
 - The GPU capture path. The DOM path is what ships.

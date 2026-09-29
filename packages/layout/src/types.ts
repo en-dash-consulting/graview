@@ -137,6 +137,12 @@ export interface LayoutNode {
    */
   readonly opened?: boolean;
   /**
+   * A card in a CROWDED band: drawn as a chip whatever its slot's size. Its
+   * row is sized for a group card's two lines, which is short of a record's
+   * summary, and a summary cut to its title and a sliver read as broken.
+   */
+  readonly compact?: boolean;
+  /**
    * WHERE THIS DISTRICT STANDS IN THE CITY, in lattice cells — its address.
    *
    * Set on a kind card at altitude, from the declaration's own map

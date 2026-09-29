@@ -934,13 +934,13 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
    or the door to the rest. A card like the others, never the kind's lens small. */
 .graview-band-group {
   display: grid;
-  align-content: start;
+  align-content: center;
   gap: 2px;
   height: 100%;
   /* A card you press, held to the floor every pressable piece of chrome keeps. */
   min-height: max(1.75rem, 28px);
   box-sizing: border-box;
-  padding: var(--graview-pad-sm, 8px) 10px;
+  padding: 6px 10px;
   border-radius: var(--graview-radius-sm, 8px);
   border: 1px solid var(--graview-edge);
   background: var(--graview-panel);
@@ -957,28 +957,37 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
 .graview-band-group[data-graview-emphasis="dimmed"] {
   opacity: 0.5;
 }
+.graview-band-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
 .graview-band-group-name {
+  flex: 1;
+  min-width: 0;
   font-weight: 600;
   font-size: 0.9375rem;
   line-height: 1.25;
-  overflow-wrap: anywhere;
-}
-.graview-band-group-count {
-  font-size: 0.8125rem;
-  color: var(--graview-ink-muted);
-  font-variant-numeric: tabular-nums;
-}
-.graview-band-group-names {
-  font-size: 0.8125rem;
-  color: var(--graview-ink-muted);
+  white-space: nowrap;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
 }
 .graview-band-group-open {
   font-size: 0.75rem;
   color: var(--graview-accent);
+}
+.graview-band-group-names {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: var(--graview-ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.graview-band-group-count {
+  color: var(--graview-ink);
+  font-variant-numeric: tabular-nums;
 }
 .graview-beyond {
   position: relative;

@@ -139,6 +139,13 @@ export function Grid({
         style={{
           display: "grid",
           gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          /*
+           * Rows as tall as what is in them. In a grid held to the lens's
+           * height an auto row is sized to a cell's minimum — the 62px
+           * below — so a month with three releases spilled them over the
+           * month beneath it; sized to their content, the grid scrolls.
+           */
+          gridAutoRows: "max-content",
           gap: 4,
           minHeight: 0,
           overflow: "auto",
