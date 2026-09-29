@@ -2988,3 +2988,28 @@ two singles and thirty-five songs.
   or, when the problem went with it, to the page's heading. Criterion:
   pages `a-repair-asks-what-it-left-open.test.tsx` (verified failing
   without the fix: `['label', 'released', 'type']`).
+
+### W-110 · The chat offers a repair its own seat may not make, and it refuses on press
+- stage: C · face: scene (the chat) · width: 1280 · scheme: light
+- expected: "repairing … from the agent's seat" leaves one op with the
+  seat as author, or the seat says it may not — never a press that refuses
+- actual: "What's wrong?" answered with the rules' repairs as presses —
+  "Take Kerosene off Kerosene", "Hometown (Again) no longer features Mara
+  Vey", "Apply all 2" — and pressing one said `Refused: starter may not
+  take-off here: it was declared able to add-song, …`. The chat applies as
+  the declared agent, whose `may` the store enforces in `apply`; the chat
+  asked `store.permits` as the person, and `permits` knew nothing of `may`.
+  W-084's rule (withheld, not offered) held for a policy and not for the
+  declaration's own allowlist.
+- where it belongs: `packages/core/src/store.ts` (`permits`),
+  `packages/primitives/src/chat.tsx`
+- harness that should have caught it: `verify-chat` and
+  `the-seat-under-a-policy.test.tsx` drive a seat whose `may` covers every
+  act they propose
+- status: fixed in "walkthrough: C · permits answers as apply does" ·
+  `store.permits` refuses what a declared agent's `may` excludes, in the
+  words `apply` uses; the chat asks as the seat that will apply (the agent,
+  with the person's roles), so such a repair is drawn struck through with
+  that sentence. Criterion: core `permits-answers-as-apply.test.ts`
+  (verified failing without the fix); in the browser the two repairs now
+  read "… — starter may not take-off here: …" with no press.

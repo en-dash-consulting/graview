@@ -189,15 +189,22 @@ export function ChatPanel<S extends AnySchema>({
       /* A proposal the policy withholds is a refusal said at the gate of the kind it acts on. */
       const withheld = reply.proposals.find((proposal) => !permitted(proposal));
       if (withheld) {
-        const verdict = store.permits({ name: withheld.mutation, args: { ...withheld.args } }, principal);
+        const verdict = store.permits({ name: withheld.mutation, args: { ...withheld.args } }, seatAs);
         if (!verdict.ok) noteSeat({ type: "refused", author, where: gateOf(withheld.mutation), say: verdict.refusal.message });
       }
     },
   });
   const { outcomes, settle } = conversation;
 
+  /*
+   * ASKED AS THE SEAT THAT WILL APPLY IT — the agent, with the person's
+   * roles — which is what the runtime applies as. Asked as the person, a
+   * proposal the agent's declared `may` excludes was offered and refused on
+   * press.
+   */
+  const seatAs = { ...author, ...(principal.roles ? { roles: principal.roles } : {}) } as typeof principal;
   const permitted = (proposal: ProposedCall) =>
-    store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal).ok;
+    store.permits({ name: proposal.mutation, args: { ...proposal.args } }, seatAs).ok;
   const gateOf = (mutation: string) => {
     const kinds = store.allMutations().find((m) => m.name === mutation)?.subject?.kinds;
     return Array.isArray(kinds) && kinds[0] ? kindCardId(kinds[0] as string) : null;
@@ -280,7 +287,7 @@ export function ChatPanel<S extends AnySchema>({
      * whether a proposal is a press or a struck line with the policy's
      * reason beside it.
      */
-    const verdict = store.permits({ name: proposal.mutation, args: { ...proposal.args } }, principal);
+    const verdict = store.permits({ name: proposal.mutation, args: { ...proposal.args } }, seatAs);
     if (!verdict.ok) {
       return (
         <span data-testid={`${testId}-withheld`} style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>

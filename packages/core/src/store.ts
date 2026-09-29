@@ -290,6 +290,14 @@ export class Store<S extends AnySchema> {
     call: MutationCall,
     principal: Principal = HUMAN,
   ): ReturnType<typeof permits> {
+    /*
+     * The same answer `apply` would give. A declared agent's `may` narrows
+     * it before the policy does; asked without it, the chat offered a
+     * repair as the starter seat, which may only add, and the press met
+     * "starter may not take-off here" (W-110).
+     */
+    const narrowed = this.refusesAgent(call, principal);
+    if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     return permits(
       this.policy,
       principal,
