@@ -3192,6 +3192,10 @@ two singles and thirty-five songs.
   Criterion: `the-drive-in-marquee.test.tsx` with a lens that has a button
   of its own: no `button button`, and the presses are labelled (verified
   failing without the fix); verify-navigation reads the presses by class.
+  With the picture no longer inside a button, `survey`'s "unnamed controls"
+  counted the inert thumbnail's own search field (named by its `<label>`,
+  and hidden from assistive tech); the survey now skips inert and hidden
+  pictures and reads a `<label>`, as axe does.
 
 ### W-119 · The profile opens off the side of an embed, and the embed cuts it
 - stage: H · face: embed · width: 1280 and 390 · scheme: light and dark

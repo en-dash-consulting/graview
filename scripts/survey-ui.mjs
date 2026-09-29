@@ -283,10 +283,14 @@ const measure = () => {
 
   const unnamed = within("button, [role=button], a, select, input")
     .filter((el) => {
+      // A picture drawn small is inert and hidden from assistive tech: its
+      // controls are not controls (the drive-in's thumbnails, W-118).
+      if (el.closest('[inert], [aria-hidden="true"]')) return false;
       const name =
         el.getAttribute("aria-label") ??
         el.getAttribute("title") ??
-        (el.textContent ?? "").trim();
+        // A field named by the <label> around it is named.
+        ((el.labels?.[0]?.textContent ?? "").trim() || (el.textContent ?? "").trim());
       return name.length === 0;
     })
     .slice(0, 8)
