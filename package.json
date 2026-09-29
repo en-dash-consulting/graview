@@ -5,10 +5,10 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/graview packages/create-graview",
-    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/graview packages/create-graview apps/todo apps/launcher apps/seedbed apps/rota",
+    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/graview packages/create-graview apps/todo apps/launcher apps/seedbed apps/rota apps/discography",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "node packages/graview/dist/cli.js check apps/todo/dist/domain/app.js && node packages/graview/dist/cli.js check apps/launcher/dist/domain/app.js && node packages/graview/dist/cli.js check apps/seedbed/dist/domain/app.js && node packages/graview/dist/cli.js check apps/rota/dist/domain/app.js",
+    "check": "node packages/graview/dist/cli.js check apps/todo/dist/domain/app.js && node packages/graview/dist/cli.js check apps/launcher/dist/domain/app.js && node packages/graview/dist/cli.js check apps/seedbed/dist/domain/app.js && node packages/graview/dist/cli.js check apps/rota/dist/domain/app.js && node packages/graview/dist/cli.js check apps/discography/dist/domain/app.js",
     "lint": "tsc -b --dry",
     "spike": "node apps/spike/scripts/run-spike.mjs",
     "shrunk": "node scripts/verify-shrunk.mjs",

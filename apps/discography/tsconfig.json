@@ -1,0 +1,47 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src/**/*",
+    "src/**/*.json"
+  ],
+  "references": [
+    {
+      "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/layout"
+    },
+    {
+      "path": "../../packages/tools"
+    },
+    {
+      "path": "../../packages/render"
+    },
+    {
+      "path": "../../packages/react"
+    },
+    {
+      "path": "../../packages/primitives"
+    },
+    {
+      "path": "../../packages/pages"
+    },
+    {
+      "path": "../../packages/ship"
+    },
+    {
+      "path": "../../packages/studio"
+    }
+  ]
+}

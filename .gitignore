@@ -22,3 +22,6 @@ claude_commands.log
 # Sourcevision's narration log writes absolute paths on every run; the
 # analysis beside it is committed, the log of producing it is not.
 .sourcevision/.cache/narration.log
+
+# The discography example builds its page into build/ (dist/ is the declaration).
+apps/discography/build/

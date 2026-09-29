@@ -1,0 +1,38 @@
+{
+  "name": "@graview/discography",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The example at real size: Tech N9ne's discography from MusicBrainz — 1,177 songs, 568 artists, 479 releases.",
+  "main": "./dist/domain/app.js",
+  "exports": {
+    ".": {
+      "types": "./dist/domain/app.d.ts",
+      "default": "./dist/domain/app.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*",
+    "@graview/layout": "workspace:*",
+    "@graview/pages": "workspace:*",
+    "@graview/primitives": "workspace:*",
+    "@graview/react": "workspace:*",
+    "@graview/render": "workspace:*",
+    "@graview/ship": "workspace:*",
+    "@graview/studio": "workspace:*",
+    "@graview/tools": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.1.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "vite": "^5.4.11",
+    "@vitejs/plugin-react": "^4.3.4"
+  }
+}

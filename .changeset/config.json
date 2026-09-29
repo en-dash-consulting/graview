@@ -29,6 +29,7 @@
     "@graview/todo",
     "@graview/seedbed",
     "@graview/promo",
-    "@graview/rota"
+    "@graview/rota",
+    "@graview/discography"
   ]
 }

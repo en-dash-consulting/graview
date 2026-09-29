@@ -44,13 +44,14 @@ export function engineName(argv = process.argv) {
  * flipping `layout.css.properties-and-values.enabled` off is how the
  * altitude morph's degradation is VERIFIED rather than assumed.
  */
-export async function launchEngine(name, { headless = true, firefoxUserPrefs } = {}) {
+export async function launchEngine(name, { headless = true, firefoxUserPrefs, args } = {}) {
   switch (name) {
     case "chromium": {
       // The operator's Chromium, when named — same override the harnesses
       // always honored — else Playwright's bundled build.
       const executablePath = process.env["GRAVIEW_BROWSER"];
-      return chromium.launch({ ...(executablePath ? { executablePath } : {}), headless });
+      // `args`: flags only a Chromium understands — the scale harness turns vsync off to time work, not the display.
+      return chromium.launch({ ...(executablePath ? { executablePath } : {}), headless, ...(args ? { args } : {}) });
     }
     case "canary":
       // The plain Canary binary without the capture flag — for a harness

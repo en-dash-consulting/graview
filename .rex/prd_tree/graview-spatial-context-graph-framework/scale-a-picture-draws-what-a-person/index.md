@@ -14,7 +14,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [A real-size fixture and a scale harness: apps/discography and verify-scale](./a-real-size-fixture-and-a-scale.md) | pending |
+| [A real-size fixture and a scale harness: apps/discography and verify-scale](./a-real-size-fixture-and-a-scale.md) | completed |
 | [Drive-in thumbnails and lenses draw a budget: at most 24 members to a thumbnail, mounted on screen and still; built-in lenses say '+N more'](./drive-in-thumbnails-and-lenses-draw-a.md) | pending |
 | [The example numbers songs on their first album, and the docs, skills and site say how a big graph reads](./the-example-numbers-songs-on-their.md) | pending |
 | [The relation band draws what fits and groups the rest: a derived budget, grouping by the declaration, aggregates that open](./the-relation-band-draws-what-fits-and.md) | pending |

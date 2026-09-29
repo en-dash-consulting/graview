@@ -1,0 +1,129 @@
+{
+  "at": "2026-09-29T06:57:35.149Z",
+  "engine": "chromium",
+  "stops": {
+    "altitude, still": {
+      "frames": 15,
+      "first": 19,
+      "p50": 19.1,
+      "p95": 19.3,
+      "worst": 19,
+      "longTasks": 0,
+      "dom": 21335,
+      "hosts": 5,
+      "strands": 0
+    },
+    "altitude, drag": {
+      "frames": 232,
+      "first": 12,
+      "p50": 18.7,
+      "p95": 37.9,
+      "worst": 527,
+      "longTasks": 6,
+      "dom": 21337,
+      "hosts": 5,
+      "strands": 0
+    },
+    "altitude, wheel": {
+      "frames": 678,
+      "first": 11,
+      "p50": 0.3,
+      "p95": 18.9,
+      "worst": 20,
+      "longTasks": 2,
+      "dom": 21345,
+      "hosts": 5,
+      "strands": 0
+    },
+    "descend": {
+      "frames": 386,
+      "first": 19,
+      "p50": 0.4,
+      "p95": 19,
+      "worst": 75,
+      "longTasks": 1,
+      "dom": 632,
+      "hosts": 6,
+      "strands": 0
+    },
+    "focus the hub": {
+      "frames": 6,
+      "first": 1,
+      "p50": 17.7,
+      "p95": 38.9,
+      "worst": 39,
+      "longTasks": 0,
+      "dom": 8670,
+      "hosts": 1260,
+      "strands": 956
+    },
+    "hub, drag": {
+      "frames": 94,
+      "first": 836,
+      "p50": 985.8,
+      "p95": 1536.7,
+      "worst": 2027,
+      "longTasks": 72,
+      "dom": 12036,
+      "hosts": 1259,
+      "strands": 2214
+    },
+    "hub, wheel": {
+      "frames": 151,
+      "first": 1072,
+      "p50": 11.2,
+      "p95": 19.4,
+      "worst": 1034,
+      "longTasks": 3,
+      "dom": 12036,
+      "hosts": 1259,
+      "strands": 2214
+    },
+    "hub, select": {
+      "frames": 2,
+      "first": 15,
+      "p50": 1060.3,
+      "p95": 1060.3,
+      "worst": 1060,
+      "longTasks": 4,
+      "dom": 12010,
+      "hosts": 1259,
+      "strands": 2214
+    },
+    "hub, type in Find": {
+      "frames": 11,
+      "first": 20,
+      "p50": 1047.7,
+      "p95": 1566.9,
+      "worst": 1567,
+      "longTasks": 11,
+      "dom": 12454,
+      "hosts": 1259,
+      "strands": 2214
+    },
+    "rise": {
+      "frames": 161,
+      "first": 1021,
+      "p50": 0.5,
+      "p95": 19.6,
+      "worst": 4018,
+      "longTasks": 9,
+      "dom": 21495,
+      "hosts": 6,
+      "strands": 0
+    }
+  },
+  "pageErrors": [],
+  "groups": [],
+  "opened": null,
+  "verdict": {
+    "theCityAtAltitudeIsLight": false,
+    "aHubStopIsBounded": false,
+    "everyGroupOpens": false,
+    "panningHolds60": false,
+    "wheelHolds60": false,
+    "aTransitionHolds60": false,
+    "aSelectionAndASearchAreCheap": false
+  },
+  "passed": false
+}
