@@ -1,6 +1,6 @@
 import { describeArg } from "./mutations/node-ref.js";
 import { matchNode, parseQuery } from "./search.js";
-import { humaniseField, isCurrent, labelOf } from "./schema/define-node.js";
+import { humaniseField, isCurrent, labelOf, tellApart } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 
@@ -539,6 +539,17 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
     ? `No ${reading.toLowerCase()}`
     : `Without ${(edgeReading ?? humaniseField(grouping.by)).toLowerCase()}`;
 
+  /*
+   * Two far ends of one name — a single and its album, both "Blue Hour" —
+   * are told apart in the heading, as they are in a picker (see `tellApart`):
+   * "Blue Hour · single, Blue Hour · album" rather than "Blue Hour, Blue Hour".
+   */
+  const apart = isField
+    ? new Map<string, string>()
+    : tellApart(
+        [...new Map(ordered.flatMap((node) => farEnds(ctx.graph, node.id, grouping.by)).map((end) => [end.id, end])).values()].map(asRecord) as never,
+        (kind) => ctx.schema.tryDefinition(kind),
+      );
   for (const node of ordered) {
     if (isField) {
       const value = fields(node)[grouping.by];
@@ -558,7 +569,7 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
       continue;
     }
     const ends = farEnds(ctx.graph, node.id, grouping.by)
-      .map((end) => ({ id: end.id, label: labelFor(ctx, end) }))
+      .map((end) => ({ id: end.id, label: apart.has(end.id) ? `${labelFor(ctx, end)} · ${apart.get(end.id)!}` : labelFor(ctx, end) }))
       .sort((a, b) => a.label.localeCompare(b.label));
     if (ends.length === 0) put("", none, node);
     else put(ends.map((end) => end.id).join(","), ends.map((end) => end.label).join(", "), node);

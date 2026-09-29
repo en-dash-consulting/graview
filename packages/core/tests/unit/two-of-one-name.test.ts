@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createSchema, defineNode, isoDate, search, Store, tellApart } from "../../src/index.js";
+import { arrange, createSchema, defineNode, isoDate, search, Store, tellApart } from "../../src/index.js";
 
 /**
  * TWO THINGS OF ONE NAME ARE TOLD APART WHERE A PERSON CHOOSES. A single
@@ -12,7 +12,7 @@ const album = defineNode("album", {
   plural: "Albums",
   label: (node) => node.label,
 });
-const song = defineNode("song", { fields: z.object({ label: z.string() }), plural: "Songs", label: (node) => node.label });
+const song = defineNode("song", { fields: z.object({ label: z.string() }), plural: "Songs", label: (node) => node.label, edges: { on: { to: ["album"] } } });
 const schema = createSchema([album, song]);
 const nodes = [
   { id: "album:blue-hour", kind: "album", label: "Blue Hour", released: "2018-07-01", type: "single" },
@@ -39,5 +39,24 @@ describe("two of one name", () => {
     const store = new Store({ schema, mutations: [], invariants: [], snapshot: { nodes: nodes as never, edges: [] } });
     const hits = search(store, "blue hour").hits.filter((hit) => hit.about === "node" && hit.kind === "album");
     expect(hits.map((hit) => (hit.about === "node" ? hit.apart : null)).sort()).toEqual(["album", "single"]);
+  });
+
+  it("heads a group of songs by release in words that tell the releases apart", () => {
+    const store = new Store({
+      schema,
+      mutations: [],
+      invariants: [],
+      snapshot: {
+        nodes: [...nodes, { id: "song:navy-coat", kind: "song", label: "Navy Coat" }] as never,
+        edges: [
+          { kind: "on", from: "song:blue-hour", to: "album:blue-hour" },
+          { kind: "on", from: "song:blue-hour", to: "album:blue-hour-2" },
+          { kind: "on", from: "song:navy-coat", to: "album:blue-hour-2" },
+        ],
+      },
+    });
+    const songs = store.graph.nodesOfKind("song");
+    const grouped = arrange(songs, { group: { by: "on" } }, { schema, graph: store.graph as never, flagged: new Set() });
+    expect(grouped.groups.map((group) => group.label).sort()).toEqual(["Blue Hour · album", "Blue Hour · album, Blue Hour · single"]);
   });
 });

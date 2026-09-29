@@ -3056,7 +3056,11 @@ two singles and thirty-five songs.
   "Blue Hour · single" and "Blue Hour · album" — else its kind, else its id.
   Criterion: core `two-of-one-name.test.ts` (the words, the kind, and the
   search hits); in the browser the strip's ask and the Find strip read
-  "Blue Hour · single", "Blue Hour · album".
+  "Blue Hour · single", "Blue Hour · album". Grouping songs by release
+  (`?group=tracks`) headed a group "Blue Hour, Blue Hour" and another
+  "Blue Hour" that could be either; the arrangement's headings are told
+  apart the same way ("heads a group of songs by release …", verified
+  failing without it).
 
 ### W-113 · A design's shell does not register without a cast
 - stage: E · face: pages · width: — · scheme: —
