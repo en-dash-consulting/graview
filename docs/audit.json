@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-29T13:48:32.292Z",
+  "at": "2026-09-29T15:27:52.153Z",
   "engine": "chromium",
   "screens": [
     {
@@ -601,7 +601,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 61,
       "inspector": null,
       "led": null,
       "figures": []
@@ -777,7 +777,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 61,
       "inspector": null,
       "led": null,
       "figures": []
@@ -799,7 +799,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 61,
       "inspector": null,
       "led": null,
       "figures": []
@@ -821,7 +821,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 61,
       "inspector": null,
       "led": null,
       "figures": []

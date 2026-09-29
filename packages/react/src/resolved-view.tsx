@@ -1,7 +1,7 @@
 import type { AnySchema, Fidelity, NodeOfSchema } from "@graview/core";
 import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout";
 import { PLANE_STYLES } from "@graview/render";
-import { memo, useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useFlagged, useImplicated, useNavigation } from "./hooks.js";
 import { useFound, useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
@@ -270,12 +270,20 @@ export function ResolvedView<S extends AnySchema>({
     | undefined;
   const hasOwnView = own !== undefined && own.generic !== true;
 
+  /*
+   * A group's members, looked up once per graph rather than once per frame:
+   * a kind's card holds every song, and a tween re-renders it sixty times a
+   * second with the same list.
+   */
+  const memberIds = node.aggregate?.memberIds;
+  const members = useMemo(
+    () => (memberIds ?? []).map((id) => store.graph.getNode(id)).filter((n): n is NodeOfSchema<S> => n !== undefined),
+    [memberIds, store, graph],
+  );
   const props: ViewProps<S> = {
     ...(node.aggregate
       ? {
-          nodes: node.aggregate.memberIds
-            .map((id) => store.graph.getNode(id))
-            .filter((n): n is NodeOfSchema<S> => n !== undefined),
+          nodes: members,
           // A titled registration names the picture; the plural is the fallback.
           label: registration?.title ?? node.aggregate.label,
         }

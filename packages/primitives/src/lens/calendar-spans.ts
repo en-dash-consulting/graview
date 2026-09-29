@@ -130,6 +130,22 @@ export function spanOf(
     const span = Math.max(1, options.horizon?.years ?? 1);
     const first = Number(at.slice(0, 4));
     const years = Array.from({ length: span }, (_, step) => String(first + step));
+    /*
+     * PAST A DECADE, A YEAR PER CELL. Thirty years of months is 360 cells,
+     * most of them empty, scrolled through to find the busy ones — a career
+     * read as a column of blanks. A year per cell is the whole horizon on
+     * one screen, each saying how many and the first of them; pressing one
+     * opens its months.
+     */
+    if (span > YEARS_BY_THE_MONTH) {
+      return {
+        title: `${options.horizon?.title ?? "Years"} · ${years[0]}–${years[years.length - 1]}`,
+        grain: "year",
+        columns: 5,
+        years,
+        cells: years.map((year) => ({ from: `${year}-01-01`, to: `${year}-12-31`, label: year })),
+      };
+    }
     return {
       title: `${options.horizon?.title ?? "Years"} · ${years[0]}–${years[years.length - 1]}`,
       grain: "month",
@@ -164,7 +180,10 @@ export function entriesIn(entries: readonly PlacedEntry[], from: string, to: str
     });
 }
 
+/** The longest horizon still drawn a month to a cell. */
+export const YEARS_BY_THE_MONTH = 10;
+
 /** The range one level finer than a cell of this grain, and what a press on it opens. */
 export function finerThan(grain: CalendarGrain): CalendarRange {
-  return grain === "month" ? "month" : grain === "week" ? "week" : "day";
+  return grain === "year" ? "year" : grain === "month" ? "month" : grain === "week" ? "week" : "day";
 }

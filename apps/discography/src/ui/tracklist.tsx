@@ -1,6 +1,15 @@
 import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { useState } from "react";
 import { useGraview, type ViewProps } from "@graview/react";
-import { Chip, hueFor, Panel, useArranging } from "@graview/primitives";
+import { Chip, hueFor, Panel, useArranging, withMore } from "@graview/primitives";
+
+/**
+ * A page of releases at a time. Every one of 479 releases and their 1,500
+ * tracks was one column of nearly five thousand elements, taller than the
+ * browser would paint — the panel drew black. The row's sort and "only…"
+ * and the search reach any of them; the rest come a page at a time.
+ */
+const PAGE = 24;
 
 /**
  * TRACKLISTS: every release as a column, its songs in track order.
@@ -61,16 +70,20 @@ export function createTracklistLens<S extends AnySchema>(roles: TracklistRoles) 
       }
     }
     const name = (node: { id: string; kind: string } & Record<string, unknown>) => labelOf(store.schema.tryDefinition(node.kind as never), node);
-    const columns = buildTracklists(nodes as never, store.graph as never, roles, name);
+    const [pages, setPages] = useState(1);
+    const everyColumn = buildTracklists(nodes as never, store.graph as never, roles, name);
+    // A thumbnail's budget, or the pages asked for so far.
+    const columns = everyColumn.slice(0, props.budget ?? pages * PAGE);
+    const left = props.budget === undefined ? everyColumn.length - columns.length : 0;
     const lit = new Set(props.implicated ?? []);
     const flagged = new Set(props.flagged ?? []);
     const emphasis = (id: string) => (lit.size === 0 ? "rest" : lit.has(id) ? "lit" : "dim");
     if (props.fidelity === "glyph") {
-      return <Chip label={`${props.label ?? "Releases"} · ${columns.length}`} hue={hueFor(props.cardinality === "many" ? String([...kinds][0] ?? "") : "")} />;
+      return <Chip label={`${props.label ?? "Releases"} · ${everyColumn.length}`} hue={hueFor(props.cardinality === "many" ? String([...kinds][0] ?? "") : "")} />;
     }
     const full = props.fidelity === "full";
-    return (
-      <Panel title={props.label ?? "Tracklists"} meta={`${columns.length} releases`} selected={props.selected}>
+    return withMore(props, store.schema, (
+      <Panel title={props.label ?? "Tracklists"} meta={`${props.total ?? everyColumn.length} releases`} selected={props.selected}>
         {full ? bar : null}
         {columns.length === 0 ? (
           <p style={{ margin: 0 }}>No releases yet.</p>
@@ -104,8 +117,13 @@ export function createTracklistLens<S extends AnySchema>(roles: TracklistRoles) 
             ))}
           </div>
         )}
+        {left > 0 ? (
+          <button type="button" data-testid="tracklists-more" onClick={() => setPages((count) => count + 1)} style={{ justifySelf: "start", marginTop: 12 }}>
+            Show {Math.min(PAGE, left)} more of {left}
+          </button>
+        ) : null}
       </Panel>
-    );
+    ));
   }
   return { name: "tracklist" as const, requiredRoles: ["entries", "order"] as const, View };
 }

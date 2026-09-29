@@ -267,6 +267,27 @@ nobody looked at the band. Walked stop by stop, with screenshots:
 Small apps keep exactly the band they had: all of this applies only past
 what fits as chips.
 
+### And in the running app
+
+Walked again in the example's own dev server, stop by stop:
+
+- **Tracklists painted solid black.** A panel's scroll fade was a CSS mask,
+  which made the scroller its own layer; painted before its rows arrived,
+  it stayed black. The fade is now painted in the panel's own ground. The
+  example's tracklists come a page of 24 releases at a time.
+- **The Albums district's two pictures never drew.** A thumbnail waiting to
+  be seen was a one-pixel box drawn at a twentieth of its size, which the
+  browser counts as no area. It is as tall as a picture now.
+- **Eras and Themes were piled on the Songs card** of a shelf with room for
+  all five. A kind tucks behind another only when the row needs the room.
+- **Thirty years of months** was 360 cells, most of them empty. A horizon
+  past a decade draws a year to a cell.
+- **Costs the walk found:** "who worked with whom" built its matrix by
+  scanning every credit for every artist (140 ms, now 7); a kind's card
+  looked up all 1,177 songs on every frame; a tween recomputed a group's
+  centroid on every frame. None of them survives a profile now: the stops
+  measured have no long task in the production build.
+
 ## Not in this
 
 - The GPU capture path. The DOM path is what ships.

@@ -220,6 +220,16 @@ describe("the longer horizons", () => {
     expect(span.cells[12]?.label).toBe("Jan 27");
   });
 
+  it("draws a horizon past a decade a year to a cell, so a career fits one screen", () => {
+    const span = spanOf("years", "1997-01-01", { horizon: { years: 30, title: "The career" } });
+    expect(span.grain).toBe("year");
+    expect(span.cells).toHaveLength(30);
+    expect(span.cells[0]).toEqual({ from: "1997-01-01", to: "1997-12-31", label: "1997" });
+    expect(span.title).toBe("The career · 1997–2026");
+    // Pressing a year opens its months.
+    expect(finerThan("year")).toBe("year");
+  });
+
   it("has no horizon unless the app names one", () => {
     expect(rangesOf({})).not.toContain("years");
     expect(rangesOf({ horizon: { years: 5, title: "Five years" } })).toContain("years");

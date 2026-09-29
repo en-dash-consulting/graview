@@ -852,6 +852,16 @@ export function layout<S extends AnySchema>(
    * the view.
    */
   const FANNED_PER_PARENT = 2;
+  /*
+   * AND ONLY WHEN THE ROW NEEDS THE ROOM. A tuck saves a slot; where the row
+   * holds every kind in a slot of its own there is no slot to save, and the
+   * tuck was a pile — Eras and Themes stacked on the Songs card of a shelf
+   * with room to spare, each label half under the card in front. A
+   * secondary kind keeps its rank there, drawn smaller and further back in
+   * its own slot.
+   */
+  const rowHolds = contextItems.length <= districtCapacity((zoomed ? 240 : opts.contextSize.width) * unit);
+  if (rowHolds) for (const item of contextItems) delete (item as { nestedUnder?: string }).nestedUnder;
   const fannedSoFar = new Map<string, number>();
   for (const item of contextItems) {
     if (item.nestedUnder === undefined) continue;

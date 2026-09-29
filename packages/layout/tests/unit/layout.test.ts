@@ -840,8 +840,8 @@ describe("the kinds plane ranks relations rather than listing them flat", () => 
       ],
     });
 
-  const cards = (state: ViewState) => {
-    const placed = layout(nestedGraph(), nested, state, { width: 1400, height: 900 });
+  const cards = (state: ViewState, width = 1400) => {
+    const placed = layout(nestedGraph(), nested, state, { width, height: 900 });
     return new Map(
       placed.nodes.filter((node) => node.id.startsWith("kind:")).map((node) => [node.id, node]),
     );
@@ -867,8 +867,18 @@ describe("the kinds plane ranks relations rather than listing them flat", () => 
     );
   });
 
-  it("nests a kind reached THROUGH another rather than beside it", () => {
+  it("gives every kind a slot of its own when the row holds them, the secondary still smaller", () => {
     const placed = cards(view({ focusId: "ana" }));
+    // A tuck saves a slot; with room for all five there is none to save.
+    expect([...placed.values()].every((card) => card.nestedUnder === undefined)).toBe(true);
+    expect(placed.get(kindCardId("tool"))!.rank).toBe("secondary");
+  });
+
+  // A row too narrow for five kinds: the tuck earns its slot.
+  const NARROW = 800;
+
+  it("nests a kind reached THROUGH another rather than beside it, where the row needs the room", () => {
+    const placed = cards(view({ focusId: "ana" }), NARROW);
     const brush = placed.get(kindCardId("tool"))!;
     // A tool is only reachable via a chore, so it hangs off the chore.
     expect(brush.nestedUnder).toBe(kindCardId("chore"));
@@ -877,7 +887,7 @@ describe("the kinds plane ranks relations rather than listing them flat", () => 
   });
 
   it("puts a nested card behind the one it hangs off, peeking over its top", () => {
-    const placed = cards(view({ focusId: "ana" }));
+    const placed = cards(view({ focusId: "ana" }), NARROW);
     const brush = placed.get(kindCardId("tool"))!;
     const chores = placed.get(kindCardId("chore"))!;
     // Behind means further, and further means higher on screen: the tuck

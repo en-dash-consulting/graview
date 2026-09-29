@@ -309,11 +309,23 @@ export function buildCoverage<S extends AnySchema>(
      * hundreds of routines still only ever walks the edges of one kind at a
      * time.
      */
-    const byKind = new Map<string, { from: string; to: string }[]>();
+    /*
+     * Each step's edges as an adjacency, both readings, read once. Scanning
+     * every edge of the kind for every node on every column's frontier was
+     * 568 artists × a thousand songs × a thousand credits for "who worked
+     * with whom" — a seventh of a second before anything was drawn.
+     */
+    const onwardOf = new Map<string, Map<string, string[]>>();
+    for (const step of new Set(options.link.path)) onwardOf.set(step, new Map());
     for (const edge of edges) {
-      const bucket = byKind.get(edge.kind);
-      if (bucket) bucket.push(edge);
-      else byKind.set(edge.kind, [{ from: edge.from, to: edge.to }]);
+      const adjacency = onwardOf.get(edge.kind);
+      if (!adjacency) continue;
+      const out = adjacency.get(edge.from);
+      if (out) out.push(edge.to);
+      else adjacency.set(edge.from, [edge.to]);
+      const back = adjacency.get(edge.to);
+      if (back) back.push(edge.from);
+      else adjacency.set(edge.to, [edge.from]);
     }
     const seen = new Set<string>();
     for (const column of columnNodes) {
@@ -322,10 +334,10 @@ export function buildCoverage<S extends AnySchema>(
       for (const step of options.link.path) {
         const next: { id: string; via: string[] }[] = [];
         const here = new Set<string>();
+        const adjacency = onwardOf.get(step)!;
         for (const at of frontier) {
-          for (const edge of byKind.get(step) ?? []) {
-            const onward = edge.from === at.id ? edge.to : edge.to === at.id ? edge.from : undefined;
-            if (onward === undefined || here.has(`${at.id}|${onward}`)) continue;
+          for (const onward of adjacency.get(at.id) ?? []) {
+            if (here.has(`${at.id}|${onward}`)) continue;
             here.add(`${at.id}|${onward}`);
             next.push({ id: onward, via: [...at.via, at.id] });
           }
@@ -351,6 +363,10 @@ export function buildCoverage<S extends AnySchema>(
           .map((edge) => edge.to),
       )
     : null;
+  // Sets, not a scan of every cell per row and per column.
+  const coveredRows = new Set(cells.map((cell) => cell.rowId));
+  const usedColumns = new Set(cells.map((cell) => cell.columnId));
+  const badged = new Set(badgeEdges.map((edge) => edge.to));
   const rows = rowNodes
     .map((node) => {
       const record = asRecord(node);
@@ -363,8 +379,8 @@ export function buildCoverage<S extends AnySchema>(
         required: demanded
           ? demanded.has(node.id)
           : required.size === 0 || required.has(group),
-        covered: cells.some((cell) => cell.rowId === node.id),
-        badged: badgeEdges.some((edge) => edge.to === node.id),
+        covered: coveredRows.has(node.id),
+        badged: badged.has(node.id),
       };
     })
     .sort(
@@ -375,13 +391,11 @@ export function buildCoverage<S extends AnySchema>(
     .map((node) => ({
       id: node.id,
       label: label(node),
-      used: cells.some((cell) => cell.columnId === node.id),
+      used: usedColumns.has(node.id),
+      group: text(asRecord(node), options.columnGroup),
     }))
-    .sort((a, b) => {
-      const ga = text(asRecord(columnNodes.find((n) => n.id === a.id)!), options.columnGroup);
-      const gb = text(asRecord(columnNodes.find((n) => n.id === b.id)!), options.columnGroup);
-      return ga < gb ? -1 : ga > gb ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-    });
+    .sort((a, b) => (a.group < b.group ? -1 : a.group > b.group ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+    .map(({ group: _group, ...column }) => column);
 
   return {
     rows,

@@ -50,7 +50,7 @@ export type CalendarBindings = Readonly<Record<string, CalendarRoles>>;
 export type CalendarRange = "day" | "week" | "month" | "quarter" | "year" | "years" | "agenda";
 
 /** How coarse one cell of the grid is. */
-export type CalendarGrain = "day" | "week" | "month";
+export type CalendarGrain = "day" | "week" | "month" | "year";
 
 /**
  * A SPAN OF YEARS THE APP NAMES.

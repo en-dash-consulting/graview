@@ -44,7 +44,7 @@ export const stepStyle = {
  * rules' own flag on it where something in the remainder is broken — the
  * lens contract's two fidelities doing the work a scroll bar would not.
  */
-export const PER_CELL: Readonly<Record<CalendarGrain, number>> = { day: 12, week: 4, month: 3 };
+export const PER_CELL: Readonly<Record<CalendarGrain, number>> = { day: 12, week: 4, month: 3, year: 5 };
 
 export function Grid({
   span,

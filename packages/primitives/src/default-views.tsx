@@ -165,8 +165,15 @@ function WhenSeen({ children }: { readonly children: ReactNode }) {
     return takeTurn(() => setShown(true));
   }, [seen, still, shown]);
   return (
-    // A real box, not `display: contents`: an element with no box never intersects anything.
-    <span ref={box} style={{ display: "block", minHeight: 1 }} data-graview-thumbnail={shown ? "drawn" : "waiting"}>
+    /*
+     * A real box, not `display: contents`: an element with no box never
+     * intersects anything. And a box as tall as a picture, not one pixel:
+     * drawn at a twentieth of its size a pixel is a twentieth of one, which
+     * the browser counts as no area at all — the Albums district's two
+     * pictures waited forever while the Artists one, drawn twice as large,
+     * was seen.
+     */
+    <span ref={box} style={{ display: "block", minHeight: shown ? undefined : 360 }} data-graview-thumbnail={shown ? "drawn" : "waiting"}>
       {shown ? children : null}
     </span>
   );

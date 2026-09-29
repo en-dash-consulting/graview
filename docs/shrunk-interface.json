@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-29T13:46:37.826Z",
+  "at": "2026-09-29T15:25:57.923Z",
   "engine": "canary-gpu",
   "flags": [
     "--enable-unsafe-webgpu",
@@ -81,7 +81,7 @@
         {
           "id": "t-broadband",
           "x": 916,
-          "y": 439,
+          "y": 438,
           "inside": true
         },
         {

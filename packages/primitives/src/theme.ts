@@ -321,6 +321,17 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   background-size: 100% 24px, 100% 24px, 100% 10px, 100% 10px;
   background-attachment: local, local, scroll, scroll;
 }
+/* "There is more of this", said by the ground: a few pixels of the panel's
+ * own colour over the last row, stuck to the bottom of what scrolls. */
+.graview-scroll[data-graview-overflowing]::after {
+  content: "";
+  position: sticky;
+  bottom: 0;
+  flex: 0 0 14px;
+  margin-top: calc(-14px - var(--graview-gap, 7px));
+  background: linear-gradient(transparent, var(--graview-panel-bg, var(--graview-panel)));
+  pointer-events: none;
+}
 
 /* A card on the kinds plane.
  *
@@ -652,7 +663,9 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   font-size: 0.75rem;
   line-height: 1.2;
   white-space: nowrap;
-  max-width: 116px;
+  /* Its own frame's width: two pictures share the marquee, and two names
+     each allowed the width of one picture ran into each other. */
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }

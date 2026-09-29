@@ -61,7 +61,22 @@ function indexOf(layout: Layout): Index {
   return index;
 }
 
+/*
+ * The same node and the same far layout give the same stand-in, and a tween
+ * asks sixty times a second: a group of a thousand songs was a thousand
+ * lookups and a centroid per frame. Answered once per pair.
+ */
+const stoodIn = new WeakMap<Layout, WeakMap<LayoutNode, LayoutNode | null>>();
 function standIn(node: LayoutNode, other: Layout): LayoutNode | null {
+  let known = stoodIn.get(other);
+  if (!known) stoodIn.set(other, (known = new WeakMap()));
+  if (known.has(node)) return known.get(node)!;
+  const answer = standInFresh(node, other);
+  known.set(node, answer);
+  return answer;
+}
+
+function standInFresh(node: LayoutNode, other: Layout): LayoutNode | null {
   const { byId, groupsOf } = indexOf(other);
   /*
    * A BILLBOARD SINKS INTO ITS VILLAGE, and rises out of it. The picture on

@@ -658,8 +658,15 @@ export function Scene<S extends AnySchema>({
    * what the fidelity axis is for: legible at any width, still selectable,
    * still the node. A band that WRAPPED into rows is a crowd by height: a
    * summary card in a 46-pixel row showed its title cut at the second line.
+   *
+   * The floor is what a summary holds: its title and one row of chips, 80
+   * pixels. At 64 a release in a three-row band drew its name and a sliver
+   * of its date chip under a fade — a card that looked broken, where a chip
+   * would have read.
    */
-  const crowded = (node: SceneNode) => Math.round(node.plane) === 1 && (node.compact === true || node.width < 175 || node.height < 64);
+  const SUMMARY_FLOOR = 80;
+  const crowded = (node: SceneNode) =>
+    Math.round(node.plane) === 1 && (node.compact === true || node.width < 175 || node.height < SUMMARY_FLOOR);
 
   /*
    * Whether this card stands for a kind the app gave a picture of its own —

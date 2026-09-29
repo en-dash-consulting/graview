@@ -329,13 +329,16 @@ export function Panel({
            * pixels of fade is the oldest way there is to write "there is
            * more of this", and it costs nothing when there is not.
            */
-          ...(overflowing && !page
-            ? {
-                maskImage: "linear-gradient(to bottom, #000 calc(100% - 14px), transparent)",
-                WebkitMaskImage: "linear-gradient(to bottom, #000 calc(100% - 14px), transparent)",
-              }
-            : {}),
+          /*
+           * Painted, not masked: the fade is the theme's (`.graview-scroll`
+           * with `data-graview-overflowing`), a strip of the panel's own
+           * ground that sticks to the bottom. A mask made the whole scroller
+           * its own offscreen layer — a cost on every frame it moved — and
+           * a layer painted before the rows arrived stayed painted: the
+           * tracklists panel drew solid black until something repainted it.
+           */
         }}
+        data-graview-overflowing={overflowing && !page ? "" : undefined}
       >
         {children}
       </div>

@@ -1,53 +1,53 @@
 {
-  "at": "2026-09-29T13:51:49.326Z",
+  "at": "2026-09-29T15:23:58.418Z",
   "engine": "chromium",
   "stops": {
     "altitude, still": {
       "frames": 15,
       "first": 18,
       "p50": 18.2,
-      "p95": 18.4,
-      "worst": 18,
-      "slow": [],
-      "longTasks": 0,
-      "dom": 1161,
-      "hosts": 5,
-      "strands": 0,
-      "thumbnails": 2,
-      "waiting": 2
-    },
-    "altitude, drag": {
-      "frames": 130,
-      "first": 36,
-      "p50": 17.8,
       "p95": 18.5,
       "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 1163,
+      "dom": 2177,
       "hosts": 5,
       "strands": 0,
-      "thumbnails": 2,
-      "waiting": 2
+      "thumbnails": 4,
+      "waiting": 0
+    },
+    "altitude, drag": {
+      "frames": 127,
+      "first": 53,
+      "p50": 17.7,
+      "p95": 18.5,
+      "worst": 19,
+      "slow": [],
+      "longTasks": 0,
+      "dom": 2179,
+      "hosts": 5,
+      "strands": 0,
+      "thumbnails": 4,
+      "waiting": 0
     },
     "altitude, wheel": {
-      "frames": 685,
-      "first": 12,
+      "frames": 582,
+      "first": 13,
       "p50": 0.3,
       "p95": 18.1,
       "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 1171,
+      "dom": 2187,
       "hosts": 5,
       "strands": 0,
-      "thumbnails": 2,
-      "waiting": 2
+      "thumbnails": 4,
+      "waiting": 0
     },
     "descend": {
-      "frames": 225,
+      "frames": 208,
       "first": 18,
-      "p50": 5.2,
+      "p50": 6,
       "p95": 18.2,
       "worst": 19,
       "slow": [],
@@ -59,120 +59,116 @@
       "waiting": 0
     },
     "focus the hub": {
-      "frames": 735,
-      "first": 54,
-      "p50": 1,
-      "p95": 18.1,
+      "frames": 1111,
+      "first": 63,
+      "p50": 0.6,
+      "p95": 18,
       "worst": 19,
       "slow": [],
-      "longTasks": 0,
-      "dom": 521,
+      "longTasks": 1,
+      "dom": 524,
       "hosts": 21,
       "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, drag": {
-      "frames": 123,
+      "frames": 127,
       "first": 19,
-      "p50": 17.7,
+      "p50": 17.8,
       "p95": 18.5,
       "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 525,
+      "dom": 528,
       "hosts": 21,
       "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, move a card": {
-      "frames": 151,
+      "frames": 150,
       "first": 19,
-      "p50": 18,
+      "p50": 18.1,
       "p95": 18.6,
       "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 525,
+      "dom": 528,
       "hosts": 21,
       "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, wheel": {
-      "frames": 158,
-      "first": 18,
-      "p50": 17.3,
+      "frames": 155,
+      "first": 19,
+      "p50": 17.2,
       "p95": 18.6,
       "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 525,
+      "dom": 528,
       "hosts": 21,
       "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, select": {
-      "frames": 70,
+      "frames": 71,
       "first": 72,
-      "p50": 18.1,
+      "p50": 18.2,
       "p95": 18.5,
       "worst": 19,
       "slow": [],
       "longTasks": 1,
-      "dom": 484,
+      "dom": 487,
       "hosts": 21,
       "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, type in Find": {
-      "frames": 662,
-      "first": 36,
-      "p50": 0.8,
-      "p95": 18.1,
-      "worst": 37,
+      "frames": 938,
+      "first": 54,
+      "p50": 0.7,
+      "p95": 17.5,
+      "worst": 36,
       "slow": [
         [
-          183,
-          37
+          189,
+          34
         ],
         [
-          308,
-          37
+          314,
+          36
         ]
       ],
       "longTasks": 1,
-      "dom": 902,
+      "dom": 906,
       "hosts": 21,
       "strands": 26,
       "thumbnails": 0,
       "waiting": 0
     },
     "rise": {
-      "frames": 2970,
-      "first": 17,
+      "frames": 3139,
+      "first": 18,
       "p50": 0.1,
-      "p95": 0.9,
-      "worst": 45,
+      "p95": 1.2,
+      "worst": 40,
       "slow": [
         [
-          823,
-          42
+          854,
+          38
         ],
         [
-          888,
-          45
-        ],
-        [
-          953,
-          45
+          913,
+          40
         ]
       ],
       "longTasks": 0,
-      "dom": 3287,
+      "dom": 2299,
       "hosts": 6,
       "strands": 0,
       "thumbnails": 4,
