@@ -3275,3 +3275,14 @@ two singles and thirty-five songs.
   characters as "past any name" — four real Tech N9ne titles are longer
   (the longest, 78) — recorded for the sixth walk.
 
+### W-123 · A scaffolded project never commits its seed
+- stage: G (after the walk, on real data) · face: — · width: — · scheme: —
+- expected: `src/data/seed.json`, the graph the app opens on, is in the project's history
+- actual: the scaffold's `.gitignore` said `data/` for the served store, which also
+  matches `src/data/`; ../walk5's seed had never been committed, fixture or real
+- where it belongs: `packages/core/src/scaffold/project.ts` (`gitignore()`)
+- harness that should have caught it: `scaffold.test.ts` checked the file exists, never what it ignores
+- status: fixed in "A scaffolded project commits its seed" · `data/` plus `!**/src/data/`.
+  Criterion: `scaffold.test.ts` runs `git check-ignore` over both layouts' store and
+  seed paths (verified failing without the fix).
+

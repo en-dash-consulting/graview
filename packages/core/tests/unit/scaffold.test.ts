@@ -1,3 +1,7 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   GRAVIEW_PACKAGES,
@@ -441,6 +445,32 @@ describe("a workspace, which is what a product actually is", () => {
     expect(at(".gitignore")).toBeDefined();
     expect(at(".github/workflows/ci.yml")).toBeDefined();
     expect(at("app/README.md")).toBeUndefined();
+  });
+
+  /*
+   * THE SEED IS SOURCE, the served store is not. `data/` alone also matched
+   * `src/data/`, and no project ever committed the graph it opens on.
+   */
+  it("ignores the served store and keeps the seed, in either layout", () => {
+    const dir = mkdtempSync(join(tmpdir(), "graview-ignore-"));
+    try {
+      execFileSync("git", ["init", "-q"], { cwd: dir });
+      writeFileSync(join(dir, ".gitignore"), at(".gitignore")!.contents);
+      const ignored = (path: string) => {
+        try {
+          execFileSync("git", ["check-ignore", "-q", path], { cwd: dir });
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      expect(ignored("data/store.json")).toBe(true);
+      expect(ignored("app/data/store.json")).toBe(true);
+      expect(ignored("src/data/seed.json")).toBe(false);
+      expect(ignored("app/src/data/seed.json")).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("gives the harnesses somewhere to live, saying what each would measure", () => {

@@ -469,11 +469,17 @@ export default defineConfig({
 `;
 }
 
+/*
+ * `data/` is the store `graview serve --data data` writes, wherever the app
+ * sits — and alone it also matched `src/data/`, so every project's seed, the
+ * graph it opens on, was quietly never committed. The seed is the source.
+ */
 export function gitignore(): string {
   return `node_modules/
 dist/
 build/
 data/
+!**/src/data/
 docs/llms.txt
 docs/agents.md
 *.tsbuildinfo
