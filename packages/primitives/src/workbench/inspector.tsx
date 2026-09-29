@@ -180,6 +180,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  /* The withheld acts past the first three, on request — never dropped without a word. */
+  const [allWithheld, setAllWithheld] = useState(false);
   /*
    * The searcher's text. Chrome that is mostly not there must not be
    * there: the field only renders once the list outgrows the fold.
@@ -256,6 +258,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
   useEffect(() => {
     setPending(null);
     setExpanded(false);
+    setAllWithheld(false);
     setFailed(null);
     setQuery("");
   }, [selection]);
@@ -1060,7 +1063,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
             gap: 2,
           }}
         >
-          {withheld.slice(0, atPointer ? withheld.length : 3).map((action) => (
+          {withheld.slice(0, atPointer || allWithheld ? withheld.length : 3).map((action) => (
             <li key={action.id} style={{ display: "grid", gap: 2 }}>
               <button
                 type="button"
@@ -1100,6 +1103,25 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
               </span>
             </li>
           ))}
+          {/*
+            * NOT HIDDEN, THEN. The rail showed the first three withheld acts
+            * and dropped the rest without a word: a producer standing on a
+            * song saw three struck through and could not learn that seven
+            * more were the artist's.
+            */}
+          {!atPointer && !allWithheld && withheld.length > 3 ? (
+            <li>
+              <button
+                type="button"
+                data-testid="withheld-more"
+                onClick={() => setAllWithheld(true)}
+                title={`Show all ${withheld.length} actions this seat may not take`}
+                style={{ padding: "4px 10px", fontSize: "0.875rem", borderRadius: 8 }}
+              >
+                Show {withheld.length - 3} more withheld
+              </button>
+            </li>
+          ) : null}
         </ul>
       ) : null}
 

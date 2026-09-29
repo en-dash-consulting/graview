@@ -3101,3 +3101,21 @@ two singles and thirty-five songs.
   own). Criterion: primitives `the-seat-under-a-policy.test.tsx` "names the
   other seat by the name it is offered under" (verified failing without the
   fix: `expected 'kai' to be 'Kai, the keeper'`).
+
+### W-115 · Under a policy the strip strikes through three withheld acts and drops the rest
+- stage: F · face: scene · width: 1280 · scheme: light
+- expected: "every act it may not take is struck through with the
+  policy's reason in the strip, the pages and the design; nothing is
+  hidden"
+- actual: the producer on Cobalt saw two acts it may take and three struck
+  through — Scrap it, Drop a feature, Place it in an era — while the pages
+  record listed eleven withheld. The strip rendered `withheld.slice(0, 3)`
+  in the rail with no "more": eight acts, the artist's and the label's,
+  simply absent. Every harness's narrower seat withholds three or fewer.
+- where it belongs: `packages/primitives/src/workbench/inspector.tsx`
+- harness that should have caught it: `verify-seat` and `verify-who`
+  count withheld acts for seats that are refused at most three
+- status: fixed in "walkthrough: F · nothing withheld is hidden" · past
+  three, a "Show N more withheld" control opens the rest (the pointer menu
+  already showed all). Criterion: primitives
+  `nothing-withheld-is-hidden.test.tsx` (verified failing without the fix).
