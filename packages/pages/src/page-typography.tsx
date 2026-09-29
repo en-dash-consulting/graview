@@ -8,6 +8,7 @@ import {
   type Operation,
   type Principal,
   type Store,
+  nameOfAuthor,
 } from "@graview/core";
 
 
@@ -159,11 +160,14 @@ export function listed<S extends AnySchema>(
 
 /** Words for who did something, from the op's own author. */
 /** Who did an op, as the person at the keyboard reads it: "you" only for their own work. */
-export function whoDid(op: Operation, principal?: Principal): string {
-  if (op.author.kind === "human") {
-    if (op.author.id === undefined || principal?.id === undefined || op.author.id === principal.id) return "you";
-    return op.author.id;
-  }
+export function whoDid(
+  op: Operation,
+  principal?: Principal,
+  where?: Parameters<typeof nameOfAuthor>[1],
+): string {
+  if (op.author.kind === "human" && (op.author.id === undefined || principal?.id === undefined || op.author.id === principal.id)) return "you";
+  // By name where the graph or the seats have one — never an id a person was not offered.
+  if (where) return nameOfAuthor(op.author, where);
   if (op.author.kind === "agent") return op.author.id ?? "an agent";
   return op.author.id ?? op.author.kind;
 }

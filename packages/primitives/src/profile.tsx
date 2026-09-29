@@ -1,4 +1,4 @@
-import { labelOf, type AnySchema } from "@graview/core";
+import { labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
 import { useGraview } from "@graview/react";
 import { LadderSetting } from "./ladder.js";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -116,7 +116,9 @@ export function Profile<S extends AnySchema>({
   const me = principal.id === undefined ? undefined : store.graph.getNode(principal.id);
   const name =
     me === undefined
-      ? (principal.id ?? "Nobody in particular")
+      ? principal.id === undefined
+        ? "Nobody in particular"
+        : nameOfAuthor(principal, { graph: store.graph as never, schema: store.schema, seats })
       : labelOf(store.schema.tryDefinition(me.kind as string), me);
   const roles = principal.roles ?? [];
 

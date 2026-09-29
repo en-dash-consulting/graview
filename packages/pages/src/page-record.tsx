@@ -285,7 +285,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
             {history.map((op) => (
               <li key={op.id} style={quiet}>
-                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op, principal)}
+                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}) })}
               </li>
             ))}
           </ul>

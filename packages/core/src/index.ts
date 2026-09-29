@@ -18,6 +18,7 @@ export { z } from "zod";
 
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf, describeNode, tellApart } from "./schema/define-node.js";
+export { nameOfAuthor } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
   AnySchema,

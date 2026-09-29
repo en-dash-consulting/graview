@@ -278,7 +278,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         ) : face === "pages" ? (
           <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "auto" }}>
             <PagesApp<S>
-              context={{ store, embedded: true, ...(brand ? { brand } : {}), ...(principal ? { principal } : {}) }}
+              context={{ store, embedded: true, ...(brand ? { brand } : {}), ...(principal ? { principal } : {}), ...(props.seats ? { seats: props.seats } : {}) }}
               {...(pages ? { registry: pages } : {})}
               initialPath={path}
             />

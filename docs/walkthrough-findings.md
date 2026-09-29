@@ -3076,3 +3076,28 @@ two singles and thirty-five songs.
   `surface("shell", …)` takes a `ShellComponent<S>` (`{ context, children }`),
   exported; the three designs drop their casts. Criterion: `pnpm typecheck`
   over todo, seedbed and rota, whose shells are now registered uncast.
+
+### W-114 · The rail and the profile name a seat by its id: "user-lena", "U user-june"
+- stage: F · face: both · width: 1280 · scheme: light
+- expected: with seats offered as "Lena, the label" and "June Arlo,
+  producer", the history names the other seat's work by that name, and the
+  profile says who you are
+- actual: sitting as the producer, the rail read "user-lena Hometown
+  (Again) no longer features Mara Vey" and the profile button "U user-june".
+  W-085 made the rail name the other seat; it named it by `author.id`,
+  which is a person's name only where the app has an installation with a
+  user node of that id. Discography has seats and no installation, so the
+  ids a harness passes as `?as=` were printed where a person reads.
+- where it belongs: `packages/core/src/who.ts` (`nameOfAuthor`),
+  `packages/primitives/src/workbench/activity.tsx`,
+  `packages/primitives/src/profile.tsx`, `packages/pages/src/page-typography.tsx`
+  (`whoDid`), `page-home.tsx`, `page-record.tsx`, `page-context.tsx`
+  (`seats`), `packages/embed/src/embed.tsx`
+- harness that should have caught it: every app with seats in the
+  repository has an installation whose user ids resolve
+- status: fixed in "walkthrough: F · a seat is named by its name" · an
+  author is named by its user node, else by the seat it was offered under,
+  else by its id; the page context carries `seats` (the embed passes its
+  own). Criterion: primitives `the-seat-under-a-policy.test.tsx` "names the
+  other seat by the name it is offered under" (verified failing without the
+  fix: `expected 'kai' to be 'Kai, the keeper'`).

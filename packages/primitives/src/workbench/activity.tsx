@@ -1,4 +1,4 @@
-import { humaniseField, type AnySchema } from "@graview/core";
+import { humaniseField, nameOfAuthor, type AnySchema } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -218,7 +218,7 @@ export function ActivityRail({
   readonly seat?: ReactNode;
 }) {
   const changes = useRecentChanges();
-  const { store, principal } = useGraview<AnySchema>();
+  const { store, principal, seats } = useGraview<AnySchema>();
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
   const running = calls.some((call) => call.phase === "running");
@@ -438,7 +438,7 @@ export function ActivityRail({
                             work as their own. */}
                         {change.author === "human" && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
                           ? "you"
-                          : (change.authorId ?? change.author)}
+                          : nameOfAuthor({ kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats })}
                       </strong>{" "}
                       <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
                     </span>

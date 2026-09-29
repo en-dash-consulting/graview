@@ -95,4 +95,21 @@ describe("the rail with two seats", () => {
     expect(asKeeper.host.querySelector('[data-testid="diff-log"] li strong')?.textContent).toBe("you");
     await asKeeper.unmount();
   });
+
+  it("names the other seat by the name it is offered under, not by its id (W-114)", async () => {
+    const store = guarded();
+    store.apply({ name: "add-item", args: { label: "Pay the deposit" } }, { author: keeper });
+    const seats = [
+      { label: "Kai, the keeper", principal: keeper },
+      { label: "Hana, helping", principal: helper },
+    ];
+    const asHelper = await mounted(
+      <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW} principal={helper} seats={seats}>
+        <ActivityRail calls={[]} seat={null} />
+      </GraviewProvider>,
+    );
+    await act(async () => asHelper.host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
+    expect(asHelper.host.querySelector('[data-testid="diff-log"] li strong')?.textContent).toBe("Kai, the keeper");
+    await asHelper.unmount();
+  });
 });

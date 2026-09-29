@@ -20,6 +20,12 @@ import type { ReactViewRegistry } from "@graview/react";
 export interface PageContext<S extends AnySchema> {
   readonly store: Store<S>;
   readonly principal?: Principal;
+  /**
+   * The seats a person may sit in, by the names they are offered under — so
+   * the history can name another seat's work by that name rather than by
+   * the principal's id, where the app has no installation to look it up in.
+   */
+  readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
   readonly brand?: Brand;
   /** Where the spatial face lives, for the cross-links. Default "/". */
   readonly sceneHref?: string;
