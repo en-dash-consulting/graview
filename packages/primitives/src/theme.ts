@@ -616,6 +616,8 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   background: transparent;
   box-shadow: none;
   cursor: pointer;
+  /* The card's own floor, stated: it covers the card, and the card is at least this tall. */
+  min-height: max(1.75rem, 28px);
 }
 .graview-drive-in-thumb-press:focus-visible {
   outline: 2px solid var(--graview-accent);
