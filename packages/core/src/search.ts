@@ -2,7 +2,7 @@ import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type 
 import { describeArg } from "./mutations/node-ref.js";
 import type { Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
-import { humaniseField, isCurrent, labelOf, readableFields } from "./schema/define-node.js";
+import { humaniseField, isCurrent, labelOf, readableFields, tellApart } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import type { Store } from "./store.js";
@@ -47,6 +47,8 @@ export type Hit =
       /** False for a record its kind's lifecycle has retired; only seen under `is:any` or `is:past`. */
       readonly current: boolean;
       readonly flagged: boolean;
+      /** What tells it apart from another hit of the same name — "single" beside "album". */
+      readonly apart?: string;
     }
   | {
       readonly about: "kind";
@@ -514,7 +516,15 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
 
   ranked.sort(byRank);
   const limit = options.limit ?? 50;
-  const hits = ranked.slice(0, limit).map((entry) => entry.hit);
+  const shown = ranked.slice(0, limit).map((entry) => entry.hit);
+  // Two hits of one name — a single and its album, both "Blue Hour" — say what tells them apart.
+  // Told apart within their kind: the strip already heads each kind, so "· song" beside the albums would say it twice.
+  const apart = new Map<string, string>();
+  for (const kind of new Set(shown.flatMap((hit) => (hit.about === "node" ? [hit.kind] : [])))) {
+    const alike = shown.flatMap((hit) => (hit.about === "node" && hit.kind === kind ? [store.graph.getNode(hit.id) as unknown as { id: string; kind: string } & Record<string, unknown>] : [])).filter(Boolean);
+    for (const [id, words] of tellApart(alike, (named) => schema.tryDefinition(named))) apart.set(id, words);
+  }
+  const hits = shown.map((hit) => (hit.about === "node" && apart.has(hit.id) ? { ...hit, apart: apart.get(hit.id)! } : hit));
   const total = Object.values(byKind).reduce((sum, count) => sum + count, 0);
   const matched = ranked.flatMap((entry) => (entry.hit.about === "node" ? [entry.hit.id] : []));
   const acts = options.subject && kinds.includes(String(store.graph.getNode(options.subject)?.kind)) ? actsOn(store, options.subject, parsed.words, { principal }) : [];

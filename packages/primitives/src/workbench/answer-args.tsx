@@ -1,4 +1,4 @@
-import { humaniseField, labelOf, type AnySchema, type Store } from "@graview/core";
+import { humaniseField, labelOf, tellApart, type AnySchema, type Store } from "@graview/core";
 import { edgeOfSelection, kindsOf } from "@graview/layout";
 import { useGraview } from "@graview/react";
 import type { Affordance, OpenParameter } from "@graview/tools";
@@ -95,11 +95,22 @@ export function AnswerArgs({
    * has had both since it was written. It just never reached the ask.
    */
   const [among, setAmong] = useState("");
+  /* Two candidates with one name are told apart by what differs (see `tellApart`). */
+  const apart = useMemo(() => {
+    const nodes = choices.map((choice) => store.graph.getNode(choice)).filter((node): node is NonNullable<typeof node> => node !== undefined);
+    return tellApart(nodes, (kind) => store.schema.tryDefinition(kind));
+  }, [choices, store]);
+  const say = (choice: string) => {
+    const words = said(store, shape, choice);
+    const told = apart.get(choice);
+    return told ? `${words} · ${told}` : words;
+  };
   const matching = useMemo(() => {
     const term = among.trim().toLowerCase();
     if (term === "") return choices;
-    return choices.filter((choice) => said(store, shape, choice).toLowerCase().includes(term));
-  }, [choices, among, store, shape]);
+    return choices.filter((choice) => say(choice).toLowerCase().includes(term));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choices, among, store, shape, apart]);
   /*
    * AN ARGUMENT THAT TAKES A LIST IS ANSWERED WITH A LIST.
    *
@@ -203,7 +214,7 @@ export function AnswerArgs({
                 type="button"
                 // The question travels with the answer: a control read on its
                 // own says what choosing it would mean.
-                aria-label={`${asking}: ${said(store, shape, choice)}`}
+                aria-label={`${asking}: ${say(choice)}`}
                 {...(several ? { "aria-pressed": held } : {})}
                 style={{
                   padding: "3px 9px",
@@ -222,7 +233,7 @@ export function AnswerArgs({
                     : answer(shape.type === "boolean" ? choice === "yes" : choice)
                 }
               >
-                {said(store, shape, choice)}
+                {say(choice)}
               </button>
             );
           })}

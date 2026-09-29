@@ -3030,3 +3030,28 @@ two singles and thirty-five songs.
   lands on the next proposal still to press, else on the message field.
   Criterion: `one-request-one-press.test.tsx` "hands the keyboard to the
   next proposal once one is pressed" (verified failing without the fix).
+
+### W-112 · "Put it on a release: Blue Hour, Blue Hour" — two of one name cannot be chosen between
+- stage: C/D · face: both · width: any · scheme: both
+- expected: where a person picks a record — a form's picker, the strip's
+  ask, the Find strip, the search page — two with one name can be told apart
+- actual: the single "Blue Hour" and the album "Blue Hour" (a single and
+  its album share a title in any discography) were two identical rows
+  everywhere: the pages form's `<select>`, the strip's ask ("Album: Blue
+  Hour | Blue Hour | Paper Money …"), the Find strip ("ALBUMS | Blue Hour |
+  Blue Hour"). Choosing was a coin toss, and the wrong one put a song on
+  the wrong release. Nothing an item app names twice.
+- where it belongs: `packages/core/src/schema/define-node.ts`
+  (`tellApart`), `packages/core/src/search.ts` (a hit's `apart`),
+  `packages/pages/src/form.tsx`, `packages/pages/src/page-search.tsx`,
+  `packages/primitives/src/workbench/answer-args.tsx`,
+  `packages/primitives/src/find.tsx`
+- harness that should have caught it: no seed anywhere names two records
+  of one kind alike
+- status: fixed in "walkthrough: C · two of one name are told apart" · a
+  record whose name another in the same list shares is followed by the
+  first fact that differs between them — a word before a number, so
+  "Blue Hour · single" and "Blue Hour · album" — else its kind, else its id.
+  Criterion: core `two-of-one-name.test.ts` (the words, the kind, and the
+  search hits); in the browser the strip's ask and the Find strip read
+  "Blue Hour · single", "Blue Hour · album".

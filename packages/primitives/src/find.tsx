@@ -261,6 +261,7 @@ function HitLine({ hit, flag }: { hit: Hit; flag: string }) {
           <span style={{ fontWeight: 600, overflowWrap: "anywhere" }}>
             {hit.flagged ? <span style={{ color: "var(--graview-warn)" }}>{flag} </span> : null}
             {hit.label}
+            {hit.apart ? <span style={MUTED}> · {hit.apart}</span> : null}
             {hit.current ? null : <span style={MUTED}> · past</span>}
           </span>
           {hit.why.field !== "label" ? (

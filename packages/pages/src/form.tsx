@@ -2,6 +2,7 @@ import {
   formFields,
   humaniseField,
   labelOf,
+  tellApart,
   type AnySchema,
   type FormField,
   type Principal,
@@ -220,6 +221,7 @@ function Control<S extends AnySchema>({
             .map((id) => store.graph.getNode(id))
             .filter((node): node is NonNullable<typeof node> => node !== undefined)
         : all;
+      const told = tellApart(candidates as never, (kind) => store.schema.tryDefinition(kind as never));
       return (
         <label style={field}>
           <span style={labelStyle}>{title}</span>
@@ -232,11 +234,16 @@ function Control<S extends AnySchema>({
               style={pickerStyle}
             >
               <option value="">—</option>
-              {candidates.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {labelOf(store.schema.tryDefinition(candidate.kind), candidate)}
-                </option>
-              ))}
+              {candidates.map((candidate) => {
+                // Two releases called "Blue Hour" are told apart by what differs.
+                const apart = told.get(candidate.id);
+                return (
+                  <option key={candidate.id} value={candidate.id}>
+                    {labelOf(store.schema.tryDefinition(candidate.kind), candidate)}
+                    {apart ? ` · ${apart}` : ""}
+                  </option>
+                );
+              })}
             </select>
           </Picker>
         </label>

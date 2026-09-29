@@ -48,6 +48,50 @@ export function isCurrent(
   return !lifecycle.retired.includes(value);
 }
 
+/**
+ * WHAT TELLS TWO SAME-NAMED THINGS APART, among the nodes a person is
+ * choosing from. A single and its album are both "Blue Hour", and every
+ * picker, every ask and the Find strip listed "Blue Hour, Blue Hour": a
+ * choice nobody could make. For each node whose name another in the list
+ * shares, the first fact that differs between them — "single" and "album",
+ * or the dates — else its kind, else its id. Nodes with a name of their
+ * own get nothing.
+ */
+export function tellApart(
+  nodes: readonly ({ id: string; kind: string } & Record<string, unknown>)[],
+  definitionOf: (kind: string) => AnyNodeDefinition | undefined,
+): Map<string, string> {
+  const apart = new Map<string, string>();
+  const byName = new Map<string, typeof nodes[number][]>();
+  for (const node of nodes) {
+    const name = labelOf(definitionOf(node.kind), node).trim().toLowerCase();
+    byName.set(name, [...(byName.get(name) ?? []), node]);
+  }
+  for (const same of byName.values()) {
+    if (same.length < 2) continue;
+    const byKind = new Map<string, typeof same>();
+    for (const node of same) byKind.set(node.kind, [...(byKind.get(node.kind) ?? []), node]);
+    for (const [kind, alike] of byKind) {
+      // One of its kind among namesakes of other kinds: the kind is what differs.
+      if (alike.length === 1) {
+        apart.set(alike[0]!.id, kind.replace(/-/g, " "));
+        continue;
+      }
+      const facts = alike.map((node) => new Map(readableFields(node, definitionOf(node.kind)).map((field) => [field.key, field.alone])));
+      const keys = [...new Set(facts.flatMap((fact) => [...fact.keys()]))];
+      // A word before a number: "single" and "album" say more than two dates.
+      const wordy = (key: string) => facts.every((fact) => !/\d/.test(fact.get(key) ?? ""));
+      const ordered = [...keys.filter(wordy), ...keys.filter((key) => !wordy(key))];
+      const telling = ordered.find((key) => new Set(facts.map((fact) => fact.get(key) ?? "")).size === alike.length);
+      alike.forEach((node, at) => {
+        const fact = telling ? facts[at]!.get(telling) : undefined;
+        apart.set(node.id, fact ?? node.id);
+      });
+    }
+  }
+  return apart;
+}
+
 /** Resolves a node's display label, honouring the declaration's override. */
 export function labelOf(
   definition: AnyNodeDefinition | undefined,

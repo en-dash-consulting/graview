@@ -125,6 +125,7 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
                   <Link to={recordPath(store.schema, kind, hit.id)} style={{ ...plain, fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, lineHeight: 1.3 }}>
                     {hit.flagged ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
                     {hit.label}
+                    {hit.apart ? <span style={quiet}> · {hit.apart}</span> : null}
                     {hit.current ? null : <span style={quiet}> · past</span>}
                   </Link>
                   <WhyLine why={hit.why} />
