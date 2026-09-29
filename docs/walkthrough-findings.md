@@ -3208,3 +3208,21 @@ two singles and thirty-five songs.
   in" · inside an embed the pane is slid back inside the embed's box and no
   taller than the room under its top (measured: inside at 1280 and 390, both
   embeds). Criterion: smoke-create `theProfileStaysInTheEmbed` at 390.
+
+### W-120 · The chat says "explicit No" and starts its sentences in lower case
+- stage: I (search: "where is …") · face: scene (the chat) · width: 1280 · scheme: light
+- expected: "where is Cobalt?" answered in sentences a person would write
+- actual: "Cobalt — a song (track 3, length 4:38, explicit No). the
+  releases it is on: Blue Hour. the artist whose song it is: Mara Vey." A
+  fact was `label.toLowerCase() + " " + value`, so a yes/no read "explicit
+  No"; each relation was its declaration's words verbatim — lower case,
+  because a caption is — joined with ". ", so every sentence after the
+  first began in lower case.
+- where it belongs: `packages/tools/src/conversation.ts`
+- harness that should have caught it: `conversation.test.ts` asserted the
+  words with `toContain`, which a lower-case sentence start satisfies
+- status: fixed in "walkthrough: I · the chat writes sentences" · a fact is
+  its `alone` reading (W-096) lower-cased to sit in brackets — "explicit:
+  no" — and each relation sentence starts with a capital. Criterion:
+  `conversation.test.ts` expects ". Who does the run: Ana" (verified
+  failing without the fix) and "(minutes 75)".

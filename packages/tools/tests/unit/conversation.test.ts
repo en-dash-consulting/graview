@@ -139,7 +139,10 @@ describe("the graph answers for itself", () => {
     const reply = await graphResponder()(store(), "tell me about the School run");
     expect(reply.say).toContain("School run — a duty");
     // The relation summary speaks the declaration's own sentence.
-    expect(reply.say).toContain("who does the run: Ana");
+    // A sentence of its own, so it starts like one (W-120).
+    expect(reply.say).toContain(". Who does the run: Ana");
+    // A fact in brackets as it reads on its own: "minutes 75", never a bare value.
+    expect(reply.say).toContain("(minutes 75)");
     expect(reply.say).toContain("runs over an hour");
     expect(reply.proposals[0]?.mutation).toBe("shorten");
     expect(reply.grounded).toBe(true);
@@ -240,10 +243,10 @@ describe("the graph answers for itself", () => {
       },
     });
     const fromTheItem = await graphResponder()(tied, "tell me about Pay the deposit");
-    expect(fromTheItem.say).toContain("who is seeing to it: Ada");
+    expect(fromTheItem.say).toContain("Who is seeing to it: Ada");
     const fromTheHelper = await graphResponder()(tied, "tell me about Ada");
-    expect(fromTheHelper.say).toContain("what they are seeing to: Pay the deposit");
-    expect(fromTheHelper.say).not.toContain("who is seeing to it");
+    expect(fromTheHelper.say).toContain("What they are seeing to: Pay the deposit");
+    expect(fromTheHelper.say).not.toMatch(/who is seeing to it/i);
   });
 
   it("asks for what it cannot honestly fill rather than guessing", async () => {

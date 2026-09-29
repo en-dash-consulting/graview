@@ -475,8 +475,9 @@ export function graphResponder<S extends AnySchema>(
       const bare = tokens.every((token) => own.has(token) || ASKING_WORDS.has(token));
       const asking = question || bare;
       const definition = store.schema.tryDefinition(node.kind);
+      // Each fact as it reads on its own, lower-cased to sit in brackets: "explicit: no", not "explicit No".
       const facts = readableFields(node, definition, { limit: 3 })
-        .map((field) => `${field.label.toLowerCase()} ${field.value}`)
+        .map((field) => field.alone.charAt(0).toLowerCase() + field.alone.slice(1))
         .join(", ");
       const touching = violationsTouching(violations, [node.id]);
       /*
@@ -518,7 +519,8 @@ export function graphResponder<S extends AnySchema>(
       }
       const related = [...groups.values()]
         .slice(0, 4)
-        .map((group) => `${group.sentence}: ${group.names.join(", ")}`)
+        // Each is a sentence of its own, so it starts like one: "The releases it is on: Blue Hour."
+        .map((group) => `${group.sentence.charAt(0).toUpperCase()}${group.sentence.slice(1)}: ${group.names.join(", ")}`)
         .join(". ");
       return {
         say: sentence([
