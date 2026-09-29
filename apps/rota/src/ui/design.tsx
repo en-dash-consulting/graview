@@ -991,7 +991,7 @@ export function rotaDesign(schema: S) {
       which === "list" ? <KindList context={context} kind={kind} /> : <KindRecord context={context} kind={kind} />,
     );
   let registry = createPageRegistry<S, PageComponent<S>>(schema)
-    .surface("shell", Shell as PageComponent<S>)
+    .surface("shell", Shell)
     .surface("home", page(Home))
     .surface("problems", page(Problems));
   for (const kind of ["shift", "volunteer", "rule"] as const) {

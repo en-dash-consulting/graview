@@ -765,7 +765,7 @@ function Problems({ context }: { context: Ctx }) {
 export function seedbedDesign(schema: AnySchema) {
   const page = (component: (props: { context: Ctx }) => ReactNode) => component as PageComponent<S>;
   return createPageRegistry<S, PageComponent<S>>(schema as never)
-    .surface("shell", Shell as PageComponent<S>)
+    .surface("shell", Shell)
     .surface("home", page(Home))
     .surface("problems", page(Problems))
     .register("plot", "list", page(Plots))

@@ -1123,7 +1123,7 @@ export function thingsDesign(schema: S) {
       which === "list" ? <KindList context={context} kind={kind} /> : <KindRecord context={context} kind={kind} />,
     );
   let registry = createPageRegistry<S, PageComponent<S>>(schema)
-    .surface("shell", Shell as PageComponent<S>)
+    .surface("shell", Shell)
     .surface("home", page(Home))
     .surface("problems", page(Problems));
   for (const kind of ["task", "list", "rule", "reason"] as const) {

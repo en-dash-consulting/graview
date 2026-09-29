@@ -1,5 +1,16 @@
 import type { AnySchema, KindOfSchema } from "@graview/core";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
+import type { PageContext } from "./page-context.js";
+
+/**
+ * The frame around every route: it is handed the page as `children`.
+ *
+ * The skill says a shell "receives `{ context, children }`", and the only
+ * signature `surface` had was a page's, which has no children — so every
+ * design registered its shell with `as PageComponent<S>`, and the worked
+ * examples taught the cast.
+ */
+export type ShellComponent<S extends AnySchema> = ComponentType<{ readonly context: PageContext<S>; readonly children: ReactNode }>;
 
 /**
  * The page registry, shaped like the view registry ON PURPOSE.
@@ -29,6 +40,7 @@ export interface RouteRegistration<P = unknown> {
 
 export interface PageRegistry<S extends AnySchema, P = unknown> {
   register<K extends KindOfSchema<S>>(kind: K, page: PageType, component: P): PageRegistry<S, P>;
+  surface(surface: "shell", component: ShellComponent<S>): PageRegistry<S, P>;
   surface(surface: SurfaceType, component: P): PageRegistry<S, P>;
   /**
    * A PAGE THAT IS NOT ABOUT A KIND.
@@ -68,8 +80,8 @@ export function createPageRegistry<S extends AnySchema, P = ComponentType<never>
       registrations.push({ kind, page, component });
       return registry;
     },
-    surface(surface, component) {
-      surfaces.set(surface, component);
+    surface(surface: SurfaceType, component: P | ShellComponent<S>) {
+      surfaces.set(surface, component as P);
       return registry;
     },
     route(path, component) {

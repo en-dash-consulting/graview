@@ -3057,3 +3057,22 @@ two singles and thirty-five songs.
   Criterion: core `two-of-one-name.test.ts` (the words, the kind, and the
   search hits); in the browser the strip's ask and the Find strip read
   "Blue Hour · single", "Blue Hour · album".
+
+### W-113 · A design's shell does not register without a cast
+- stage: E · face: pages · width: — · scheme: —
+- expected: following `graview-pages` rung two — "the shell surface
+  receives `{ context, children }`" — typechecks as written
+- actual: `.surface("shell", Shell)` was refused: `surface` had one
+  signature, a page's, `ComponentType<{ context }>`, and a shell that takes
+  `children` is not one. Discography's design needed `Shell as unknown as
+  PageComponent<S>`; the three worked designs the skill points at (todo,
+  seedbed, rota) each carried `Shell as PageComponent<S>`, teaching the
+  cast. The fourth walk's class, "a generic type that needs a cast to
+  follow the skill", in the pages registry.
+- where it belongs: `packages/pages/src/registry.ts`
+- harness that should have caught it: `pnpm typecheck` of the apps — which
+  compiled because the apps cast
+- status: fixed in "walkthrough: E · a shell registers as a shell" ·
+  `surface("shell", …)` takes a `ShellComponent<S>` (`{ context, children }`),
+  exported; the three designs drop their casts. Criterion: `pnpm typecheck`
+  over todo, seedbed and rota, whose shells are now registered uncast.
