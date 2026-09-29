@@ -1,5 +1,7 @@
-import type { GraphEdge, GraphSnapshot, AnySchema, GraviewApp } from "@graview/core";
+import type { AnyMutationDefinition, GraphEdge, GraphSnapshot, AnySchema, GraviewApp } from "@graview/core";
+import { fieldTypeOf } from "./from-declaration.js";
 import type { FieldType } from "./meta.js";
+import { printZod, type ZodUses } from "./zod-source.js";
 
 /*
  * THE DECLARATION WRITTEN BACK AS CODE — the same files `graview create`
@@ -165,15 +167,36 @@ export function edgeParts(read: Read, edge: Node): string[] {
 }
 
 /** A kind's whole `defineNode` statement, as the graph holds it. */
-export function kindLines(read: Read, kind: Node, base: GraviewApp<AnySchema> | undefined, keptFormats: string[]): string[] {
+export function kindLines(
+  read: Read,
+  kind: Node,
+  base: GraviewApp<AnySchema> | undefined,
+  keptFormats: string[],
+  uses: ZodUses = { nodeRef: false, isoDate: false },
+): string[] {
   const fields = fieldsOf(read, kind);
+  // The checkout's own schema for a field the studio still reads the same way.
+  const baseShape = ((base?.schema.tryDefinition(label(kind))?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {}) as Record<string, unknown>;
+  const fieldSource = (field: (typeof fields)[number]): string => {
+    const own = baseShape[field.name];
+    if (own !== undefined) {
+      const was = fieldTypeOf(own);
+      const same =
+        was.type === field.type &&
+        was.required === field.required &&
+        (was.options ?? []).join("|") === (field.options ?? []).join("|");
+      const printed = same ? printZod(own, uses) : null;
+      if (printed !== null) return printed;
+    }
+    return zodSource(field.type, field.required, field.options);
+  };
   const edges = read.in(kind.id, "from-kind");
   const lifecycleField = str(kind, "lifecycleField");
   const retired = list(kind, "retired");
   const lines = [`export const ${camel(label(kind))} = defineNode(${q(label(kind))}, {`];
   if (str(kind, "description")) lines.push(`  description: ${q(str(kind, "description")!)},`);
   lines.push(`  fields: z.object({`);
-  for (const field of fields) lines.push(`    ${/^[a-z_$][\w$]*$/i.test(field.name) ? field.name : q(field.name)}: ${zodSource(field.type, field.required, field.options)},`);
+  for (const field of fields) lines.push(`    ${/^[a-z_$][\w$]*$/i.test(field.name) ? field.name : q(field.name)}: ${fieldSource(field)},`);
   lines.push(`  }),`);
   if (edges.length > 0) {
     lines.push(`  edges: {`);
@@ -209,7 +232,13 @@ export function kindLines(read: Read, kind: Node, base: GraviewApp<AnySchema> | 
  * saw, so the statement throws where the body belongs rather than doing
  * something else quietly.
  */
-export function actLines(read: Read, act: Node, kept: boolean): string[] {
+export function actLines(
+  read: Read,
+  act: Node,
+  kept: boolean,
+  checkout?: AnyMutationDefinition,
+  uses: ZodUses = { nodeRef: true, isoDate: false },
+): string[] {
   const actName = label(act);
   const on = read.out(act.id, "on").map((kind) => label(kind));
   const creates = read.out(act.id, "creates").map((kind) => label(kind));
@@ -265,6 +294,21 @@ export function actLines(read: Read, act: Node, kept: boolean): string[] {
       body.push(`    // Declared in the studio with no create, connect, sever or write: give it a body.`);
       body.push(`    void ctx;`);
       body.push(`    void args;`);
+    }
+  }
+  /*
+   * AN ACT THE CHECKOUT WROTE KEEPS ITS OWN ARGUMENTS AND ITS OWN WORDS.
+   * The input above is derived from what the act declares — its kind's
+   * fields, its tie's two ends — which is the checkout's input only by
+   * luck; and the history's sentence is a function the studio never saw.
+   */
+  if (kept && checkout) {
+    const printed = printZod(checkout.input, uses);
+    const at = lines.findIndex((line) => line.startsWith("  input: "));
+    if (at >= 0 && printed !== null) lines[at] = `  input: ${printed},`;
+    const said = lines.findIndex((line) => line.startsWith("  describe: "));
+    if (said >= 0 && checkout.describe) {
+      lines.splice(said, 1, `  // describe: the checkout's own sentence for the history belongs here — the studio cannot write a function it never saw.`);
     }
   }
   lines.push(`  apply(ctx, args) {`);
@@ -333,15 +377,22 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const keptFormats: string[] = [];
   const kinds = read.ofKind("kind");
 
+  /*
+   * `z` FROM THE FRAMEWORK. A product never installs zod — `@graview/core`
+   * re-exports it, and a second copy makes every kind's fields a nominally
+   * different type — so a file importing "zod" is a file the product
+   * cannot resolve.
+   */
+  const schemaUses: ZodUses = { nodeRef: false, isoDate: false };
+  const kindText = kinds.flatMap((kind) => ["", ...kindLines(read, kind, options.base, keptFormats, schemaUses)]);
   const schemaTs = [
-    `import { createSchema, defineNode } from "@graview/core";`,
-    `import { z } from "zod";`,
+    `import { createSchema, defineNode, ${schemaUses.isoDate ? "isoDate, " : ""}z } from "@graview/core";`,
     ``,
     `/*`,
     ` * ${name}'s kinds, written by the studio. The shape is the declaration's;`,
     ` * edit it here or there, and \`graview check\` judges either.`,
     ` */`,
-    ...kinds.flatMap((kind) => ["", ...kindLines(read, kind, options.base, keptFormats)]),
+    ...kindText,
     ``,
     `export const ${schemaVar} = createSchema([${kinds.map((kind) => camel(label(kind))).join(", ")}]);`,
     `export type ${pascal(schemaVar)} = typeof ${schemaVar};`,
@@ -349,9 +400,15 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   ].join("\n");
 
   const acts = read.ofKind("act").filter((act) => !bool(act, "derived"));
+  const actUses: ZodUses = { nodeRef: true, isoDate: false };
+  const actText = acts.flatMap((act) => {
+    const kept = baseActs.has(label(act));
+    if (kept) keptActs.push(label(act));
+    const checkout = options.base?.mutations?.find((mutation) => mutation.name === label(act));
+    return ["", ...actLines(read, act, kept, checkout as AnyMutationDefinition | undefined, actUses)];
+  });
   const mutationsTs = [
-    `import { bindSchema, nodeRef, type GraphReader } from "@graview/core";`,
-    `import { z } from "zod";`,
+    `import { bindSchema, ${actUses.isoDate ? "isoDate, " : ""}nodeRef, z, type GraphReader } from "@graview/core";`,
     `import { ${schemaVar} } from "./schema.js";`,
     ``,
     `const { defineMutation } = bindSchema(${schemaVar});`,
@@ -368,11 +425,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     ` * create, connect, sever or write. Where the checkout's own body did`,
     ` * more, keep the checkout's body under the studio's declaration.`,
     ` */`,
-    ...acts.flatMap((act) => {
-      const kept = baseActs.has(label(act));
-      if (kept) keptActs.push(label(act));
-      return ["", ...actLines(read, act, kept)];
-    }),
+    ...actText,
     ``,
     `export const mutations = [${acts.map((act) => camel(label(act))).join(", ")}];`,
     ``,

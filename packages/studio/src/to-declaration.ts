@@ -17,6 +17,7 @@ import {
 } from "@graview/core";
 import { z } from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
+import { fieldTypeOf } from "./from-declaration.js";
 
 /*
  * THE GRAPH READ BACK AS A DECLARATION. Kinds become `defineNode`, fields
@@ -194,7 +195,24 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
 
   const definitions = read.ofKind("kind").map((kind) => {
     const shape: Record<string, z.ZodType> = {};
-    for (const field of fieldsOf(kind)) shape[field.name] = zodFor(field.type, field.required, field.options);
+    /*
+     * THE CHECKOUT'S OWN SCHEMA for a field the graph still reads the same
+     * way: its bounds are not in the graph, and rebuilding from the graph
+     * alone dropped every one — a label's `.max(60)`, a track number's
+     * `.int()` — so the app the studio applied validated less than the one
+     * it opened on, and the checker said `label-unbounded` of every kind.
+     */
+    const baseShape = ((base?.schema.tryDefinition(name(kind))?.fields as { shape?: Record<string, z.ZodType> } | undefined)?.shape ?? {}) as Record<string, z.ZodType>;
+    for (const field of fieldsOf(kind)) {
+      const own = baseShape[field.name];
+      const was = own ? fieldTypeOf(own) : undefined;
+      const same =
+        was !== undefined &&
+        was.type === field.type &&
+        was.required === field.required &&
+        (was.options ?? []).join("|") === (field.options ?? []).join("|");
+      shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options);
+    }
     const edges: Record<string, EdgeDeclaration> = {};
     for (const edge of read.in(kind.id, "from-kind")) {
       const targets = read.out(edge.id, "to-kind").map((target) => kindName.get(target.id) ?? name(target));

@@ -20,16 +20,17 @@ any other.
    const studio = createStudio(app);          // the declaration, as a store
    ```
 
-   The store's nodes have stable ids: `kind:plot`, `field:plot.label`,
+   The store's nodes have stable ids: `declared:plot` (not `kind:plot`,
+   which is the layout's name for the district), `field:plot.label`,
    `edge:plot.tended-by`, `act:tend`, `rule:every-plot-tended`,
    `role:coordinator`, `grant:2`, `lens:coverage`, `brand`.
 
 2. **Change it with acts**, not by hand:
 
    ```ts
-   studio.store.apply({ name: "add-field", args: { kind: "kind:plot", label: "soil", type: "enum", required: true, options: ["clay", "loam"] } }, { author: june, intent: "Plots have soil" });
-   studio.store.apply({ name: "add-act", args: { kind: "kind:plot", label: "resize", title: "Resize", writes: ["size"] } });
-   studio.store.apply({ name: "add-rule", args: { kind: "kind:plot", label: "sized", description: "A plot has a size." } });
+   studio.store.apply({ name: "add-field", args: { kind: "declared:plot", label: "soil", type: "enum", required: true, options: ["clay", "loam"] } }, { author: june, intent: "Plots have soil" });
+   studio.store.apply({ name: "add-act", args: { kind: "declared:plot", label: "resize", title: "Resize", writes: ["size"] } });
+   studio.store.apply({ name: "add-rule", args: { kind: "declared:plot", label: "sized", description: "A plot has a size." } });
    studio.store.apply({ name: "name-repair", args: { rule: "rule:sized", act: "act:resize" } });
    ```
 

@@ -2806,3 +2806,58 @@ two singles and thirty-five songs.
   on its own and its menu offers its own severing act (measured: the
   midpoint of each opens `edge:by…` and `edge:produced-by…` respectively).
   Criterion: react `two-relations-are-two-lines.test.ts`.
+
+### W-102 · The studio writes a checkout back looser than it found it, importing zod
+- stage: B · face: studio (`createStudio(app).files()`) · width: — · scheme: —
+- expected: "the round trip passes `graview check` with no new warnings, and
+  `studio.files()` keeps the checkout's argument names" — and the files
+  compile in the product they are written for
+- actual: opened on Discography and written straight back, every label lost
+  its `.max(60)` — so `studio.check()` said `label-unbounded` of all five
+  kinds before anything had changed, and the app `apply()` returned
+  validated less than the one it opened on; `track`'s `.int().min(1).max(99)`
+  became `z.number()`, `demoed`'s `isoDate` became any string, an optional
+  `notes` gained a `.min(1)`; `schema.ts` and `mutations.ts` imported `z`
+  from "zod", which a product built on Graview does not install; every act
+  the checkout wrote had its input re-derived from its kind's fields —
+  "Add a song" gained `explicit` and `status` arguments it never took, "Add
+  a release" lost `released` and its `type` became optional — and its
+  history sentence replaced by the studio's ("Add a song: Blue Hour" for
+  "Add Blue Hour"). The fourth walk's app had one string field and one
+  label, so none of it showed.
+- where it belongs: `packages/studio/src/source.ts` (the files),
+  `packages/studio/src/to-declaration.ts` (the applied app), a printer of
+  its own, `packages/studio/src/zod-source.ts`
+- harness that should have caught it: `written-back.test.ts` round-trips a
+  garden whose fields have no bounds and whose creating act takes only a
+  label
+- status: fixed in "walkthrough: B · the studio writes back what the
+  checkout wrote" · a field the graph still reads the same way is written
+  (and applied) with the checkout's own schema, printed from its zod
+  definition — bounds, `.int()`, `isoDate`, `nodeRef` — falling back to the
+  graph's reading only where it cannot be printed; `z` (and `isoDate` when
+  used) come from `@graview/core`; an act the checkout wrote keeps its own
+  input, and its sentence is marked as the checkout's to supply, like its
+  body. Criteria: studio `the-round-trip-keeps-the-checkouts-words.test.ts`
+  (bounds kept, no "zod", the checkout's arguments, the applied app refuses
+  a 61-character label and checks clean). Verified failing without the fix.
+  Discography written back with a field added typechecks and `graview
+  check` says "no problems found".
+
+### W-103 · The studio skill's first example throws
+- stage: B · face: studio · width: — · scheme: —
+- expected: following `graview-studio` step 2 as written changes the
+  declaration
+- actual: `studio.store.apply({ name: "add-field", args: { kind:
+  "kind:plot", … } })` threw `Edge "of" references missing node
+  "kind:song"`. The studio's ids are `declared:<kind>` — `kind:` is the
+  layout's name for a district, which is why they were renamed (the comment
+  in `from-declaration.ts` says so) — and the skill still said `kind:plot`
+  in its id list and in all three example calls.
+- where it belongs: `packages/skills/skills/graview-studio/SKILL.md`
+- harness that should have caught it: nothing ran a skill's example
+- status: fixed in the same commit · the skill names `declared:plot` and
+  says why not `kind:plot`. Criterion: the same test file's "follows the
+  skill's own example to the letter" reads the skill and applies every
+  `studio.store.apply` call in it to a garden (verified failing on the old
+  skill).
