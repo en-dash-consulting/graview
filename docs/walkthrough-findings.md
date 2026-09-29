@@ -2887,3 +2887,26 @@ two singles and thirty-five songs.
   that names a retired state as asking for the past" (verified failing
   without the fix), pages `a-list-you-arranged-is-a-link.test.tsx`
   (`?filter=done:true` lists the done task).
+
+### W-105 · The coverage of songs by theme counts three retired demos as "3 unanswered"
+- stage: D · face: scene and pages · width: 1280 · scheme: light
+- expected: a lens over a group keeps the scene's horizon — the skill says
+  so: "every other kind comes from `store.graph`, narrowed back to `nodes`
+  for the group's own kind so the scene's horizon still applies"
+- actual: "What the songs are about" drew Tin Roof, Untitled Porch Demo and
+  Cobalt (Acoustic) — songs the district beside it counted as "+3 past" —
+  as rows with no theme and headed the matrix "3 UNANSWERED". The coverage
+  view built from `store.graph.allNodes()` with `void nodes;`, and the
+  board did the same for its occupants: the framework's own lenses broke
+  the rule the lens skill teaches.
+- where it belongs: `packages/primitives/src/lens/coverage.tsx`,
+  `packages/primitives/src/lens/board.tsx`, a helper of their own,
+  `packages/primitives/src/lens/horizon.ts`
+- harness that should have caught it: no lens fixture had a kind with a
+  lifecycle and a retired member
+- status: fixed in "walkthrough: D · a lens keeps the scene's horizon" ·
+  `onTheHorizon(graph, schema, members)`: the group's own kind is exactly
+  the members the scene handed over (so `past=1` still widens it), every
+  other kind is what is current. Criterion: primitives
+  `a-lens-keeps-the-horizon.test.tsx` (coverage and board; verified failing
+  without the fix).

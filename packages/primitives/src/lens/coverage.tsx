@@ -1,5 +1,6 @@
 import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
+import { onTheHorizon } from "./horizon.js";
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
@@ -426,12 +427,11 @@ export function CoverageView<S extends AnySchema>({
    * with no columns, because the group it was handed held gardeners only;
    * every app then wrote the same wrapper to fetch the other kind. The lens
    * knows both kinds it is bound to, so it reads them itself. The aggregate
-   * still decides what is focused; it does not decide what can be looked up.
+   * still decides what is focused; it does not decide what can be looked up
+   * — but for its own kind it is what the horizon left (see horizon.ts).
    */
-  void nodes;
   const grid = buildCoverage<S>(
-    store.graph
-      .allNodes()
+    onTheHorizon(store.graph, store.schema, nodes)
       .filter((node) => node.kind === options.rows || node.kind === options.columns),
     store.graph.allEdges(),
     options,

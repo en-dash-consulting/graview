@@ -1,6 +1,7 @@
 import { labelOf, type AnySchema, type ArrangeOption, type Arrangement, type NodeOfSchema } from "@graview/core";
 import { useArranging } from "./arranging.js";
 import { useGraview, useViolations, type ViewProps } from "@graview/react";
+import { onTheHorizon } from "./horizon.js";
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster } from "../primitives/index.js";
@@ -237,7 +238,7 @@ export function BoardView<S extends AnySchema>({
    * the room — and the occupants an arrangement kept, in the order it put
    * them; everyone, when nothing was asked.
    */
-  const everyone = store.graph.allNodes();
+  const everyone = onTheHorizon(store.graph, store.schema, nodes);
   const forBoard = occupants
     ? [
         ...everyone.filter((node) => node.kind === options.slots),
@@ -250,7 +251,6 @@ export function BoardView<S extends AnySchema>({
     options,
     schema,
   );
-  void nodes;
   const lit = new Set(implicated);
   const broken = new Set(flagged);
   /*
@@ -1059,7 +1059,7 @@ export function createBoardLens<S extends AnySchema>(options: BoardOptions): Boa
      * a board stands for its slots' kind, so the nodes it is handed are the
      * seats, and the people in them are found by the fill edge.
      */
-    const state = buildBoard<S>(store.graph.allNodes(), store.graph.allEdges(), options, store.schema);
+    const state = buildBoard<S>(onTheHorizon(store.graph, store.schema, props.nodes), store.graph.allEdges(), options, store.schema);
     const seated = [...state.slots.flatMap((slot) => slot.occupants.map((occupant) => occupant.id)), ...state.spare.map((spare) => spare.id)];
     const subject = seated.map((id) => store.graph.getNode(id)).filter((node): node is NonNullable<typeof node> => node !== undefined);
     const { arranged, bar } = useArranging<S>(props, {
