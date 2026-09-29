@@ -126,6 +126,7 @@ try {
   const groups = await page.evaluate(() =>
     [...document.querySelectorAll('[data-graview-plane="1"][data-graview-view^="aggregate:"]')].map((el) => ({
       id: el.getAttribute("data-graview-view"),
+      opens: el.querySelector("[data-graview-band]")?.getAttribute("data-graview-band") ?? null,
       text: (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 80),
     })),
   );
@@ -133,15 +134,17 @@ try {
 
   /* A GROUP OPENS: a stop, its members take the band, Back closes it. */
   let opened = null;
-  if (groups[0]) {
+  // An in-place group if the band drew one; the "+N more" door otherwise.
+  const pressed = groups.find((group) => group.opens === "place") ?? groups[0];
+  if (pressed) {
     const before = await page.evaluate(() => location.hash);
-    await page.dblclick(`[data-graview-view="${groups[0].id}"]`, { force: true, timeout: 5000 });
+    await page.dblclick(`[data-graview-view="${pressed.id}"]`, { force: true, timeout: 5000 });
     await page.waitForTimeout(1500);
     const during = await page.evaluate(() => ({ hash: location.hash, band: document.querySelectorAll('[data-graview-plane="1"]').length }));
     await page.goBack();
     await page.waitForTimeout(1500);
     const after = await page.evaluate(() => location.hash);
-    opened = { before, during, after };
+    opened = { pressed: pressed.opens, before, during, after };
   }
   report.opened = opened;
 
@@ -174,7 +177,11 @@ try {
     aHubStopIsBounded: hub.hosts <= 60 && hub.strands <= 120 && groups.length > 0,
     // A group is a real place: a stop whose members take the band, and Back closes it.
     everyGroupOpens:
-      opened !== null && opened.during.hash !== opened.before && opened.during.band > 0 && opened.after === opened.before,
+      opened !== null &&
+      opened.during.hash !== opened.before &&
+      // A group opens in place, its members in the band; the door goes to the kind's picture.
+      (opened.pressed === "place" ? opened.during.band > 0 : opened.during.hash.includes("in.filter=")) &&
+      opened.after === opened.before,
     // Dragging the ground holds sixty frames a second, up high and at the hub.
     panningHolds60: holds(cityDrag) && holds(hubDrag),
     wheelHolds60: holds(cityWheel) && holds(hubWheel),

@@ -7,6 +7,7 @@ import {
   type LayoutOptions,
   type Plane,
 } from "./types.js";
+import { bandOf } from "./band.js";
 import { placeCity } from "./city.js";
 import { rankKinds } from "./rank.js";
 import type { ViewState } from "./view-state.js";
@@ -603,33 +604,57 @@ export function layout<S extends AnySchema>(
    * narrower than a chip can be read in; past that the band takes another
    * row, each row sharing the band's height.
    */
+  /** The least a band row can be and still be read: a chip's height at a 16px rem. */
+  const READABLE_ROW = 26;
   const minRelationW = Math.round(opts.relationSize.width * 0.75);
   const perRow = Math.max(1, Math.floor((spanW - opts.gap) / (minRelationW + opts.gap)));
-  const relationRows = Math.max(1, Math.ceil(related.length / perRow));
+  /*
+   * THE BAND'S BUDGET: the cards a row holds at a readable width, times the
+   * rows the band holds at a readable height — a chip's, since a crowded
+   * band draws its cards as chips (docs/scale.md). Past it
+   * each relation is drawn within its share — as itself, as groups in its
+   * own declaration's words, or as the most relevant and one "+N more" —
+   * so the band never wraps into rows it cannot hold, and an artist with a
+   * thousand songs is a band a person can read.
+   */
+  const drawn = bandOf(related, {
+    schema,
+    graph,
+    // `unit` is the reader's rem in pixels (16 by default): the chip grows with the words.
+    budget: perRow * Math.max(2, Math.floor((band.relationH + opts.gap) / (READABLE_ROW * (opts.unit / 16) + opts.gap))),
+    focusId: focus?.id,
+    expanded,
+    ...(opts.relevance ? { relevance: opts.relevance } : {}),
+    ...(state.selection ? { selection: state.selection } : {}),
+    plural: (kind) => pluralOf(schema, kind),
+    ...(opts.today ? { today: opts.today } : {}),
+  });
+  const relationRows = Math.max(1, Math.ceil(drawn.length / perRow));
   const rowH = relationRows === 1 ? band.relationH : (band.relationH - opts.gap * (relationRows - 1)) / relationRows;
   const relationSize = fit(
-    Math.min(related.length, perRow),
-    related.length <= 2 ? Math.round(opts.relationSize.width * 1.35) : opts.relationSize.width,
+    Math.min(drawn.length, perRow),
+    drawn.length <= 2 ? Math.round(opts.relationSize.width * 1.35) : opts.relationSize.width,
     rowH,
   );
   const relationPositions: { x: number; y: number }[] = [];
   for (let r = 0; r < relationRows; r++) {
-    const inRow = Math.min(perRow, related.length - r * perRow);
+    const inRow = Math.min(perRow, drawn.length - r * perRow);
     for (const position of row(inRow, relationSize, opts.gap, spanW, band.relationY + r * (rowH + opts.gap))) {
       relationPositions.push({ ...position, x: position.x + railLeft });
     }
   }
-  related.forEach((entry, index) => {
+  drawn.forEach((entry, index) => {
     const position = relationPositions[index]!;
     push({
-      id: entry.node.id,
-      kind: entry.node.kind,
+      id: entry.id,
+      kind: entry.kind,
       plane: 1,
       x: position.x,
       y: position.y,
       width: relationSize.width,
       height: relationSize.height,
       ...(entry.via ? { via: entry.via } : {}),
+      ...(entry.aggregate ? { aggregate: entry.aggregate } : {}),
     });
   });
 

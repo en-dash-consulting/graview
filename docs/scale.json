@@ -1,12 +1,12 @@
 {
-  "at": "2026-09-29T06:57:35.149Z",
+  "at": "2026-09-29T07:20:46.172Z",
   "engine": "chromium",
   "stops": {
     "altitude, still": {
-      "frames": 15,
+      "frames": 14,
       "first": 19,
-      "p50": 19.1,
-      "p95": 19.3,
+      "p50": 19.2,
+      "p95": 19.4,
       "worst": 19,
       "longTasks": 0,
       "dom": 21335,
@@ -14,32 +14,32 @@
       "strands": 0
     },
     "altitude, drag": {
-      "frames": 232,
-      "first": 12,
-      "p50": 18.7,
-      "p95": 37.9,
-      "worst": 527,
+      "frames": 118,
+      "first": 18,
+      "p50": 18.8,
+      "p95": 259.5,
+      "worst": 525,
       "longTasks": 6,
       "dom": 21337,
       "hosts": 5,
       "strands": 0
     },
     "altitude, wheel": {
-      "frames": 678,
+      "frames": 690,
       "first": 11,
       "p50": 0.3,
-      "p95": 18.9,
+      "p95": 19,
       "worst": 20,
-      "longTasks": 2,
+      "longTasks": 0,
       "dom": 21345,
       "hosts": 5,
       "strands": 0
     },
     "descend": {
-      "frames": 386,
+      "frames": 405,
       "first": 19,
       "p50": 0.4,
-      "p95": 19,
+      "p95": 19.1,
       "worst": 75,
       "longTasks": 1,
       "dom": 632,
@@ -47,81 +47,125 @@
       "strands": 0
     },
     "focus the hub": {
-      "frames": 6,
-      "first": 1,
-      "p50": 17.7,
-      "p95": 38.9,
-      "worst": 39,
-      "longTasks": 0,
-      "dom": 8670,
-      "hosts": 1260,
-      "strands": 956
+      "frames": 566,
+      "first": 2,
+      "p50": 0.4,
+      "p95": 19.2,
+      "worst": 77,
+      "longTasks": 1,
+      "dom": 646,
+      "hosts": 36,
+      "strands": 50
     },
     "hub, drag": {
-      "frames": 94,
-      "first": 836,
-      "p50": 985.8,
-      "p95": 1536.7,
-      "worst": 2027,
-      "longTasks": 72,
-      "dom": 12036,
-      "hosts": 1259,
-      "strands": 2214
+      "frames": 580,
+      "first": 18,
+      "p50": 18,
+      "p95": 19.5,
+      "worst": 52,
+      "longTasks": 1,
+      "dom": 651,
+      "hosts": 36,
+      "strands": 50
     },
     "hub, wheel": {
-      "frames": 151,
-      "first": 1072,
-      "p50": 11.2,
-      "p95": 19.4,
-      "worst": 1034,
-      "longTasks": 3,
-      "dom": 12036,
-      "hosts": 1259,
-      "strands": 2214
+      "frames": 6042,
+      "first": 19,
+      "p50": 0.2,
+      "p95": 0.4,
+      "worst": 20,
+      "longTasks": 0,
+      "dom": 651,
+      "hosts": 36,
+      "strands": 50
     },
     "hub, select": {
-      "frames": 2,
-      "first": 15,
-      "p50": 1060.3,
-      "p95": 1060.3,
-      "worst": 1060,
-      "longTasks": 4,
-      "dom": 12010,
-      "hosts": 1259,
-      "strands": 2214
+      "frames": 65,
+      "first": 19,
+      "p50": 19.1,
+      "p95": 19.4,
+      "worst": 20,
+      "longTasks": 0,
+      "dom": 613,
+      "hosts": 36,
+      "strands": 50
     },
     "hub, type in Find": {
-      "frames": 11,
-      "first": 20,
-      "p50": 1047.7,
-      "p95": 1566.9,
-      "worst": 1567,
-      "longTasks": 11,
-      "dom": 12454,
-      "hosts": 1259,
-      "strands": 2214
+      "frames": 744,
+      "first": 2,
+      "p50": 0.3,
+      "p95": 19.4,
+      "worst": 72,
+      "longTasks": 3,
+      "dom": 1046,
+      "hosts": 36,
+      "strands": 56
     },
     "rise": {
-      "frames": 161,
-      "first": 1021,
-      "p50": 0.5,
-      "p95": 19.6,
-      "worst": 4018,
-      "longTasks": 9,
+      "frames": 42,
+      "first": 1,
+      "p50": 18.8,
+      "p95": 445.8,
+      "worst": 636,
+      "longTasks": 7,
       "dom": 21495,
       "hosts": 6,
       "strands": 0
     }
   },
   "pageErrors": [],
-  "groups": [],
-  "opened": null,
+  "groups": [
+    {
+      "id": "aggregate:album|released-by|in|type=album",
+      "opens": "place",
+      "text": "Album29 albumsThe Storm · Everready: The Religion · Killer …open ▾"
+    },
+    {
+      "id": "aggregate:album|released-by|in|type=compilation",
+      "opens": "place",
+      "text": "Compilation5 albumsTech N9ne: The Box Set · Strange Days Tour: A Decade Of Excel"
+    },
+    {
+      "id": "aggregate:album|released-by|in|type=ep",
+      "opens": "place",
+      "text": "Ep13 albumsTherapy · E.B.A.H. · FEAR EXODUS …open ▾"
+    },
+    {
+      "id": "aggregate:album|released-by|in|type=mixtape",
+      "opens": "place",
+      "text": "Mixtape2 albumsMadness Unleashed · Bad Seasonopen ▾"
+    },
+    {
+      "id": "aggregate:album|released-by|in|type=single",
+      "opens": "place",
+      "text": "Single80 albumsOverdrive · John Doe (Chopped Up Not Slopped Up Version) · Bass …"
+    },
+    {
+      "id": "aggregate:song|by|in|more:by:artist:tech-n9ne",
+      "opens": "picture",
+      "text": "783 more songsOverdrive · Rock The Bells Anthem · 2 Piece …see them ↗"
+    },
+    {
+      "id": "aggregate:song|features|in|more:features:artist:tech-n9ne",
+      "opens": "picture",
+      "text": "318 more songsCold Piece of Work · Crew Cut · Don’t Worry Momma, It’s Just Bleed"
+    }
+  ],
+  "opened": {
+    "pressed": "place",
+    "before": "#focus=artist%3Atech-n9ne&pin.artist%3Atech-n9ne=178%2C-86.16",
+    "during": {
+      "hash": "#focus=artist%3Atech-n9ne&expand=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum&pin.artist%3Atech-n9ne=178%2C-86.16",
+      "band": 30
+    },
+    "after": "#focus=artist%3Atech-n9ne&pin.artist%3Atech-n9ne=178%2C-86.16"
+  },
   "verdict": {
     "theCityAtAltitudeIsLight": false,
-    "aHubStopIsBounded": false,
-    "everyGroupOpens": false,
+    "aHubStopIsBounded": true,
+    "everyGroupOpens": true,
     "panningHolds60": false,
-    "wheelHolds60": false,
+    "wheelHolds60": true,
     "aTransitionHolds60": false,
     "aSelectionAndASearchAreCheap": false
   },

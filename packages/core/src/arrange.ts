@@ -40,7 +40,8 @@ export interface Condition {
   readonly value: string;
 }
 
-export type DateBucket = "day" | "week" | "month";
+/** How wide a date group is. A year and a decade are what a catalogue of thirty years reads by. */
+export type DateBucket = "day" | "week" | "month" | "year" | "decade";
 
 export interface Grouping {
   /** A field name or an edge kind. */
@@ -197,7 +198,7 @@ export function arrangeable(schema: AnySchema, kind: string): Arrangeable {
     sorts.push(offer);
     if (type === "boolean" || type === "choice" || type === "date") filters.push(offer);
     if (type === "boolean" || type === "choice") groups.push(offer);
-    if (type === "date") groups.push({ ...offer, buckets: ["day", "week", "month"] });
+    if (type === "date") groups.push({ ...offer, buckets: ["day", "week", "month", "year", "decade"] });
   }
 
   for (const edge of edgesOf(schema, kind)) {
@@ -246,7 +247,7 @@ export interface ArrangementWords {
   readonly q?: string;
 }
 
-const BUCKETS: readonly DateBucket[] = ["day", "week", "month"];
+const BUCKETS: readonly DateBucket[] = ["day", "week", "month", "year", "decade"];
 
 export function parseArrangement(words: ArrangementWords): Arrangement {
   const out: { sort?: Sort; filter?: Condition[]; group?: Grouping; query?: string } = {};
@@ -404,6 +405,8 @@ export function bucketStart(date: string, bucket: DateBucket): string | undefine
   const [, y, m, d] = match;
   if (bucket === "day") return `${y}-${m}-${d}`;
   if (bucket === "month") return `${y}-${m}-01`;
+  if (bucket === "year") return `${y}-01-01`;
+  if (bucket === "decade") return `${String(Number(y) - (Number(y) % 10)).padStart(4, "0")}-01-01`;
   const at = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
   const back = (at.getUTCDay() + 6) % 7;
   at.setUTCDate(at.getUTCDate() - back);
@@ -415,6 +418,8 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
 function bucketLabel(start: string, bucket: DateBucket): string {
   if (bucket === "month") return `${MONTHS[Number(start.slice(5, 7)) - 1]} ${start.slice(0, 4)}`;
   if (bucket === "week") return `Week of ${start}`;
+  if (bucket === "year") return start.slice(0, 4);
+  if (bucket === "decade") return `The ${start.slice(0, 4)}s`;
   return start;
 }
 

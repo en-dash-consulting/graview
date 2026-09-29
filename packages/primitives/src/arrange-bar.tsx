@@ -11,6 +11,7 @@ import {
   type Arrangement,
   type ArrangeGraph,
   type Condition,
+  type DateBucket,
 } from "@graview/core";
 import { withWithin, type ViewState } from "@graview/layout";
 import type { CSSProperties, ReactNode } from "react";
@@ -236,12 +237,14 @@ export function ArrangeBar(props: ArrangeBarProps) {
               data-testid={`${id}-bucket`}
               aria-label="How wide a group is"
               value={arrangement.group.bucket ?? "day"}
-              onChange={(event) => set({ group: { by: arrangement.group!.by, bucket: event.target.value as "day" | "week" | "month" } })}
+              onChange={(event) => set({ group: { by: arrangement.group!.by, bucket: event.target.value as DateBucket } })}
               style={choice}
             >
               <option value="day">by day</option>
               <option value="week">by week</option>
               <option value="month">by month</option>
+              <option value="year">by year</option>
+              <option value="decade">by decade</option>
             </select>
           ) : null}
         </label>

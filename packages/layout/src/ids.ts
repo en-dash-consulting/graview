@@ -60,7 +60,8 @@ export function isAggregateId(id: string): boolean {
 
 /** The kinds a group id names, or an empty list if it is not a group id. */
 export function kindsOfAggregate(id: string): string[] {
-  if (!isAggregateId(id)) return [];
+  // A band's group ("aggregate:song|by|in|…") stands for SOME members, not a kind.
+  if (!isAggregateId(id) || id.includes("|")) return [];
   return id.slice(AGGREGATE_PREFIX.length).split("+").filter(Boolean);
 }
 

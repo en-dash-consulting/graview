@@ -17,7 +17,19 @@ export interface Aggregate {
    * forgotten.
    */
   readonly retired?: number;
+  /**
+   * Where pressing it goes, for an aggregate the relation band drew because
+   * not all could stand (docs/scale.md): a group opens in place, through the
+   * `expanded` stop; "+N more" opens the kind's picture, filtered by the
+   * relation. Absent on a kind's own group, which travels as it always did.
+   */
+  readonly opens?: Opens;
 }
+
+/** Where pressing a band aggregate goes: open in place, or through to the kind's picture. */
+export type Opens =
+  | { readonly in: "place" }
+  | { readonly in: "picture"; readonly focus: string; readonly within: Readonly<Record<string, string>> };
 
 /**
  * Why a node is on plane 1 at all: the edge that reached it, in the schema's
@@ -267,6 +279,17 @@ export interface LayoutOptions {
    */
   readonly judged?: Readonly<Record<string, readonly string[]>>;
   /**
+   * WHAT STANDS AS ITSELF when a relation does not fit the band: the
+   * selection and its reach, the search's hits, the flagged, the recently
+   * written. The scene knows them; the layout only ranks by them.
+   */
+  readonly relevance?: {
+    readonly chosen?: ReadonlySet<string>;
+    readonly hits?: ReadonlySet<string>;
+    readonly flagged?: ReadonlySet<string>;
+    readonly touched?: ReadonlyMap<string, number>;
+  };
+  /**
    * Room the picture must leave for chrome that lives ON the scene — the
    * left rail at altitude, where the relation key and the inspector sit.
    * The ring and the focused card centre within what is left, so a
@@ -327,7 +350,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "cityOrder" | "plots" | "screens" | "cityZoom" | "screenHeight">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "screenHeight">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1200, height: 420 },

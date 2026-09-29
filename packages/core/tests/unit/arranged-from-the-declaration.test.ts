@@ -70,7 +70,7 @@ describe("what a kind can be arranged by", () => {
     expect(offers.filters.map((offer) => offer.key)).toEqual(["done", "due", "size", "holds", "is"]);
     expect(offers.filters.find((offer) => offer.key === "is")?.options).toEqual(["current", "past", "any", "flagged", "clear"]);
     expect(offers.groups.map((offer) => offer.key)).toEqual(["done", "due", "size", "holds"]);
-    expect(offers.groups.find((offer) => offer.key === "due")?.buckets).toEqual(["day", "week", "month"]);
+    expect(offers.groups.find((offer) => offer.key === "due")?.buckets).toEqual(["day", "week", "month", "year", "decade"]);
     expect(offers.natural).toEqual({ by: "due", direction: "asc" });
 
     const lists = arrangeable(schema, "list");
@@ -180,6 +180,10 @@ describe("arranging", () => {
     expect(bucketStart("2026-09-28", "week")).toBe("2026-09-28");
     expect(bucketStart("2026-09-27", "week")).toBe("2026-09-21");
     expect(bucketStart("nonsense", "day")).toBeUndefined();
+    // A catalogue of thirty years reads by the year and the decade.
+    expect(bucketStart("2006-11-07", "year")).toBe("2006-01-01");
+    expect(bucketStart("2006-11-07", "decade")).toBe("2000-01-01");
+    expect(bucketStart("1999-11-09", "decade")).toBe("1990-01-01");
     const flat = arrange(tasks, {}, ctx);
     expect(flat.grouped).toBe(false);
     expect(flat.groups).toHaveLength(1);

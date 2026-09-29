@@ -98,6 +98,9 @@ export function SceneViewHost({
   const hostName = node.beyond
     ? /* Not a thing in the graph: the row saying what it could not hold. */
       `${node.beyond.length} more district${node.beyond.length === 1 ? "" : "s"}`
+    : node.aggregate?.opens?.in === "place"
+    ? /* A band's group is heard with its count: "Single, 80 albums". */
+      `${node.aggregate.label}, ${node.aggregate.memberIds.length} ${(hostStore.schema.tryDefinition(node.aggregate.kind)?.plural ?? `${node.aggregate.kind}s`).toLowerCase()}`
     : node.aggregate
     ? node.aggregate.label
     : (() => {

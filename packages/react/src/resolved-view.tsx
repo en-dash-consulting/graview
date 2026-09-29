@@ -4,7 +4,7 @@ import { PLANE_STYLES } from "@graview/render";
 import { memo, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useFlagged, useImplicated, useNavigation } from "./hooks.js";
-import { useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
+import { useFound, useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
 import { ViewBoundary } from "./view-boundary.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 import type { SceneNode } from "./scene-root.js";
@@ -387,3 +387,51 @@ function MissingView<S extends AnySchema>({
     </div>
   );
 }
+
+/**
+ * A RELATION THE BAND COULD NOT HOLD, drawn as what it is (docs/scale.md):
+ * a group in the graph's own words with a true count and the first names
+ * in it — the most relevant — or the "+N more" door to the kind's picture.
+ * Not the kind's own lens squeezed into a card: a coverage matrix at 180
+ * pixels says nothing and costs thousands of elements. Opened by the host's
+ * own press (a double-click, or Enter), like every card.
+ */
+export const BandCard = memo(function BandCard({ node }: { readonly node: SceneNode }) {
+  const { store } = useGraview();
+  const found = useFound();
+  const aggregate = node.aggregate!;
+  const opens = aggregate.opens!;
+  const count = aggregate.memberIds.length;
+  const plural = (store.schema.tryDefinition(aggregate.kind)?.plural ?? `${aggregate.kind}s`).toLowerCase();
+  const names = aggregate.memberIds.slice(0, 3).map((id) => {
+    const member = store.graph.getNode(id);
+    const definition = member ? store.schema.tryDefinition(member.kind) : undefined;
+    return member ? (definition?.label ? definition.label(member as never) : String((member as { label?: unknown }).label ?? id)) : id;
+  });
+  const hits = found ? aggregate.memberIds.filter(new Set(found.matched).has, new Set(found.matched)).length : 0;
+  const door = opens.in === "picture";
+  return (
+    <div
+      className="graview-band-group"
+      data-graview-band={opens.in}
+      data-graview-band-count={count}
+      data-graview-emphasis={found ? (hits > 0 ? "lit" : "dimmed") : undefined}
+      title={door ? `${aggregate.label} — press twice to see them all, arranged` : `${aggregate.label}: ${count} ${plural} — press twice to open`}
+    >
+      <span className="graview-band-group-name">{aggregate.label}</span>
+      {door ? null : (
+        <span className="graview-band-group-count">
+          {count} {plural}
+          {hits > 0 ? ` · ${hits} match` : ""}
+        </span>
+      )}
+      <span className="graview-band-group-names">
+        {names.join(" · ")}
+        {count > names.length ? " …" : ""}
+      </span>
+      <span className="graview-band-group-open" aria-hidden="true">
+        {door ? "see them ↗" : "open ▾"}
+      </span>
+    </div>
+  );
+});

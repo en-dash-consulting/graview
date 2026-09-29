@@ -1,4 +1,4 @@
-import { beginning, toIso } from "@graview/core";
+import { beginning, toIso, touchWeights } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import {
   aggregateId,
@@ -18,6 +18,9 @@ import {
   type LayoutNode,
   type LayoutOptions,
   withJackIn,
+  isBandAggregate,
+  toggleExpanded,
+  withWithin,
 } from "@graview/layout";
 import {
   useCallback,
@@ -39,7 +42,7 @@ import { Occupants } from "./occupants.js";
 import { useCameraFlights } from "./scene-camera.js";
 import { useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift } from "./scene-hand.js";
 import { whereIsIn } from "./where-drawn.js";
-import { BeyondCard, SettledView } from "./resolved-view.js";
+import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
 import { Lines, RelationCaptions } from "./scene-lines.js";
 import { railInset } from "./rails.js";
@@ -205,6 +208,21 @@ export function Scene<S extends AnySchema>({
       return current === next ? current : next;
     });
   }, []);
+  /*
+   * WHAT STANDS AS ITSELF when the band cannot hold a relation: the search's
+   * hits, the flagged, the recently written — the selection the layout reads
+   * from the stop. Each only changes with the graph or the words.
+   */
+  const relevance = useMemo(
+    () => ({
+      hits: new Set(found?.matched ?? []),
+      flagged: new Set(violations.flatMap((violation) => violation.nodeIds)),
+      touched: touchWeights(store.log.all()),
+    }),
+    // `nodes` is the graph's tick: the log only grows when the graph changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [found, violations, store, nodes],
+  );
   const sized = useMemo<LayoutOptions>(
     () => ({
       ...options,
@@ -215,6 +233,8 @@ export function Scene<S extends AnySchema>({
       // asked to — one set, from the provider, so every surface agrees.
       ...(hiddenKinds.size > 0 ? { hiddenKinds: [...hiddenKinds].sort() } : {}),
       ...(Object.keys(judged).length > 0 ? { judged } : {}),
+      // What stands as itself when a relation does not fit the band (docs/scale.md).
+      relevance,
       /*
        * THE LEFT RAIL. The relation key, the quick relations and the
        * inspector live on the scene's left edge in every mode, and the
@@ -273,7 +293,7 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, cityZoom, screenHeight],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, screenHeight],
   );
   /*
    * THE CAMERA IS NOT A MOVE. A drive-in on the far side of a large city
@@ -671,6 +691,11 @@ export function Scene<S extends AnySchema>({
          * had no way to be triggered except through the legend. Selecting the
          * card is what "what does this touch" means when the cards are kinds.
          */
+        // A band's group is selected as itself: its members could be hundreds of ids in the address.
+        if (isBandAggregate(node.id)) {
+          setSelection((current) => (additive ? (current.includes(node.id) ? current.filter((id) => id !== node.id) : [...current, node.id]) : [node.id]));
+          return;
+        }
         const kinds = node.aggregate ? kindsOf(node.id) : [];
         if (view.overview) {
           setSelection((current) => (additive ? [...new Set([...current, node.id])] : [node.id]));
@@ -718,6 +743,24 @@ export function Scene<S extends AnySchema>({
        * the same gesture zooms back out — in and out are one motion.
        */
       onJackIn={() => {
+        /*
+         * A BAND'S GROUP OPENS: in place, as the `expanded` stop Back undoes;
+         * "+N more" through to the kind's picture, filtered by the relation,
+         * where the row and the search make any number of them browsable.
+         */
+        const opens = node.aggregate?.opens;
+        if (opens) {
+          if (opens.in === "place") setView((current) => toggleExpanded(current, node.id));
+          else
+            setView((current) =>
+              Object.entries(opens.within).reduce(
+                (stop, [key, value]) => withWithin(stop, key, value),
+                withFocus(withOverview(current, false), opens.focus),
+              ),
+            );
+          setSelection([]);
+          return;
+        }
         /*
          * A kind with a lens over it goes INTO the lens; a kind without one
          * explodes into its district. The card already draws a ◆ when it has
@@ -793,6 +836,8 @@ export function Scene<S extends AnySchema>({
       ) : null}
       {node.beyond ? (
         <BeyondCard kinds={node.beyond} />
+      ) : node.aggregate?.opens ? (
+        <BandCard node={node} />
       ) : (
         <SettledView
           node={node}

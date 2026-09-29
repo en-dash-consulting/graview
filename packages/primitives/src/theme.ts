@@ -930,6 +930,56 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
    row naming every district with what it holds. Solid rather than dashed
    and faded: a dashed, translucent card read as a placeholder, and the only
    way to five districts should not look like something that failed to load. */
+/* A RELATION THE BAND COULD NOT HOLD: a group with its count and first names,
+   or the door to the rest. A card like the others, never the kind's lens small. */
+.graview-band-group {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  height: 100%;
+  /* A card you press, held to the floor every pressable piece of chrome keeps. */
+  min-height: max(1.75rem, 28px);
+  box-sizing: border-box;
+  padding: var(--graview-pad-sm, 8px) 10px;
+  border-radius: var(--graview-radius-sm, 8px);
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-panel);
+  color: var(--graview-ink);
+  overflow: hidden;
+  cursor: pointer;
+}
+.graview-band-group[data-graview-band="picture"] {
+  border-style: dashed;
+}
+.graview-band-group[data-graview-emphasis="lit"] {
+  border-color: var(--graview-accent);
+}
+.graview-band-group[data-graview-emphasis="dimmed"] {
+  opacity: 0.5;
+}
+.graview-band-group-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.graview-band-group-count {
+  font-size: 0.8125rem;
+  color: var(--graview-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.graview-band-group-names {
+  font-size: 0.8125rem;
+  color: var(--graview-ink-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.graview-band-group-open {
+  font-size: 0.75rem;
+  color: var(--graview-accent);
+}
 .graview-beyond {
   position: relative;
   height: 100%;

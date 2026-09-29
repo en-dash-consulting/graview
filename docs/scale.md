@@ -60,11 +60,14 @@ bring the individuals back.
 Each surface derives its budget from its size, never from a constant an
 app sets:
 
-- **The relation band** holds as many cards as fit at a readable width in
-  at most two rows: `perRow × 2`, with `perRow` the cards of at least the
-  crowd width (`0.75 × relationSize.width`) that fit the span. At 1440 wide
-  that is 10–12; on a phone, 2–4. The band never wraps into a third row and
-  its row height never falls below the crowd height (the negative `rowH`).
+- **The relation band** holds as many cards as fit at a readable width
+  times as many rows as fit at a readable height: `perRow × rows`, with
+  `perRow` the cards of at least the crowd width (`0.75 × relationSize.width`)
+  that fit the span, and `rows` the rows of a chip's height (26 × the
+  reader's text unit) the band's height holds, never fewer than two. A
+  crowded band already draws its cards as chips, so a chip is the floor. At
+  1440 wide that is about 20; on a phone, 4–6. The row height never falls
+  below a chip's (it went negative before).
 - **A drive-in thumbnail** is handed at most 24 members — enough for a lens
   to draw its shape, never the population. It is a picture of the lens,
   not the lens.
