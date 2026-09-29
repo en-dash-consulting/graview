@@ -2964,3 +2964,27 @@ two singles and thirty-five songs.
   is lit when the selection reaches both its ends. Criterion: primitives
   `a-cell-is-an-edge.test.tsx` (verified failing without the fix:
   `['Blue Hour:lit', 'Cobalt:lit']`).
+
+### W-109 · "Correct when Kerosene came out" asks for its name first, and a date typed there renames the single
+- stage: C · face: pages · width: 1280 · scheme: light
+- expected: "the repair is … an ask when it needs one thing" — the rule
+  names the derived `edit-album` with `missing: ["released"]`, so the ask
+  is the release date
+- actual: on `/pages/problems` the ask drew the edit act's every field —
+  Label, Released, Type — the name first; the date typed into the first
+  box renamed the single to "2023-04-14" and the log said so (`Change
+  Kerosene: label → "2023-04-14"`), while the problem stood. The button said
+  "Change the album", not the repair. And once answered, the form went and
+  the keyboard with it, to `<body>`. The scene's strip asked for the
+  missing argument alone; the routed face's `Repairs` ignored `missing` for
+  everything but deciding that it asks.
+- where it belongs: `packages/pages/src/form.tsx` (`DerivedForm` takes
+  `only`), `packages/pages/src/page-problems.tsx` (`Repairs`)
+- harness that should have caught it: every repair ask in the fixtures
+  names an act whose only open argument is the missing one
+- status: fixed in "walkthrough: C · a repair asks what it left open" · the
+  ask draws only the repair's `missing` arguments, submits under the
+  repair's own label, and hands the keyboard back to the repair's button —
+  or, when the problem went with it, to the page's heading. Criterion:
+  pages `a-repair-asks-what-it-left-open.test.tsx` (verified failing
+  without the fix: `['label', 'released', 'type']`).

@@ -1,6 +1,6 @@
 import { labelOf, violationsTouching, type AnySchema, type Principal, type Repair, type Store } from "@graview/core";
 import { Link } from "react-router-dom";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { DerivedForm } from "./form.js";
 import { recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
@@ -101,6 +101,8 @@ export function Repairs<S extends AnySchema>({
 }): ReactNode {
   const [open, setOpen] = useState<number | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  /* The repair buttons, so an answered ask gives the keyboard back to the one that asked. */
+  const pressed = useRef<(HTMLButtonElement | null)[]>([]);
   if (repairs.length === 0) return null;
   const opened = open === null ? null : repairs[open];
   const asking =
@@ -128,6 +130,9 @@ export function Repairs<S extends AnySchema>({
           return (
             <button
               key={at}
+              ref={(element) => {
+                pressed.current[at] = element;
+              }}
               type="button"
               data-graview-repair={repair.mutation}
               data-graview-asks={asks || undefined}
@@ -160,7 +165,26 @@ export function Repairs<S extends AnySchema>({
           store={store}
           mutation={asking}
           prefilled={{ ...opened.args }}
-          onDone={() => setOpen(null)}
+          // What the rule left open, and only that, under the repair's own words.
+          only={opened.missing ?? []}
+          label={opened.label}
+          onDone={() => {
+            const asked = open;
+            setOpen(null);
+            // The form goes; the keyboard goes back to the press that opened it, if the repair is still here.
+            requestAnimationFrame(() => {
+              const home = asked === null ? null : pressed.current[asked];
+              if (home?.isConnected) {
+                home.focus();
+                return;
+              }
+              // The problem is gone with its repairs: the page's own heading is the honest home.
+              const heading = document.querySelector<HTMLElement>("main h1, h1");
+              if (!heading) return;
+              if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
+              heading.focus();
+            });
+          }}
           {...(principal ? { principal } : {})}
         />
       ) : null}

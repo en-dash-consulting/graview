@@ -374,6 +374,14 @@ export interface DerivedFormProps<S extends AnySchema> {
    * the era", the era's. Hand it the affordance's label and they agree.
    */
   readonly label?: string;
+  /**
+   * The arguments to ASK, when the form answers a question somebody else
+   * posed — a repair's `missing`. Everything else is left as the act has it.
+   * A repair asking "when did the single come out?" through the derived edit
+   * act drew every field the act can change, the name first, and the date
+   * typed into the first box renamed the single to "2023-04-14".
+   */
+  readonly only?: readonly string[];
 }
 
 /** The submit path is the ordinary one: `store.apply`, refusals shown. */
@@ -386,10 +394,11 @@ export function DerivedForm<S extends AnySchema>({
   principal,
   initial,
   label,
+  only,
 }: DerivedFormProps<S>) {
   const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...initial }));
   const [failed, setFailed] = useState<string | null>(null);
-  const fields = formFields(mutation.input);
+  const fields = formFields(mutation.input).filter((spec) => only === undefined || only.includes(spec.name));
 
   return (
     <form
