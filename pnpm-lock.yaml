@@ -468,9 +468,6 @@ importers:
       '@webgpu/types':
         specifier: ^0.1.60
         version: 0.1.72
-      vgpu:
-        specifier: ^0.3.1
-        version: 0.3.1
     devDependencies:
       zod:
         specifier: ^4.4.3

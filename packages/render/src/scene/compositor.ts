@@ -43,8 +43,9 @@ export interface SceneView extends PlannedView {
 }
 
 /**
- * The minimum of vgpu this module uses, named so the compositor can be driven
- * by `vgpu`, `vgpu/node` or `vgpu/mock` without importing any of them.
+ * The minimum of a WebGPU device this module uses, said structurally: a
+ * device from `navigator.gpu`, from `vgpu`, `vgpu/node` or `vgpu/mock` all
+ * fit, and this package depends on none of them.
  */
 export interface VgpuLike {
   readonly device: { readonly gpu: GPUDevice };
