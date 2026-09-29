@@ -3244,7 +3244,7 @@ two singles and thirty-five songs.
   filter selects measured 188×22, 355×22 and 313×22. WebKit draws a native
   select at its own height and ignores the `min-height: 32` the bar gives
   it; Chromium and Firefox honour it. The pages' own pickers learned this in
-  the third walk (W-0xx, `appearance: none`); the arrange bar, written after,
+  the third walk (W-067, `appearance: none`); the arrange bar, written after,
   did not, and the only harness that measures it in WebKit is the engines
   run nobody had run since.
 - where it belongs: `packages/primitives/src/arrange-bar.tsx`
