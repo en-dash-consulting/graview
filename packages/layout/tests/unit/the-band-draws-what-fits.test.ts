@@ -96,6 +96,31 @@ describe("the band's budget", () => {
     expect(door?.aggregate?.opens).toMatchObject({ within: { filter: "released-by:hub,type:single" } });
   });
 
+  it("opens a card of one kind in place, where a relation holds several kinds", () => {
+    const tag = defineNode("tag", { fields: z.object({ label: z.string() }), plural: "Tags" });
+    const note = defineNode("note", { fields: z.object({ label: z.string() }), edges: { tagged: { to: ["tag"], description: "what it is tagged", inverse: "what is tagged it" } }, plural: "Notes" });
+    const link = defineNode("link", { fields: z.object({ label: z.string() }), edges: { tagged: { to: ["tag"], description: "what it is tagged", inverse: "what is tagged it" } }, plural: "Links" });
+    const mixed = createSchema([tag, note, link]);
+    const many = Graph.from(mixed, {
+      nodes: [
+        { id: "t", kind: "tag", label: "T" },
+        ...Array.from({ length: 20 }, (_, i) => ({ id: `n-${i}`, kind: "note", label: `Note ${i}` })),
+        ...Array.from({ length: 20 }, (_, i) => ({ id: `l-${i}`, kind: "link", label: `Link ${i}` })),
+      ],
+      edges: [...Array.from({ length: 20 }, (_, i) => ({ kind: "tagged", from: `n-${i}`, to: "t" })), ...Array.from({ length: 20 }, (_, i) => ({ kind: "tagged", from: `l-${i}`, to: "t" }))],
+    } as never);
+    const run = many.allEdges().map((edge) => ({ node: many.getNode(edge.from)!, via: { edgeKind: edge.kind, direction: "in" as const } }));
+    const options = { schema: mixed, graph: many, budget: 6, focusId: "t", plural: (kind: string) => mixed.tryDefinition(kind)?.plural ?? kind };
+    const closed = bandOf(run, { ...options, expanded: new Set() });
+    const notes = closed.find((item) => item.aggregate?.label === "Notes")!;
+    expect(notes.aggregate?.opens).toEqual({ in: "place" });
+    const open = bandOf(run, { ...options, expanded: new Set([notes.id]) });
+    // Pressed, the card gives its place to its members — the stop changed, so must the band.
+    expect(ids(open)).not.toContain(notes.id);
+    expect(open.filter((item) => item.kind === "note" && !item.aggregate).length).toBeGreaterThan(0);
+    expect(ids(open)).toContain(closed.find((item) => item.aggregate?.label === "Links")!.id);
+  });
+
   it("never lets the band wrap past the rows a chip fits in a laid-out stop", () => {
     const stop = { ...EMPTY_VIEW, focusId: "hub" };
     const drawn = layout(graph, schema, stop, { width: 1200, height: 760 });

@@ -1,11 +1,11 @@
 {
-  "at": "2026-09-29T07:51:36.393Z",
+  "at": "2026-09-29T08:08:51.507Z",
   "engine": "chromium",
   "stops": {
     "altitude, still": {
       "frames": 15,
-      "first": 19,
-      "p50": 18.9,
+      "first": 20,
+      "p50": 19.1,
       "p95": 19.6,
       "worst": 20,
       "slow": [],
@@ -17,12 +17,17 @@
       "waiting": 2
     },
     "altitude, drag": {
-      "frames": 133,
-      "first": 36,
-      "p50": 18.2,
-      "p95": 19.5,
-      "worst": 20,
-      "slow": [],
+      "frames": 132,
+      "first": 37,
+      "p50": 18.7,
+      "p95": 19.6,
+      "worst": 37,
+      "slow": [
+        [
+          1228,
+          37
+        ]
+      ],
       "longTasks": 0,
       "dom": 1163,
       "hosts": 5,
@@ -31,10 +36,10 @@
       "waiting": 2
     },
     "altitude, wheel": {
-      "frames": 685,
+      "frames": 687,
       "first": 8,
       "p50": 0.3,
-      "p95": 18.9,
+      "p95": 18.4,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
@@ -45,10 +50,10 @@
       "waiting": 2
     },
     "descend": {
-      "frames": 235,
+      "frames": 210,
       "first": 19,
-      "p50": 4.4,
-      "p95": 19.2,
+      "p50": 5.5,
+      "p95": 19.1,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
@@ -59,10 +64,10 @@
       "waiting": 0
     },
     "focus the hub": {
-      "frames": 587,
-      "first": 57,
+      "frames": 583,
+      "first": 36,
       "p50": 1.4,
-      "p95": 19,
+      "p95": 19.1,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
@@ -73,15 +78,15 @@
       "waiting": 0
     },
     "hub, drag": {
-      "frames": 130,
-      "first": 20,
-      "p50": 18.1,
+      "frames": 123,
+      "first": 19,
+      "p50": 18.2,
       "p95": 19.5,
-      "worst": 37,
+      "worst": 38,
       "slow": [
         [
-          1128,
-          37
+          1007,
+          38
         ]
       ],
       "longTasks": 0,
@@ -92,9 +97,9 @@
       "waiting": 0
     },
     "hub, move a card": {
-      "frames": 150,
-      "first": 19,
-      "p50": 18.7,
+      "frames": 148,
+      "first": 20,
+      "p50": 18.9,
       "p95": 19.6,
       "worst": 20,
       "slow": [],
@@ -106,10 +111,10 @@
       "waiting": 0
     },
     "hub, wheel": {
-      "frames": 171,
-      "first": 19,
+      "frames": 167,
+      "first": 20,
       "p50": 17.2,
-      "p95": 19.5,
+      "p95": 19.4,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
@@ -120,13 +125,13 @@
       "waiting": 0
     },
     "hub, select": {
-      "frames": 66,
-      "first": 19,
+      "frames": 67,
+      "first": 112,
       "p50": 19.1,
-      "p95": 19.4,
+      "p95": 19.5,
       "worst": 20,
       "slow": [],
-      "longTasks": 0,
+      "longTasks": 1,
       "dom": 609,
       "hosts": 36,
       "strands": 50,
@@ -134,19 +139,23 @@
       "waiting": 0
     },
     "hub, type in Find": {
-      "frames": 594,
-      "first": 66,
-      "p50": 1.2,
-      "p95": 18.7,
-      "worst": 38,
+      "frames": 348,
+      "first": 56,
+      "p50": 1.5,
+      "p95": 19.3,
+      "worst": 39,
       "slow": [
         [
-          187,
-          38
+          115,
+          37
+        ],
+        [
+          190,
+          39
         ],
         [
           315,
-          38
+          37
         ]
       ],
       "longTasks": 1,
@@ -157,23 +166,23 @@
       "waiting": 0
     },
     "rise": {
-      "frames": 2971,
-      "first": 20,
+      "frames": 3419,
+      "first": 39,
       "p50": 0.1,
-      "p95": 1.6,
-      "worst": 42,
+      "p95": 0.7,
+      "worst": 38,
       "slow": [
         [
-          893,
-          42
+          852,
+          36
         ],
         [
-          949,
-          37
+          908,
+          38
         ]
       ],
       "longTasks": 0,
-      "dom": 2493,
+      "dom": 2455,
       "hosts": 6,
       "strands": 0,
       "thumbnails": 4,
@@ -232,7 +241,7 @@
       "hash": "#focus=artist%3Atech-n9ne&expand=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum",
       "band": 30
     },
-    "after": "#focus=artist%3Atech-n9ne"
+    "after": "#focus=artist%3Atech-n9ne&sel=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum"
   },
   "verdict": {
     "theCityAtAltitudeIsLight": true,

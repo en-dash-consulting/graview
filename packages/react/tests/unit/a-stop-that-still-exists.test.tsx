@@ -153,4 +153,14 @@ describe("a stop that still exists", () => {
     expect(at.latest().view.focusId).toBe("aggregate:item");
     await at.stop();
   });
+
+  it("keeps a band's group selected, which names a run of a relation rather than a kind", async () => {
+    const store = made();
+    const group = "aggregate:item|handled-by|in|kind";
+    const at = await stand(store, { ...EMPTY_VIEW, focusId: "person:ada", selection: [group] });
+    expect(at.latest().selection).toEqual([group]);
+    await at.apply("drop", { id: "item:deposit" });
+    expect(at.latest().selection).toEqual([group]);
+    await at.stop();
+  });
 });

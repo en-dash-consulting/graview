@@ -255,7 +255,10 @@ try {
       opened.during.hash !== opened.before &&
       // A group opens in place, its members in the band; the door goes to the kind's picture.
       (opened.pressed === "place" ? opened.during.band > 0 : opened.during.hash.includes("in.filter=")) &&
-      opened.after === opened.before,
+      // Back closes it, at the same focus. The press's first click selected the group, as a
+      // first click does anywhere, so Back lands on it selected rather than on the address before.
+      !opened.after.includes("expand=") &&
+      opened.after.split("&")[0] === opened.before.split("&")[0],
     // Dragging the ground holds sixty frames a second, up high and at the hub.
     panningHolds60: holds(cityDrag) && holds(hubDrag),
     // A card held by the hand follows it at sixty, and landing it is one frame.

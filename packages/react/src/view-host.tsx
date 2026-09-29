@@ -117,14 +117,15 @@ export function SceneViewHost({
   const [tagAt, setTagAt] = useState<{ top: number; right: number } | null>(null);
   const tagged = Math.round(node.plane) === 0 && !node.aggregate;
   /*
-   * Measured when the panel's SIZE changes, not on every render.
+   * Measured when the panel's SIZE changes, not on every render — from the
+   * observer, when the layout is already clean, so the reads are free.
    *
    * It ran after every render and read two bounding boxes, and a host
    * renders every frame of a transition — so every frame forced the browser
    * to lay the whole scene out before it could paint it (docs/scale.md, a
-   * third of the frame landing on a hub). The offsets are the host's own
-   * coordinates, which is also what the tag is positioned in: a bounding
-   * box included the transition's scale and was wrong for it.
+   * third of the frame landing on a hub). An observer reports once when it
+   * starts watching, after layout and before paint, so the tag is placed
+   * in its first frame without forcing one.
    */
   useLayoutEffect(() => {
     if (!tagged) return;
@@ -147,16 +148,27 @@ export function SceneViewHost({
         (element) => (element as HTMLElement).dataset["graviewKindtag"] === undefined,
       ) as HTMLElement | undefined;
       if (!child) return;
+      /*
+       * Drawn boxes, in the host's own units. Offsets would ignore the
+       * natural box's centring and shrink (the stamp at altitude) and land
+       * the tag mid-card; a box difference includes them, and dividing by
+       * the host's drawn scale takes the plane's scale back out.
+       */
+      const hostBox = host.getBoundingClientRect();
+      const childBox = child.getBoundingClientRect();
+      const scale = host.offsetWidth > 0 ? hostBox.width / host.offsetWidth : 1;
       const next = {
-        top: child.offsetTop - 9,
-        right: host.clientWidth - (child.offsetLeft + child.offsetWidth) + 14,
+        top: Math.round((childBox.top - hostBox.top) / scale) - 9,
+        right: Math.round((hostBox.right - childBox.right) / scale) + 14,
       };
       setTagAt((current) =>
         current && current.top === next.top && current.right === next.right ? current : next,
       );
     };
-    place();
-    if (typeof ResizeObserver === "undefined") return;
+    if (typeof ResizeObserver === "undefined") {
+      place();
+      return;
+    }
     const watch = new ResizeObserver(place);
     watch.observe(host);
     for (const element of host.children) watch.observe(element);

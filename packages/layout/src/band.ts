@@ -240,7 +240,9 @@ export function bandOf<N extends ArrangeNode>(related: readonly Related<N>[], op
   room -= over.reduce((sum, plan) => sum + need(plan), 0);
   // The rest of the room: to a door's standing members, or into an opened group.
   const opened = (plan: Plan) =>
-    plan.grouping?.groups.some((group) => options.expanded.has(groupId(plan.kinds[0]!, plan.key, partOf(plan.grouping!, group.key))));
+    plan.byKind
+      ? plan.kinds.some((kind) => options.expanded.has(groupId(kind, plan.key, "kind")))
+      : plan.grouping?.groups.some((group) => options.expanded.has(groupId(plan.kinds[0]!, plan.key, partOf(plan.grouping!, group.key))));
   const taking = over.filter((plan) => !plan.grouping && !plan.byKind ? true : opened(plan));
   const extra = shares(taking.map((plan) => plan.members.length), Math.max(0, room));
   taking.forEach((plan, index) => (plan.extra = room > 0 ? extra[index]! : 0));
@@ -281,8 +283,16 @@ export function bandOf<N extends ArrangeNode>(related: readonly Related<N>[], op
 
     /* A RUN OF SEVERAL KINDS is grouped by kind first: that is what it is. */
     if (plan.byKind) {
+      // An opened kind takes its card's place with its members, as many as the room gives.
+      const open = plan.kinds.find((kind) => options.expanded.has(groupId(kind, key, "kind")));
       for (const kind of plan.kinds) {
         const ofKind = plan.members.filter((node) => node.kind === kind);
+        if (kind === open) {
+          const fits = plan.extra + 1;
+          if (ofKind.length <= fits) out.push(...ofKind.map(stand));
+          else rest(ofKind, fits - 1, relationFilter);
+          continue;
+        }
         out.push({ id: groupId(kind, key, "kind"), kind, ...(via ? { via } : {}), aggregate: { kind, memberIds: ofKind.map((node) => node.id), label: options.plural(kind), opens: { in: "place" } } });
       }
       continue;

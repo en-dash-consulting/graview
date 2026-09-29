@@ -16,7 +16,7 @@ import { honourSetting, loadSetting, rememberSetting } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
-import { EMPTY_VIEW, edgeOfSelection, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout";
+import { EMPTY_VIEW, edgeOfSelection, isBandAggregate, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout";
 import {
   createContext,
   useCallback,
@@ -525,6 +525,8 @@ export function GraviewProvider<S extends AnySchema>({
   const stillThere = useCallback(
     (id: string): boolean => {
       if (kindOfCard(id) !== null || kindsOfAggregate(id).length > 0) return true;
+      // A band's group names a run of a relation, not a kind: it is kept as itself.
+      if (isBandAggregate(id)) return true;
       const edge = edgeOfSelection(id);
       if (edge) {
         return store.graph

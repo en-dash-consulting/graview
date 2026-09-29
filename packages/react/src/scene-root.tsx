@@ -387,10 +387,12 @@ export function Scene<S extends AnySchema>({
    * only the layout knows, so up there the pin still goes into the layout.
    */
   const inPlace = held !== null && !(view.overview ?? false);
+  // Only a pin the layout needs is a dependency: a card moved in place must not re-lay the stop.
+  const pinned = inPlace ? null : held;
   const atRest = useMemo(() => {
     const still = view.pan ? { ...view, pan: undefined } : view;
-    return held && !inPlace ? withPin(still, held.id, { x: held.x, y: held.y }) : still;
-  }, [view, held, inPlace]);
+    return pinned ? withPin(still, pinned.id, { x: pinned.x, y: pinned.y }) : still;
+  }, [view, pinned]);
   const laid = useMemo<Layout>(
     () => layout(store.graph, store.schema, atRest, sized),
     [store, atRest, sized, nodes],
