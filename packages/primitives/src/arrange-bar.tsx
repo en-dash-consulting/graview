@@ -64,6 +64,25 @@ const control: CSSProperties = {
   color: "var(--graview-ink)",
   textOverflow: "ellipsis",
 };
+/*
+ * A SELECT THAT KEEPS ITS FLOOR IN EVERY ENGINE. WebKit draws a native
+ * select at its own height and ignores `min-height`: at phone width every
+ * arrange bar's select was 22 pixels tall in WebKit and 32 elsewhere —
+ * under the 24 a target needs, measured by a check that had only ever run
+ * in Chromium (the third walk's lesson, in the fifth). With the native
+ * appearance off the floor holds, and the chevron is drawn in the text's
+ * colour the way the places menu draws it.
+ */
+const choice: CSSProperties = {
+  ...control,
+  appearance: "none",
+  WebkitAppearance: "none",
+  paddingRight: 24,
+  backgroundImage: "linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%)",
+  backgroundPosition: "calc(100% - 13px) 55%, calc(100% - 9px) 55%",
+  backgroundSize: "4px 4px, 4px 4px",
+  backgroundRepeat: "no-repeat",
+};
 const label: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -173,7 +192,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
                 sort: event.target.value ? { by: event.target.value, direction: arrangement.sort?.direction ?? "asc" } : undefined,
               })
             }
-            style={{ ...control, maxWidth: "min(100%, 60vw)" }}
+            style={{ ...choice, maxWidth: "min(100%, 60vw)" }}
           >
             <option value="">{offers.natural ? `as declared (${offers.sorts.find((o) => o.key === offers.natural!.by)?.label.toLowerCase() ?? offers.natural.by})` : "as they come"}</option>
             {offers.sorts.map((offer) => (
@@ -203,7 +222,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
             data-testid={`${id}-group`}
             value={arrangement.group?.by ?? ""}
             onChange={(event) => set({ group: event.target.value ? { by: event.target.value } : undefined })}
-            style={{ ...control, maxWidth: "min(100%, 60vw)" }}
+            style={{ ...choice, maxWidth: "min(100%, 60vw)" }}
           >
             <option value="">nothing</option>
             {offers.groups.map((offer) => (
@@ -218,7 +237,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
               aria-label="How wide a group is"
               value={arrangement.group.bucket ?? "day"}
               onChange={(event) => set({ group: { by: arrangement.group!.by, bucket: event.target.value as "day" | "week" | "month" } })}
-              style={control}
+              style={choice}
             >
               <option value="day">by day</option>
               <option value="week">by week</option>
@@ -311,7 +330,7 @@ function AddCondition({
             if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) onAdd({ key: entry.ask.key, value: `${entry.ask.op}:${date}` });
           }
         }}
-        style={control}
+        style={choice}
       >
         <option value="">only…</option>
         {groups.map((group) => (

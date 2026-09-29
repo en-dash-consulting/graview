@@ -3234,3 +3234,24 @@ two singles and thirty-five songs.
   no" — and each relation sentence starts with a capital. Criterion:
   `conversation.test.ts` expects ". Who does the run: Ana" (verified
   failing without the fix) and "(minutes 75)".
+
+### W-121 · In WebKit every arrange bar's select is 22 pixels tall
+- stage: I · face: pages (and the scene's lenses) · width: 390 · scheme: both · engine: WebKit
+- expected: every link and button at least 24px, in every engine the
+  stage asks for
+- actual: `pnpm engines` failed WebKit's `verify-pages`: on the list page,
+  a place's page and the ask at 390, the arrange bar's sort, group and
+  filter selects measured 188×22, 355×22 and 313×22. WebKit draws a native
+  select at its own height and ignores the `min-height: 32` the bar gives
+  it; Chromium and Firefox honour it. The pages' own pickers learned this in
+  the third walk (W-0xx, `appearance: none`); the arrange bar, written after,
+  did not, and the only harness that measures it in WebKit is the engines
+  run nobody had run since.
+- where it belongs: `packages/primitives/src/arrange-bar.tsx`
+- harness that should have caught it: `verify-pages`' `bigEnoughToHit`
+  does — in WebKit, through `pnpm engines`
+- status: fixed in "walkthrough: I · an arranging select keeps its floor in
+  WebKit" · the bar's selects drop the native appearance, so the floor
+  holds, with the chevron drawn in the text's colour. Criterion: the
+  existing `verify-pages --engine=webkit` (`bigEnoughToHit` empty; failing
+  before the fix with the three selects above), run by `pnpm engines`.
