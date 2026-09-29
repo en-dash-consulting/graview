@@ -25,12 +25,16 @@ export {
 export type { AgentSeatProps, Change } from "./workbench/index.js";
 export {
   buildCoverage,
+  capCoverage,
   CoverageBindingError,
+  COVERAGE_MAX_COLUMNS,
+  COVERAGE_MAX_ROWS,
   COVERAGE_REQUIRED_ROLES,
   CoverageView,
   createCoverageLens,
 } from "./lens/coverage.js";
 export type {
+  CappedCoverage,
   CoverageCell,
   CoverageGrid,
   CoverageLens,

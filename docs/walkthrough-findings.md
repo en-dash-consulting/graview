@@ -3255,3 +3255,23 @@ two singles and thirty-five songs.
   holds, with the chevron drawn in the text's colour. Criterion: the
   existing `verify-pages --engine=webkit` (`bigEnoughToHit` empty; failing
   before the fix with the three selects above), run by `pnpm engines`.
+
+### W-122 · A coverage over a real catalogue never finishes drawing
+- stage: D (after the walk, on real data) · face: scene · width: 1440 · scheme: light
+- expected: the Discography opens on Tech N9ne's real catalogue — 1,177 songs,
+  568 artists, 479 releases from MusicBrainz — as it did on the fixture
+- actual: the page's main thread never yielded; the "who worked with whom"
+  coverage (artists by artists) drew every cell, 568 × 568, a third of a
+  million, and React spent minutes committing their styles. Layout itself took
+  10–40 ms on every stop; only the matrix was unbounded.
+- where it belongs: `packages/primitives/src/lens/coverage.tsx`
+- harness that should have caught it: none — every fixture's coverage was a
+  few dozen cells; nothing drew a lens over a graph of real size
+- status: fixed in "The coverage lens draws a matrix the page can hold" · past
+  80 rows or 48 columns the most-tied are drawn in their own order and a line
+  says how many were left out; gaps and unasked are still counted over all.
+  Criterion: `a-matrix-the-page-can-hold.test.ts` (a 568 × 568 grid draws 80 ×
+  48). Also noticed: `graview check`'s label-unbounded note treats 61
+  characters as "past any name" — four real Tech N9ne titles are longer
+  (the longest, 78) — recorded for the sixth walk.
+

@@ -139,6 +139,58 @@ const text = (node: Record<string, unknown>, field: string | undefined): string 
  * Pure and exported, so an app can assert on the same numbers the picture is
  * drawn from rather than on the rendering of them.
  */
+/**
+ * A MATRIX THE ROOM CAN HOLD, and the DOM can.
+ *
+ * Every row times every column is a cell, and a real graph is not a
+ * fixture: a discography's "who worked with whom" is 568 artists by 568,
+ * a third of a million cells, and the page never came back from drawing
+ * them. Past the limit the picture keeps the rows and columns with the
+ * most ties — in their own order — and says how many it left out. What is
+ * missing (`gaps`, `unasked`) is still counted over all of it.
+ */
+export const COVERAGE_MAX_ROWS = 80;
+export const COVERAGE_MAX_COLUMNS = 48;
+
+export interface CappedCoverage extends CoverageGrid {
+  /** How many rows and columns there are in all, when fewer are drawn. */
+  readonly of?: { readonly rows: number; readonly columns: number };
+}
+
+export function capCoverage(grid: CoverageGrid, limits: { readonly rows?: number; readonly columns?: number } = {}): CappedCoverage {
+  const maxRows = limits.rows ?? COVERAGE_MAX_ROWS;
+  const maxColumns = limits.columns ?? COVERAGE_MAX_COLUMNS;
+  if (grid.rows.length <= maxRows && grid.columns.length <= maxColumns) return grid;
+  const ties = new Map<string, number>();
+  for (const cell of grid.cells) {
+    ties.set(cell.rowId, (ties.get(cell.rowId) ?? 0) + 1);
+    ties.set(`col:${cell.columnId}`, (ties.get(`col:${cell.columnId}`) ?? 0) + 1);
+  }
+  // The most-tied, kept in the order the grid already drew them.
+  const keep = <T extends { id: string }>(items: readonly T[], max: number, key: (item: T) => string): readonly T[] => {
+    if (items.length <= max) return items;
+    const chosen = new Set(
+      items
+        .map((item, index) => ({ item, index, count: ties.get(key(item)) ?? 0 }))
+        .sort((a, b) => b.count - a.count || a.index - b.index)
+        .slice(0, max)
+        .map((entry) => entry.item.id),
+    );
+    return items.filter((item) => chosen.has(item.id));
+  };
+  const rows = keep(grid.rows, maxRows, (row) => row.id);
+  const columns = keep(grid.columns, maxColumns, (column) => `col:${column.id}`);
+  const shownRows = new Set(rows.map((row) => row.id));
+  const shownColumns = new Set(columns.map((column) => column.id));
+  return {
+    ...grid,
+    rows,
+    columns,
+    cells: grid.cells.filter((cell) => shownRows.has(cell.rowId) && shownColumns.has(cell.columnId)),
+    of: { rows: grid.rows.length, columns: grid.columns.length },
+  };
+}
+
 export function buildCoverage<S extends AnySchema>(
   nodes: readonly NodeOfSchema<S>[],
   edges: readonly { kind: string; from: string; to: string }[],
@@ -450,13 +502,15 @@ export function CoverageView<S extends AnySchema>({
    * still decides what is focused; it does not decide what can be looked up
    * — but for its own kind it is what the horizon left (see horizon.ts).
    */
-  const grid = buildCoverage<S>(
+  const whole = buildCoverage<S>(
     onTheHorizon(store.graph, store.schema, nodes)
       .filter((node) => node.kind === options.rows || node.kind === options.columns),
     store.graph.allEdges(),
     options,
     schema,
   );
+  // The glyph and the summary count; only the full picture draws cells, and only as many as it can.
+  const grid: CappedCoverage = fidelity === "full" ? capCoverage(whole) : whole;
 
   if (fidelity === "glyph") {
     return (
@@ -667,6 +721,18 @@ export function CoverageView<S extends AnySchema>({
         </div>
         )}
 
+        {grid.of ? (
+          <p data-testid="coverage-more" style={{ margin: "4px 0 6px", fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
+            {[
+              grid.of.rows > grid.rows.length ? `the ${grid.rows.length} most connected of ${grid.of.rows} ${pluralWords(store.schema, options.rows)}` : null,
+              grid.of.columns > grid.columns.length ? `${grid.columns.length} of ${grid.of.columns} ${pluralWords(store.schema, options.columns)} across` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")
+              .replace(/^./, (first) => first.toUpperCase())}
+            {" "}— what is missing is still counted over all of them.
+          </p>
+        ) : null}
         <div>
           {grid.rows.map((row, index) => {
             const previous = grid.rows[index - 1];
