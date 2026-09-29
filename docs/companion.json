@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-27T04:55:34.972Z",
+  "at": "2026-09-29T01:09:25.625Z",
   "engine": "chromium",
   "checks": {
     "theRailIsFixed": {
@@ -48,7 +48,7 @@
       "ok": true
     },
     "thisIsTheSubject": {
-      "reply": "Pay the deposit — a task (finished No, due 2026-08-28, day TUE). the list it is on: Today. why this is here: The landlor",
+      "reply": "Pay the deposit — a task (finished: no, 2026-08-28, tUE). The list it is on: Today. Why this is here: The landlord holds",
       "ok": true
     },
     "rightClickOpensItHere": {
@@ -63,7 +63,8 @@
           "schema:explain",
           "schema:move-to-list",
           "schema:wait-for",
-          "schema:drop"
+          "schema:drop",
+          "schema:remove-task"
         ],
         "struck": 0,
         "railAlso": 0
@@ -132,7 +133,7 @@
     },
     "keyboardReachesIt": {
       "reached": true,
-      "tabsAway": 31,
+      "tabsAway": 32,
       "shut": "shut",
       "ok": true
     }

@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-27T05:47:56.677Z",
-  "engine": "chromium",
+  "at": "2026-09-29T02:13:46.210Z",
+  "engine": "firefox",
   "shots": [
     {
       "app": "todo",
@@ -103,9 +103,9 @@
       ],
       "covered": [],
       "contentBottom": 940,
-      "contentRight": 3254,
+      "contentRight": 3252,
       "verticalFill": 100,
-      "horizontalFill": 209,
+      "horizontalFill": 208,
       "overflowing": [],
       "unnamed": [],
       "repeatedText": []
@@ -319,9 +319,9 @@
       ],
       "covered": [],
       "contentBottom": 940,
-      "contentRight": 3254,
+      "contentRight": 3252,
       "verticalFill": 100,
-      "horizontalFill": 209,
+      "horizontalFill": 208,
       "overflowing": [],
       "unnamed": [],
       "repeatedText": []
@@ -421,186 +421,6 @@
       "state": "tidied",
       "scheme": "dark",
       "file": "todo-tidied-dark.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 940,
-      "contentRight": 1560,
-      "verticalFill": 100,
-      "horizontalFill": 100,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "launcher",
-      "state": "home",
-      "scheme": "light",
-      "file": "launcher-home-light.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 1814,
-      "contentRight": 1560,
-      "verticalFill": 193,
-      "horizontalFill": 100,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "launcher",
-      "state": "home",
-      "scheme": "dark",
-      "file": "launcher-home-dark.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 1814,
-      "contentRight": 1560,
-      "verticalFill": 193,
-      "horizontalFill": 100,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "seedbed",
-      "state": "empty",
-      "scheme": "light",
-      "file": "seedbed-empty-light.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 940,
-      "contentRight": 1560,
-      "verticalFill": 100,
-      "horizontalFill": 100,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "seedbed",
-      "state": "rotation",
-      "scheme": "light",
-      "file": "seedbed-rotation-light.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 964,
-      "contentRight": 1560,
-      "verticalFill": 103,
-      "horizontalFill": 100,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "seedbed",
-      "state": "invited",
-      "scheme": "light",
-      "file": "seedbed-invited-light.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 1193,
-      "contentRight": 1879,
-      "verticalFill": 127,
-      "horizontalFill": 120,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "seedbed",
-      "state": "planted",
-      "scheme": "light",
-      "file": "seedbed-planted-light.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 940,
-      "contentRight": 1560,
-      "verticalFill": 100,
-      "horizontalFill": 100,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "seedbed",
-      "state": "empty",
-      "scheme": "dark",
-      "file": "seedbed-empty-dark.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 940,
-      "contentRight": 1560,
-      "verticalFill": 100,
-      "horizontalFill": 100,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "seedbed",
-      "state": "rotation",
-      "scheme": "dark",
-      "file": "seedbed-rotation-dark.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 964,
-      "contentRight": 1560,
-      "verticalFill": 103,
-      "horizontalFill": 100,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "seedbed",
-      "state": "invited",
-      "scheme": "dark",
-      "file": "seedbed-invited-dark.png",
-      "viewport": [
-        1560,
-        940
-      ],
-      "covered": [],
-      "contentBottom": 1193,
-      "contentRight": 1879,
-      "verticalFill": 127,
-      "horizontalFill": 120,
-      "overflowing": [],
-      "unnamed": [],
-      "repeatedText": []
-    },
-    {
-      "app": "seedbed",
-      "state": "planted",
-      "scheme": "dark",
-      "file": "seedbed-planted-dark.png",
       "viewport": [
         1560,
         940

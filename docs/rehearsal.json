@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-27T04:59:24.674Z",
+  "at": "2026-09-29T01:13:29.544Z",
   "checks": {
     "theSeatsChangeIsKept": {
       "kept": 2,
@@ -18,7 +18,7 @@
       "ok": true
     },
     "itIsWrittenIntoTheCheckout": {
-      "outcome": "written into the checkout; the page reloaded onto it",
+      "outcome": "The checker is happy, and the change is written into src/domain/app.ts, src/domain/invariants.ts, src/domain/mutations.ts, src/domain/schema.ts. The app reloads onto it, and a stored graph is carried forward: plot tended-by edges move to the planting records tied to each plot.",
       "ok": true
     },
     "theRelationMovedWithItsWords": {
@@ -49,7 +49,7 @@
         "tended-by:chard->sam"
       ],
       "log": [
-        "{\"id\":\"migration:1-2:2026-09-27T04:59:29.123Z\",\"seq\":0,\"batch\":\"migration:1->2\",\"author\":{\"kind\":\"system\",\"id\":\"ship:migration\"},\"intent\":\"migration 1→2: plot tended-by edges move to the planting records tied to each plot\",\"mutation\":null,\"primitives\":[{\"op\":\"remove-edge\",\"edge\":{\"kind\":\"tended-by\","
+        "{\"id\":\"migration:1-2:2026-09-29T01:13:33.815Z\",\"seq\":0,\"batch\":\"migration:1->2\",\"author\":{\"kind\":\"system\",\"id\":\"ship:migration\"},\"intent\":\"migration 1→2: plot tended-by edges move to the planting records tied to each plot\",\"mutation\":null,\"primitives\":[{\"op\":\"remove-edge\",\"edge\":{\"kind\":\"tended-by\","
       ],
       "ok": true
     },
@@ -67,7 +67,7 @@
   "debug": {
     "afterSeeding": 5,
     "beforeWriting": 5,
-    "rightAfterWriting": 6,
+    "rightAfterWriting": 5,
     "afterTheReload": 6
   },
   "prompts": 3

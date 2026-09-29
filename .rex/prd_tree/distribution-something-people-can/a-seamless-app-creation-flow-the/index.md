@@ -38,4 +38,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Walkthrough II · The second walk, from a fresh checkout, adds nothing](./walkthrough-ii-the-second-walk-from-a.md) | completed |
 | [Walkthrough III · The third walk, from a fresh checkout, adds nothing](./walkthrough-iii-the-third-walk-from-a.md) | completed |
 | [Walkthrough IV · The fourth walk, from a fresh checkout, adds nothing](./walkthrough-iv-the-fourth-walk-from-a.md) | completed |
-| [Walkthrough V · The fifth walk, from a fresh checkout, adds nothing](./walkthrough-v-the-fifth-walk-from-a.md) | deferred |
+| [Walkthrough V · The fifth walk, from a fresh checkout, adds nothing](./walkthrough-v-the-fifth-walk-from-a.md) | in_progress |

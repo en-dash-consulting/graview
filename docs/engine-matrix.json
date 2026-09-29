@@ -1,10 +1,10 @@
 {
-  "at": "2026-09-21T19:50:43.978Z",
+  "at": "2026-09-29T01:59:20.079Z",
   "engines": {
     "chromium": {
       "audit": {
         "ok": true,
-        "screens": 39
+        "screens": 38
       },
       "pages": {
         "ok": true
@@ -15,18 +15,18 @@
       },
       "keyboardSurvivesThePane": {
         "ok": true,
-        "paneWentAway": true,
+        "paneWentAway": false,
         "tabbedTo": [
-          "aggregate:list",
-          "div",
-          "div"
+          "action-filter",
+          "button",
+          "pin-toggle"
         ]
       }
     },
     "webkit": {
       "audit": {
         "ok": true,
-        "screens": 39
+        "screens": 38
       },
       "pages": {
         "ok": true
@@ -37,18 +37,18 @@
       },
       "keyboardSurvivesThePane": {
         "ok": true,
-        "paneWentAway": true,
+        "paneWentAway": false,
         "tabbedTo": [
-          "aggregate:list",
-          "div",
-          "div"
+          "action-filter",
+          "button",
+          "pin-toggle"
         ]
       }
     },
     "firefox": {
       "audit": {
         "ok": true,
-        "screens": 39
+        "screens": 38
       },
       "pages": {
         "ok": true
@@ -59,11 +59,11 @@
       },
       "keyboardSurvivesThePane": {
         "ok": true,
-        "paneWentAway": true,
+        "paneWentAway": false,
         "tabbedTo": [
-          "aggregate:list",
-          "div",
-          "div"
+          "action-filter",
+          "button",
+          "pin-toggle"
         ]
       }
     }

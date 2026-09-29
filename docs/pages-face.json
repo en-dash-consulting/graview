@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-28T22:15:26.520Z",
-  "engine": "chromium",
+  "at": "2026-09-29T02:12:06.778Z",
+  "engine": "firefox",
   "checks": {
     "phoneHome": {
       "noSideScroll": true,
@@ -222,7 +222,7 @@
       "ok": true
     },
     "aProposalAppliesFromThePage": {
-      "said": " on: Today. why this is here: The landlord holds the date for 48 hours once the deposit…. Trouble: \"Pay the deposit\" was due 2026-08-28.Finish \"Pay the deposit\"",
+      "said": " on: Today. Why this is here: The landlord holds the date for 48 hours once the deposit…. Trouble: \"Pay the deposit\" was due 2026-08-28.Finish \"Pay the deposit\"",
       "ok": true
     },
     "phoneAsk": {

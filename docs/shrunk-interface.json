@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-27T04:54:18.371Z",
+  "at": "2026-09-29T01:08:05.483Z",
   "engine": "canary-gpu",
   "flags": [
     "--enable-unsafe-webgpu",
@@ -17,65 +17,65 @@
         "height": 333
       },
       "drawn": {
-        "width": 308,
-        "height": 96
+        "width": 311,
+        "height": 97
       },
       "slot": {
-        "width": 308,
-        "height": 96
+        "width": 311,
+        "height": 97
       },
-      "scaleX": 0.28709252200909513,
-      "scaleY": 0.28709251243430933,
+      "scaleX": 0.290359155455632,
+      "scaleY": 0.29035917631498687,
       "overflowRight": 0,
       "overflowBottom": 0,
       "clipped": null,
       "picks": [
         {
           "id": "today",
-          "x": 815,
-          "y": 397,
+          "x": 813,
+          "y": 396,
           "inside": true
         },
         {
           "id": "t-deposit",
-          "x": 815,
-          "y": 408,
+          "x": 813,
+          "y": 407,
           "inside": true
         },
         {
           "id": "t-book",
-          "x": 815,
-          "y": 418,
+          "x": 813,
+          "y": 417,
           "inside": true
         },
         {
           "id": "t-quote",
-          "x": 815,
-          "y": 429,
+          "x": 813,
+          "y": 428,
           "inside": true
         },
         {
           "id": "week",
           "x": 916,
-          "y": 397,
+          "y": 396,
           "inside": true
         },
         {
           "id": "t-notice",
           "x": 916,
-          "y": 408,
+          "y": 407,
           "inside": true
         },
         {
           "id": "t-meter",
           "x": 916,
-          "y": 418,
+          "y": 417,
           "inside": true
         },
         {
           "id": "t-post",
           "x": 916,
-          "y": 429,
+          "y": 428,
           "inside": true
         },
         {
@@ -98,26 +98,26 @@
         },
         {
           "id": "someday",
-          "x": 1017,
-          "y": 397,
+          "x": 1018,
+          "y": 396,
           "inside": true
         },
         {
           "id": "t-shelves",
-          "x": 1017,
-          "y": 408,
+          "x": 1018,
+          "y": 407,
           "inside": true
         },
         {
           "id": "t-paint",
-          "x": 1017,
-          "y": 418,
+          "x": 1018,
+          "y": 417,
           "inside": true
         },
         {
           "id": "t-piano",
-          "x": 1017,
-          "y": 429,
+          "x": 1018,
+          "y": 428,
           "inside": true
         }
       ],
@@ -136,71 +136,71 @@
         "height": 886
       },
       "drawn": {
-        "width": 339,
-        "height": 280
+        "width": 335,
+        "height": 277
       },
       "slot": {
-        "width": 339,
-        "height": 280
+        "width": 335,
+        "height": 277
       },
-      "scaleX": 0.3163591071740905,
-      "scaleY": 0.3163591303082675,
+      "scaleX": 0.3127596840929629,
+      "scaleY": 0.3127597094120344,
       "overflowRight": 0,
       "overflowBottom": 0,
       "clipped": null,
       "picks": [
         {
           "id": "t-boxes",
-          "x": 655,
-          "y": 323,
+          "x": 657,
+          "y": 331,
           "inside": true
         },
         {
           "id": "t-quote",
-          "x": 698,
-          "y": 316,
+          "x": 699,
+          "y": 324,
           "inside": true
         },
         {
           "id": "t-deposit",
-          "x": 698,
-          "y": 281,
+          "x": 699,
+          "y": 291,
           "inside": true
         },
         {
           "id": "t-book",
           "x": 700,
-          "y": 295,
+          "y": 304,
           "inside": true
         },
         {
           "id": "t-notice",
-          "x": 743,
-          "y": 291,
+          "x": 744,
+          "y": 301,
           "inside": true
         },
         {
           "id": "t-broadband",
           "x": 788,
-          "y": 315,
+          "y": 323,
           "inside": true
         },
         {
           "id": "t-meter",
           "x": 788,
-          "y": 252,
+          "y": 264,
           "inside": true
         },
         {
           "id": "t-post",
           "x": 788,
-          "y": 266,
+          "y": 278,
           "inside": true
         },
         {
           "id": "t-keys",
-          "x": 833,
-          "y": 451,
+          "x": 832,
+          "y": 452,
           "inside": true
         }
       ],
@@ -219,65 +219,65 @@
         "height": 333
       },
       "drawn": {
-        "width": 308,
-        "height": 96
+        "width": 311,
+        "height": 97
       },
       "slot": {
-        "width": 308,
-        "height": 96
+        "width": 311,
+        "height": 97
       },
-      "scaleX": 0.28709252200909513,
-      "scaleY": 0.28709251243430933,
+      "scaleX": 0.290359155455632,
+      "scaleY": 0.29035917631498687,
       "overflowRight": 0,
       "overflowBottom": 0,
       "clipped": null,
       "picks": [
         {
           "id": "today",
-          "x": 815,
-          "y": 397,
+          "x": 813,
+          "y": 396,
           "inside": true
         },
         {
           "id": "t-deposit",
-          "x": 815,
-          "y": 408,
+          "x": 813,
+          "y": 407,
           "inside": true
         },
         {
           "id": "t-book",
-          "x": 815,
-          "y": 418,
+          "x": 813,
+          "y": 417,
           "inside": true
         },
         {
           "id": "t-quote",
-          "x": 815,
-          "y": 429,
+          "x": 813,
+          "y": 428,
           "inside": true
         },
         {
           "id": "week",
           "x": 916,
-          "y": 397,
+          "y": 396,
           "inside": true
         },
         {
           "id": "t-notice",
           "x": 916,
-          "y": 408,
+          "y": 407,
           "inside": true
         },
         {
           "id": "t-meter",
           "x": 916,
-          "y": 418,
+          "y": 417,
           "inside": true
         },
         {
           "id": "t-post",
           "x": 916,
-          "y": 429,
+          "y": 428,
           "inside": true
         },
         {
@@ -300,26 +300,26 @@
         },
         {
           "id": "someday",
-          "x": 1017,
-          "y": 397,
+          "x": 1018,
+          "y": 396,
           "inside": true
         },
         {
           "id": "t-shelves",
-          "x": 1017,
-          "y": 408,
+          "x": 1018,
+          "y": 407,
           "inside": true
         },
         {
           "id": "t-paint",
-          "x": 1017,
-          "y": 418,
+          "x": 1018,
+          "y": 417,
           "inside": true
         },
         {
           "id": "t-piano",
-          "x": 1017,
-          "y": 429,
+          "x": 1018,
+          "y": 428,
           "inside": true
         }
       ],
@@ -338,71 +338,71 @@
         "height": 886
       },
       "drawn": {
-        "width": 339,
-        "height": 280
+        "width": 335,
+        "height": 277
       },
       "slot": {
-        "width": 339,
-        "height": 280
+        "width": 335,
+        "height": 277
       },
-      "scaleX": 0.3163591071740905,
-      "scaleY": 0.3163591303082675,
+      "scaleX": 0.3127596840929629,
+      "scaleY": 0.3127597094120344,
       "overflowRight": 0,
       "overflowBottom": 0,
       "clipped": null,
       "picks": [
         {
           "id": "t-boxes",
-          "x": 655,
-          "y": 323,
+          "x": 657,
+          "y": 331,
           "inside": true
         },
         {
           "id": "t-quote",
-          "x": 698,
-          "y": 316,
+          "x": 699,
+          "y": 324,
           "inside": true
         },
         {
           "id": "t-deposit",
-          "x": 698,
-          "y": 281,
+          "x": 699,
+          "y": 291,
           "inside": true
         },
         {
           "id": "t-book",
           "x": 700,
-          "y": 295,
+          "y": 304,
           "inside": true
         },
         {
           "id": "t-notice",
-          "x": 743,
-          "y": 291,
+          "x": 744,
+          "y": 301,
           "inside": true
         },
         {
           "id": "t-broadband",
           "x": 788,
-          "y": 315,
+          "y": 323,
           "inside": true
         },
         {
           "id": "t-meter",
           "x": 788,
-          "y": 252,
+          "y": 264,
           "inside": true
         },
         {
           "id": "t-post",
           "x": 788,
-          "y": 266,
+          "y": 278,
           "inside": true
         },
         {
           "id": "t-keys",
-          "x": 833,
-          "y": 451,
+          "x": 832,
+          "y": 452,
           "inside": true
         }
       ],

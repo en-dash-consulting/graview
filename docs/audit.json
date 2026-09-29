@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-27T05:03:56.841Z",
-  "engine": "chromium",
+  "at": "2026-09-29T02:09:35.363Z",
+  "engine": "firefox",
   "screens": [
     {
       "app": "todo",
@@ -44,13 +44,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [
-        "place-the-lists at 512..645",
-        "place-the-month at 647..811",
-        "place-what-is-left at 813..985",
-        "place-the-week at 987..1136",
-        "standing at 1065..1248",
-        "activity-button at 1256..1390",
-        "profile-button at 1398..1544"
+        "standing at 1064..1247"
       ],
       "asking": [],
       "board": [],
@@ -58,7 +52,7 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "239x195",
+        "size": "239x196",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -105,9 +99,9 @@
       "board": [],
       "fill": 62,
       "inspector": {
-        "shown": 13,
+        "shown": 14,
         "hidden": 0,
-        "size": "239x400",
+        "size": "239x474",
         "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
       },
       "led": null,
@@ -127,16 +121,7 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [
-        "wordmark at 16..105",
-        "Back at 115..147",
-        "Forward at 149..180",
-        "pages-link at 257..314",
-        "place-who-may-do-what at 525..668",
-        "place-the-lists at 670..750",
-        "place-the-month at 752..848",
-        "place-what-is-left at 850..951"
-      ],
+      "offscreen": [],
       "asking": [],
       "board": [],
       "fill": 61,
@@ -295,7 +280,7 @@
       "inspector": {
         "shown": 6,
         "hidden": 0,
-        "size": "239x265",
+        "size": "239x360",
         "text": "Nothing done before what it waits for is connected to nothing yet⚠ \"Order boxes\" is done, "
       },
       "led": null,
@@ -322,8 +307,8 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+        "size": "239x140",
+        "text": "Nothing you may do with this mix of kinds — 1 action withheld.Remove the reasonNot permitt"
       },
       "led": null,
       "figures": []
@@ -373,9 +358,9 @@
       "board": [],
       "fill": 34,
       "inspector": {
-        "shown": 13,
+        "shown": 14,
         "hidden": 0,
-        "size": "239x400",
+        "size": "239x474",
         "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
       },
       "led": null,
@@ -466,15 +451,10 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [
-        "places-more at 342..453",
-        "standing at 356..468",
-        "activity-button at 476..561",
-        "profile-button at 569..623"
-      ],
+      "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 67,
+      "fill": 68,
       "inspector": null,
       "led": null,
       "figures": []
@@ -498,9 +478,9 @@
       "board": [],
       "fill": 62,
       "inspector": {
-        "shown": 11,
+        "shown": 12,
         "hidden": 0,
-        "size": "239x366",
+        "size": "239x441",
         "text": "Put it back☆Rename …☆Move the date …☆Change the task …☆Block time for it …☆its tiesNote wh"
       },
       "led": null,
@@ -525,9 +505,9 @@
       "board": [],
       "fill": 62,
       "inspector": {
-        "shown": 13,
+        "shown": 14,
         "hidden": 0,
-        "size": "239x473",
+        "size": "239x547",
         "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
       },
       "led": null,
@@ -645,9 +625,9 @@
       "board": [],
       "fill": 62,
       "inspector": {
-        "shown": 9,
+        "shown": 11,
         "hidden": 0,
-        "size": "239x341",
+        "size": "239x389",
         "text": "⚠ Nobody is covering \"Friday repair cafe\" on 2026-09-18Find somebody for \"Friday repair ca"
       },
       "led": null,
@@ -674,8 +654,8 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "239x518",
-        "text": "Nobody is covering \"Friday repair cafe\" on 2026-09-18Nothing you may do with a shift — 6 a"
+        "size": "239x552",
+        "text": "Nobody is covering \"Friday repair cafe\" on 2026-09-18Nothing you may do with a shift — 7 a"
       },
       "led": null,
       "figures": []
@@ -694,16 +674,7 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [
-        "wordmark at 16..88",
-        "Back at 98..130",
-        "Forward at 132..163",
-        "pages-link at 242..303",
-        "place-the-quarter at 432..539",
-        "place-the-fortnight at 541..656",
-        "place-the-week at 658..752",
-        "place-who-is-covering-what at 754..926"
-      ],
+      "offscreen": [],
       "asking": [],
       "board": [],
       "fill": 61,
@@ -720,7 +691,12 @@
       "app": "seedbed",
       "state": "largest",
       "collisions": [],
-      "small": [],
+      "small": [
+        {
+          "what": "Find anything",
+          "size": "22x53"
+        }
+      ],
       "cut": [],
       "unnamed": [],
       "keyed": [],
@@ -731,9 +707,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [
-        "standing at 598..1054",
-        "activity-button at 1062..1196",
-        "profile-button at 1204..1544"
+        "standing at 597..1053"
       ],
       "asking": [],
       "board": [],
@@ -756,18 +730,10 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [
-        "wordmark at -164..-58",
-        "Back at -48..-16",
-        "Forward at -14..17",
-        "places-more at 296..448",
-        "standing at 310..416",
-        "activity-button at 424..521",
-        "profile-button at 529..583"
-      ],
+      "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 30,
+      "fill": 34,
       "inspector": null,
       "led": null,
       "figures": []
@@ -923,10 +889,10 @@
       "board": [],
       "fill": 8,
       "inspector": {
-        "shown": 3,
+        "shown": 5,
         "hidden": 0,
-        "size": "239x180",
-        "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆ApplySkip"
+        "size": "239x228",
+        "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆Remove the garde"
       },
       "led": null,
       "figures": []
@@ -967,21 +933,15 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [
-        "wordmark at -164..-58",
-        "Back at -48..-16",
-        "Forward at -14..17",
-        "activity-button at 307..404",
-        "profile-button at 412..466"
-      ],
+      "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 25,
+      "fill": 26,
       "inspector": {
-        "shown": 3,
+        "shown": 5,
         "hidden": 0,
-        "size": "344x180",
-        "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆ApplySkip"
+        "size": "344x228",
+        "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆Remove the garde"
       },
       "led": null,
       "figures": []
