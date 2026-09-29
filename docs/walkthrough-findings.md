@@ -3097,8 +3097,9 @@ two singles and thirty-five songs.
   repository has an installation whose user ids resolve
 - status: fixed in "walkthrough: F · a seat is named by its name" · an
   author is named by its user node, else by the seat it was offered under,
-  else by its id; the page context carries `seats` (the embed passes its
-  own). Criterion: primitives `the-seat-under-a-policy.test.tsx` "names the
+  else by its id; the page context carries `seats`, and the embed hands its
+  seats to its provider as well as its strip (its profile read "U
+  user-mara" until it did). Criterion: primitives `the-seat-under-a-policy.test.tsx` "names the
   other seat by the name it is offered under" (verified failing without the
   fix: `expected 'kai' to be 'Kai, the keeper'`).
 

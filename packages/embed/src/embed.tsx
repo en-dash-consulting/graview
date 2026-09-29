@@ -242,6 +242,8 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         scheme={scheme}
         {...(brand ? { brand } : {})}
         {...(principal ? { principal } : {})}
+        /* The seats, so every surface under the provider names a seat as it was offered (W-114). */
+        {...(props.seats ? { seats: props.seats } : {})}
         {...(props.presence ? { presence: props.presence } : {})}
         /* The reader's own text size and motion, on somebody else's page
            too: the answer lives on the browser, not on the installation. */
