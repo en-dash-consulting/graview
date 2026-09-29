@@ -2946,3 +2946,21 @@ two singles and thirty-five songs.
   among what it implicates. Criterion: tools `affordances.test.ts` "never
   says a node holds while another rule names it" (verified failing without
   the fix).
+
+### W-108 · Selecting one song lights its theme's whole column
+- stage: D · face: scene · width: 1280 · scheme: light
+- expected: "selection lights it and dims the rest" — select Cobalt in the
+  coverage of songs by theme and what is lit is Cobalt's
+- actual: ten marks lit, nine of them `theme:night` — the night cell of
+  every song about night. A cell was lit when the selection reached its row
+  OR its column; Cobalt reaches "night", so the whole night column lit, and
+  the picture said Cobalt was tied to eight other songs it has nothing to
+  do with. Todo's coverage has one row per requirement, so a lit column
+  always read as right there.
+- where it belongs: `packages/primitives/src/lens/coverage.tsx`
+- harness that should have caught it: `audit-ui`'s emphasis states select a
+  row with no shared columns
+- status: fixed in "walkthrough: D · a coverage cell is an edge" · a cell
+  is lit when the selection reaches both its ends. Criterion: primitives
+  `a-cell-is-an-edge.test.tsx` (verified failing without the fix:
+  `['Blue Hour:lit', 'Cobalt:lit']`).

@@ -815,10 +815,17 @@ export function CoverageView<S extends AnySchema>({
                           {...(filled
                             ? {
                                 "data-graview-pick": column.id,
+                                /*
+                                 * A cell is an EDGE, lit when the selection
+                                 * reaches both its ends. Lit when it reached
+                                 * either, selecting one song lit the whole
+                                 * column of its theme — every other song
+                                 * about night, none of them its business.
+                                 */
                                 "data-graview-emphasis":
                                   lit.size === 0
                                     ? "plain"
-                                    : lit.has(column.id) || lit.has(row.id)
+                                    : lit.has(column.id) && lit.has(row.id)
                                       ? "lit"
                                       : "dimmed",
                               }
@@ -856,7 +863,7 @@ export function CoverageView<S extends AnySchema>({
                                 }
                           }
                         >
-                          <span style={cellStyle(filled, missing, lit.has(column.id) || lit.has(row.id), lit.size > 0)} />
+                          <span style={cellStyle(filled, missing, lit.has(column.id) && lit.has(row.id), lit.size > 0)} />
                           {stacked ? <span>{column.label}</span> : null}
                         </div>
                       );
