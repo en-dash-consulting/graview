@@ -18,6 +18,7 @@ import {
   type LayoutNode,
   type LayoutOptions,
   withJackIn,
+  holdLayout,
   isBandAggregate,
   toggleExpanded,
   withWithin,
@@ -377,13 +378,30 @@ export function Scene<S extends AnySchema>({
    * and it is the same kind of thing as a pan. Keying this on `seen` meant a
    * camera that moved by a pixel rebuilt the world exactly as a pan did.
    */
+  /*
+   * A CARD UNDER THE HAND IS MOVED, NOT LAID OUT (docs/scale.md). In the
+   * stack a held card is the only thing a drag changes, so the world is laid
+   * out without it and `holdLayout` moves it — a full layout per pointer
+   * move was the band's grouping and every edge's bundle, every frame. A
+   * district held at altitude carries its plot and village with it, which
+   * only the layout knows, so up there the pin still goes into the layout.
+   */
+  const inPlace = held !== null && !(view.overview ?? false);
   const atRest = useMemo(() => {
     const still = view.pan ? { ...view, pan: undefined } : view;
-    return held ? withPin(still, held.id, { x: held.x, y: held.y }) : still;
-  }, [view, held]);
-  const still = useMemo<Layout>(
+    return held && !inPlace ? withPin(still, held.id, { x: held.x, y: held.y }) : still;
+  }, [view, held, inPlace]);
+  const laid = useMemo<Layout>(
     () => layout(store.graph, store.schema, atRest, sized),
     [store, atRest, sized, nodes],
+  );
+  const still = useMemo<Layout>(
+    () =>
+      held && inPlace
+        ? (holdLayout(laid, held.id, { x: held.x, y: held.y }) ??
+          layout(store.graph, store.schema, withPin(atRest, held.id, { x: held.x, y: held.y }), sized))
+        : laid,
+    [laid, held, inPlace, store, atRest, sized],
   );
   const result = useMemo<Layout>(
     () => panLayout(still, seen.pan ?? { x: 0, y: 0 }),
@@ -1021,6 +1039,7 @@ export function Scene<S extends AnySchema>({
       ) : null}
       <Lines
         frame={frame}
+        holding={inPlace}
         width={result.width}
         height={result.height}
         scheme={scheme}
@@ -1079,6 +1098,8 @@ export function Scene<S extends AnySchema>({
       />
       <RelationCaptions
         nodes={frame.nodes}
+        moving={frame.t < 1}
+        holding={inPlace}
         scheme={scheme}
         width={result.width}
         stageRef={wrapperRef}

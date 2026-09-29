@@ -18,4 +18,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Drive-in thumbnails and lenses draw a budget: at most 24 members to a thumbnail, mounted on screen and still; built-in lenses say '+N more'](./drive-in-thumbnails-and-lenses-draw-a.md) | completed |
 | [The example numbers songs on their first album, and the docs, skills and site say how a big graph reads](./the-example-numbers-songs-on-their.md) | pending |
 | [The relation band draws what fits and groups the rest: a derived budget, grouping by the declaration, aggregates that open](./the-relation-band-draws-what-fits-and.md) | completed |
-| [The render path holds 60 frames a second: nothing measures while moving, memoised hosts, linear lines and tweens](./the-render-path-holds-60-frames-a.md) | pending |
+| [The render path holds 60 frames a second: nothing measures while moving, memoised hosts, linear lines and tweens](./the-render-path-holds-60-frames-a.md) | completed |

@@ -1,13 +1,14 @@
 {
-  "at": "2026-09-29T07:31:37.438Z",
+  "at": "2026-09-29T07:51:36.393Z",
   "engine": "chromium",
   "stops": {
     "altitude, still": {
       "frames": 15,
       "first": 19,
-      "p50": 19.1,
-      "p95": 19.4,
-      "worst": 19,
+      "p50": 18.9,
+      "p95": 19.6,
+      "worst": 20,
+      "slow": [],
       "longTasks": 0,
       "dom": 1161,
       "hosts": 5,
@@ -16,12 +17,13 @@
       "waiting": 2
     },
     "altitude, drag": {
-      "frames": 254,
-      "first": 7,
-      "p50": 18.7,
-      "p95": 19.7,
-      "worst": 38,
-      "longTasks": 1,
+      "frames": 133,
+      "first": 36,
+      "p50": 18.2,
+      "p95": 19.5,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
       "dom": 1163,
       "hosts": 5,
       "strands": 0,
@@ -29,11 +31,12 @@
       "waiting": 2
     },
     "altitude, wheel": {
-      "frames": 2071,
-      "first": 18,
+      "frames": 685,
+      "first": 8,
       "p50": 0.3,
-      "p95": 18.8,
+      "p95": 18.9,
       "worst": 20,
+      "slow": [],
       "longTasks": 0,
       "dom": 1171,
       "hosts": 5,
@@ -42,12 +45,13 @@
       "waiting": 2
     },
     "descend": {
-      "frames": 1130,
+      "frames": 235,
       "first": 19,
-      "p50": 2.8,
-      "p95": 19.1,
-      "worst": 39,
-      "longTasks": 1,
+      "p50": 4.4,
+      "p95": 19.2,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
       "dom": 632,
       "hosts": 6,
       "strands": 0,
@@ -55,12 +59,13 @@
       "waiting": 0
     },
     "focus the hub": {
-      "frames": 1278,
-      "first": 19,
-      "p50": 0.4,
-      "p95": 19.4,
-      "worst": 77,
-      "longTasks": 1,
+      "frames": 587,
+      "first": 57,
+      "p50": 1.4,
+      "p95": 19,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
       "dom": 646,
       "hosts": 36,
       "strands": 50,
@@ -68,64 +73,106 @@
       "waiting": 0
     },
     "hub, drag": {
-      "frames": 198,
-      "first": 2,
-      "p50": 17.9,
+      "frames": 130,
+      "first": 20,
+      "p50": 18.1,
       "p95": 19.5,
-      "worst": 51,
-      "longTasks": 1,
-      "dom": 651,
+      "worst": 37,
+      "slow": [
+        [
+          1128,
+          37
+        ]
+      ],
+      "longTasks": 0,
+      "dom": 650,
+      "hosts": 36,
+      "strands": 50,
+      "thumbnails": 0,
+      "waiting": 0
+    },
+    "hub, move a card": {
+      "frames": 150,
+      "first": 19,
+      "p50": 18.7,
+      "p95": 19.6,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
+      "dom": 650,
       "hosts": 36,
       "strands": 50,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, wheel": {
-      "frames": 3002,
-      "first": 2,
-      "p50": 0.2,
-      "p95": 0.4,
+      "frames": 171,
+      "first": 19,
+      "p50": 17.2,
+      "p95": 19.5,
       "worst": 20,
+      "slow": [],
       "longTasks": 0,
-      "dom": 651,
+      "dom": 654,
       "hosts": 36,
       "strands": 50,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, select": {
-      "frames": 67,
-      "first": 18,
+      "frames": 66,
+      "first": 19,
       "p50": 19.1,
       "p95": 19.4,
       "worst": 20,
+      "slow": [],
       "longTasks": 0,
-      "dom": 613,
+      "dom": 609,
       "hosts": 36,
       "strands": 50,
       "thumbnails": 0,
       "waiting": 0
     },
     "hub, type in Find": {
-      "frames": 534,
-      "first": 16,
-      "p50": 0.3,
-      "p95": 19.4,
-      "worst": 73,
-      "longTasks": 3,
-      "dom": 1046,
+      "frames": 594,
+      "first": 66,
+      "p50": 1.2,
+      "p95": 18.7,
+      "worst": 38,
+      "slow": [
+        [
+          187,
+          38
+        ],
+        [
+          315,
+          38
+        ]
+      ],
+      "longTasks": 1,
+      "dom": 1045,
       "hosts": 36,
       "strands": 56,
       "thumbnails": 0,
       "waiting": 0
     },
     "rise": {
-      "frames": 4490,
-      "first": 38,
+      "frames": 2971,
+      "first": 20,
       "p50": 0.1,
-      "p95": 0.3,
-      "worst": 72,
-      "longTasks": 2,
+      "p95": 1.6,
+      "worst": 42,
+      "slow": [
+        [
+          893,
+          42
+        ],
+        [
+          949,
+          37
+        ]
+      ],
+      "longTasks": 0,
       "dom": 2493,
       "hosts": 6,
       "strands": 0,
@@ -138,56 +185,64 @@
     {
       "id": "aggregate:album|released-by|in|type=album",
       "opens": "place",
-      "text": "Album29 albumsThe Storm · Everready: The Religion · Killer …open ▾"
+      "text": "Album29 albumsThe Storm · Everready: The Religion · Killer …open ▾",
+      "reachable": true
     },
     {
       "id": "aggregate:album|released-by|in|type=compilation",
       "opens": "place",
-      "text": "Compilation5 albumsTech N9ne: The Box Set · Strange Days Tour: A Decade Of Excel"
+      "text": "Compilation5 albumsTech N9ne: The Box Set · Strange Days Tour: A Decade Of Excel",
+      "reachable": true
     },
     {
       "id": "aggregate:album|released-by|in|type=ep",
       "opens": "place",
-      "text": "Ep13 albumsTherapy · E.B.A.H. · FEAR EXODUS …open ▾"
+      "text": "Ep13 albumsTherapy · E.B.A.H. · FEAR EXODUS …open ▾",
+      "reachable": true
     },
     {
       "id": "aggregate:album|released-by|in|type=mixtape",
       "opens": "place",
-      "text": "Mixtape2 albumsMadness Unleashed · Bad Seasonopen ▾"
+      "text": "Mixtape2 albumsMadness Unleashed · Bad Seasonopen ▾",
+      "reachable": true
     },
     {
       "id": "aggregate:album|released-by|in|type=single",
       "opens": "place",
-      "text": "Single80 albumsOverdrive · John Doe (Chopped Up Not Slopped Up Version) · Bass …"
+      "text": "Single80 albumsOverdrive · John Doe (Chopped Up Not Slopped Up Version) · Bass …",
+      "reachable": true
     },
     {
       "id": "aggregate:song|by|in|more:by:artist:tech-n9ne",
       "opens": "picture",
-      "text": "783 more songsOverdrive · Rock The Bells Anthem · 2 Piece …see them ↗"
+      "text": "783 more songsOverdrive · Rock The Bells Anthem · 2 Piece …see them ↗",
+      "reachable": true
     },
     {
       "id": "aggregate:song|features|in|more:features:artist:tech-n9ne",
       "opens": "picture",
-      "text": "318 more songsCold Piece of Work · Crew Cut · Don’t Worry Momma, It’s Just Bleed"
+      "text": "318 more songsCold Piece of Work · Crew Cut · Don’t Worry Momma, It’s Just Bleed",
+      "reachable": true
     }
   ],
   "opened": {
     "pressed": "place",
-    "before": "#focus=artist%3Atech-n9ne&pin.artist%3Atech-n9ne=178%2C-86.16",
+    "before": "#focus=artist%3Atech-n9ne",
     "during": {
-      "hash": "#focus=artist%3Atech-n9ne&expand=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum&pin.artist%3Atech-n9ne=178%2C-86.16",
+      "hash": "#focus=artist%3Atech-n9ne&expand=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum",
       "band": 30
     },
-    "after": "#focus=artist%3Atech-n9ne&pin.artist%3Atech-n9ne=178%2C-86.16"
+    "after": "#focus=artist%3Atech-n9ne"
   },
   "verdict": {
     "theCityAtAltitudeIsLight": true,
     "aHubStopIsBounded": true,
     "everyGroupOpens": true,
-    "panningHolds60": false,
+    "panningHolds60": true,
+    "aHeldCardFollowsTheHand": true,
     "wheelHolds60": true,
-    "aTransitionHolds60": false,
-    "aSelectionAndASearchAreCheap": false
+    "aTransitionHolds60": true,
+    "aSelectionAndASearchAreCheap": true
   },
-  "passed": false
+  "passed": true
 }

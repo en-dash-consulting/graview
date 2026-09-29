@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-29T02:09:35.363Z",
-  "engine": "firefox",
+  "at": "2026-09-29T07:56:30.866Z",
+  "engine": "chromium",
   "screens": [
     {
       "app": "todo",
@@ -44,7 +44,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [
-        "standing at 1064..1247"
+        "standing at 1065..1248"
       ],
       "asking": [],
       "board": [],
@@ -52,7 +52,7 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "239x196",
+        "size": "239x195",
         "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
       },
       "led": null,
@@ -480,7 +480,7 @@
       "inspector": {
         "shown": 12,
         "hidden": 0,
-        "size": "239x441",
+        "size": "239x440",
         "text": "Put it back☆Rename …☆Move the date …☆Change the task …☆Block time for it …☆its tiesNote wh"
       },
       "led": null,
@@ -654,7 +654,7 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "239x552",
+        "size": "239x551",
         "text": "Nobody is covering \"Friday repair cafe\" on 2026-09-18Nothing you may do with a shift — 7 a"
       },
       "led": null,
@@ -707,7 +707,7 @@
       "articles": [],
       "covered": [],
       "offscreen": [
-        "standing at 597..1053"
+        "standing at 598..1054"
       ],
       "asking": [],
       "board": [],
@@ -936,7 +936,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 26,
+      "fill": 33,
       "inspector": {
         "shown": 5,
         "hidden": 0,

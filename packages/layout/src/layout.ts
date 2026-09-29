@@ -1378,6 +1378,38 @@ export function planeOf(result: Layout, id: string): Plane | null {
  * rides `city.pan`), so only the cards, the lines between them and the
  * recorded pan move.
  */
+/**
+ * A CARD UNDER THE HAND, moved without laying the world out again.
+ *
+ * A pin only overrides where one card is; everything else about the stop —
+ * the band's grouping, the bundles, the districts — is what it was. Laying
+ * it all out again on every pointer move put a full `layout()` and a full
+ * bundle of every edge in every frame of a drag (docs/scale.md). This moves
+ * the held card to the pin (unpanned, as a pin is stored) and re-aims the
+ * lines that touch it. `null` when it cannot say the same thing a full
+ * layout would — a drive-in's screen, whose pin places it differently —
+ * and the caller lays it out with the pin instead. On release the pin goes
+ * into the view and the full layout runs once.
+ */
+export function holdLayout(placed: Layout, id: string, at: { x: number; y: number }): Layout | null {
+  const held = placed.nodes.find((node) => node.id === id);
+  if (!held || held.screenOf !== undefined) return null;
+  const moved: LayoutNode = { ...held, x: at.x, y: at.y, pinned: true };
+  const cx = moved.x + moved.width / 2;
+  const cy = moved.y + moved.height / 2;
+  return {
+    ...placed,
+    nodes: placed.nodes.map((node) => (node.id === id ? moved : node)),
+    connectors: placed.connectors.map((connector) =>
+      connector.from === id
+        ? { ...connector, x1: cx, y1: cy }
+        : connector.to === id
+          ? { ...connector, x2: cx, y2: cy }
+          : connector,
+    ),
+  };
+}
+
 export function panLayout(placed: Layout, pan: { x: number; y: number }): Layout {
   if (pan.x === 0 && pan.y === 0) return placed;
   return {

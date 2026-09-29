@@ -325,7 +325,7 @@ export function ResolvedView<S extends AnySchema>({
     node.rank ?? "",
     node.nestedUnder ?? "",
     node.plot ? `${node.plot.col},${node.plot.row},${node.plot.side}` : "",
-    node.aggregate?.memberIds.join(",") ?? "",
+    node.aggregate ? idsKey(node.aggregate.memberIds) : "",
     node.aggregate?.retired ?? "",
     (implicated ?? []).join(","),
     (flagged ?? []).join(","),
@@ -435,3 +435,24 @@ export const BandCard = memo(function BandCard({ node }: { readonly node: SceneN
     </div>
   );
 });
+
+/*
+ * A group's members as a short key: their count and a hash of their ids.
+ * The signature joined them, and a band group or a district holds hundreds,
+ * so every host rebuilt a string of thousands of characters every frame of
+ * a transition to learn that nothing had changed (docs/scale.md).
+ */
+const keys = new WeakMap<readonly string[], string>();
+function idsKey(ids: readonly string[]): string {
+  // The same array from frame to frame of a tween: hashed once.
+  const known = keys.get(ids);
+  if (known !== undefined) return known;
+  let hash = 0x811c9dc5;
+  for (const id of ids) {
+    for (let i = 0; i < id.length; i++) hash = Math.imul(hash ^ id.charCodeAt(i), 0x01000193);
+    hash = Math.imul(hash ^ 0x2c, 0x01000193);
+  }
+  const key = `${ids.length}:${(hash >>> 0).toString(36)}`;
+  keys.set(ids, key);
+  return key;
+}

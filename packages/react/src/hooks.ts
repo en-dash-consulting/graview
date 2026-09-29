@@ -57,10 +57,34 @@ export function useSelection() {
 export function useViolations<S extends AnySchema>() {
   const { store } = useGraview<S>();
   const nodes = useGraph<S>();
-  return useMemo(
-    () => store.violations(),
-    [store, nodes],
-  );
+  // `nodes` changes with the graph, so a re-render after an edit asks again.
+  return useMemo(() => violationsOf(store as unknown as AnyStore) as ReturnType<typeof store.violations>, [store, nodes]);
+}
+
+/*
+ * ONE evaluation per change, however many ask.
+ *
+ * Every caller — the scene, Find, the standing, and each picture on the
+ * ground — evaluated every invariant over the whole graph for itself, and a
+ * picture evaluates when it mounts. On a catalogue of a thousand songs that
+ * was tens of milliseconds for each card a stop brought in (docs/scale.md).
+ * The store says when the graph changes; until it does, the answer holds.
+ */
+type AnyStore = ReturnType<typeof useGraview>["store"];
+const evaluated = new WeakMap<AnyStore, { violations: ReturnType<AnyStore["violations"]> | null }>();
+function violationsOf(store: AnyStore) {
+  let entry = evaluated.get(store);
+  if (!entry) {
+    const fresh: { violations: ReturnType<AnyStore["violations"]> | null } = { violations: null };
+    // Cleared inside the store's notify, before React renders anything that asks again.
+    store.subscribe(() => {
+      fresh.violations = null;
+    });
+    evaluated.set(store, fresh);
+    entry = fresh;
+  }
+  entry.violations ??= store.violations();
+  return entry.violations;
 }
 
 /** Ids implicated in some current violation, for marking them in place. */

@@ -115,36 +115,53 @@ export function SceneViewHost({
    * child instead, the same lesson every measured surface here learned.
    */
   const [tagAt, setTagAt] = useState<{ top: number; right: number } | null>(null);
+  const tagged = Math.round(node.plane) === 0 && !node.aggregate;
+  /*
+   * Measured when the panel's SIZE changes, not on every render.
+   *
+   * It ran after every render and read two bounding boxes, and a host
+   * renders every frame of a transition — so every frame forced the browser
+   * to lay the whole scene out before it could paint it (docs/scale.md, a
+   * third of the frame landing on a hub). The offsets are the host's own
+   * coordinates, which is also what the tag is positioned in: a bounding
+   * box included the transition's scale and was wrong for it.
+   */
   useLayoutEffect(() => {
-    if (Math.round(node.plane) !== 0 || node.aggregate) return;
+    if (!tagged) return;
     const host = ref.current;
-    /*
-     * The PANEL, never the tag itself.
-     *
-     * `firstElementChild` was the drawn panel right up until the view had
-     * nothing to draw — a focus on a node an act had just removed — and
-     * then the tag was the only child, so this measured the tag against its
-     * own host and moved it by the offset below. Every render moved it nine
-     * pixels up and fourteen right, for fifty renders, until React gave up
-     * with "Maximum update depth exceeded" and blanked the page. A
-     * measurement that can read its own output has to say which child it
-     * means.
-     */
-    const child = [...(host?.children ?? [])].find(
-      // An empty data attribute reads as "", so presence is the question.
-      (element) => (element as HTMLElement).dataset["graviewKindtag"] === undefined,
-    ) as HTMLElement | undefined;
-    if (!host || !child) return;
-    const hostBox = host.getBoundingClientRect();
-    const childBox = child.getBoundingClientRect();
-    const next = {
-      top: Math.round(childBox.top - hostBox.top) - 9,
-      right: Math.round(hostBox.right - childBox.right) + 14,
+    if (!host) return;
+    const place = () => {
+      /*
+       * The PANEL, never the tag itself.
+       *
+       * `firstElementChild` was the drawn panel right up until the view had
+       * nothing to draw — a focus on a node an act had just removed — and
+       * then the tag was the only child, so this measured the tag against
+       * its own host and moved it by the offset below, every render, until
+       * React gave up with "Maximum update depth exceeded" and blanked the
+       * page. A measurement that can read its own output has to say which
+       * child it means.
+       */
+      const child = [...host.children].find(
+        // An empty data attribute reads as "", so presence is the question.
+        (element) => (element as HTMLElement).dataset["graviewKindtag"] === undefined,
+      ) as HTMLElement | undefined;
+      if (!child) return;
+      const next = {
+        top: child.offsetTop - 9,
+        right: host.clientWidth - (child.offsetLeft + child.offsetWidth) + 14,
+      };
+      setTagAt((current) =>
+        current && current.top === next.top && current.right === next.right ? current : next,
+      );
     };
-    setTagAt((current) =>
-      current && current.top === next.top && current.right === next.right ? current : next,
-    );
-  });
+    place();
+    if (typeof ResizeObserver === "undefined") return;
+    const watch = new ResizeObserver(place);
+    watch.observe(host);
+    for (const element of host.children) watch.observe(element);
+    return () => watch.disconnect();
+  }, [tagged, node.id]);
   /*
    * A node's depth is its plane, pulled forward by however near it sits
    * within that plane.
@@ -162,6 +179,13 @@ export function SceneViewHost({
       ? styleFor(lower, scheme)
       : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), at - lower);
   const transform = transformFor(style, node.x, node.y, canvasWidth, canvasHeight);
+  /*
+   * The blur is the NEAREST plane's, not a mix. It is under half a pixel,
+   * nobody can see it tween, and a filter whose radius changes is a filter
+   * repainted — every host, every frame of every transition
+   * (docs/scale.md). Snapped, it changes once, halfway.
+   */
+  const blur = styleFor(Math.max(0, Math.min(2, Math.round(at))) as 0 | 1 | 2, scheme).blur;
   const ref = useRef<HTMLDivElement | null>(null);
   usePickTargets(ref);
 
@@ -241,7 +265,7 @@ export function SceneViewHost({
     ? {
         transform: cssTransform(transform),
         transformOrigin: "0 0",
-        filter: style.blur > 0 ? `blur(${style.blur}px)` : undefined,
+        filter: blur > 0 ? `blur(${blur}px)` : undefined,
         // Recession dims toward the ground; entering and leaving nodes carry
         // their own fade on top of it.
         opacity: (1 - style.falloff * 0.55) * (node.opacity ?? 1),

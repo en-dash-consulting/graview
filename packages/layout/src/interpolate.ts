@@ -32,7 +32,37 @@ function centre(node: LayoutNode): { x: number; y: number } {
  * animations — a member growing out of its group and a group swallowing its
  * members are the same interpolation run in opposite directions.
  */
+/*
+ * A layout's nodes by id, and the groups each member could shrink into —
+ * read once per layout, not once per node per frame. `find` over every node
+ * for every node entering or leaving was quadratic, and a hub whose band
+ * groups hold a thousand members ran it sixty times a second.
+ */
+interface Index {
+  readonly byId: ReadonlyMap<string, LayoutNode>;
+  readonly groupsOf: ReadonlyMap<string, readonly LayoutNode[]>;
+}
+const indexed = new WeakMap<Layout, Index>();
+function indexOf(layout: Layout): Index {
+  let index = indexed.get(layout);
+  if (index) return index;
+  const byId = new Map<string, LayoutNode>();
+  const groupsOf = new Map<string, LayoutNode[]>();
+  for (const node of layout.nodes) {
+    byId.set(node.id, node);
+    for (const member of node.aggregate?.memberIds ?? []) {
+      const groups = groupsOf.get(member);
+      if (groups) groups.push(node);
+      else groupsOf.set(member, [node]);
+    }
+  }
+  index = { byId, groupsOf };
+  indexed.set(layout, index);
+  return index;
+}
+
 function standIn(node: LayoutNode, other: Layout): LayoutNode | null {
+  const { byId, groupsOf } = indexOf(other);
   /*
    * A BILLBOARD SINKS INTO ITS VILLAGE, and rises out of it. The picture on
    * a kind's plot is an aggregate node, and an aggregate's stand-in is the
@@ -45,14 +75,14 @@ function standIn(node: LayoutNode, other: Layout): LayoutNode | null {
    * picture is — and where the next one comes from.
    */
   if (node.screenOf !== undefined) {
-    const card = other.nodes.find((candidate) => candidate.id === kindCardId(node.screenOf!));
+    const card = byId.get(kindCardId(node.screenOf));
     if (card) return { ...node, x: card.x, y: card.y, width: card.width, height: card.height };
   }
   if (isAggregateId(node.id) || kindOfCard(node.id) !== null) {
     // A group vanishing: its members are the thing it becomes. Collapse to
     // the centroid of wherever they went.
     const members = (node.aggregate?.memberIds ?? [])
-      .map((id) => other.nodes.find((n) => n.id === id))
+      .map((id) => byId.get(id))
       .filter((n): n is LayoutNode => n !== undefined);
     if (members.length === 0) return null;
     const points = members.map(centre);
@@ -61,11 +91,9 @@ function standIn(node: LayoutNode, other: Layout): LayoutNode | null {
     return { ...node, x: x - node.width / 2, y: y - node.height / 2 };
   }
 
-  const group = other.nodes.find(
-    (candidate) =>
-      (candidate.id === kindCardId(node.kind) || candidate.id === aggregateId(node.kind)) &&
-      candidate.aggregate?.memberIds.includes(node.id),
-  );
+  const group = groupsOf
+    .get(node.id)
+    ?.find((candidate) => candidate.id === kindCardId(node.kind) || candidate.id === aggregateId(node.kind));
   if (!group) return null;
   const point = centre(group);
   return { ...node, x: point.x - node.width / 2, y: point.y - node.height / 2 };

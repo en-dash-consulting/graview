@@ -47,6 +47,7 @@ export function Lines<S extends AnySchema>({
   graphNodes,
   onPickEdge,
   liveOf,
+  holding = false,
 }: {
   readonly frame: InterpolatedLayout;
   readonly width: number;
@@ -60,6 +61,8 @@ export function Lines<S extends AnySchema>({
   readonly graphNodes: unknown;
   readonly onPickEdge: (edgeId: string, at?: { x: number; y: number }) => void;
   readonly liveOf: (connector: { from: string; to: string }) => ActivityMark | undefined;
+  /** A card is held by the hand: draw from the layout, measure when it lets go. */
+  readonly holding?: boolean;
 }) {
   const [asked, remeasure] = useState(0);
   /*
@@ -70,9 +73,19 @@ export function Lines<S extends AnySchema>({
    * after commit and before paint, and is what is drawn.
    */
   const [measured, setMeasured] = useState<ReturnType<typeof connectorStrands> | null>(null);
+  /*
+   * NOTHING MEASURES WHILE MOVING (docs/scale.md). Both ends of every line
+   * are in flight during a transition, so no line drawn then is right; and
+   * measuring every host, every pick and every member box on every frame
+   * was the largest cost of a transition. The lines leave with the flight
+   * and are measured once, where it lands. A pan moves them by transform
+   * with the world, which is not a new frame, so they follow the hand.
+   */
+  const moving = frame.t < 1;
   useLayoutEffect(() => {
+    if (moving || holding) return;
     setMeasured(connectorStrands(frame.nodes, frame.connectors, stageRef.current, overview, scheme));
-  }, [frame, selection, overview, graphNodes, scheme, asked, stageRef]);
+  }, [frame, moving, holding, selection, overview, graphNodes, scheme, asked, stageRef]);
 
   /*
    * A LINE POINTS AT WHERE A THING IS, NOT AT WHERE IT WAS.
@@ -126,8 +139,14 @@ export function Lines<S extends AnySchema>({
     };
   }, [stageRef, views]);
 
-  // Without a DOM — the first render, a server — the lines stand on the layout's own boxes.
-  const strands = measured ?? connectorStrands(frame.nodes, frame.connectors, null, overview, scheme);
+  if (moving) return null;
+  /*
+   * Without a DOM — the first render, a server — the lines stand on the
+   * layout's own boxes; and so they do while a card is held, following the
+   * hand from the layout rather than measuring the page on every move.
+   */
+  const strands =
+    (holding ? null : measured) ?? connectorStrands(frame.nodes, frame.connectors, null, overview, scheme);
   const drawnSingles = new Set<string>();
   for (const strand of strands) {
     if (strand.edges.length !== 1) continue;
@@ -653,20 +672,28 @@ export function RelationCaptions({
   scheme,
   width: stageWidth,
   stageRef,
+  moving = false,
+  holding = false,
 }: {
   readonly nodes: readonly SceneNode[];
   readonly scheme: "light" | "dark";
   readonly width: number;
   readonly stageRef: { current: HTMLElement | null };
+  /** In flight: captions are measured where the transition lands, not on every frame of it. */
+  readonly moving?: boolean;
+  /** A card is held: nothing the captions stand over moves, so they are not measured again. */
+  readonly holding?: boolean;
 }) {
   const kit = useKit();
   /* Measured after commit, for the reason the ties are: a caption placed
      over where a card WAS hung in open ground after every navigation. */
   const [runs, setRuns] = useState<CaptionRun[]>([]);
   useLayoutEffect(() => {
+    // Nothing under a held card moves: the captions keep where they were measured.
+    if (moving || holding) return;
     setRuns(placeCaptions());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, scheme, stageWidth, stageRef]);
+  }, [nodes, moving, holding, scheme, stageWidth, stageRef]);
   function placeCaptions(): CaptionRun[] {
     const entries: CaptionEntry[] = [];
     for (const node of nodes) {
@@ -693,6 +720,7 @@ export function RelationCaptions({
   // The kit may keep the captions off: the edge's words stay on the inspector.
   if (runs.length === 0 || !kit.captions.visible) return null;
 
+  if (moving) return null;
   return (
     <div
       aria-hidden="true"

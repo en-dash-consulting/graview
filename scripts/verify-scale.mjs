@@ -47,22 +47,48 @@ try {
     }).observe({ type: "longtask", buffered: true });
     w.__record = () => {
       w.__frames = [];
+      w.__at = [];
       w.__long = [];
-      w.__on = true;
+      w.__markIndex = null;
+      /*
+       * One recorder at a time. A loop that only checked a flag outlived its
+       * stop whenever the next recording began before its next frame, and
+       * then every frame was counted twice, at times past the stop's end.
+       */
+      const generation = (w.__generation = (w.__generation ?? 0) + 1);
       let last = performance.now();
+      const began = last;
       const tick = (at) => {
-        if (!w.__on) return;
+        if (w.__generation !== generation) return;
         w.__frames.push(at - last);
+        w.__at.push(at - began);
         last = at;
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     };
+    // The moment the gesture began, so its first frame is found rather than assumed.
+    w.__begin = () => {
+      w.__markIndex = w.__frames.length;
+    };
     w.__stop = () => {
-      w.__on = false;
-      // The first frame is the new stop being laid out and drawn; it is judged apart.
-      const first = w.__frames[1] ?? 0;
-      const rest = w.__frames.slice(2).sort((a, b) => a - b);
+      w.__generation = (w.__generation ?? 0) + 1;
+      /*
+       * THE FIRST FRAME is the one the new stop lands in: laid out, rendered
+       * and drawn. With vsync off a frame is a couple of milliseconds, so it
+       * is not the recording's first frame — the gesture has not happened
+       * yet — nor reliably the one straight after the gesture: the
+       * navigation reaches React a task or two later. It is the longest
+       * frame in the 100 ms after the gesture began, judged on its own
+       * (at most 150 ms), and every other frame is judged as a frame.
+       */
+      const start = w.__markIndex ?? 1;
+      let firstAt = -1;
+      for (let i = start, elapsed = 0; i < w.__frames.length && elapsed < 100; elapsed += w.__frames[i], i++) {
+        if (firstAt < 0 || w.__frames[i] > w.__frames[firstAt]) firstAt = i;
+      }
+      const first = firstAt < 0 ? 0 : w.__frames[firstAt];
+      const rest = w.__frames.filter((_, i) => i > 0 && i !== firstAt).sort((a, b) => a - b);
       const at = (p) => (rest.length ? Math.round(rest[Math.min(rest.length - 1, Math.floor(rest.length * p))] * 10) / 10 : 0);
       return {
         frames: rest.length,
@@ -70,6 +96,12 @@ try {
         p50: at(0.5),
         p95: at(0.95),
         worst: rest.length ? Math.round(rest[rest.length - 1]) : 0,
+        // Every other frame over two frames' time, as [ms into the stop, length]: which part of it is slow.
+        slow: w.__frames
+          .map((length, i) => [i, Math.round(w.__at[i]), Math.round(length)])
+          .filter(([i, , length]) => i > 0 && i !== firstAt && length > 33)
+          .map(([, when, length]) => [when, length])
+          .slice(0, 8),
         longTasks: w.__long.length,
         dom: document.querySelectorAll("*").length,
         hosts: document.querySelectorAll("[data-graview-view]").length,
@@ -82,6 +114,7 @@ try {
   });
   const measure = async (name, act, settle = 800) => {
     await page.evaluate(() => window.__record());
+    await page.evaluate(() => window.__begin());
     // A gesture that cannot be made is recorded, not fatal: the next claim still gets measured.
     try {
       await act();
@@ -111,6 +144,26 @@ try {
     }
   };
   const travel = (hash) => page.evaluate((next) => { location.hash = next; }, hash);
+  /*
+   * A point on the GROUND, found rather than assumed: a drag that starts on
+   * a card moves the card (a different gesture, measured on its own), and a
+   * fixed point was a card at one stop and ground at the next.
+   */
+  const ground = () =>
+    page.evaluate(() => {
+      for (let y = 200; y < innerHeight - 80; y += 30) {
+        for (let x = 320; x < innerWidth - 160; x += 30) {
+          const el = document.elementFromPoint(x, y);
+          if (el?.closest(".graview-ground") && !el.closest("[data-graview-view], button, a, input, select, [data-graview-overlay]")) return { x, y };
+        }
+      }
+      return { x: 700, y: 520 };
+    });
+  const card = (selector) =>
+    page.evaluate((wanted) => {
+      const box = document.querySelector(wanted)?.getBoundingClientRect();
+      return box ? { x: box.x + 12, y: box.y + 8 } : null;
+    }, selector);
 
   await page.goto(`http://localhost:${PORT}/?fresh=1#overview=1`, { waitUntil: "load" });
   await page.waitForSelector("[data-graview-view]", { timeout: 120_000 });
@@ -118,30 +171,47 @@ try {
 
   /* ALTITUDE: the city, and the ground dragged and wheeled under it. */
   const city = await measure("altitude, still", async () => {}, 300);
-  const cityDrag = await measure("altitude, drag", () => drag(700, 520, -260, -120));
+  const cityAt = await ground();
+  const cityDrag = await measure("altitude, drag", () => drag(cityAt.x, cityAt.y, -260, -120));
   const cityWheel = await measure("altitude, wheel", () => wheel(700, 520, 60));
 
   /* DOWN, then THE HUB: an artist with more than a thousand songs. */
   const descend = await measure("descend", () => page.click('[data-testid="overview"]'), 1500);
   const hub = await measure("focus the hub", () => travel("#focus=artist%3Atech-n9ne"), 2000);
-  const hubDrag = await measure("hub, drag", () => drag(700, 420, -260, -120));
+  const hubAt = await ground();
+  const hubDrag = await measure("hub, drag", () => drag(hubAt.x, hubAt.y, -260, -120));
+  // A card under the hand: the focus, moved a little way and brought back, so the band is where it was.
+  const heldAt = await card('[data-graview-plane="0"]');
+  const held = await measure("hub, move a card", async () => {
+    if (!heldAt) return;
+    await drag(heldAt.x, heldAt.y, 120, 60, 24);
+    await drag(heldAt.x + 120, heldAt.y + 60, -120, -60, 24);
+  });
   const hubWheel = await measure("hub, wheel", () => wheel(700, 420, 60));
+  // The hub as it first lands: the drag above panned the band under the rail.
+  await travel("#focus=artist%3Atech-n9ne");
+  await page.waitForTimeout(1500);
   const groups = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-graview-plane="1"][data-graview-view^="aggregate:"]')].map((el) => ({
-      id: el.getAttribute("data-graview-view"),
-      opens: el.querySelector("[data-graview-band]")?.getAttribute("data-graview-band") ?? null,
-      text: (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 80),
-    })),
+    [...document.querySelectorAll('[data-graview-plane="1"][data-graview-view^="aggregate:"]')].map((el) => {
+      const box = el.getBoundingClientRect();
+      return {
+        id: el.getAttribute("data-graview-view"),
+        opens: el.querySelector("[data-graview-band]")?.getAttribute("data-graview-band") ?? null,
+        text: (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 80),
+        // Pressable where a person would press it: nothing drawn over its middle.
+        reachable: el.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)),
+      };
+    }),
   );
   report.groups = groups;
 
   /* A GROUP OPENS: a stop, its members take the band, Back closes it. */
   let opened = null;
   // An in-place group if the band drew one; the "+N more" door otherwise.
-  const pressed = groups.find((group) => group.opens === "place") ?? groups[0];
+  const pressed = groups.find((group) => group.opens === "place" && group.reachable) ?? groups.find((group) => group.reachable);
   if (pressed) {
     const before = await page.evaluate(() => location.hash);
-    await page.dblclick(`[data-graview-view="${pressed.id}"]`, { force: true, timeout: 5000 });
+    await page.dblclick(`[data-graview-view="${pressed.id}"]`, { timeout: 5000 });
     await page.waitForTimeout(1500);
     const during = await page.evaluate(() => ({ hash: location.hash, band: document.querySelectorAll('[data-graview-plane="1"]').length }));
     await page.goBack();
@@ -158,7 +228,7 @@ try {
     if (card) await card.click({ force: true, timeout: 5000 });
   }, 1200);
   const search = await measure("hub, type in Find", async () => {
-    await page.keyboard.press("Escape");
+    // "/" reaches the Find box from anywhere that is not a field; no Escape first, which would leave the hub.
     await page.keyboard.press("/");
     await page.keyboard.type("the", { delay: 80 });
   }, 1200);
@@ -188,6 +258,8 @@ try {
       opened.after === opened.before,
     // Dragging the ground holds sixty frames a second, up high and at the hub.
     panningHolds60: holds(cityDrag) && holds(hubDrag),
+    // A card held by the hand follows it at sixty, and landing it is one frame.
+    aHeldCardFollowsTheHand: holds(held),
     wheelHolds60: holds(cityWheel) && holds(hubWheel),
     // Rising, descending and changing focus: one first frame for the new stop, then sixty.
     aTransitionHolds60: [descend, hub, rise].every((stop) => stop.first <= 150 && holds(stop)),

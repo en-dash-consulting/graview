@@ -193,8 +193,29 @@ interface Pass {
   readonly clips: Map<Element, DOMRect | null>;
   /** A member's boxes inside a host, keyed by host and member. */
   readonly members: Map<Element, Map<string, Box[]>>;
+  /**
+   * A host's marked elements by the id they mark, read once: a selector per
+   * member walked the whole of a large picture for each of its lines.
+   */
+  readonly marks: Map<Element, Map<string, Element[]>>;
 }
-const newPass = (): Pass => ({ clips: new Map(), members: new Map() });
+const newPass = (): Pass => ({ clips: new Map(), members: new Map(), marks: new Map() });
+
+function marksIn(host: Element, pass: Pass): Map<string, Element[]> {
+  let marks = pass.marks.get(host);
+  if (marks) return marks;
+  marks = new Map();
+  for (const el of host.querySelectorAll("[data-graview-pick], [data-graview-slot]")) {
+    for (const id of new Set([el.getAttribute("data-graview-pick"), el.getAttribute("data-graview-slot")])) {
+      if (id === null) continue;
+      const list = marks.get(id);
+      if (list) list.push(el);
+      else marks.set(id, [el]);
+    }
+  }
+  pass.marks.set(host, marks);
+  return marks;
+}
 
 function clipOf(parent: Element, pass: Pass): DOMRect | null {
   let held = pass.clips.get(parent);
@@ -244,9 +265,7 @@ function memberBoxes(
   if (known) return known;
   const stage = stageEl.getBoundingClientRect();
   const boxes: Box[] = [];
-  const selector =
-    `[data-graview-pick="${CSS.escape(memberId)}"], [data-graview-slot="${CSS.escape(memberId)}"]`;
-  for (const el of host.querySelectorAll(selector)) {
+  for (const el of marksIn(host, pass).get(memberId) ?? []) {
     if (el.closest("[data-graview-offstage]")) continue;
     const rect = el.getBoundingClientRect();
     if (rect.width <= 2 || rect.height <= 2) continue;

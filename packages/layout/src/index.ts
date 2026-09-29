@@ -9,7 +9,7 @@ export {
   withJackIn,
   AGGREGATE_PREFIX,
 } from "./ids.js";
-export { layout, marqueeHeightFor, panLayout, planeOf, SCREEN_LEASH_CELLS } from "./layout.js";
+export { holdLayout, layout, marqueeHeightFor, panLayout, planeOf, SCREEN_LEASH_CELLS } from "./layout.js";
 export { easeInOut, interpolate } from "./interpolate.js";
 export { rankKinds } from "./rank.js";
 export type { KindRank, KindRanking } from "./rank.js";

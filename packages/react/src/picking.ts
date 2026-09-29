@@ -35,16 +35,42 @@ export function pickedFrom(target: EventTarget | null): string | null {
  * to fight over.
  */
 export function usePickTargets(ref: { current: HTMLElement | null }): void {
+  /*
+   * WHEN THE CONTENT CHANGES, not after every render. This ran on every
+   * render of every host — every frame of a transition, for every card —
+   * scanning each subtree for marks that had not moved (docs/scale.md). The
+   * marks only change when a view draws something new, so the scan runs
+   * when the host mounts and when elements are added under it, at most
+   * once a frame.
+   */
   useEffect(() => {
     const host = ref.current;
     if (!host) return;
-    for (const target of host.querySelectorAll<Element>("[data-graview-pick]")) {
-      if (target.getAttribute("tabindex") === null) target.setAttribute("tabindex", "0");
-      if (target.getAttribute("role") === null && takesButton(target)) {
-        target.setAttribute("role", "button");
+    const mark = () => {
+      for (const target of host.querySelectorAll<Element>("[data-graview-pick]")) {
+        if (target.getAttribute("tabindex") === null) target.setAttribute("tabindex", "0");
+        if (target.getAttribute("role") === null && takesButton(target)) {
+          target.setAttribute("role", "button");
+        }
       }
-    }
-  });
+    };
+    mark();
+    if (typeof MutationObserver === "undefined") return;
+    let queued = 0;
+    const watch = new MutationObserver(() => {
+      if (queued !== 0) return;
+      queued = typeof requestAnimationFrame === "undefined" ? 0 : requestAnimationFrame(() => {
+        queued = 0;
+        mark();
+      });
+      if (queued === 0) mark();
+    });
+    watch.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-graview-pick"] });
+    return () => {
+      watch.disconnect();
+      if (queued !== 0) cancelAnimationFrame(queued);
+    };
+  }, [ref]);
 }
 
 /**

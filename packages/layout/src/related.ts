@@ -165,6 +165,9 @@ export function connectorsFor<N extends { id: string; kind: string }>(
     placed.get(id) ?? placed.get(containing.get(id) ?? "");
 
   const connectors = new Map<string, Connector>();
+  // The real pairs a bundle holds, by connector: a set, not a scan of a copied array per edge (O(E²) in one bundle).
+  const pairs = new Map<string, Set<string>>();
+  const bundled = new Map<string, { from: string; to: string }[]>();
   for (const edge of graph.allEdges()) {
     const from = resolve(edge.from);
     const to = resolve(edge.to);
@@ -200,11 +203,19 @@ export function connectorsFor<N extends { id: string; kind: string }>(
     const held = connectors.get(id);
     if (held) {
       // The same real pair twice is one relation, not two.
-      if (held.edges.some((e) => e.from === edge.from && e.to === edge.to)) continue;
-      const { single: _dropped, ...rest } = held;
-      connectors.set(id, { ...rest, edges: [...held.edges, { from: edge.from, to: edge.to }] });
+      const pair = `${edge.from}\n${edge.to}`;
+      const seen = pairs.get(id)!;
+      if (seen.has(pair)) continue;
+      seen.add(pair);
+      bundled.get(id)!.push({ from: edge.from, to: edge.to });
+      if (held.single) {
+        const { single: _dropped, ...rest } = held;
+        connectors.set(id, rest as Connector);
+      }
       continue;
     }
+    pairs.set(id, new Set([`${edge.from}\n${edge.to}`]));
+    bundled.set(id, [{ from: edge.from, to: edge.to }]);
     connectors.set(id, {
       id,
       kind: edge.kind,
@@ -219,5 +230,5 @@ export function connectorsFor<N extends { id: string; kind: string }>(
       y2: to.y + to.height / 2,
     });
   }
-  return [...connectors.values()].sort(byStableKey);
+  return [...connectors.values()].map((connector) => ({ ...connector, edges: bundled.get(connector.id)! })).sort(byStableKey);
 }
