@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-28T23:54:06.339Z",
+  "at": "2026-09-29T02:20:23.408Z",
   "engine": "chromium",
   "steps": [
     {
@@ -7,63 +7,83 @@
       "url": "#focus=aggregate%3Alist",
       "back": false,
       "forward": false,
-      "trail": ""
+      "trail": "",
+      "captions": []
     },
     {
       "step": "travelled",
       "url": "#focus=t-deposit&sel=t-deposit",
       "back": true,
       "forward": false,
-      "trail": "Pay the deposit×"
+      "trail": "Pay the deposit×",
+      "captions": [
+        "the list it is on",
+        "why this is here"
+      ]
     },
     {
       "step": "travelled again",
       "url": "#focus=reason-deposit&sel=reason-deposit",
       "back": true,
       "forward": false,
-      "trail": "The landlord holds the date for 48 hours once the deposit…×"
+      "trail": "The landlord holds the date for 48 hours once the deposit…×",
+      "captions": [
+        "what this is about"
+      ]
     },
     {
       "step": "back once",
       "url": "#focus=t-deposit&sel=reason-deposit",
       "back": true,
       "forward": true,
-      "trail": "Pay the deposit×"
+      "trail": "Pay the deposit×",
+      "captions": [
+        "the list it is on",
+        "why this is here"
+      ]
     },
     {
       "step": "back twice",
       "url": "#focus=aggregate%3Alist&sel=t-deposit",
       "back": false,
       "forward": true,
-      "trail": ""
+      "trail": "",
+      "captions": []
     },
     {
       "step": "forward once",
       "url": "#focus=t-deposit&sel=reason-deposit",
       "back": true,
       "forward": true,
-      "trail": "Pay the deposit×"
+      "trail": "Pay the deposit×",
+      "captions": [
+        "the list it is on",
+        "why this is here"
+      ]
     },
     {
       "step": "home by breadcrumb",
       "url": "#focus=aggregate%3Alist&sel=reason-deposit",
       "back": true,
       "forward": false,
-      "trail": ""
+      "trail": "",
+      "captions": []
     },
     {
       "step": "lists with every task raised",
       "url": "#focus=aggregate%3Alist&relation=task",
       "back": false,
       "forward": true,
-      "trail": "Tasks×"
+      "trail": "Tasks×",
+      "captions": []
     },
     {
       "step": "the week with the lists raised",
       "url": "#focus=aggregate%3Atask&relation=list",
       "back": false,
       "forward": true,
-      "trail": "Lists×"
+      "trail": "Lists×",
+      "captions": []
     }
   ],
   "pageErrors": [],
@@ -94,7 +114,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.588957,
+      "wingOpacity": 0.565533,
       "registered": true
     },
     "groundAgain": {
@@ -219,15 +239,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 420.00006103515625,
+        "width": 412.00006103515625,
         "height": 193,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 279,
-        "height": 255.00003051757812,
-        "opacity": 0.449932
+        "width": 281.0000305175781,
+        "height": 256,
+        "opacity": 0.470477
       }
     ],
     "afterSwitch": [
@@ -262,9 +282,9 @@
       "up": true
     },
     "midway": {
-      "x": 770.6815185546875,
-      "y": 286.564208984375,
-      "width": 375
+      "x": 770.0120239257812,
+      "y": 288.57867431640625,
+      "width": 378
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -407,6 +427,7 @@
     "ok": true
   },
   "verdict": {
+    "everyRelationIsCaptionedOnce": true,
     "aDriveInHasAMarquee": true,
     "theWheelZoomsTheCity": true,
     "theWheelPansTheGround": true,

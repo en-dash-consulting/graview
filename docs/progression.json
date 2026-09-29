@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-13T17:48:33.895Z",
+  "at": "2026-09-29T02:21:21.678Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -38,7 +38,7 @@
         "districts": [
           "Plots2close ▴Plot 1Plot 2"
         ],
-        "trail": "GraviewGraview←→StudioPagesThe garden keeps its agreements◆Ask☾NNobody in particular",
+        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.The garden keeps its agreementsNNobody in particular⚙Signed in asNobody in particularThis app has no sign-in",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -79,16 +79,16 @@
       },
       "errors": [],
       "picture": {
-        "width": 756,
-        "height": 623
+        "width": 1086,
+        "height": 629
       },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
           "Gardeners2open ▾",
-          "Plots2open ▾"
+          "Plots2"
         ],
-        "trail": "GraviewGraview←→Plot 1×StudioPagesThe garden keeps its agreements◆Ask☾NNobody in particular",
+        "trail": "GraviewGraview←→ScenePagesPlot 1×Nothing here is called “”.The garden keeps its agreementsNNobody in particular⚙Signed in asNobody in particularThis app has no ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -133,8 +133,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 751,
-        "height": 556
+        "width": 750,
+        "height": 506
       },
       "saw": {
         "standing": "1 problem",
@@ -143,7 +143,7 @@
           "Plots⚠ 2open ▾",
           "Rules1close ▴Every plot has a caretaker"
         ],
-        "trail": "GraviewGraview←→StudioPages1 problemNobody tends Plot 2Every plot has a caretaker · 2 ways to fix◆Ask☾NNobody in particular",
+        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.1 problemNobody tends Plot 2Every plot has a caretaker · 2 ways to fixNNobody in particular⚙Signed in asNobo",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -191,18 +191,18 @@
       },
       "errors": [],
       "picture": {
-        "width": 856,
-        "height": 575
+        "width": 735,
+        "height": 349
       },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
           "Gardeners2open ▾",
-          "Plantings1+1 past◆open ▾",
+          "Plantings1+1 past◆open ▾The year2026‹Today›DayWeekMonthQuarterYearAgendaJanFebMarApr1BeansMayJunJulAugSepOctNovDecThe yearThe seasonApril 2026‹Today›DayWeekMonthQuarterYearAgendaSat 4 AprBeansThe season",
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→The yearThe seasonStudioPagesThe garden keeps its agreements◆Ask☾NNobody in particular",
+        "trail": "GraviewGraview←→ScenePagesThe yearThe seasonNothing here is called “”.The garden keeps its agreementsNNobody in particular⚙Signed in asNobody in particularThis ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -241,7 +241,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/05-a-seat-light.png",
@@ -249,8 +254,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 856,
-        "height": 653
+        "width": 751,
+        "height": 481
       },
       "saw": {
         "standing": "1 problem",
@@ -260,7 +265,7 @@
           "Plots⚠ 1open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→StudioPages1 problem◆Ask3 ActivityThe agent's seatThe garden is plantedchanged · Agree every plot has a caretakerchanged · Stake out a plotFirst",
+        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.1 problem3 ActivityThe agent's seatThe garden is plantedchanged · Agree every plot has a caretakerchanged · ",
         "withheld": null,
         "activity": [
           "starter Adopt: every plot has a caretakerundoEvery plot has a caretaker",
@@ -303,7 +308,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/06-it-remembers-light.png",
@@ -311,8 +321,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 856,
-        "height": 653
+        "width": 750,
+        "height": 481
       },
       "saw": {
         "standing": "The garden keeps its agreements",
@@ -322,7 +332,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→StudioPagesThe garden keeps its agreements◆Ask ActivityThe agent's seatThe garden is plantedRemembered in this browserStart fresh☾NNobody in par",
+        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityThe agent's seatThe garden is plantedRemembered in this browserStart",
         "withheld": null,
         "activity": [],
         "remembered": "Remembered in this browserStart fresh",
@@ -361,7 +371,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/07-who-may-light.png",
@@ -369,8 +384,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 1121,
-        "height": 575
+        "width": 1077,
+        "height": 303
       },
       "saw": {
         "standing": "The garden keeps its agreements",
@@ -380,7 +395,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→StudioPagesThe garden keeps its agreements◆Ask Activity☾RRavi",
+        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityPlant a starter gardenNot yours to do from this seat. The store refu",
         "withheld": "Stake out a plotNot permitted: add-plot — coordinator can. The coordinator keeps the map.",
         "activity": [],
         "remembered": null,
@@ -390,9 +405,9 @@
       },
       "seatSees": {
         "offered": [
-          "Name a caretaker …"
+          "Take on a plot …"
         ],
-        "withheld": "Change the plotNot permitted: edit-plot on a plot — coordinator can. The coordinator keeps the map."
+        "withheld": "Change the gardenerNot permitted: edit-gardener on a gardener — coordinator can. The coordinator keeps the map.Remove the gardenerNot permitted: remove-gardener on a gardener — coordinator can. The coordinator keeps the map."
       }
     },
     {
@@ -424,7 +439,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/08-its-own-name-light.png",
@@ -432,8 +452,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 856,
-        "height": 575
+        "width": 735,
+        "height": 292
       },
       "saw": {
         "standing": "The garden keeps its agreements",
@@ -443,7 +463,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→StudioPagesThe garden keeps its agreements◆Ask Activity☾JJune",
+        "trail": "SeedbedSeedbed←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityThe garden is plantedJJune⚙Signed in asJunecoordinatorKeeping this a",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -454,7 +474,8 @@
       "seatSees": {
         "offered": [
           "Change the gardener …",
-          "Take on a plot …"
+          "Take on a plot …",
+          "Remove the gardener"
         ],
         "withheld": ""
       }
@@ -463,11 +484,11 @@
       "n": 9,
       "slug": "the-other-face",
       "title": "The other face",
-      "claim": "The same declaration is also an ordinary web application: lists, records, forms and problems, routed, at phone width. Any page can be replaced with one the app writes, in its own words, over the same derivations.",
+      "claim": "The same declaration is also an ordinary web application, routed, at phone width: it lands on a gallery — every kind drawn as a picture until the garden names a lens, then the lens by its name — with a list, a record and a form per kind, the problems, a map of how the kinds fit together, and the seat on every route. Any page can be replaced with one the app writes, in its own words, over the same derivations.",
       "adds": [
         "PagesApp at /pages, from the same store",
-        "createPageRegistry(schema).register(\"plot\", \"record\", PlotPage) — the plot's page in the garden's words",
-        "pageStyles from @graview/pages, so a custom page is still the same face"
+        "views in the page context: every lens a page at /places, and the assistant with it",
+        "createPageRegistry(schema).register(\"plot\", \"record\", PlotPage) — the plot's page in the garden's words"
       ],
       "kinds": [
         "gardener",
@@ -490,7 +511,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/09-the-other-face-light.png",
@@ -499,7 +525,7 @@
       "errors": [],
       "picture": {
         "width": 390,
-        "height": 844,
+        "height": 1000,
         "phone": true
       },
       "saw": {
@@ -541,7 +567,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/10-a-lens-light.png",
@@ -549,29 +580,31 @@
       },
       "errors": [],
       "picture": {
-        "width": 880,
-        "height": 623
+        "width": 1136,
+        "height": 626
       },
       "saw": {
         "standing": "1 problem",
         "districts": [
-          "Gardeners2◆open ▾",
+          "Gardeners2◆",
           "Plantings1+1 past",
           "Plots⚠ 2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→Who tends whatStudioPages1 problem◆Ask Activity☾JJune",
+        "trail": "SeedbedSeedbed←→ScenePagesWho tends whatNothing here is called “”.1 problem ActivityThe garden is plantedJJune⚙Signed in asJunecoordinatorKeeping this appStudio",
         "withheld": null,
         "activity": [],
         "remembered": null,
         "problems": null,
         "wordmark": "Seedbed",
-        "focused": "Who tends what1 unanswered · 1 unaskedPlot 1⚠ Plot 2JuneRavi"
+        "focused": "Who tends what1 gardener with no plot · 1 plot on no gardenerPlot 1⚠ Plot 2JuneRavi"
       },
       "seatSees": {
         "offered": [
           "Change the plot …",
-          "Name a caretaker …"
+          "Name a caretaker …",
+          "Sow something …",
+          "Remove the plot"
         ],
         "withheld": ""
       }
@@ -607,7 +640,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/11-what-grows-where-light.png",
@@ -615,29 +653,30 @@
       },
       "errors": [],
       "picture": {
-        "width": 880,
-        "height": 623
+        "width": 1136,
+        "height": 626
       },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
           "Gardeners2◆open ▾",
           "Plantings1+1 pastopen ▾",
-          "Plots3◆open ▾",
+          "Plots3◆",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→What grows whereWho tends whatStudioPagesThe garden keeps its agreements◆Ask Activity☾JJune",
+        "trail": "SeedbedSeedbed←→ScenePagesWhat grows whereWho tends whatNothing here is called “”.The garden keeps its agreements ActivityThe garden is plantedJJune⚙Signed in a",
         "withheld": null,
         "activity": [],
         "remembered": null,
         "problems": null,
         "wordmark": "Seedbed",
-        "focused": "What grows where1 unfilledPlot 1BeansPlot 2TomatoesPlot 3nothing sown"
+        "focused": "What grows where2 unfilledPlot 1BeansPlot 2nothing sownPlot 3nothing sown"
       },
       "seatSees": {
         "offered": [
           "Harvest it …",
-          "Change the planting …"
+          "Change the planting …",
+          "Remove the planting"
         ],
         "withheld": ""
       }
@@ -672,7 +711,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/12-ship-it-light.png",
@@ -680,18 +724,18 @@
       },
       "errors": [],
       "picture": {
-        "width": 887,
-        "height": 653
+        "width": 850,
+        "height": 491
       },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
-          "Gardeners2◆open ▾",
+          "Gardeners2◆open ▾Who tends whatcompleteJunePlot 1Plot 2RaviPlot 1Plot 2Who tends what",
           "Plantings1+1 pastopen ▾",
-          "Plots2◆open ▾",
+          "Plots2◆open ▾What grows where1 unfilledPlot 1BeansPlot 2nothing sownWhat grows where",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→What grows whereWho tends whatStudioPagesThe garden keeps its agreements◆Ask1 ActivityThe agent's seatThe garden is plantedship:migration migrat",
+        "trail": "SeedbedSeedbed←→ScenePagesWhat grows whereWho tends whatNothing here is called “”.The garden keeps its agreements1 ActivityThe agent's seatThe garden is planted",
         "withheld": null,
         "activity": [
           "ship:migration migration 1→2: Every garden adopts the agreementundoEvery plot has a caretaker"
@@ -703,8 +747,9 @@
       },
       "seatSees": {
         "offered": [
-          "Change the plot …",
-          "Name a caretaker …"
+          "Change the gardener …",
+          "Take on a plot …",
+          "Remove the gardener"
         ],
         "withheld": ""
       }
@@ -739,7 +784,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/13-the-gardens-own-face-light.png",
@@ -748,7 +798,7 @@
       "errors": [],
       "picture": {
         "width": 1280,
-        "height": 1344
+        "height": 1342
       },
       "saw": {
         "standing": null,
@@ -798,7 +848,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/14-who-is-here-light.png",
@@ -806,20 +861,20 @@
       },
       "errors": [],
       "picture": {
-        "width": 778,
-        "height": 557
+        "width": 886,
+        "height": 583
       },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
-          "Gardeners2◆open ▾",
+          "Gardeners2◆open ▾Who tends whatcompleteJunePlot 1Plot 2Plot 3RaviPlot 1Plot 2Plot 3Who tends what",
           "Invitations1open ▾",
           "Plantings1+1 pastopen ▾",
-          "Plots3◆open ▾",
+          "Plots3◆open ▾What grows where2 unfilledPlot 1BeansPlot 2nothing sownPlot 3nothing sownWhat grows where",
           "Rules1open ▾",
-          "People2◆open ▾"
+          "People2◆open ▾Who may do what● may · ◐ on their own record · read from the policyRoleWelcome a gardenerStake out a plotSow something · plotName a caretaker · plotHarvest it · plantingAgree every plot has a caretakerInvite somebodyWelcome them in · invitationWithdraw the invitation · invitationRemove them · userGive a role · userTake a role away · usercoordinator●●●●●●●●●●●●gardener··●●●·······Who may do what"
         ],
-        "trail": "SeedbedSeedbed←→What grows whereWho may do whatWho tends whatHide the installationStudioPagesThe garden keeps its agreements◆Ask Activity☾JJune",
+        "trail": "SeedbedSeedbed←→ScenePagesWhat grows whereWho may do whatWho tends what+1 moreWho tends whatNothing here is called “”.The garden keeps its agreements ActivityTh",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -829,8 +884,9 @@
       },
       "seatSees": {
         "offered": [
-          "Change the plot …",
-          "Name a caretaker …"
+          "Change the gardener …",
+          "Take on a plot …",
+          "Remove the gardener"
         ],
         "withheld": ""
       }
@@ -880,7 +936,16 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "blank-graph-unreachable",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/15-the-studio-light.png",
@@ -888,8 +953,8 @@
       },
       "errors": [],
       "picture": {
-        "width": 850,
-        "height": 561
+        "width": 1095,
+        "height": 483
       },
       "saw": {
         "standing": "The garden keeps its agreements",
@@ -899,12 +964,12 @@
           "edges3open ▾",
           "fields19open ▾",
           "grants4open ▾",
-          "kinds6◆open ▾",
+          "kinds6◆open ▾What the checker says6 kinds · 12 acts · 1 rulegraview check: Seedbed — no problems found.label-unbounded defineNode(\"gardener\").fields.labelA declared provider may create a gardener, and \"label\" has no maximum length — so a model may write a paragraph where a name goes, and every surface that draws it will try.Bound it to something an interface can draw: z.string().min(1).max(60). Whatever else there is to say about a gardener belongs in a field of its own, where a person will actually read it.label-unbounded defineNode(\"plot\").fields.labelA declared provider may create a plot, and \"label\" has no maximum length — so a model may write a paragraph where a name goes, and every surface that draws it will try.Bound it to something an interface can draw: z.string().min(1).max(60). Whatever else there is to say about a plot belongs in a field of its own, where a person will actually read it.label-unbounded defineNode(\"planting\").fields.labelA declared provider may create a planting, and \"label\" has no maximum length — so a model may write a paragraph where a name goes, and every surface that draws it will try.Bound it to something an interface can draw: z.string().min(1).max(60). Whatever else there is to say about a planting belongs in a field of its own, where a person will actually read it.label-unbounded defineNode(\"rule\").fields.labelA declared provider may create a rule, and \"label\" has no maximum length — so a model may write a paragraph where a name goes, and every surface that draws it will try.Bound it to something an interface can draw: z.string().min(1).max(60). Whatever else there is to say about a rule belongs in a field of its own, where a person will actually read it.What the checker says",
           "lenses2open ▾",
-          "roles9open ▾",
+          "roles2open ▾",
           "rules1open ▾"
         ],
-        "trail": "GraviewGraview←→What the checker saysStudioPagesThe garden keeps its agreements◆Ask Activity☾NNobody in particular",
+        "trail": "GraviewGraview←→ScenePagesWhat the checker saysNothing here is called “”.The garden keeps its agreements ActivityPlant a starter gardenNot yours to do from this",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -920,7 +985,8 @@
       "claim": "A bed is turned through four families and comes back to the first four years later. The same calendar lens that drew the season draws the rotation, a month per cell over as many years as the garden says it turns through — and how far out that is is the garden's word, not the framework's.",
       "adds": [
         "defineNode(\"rotation\") with an appendOnly edge \"turns-over\" to the plot it turns",
-        "defineMutation(\"rotate\") — which family a plot grows, and until when",
+        "an appendOnly edge \"holds\" from a rotation to what went in during it — so a turn and its plantings are connected, not strangers on the same plot",
+        "defineMutation(\"rotate\") — which family a plot grows, and until when; it claims what is already in the ground, and sow puts new plantings under the turn",
         "the same calendar binding at range: \"years\" with horizon: { years: 4, title: \"The rotation\" }"
       ],
       "kinds": [
@@ -954,7 +1020,12 @@
         "ok": true,
         "errors": 0,
         "warnings": 0,
-        "findings": []
+        "findings": [
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded",
+          "label-unbounded"
+        ]
       },
       "pictures": {
         "light": "docs/progression/16-the-rotation-light.png",
@@ -962,29 +1033,30 @@
       },
       "errors": [],
       "picture": {
-        "width": 888,
-        "height": 603
+        "width": 884,
+        "height": 626
       },
       "saw": {
         "standing": "The garden keeps its agreements",
         "districts": [
           "Gardeners2◆",
-          "Plantings1+1 past◆",
+          "Plantings1+1 past◆open ▾",
           "Plots3◆open ▾",
-          "The rotation · 8",
+          "Rotations8◆",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→What grows whereThe yearThe seasonThe rotationWho tends whatShow the installationStudioPagesThe garden keeps its agreements◆Ask Activity☾JJune",
+        "trail": "SeedbedSeedbed←→ScenePagesWhat grows whereThe yearThe seasonThe rotationWho tends whatThe rotationThe seasonThe rotationWho tends whatNothing here is called “”.",
         "withheld": null,
         "activity": [],
         "remembered": null,
         "problems": null,
         "wordmark": "Seedbed",
-        "focused": "The rotationThe rotation · 2026–2029‹Today›dayweekmonthquarteryearThe rotationagenda2026202720282029Jan 26Feb 26Mar 262Brassicas · Plot 1Legumes · Plot 2Apr 262 May 262Brassicas · Plot 1Legumes · Plot 2Jun 262 Jul 262 Aug 262 Sep 262Brassicas · Plot 1Legumes · Plot 2Oct 262 Nov 26Dec 26Jan 27Feb 27Mar 272Legumes · Plot 1Roots · Plot 2Apr 272 May 272Legumes · Plot 1Roots · Plot 2Jun 272 Jul 272 Aug"
+        "focused": "The rotationThe rotation · 2026–2029‹Today›dayweekmonthquarteryearThe rotationagenda2026202720282029FindOnlyonly…brassicaslegumesrootsalliumsrestingbefore…after…on…before…after…on…anythingnothingPlot 1Plot 2Plot 3anythingnothingBeansTomatoesflaggedclearJan 26Feb 26Mar 262Brassicas · Plot 1Legumes · Plot 2Apr 262 May 262Brassicas · Plot 1Legumes · Plot 2Jun 262 Jul 262 Aug 262 Sep 262Brassicas · Pl"
       },
       "seatSees": {
         "offered": [
-          "Change the rotation …"
+          "Change the rotation …",
+          "Remove the rotation"
         ],
         "withheld": ""
       }
