@@ -52,6 +52,10 @@ describe("graview check holds the kit's colours to the ground", () => {
     expect(findings[0]!.where).toMatch(/in (light|dark)$/);
     expect(findings[0]!.severity).toBe("error");
     expect(findings[0]!.fix).toContain("kind's own hue");
+    // Two failures in one scheme say which ground each is, not "the ground" twice (W-116).
+    const light = findings.filter((f) => f.where.endsWith("in light")).map((f) => f.message);
+    expect(new Set(light).size).toBe(light.length);
+    expect(light.some((message) => message.includes("deep ground"))).toBe(true);
   });
 
   it("warns once about a colour it cannot read, and is clean for a kit that only routes and hides", () => {

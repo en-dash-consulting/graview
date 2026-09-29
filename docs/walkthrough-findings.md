@@ -3120,3 +3120,22 @@ two singles and thirty-five songs.
   three, a "Show N more withheld" control opens the rest (the pointer menu
   already showed all). Criterion: primitives
   `nothing-withheld-is-hidden.test.tsx` (verified failing without the fix).
+
+### W-116 · The kit check says one line fails "against the ground" twice, with two different numbers
+- stage: F · face: `graview check` · width: — · scheme: light
+- expected: `kit-contrast-below-aa` says what the line fails against, so the
+  two errors read as two facts
+- actual: a yellow `features` line printed two identical errors, `in light:
+  1.33:1 against the ground` and `in light: 1.24:1 against the ground`. The
+  check measures the scene's ground and the deeper ground under a district;
+  the message named neither, so it read as one error said twice and wrong
+  once.
+- where it belongs: `packages/core/src/theme/kit.ts` (`checkKitContrast`),
+  `packages/core/src/cli/check/brand.ts`
+- harness that should have caught it: `kit.test.ts` asserted the first
+  finding only
+- status: fixed in "walkthrough: F · the kit check names its ground" · a
+  finding carries which ground, and the message says it with the scheme:
+  "1.24:1 against the deep ground of the light scheme". Criterion: core
+  `kit.test.ts` (the light scheme's messages differ, one names the deep
+  ground; verified failing without the fix).

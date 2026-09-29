@@ -135,6 +135,8 @@ export interface KitContrastFinding {
   readonly ratio: number;
   readonly requires: number;
   readonly unreadable?: string;
+  /** Which ground it failed on: the scene's own, or the deeper one under a district. */
+  readonly ground?: "ground" | "deep ground";
 }
 
 /**
@@ -145,9 +147,9 @@ export interface KitContrastFinding {
  */
 export function checkKitContrast(kit: Kit, tokens: ThemeTokens): readonly KitContrastFinding[] {
   const findings: KitContrastFinding[] = [];
-  const grounds = [tokens.ground, tokens.groundDeep]
-    .map((value) => coloursIn(value)[0])
-    .filter((c): c is Rgba => c !== undefined);
+  const grounds = ([["ground", tokens.ground], ["deep ground", tokens.groundDeep]] as const)
+    .map(([name, value]) => ({ name, colour: coloursIn(value)[0] }))
+    .filter((one): one is { name: "ground" | "deep ground"; colour: Rgba } => one.colour !== undefined);
   const judge = (edgeKind: string | "*", colour: string | undefined) => {
     if (!colour) return;
     const ink = coloursIn(colour)[0];
@@ -156,8 +158,8 @@ export function checkKitContrast(kit: Kit, tokens: ThemeTokens): readonly KitCon
       return;
     }
     for (const ground of grounds) {
-      const ratio = Math.round(contrast(ink, ground) * 100) / 100;
-      if (ratio < 3) findings.push({ edgeKind, colour, ratio, requires: 3 });
+      const ratio = Math.round(contrast(ink, ground.colour) * 100) / 100;
+      if (ratio < 3) findings.push({ edgeKind, colour, ratio, requires: 3, ground: ground.name });
     }
   };
   judge("*", kit.connectors.all.colour);

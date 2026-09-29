@@ -105,7 +105,8 @@ export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {
             severity: "error",
             code: "kit-contrast-below-aa",
             where: `${where} in ${scheme}`,
-            message: `${finding.ratio}:1 against the ground where ${finding.requires}:1 is required for a line to be seen.`,
+            // WHICH ground: the same line fails the scene's ground and the deeper one under a district, and two errors saying "the ground" read as one said twice.
+            message: `${finding.ratio}:1 against the ${finding.ground ?? "ground"} of the ${scheme} scheme, where ${finding.requires}:1 is required for a line to be seen.`,
             fix: `Darken or lighten "${finding.colour}", or drop it and let the kind's own hue paint the line.`,
           });
         }
