@@ -1,0 +1,28 @@
+{
+  "id": "23ffe254-6b54-42ef-9e2e-ae4fc2c450d1",
+  "taskId": "b5c001b9-6f4e-47e8-b46c-d73d3e18278b",
+  "taskTitle": "The relation band draws what fits and groups the rest",
+  "startedAt": "2026-09-29T08:00:49.265Z",
+  "finishedAt": "2026-09-29T08:00:49.265Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "bandOf: budget by readable rows, grouping by arrangement, place/door aggregates, relevance ordering; hub 1,259 hosts to 36",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "ndxVersion": "0.7.1",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

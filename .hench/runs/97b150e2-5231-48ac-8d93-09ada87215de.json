@@ -1,0 +1,28 @@
+{
+  "id": "97b150e2-5231-48ac-8d93-09ada87215de",
+  "taskId": "df663a0f-ced6-46d6-ac86-f81dbe7f7edd",
+  "taskTitle": "The example numbers songs on their first album, and the docs say how a big graph reads",
+  "startedAt": "2026-09-29T08:00:49.858Z",
+  "finishedAt": "2026-09-29T08:00:49.858Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "Home release = first album/EP/mixtape; 65 track numbers change, no violations; scale.md records what shipped; new-app skill",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "ndxVersion": "0.7.1",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

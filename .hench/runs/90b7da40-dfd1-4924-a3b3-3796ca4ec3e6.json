@@ -1,0 +1,28 @@
+{
+  "id": "90b7da40-dfd1-4924-a3b3-3796ca4ec3e6",
+  "taskId": "4a737892-a936-4821-8e56-84fbcb9f0d4f",
+  "taskTitle": "The render path holds 60 frames a second",
+  "startedAt": "2026-09-29T08:00:49.654Z",
+  "finishedAt": "2026-09-29T08:00:49.654Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "No measuring while moving, holdLayout, kind tag by ResizeObserver, violations once per change, linear lines and tweens; all scale claims hold",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "ndxVersion": "0.7.1",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}

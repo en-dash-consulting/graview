@@ -1,0 +1,28 @@
+{
+  "id": "95eedbdf-66cc-4a40-ab16-28fe0f767edb",
+  "taskId": "2675b82f-f2a5-4f16-adab-2e019358df1d",
+  "taskTitle": "Drive-in thumbnails and lenses draw a budget",
+  "startedAt": "2026-09-29T08:00:49.458Z",
+  "finishedAt": "2026-09-29T08:00:49.458Z",
+  "status": "completed",
+  "turns": 0,
+  "summary": "Thumbnails get 12 most relevant members, mounted on screen and still; lenses honour budget with +N more; altitude 21k elements to 1.2k",
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "toolCalls": [],
+  "model": "sonnet",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "ndxVersion": "0.7.1",
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0,
+    "total": 0
+  }
+}
