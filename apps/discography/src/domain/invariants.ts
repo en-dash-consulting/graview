@@ -31,10 +31,14 @@ export const featuresSomebodyElse = defineInvariant("features-somebody-else", {
 /**
  * Two songs a release introduces do not share a track number.
  *
- * A song's number is its place on the release it first came out on. A
- * compilation, a box set or a soundtrack carries songs numbered on their own
- * albums, and two of them sharing a number there is not a clash — so a
- * release is judged only on the songs it introduced.
+ * A song's number is its place on its HOME: the first album, EP or mixtape
+ * it came out on, or — for a song that was only ever a single or on
+ * somebody's compilation — the first release of any kind. A single that
+ * leads an album is numbered 1 on the single and 7 on the album, and the
+ * album is where a person looks for it. A compilation, a box set or a
+ * soundtrack carries songs numbered on their own albums, and two of them
+ * sharing a number there is not a clash — so a release is judged only on
+ * the songs whose home it is.
  */
 export const tracksInOrder = defineInvariant("tracks-in-order", {
   label: "One song per track number",
@@ -43,14 +47,19 @@ export const tracksInOrder = defineInvariant("tracks-in-order", {
   repairs: ["edit-song"],
   evaluate({ graph, subject }): Violation[] {
     /*
-     * The release a song came out on first: the earliest with a full date. A
-     * release known only by its year introduces a song only when none of the
-     * song's releases has a date; on the same day, every one of them does.
+     * The song's home, as the catalogue numbers it: among its albums, EPs
+     * and mixtapes if it has any, otherwise among all its releases, the
+     * earliest with a full date. A release known only by its year is a home
+     * only when none of the candidates has a date; on the same day, every
+     * one of them is.
      */
+    const BODY = new Set(["album", "ep", "mixtape"]);
     const introduced = (song: { id: string }) => {
-      const dated = graph
-        .in(song.id, "tracks")
-        .flatMap((other) => (other.kind === "album" && other.released ? [other.released] : []));
+      const releases = graph.in(song.id, "tracks").filter((other) => other.kind === "album");
+      const bodies = releases.filter((other) => BODY.has(String(other.type)));
+      const pool = bodies.length > 0 ? bodies : releases;
+      if (!pool.some((other) => other.id === subject.id)) return false;
+      const dated = pool.flatMap((other) => (other.released ? [other.released] : []));
       if (dated.length === 0) return true;
       if (!subject.released) return false;
       return dated.every((released) => released >= subject.released!);

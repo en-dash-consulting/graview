@@ -187,4 +187,9 @@ reads the interface or an agent reads a tool schema.
 - Whether your mutations are the acts a person would name. They are the labels
   in the strip and the instructions in an agent's tool schema, so an opaque one
   costs twice.
-- Whether the interface is any good. Run it.
+- Whether the interface is any good. Run it. Run it at the size it will have: seed a
+  real catalogue, not a dozen rows. The scene draws what a person can read — a
+  relation too long for its band is grouped by its best arrangement or closes
+  on "+N more", and a thumbnail draws its 12 most relevant members — so a
+  thousand records are a picture, not a smear. What that hides is yours to
+  judge: whether the groups are the ones a person would ask for.

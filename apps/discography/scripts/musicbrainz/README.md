@@ -12,8 +12,10 @@
   credit after "feat.", "ft.", "featuring" or "with" is a feature), merged
   across every release the song is on;
 - producers where MusicBrainz records a producer relationship on the recording;
-- a song's track number is its place on its home release: the earliest with a
-  full date, an album or EP before a single on the same day;
+- a song's track number is its place on its home release: the first album,
+  EP or mixtape it is on (earliest full date), or the first release of any
+  kind for a song on none — a single that leads an album is numbered where it
+  sits on the album;
 - eras are the series the titles themselves name (Collabos, K.O.D.,
   ENTERFEAR, N9NA, Anghellic). Themes are left empty: no source says what a
   song is about, and none is invented. Explicit is left unset for the same

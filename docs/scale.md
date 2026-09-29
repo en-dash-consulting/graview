@@ -5,7 +5,9 @@ Tech N9ne's discography from MusicBrainz — 1,177 songs, 568 artists, 479
 releases, about 5,000 edges — is small for a real domain and broke the scene.
 This is what was measured, what a person should see instead, how the scene
 gets there at 60 frames a second, and the holes found in the design three
-times over before any of it was built.
+times over before any of it was built. It shipped the same day; what
+shipped, and where it departed from the design, is recorded under
+[What shipped](#what-shipped).
 
 ## What was measured
 
@@ -184,6 +186,53 @@ repository (`apps/discography`, Tech N9ne from MusicBrainz, CC0), writing
 - `aSelectionAndASearchAreCheap` — selecting and typing at the hub: no frame
   over 50 ms after the first.
 - And the existing chain unchanged: a small app draws what it drew.
+
+## What shipped
+
+The same catalogue, the same recorder, `docs/scale.json`. All eight claims
+hold; "first" is the one frame the new stop lands in (the longest frame in
+the 100 ms after the gesture — with vsync off the recording's own first
+frame comes before the gesture has happened).
+
+| stop / gesture | DOM elements | hosts | line paths | first | p95 | worst after |
+|---|---|---|---|---|---|---|
+| altitude, still | 1,161 | 5 | 0 | 19 ms | 19.6 ms | 20 ms |
+| altitude, drag | 1,163 | 5 | 0 | 36 ms | 19.5 ms | 20 ms |
+| altitude, wheel | 1,171 | 5 | 0 | 8 ms | 18.9 ms | 20 ms |
+| descend | 632 | 6 | 0 | 19 ms | 19.2 ms | 20 ms |
+| focus Tech N9ne | 646 | 36 | 50 | 57 ms | 19.0 ms | 20 ms |
+| hub, drag | 650 | 36 | 50 | 20 ms | 19.5 ms | 37 ms |
+| hub, move a card | 650 | 36 | 50 | 19 ms | 19.6 ms | 20 ms |
+| hub, wheel | 654 | 36 | 50 | 19 ms | 19.5 ms | 20 ms |
+| hub, select | 609 | 36 | 50 | 19 ms | 19.4 ms | 20 ms |
+| hub, type in Find | 1,045 | 36 | 56 | 66 ms | 18.7 ms | 38 ms |
+| rise | 2,493 | 6 | 0 | 20 ms | 1.6 ms | 42 ms |
+
+Where the build departed from the design, and why:
+
+- **The thumbnail budget is 12, not 24.** At 24 the city still drew most of
+  a lens per district; 12 is a picture you can read at that size.
+- **The band's budget counts readable rows**, `perRow × rows` with a row of
+  26 px at the scene's unit, rather than `perRow × 2` — two rows grouped
+  the todo fixture's twelve raised tasks, which fit.
+- **A held card moves alone.** Dragging the focus laid the whole stop out
+  again every frame; `holdLayout` moves the one node and re-aims the lines
+  that touch it, and the full layout runs once, on release.
+- **Two costs the design did not name** were most of the landing frame:
+  the focus's kind tag read two bounding boxes after every render (a forced
+  layout on every tween frame — now placed when the panel resizes), and
+  every view that asked for violations evaluated every invariant over the
+  whole graph, each picture as it mounted (now once per change).
+- **The blur snaps to the nearest plane** rather than becoming a class: it
+  is under half a pixel, and snapped it changes once per transition, which
+  was the point. `contain` on hosts was not needed and was not added.
+- **Lines hide while the scene moves** rather than fading: with both ends
+  in flight they cannot be right, and a fade is a paint every frame.
+- **Hosts were not memoised further.** Bounded at 36 at the hub, and with
+  the signature keyed by count and hash, the render was no longer where the
+  frame went; stable callbacks were left for when a stop needs them.
+- **The gate was not taken.** With the rest done every transition's p95
+  fits, so the tween stays in React.
 
 ## Not in this
 

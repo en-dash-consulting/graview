@@ -70,11 +70,15 @@ for group,rel,mine in releases:
             if isinstance(pos,int) and 1<=offset+pos<=99: positions.setdefault(sid,[]).append((alb,offset+pos))
             edges.add(("tracks",alb,sid))
 
-# A song's number is its place on its HOME release: the earliest one with a full
-# date — the same release the app's track rule judges it on.
+# A song's number is its place on its HOME release: the first album, EP or mixtape
+# it is on, or the first release of any kind when it is on none — the same release
+# the app's track rule judges it on. A single that leads an album is track 1 on the
+# single and its place on the album, and the album is where a person looks for it.
+BODY={"album","ep","mixtape"}
 for sid,places in positions.items():
     rank={"album":0,"ep":0,"mixtape":1,"compilation":2,"single":3}
-    home=min(places,key=lambda ap:(albums[ap[0]].get("released","9999"),rank.get(albums[ap[0]]["type"],2)))
+    homes=[ap for ap in places if albums[ap[0]]["type"] in BODY] or places
+    home=min(homes,key=lambda ap:(albums[ap[0]].get("released","9999"),rank.get(albums[ap[0]]["type"],2)))
     songs[sid]["track"]=home[1]
 
 # A feature is somebody else: whoever a song is BY is not also featured on it.
