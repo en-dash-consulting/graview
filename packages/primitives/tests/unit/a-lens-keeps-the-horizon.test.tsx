@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createBoardLens, createCoverageLens, registerDefaultViews } from "../../src/index.js";
+import { gapWords, unaskedWords } from "../../src/lens/coverage.js";
 
 /**
  * A LENS KEEPS THE SCENE'S HORIZON. The coverage of songs by theme read
@@ -63,5 +64,22 @@ describe("a lens over a group", () => {
     const html = draw(createBoardLens({ slots: "stage", x: "x", y: "y", fill: "sung-at", fillFrom: "occupant" } as never), "stage");
     expect(html).toContain("Main");
     expect(html).not.toContain("Tin Roof");
+  });
+});
+
+describe("what the coverage says is missing (W-106)", () => {
+  it("says it in the kinds' own words, never a tender's", () => {
+    const about = { rows: "song", columns: "theme", link: "about" };
+    expect(gapWords(3, about, schema)).toBe("3 songs with no theme");
+    expect(gapWords(1, about, schema)).toBe("1 song with no theme");
+    expect(unaskedWords(2, about, schema)).toBe("2 themes on no song");
+    const together = { rows: "artist", columns: "artist", link: { path: ["features", "by"] } };
+    expect(gapWords(5, together, schema)).toBe("5 with none across");
+    expect(unaskedWords(2, together, schema)).toBe("2 with none down");
+  });
+
+  it("heads the matrix with them", () => {
+    const html = draw(createCoverageLens({ rows: "theme", columns: "song", link: "about" }), "song");
+    expect(html).not.toMatch(/unanswered|unasked/);
   });
 });

@@ -406,6 +406,26 @@ const HEADER_OVERHANG = Math.ceil(HEADER_MAX * RUN);
  * scaling, the same discipline the timeline keeps, because a matrix shrunk to
  * a third of its size is a grey rectangle and a list of two names is not.
  */
+/*
+ * WHAT IS MISSING, IN THE DECLARATION'S WORDS. The header said "3
+ * unanswered · 2 unasked" in every domain — a tender's vocabulary, where a
+ * requirement is answered by a section. Over songs and themes it is "songs
+ * with no theme"; over artists and the artists they worked with, rows and
+ * columns of one kind, it says which way the gap runs.
+ */
+const pluralWords = (schema: AnySchema, kind: string): string => (schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase();
+const kindWords = (kind: string): string => kind.replace(/-/g, " ");
+export function gapWords(count: number, options: CoverageRoles, schema: AnySchema): string {
+  if (options.rows === options.columns) return `${count} with none across`;
+  const rows = count === 1 ? kindWords(options.rows) : pluralWords(schema, options.rows);
+  return `${count} ${rows} with no ${kindWords(options.columns)}`;
+}
+export function unaskedWords(count: number, options: CoverageRoles, schema: AnySchema): string {
+  if (options.rows === options.columns) return `${count} with none down`;
+  const columns = count === 1 ? kindWords(options.columns) : pluralWords(schema, options.columns);
+  return `${count} ${columns} on no ${kindWords(options.rows)}`;
+}
+
 export function CoverageView<S extends AnySchema>({
   nodes,
   label,
@@ -496,8 +516,8 @@ export function CoverageView<S extends AnySchema>({
         grid.gaps.length === 0 && grid.unasked.length === 0
           ? "complete"
           : [
-              grid.gaps.length > 0 ? `${grid.gaps.length} unanswered` : "",
-              grid.unasked.length > 0 ? `${grid.unasked.length} unasked` : "",
+              grid.gaps.length > 0 ? gapWords(grid.gaps.length, options, store.schema) : "",
+              grid.unasked.length > 0 ? unaskedWords(grid.unasked.length, options, store.schema) : "",
             ]
               .filter(Boolean)
               .join(" · ")

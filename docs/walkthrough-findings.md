@@ -2910,3 +2910,20 @@ two singles and thirty-five songs.
   other kind is what is current. Criterion: primitives
   `a-lens-keeps-the-horizon.test.tsx` (coverage and board; verified failing
   without the fix).
+
+### W-106 · The coverage lens says "unanswered" and "unasked" in every domain
+- stage: D · face: scene and pages · width: 1280 · scheme: light
+- expected: a lens that binds roles speaks the declaration's words
+- actual: "What the songs are about" was headed "3 UNANSWERED"; "Who
+  worked with whom" (artists × the artists featured on their songs) "5
+  UNANSWERED · 2 UNASKED". The words are a tender's — a requirement is
+  answered by a section — hard-coded in the one line a reader sees first,
+  in a lens whose whole claim is that it knows nothing about the domain.
+- where it belongs: `packages/primitives/src/lens/coverage.tsx`
+- harness that should have caught it: every coverage fixture is a
+  requirements matrix, where the words happen to fit
+- status: fixed in "walkthrough: D · the coverage says what is missing in
+  the kinds' words" · "3 songs with no theme", "2 themes on no song"; over
+  one kind both ways, "5 with none across · 2 with none down". Criterion:
+  primitives `a-lens-keeps-the-horizon.test.tsx` "what the coverage says is
+  missing".
