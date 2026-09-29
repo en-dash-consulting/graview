@@ -14,7 +14,7 @@ import {
   type Responder,
   type ToolCall,
 } from "@graview/tools";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSubject } from "./companion.js";
 import { describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, useSeatConversation } from "./seat.js";
 import { AnswerArgs } from "./workbench/index.js";
@@ -278,6 +278,24 @@ export function ChatPanel<S extends AnySchema>({
     }
   };
 
+  /*
+   * THE KEYBOARD OUTLIVES THE PROPOSAL IT PRESSED. Applied, a proposal's
+   * button becomes a line saying it was done, and the element the keyboard
+   * was on left the document for <body>. It goes on to the next proposal
+   * still to press, else back to the words.
+   */
+  const panel = useRef<HTMLDivElement | null>(null);
+  const kept = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const was = kept.current;
+    if (!was || was.isConnected || document.activeElement !== document.body) return;
+    kept.current = null;
+    const next =
+      panel.current?.querySelector<HTMLElement>(`[data-testid="${testId}-apply"]:not([disabled])`) ??
+      panel.current?.querySelector<HTMLElement>(`[data-testid="${testId}-draft"]`);
+    next?.focus();
+  });
+
   const offerOne = (turnIndex: number, at: number, proposal: ProposedCall, key: string) => {
     /*
      * WITHHELD, NOT OFFERED — the same rule as the strip. The responder
@@ -362,6 +380,10 @@ export function ChatPanel<S extends AnySchema>({
 
       {open ? (
         <div
+          ref={panel}
+          onFocus={(event) => {
+            kept.current = event.target as HTMLElement;
+          }}
           data-testid={`${testId}-panel`}
           {...(inside ? {} : { "data-graview-offstage": "", "data-graview-overlay": "" })}
           data-graview-anchor={inside ? "rail" : "bar"}

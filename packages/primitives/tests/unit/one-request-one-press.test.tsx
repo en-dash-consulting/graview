@@ -101,4 +101,42 @@ describe("a request the seat answers with several changes", () => {
     expect(host.textContent).not.toContain("Undo works");
     await act(async () => root.unmount());
   });
+
+  it("hands the keyboard to the next proposal once one is pressed, never to the body (W-111)", async () => {
+    const store = new Store({ schema, mutations: [addPlot, sow], invariants: [] });
+    const respond = async () => ({
+      say: "Two plots.",
+      proposals: [
+        { mutation: "add-plot", args: { label: "back bed" } },
+        { mutation: "add-plot", args: { label: "front bed" } },
+      ],
+    });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW} principal={gardener}>
+          <ChatPanel inside respond={respond as never} />
+        </GraviewProvider>,
+      ),
+    );
+    const field = host.querySelector<HTMLInputElement>('[aria-label="Message the seat"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "two plots");
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      field.closest("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    const first = host.querySelector<HTMLButtonElement>('[data-testid="chat-apply"]')!;
+    first.focus();
+    await act(async () => first.click());
+    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    expect(store.graph.nodesOfKind("plot")).toHaveLength(1);
+    expect(document.activeElement).not.toBe(document.body);
+    expect(document.activeElement?.textContent).toBe("Stake out front bed");
+    await act(async () => root.unmount());
+  });
 });

@@ -3013,3 +3013,20 @@ two singles and thirty-five songs.
   that sentence. Criterion: core `permits-answers-as-apply.test.ts`
   (verified failing without the fix); in the browser the two repairs now
   read "… — starter may not take-off here: …" with no press.
+
+### W-111 · Pressing a chat proposal leaves the keyboard on the body
+- stage: C · face: scene (the chat) · width: 1280 · scheme: light
+- expected: repair from the seat, and the keyboard is still in the
+  conversation
+- actual: "Hometown (Again) no longer features Mara Vey", pressed, became
+  "✓ Hometown (Again) no longer features Mara Vey" — a line, not a button —
+  and `activeElement` was `<body>`, with "Take Kerosene off Kerosene" still
+  waiting to be pressed below it. W-053's shape in the fifth place.
+- where it belongs: `packages/primitives/src/chat.tsx`
+- harness that should have caught it: `one-request-one-press.test.tsx`
+  asserts what lands and what the thread says, not where the keyboard is
+- status: fixed in "walkthrough: C · the chat keeps the keyboard" · the
+  panel remembers where the keyboard was; when that element is gone it
+  lands on the next proposal still to press, else on the message field.
+  Criterion: `one-request-one-press.test.tsx` "hands the keyboard to the
+  next proposal once one is pressed" (verified failing without the fix).
