@@ -278,7 +278,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
   const baseInvariants = new Map((base?.invariants ?? []).map((rule) => [rule.name, rule as InvariantDefinition]));
   const invariants: InvariantDefinition[] = read.ofKind("rule").map((rule) => {
     const ruleName = name(rule);
-    const repairs = read.out(rule.id, "repairs").map(name);
+    const repairs = [...read.out(rule.id, "repairs").map(name), ...(list(rule, "derivedRepairs") ?? [])];
     const over = read.out(rule.id, "over")[0];
     const kept = baseInvariants.get(ruleName);
     const scope = bool(rule, "wholeGraph") || !over ? ("graph" as const) : { kind: kindName.get(over.id) ?? name(over) };

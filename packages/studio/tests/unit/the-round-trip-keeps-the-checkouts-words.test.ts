@@ -1,4 +1,4 @@
-import { checkApp, createSchema, defineApp, defineMutation, defineNode, isoDate, nodeRef } from "@graview/core";
+import { checkApp, createSchema, defineApp, defineInvariant, defineMutation, defineNode, isoDate, nodeRef } from "@graview/core";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -62,7 +62,20 @@ const putOn = defineMutation("put-on", {
   describe: (args) => `Put ${args.songId} on ${args.albumId}`,
   apply: (ctx, args) => ctx.addEdge({ kind: "tracks", from: args.albumId, to: args.songId }),
 });
-const app = defineApp({ name: "Discography", schema, mutations: [addSong, addAlbum, putOn], intelligence: [{ name: "starter", kind: "graph", description: "Seeds.", may: ["add-song", "add-album"] }] });
+// A rule whose repair is an act the framework derives: there is no act node to point an edge at.
+const renumber = defineInvariant("tracks-in-order", {
+  label: "One song per track number",
+  scope: { kind: "album" },
+  repairs: ["edit-song", "put-on"],
+  evaluate: () => [],
+});
+const app = defineApp({
+  name: "Discography",
+  schema,
+  mutations: [addSong, addAlbum, putOn],
+  invariants: [renumber as never],
+  intelligence: [{ name: "starter", kind: "graph", description: "Seeds.", may: ["add-song", "add-album"] }],
+});
 
 describe("the studio's round trip, on a checkout with bounds", () => {
   const files = () => createStudio(app).files({ schemaVar: "discographySchema" });
@@ -115,5 +128,12 @@ describe("the studio's round trip, on a checkout with bounds", () => {
       expect(() => studio.store.apply(parsed, { author: june }), call).not.toThrow();
     }
   });
-});
 
+  it("keeps a rule's repair that names a derived act (W-117)", () => {
+    expect(file("src/domain/invariants.ts")).toContain('repairs: ["put-on", "edit-song"],');
+    const applied = createStudio(app).apply();
+    expect(applied.ok).toBe(true);
+    if (!applied.ok) return;
+    expect([...(applied.app.invariants?.[0]?.repairs ?? [])].sort()).toEqual(["edit-song", "put-on"]);
+  });
+});

@@ -138,6 +138,13 @@ export const ruleNode = defineNode("rule", {
     judgesPast: z.boolean(),
     /** Judged over the whole graph rather than one kind's records. */
     wholeGraph: z.boolean(),
+    /**
+     * Repairs naming an act the FRAMEWORK derives — `edit-song`,
+     * `remove-album` — which has no node here to point an edge at. Kept by
+     * name, or the round trip dropped them: "One song per track number"
+     * came back with no repairs at all.
+     */
+    derivedRepairs: z.array(z.string()).optional(),
   }),
   edges: {
     over: { to: ["kind"], description: "the kind it judges", inverse: "the rules over it" },

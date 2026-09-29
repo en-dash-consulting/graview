@@ -337,7 +337,7 @@ export function actLines(
 export function ruleLines(read: Read, rule: Node, kept: boolean): string[] {
   const ruleName = label(rule);
   const over = read.out(rule.id, "over")[0];
-  const repairs = read.out(rule.id, "repairs").map(label);
+  const repairs = [...read.out(rule.id, "repairs").map(label), ...(list(rule, "derivedRepairs") ?? [])];
   const whole = bool(rule, "wholeGraph") || !over;
   const lines = [`export const ${camel(ruleName)} = ${whole ? "defineGraphInvariant" : "defineInvariant"}(${q(ruleName)}, {`];
   // The checkout's words for it, not its identifier.

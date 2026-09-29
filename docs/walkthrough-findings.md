@@ -3139,3 +3139,27 @@ two singles and thirty-five songs.
   "1.24:1 against the deep ground of the light scheme". Criterion: core
   `kit.test.ts` (the light scheme's messages differ, one names the deep
   ground; verified failing without the fix).
+
+### W-117 · The studio drops a rule's repair when it names an act the framework derives
+- stage: F (the studio, against a checkout with a policy and lenses) · face: studio · width: — · scheme: —
+- expected: the round trip keeps what each rule names as its repairs
+- actual: `studio.files()` over Discography wrote "One song per track
+  number" with no `repairs` at all and "A single leads its album" with
+  `["take-off"]` — the checkout named `edit-song`, and `edit-album` beside
+  `take-off`. A rule's repairs are edges to act nodes, and the acts the
+  framework derives (`edit-<kind>`, `remove-<kind>`) have none, so the edges
+  pointed at nothing and were lost; `apply()` returned an app whose rules
+  had forgotten them too. A write-back that disarms, the fourth walk's
+  class, found by the first checkout whose rules repair through the derived
+  edit — which is what a rule about a field most naturally does.
+- where it belongs: `packages/studio/src/from-declaration.ts`,
+  `meta.ts` (the rule's `derivedRepairs`), `source.ts`, `to-declaration.ts`
+- harness that should have caught it: the studio's fixtures name only
+  declared acts as repairs
+- status: fixed in "walkthrough: F · the studio keeps a repair it cannot
+  point at" · a repair naming an act the app did not declare is kept on the
+  rule by name and written back and applied with the others. Criterion:
+  studio `the-round-trip-keeps-the-checkouts-words.test.ts` "keeps a rule's
+  repair that names a derived act" (verified failing without the fix). The
+  rest of the round trip with a policy held: `policy.ts` came back as
+  declared, and the files typecheck in a copy of the app.

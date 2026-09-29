@@ -146,8 +146,10 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
     }
   }
 
+  const declaredActs = new Set(((app.mutations ?? []) as unknown as readonly AnyMutationDefinition[]).map((mutation) => mutation.name));
   for (const rule of (app.invariants ?? []) as readonly InvariantDefinition[]) {
     const id = `rule:${rule.name}`;
+    const derivedRepairs = (rule.repairs ?? []).filter((name) => !declaredActs.has(name));
     nodes.push({
       id,
       kind: "rule",
@@ -156,9 +158,10 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       wholeGraph: rule.scope === "graph",
       ...(rule.label ? { title: rule.label } : {}),
       ...(rule.description ?? rule.label ? { description: rule.description ?? rule.label } : {}),
+      ...(derivedRepairs.length > 0 ? { derivedRepairs } : {}),
     });
     if (rule.scope !== "graph") edges.push({ kind: "over", from: id, to: kindId(rule.scope.kind) });
-    for (const name of rule.repairs ?? []) edges.push({ kind: "repairs", from: id, to: actId(name) });
+    for (const name of rule.repairs ?? []) if (declaredActs.has(name)) edges.push({ kind: "repairs", from: id, to: actId(name) });
   }
 
   const roleId = (role: string) => `role:${role}`;
