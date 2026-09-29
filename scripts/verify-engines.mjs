@@ -209,8 +209,17 @@ async function verifyKeyboardSurvivesThePane(engine, launch) {
         ),
       );
     }
+    /*
+     * What the claim is ABOUT is the keyboard: after Escape took away the
+     * selection the keyboard stood in, Tab still goes somewhere. Since the
+     * companion's rail the pane stays on screen at a desk's width — it says
+     * what is in view once the selection is gone — so "the pane went away"
+     * stopped being true while the keyboard was fine, and the claim failed
+     * in every engine at the commit the fifth walk started from. The pane's
+     * going is reported; the keyboard is what is judged.
+     */
     return {
-      ok: gone && reached.some((where) => where !== "body"),
+      ok: reached.length > 0 && reached.every((where) => where !== "body"),
       paneWentAway: gone,
       tabbedTo: reached,
     };
