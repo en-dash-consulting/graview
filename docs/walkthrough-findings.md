@@ -3394,3 +3394,23 @@ vehicles, dozens of customers and deals.
   hyphenated word in a sentence alone, because it is English" (verified
   failing without the fix: `Offer a trade-in: expected [ Array(1) ] to not
   include 'warning:mutation-title-is-an-identifier'`).
+
+### W-129 · What the lines mean is a list of edge names
+- stage: B · face: scene (the key, at altitude and in the rail) · width: 1280 · scheme: light
+- expected: "the lines change and the relation key agrees" — and the key
+  says, in the app's words, what each line is
+- actual: twelve rows reading `advised-by`, `buyer`, `driver`, `drives`,
+  `for-vehicle`, `offered-by`, `parked-at`, `ride-along`, `services`,
+  `takes-in`, `worked-by`, `works-at`. Each is an identifier; the words
+  ("the vehicle it is for") were only in a tooltip. With eight kinds nobody
+  can tell `drives` from `driver` or say which way `takes-in` runs. Noticed
+  in the fifth walk and not investigated; a dealership has twelve of them.
+- where it belongs: `packages/primitives/src/relation-key.tsx`
+- harness that should have caught it: `the-key-stays-in-its-rail.test.tsx`
+  measured the key's width, never read what it says
+- status: fixed in "walkthrough: B · the key says what a line means" · each
+  row reads the declaration's description, capitalised, over the kinds it
+  runs between in their plurals ("Deals → Vehicles"); `relationWords`
+  exported. Criterion: `the-key-stays-in-its-rail.test.tsx` "names a
+  relation in its declaration's words and its two ends, never by the edge's
+  name" (verified failing without the fix).

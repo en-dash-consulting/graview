@@ -51,7 +51,7 @@ export type { ConnectionsProps } from "./connections.js";
 export { EditableTitle, EditableValue, Fields, humanise } from "./editable.js";
 export { Companion, useSubject } from "./companion.js";
 export type { CompanionProps, Subject } from "./companion.js";
-export { RelationKey, RelationMark } from "./relation-key.js";
+export { RelationKey, RelationMark, relationWords } from "./relation-key.js";
 export { QuickRelations } from "./quick-relations.js";
 export { ChatPanel } from "./chat.js";
 export { LadderSetting } from "./ladder.js";

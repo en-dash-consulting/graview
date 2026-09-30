@@ -199,7 +199,16 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
                 strokeLinecap="round"
               />
             </svg>
-            <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink)" }}>{edgeKind}</span>
+            {/*
+              * THE RELATION IN ITS OWN WORDS. The row said the edge's name —
+              * `for-vehicle`, `takes-in`, `offered-by` — which is the source's
+              * word for it; the declaration's description is the person's,
+              * and the two plurals under it say which way it reads.
+              */}
+            <span style={{ display: "grid", minWidth: 0 }} data-graview-relation-words={edgeKind}>
+              <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink)" }}>{relationWords(store.schema, edgeKind).words}</span>
+              <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>{relationWords(store.schema, edgeKind).ends}</span>
+            </span>
             {/* A kind the kit keeps quiet says so here, the one place it is still listed. */}
             {connector.visible ? null : (
               <span data-graview-quiet={edgeKind} style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", fontStyle: "italic" }}>
@@ -220,6 +229,21 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
       })}
     </aside>
   );
+}
+
+/**
+ * What a relation is called where a person reads it: the declaration's
+ * description, capitalised, and which kinds it runs between in their
+ * plurals — "The vehicle it is for", "Deals → Vehicles". The edge's name is
+ * the source's word for it and only stands in when nothing else was said.
+ */
+export function relationWords(schema: AnySchema, edgeKind: string): { readonly words: string; readonly ends: string } {
+  const info = schema.edge(edgeKind);
+  const said = info?.description ?? edgeKind.replace(/[-_]+/g, " ");
+  const plural = (kind: string) => schema.tryDefinition(kind)?.plural ?? kind;
+  const from = (info?.from ?? []).map(plural).join(", ");
+  const to = info === undefined ? "" : info.to === "*" ? "anything" : info.to.map(plural).join(", ");
+  return { words: said.charAt(0).toUpperCase() + said.slice(1), ends: from && to ? `${from} → ${to}` : "" };
 }
 
 /**

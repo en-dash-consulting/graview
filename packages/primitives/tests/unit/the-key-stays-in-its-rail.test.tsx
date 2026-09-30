@@ -68,6 +68,13 @@ describe("the key at altitude", () => {
     expect(html).toContain("max(110px, calc(min(250px, 22%) - 32px))");
   });
 
+  it("names a relation in its declaration's words and its two ends, never by the edge's name", () => {
+    const html = drawn();
+    expect(html).toContain("The ground they keep");
+    expect(html).toContain("Gardeners → Plots");
+    expect(html).not.toContain(">is-responsible-for-the-upkeep-of<");
+  });
+
   it("is not drawn at all when the scene is not at altitude", () => {
     const html = renderToStaticMarkup(
       <GraviewProvider
