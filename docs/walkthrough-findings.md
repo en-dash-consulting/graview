@@ -3286,3 +3286,29 @@ two singles and thirty-five songs.
   Criterion: `scaffold.test.ts` runs `git check-ignore` over both layouts' store and
   seed paths (verified failing without the fix).
 
+
+## The sixth walk — a car dealership (2026-09-30)
+
+The sixth walk took a dealership: vehicles by VIN on a lot of several
+locations, salespeople, customers, test drives on a calendar, deals that
+move from lead to closed or lost, trade-ins and service appointments,
+scaffolded with `graview create ../walk6 --name "Dealership" --kind vehicle
+--plural vehicles` and seeded at the size a real store has — a few hundred
+vehicles, dozens of customers and deals.
+
+### W-124 · A fresh checkout's tests fail for anyone who set the key the docs name
+- stage: setup (`pnpm install && pnpm build && pnpm test`) · face: — · width: — · scheme: —
+- expected: `pnpm test` passes on a fresh checkout
+- actual: 1 failed of 1614 — `the-provider-is-one-call.test.ts` "the key …
+  never from nowhere" expected `jevKeyFromEnvironment(undefined)` to be
+  undefined and got the machine's own `TYPESAFE_API_KEY`. Passing
+  `undefined` takes the default, which is `process.env`; the test meant "no
+  environment" and asked for "this environment". Anyone who followed the
+  docs and set the key fails the suite before they have changed anything.
+- where it belongs: `packages/tools/tests/unit/the-provider-is-one-call.test.ts`
+- harness that should have caught it: `pnpm test` — it did, on the first
+  machine with the key set
+- status: fixed in "walkthrough: setup · the key test reads no machine" ·
+  "never from nowhere" asks with `{}`, and "no environment" is a runtime
+  with no `process` at all. Criterion: the same file, run with
+  `TYPESAFE_API_KEY=x` (failing before the fix as above, passing after).

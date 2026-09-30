@@ -2,7 +2,7 @@
 id: "95371d9b-9fda-4f0c-940f-545b6342d327"
 level: "task"
 title: "Walkthrough VI · The sixth walk, from a fresh checkout, adds nothing"
-status: "pending"
+status: "in_progress"
 priority: "critical"
 acceptanceCriteria:
   - "a fresh checkout, pnpm install && pnpm build && pnpm test, then graview create of a new app beside it"

@@ -125,6 +125,16 @@ describe("the key", () => {
     expect(jevKeyFromEnvironment({ TYPESAFE_API_KEY: "a", JEV_API_KEY: "b" })).toBe("a");
     expect(jevKeyFromEnvironment({ JEV_API_KEY: "b" })).toBe("b");
     expect(jevKeyFromEnvironment({ TYPESAFE_API_KEY: "" })).toBeUndefined();
-    expect(jevKeyFromEnvironment(undefined)).toBeUndefined();
+    expect(jevKeyFromEnvironment({})).toBeUndefined();
+  });
+
+  it("answers undefined where there is no environment, whatever the machine running the test has set", () => {
+    const saved = (globalThis as { process?: unknown }).process;
+    try {
+      (globalThis as { process?: unknown }).process = undefined;
+      expect(jevKeyFromEnvironment()).toBeUndefined();
+    } finally {
+      (globalThis as { process?: unknown }).process = saved;
+    }
   });
 });
