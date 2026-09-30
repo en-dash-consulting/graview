@@ -1,4 +1,5 @@
 import { humaniseField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
+import { relationWords } from "../relation-key.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout";
 import { useGraview } from "@graview/react";
 import type { Affordance, OpenParameter } from "@graview/tools";
@@ -371,7 +372,8 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
    * the first string the interface ever showed them.
    */
   const edge = edgeOfSelection(id);
-  if (edge) return humaniseField(edge.kind);
+  // A relation by its words ("Where they work"), never its name ("Works at").
+  if (edge) return relationWords(store.schema, edge.kind).words;
   const kinds = kindsOf(id);
   if (kinds.length > 0) {
     return kinds

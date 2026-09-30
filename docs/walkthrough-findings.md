@@ -3481,3 +3481,25 @@ vehicles, dozens of customers and deals.
   read-only value breaks anywhere too. Criterion:
   `a-value-stays-in-its-cell.test.tsx` (verified failing without the fix:
   `expected '' to be '100%'`); measured in walk6: right edge 638, cell 638.
+
+### W-133 · A selected line is headed by its edge's name
+- stage: B · face: scene (the line's own menu) · width: 1280 · scheme: light
+- expected: "Words read from the wrong end … Cousins: a heading that names
+  the edge kind" — a selected line says what it means
+- actual: select the line from Priya Raman to North lot: the menu reads
+  "Works at · relation · where they work · Priya Raman → North lot". The
+  heading was `humaniseField(edge.kind)`. On this domain that reads "For
+  vehicle", "Takes in", "Drives", "Services" — the source's names for
+  relations whose words the declaration gives. The sentence under the
+  heading then restated the description.
+- where it belongs: `packages/primitives/src/workbench/answer-args.tsx`
+  (`nameOf`), `workbench/inspector.tsx`
+- harness that should have caught it: none reads the heading of a selected
+  line; `verify-menu` checks the line's acts
+- status: fixed in "walkthrough: B · a line is named in its words" · a
+  line's name is its description, capitalised (`relationWords`); the line
+  under it is the other end's reading ("From North lot: who works here").
+  Criterion: `a-line-is-named-in-its-words.test.ts` (verified failing
+  without the fix: `expected 'Works at' to be 'Where they work'`);
+  measured in walk6: "Where they work · relation · From North lot: who
+  works here". Severing from the line's menu removed exactly that line.

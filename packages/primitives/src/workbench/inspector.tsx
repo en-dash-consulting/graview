@@ -243,15 +243,18 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
   const edgeEnds = edge
     ? { from: store.graph.getNode(edge.from), to: store.graph.getNode(edge.to) }
     : null;
+  /*
+   * The heading already reads the relation from its declaring end ("Where
+   * they work"); what is left to say is how it reads from the other end —
+   * "From North lot: who works here" — and nothing when that was not declared.
+   */
   const edgeSaid = edge
     ? (() => {
-        for (const definition of store.schema.definitions) {
-          const declared = (definition.edges as Record<string, { description?: string }>)[
-            edge.kind
-          ];
-          if (declared?.description) return declared.description;
-        }
-        return null;
+        const declared = (store.schema.tryDefinition(store.graph.getNode(edge.from)?.kind ?? "")?.edges as
+          | Record<string, { inverse?: string }>
+          | undefined)?.[edge.kind];
+        const far = store.graph.getNode(edge.to);
+        return declared?.inverse && far ? `From ${nameOf(store, far.id)}: ${declared.inverse}` : null;
       })()
     : null;
 
