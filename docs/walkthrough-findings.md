@@ -3414,3 +3414,23 @@ vehicles, dozens of customers and deals.
   exported. Criterion: `the-key-stays-in-its-rail.test.tsx` "names a
   relation in its declaration's words and its two ends, never by the edge's
   name" (verified failing without the fix).
+
+### W-130 · Three quick-select chips all read "Wei Haddad in the…"
+- stage: B · face: scene (the quick select beside a focus) · width: 1280 · scheme: light
+- expected: a chip says what it is; two chips are two names
+- actual: focus a customer with three test drives (each named "<customer>
+  in the <vehicle>") and the quick select shows three chips reading "Wei
+  Haddad in the…". Every chip was its name cut at eighteen characters, and
+  the cut fell inside the words they share; each button's accessible name
+  was that same cut text, so a screen reader heard one name three times.
+  A vehicle's four service appointments did the same ("2026 Tesla Model…").
+  Real names share their beginnings far more than fixture names do.
+- where it belongs: `packages/primitives/src/quick-relations.tsx`
+- harness that should have caught it: none — the fixtures' quick-select
+  members were short names
+- status: fixed in "walkthrough: B · handles that can be told apart" · where
+  two cut handles would read the same, the shared words are cut ("…2017
+  Jeep Wrangl…"); the button's name is the whole label. Criterion:
+  `handles-can-be-told-apart.test.ts` (the old cut gives `['Wei Haddad in
+  the…', 'Wei Haddad in the…']`; the test fails on it); measured in walk6:
+  three distinct handles, named in full.

@@ -36,6 +36,37 @@ const MOST_KINDS = 1;
 /** A chip is a handle, not a sentence: long names cut with their full text on hover. */
 const MOST_LABEL = 18;
 
+/**
+ * HANDLES THAT CAN BE TOLD APART.
+ *
+ * Cut at eighteen characters, a customer's three test drives — "Wei Haddad
+ * in the 2017 Jeep…", "…2027 Chevrolet…", "…2027 Honda…" — were three
+ * chips reading "Wei Haddad in the…", and three buttons with one name. Where
+ * two cut handles would read the same, the words they share are what gets
+ * cut: "…2017 Jeep Wrangl…". A label that fits, or whose cut is already
+ * its own, is left as it was.
+ */
+export function handles(labels: readonly string[], most = MOST_LABEL): string[] {
+  const cut = (text: string) => (text.length > most ? `${text.slice(0, most - 1).trimEnd()}…` : text);
+  const first = labels.map(cut);
+  return labels.map((label, index) => {
+    const mine = first[index]!;
+    const twins = labels.filter((_, other) => first[other] === mine);
+    if (twins.length < 2) return mine;
+    // The words every twin starts with, to a word boundary.
+    let shared = twins.reduce((prefix, other) => {
+      let at = 0;
+      while (at < prefix.length && prefix[at] === other[at]) at += 1;
+      return prefix.slice(0, at);
+    }, label);
+    const space = shared.lastIndexOf(" ");
+    shared = space > 0 ? shared.slice(0, space + 1) : "";
+    const rest = label.slice(shared.length);
+    if (shared.length === 0 || rest.length === 0) return mine;
+    return `…${rest.length > most - 1 ? `${rest.slice(0, most - 2).trimEnd()}…` : rest}`;
+  });
+}
+
 export function QuickRelations<S extends AnySchema>({ inside = false }: { readonly inside?: boolean } = {}) {
   const { store, view, brand, menuAt } = useGraview<S>();
   const { set } = useSelection();
@@ -137,17 +168,24 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
             {row.plural}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-          {row.members.map((member) => {
+          {row.members.map((member, index, all) => {
             const node = store.graph.getNode(member.id);
             if (!node) return null;
             const hue = Math.round(hueFor(member.kind, brand?.accents));
             const full = labelOf(store.schema.tryDefinition(member.kind), node);
-            const shown = full.length > MOST_LABEL ? `${full.slice(0, MOST_LABEL - 1).trimEnd()}…` : full;
+            const shown = handles(
+              all.map((one) => {
+                const other = store.graph.getNode(one.id);
+                return other ? labelOf(store.schema.tryDefinition(one.kind), other) : one.id;
+              }),
+            )[index]!;
             return (
               <button
                 key={member.id}
                 type="button"
                 data-graview-quick={member.id}
+                // The whole name is the button's name; the handle is only what fits.
+                aria-label={full}
                 title={`${full} — ${member.touches} of what you are looking at`}
                 onClick={() => set([member.id])}
                 style={{
