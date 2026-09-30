@@ -1,4 +1,4 @@
-import { humaniseField, labelOf, tellApart, type AnySchema, type Store } from "@graview/core";
+import { humaniseField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
 import { edgeOfSelection, kindsOf } from "@graview/layout";
 import { useGraview } from "@graview/react";
 import type { Affordance, OpenParameter } from "@graview/tools";
@@ -149,7 +149,7 @@ export function AnswerArgs({
    */
   const asking =
     parameter.kinds && parameter.kinds.length > 0 && !parameter.kinds.includes("*")
-      ? parameter.kinds.map((kind) => humaniseField(kind)).join(" or ")
+      ? parameter.kinds.map((kind) => humaniseField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
       : humaniseField(parameter.name);
   const step =
     affordance.open.length > 1

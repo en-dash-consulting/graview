@@ -1,4 +1,4 @@
-import { argShape, humaniseField, nodeRefArgs, withArticle, type AnySchema, type Store } from "@graview/core";
+import { argShape, humaniseField, nodeRefArgs, nounOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation, OpenParameter } from "../types.js";
 
 const BASE_SCORE = 40;
@@ -179,7 +179,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             if (waiting.length > 0) {
               const wants = [
                 ...new Set(waiting.flatMap((parameter) => parameter.kinds ?? [])),
-              ].map((kind) => withArticle(kind));
+              ].map((kind) => withArticle(nounOf(store.schema.tryDefinition(kind), kind)));
               observations.push({
                 id: `schema:waits:${mutation.name}`,
                 text: `"${mutation.title ?? mutation.name}" cannot begin until there is ${
@@ -202,7 +202,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             score: BASE_SCORE - open.length,
             why: `this makes ${(mutation.creates ?? [])
               .filter((kind) => wanted.has(kind as string))
-              .map((kind) => withArticle(kind as string))
+              .map((kind) => withArticle(nounOf(store.schema.tryDefinition(kind as string), kind as string)))
               .join(", ")}`,
             nodeIds: [],
           });
@@ -384,9 +384,9 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           why:
             nodes.length > 1
               ? `all ${nodes.length} selected nodes are ${[...kinds]
-                  .map((kind) => humaniseField(kind as string).toLowerCase())
+                  .map((kind) => (store.schema.tryDefinition(kind as string)?.plural ?? humaniseField(kind as string)).toLowerCase())
                   .join(" or ")}`
-              : `this is ${withArticle(nodes[0]!.kind as string)}`,
+              : `this is ${withArticle(nounOf(store.schema.tryDefinition(nodes[0]!.kind as string), nodes[0]!.kind as string))}`,
           nodeIds: nodes.map((node) => node.id),
         });
       }

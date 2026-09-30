@@ -3455,7 +3455,12 @@ vehicles, dozens of customers and deals.
   one, carried and written back by the studio. Criteria:
   `a-kind-says-what-one-is-called.test.ts` ("Remove the staff member") and
   the studio's round trip "writes a declared noun back" (both verified
-  failing without the fix).
+  failing without the fix). Four sentences were missed by that commit and
+  found at once in the strip — the hover on "Change the staff member" said
+  "this is a staff" — and fixed in "walkthrough: B · the reason says the
+  noun too": the reason, what a beginning waits for, the ask's picker label
+  and the reach lens's hover. Criterion: tools
+  `the-reason-says-the-noun.test.ts` (verified failing without the fix).
 
 ### W-132 · A staff member's email runs under her appointments
 - stage: B · face: scene (a record's card) · width: 1280 · scheme: light

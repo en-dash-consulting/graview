@@ -1,4 +1,4 @@
-import { permits, withArticle, type AnySchema, type Policy, type Principal } from "@graview/core";
+import { nounOf, permits, withArticle, type AnySchema, type Policy, type Principal } from "@graview/core";
 import { useGraview, type ViewComponent, type ViewProps } from "@graview/react";
 import type { ReactElement } from "react";
 import { hueFor } from "../default-views.js";
@@ -113,7 +113,7 @@ export function ReachView<S extends AnySchema>({ label, fidelity, mode }: ViewPr
                 <th
                   key={`${act.name}|${act.kind ?? ""}`}
                   scope="col"
-                  title={act.kind ? `${act.title}, on ${withArticle(act.kind)}` : act.title}
+                  title={act.kind ? `${act.title}, on ${withArticle(nounOf(store.schema.tryDefinition(act.kind), act.kind))}` : act.title}
                   style={{ textAlign: "left", padding: "4px 10px 6px", fontWeight: 500, whiteSpace: "nowrap", color: "var(--graview-ink-muted)", fontSize: "0.8125rem" }}
                 >
                   {act.title}
