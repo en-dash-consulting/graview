@@ -181,8 +181,13 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               </li>
             ))}
           </ul>
-          {/* THE OTHER WAY ROUND: the far kind's list, narrowed to this record — the same relation read as a pile. */}
-          {[...new Set(group.targets.map((target) => target.kind))].map((farKind) => (
+          {/* THE OTHER WAY ROUND: the far kind's list, narrowed to this record — the same relation read as a pile.
+              Not for a relation that holds ONE by declaration — a deal's buyer, a vehicle's lot: sorting and
+              filtering a list that can only ever hold one thing is a link to the same name again. */}
+          {(group.direction === "out" && store.schema.edge(group.edgeKind)?.cardinality === "one"
+            ? []
+            : [...new Set(group.targets.map((target) => target.kind))]
+          ).map((farKind) => (
             <Link
               key={farKind}
               to={`/${pluralSlug(store.schema, farKind)}?${encodeURIComponent(group.edgeKind)}=${encodeURIComponent(id)}`}

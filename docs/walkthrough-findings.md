@@ -3528,3 +3528,21 @@ vehicles, dozens of customers and deals.
   `a-glance-does-not-say-its-heading-again.test.ts` (verified failing
   without the fix: `['vin', 'year', 'make']`); measured in walk6: "VIN ·
   Mileage 31 mi · Price $31,900".
+
+### W-135 · "Sort and filter who is buying" under the one buyer a deal can have
+- stage: B · face: pages (a record) · width: 390 and 1280 · scheme: both
+- expected: an offer on a page can do something the page does not already
+  show ("an act that cannot act" is the class)
+- actual: a deal's record lists its buyer, its vehicle and its salesperson,
+  and under each one "Sort and filter who is buying →", "Sort and filter
+  the vehicle it is for →". The buyer and the vehicle are declared
+  `cardinality: "one"`; the link opens the customers list narrowed to this
+  deal, which holds the one name above the link. Every test drive, trade-in
+  and service appointment record had the same.
+- where it belongs: `packages/pages/src/page-record.tsx`
+- harness that should have caught it: none — no fixture record page reads
+  a cardinality-one relation from its declaring end
+- status: fixed in "walkthrough: B · one is not a pile" · the pile is not
+  offered from the end of a relation declared to hold one; from the far
+  end, which may be many, it still is. Criterion:
+  `one-is-not-a-pile.test.tsx` (verified failing without the fix).
