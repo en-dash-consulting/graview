@@ -3659,3 +3659,28 @@ vehicles, dozens of customers and deals.
   Criterion: embed `a-seat-change-keeps-the-store.test.tsx` (verified
   failing without the fix: `one store across the seats: expected 2 to be
   1`).
+
+### W-141 · The chat says "tesla", and answers for one of three Model Ys
+- stage: C (the seat's chat, before the rule) · face: scene (the chat) · width: — · scheme: —
+- expected: the graph answers in sentences a person would write (W-120),
+  and about the thing that was asked
+- actual: on the dealership's seed, `graphResponder`:
+  "tell me about the 2026 Tesla Model Y Performance" → "— a vehicle
+  (8C9DCWU1ADJZLWE6S, year 2026, tesla)": each fact was lower-cased whole
+  to sit in brackets, so a make lost its capital, and a string fact is its
+  bare value, so the VIN read as noise; and there are several 2026 Tesla
+  Model Y Performances, and it described the first one found as if it
+  were the only one. "any Subaru Outback?" listed "2025 Subaru Outback
+  Base (vehicle); 2025 Subaru Outback Base (vehicle)" — two of one name,
+  not told apart (the W-095 rule, missed in prose). "Wei Haddad — a
+  customer ((555) 298-1878)" was the same bare value doubling a bracket.
+- where it belongs: `packages/tools/src/conversation.ts`
+- harness that should have caught it: `conversation.test.ts`'s fixtures
+  are lower-case words and unique names
+- status: fixed in "walkthrough: C · the chat on a real lot" · a fact's
+  label is lower-cased, never its value, and a bare value is labelled
+  ("make Tesla", "phone (555) 298-1878"); a found list tells two of one
+  name apart and says each kind by its noun; a name several records share
+  is not taken as one referent — the words find them all. Criterion:
+  tools `the-chat-at-a-dealership.test.ts` (both cases verified failing
+  without the fix).

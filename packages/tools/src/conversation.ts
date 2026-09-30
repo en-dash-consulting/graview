@@ -2,6 +2,7 @@ import {
   formFields,
   humaniseField,
   nounOf,
+  tellApart,
   labelOf,
   readableFields,
   search,
@@ -176,7 +177,16 @@ export function graphResponder<S extends AnySchema>(
       .map((node) => ({ node, label: squeeze(name(node)) }))
       .filter(({ label }) => label.length >= 2 && runs.has(label))
       .sort((a, b) => b.label.length - a.label.length);
-    for (const { node } of byLabel) {
+    /*
+     * A NAME SEVERAL THINGS SHARE NAMES NONE OF THEM. "Tell me about the
+     * 2026 Tesla Model Y Performance" on a lot with three was answered
+     * with the first one found and said nothing about the other two; the
+     * words find them all below, each told apart.
+     */
+    const shared = new Map<string, number>();
+    for (const { label } of byLabel) shared.set(label, (shared.get(label) ?? 0) + 1);
+    for (const { node, label } of byLabel) {
+      if ((shared.get(label) ?? 0) > 1) continue;
       if (!referents.some((held) => held.id === node.id)) referents.push(node);
     }
     /*
@@ -476,9 +486,17 @@ export function graphResponder<S extends AnySchema>(
       const bare = tokens.every((token) => own.has(token) || ASKING_WORDS.has(token));
       const asking = question || bare;
       const definition = store.schema.tryDefinition(node.kind);
-      // Each fact as it reads on its own, lower-cased to sit in brackets: "explicit: no", not "explicit No".
+      /*
+       * Each fact as it reads on its own, its LABEL lower-cased to sit in
+       * brackets — "explicit: no", "year 2026" — and never its value: "tesla"
+       * is a make somebody spelt with a capital. A bare value says what it
+       * is, "make Tesla", "phone (555) 298-1878", or a VIN reads as noise.
+       */
+      const quietly = (label: string) => (label === label.toUpperCase() ? label : label.charAt(0).toLowerCase() + label.slice(1));
       const facts = readableFields(node, definition, { limit: 3 })
-        .map((field) => field.alone.charAt(0).toLowerCase() + field.alone.slice(1))
+        .map((field) =>
+          field.alone.startsWith(field.label) ? quietly(field.label) + field.alone.slice(field.label.length) : `${quietly(field.label)} ${field.alone}`,
+        )
         .join(", ");
       const touching = violationsTouching(violations, [node.id]);
       /*
@@ -555,8 +573,16 @@ export function graphResponder<S extends AnySchema>(
         });
         const picks = found.hits.filter((hit): hit is Extract<Hit, { about: "node" }> => hit.about === "node");
         if (picks.length > 0) {
+          // Two of one name are told apart: "2025 Subaru Outback Base · VIN 3VP1…" (the W-095 rule, in prose).
+          const apart = tellApart(
+            picks.flatMap((hit) => {
+              const node = store.graph.getNode(hit.id);
+              return node ? [node] : [];
+            }),
+            (kind) => store.schema.tryDefinition(kind),
+          );
           const said = picks.map((hit) =>
-            `${hit.label} (${humaniseField(hit.kind).toLowerCase()}${hit.why.field === "label" ? "" : `, ${hit.why.reading.toLowerCase()}: ${hit.why.fragment}`})`,
+            `${hit.label}${apart.has(hit.id) ? ` · ${apart.get(hit.id)}` : ""} (${nounOf(store.schema.tryDefinition(hit.kind), hit.kind)}${hit.why.field === "label" ? "" : `, ${hit.why.reading.toLowerCase()}: ${hit.why.fragment}`})`,
           );
           const how = found.total === 1 ? "One thing is" : `${numberWord(found.total)} things are`;
           return {
