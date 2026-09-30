@@ -310,13 +310,6 @@ export class Store<S extends AnySchema> {
     );
   }
 
-  /**
-   * Why a declared agent may not run this call, if it may not.
-   *
-   * Only ever narrows, and only for an agent: a human author has no
-   * allowlist, and a provider that declared no `may` may do whatever its
-   * roles allow, which is what "absent means all" has always meant.
-   */
   /** How the policy's refusals name an act and a kind: by title and noun, never by id. */
   private get words(): PolicyWords {
     return {
@@ -325,6 +318,13 @@ export class Store<S extends AnySchema> {
     };
   }
 
+  /**
+   * Why a declared agent may not run this call, if it may not.
+   *
+   * Only ever narrows, and only for an agent: a human author has no
+   * allowlist, and a provider that declared no `may` may do whatever its
+   * roles allow, which is what "absent means all" has always meant.
+   */
   private refusesAgent(call: MutationCall, author: Author | Principal): Refusal | undefined {
     if (author.kind !== "agent" || author.id === undefined) return undefined;
     const allowed = this.may.get(author.id);
