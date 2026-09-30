@@ -42,6 +42,15 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
   const widths = useRef<number[]>([]);
   const [shown, setShown] = useState(places.length);
   const MORE = 92;
+  /* Which place you are on, so the menu keeps room for its name when it holds it. */
+  const current = places.findIndex(
+    (place) =>
+      !view.overview &&
+      view.focusId === aggregateId(place.kind) &&
+      (view.within?.["view"] === undefined
+        ? places.filter((other) => other.kind === place.kind).at(-1)?.as === place.as
+        : view.within["view"] === place.as),
+  );
   useLayoutEffect(() => {
     const element = row.current;
     if (!element || typeof ResizeObserver === "undefined") return;
@@ -57,14 +66,15 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
       for (let i = 0; i < places.length; i += 1) {
         const next = used + (sizes[i] ?? 0) + (i > 0 ? 2 : 0);
         /*
-         * THE MORE MENU IS AS WIDE AS WHAT IT MAY SAY. Standing on a place it
+         * THE MORE MENU IS AS WIDE AS WHAT IT SAYS. Standing on a place it
          * holds, the select shows that place's name, not "+2 more" — and
          * "The rotation" is wider than the 92 pixels kept for it, so the
-         * row ran seven pixels past its own edge. Keep room for the widest
-         * name it could show, and the chevron beside it.
+         * row ran seven pixels past its own edge. Keep room for the name of
+         * the place you are on when it would be in the menu; otherwise the
+         * menu says "+N more", and 92 holds that.
          */
         const reserve =
-          i < places.length - 1 ? Math.max(MORE, ...sizes.slice(i + 1, places.length).map((width) => (width ?? 0) + 14)) : 0;
+          i < places.length - 1 ? Math.max(MORE, current > i ? (sizes[current] ?? 0) + 14 : 0) : 0;
         if (next + reserve > room) break;
         used = next;
         fit = i + 1;
@@ -75,7 +85,7 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
     const watch = new ResizeObserver(measure);
     watch.observe(element.parentElement ?? element);
     return () => watch.disconnect();
-  }, [places.length]);
+  }, [places.length, current]);
   if (places.length === 0) return null;
   /*
    * Which picture a group draws when the address names none: the LAST

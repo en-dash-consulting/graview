@@ -3709,7 +3709,13 @@ vehicles, dozens of customers and deals.
 - harness that should have caught it: `survey` did, every run since the
   rotation became a place
 - status: fixed in "walkthrough: B · the more menu is as wide as what it
-  says" · the row keeps room for the widest name the menu could show.
+  says" · the row keeps room for the name the menu will show. The first
+  version kept room for the WIDEST name it could show, and on the
+  dealership's bar at 1280 that was every pill: all three places went into
+  "+3 more" and none was on the bar. "walkthrough: D · the more menu keeps
+  room only for where you are" keeps room for the current place's name
+  when the menu holds it, and 92 pixels for "+N more" otherwise (walk6 at
+  1280: "The diary · +2 more").
   Criterion: the existing `survey` (32 of 34 screens clean before, 34 of 34
   after; `pnpm verify survey` holds).
 
