@@ -135,6 +135,9 @@ describe("Focus, from altitude", () => {
     expect(html).toContain("<s>Add some starter data</s>");
     expect(html).toContain('data-testid="agent-starter-why"');
     expect(html).toContain("Not yours to do from this seat");
+    // In the store's words (W-147): the act by its title and who may, never "refuses add-note".
+    expect(html).not.toContain("refuses add-note");
+    expect(html).toContain("a keeper can");
     // Not "there is something here already", which is a different answer.
     expect(html).not.toContain(">There is something here already<");
   });

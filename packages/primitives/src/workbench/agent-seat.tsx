@@ -113,8 +113,18 @@ export function AgentSeat<S extends AnySchema>({
   const nothing = count === 0;
   const off = busy || nothing || !permitted;
 
+  /*
+   * THE REFUSAL IN THE STORE'S OWN WORDS. "The store refuses add-vehicle"
+   * named the act by its identifier on the seat people read first; the
+   * store's sentence says the act's title and who may.
+   */
+  const verdict = !permitted && gate !== undefined ? store.permits({ name: gate, args: {} }, principal) : undefined;
   const why = !permitted
-    ? `Not yours to do from this seat. The store refuses ${gate}, and the actions strip refuses it too.`
+    ? `Not yours to do from this seat. ${
+        verdict && !verdict.ok
+          ? verdict.refusal.message
+          : `“${store.allMutations().find((mutation) => mutation.name === gate)?.title ?? gate}” is not offered to it.`
+      } The actions strip says the same.`
     : nothing
       ? idle
       : `${runtime.definitions.length} tools, generated from the schema. Its edits produce the diffs yours do, and Activity can take the turn back.`;

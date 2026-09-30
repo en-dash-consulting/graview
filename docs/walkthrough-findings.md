@@ -3808,3 +3808,20 @@ vehicles, dozens of customers and deals.
   controls take `min-width: 0` and `max-width: 100%` and cut the text.
   Criterion: pages `a-picker-fits-its-field.test.tsx` (verified failing
   without the fix); measured in walk6: both place pages 390 wide.
+
+### W-147 · The seat says "The store refuses add-vehicle"
+- stage: F · face: scene (the agent seat in the rail) · width: 1280 · scheme: light
+- expected: the seat under a policy says why it may not act, in the app's
+  words (W-143's rule, on the seat)
+- actual: sat as Priya Raman, the starter seat read "starter · refused —
+  Not yours to do from this seat. The store refuses add-vehicle, and the
+  actions strip refuses it too." The seat's gate is the act's name, and the
+  sentence printed it.
+- where it belongs: `packages/primitives/src/workbench/agent-seat.tsx`
+- harness that should have caught it: `shell.test.tsx` asserts the seat
+  says it is refused, not in what words
+- status: fixed in "walkthrough: F · the seat refuses in the store's words" ·
+  the line is the store's refusal for the gate ("Not permitted: “Take a
+  vehicle into stock” — a sales manager can."). Criterion:
+  `shell.test.tsx` now expects "a keeper can" and not "refuses add-note"
+  (verified failing without the fix).
