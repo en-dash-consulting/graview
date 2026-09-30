@@ -71,8 +71,25 @@ export function clipPolyline(points: readonly Point[], boxes: readonly Box[]): P
   return runs;
 }
 
-/** Two elbows: out along x to the middle, across, then in along x. */
+/**
+ * Two elbows, leaving and arriving along the LONGER way.
+ *
+ * Out along x to the middle, across, and in along x drew the last leg of a
+ * line from the focus down to a card in a band as a horizontal run at the
+ * card's own height — through the gap between it and its neighbour, so two
+ * chips in a row read as joined by a dashed line. Where the ends are further
+ * apart vertically than across, the route leaves and arrives vertically and
+ * crosses in the gutter halfway between: a line comes down INTO a card, and
+ * never lies along the row it sits in.
+ */
 export function orthogonalPoints(from: Point, to: Point): Point[] {
+  const dx = Math.abs(to.x - from.x);
+  const dy = Math.abs(to.y - from.y);
+  if (dy > dx) {
+    if (dx < 2) return [from, to];
+    const midY = (from.y + to.y) / 2;
+    return [from, { x: from.x, y: midY }, { x: to.x, y: midY }, to];
+  }
   const midX = (from.x + to.x) / 2;
   if (Math.abs(to.x - from.x) < 2) return [from, to];
   return [from, { x: midX, y: from.y }, { x: midX, y: to.y }, to];

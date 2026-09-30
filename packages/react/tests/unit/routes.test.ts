@@ -29,6 +29,20 @@ describe("routes", () => {
     expect(mid).toEqual({ x: 50, y: 30 });
   });
 
+  it("comes DOWN into a card below rather than along the row it sits in", () => {
+    // A focus above, a chip in a band 300 below and 120 across: the last leg
+    // is vertical, and the crossing runs in the gutter halfway down (W-148).
+    const points = orthogonalPoints({ x: 400, y: 100 }, { x: 280, y: 400 });
+    expect(points).toEqual([
+      { x: 400, y: 100 },
+      { x: 400, y: 250 },
+      { x: 280, y: 250 },
+      { x: 280, y: 400 },
+    ]);
+    const last = points.at(-2)!;
+    expect(last.x).toBe(280);
+  });
+
   it("a polyline keeps out of the boxes its ends are drawn in", () => {
     const runs = clipPolyline(
       [{ x: 0, y: 0 }, { x: 100, y: 0 }],

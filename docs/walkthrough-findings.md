@@ -3825,3 +3825,22 @@ vehicles, dozens of customers and deals.
   vehicle into stock” — a sales manager can."). Criterion:
   `shell.test.tsx` now expects "a keeper can" and not "refuses add-note"
   (verified failing without the fix).
+
+### W-148 · Right-angled lines read as joining two chips in a row
+- stage: F (dressing the app: `kit.connectors.all.route: "orthogonal"`; carried from the fifth walk's "noticed and not investigated") · face: scene · width: 1280 · scheme: light
+- expected: "a line between two chips of the band runs through the gutters";
+  a line from the focus to one chip does not look like a line between two
+- actual: focus Priya Raman with right-angled lines: every line to a deal
+  in the band ended in a dashed horizontal run at the chip's own height —
+  "Chloé Haddad · 2024 Toy… – – – Nguyen Anderson · 2018…" — and the row
+  read as four chips joined to each other. `orthogonalPoints` always left
+  along x, crossed at the midpoint and arrived along x, which is right
+  beside the focus and wrong below it.
+- where it belongs: `packages/react/src/routes.ts` (`orthogonalPoints`)
+- harness that should have caught it: `routes.test.ts` tried one route
+  wider than it is tall
+- status: fixed in "walkthrough: F · a right-angled line comes down into a
+  card" · where the ends are further apart vertically, the route leaves and
+  arrives vertically and crosses halfway between. Criterion: `routes.test.ts`
+  "comes DOWN into a card below rather than along the row it sits in"
+  (verified failing without the fix); photographed in walk6.
