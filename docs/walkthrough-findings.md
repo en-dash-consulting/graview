@@ -3593,7 +3593,14 @@ vehicles, dozens of customers and deals.
   Criteria: layout `an-opened-district-lists-what-it-has-room-for.test.ts`
   (verified failing without the fix: `openedRows` undefined) and primitives
   `a-roster-you-can-read.test.ts`; measured in walk6: the roster ends above
-  the scene's edge, "Vehicles" and "291" on their own lines.
+  the scene's edge, "Vehicles" and "291" on their own lines. The stage's
+  harness run then failed `verify-studio` — opening the studio's Kinds
+  district showed one kind and "+3 more", and the task kind it presses was
+  not there: a crowded city shrank the roster to a row. Fixed in
+  "walkthrough: B · a roster keeps four rows" (the city grows before the
+  roster goes under four); criterion: the layout test "keeps four rows"
+  (verified failing without it: `expected 1 to be 4`), and `pnpm verify
+  studio` holds again.
 
 ### W-138 · Two districts hidden under "+3 more", and missing from its list
 - stage: B (raising a second kind on a focus with no edge of it) · face: scene · width: 1280 · scheme: light

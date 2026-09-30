@@ -43,3 +43,17 @@ describe("an opened district", () => {
     });
   }
 });
+
+describe("an opened district in a crowded city", () => {
+  it("keeps four rows, so opening a district of four names all four", () => {
+    const small = () =>
+      Graph.from(schema, {
+        nodes: kinds.flatMap((definition, k) =>
+          Array.from({ length: k === 0 ? 4 : 12 }, (_, i) => ({ id: `${definition.kind}-${i}`, kind: definition.kind, label: `${definition.kind} ${i}` })),
+        ) as never,
+        edges: [],
+      });
+    const result = layout(small(), schema, { ...EMPTY_VIEW, overview: true, expanded: ["kind:vehicle"] }, { width: 1016, height: 806, unit: 16 });
+    expect(result.nodes.find((node) => node.id === "kind:vehicle")!.openedRows).toBe(4);
+  });
+});

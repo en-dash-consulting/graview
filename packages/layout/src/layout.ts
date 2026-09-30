@@ -164,6 +164,8 @@ function row(
 export const ROSTER_ROW = 27;
 /** The most rows a roster is given: past it the district is gone into. */
 export const ROSTER_MOST = 8;
+/** The rows it keeps however crowded the city: the city grows before the roster goes under four. */
+const ROSTER_KEPT = 4;
 /** The count line under the rows, the hairline and padding above them, and the header's second line (the count wraps under the name). */
 const ROSTER_CHROME = 64;
 export const rosterRows = (count: number): number => Math.max(1, Math.min(ROSTER_MOST, count));
@@ -968,6 +970,7 @@ export function layout<S extends AnySchema>(
           // An opened district lays its members out inside its plot: room
           // for a small grid, in the reader's unit.
           opened: expanded.has(item.id) ? rosterHeight(rosterRows(item.aggregate?.memberIds.length ?? 0)) * unit : 0,
+          openedMin: expanded.has(item.id) ? rosterHeight(Math.min(ROSTER_KEPT, rosterRows(item.aggregate?.memberIds.length ?? 0))) * unit : 0,
           // A district with showings carries their marquee under its name:
           // its buttons, wrapped to the card, in the reader's unit.
           ...((options.screens?.[item.kind]?.length ?? 0) > 0
@@ -1242,7 +1245,11 @@ export function layout<S extends AnySchema>(
               1,
               // The rows the room the city KEPT holds, once the chrome is paid for.
               Math.floor(
-                (rosterHeight(rosterRows(item.aggregate?.memberIds.length ?? 0)) * (city?.frame.openedShare ?? 1) - ROSTER_CHROME) /
+                (Math.max(
+                  rosterHeight(Math.min(ROSTER_KEPT, rosterRows(item.aggregate?.memberIds.length ?? 0))),
+                  rosterHeight(rosterRows(item.aggregate?.memberIds.length ?? 0)) * (city?.frame.openedShare ?? 1),
+                ) -
+                  ROSTER_CHROME) /
                   ROSTER_ROW,
               ),
             ),

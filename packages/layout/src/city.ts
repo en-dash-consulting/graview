@@ -22,6 +22,12 @@ export interface CityCard {
   /** Extra height this card asks for, opened in place. */
   readonly opened: number;
   /**
+   * The least of that the listing gives up to: a few rows it keeps however
+   * crowded the city is. Shrunk to nothing, an opened district of four kinds
+   * listed one and counted three — opening it answered nothing.
+   */
+  readonly openedMin?: number;
+  /**
    * Extra height for a drive-in's marquee — the showings drawn as buttons
    * under the nameplate. Not given back like the listing: a marquee
    * clipped is a button nobody can press.
@@ -141,7 +147,7 @@ export function placeCity(
       const grow = 0.85 + near * 0.45;
       const width = size.width * grow;
       const base = Math.max(minHeight, size.height * grow);
-      const height = base + (card.marquee ?? 0) + card.opened * openedShare;
+      const height = base + (card.marquee ?? 0) + (card.opened > 0 ? Math.max(card.openedMin ?? 0, card.opened * openedShare) : 0);
       /*
        * NOT HELD INSIDE THE CANVAS. The ring pushed its near card back in
        * from the edge; a city has a shape, and a district pushed off its
