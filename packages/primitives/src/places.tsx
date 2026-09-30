@@ -56,7 +56,15 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
       let fit = 0;
       for (let i = 0; i < places.length; i += 1) {
         const next = used + (sizes[i] ?? 0) + (i > 0 ? 2 : 0);
-        const reserve = i < places.length - 1 ? MORE : 0;
+        /*
+         * THE MORE MENU IS AS WIDE AS WHAT IT MAY SAY. Standing on a place it
+         * holds, the select shows that place's name, not "+2 more" — and
+         * "The rotation" is wider than the 92 pixels kept for it, so the
+         * row ran seven pixels past its own edge. Keep room for the widest
+         * name it could show, and the chevron beside it.
+         */
+        const reserve =
+          i < places.length - 1 ? Math.max(MORE, ...sizes.slice(i + 1, places.length).map((width) => (width ?? 0) + 14)) : 0;
         if (next + reserve > room) break;
         used = next;
         fit = i + 1;

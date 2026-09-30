@@ -3694,3 +3694,21 @@ vehicles, dozens of customers and deals.
   model performance”": the words dropped every one-letter word, and Model
   Y is not Model. Fixed in "walkthrough: C · Model Y is not Model", with
   a third case in the same file (verified failing without it).
+
+### W-142 · The places row runs seven pixels past its edge on the rotation
+- stage: B (carried from the fifth walk, found by `pnpm survey` at the end of the stage) · face: scene (the bar) · width: 1560 · scheme: light and dark
+- expected: `survey` — every screen clean
+- actual: `seedbed/rotation`, both schemes: the Places `nav` overflowed by
+  7px ("What grows where · The year · The season · The ro…", with "The
+  rotation" behind the edge). The row holds as many pills as fit and puts
+  the rest in a "more" select, keeping 92 pixels for it; standing on a
+  place that is in the menu, the select shows that place's name — "The
+  rotation", wider than 92 — so the row overflowed exactly when you were
+  on it. The fifth walk tried a fix that did not clear it.
+- where it belongs: `packages/primitives/src/places.tsx`
+- harness that should have caught it: `survey` did, every run since the
+  rotation became a place
+- status: fixed in "walkthrough: B · the more menu is as wide as what it
+  says" · the row keeps room for the widest name the menu could show.
+  Criterion: the existing `survey` (32 of 34 screens clean before, 34 of 34
+  after; `pnpm verify survey` holds).
