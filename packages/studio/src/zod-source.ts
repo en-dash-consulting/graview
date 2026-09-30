@@ -36,6 +36,23 @@ type Check = {
   readonly value?: number;
   readonly inclusive?: boolean;
   readonly pattern?: RegExp | string;
+  /** The checkout's own words for a value that fails the check, as zod keeps them. */
+  readonly error?: unknown;
+};
+
+/**
+ * THE REFUSAL IN THE CHECKOUT'S WORDS. `.regex(/…/, "a 17-character VIN")`
+ * came back as `.regex(/…/)`: the message is what a person reads when the
+ * form refuses them, and without it they read "Invalid string".
+ */
+const saying = (check: Check): string => {
+  if (typeof check.error !== "function") return "";
+  try {
+    const said = (check.error as () => unknown)();
+    return typeof said === "string" && said.length > 0 ? `, ${q(said)}` : "";
+  } catch {
+    return "";
+  }
 };
 
 const defOf = (type: unknown): Def =>
@@ -81,10 +98,10 @@ export function printZod(type: unknown, uses: ZodUses = { nodeRef: false, isoDat
       let out = "z.string()";
       for (const raw of def.checks ?? []) {
         const check = checkOf(raw);
-        if (check.check === "min_length") out += `.min(${check.minimum})`;
-        else if (check.check === "max_length") out += `.max(${check.maximum})`;
-        else if (check.check === "length_equals") out += `.length(${check.length})`;
-        else if (check.check === "string_format" && check.format === "regex" && check.pattern !== undefined) out += `.regex(${String(check.pattern)})`;
+        if (check.check === "min_length") out += `.min(${check.minimum}${saying(check)})`;
+        else if (check.check === "max_length") out += `.max(${check.maximum}${saying(check)})`;
+        else if (check.check === "length_equals") out += `.length(${check.length}${saying(check)})`;
+        else if (check.check === "string_format" && check.format === "regex" && check.pattern !== undefined) out += `.regex(${String(check.pattern)}${saying(check)})`;
         else if (check.check === "string_format" && (check.format === "email" || check.format === "url" || check.format === "uuid")) out += `.${check.format}()`;
         else return null;
       }

@@ -157,3 +157,32 @@ describe("the studio's round trip keeps what one of a kind is called", () => {
     expect(schemaTs).toContain('noun: "staff member",');
   });
 });
+
+describe("the studio's round trip keeps a name built from fields, and a refusal's words", () => {
+  const car = defineNode("car", {
+    fields: z.object({ vin: z.string().regex(/^[A-HJ-NPR-Z0-9]{17}$/, "a 17-character VIN"), year: z.number(), make: z.string() }),
+    plural: "Cars",
+    label: (node) => `${node.year} ${node.make}`,
+  });
+  const lot = defineApp({ name: "Lot", schema: createSchema([car]), mutations: [] });
+
+  it("writes a regex's message back", () => {
+    const schemaTs = createStudio(lot).files().find((one) => one.path === "src/domain/schema.ts")!.contents;
+    expect(schemaTs).toContain('.regex(/^[A-HJ-NPR-Z0-9]{17}$/, "a 17-character VIN")');
+  });
+
+  it("says loudly that a label function must be carried over, and lists it as kept", () => {
+    const written = createStudio(lot).files().find((one) => one.path === "src/domain/schema.ts")!;
+      expect(written.contents).toContain('names "car" with a function the studio cannot write');
+    expect(written.kept).toContain("car (label)");
+  });
+
+  it("keeps the checkout's name in the app it applies", () => {
+    const studio = createStudio(lot);
+    const applied = studio.apply();
+    expect(applied.ok).toBe(true);
+    const definition = applied.ok ? applied.app.schema.tryDefinition("car") : undefined;
+    expect(typeof definition?.label).toBe("function");
+    expect(definition?.label?.({ id: "c1", vin: "X", year: 2027, make: "Subaru" } as never)).toBe("2027 Subaru");
+  });
+});

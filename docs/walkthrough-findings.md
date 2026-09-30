@@ -3614,3 +3614,29 @@ vehicles, dozens of customers and deals.
   without the fix: `kind:deal drawn wholly under kind:drive`); measured in
   walk6: the list reads Test drives, Trade-ins, Vehicles, Deals, Service
   appointments.
+
+### W-139 · The studio drops a vehicle's name and a VIN's refusal without a word
+- stage: B (the studio's round trip) · face: studio / written files · width: — · scheme: —
+- expected: "`studio.files()` … says loudly where a body must be supplied";
+  the applied app names its records as the checkout does
+- actual: a round trip of the dealership through `createStudio` (one field
+  added) wrote `vin: z.string().regex(/^[A-HJ-NPR-Z0-9]{17}$/)` — the
+  message "a 17-character VIN", which is what a person refused by the form
+  reads, gone — and wrote the vehicle kind with no `label` and no comment:
+  its name is a function of year, make, model and trim, and the studio
+  writes a label only for a `label` field. `kept` listed every format
+  function and apply body and not this. The app `apply()` returned had the
+  same hole, so in the studio's live preview all 320 vehicles were named by
+  their ids.
+- where it belongs: `packages/studio/src/source.ts`,
+  `to-declaration.ts`, `zod-source.ts`
+- harness that should have caught it: the round-trip tests' kinds all have
+  a `label` field and bare regexes
+- status: fixed in "walkthrough: B · the studio keeps a name built from
+  fields" · the applied app carries the checkout's label function; the file
+  says it must be carried over and lists `vehicle (label)` in `kept`; a
+  string check's message is written back. Criteria: three cases in
+  `the-round-trip-keeps-the-checkouts-words.test.ts` (all verified failing
+  without the fix). The round trip otherwise passed `graview check` with no
+  findings before and after, kept every argument name, and wrote each rule
+  and act body as a stub that throws naming what belongs there.

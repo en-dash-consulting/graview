@@ -135,10 +135,14 @@ function kept(
         };
         fixed?: Record<string, string>;
         fieldRoles?: Record<string, string>;
+        label?: unknown;
       }
     | undefined;
   if (!was) return {};
   const here = (name: string) => name in shape;
+  // A name built from fields ("2027 Subaru Forester Sport") is the checkout's function, carried
+  // while the kind has no `label` field of its own to fall back on.
+  const naming = typeof was.label === "function" && !here("label") ? { label: was.label } : undefined;
   const narrow = <T,>(record: Record<string, T> | undefined): Record<string, T> | undefined => {
     if (!record) return undefined;
     const left = Object.fromEntries(Object.entries(record).filter(([field]) => here(field)));
@@ -164,6 +168,7 @@ function kept(
     ...(display ? { display } : {}),
     ...(fixed ? { fixed } : {}),
     ...(roles && Object.keys(roles).length > 0 ? { fieldRoles: roles } : {}),
+    ...(naming ?? {}),
   };
 }
 

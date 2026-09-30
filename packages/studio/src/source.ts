@@ -208,6 +208,19 @@ export function kindLines(
   if (str(kind, "plural")) lines.push(`  plural: ${q(str(kind, "plural")!)},`);
   if (str(kind, "noun")) lines.push(`  noun: ${q(str(kind, "noun")!)},`);
   if (fields.some((field) => field.name === "label")) lines.push(`  label: (node) => node.label,`);
+  else if (typeof (base?.schema?.tryDefinition?.(label(kind)) as { label?: unknown } | undefined)?.label === "function") {
+    /*
+     * A NAME BUILT FROM FIELDS is a function, and the studio cannot write
+     * one. A vehicle named "2027 Subaru Forester Sport" from its year, make
+     * and model came back with no label at all — every card an id — and
+     * nothing said so.
+     */
+    lines.push(
+      `  // The checkout names ${q(label(kind))} with a function the studio cannot write;`,
+      `  // carry \`label\` over from the file you are replacing, or every one is named by its id.`,
+    );
+    keptFormats.push(`${label(kind)} (label)`);
+  }
   if (lifecycleField && retired) lines.push(`  lifecycle: { field: ${q(lifecycleField)}, retired: ${retired[0] === "date" ? '"date"' : `[${retired.map(q).join(", ")}]`} },`);
   // The drawing is part of the declaration, so it is part of the file.
   if (str(kind, "figure")) lines.push(`  figure: ${q(str(kind, "figure")!)},`);
