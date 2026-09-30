@@ -25,3 +25,7 @@ claude_commands.log
 
 # The discography example builds its page into build/ (dist/ is the declaration).
 apps/discography/build/
+
+# The vgpu skill is local tooling for apps/spike's WebGPU work, not part of
+# Graview; a product installs the graview-* skills, never this one.
+.claude/skills/vgpu/
