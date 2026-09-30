@@ -27,6 +27,8 @@ export interface SchemaBinding<S extends AnySchema> {
       readonly label?: string;
       readonly description?: string;
       readonly repairs?: readonly string[];
+      /** Judge retired subjects too — see `InvariantDefinition.judgesPast`. */
+      readonly judgesPast?: boolean;
       readonly evaluate: (args: InvariantEvalArgs<S, NodeOfKind<S, K>>) => Violation[];
     },
   ): InvariantDefinition<S>;

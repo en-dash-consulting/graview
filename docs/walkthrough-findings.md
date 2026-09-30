@@ -3353,3 +3353,24 @@ vehicles, dozens of customers and deals.
   bounded means it refuses ten thousand characters. Criterion:
   `check.test.ts` "says nothing for a ceiling past sixty, because real names
   are longer and the call was made" (verified failing without the fix).
+
+### W-127 · The skill says `judgesPast: true`, and the bound declaration refuses it
+- stage: B (C's rule, written while declaring the kinds) · face: typecheck · width: — · scheme: —
+- expected: "An invariant that genuinely audits history says so with
+  `judgesPast: true`" (graview-invariant) — written in the scaffold's
+  `bindSchema(...).defineInvariant`, it typechecks
+- actual: `TS2353: Object literal may only specify known properties, and
+  'judgesPast' does not exist`. The engine reads it and `InvariantDefinition`
+  declares it; the bound spec type never listed it. A dealership's first
+  real rule — a sold vehicle has exactly one closed deal — is a rule about
+  retired subjects, and could not be declared the way the skill says. The
+  framework's own test of the flag spread it in (`...{ judgesPast }`), the
+  one form an excess-property check does not look at.
+- where it belongs: `packages/core/src/bind.ts`
+- harness that should have caught it: none — tests are not typechecked,
+  and no app in the framework judges the past
+- status: fixed in "walkthrough: B · the bound invariant judges the past" ·
+  the bound spec takes `judgesPast`. Criterion:
+  `the-bound-declaration.test.ts` compiles `tests/types/judges-past.ts`,
+  written the skill's way, and expects no errors (verified failing without
+  the fix).
