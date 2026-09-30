@@ -68,7 +68,8 @@ export function EditableValue<S extends AnySchema>({
         data-graview-readonly=""
         // Said, not merely implied: a value that ignores a click looks broken.
         title={`Read-only — no mutation declares "${field}" as something it writes`}
-        style={{ color: "var(--graview-ink)", cursor: "default" }}
+        // An address, a VIN, a URL has nowhere to break: it breaks anywhere rather than run into the next column.
+        style={{ color: "var(--graview-ink)", cursor: "default", overflowWrap: "anywhere" }}
       >
         {value}
       </span>
@@ -99,6 +100,14 @@ export function EditableValue<S extends AnySchema>({
           // And at least as wide: a two-letter value ("No") that became a
           // control when its field gained a writer is still a target.
           minWidth: 24,
+          /*
+           * NEVER WIDER THAN ITS CELL. A value with nowhere to break — an
+           * email address, a VIN, a URL — made the button as wide as the
+           * word and ran it under the next column of the card: a staff
+           * member's address sat beneath the chips of her appointments.
+           */
+          maxWidth: "100%",
+          overflowWrap: "anywhere",
           paddingBottom: 1,
           borderBottom: "1px dashed var(--graview-edge-bright)",
           color: "var(--graview-ink)",

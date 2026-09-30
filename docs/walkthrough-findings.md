@@ -3456,3 +3456,23 @@ vehicles, dozens of customers and deals.
   `a-kind-says-what-one-is-called.test.ts` ("Remove the staff member") and
   the studio's round trip "writes a declared noun back" (both verified
   failing without the fix).
+
+### W-132 · A staff member's email runs under her appointments
+- stage: B · face: scene (a record's card) · width: 1280 · scheme: light
+- expected: "chrome over content" is a bug class; a card's facts stay in
+  their column
+- actual: focus Mei Lin Chow: "mei.lin.chow@springfieldmotors.example" is
+  one word of 38 characters, and the editable value is a button as wide as
+  its word — 264px in a 200px cell — so it ran 64px under the first chip of
+  "The appointments they advise on". Measured: the value's right edge at
+  702, its cell's at 638. Nothing in any fixture had a value with nowhere
+  to break; real records have addresses, VINs and URLs.
+- where it belongs: `packages/primitives/src/editable.tsx`
+- harness that should have caught it: `survey` counts clipped boxes; a
+  value spilling out of an unclipped cell is not clipped, so it counted
+  nothing
+- status: fixed in "walkthrough: B · a value stays in its cell" · the
+  editable value is never wider than its cell and breaks anywhere; the
+  read-only value breaks anywhere too. Criterion:
+  `a-value-stays-in-its-cell.test.tsx` (verified failing without the fix:
+  `expected '' to be '100%'`); measured in walk6: right edge 638, cell 638.
