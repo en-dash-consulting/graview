@@ -888,7 +888,7 @@ export function layout<S extends AnySchema>(
     else fannedSoFar.set(item.nestedUnder, already + 1);
   }
 
-  const tucked = contextItems.filter((item) => item.nestedUnder !== undefined);
+  const hanging = contextItems.filter((item) => item.nestedUnder !== undefined);
   const inRow = contextItems.filter((item) => item.nestedUnder === undefined);
 
   /*
@@ -914,10 +914,20 @@ export function layout<S extends AnySchema>(
    * edge of the screen.
    */
   const keep = Math.max(0, rowCap - 1);
+  /*
+   * A KIND TUCKED BEHIND A KIND THE ROW SHED GOES WITH IT. Its parent has no
+   * slot to hang off, and the fallback drew it at the end of the row — at
+   * exactly the "+3 more" card's place, under it: a dealership's Deals and
+   * Service appointments were two cards stacked behind "+3 more", reachable
+   * neither by pointer nor from the list, which named only the three.
+   */
+  const shedIds = new Set(sheds ? inRow.slice(keep).map((item) => item.id) : []);
+  const tucked = hanging.filter((item) => !shedIds.has(item.nestedUnder!));
+  const shedWithParent = hanging.filter((item) => shedIds.has(item.nestedUnder!));
   const slotted = sheds
     ? [
         ...inRow.slice(0, keep),
-        { id: BEYOND_CARD, kind: "", beyond: inRow.slice(keep).map((item) => item.kind) },
+        { id: BEYOND_CARD, kind: "", beyond: [...inRow.slice(keep), ...shedWithParent].map((item) => item.kind) },
       ]
     : inRow;
 

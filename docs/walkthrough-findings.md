@@ -3594,3 +3594,23 @@ vehicles, dozens of customers and deals.
   (verified failing without the fix: `openedRows` undefined) and primitives
   `a-roster-you-can-read.test.ts`; measured in walk6: the roster ends above
   the scene's edge, "Vehicles" and "291" on their own lines.
+
+### W-138 · Two districts hidden under "+3 more", and missing from its list
+- stage: B (raising a second kind on a focus with no edge of it) · face: scene · width: 1280 · scheme: light
+- expected: every kind on the shelf is a target, or is named by the card
+  that stands for the rest
+- actual: focus North lot and try to raise Deals: the pointer lands on "+3
+  more districts". Deals and Service appointments were tucked behind
+  Vehicles; the row sheds Vehicles into "+3 more" (with Test drives and
+  Trade-ins), and a tuck whose parent has no slot fell back to "the end of
+  the row" — the "+3 more" card's exact box (934,762, both). Its list named
+  three districts; eight kinds, five reachable.
+- where it belongs: `packages/layout/src/layout.ts` (the row's shedding)
+- harness that should have caught it: `verify-shrunk` sheds a row, but no
+  fixture has a tuck under a shed kind
+- status: fixed in "walkthrough: B · a tuck goes with its parent" · a kind
+  tucked behind a shed kind is shed with it and named in the list.
+  Criterion: layout `a-tuck-goes-with-its-parent.test.ts` (verified failing
+  without the fix: `kind:deal drawn wholly under kind:drive`); measured in
+  walk6: the list reads Test drives, Trade-ins, Vehicles, Deals, Service
+  appointments.
