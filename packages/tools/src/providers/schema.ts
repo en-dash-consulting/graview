@@ -99,7 +99,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
               // A break offered on the line itself outranks a make; both sit
               // between plain schema actions and repairs.
               score: (breaks ? 62 : 58) - open.length,
-              why: `this line is "${edge.kind}"`,
+              why: `this line is "${store.schema.edge(edge.kind)?.description ?? edge.kind.replace(/[-_]+/g, " ")}"`,
               nodeIds: [edge.from, edge.to],
             });
           }

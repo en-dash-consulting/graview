@@ -72,7 +72,8 @@ describe("edge affordances", () => {
     expect(offer).toBeDefined();
     expect(offer?.args).toEqual({ personId: "ana", dutyId: "morning" });
     expect(offer?.open).toEqual([]);
-    expect(offer?.why).toContain('"rides-in"');
+    // The line in its words (W-133), not its name.
+    expect(offer?.why).toContain('"who is along for it"');
     expect(offer?.nodeIds).toEqual(["ana", "morning"]);
   });
 

@@ -129,7 +129,8 @@ describe("derived affordances", () => {
     const reassignAction = derived.affordances.find(
       (a) => a.mutation === "reassign" && a.provider === "schema",
     )!;
-    expect(reassignAction.why).toBe("all 2 selected nodes are duty");
+    // In the plural the kind declares (W-131): "are runs", never "are duty".
+    expect(reassignAction.why).toBe("all 2 selected nodes are runs");
     // Every selected node gets the action, as one gesture.
     expect(reassignAction.batch).toEqual([{ dutyId: "d1" }, { dutyId: "d2" }]);
     // The open argument arrives with real candidates, so no picker is wired

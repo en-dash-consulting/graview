@@ -3503,3 +3503,7 @@ vehicles, dozens of customers and deals.
   without the fix: `expected 'Works at' to be 'Where they work'`);
   measured in walk6: "Where they work · relation · From North lot: who
   works here". Severing from the line's menu removed exactly that line.
+  The full suite then found two tests pinning the old words ("Rides in",
+  "are duty") and the act's hover still reading `this line is "rides-in"`;
+  those are "walkthrough: B · a line's reason is its words", with the edge
+  and affordance tests now asserting the words.

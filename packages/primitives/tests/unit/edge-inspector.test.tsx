@@ -60,11 +60,16 @@ const render = (selection: readonly string[]) =>
   );
 
 describe("the inspector for a selected line", () => {
-  it("names the relation, says its sentence, and links both ends", () => {
+  it("names the relation in its declaration's words, and links both ends", () => {
     const html = render([edgeSelectionId("rides-in", "ana", "morning")]);
-    expect(html).toContain("Rides in");
+    // Its words, never its name spaced out (W-133).
+    expect(html).toContain("Who is along for it");
+    expect(html).not.toContain(">Rides in<");
     expect(html).toContain("relation");
-    expect(html).toContain("who is along for it");
+    // No inverse was declared, so there is no other reading to add.
+    expect(html).not.toContain('data-testid="edge-said"');
+    // Nor on the act's reason: the line is what it means, not its name.
+    expect(html).not.toContain('this line is &quot;rides-in&quot;');
     expect(html).toContain('data-testid="edge-from"');
     expect(html).toContain("Ana");
     expect(html).toContain("Morning run");
@@ -242,8 +247,7 @@ describe("the inspector for a selected line", () => {
         <Inspector />
       </GraviewProvider>,
     );
-    expect(html).toContain("Rides in");
-    expect(html).toContain("who is along for it");
+    expect(html).toContain("Who is along for it");
     expect(html).toContain("Take them off it");
     expect(html).not.toContain("no mutation declares");
     expect(html).not.toContain("mix of kinds");
