@@ -47,6 +47,15 @@ const controlStyle: React.CSSProperties = {
    * `pnpm engines`.
    */
   minHeight: 24,
+  /*
+   * NEVER WIDER THAN ITS FIELD. A select is as wide as its longest option,
+   * and a picker over 320 vehicles ("2027 Mercedes-Benz GLE AMG 53 4MATIC+
+   * Coupe") was 618 pixels on a 390 phone, and the whole page scrolled
+   * sideways. It shrinks to its track and cuts the option inside its box.
+   */
+  minWidth: 0,
+  maxWidth: "100%",
+  textOverflow: "ellipsis",
   boxSizing: "border-box",
   padding: "7px 10px",
   borderRadius: 8,

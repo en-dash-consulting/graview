@@ -3790,3 +3790,21 @@ vehicles, dozens of customers and deals.
   verified failing without the fix); the regenerated page typechecks in
   walk6 and reads "VIN · Price $52,100 · …", "Check engine light on ·
   Booked", "Check engine light on · Done".
+
+### W-146 · A place page scrolls sideways at 390 because a picker is 618 pixels wide
+- stage: E · face: pages (a place: The diary, The pipeline) · width: 390 · scheme: light and dark
+- expected: "The full design passes axe at 390 and 1280 in both schemes" —
+  and the page does not scroll sideways (smoke-create's `fitsAPhone`)
+- actual: `/pages/places/the-pipeline` and `/pages/places/the-diary` at 390
+  were 638 pixels wide. The place page offers the forms that begin its kind
+  ("Open a deal", "Book a test drive"), and their vehicle picker is a
+  `select` over 320 vehicles, as wide as its longest option; the form's
+  control style had no `min-width: 0`, so the select would not shrink to
+  its grid track. The fixtures' option names are a word long.
+- where it belongs: `packages/pages/src/form.tsx`
+- harness that should have caught it: `verify-pages` measures the phone
+  width on the fixtures, whose pickers hold short names
+- status: fixed in "walkthrough: E · a picker fits its field" · form
+  controls take `min-width: 0` and `max-width: 100%` and cut the text.
+  Criterion: pages `a-picker-fits-its-field.test.tsx` (verified failing
+  without the fix); measured in walk6: both place pages 390 wide.
