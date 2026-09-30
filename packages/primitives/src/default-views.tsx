@@ -8,7 +8,7 @@ import {
   type NodeOfSchema,
   violationsTouching,
 } from "@graview/core";
-import { aggregateId, kindCardId, marqueeHeightFor, withFocus, withJackIn, withOverview, withPast, withWithin } from "@graview/layout";
+import { aggregateId, kindCardId, marqueeHeightFor, rosterRows, withFocus, withJackIn, withOverview, withPast, withWithin } from "@graview/layout";
 import {
   createViews,
   useFound,
@@ -73,10 +73,19 @@ function longFormOf(
   return undefined;
 }
 
-/** How many buildings an opened plot shows: its side squared, and never fewer than the old eight without a plot. */
-function buildingsCap(side: number | undefined, count: number): number {
-  const s = side ?? Math.min(4, Math.max(1, Math.ceil(Math.sqrt(count))));
-  return Math.max(1, s * s);
+/**
+ * WHAT AN OPENED DISTRICT LISTS: the rows the layout kept room for
+ * (`openedRows`), in as many columns as its names can be READ in. Two
+ * columns of ninety-five pixels turned every vehicle into "2026 Ma…"; a
+ * name needs about seven and a half pixels a character in a 212-pixel
+ * roster, and a district of long names keeps one column.
+ */
+export function rosterOf(names: readonly string[], rows: number): { readonly columns: number; readonly shown: number } {
+  const widest = Math.max(0, ...names.slice(0, rows * 2).map((name) => name.length));
+  const columns = widest * 7.5 + 28 <= 212 / 2 ? 2 : 1;
+  const room = rows * columns;
+  // The count line needs no row of its own: it is part of the room reserved.
+  return { columns, shown: Math.min(names.length, room) };
 }
 
 /**
@@ -489,6 +498,10 @@ export function registerDefaultViews<S extends AnySchema>(
      */
     const GroupGlyph = (props: ViewProps<S>) => {
       const members = props.nodes ?? [];
+      const roster = rosterOf(
+        members.map((member) => labelOf(definition, member)),
+        props.openedRows ?? rosterRows(members.length),
+      );
       const hue = useHue(kind as string);
       /*
        * THE KIND'S OWN DRAWING, where it has one.
@@ -945,17 +958,11 @@ export function registerDefaultViews<S extends AnySchema>(
                  * answer it. So the columns are set by what the widest name
                  * needs, and a district only wide enough for one keeps one.
                  */
-                gridTemplateColumns: `repeat(${Math.max(
-                  1,
-                  Math.min(
-                    props.plot?.side ?? 4,
-                    Math.floor((props.plot ? props.plot.side * 46 : 180) / 88) || 1,
-                  ),
-                )}, minmax(0, 1fr))`,
+                gridTemplateColumns: `repeat(${roster.columns}, minmax(0, 1fr))`,
                 gap: 3,
               }}
             >
-              {members.slice(0, buildingsCap(props.plot?.side, members.length)).map((member) => {
+              {members.slice(0, roster.shown).map((member) => {
                 /*
                  * WHICH ONE. The card's own count already says "⚠ 1" —
                  * opening the district to find out which member that is was
@@ -976,9 +983,9 @@ export function registerDefaultViews<S extends AnySchema>(
                   />
                 );
               })}
-              {members.length > buildingsCap(props.plot?.side, members.length) ? (
+              {members.length > roster.shown ? (
                 <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", padding: "2px 4px", gridColumn: "1 / -1" }}>
-                  +{members.length - buildingsCap(props.plot?.side, members.length)} more — double-click to go in
+                  +{members.length - roster.shown} more — double-click to go in
                 </span>
               ) : null}
             </div>

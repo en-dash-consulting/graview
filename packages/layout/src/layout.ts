@@ -151,6 +151,24 @@ function row(
  * lets spatial memory survive, and what lets any two states be interpolated
  * into an animated transition.
  */
+/**
+ * AN OPENED DISTRICT'S ROSTER, in arithmetic both sides share.
+ *
+ * The layout reserved 96 pixels under an opened district's nameplate and
+ * the view listed sixteen members in 250 — so a dealership's Vehicles,
+ * opened at the bottom of the city, ran its list off the scene and over the
+ * district beside it. The layout now reserves the rows it will be asked to
+ * hold, the view lists the rows it was given (`openedRows`), and the rest
+ * are counted.
+ */
+export const ROSTER_ROW = 27;
+/** The most rows a roster is given: past it the district is gone into. */
+export const ROSTER_MOST = 8;
+/** The count line under the rows, the hairline and padding above them, and the header's second line (the count wraps under the name). */
+const ROSTER_CHROME = 64;
+export const rosterRows = (count: number): number => Math.max(1, Math.min(ROSTER_MOST, count));
+export const rosterHeight = (rows: number): number => rows * ROSTER_ROW + ROSTER_CHROME;
+
 export function layout<S extends AnySchema>(
   graph: GraphReader<NodeOfSchema<S>>,
   schema: S,
@@ -939,7 +957,7 @@ export function layout<S extends AnySchema>(
           count: item.aggregate?.memberIds.length ?? 0,
           // An opened district lays its members out inside its plot: room
           // for a small grid, in the reader's unit.
-          opened: expanded.has(item.id) ? 96 * unit : 0,
+          opened: expanded.has(item.id) ? rosterHeight(rosterRows(item.aggregate?.memberIds.length ?? 0)) * unit : 0,
           // A district with showings carries their marquee under its name:
           // its buttons, wrapped to the card, in the reader's unit.
           ...((options.screens?.[item.kind]?.length ?? 0) > 0
@@ -1208,6 +1226,18 @@ export function layout<S extends AnySchema>(
       ...(item.raised ? { raised: true } : {}),
       ...(item.focused ? { focused: true } : {}),
       ...(item.opened ? { opened: true } : {}),
+      ...(item.opened
+        ? {
+            openedRows: Math.max(
+              1,
+              // The rows the room the city KEPT holds, once the chrome is paid for.
+              Math.floor(
+                (rosterHeight(rosterRows(item.aggregate?.memberIds.length ?? 0)) * (city?.frame.openedShare ?? 1) - ROSTER_CHROME) /
+                  ROSTER_ROW,
+              ),
+            ),
+          }
+        : {}),
       ...(item.rank ? { rank: item.rank } : {}),
       ...(item.nestedUnder ? { nestedUnder: item.nestedUnder } : {}),
       ...(item.beyond ? { beyond: item.beyond } : {}),

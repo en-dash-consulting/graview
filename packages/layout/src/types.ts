@@ -137,6 +137,13 @@ export interface LayoutNode {
    */
   readonly opened?: boolean;
   /**
+   * HOW MANY ROWS OF MEMBERS an opened district has room for: what the
+   * layout reserved under its nameplate, in rows of `ROSTER_ROW`. The view
+   * lists that many and counts the rest, so the roster ends where the room
+   * does rather than running under the district below.
+   */
+  readonly openedRows?: number;
+  /**
    * A card in a CROWDED band: drawn as a chip whatever its slot's size. Its
    * row is sized for a group card's two lines, which is short of a record's
    * summary, and a summary cut to its title and a sliver read as broken.
@@ -225,6 +232,8 @@ export interface CityFrame {
    */
   readonly pan: { readonly x: number; readonly y: number };
   readonly extent: { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
+  /** How much of an opened district's roster the city kept room for: 1 is all of it. */
+  readonly openedShare?: number;
 }
 
 export interface Layout {

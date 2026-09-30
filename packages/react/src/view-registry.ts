@@ -66,6 +66,8 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
   readonly focused?: boolean;
   /** The aggregate is opened in place, showing its members (the ring). */
   readonly opened?: boolean;
+  /** The rows of members an opened district has room for (the layout's `openedRows`). */
+  readonly openedRows?: number;
   /**
    * The district's address in the city, when it is drawn at altitude: its
    * corner in lattice cells and how many cells it takes on a side today —

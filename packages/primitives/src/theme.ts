@@ -883,10 +883,15 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
    and the block behind fades — the plate IS the district while it is
    open, so no roof pokes out above the roster. */
 [data-graview-altitude] .graview-kind-face[data-graview-opened] {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto;
+  /* A header that WRAPS rather than a grid that squeezes: the name's column
+     was minmax(0, 1fr) beside the count's auto, so "VEHICLES" beside
+     "291 · +29 past · close" got 25 pixels and the count was drawn over it. */
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: flex-start !important;
   align-items: baseline !important;
   column-gap: 10px;
+  row-gap: 2px;
   border-radius: 12px !important;
   padding: 10px 12px 11px !important;
   width: 236px;
@@ -894,7 +899,7 @@ code, kbd, samp { font-family: var(--graview-font-mono); }
   box-shadow: var(--graview-lift-high) !important;
 }
 [data-graview-altitude] .graview-kind-face[data-graview-opened] .graview-kind-members {
-  grid-column: 1 / -1;
+  flex: 1 0 100%;
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--graview-edge);

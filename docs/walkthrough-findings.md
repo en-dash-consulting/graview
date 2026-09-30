@@ -3566,3 +3566,31 @@ vehicles, dozens of customers and deals.
   `the-record-gives-the-keyboard-back.test.tsx` (verified failing without
   the fix: the active element was the body); measured in walk6: `button
   "Assign to a location"`.
+
+### W-137 · An opened district reads "VEHICL291ES" over a list that runs off the scene
+- stage: B (the district at altitude opens on double-click) · face: scene · width: 1280 and 1560 · scheme: light
+- expected: the district opens in place, readable, and "nothing in the
+  scene escapes its box"
+- actual: double-click Vehicles (291) at altitude. The header's grid gave
+  the name `minmax(0, 1fr)` beside the count's `auto`, so "VEHICLES" had 25
+  pixels and "291" was drawn over its last letters. The roster was two
+  columns of 95 pixels — "2026 Ma…", "2021 Che…", sixteen chips nobody can
+  tell apart — and 252 pixels tall where the layout had reserved 96, so
+  opened at the foot of an eight-district city it ran past the scene's
+  bottom edge ("+275 more" at y 857–877 of an 860 stage) and over the
+  ground below. The comment above the columns said they were "set by what
+  the widest name needs"; the code set them by the plot's size.
+- where it belongs: `packages/layout/src/layout.ts` (the roster's
+  reservation), `city.ts` (the share kept), `interpolate.ts`;
+  `packages/react` (the prop); `packages/primitives/src/default-views.tsx`
+  and `theme.ts`
+- harness that should have caught it: none opens a district with long names
+  and a real count; the fixtures' districts hold a handful of short ones
+- status: fixed in "walkthrough: B · an opened district lists what it has
+  room for" · the layout reserves rows and tells the view how many it kept
+  (`openedRows`, carried through the tween); the view lists that many, in
+  one column where names are long, and counts the rest; the header wraps.
+  Criteria: layout `an-opened-district-lists-what-it-has-room-for.test.ts`
+  (verified failing without the fix: `openedRows` undefined) and primitives
+  `a-roster-you-can-read.test.ts`; measured in walk6: the roster ends above
+  the scene's edge, "Vehicles" and "291" on their own lines.

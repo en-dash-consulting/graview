@@ -316,6 +316,7 @@ export function placeCity(
       width: spread.x * cell,
       height: spread.y * cell,
     },
+    openedShare,
   };
   return { placed, frame, map };
 }

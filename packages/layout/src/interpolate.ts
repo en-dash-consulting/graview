@@ -221,6 +221,7 @@ function mix(a: LayoutNode, b: LayoutNode, t: number, opacity: number): Interpol
     ...(b.raised ? { raised: true } : {}),
     ...(b.focused ? { focused: true } : {}),
     ...(b.opened ? { opened: true } : {}),
+    ...(b.openedRows !== undefined ? { openedRows: b.openedRows } : {}),
     ...(b.compact ? { compact: true } : {}),
     ...(b.rank ? { rank: b.rank } : {}),
     ...(b.nestedUnder ? { nestedUnder: b.nestedUnder } : {}),
