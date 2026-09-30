@@ -563,7 +563,7 @@ export function graphResponder<S extends AnySchema>(
      * grounded answer — a model may yet read the sentence better.
      */
     {
-      const words = asked.split(/[^\p{L}\p{N}]+/u).filter((word) => word.length > 1 && !LOOKING_WORDS.has(word));
+      const words = asked.split(/[^\p{L}\p{N}]+/u).filter((word) => word.length > 0 && !LOOKING_WORDS.has(word));
       if (words.length > 0) {
         const found = search(store, words.join(" "), {
           ...(context.principal ? { principal: context.principal } : {}),

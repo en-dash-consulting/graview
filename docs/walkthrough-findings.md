@@ -3683,4 +3683,7 @@ vehicles, dozens of customers and deals.
   name apart and says each kind by its noun; a name several records share
   is not taken as one referent — the words find them all. Criterion:
   tools `the-chat-at-a-dealership.test.ts` (both cases verified failing
-  without the fix).
+  without the fix). Re-asked in walk6, the list read "called “2026 tesla
+  model performance”": the words dropped every one-letter word, and Model
+  Y is not Model. Fixed in "walkthrough: C · Model Y is not Model", with
+  a third case in the same file (verified failing without it).

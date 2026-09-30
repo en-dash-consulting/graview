@@ -46,4 +46,9 @@ describe("the chat on a dealership's lot", () => {
     expect(said).toContain("3VP1SNH5LG8UKNNRM");
     expect(said).toContain("H3KKJJ57BZSKA9ZWV");
   });
+
+  it("keeps a one-letter word, because Model Y is not Model", async () => {
+    const said = (await ask(store(), "any Model Y?")).say;
+    expect(said).toContain("“model y”");
+  });
 });
