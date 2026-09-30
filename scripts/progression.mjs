@@ -252,11 +252,13 @@ report.verdict = {
     .filter(({ chapter, roles }) => roles.size > 0 && chapter.seatSees !== undefined)
     .every(({ chapter, roles }) => {
       const said = chapter.seatSees?.withheld ?? "";
-      const named = [...said.matchAll(/—\s*(?:one of\s*)?([^—]*?)\s+can\./g)].flatMap((match) =>
-        match[1].split(/,\s*/).map((role) => role.trim()),
+      // Roles are said in words since W-143 — "— a coordinator or a gardener can." — so read them back as words.
+      const named = [...said.matchAll(/—\s*([^—]*?)\s+can\./g)].flatMap((match) =>
+        match[1].split(/,\s*|\s+or\s+/).map((role) => role.trim().replace(/^(?:an?|one of)\s+/, "")),
       );
+      const spoken = new Set([...roles].map((role) => role.replace(/[-_]+/g, " ").toLowerCase()));
       // Something it MAY do, and nothing refused for a role it already holds.
-      return (chapter.seatSees?.offered.length ?? 0) > 0 && !named.some((role) => roles.has(role));
+      return (chapter.seatSees?.offered.length ?? 0) > 0 && !named.some((role) => spoken.has(role));
     }) && report.chapters[6]?.seatSees !== undefined,
   theBrandArrivesInChapterEight: report.chapters[6]?.saw?.wordmark === "Graview" && report.chapters[7]?.saw?.wordmark === "Seedbed",
   theOtherFaceIsThePlotsOwnPageInChapterNine: report.chapters[8]?.saw?.custom === true && report.chapters[8]?.saw?.fitsAPhone === true && /looked after by|nobody looks after/.test(report.chapters[8]?.saw?.page ?? ""),

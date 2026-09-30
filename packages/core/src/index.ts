@@ -183,6 +183,7 @@ export {
   rolesOf,
   rolesWhoCould, whyNot,
 } from "./permissions/policy.js";
+export type { PolicyWords } from "./permissions/policy.js";
 export { PermissionDeniedError } from "./permissions/types.js";
 export {
   brandFromAccent,

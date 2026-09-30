@@ -1,6 +1,6 @@
 import type { AnyMutationDefinition } from "../mutations/types.js";
 import type { AnySchema } from "../schema/schema.js";
-import { withArticle } from "../schema/define-node.js";
+import { humaniseField, withArticle } from "../schema/define-node.js";
 import type { Grant, Policy, Principal, Refusal } from "./types.js";
 
 const matches = (allowed: readonly string[] | "*", value: string): boolean =>
@@ -10,6 +10,24 @@ const matches = (allowed: readonly string[] | "*", value: string): boolean =>
 function grantsTo(grant: Grant, principal: Principal): boolean {
   if (grant.roles === "*") return true;
   return (principal.roles ?? []).some((role) => grant.roles.includes(role));
+}
+
+/**
+ * WHAT A REFUSAL CALLS THINGS. The policy knows acts and roles by their
+ * names; a person reads "Not permitted: close-deal on a deal — sales-manager
+ * can" struck through beside every button they may not press. The store
+ * hands its titles and nouns ("“Close the deal” on a deal — a sales manager
+ * can"); a role is always said in words.
+ */
+export interface PolicyWords {
+  readonly act?: (mutation: string) => string | undefined;
+  readonly noun?: (kind: string) => string;
+}
+
+/** "a sales manager", "a sales manager or a salesperson". */
+function rolesSaid(roles: readonly string[]): string {
+  const spoken = roles.map((role) => withArticle(humaniseField(role).toLowerCase()));
+  return spoken.length <= 1 ? (spoken[0] ?? "") : `${spoken.slice(0, -1).join(", ")} or ${spoken[spoken.length - 1]}`;
 }
 
 /**
@@ -36,6 +54,8 @@ export function permits(
    * is only ever satisfied when this is the principal's own id.
    */
   subjectId?: string,
+  /** How the refusal names an act and a kind: the store hands its titles and nouns. */
+  words: PolicyWords = {},
 ): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
   // No policy means permission is not a concern in this installation.
   if (!policy) return { ok: true };
@@ -64,14 +84,14 @@ export function permits(
         ? via.length === 0
           ? "no declared act creates or changes it, so no role can"
           : "no role can"
-        : `${wouldNeed.length === 1 ? "" : "one of "}${wouldNeed.join(", ")} can`;
+        : `${rolesSaid(wouldNeed)} can`;
     return {
       ok: false,
       refusal: {
         mutation,
         ...(kind === undefined ? {} : { kind }),
         wouldNeed,
-        message: said(policy, names, kind, who),
+        message: said(policy, names, kind, who, words),
       },
     };
   }
@@ -88,17 +108,14 @@ export function permits(
   }
 
   const wouldNeed = rolesWhoCould(policy, mutation, kind);
-  const who =
-    wouldNeed.length === 0
-      ? "no role can"
-      : `${wouldNeed.length === 1 ? "" : "one of "}${wouldNeed.join(", ")} can`;
+  const who = wouldNeed.length === 0 ? "no role can" : `${rolesSaid(wouldNeed)} can`;
   return {
     ok: false,
     refusal: {
       mutation,
       ...(kind === undefined ? {} : { kind }),
       wouldNeed,
-      message: said(policy, [mutation], kind, who),
+      message: said(policy, [mutation], kind, who, words),
     },
   };
 }
@@ -115,10 +132,12 @@ function said(
   names: readonly string[],
   kind: string | undefined,
   who: string,
+  words: PolicyWords,
 ): string {
   const because = [...new Set(names.flatMap((name) => whyNot(policy, name, kind)))];
+  const act = words.act?.(names[0]!);
   return (
-    `Not permitted: ${names[0]}${kind ? ` on ${withArticle(kind)}` : ""} — ${who}.` +
+    `Not permitted: ${act ? `“${act}”` : names[0]}${kind ? ` on ${withArticle(words.noun?.(kind) ?? kind)}` : ""} — ${who}.` +
     (because.length > 0 ? ` ${because.join(" ")}` : "")
   );
 }

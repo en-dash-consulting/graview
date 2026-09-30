@@ -69,7 +69,7 @@ describe("an agent the app declared", () => {
     try {
       at.apply({ name: "rename-zone", args: { zoneId: "lawn", label: "The Lawn" } }, { author: surveyor });
     } catch (error) {
-      expect((error as PermissionDeniedError).refusal.message).toContain("declared able to describe-zone");
+      expect((error as PermissionDeniedError).refusal.message).toContain("declared able to “describe-zone”");
     }
     /* Refused means nothing happened, not partly happened. */
     expect(at.graph.getNode("lawn")).toMatchObject({ label: "Back Lawn" });

@@ -40,7 +40,8 @@ describe("permits, for a declared agent", () => {
     const verdict = store().permits({ name: "take-off", args: { id: "a", from: "b" } }, starter);
     expect(verdict.ok).toBe(false);
     if (verdict.ok) return;
-    expect(verdict.refusal.message).toContain("starter may not take-off here");
+    // The act by its title (W-143), as the button says it.
+    expect(verdict.refusal.message).toContain("starter may not “Take it off” here");
   });
 
   it("allows what it was declared able to do, and leaves a person alone", () => {

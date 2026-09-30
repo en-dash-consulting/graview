@@ -177,7 +177,8 @@ describe("through the policy, with no second list", () => {
     expect(refused.ok).toBe(false);
     if (!refused.ok) {
       expect(refused.refusal.wouldNeed).toEqual(["analyst", "coach"]);
-      expect(refused.refusal.message).toContain("one of analyst, coach can");
+      // Roles and acts in words (W-143): never "one of analyst, coach can" beside "edit-drill".
+      expect(refused.refusal.message).toContain("“Change the drill” on a drill — an analyst or a coach can");
     }
     expect(() =>
       store.apply({ name: "edit-drill", args: { id: "d1", minPlayers: 8 } }, { author: as("player") }),

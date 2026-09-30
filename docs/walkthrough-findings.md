@@ -3712,3 +3712,28 @@ vehicles, dozens of customers and deals.
   says" · the row keeps room for the widest name the menu could show.
   Criterion: the existing `survey` (32 of 34 screens clean before, 34 of 34
   after; `pnpm verify survey` holds).
+
+### W-143 · "Not permitted: close-deal on a deal — sales-manager can."
+- stage: C (a repair from the agent's seat) and F (the narrower seat) · face: both · width: — · scheme: —
+- expected: "every act it may not take is struck through with the policy's
+  reason" — a reason in the app's words, beside a button in the app's words
+- actual: as Priya Raman (salesperson) on a deal, the strip and the pages
+  read "~~Close the deal~~ — Not permitted: close-deal on a deal —
+  sales-manager can." and, for the kiosk seat, "one of sales-manager,
+  salesperson can". The chat, asked what is wrong, answered "starter may
+  not release-hold here: it was declared able to add-location,
+  add-vehicle, …" — thirteen act names. `said()` built the sentence from
+  the policy's names; the store, which knows every title and noun, never
+  handed them over. Every walk has read these sentences on a two-word
+  fixture ("keeper can") where an id and a word coincide.
+- where it belongs: `packages/core/src/permissions/policy.ts` (`said`,
+  `PolicyWords`), `packages/core/src/store.ts`
+- harness that should have caught it: none reads the refusal as prose;
+  `progression` parses role names out of it (and now parses words)
+- status: fixed in "walkthrough: C · a refusal in words" · the store hands
+  the policy its titles and nouns; roles are said in words ("a sales
+  manager or a salesperson can"); an agent's refusal names acts by title.
+  Criterion: core `a-refusal-in-words.test.ts` (verified failing without the
+  fix: `Received: "Not permitted: close-deal on a deal — sales-manager
+  can."`); three tests that pinned the ids now pin the words, and
+  `scripts/progression.mjs` reads the roles back as words.

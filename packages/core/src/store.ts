@@ -16,7 +16,8 @@ import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog } from "./ops/log.js";
 import type { Author, Batch, Operation } from "./ops/types.js";
-import { permits, permittedMutations } from "./permissions/policy.js";
+import { permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
+import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -305,6 +306,7 @@ export class Store<S extends AnySchema> {
       this.subjectKindOf(call),
       this.viaOf(this.mutations.get(call.name)),
       this.subjectIdOf(call),
+      this.words,
     );
   }
 
@@ -315,14 +317,23 @@ export class Store<S extends AnySchema> {
    * allowlist, and a provider that declared no `may` may do whatever its
    * roles allow, which is what "absent means all" has always meant.
    */
+  /** How the policy's refusals name an act and a kind: by title and noun, never by id. */
+  private get words(): PolicyWords {
+    return {
+      act: (name) => this.mutations.get(name)?.title,
+      noun: (kind) => nounOf(this.schema.tryDefinition(kind), kind),
+    };
+  }
+
   private refusesAgent(call: MutationCall, author: Author | Principal): Refusal | undefined {
     if (author.kind !== "agent" || author.id === undefined) return undefined;
     const allowed = this.may.get(author.id);
     if (!allowed || allowed.has(call.name)) return undefined;
-    const named = [...allowed];
+    const titled = (name: string) => `“${this.mutations.get(name)?.title ?? name}”`;
+    const named = [...allowed].map(titled);
     return {
       mutation: call.name,
-      message: `${author.id} may not ${call.name} here: it was declared able to ${
+      message: `${author.id} may not ${titled(call.name)} here: it was declared able to ${
         named.length === 0 ? "do nothing else" : named.join(", ")
       }.`,
       wouldNeed: [],
