@@ -1,6 +1,6 @@
 import { describeNode, humaniseField, type AnySchema } from "@graview/core";
 import { Link, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { rankedRepairs, recordFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { placeHref, placePath, pluralSlug, recordPath, spatialHref } from "./registry.js";
@@ -44,6 +44,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
     ...(invariantContext ? { context: invariantContext } : {}),
   });
   const [open, setOpen] = useState<string | null>(null);
+  const actsHeading = useRef<HTMLHeadingElement | null>(null);
   if (!facts) {
     return (
       <PageMain context={context}>
@@ -209,7 +210,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
 
       {offered.length > 0 || facts.actions.withheld.length > 0 ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-actions">
-          <h2 style={h2}>What can be done</h2>
+          <h2 style={h2} ref={actsHeading} tabIndex={-1}>What can be done</h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {offered.map((affordance) => {
               const opened = open === affordance.id;
@@ -266,7 +267,20 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   open={affordance.open}
                   // The button says what the heading says: this end's words.
                   label={affordance.label}
-                  onDone={() => setOpen(null)}
+                  onDone={() => {
+                    setOpen(null);
+                    /*
+                     * THE KEYBOARD GOES BACK TO THE ACT THAT ASKED. The form
+                     * unmounts on done and took the keyboard to <body>; the
+                     * button that opened it is where it belongs, and when the
+                     * act is no longer offered, the heading of the acts.
+                     */
+                    const asked = affordance.id;
+                    requestAnimationFrame(() => {
+                      const opener = actsHeading.current?.parentElement?.querySelector<HTMLElement>(`[data-affordance="${asked.replace(/["\\]/g, "\\$&")}"]`);
+                      (opener ?? actsHeading.current)?.focus();
+                    });
+                  }}
                   {...(principal ? { principal } : {})}
                 />
               </div>

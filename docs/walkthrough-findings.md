@@ -3546,3 +3546,23 @@ vehicles, dozens of customers and deals.
   offered from the end of a relation declared to hold one; from the far
   end, which may be many, it still is. Criterion:
   `one-is-not-a-pile.test.tsx` (verified failing without the fix).
+
+### W-136 · Answering an act on a record ends on <body>
+- stage: B (connecting through the pages record) · face: pages · width: 1280 · scheme: light
+- expected: the keyboard is where it was after an act, the way the pages'
+  own forms were made to behave (W-053, W-083)
+- actual: on Priya Raman's record, "Assign to a location" → North lot →
+  submit: the tie was made, the line appeared in the scene and the log
+  said "you Priya Raman works at North lot" — and `activeElement` was
+  `<body>`. The record page now opens each act's form in place under its
+  button and closes it on done; W-083 fixed exactly this on a product's own
+  design, and the derived record page had grown the same shape since.
+- where it belongs: `packages/pages/src/page-record.tsx`
+- harness that should have caught it: `verify-pages` submits record forms
+  and reads the result, not where the keyboard went
+- status: fixed in "walkthrough: B · the record gives the keyboard back" ·
+  on done the keyboard goes to the button that opened the form, else to the
+  "What can be done" heading. Criterion:
+  `the-record-gives-the-keyboard-back.test.tsx` (verified failing without
+  the fix: the active element was the body); measured in walk6: `button
+  "Assign to a location"`.
