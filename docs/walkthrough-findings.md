@@ -3743,3 +3743,24 @@ vehicles, dozens of customers and deals.
   fix: `Received: "Not permitted: close-deal on a deal — sales-manager
   can."`); three tests that pinned the ids now pin the words, and
   `scripts/progression.mjs` reads the roles back as words.
+
+### W-144 · The diary is bound to service appointments and draws none
+- stage: D · face: scene (a lens) and pages (its place) · width: 1280 · scheme: light
+- expected: "The lens reads the whole graph, never only the group's
+  members"
+- actual: the dealership's diary is `createCalendarLens({ bindings: {
+  "test-drive": { start: "at" }, service: { start: "at" } } })`, registered
+  over the test drives as "The diary". The week of 28 September showed
+  eleven test drives and no service appointment, though five were booked
+  that week and one was in the bay today. The calendar placed `nodes` —
+  the group's members — and never read the other bound kind from the
+  graph; `graview check` accepted the binding, so nothing said the half of
+  it that was not drawn.
+- where it belongs: `packages/primitives/src/lens/calendar-view.tsx`
+- harness that should have caught it: `verify-calendar` binds one kind;
+  every calendar in the framework's apps binds one kind
+- status: fixed in "walkthrough: D · a calendar draws every kind it is
+  bound to" · the other bound kinds come from the graph on the group's
+  horizon (their past with `past`), after the group's arranging. Criterion:
+  primitives `a-calendar-draws-every-kind-it-is-bound-to.test.tsx` (both
+  cases verified failing without the fix).

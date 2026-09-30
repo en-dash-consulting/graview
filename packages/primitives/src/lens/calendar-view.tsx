@@ -1,5 +1,5 @@
 import { withMore } from "./more.js";
-import type { AnySchema, NodeOfSchema } from "@graview/core";
+import { isCurrent, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { withWithin } from "@graview/layout";
 import { useGraview, useNavigation, type ViewProps } from "@graview/react";
 import { useArranging } from "./arranging.js";
@@ -70,13 +70,31 @@ export function createCalendarLens<S extends AnySchema>(options: CalendarOptions
         ...(kinds[0] ? { kind: ((props.nodes ?? []).find((node) => kinds.includes(String(node.kind)))?.kind as string | undefined) ?? kinds[0] } : {}),
       });
       const groups = range === "agenda" && arranged.grouped && arrangement.group ? arranged.groups.map((group) => ({ label: group.label, ids: new Set(group.nodes.map((node) => node.id)) })) : undefined;
+      /*
+       * EVERY KIND IT IS BOUND TO, NOT ONLY THE GROUP IT HANGS OFF. A diary
+       * bound to test drives and service appointments, registered over the
+       * test drives, drew the test drives: `nodes` is the group's members,
+       * and the other bound kind was never read. The rest come from the
+       * graph, on the same horizon the group keeps (the past only when the
+       * stop asks for it), and after the group's own arranging.
+       */
+      const own = new Set((props.nodes ?? []).map((node) => String(node.kind)));
+      const others = kinds
+        .filter((kind) => !own.has(kind) && store.schema.tryDefinition(kind) !== undefined)
+        .flatMap((kind) => {
+          const definition = store.schema.tryDefinition(kind);
+          return (store.graph.nodesOfKind(kind as never) as NodeOfSchema<S>[]).filter(
+            (node) => view.past === true || isCurrent(definition, node as never),
+          );
+        });
+      const drawn = others.length === 0 ? nodes : [...nodes, ...(props.budget !== undefined ? others.slice(0, props.budget) : others)];
       return withMore(
         props,
         store.schema,
         <CalendarView<S>
           schema={store.schema}
           {...props}
-          nodes={nodes}
+          nodes={drawn}
           options={here}
           {...(bar ? { bar } : {})}
           {...(groups ? { groups } : {})}
