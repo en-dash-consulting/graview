@@ -70,6 +70,22 @@ describe("the shell", () => {
     expect(html).toContain('data-testid="profile-gear"');
   });
 
+  it("names the seat's roles in words, never their ids", () => {
+    // W-149: "sales-manager" in the pane beside "Dana Whitfield".
+    const html = renderToStaticMarkup(
+      <GraviewProvider
+        store={store()}
+        views={registerDefaultViews(schema, createViews(schema))}
+        initialView={{ ...EMPTY_VIEW, overview: true }}
+        principal={{ kind: "human", id: "dana", roles: ["sales-manager"] }}
+      >
+        <Shell<typeof schema> scheme="light" onScheme={() => {}} />
+      </GraviewProvider>,
+    );
+    expect(html).toContain(">Sales manager<");
+    expect(html).not.toContain(">sales-manager<");
+  });
+
   it("says what the app says when nothing is wrong, and hides the pages link when asked", () => {
     const html = render({ standing: "The garden keeps its agreements", pagesHref: null, chat: false });
     expect(html).toContain("The garden keeps its agreements");

@@ -3844,3 +3844,25 @@ vehicles, dozens of customers and deals.
   arrives vertically and crosses halfway between. Criterion: `routes.test.ts`
   "comes DOWN into a card below rather than along the row it sits in"
   (verified failing without the fix); photographed in walk6.
+
+### W-149 · The log says "price → 49900" and the profile says "sales-manager"
+- stage: G (an edit that survives a reload) · face: scene (Activity, the profile) · width: 1280 · scheme: light
+- expected: the log says the act in the app's words (the fourth walk's
+  "the log says the button, not the act"), and so does the seat
+- actual: change the Tesla's price in place: the card reads "Price
+  $49,900" and Activity reads "you Change 2026 Tesla Model Y Performance:
+  price → 49900" — the derived edit's `describe` wrote the humanised field
+  name and `JSON.stringify` of the value, past the declaration's own
+  `display.labels` and `display.format` (a condition would have read
+  `"cpo"`). The profile pane, open beside it, named the seat "Dana
+  Whitfield — sales-manager".
+- where it belongs: `packages/core/src/mutations/derive-edits.ts`,
+  `packages/primitives/src/profile.tsx`
+- harness that should have caught it: `verify-remember` reloads and reads
+  that the edit is in the log, not what the log says
+- status: fixed in "walkthrough: G · a change in the record's words" · the
+  change is said with the field's label and format; roles are humanised.
+  Criteria: core `a-change-in-the-records-words.test.ts` and `shell.test.tsx`
+  "names the seat's roles in words, never their ids" (both verified failing
+  without the fix). The edit survived the reload; the rail said
+  "Remembered in this browser · Start fresh".

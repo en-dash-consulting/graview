@@ -1,4 +1,4 @@
-import { labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
+import { humaniseField, labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
 import { useGraview } from "@graview/react";
 import { LadderSetting } from "./ladder.js";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
@@ -241,7 +241,8 @@ export function Profile<S extends AnySchema>({
                   "no roles" would read as a deprivation rather than as the
                   absence of a permission system. */}
               {roles.length > 0
-                ? roles.join(", ")
+                ? // A role in words — "Sales manager", never "sales-manager".
+                  roles.map((role) => humaniseField(role)).join(", ")
                 : me === undefined
                   ? "This app has no sign-in; everything here is yours."
                   : "No role in particular"}

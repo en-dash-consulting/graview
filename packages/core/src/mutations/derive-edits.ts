@@ -157,14 +157,27 @@ export function deriveEditMutations<S extends AnySchema>(
       describe: (args, graph) => {
         const node = graph.getNode((args as { id: string }).id);
         const label = node ? labelOf(definition, node) : (args as { id: string }).id;
+        /*
+         * THE CHANGE AS THE RECORD READS IT. The log said "price → 49900"
+         * and "condition → \"cpo\"" beside a card that says "Price $49,900"
+         * and "Certified pre-owned": the declaration's own labels and
+         * formats are the words, and the raw value only where there is none.
+         */
+        const display = definition.display;
+        const quietly = (label: string) => (label === label.toUpperCase() ? label : label.charAt(0).toLowerCase() + label.slice(1));
         const changes = fields
           .filter((field) => (args as Record<string, unknown>)[field] !== undefined)
-          .map(
-            (field) =>
-              `${humaniseField(field).toLowerCase()} → ${JSON.stringify(
-                (args as Record<string, unknown>)[field],
-              )}`,
-          );
+          .map((field) => {
+            const value = (args as Record<string, unknown>)[field];
+            const format = display?.format?.[field];
+            let said: string;
+            try {
+              said = format ? String(format(value)) : JSON.stringify(value);
+            } catch {
+              said = JSON.stringify(value);
+            }
+            return `${quietly(display?.labels?.[field] ?? humaniseField(field))} → ${said}`;
+          });
         return `Change ${label}: ${changes.join(", ") || "nothing"}`;
       },
       apply(ctx, args) {
