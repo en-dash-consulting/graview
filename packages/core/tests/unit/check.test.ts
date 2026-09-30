@@ -543,6 +543,11 @@ describe("what the checker says out loud without failing", () => {
     expect(findings(surveyed(z.string().min(1).max(60)))).not.toContain("note:label-unbounded");
   });
 
+  it("says nothing for a ceiling past sixty, because real names are longer and the call was made", () => {
+    // A real catalogue's titles run to 78 characters; bounding at 100 is a choice, not an omission.
+    expect(findings(surveyed(z.string().min(1).max(100)))).not.toContain("note:label-unbounded");
+  });
+
   it("says nothing at all when no provider can create anything", () => {
     const app = defineApp({
       name: "grounds",

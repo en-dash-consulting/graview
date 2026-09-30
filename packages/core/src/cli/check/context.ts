@@ -46,8 +46,13 @@ export interface CheckContext<S extends AnySchema> {
 export function bounded(field: unknown): boolean {
   const schema = field as { safeParse?: (value: unknown) => { success: boolean } };
   if (typeof schema?.safeParse !== "function") return true;
-  /* Sixty-one characters: past any name, short of any description. */
-  return !schema.safeParse("x".repeat(61)).success;
+  /*
+   * WHETHER A CEILING WAS CHOSEN, not whether it is sixty. The note asks
+   * that the call was made; a catalogue's real titles run to 78 characters
+   * and a bound of 100 is a call. Ten thousand characters is past any
+   * ceiling somebody chose for a name.
+   */
+  return !schema.safeParse("x".repeat(10_000)).success;
 }
 
 /**

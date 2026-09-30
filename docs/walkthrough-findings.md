@@ -3335,3 +3335,21 @@ vehicles, dozens of customers and deals.
   gone" (verified failing without the fix: `expected <body> to be <div>`);
   measured in walk6 in Chromium and WebKit: `div "Vehicles"` after the
   second Escape.
+
+### W-126 · A label bounded at a hundred is told it has no maximum
+- stage: B (carried from W-122) · face: `graview check` · width: — · scheme: —
+- expected: `label-unbounded` — "has no maximum length" — only where there is
+  no maximum
+- actual: `bounded()` tried a 61-character name and called any field that
+  accepted it unbounded, so `z.string().min(1).max(100)` drew the note and
+  its false sentence. Real names run past sixty: four Tech N9ne titles (78
+  at most), and a dealership's "2021 Mercedes-Benz GLE 450 4MATIC
+  Coupe AMG Line" is 48 before a trim package. The note exists to ask that
+  the call was made; an author who made it at 100 was told they had not.
+- where it belongs: `packages/core/src/cli/check/context.ts` (`bounded`)
+- harness that should have caught it: `check.test.ts` tried `.max(60)` and
+  no ceiling at all, never a ceiling between
+- status: fixed in "walkthrough: B · a ceiling past sixty is a ceiling" ·
+  bounded means it refuses ten thousand characters. Criterion:
+  `check.test.ts` "says nothing for a ceiling past sixty, because real names
+  are longer and the call was made" (verified failing without the fix).
