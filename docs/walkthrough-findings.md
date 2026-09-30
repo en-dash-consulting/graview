@@ -3312,3 +3312,26 @@ vehicles, dozens of customers and deals.
   "never from nowhere" asks with `{}`, and "no environment" is a runtime
   with no `process` at all. Criterion: the same file, run with
   `TYPESAFE_API_KEY=x` (failing before the fix as above, passing after).
+
+### W-125 · Escape out of a record leaves the keyboard on <body>
+- stage: A · face: scene · width: 1280 · scheme: light · engines: Chromium and WebKit
+- expected: "Escape backs out one level at a time" and "keyboard alone can do
+  everything above" — after the rung, the keyboard is on the picture
+- actual: add a vehicle, open its district, travel to it, put the keyboard on
+  its card (or rename it in place, which leaves it on the title) and press
+  Escape twice: the first drops the selection, the second backs out of the
+  record and `document.activeElement` is `<body>`. The card it stood on went
+  with the focus. Chromium's next Tab went to "Zoom out"; WebKit's to the
+  district's toggle. W-070 and W-090 were this shape for the in-place editor
+  and the popovers; the ladder itself was never asked.
+- where it belongs: `packages/primitives/src/workbench/back-out.tsx`
+- harness that should have caught it: `back-out.test.tsx` asks what the
+  ladder did to the address, never where the keyboard went
+- status: fixed in "walkthrough: A · Escape lands the keyboard on what still
+  draws the record" · when a rung takes away the element the keyboard was on,
+  the keyboard goes to the card that holds the record's chip (the district),
+  else to a card in the scene. Criterion: `back-out.test.tsx` "puts the
+  keyboard on the card that holds the record's chip once its own card is
+  gone" (verified failing without the fix: `expected <body> to be <div>`);
+  measured in walk6 in Chromium and WebKit: `div "Vehicles"` after the
+  second Escape.

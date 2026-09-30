@@ -153,3 +153,31 @@ describe("Escape, with a popover open over the scene", () => {
     expect(seen[1]?.selection ?? [], "the second press drops the selection").toEqual([]);
   });
 });
+
+describe("Escape, with the keyboard on the record it backs out of", () => {
+  /*
+   * THE KEYBOARD LANDS ON WHAT STILL DRAWS THE RECORD. Backing out of a
+   * record at altitude removes its card; the keyboard was on it and fell to
+   * <body>, and the next Tab went to the zoom buttons (Chromium) or to
+   * somewhere else again (WebKit). The district holding the record's chip is
+   * where it belongs.
+   */
+  it("puts the keyboard on the card that holds the record's chip once its own card is gone", async () => {
+    const district = document.createElement("div");
+    district.setAttribute("data-graview-view", "kind:item");
+    district.tabIndex = 0;
+    const chip = document.createElement("span");
+    chip.setAttribute("data-graview-pick", "item:first-thing");
+    district.append(chip);
+    const card = document.createElement("div");
+    card.setAttribute("data-graview-view", "item:first-thing");
+    card.tabIndex = 0;
+    document.body.append(district, card);
+    card.focus();
+    expect(document.activeElement).toBe(card);
+    await ladder(ALTITUDE_HOME, { ...ALTITUDE_HOME, focusId: "item:first-thing" }, 1, () => card.remove());
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(document.activeElement).toBe(district);
+    district.remove();
+  });
+});

@@ -11,6 +11,41 @@ import {
 import { useGraview, useJackIn, useNavigation, useSelection } from "@graview/react";
 import { useEffect } from "react";
 
+/**
+ * WHERE THE KEYBOARD GOES WHEN ESCAPE TAKES AWAY WHAT IT STOOD ON.
+ *
+ * Backing out of a record removes its card; the keyboard was on the card, or
+ * on the title renamed in it a moment ago, and fell to `<body>`. Chromium
+ * then tabs on from wherever the card was, into the zoom buttons, and WebKit
+ * from somewhere else again. The honest place is the card that still draws
+ * what was left — the district holding its chip — and failing that any card
+ * in the scene, so the next arrow or Enter still means the picture.
+ *
+ * Asked for a while rather than once, because a card leaving on a rise may
+ * fade out before it is removed; and only while the keyboard is still on
+ * nothing, so a person who moved it in the meantime keeps where they went.
+ */
+export function landTheKeyboard(stoodOn: HTMLElement, left: string | null, tries = 40): void {
+  const attempt = (remaining: number) => {
+    const active = document.activeElement;
+    const onNothing = active === null || active === document.body || active === stoodOn;
+    if (!onNothing) return;
+    if (stoodOn.isConnected) {
+      if (remaining > 0) setTimeout(() => attempt(remaining - 1), 25);
+      return;
+    }
+    const escaped = left === null ? null : left.replace(/["\\]/g, "\\$&");
+    const target =
+      (escaped === null
+        ? null
+        : (document.querySelector<HTMLElement>(`[data-graview-view="${escaped}"]`) ??
+          document.querySelector<HTMLElement>(`[data-graview-pick="${escaped}"]`)?.closest<HTMLElement>("[data-graview-view]"))) ??
+      document.querySelector<HTMLElement>("[data-graview-view][tabindex]");
+    target?.focus({ preventScroll: true });
+  };
+  attempt(tries);
+}
+
 
 /**
  * Escape backs out one level: leave the full page, then the Graview, then
@@ -59,6 +94,10 @@ export function BackOut({ home }: { readonly home: string | null }) {
        */
       // A pane kept in the tree but hidden — the profile, shut — is not open over anything.
       if (document.querySelector("[data-graview-overlay]:not([hidden])")) return;
+      // The keyboard, if it is on the picture: the rung may take its card away.
+      const stoodOn =
+        active instanceof HTMLElement && active.closest("[data-graview-view]") !== null ? active : null;
+      if (stoodOn) landTheKeyboard(stoodOn, view.focusId ?? null);
       /*
        * Outermost first, and the full page is the outermost thing there is.
        *
