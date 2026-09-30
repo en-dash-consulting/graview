@@ -206,6 +206,7 @@ export function kindLines(
     lines.push(`  },`);
   }
   if (str(kind, "plural")) lines.push(`  plural: ${q(str(kind, "plural")!)},`);
+  if (str(kind, "noun")) lines.push(`  noun: ${q(str(kind, "noun")!)},`);
   if (fields.some((field) => field.name === "label")) lines.push(`  label: (node) => node.label,`);
   if (lifecycleField && retired) lines.push(`  lifecycle: { field: ${q(lifecycleField)}, retired: ${retired[0] === "date" ? '"date"' : `[${retired.map(q).join(", ")}]`} },`);
   // The drawing is part of the declaration, so it is part of the file.

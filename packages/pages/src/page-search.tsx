@@ -1,7 +1,7 @@
 import {
   describeSearched,
   formFields,
-  humaniseField,
+  nounOf,
   search,
   withArticle,
   type AnyMutationDefinition,
@@ -154,7 +154,7 @@ export function WhyLine({ why }: { why: Hit["why"] }) {
 
 function countSentence<S extends AnySchema>(store: Store<S>, byKind: Readonly<Record<string, number>>): string {
   const parts = Object.entries(byKind).map(
-    ([kind, count]) => `${count} ${count === 1 ? humaniseField(kind).toLowerCase() : pluralOf(store, kind).toLowerCase()}`,
+    ([kind, count]) => `${count} ${count === 1 ? nounOf(store.schema.tryDefinition(kind), kind) : pluralOf(store, kind).toLowerCase()}`,
   );
   if (parts.length === 0) return "Found";
   return parts.length === 1 ? capitalFirst(parts[0]!) : capitalFirst(`${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`);
@@ -242,7 +242,7 @@ export function SearchToCreate<S extends AnySchema>({
         <section key={`${affordance.id}|${words}`} style={{ ...rule, display: "grid", gap: 14 }}>
           {/* The thing, named: an act's title need not say its kind ("Welcome them in"), so the heading does and the button keeps the act's own words. */}
           <h2 style={h2}>
-            {capitalFirst(withArticle(kind))} called “{words}”
+            {capitalFirst(withArticle(nounOf(store.schema.tryDefinition(kind), kind)))} called “{words}”
           </h2>
           <DerivedForm
             store={store}

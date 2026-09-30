@@ -36,7 +36,7 @@ export interface Rewrite {
   readonly why: string;
 }
 
-const KIND_PROPERTIES = ["description", "plural", "figure"] as const;
+const KIND_PROPERTIES = ["description", "plural", "noun", "figure"] as const;
 
 export function sourceChanges(before: Reading, after: Reading, base?: GraviewApp<AnySchema>): SourceChanges {
   const was = new Read(before);

@@ -75,6 +75,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       kind: "kind",
       label: def.kind,
       ...(def.plural ? { plural: def.plural } : {}),
+      ...(def.noun ? { noun: def.noun } : {}),
       ...(def.description ? { description: def.description } : {}),
       ...(def.lifecycle ? { lifecycleField: def.lifecycle.field, retired: def.lifecycle.retired === "date" ? ["date"] : def.lifecycle.retired.map(String) } : {}),
       ...(def.figure ? { figure: def.figure } : {}),

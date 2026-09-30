@@ -66,6 +66,13 @@ export interface NodeDefinitionSpec<
   readonly describe?: (node: { id: string } & z.infer<F>) => string;
   /** Plural noun for aggregates ("People"). Defaults to `kind + "s"`. */
   readonly plural?: string;
+  /**
+   * What ONE of them is called, in lower case, where the kind's id does not
+   * say it: a kind called `staff` whose one member is "a staff member", a
+   * kind called `equipment` whose one is "a piece of equipment". Defaults to
+   * the id, spoken ("work-order" → "work order").
+   */
+  readonly noun?: string;
   readonly description?: string;
   /**
    * Maps a node onto the invariant it requires. The engine uses this to detect

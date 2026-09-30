@@ -137,3 +137,23 @@ describe("the studio's round trip, on a checkout with bounds", () => {
     expect([...(applied.app.invariants?.[0]?.repairs ?? [])].sort()).toEqual(["edit-song", "put-on"]);
   });
 });
+
+describe("the studio's round trip keeps what one of a kind is called", () => {
+  it("writes a declared noun back", () => {
+    const staff = defineNode("staff", {
+      fields: z.object({ label: z.string().min(1).max(60) }),
+      plural: "Staff",
+      noun: "staff member",
+      label: (node) => node.label,
+    });
+    const hire = defineMutation("hire", {
+      title: "Hire somebody",
+      creates: ["staff"],
+      input: z.object({ label: z.string().min(1).max(60) }),
+      apply: (ctx, args) => void ctx.addNode({ id: ctx.freshId(args.label, "staff"), kind: "staff", label: args.label } as never),
+    });
+    const people = defineApp({ name: "People", schema: createSchema([staff]), mutations: [hire as never] });
+    const schemaTs = createStudio(people).files().find((one) => one.path === "src/domain/schema.ts")!.contents;
+    expect(schemaTs).toContain('noun: "staff member",');
+  });
+});

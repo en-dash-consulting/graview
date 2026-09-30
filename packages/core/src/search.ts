@@ -338,6 +338,7 @@ function kindStrength(schema: AnySchema, kind: string, words: readonly string[])
   const candidates: { field: string; text: string }[] = [
     { field: "plural", text: pluralOf(definition, kind) },
     { field: "kind", text: humaniseField(kind) },
+    ...(definition?.noun ? [{ field: "noun", text: definition.noun }] : []),
   ];
   let best: { strength: Exclude<MatchStrength, "field">; field: string; text: string } | undefined;
   for (const candidate of candidates) {

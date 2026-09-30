@@ -1,6 +1,7 @@
 import {
   formFields,
   humaniseField,
+  nounOf,
   labelOf,
   readableFields,
   search,
@@ -227,7 +228,7 @@ export function graphResponder<S extends AnySchema>(
           ? formFields(declared.input).find((candidate) => candidate.name === field)
           : undefined;
         return spec?.control === "node" && !spec.kinds.includes("*")
-          ? spec.kinds.map((kind) => humaniseField(kind).toLowerCase()).join(" or ")
+          ? spec.kinds.map((kind) => nounOf(store.schema.tryDefinition(kind), kind)).join(" or ")
           : humaniseField(field).toLowerCase();
       };
       const wants = [
@@ -524,7 +525,7 @@ export function graphResponder<S extends AnySchema>(
         .join(". ");
       return {
         say: sentence([
-          `${name(node)} — ${withArticle(node.kind as string)}${facts ? ` (${facts})` : ""}.`,
+          `${name(node)} — ${withArticle(nounOf(store.schema.tryDefinition(node.kind as string), node.kind as string))}${facts ? ` (${facts})` : ""}.`,
           related ? `${related}.` : "Connected to nothing yet.",
           touching.length > 0
             ? `Trouble: ${touching.map((violation) => violation.message).join("; ")}.`

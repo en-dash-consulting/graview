@@ -202,6 +202,15 @@ export function withArticle(word: string): string {
 }
 
 /**
+ * What one of a kind is called: its declared `noun`, else its id spoken.
+ * Every sentence about ONE of them — "Change the staff member", "a staff
+ * member called …", "Remove the staff member" — reads this, never the id.
+ */
+export function nounOf(definition: { readonly noun?: string } | undefined, kind: string): string {
+  return definition?.noun ?? humaniseField(kind).toLowerCase();
+}
+
+/**
  * WHICH of a node's fields a person sees, and HOW each one reads.
  *
  * One implementation, because there were two: the record on a page and the

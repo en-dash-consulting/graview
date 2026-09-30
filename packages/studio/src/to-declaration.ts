@@ -231,6 +231,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       fields: z.object(shape),
       edges,
       ...(str(kind, "plural") ? { plural: str(kind, "plural")! } : {}),
+      ...(str(kind, "noun") ? { noun: str(kind, "noun")! } : {}),
       ...(str(kind, "description") ? { description: str(kind, "description")! } : {}),
       ...(hasLabel ? { label: (node: { id: string } & Record<string, unknown>) => String(node["label"] ?? node.id) } : {}),
       ...(lifecycleField && retired ? { lifecycle: { field: lifecycleField, retired: retired[0] === "date" ? ("date" as const) : retired } } : {}),

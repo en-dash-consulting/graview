@@ -1,6 +1,7 @@
 import {
   formFields,
   humaniseField,
+  nounOf,
   labelOf,
   tellApart,
   type AnySchema,
@@ -117,7 +118,7 @@ function Control<S extends AnySchema>({
    */
   const named =
     spec.control === "node" && !spec.kinds.includes("*")
-      ? spec.kinds.map((kind) => humaniseField(kind)).join(" or ")
+      ? spec.kinds.map((kind) => humaniseField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
       : humaniseField(spec.name);
   const title = named + (spec.optional ? "" : " *");
 

@@ -2,6 +2,7 @@ import {
   fieldWriters,
   formFields,
   humaniseField,
+  nounOf,
   labelOf,
   readableFields,
   withArticle,
@@ -156,7 +157,7 @@ function questionFor<S extends AnySchema>(
       for (const node of store.graph.allNodes()) {
         if (!field.kinds.includes("*") && !field.kinds.includes(node.kind as string)) continue;
         if (store.modules.disabledKinds.has(node.kind as string)) continue;
-        criteria[node.id] = `${withArticle(node.kind as string)}: ${labelOf(store.schema.tryDefinition(node.kind as string), node)}`;
+        criteria[node.id] = `${withArticle(nounOf(store.schema.tryDefinition(node.kind as string), node.kind as string))}: ${labelOf(store.schema.tryDefinition(node.kind as string), node)}`;
       }
       if (Object.keys(criteria).length === 0) return undefined;
       return { type: "choice", instructions: `Which ${humaniseField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria };
@@ -203,7 +204,7 @@ export function questionsForKind<S extends AnySchema>(store: Store<S>, kind: str
   if (!definition) return [];
   const shape = (definition.fields as { shape?: Record<string, unknown> }).shape ?? {};
   const writers = fieldWriters(store.schema, store.allMutations()).get(kind);
-  const of = withArticle(kind);
+  const of = withArticle(nounOf(definition, kind));
   const out: DerivedQuestion[] = [];
   for (const field of formFields(definition.fields)) {
     if (field.name in (definition.fixed ?? {})) continue;

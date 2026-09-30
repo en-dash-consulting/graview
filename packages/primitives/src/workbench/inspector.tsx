@@ -1,4 +1,4 @@
-import { withArticle, type AnySchema } from "@graview/core";
+import { nounOf, withArticle, type AnySchema } from "@graview/core";
 import { useSubject } from "../companion.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout";
 import { useAffordances, useApplyAffordance, useGraview, useSelection } from "@graview/react";
@@ -831,13 +831,13 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                 edge
                   ? "this relation"
                   : subjectKinds.length === 1
-                    ? withArticle(subjectKinds[0]!)
+                    ? withArticle(nounOf(store.schema.tryDefinition(subjectKinds[0]!), subjectKinds[0]!))
                     : "this mix of kinds"
               } — ${withheld.length} action${withheld.length === 1 ? "" : "s"} withheld.`
             : edge
               ? `Nothing can be done with this line yet — no mutation declares that it makes or breaks "${edge.kind}".`
               : `Nothing can be done with ${
-                  subjectKinds.length === 1 ? withArticle(subjectKinds[0]!) : "this mix of kinds"
+                  subjectKinds.length === 1 ? withArticle(nounOf(store.schema.tryDefinition(subjectKinds[0]!), subjectKinds[0]!)) : "this mix of kinds"
                 } yet — no mutation declares ${subjectKinds.length === 1 ? "it" : "them"} as a subject.`}
         </p>
       ) : (

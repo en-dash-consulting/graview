@@ -56,7 +56,9 @@ agent tool that walks the graph.
 
 4. **Say what a node of it is called.** `label` defaults to a `label` field and
    then to the id. An id in the interface is a bug you shipped, not a
-   placeholder.
+   placeholder. And say what ONE of the kind is called where its id does not:
+   `noun: "staff member"` on a kind called `staff`, or every sentence about
+   one reads "Change the staff".
 
    An id is still a name a caller may choose: every act that declares
    `creates: ["fixture"]` takes an optional `id` argument the framework adds,

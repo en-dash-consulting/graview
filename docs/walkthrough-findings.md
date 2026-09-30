@@ -3434,3 +3434,25 @@ vehicles, dozens of customers and deals.
   `handles-can-be-told-apart.test.ts` (the old cut gives `['Wei Haddad in
   the…', 'Wei Haddad in the…']`; the test fails on it); measured in walk6:
   three distinct handles, named in full.
+
+### W-131 · One of the dealership's staff is "the staff"
+- stage: B · face: both · width: 1280 · scheme: light
+- expected: every sentence about one record names it in words; "a title
+  that is an identifier" is a bug class
+- actual: the kind is `staff`, plural "Staff" — the dealership's word — and
+  the only singular a declaration could give was the id. The strip offered
+  "Change the staff …" and "Remove the staff" on Mei Lin Chow; the routed
+  face's picker was labelled "Staff", search said "a staff called …", the
+  chat "Mei Lin Chow — a staff". Every domain with a mass noun meets it:
+  staff, equipment, inventory, personnel, livestock.
+- where it belongs: `packages/core/src/schema` (`noun`, `nounOf`),
+  `mutations/derive-edits.ts`; its readers in primitives, pages and tools;
+  the studio's round trip; `graview-node-kind`
+- harness that should have caught it: none — every kind in the framework's
+  apps has a countable id
+- status: fixed in "walkthrough: B · a kind says what one of it is called" ·
+  `defineNode(..., { noun: "staff member" })`, read by every sentence about
+  one, carried and written back by the studio. Criteria:
+  `a-kind-says-what-one-is-called.test.ts` ("Remove the staff member") and
+  the studio's round trip "writes a declared noun back" (both verified
+  failing without the fix).

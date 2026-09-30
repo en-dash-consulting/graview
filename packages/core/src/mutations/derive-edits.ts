@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { labelOf } from "../schema/define-node.js";
-import { humaniseField } from "../schema/define-node.js";
+import { humaniseField, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { nodeRef, nodeRefArgs } from "./node-ref.js";
@@ -141,7 +141,7 @@ export function deriveEditMutations<S extends AnySchema>(
     const fields = unwrittenFields(schema, mutations, kind);
     if (fields.length === 0) continue;
     const shape = definition.fields.shape as Record<string, z.ZodType>;
-    const noun = humaniseField(kind).toLowerCase();
+    const noun = nounOf(definition, kind);
     const said = fields.map((field) => humaniseField(field).toLowerCase());
     derived.push({
       name,
@@ -235,7 +235,7 @@ export function deriveRemoveMutations<S extends AnySchema>(
     const kind = definition.kind;
     const name = removeMutationName(kind);
     if (taken.has(name)) continue;
-    const noun = humaniseField(kind).toLowerCase();
+    const noun = nounOf(definition, kind);
     derived.push({
       name,
       derived: { kind, act: "remove" },

@@ -34,6 +34,8 @@ export const kindNode = defineNode("kind", {
   fields: z.object({
     label,
     plural: z.string().optional(),
+    /** What one of them is called, where the kind's name does not say it. */
+    noun: z.string().optional(),
     description: z.string().optional(),
     /** The field the horizon reads, and the values that put a record behind it. */
     lifecycleField: z.string().optional(),
