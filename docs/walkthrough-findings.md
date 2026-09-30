@@ -3507,3 +3507,24 @@ vehicles, dozens of customers and deals.
   "are duty") and the act's hover still reading `this line is "rides-in"`;
   those are "walkthrough: B · a line's reason is its words", with the edge
   and affordance tests now asserting the words.
+
+### W-134 · A vehicle's card says its heading twice and never its price
+- stage: B · face: both (summary cards, the pages gallery and lists) · width: 1280 and 390 · scheme: both
+- expected: a glance spends its three facts on what the heading does not
+  say (the rule `readableFields` already states for a whole heading)
+- actual: every vehicle's card and gallery entry read "2027 Subaru Forester
+  Sport · GTACBLRJ9YVNF1VAC · Year 2027 · Subaru". The label is built from
+  the year, make, model and trim; the glance only dropped a value equal to
+  the WHOLE heading, so two of three facts restated it and the price, the
+  mileage and the condition never appeared on any card of 320.
+- where it belongs: `packages/core/src/schema/define-node.ts`
+  (`readableFields`), its glance callers in primitives (`Summary`) and
+  pages (`glance`)
+- harness that should have caught it: none — every fixture's label is a
+  field of its own
+- status: fixed in "walkthrough: B · a glance does not say its heading
+  again" · with `glance: true` a value the heading carries as whole words
+  is dropped; the full record keeps every field. Criterion:
+  `a-glance-does-not-say-its-heading-again.test.ts` (verified failing
+  without the fix: `['vin', 'year', 'make']`); measured in walk6: "VIN ·
+  Mileage 31 mi · Price $31,900".

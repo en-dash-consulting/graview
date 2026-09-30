@@ -210,6 +210,13 @@ export function nounOf(definition: { readonly noun?: string } | undefined, kind:
   return definition?.noun ?? humaniseField(kind).toLowerCase();
 }
 
+/** Whether `line` carries `value` as whole words: "2027 Subaru Forester" says "Subaru" and "2027", not "Sub". */
+function saysAsWords(line: string, value: string): boolean {
+  if (value.length === 0) return false;
+  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[\\s·,(/])${escaped}($|[\\s·,)/])`).test(line);
+}
+
 /**
  * WHICH of a node's fields a person sees, and HOW each one reads.
  *
@@ -229,7 +236,18 @@ export function nounOf(definition: { readonly noun?: string } | undefined, kind:
 export function readableFields(
   node: Record<string, unknown>,
   definition: AnyNodeDefinition | undefined,
-  options: { readonly limit?: number; readonly said?: readonly (string | undefined)[] } = {},
+  options: {
+    readonly limit?: number;
+    readonly said?: readonly (string | undefined)[];
+    /**
+     * A GLANCE drops a value the heading already says as a WORD, not only as
+     * the whole heading: a vehicle's summary is headed "2027 Subaru Forester
+     * Sport", and "Year 2027 · Subaru" under it spent two of its three facts
+     * saying the heading again while the price never appeared. A record's
+     * full facts keep every field — that is where each is changed.
+     */
+    readonly glance?: boolean;
+  } = {},
 ): readonly ReadableField[] {
   const display = definition?.display;
   const skip = new Set([...NOT_A_FIELD, ...(display?.hide ?? [])]);
@@ -276,6 +294,7 @@ export function readableFields(
           : String(value);
 
     if (said.includes(text) || stems.some((stem) => text.startsWith(stem))) continue;
+    if (options.glance && (typeof value === "string" || typeof value === "number") && said.some((line) => saysAsWords(line, text))) continue;
     const label = display?.labels?.[key] ?? humaniseField(key);
     const alone =
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" ? `${label}: ${text.toLowerCase()}` : text;

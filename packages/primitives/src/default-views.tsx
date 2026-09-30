@@ -377,6 +377,7 @@ export function registerDefaultViews<S extends AnySchema>(
       const fields = readableFields(node, definition, {
         limit: 3,
         said: [labelOf(definition, node)],
+        glance: true,
       });
       const hue = useHue(kind as string);
       return (

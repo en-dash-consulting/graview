@@ -180,7 +180,7 @@ export function glance(
 ): string {
   // A bare number says nothing on its own — "12 · 8" is not a sentence —
   // so each fact is read the way it stands alone, the same words a card uses.
-  return readableFields(node, definition, { limit: 3, said: [said] })
+  return readableFields(node, definition, { limit: 3, said: [said], glance: true })
     .map((field) => field.alone)
     .join(" · ");
 }
