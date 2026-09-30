@@ -262,6 +262,21 @@ describe("what a mutation calls itself", () => {
     expect(findings(app(sluggish))).toContain("warning:mutation-title-is-an-identifier");
   });
 
+  it("leaves a hyphenated word in a sentence alone, because it is English", () => {
+    // "Offer a trade-in" is a dealership's button; the kind is called trade-in
+    // because the word is. A hyphen in ONE word is a slug, in a sentence it is not.
+    for (const title of ["Offer a trade-in", "Book a follow-up", "Re-open it"]) {
+      const english = bound.defineMutation("reword-thing", {
+        title,
+        description: "Change the wording.",
+        subject: { kinds: ["duty"], arg: "dutyId" },
+        input: z.object({ dutyId: nodeRef(["duty"]) }),
+        apply: () => {},
+      });
+      expect(findings(app(english)), title).not.toContain("warning:mutation-title-is-an-identifier");
+    }
+  });
+
   it("leaves an ordinary title alone even when it matches its slug", () => {
     // "Add person" is a perfectly good label. Slug-similarity is not the
     // signal; looking like an identifier is.

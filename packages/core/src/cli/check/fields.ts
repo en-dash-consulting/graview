@@ -189,10 +189,13 @@ export function checkEditableFields<S extends AnySchema>(ctx: CheckContext<S>): 
        * A title that is an IDENTIFIER names the code rather than the act.
        *
        * Deliberately narrow: "Add person" matches its slug and is a perfectly
-       * good label, so slug-similarity is not the signal. A hyphen, an
-       * underscore or interior capitals in a single word is.
+       * good label, so slug-similarity is not the signal. An underscore is,
+       * and so is a hyphen or interior capitals in a title that is one word.
+       * A hyphen inside a sentence is English: "Offer a trade-in", "Book a
+       * follow-up", "Re-open it" are labels on buttons.
        */
-      if (/[-_]/.test(mutation.title) || /^[a-z]+[A-Z]/.test(mutation.title)) {
+      const oneWord = !/\s/.test(mutation.title.trim());
+      if (/_/.test(mutation.title) || (oneWord && /-/.test(mutation.title)) || /^[a-z]+[A-Z]/.test(mutation.title)) {
         add({
           severity: "warning",
           code: "mutation-title-is-an-identifier",

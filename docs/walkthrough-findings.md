@@ -3374,3 +3374,23 @@ vehicles, dozens of customers and deals.
   `the-bound-declaration.test.ts` compiles `tests/types/judges-past.ts`,
   written the skill's way, and expects no errors (verified failing without
   the fix).
+
+### W-128 · "Offer a trade-in" is called an identifier
+- stage: B · face: `graview check` · width: — · scheme: —
+- expected: the check is clean for acts titled in the app's own words
+- actual: three warnings, `mutation-title-is-an-identifier`, on "Offer a
+  trade-in", "Put a trade-in toward it" and "Take a trade-in off it": "reads
+  as a name in the source rather than as a label on a button". The rule
+  flagged any hyphen anywhere. Its own comment meant "in a single word"
+  (`reword-thing`); a hyphenated English word in a sentence — trade-in,
+  follow-up, re-open, check-in — is exactly what a real domain's buttons
+  say. The only way to quiet it was to write worse English.
+- where it belongs: `packages/core/src/cli/check/fields.ts`
+- harness that should have caught it: `check.test.ts` tried "reword-thing"
+  and "Add person", never a sentence with a hyphen in it
+- status: fixed in "walkthrough: B · a hyphen in a sentence is English" · a
+  hyphen marks an identifier only in a one-word title; an underscore, or
+  camel case in one word, still does. Criterion: `check.test.ts` "leaves a
+  hyphenated word in a sentence alone, because it is English" (verified
+  failing without the fix: `Offer a trade-in: expected [ Array(1) ] to not
+  include 'warning:mutation-title-is-an-identifier'`).
