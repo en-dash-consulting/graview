@@ -3640,3 +3640,22 @@ vehicles, dozens of customers and deals.
   without the fix). The round trip otherwise passed `graview check` with no
   findings before and after, kept every argument name, and wrote each rule
   and act body as a stub that throws naming what belongs there.
+
+### W-140 · `<Embed>` without a store forgets everything when the seat changes
+- stage: F (carried from the fifth walk's "noticed and not investigated") · face: embed · width: — · scheme: —
+- expected: "Changing seats on the embed keeps the store and its history"
+- actual: `<Embed>` handed no `store` built one with
+  `useMemo(() => storeOf(app, seed, principal), [..., principal])`. The
+  principal was passed to a `Store` that has no such option (hidden by an
+  `as never`) and sat in the dependencies, so every seat change made a new
+  store from the seed: a React host that sat Priya down after Dana had
+  worked a deal lost the deal and the log. `mount()` passes a store, which
+  is why the harness that changes seats (through `mount`) never saw it.
+- where it belongs: `packages/embed/src/embed.tsx`
+- harness that should have caught it: `smoke-create` changes seats through
+  `mount`, which always hands the component a store
+- status: fixed in "walkthrough: F · a seat change keeps the store" · the
+  store depends on the app and the seed, not on who is at the keyboard.
+  Criterion: embed `a-seat-change-keeps-the-store.test.tsx` (verified
+  failing without the fix: `one store across the seats: expected 2 to be
+  1`).

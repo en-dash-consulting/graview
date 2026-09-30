@@ -108,7 +108,7 @@ export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOption
 let sequence = 0;
 
 /** A store from a declaration and a seed: the app's own policy, in memory. */
-function storeOf<S extends AnySchema>(app: GraviewApp<S>, seed: EmbedOptions<S>["seed"], principal: Principal | undefined): Store<S> {
+function storeOf<S extends AnySchema>(app: GraviewApp<S>, seed: EmbedOptions<S>["seed"]): Store<S> {
   return new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],
@@ -116,7 +116,6 @@ function storeOf<S extends AnySchema>(app: GraviewApp<S>, seed: EmbedOptions<S>[
     ...(seed ? { snapshot: seed as never } : {}),
     ...(app.policy ? { policy: app.policy } : {}),
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),
-    ...(principal ? { principal } : {}),
   } as never);
 }
 
@@ -172,7 +171,13 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   } = props;
   const rootRef = useRef<HTMLDivElement>(null);
   const scope = useMemo(() => `graview-embed-${++sequence}`, []);
-  const store = useMemo(() => props.store ?? storeOf(app, seed, principal), [props.store, app, seed, principal]);
+  /*
+   * ONE STORE ACROSS THE SEATS. Who is at the keyboard is the provider's
+   * business, not the store's: with the principal in these dependencies a
+   * seat change made a fresh store from the seed, and a React host that sat
+   * somebody else down lost every edit and the history with them.
+   */
+  const store = useMemo(() => props.store ?? storeOf(app, seed), [props.store, app, seed]);
   const views = useMemo(
     () => (props.views ? props.views(app.schema) : registerDefaultViews(app.schema, createViews(app.schema))) as never,
     [props.views, app.schema],
@@ -501,7 +506,7 @@ export interface EmbedHandle {
  * render is synchronous, so what comes back is already on the page.
  */
 export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
-  const store = options.store ?? storeOf(options.app, options.seed, options.principal);
+  const store = options.store ?? storeOf(options.app, options.seed);
   let setters: { face: (f: EmbedFace) => void; stop: (s: string) => void; scheme: (s: Scheme) => void; seat: (p: Principal) => void; brand: (b: Brand | undefined) => void } | null = null;
   function Host() {
     const [face, setFace] = useState<EmbedFace>(options.face ?? faceOf(options.stop));
