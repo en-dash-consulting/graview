@@ -178,6 +178,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                 <KindMark kind={target.kind} brand={brand} schema={store.schema} size={7} />
                 <Link to={recordPath(store.schema, target.kind, target.id)} style={{ ...link, fontSize: "1.125rem" }}>
                   {target.label}
+                  {target.apart ? <span style={quiet}> · {target.apart}</span> : null}
                 </Link>
               </li>
             ))}

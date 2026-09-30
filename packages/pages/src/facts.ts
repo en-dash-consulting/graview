@@ -1,6 +1,7 @@
 import {
   labelOf,
   readableFields,
+  tellApart,
   violationsTouching,
   type AnySchema,
   type Principal,
@@ -26,7 +27,11 @@ export interface RecordLinkGroup {
   readonly direction: "out" | "in";
   /** The edge declaration's own description, when it has one. */
   readonly description?: string;
-  readonly targets: readonly { readonly id: string; readonly kind: string; readonly label: string }[];
+  /**
+   * `apart` is what tells a target from another of the same name in this
+   * group — a vehicle's two "Check engine light on" appointments, by when.
+   */
+  readonly targets: readonly { readonly id: string; readonly kind: string; readonly label: string; readonly apart?: string }[];
 }
 
 export interface RecordFacts {
@@ -121,10 +126,21 @@ export function recordFacts<S extends AnySchema>(
       ...(options.principal ? { principal: options.principal } : {}),
       ...(options.context ? { context: options.context } : {}),
     }),
-    links: [...groups.values()].map((group) => ({
-      ...group,
-      targets: [...group.targets].sort((a, b) => a.label.localeCompare(b.label)),
-    })),
+    links: [...groups.values()].map((group) => {
+      const apart = tellApart(
+        group.targets.flatMap((target) => {
+          const other = store.graph.getNode(target.id);
+          return other ? [other as { id: string; kind: string } & Record<string, unknown>] : [];
+        }),
+        (kind) => store.schema.tryDefinition(kind),
+      );
+      return {
+        ...group,
+        targets: [...group.targets]
+          .map((target) => (apart.has(target.id) ? { ...target, apart: apart.get(target.id)! } : target))
+          .sort((a, b) => a.label.localeCompare(b.label)),
+      };
+    }),
   };
 }
 

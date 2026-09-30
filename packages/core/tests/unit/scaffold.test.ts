@@ -151,6 +151,16 @@ describe("what a project starts with", () => {
     expect(pages).toContain("withheld.refusal.message");
   });
 
+  it("shows the record's facts and links its ties, two of one name told apart", () => {
+    // A vehicle's page on the scaffold's own record page had no price and listed
+    // "…Check engine light on, …Check engine light on" as words nobody could follow.
+    const pages = file("Field Notes", "src/ui/pages.tsx");
+    expect(pages).toContain("facts.fields.map");
+    expect(pages).toContain("recordPath(");
+    expect(pages).toContain("target.apart");
+    expect(pages).not.toContain('.join(", ")');
+  });
+
   it("reads its ties and its acts from the declaration, naming neither by hand", () => {
     const pages = file("Field Notes", "src/ui/pages.tsx");
     expect(pages).toContain("facts.links");

@@ -3764,3 +3764,29 @@ vehicles, dozens of customers and deals.
   horizon (their past with `past`), after the group's arranging. Criterion:
   primitives `a-calendar-draws-every-kind-it-is-bound-to.test.tsx` (both
   cases verified failing without the fix).
+
+### W-145 · A vehicle's own page has no price, and two appointments are one line of words
+- stage: E (the one record page the scaffold replaces) · face: pages · width: 1280 and 390 · scheme: both
+- expected: "Replace one record page … a custom page still re-renders on
+  every op, offers acts by `store.permits`, and uses `PageMain`" — and says
+  what the record is
+- actual: the record page `graview create` writes for the first kind showed
+  the name, the horizon and the ties, and none of the record's fields: the
+  vehicle page had no VIN, no price, no mileage. On the one-kind scaffold
+  the only field is the name, so the page looked complete. Its ties were
+  `targets.map(label).join(", ")` — words, not links — and read "…Model Y
+  Performance · Check engine light on, …Model Y Performance · Check engine
+  light on": two appointments of one name. The derived record page linked
+  them, but with the same text twice.
+- where it belongs: `packages/core/src/scaffold/ui.ts` (the page it
+  writes), `packages/pages/src/facts.ts` and `page-record.tsx`
+- harness that should have caught it: `scaffold.test.ts` asserted the page
+  reads `facts.links`, not what it shows
+- status: fixed in "walkthrough: E · a record page shows its facts and
+  links its ties" · tie targets carry `apart`; the derived page says it;
+  the scaffold's page lists `facts.fields` and links each tie with its
+  `apart`. Criteria: pages `two-ties-of-one-name.test.tsx` and
+  `scaffold.test.ts` "shows the record's facts and links its ties" (both
+  verified failing without the fix); the regenerated page typechecks in
+  walk6 and reads "VIN · Price $52,100 · …", "Check engine light on ·
+  Booked", "Check engine light on · Done".

@@ -241,13 +241,14 @@ import {
   PageMain,
   pageStyles,
   recordFacts,
+  recordPath,
   Repairs,
   spatialHref,
   useStoreTick,
   type PageComponent,
   type PageContext,
 } from "@graview/pages";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { ${ids.schemaVar}, type ${ids.SchemaType} } from "../domain/schema.js";
 
 type S = ${ids.SchemaType};
@@ -333,6 +334,22 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           ))}
         </section>
       ) : null}
+      {/*
+        * THE FACTS, as the derivation reads them — every field that is not
+        * the name, formatted as the declaration says. A page that dropped
+        * them looked finished on the one-kind scaffold, where the only
+        * field is the name, and hid the price of every vehicle a day later.
+        */}
+      {facts.fields.length > 0 ? (
+        <dl style={{ ...pageStyles.rule, margin: 0, display: "grid", gridTemplateColumns: "minmax(0, max-content) minmax(0, 1fr)", gap: "6px 18px" }} data-testid="record-fields">
+          {facts.fields.map((field) => (
+            <div key={field.key} style={{ display: "contents" }}>
+              <dt style={pageStyles.quiet}>{field.label}</dt>
+              <dd style={{ margin: 0, overflowWrap: "anywhere" }}>{field.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
       {ties.length > 0 ? (
         <section style={{ ...pageStyles.rule, display: "grid", gap: 14 }} data-testid="record-ties">
           {ties.map((group) => (
@@ -343,7 +360,17 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
               <h2 style={pageStyles.h2}>
                 {(group.description ?? group.edgeKind).replace(/^./, (first) => first.toUpperCase())}
               </h2>
-              <p style={{ margin: 0 }}>{group.targets.map((target) => target.label).join(", ")}</p>
+              {/* Each a link, and two of one name told apart (\`apart\`): a list of words cannot be followed. */}
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
+                {group.targets.map((target) => (
+                  <li key={target.id}>
+                    <Link to={recordPath(${ids.schemaVar}, target.kind, target.id)} style={pageStyles.link}>
+                      {target.label}
+                      {target.apart ? <span style={pageStyles.quiet}> · {target.apart}</span> : null}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </section>
