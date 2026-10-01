@@ -1,9 +1,9 @@
 import { INSTALLATION_MODULE, type AnySchema, type CheckResult, type GraviewApp, type Store } from "@graview/core";
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
-import { GraviewProvider, Scene, createViews, useGraview, useNavigation } from "@graview/react";
+import { GraviewProvider, Scene, createViews, useGraview, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
 import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
 import type { ToolCall } from "@graview/tools";
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useStoreTick } from "@graview/pages";
 import { StudioAgentPanel } from "./agent-panel.js";
@@ -153,6 +153,27 @@ function StudioOverlay<S extends AnySchema>({
 }) {
   const { principal, brand, scheme } = useGraview<S>();
   const studio = useMemo(() => createStudio(app, { principal }), [app, principal]);
+  /*
+   * A DIALOG GIVES THE KEYBOARD BACK. The studio opens over the app from a
+   * button in the profile; closing it removed the dialog the keyboard was
+   * in and left it on <body>. Whatever held the keyboard when it opened
+   * holds it again when it closes — and inside, an act that removes what
+   * the keyboard stood on lands it on what still stands.
+   */
+  const dialog = useRef<HTMLDivElement>(null);
+  useTheKeyboardLandsSomewhere(dialog);
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => {
+      const active = document.activeElement;
+      const onNothing = active === null || active === document.body || dialog.current?.contains(active);
+      if (onNothing && opener?.isConnected) opener.focus({ preventScroll: true });
+      else if (onNothing) setTimeout(() => {
+        // The opener went with the menu it was in: the profile button that opened that.
+        document.querySelector<HTMLElement>('[data-testid="profile-button"]')?.focus({ preventScroll: true });
+      }, 0);
+    };
+  }, []);
   const views = useMemo(() => studioViews(app as unknown as GraviewApp<AnySchema>), [app]);
   /*
    * Re-read on every change rather than cached: the checker is cheap, the
@@ -184,7 +205,10 @@ function StudioOverlay<S extends AnySchema>({
       initialView={AT_ALTITUDE}
     >
     <div
+      ref={dialog}
       data-testid="studio"
+      // The studio edits the declaration: its ids are what it is about.
+      data-graview-speaks-ids=""
       role="dialog"
       aria-modal="true"
       aria-label={`Studio · ${app.name}`}

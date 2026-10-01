@@ -11,6 +11,7 @@ import {
   useNavigation,
   type Scheme,
   type ReactViewRegistry,
+  useTheKeyboardLandsSomewhere,
 } from "@graview/react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -170,6 +171,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
     label,
   } = props;
   const rootRef = useRef<HTMLDivElement>(null);
+  useTheKeyboardLandsSomewhere(rootRef);
   const scope = useMemo(() => `graview-embed-${++sequence}`, []);
   /*
    * ONE STORE ACROSS THE SEATS. Who is at the keyboard is the provider's

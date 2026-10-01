@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { Scene, useGraview, UrlSync, type Scheme, type SceneProps } from "@graview/react";
+import { Scene, useGraview, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode, useRef } from "react";
 import { Companion } from "./companion.js";
@@ -109,6 +109,9 @@ export function Shell<S extends AnySchema>({
   // give up their words; the words are their titles either way.
   const bar = useRef<HTMLElement>(null);
   const barWidth = useWidth(bar);
+  // An act that removes what the keyboard stood on lands it on what still stands.
+  const shell = useRef<HTMLDivElement>(null);
+  useTheKeyboardLandsSomewhere(shell);
   // The standing's sentence goes first — the app's own places are worth
   // more than "everything is in order" said in words — and the name behind
   // the profile's mark goes at a laptop's width.
@@ -134,7 +137,7 @@ export function Shell<S extends AnySchema>({
   }, []);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+    <div ref={shell} style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <header
         ref={bar}
         /*

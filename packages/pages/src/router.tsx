@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
-import { useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
 import { GraviewProvider } from "@graview/react";
 import { PageAsk } from "./ask.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
@@ -81,6 +81,31 @@ function ScrollReset() {
     }
     window.scrollTo(0, 0);
     // The address is the page; its search and hash are where you are on it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+  /*
+   * A NEW PAGE TAKES THE KEYBOARD AT ITS HEADING. Following a link removes
+   * the page the link was on, and with it the keyboard, which fell to
+   * <body>: Tab started again at the top of the document and a screen
+   * reader said nothing about where it had arrived. Where the keyboard was
+   * on the page that left, it lands on the heading of the one that came —
+   * which a reader then hears — and nowhere else, so a person who was
+   * typing in the search box is not moved.
+   */
+  // The first page is where the reader arrived, not where they went.
+  const arrivedAt = useRef(pathname);
+  const moved = useRef(false);
+  useEffect(() => {
+    if (!moved.current && pathname === arrivedAt.current) return;
+    moved.current = true;
+    const active = document.activeElement;
+    if (active !== null && active !== document.body && active !== document.documentElement) return;
+    const main = mark.current?.closest("main") ?? document.querySelector("main");
+    const heading = main?.querySelector<HTMLElement>("h1") ?? null;
+    const target = heading ?? main ?? null;
+    if (!target) return;
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
   return <span ref={mark} hidden data-graview-scroll-reset="" />;
