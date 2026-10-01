@@ -20,8 +20,9 @@ What is specific to Claude Code:
   checkout. Iterate with `pnpm verify <name>`, `--failed` and `--quick`;
   the whole chain is for the end of a piece of work. A subagent in a
   worktree runs its dev servers on 5600–5699, never 5190–5399. Don't edit
-  package sources while a chain runs — its dev servers serve them live. Playwright's WebKit hangs on `newPage` past 1.49.1 on this
-  macOS, which is why the pin exists.
+  package sources while a chain runs — its dev servers serve them live.
+  Playwright's WebKit hangs on `newPage` past 1.49.1 on this macOS, which
+  is why the pin exists.
 - **Verdicts are files.** After a harness, read `docs/<name>.json` and report
   the claim that failed by name rather than summarising the log.
 - **Changesets.** Write one with every package change, `patch` unless told
