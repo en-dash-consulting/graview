@@ -676,6 +676,7 @@ try {
       return {
         cell: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-cell")) || 0),
         x: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-x")) || 0),
+        t: performance.now(),
       };
     };
     const seen = [];
@@ -696,7 +697,13 @@ try {
      * frame rate; easing never puts more than a share of it in one.
      */
     const travel = Math.abs((seen[seen.length - 1]?.cell ?? 0) - (seen[0]?.cell ?? 0));
-    const jumps = seen.filter((one, at) => at > 0 && Math.abs(one.cell - seen[at - 1].cell) > Math.max(20, travel * 0.6)).length;
+    /*
+     * AND IN ONE ORDINARY FRAME. A cut lands in the frame after the press; a
+     * runner that stalled for a third of a second drew most of an easing in
+     * one late frame, which is a starved machine, not a cut — a step counts
+     * as a leap only when it came within 50 ms of the one before.
+     */
+    const jumps = seen.filter((one, at) => at > 0 && Math.abs(one.cell - seen[at - 1].cell) > Math.max(20, travel * 0.6) && one.t - seen[at - 1].t < 50).length;
     return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1] };
   });
   report.checks = {
