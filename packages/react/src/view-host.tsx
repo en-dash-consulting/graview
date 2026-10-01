@@ -90,7 +90,7 @@ export function SceneViewHost({
   children,
 }: HostProps) {
   // The tag's dot must agree with every other dot in a branded app.
-  const { brand: hostBrand, store: hostStore } = useGraview();
+  const { brand: hostBrand, store: hostStore, actsDoor } = useGraview();
   /*
    * The name a screen reader reads for this box: the group's plural, or the
    * node's own label — never the id, which is an address.
@@ -373,6 +373,8 @@ export function SceneViewHost({
        * (mid-removal) keeps the address, which is at least true.
        */
       aria-label={hostName}
+      /* Said where a screen reader reads the card; the seat says it on screen. */
+      aria-keyshortcuts={actsDoor && !node.beyond ? actsDoor.key : undefined}
       tabIndex={0}
       onPointerDown={onDragStart}
       onPointerMove={onDragMove}
@@ -418,6 +420,29 @@ export function SceneViewHost({
         onSelect(additive);
       }}
       onKeyDown={(event) => {
+        /*
+         * ITS ACTS, ONE KEY AWAY. The keyboard's right-click: what the key
+         * lands on is chosen, as a right-click chooses it, and the seat
+         * opens on its acts with the keyboard in them. Only on the card
+         * itself — a letter typed into a field inside it is a letter.
+         */
+        if (
+          actsDoor &&
+          !node.beyond &&
+          event.key.toLowerCase() === actsDoor.key.toLowerCase() &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.altKey &&
+          !(event.target as HTMLElement | null)?.closest("input, textarea, select, [contenteditable='true']")
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          const on = pickedFrom(event.target) ?? node.id;
+          if (!selection.includes(on)) onPick(on, false);
+          // Back to what the keyboard stood on — the card, or the mark inside it it had reached.
+          actsDoor.open(event.target instanceof HTMLElement ? event.target : event.currentTarget);
+          return;
+        }
         if (event.key !== "Enter" && event.key !== " ") return;
         /*
          * NEVER STEAL A KEY FROM A CONTROL THAT HAS ITS OWN MEANING FOR IT.

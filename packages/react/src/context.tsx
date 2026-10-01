@@ -61,6 +61,23 @@ export interface Seat {
   readonly principal: Principal;
 }
 
+/**
+ * THE KEY THAT TAKES THE KEYBOARD FROM A CARD TO ITS ACTS.
+ *
+ * On a phone the acts live in a folded sheet, and from the keyboard the
+ * sheet's toggle was a walk of a dozen Tabs past every other card from the
+ * card you were on. Whatever draws the acts — the Shell's seat — lends the
+ * scene this door; a card with the keyboard on it then answers `key` the
+ * way it answers a right-click, and says so (`aria-keyshortcuts`). With no
+ * seat drawn there is no door, and the card claims no key.
+ */
+export interface ActsDoor {
+  /** The key, as `aria-keyshortcuts` names it: one letter, pressed on the card. */
+  readonly key: string;
+  /** Open the acts and put the keyboard on them; `from` is where it comes back to. */
+  open(from: HTMLElement): void;
+}
+
 export interface PointerMenu {
   readonly x: number;
   readonly y: number;
@@ -145,6 +162,9 @@ export interface GraviewContextValue<S extends AnySchema> {
    */
   readonly seatWho: string | null;
   registerSeatWho(who: string | null): void;
+  /** The way from a card to its acts, lent by whatever draws them; null when nothing does. */
+  readonly actsDoor: ActsDoor | null;
+  registerActsDoor(door: ActsDoor | null): void;
   /**
    * WHO IS WHERE. The others on this map, by participant; whose stop this
    * tab is adopting; how this tab is seen; and this tab's own session —
@@ -394,6 +414,7 @@ export function GraviewProvider<S extends AnySchema>({
   );
   const homeView = useRef<ViewState>(initialView ?? EMPTY_VIEW).current;
   const [menuAt, setMenuAt] = useState<PointerMenu | null>(null);
+  const [actsDoor, registerActsDoor] = useState<ActsDoor | null>(null);
   /*
    * The scene's handle, held in a ref: where things are changes every frame
    * of a tween, and a context value that changed with it would re-render
@@ -722,6 +743,8 @@ export function GraviewProvider<S extends AnySchema>({
       noteSeat,
       seatWho,
       registerSeatWho,
+      actsDoor,
+      registerActsDoor,
       who: others,
       following,
       follow,
@@ -765,6 +788,7 @@ export function GraviewProvider<S extends AnySchema>({
       noteSeat,
       seatWho,
       registerSeatWho,
+      actsDoor,
       others,
       following,
       follow,

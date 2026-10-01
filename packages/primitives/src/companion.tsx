@@ -172,6 +172,13 @@ export function useSubject<S extends AnySchema>(): Subject {
   return { id: null, name: "the whole thing", because: "place" };
 }
 
+/**
+ * The key a card answers with its acts. A letter, and only on the card that
+ * has the keyboard — a character key bound to focus is not one a voice
+ * user's dictation sets off by accident (WCAG 2.1.4).
+ */
+export const ACTS_KEY = "A";
+
 /** What the seat is doing, in one word, from the state it already reports. */
 function seatSays(mode: string | undefined): { readonly word: string; readonly tone: string } {
   switch (mode) {
@@ -206,7 +213,7 @@ export interface CompanionProps<S extends AnySchema> {
 }
 
 export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat = true, framed = false }: CompanionProps<S> = {}) {
-  const { seatWho, robots, session, store, setView: setViewOf } = useGraview<S>();
+  const { seatWho, robots, session, store, setView: setViewOf, registerActsDoor } = useGraview<S>();
   const { set: chooseOf } = useSelection();
   const subject = useSubject<S>();
   const [open, setOpen] = useState(true);
@@ -252,6 +259,46 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
       parent.style.paddingBottom = before;
     };
   });
+  /*
+   * AND THE KEYBOARD GETS THERE IN ONE KEY. Folded, the sheet's toggle sat a
+   * dozen Tabs from the card the keyboard was on — past every other card
+   * and the controls inside them — so every act from the keyboard on a
+   * phone began with that walk. The scene's cards answer A instead, the way
+   * a right-click is answered: the card chosen, the seat opened, and the
+   * keyboard put on its first act. Put away again from the keyboard, the
+   * keyboard goes back to the card it came from. The rail does the same
+   * where it is already open, so a laptop's keyboard gets the short way too.
+   */
+  const cameFrom = useRef<HTMLElement | null>(null);
+  const dock = useRef<HTMLButtonElement | null>(null);
+  const [asked, setAsked] = useState(0);
+  useEffect(() => {
+    if (framed) return;
+    registerActsDoor({
+      key: ACTS_KEY,
+      open: (from) => {
+        cameFrom.current = from;
+        setOpen(true);
+        setAsked((count) => count + 1);
+      },
+    });
+    return () => registerActsDoor(null);
+  }, [framed, registerActsDoor]);
+  /* Whether the keyboard stands on a card, so the seat can say the key where it is seen. */
+  const [onACard, setOnACard] = useState(false);
+  useEffect(() => {
+    if (framed || typeof document === "undefined") return;
+    const watch = () => {
+      const active = document.activeElement;
+      setOnACard(active instanceof HTMLElement && active.closest("[data-graview-view][aria-keyshortcuts]") !== null);
+    };
+    document.addEventListener("focusin", watch);
+    document.addEventListener("focusout", watch);
+    return () => {
+      document.removeEventListener("focusin", watch);
+      document.removeEventListener("focusout", watch);
+    };
+  }, [framed]);
   const anything = store.graph.allEdges().length > 0;
   const docked = !narrow && !framed;
   /* The conversation, rendered once and placed by the pane's shape. */
@@ -305,6 +352,35 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
     watch.observe(scroller, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-graview-asking"] });
     return () => watch.disconnect();
   }, [open]);
+  useEffect(() => {
+    if (asked === 0) return;
+    /*
+     * The acts are derived after the choice the key made, so the first one
+     * may be a frame or two behind the press: asked for a little while, and
+     * only while the keyboard has not gone somewhere else meanwhile.
+     */
+    let tries = 12;
+    let frame = 0;
+    const land = () => {
+      const active = document.activeElement;
+      const stillThere = active === document.body || active === null || (active instanceof Node && cameFrom.current?.closest("[data-graview-view]")?.contains(active));
+      if (!stillThere) return;
+      const pane = column.current;
+      const act = pane?.querySelector<HTMLElement>('[data-testid="affordances"] button:not([disabled])');
+      if (act) {
+        act.focus();
+        return;
+      }
+      if (tries-- > 0) {
+        frame = requestAnimationFrame(land);
+        return;
+      }
+      // Nothing to do here: the first thing the seat holds, so the keyboard is in what opened.
+      (pane?.querySelector<HTMLElement>("button:not([disabled]), input, select, textarea, summary") ?? dock.current)?.focus();
+    };
+    frame = requestAnimationFrame(land);
+    return () => cancelAnimationFrame(frame);
+  }, [asked]);
 
   return (
     <aside
@@ -359,9 +435,20 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
       {/* THE SUBJECT, said in the header: what "this" means right now, and what the seat is doing about it. */}
       <button
         type="button"
+        ref={dock}
         data-testid="companion-dock"
         aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        onClick={(event) => {
+          setOpen(!open);
+          /*
+           * Put away from the keyboard (a click no pointer made), the
+           * keyboard goes back to the card the key brought it from rather
+           * than staying on a toggle at the foot of the screen.
+           */
+          const back = cameFrom.current;
+          cameFrom.current = null;
+          if (open && narrow && event.detail === 0 && back?.isConnected) back.focus({ preventScroll: true });
+        }}
         title={open ? "Put the seat away" : `Talk to the seat about ${subject.name}`}
         style={{
           all: "unset",
@@ -399,8 +486,19 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
             {name} · {state.word}
           </span>
         </span>
-        <span aria-hidden="true" style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
-          {open ? "▾" : "▸"}
+        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
+          {/*
+            * THE KEY, said where it can be seen, beside the toggle it saves
+            * the walk to — only while the keyboard stands on a card, the one
+            * place it works, and on the header's own line, so saying it never
+            * makes the sheet taller and the picture move.
+            */}
+          {onACard ? (
+            <span data-testid="companion-acts-key" style={{ color: "var(--graview-ink-muted)", whiteSpace: "nowrap" }}>
+              <kbd style={{ font: "inherit", fontWeight: 600, padding: "0 4px", border: "1px solid var(--graview-edge)", borderRadius: 4 }}>{ACTS_KEY}</kbd> its acts
+            </span>
+          ) : null}
+          <span aria-hidden="true">{open ? "▾" : "▸"}</span>
         </span>
       </button>
       {open && said && (robot?.mode === "refused" || robot?.mode === "asking") ? (

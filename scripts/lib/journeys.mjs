@@ -402,6 +402,33 @@ const seatToggle = (page) =>
     .filter({ hasText: /^(Selected|In view)/ })
     .first();
 
+/**
+ * Open the folded seat. From the keyboard, a card that has it and names a
+ * key for its acts (`aria-keyshortcuts`, said on screen by the seat) is
+ * answered with that key, the way a person who read it would; anywhere
+ * else, or if the key opened nothing, the toggle is walked to as before.
+ */
+async function openSeat(person, toggle) {
+  const page = person.page;
+  if (person.input === "keyboard") {
+    const key = await page.evaluate(() => {
+      const card = document.activeElement?.closest?.("[data-graview-view][aria-keyshortcuts]");
+      return card?.getAttribute("aria-keyshortcuts") ?? null;
+    });
+    if (key) {
+      const before = person.presses;
+      await person.key(key.toLowerCase());
+      await person.settle(250);
+      const opened = await page.evaluate(() => document.querySelector('[data-graview-companion="open"]') !== null);
+      if (opened) {
+        person.note("the seat's pane", before);
+        return;
+      }
+    }
+  }
+  await person.press(toggle, "the seat's pane");
+}
+
 /** The seat's pane on a narrow screen is a sheet: open it when what is wanted is inside. */
 async function revealSeat(person, wanted) {
   // What a press just asked for may take a frame or two to be drawn.
@@ -409,7 +436,7 @@ async function revealSeat(person, wanted) {
   if (await wanted.first().isVisible().catch(() => false)) return;
   const toggle = seatToggle(person.page);
   if (await toggle.isVisible().catch(() => false)) {
-    await person.press(toggle, "the seat's pane");
+    await openSeat(person, toggle);
     await person.settle(250);
   }
 }
@@ -1006,7 +1033,7 @@ export const JOBS = {
       }
       if (ctx.face === "pages" && !prep.subject) await openKindPage(person, prep.plural).catch(() => {});
       const seat = seatToggle(page);
-      if (ctx.face === "scene" && (await seat.isVisible().catch(() => false))) await person.press(seat, "the seat's pane");
+      if (ctx.face === "scene" && (await seat.isVisible().catch(() => false))) await openSeat(person, seat);
       const said = async () =>
         page.evaluate((title) => {
           const visible = (el) => el.getClientRects().length > 0;
