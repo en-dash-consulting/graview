@@ -51,17 +51,21 @@ export function updateLedger(repoRoot, { since, ran }) {
   }
   const fresh = [];
   const still = [];
+  const flapping = [];
   for (const [signature, entry] of seen) {
     const was = problems[signature];
     const harnesses = [...entry.harnesses].sort();
-    if (!was || was.status === "fixed") fresh.push({ ...entry, harnesses });
+    // Back after it was fixed: a flap, not a new problem — said apart, because it is about the check or the timing.
+    if (was?.status === "fixed") flapping.push({ ...entry, harnesses });
+    else if (!was) fresh.push({ ...entry, harnesses });
     else still.push({ ...entry, harnesses, since: was.firstSeen });
     problems[signature] = {
       rule: entry.rule,
       detail: entry.detail,
       at: entry.at,
       harnesses,
-      firstSeen: was && was.status !== "fixed" ? was.firstSeen : now,
+      firstSeen: was ? was.firstSeen : now,
+      flaps: (was?.flaps ?? 0) + (was?.status === "fixed" ? 1 : 0),
       lastSeen: now,
       status: "open",
     };
@@ -80,5 +84,5 @@ export function updateLedger(repoRoot, { since, ran }) {
   }
   const open = Object.values(problems).filter((entry) => entry.status === "open");
   writeFileSync(file, `${JSON.stringify({ at: now, open: open.length, problems }, null, 2)}\n`);
-  return { fresh, still, fixed, open };
+  return { fresh, still, fixed, flapping, open };
 }

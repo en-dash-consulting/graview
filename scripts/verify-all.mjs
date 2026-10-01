@@ -258,11 +258,12 @@ if (broken.length > 0) {
  */
 const ledger = updateLedger(repoRoot, { since: started, ran: new Set(results.map((one) => one.file.replace(/\.mjs$/, ""))) });
 const line = (entry) => `  ${entry.rule.padEnd(22)} ${entry.detail.slice(0, 150)}  (${entry.harnesses.join(", ")})\n`;
-if (ledger.fresh.length + ledger.still.length + ledger.fixed.length > 0) {
-  say(`\nproblems: ${ledger.fresh.length} new, ${ledger.still.length} still open, ${ledger.fixed.length} fixed since the last run\n`);
+if (ledger.fresh.length + ledger.still.length + ledger.fixed.length + ledger.flapping.length > 0) {
+  say(`\nproblems: ${ledger.fresh.length} new, ${ledger.still.length} still open, ${ledger.fixed.length} fixed, ${ledger.flapping.length} back after a fix\n`);
   if (ledger.fresh.length) say(`new\n${ledger.fresh.map(line).join("")}`);
   if (ledger.still.length) say(`still open\n${ledger.still.map(line).join("")}`);
   if (ledger.fixed.length) say(`fixed\n${ledger.fixed.map(line).join("")}`);
+  if (ledger.flapping.length) say(`back after a fix — the check or its timing, before the product\n${ledger.flapping.map(line).join("")}`);
 }
 mkdirSync(resolve(repoRoot, "docs/watch"), { recursive: true });
 writeFileSync(LAST_RUN, `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took }) => ({ name, code, took })) }, null, 2)}\n`);

@@ -167,6 +167,16 @@ function watchInPage() {
   // Judged once the scene has settled: a transition takes the old card away
   // at its end (about half a second), and the keyboard lands after it.
   const settle = (then) => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(then)), 800);
+  /*
+   * AND ASKED AGAIN BEFORE IT IS SAID. Under a loaded machine the keyboard
+   * can land a few hundred milliseconds late, and a violation that is there
+   * at one look and gone at the next made the ledger flap — fixed, new,
+   * fixed — which is noise a person then has to read. Reported only if the
+   * keyboard is still on nothing a second and a half later.
+   */
+  const stillNowhere = (then) => settle(() => {
+    if (nowhere()) setTimeout(() => nowhere() && then(), 1500);
+  });
   const TEXT_ENTRY = "input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]),textarea,[contenteditable='true'],[contenteditable='']";
   const KEYS = { Enter: "Enter", " ": "Space", Escape: "Escape", Delete: "Delete", Backspace: "Backspace" };
   document.addEventListener(
@@ -179,9 +189,7 @@ function watchInPage() {
       // Typing in a field: Space, Backspace and Delete are edits, not acts.
       if (key !== "Enter" && key !== "Escape" && before.matches(TEXT_ENTRY)) return;
       const what = describe(before);
-      settle(() => {
-        if (nowhere()) report("keyboard-lands-nowhere", `${key} on ${what} left the keyboard on <body> (${fate(before)})`, `${key}|${what}`);
-      });
+      stillNowhere(() => report("keyboard-lands-nowhere", `${key} on ${what} left the keyboard on <body> (${fate(before)})`, `${key}|${what}`));
     },
     true,
   );
@@ -193,9 +201,7 @@ function watchInPage() {
       // Only where the engine focused what was pressed (WebKit does not focus a button on click).
       if (document.activeElement !== target && !target.contains(document.activeElement)) return;
       const what = describe(target);
-      settle(() => {
-        if (nowhere()) report("keyboard-lands-nowhere", `a press on ${what} left the keyboard on <body> (${fate(target)})`, `press|${what}`);
-      });
+      stillNowhere(() => report("keyboard-lands-nowhere", `a press on ${what} left the keyboard on <body> (${fate(target)})`, `press|${what}`));
     },
     true,
   );

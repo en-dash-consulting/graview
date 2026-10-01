@@ -10,45 +10,67 @@ it is done, and where to put what you find.
 
 Paste this to start a session:
 
-> Read `docs/walkthrough.md` in this repository and follow it. Work the
-> stages in order in a new app created beside the framework. For every
-> finding: record it in the findings log the way the playbook says, with
-> its class. If the class is already on the list, the shared check that
-> owns it missed — fix that check (the watch, or the gauntlet's data) so it
-> would have caught this everywhere, then fix the instance in the framework
-> package it belongs to (never only in the app). If no class fits, name a
-> new one and give it a shared check before going on. Re-run the stage.
-> Report the real outcome of every check, including failures. The
-> PRD feature "A seamless app-creation flow: the walkthrough" carries one
-> task per stage; mark each in progress and completed as you go.
+> Read `docs/walkthrough.md` in this repository and follow it. Create a new
+> app beside the framework in a domain of its own, seeded at real size.
+> Start every stage by running the journeys on it (`pnpm verify journeys`
+> with the app named) and read `docs/journeys.json`: the jobs a person
+> cannot finish, and the ones that cost far more than they should, are
+> what the walk is for. Work those first, in order of impact. The watch
+> judges the mechanical rules on every screen every harness reaches and
+> keeps them in the ledger (`docs/watch/ledger.json`) — do not log by hand
+> what it already holds; if you see one it missed, extend the watch, not
+> the log. For every finding you do log: its impact on a job, its class,
+> the fix in the framework package it belongs to (never only in the app),
+> and the shared check that now holds it. Iterate with `pnpm verify
+> --quick` and `--failed`; the full chain is the reviewer's. Report the
+> real outcome of every check, including failures.
 
 ## How a walk is run now
 
-The fourth walk was run as a fresh agent launched from the kick-off prompt
-by a session that then reviewed, ran the harness chain, rebuilt the page
-and pushed. That worked: the walker has no memory of the last walk's
-excuses, and the reviewer keeps the criteria honest. Do it that way:
+A walk is an agent launched from the kick-off prompt, and a reviewing
+session that runs the full chain, rebuilds the site and pushes. The walker
+has no memory of the last walk's excuses; the reviewer keeps the criteria
+honest.
 
-- The walker works in the framework checkout, commits each finding with its
-  criterion ("walkthrough: <stage> · <finding>") and does NOT push.
-- The walker does not run `pnpm progression`, `pnpm site` or the artifact
-  build; the reviewer runs the chain (typecheck, build, test, progression,
-  site-progression, site:build, verify-site, artifact) and pushes.
-- Browser harnesses run one at a time. An engines run beside another
-  browser session reported a Firefox audit failure that was not there.
-- Nothing runs on a port a `pnpm dev` already holds: the harnesses start
-  their own servers on 5193 (Things) and 5194 (Seedbed) and exit if they
-  cannot. Stop the dev servers first.
-- When a walk adds a new class, the walk task is closed by acknowledgment
-  (the work was done) and the next walk task carries the "no new class"
-  criterion. A walk that adds findings only of known classes has still
-  found something — each one is a shared check that missed — but it has
-  not found a new kind of bug, and that is the walk's own question. That
-  is what the queue follows.
-- Each walk takes a new domain, so its findings are never zero: a new
-  domain is new data, and new data finds new instances. The run where
-  "nothing" is the expected answer is a regression re-walk of an earlier
-  domain (see Done).
+### What a walk is for
+
+Six walks logged 152 findings and the count did not fall, because the walk
+spent its attention on what a machine can judge — the keyboard left on
+`<body>`, a field key in a tooltip, seven pixels of overflow — and every
+new domain found new instances of the same dozen classes. Those are the
+watch's now: it judges every state every harness reaches, and the ledger
+keeps each problem once, across harnesses and runs, as new, still open or
+fixed. A walk that re-finds them by hand is spinning.
+
+What no harness can say is whether a person can do the app's jobs, and at
+what cost. The journeys (`scripts/verify-journeys.mjs`, `docs/journeys.json`)
+derive the core jobs from the declaration — make one, find one, change one,
+relate two, take it back, see what is wrong and repair it, be refused
+before the press — and drive each in both faces, at a desk and on a phone,
+by keyboard and by pointer, counting presses and noting where it dead-ends.
+Their friction list, ranked by impact, is where a walk starts. The walk's
+own eyes are for what neither can see: a job that completes and is still
+confusing, a picture that misleads, a word that is wrong for the domain.
+
+### The loop
+
+- **Inner loop, the walker's: minutes, not half an hour.** `pnpm verify
+  <name>` runs one harness; `--failed` reruns what failed last time;
+  `--quick` asks the sweeping harnesses (site, gauntlet) for fewer widths,
+  schemes and seats. A fix is checked by the harness that covers it, then
+  `--failed`, never by the whole chain.
+- **Outer loop, the reviewer's: once per walk.** `pnpm verify` runs every
+  harness — three side by side on shared dev servers, then the ones that
+  time something alone — and ends by saying what is new, still open and
+  fixed. The nightly runs it in full and a red night holds the release.
+- **One checkout per port range.** A harness borrows a dev server only if
+  it serves this checkout (`lib/serve.mjs` asks it by absolute path). A
+  second checkout — a worktree, a walk app's own framework copy — runs its
+  servers outside 5190–5399.
+- The walker commits each finding with its check ("walkthrough: <stage> ·
+  <finding>") and does not push. When a walk adds a new class or a blocked
+  job, the walk task is closed by acknowledgment and the next walk task
+  carries the done criterion (see Done).
 
 ## The stance
 
@@ -73,7 +95,7 @@ excuses, and the reviewer keeps the criteria honest. Do it that way:
 ## Setup
 
 ```sh
-# in the framework checkout - the fifth walk is ../walk5; earlier walks stay put
+# in the framework checkout - each walk gets its own ../walkN; earlier walks stay put
 pnpm install && pnpm build && pnpm test
 pnpm graview create ../walk5 --link . --name "Walk" --kind item --plural items
 cd ../walk5 && pnpm verify && pnpm dev           # http://localhost:5170
@@ -100,6 +122,7 @@ window (390 wide) and one wide (1280). Reduced motion on at least once.
 ```
 ### W-014 · The inspector's menu opens off the bottom of a short scene
 - stage: A · face: scene · width: 1280 · scheme: dark
+- impact: costs a job — "relate two" from the strip: the menu covers its own last item, 2 extra presses
 - class: layout-collision-or-overflow (also: breaks-at-width-zoom-or-engine)
 - expected: the pointer menu is clamped to the scene's box
 - actual: it opens at the pointer and runs under the shelf
@@ -108,8 +131,22 @@ window (390 wide) and one wide (1280). Reduced motion on at least once.
 - status: fixed in <commit> · criterion added: audit-ui "menusStayInTheBox"
 ```
 
-Severity is not a field. Everything in the log gets fixed; the order is the
-order you found them.
+`impact` is a field, and it decides the order:
+
+- **blocks a job** — a journey cannot be finished this way (name the job,
+  face, width and input). First, always.
+- **costs a job** — it can be finished, at a cost a person notices: presses
+  far above the cheapest way, a detour, a wrong word on the way (give the
+  numbers from `docs/journeys.json`). Next.
+- **cosmetic** — nothing a person is trying to do is harder. Logged only
+  when it is a NEW class; a cosmetic instance of a known class is the
+  watch's or the gauntlet's to hold, and is fixed with its class, in one
+  batch, through the shared check — never one by one, never ahead of a
+  job that is blocked.
+
+"Everything gets fixed in the order found" was the old rule, and it is how
+a walk spent the same afternoon on a seven-pixel overflow as on a form that
+could not be submitted from the keyboard.
 
 `class` is one of the classes listed at the top of the findings log, each
 with a one-line definition and the shared check that owns it. Exactly one
@@ -405,7 +442,12 @@ asked it since.
 There are two answers to "is it done", and they are asked by two kinds of
 run.
 
-- **A walk is done when it adds no new class.** A second agent, starting
+- **A walk is done when no job is blocked and it adds no new class.** The
+  journeys finish every derived job in both faces, at both widths, by
+  keyboard and by pointer, on the walk's own app at real size; nothing on
+  the friction list costs more than the cheapest way to the same job by a
+  margin the walk can name a reason for; and every finding is of a class
+  already on the list, fixed by closing the hole in that class's check. A second agent, starting
   from the kick-off prompt in a fresh checkout and a new domain, works all
   nine stages; every finding it makes is of a class already on the list,
   and each has been fixed by closing the hole in that class's shared check.
@@ -425,7 +467,7 @@ criterion is the shared check's.
 
 Six walks have been run (31, 19, 19, 16, 32 and 29 findings, every one
 fixed with a criterion); none kept the log still, and none added a class
-the first had not. The seventh waits on the watch and the gauntlet, so
-that what it finds is measured against the shared checks rather than
-against the components. When it runs, file each finding under its class
-first; press hardest on whatever fits none of them.
+the first had not. The seventh starts from the journeys and the ledger: the
+watch, the gauntlet and the ledger hold the classes six walks found, so
+what it is for is the jobs — the ones a person cannot finish, then the ones
+that cost too much — and whatever fits no class at all.
