@@ -16,6 +16,9 @@
  *   node scripts/verify-all.mjs menu pages   only these
  *   node scripts/verify-all.mjs --list       the names, and nothing else
  *   node scripts/verify-all.mjs --except=shrunk   every harness but these
+ *   node scripts/verify-all.mjs --failed     only what failed last time
+ *   node scripts/verify-all.mjs --quick      fewer widths where a harness sweeps them (iteration)
+ *   node scripts/verify-all.mjs --jobs=1     one at a time, as it used to be
  *
  * Run in series on purpose: they drive the same dev servers on the same
  * ports, and a parallel run is a harness measuring another harness's app.
@@ -27,9 +30,11 @@
  * fix, reproduced by the command itself.
  */
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, writeSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, writeSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { updateLedger } from "./lib/ledger.mjs";
+import { serving } from "./lib/serve.mjs";
 import { watchFile } from "./lib/watch.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -74,6 +79,19 @@ const CHAIN = [
   ["create", "smoke-create.mjs"],
 ];
 
+/*
+ * ALONE: the harnesses that time something — frames, a presence
+ * time-to-live, an animation settling — or that load the machine on their
+ * own (create installs three projects). They run after the others, one at a
+ * time, on a quiet machine. Everything else shares the dev servers, which
+ * hold no state of a harness's (each opens its own browser context), and
+ * runs side by side.
+ */
+const ALONE = new Set(["lines", "panning", "scale", "who", "create"]);
+
+/** Where the last run's verdicts are kept, for `--failed`. */
+const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");
+
 const asked = process.argv.slice(2).filter((arg) => !arg.startsWith("-"));
 if (process.argv.includes("--list")) {
   say(`${CHAIN.map(([name]) => name).join("\n")}\n`);
@@ -84,7 +102,17 @@ if (process.argv.includes("--list")) {
  * Canary for the GPU capture path, and says so here rather than failing it.
  */
 const except = (process.argv.find((arg) => arg.startsWith("--except="))?.slice("--except=".length) ?? "").split(",").filter(Boolean);
-const chain = (asked.length > 0 ? CHAIN.filter(([name]) => asked.includes(name)) : CHAIN).filter(([name]) => !except.includes(name));
+/*
+ * `--failed`: what failed last time, and nothing else. Iterating on a fix
+ * reran the whole chain — twenty-three minutes — to learn whether the two
+ * harnesses that had failed now held.
+ */
+const lastFailed = process.argv.includes("--failed") && existsSync(LAST_RUN)
+  ? JSON.parse(readFileSync(LAST_RUN, "utf8")).results.filter((one) => one.code !== 0).map((one) => one.name)
+  : null;
+const chain = (asked.length > 0 ? CHAIN.filter(([name]) => asked.includes(name)) : lastFailed ? CHAIN.filter(([name]) => lastFailed.includes(name)) : CHAIN).filter(([name]) => !except.includes(name));
+const jobs = process.argv.includes("--serial") ? 1 : Number(process.argv.find((arg) => arg.startsWith("--jobs="))?.slice("--jobs=".length) ?? 3);
+const quick = process.argv.includes("--quick");
 const unknown = [...asked, ...except].filter((name) => !CHAIN.some(([known]) => known === name));
 if (unknown.length > 0) {
   say(`No harness called ${unknown.join(", ")}. Known: ${CHAIN.map(([n]) => n).join(", ")}\n`);
@@ -133,12 +161,36 @@ if (answering.length > 0) {
   );
 }
 
+/*
+ * THE SHARED SERVERS, started once. Every harness borrows a server already
+ * answering its port (lib/serve.mjs), so starting them here is what lets
+ * harnesses run side by side instead of racing to start the same vite.
+ */
+const SHARED = [
+  ["todo", 5193],
+  ["seedbed", 5194],
+  ["rota", 5195],
+  ["launcher", 5199],
+];
+const servers = [];
+if (chain.length > 1) {
+  for (const [app, port] of SHARED) {
+    try {
+      servers.push(await serving(app, port, repoRoot));
+    } catch (error) {
+      say(`note  ${app} did not start on ${port} (${error.message}); its harnesses will try themselves.\n`);
+    }
+  }
+}
+
 const results = [];
-for (const [name, file] of chain) {
+const runOne = async ([name, file]) => {
   const began = Date.now();
-  say(`… ${name}\r`);
   const { code, output } = await new Promise((done) => {
-    const child = spawn("node", [resolve(repoRoot, "scripts", file)], { cwd: repoRoot });
+    const child = spawn("node", [resolve(repoRoot, "scripts", file)], {
+      cwd: repoRoot,
+      env: { ...process.env, ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
+    });
     let output = "";
     child.stdout.on("data", (chunk) => (output += chunk));
     child.stderr.on("data", (chunk) => (output += chunk));
@@ -156,9 +208,24 @@ for (const [name, file] of chain) {
   const open = seen && Date.parse(seen.at) >= began ? seen.open : 0;
   const failed = code !== 0 ? code : open > 0 ? 1 : 0;
   const said = open > 0 ? `watch: ${open} open — docs/watch/${watch.split("/").pop()}` : gist(output);
-  results.push({ name, code: failed, took, gist: said, output });
+  results.push({ name, file, code: failed, took, gist: said, output });
   say(`${failed === 0 ? "ok  " : "FAIL"} ${name.padEnd(12)} ${String(took).padStart(4)}s  ${said}\n`);
-}
+};
+
+const started = Date.now();
+const together = chain.filter(([name]) => !ALONE.has(name));
+const alone = chain.filter(([name]) => ALONE.has(name));
+say(`${together.length} side by side (${jobs} at a time), then ${alone.length} alone${quick ? ", quick" : ""}\n`);
+// Longest first, so the slow ones are not what is left at the end.
+const queue = [...together];
+await Promise.all(
+  Array.from({ length: Math.min(jobs, queue.length) }, async () => {
+    for (let next = queue.shift(); next; next = queue.shift()) await runOne(next);
+  }),
+);
+for (const one of alone) await runOne(one);
+for (const server of servers) server.stop();
+const wall = Math.round((Date.now() - started) / 1000);
 
 const broken = results.filter((one) => one.code !== 0);
 if (broken.length > 0) {
@@ -181,8 +248,23 @@ if (broken.length > 0) {
     say(`\n${one.name}:\n${shown.slice(-40).join("\n")}\n`);
   }
 }
+/*
+ * THE PROBLEMS, ONCE EACH. A harness line says which harnesses failed; this
+ * says what is wrong — each problem once however many screens showed it,
+ * and whether it is new, still there, or fixed since the last run.
+ */
+const ledger = updateLedger(repoRoot, { since: started, ran: new Set(results.map((one) => one.file.replace(/\.mjs$/, ""))) });
+const line = (entry) => `  ${entry.rule.padEnd(22)} ${entry.detail.slice(0, 150)}  (${entry.harnesses.join(", ")})\n`;
+if (ledger.fresh.length + ledger.still.length + ledger.fixed.length > 0) {
+  say(`\nproblems: ${ledger.fresh.length} new, ${ledger.still.length} still open, ${ledger.fixed.length} fixed since the last run\n`);
+  if (ledger.fresh.length) say(`new\n${ledger.fresh.map(line).join("")}`);
+  if (ledger.still.length) say(`still open\n${ledger.still.map(line).join("")}`);
+  if (ledger.fixed.length) say(`fixed\n${ledger.fixed.map(line).join("")}`);
+}
+mkdirSync(resolve(repoRoot, "docs/watch"), { recursive: true });
+writeFileSync(LAST_RUN, `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took }) => ({ name, code, took })) }, null, 2)}\n`);
 const spent = results.reduce((sum, one) => sum + one.took, 0);
 say(
-  `\n${results.length - broken.length} of ${results.length} harnesses hold (${Math.round(spent / 60)}m)\n`,
+  `\n${results.length - broken.length} of ${results.length} harnesses hold (${Math.round(wall / 60)}m, ${Math.round(spent / 60)}m of harness time)\n`,
 );
 process.exit(broken.length > 0 ? 1 : 0);

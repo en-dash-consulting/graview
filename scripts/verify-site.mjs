@@ -88,14 +88,21 @@ const PAGE = pageAt("index.html");
 const ENGINE = engineName();
 
 /* 320 is the reflow floor WCAG asks for; 1920 is where a wide layout gives up. */
-const WIDTHS = [320, 360, 414, 600, 768, 900, 1024, 1280, 1440, 1920];
+const ALL_WIDTHS = [320, 360, 414, 600, 768, 900, 1024, 1280, 1440, 1920];
+/*
+ * QUICK, while iterating (GRAVIEW_QUICK, `pnpm verify --quick`): the floor,
+ * a tablet and a laptop, one scheme for the docs pages — seven minutes
+ * became under two. The nightly sweeps every width in both schemes.
+ */
+const QUICK = process.env["GRAVIEW_QUICK"] === "1";
+const WIDTHS = QUICK ? [320, 768, 1440] : ALL_WIDTHS;
 
 const report = { at: new Date().toISOString(), engine: ENGINE, viewports: [], criteria: {} };
 const browser = await launchEngine(ENGINE, { headless: true });
 
 try {
   for (const sheet of PAGES) {
-  for (const scheme of ["light", "dark"]) {
+  for (const scheme of QUICK && sheet.live === 0 ? ["light"] : ["light", "dark"]) {
     for (const width of sheet.widths ?? WIDTHS) {
       const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: scheme });
       const errors = [];
