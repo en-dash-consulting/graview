@@ -2,7 +2,7 @@
 id: "8819c5f4-ff89-43cb-b467-93df9b5fe923"
 level: "feature"
 title: "The walk finds kinds of bug, not instances"
-status: "pending"
+status: "in_progress"
 priority: "critical"
 tags:
   - "walkthrough"
@@ -23,7 +23,8 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [Every screen a harness reaches is held to the rules that hold everywhere](./every-screen-a-harness-reaches-is.md) | pending |
-| [An example built to be awkward, run through every harness](./an-example-built-to-be-awkward.md) | pending |
-| [A finding names its class, and a class already known is a miss of the shared check](./a-finding-names-its-class-and-a.md) | pending |
-| [The browser harnesses gate what ships](./the-browser-harnesses-gate-what.md) | pending |
+| [Every screen a harness reaches is held to the rules that hold everywhere](./every-screen-a-harness-reaches-is.md) | completed |
+| [An example built to be awkward, run through every harness](./an-example-built-to-be-awkward.md) | completed |
+| [A finding names its class, and a class already known is a miss of the shared check](./a-finding-names-its-class-and-a.md) | completed |
+| [The browser harnesses gate what ships](./the-browser-harnesses-gate-what.md) | in_progress |
+| [The core jobs are measured every run, and their friction is the work](./the-core-jobs-are-measured-every-run.md) | completed |

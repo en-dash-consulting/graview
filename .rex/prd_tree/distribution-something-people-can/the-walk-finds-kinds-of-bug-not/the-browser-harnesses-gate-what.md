@@ -2,7 +2,7 @@
 id: "e18a4d24-fdd4-4da8-8ad0-85c3bc90bcee"
 level: "task"
 title: "The browser harnesses gate what ships"
-status: "pending"
+status: "in_progress"
 priority: "critical"
 tags:
   - "walkthrough"
