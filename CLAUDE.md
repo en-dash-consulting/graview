@@ -16,9 +16,11 @@ What is specific to Claude Code:
   `http://localhost:3117/mcp/rex` and `/mcp/sourcevision`. When several
   projects are registered on that server the endpoint answers 409 and asks
   for `/p/<id>/...`; that is a connection problem to fix, not a missing tool.
-- **Harnesses in a session.** They are long and hold ports; run one chain at
-  a time and prefer `pnpm verify <name>` for the claim you touched over the
-  whole chain. Playwright's WebKit hangs on `newPage` past 1.49.1 on this
+- **Harnesses in a session.** They hold ports; run one chain at a time per
+  checkout. Iterate with `pnpm verify <name>`, `--failed` and `--quick`;
+  the whole chain is for the end of a piece of work. A subagent in a
+  worktree runs its dev servers on 5600–5699, never 5190–5399. Don't edit
+  package sources while a chain runs — its dev servers serve them live. Playwright's WebKit hangs on `newPage` past 1.49.1 on this
   macOS, which is why the pin exists.
 - **Verdicts are files.** After a harness, read `docs/<name>.json` and report
   the claim that failed by name rather than summarising the log.

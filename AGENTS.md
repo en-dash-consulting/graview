@@ -72,8 +72,10 @@ pnpm install && pnpm build     # the framework; apps typecheck against dist/
 pnpm test                      # vitest, headless: no GPU, no browser
 pnpm typecheck                 # packages and apps
 pnpm check                     # graview check against every app's declaration
-pnpm verify                    # every browser harness in series, one exit code (~20 min)
+pnpm verify                    # every browser harness, 3 side by side then the timing ones alone (~10 min)
 pnpm verify <name> [<name>]    # only these harnesses (pnpm verify --list)
+pnpm verify --failed           # only what failed last time
+pnpm verify --quick            # fewer widths, schemes and seats where a harness sweeps them
 
 pnpm dev                       # apps/todo → http://localhost:5193
 pnpm apps                      # the desk → http://localhost:5199 (opens the others in place)
@@ -87,8 +89,15 @@ pnpm skills                    # install the authoring skills into .claude/skill
 ```
 
 The harnesses drive dev servers on fixed ports, so run **one harness chain
-at a time**. Each writes its verdict to `docs/*.json` as named claims; when
-one fails it names the claim that stopped being true. `tests/site.test.ts`
+at a time** per checkout; a second checkout (a worktree) runs its servers
+outside 5190–5399, and a harness only borrows a server that serves its own
+checkout. Each writes its verdict to `docs/*.json` as named claims; when one
+fails it names the claim that stopped being true. Every page every harness
+opens is also judged by the watch (`scripts/lib/watch.mjs`) — the keyboard
+never left on `<body>`, no declared id shown to a person, no act offered
+then refused, no page error — and the ledger (`docs/watch/ledger.json`)
+keeps each problem once across harnesses and runs: a run ends by saying
+what is new, still open, fixed, and back after a fix. `tests/site.test.ts`
 checks that `docs/site` matches the tree — after changing package
 descriptions, skills or test counts, run `pnpm site:build:all`.
 
