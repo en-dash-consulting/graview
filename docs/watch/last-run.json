@@ -1,10 +1,10 @@
 {
-  "at": "2026-10-01T12:54:00.132Z",
+  "at": "2026-10-01T14:28:14.860Z",
   "results": [
     {
-      "name": "menu",
+      "name": "rehearsal",
       "code": 0,
-      "took": 14
+      "took": 12
     },
     {
       "name": "studio",
@@ -12,24 +12,9 @@
       "took": 33
     },
     {
-      "name": "rehearsal",
+      "name": "rota",
       "code": 0,
-      "took": 12
-    },
-    {
-      "name": "navigation",
-      "code": 0,
-      "took": 66
-    },
-    {
-      "name": "companion",
-      "code": 0,
-      "took": 72
-    },
-    {
-      "name": "pages",
-      "code": 1,
-      "took": 110
+      "took": 59
     }
   ]
 }

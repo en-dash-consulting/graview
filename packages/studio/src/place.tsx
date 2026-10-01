@@ -166,7 +166,31 @@ function StudioOverlay<S extends AnySchema>({
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     // Opened, it takes the keyboard: a dialog the keyboard is not in is one it cannot reach.
     dialog.current?.focus({ preventScroll: true });
+    /*
+     * AND HOLDS IT WHILE IT IS OPEN. Taken once, at mount, the keyboard could
+     * still be taken back by what opened the studio — the profile's menu
+     * closing behind it — and on the nightly's runner it sat on <body> with
+     * the studio open. A modal dialog keeps the keyboard inside itself: when
+     * it lands on nothing while the studio is open, it comes back to the
+     * studio.
+     */
+    const onNothing = () => {
+      const active = document.activeElement;
+      return active === null || active === document.body || active === document.documentElement;
+    };
+    const holdIt = () => {
+      if (onNothing()) dialog.current?.focus({ preventScroll: true });
+    };
+    const watch = (event: FocusEvent) => {
+      if (event.relatedTarget === null) setTimeout(holdIt, 0);
+    };
+    document.addEventListener("focusout", watch, true);
+    const sweep = setInterval(holdIt, 250);
+    const stopSweep = setTimeout(() => clearInterval(sweep), 3000);
     return () => {
+      document.removeEventListener("focusout", watch, true);
+      clearInterval(sweep);
+      clearTimeout(stopSweep);
       const active = document.activeElement;
       const onNothing = active === null || active === document.body || dialog.current?.contains(active);
       if (onNothing && opener?.isConnected) opener.focus({ preventScroll: true });
