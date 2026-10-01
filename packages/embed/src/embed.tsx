@@ -205,9 +205,15 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
     if (!root || !label) return;
     const name = (el: Element) => {
       const own = el.getAttribute("aria-label") ?? "";
-      // Already named by the embed, or named the same thing: "The pipeline ·
-      // The pipeline" is one name said twice, not a place inside a place.
-      if (own === label || own.startsWith(`${label} · `)) return;
+      if (own.startsWith(`${label} · `)) return;
+      // Named the same thing: "The pipeline · The pipeline" is one name said
+      // twice, not a place inside a place. A region of that name IS the
+      // embed's region, so it stops being a second landmark (two regions of
+      // one name is axe's `landmark-unique`) and stays a named group.
+      if (own === label) {
+        if (el.getAttribute("role") === "region") el.setAttribute("role", "group");
+        return;
+      }
       el.setAttribute("aria-label", own ? `${label} · ${own}` : label);
     };
     // The root is the embed's own region and already wears the label; the

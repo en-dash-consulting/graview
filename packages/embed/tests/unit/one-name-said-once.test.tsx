@@ -36,4 +36,25 @@ describe("an embed's landmarks", () => {
     await act(async () => root.unmount());
     host.remove();
   });
+
+  it("does not leave a second region of the embed's own name", async () => {
+    // The pipeline lens's scroll panel is a region named by its title; in an
+    // embed labelled the same, it is the embed's region, not another one.
+    const Scroller: PageComponent<typeof schema> = ({ context }) => (
+      <PageMain context={context}>
+        <div role="region" tabIndex={0} aria-label="Lot">the lot</div>
+      </PageMain>
+    );
+    const scrolled = createPageRegistry<typeof schema, PageComponent<typeof schema>>(schema).surface("home", Scroller);
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<Embed app={app} face="pages" pages={scrolled} label="Lot" fonts={false} />));
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
+    const regions = [...host.querySelectorAll("section[aria-label], [role=region]")].filter((el) => el.getAttribute("aria-label") === "Lot");
+    expect(regions).toHaveLength(1);
+    expect(host.querySelector('[role=group][aria-label="Lot"]')).not.toBeNull();
+    await act(async () => root.unmount());
+    host.remove();
+  });
 });

@@ -3880,6 +3880,11 @@ vehicles, dozens of customers and deals.
 - status: fixed in "walkthrough: H · one name said once" · a landmark
   already named the embed's label is left alone. Criterion: embed
   `one-name-said-once.test.tsx` (verified failing without the fix).
+  Reviewed: left alone, a scroll region named the label was a second region
+  of the embed's own name, and verify-site's `everyViewportIsClean` failed on
+  axe `landmark-unique` (38 viewports, chapter 8's "Who may do what"). A
+  region of the embed's name now becomes a named group; the test's second
+  case holds it (verified failing without the fix).
 
 ### W-151 · Search scrolls sideways at 200% text on a phone
 - stage: I (text zoom to 200% on every route of the design, 390 wide) · face: pages · width: 390 · scheme: light
