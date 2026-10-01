@@ -138,7 +138,7 @@ function Control<S extends AnySchema>({
         <label style={field}>
           <span style={labelStyle}>{title}</span>
           <input
-            type={spec.control === "date" ? "date" : "text"}
+            type={spec.control === "date" ? (spec.time ? "datetime-local" : "date") : "text"}
             name={spec.name}
             required={!spec.optional}
             value={typeof value === "string" ? value : ""}

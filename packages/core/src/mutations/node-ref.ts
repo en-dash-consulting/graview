@@ -66,7 +66,13 @@ export function nodeRefArgs(
  */
 export type ArgShape =
   | { readonly type: "text" }
-  | { readonly type: "date" }
+  /**
+   * A DATE, AND WITH `time` A TIME OF DAY IN IT. A workshop's start is
+   * `YYYY-MM-DDTHH:MM`; read as a plain date it got a date picker, whose
+   * `YYYY-MM-DD` the act's own pattern refused — on every face, so the
+   * workshop could not be made and the talk could not be given its slot.
+   */
+  | { readonly type: "date"; readonly time?: true }
   | { readonly type: "number"; readonly min?: number; readonly max?: number }
   | { readonly type: "choice"; readonly options: readonly string[] }
   /**
@@ -144,7 +150,10 @@ export function describeArg(schema: unknown): ArgShape {
     const patterns = bag["patterns"];
     const sources =
       patterns instanceof Set ? [...patterns].map((pattern) => String((pattern as RegExp).source)) : [];
-    if (sources.some((source) => source.includes("\\d{4}"))) return { type: "date" };
+    if (sources.some((source) => source.includes("\\d{4}"))) {
+      // A time of day in the pattern as well: `T\d{2}:\d{2}`, or a space before it.
+      return sources.some((source) => source.includes("\\d{2}:\\d{2}")) ? { type: "date", time: true } : { type: "date" };
+    }
     return { type: "text" };
   }
 

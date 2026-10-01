@@ -284,7 +284,7 @@ export function AnswerArgs({
         >
           <input
             autoFocus
-            type={shape.type === "date" ? "date" : shape.type === "number" ? "number" : "text"}
+            type={shape.type === "date" ? (shape.time ? "datetime-local" : "date") : shape.type === "number" ? "number" : "text"}
             /*
              * A FIELD IS ASKED FOR IN WORDS. `dependsOn` and `label` are the
              * declaration's identifiers; the pages face has always humanised

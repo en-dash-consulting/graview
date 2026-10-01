@@ -204,7 +204,9 @@ export function EditableValue<S extends AnySchema>({
             editable.shape.type === "number"
               ? "number"
               : editable.shape.type === "date"
-                ? "date"
+                ? editable.shape.time
+                  ? "datetime-local"
+                  : "date"
                 : "text"
           }
           value={draft}

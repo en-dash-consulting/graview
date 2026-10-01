@@ -634,8 +634,11 @@ function answerFrom(
     }
     case "text":
       return quoted;
-    case "date":
-      return today ?? new Date().toISOString().slice(0, 10);
+    case "date": {
+      const day = today ?? new Date().toISOString().slice(0, 10);
+      // A sentence that names no hour still has to give one when the act asks for a time of day.
+      return field.time ? `${day}T09:00` : day;
+    }
     /*
      * A CHOICE IS ITS OWN WORD. "Give a role keeper to Sam" names the role
      * the way a person would, and a closed set of options is the one kind
@@ -682,7 +685,9 @@ export function llmResponder<S extends AnySchema>(options: {
           : field.control === "choice"
             ? (field.options ?? []).map((option) => JSON.stringify(option)).join(" | ")
             : field.control === "date"
-              ? "YYYY-MM-DD"
+              ? field.time
+                ? "YYYY-MM-DDTHH:MM"
+                : "YYYY-MM-DD"
               : field.control === "text" || field.control === "number" || field.control === "boolean"
                 ? field.control
                 : "value";

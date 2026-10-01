@@ -519,7 +519,7 @@ function Argument<S extends AnySchema>({
   }
   if (field.control === "date") {
     return row(
-      <input type="date" data-testid={testId} value={typeof value === "string" ? value : ""} onChange={(event) => onChange(event.target.value)} style={box} />,
+      <input type={field.time ? "datetime-local" : "date"} data-testid={testId} value={typeof value === "string" ? value : ""} onChange={(event) => onChange(event.target.value)} style={box} />,
     );
   }
   if (field.control === "list") {
