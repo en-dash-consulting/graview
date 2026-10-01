@@ -1,5 +1,5 @@
 import { cityExtent, cityMap, toIso, type AnySchema, type CityMap, type Plot } from "@graview/core";
-import type { CityFrame } from "./types.js";
+import type { CityFrame, Layout } from "./types.js";
 
 /**
  * THE CITY AT ALTITUDE: districts on the lattice, one uniform scale.
@@ -344,6 +344,51 @@ export function cameraLimit(result: { readonly width: number; readonly height: n
     x: Math.max(slack.x, extent.x + extent.width - result.width + margin, -extent.x + margin),
     y: Math.max(slack.y, extent.y + extent.height - result.height + margin, -extent.y + margin),
   };
+}
+
+/** How far in from an edge a district brought into the window stands, at the least: room for its nameplate's height. */
+const EDGE_CLEAR = 48;
+
+/** A district the window does not reach, the edge it lies past, and the pan that brings it in. */
+export interface PastTheEdge {
+  /** The district's card: `kind:<kind>`. */
+  readonly id: string;
+  readonly kind: string;
+  readonly side: "left" | "right" | "top" | "bottom";
+  /** Where along that edge it lies, clamped to the canvas: y for left and right, x for top and bottom. */
+  readonly along: number;
+  /** The move that brings it a quarter of the way in from that edge. */
+  readonly by: { readonly x: number; readonly y: number };
+}
+
+/**
+ * THE EDGE SAYS WHAT IS PAST IT. A city wider than the window is reached
+ * by panning, and a district has a corner of its own that no phone is
+ * allowed to move — so on a 390-pixel phone the conference's Topics and
+ * Staff stood wholly off the canvas, with nothing on it saying they were
+ * there or which way to go. Every district whose middle is past the edge
+ * is named here with the side it lies past, so the scene can put a sign on
+ * that edge, and with the pan that brings it into the window.
+ */
+export function districtsPastTheEdge(result: Pick<Layout, "nodes" | "width" | "height" | "city">): readonly PastTheEdge[] {
+  if (!result.city) return [];
+  const { width, height } = result;
+  const out: PastTheEdge[] = [];
+  for (const node of result.nodes) {
+    if (!node.id.startsWith("kind:") || Math.round(node.plane) !== 2) continue;
+    const cx = node.x + node.width / 2;
+    const cy = node.y + node.height / 2;
+    const side = cx < 0 ? "left" : cx > width ? "right" : cy < 0 ? "top" : cy > height ? "bottom" : null;
+    if (!side) continue;
+    const across = side === "left" || side === "right";
+    const along = across ? Math.max(0, Math.min(height, cy)) : Math.max(0, Math.min(width, cx));
+    // A quarter of the way in from the edge it was past; along that edge, only as far as keeps it off the other two.
+    const inward = (at: number, span: number) => (at < span / 4 ? span / 4 - at : at > (span * 3) / 4 ? (span * 3) / 4 - at : 0);
+    const clear = (at: number, span: number) => (at < EDGE_CLEAR ? EDGE_CLEAR - at : at > span - EDGE_CLEAR ? span - EDGE_CLEAR - at : 0);
+    const by = across ? { x: inward(cx, width), y: clear(cy, height) } : { x: clear(cx, width), y: inward(cy, height) };
+    out.push({ id: node.id, kind: node.id.slice("kind:".length), side, along, by });
+  }
+  return out;
 }
 
 /**

@@ -40,6 +40,7 @@ import { useFound, useGraph, useGraview } from "./context.js";
 import { isDefaultView } from "./view-registry.js";
 import { Plots } from "./plots.js";
 import { Occupants } from "./occupants.js";
+import { EdgeSigns } from "./edge-signs.js";
 import { useCameraFlights } from "./scene-camera.js";
 import { useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift } from "./scene-hand.js";
 import { whereIsIn } from "./where-drawn.js";
@@ -1010,6 +1011,18 @@ export function Scene<S extends AnySchema>({
           {hosts}
         </canvas>
       )}
+      {view.overview && !dragging ? (
+        /* What the window does not reach, named on the edge it lies past (see edge-signs.tsx). */
+        <EdgeSigns
+          result={result}
+          schema={store.schema as AnySchema}
+          onGo={(by) => {
+            const limit = cameraLimit(result);
+            setView((current) => withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + by.x, y: (current.pan?.y ?? 0) + by.y })));
+            noteMoved();
+          }}
+        />
+      ) : null}
       {view.overview ? (
         /* SCENE FURNITURE in the ground's other corner: the way a map carries its own zoom. */
         <div
