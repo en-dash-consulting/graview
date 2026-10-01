@@ -74,7 +74,11 @@ function watchInPage() {
     const testid = el.getAttribute("data-testid");
     const label = el.getAttribute("aria-label");
     const text = (el.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 40);
-    return `<${tag}${testid ? ` data-testid="${testid}"` : ""}${label ? ` aria-label="${label.slice(0, 50)}"` : ""}>${text ? ` "${text}"` : ""}`;
+    // Where it is, so a finding can be traced to the code that drew it.
+    const host = el.parentElement?.closest("[data-testid]")?.getAttribute("data-testid");
+    const view = el.closest("[data-graview-view]")?.getAttribute("data-graview-view");
+    const inside = [host ? `in [data-testid="${host}"]` : "", view ? `in view "${view}"` : ""].filter(Boolean).join(" ");
+    return `<${tag}${testid ? ` data-testid="${testid}"` : ""}${label ? ` aria-label="${label.slice(0, 50)}"` : ""}>${text ? ` "${text}"` : ""}${inside ? ` ${inside}` : ""}`;
   };
   const nowhere = () => {
     const now = document.activeElement;
