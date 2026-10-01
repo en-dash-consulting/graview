@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-01T04:43:26.137Z",
+  "engine": "chromium",
+  "checks": {
+    "theKeyboardLeftOnBodyIsCaught": true,
+    "anActsNameAsTextIsCaught": true,
+    "aFieldKeyReadOutIsCaught": true,
+    "codeIsNotPeopleText": true,
+    "aRefusedPressIsCaught": true,
+    "aCleanPageNamesNothing": true
+  },
+  "passed": true
+}

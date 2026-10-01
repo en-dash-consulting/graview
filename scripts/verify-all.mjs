@@ -27,9 +27,10 @@
  * fix, reproduced by the command itself.
  */
 import { spawn } from "node:child_process";
-import { writeSync } from "node:fs";
+import { existsSync, readFileSync, writeSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { watchFile } from "./lib/watch.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -41,6 +42,8 @@ const say = (text) => writeSync(1, text);
  * than after ten minutes of screenshots.
  */
 const CHAIN = [
+  // First: the watch that judges every other harness's screens, made to fire.
+  ["watch", "verify-watch.mjs"],
   ["site", "verify-site.mjs"],
   ["lines", "verify-lines.mjs"],
   ["shrunk", "verify-shrunk.mjs"],
@@ -142,10 +145,19 @@ for (const [name, file] of chain) {
     child.on("exit", (code) => done({ code: code ?? 1, output }));
   });
   const took = Math.round((Date.now() - began) / 1000);
-  results.push({ name, code, took, gist: gist(output), output });
-  say(
-    `${code === 0 ? "ok  " : "FAIL"} ${name.padEnd(12)} ${String(took).padStart(4)}s  ${gist(output)}\n`,
-  );
+  /*
+   * AND THE WATCH'S VERDICT. A harness holds its own claims; the watch holds
+   * the rules every screen it reached must keep (lib/watch.mjs). A harness
+   * whose claims all pass over a screen that left the keyboard on <body>
+   * does not hold.
+   */
+  const watch = watchFile(file.replace(/\.mjs$/, ""));
+  const seen = existsSync(watch) ? JSON.parse(readFileSync(watch, "utf8")) : null;
+  const open = seen && Date.parse(seen.at) >= began ? seen.open : 0;
+  const failed = code !== 0 ? code : open > 0 ? 1 : 0;
+  const said = open > 0 ? `watch: ${open} open — docs/watch/${watch.split("/").pop()}` : gist(output);
+  results.push({ name, code: failed, took, gist: said, output });
+  say(`${failed === 0 ? "ok  " : "FAIL"} ${name.padEnd(12)} ${String(took).padStart(4)}s  ${said}\n`);
 }
 
 const broken = results.filter((one) => one.code !== 0);

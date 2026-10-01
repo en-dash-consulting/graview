@@ -19,6 +19,7 @@
  *   GRAVIEW_BROWSER=/path/to/chrome pnpm audit
  */
 import { chromium, firefox, webkit } from "playwright";
+import { watched } from "./watch.mjs";
 
 /** The one place the Canary path is written. GRAVIEW_BROWSER overrides it. */
 const CANARY =
@@ -44,7 +45,12 @@ export function engineName(argv = process.argv) {
  * flipping `layout.css.properties-and-values.enabled` off is how the
  * altitude morph's degradation is VERIFIED rather than assumed.
  */
-export async function launchEngine(name, { headless = true, firefoxUserPrefs, args } = {}) {
+export async function launchEngine(name, options = {}) {
+  // Every page every harness opens is held to the rules that hold everywhere (watch.mjs).
+  return watched(await launch(name, options), name);
+}
+
+async function launch(name, { headless = true, firefoxUserPrefs, args } = {}) {
   switch (name) {
     case "chromium": {
       // The operator's Chromium, when named — same override the harnesses
@@ -75,9 +81,9 @@ export async function launchEngine(name, { headless = true, firefoxUserPrefs, ar
  * the harnesses that also need WebGPU switches.
  */
 export async function launchCanaryGpu({ headless = true, extraArgs = [] } = {}) {
-  return chromium.launch({
+  return watched(await chromium.launch({
     executablePath: CANARY,
     headless,
     args: ["--enable-blink-features=CanvasDrawElement", ...extraArgs],
-  });
+  }), "chromium");
 }

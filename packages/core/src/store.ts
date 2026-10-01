@@ -21,6 +21,7 @@ import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
+import { tellTheWatchItsNames, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
 
 export interface StoreOptions<S extends AnySchema> {
   readonly schema: S;
@@ -184,6 +185,7 @@ export class Store<S extends AnySchema> {
     for (const mutation of deriveMutations(options.schema, options.mutations ?? [])) {
       this.mutations.set(mutation.name, mutation);
     }
+    tellTheWatchItsNames(options.schema, this.mutations.values(), options.policy);
 
     if (options.log && options.snapshot) {
       // Hydrate: the graph as stored, the history as recorded.
@@ -523,7 +525,10 @@ export class Store<S extends AnySchema> {
     if (this.policy) {
       for (const call of calls) {
         const verdict = this.permits(call, author as Principal);
-        if (!verdict.ok) throw new PermissionDeniedError(verdict.refusal);
+        if (!verdict.ok) {
+          tellTheWatchOfARefusal(verdict.refusal, author.id);
+          throw new PermissionDeniedError(verdict.refusal);
+        }
       }
     }
     /*
@@ -538,8 +543,12 @@ export class Store<S extends AnySchema> {
      */
     for (const call of calls) {
       const refusal = this.refusesAgent(call, author);
-      if (refusal) throw new PermissionDeniedError(refusal);
+      if (refusal) {
+        tellTheWatchOfARefusal(refusal, author.id);
+        throw new PermissionDeniedError(refusal);
+      }
     }
+    tellTheWatchOfAnAuthor(author.id);
 
     try {
       for (const call of calls) {
@@ -725,10 +734,12 @@ export class Store<S extends AnySchema> {
         if (!target.mutation) continue;
         const verdict = this.permits(target.mutation, author as Principal);
         if (!verdict.ok) {
-          throw new PermissionDeniedError({
+          const refusal = {
             ...verdict.refusal,
             message: `Not permitted to undo "${target.intent}": ${verdict.refusal.message}`,
-          });
+          };
+          tellTheWatchOfARefusal(refusal, author.id);
+          throw new PermissionDeniedError(refusal);
         }
       }
     }
