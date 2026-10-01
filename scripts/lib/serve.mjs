@@ -47,7 +47,8 @@ export async function serving(app, port, repoRoot) {
     return { url, borrowed: true, stop: () => {} };
   }
 
-  const child = spawn("npx", ["vite"], {
+  // The port asked for, said to vite: a harness on a moved port base must not land on the config's.
+  const child = spawn("npx", ["vite", "--port", String(port), "--strictPort"], {
     cwd: resolve(repoRoot, `apps/${app}`),
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,

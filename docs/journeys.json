@@ -1,0 +1,4479 @@
+{
+  "at": "2026-10-01T06:12:54.450Z",
+  "engine": "chromium",
+  "apps": {
+    "todo": {
+      "port": 5603,
+      "jobs": {
+        "make-task": {
+          "says": "Making a task",
+          "act": "add-task",
+          "runs": {
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 1500,
+              "steps": [
+                "the Tasks link (1)",
+                "the List * (2)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Add a task\" in [data-testid=\"form-add-task\"] left the keyboard on <body>",
+                  "at": "tasks"
+                }
+              ]
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 33,
+              "ms": 1505,
+              "steps": [
+                "the Tasks link (11)",
+                "the List * (19)",
+                "the Label * (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input> in [data-testid=\"form-add-task\"] left the keyboard on <body>",
+                  "at": "tasks"
+                }
+              ]
+            },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1191,
+              "steps": [
+                "\"Today\" (1)",
+                "\"Add a task\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 37,
+              "ms": 1209,
+              "steps": [
+                "\"Today\" (13)",
+                "\"Add a task\" (22)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2270,
+              "steps": [
+                "\"Today\" (1)",
+                "the seat's pane (1)",
+                "\"Add a task\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 27,
+              "ms": 2271,
+              "steps": [
+                "\"Today\" (11)",
+                "the seat's pane (12)",
+                "\"Add a task\" (2)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 1551,
+              "steps": [
+                "the Tasks link (1)",
+                "the List * (2)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Add a task\" in [data-testid=\"form-add-task\"] left the keyboard on <body>",
+                  "at": "tasks"
+                }
+              ]
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 33,
+              "ms": 1586,
+              "steps": [
+                "the Tasks link (11)",
+                "the List * (19)",
+                "the Label * (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input> in [data-testid=\"form-add-task\"] left the keyboard on <body>",
+                  "at": "tasks"
+                }
+              ]
+            }
+          }
+        },
+        "find": {
+          "says": "Finding a task by part of its name",
+          "runs": {
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1678,
+              "steps": [
+                "Find \"redirect\" (2)",
+                "\"Redirect the post\" (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 9,
+              "ms": 1651,
+              "steps": [
+                "Find \"redirect\" (3)",
+                "\"Redirect the post\" (5)"
+              ],
+              "violations": []
+            },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1341,
+              "steps": [
+                "Find \"redirect\" (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 3,
+              "ms": 1422,
+              "steps": [
+                "Find \"redirect\" (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/?today=2026-09-01#focus=t-post&sel=t-post&q=redirect"
+                }
+              ]
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1320,
+              "steps": [
+                "Find \"redirect\" (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 3,
+              "ms": 1405,
+              "steps": [
+                "Find \"redirect\" (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/?today=2026-09-01#focus=t-post&sel=t-post&q=redirect"
+                }
+              ]
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1657,
+              "steps": [
+                "Find \"redirect\" (2)",
+                "\"Redirect the post\" (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 9,
+              "ms": 1649,
+              "steps": [
+                "Find \"redirect\" (3)",
+                "\"Redirect the post\" (5)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "change": {
+          "says": "Renaming a task on its record",
+          "act": "rename",
+          "runs": {
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1027,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                }
+              ]
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 23,
+              "ms": 1054,
+              "steps": [
+                "the record's name (20)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                }
+              ]
+            },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1055,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 1063,
+              "steps": [
+                "the record's name (19)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1028,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 16,
+              "ms": 1052,
+              "steps": [
+                "the record's name (13)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1026,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                }
+              ]
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 23,
+              "ms": 1049,
+              "steps": [
+                "the record's name (20)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                }
+              ]
+            }
+          }
+        },
+        "relate": {
+          "says": "Tying a task to another with \"This has to happen first\"",
+          "act": "wait-for",
+          "runs": {
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 653,
+              "steps": [
+                "\"This has to happen first\" (1)",
+                "the Task * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"This has to happen first …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"This has to happen first\" in [data-testid=\"form-wait-for\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                }
+              ]
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 16,
+              "ms": 758,
+              "steps": [
+                "\"This has to happen first\" (8)",
+                "the Task * (6)",
+                "the form's button (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"This has to happen first …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"This has to happen first …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"This has to happen first\" in [data-testid=\"form-wait-for\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"This has to happen first\" in [data-testid=\"form-wait-for\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                }
+              ]
+            },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1357,
+              "steps": [
+                "\"This has to happen first\" (1)",
+                "the filter of choices (2)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 21,
+              "ms": 1350,
+              "steps": [
+                "\"This has to happen first\" (13)",
+                "the filter of choices (6)",
+                "a choice (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 2513,
+              "steps": [
+                "the seat's pane (1)",
+                "\"This has to happen first\" (1)",
+                "the filter of choices (2)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 28,
+              "ms": 2491,
+              "steps": [
+                "the seat's pane (3)",
+                "\"This has to happen first\" (17)",
+                "the filter of choices (6)",
+                "a choice (2)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 701,
+              "steps": [
+                "\"This has to happen first\" (1)",
+                "the Task * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"This has to happen first …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"This has to happen first\" in [data-testid=\"form-wait-for\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                }
+              ]
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 16,
+              "ms": 763,
+              "steps": [
+                "\"This has to happen first\" (8)",
+                "the Task * (6)",
+                "the form's button (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"This has to happen first …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"This has to happen first …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"This has to happen first\" in [data-testid=\"form-wait-for\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"This has to happen first\" in [data-testid=\"form-wait-for\"] left the keyboard on <body>",
+                  "at": "t-deposit?today=2026-09-01"
+                }
+              ]
+            }
+          }
+        },
+        "undo": {
+          "says": "Taking the last change back",
+          "act": "rename",
+          "runs": {
+            "pages/1440/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 8,
+              "deadEnd": "nothing on the page offers to take \"Rename to \"Pay the deposit for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 8,
+              "deadEnd": "nothing on the page offers to take \"Rename to \"Pay the deposit for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 418,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 13,
+              "ms": 375,
+              "steps": [
+                "Activity (10)",
+                "undo (3)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 384,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 10,
+              "ms": 358,
+              "steps": [
+                "Activity (7)",
+                "undo (3)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 8,
+              "deadEnd": "nothing on the page offers to take \"Rename to \"Pay the deposit for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 9,
+              "deadEnd": "nothing on the page offers to take \"Rename to \"Pay the deposit for now\"\" back",
+              "steps": [],
+              "violations": []
+            }
+          }
+        },
+        "repair": {
+          "says": "Getting from a problem to its repair",
+          "runs": {
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 642,
+              "steps": [
+                "the Problems link (1)",
+                "a repair (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 692,
+              "steps": [
+                "the Problems link (16)",
+                "a repair (6)"
+              ],
+              "violations": []
+            },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 870,
+              "steps": [
+                "the problems (1)",
+                "the problem (1)",
+                "its repair (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 38,
+              "ms": 872,
+              "steps": [
+                "the problems (9)",
+                "the problem (2)",
+                "its repair (27)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1975,
+              "steps": [
+                "the problems (1)",
+                "the problem (1)",
+                "the seat's pane (1)",
+                "its repair (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 18,
+              "ms": 2004,
+              "steps": [
+                "the problems (6)",
+                "the problem (2)",
+                "the seat's pane (7)",
+                "its repair (3)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 648,
+              "steps": [
+                "the Problems link (1)",
+                "a repair (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 681,
+              "steps": [
+                "the Problems link (16)",
+                "a repair (6)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "refused": {
+          "says": "Being told an act is not yours before pressing it",
+          "runs": {
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 0,
+              "ms": 2,
+              "steps": [],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 0,
+              "ms": 2,
+              "steps": [],
+              "violations": []
+            },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 0,
+              "ms": 15,
+              "steps": [],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 0,
+              "ms": 8,
+              "steps": [],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 181,
+              "steps": [
+                "the seat's pane (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 3,
+              "ms": 189,
+              "steps": [
+                "the seat's pane (3)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 0,
+              "ms": 3,
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 0,
+              "ms": 5,
+              "steps": [],
+              "violations": []
+            }
+          }
+        }
+      }
+    },
+    "seedbed": {
+      "port": 5604,
+      "jobs": {
+        "make-gardener": {
+          "says": "Making a gardener",
+          "act": "add-gardener",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1294,
+              "steps": [
+                "the Gardeners district (1)",
+                "\"Welcome a gardener\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 28,
+              "ms": 1286,
+              "steps": [
+                "the Gardeners district (10)",
+                "\"Welcome a gardener\" (16)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2444,
+              "steps": [
+                "the Gardeners district (1)",
+                "the seat's pane (1)",
+                "\"Welcome a gardener\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 23,
+              "ms": 2353,
+              "steps": [
+                "the Gardeners district (9)",
+                "the seat's pane (10)",
+                "\"Welcome a gardener\" (2)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1542,
+              "steps": [
+                "the Gardeners link (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 21,
+              "ms": 1428,
+              "steps": [
+                "the Gardeners link (6)",
+                "the Label * (14)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1544,
+              "steps": [
+                "the Gardeners link (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 21,
+              "ms": 1409,
+              "steps": [
+                "the Gardeners link (6)",
+                "the Label * (14)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "make-plot": {
+          "says": "Making a plot",
+          "act": "add-plot",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 8,
+              "ms": 1440,
+              "steps": [
+                "the Plots district (1)",
+                "\"Stake out a plot\" (1)",
+                "the field it asks for (2)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 30,
+              "ms": 1357,
+              "steps": [
+                "the Plots district (15)",
+                "\"Stake out a plot\" (11)",
+                "the field it asks for (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 9,
+              "ms": 2575,
+              "steps": [
+                "the Plots district (1)",
+                "the seat's pane (1)",
+                "\"Stake out a plot\" (1)",
+                "the field it asks for (2)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 28,
+              "ms": 2483,
+              "steps": [
+                "the Plots district (12)",
+                "the seat's pane (10)",
+                "\"Stake out a plot\" (2)",
+                "the field it asks for (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 1509,
+              "steps": [
+                "the Plots link (1)",
+                "the Label * (2)",
+                "the Beds * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 26,
+              "ms": 1331,
+              "steps": [
+                "the Plots link (7)",
+                "the Label * (16)",
+                "the Beds * (2)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 1490,
+              "steps": [
+                "the Plots link (1)",
+                "the Label * (2)",
+                "the Beds * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 26,
+              "ms": 1357,
+              "steps": [
+                "the Plots link (7)",
+                "the Label * (16)",
+                "the Beds * (2)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "make-planting": {
+          "says": "Making a planting",
+          "act": "sow",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 10,
+              "ms": 2506,
+              "steps": [
+                "Find \"plot\" (2)",
+                "\"Sow something\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 23,
+              "ms": 2548,
+              "steps": [
+                "Find \"plot\" (2)",
+                "\"Sow something\" (14)",
+                "the field it asks for (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/?remember=1#focus=plot%3Aplot-1&sel=plot%3Aplot-1&q=plot"
+                }
+              ]
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 11,
+              "ms": 3591,
+              "steps": [
+                "Find \"plot\" (2)",
+                "the seat's pane (1)",
+                "\"Sow something\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 20,
+              "ms": 3648,
+              "steps": [
+                "Find \"plot\" (2)",
+                "the seat's pane (3)",
+                "\"Sow something\" (8)",
+                "the field it asks for (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/?remember=1#focus=plot%3Aplot-1&sel=plot%3Aplot-1&q=plot"
+                }
+              ]
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 8,
+              "ms": 1687,
+              "steps": [
+                "the Plantings link (1)",
+                "the Label * (2)",
+                "the Plot * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 24,
+              "ms": 1642,
+              "steps": [
+                "the Plantings link (8)",
+                "the Label * (9)",
+                "the Plot * (2)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 8,
+              "ms": 1604,
+              "steps": [
+                "the Plantings link (1)",
+                "the Label * (2)",
+                "the Plot * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 24,
+              "ms": 1608,
+              "steps": [
+                "the Plantings link (8)",
+                "the Label * (9)",
+                "the Plot * (2)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "make-rotation": {
+          "says": "Making a rotation",
+          "act": "rotate",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 10,
+              "ms": 1664,
+              "steps": [
+                "the Rotations district (1)",
+                "\"Put a plot on the rotation\" (1)",
+                "a choice (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 30,
+              "ms": 1561,
+              "steps": [
+                "the Rotations district (14)",
+                "\"Put a plot on the rotation\" (8)",
+                "a choice (3)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 11,
+              "ms": 2784,
+              "steps": [
+                "the Rotations district (1)",
+                "the seat's pane (1)",
+                "\"Put a plot on the rotation\" (1)",
+                "a choice (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 26,
+              "ms": 2664,
+              "steps": [
+                "the Rotations district (9)",
+                "the seat's pane (7)",
+                "\"Put a plot on the rotation\" (2)",
+                "a choice (3)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 10,
+              "ms": 1104,
+              "steps": [
+                "the Rotations link (1)",
+                "the Plot * (2)",
+                "the Family * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 30,
+              "ms": 1436,
+              "steps": [
+                "the Rotations link (9)",
+                "the Plot * (7)",
+                "the Family * (2)",
+                "the form's button (5)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 10,
+              "ms": 1063,
+              "steps": [
+                "the Rotations link (1)",
+                "the Plot * (2)",
+                "the Family * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 30,
+              "ms": 1340,
+              "steps": [
+                "the Rotations link (9)",
+                "the Plot * (7)",
+                "the Family * (2)",
+                "the form's button (5)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "make-rule": {
+          "says": "Making a rule",
+          "act": "adopt-rule",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 416,
+              "steps": [
+                "the Rules district (1)",
+                "\"Agree every plot has a caretaker\" (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 20,
+              "ms": 385,
+              "steps": [
+                "the Rules district (13)",
+                "\"Agree every plot has a caretaker\" (7)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1581,
+              "steps": [
+                "the Rules district (1)",
+                "the seat's pane (1)",
+                "\"Agree every plot has a caretaker\" (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 16,
+              "ms": 1492,
+              "steps": [
+                "the Rules district (8)",
+                "the seat's pane (6)",
+                "\"Agree every plot has a caretaker\" (2)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 914,
+              "steps": [
+                "the Rules link (1)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 15,
+              "ms": 959,
+              "steps": [
+                "the Rules link (10)",
+                "the form's button (5)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 896,
+              "steps": [
+                "the Rules link (1)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 15,
+              "ms": 897,
+              "steps": [
+                "the Rules link (10)",
+                "the form's button (5)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "find": {
+          "says": "Finding a gardener by part of its name",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1234,
+              "steps": [
+                "Find \"ravi\" (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 3,
+              "ms": 1251,
+              "steps": [
+                "Find \"ravi\" (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/?remember=1#focus=gardener%3Aravi&sel=gardener%3Aravi&q=ravi"
+                }
+              ]
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1221,
+              "steps": [
+                "Find \"ravi\" (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 3,
+              "ms": 1243,
+              "steps": [
+                "Find \"ravi\" (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/?remember=1#focus=gardener%3Aravi&sel=gardener%3Aravi&q=ravi"
+                }
+              ]
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1542,
+              "steps": [
+                "Find \"ravi\" (2)",
+                "\"Ravi\" (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 14,
+              "ms": 1519,
+              "steps": [
+                "Find \"ravi\" (3)",
+                "\"Ravi\" (10)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1525,
+              "steps": [
+                "Find \"ravi\" (2)",
+                "\"Ravi\" (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 14,
+              "ms": 1513,
+              "steps": [
+                "Find \"ravi\" (3)",
+                "\"Ravi\" (10)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "change": {
+          "says": "Renaming a gardener on its record",
+          "act": "edit-gardener",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 743,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 15,
+              "ms": 739,
+              "steps": [
+                "the record's name (12)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 742,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 10,
+              "ms": 766,
+              "steps": [
+                "the record's name (7)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 942,
+              "steps": [
+                "\"Change the gardener\" (1)",
+                "the Label (2)",
+                "the form's button (1)"
+              ],
+              "via": "the name is not something to press; it takes \"Change the gardener\"",
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 14,
+              "ms": 841,
+              "steps": [
+                "\"Change the gardener\" (10)",
+                "the Label (3)"
+              ],
+              "via": "the name is not something to press; it takes \"Change the gardener\"",
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 935,
+              "steps": [
+                "\"Change the gardener\" (1)",
+                "the Label (2)",
+                "the form's button (1)"
+              ],
+              "via": "the name is not something to press; it takes \"Change the gardener\"",
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 14,
+              "ms": 739,
+              "steps": [
+                "\"Change the gardener\" (10)",
+                "the Label (3)"
+              ],
+              "via": "the name is not something to press; it takes \"Change the gardener\"",
+              "violations": []
+            }
+          }
+        },
+        "relate": {
+          "says": "Tying a plot to another with \"Name a caretaker\"",
+          "act": "tend",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 612,
+              "steps": [
+                "\"Name a caretaker\" (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 17,
+              "ms": 600,
+              "steps": [
+                "\"Name a caretaker\" (12)",
+                "a choice (5)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1731,
+              "steps": [
+                "the seat's pane (1)",
+                "\"Name a caretaker\" (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 18,
+              "ms": 1720,
+              "steps": [
+                "the seat's pane (3)",
+                "\"Name a caretaker\" (10)",
+                "a choice (5)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 174,
+              "steps": [
+                "\"June takes on Plot 1\" (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"June takes on Plot 1\" in [data-testid=\"record-violations\"] left the keyboard on <body>",
+                  "at": "plot%3Aplot-1?remember=1"
+                }
+              ]
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 14,
+              "ms": 227,
+              "steps": [
+                "\"June takes on Plot 1\" (14)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"June takes on Plot 1\" in [data-testid=\"record-violations\"] left the keyboard on <body>",
+                  "at": "plot%3Aplot-1?remember=1"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"June takes on Plot 1\" in [data-testid=\"record-violations\"] left the keyboard on <body>",
+                  "at": "plot%3Aplot-1?remember=1"
+                }
+              ]
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 167,
+              "steps": [
+                "\"June takes on Plot 1\" (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"June takes on Plot 1\" in [data-testid=\"record-violations\"] left the keyboard on <body>",
+                  "at": "plot%3Aplot-1?remember=1"
+                }
+              ]
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 14,
+              "ms": 184,
+              "steps": [
+                "\"June takes on Plot 1\" (14)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"June takes on Plot 1\" in [data-testid=\"record-violations\"] left the keyboard on <body>",
+                  "at": "plot%3Aplot-1?remember=1"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"June takes on Plot 1\" in [data-testid=\"record-violations\"] left the keyboard on <body>",
+                  "at": "plot%3Aplot-1?remember=1"
+                }
+              ]
+            }
+          }
+        },
+        "undo": {
+          "says": "Taking the last change back",
+          "act": "edit-gardener",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 423,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 10,
+              "ms": 363,
+              "steps": [
+                "Activity (8)",
+                "undo (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 439,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 9,
+              "ms": 348,
+              "steps": [
+                "Activity (7)",
+                "undo (2)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 9,
+              "deadEnd": "nothing on the page offers to take \"Change June: label → \"June for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 12,
+              "deadEnd": "nothing on the page offers to take \"Change June: label → \"June for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 10,
+              "deadEnd": "nothing on the page offers to take \"Change June: label → \"June for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 9,
+              "deadEnd": "nothing on the page offers to take \"Change June: label → \"June for now\"\" back",
+              "steps": [],
+              "violations": []
+            }
+          }
+        },
+        "repair": {
+          "says": "Getting from a problem to its repair",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 881,
+              "steps": [
+                "the problems (1)",
+                "the problem (1)",
+                "its repair (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 28,
+              "ms": 857,
+              "steps": [
+                "the problems (7)",
+                "the problem (2)",
+                "its repair (19)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 2008,
+              "steps": [
+                "the problems (1)",
+                "the problem (1)",
+                "the seat's pane (1)",
+                "its repair (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 17,
+              "ms": 1987,
+              "steps": [
+                "the problems (6)",
+                "the problem (2)",
+                "the seat's pane (7)",
+                "its repair (2)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 645,
+              "steps": [
+                "the Problems link (1)",
+                "a repair (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 15,
+              "ms": 698,
+              "steps": [
+                "the Problems link (12)",
+                "a repair (3)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 644,
+              "steps": [
+                "the Problems link (1)",
+                "a repair (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 15,
+              "ms": 683,
+              "steps": [
+                "the Problems link (12)",
+                "a repair (3)"
+              ],
+              "violations": []
+            }
+          }
+        }
+      }
+    },
+    "rota": {
+      "port": 5605,
+      "jobs": {
+        "make-shift": {
+          "says": "Making a shift",
+          "act": "add-shift",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 15,
+              "ms": 2442,
+              "steps": [
+                "\"Add a shift\" (1)",
+                "a choice (1)",
+                "the field it asks for (2)",
+                "a choice (1)",
+                "the field it asks for (2)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 26,
+              "ms": 2397,
+              "steps": [
+                "\"Add a shift\" (14)",
+                "a choice (3)",
+                "the field it asks for (1)",
+                "a choice (1)",
+                "the field it asks for (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 17,
+              "ms": 3556,
+              "steps": [
+                "the seat's pane (3)",
+                "\"Add a shift\" (2)",
+                "a choice (3)",
+                "the field it asks for (1)",
+                "a choice (1)",
+                "the field it asks for (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 16,
+              "ms": 3608,
+              "steps": [
+                "the seat's pane (1)",
+                "\"Add a shift\" (1)",
+                "a choice (1)",
+                "the field it asks for (2)",
+                "a choice (1)",
+                "the field it asks for (2)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 14,
+              "ms": 1748,
+              "steps": [
+                "the Shifts link (1)",
+                "the Label * (2)",
+                "the Location * (2)",
+                "the Day * (2)",
+                "the From * (2)",
+                "the Until * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Add a shift\" in [data-testid=\"form-add-shift\"] left the keyboard on <body>",
+                  "at": "shifts"
+                }
+              ]
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 33,
+              "ms": 1716,
+              "steps": [
+                "the Shifts link (4)",
+                "the Label * (15)",
+                "the Location * (5)",
+                "the Day * (2)",
+                "the From * (2)",
+                "the Until * (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input> in [data-testid=\"form-add-shift\"] left the keyboard on <body>",
+                  "at": "shifts"
+                }
+              ]
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 14,
+              "ms": 1710,
+              "steps": [
+                "the Shifts link (1)",
+                "the Label * (2)",
+                "the Location * (2)",
+                "the Day * (2)",
+                "the From * (2)",
+                "the Until * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Add a shift\" in [data-testid=\"form-add-shift\"] left the keyboard on <body>",
+                  "at": "shifts"
+                }
+              ]
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 33,
+              "ms": 1671,
+              "steps": [
+                "the Shifts link (4)",
+                "the Label * (15)",
+                "the Location * (5)",
+                "the Day * (2)",
+                "the From * (2)",
+                "the Until * (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input> in [data-testid=\"form-add-shift\"] left the keyboard on <body>",
+                  "at": "shifts"
+                }
+              ]
+            }
+          }
+        },
+        "make-location": {
+          "says": "Making a location",
+          "act": "add-location",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 7,
+              "ms": 2853,
+              "steps": [
+                "the Locations district (1)",
+                "Up (1)",
+                "the Locations district (1)",
+                "\"Add a location\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 62,
+              "ms": 2944,
+              "steps": [
+                "the Locations district (20)",
+                "Up (10)",
+                "the Locations district (14)",
+                "\"Add a location\" (16)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 2921,
+              "steps": [
+                "the folded districts (5)",
+                "Locations in the menu (2)",
+                "the seat's pane (11)",
+                "\"Add a location\" (2)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 8,
+              "ms": 4341,
+              "steps": [
+                "the folded districts (1)",
+                "Locations in the menu (1)",
+                "Up (1)",
+                "the seat's pane (1)",
+                "\"Add a location\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1568,
+              "steps": [
+                "the Locations link (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 15,
+              "ms": 1436,
+              "steps": [
+                "the Locations link (5)",
+                "the Label * (9)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1558,
+              "steps": [
+                "the Locations link (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 15,
+              "ms": 1393,
+              "steps": [
+                "the Locations link (5)",
+                "the Label * (9)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "make-volunteer": {
+          "says": "Making a volunteer",
+          "act": "add-volunteer",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 13,
+              "ms": 3725,
+              "steps": [
+                "the Volunteers district (1)",
+                "Up (1)",
+                "the Volunteers district (1)",
+                "\"Add a volunteer\" (1)",
+                "the field it asks for (2)",
+                "the field it asks for (2)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 43,
+              "ms": 3621,
+              "steps": [
+                "the Volunteers district (17)",
+                "Up (6)",
+                "the Volunteers district (6)",
+                "\"Add a volunteer\" (8)",
+                "the field it asks for (1)",
+                "the field it asks for (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 21,
+              "ms": 3675,
+              "steps": [
+                "the folded districts (5)",
+                "Volunteers in the menu (5)",
+                "the seat's pane (3)",
+                "\"Add a volunteer\" (2)",
+                "the field it asks for (1)",
+                "the field it asks for (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 14,
+              "ms": 5049,
+              "steps": [
+                "the folded districts (1)",
+                "Volunteers in the menu (1)",
+                "Up (1)",
+                "the seat's pane (1)",
+                "\"Add a volunteer\" (1)",
+                "the field it asks for (2)",
+                "the field it asks for (2)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 8,
+              "ms": 1906,
+              "steps": [
+                "the Volunteers link (1)",
+                "the Label * (2)",
+                "the Phone * (2)",
+                "the Limit * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Add a volunteer\" in [data-testid=\"form-add-volunteer\"] left the keyboard on <body>",
+                  "at": "volunteers"
+                }
+              ]
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 1740,
+              "steps": [
+                "the Volunteers link (6)",
+                "the Label * (11)",
+                "the Phone * (2)",
+                "the Limit * (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input> in [data-testid=\"form-add-volunteer\"] left the keyboard on <body>",
+                  "at": "volunteers"
+                }
+              ]
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 8,
+              "ms": 1939,
+              "steps": [
+                "the Volunteers link (1)",
+                "the Label * (2)",
+                "the Phone * (2)",
+                "the Limit * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Add a volunteer\" in [data-testid=\"form-add-volunteer\"] left the keyboard on <body>",
+                  "at": "volunteers"
+                }
+              ]
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 1783,
+              "steps": [
+                "the Volunteers link (6)",
+                "the Label * (11)",
+                "the Phone * (2)",
+                "the Limit * (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input> in [data-testid=\"form-add-volunteer\"] left the keyboard on <body>",
+                  "at": "volunteers"
+                }
+              ]
+            }
+          }
+        },
+        "find": {
+          "says": "Finding a shift by part of its name",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1335,
+              "steps": [
+                "Find \"thursday\" (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 3,
+              "ms": 1414,
+              "steps": [
+                "Find \"thursday\" (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/?today=2026-09-14#focus=s-thu-baby&sel=s-thu-baby&q=thursday"
+                }
+              ]
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 3,
+              "ms": 1387,
+              "steps": [
+                "Find \"thursday\" (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/?today=2026-09-14#focus=s-thu-baby&sel=s-thu-baby&q=thursday"
+                }
+              ]
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1312,
+              "steps": [
+                "Find \"thursday\" (2)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 12,
+              "deadEnd": "there is no Find box on the screen",
+              "steps": [],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 9,
+              "deadEnd": "there is no Find box on the screen",
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 11,
+              "deadEnd": "there is no Find box on the screen",
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 10,
+              "deadEnd": "there is no Find box on the screen",
+              "steps": [],
+              "violations": []
+            }
+          }
+        },
+        "change": {
+          "says": "Renaming a shift on its record",
+          "act": "rename",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1014,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 1075,
+              "steps": [
+                "the record's name (19)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 16,
+              "ms": 1100,
+              "steps": [
+                "the record's name (13)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1019,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 992,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                }
+              ]
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 17,
+              "ms": 1020,
+              "steps": [
+                "the record's name (14)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                }
+              ]
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 982,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                }
+              ]
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 17,
+              "ms": 1011,
+              "steps": [
+                "the record's name (14)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                }
+              ]
+            }
+          }
+        },
+        "relate": {
+          "says": "Tying a shift to another with \"Hold it somewhere else\"",
+          "act": "hold-at",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 608,
+              "steps": [
+                "\"Hold it somewhere else\" (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 25,
+              "ms": 632,
+              "steps": [
+                "\"Hold it somewhere else\" (16)",
+                "a choice (9)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 1738,
+              "steps": [
+                "the seat's pane (3)",
+                "\"Hold it somewhere else\" (10)",
+                "a choice (9)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1732,
+              "steps": [
+                "the seat's pane (1)",
+                "\"Hold it somewhere else\" (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 652,
+              "steps": [
+                "\"Hold it somewhere else\" (1)",
+                "the Location * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Hold it somewhere else …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Hold it somewhere else\" in [data-testid=\"form-hold-at\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                }
+              ]
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 20,
+              "ms": 700,
+              "steps": [
+                "\"Hold it somewhere else\" (10)",
+                "the Location * (8)",
+                "the form's button (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"Hold it somewhere else …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Hold it somewhere else …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"Hold it somewhere else\" in [data-testid=\"form-hold-at\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Hold it somewhere else\" in [data-testid=\"form-hold-at\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                }
+              ]
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 654,
+              "steps": [
+                "\"Hold it somewhere else\" (1)",
+                "the Location * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Hold it somewhere else …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Hold it somewhere else\" in [data-testid=\"form-hold-at\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                }
+              ]
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 20,
+              "ms": 769,
+              "steps": [
+                "\"Hold it somewhere else\" (10)",
+                "the Location * (8)",
+                "the form's button (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"Hold it somewhere else …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Hold it somewhere else …\" in [data-testid=\"record-actions\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"Hold it somewhere else\" in [data-testid=\"form-hold-at\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Hold it somewhere else\" in [data-testid=\"form-hold-at\"] left the keyboard on <body>",
+                  "at": "s-mon-open?today=2026-09-14"
+                }
+              ]
+            }
+          }
+        },
+        "undo": {
+          "says": "Taking the last change back",
+          "act": "rename",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 415,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 13,
+              "ms": 385,
+              "steps": [
+                "Activity (10)",
+                "undo (3)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 10,
+              "ms": 345,
+              "steps": [
+                "Activity (7)",
+                "undo (3)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 382,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 10,
+              "deadEnd": "nothing on the page offers to take \"Rename to \"Monday open up for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 10,
+              "deadEnd": "nothing on the page offers to take \"Rename to \"Monday open up for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 7,
+              "deadEnd": "nothing on the page offers to take \"Rename to \"Monday open up for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 7,
+              "deadEnd": "nothing on the page offers to take \"Rename to \"Monday open up for now\"\" back",
+              "steps": [],
+              "violations": []
+            }
+          }
+        },
+        "repair": {
+          "says": "Getting from a problem to its repair",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1263,
+              "steps": [
+                "the problems (1)",
+                "the problem (1)",
+                "its repair (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 50,
+              "ms": 1296,
+              "steps": [
+                "the problems (9)",
+                "the problem (2)",
+                "its repair (24)",
+                "a choice (15)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 32,
+              "ms": 2354,
+              "steps": [
+                "the problems (6)",
+                "the problem (2)",
+                "the seat's pane (7)",
+                "its repair (2)",
+                "a choice (15)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 2380,
+              "steps": [
+                "the problems (1)",
+                "the problem (1)",
+                "the seat's pane (1)",
+                "its repair (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1105,
+              "steps": [
+                "the Problems link (1)",
+                "a repair (1)",
+                "the Volunteer * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Find somebody for \"Friday repair cafe\" …\" in [data-testid=\"repairs\"] left the keyboard on <body>",
+                  "at": "problems"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Find somebody for \"Friday repair cafe\"\" in [data-testid=\"form-cover\"] left the keyboard on <body>",
+                  "at": "problems"
+                }
+              ]
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 20,
+              "ms": 1184,
+              "steps": [
+                "the Problems link (10)",
+                "a repair (5)",
+                "the Volunteer * (3)",
+                "the form's button (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"Find somebody for \"Friday repair cafe\" …\" in [data-testid=\"repairs\"] left the keyboard on <body>",
+                  "at": "problems"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Find somebody for \"Friday repair cafe\" …\" in [data-testid=\"repairs\"] left the keyboard on <body>",
+                  "at": "problems"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"Find somebody for \"Friday repair cafe\"\" in [data-testid=\"form-cover\"] left the keyboard on <body>",
+                  "at": "problems"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Find somebody for \"Friday repair cafe\"\" in [data-testid=\"form-cover\"] left the keyboard on <body>",
+                  "at": "problems"
+                }
+              ]
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1114,
+              "steps": [
+                "the Problems link (1)",
+                "a repair (1)",
+                "the Volunteer * (2)",
+                "the form's button (1)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Find somebody for \"Friday repair cafe\" …\" in [data-testid=\"repairs\"] left the keyboard on <body>",
+                  "at": "problems"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Find somebody for \"Friday repair cafe\"\" in [data-testid=\"form-cover\"] left the keyboard on <body>",
+                  "at": "problems"
+                }
+              ]
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 20,
+              "ms": 1177,
+              "steps": [
+                "the Problems link (10)",
+                "a repair (5)",
+                "the Volunteer * (3)",
+                "the form's button (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"Find somebody for \"Friday repair cafe\" …\" in [data-testid=\"repairs\"] left the keyboard on <body>",
+                  "at": "problems"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Find somebody for \"Friday repair cafe\" …\" in [data-testid=\"repairs\"] left the keyboard on <body>",
+                  "at": "problems"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <button> \"Find somebody for \"Friday repair cafe\"\" in [data-testid=\"form-cover\"] left the keyboard on <body>",
+                  "at": "problems"
+                },
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "a press on <button> \"Find somebody for \"Friday repair cafe\"\" in [data-testid=\"form-cover\"] left the keyboard on <body>",
+                  "at": "problems"
+                }
+              ]
+            }
+          }
+        },
+        "refused": {
+          "says": "Being told an act is not yours before pressing it",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 0,
+              "ms": 10,
+              "steps": [],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 0,
+              "ms": 10,
+              "steps": [],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 3,
+              "ms": 184,
+              "steps": [
+                "the seat's pane (3)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 175,
+              "steps": [
+                "the seat's pane (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 474,
+              "steps": [
+                "the Shifts link (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 4,
+              "ms": 486,
+              "steps": [
+                "the Shifts link (4)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 482,
+              "steps": [
+                "the Shifts link (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 4,
+              "ms": 474,
+              "steps": [
+                "the Shifts link (4)"
+              ],
+              "violations": []
+            }
+          }
+        }
+      }
+    },
+    "discography": {
+      "port": 5607,
+      "jobs": {
+        "make-song": {
+          "says": "Making a song",
+          "act": "add-song",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1458,
+              "steps": [
+                "the Songs district (1)",
+                "\"Add a song\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 26,
+              "ms": 1532,
+              "steps": [
+                "the Songs district (15)",
+                "\"Add a song\" (9)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2675,
+              "steps": [
+                "the Songs district (1)",
+                "the seat's pane (1)",
+                "\"Add a song\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 2560,
+              "steps": [
+                "the Songs district (10)",
+                "the seat's pane (8)",
+                "\"Add a song\" (2)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1869,
+              "steps": [
+                "the Songs link (1)",
+                "\"Add a song\" (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 13,
+              "ms": 2090,
+              "steps": [
+                "the Songs link (4)",
+                "\"Add a song\" (6)",
+                "the Label * (2)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1902,
+              "steps": [
+                "the Songs link (1)",
+                "\"Add a song\" (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 13,
+              "ms": 1953,
+              "steps": [
+                "the Songs link (4)",
+                "\"Add a song\" (6)",
+                "the Label * (2)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "make-album": {
+          "says": "Making an album",
+          "act": "add-album",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 1862,
+              "steps": [
+                "the Albums district (1)",
+                "\"Add a release\" (1)",
+                "the field it asks for (2)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 30,
+              "ms": 1792,
+              "steps": [
+                "the Albums district (10)",
+                "\"Add a release\" (17)",
+                "the field it asks for (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 7,
+              "ms": 2982,
+              "steps": [
+                "the Albums district (1)",
+                "the seat's pane (1)",
+                "\"Add a release\" (1)",
+                "the field it asks for (2)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 2896,
+              "steps": [
+                "the Albums district (8)",
+                "the seat's pane (9)",
+                "\"Add a release\" (2)",
+                "the field it asks for (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 7,
+              "ms": 1849,
+              "steps": [
+                "the Albums link (1)",
+                "\"Add a release\" (1)",
+                "the Label * (2)",
+                "the Type * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 18,
+              "ms": 2197,
+              "steps": [
+                "the Albums link (5)",
+                "\"Add a release\" (7)",
+                "the Label * (2)",
+                "the Type * (2)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 7,
+              "ms": 1843,
+              "steps": [
+                "the Albums link (1)",
+                "\"Add a release\" (1)",
+                "the Label * (2)",
+                "the Type * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 18,
+              "ms": 2286,
+              "steps": [
+                "the Albums link (5)",
+                "\"Add a release\" (7)",
+                "the Label * (2)",
+                "the Type * (2)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "make-artist": {
+          "says": "Making an artist",
+          "act": "add-artist",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1505,
+              "steps": [
+                "the Artists district (1)",
+                "\"Add an artist\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 30,
+              "ms": 1662,
+              "steps": [
+                "the Artists district (14)",
+                "\"Add an artist\" (14)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2669,
+              "steps": [
+                "the Artists district (1)",
+                "the seat's pane (1)",
+                "\"Add an artist\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 29,
+              "ms": 2690,
+              "steps": [
+                "the Artists district (12)",
+                "the seat's pane (13)",
+                "\"Add an artist\" (2)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1801,
+              "steps": [
+                "the Artists link (1)",
+                "\"Add an artist\" (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 17,
+              "ms": 1920,
+              "steps": [
+                "the Artists link (6)",
+                "\"Add an artist\" (8)",
+                "the Label * (2)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1810,
+              "steps": [
+                "the Artists link (1)",
+                "\"Add an artist\" (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 17,
+              "ms": 1765,
+              "steps": [
+                "the Artists link (6)",
+                "\"Add an artist\" (8)",
+                "the Label * (2)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "make-theme": {
+          "says": "Making a theme",
+          "act": "add-theme",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1458,
+              "steps": [
+                "the Themes district (1)",
+                "\"Add a theme\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 20,
+              "ms": 1416,
+              "steps": [
+                "the Themes district (12)",
+                "\"Add a theme\" (6)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2602,
+              "steps": [
+                "the Themes district (1)",
+                "the seat's pane (1)",
+                "\"Add a theme\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 16,
+              "ms": 2504,
+              "steps": [
+                "the Themes district (7)",
+                "the seat's pane (5)",
+                "\"Add a theme\" (2)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1713,
+              "steps": [
+                "the Themes link (1)",
+                "\"Add a theme\" (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 19,
+              "ms": 1540,
+              "steps": [
+                "the Themes link (7)",
+                "\"Add a theme\" (9)",
+                "the Label * (2)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1733,
+              "steps": [
+                "the Themes link (1)",
+                "\"Add a theme\" (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 19,
+              "ms": 1559,
+              "steps": [
+                "the Themes link (7)",
+                "\"Add a theme\" (9)",
+                "the Label * (2)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "make-era": {
+          "says": "Making an era",
+          "act": "add-era",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1363,
+              "steps": [
+                "the Eras district (1)",
+                "\"Add an era\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 30,
+              "ms": 1370,
+              "steps": [
+                "the Eras district (17)",
+                "\"Add an era\" (11)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2498,
+              "steps": [
+                "the Eras district (1)",
+                "the seat's pane (1)",
+                "\"Add an era\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 26,
+              "ms": 2498,
+              "steps": [
+                "the Eras district (12)",
+                "the seat's pane (10)",
+                "\"Add an era\" (2)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1636,
+              "steps": [
+                "the Eras link (1)",
+                "\"Add an era\" (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 21,
+              "ms": 1485,
+              "steps": [
+                "the Eras link (8)",
+                "\"Add an era\" (10)",
+                "the Label * (2)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1636,
+              "steps": [
+                "the Eras link (1)",
+                "\"Add an era\" (1)",
+                "the Label * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 21,
+              "ms": 1459,
+              "steps": [
+                "the Eras link (8)",
+                "\"Add an era\" (10)",
+                "the Label * (2)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "find": {
+          "says": "Finding a song by part of its name",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": false,
+              "presses": 3,
+              "ms": 1622,
+              "deadEnd": "Find shows 2 rows that read \"Gone Digital\" and nothing that says which is the song; the first is not",
+              "steps": [
+                "Find \"digital\" (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": false,
+              "presses": 3,
+              "ms": 1709,
+              "deadEnd": "Find shows 2 rows that read \"Gone Digital\" and nothing that says which is the song; the first is not",
+              "steps": [
+                "Find \"digital\" (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/#focus=album%3Agone-digital&sel=album%3Agone-digital&q=digital"
+                }
+              ]
+            },
+            "scene/390/pointer": {
+              "done": false,
+              "presses": 3,
+              "ms": 1617,
+              "deadEnd": "Find shows 2 rows that read \"Gone Digital\" and nothing that says which is the song; the first is not",
+              "steps": [
+                "Find \"digital\" (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": false,
+              "presses": 3,
+              "ms": 1674,
+              "deadEnd": "Find shows 2 rows that read \"Gone Digital\" and nothing that says which is the song; the first is not",
+              "steps": [
+                "Find \"digital\" (2)"
+              ],
+              "violations": [
+                {
+                  "rule": "keyboard-lands-nowhere",
+                  "detail": "Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body>",
+                  "at": "/#focus=album%3Agone-digital&sel=album%3Agone-digital&q=digital"
+                }
+              ]
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1678,
+              "steps": [
+                "Find \"digital\" (2)",
+                "\"Gone Digital\" (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 1680,
+              "steps": [
+                "Find \"digital\" (14)",
+                "\"Gone Digital\" (7)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1659,
+              "steps": [
+                "Find \"digital\" (2)",
+                "\"Gone Digital\" (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 1640,
+              "steps": [
+                "Find \"digital\" (14)",
+                "\"Gone Digital\" (7)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "change": {
+          "says": "Renaming a song on its record",
+          "act": "edit-song",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1250,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 22,
+              "ms": 1262,
+              "steps": [
+                "the record's name (19)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1160,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 13,
+              "ms": 1171,
+              "steps": [
+                "the record's name (10)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1371,
+              "steps": [
+                "\"Change the song\" (1)",
+                "the Label (2)",
+                "the form's button (1)"
+              ],
+              "via": "the name is not something to press; it takes \"Change the song\"",
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 9,
+              "ms": 1229,
+              "steps": [
+                "\"Change the song\" (5)",
+                "the Label (3)"
+              ],
+              "via": "the name is not something to press; it takes \"Change the song\"",
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1353,
+              "steps": [
+                "\"Change the song\" (1)",
+                "the Label (2)",
+                "the form's button (1)"
+              ],
+              "via": "the name is not something to press; it takes \"Change the song\"",
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 9,
+              "ms": 1186,
+              "steps": [
+                "\"Change the song\" (5)",
+                "the Label (3)"
+              ],
+              "via": "the name is not something to press; it takes \"Change the song\"",
+              "violations": []
+            }
+          }
+        },
+        "relate": {
+          "says": "Tying a song to another with \"Put it on a release\"",
+          "act": "put-on",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1747,
+              "steps": [
+                "\"Put it on a release\" (1)",
+                "the filter of choices (2)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 25,
+              "ms": 1770,
+              "steps": [
+                "\"Put it on a release\" (15)",
+                "the filter of choices (8)",
+                "a choice (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 2863,
+              "steps": [
+                "the seat's pane (1)",
+                "\"Put it on a release\" (1)",
+                "the filter of choices (2)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 28,
+              "ms": 2872,
+              "steps": [
+                "the seat's pane (3)",
+                "\"Put it on a release\" (15)",
+                "the filter of choices (8)",
+                "a choice (2)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 770,
+              "steps": [
+                "\"Put it on a release\" (1)",
+                "the Album * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 16,
+              "ms": 833,
+              "steps": [
+                "\"Put it on a release\" (8)",
+                "the Album * (6)",
+                "the form's button (2)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 751,
+              "steps": [
+                "\"Put it on a release\" (1)",
+                "the Album * (2)",
+                "the form's button (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 16,
+              "ms": 790,
+              "steps": [
+                "\"Put it on a release\" (8)",
+                "the Album * (6)",
+                "the form's button (2)"
+              ],
+              "violations": []
+            }
+          }
+        },
+        "undo": {
+          "says": "Taking the last change back",
+          "act": "edit-song",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 565,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 10,
+              "ms": 473,
+              "steps": [
+                "Activity (8)",
+                "undo (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 548,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 8,
+              "ms": 486,
+              "steps": [
+                "Activity (6)",
+                "undo (2)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 12,
+              "deadEnd": "nothing on the page offers to take \"Change Cloudy-Eyed Stroll: label → \"Cloudy-Eyed Stroll for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 14,
+              "deadEnd": "nothing on the page offers to take \"Change Cloudy-Eyed Stroll: label → \"Cloudy-Eyed Stroll for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": false,
+              "presses": 0,
+              "ms": 12,
+              "deadEnd": "nothing on the page offers to take \"Change Cloudy-Eyed Stroll: label → \"Cloudy-Eyed Stroll for now\"\" back",
+              "steps": [],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": false,
+              "presses": 0,
+              "ms": 12,
+              "deadEnd": "nothing on the page offers to take \"Change Cloudy-Eyed Stroll: label → \"Cloudy-Eyed Stroll for now\"\" back",
+              "steps": [],
+              "violations": []
+            }
+          }
+        },
+        "repair": {
+          "says": "Getting from a problem to its repair",
+          "runs": {
+            "scene/1440/pointer": {
+              "skipped": "nothing is broken in the example"
+            },
+            "scene/1440/keyboard": {
+              "skipped": "nothing is broken in the example"
+            },
+            "scene/390/pointer": {
+              "skipped": "nothing is broken in the example"
+            },
+            "scene/390/keyboard": {
+              "skipped": "nothing is broken in the example"
+            },
+            "pages/1440/pointer": {
+              "skipped": "nothing is broken in the example"
+            },
+            "pages/1440/keyboard": {
+              "skipped": "nothing is broken in the example"
+            },
+            "pages/390/pointer": {
+              "skipped": "nothing is broken in the example"
+            },
+            "pages/390/keyboard": {
+              "skipped": "nothing is broken in the example"
+            }
+          }
+        },
+        "refused": {
+          "says": "Being told an act is not yours before pressing it",
+          "runs": {
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 323,
+              "steps": [
+                "the Songs district (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 15,
+              "ms": 334,
+              "steps": [
+                "the Songs district (15)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 490,
+              "steps": [
+                "the Songs district (1)",
+                "the seat's pane (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/keyboard": {
+              "done": true,
+              "presses": 18,
+              "ms": 477,
+              "steps": [
+                "the Songs district (10)",
+                "the seat's pane (8)"
+              ],
+              "violations": []
+            },
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 553,
+              "steps": [
+                "the Songs link (1)"
+              ],
+              "violations": []
+            },
+            "pages/1440/keyboard": {
+              "done": true,
+              "presses": 4,
+              "ms": 541,
+              "steps": [
+                "the Songs link (4)"
+              ],
+              "violations": []
+            },
+            "pages/390/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 536,
+              "steps": [
+                "the Songs link (1)"
+              ],
+              "violations": []
+            },
+            "pages/390/keyboard": {
+              "done": true,
+              "presses": 4,
+              "ms": 512,
+              "steps": [
+                "the Songs link (4)"
+              ],
+              "violations": []
+            }
+          }
+        }
+      }
+    },
+    "gauntlet": {
+      "skipped": "apps/gauntlet is not built here (no dist/domain/app.js)"
+    }
+  },
+  "friction": [
+    {
+      "app": "todo",
+      "job": "undo",
+      "says": "todo: Taking the last change back cannot be done on the pages, at either width and with either hand — nothing on the page offers to take \"Rename to \"Pay the deposit for now\"\" back."
+    },
+    {
+      "app": "seedbed",
+      "job": "undo",
+      "says": "seedbed: Taking the last change back cannot be done on the pages, at either width and with either hand — nothing on the page offers to take \"Change June: label → \"June for now\"\" back."
+    },
+    {
+      "app": "rota",
+      "job": "find",
+      "says": "rota: Finding a shift by part of its name cannot be done on the pages, at either width and with either hand — there is no Find box on the screen."
+    },
+    {
+      "app": "rota",
+      "job": "undo",
+      "says": "rota: Taking the last change back cannot be done on the pages, at either width and with either hand — nothing on the page offers to take \"Rename to \"Monday open up for now\"\" back."
+    },
+    {
+      "app": "discography",
+      "job": "find",
+      "says": "discography: Finding a song by part of its name cannot be done on the scene, at either width and with either hand — Find shows 2 rows that read \"Gone Digital\" and nothing that says which is the song; the first is not."
+    },
+    {
+      "app": "discography",
+      "job": "undo",
+      "says": "discography: Taking the last change back cannot be done on the pages, at either width and with either hand — nothing on the page offers to take \"Change Cloudy-Eyed Stroll: label → \"Cloudy-Eyed Stroll for now\"\" back."
+    },
+    {
+      "app": "todo",
+      "job": "change",
+      "says": "todo: Renaming a task on its record works but breaks keyboard-lands-nowhere: Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body> — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" works but breaks keyboard-lands-nowhere: a press on <button> \"This has to happen first …\" in [data-testid=\"record-actions\"] left the keyboard on <body> — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" works but breaks keyboard-lands-nowhere: a press on <button> \"This has to happen first\" in [data-testid=\"form-wait-for\"] left the keyboard on <body> — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "seedbed",
+      "job": "change",
+      "says": "seedbed: Renaming a gardener on its record works only the long way round — the name is not something to press; it takes \"Change the gardener\" — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "seedbed",
+      "job": "relate",
+      "says": "seedbed: Tying a plot to another with \"Name a caretaker\" works but breaks keyboard-lands-nowhere: a press on <button> \"June takes on Plot 1\" in [data-testid=\"record-violations\"] left the keyboard on <body> — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "rota",
+      "job": "change",
+      "says": "rota: Renaming a shift on its record works but breaks keyboard-lands-nowhere: Enter on <input aria-label=\"Label\"> in [data-testid=\"edit-label\"] left the keyboard on <body> — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" works but breaks keyboard-lands-nowhere: a press on <button> \"Hold it somewhere else …\" in [data-testid=\"record-actions\"] left the keyboard on <body> — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" works but breaks keyboard-lands-nowhere: a press on <button> \"Hold it somewhere else\" in [data-testid=\"form-hold-at\"] left the keyboard on <body> — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "rota",
+      "job": "repair",
+      "says": "rota: Getting from a problem to its repair works but breaks keyboard-lands-nowhere: a press on <button> \"Find somebody for \"Friday repair cafe\" …\" in [data-testid=\"repairs\"] left the keyboard on <body> — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "rota",
+      "job": "repair",
+      "says": "rota: Getting from a problem to its repair works but breaks keyboard-lands-nowhere: a press on <button> \"Find somebody for \"Friday repair cafe\"\" in [data-testid=\"form-cover\"] left the keyboard on <body> — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "discography",
+      "job": "change",
+      "says": "discography: Renaming a song on its record works only the long way round — the name is not something to press; it takes \"Change the song\" — on the pages, at either width and with either hand."
+    },
+    {
+      "app": "todo",
+      "job": "make-task",
+      "says": "todo: Making a task works but breaks keyboard-lands-nowhere: a press on <button> \"Add a task\" in [data-testid=\"form-add-task\"] left the keyboard on <body> — on the pages with the pointer, at either width."
+    },
+    {
+      "app": "todo",
+      "job": "make-task",
+      "says": "todo: Making a task works but breaks keyboard-lands-nowhere: Enter on <input> in [data-testid=\"form-add-task\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "todo",
+      "job": "find",
+      "says": "todo: Finding a task by part of its name works but breaks keyboard-lands-nowhere: Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body> — on the scene from the keyboard, at either width."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" works but breaks keyboard-lands-nowhere: Enter on <button> \"This has to happen first …\" in [data-testid=\"record-actions\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" works but breaks keyboard-lands-nowhere: Enter on <button> \"This has to happen first\" in [data-testid=\"form-wait-for\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-planting",
+      "says": "seedbed: Making a planting works but breaks keyboard-lands-nowhere: Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body> — on the scene from the keyboard, at either width."
+    },
+    {
+      "app": "seedbed",
+      "job": "find",
+      "says": "seedbed: Finding a gardener by part of its name works but breaks keyboard-lands-nowhere: Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body> — on the scene from the keyboard, at either width."
+    },
+    {
+      "app": "seedbed",
+      "job": "relate",
+      "says": "seedbed: Tying a plot to another with \"Name a caretaker\" works but breaks keyboard-lands-nowhere: Enter on <button> \"June takes on Plot 1\" in [data-testid=\"record-violations\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "rota",
+      "job": "make-shift",
+      "says": "rota: Making a shift works but breaks keyboard-lands-nowhere: a press on <button> \"Add a shift\" in [data-testid=\"form-add-shift\"] left the keyboard on <body> — on the pages with the pointer, at either width."
+    },
+    {
+      "app": "rota",
+      "job": "make-shift",
+      "says": "rota: Making a shift works but breaks keyboard-lands-nowhere: Enter on <input> in [data-testid=\"form-add-shift\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "rota",
+      "job": "make-volunteer",
+      "says": "rota: Making a volunteer works but breaks keyboard-lands-nowhere: a press on <button> \"Add a volunteer\" in [data-testid=\"form-add-volunteer\"] left the keyboard on <body> — on the pages with the pointer, at either width."
+    },
+    {
+      "app": "rota",
+      "job": "make-volunteer",
+      "says": "rota: Making a volunteer works but breaks keyboard-lands-nowhere: Enter on <input> in [data-testid=\"form-add-volunteer\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "rota",
+      "job": "find",
+      "says": "rota: Finding a shift by part of its name works but breaks keyboard-lands-nowhere: Enter on <input data-testid=\"find-box\" aria-label=\"Find anything\"> in [data-testid=\"find\"] left the keyboard on <body> — on the scene from the keyboard, at either width."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" works but breaks keyboard-lands-nowhere: Enter on <button> \"Hold it somewhere else …\" in [data-testid=\"record-actions\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" works but breaks keyboard-lands-nowhere: Enter on <button> \"Hold it somewhere else\" in [data-testid=\"form-hold-at\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "rota",
+      "job": "repair",
+      "says": "rota: Getting from a problem to its repair works but breaks keyboard-lands-nowhere: Enter on <button> \"Find somebody for \"Friday repair cafe\" …\" in [data-testid=\"repairs\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "rota",
+      "job": "repair",
+      "says": "rota: Getting from a problem to its repair works but breaks keyboard-lands-nowhere: Enter on <button> \"Find somebody for \"Friday repair cafe\"\" in [data-testid=\"form-cover\"] left the keyboard on <body> — on the pages from the keyboard, at either width."
+    },
+    {
+      "app": "todo",
+      "job": "repair",
+      "says": "todo: Getting from a problem to its repair on the scene on a laptop from the keyboard takes 38 presses; on the pages on a laptop with the pointer, 2."
+    },
+    {
+      "app": "seedbed",
+      "job": "relate",
+      "says": "seedbed: Tying a plot to another with \"Name a caretaker\" on the scene on a phone from the keyboard takes 18 presses; on the pages on a laptop with the pointer, 1."
+    },
+    {
+      "app": "discography",
+      "job": "refused",
+      "says": "discography: Being told an act is not yours before pressing it on the scene on a phone from the keyboard takes 18 presses; on the scene on a laptop with the pointer, 1."
+    },
+    {
+      "app": "seedbed",
+      "job": "relate",
+      "says": "seedbed: Tying a plot to another with \"Name a caretaker\" on the scene on a laptop from the keyboard takes 17 presses; on the pages on a laptop with the pointer, 1."
+    },
+    {
+      "app": "rota",
+      "job": "make-location",
+      "says": "rota: Making a location on the scene on a laptop from the keyboard takes 62 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "refused",
+      "says": "discography: Being told an act is not yours before pressing it on the scene on a laptop from the keyboard takes 15 presses; on the scene on a laptop with the pointer, 1."
+    },
+    {
+      "app": "seedbed",
+      "job": "relate",
+      "says": "seedbed: Tying a plot to another with \"Name a caretaker\" on the pages on a laptop from the keyboard takes 14 presses; on the pages on a laptop with the pointer, 1."
+    },
+    {
+      "app": "seedbed",
+      "job": "relate",
+      "says": "seedbed: Tying a plot to another with \"Name a caretaker\" on the pages on a phone from the keyboard takes 14 presses; on the pages on a laptop with the pointer, 1."
+    },
+    {
+      "app": "seedbed",
+      "job": "repair",
+      "says": "seedbed: Getting from a problem to its repair on the scene on a laptop from the keyboard takes 28 presses; on the pages on a laptop with the pointer, 2."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" on the scene on a laptop from the keyboard takes 25 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "rota",
+      "job": "repair",
+      "says": "rota: Getting from a problem to its repair on the scene on a laptop from the keyboard takes 50 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "todo",
+      "job": "repair",
+      "says": "todo: Getting from a problem to its repair on the pages on a laptop from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 2."
+    },
+    {
+      "app": "todo",
+      "job": "repair",
+      "says": "todo: Getting from a problem to its repair on the pages on a phone from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 2."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" on the scene on a phone from the keyboard takes 22 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-rule",
+      "says": "seedbed: Making a rule on the scene on a laptop from the keyboard takes 20 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" on the pages on a laptop from the keyboard takes 20 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" on the pages on a phone from the keyboard takes 20 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "todo",
+      "job": "repair",
+      "says": "todo: Getting from a problem to its repair on the scene on a phone from the keyboard takes 18 presses; on the pages on a laptop with the pointer, 2."
+    },
+    {
+      "app": "seedbed",
+      "job": "repair",
+      "says": "seedbed: Getting from a problem to its repair on the scene on a phone from the keyboard takes 17 presses; on the pages on a laptop with the pointer, 2."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-rule",
+      "says": "seedbed: Making a rule on the scene on a phone from the keyboard takes 16 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "rota",
+      "job": "repair",
+      "says": "rota: Getting from a problem to its repair on the scene on a phone from the keyboard takes 32 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-rule",
+      "says": "seedbed: Making a rule on the pages on a laptop from the keyboard takes 15 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-rule",
+      "says": "seedbed: Making a rule on the pages on a phone from the keyboard takes 15 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "seedbed",
+      "job": "repair",
+      "says": "seedbed: Getting from a problem to its repair on the pages on a laptop from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 2."
+    },
+    {
+      "app": "seedbed",
+      "job": "repair",
+      "says": "seedbed: Getting from a problem to its repair on the pages on a phone from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 2."
+    },
+    {
+      "app": "todo",
+      "job": "make-task",
+      "says": "todo: Making a task on the scene on a laptop from the keyboard takes 37 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" on the scene on a phone from the keyboard takes 28 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-gardener",
+      "says": "seedbed: Making a gardener on the scene on a laptop from the keyboard takes 28 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "relate",
+      "says": "discography: Tying a song to another with \"Put it on a release\" on the scene on a phone from the keyboard takes 28 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "todo",
+      "job": "make-task",
+      "says": "todo: Making a task on the pages on a laptop from the keyboard takes 33 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "todo",
+      "job": "make-task",
+      "says": "todo: Making a task on the pages on a phone from the keyboard takes 33 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "todo",
+      "job": "undo",
+      "says": "todo: Taking the last change back on the scene on a laptop from the keyboard takes 13 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "rota",
+      "job": "undo",
+      "says": "rota: Taking the last change back on the scene on a laptop from the keyboard takes 13 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "discography",
+      "job": "relate",
+      "says": "discography: Tying a song to another with \"Put it on a release\" on the scene on a laptop from the keyboard takes 25 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "make-artist",
+      "says": "discography: Making an artist on the scene on a laptop from the keyboard takes 30 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "discography",
+      "job": "make-era",
+      "says": "discography: Making an era on the scene on a laptop from the keyboard takes 30 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "discography",
+      "job": "make-artist",
+      "says": "discography: Making an artist on the scene on a phone from the keyboard takes 29 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "todo",
+      "job": "change",
+      "says": "todo: Renaming a task on its record on the pages on a laptop from the keyboard takes 23 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "todo",
+      "job": "change",
+      "says": "todo: Renaming a task on its record on the pages on a phone from the keyboard takes 23 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-gardener",
+      "says": "seedbed: Making a gardener on the scene on a phone from the keyboard takes 23 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "todo",
+      "job": "change",
+      "says": "todo: Renaming a task on its record on the scene on a laptop from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "make-location",
+      "says": "rota: Making a location on the scene on a phone from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "change",
+      "says": "rota: Renaming a shift on its record on the scene on a laptop from the keyboard takes 22 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "find",
+      "says": "discography: Finding a song by part of its name on the pages on a laptop from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "find",
+      "says": "discography: Finding a song by part of its name on the pages on a phone from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "change",
+      "says": "discography: Renaming a song on its record on the scene on a laptop from the keyboard takes 22 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "todo",
+      "job": "make-task",
+      "says": "todo: Making a task on the scene on a phone from the keyboard takes 27 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "rota",
+      "job": "make-volunteer",
+      "says": "rota: Making a volunteer on the scene on a laptop from the keyboard takes 43 presses; on the pages on a laptop with the pointer, 8."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" on the scene on a laptop from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-gardener",
+      "says": "seedbed: Making a gardener on the pages on a laptop from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-gardener",
+      "says": "seedbed: Making a gardener on the pages on a phone from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "make-song",
+      "says": "discography: Making a song on the scene on a laptop from the keyboard takes 26 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "discography",
+      "job": "make-era",
+      "says": "discography: Making an era on the scene on a phone from the keyboard takes 26 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "todo",
+      "job": "undo",
+      "says": "todo: Taking the last change back on the scene on a phone from the keyboard takes 10 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-plot",
+      "says": "seedbed: Making a plot on the scene on a laptop from the keyboard takes 30 presses; on the pages on a laptop with the pointer, 6."
+    },
+    {
+      "app": "seedbed",
+      "job": "undo",
+      "says": "seedbed: Taking the last change back on the scene on a laptop from the keyboard takes 10 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "rota",
+      "job": "undo",
+      "says": "rota: Taking the last change back on the scene on a phone from the keyboard takes 10 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "rota",
+      "job": "repair",
+      "says": "rota: Getting from a problem to its repair on the pages on a laptop from the keyboard takes 20 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "repair",
+      "says": "rota: Getting from a problem to its repair on the pages on a phone from the keyboard takes 20 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "make-album",
+      "says": "discography: Making an album on the scene on a laptop from the keyboard takes 30 presses; on the scene on a laptop with the pointer, 6."
+    },
+    {
+      "app": "discography",
+      "job": "undo",
+      "says": "discography: Taking the last change back on the scene on a laptop from the keyboard takes 10 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-plot",
+      "says": "seedbed: Making a plot on the scene on a phone from the keyboard takes 28 presses; on the pages on a laptop with the pointer, 6."
+    },
+    {
+      "app": "seedbed",
+      "job": "find",
+      "says": "seedbed: Finding a gardener by part of its name on the pages on a laptop from the keyboard takes 14 presses; on the scene on a laptop with the pointer, 3."
+    },
+    {
+      "app": "seedbed",
+      "job": "find",
+      "says": "seedbed: Finding a gardener by part of its name on the pages on a phone from the keyboard takes 14 presses; on the scene on a laptop with the pointer, 3."
+    },
+    {
+      "app": "seedbed",
+      "job": "undo",
+      "says": "seedbed: Taking the last change back on the scene on a phone from the keyboard takes 9 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "discography",
+      "job": "make-song",
+      "says": "discography: Making a song on the scene on a phone from the keyboard takes 22 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-plot",
+      "says": "seedbed: Making a plot on the pages on a laptop from the keyboard takes 26 presses; on the pages on a laptop with the pointer, 6."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-plot",
+      "says": "seedbed: Making a plot on the pages on a phone from the keyboard takes 26 presses; on the pages on a laptop with the pointer, 6."
+    },
+    {
+      "app": "rota",
+      "job": "change",
+      "says": "rota: Renaming a shift on its record on the pages on a laptop from the keyboard takes 17 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "change",
+      "says": "rota: Renaming a shift on its record on the pages on a phone from the keyboard takes 17 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "make-era",
+      "says": "discography: Making an era on the pages on a laptop from the keyboard takes 21 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "discography",
+      "job": "make-era",
+      "says": "discography: Making an era on the pages on a phone from the keyboard takes 21 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "todo",
+      "job": "change",
+      "says": "todo: Renaming a task on its record on the scene on a phone from the keyboard takes 16 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" on the pages on a laptop from the keyboard takes 16 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" on the pages on a phone from the keyboard takes 16 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "change",
+      "says": "rota: Renaming a shift on its record on the scene on a phone from the keyboard takes 16 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "refused",
+      "says": "rota: Being told an act is not yours before pressing it on the pages on a laptop from the keyboard takes 4 presses; on the scene on a laptop with the pointer, 0."
+    },
+    {
+      "app": "rota",
+      "job": "refused",
+      "says": "rota: Being told an act is not yours before pressing it on the pages on a phone from the keyboard takes 4 presses; on the scene on a laptop with the pointer, 0."
+    },
+    {
+      "app": "discography",
+      "job": "make-theme",
+      "says": "discography: Making a theme on the scene on a laptop from the keyboard takes 20 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "discography",
+      "job": "relate",
+      "says": "discography: Tying a song to another with \"Put it on a release\" on the pages on a laptop from the keyboard takes 16 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "relate",
+      "says": "discography: Tying a song to another with \"Put it on a release\" on the pages on a phone from the keyboard takes 16 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "undo",
+      "says": "discography: Taking the last change back on the scene on a phone from the keyboard takes 8 presses; on the scene on a laptop with the pointer, 2."
+    },
+    {
+      "app": "discography",
+      "job": "make-theme",
+      "says": "discography: Making a theme on the pages on a laptop from the keyboard takes 19 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "discography",
+      "job": "make-theme",
+      "says": "discography: Making a theme on the pages on a phone from the keyboard takes 19 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "seedbed",
+      "job": "change",
+      "says": "seedbed: Renaming a gardener on its record on the scene on a laptop from the keyboard takes 15 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "make-location",
+      "says": "rota: Making a location on the pages on a laptop from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "make-location",
+      "says": "rota: Making a location on the pages on a phone from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "make-album",
+      "says": "discography: Making an album on the scene on a phone from the keyboard takes 22 presses; on the scene on a laptop with the pointer, 6."
+    },
+    {
+      "app": "seedbed",
+      "job": "change",
+      "says": "seedbed: Renaming a gardener on its record on the pages on a laptop from the keyboard takes 14 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "seedbed",
+      "job": "change",
+      "says": "seedbed: Renaming a gardener on its record on the pages on a phone from the keyboard takes 14 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "make-artist",
+      "says": "discography: Making an artist on the pages on a laptop from the keyboard takes 17 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "discography",
+      "job": "make-artist",
+      "says": "discography: Making an artist on the pages on a phone from the keyboard takes 17 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "discography",
+      "job": "change",
+      "says": "discography: Renaming a song on its record on the scene on a phone from the keyboard takes 13 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "make-theme",
+      "says": "discography: Making a theme on the scene on a phone from the keyboard takes 16 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "todo",
+      "job": "find",
+      "says": "todo: Finding a task by part of its name on the pages on a laptop from the keyboard takes 9 presses; on the scene on a laptop with the pointer, 3."
+    },
+    {
+      "app": "todo",
+      "job": "find",
+      "says": "todo: Finding a task by part of its name on the pages on a phone from the keyboard takes 9 presses; on the scene on a laptop with the pointer, 3."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-planting",
+      "says": "seedbed: Making a planting on the pages on a laptop from the keyboard takes 24 presses; on the pages on a laptop with the pointer, 8."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-planting",
+      "says": "seedbed: Making a planting on the pages on a phone from the keyboard takes 24 presses; on the pages on a laptop with the pointer, 8."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-rotation",
+      "says": "seedbed: Making a rotation on the scene on a laptop from the keyboard takes 30 presses; on the scene on a laptop with the pointer, 10."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-rotation",
+      "says": "seedbed: Making a rotation on the pages on a laptop from the keyboard takes 30 presses; on the scene on a laptop with the pointer, 10."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-rotation",
+      "says": "seedbed: Making a rotation on the pages on a phone from the keyboard takes 30 presses; on the scene on a laptop with the pointer, 10."
+    },
+    {
+      "app": "discography",
+      "job": "make-album",
+      "says": "discography: Making an album on the pages on a laptop from the keyboard takes 18 presses; on the scene on a laptop with the pointer, 6."
+    },
+    {
+      "app": "discography",
+      "job": "make-album",
+      "says": "discography: Making an album on the pages on a phone from the keyboard takes 18 presses; on the scene on a laptop with the pointer, 6."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-planting",
+      "says": "seedbed: Making a planting on the scene on a laptop from the keyboard takes 23 presses; on the pages on a laptop with the pointer, 8."
+    },
+    {
+      "app": "rota",
+      "job": "make-volunteer",
+      "says": "rota: Making a volunteer on the pages on a laptop from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 8."
+    },
+    {
+      "app": "rota",
+      "job": "make-volunteer",
+      "says": "rota: Making a volunteer on the pages on a phone from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 8."
+    },
+    {
+      "app": "rota",
+      "job": "make-volunteer",
+      "says": "rota: Making a volunteer on the scene on a phone from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 8."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-rotation",
+      "says": "seedbed: Making a rotation on the scene on a phone from the keyboard takes 26 presses; on the scene on a laptop with the pointer, 10."
+    },
+    {
+      "app": "discography",
+      "job": "make-song",
+      "says": "discography: Making a song on the pages on a laptop from the keyboard takes 13 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "discography",
+      "job": "make-song",
+      "says": "discography: Making a song on the pages on a phone from the keyboard takes 13 presses; on the scene on a laptop with the pointer, 5."
+    },
+    {
+      "app": "seedbed",
+      "job": "make-planting",
+      "says": "seedbed: Making a planting on the scene on a phone from the keyboard takes 20 presses; on the pages on a laptop with the pointer, 8."
+    },
+    {
+      "app": "seedbed",
+      "job": "change",
+      "says": "seedbed: Renaming a gardener on its record on the scene on a phone from the keyboard takes 10 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "make-shift",
+      "says": "rota: Making a shift on the pages on a laptop from the keyboard takes 33 presses; on the pages on a laptop with the pointer, 14."
+    },
+    {
+      "app": "rota",
+      "job": "make-shift",
+      "says": "rota: Making a shift on the pages on a phone from the keyboard takes 33 presses; on the pages on a laptop with the pointer, 14."
+    },
+    {
+      "app": "discography",
+      "job": "change",
+      "says": "discography: Renaming a song on its record on the pages on a laptop from the keyboard takes 9 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "change",
+      "says": "discography: Renaming a song on its record on the pages on a phone from the keyboard takes 9 presses; on the scene on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "make-location",
+      "says": "rota: Making a location on the scene on a phone with the pointer takes 8 presses; on the pages on a laptop with the pointer, 4."
+    }
+  ],
+  "regressions": [],
+  "took": 163
+}

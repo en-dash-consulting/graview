@@ -21,7 +21,7 @@ import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
-import { tellTheWatchItsNames, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
+import { tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
 
 export interface StoreOptions<S extends AnySchema> {
   readonly schema: S;
@@ -226,6 +226,7 @@ export class Store<S extends AnySchema> {
       this.counter = Math.max(this.counter, trailing(op.batch));
       n = Math.max(n, trailing(op.id));
     }
+    tellTheWatchOfAStore(this);
   }
 
   mutation(name: string): AnyMutationDefinition<S> {

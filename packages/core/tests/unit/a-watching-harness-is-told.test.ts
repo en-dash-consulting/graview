@@ -27,8 +27,9 @@ const policy = { roles: ["sales-manager", "salesperson"], grants: [{ roles: ["sa
 const snapshot = { nodes: [{ id: "d1", kind: "deal", label: "Chloé · Highlander", stage: "open" }] as never, edges: [] };
 
 const listen = () => {
-  const told = { ids: new Set<string>(), words: [] as string[], refused: [] as { mutation: string; author?: string }[] };
+  const told = { ids: new Set<string>(), words: [] as string[], refused: [] as { mutation: string; author?: string }[], stores: [] as unknown[] };
   (globalThis as { __graviewWatch?: unknown }).__graviewWatch = {
+    store: (store: unknown) => told.stores.push(store),
     learn: ({ ids, words }: { ids: string[]; words: string[] }) => {
       for (const id of ids) told.ids.add(id);
       told.words.push(...words);
@@ -67,6 +68,13 @@ describe("a store in a watched page", () => {
     const store = new Store({ schema, mutations: [close], policy, snapshot });
     store.apply({ name: "close-deal", args: { id: "d1" } }, { author: { kind: "human", id: "user-mona", roles: ["sales-manager"] } });
     expect(told.ids).toContain("user-mona");
+  });
+
+  it("hands the watch the store itself, once it holds its graph, so a harness can read what a press did", () => {
+    const told = listen();
+    const store = new Store({ schema, mutations: [close], policy, snapshot });
+    expect(told.stores).toEqual([store]);
+    expect((told.stores[0] as Store<typeof schema>).graph.getNode("d1")).toBeDefined();
   });
 
   it("costs nothing where nobody watches", () => {

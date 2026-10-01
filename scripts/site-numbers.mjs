@@ -65,11 +65,18 @@ export function countOf() {
  * handful run inside loops — and being the smaller, exactly countable one is
  * the right trade for a claim on a marketing page.
  */
+/*
+ * NOT COUNTED: what is built or installed, and `.claude`, where an assistant's
+ * worktrees live — whole second checkouts, which doubled the count on the
+ * machine that had them and made the page disagree with every other one.
+ */
+const UNCOUNTED = new Set(["node_modules", "dist", ".git", "out", ".claude"]);
+
 function testFiles() {
   let found = 0;
   const walk = (dir) => {
     for (const entry of readdirSync(dir)) {
-      if (entry === "node_modules" || entry === "dist" || entry === ".git" || entry === "out") continue;
+      if (UNCOUNTED.has(entry)) continue;
       const path = resolve(dir, entry);
       if (statSync(path).isDirectory()) walk(path);
       else if (/\.test\.(ts|tsx|js|mjs)$/.test(entry)) found += 1;
@@ -83,7 +90,7 @@ function tested() {
   let found = 0;
   const walk = (dir) => {
     for (const entry of readdirSync(dir)) {
-      if (entry === "node_modules" || entry === "dist" || entry === ".git" || entry === "out") continue;
+      if (UNCOUNTED.has(entry)) continue;
       const path = resolve(dir, entry);
       if (statSync(path).isDirectory()) walk(path);
       else if (/\.test\.(ts|tsx|js|mjs)$/.test(entry)) {

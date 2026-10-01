@@ -68,6 +68,8 @@ const CHAIN = [
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],
   ["pages", "verify-pages.mjs"],
+  // Whether a person can do each app's core jobs on both faces, and what it costs; fails only on a regression.
+  ["journeys", "verify-journeys.mjs"],
   ["panning", "verify-panning.mjs"],
   // A real catalogue, built for production: what a person can read, at sixty frames a second.
   ["scale", "verify-scale.mjs"],

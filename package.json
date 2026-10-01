@@ -28,6 +28,7 @@
     "gauntlet": "node scripts/verify-gauntlet.mjs",
     "dev:gauntlet": "pnpm --filter @graview/gauntlet dev",
     "pages": "node scripts/verify-pages.mjs",
+    "journeys": "node scripts/verify-journeys.mjs",
     "remember": "node scripts/verify-remember.mjs",
     "promo": "pnpm --filter @graview/promo dev",
     "dev:promo": "pnpm --filter @graview/promo dev",

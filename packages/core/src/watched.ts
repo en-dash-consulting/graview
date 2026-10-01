@@ -16,6 +16,7 @@ import type { Policy, Refusal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
 
 interface Watch {
+  store?(store: unknown): void;
   learn?(names: { readonly ids: readonly string[]; readonly words: readonly string[] }): void;
   refused?(refusal: Refusal & { readonly author?: string }): void;
 }
@@ -50,6 +51,16 @@ export function tellTheWatchItsNames(
   for (const grant of policy?.grants ?? []) if (grant.roles !== "*") ids.push(...grant.roles);
   ids.push(...(policy?.roles ?? []));
   watch.learn({ ids, words: words.filter(Boolean) });
+}
+
+/**
+ * THE STORE ITSELF, for a harness that measures whether a person got a job
+ * done (`scripts/verify-journeys.mjs`). It drives the page as a person
+ * would and reads the log afterwards to say whether the press did what it
+ * meant — the screen saying so is the claim under test, not the evidence.
+ */
+export function tellTheWatchOfAStore(store: unknown): void {
+  theWatch()?.store?.(store);
 }
 
 /** An author's id, once it has signed something: a seat's id is a name too. */
