@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-01T05:48:32.477Z",
+  "at": "2026-10-01T06:54:58.867Z",
   "engine": "chromium",
   "screens": [
     {
@@ -691,12 +691,7 @@
       "app": "seedbed",
       "state": "largest",
       "collisions": [],
-      "small": [
-        {
-          "what": "Find anything",
-          "size": "22x53"
-        }
-      ],
+      "small": [],
       "cut": [],
       "unnamed": [],
       "keyed": [],
@@ -707,7 +702,8 @@
       "articles": [],
       "covered": [],
       "offscreen": [
-        "standing at 598..1054"
+        "standing at 761..1218",
+        "profile-button at 1367..1707"
       ],
       "asking": [],
       "board": [],

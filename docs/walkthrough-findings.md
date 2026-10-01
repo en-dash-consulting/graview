@@ -3907,6 +3907,12 @@ vehicles, dozens of customers and deals.
   1280: "The diary · +2 more").
   Criterion: the existing `survey` (32 of 34 screens clean before, 34 of 34
   after; `pnpm verify survey` holds).
+  Reopened 2026-10-01: survey kept the seven pixels on both schemes after
+  this fix — the reserve kept the pill's width plus 14 for a select that
+  draws "The rotation" in 144 against its pill's 106, and the pills' widths
+  were taken once as they mounted. Fixed in "The places row measures the
+  menu as it is drawn": the pills are measured on each fit and watched, and
+  what the menu adds to the place it shows is measured. survey: 34 of 34.
 
 ### W-143 · "Not permitted: close-deal on a deal — sales-manager can."
 - stage: C (a repair from the agent's seat) and F (the narrower seat) · face: both · width: — · scheme: —

@@ -39,7 +39,9 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
   /* Hooks first, before any early return: a bar whose places arrive a
      render later must not change how many hooks it calls. */
   const row = useRef<HTMLElement>(null);
-  const widths = useRef<number[]>([]);
+  // The pills, measured each time the row is fitted (their widths change when the font arrives).
+  const pills = useRef<(HTMLButtonElement | null)[]>([]);
+  const more = useRef<HTMLSelectElement | null>(null);
   const [shown, setShown] = useState(places.length);
   const MORE = 92;
   /* Which place you are on, so the menu keeps room for its name when it holds it. */
@@ -59,8 +61,27 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
       // the row shrinks to what it shows, and measuring it could only ever
       // agree with what was already shown.
       const room = (element.parentElement ?? element).getBoundingClientRect().width - 8;
-      const sizes = widths.current;
-      if (sizes.length < places.length) return;
+      /*
+       * READ NOW, NOT WHEN THE PILL MOUNTED. The widths were taken in each
+       * pill's ref as it mounted — in the fallback face, before the brand's
+       * font arrived — and the font made every pill wider without making the
+       * row fit again: seedbed's places ran seven pixels past their edge on
+       * every screen measured early, and a fix to the reserve below did not
+       * touch it. The pills are measured on each fit, and watched.
+       */
+      const sizes = pills.current.map((pill) => pill?.getBoundingClientRect().width ?? 0);
+      /*
+       * AND THE MENU AS IT IS DRAWN. Standing on a place the menu holds, the
+       * menu shows that place's name in a select's padding and chevron —
+       * 144 pixels for "The rotation", whose pill is 106 — and the 14 kept
+       * for it was a guess that ran the row seven pixels past its edge. Where
+       * the menu is showing a held place, what it adds to that place's pill
+       * is measured; until then, forty.
+       */
+      const menu = more.current;
+      const showing = menu ? places.findIndex((place) => `${place.kind}:${place.as}` === menu.value) : -1;
+      const chrome = menu && showing >= 0 && sizes[showing] ? Math.max(14, menu.getBoundingClientRect().width - sizes[showing]) : 40;
+      if (pills.current.filter(Boolean).length < places.length) return;
       let used = 0;
       let fit = 0;
       for (let i = 0; i < places.length; i += 1) {
@@ -74,7 +95,7 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
          * menu says "+N more", and 92 holds that.
          */
         const reserve =
-          i < places.length - 1 ? Math.max(MORE, current > i ? (sizes[current] ?? 0) + 14 : 0) : 0;
+          i < places.length - 1 ? Math.max(MORE, current > i ? (sizes[current] ?? 0) + chrome : 0) : 0;
         if (next + reserve > room) break;
         used = next;
         fit = i + 1;
@@ -84,6 +105,8 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
     measure();
     const watch = new ResizeObserver(measure);
     watch.observe(element.parentElement ?? element);
+    for (const pill of pills.current) if (pill) watch.observe(pill);
+    if (more.current) watch.observe(more.current);
     return () => watch.disconnect();
   }, [places.length, current]);
   if (places.length === 0) return null;
@@ -176,7 +199,7 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
           <button
             key={`${place.kind}:${place.as}`}
             ref={(el) => {
-              if (el) widths.current[index] = el.getBoundingClientRect().width;
+              pills.current[index] = el;
             }}
             type="button"
             aria-pressed={here}
@@ -213,6 +236,7 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
       })}
       {rest.length > 0 ? (
         <select
+          ref={more}
           aria-label="More places"
           data-testid="places-more"
           value={restHere ? `${restHere.kind}:${restHere.as}` : ""}

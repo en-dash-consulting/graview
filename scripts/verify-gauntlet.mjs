@@ -199,6 +199,12 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     await reach(page, where, `the ${kind} district opened in place`, async () => {
       await rise(page);
       const control = page.locator(`[data-testid="open-${kind}"]`).first();
+      // On a phone a district can stand past the edge of the ground; its sign brings it in, as a person would press it.
+      const sign = page.locator(`[data-graview-past-edge="kind:${kind}"]`).first();
+      if ((await sign.count()) > 0) {
+        await sign.click();
+        await page.waitForTimeout(800);
+      }
       await control.click();
       await page.waitForTimeout(1200);
       return { reached: (await control.getAttribute("aria-expanded")) === "true", detail: await count(page, `[data-graview-view="kind:${kind}"] [data-graview-pick]`) };

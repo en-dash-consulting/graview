@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-01T05:59:31.881Z",
+  "at": "2026-10-01T07:06:35.478Z",
   "engine": "chromium",
   "states": [
     {
@@ -24,6 +24,23 @@
       "face": "scene",
       "width": 1440,
       "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "light",
       "seat": "u-02d8c4",
       "reached": true,
       "detail": 7
@@ -39,6 +56,125 @@
     {
       "state": "the city from altitude",
       "face": "scene",
+      "width": 1440,
+      "scheme": "light",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "light",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "light",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "light",
+      "seat": "u-anon-0",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-4f1c9a",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-4f1c9a",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-02d8c4",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-02d8c4",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
       "width": 390,
       "scheme": "light",
       "seat": "u-4f1c9a",
@@ -58,6 +194,23 @@
       "face": "scene",
       "width": 390,
       "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
       "seat": "u-02d8c4",
       "reached": true,
       "detail": 7
@@ -68,6 +221,125 @@
       "width": 390,
       "scheme": "light",
       "seat": "u-02d8c4",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-anon-0",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-4f1c9a",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-4f1c9a",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-02d8c4",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-02d8c4",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "the city from altitude",
+      "face": "scene",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": 7
+    },
+    {
+      "state": "the pages' home",
+      "face": "pages",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-anon-0",
       "reached": true
     },
     {
@@ -217,9 +489,9 @@
       "width": 1440,
       "scheme": "light",
       "seat": "u-4f1c9a",
-      "reached": false,
+      "reached": true,
       "detail": {
-        "hits": 0
+        "hits": 1
       }
     },
     {
@@ -512,6 +784,445 @@
       "width": 1440,
       "scheme": "light",
       "seat": "u-4f1c9a",
+      "reached": true,
+      "detail": {
+        "withheld": 0
+      }
+    },
+    {
+      "state": "the talk district opened in place",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": 33
+    },
+    {
+      "state": "the speaker district opened in place",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": 4
+    },
+    {
+      "state": "the session district opened in place",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": 4
+    },
+    {
+      "state": "a district gone deeper into",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "a talk with a long, shared-prefix title focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=talk%3Auber-die-zuverlassigkeit-verteilter-systeme-erfahrungen-aus-a-startup-that-grew-faster-than-its-database&sel=talk%3Auber-die-zuverlassigkeit-verteilter-systeme-erfahrungen-aus-a-startup-that-grew-faster-than-its-database"
+    },
+    {
+      "state": "one of ten Opening Remarks focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=talk%3Aopening-remarks-7&sel=talk%3Aopening-remarks-7"
+    },
+    {
+      "state": "one of three Wei Zhangs focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=speaker%3Awei-zhang-2&sel=speaker%3Awei-zhang-2"
+    },
+    {
+      "state": "a speaker named in Han script focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=speaker%3A%E7%8E%8B-%E8%8A%B3&sel=speaker%3A%E7%8E%8B-%E8%8A%B3"
+    },
+    {
+      "state": "a speaker with a seventy-character name focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=speaker%3Amaximiliane-franziska-wilhelmina-von-hohenzollern-sigmaringen-ostbrandenburg&sel=speaker%3Amaximiliane-franziska-wilhelmina-von-hohenzollern-sigmaringen-ostbrandenburg"
+    },
+    {
+      "state": "a room with no label field focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=room%3Aaula&sel=room%3Aaula"
+    },
+    {
+      "state": "one of two staff members of one name focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
+    },
+    {
+      "state": "a workshop over its room's seats focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector&sel=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector"
+    },
+    {
+      "state": "the strip on a submitted talk, withheld acts shown",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "offered": 5,
+        "withheld": 6
+      }
+    },
+    {
+      "state": "an ask opened from the strip and put away with Escape",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "asked": true
+      }
+    },
+    {
+      "state": "the Find box asked for a name ten records share",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "hits": 10
+      }
+    },
+    {
+      "state": "the Find box asked in another script",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "hits": 1
+      }
+    },
+    {
+      "state": "the timetable over talks and workshops opened",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "the timetable paged a week on",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "the timetable over all ten editions",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=aggregate%3Atalk&in.at=2026-10-05&in.range=years&in.view=the-timetable"
+    },
+    {
+      "state": "the workshops' timetable, the calendar's second kind",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "what the talks are about, at real size",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "an act pressed from the keyboard",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "the turn taken back from the activity",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true
+    },
+    {
+      "state": "the keyboard walked from the page and Escape pressed",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "BUTTON"
+    },
+    {
+      "state": "the profile opened and the seats listed",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "seats": 5
+      }
+    },
+    {
+      "state": "the talks, every one of two thousand",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "the talks, the past widened",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "the speakers",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "the staff, a mass noun",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "a talk with a long, shared-prefix title",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "one of ten Opening Remarks",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "one of three Wei Zhangs",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "a speaker whose id is in Han script",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "a room with no label field",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "a session, held in a room and chaired by one",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "the places",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "the timetable's place",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "the coverage's place",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "the problems the seed was written with",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "a search for a name ten records share",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "a search that folds an accent",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "the map of the kinds",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "a form opened on a submitted talk and put away with Escape",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "form": true,
+        "expanded": "true"
+      }
+    },
+    {
+      "state": "a refused act on a page says why",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
       "reached": true,
       "detail": {
         "withheld": 0
@@ -954,6 +1665,867 @@
       "detail": {
         "withheld": 0
       }
+    },
+    {
+      "state": "the talk district opened in place",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": 33
+    },
+    {
+      "state": "the speaker district opened in place",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": 4
+    },
+    {
+      "state": "the session district opened in place",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": 4
+    },
+    {
+      "state": "a district gone deeper into",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "a talk with a long, shared-prefix title focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=talk%3Auber-die-zuverlassigkeit-verteilter-systeme-erfahrungen-aus-a-startup-that-grew-faster-than-its-database&sel=talk%3Auber-die-zuverlassigkeit-verteilter-systeme-erfahrungen-aus-a-startup-that-grew-faster-than-its-database"
+    },
+    {
+      "state": "one of ten Opening Remarks focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=talk%3Aopening-remarks-7&sel=talk%3Aopening-remarks-7"
+    },
+    {
+      "state": "one of three Wei Zhangs focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=speaker%3Awei-zhang-2&sel=speaker%3Awei-zhang-2"
+    },
+    {
+      "state": "a speaker named in Han script focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=speaker%3A%E7%8E%8B-%E8%8A%B3&sel=speaker%3A%E7%8E%8B-%E8%8A%B3"
+    },
+    {
+      "state": "a speaker with a seventy-character name focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=speaker%3Amaximiliane-franziska-wilhelmina-von-hohenzollern-sigmaringen-ostbrandenburg&sel=speaker%3Amaximiliane-franziska-wilhelmina-von-hohenzollern-sigmaringen-ostbrandenburg"
+    },
+    {
+      "state": "a room with no label field focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=room%3Aaula&sel=room%3Aaula"
+    },
+    {
+      "state": "one of two staff members of one name focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
+    },
+    {
+      "state": "a workshop over its room's seats focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector&sel=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector"
+    },
+    {
+      "state": "the strip on a submitted talk, withheld acts shown",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "offered": 2,
+        "withheld": 9
+      }
+    },
+    {
+      "state": "an ask opened from the strip and put away with Escape",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "asked": true
+      }
+    },
+    {
+      "state": "the Find box asked for a name ten records share",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "hits": 10
+      }
+    },
+    {
+      "state": "the Find box asked in another script",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "hits": 1
+      }
+    },
+    {
+      "state": "the timetable over talks and workshops opened",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "the timetable paged a week on",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "the timetable over all ten editions",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=aggregate%3Atalk&in.at=2026-10-05&in.range=years&in.view=the-timetable"
+    },
+    {
+      "state": "the workshops' timetable, the calendar's second kind",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "what the talks are about, at real size",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "an act pressed from the keyboard",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "the turn taken back from the activity",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true
+    },
+    {
+      "state": "the keyboard walked from the page and Escape pressed",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "DIV"
+    },
+    {
+      "state": "the profile opened and the seats listed",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "seats": 5
+      }
+    },
+    {
+      "state": "the talks, every one of two thousand",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the talks, the past widened",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the speakers",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the staff, a mass noun",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a talk with a long, shared-prefix title",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "one of ten Opening Remarks",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "one of three Wei Zhangs",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a speaker whose id is in Han script",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a room with no label field",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a session, held in a room and chaired by one",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the places",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the timetable's place",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the coverage's place",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the problems the seed was written with",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a search for a name ten records share",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a search that folds an accent",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the map of the kinds",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a form opened on a submitted talk and put away with Escape",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "form": true,
+        "expanded": "true"
+      }
+    },
+    {
+      "state": "a refused act on a page says why",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "withheld": 0
+      }
+    },
+    {
+      "state": "the talk district opened in place",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": 33
+    },
+    {
+      "state": "the speaker district opened in place",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": 4
+    },
+    {
+      "state": "the session district opened in place",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": 4
+    },
+    {
+      "state": "a district gone deeper into",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true
+    },
+    {
+      "state": "a talk with a long, shared-prefix title focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#focus=talk%3Auber-die-zuverlassigkeit-verteilter-systeme-erfahrungen-aus-a-startup-that-grew-faster-than-its-database&sel=talk%3Auber-die-zuverlassigkeit-verteilter-systeme-erfahrungen-aus-a-startup-that-grew-faster-than-its-database"
+    },
+    {
+      "state": "one of ten Opening Remarks focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#focus=talk%3Aopening-remarks-7&sel=talk%3Aopening-remarks-7"
+    },
+    {
+      "state": "one of three Wei Zhangs focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#focus=speaker%3Awei-zhang-2&sel=speaker%3Awei-zhang-2"
+    },
+    {
+      "state": "a speaker named in Han script focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#focus=speaker%3A%E7%8E%8B-%E8%8A%B3&sel=speaker%3A%E7%8E%8B-%E8%8A%B3"
+    },
+    {
+      "state": "a speaker with a seventy-character name focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#focus=speaker%3Amaximiliane-franziska-wilhelmina-von-hohenzollern-sigmaringen-ostbrandenburg&sel=speaker%3Amaximiliane-franziska-wilhelmina-von-hohenzollern-sigmaringen-ostbrandenburg"
+    },
+    {
+      "state": "a room with no label field focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#focus=room%3Aaula&sel=room%3Aaula"
+    },
+    {
+      "state": "one of two staff members of one name focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
+    },
+    {
+      "state": "a workshop over its room's seats focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#focus=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector&sel=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector"
+    },
+    {
+      "state": "the strip on a submitted talk, withheld acts shown",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "offered": 0,
+        "withheld": 11
+      }
+    },
+    {
+      "state": "a talk with every act withheld",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "offered": 0
+      }
+    },
+    {
+      "state": "the Find box asked for a name ten records share",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "hits": 10
+      }
+    },
+    {
+      "state": "the Find box asked in another script",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "hits": 1
+      }
+    },
+    {
+      "state": "the timetable over talks and workshops opened",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true
+    },
+    {
+      "state": "the timetable paged a week on",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true
+    },
+    {
+      "state": "the timetable over all ten editions",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#focus=aggregate%3Atalk&in.at=2026-10-05&in.range=years&in.view=the-timetable"
+    },
+    {
+      "state": "the workshops' timetable, the calendar's second kind",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true
+    },
+    {
+      "state": "what the talks are about, at real size",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true
+    },
+    {
+      "state": "the keyboard walked from the page and Escape pressed",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "DIV"
+    },
+    {
+      "state": "the profile opened and the seats listed",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "seats": 5
+      }
+    },
+    {
+      "state": "the talks, every one of two thousand",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the talks, the past widened",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the speakers",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the staff, a mass noun",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a talk with a long, shared-prefix title",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "one of ten Opening Remarks",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "one of three Wei Zhangs",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a speaker whose id is in Han script",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a room with no label field",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a session, held in a room and chaired by one",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the places",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the timetable's place",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the coverage's place",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the problems the seed was written with",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a search for a name ten records share",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a search that folds an accent",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "the map of the kinds",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
+      "state": "a talk's page with every act withheld",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "offered": 0
+      }
+    },
+    {
+      "state": "a refused act on a page says why",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "withheld": 0
+      }
     }
   ],
   "pageErrors": [],
@@ -962,15 +2534,13 @@
     "everyDistrictOpensInPlace": true,
     "everyAwkwardRecordIsReached": true,
     "theCalendarOverTwoKindsOpens": true,
-    "findingReachesAwkwardNames": false,
+    "findingReachesAwkwardNames": true,
     "asksAndFormsOpenAndClose": true,
     "anActIsPressedAndTakenBackByEverySeatThatMayAct": true,
     "noStepThrew": true,
     "noPageErrors": true
   },
-  "missed": [
-    "scene 1440 light u-4f1c9a: the Find box asked in another script ({\"hits\":0})"
-  ],
-  "reached": "96 of 97 states",
-  "passed": false
+  "missed": [],
+  "reached": "259 of 259 states",
+  "passed": true
 }
