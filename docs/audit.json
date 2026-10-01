@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-29T15:27:52.153Z",
+  "at": "2026-10-01T00:35:24.224Z",
   "engine": "chromium",
   "screens": [
     {
@@ -733,7 +733,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 34,
+      "fill": 35,
       "inspector": null,
       "led": null,
       "figures": []
@@ -936,7 +936,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 33,
+      "fill": 36,
       "inspector": {
         "shown": 5,
         "hidden": 0,

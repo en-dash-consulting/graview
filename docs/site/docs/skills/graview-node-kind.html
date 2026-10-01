@@ -1074,7 +1074,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>Add it to <code>createSchema([...])</code>.</strong> An edge pointing at a kind that is not in that array is a *typecheck* failure, not a runtime one — <code>createSchema</code>'s <code>ValidateEdgeTargets</code> sees it.</li>
 </ol>
 <ol>
-<li><strong>Say what a node of it is called.</strong> <code>label</code> defaults to a <code>label</code> field and then to the id. An id in the interface is a bug you shipped, not a placeholder.</li>
+<li><strong>Say what a node of it is called.</strong> <code>label</code> defaults to a <code>label</code> field and then to the id. An id in the interface is a bug you shipped, not a placeholder. And say what ONE of the kind is called where its id does not: <code>noun: "staff member"</code> on a kind called <code>staff</code>, or every sentence about one reads "Change the staff".</li>
 </ol>
 <p>An id is still a name a caller may choose: every act that declares    <code>creates: ["fixture"]</code> takes an optional <code>id</code> argument the framework adds,    so a seed being synced or an agent that will refer to the node next call    gets exactly the id it asked for, or a refusal by name. Never hardcode a    bootstrap id — <code>"today"</code>, <code>"u-nick"</code> — inside a mutation body or an    invariant; bind a role, a flag or an edge instead, so a store seeded    differently still works. And every kind gets <code>remove-&lt;kind&gt;</code> derived,    permitted through the acts that create it.</p>
 <ol>

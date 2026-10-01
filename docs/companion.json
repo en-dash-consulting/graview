@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-29T01:09:25.625Z",
+  "at": "2026-10-01T00:24:31.312Z",
   "engine": "chromium",
   "checks": {
     "theRailIsFixed": {
@@ -48,7 +48,7 @@
       "ok": true
     },
     "thisIsTheSubject": {
-      "reply": "Pay the deposit — a task (finished: no, 2026-08-28, tUE). The list it is on: Today. Why this is here: The landlord holds",
+      "reply": "Pay the deposit — a task (finished: no, due 2026-08-28, day TUE). The list it is on: Today. Why this is here: The landlo",
       "ok": true
     },
     "rightClickOpensItHere": {
@@ -127,7 +127,7 @@
       "ok": true
     },
     "aRefusalIsSaidAtTheGate": {
-      "thread": "give a role keeper to Sam | I can do that. Review it below.Give user-sam the keeper role — Not permitted: grant on a user — keeper can. The keeper keeps the installation: who is here, and what each of",
+      "thread": "give a role keeper to Sam | I can do that. Review it below.Give user-sam the keeper role — Not permitted: “Give a role” on a user — a keeper can. The keeper keeps the installation: who is here, and wh",
       "state": "tidy · refused",
       "ok": true
     },

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-29T01:12:13.481Z",
+  "at": "2026-10-01T00:27:47.443Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
@@ -111,7 +111,7 @@
       "scoped": true,
       "views": [
         3,
-        4
+        3
       ],
       "ok": true
     },

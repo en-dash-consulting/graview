@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-29T02:21:21.678Z",
+  "at": "2026-10-01T02:42:54.319Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -134,7 +134,7 @@
       "errors": [],
       "picture": {
         "width": 750,
-        "height": 506
+        "height": 502
       },
       "saw": {
         "standing": "1 problem",
@@ -395,8 +395,8 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityPlant a starter gardenNot yours to do from this seat. The store refu",
-        "withheld": "Stake out a plotNot permitted: add-plot — coordinator can. The coordinator keeps the map.",
+        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityPlant a starter gardenNot yours to do from this seat. Not permitted:",
+        "withheld": "Stake out a plotNot permitted: “Stake out a plot” — a coordinator can. The coordinator keeps the map.",
         "activity": [],
         "remembered": null,
         "problems": null,
@@ -407,7 +407,7 @@
         "offered": [
           "Take on a plot …"
         ],
-        "withheld": "Change the gardenerNot permitted: edit-gardener on a gardener — coordinator can. The coordinator keeps the map.Remove the gardenerNot permitted: remove-gardener on a gardener — coordinator can. The coordinator keeps the map."
+        "withheld": "Change the gardenerNot permitted: “Change the gardener” on a gardener — a coordinator can. The coordinator keeps the map.Remove the gardenerNot permitted: “Remove the gardener” on a gardener — a coordinator can. The coordinator keeps the map."
       }
     },
     {
@@ -463,7 +463,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityThe garden is plantedJJune⚙Signed in asJunecoordinatorKeeping this a",
+        "trail": "SeedbedSeedbed←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityThe garden is plantedJJune⚙Signed in asJuneCoordinatorKeeping this a",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -587,11 +587,11 @@
         "standing": "1 problem",
         "districts": [
           "Gardeners2◆",
-          "Plantings1+1 past",
+          "Plantings1+1 pastopen ▾",
           "Plots⚠ 2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→ScenePagesWho tends whatNothing here is called “”.1 problem ActivityThe garden is plantedJJune⚙Signed in asJunecoordinatorKeeping this appStudio",
+        "trail": "SeedbedSeedbed←→ScenePagesWho tends whatNothing here is called “”.1 problem ActivityThe garden is plantedJJune⚙Signed in asJuneCoordinatorKeeping this appStudio",
         "withheld": null,
         "activity": [],
         "remembered": null,

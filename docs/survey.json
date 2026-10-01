@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-30T22:40:55.518Z",
+  "at": "2026-10-01T00:33:11.044Z",
   "engine": "chromium",
   "shots": [
     {
@@ -502,7 +502,14 @@
       "contentRight": 1560,
       "verticalFill": 107,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "nav",
+          "by": 7,
+          "text": "What grows whereThe yearThe seasonThe ro",
+          "behind": "select. The rotationThe rotationWho te"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },
@@ -574,7 +581,14 @@
       "contentRight": 1560,
       "verticalFill": 107,
       "horizontalFill": 100,
-      "overflowing": [],
+      "overflowing": [
+        {
+          "tag": "nav",
+          "by": 7,
+          "text": "What grows whereThe yearThe seasonThe ro",
+          "behind": "select. The rotationThe rotationWho te"
+        }
+      ],
       "unnamed": [],
       "repeatedText": []
     },

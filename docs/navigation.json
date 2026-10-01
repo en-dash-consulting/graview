@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-29T15:24:27.333Z",
+  "at": "2026-10-01T00:22:54.739Z",
   "engine": "chromium",
   "steps": [
     {
@@ -114,7 +114,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565533,
+      "wingOpacity": 0.588957,
       "registered": true
     },
     "groundAgain": {
@@ -239,15 +239,15 @@
     "midSwitch": [
       {
         "view": "aggregate:list",
-        "width": 399,
-        "height": 193,
+        "width": 388.99993896484375,
+        "height": 194.00003051757812,
         "opacity": 1
       },
       {
         "view": "aggregate:task",
-        "width": 285,
-        "height": 257,
-        "opacity": 0.501274
+        "width": 287,
+        "height": 258,
+        "opacity": 0.527806
       }
     ],
     "afterSwitch": [
@@ -282,9 +282,9 @@
       "up": true
     },
     "midway": {
-      "x": 770.7559204101562,
-      "y": 287.2632293701172,
-      "width": 376
+      "x": 772.6273193359375,
+      "y": 281.05010986328125,
+      "width": 366
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -298,7 +298,7 @@
       "ok": true
     },
     "theGroundTravelsWithTheCards": {
-      "steps": 27,
+      "steps": 26,
       "jumps": 0,
       "first": 236,
       "last": 355,
@@ -417,10 +417,10 @@
       "width": 390,
       "strip": {
         "left": 0,
-        "top": 277,
+        "top": 275,
         "width": 390
       },
-      "boxBottom": 277,
+      "boxBottom": 275,
       "boxWidth": 366,
       "small": 0
     },
