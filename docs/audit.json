@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-01T00:35:24.224Z",
+  "at": "2026-10-01T05:48:32.477Z",
   "engine": "chromium",
   "screens": [
     {
@@ -24,7 +24,7 @@
         "shown": 0,
         "hidden": 0,
         "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
       },
       "led": null,
       "figures": []
@@ -52,8 +52,8 @@
       "inspector": {
         "shown": 0,
         "hidden": 0,
-        "size": "239x195",
-        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+        "size": "239x233",
+        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
       },
       "led": null,
       "figures": []
@@ -129,7 +129,7 @@
         "shown": 0,
         "hidden": 0,
         "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
       },
       "led": null,
       "figures": []
@@ -156,7 +156,7 @@
         "shown": 0,
         "hidden": 0,
         "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
       },
       "led": null,
       "figures": []
@@ -254,7 +254,7 @@
         "shown": 0,
         "hidden": 0,
         "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
       },
       "led": null,
       "figures": []
@@ -432,7 +432,7 @@
         "shown": 0,
         "hidden": 0,
         "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — no mutation declares them as a subject."
+        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
       },
       "led": null,
       "figures": []

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-01T00:26:27.496Z",
+  "at": "2026-10-01T05:46:48.199Z",
   "engine": "chromium",
   "checks": {
     "aSecondPictureOfOneGroupIsASecondPlace": {
@@ -106,7 +106,7 @@
     "aCoarseCellSaysWhatTheDropMeant": {
       "id": "rot-plot-1-2026",
       "moved": true,
-      "rounded": "Moved to Thu 1 Jun — a month is coarser than from holds, so it takes the first day of the cell. Undo puts it back.",
+      "rounded": "Moved to Thu 1 Jun — a month is coarser than the from holds, so it takes the first day of the cell. Undo puts it back.",
       "refused": null,
       "ok": true
     },

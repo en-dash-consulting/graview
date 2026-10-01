@@ -1,0 +1,114 @@
+{
+  "at": "2026-10-01T06:02:50.457Z",
+  "open": 0,
+  "problems": {
+    "keyboard-lands-nowhere|a press on <div> \"#:#Pay the deposit\" left the keyboard on <body>": {
+      "rule": "keyboard-lands-nowhere",
+      "detail": "a press on <div> \"09:00Pay the deposit\" in view \"aggregate:task\" left the keyboard on <body> (it was removed)",
+      "at": "/?today=2026-09-01#focus=t-deposit&overview=1&sel=t-deposit",
+      "harnesses": [
+        "verify-navigation"
+      ],
+      "firstSeen": "2026-10-01T05:35:29.661Z",
+      "lastSeen": "2026-10-01T05:54:12.348Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-01T05:58:56.747Z"
+    },
+    "keyboard-lands-nowhere|Enter on <span> \"task\" left the keyboard on <body>": {
+      "rule": "keyboard-lands-nowhere",
+      "detail": "Enter on <span> \"task\" in [data-testid=\"studio\"] in view \"kind:kind\" left the keyboard on <body> (it is still there)",
+      "at": "/?today=2026-09-01&as=user-nora#focus=aggregate%3Alist&in.studio=open",
+      "harnesses": [
+        "verify-studio"
+      ],
+      "firstSeen": "2026-10-01T05:54:12.348Z",
+      "lastSeen": "2026-10-01T05:54:12.348Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-01T05:58:56.747Z"
+    },
+    "keyboard-lands-nowhere|a press on <button> \"Add a field …\" left the keyboard on <body>": {
+      "rule": "keyboard-lands-nowhere",
+      "detail": "a press on <button> \"Add a field …\" in [data-testid=\"affordances\"] left the keyboard on <body> (it is still there)",
+      "at": "/?today=2026-09-01&as=user-nora#focus=aggregate%3Alist&in.studio=open",
+      "harnesses": [
+        "verify-studio"
+      ],
+      "firstSeen": "2026-10-01T05:35:29.661Z",
+      "lastSeen": "2026-10-01T05:54:12.348Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-01T05:58:56.747Z"
+    },
+    "keyboard-lands-nowhere|Enter on <input aria-label=\"Label\"> left the keyboard on <body>": {
+      "rule": "keyboard-lands-nowhere",
+      "detail": "Enter on <input aria-label=\"Label\"> in [data-testid=\"inspector-strip\"] left the keyboard on <body> (it was removed)",
+      "at": "/?today=2026-09-01&as=user-nora#focus=aggregate%3Alist&in.studio=open",
+      "harnesses": [
+        "verify-studio"
+      ],
+      "firstSeen": "2026-10-01T05:35:29.661Z",
+      "lastSeen": "2026-10-01T05:54:12.348Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-01T05:58:56.747Z"
+    },
+    "keyboard-lands-nowhere|a press on <button data-testid=\"activity-button\"> \"# Activity\" left the keyboard on <body>": {
+      "rule": "keyboard-lands-nowhere",
+      "detail": "a press on <button data-testid=\"activity-button\"> \"2 Activity\" in [data-testid=\"studio\"] left the keyboard on <body> (it is still there)",
+      "at": "/?today=2026-09-01&as=user-nora#focus=aggregate%3Alist&in.studio=open",
+      "harnesses": [
+        "verify-studio"
+      ],
+      "firstSeen": "2026-10-01T05:54:12.348Z",
+      "lastSeen": "2026-10-01T05:54:12.348Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-01T05:58:56.747Z"
+    },
+    "keyboard-lands-nowhere|a press on <button data-testid=\"studio-place\"> \"Studio\" left the keyboard on <body>": {
+      "rule": "keyboard-lands-nowhere",
+      "detail": "a press on <button data-testid=\"studio-place\"> \"Studio\" in [data-testid=\"profile-keeping\"] left the keyboard on <body>",
+      "at": "/?remember=1#overview=1&in.studio=open",
+      "harnesses": [
+        "rehearse-studio"
+      ],
+      "firstSeen": "2026-10-01T05:40:21.195Z",
+      "lastSeen": "2026-10-01T05:40:21.195Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-01T05:41:43.509Z"
+    },
+    "keyboard-lands-nowhere|a press on <button aria-label=\"Forward\"> \"→\" left the keyboard on <body>": {
+      "rule": "keyboard-lands-nowhere",
+      "detail": "a press on <button aria-label=\"Forward\"> \"→\" in [data-testid=\"backtrack\"] left the keyboard on <body> (it was disabled)",
+      "at": "/?today=2026-09-01#focus=aggregate%3Alist&sel=reason-deposit",
+      "harnesses": [
+        "verify-navigation"
+      ],
+      "firstSeen": "2026-10-01T05:43:32.240Z",
+      "lastSeen": "2026-10-01T05:43:32.240Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-01T05:54:12.348Z"
+    },
+    "keyboard-lands-nowhere|a press on <div> \"Book the van#-#\" left the keyboard on <body>": {
+      "rule": "keyboard-lands-nowhere",
+      "detail": "a press on <div> \"Book the van09-01\" in view \"aggregate:list\" left the keyboard on <body> (it is still there)",
+      "at": "/?today=2026-09-01#focus=aggregate%3Alist&sel=t-book",
+      "harnesses": [
+        "verify-menu"
+      ],
+      "firstSeen": "2026-10-01T05:54:12.348Z",
+      "lastSeen": "2026-10-01T05:54:12.348Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-01T05:58:56.747Z"
+    },
+    "keyboard-lands-nowhere|a press on <button data-testid=\"studio-apply\"> \"Apply\" left the keyboard on <body>": {
+      "rule": "keyboard-lands-nowhere",
+      "detail": "a press on <button data-testid=\"studio-apply\"> \"Apply\" in [data-testid=\"studio\"] left the keyboard on <body> (it is still there)",
+      "at": "/?today=2026-09-01&as=user-nora#focus=aggregate%3Alist&in.studio=open",
+      "harnesses": [
+        "verify-studio"
+      ],
+      "firstSeen": "2026-10-01T05:54:12.348Z",
+      "lastSeen": "2026-10-01T05:54:12.348Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-01T05:58:56.747Z"
+    }
+  }
+}
