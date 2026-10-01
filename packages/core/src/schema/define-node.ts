@@ -74,7 +74,7 @@ export function tellApart(
     for (const [kind, alike] of byKind) {
       // One of its kind among namesakes of other kinds: the kind is what differs.
       if (alike.length === 1) {
-        apart.set(alike[0]!.id, kind.replace(/-/g, " "));
+        apart.set(alike[0]!.id, nounOf(definitionOf(kind), kind));
         continue;
       }
       const facts = alike.map((node) => new Map(readableFields(node, definitionOf(node.kind)).map((field) => [field.key, field.alone])));

@@ -830,9 +830,16 @@ function FoundProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, nodes, searching],
   );
+  // The kind the person is in: the district they went into, or the kind of the record they are on.
+  const inKind = focusId
+    ? (store.graph.getNode(focusId)?.kind as string | undefined) ??
+      kindOfCard(focusId) ??
+      (kindsOfAggregate(focusId).length === 1 ? kindsOfAggregate(focusId)[0] : undefined)
+    : undefined;
   const found = useMemo(() => {
     if (!q || !standing) return null;
     return search(store, q, {
+      ...(inKind ? { inKind } : {}),
       principal,
       places: views.places(),
       kinds: (store.schema.kinds as readonly string[]).filter((kind) => !hiddenKinds.has(kind)),
@@ -843,7 +850,7 @@ function FoundProvider({ children }: { children: ReactNode }) {
       limit: 200,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, q, principal, views, hiddenKinds, selection, focusId, standing]);
+  }, [store, q, principal, views, hiddenKinds, selection, focusId, inKind, standing]);
   return <FoundContext.Provider value={found}>{children}</FoundContext.Provider>;
 }
 

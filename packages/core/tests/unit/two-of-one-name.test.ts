@@ -59,4 +59,31 @@ describe("two of one name", () => {
     const grouped = arrange(songs, { group: { by: "on" } }, { schema, graph: store.graph as never, flagged: new Set() });
     expect(grouped.groups.map((group) => group.label).sort()).toEqual(["Blue Hour · album", "Blue Hour · album, Blue Hour · single"]);
   });
+
+  it("says each one's noun on search hits when a song and an album share a name", () => {
+    const store = new Store({ schema, mutations: [], invariants: [], snapshot: { nodes: [nodes[2], { id: "song:paper-money", kind: "song", label: "Paper Money" }] as never, edges: [] } });
+    const hits = search(store, "paper").hits.flatMap((hit) => (hit.about === "node" ? [[hit.kind, hit.apart]] : []));
+    expect(Object.fromEntries(hits)).toEqual({ album: "album", song: "song" });
+  });
+
+  it("says the noun the declaration gives a kind, not its identifier", () => {
+    const staff = defineNode("staff", { fields: z.object({ label: z.string() }), plural: "Staff", noun: "staff member", label: (node) => node.label });
+    const room = defineNode("room", { fields: z.object({ label: z.string() }), plural: "Rooms", label: (node) => node.label });
+    const venue = createSchema([staff, room]);
+    const apart = tellApart(
+      [
+        { id: "staff:hall", kind: "staff", label: "Hall" },
+        { id: "room:hall", kind: "room", label: "Hall" },
+      ],
+      (kind) => venue.tryDefinition(kind as never),
+    );
+    expect(apart.get("staff:hall")).toBe("staff member");
+  });
+
+  it("leads with the kind the person is in, among names found as well", () => {
+    const store = new Store({ schema, mutations: [], invariants: [], snapshot: { nodes: nodes as never, edges: [] } });
+    const first = (inKind?: string) => search(store, "blue hour", inKind ? { inKind } : {}).hits.find((hit) => hit.about === "node");
+    expect(first()?.kind).toBe("album");
+    expect(first("song")?.kind).toBe("song");
+  });
 });

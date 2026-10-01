@@ -117,6 +117,13 @@ export interface SearchOptions {
   readonly principal?: Principal;
   /** The subject: the selection, the focus, the pointer's settle. A record one edge from it ranks first in its tier. */
   readonly from?: readonly string[];
+  /**
+   * The kind the person is in — the district they went into, or the kind of
+   * the record they are on. Its records lead the others of the same
+   * strength: "Gone Digital" typed inside the songs is the song, not the
+   * album that happens to sort first.
+   */
+  readonly inKind?: string;
   /** The node hit that is highlighted; its acts become hits. */
   readonly subject?: string;
   /** The places the view registry names — the store cannot see pictures. */
@@ -348,11 +355,12 @@ function kindStrength(schema: AnySchema, kind: string, words: readonly string[])
   return best;
 }
 
-type Ranked = { hit: Hit; tier: number; near: number; past: number; touched: number; flagged: number; name: string; id: string };
+type Ranked = { hit: Hit; tier: number; inKind: number; near: number; past: number; touched: number; flagged: number; name: string; id: string };
 
-/** The ranking, as one comparison: how it matched, near, current, touched, flagged, alphabetical, id. */
+/** The ranking, as one comparison: how it matched, the kind the person is in, near, current, touched, flagged, alphabetical, id. */
 const byRank = (a: Ranked, b: Ranked): number =>
   a.tier - b.tier ||
+  a.inKind - b.inKind ||
   a.near - b.near ||
   a.past - b.past ||
   a.touched - b.touched ||
@@ -458,6 +466,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
       ranked.push({
         hit: { about: "node", id: node.id, kind, label, why, current, flagged: flagged.has(node.id) },
         tier: TIER[why.strength],
+        inKind: kind === options.inKind ? 0 : 1,
         near: near.has(node.id) ? 0 : 1,
         past: current ? 0 : 1,
         touched: -(touched.get(node.id) ?? 0),
@@ -477,6 +486,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
   const declared = (hit: Hit, strength: Exclude<MatchStrength, "field">, name: string, id: string): Ranked => ({
     hit,
     tier: lead(strength),
+    inKind: 1,
     near: 1,
     past: 0,
     touched: 0,
@@ -518,13 +528,16 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
   ranked.sort(byRank);
   const limit = options.limit ?? 50;
   const shown = ranked.slice(0, limit).map((entry) => entry.hit);
-  // Two hits of one name — a single and its album, both "Blue Hour" — say what tells them apart.
-  // Told apart within their kind: the strip already heads each kind, so "· song" beside the albums would say it twice.
-  const apart = new Map<string, string>();
-  for (const kind of new Set(shown.flatMap((hit) => (hit.about === "node" ? [hit.kind] : [])))) {
-    const alike = shown.flatMap((hit) => (hit.about === "node" && hit.kind === kind ? [store.graph.getNode(hit.id) as unknown as { id: string; kind: string } & Record<string, unknown>] : [])).filter(Boolean);
-    for (const [id, words] of tellApart(alike, (named) => schema.tryDefinition(named))) apart.set(id, words);
-  }
+  /*
+   * Two hits of one name say what tells them apart — a single and its
+   * album, both "Blue Hour", by the fact that differs; a song and an album,
+   * both "Gone Digital", by their nouns. Across kinds too: the strip heads
+   * each kind, but a row is read alone — by the pointer that lands on it,
+   * by the screen reader that speaks it — and "Gone Digital, Gone Digital"
+   * is a choice nobody can make.
+   */
+  const alike = shown.flatMap((hit) => (hit.about === "node" ? [store.graph.getNode(hit.id) as unknown as { id: string; kind: string } & Record<string, unknown>] : [])).filter(Boolean);
+  const apart = tellApart(alike, (named) => schema.tryDefinition(named));
   const hits = shown.map((hit) => (hit.about === "node" && apart.has(hit.id) ? { ...hit, apart: apart.get(hit.id)! } : hit));
   const total = Object.values(byKind).reduce((sum, count) => sum + count, 0);
   const matched = ranked.flatMap((entry) => (entry.hit.about === "node" ? [entry.hit.id] : []));
@@ -578,6 +591,7 @@ export function actsOn<S extends AnySchema>(
     ranked.push({
       hit: { about: "act", name: mutation.name, title, subject: subject.id, why, destructive: mutation.destructive === true },
       tier: strength ? TIER[strength] : TIER.field + 1,
+      inKind: 0,
       near: 0,
       past: mutation.destructive ? 1 : 0,
       touched: 0,
