@@ -36,8 +36,19 @@ export default defineConfig({
       "@graview/ship": src("ship"),
       "@graview/embed": src("embed"),
       "@graview/studio": src("studio"),
+      // The subpaths first, or the bare-name alias swallows them.
+      "@graview/todo/ui": fileURLToPath(new URL("./apps/todo/src/ui/app.tsx", import.meta.url)),
+      "@graview/todo/open": fileURLToPath(new URL("./apps/todo/src/open.ts", import.meta.url)),
       "@graview/todo": app("todo"),
+      "@graview/seedbed/ui": fileURLToPath(new URL("./apps/seedbed/src/ui/app.tsx", import.meta.url)),
+      "@graview/seedbed/open": fileURLToPath(new URL("./apps/seedbed/src/open.ts", import.meta.url)),
       "@graview/seedbed": app("seedbed"),
+      // Rota is reached from the launcher's and seedbed's own source, never a
+      // test's — so the setup check walks app sources too (W-153).
+      "@graview/rota/ui": fileURLToPath(new URL("./apps/rota/src/ui/app.tsx", import.meta.url)),
+      "@graview/rota/open": fileURLToPath(new URL("./apps/rota/src/open.ts", import.meta.url)),
+      "@graview/rota/views": fileURLToPath(new URL("./apps/rota/src/ui/views.tsx", import.meta.url)),
+      "@graview/rota": app("rota"),
     },
   },
   test: {

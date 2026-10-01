@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/graview packages/create-graview",
+    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/graview packages/create-graview apps/rota",
     "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/graview packages/create-graview apps/todo apps/launcher apps/seedbed apps/rota apps/discography",
     "test": "vitest run",
     "test:watch": "vitest",

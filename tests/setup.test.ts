@@ -62,13 +62,36 @@ describe("a fresh checkout can run its own setup", () => {
   };
   for (const where of ["packages", "apps", "tests"]) walk(resolve(root, where));
 
+  /**
+   * And what those tests reach: an app's own source imports other apps, and
+   * a name it imports is resolved the same way. Rota was reached only from
+   * the launcher's and seedbed's sources, so a fresh checkout failed here
+   * and this check, reading test files alone, said nothing (W-153).
+   */
+  const sourceFiles: string[] = [];
+  for (const app of readdirSync(resolve(root, "apps"))) {
+    const dir = resolve(root, "apps", app, "src");
+    const walkSource = (at: string) => {
+      for (const entry of readdirSync(at)) {
+        const full = resolve(at, entry);
+        if (statSync(full).isDirectory()) walkSource(full);
+        else if (/\.tsx?$/.test(entry)) sourceFiles.push(full);
+      }
+    };
+    try {
+      walkSource(dir);
+    } catch {
+      // An app without a src/ (none yet) has nothing to reach.
+    }
+  }
+
   it("has test files to check", () => {
     expect(testFiles.length).toBeGreaterThan(20);
   });
 
   it("resolves every workspace name its tests import without a dist that build does not write", () => {
     const unreachable = new Map<string, string[]>();
-    for (const file of testFiles) {
+    for (const file of [...testFiles, ...sourceFiles]) {
       const source = readFileSync(file, "utf8");
       for (const [, specifier] of source.matchAll(/from "(@graview\/[a-z/-]+)"/g)) {
         if (aliases.has(specifier)) continue;

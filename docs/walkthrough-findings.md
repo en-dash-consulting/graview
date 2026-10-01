@@ -4123,3 +4123,20 @@ vehicles, dozens of customers and deals.
   `a-select-keeps-its-floor-in-webkit.test.tsx` (both cases verified
   failing without the fix); re-measured in walk6 under WebKit: no control
   under 24 on the scene, the pages or the diary.
+
+### W-153 · A fresh checkout's tests still need an app's dist that build does not write
+- stage: — (found while classifying the findings, in a fresh worktree) · face: — · width: — · scheme: —
+- class: harness-or-setup-itself
+- expected: `pnpm install && pnpm build && pnpm test` passes in a fresh checkout (W-032)
+- actual: two files failed on `@graview/rota`: the launcher's acceptance test
+  could not collect (its source imports `@graview/rota/ui`, which vitest did
+  not alias), and the studio door's test typechecks seedbed, whose source
+  imports rota's types from a `dist/` only `pnpm typecheck` writes. The
+  launcher also reached `@graview/todo/ui`, `/open` and seedbed's, unaliased.
+- where it belongs: `vitest.config.ts`, the root `build` script
+- harness that should have caught it: `tests/setup.test.ts` — W-032's own
+  criterion — read only test files' imports, never the app sources they reach
+- status: fixed in "A fresh checkout's tests reach every app they import" ·
+  rota, todo and seedbed subpaths are aliased to their sources and `pnpm
+  build` compiles `apps/rota`. Criterion: `tests/setup.test.ts` now walks
+  every app's `src/` as well (verified failing without the aliases).
