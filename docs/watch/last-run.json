@@ -1,10 +1,10 @@
 {
-  "at": "2026-10-01T06:02:50.460Z",
+  "at": "2026-10-01T06:22:14.604Z",
   "results": [
     {
-      "name": "gauntlet",
-      "code": 1,
-      "took": 199
+      "name": "journeys",
+      "code": 0,
+      "took": 281
     }
   ]
 }

@@ -92,7 +92,7 @@ const CHAIN = [
  * hold no state of a harness's (each opens its own browser context), and
  * runs side by side.
  */
-const ALONE = new Set(["lines", "panning", "scale", "who", "create"]);
+const ALONE = new Set(["lines", "panning", "scale", "who", "journeys", "create"]);
 
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");
