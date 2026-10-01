@@ -76,6 +76,7 @@ pnpm verify                    # every browser harness, 3 side by side then the 
 pnpm verify <name> [<name>]    # only these harnesses (pnpm verify --list)
 pnpm verify --failed           # only what failed last time
 pnpm verify --quick            # fewer widths, schemes and seats where a harness sweeps them
+GRAVIEW_SLOW=4 pnpm verify <name>  # every page's CPU throttled like the nightly's runner
 
 pnpm dev                       # apps/todo → http://localhost:5193
 pnpm apps                      # the desk → http://localhost:5199 (opens the others in place)
