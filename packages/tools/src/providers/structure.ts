@@ -1,4 +1,4 @@
-import { labelOf, nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { fieldWords, humaniseField, labelOf, nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation } from "../types.js";
 
 const SHARED_SCORE = 70;
@@ -43,7 +43,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
           if (!neighbour) continue;
           observations.push({
             id: `shared:${edgeKind}:${neighbourId}`,
-            text: `all ${nodes.length} share "${named(neighbour)}" via ${edgeKind}`,
+            text: `all ${nodes.length} share "${named(neighbour)}" (${humaniseField(edgeKind).toLowerCase()})`,
             nodeIds: [...ids, neighbourId],
           });
         }
@@ -73,7 +73,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
           if (!odd) continue;
           observations.push({
             id: `near-shared:${edgeKind}:${neighbourId}`,
-            text: `all but "${named(odd)}" share "${named(neighbour)}" via ${edgeKind}`,
+            text: `all but "${named(odd)}" share "${named(neighbour)}" (${humaniseField(edgeKind).toLowerCase()})`,
             nodeIds: [...ids, neighbourId],
           });
           for (const mutation of store.allMutations()) {
@@ -107,7 +107,10 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
         }
       }
 
+      // A field and its value in words: "all 3 share status open" read the key and the JSON.
+      const definitionOf = (kind: string) => store.schema.definitions.find((definition) => definition.kind === kind);
       for (const field of [...fields].sort()) {
+        const words = fieldWords(definitionOf(nodes[0]!.kind as string), field).toLowerCase();
         const values = nodes.map((node) => (node as Record<string, unknown>)[field]);
         const groups = new Map<string, NodeOfSchema<S>[]>();
         values.forEach((value, index) => {
@@ -122,7 +125,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
           if (key === "null") continue;
           observations.push({
             id: `agree:${field}`,
-            text: `all ${nodes.length} share ${field} ${key}`,
+            text: `all ${nodes.length} share the ${words} ${key}`,
             nodeIds: ids,
           });
           continue;
@@ -139,7 +142,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
 
         observations.push({
           id: `odd-one-out:${field}`,
-          text: `${majority.length} share ${field} ${majorityKey}; "${named(odd)}" does not`,
+          text: `${majority.length} share the ${words} ${majorityKey}; "${named(odd)}" does not`,
           nodeIds: ids,
         });
 
@@ -173,13 +176,13 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
 
           affordances.push({
             id: `structure:align:${mutation.name}:${field}:${odd.id}`,
-            label: `Align "${named(odd)}" ${field} with the other ${majority.length}`,
+            label: `Align the ${words} of "${named(odd)}" with the other ${majority.length}`,
             provider: "structure",
             mutation: mutation.name,
             args,
             open: [],
             score: ALIGN_SCORE,
-            why: `${majority.length} of ${nodes.length} share ${field} ${majorityKey}`,
+            why: `${majority.length} of ${nodes.length} share the ${words} ${majorityKey}`,
             nodeIds: ids,
           });
         }

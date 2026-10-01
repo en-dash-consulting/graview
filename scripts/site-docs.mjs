@@ -386,7 +386,7 @@ ${nav.map(([href, label]) => `      <a href="${docsRoot}${href}"${href === here 
     </div>
   </nav>
 
-  <main class="col" id="main">
+  <main class="col" id="main" tabindex="-1">
 ${body}
   </main>
 </div>

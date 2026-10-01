@@ -1,4 +1,4 @@
-import { arrange, arrangeable, type AnySchema, type ArrangeGraph, type ArrangeNode, type DateBucket, type GraphReader } from "@graview/core";
+import { arrange, arrangeable, fieldWords, humaniseField, type AnySchema, type ArrangeGraph, type ArrangeNode, type DateBucket, type GraphReader } from "@graview/core";
 import { aggregateId } from "./ids.js";
 import type { Aggregate, Opens, Via } from "./types.js";
 
@@ -72,6 +72,34 @@ const groupId = (kind: string, run: string, part: string) => `${BAND_PREFIX}${ki
 /** Whether an id names a band aggregate — a group or the rest of a relation — rather than a kind's group. */
 export function isBandAggregate(id: string): boolean {
   return id.startsWith(BAND_PREFIX) && id.includes("|");
+}
+
+/**
+ * A band aggregate in words: "Albums — released by, type: album". Its id is
+ * the picture's own bookkeeping (`aggregate:album|released-by|in|type=album`)
+ * and was what the seat called it, in its header and to a screen reader.
+ */
+export function bandAggregateWords(id: string, schema: AnySchema): string | null {
+  if (!isBandAggregate(id)) return null;
+  const [kind = "", first = "", second = "", part = ""] = id.slice(BAND_PREFIX.length).split("|");
+  const definition = schema.definitions.find((one) => one.kind === kind);
+  const plural = definition?.plural ?? humaniseField(`${kind}s`);
+  const relation =
+    first === "raised"
+      ? null
+      : (() => {
+          const declared = schema.definitions.map((one) => one.edges[first]).find(Boolean);
+          const said = second === "in" ? declared?.inverse : declared?.description;
+          return (said ?? humaniseField(first)).toLowerCase();
+        })();
+  const [by = "", key = ""] = part.split("=");
+  const field = by.split(":")[0]!;
+  const detail =
+    part === "" || part === "kind" || part.startsWith("more")
+      ? null
+      : `${fieldWords(definition, field).toLowerCase()}: ${key === "none" ? "none" : key}`;
+  const more = part.startsWith("more") ? `More ${plural.toLowerCase()}` : plural;
+  return [more, [relation, detail].filter(Boolean).join(", ")].filter(Boolean).join(" — ");
 }
 
 /**

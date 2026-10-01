@@ -1,5 +1,5 @@
 import { withMore } from "./more.js";
-import { isCurrent, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { fieldWords, isCurrent, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { withWithin } from "@graview/layout";
 import { useGraview, useNavigation, type ViewProps } from "@graview/react";
 import { useArranging } from "./arranging.js";
@@ -209,7 +209,7 @@ function CalendarView<S extends AnySchema>({
     if (!roles) return;
     const act = actThatMoves(store, node.kind as string, roles.start);
     if (!act) {
-      setSaid({ text: `Nothing declared writes ${roles.start}, so this cannot be moved from here.`, tone: "refused" });
+      setSaid({ text: `Nothing declared writes the ${fieldWords(store.schema.definitions.find((d) => d.kind === node.kind), roles.start).toLowerCase()}, so this cannot be moved from here.`, tone: "refused" });
       return;
     }
     const day = cell.from;
@@ -239,7 +239,7 @@ function CalendarView<S extends AnySchema>({
         grain === "day"
           ? null
           : {
-              text: `Moved to ${longDay(day)} — a ${grain} is coarser than ${roles.start} holds, so it takes the first day of the cell. Undo puts it back.`,
+              text: `Moved to ${longDay(day)} — a ${grain} is coarser than the ${fieldWords(store.schema.definitions.find((d) => d.kind === node.kind), roles.start).toLowerCase()} holds, so it takes the first day of the cell. Undo puts it back.`,
               tone: "rounded",
             },
       );

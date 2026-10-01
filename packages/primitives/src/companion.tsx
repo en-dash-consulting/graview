@@ -1,6 +1,6 @@
 import { labelOf, placeSlug, type AnySchema } from "@graview/core";
 import { withFocus } from "@graview/layout";
-import { aggregateId, isAggregateId, kindOfCard } from "@graview/layout";
+import { aggregateId, bandAggregateWords, isAggregateId, kindOfCard } from "@graview/layout";
 import { useGraview, useSeatWork, useSelection } from "@graview/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChatPanel } from "./chat.js";
@@ -139,6 +139,8 @@ export function useSubject<S extends AnySchema>(): Subject {
   const name = (id: string): string | null => {
     const node = store.graph.getNode(id);
     if (node) return labelOf(store.schema.tryDefinition(node.kind), node);
+    const band = bandAggregateWords(id, store.schema);
+    if (band) return band;
     const kind = kindOfCard(id) ?? (isAggregateId(id) ? id.slice("aggregate:".length) : null);
     if (kind) return store.schema.tryDefinition(kind)?.plural ?? kind;
     return null;

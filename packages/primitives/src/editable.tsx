@@ -1,4 +1,4 @@
-import { humaniseField as humanise, readableFields, type AnySchema } from "@graview/core";
+import { fieldWords, humaniseField as humanise, readableFields, type AnySchema } from "@graview/core";
 import { useEditableFields, useGraview, useNode } from "@graview/react";
 import type { EditableField } from "@graview/tools";
 import { useEffect, useRef, useState } from "react";
@@ -28,6 +28,10 @@ export function EditableValue<S extends AnySchema>({
 }) {
   const { fields, commit } = useEditableFields<S>(nodeId);
   const editable = fields.find((candidate) => candidate.field === field);
+  // The field as the declaration says it: a tooltip read "changes "plannedAt"".
+  const { store } = useGraview<S>();
+  const kind = store.graph.getNode(nodeId)?.kind as string | undefined;
+  const words = fieldWords(store.schema.definitions.find((definition) => definition.kind === kind), field).toLowerCase();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const input = useRef<HTMLInputElement | HTMLSelectElement | HTMLButtonElement | null>(null);
@@ -67,7 +71,7 @@ export function EditableValue<S extends AnySchema>({
         data-graview-field={field}
         data-graview-readonly=""
         // Said, not merely implied: a value that ignores a click looks broken.
-        title={`Read-only — no mutation declares "${field}" as something it writes`}
+        title={`Read-only — nothing this app declares changes the ${words}`}
         // An address, a VIN, a URL has nowhere to break: it breaks anywhere rather than run into the next column.
         style={{ color: "var(--graview-ink)", cursor: "default", overflowWrap: "anywhere" }}
       >
@@ -83,7 +87,7 @@ export function EditableValue<S extends AnySchema>({
         type="button"
         data-graview-field={field}
         data-graview-editable={editable.mutation}
-        title={`${editable.title} — changes "${field}" through a mutation, so it can be undone`}
+        title={`${editable.title} — changes the ${words}, and can be undone`}
         onClick={() => setEditing(true)}
         style={{
           all: "unset",

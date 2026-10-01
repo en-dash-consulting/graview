@@ -112,7 +112,7 @@ describe("the inspector for a selected line", () => {
         <Inspector />
       </GraviewProvider>,
     );
-    expect(html).toContain("no mutation declares");
+    expect(html).toContain("nothing this app declares");
   });
 
   /*
@@ -249,7 +249,7 @@ describe("the inspector for a selected line", () => {
     );
     expect(html).toContain("Who is along for it");
     expect(html).toContain("Take them off it");
-    expect(html).not.toContain("no mutation declares");
+    expect(html).not.toContain("nothing this app declares");
     expect(html).not.toContain("mix of kinds");
   });
 });

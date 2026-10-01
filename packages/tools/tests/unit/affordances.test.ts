@@ -189,15 +189,15 @@ describe("suggestions nobody wrote a rule to produce", () => {
     expect(align).toBeDefined();
     expect(align!.mutation).toBe("reday");
     expect(align!.args).toEqual({ dutyId: "d3", day: "mon" });
-    expect(align!.why).toBe('2 of 3 share day "mon"');
-    expect(align!.label).toBe('Align "Wed run" day with the other 2');
+    expect(align!.why).toBe('2 of 3 share the day "mon"');
+    expect(align!.label).toBe('Align the day of "Wed run" with the other 2');
   });
 
   it("says what is true about a selection, not only what can be done", () => {
     const derived = deriveAffordances(store(), ["d1", "d2", "d3"]);
     const texts = derived.observations.map((o) => o.text);
-    expect(texts).toContain('all 3 share "Ana" via assigned-to');
-    expect(texts).toContain('2 share day "mon"; "Wed run" does not');
+    expect(texts).toContain('all 3 share "Ana" (assigned to)');
+    expect(texts).toContain('2 share the day "mon"; "Wed run" does not');
   });
 
   it("spots the node missing a connection all the others have", () => {
@@ -205,7 +205,7 @@ describe("suggestions nobody wrote a rule to produce", () => {
     s.apply({ name: "reassign", args: { dutyId: "d3", toPersonId: "bo" } });
     const derived = deriveAffordances(s, ["d1", "d2", "d3"]);
     expect(derived.observations.map((o) => o.text)).toContain(
-      'all but "Wed run" share "Ana" via assigned-to',
+      'all but "Wed run" share "Ana" (assigned to)',
     );
     const join = derived.affordances.find((a) => a.id.startsWith("structure:join"));
     expect(join?.args).toEqual({ dutyId: "d3", toPersonId: "ana" });

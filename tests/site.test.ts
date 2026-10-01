@@ -108,7 +108,8 @@ describe("what the pages promise each other", () => {
       const page = read(file);
       expect(page, file).toContain('<a class="skip" href="#main">');
       expect(page, file).toContain('<nav class="rail" aria-label="Documentation">');
-      expect(page, file).toContain('<main class="col" id="main">');
+      // The skip link's target takes the keyboard, or Enter on it lands on <body>.
+      expect(page, file).toContain('<main class="col" id="main" tabindex="-1">');
     }
   });
 });

@@ -166,6 +166,17 @@ export function humaniseField(field: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
+/**
+ * A field in words, as the declaration says it: its `display.labels` entry,
+ * else the key spoken. Every sentence that names a field — "Nothing
+ * declared writes the planned time", a tooltip, a refusal — reads it here,
+ * so `plannedAt` never reaches a person from one surface while another says
+ * "Planned at".
+ */
+export function fieldWords(definition: { readonly display?: { readonly labels?: Readonly<Record<string, string>> } } | undefined, key: string): string {
+  return definition?.display?.labels?.[key] ?? humaniseField(key);
+}
+
 /*
  * "a item" is the sound of generated prose.
  *
@@ -295,7 +306,7 @@ export function readableFields(
 
     if (said.includes(text) || stems.some((stem) => text.startsWith(stem))) continue;
     if (options.glance && (typeof value === "string" || typeof value === "number") && said.some((line) => saysAsWords(line, text))) continue;
-    const label = display?.labels?.[key] ?? humaniseField(key);
+    const label = fieldWords(definition, key);
     const alone =
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" ? `${label}: ${text.toLowerCase()}` : text;
     fields.push({ key, label, value: text, alone });
