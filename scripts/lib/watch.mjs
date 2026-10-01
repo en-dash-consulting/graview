@@ -283,6 +283,16 @@ export function watched(browser, engine) {
   const listen = (page) => {
     if (listening.has(page)) return;
     listening.add(page);
+    /*
+     * GRAVIEW_SLOW=4: every page as slow as the nightly's runner. The first
+     * nightlies failed on what only a two-core runner shows — a dead end
+     * decided before a list drew, a key lost to a lagging address — and an
+     * hour per round to see it is not a loop. Chromium only.
+     */
+    const slow = Number(process.env["GRAVIEW_SLOW"] ?? 0);
+    if (slow > 1 && engineSeen === "chromium") {
+      page.context().newCDPSession(page).then((cdp) => cdp.send("Emulation.setCPUThrottlingRate", { rate: slow })).catch(() => {});
+    }
     page.on("pageerror", (error) => record({ rule: "page-error", detail: String(error?.message ?? error).split("\n")[0].slice(0, 200), at: page.url().split("/").pop()?.slice(0, 160) ?? "" }));
   };
   return new Proxy(browser, {

@@ -278,6 +278,21 @@ try {
     url: location.pathname + location.search,
     hits: [...document.querySelectorAll('[data-testid="search-hit"][data-about="node"] a')].map((a) => a.textContent?.trim()),
   }));
+  /*
+   * TYPED AT FULL SPEED, KEY BY KEY. `fill` above is one input event; a
+   * person is a run of them, and the box wrote each to the address and took
+   * the address back — one that caught up after the next key overwrote it,
+   * so on a slow runner "digital" was searched as "dgtl". Every key arrives.
+   */
+  await finder.goto("http://localhost:5193/pages/tasks?today=2026-09-01", { waitUntil: "networkidle" });
+  await finder.waitForSelector('[data-testid="nav-find"]', { timeout: 20_000 });
+  await finder.click('[data-testid="nav-find"]');
+  await finder.keyboard.type("pay the deposit now", { delay: 0 });
+  await finder.waitForTimeout(800);
+  const fast = await finder.evaluate(() => ({
+    box: document.querySelector('[data-testid="nav-find"]')?.value ?? null,
+    q: new URLSearchParams(location.search).get("q"),
+  }));
   await finder.goto("http://localhost:5193/pages/search?q=zzzz&today=2026-09-01", { waitUntil: "networkidle" });
   await finder.waitForSelector('[data-testid="search-heading"]', { timeout: 20_000 });
   const nothing = await finder.evaluate(() => ({
@@ -298,6 +313,7 @@ try {
     cold,
     intoTheList,
     typed,
+    fast,
     nothing,
     bigEnoughToHit: onAPhone.bigEnoughToHit,
     ok:
@@ -310,6 +326,8 @@ try {
       intoTheList.rows <= cold.hits &&
       typed.url.endsWith("/search?q=deposit") &&
       typed.hits.some((label) => /deposit/i.test(label ?? "")) &&
+      fast.box === "pay the deposit now" &&
+      fast.q === "pay the deposit now" &&
       /Nothing here is called/.test(nothing.heading) &&
       /is:any/.test(nothing.searched) &&
       nothing.beginnings.length > 0 &&

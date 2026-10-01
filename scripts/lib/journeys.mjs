@@ -1018,11 +1018,16 @@ export const JOBS = {
           );
           return disabled || sentence;
         }, prep.title);
-      if (await said()) return;
+      // Given the time a slow page takes to say it, like any control (see `appears`).
+      const saidSoon = async (ms = Number(process.env["GRAVIEW_JOURNEYS_PATIENCE"] ?? 10_000)) => {
+        for (const end = Date.now() + ms; Date.now() < end; await page.waitForTimeout(250)) if (await said()) return true;
+        return said();
+      };
+      if (await saidSoon(3_000)) return;
       const more = page.locator('[data-testid="withheld-more"]').filter({ visible: true }).first();
-      if (await more.isVisible().catch(() => false)) {
+      if (await appears(more, 3_000)) {
         await person.press(more, "what is withheld");
-        if (await said()) return;
+        if (await saidSoon()) return;
       }
       const offered = actControl(page, prep.act, prep.title).filter({ visible: true }).first();
       if (await offered.isVisible().catch(() => false)) {

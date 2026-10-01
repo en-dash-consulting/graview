@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-01T06:53:33.701Z",
+  "at": "2026-10-01T09:56:27.866Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -109,6 +109,10 @@
           "⚠ Pay the deposit",
           "The landlord holds the date for 48 hours once the deposit…"
         ]
+      },
+      "fast": {
+        "box": "pay the deposit now",
+        "q": "pay the deposit now"
       },
       "nothing": {
         "heading": "Nothing here is called “zzzz”.",

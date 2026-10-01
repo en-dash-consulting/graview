@@ -83,6 +83,29 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
     };
   }, [open]);
   const going = kinds.filter((kind) => !here(kind));
+  /*
+   * CHOSEN, THE KEYBOARD GOES WITH IT. Choosing a district closes the menu
+   * and, often, takes this card away with it, and the keyboard fell to
+   * <body> until something noticed: on a slow phone a person pressing Tab
+   * in that moment started again at the top of the page (a location took
+   * twenty-two presses from the keyboard where it takes fourteen). The
+   * keyboard goes to the district chosen as soon as it is drawn, and to
+   * this button while it is not.
+   */
+  const choose = (kind: string) => {
+    setOpen(false);
+    const button = card.current?.querySelector<HTMLButtonElement>(".graview-beyond-more") ?? null;
+    if (!here(kind)) go(withFocus(view, aggregateId(kind)));
+    button?.focus({ preventScroll: true });
+    const wanted = `[data-graview-view="${aggregateId(kind)}"][tabindex], [data-graview-view="${kindCardId(kind)}"][tabindex]`;
+    let tries = 40;
+    const land = () => {
+      const drawn = document.querySelector<HTMLElement>(wanted);
+      if (drawn) drawn.focus({ preventScroll: true });
+      else if (--tries > 0) requestAnimationFrame(land);
+    };
+    requestAnimationFrame(land);
+  };
   return (
     <div
       ref={card}
@@ -130,8 +153,7 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
                 onPointerDown={(event) => event.stopPropagation()}
                 onClick={(event) => {
                   event.stopPropagation();
-                  setOpen(false);
-                  if (!here(kind)) go(withFocus(view, aggregateId(kind)));
+                  choose(kind);
                 }}
               >
                 <span className="graview-beyond-name">{plural(kind)}</span>
@@ -145,7 +167,7 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
         <ul className="graview-beyond-list" role="menu" aria-label="The other districts" data-testid="beyond-list">
           {kinds.map((kind) => (
             <li key={kind} role="none">
-              <button type="button" role="menuitem" data-graview-pick={kindCardId(kind)} onClick={() => { setOpen(false); if (!here(kind)) go(withFocus(view, aggregateId(kind))); }}>
+              <button type="button" role="menuitem" data-graview-pick={kindCardId(kind)} onClick={() => choose(kind)}>
                 {plural(kind)}
               </button>
             </li>

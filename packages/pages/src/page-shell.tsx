@@ -1,7 +1,7 @@
 import { LadderSetting, useMarkup } from "@graview/primitives";
 import type { AnySchema } from "@graview/core";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { kindMap } from "./facts.js";
 import { kindOfSlug, pluralSlug } from "./registry.js";
@@ -230,10 +230,23 @@ export function PageFind<S extends AnySchema>({
   const onSearch = location.pathname === "/search";
   const addressed = onList || onSearch ? (params.get("q") ?? "") : "";
   const [typed, setTyped] = useState(addressed);
-  // Back, a link, or the list's own row changed the words: the box follows the address.
-  useEffect(() => setTyped(addressed), [addressed]);
+  /*
+   * Back, a link, or the list's own row changed the words: the box follows
+   * the address. But not its own words coming back: each keystroke writes the
+   * address, and an address that caught up after the next key was taken for
+   * a change and written over the box — a key typed quickly on a slow phone
+   * was lost ("digital" searched as "dgtl"). Words the box handed over are
+   * its own echo.
+   */
+  const handed = useRef(new Set<string>([addressed]));
+  useEffect(() => {
+    if (handed.current.has(addressed)) return;
+    handed.current = new Set([addressed]);
+    setTyped(addressed);
+  }, [addressed]);
   const go = (words: string) => {
     setTyped(words);
+    handed.current.add(words);
     if (onList) {
       const next = new URLSearchParams(params);
       if (words.trim()) next.set("q", words);
