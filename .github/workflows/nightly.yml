@@ -9,8 +9,9 @@
 # to remember, and the release workflow will not publish while it is red.
 #
 # Chromium every night; WebKit and Firefox once a week, through `pnpm
-# engines`. `shrunk` is left out because it drives the GPU capture path,
-# which needs Chrome Canary and a GPU the runner does not have.
+# engines`. `shrunk`, `panning` and `scale` are left out: the GPU capture
+# path needs Chrome Canary, and the other two time frames against a GPU the
+# runner does not have.
 
 name: Nightly
 
@@ -52,8 +53,15 @@ jobs:
 
       # `site` is the chain's first harness; `pnpm test` already holds the
       # site to the tree on every push.
+      # One at a time and journeys two-wide: a two-core runner running three
+      # harnesses at once starved every claim that waits on a frame (the first
+      # nightly took 40 minutes and failed eight on timing). panning and scale
+      # time frames against a GPU this runner does not have — they hold on a
+      # real machine, through `pnpm verify` there.
       - name: Every harness, one at a time
-        run: node scripts/verify-all.mjs --except=shrunk
+        env:
+          GRAVIEW_JOURNEYS_PARALLEL: "2"
+        run: node scripts/verify-all.mjs --serial --except=shrunk,panning,scale
 
       - name: Every engine (Mondays, or when asked)
         if: github.event.schedule == '17 9 * * 1' || inputs.engines
