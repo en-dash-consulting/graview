@@ -1,10 +1,35 @@
 {
-  "at": "2026-10-01T08:52:21.879Z",
+  "at": "2026-10-01T12:54:00.132Z",
   "results": [
     {
-      "name": "journeys",
+      "name": "menu",
       "code": 0,
-      "took": 243
+      "took": 14
+    },
+    {
+      "name": "studio",
+      "code": 0,
+      "took": 33
+    },
+    {
+      "name": "rehearsal",
+      "code": 0,
+      "took": 12
+    },
+    {
+      "name": "navigation",
+      "code": 0,
+      "took": 66
+    },
+    {
+      "name": "companion",
+      "code": 0,
+      "took": 72
+    },
+    {
+      "name": "pages",
+      "code": 1,
+      "took": 110
     }
   ]
 }

@@ -106,24 +106,47 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
         }
       }
     };
+    /*
+     * ASKED UNTIL IT IS SOMEWHERE, not a set number of times. The rule looked
+     * at fixed moments — 60, 150, 600 ms — and on a starved machine every one
+     * of them came before the change it was waiting for: the nightly's runner
+     * left the keyboard on <body> after the studio's Keep for seconds. It is
+     * asked again every tenth of a second until it lands, or for two and a
+     * half seconds, whichever is first; a person who moves it meanwhile ends
+     * it, because the keyboard is then somewhere.
+     */
+    const persist = (afterAnAct: boolean, until = Date.now() + 2500) => {
+      setTimeout(() => {
+        land(afterAnAct);
+        const active = document.activeElement;
+        const onNothing = active === null || active === document.body || active === document.documentElement;
+        if (onNothing && line.length > 0 && Date.now() < until) persist(afterAnAct, until);
+      }, 100);
+    };
     const later = () => {
       if (queued || line.length === 0) return;
       queued = true;
       // After the frame a surface that knows better gets to move it first.
-      setTimeout(() => requestAnimationFrame(() => land(false)), 60);
+      setTimeout(() => requestAnimationFrame(() => {
+        land(false);
+        persist(false);
+      }), 60);
     };
     /*
      * AND AFTER AN ACT, ASKED AGAIN. A press can take the keyboard off a
      * control without removing it or firing anything the root hears — a
      * button disabled while its answer comes, a form that resets — so after
-     * a press or Enter, Space or Escape inside the root, it is asked twice
-     * more whether the keyboard is anywhere.
+     * a press or Enter, Space or Escape inside the root, it is asked whether
+     * the keyboard is anywhere until it is.
      */
     const acted = (event: Event) => {
       if (event instanceof KeyboardEvent && !["Enter", " ", "Escape"].includes(event.key)) return;
       // A click elsewhere — on the empty picture, say — is a person leaving on purpose.
       if (!(event instanceof KeyboardEvent) && !(event.target instanceof Node && line[0]?.contains(event.target))) return;
-      for (const wait of [150, 600]) setTimeout(() => requestAnimationFrame(() => land(true)), wait);
+      setTimeout(() => requestAnimationFrame(() => {
+        land(true);
+        persist(true);
+      }), 150);
     };
     const observer = new MutationObserver(() => {
       if (line.length > 0 && !line[0]!.isConnected) later();

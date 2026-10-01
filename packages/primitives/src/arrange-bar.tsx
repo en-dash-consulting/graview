@@ -155,8 +155,11 @@ export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arr
   return `${offer.label}: ${condition.value}`;
 }
 
+/** What each bar last sent, by its test id and kind (see `ArrangeBar`). */
+const SENT = new Map<string, { words: Set<string>; latest: Arrangement | null; at: number }>();
+
 export function ArrangeBar(props: ArrangeBarProps) {
-  const { schema, graph, kind, arrangement, onChange } = props;
+  const { schema, graph, kind, arrangement: given, onChange } = props;
   const offers = arrangeable(schema, kind);
   const id = props.testId ?? "arrange";
   const sorts = arrangeAllows(props.allow, "sort");
@@ -165,9 +168,38 @@ export function ArrangeBar(props: ArrangeBarProps) {
   const words = props.query !== false;
   if (!sorts && !groups && !filters && !words) return null;
 
+  /*
+   * TWO CHANGES BEFORE ONE RENDER ARE TWO CHANGES. The bar merged each change
+   * onto the arrangement it was drawn with, and the arrangement comes back
+   * through the address or the view a render later — so a grouping chosen
+   * and a word typed before the page redrew sent the word on top of the old
+   * grouping, and the grouping was lost (on a slow phone, every time). The
+   * bar merges onto what it last sent while what comes back is its own echo,
+   * and follows what comes back once something else changed it.
+   */
+  const said = (one: Arrangement) => JSON.stringify(formatArrangement(one));
+  /*
+   * Kept per bar, not per mount: a busy page redrew the bar between a choice
+   * and the next keystroke, and a bar that forgot what it had sent took the
+   * stale arrangement back. For a moment after its own change it trusts what
+   * it sent; after that, what comes back is either its echo or news.
+   */
+  const memory = `${id}|${kind}`;
+  const sent = { current: SENT.get(memory) ?? { words: new Set<string>(), latest: null as Arrangement | null, at: 0 } };
+  SENT.set(memory, sent.current);
+  if (sent.current.latest && Date.now() - sent.current.at > 1500 && !sent.current.words.has(said(given))) {
+    sent.current = { words: new Set(), latest: null, at: 0 };
+    SENT.set(memory, sent.current);
+  }
+  // What the controls show: what the bar last sent while what comes back is its echo.
+  const arrangement = sent.current.latest ?? given;
   const set = (patch: Partial<Arrangement>) => {
-    const next: Record<string, unknown> = { ...arrangement, ...patch };
+    // What the bar last sent, read now — not the arrangement this render was drawn with.
+    const next: Record<string, unknown> = { ...(sent.current.latest ?? given), ...patch };
     for (const key of Object.keys(next)) if (next[key] === undefined) delete next[key];
+    sent.current.latest = next as Arrangement;
+    sent.current.at = Date.now();
+    sent.current.words.add(said(next as Arrangement));
     onChange(next as Arrangement);
   };
   const conditions = arrangement.filter ?? [];
