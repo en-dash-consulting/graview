@@ -8,6 +8,7 @@ tags:
   - "walkthrough"
 blockedBy:
   - "95371d9b-9fda-4f0c-940f-545b6342d327"
+  - "8819c5f4-ff89-43cb-b467-93df9b5fe923"
 source: "The sixth walk, 2026-09-30: twenty-nine findings across all nine stages, so the log did not stay still."
 acceptanceCriteria:
   - "a fresh checkout, pnpm install && pnpm build && pnpm test, then graview create of a new app beside it"

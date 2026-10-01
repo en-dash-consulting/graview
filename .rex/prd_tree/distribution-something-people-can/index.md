@@ -25,6 +25,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [A seamless app-creation flow: the walkthrough](./a-seamless-app-creation-flow-the/index.md) | pending |
+| [The walk finds kinds of bug, not instances](./the-walk-finds-kinds-of-bug-not/index.md) | pending |
 | [An external agent evolves a live store the way a person does: through store.apply, never by editing the seed](./an-external-agent-evolves-a-live-store/index.md) | completed |
 | [Live, embeddable chapters: mount a Graview app into any element, with a face toggle](./live-embeddable-chapters-mount-a/index.md) | completed |
 | [The site: a page that sells it, and docs that hold it](./the-site-a-page-that-sells-it-and-docs/index.md) | completed |
