@@ -273,10 +273,11 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
 
   /*
    * Typed as text the keyboard has no key for (an IME's, Playwright's
-   * insertText): with a record focused at a desk width, each character
-   * lands at the START of the box, so "Плинов" reads "вонилП" and finds
-   * nothing. Found by this example on its first run, left failing on
-   * purpose until the Find box keeps its caret.
+   * insertText). With a talk of a hundred characters focused at a desk,
+   * the trail's crumb squeezed the Find box to 23px, and Chromium commits
+   * such text into a field that narrow with the caret left at the start:
+   * "Плинов" read "вонилП" and found nothing. The box now keeps a floor and
+   * the crumb truncates (the Shell and the Trail in @graview/primitives).
    */
   await reach(page, where, "the Find box asked in another script", async () => {
     await page.click('[data-testid="find-box"]');

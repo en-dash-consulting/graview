@@ -87,6 +87,9 @@ export interface ShellProps<S extends AnySchema> {
   readonly studio?: ReactNode;
 }
 
+/** The narrowest the Find box gets at a desk: room for a word, not a sliver. */
+const FIND_FLOOR = "6rem";
+
 export function Shell<S extends AnySchema>({
   home = null,
   homeLabel,
@@ -205,8 +208,16 @@ export function Shell<S extends AnySchema>({
           * list. On a phone it takes a row of its own under the places — a
           * box squeezed between the standing and the profile is a box nobody
           * can type in — and its strip becomes a sheet the screen's width.
+          *
+          * At a desk it keeps a floor. With a talk of a hundred characters
+          * focused, the trail's crumb took the row and left the box 23px
+          * wide — under one character of room — and Chromium commits text
+          * that arrives without a key (an input method, dictation, an
+          * on-screen keyboard) into a field that narrow with the caret left
+          * at the start: "Плинов" was written "вонилП" and found nothing.
+          * The crumb is capped (`Trail`); the places hand the rest to a menu.
           */}
-        <div style={narrow ? { flex: "1 1 100%", order: 4, minWidth: 0, display: "flex" } : { flex: "0 1 15rem", minWidth: 0, display: "flex" }}>
+        <div style={narrow ? { flex: "1 1 100%", order: 4, minWidth: 0, display: "flex" } : { flex: "0 1 15rem", minWidth: FIND_FLOOR, display: "flex" }}>
           <FindBox<S> compact={narrow} />
         </div>
         <div

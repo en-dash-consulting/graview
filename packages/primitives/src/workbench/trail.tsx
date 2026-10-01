@@ -143,9 +143,11 @@ export function Trail({
           // Dropping the focus drops the zoom with it: zoomed into nothing
           // is not a place.
           onClick={() => go(withZoom({ ...view, focusId: home }, false))}
-          style={chip}
+          // A name of a hundred characters gives way to the bar, whole on hover.
+          title={nameOf(store, focused.id)}
+          style={{ ...chip, maxWidth: "min(14rem, 15vw)" }}
         >
-          {nameOf(store, focused.id)}
+          <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{nameOf(store, focused.id)}</span>
           <span aria-hidden="true" style={{ opacity: 0.7 }}>
             ×
           </span>
