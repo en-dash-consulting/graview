@@ -320,18 +320,32 @@ try {
 
   /* The kit re-dresses the live garden: a right-angled route draws elbows, a kind kept quiet is not drawn. */
   await page.locator('#kit [data-graview-chapter="8"]').scrollIntoViewIfNeeded();
-  await page.waitForFunction(() => document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]') !== null, null, { timeout: 20_000 }).catch(() => {});
   const kitPath = () => page.evaluate(() => document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null);
+  /*
+   * A LINE IS READ ONCE THE SCENE HAS SETTLED. Lines are not drawn while the
+   * scene moves (they are measured once a transition lands), and a chapter
+   * arrives with a transition: the line shows on the first frame, is gone
+   * for the half second the scene moves, and comes back. Reading the first
+   * appearance read the gap. So: the same path on two reads 300 ms apart,
+   * and, after a change, a path that differs from the one before it.
+   */
+  const settledPath = (unlike) =>
+    page
+      .waitForFunction(
+        ({ unlike }) => {
+          const d = document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null;
+          const seen = (window.__kitSeen ??= { d: undefined, since: 0 });
+          if (d !== seen.d) Object.assign(seen, { d, since: performance.now() });
+          return d !== null && d !== unlike && performance.now() - seen.since >= 300;
+        },
+        { unlike },
+        { timeout: 20_000, polling: 100 },
+      )
+      .catch(() => {});
+  await settledPath(null);
   const curved = await kitPath();
   await page.locator('#kit-form input[name="route"][value="orthogonal"]').check().catch(() => {});
-  /* The re-route lands on a frame of its own; wait for the path to change
-     rather than for a number of milliseconds that was right on one machine. */
-  await page.waitForFunction(
-    (was) => (document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null) !== was,
-    curved,
-    { timeout: 4_000 },
-  ).catch(() => {});
-  await page.waitForTimeout(200);
+  await settledPath(curved);
   const elbowed = await kitPath();
   await page.locator('#kit-form input[name="tended-visible"]').uncheck().catch(() => {});
   await page.waitForTimeout(400);
