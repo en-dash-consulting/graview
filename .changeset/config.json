@@ -30,6 +30,7 @@
     "@graview/seedbed",
     "@graview/promo",
     "@graview/rota",
-    "@graview/discography"
+    "@graview/discography",
+    "@graview/gauntlet"
   ]
 }

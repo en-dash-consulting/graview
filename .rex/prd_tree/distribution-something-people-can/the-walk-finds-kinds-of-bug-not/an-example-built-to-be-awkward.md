@@ -2,7 +2,7 @@
 id: "71f44cb2-4fbf-47d7-9dec-9281343689cb"
 level: "task"
 title: "An example built to be awkward, run through every harness"
-status: "pending"
+status: "in_progress"
 priority: "critical"
 tags:
   - "walkthrough"
