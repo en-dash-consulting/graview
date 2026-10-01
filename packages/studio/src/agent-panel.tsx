@@ -155,6 +155,32 @@ export function StudioAgentPanel({
     // `offerFor` reads the store as it is, so the tick stands for it.
   }, [conversation.turns, outcomes, edits, tick]);
 
+  /*
+   * KEPT, THE KEYBOARD MOVES ON. Keeping or discarding an offer turns it into
+   * a line of what happened, and the button the keyboard was on goes with it;
+   * on the nightly's runner the keyboard was still on <body> seconds later.
+   * It goes to the next offer still open, or to the words to ask with when
+   * none is — where a person works next.
+   */
+  const handOn = () => {
+    const panel = anchor.current;
+    if (!panel) return;
+    const pressed = document.activeElement;
+    let tries = 20;
+    const land = () => {
+      const active = document.activeElement;
+      // Still on the button that was pressed, while the panel redraws: ask again next frame.
+      if (active === pressed && active?.isConnected && --tries > 0) return void requestAnimationFrame(land);
+      if (active && active !== pressed && active !== document.body && active.isConnected) return;
+      const next =
+        panel.querySelector<HTMLElement>('[data-testid="studio-agent-keep"]:not([disabled])') ??
+        panel.querySelector<HTMLElement>("textarea, input[type='text'], input:not([type])");
+      if (next) next.focus({ preventScroll: true });
+      else if (--tries > 0) requestAnimationFrame(land);
+    };
+    requestAnimationFrame(land);
+  };
+
   const keep = (key: string, offer: Offer): boolean => {
     // Said before it lands: a removal described afterwards names what is no longer there.
     const said = describeProposal(studio.store, { ...offer.proposal, args: offer.args });
@@ -268,10 +294,14 @@ export function StudioAgentPanel({
                     testId={testId}
                     store={studio.store}
                     onEdit={(name, value) => setEdits((current) => new Map(current).set(key, { ...offer.args, [name]: value }))}
-                    onKeep={() => keep(key, offer)}
-                    onDiscard={() =>
-                      settle(key, { state: "declined", said: describeProposal(studio.store, { ...offer.proposal, args: offer.args }) })
-                    }
+                    onKeep={() => {
+                      keep(key, offer);
+                      handOn();
+                    }}
+                    onDiscard={() => {
+                      settle(key, { state: "declined", said: describeProposal(studio.store, { ...offer.proposal, args: offer.args }) });
+                      handOn();
+                    }}
                   />
                 );
               }}
