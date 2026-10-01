@@ -1,6 +1,7 @@
 import type { AnySchema, KindOfSchema } from "@graview/core";
 import type { ComponentType, ReactNode } from "react";
 import type { PageContext } from "./page-context.js";
+import type { FaceControl } from "./face-placed.js";
 
 /**
  * The frame around every route: it is handed the page as `children`.
@@ -26,6 +27,15 @@ export type PageType = "list" | "record";
 /** App-level surfaces that are not per-kind: the shell and the fixed pages. */
 export type SurfaceType = "shell" | "home" | "problems";
 
+/**
+ * What a shell may say it goes without: the routed face's Find box, its way
+ * back. Without this said, a shell that does not place `<PageFind>` or
+ * `<PageUndo>` gets them drawn around it.
+ */
+export interface ShellOptions {
+  readonly without?: readonly FaceControl[];
+}
+
 export interface PageRegistration<P = unknown> {
   readonly kind: string;
   readonly page: PageType;
@@ -40,7 +50,7 @@ export interface RouteRegistration<P = unknown> {
 
 export interface PageRegistry<S extends AnySchema, P = unknown> {
   register<K extends KindOfSchema<S>>(kind: K, page: PageType, component: P): PageRegistry<S, P>;
-  surface(surface: "shell", component: ShellComponent<S>): PageRegistry<S, P>;
+  surface(surface: "shell", component: ShellComponent<S>, options?: ShellOptions): PageRegistry<S, P>;
   surface(surface: SurfaceType, component: P): PageRegistry<S, P>;
   /**
    * A PAGE THAT IS NOT ABOUT A KIND.
@@ -61,6 +71,8 @@ export interface PageRegistry<S extends AnySchema, P = unknown> {
   route(path: string, component: P): PageRegistry<S, P>;
   lookup(kind: string, page: PageType): P | undefined;
   lookupSurface(surface: SurfaceType): P | undefined;
+  /** The face's own controls the shell said it goes without. */
+  without(): ReadonlySet<FaceControl>;
   /** The app's own routes, in registration order. */
   routes(): readonly RouteRegistration<P>[];
   all(): readonly PageRegistration<P>[];
@@ -73,6 +85,7 @@ export function createPageRegistry<S extends AnySchema, P = ComponentType<never>
   const surfaces = new Map<SurfaceType, P>();
   const registrations: PageRegistration<P>[] = [];
   const routed: RouteRegistration<P>[] = [];
+  let goesWithout: ReadonlySet<FaceControl> = new Set();
 
   const registry: PageRegistry<S, P> = {
     register(kind, page, component) {
@@ -80,8 +93,9 @@ export function createPageRegistry<S extends AnySchema, P = ComponentType<never>
       registrations.push({ kind, page, component });
       return registry;
     },
-    surface(surface: SurfaceType, component: P | ShellComponent<S>) {
+    surface(surface: SurfaceType, component: P | ShellComponent<S>, options?: ShellOptions) {
       surfaces.set(surface, component as P);
+      if (surface === "shell") goesWithout = new Set(options?.without ?? []);
       return registry;
     },
     route(path, component) {
@@ -112,6 +126,9 @@ export function createPageRegistry<S extends AnySchema, P = ComponentType<never>
     },
     lookupSurface(surface) {
       return surfaces.get(surface);
+    },
+    without() {
+      return goesWithout;
     },
     routes() {
       return routed;

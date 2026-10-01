@@ -1,0 +1,338 @@
+import type { AnySchema, Principal, Store } from "@graview/core";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode, type RefObject } from "react";
+import { useLocation } from "react-router-dom";
+import type { PageContext } from "./page-context.js";
+import { useStoreTick } from "./page-context.js";
+import { kindOfSlug, type PageRegistry } from "./registry.js";
+import { PageFind } from "./page-shell.js";
+import { createPlaced, FaceControls, usePlaced, usePlacedOnTheFace, type FaceControl, type Placed } from "./face-placed.js";
+
+/**
+ * WHAT THE ROUTED FACE OFFERS WHICHEVER SHELL DRAWS IT.
+ *
+ * Finding a record by part of its name and taking the last change back are
+ * core jobs, not chrome a design may happen to remember. The Find box lived
+ * in the derived shell only, so an app that replaced the shell — every
+ * example does — had Find exactly when its author thought to put
+ * `<PageFind>` in, and rota had none. Undo lived nowhere on this face at
+ * all: the scene's Activity rail takes a turn back, and on the pages a
+ * person who renamed the wrong record could not.
+ *
+ * So the face's root owns both. A shell that places `<PageFind>` or
+ * `<PageUndo>` itself says where they go, and the root sees them placed and
+ * draws nothing more; a shell that places neither still gets them — Find in
+ * a bar above it, the way back in a dock at the corner. Only a registry that
+ * says so (`surface("shell", Shell, { without: ["find"] })`) goes without.
+ */
+export type { FaceControl } from "./face-placed.js";
+
+/* ------------------------------------------------------------------ */
+/* The last change                                                     */
+/* ------------------------------------------------------------------ */
+
+export interface LastChange {
+  readonly batch: string;
+  /** What it did, in the store's own words — the line the Activity rail shows. */
+  readonly intent: string;
+}
+
+/**
+ * The change this person can take back: their own latest turn that is not
+ * already taken back, is not itself a take-back, that the log lets go of on
+ * its own, and that the policy lets them take back — undo is judged like a
+ * change ("what you may undo is what you may have done"), so a turn the
+ * store would refuse is never offered.
+ *
+ * "Their own" is the rule the Activity rail uses for "you": a human author
+ * who is this principal, or either side has no id to tell them apart. On a
+ * served store two seats share one log, and one person's corner should not
+ * offer to take back another's work.
+ */
+export function lastChangeOf<S extends AnySchema>(store: Store<S>, principal?: Principal): LastChange | undefined {
+  const batches = store.batches();
+  for (let at = batches.length - 1; at >= 0; at--) {
+    const batch = batches[at]!;
+    if (batch.undone || batch.ops.length === 0) continue;
+    if (batch.ops.every((op) => op.undoes !== undefined)) continue;
+    const author = batch.author;
+    const mine = author.kind === "human" && (principal?.id === undefined || author.id === undefined || author.id === principal.id);
+    if (!mine) continue;
+    const check = store.canUndo(batch.id);
+    if (!check.ok) continue;
+    const permitted = check.ops.every((op) => !op.mutation || store.permits(op.mutation, principal).ok);
+    if (!permitted) continue;
+    return { batch: batch.id, intent: batch.intent };
+  }
+  return undefined;
+}
+
+/** "Take back “Rename to …”" — the words on the control and in the announcement. */
+export const takeBackWords = (change: LastChange) => `Take back “${change.intent}”`;
+
+const editable = (target: EventTarget | null): boolean =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || target.matches("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
+
+/** Where the keyboard goes when the control it pressed is gone: the page's heading, where the change shows. */
+function landOnThePage(face: Element | null) {
+  const active = document.activeElement;
+  if (active !== null && active !== document.body && active !== document.documentElement && active.isConnected) return;
+  const root = face ?? document;
+  const main = root.querySelector("main") ?? root.querySelector("[data-graview-page]") ?? null;
+  const target = main?.querySelector<HTMLElement>("h1") ?? root.querySelector<HTMLElement>("h1") ?? main;
+  if (!(target instanceof HTMLElement)) return;
+  if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+  target.focus({ preventScroll: true });
+}
+
+function useTakeBack<S extends AnySchema>(context: PageContext<S>) {
+  const { store, principal } = context;
+  const tick = useStoreTick(store);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const change = useMemo(() => lastChangeOf(store, principal), [store, principal, tick]);
+  const [refused, setRefused] = useState<string | null>(null);
+  const [said, setSaid] = useState("");
+  const takeBack = useCallback(() => {
+    const now = lastChangeOf(store, principal);
+    if (!now) return false;
+    setRefused(null);
+    try {
+      store.undo(now.batch, principal ? { author: principal } : {});
+      setSaid(`Took back “${now.intent}”`);
+    } catch (error) {
+      setRefused(error instanceof Error ? error.message : String(error));
+    }
+    return true;
+  }, [store, principal]);
+  return { change, takeBack, refused, said };
+}
+
+/**
+ * THE WAY BACK, on the routed face: one control that says what it takes
+ * back — "Take back “Rename to …”" — and takes it back as the person at the
+ * keyboard, judged by the policy like any change.
+ *
+ * Exported for a shell that wants it somewhere of its own; a shell that
+ * does not place it gets it anyway, docked at the corner of the face.
+ */
+export function PageUndo<S extends AnySchema>({
+  context,
+  docked = false,
+}: {
+  readonly context: PageContext<S>;
+  /** Held at the corner of the face rather than in a shell's own row. Set by the face's root. */
+  readonly docked?: boolean;
+}) {
+  usePlacedOnTheFace("undo");
+  return <TakeBack context={context} docked={docked} />;
+}
+
+function TakeBack<S extends AnySchema>({ context, docked }: { readonly context: PageContext<S>; readonly docked: boolean }) {
+  const { change, takeBack, refused, said } = useTakeBack(context);
+  const corner: React.CSSProperties = docked
+    ? context.embedded
+      ? { position: "sticky", bottom: 12, marginLeft: "auto", marginRight: 12, width: "fit-content" }
+      : { position: "fixed", right: 16, bottom: 16, zIndex: 30 }
+    : {};
+  return (
+    <div
+      data-testid={docked ? "face-undo-dock" : "page-undo-place"}
+      style={{
+        ...corner,
+        display: "grid",
+        justifyItems: "end",
+        gap: 4,
+        // Clear of the Ask control at the other corner on a phone.
+        maxWidth: docked ? "min(30rem, calc(100vw - 140px))" : "100%",
+        minWidth: 0,
+      }}
+    >
+      {/* What happened, said once to a screen reader: the control that said it may be gone. */}
+      <span role="status" style={visuallyHidden}>
+        {said}
+      </span>
+      {change ? (
+        <button
+          type="button"
+          data-testid="page-undo"
+          title={`${takeBackWords(change)} — ⌘Z or Ctrl+Z`}
+          aria-keyshortcuts="Meta+Z Control+Z"
+          onClick={(event) => {
+            const face = event.currentTarget.closest("[data-graview-face]");
+            takeBack();
+            // After the face has drawn the change gone: if this control went with it, the keyboard lands on the page.
+            requestAnimationFrame(() => landOnThePage(face));
+          }}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            minHeight: 36,
+            maxWidth: "100%",
+            minWidth: 0,
+            padding: "0 14px",
+            borderRadius: 999,
+            border: "1px solid var(--graview-edge)",
+            background: "var(--graview-float)",
+            color: "var(--graview-ink)",
+            font: "inherit",
+            fontSize: "0.875rem",
+            boxShadow: docked ? "var(--graview-lift-low)" : undefined,
+            cursor: "pointer",
+          }}
+        >
+          <span aria-hidden="true">↶</span>
+          <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {takeBackWords(change)}
+          </span>
+        </button>
+      ) : null}
+      {refused ? (
+        <span
+          data-testid="page-undo-refused"
+          role="alert"
+          style={{
+            fontSize: "0.8125rem",
+            lineHeight: 1.4,
+            color: "var(--graview-warn)",
+            background: docked ? "var(--graview-float)" : undefined,
+            padding: docked ? "4px 8px" : undefined,
+            borderRadius: 6,
+          }}
+        >
+          {refused}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+const visuallyHidden: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
+/* ------------------------------------------------------------------ */
+/* The root                                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * ⌘Z AND CTRL+Z, on the face — not in a text field, where they are the
+ * field's own undo and a person typing a name expects the letters back, not
+ * the last change. Heard on the document while the keyboard is in the face,
+ * or on nothing at all when the face owns the document; never while it is
+ * on the host page around an embed.
+ */
+function useTakeBackKeys<S extends AnySchema>(context: PageContext<S>, root: RefObject<HTMLElement | null>, on: boolean) {
+  const { store, principal, embedded } = context;
+  useEffect(() => {
+    if (!on) return;
+    const key = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.altKey || event.shiftKey) return;
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") return;
+      if (editable(event.target)) return;
+      const target = event.target;
+      const inFace = target instanceof Node && root.current?.contains(target);
+      const onNothing = target === document.body || target === document.documentElement || target === document;
+      if (!inFace && !(onNothing && !embedded)) return;
+      const change = lastChangeOf(store, principal);
+      if (!change) return;
+      event.preventDefault();
+      try {
+        store.undo(change.batch, principal ? { author: principal } : {});
+      } catch {
+        // The control says a refusal where it was asked; a key has nowhere to say it.
+      }
+    };
+    document.addEventListener("keydown", key);
+    return () => document.removeEventListener("keydown", key);
+  }, [store, principal, embedded, root, on]);
+}
+
+/**
+ * The face's root: it knows which of the face's controls a shell placed,
+ * and draws the rest — Find in a bar above the shell, the way back docked
+ * at the corner — before the shell in the document, so the keyboard reaches
+ * them first.
+ */
+export function FaceControlsRoot<S extends AnySchema>({
+  context,
+  registry,
+  root,
+  children,
+}: {
+  readonly context: PageContext<S>;
+  readonly registry: PageRegistry<S, unknown> | undefined;
+  readonly root: RefObject<HTMLElement | null>;
+  readonly children: ReactNode;
+}) {
+  const placed = useMemo(createPlaced, []);
+  const without = registry?.without() ?? new Set<FaceControl>();
+  useTakeBackKeys(context, root, !without.has("undo"));
+  return (
+    <FaceControls.Provider value={placed}>
+      <Fallbacks context={context} registry={registry} placed={placed} without={without} />
+      {children}
+    </FaceControls.Provider>
+  );
+}
+
+function Fallbacks<S extends AnySchema>({
+  context,
+  registry,
+  placed,
+  without,
+}: {
+  readonly context: PageContext<S>;
+  readonly registry: PageRegistry<S, unknown> | undefined;
+  readonly placed: Placed;
+  readonly without: ReadonlySet<FaceControl>;
+}) {
+  // Drawn once the shell has had its say: its controls are placed in the same commit, before paint.
+  const [ready, setReady] = useState(false);
+  useLayoutEffect(() => setReady(true), []);
+  const findPlaced = usePlaced(placed, "find");
+  const undoPlaced = usePlaced(placed, "undo");
+  const location = useLocation();
+  if (!ready) return null;
+  const segments = location.pathname.split("/").filter(Boolean);
+  const listKind = segments.length === 1 ? kindOfSlug(context.store.schema, segments[0]!) : undefined;
+  // `?q=` narrows a list the face derived; a list of the app's own has its own words for that.
+  const narrows = listKind !== undefined && registry?.lookup(listKind, "list") === undefined;
+  return (
+    <>
+      {!findPlaced && !without.has("find") ? (
+        <div
+          data-testid="face-find-bar"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "8px 16px",
+            borderBottom: "1px solid var(--graview-edge)",
+            background: "var(--graview-bar)",
+            minWidth: 0,
+          }}
+        >
+          <FindInBar context={context} narrowsLists={narrows} />
+        </div>
+      ) : null}
+      {!undoPlaced && !without.has("undo") ? <TakeBack context={context} docked /> : null}
+    </>
+  );
+}
+
+/** The bar's Find box: `PageFind` without counting as one the shell placed. */
+function FindInBar<S extends AnySchema>({ context, narrowsLists }: { readonly context: PageContext<S>; readonly narrowsLists: boolean }) {
+  return (
+    <FaceControls.Provider value={null}>
+      <PageFind context={context} narrowsLists={narrowsLists} />
+    </FaceControls.Provider>
+  );
+}

@@ -3,6 +3,7 @@ import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
 import { useEffect, useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
 import { GraviewProvider, useTheKeyboardLandsSomewhere } from "@graview/react";
 import { PageAsk } from "./ask.js";
+import { FaceControlsRoot } from "./face-controls.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useLocation, useNavigationType, useParams } from "react-router-dom";
@@ -66,13 +67,27 @@ function KindSwitch<S extends AnySchema>({
  * scrolls when it is inside an embed's frame or a shell's own region — so
  * a host page with three embeds is never yanked to the top of one of them.
  */
-/** The routed face's root for the rule that the keyboard always lands somewhere. */
-function KeyboardRoot({ children }: { readonly children: ReactNode }) {
+/**
+ * The routed face's root: the rule that the keyboard always lands
+ * somewhere, and the controls the face offers whichever shell draws it —
+ * Find and the way back (face-controls.tsx).
+ */
+function FaceRoot<S extends AnySchema>({
+  context,
+  registry,
+  children,
+}: {
+  readonly context: PageContext<S>;
+  readonly registry: PageRegistry<S, PageComponent<S>> | undefined;
+  readonly children: ReactNode;
+}) {
   const root = useRef<HTMLDivElement>(null);
   useTheKeyboardLandsSomewhere(root);
   return (
-    <div ref={root} style={{ display: "contents" }}>
-      {children}
+    <div ref={root} data-graview-face="pages" style={{ display: "contents" }}>
+      <FaceControlsRoot context={context} registry={registry as PageRegistry<S, unknown> | undefined} root={root}>
+        {children}
+      </FaceControlsRoot>
     </div>
   );
 }
@@ -148,8 +163,8 @@ export function PagesRoutes<S extends AnySchema>({
    */
   const inside: PageContext<S> = own ? { ...context, framed: true } : context;
   return (
-    // The routed face holds the keyboard the way the scene does, whichever shell an app draws.
-    <KeyboardRoot>
+    // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
+    <FaceRoot context={context} registry={registry}>
     <Shell context={context}>
       <ScrollReset />
       <Routes>
@@ -177,7 +192,7 @@ export function PagesRoutes<S extends AnySchema>({
         />
       </Routes>
     </Shell>
-    </KeyboardRoot>
+    </FaceRoot>
   );
 }
 

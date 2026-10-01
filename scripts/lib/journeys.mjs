@@ -868,11 +868,13 @@ export const JOBS = {
 
   undo: {
     async prepare(ctx, job) {
-      const node = await inStore(ctx.page, ctx.kinds, (store, kind) => {
-        const one = store.graph.allNodes().find((node) => node.kind === kind && typeof node.label === "string");
-        return one ? { id: one.id, label: one.label } : null;
-      }, job.kind);
-      if (!node || !job.field) return { skip: "nothing could be changed to take back" };
+      if (!job.field) return { skip: "nothing could be changed to take back" };
+      // The kind's own name field — a talk has a title, not a label — so the change is the one the renamer makes.
+      const node = await inStore(ctx.page, ctx.kinds, (store, { kind, field }) => {
+        const one = store.graph.allNodes().find((node) => node.kind === kind && typeof node[field] === "string");
+        return one ? { id: one.id, label: one[field] } : null;
+      }, { kind: job.kind, field: job.field });
+      if (!node) return { skip: "nothing could be changed to take back" };
       return { node };
     },
     start: (ctx) => ctx.home,
@@ -896,7 +898,7 @@ export const JOBS = {
       if (ctx.face === "scene" && (await opener.isVisible().catch(() => false))) await person.press(opener, "Activity");
       const undo = page
         .locator('[data-testid="undo-turn"]')
-        .or(page.getByRole("button", { name: /^(undo|take (it|this) back)/i }))
+        .or(page.getByRole("button", { name: /^(undo|take (it |this )?back)/i }))
         .filter({ visible: true })
         .first();
       if (!(await undo.isVisible().catch(() => false))) throw new DeadEnd(`nothing on the ${ctx.face === "scene" ? "scene" : "page"} offers to take "${prep.intent}" back`);

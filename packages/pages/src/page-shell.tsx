@@ -7,6 +7,7 @@ import { kindMap } from "./facts.js";
 import { kindOfSlug, pluralSlug } from "./registry.js";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { placesOf } from "./page-places.js";
+import { usePlacedOnTheFace } from "./face-placed.js";
 import { DISPLAY, WIDE, column, liveKinds, plain, pluralOf, quiet } from "./page-typography.js";
 
 
@@ -209,6 +210,9 @@ export function PageMain<S extends AnySchema>({
  * Exported for a shell an app draws itself. `narrowsLists: false` is for an
  * app whose own list pages already carry a box for their words: then this
  * one always goes to `/search`, and a list never has two.
+ *
+ * Placed by a shell, it is THE face's Find box: the face's root sees it and
+ * draws no second one above the shell (face-controls.tsx).
  */
 export function PageFind<S extends AnySchema>({
   context,
@@ -217,6 +221,7 @@ export function PageFind<S extends AnySchema>({
   context: PageContext<S>;
   narrowsLists?: boolean;
 }) {
+  usePlacedOnTheFace("find");
   const location = useLocation();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();

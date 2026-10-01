@@ -54,7 +54,10 @@ under its routes, which buys three things at once:
   its fragment, so an arrangement is a link; `?by=`, `?<edge>=<id>`,
   `?with=` and `?past=1` still land. A record links back.
 - `/search?q=` — the Find box's matcher: hits by kind, each with why; a
-  nav box narrows a list, else lands here. Own shell? Add `<PageFind>`.
+  nav box narrows a list, else lands here. Find and the way back ("Take
+  back “…”", ⌘Z) are on every face: a shell that places `<PageFind>` or
+  `<PageUndo>` says where, one that does not gets them drawn around it,
+  and `surface("shell", Shell, { without: ["find"] })` goes without.
 - **The assistant**, on every route: one control opens the scene's own
   `Companion` in a drawer, and the ROUTE is what "this" means. Grounded
   questions before anybody types; proposals apply through the same runtime,
