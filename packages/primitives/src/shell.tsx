@@ -124,10 +124,13 @@ export function Shell<S extends AnySchema>({
    * A PHONE GETS TWO ROWS. One row that hides what it cannot hold is the
    * failure the old bar was built against: at 390 a scaffolded app had no
    * undo, no activity and no way back to light, painted off the edge with
-   * nothing to say so. Below a tablet's width the bar wraps — the places
-   * as one menu on their own line — and the picture starts under it.
+   * nothing to say so. Below a small laptop's width the bar wraps — the
+   * places as one menu on their own line — and the picture starts under it.
+   * The line is where one row stops holding the name, the places, a Find
+   * box with room to type in and the profile: at 720 a long record's name
+   * pushed the profile — the seat switcher — off the screen, so it is 920.
    */
-  const narrow = barWidth !== null && barWidth < 720;
+  const narrow = barWidth !== null && barWidth < 920;
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);
   const onCall = useCallback((call: ToolCall) => {
     setCalls((current) => {
