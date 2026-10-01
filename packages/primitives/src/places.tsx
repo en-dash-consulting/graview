@@ -122,7 +122,15 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
           borderStyle: "solid",
           borderColor: here ? "var(--graview-accent)" : "var(--graview-edge)",
           color: here ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-          background: "var(--graview-panel)",
+          backgroundColor: "var(--graview-panel)",
+          // WebKit ignores the floor on a native select (W-121): the look off, a chevron drawn.
+          paddingRight: 24,
+          appearance: "none",
+          WebkitAppearance: "none",
+          backgroundImage: "linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%)",
+          backgroundPosition: "calc(100% - 13px) 55%, calc(100% - 9px) 55%",
+          backgroundSize: "4px 4px, 4px 4px",
+          backgroundRepeat: "no-repeat",
         }}
       >
         <option value="">Places…</option>

@@ -312,7 +312,26 @@ function CalendarView<S extends AnySchema>({
               data-testid="calendar-ranges"
               value={range}
               onChange={(event) => show(event.target.value as CalendarRange)}
-              style={{ ...stepStyle, marginLeft: "auto", maxWidth: "50%" }}
+              /*
+               * THE NATIVE LOOK OFF, so the floor holds in WebKit: it draws a
+               * select at its own height and ignored the 24 asked of it — the
+               * range picker was 21 pixels tall on a phone in Safari (the
+               * W-121 lesson, one select over). The chevron is drawn instead.
+               */
+              style={{
+                ...stepStyle,
+                background: undefined,
+                backgroundColor: "transparent",
+                marginLeft: "auto",
+                maxWidth: "50%",
+                paddingRight: 24,
+                appearance: "none",
+                WebkitAppearance: "none",
+                backgroundImage: "linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%)",
+                backgroundPosition: "calc(100% - 13px) 55%, calc(100% - 9px) 55%",
+                backgroundSize: "4px 4px, 4px 4px",
+                backgroundRepeat: "no-repeat",
+              }}
             >
               {rangesOf(options).map((candidate) => (
                 <option key={candidate} value={candidate}>

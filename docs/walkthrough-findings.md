@@ -3898,3 +3898,24 @@ vehicles, dozens of customers and deals.
   Criterion: pages `a-search-fits-a-phone-at-200.test.tsx` (verified failing
   without the fix); every route of walk6's design re-measured clean at
   390@200% and 320.
+
+### W-152 · Two selects under 24 pixels in WebKit on a phone
+- stage: I (WebKit, 390, reduced motion) · face: scene and pages · width: 390 · scheme: light · engine: WebKit
+- expected: every link and button at least 24px, in every engine the stage
+  asks for
+- actual: in WebKit at 390 the bar's compact Places picker measured 175×22
+  on every scene, and the diary's Range picker (a select below 420 wide)
+  79×21 on its place page; 28 and 24 elsewhere. The third and fifth walks
+  fixed this for the pages' pickers (W-067) and the arrange bar (W-121);
+  these two selects were written without the native look off, and nothing
+  measures them in WebKit — the places select appears only at phone width,
+  the Range select only in a narrow calendar.
+- where it belongs: `packages/primitives/src/places.tsx`,
+  `packages/primitives/src/lens/calendar-view.tsx`
+- harness that should have caught it: `pnpm engines` measures
+  `verify-pages` in WebKit, not the scene's bar at 390 nor a narrow calendar
+- status: fixed in "walkthrough: I · a select keeps its floor in WebKit" ·
+  both drop the native appearance and draw the chevron. Criterion:
+  `a-select-keeps-its-floor-in-webkit.test.tsx` (both cases verified
+  failing without the fix); re-measured in walk6 under WebKit: no control
+  under 24 on the scene, the pages or the diary.
