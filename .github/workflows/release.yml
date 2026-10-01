@@ -41,6 +41,8 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
+      # Reads the last Nightly's conclusion before a publish.
+      actions: read
 
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +70,30 @@ jobs:
       # clean runner with "Cannot find module '@graview/rota'".
       - run: pnpm typecheck
       - run: pnpm test
+
+      # A publish run (no changesets left: the Version packages pull request
+      # was just merged) waits on the browser harnesses. The last finished
+      # Nightly on main must be green; a run with changesets only opens or
+      # updates the pull request, and is not held.
+      - name: The last nightly on main holds
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if ls .changeset/*.md 2>/dev/null | grep -qv README.md; then
+            echo "Changesets pending: this run versions, it does not publish."
+            exit 0
+          fi
+          RESULT=$(gh run list --workflow nightly.yml --branch main --status completed --limit 1 --json conclusion,headSha,url --jq '.[0] // empty | "\(.conclusion) \(.headSha[0:8]) \(.url)"')
+          if [ -z "$RESULT" ]; then
+            echo "::error::no finished Nightly on main — run it (Actions → Nightly → Run workflow) before publishing"
+            exit 1
+          fi
+          echo "Last nightly: $RESULT"
+          case "$RESULT" in
+            success*) ;;
+            *) echo "::error::the last Nightly on main is not green: $RESULT"; exit 1 ;;
+          esac
 
       - name: Version packages, or publish them
         id: changesets

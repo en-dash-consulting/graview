@@ -15,6 +15,7 @@
  *   node scripts/verify-all.mjs              every harness
  *   node scripts/verify-all.mjs menu pages   only these
  *   node scripts/verify-all.mjs --list       the names, and nothing else
+ *   node scripts/verify-all.mjs --except=shrunk   every harness but these
  *
  * Run in series on purpose: they drive the same dev servers on the same
  * ports, and a parallel run is a harness measuring another harness's app.
@@ -75,8 +76,13 @@ if (process.argv.includes("--list")) {
   say(`${CHAIN.map(([name]) => name).join("\n")}\n`);
   process.exit(0);
 }
-const chain = asked.length > 0 ? CHAIN.filter(([name]) => asked.includes(name)) : CHAIN;
-const unknown = asked.filter((name) => !CHAIN.some(([known]) => known === name));
+/*
+ * `--except=shrunk,scale` leaves those out: the nightly runner has no Chrome
+ * Canary for the GPU capture path, and says so here rather than failing it.
+ */
+const except = (process.argv.find((arg) => arg.startsWith("--except="))?.slice("--except=".length) ?? "").split(",").filter(Boolean);
+const chain = (asked.length > 0 ? CHAIN.filter(([name]) => asked.includes(name)) : CHAIN).filter(([name]) => !except.includes(name));
+const unknown = [...asked, ...except].filter((name) => !CHAIN.some(([known]) => known === name));
 if (unknown.length > 0) {
   say(`No harness called ${unknown.join(", ")}. Known: ${CHAIN.map(([n]) => n).join(", ")}\n`);
   process.exit(2);

@@ -1,0 +1,70 @@
+# The browser harnesses, every night, and red when a claim stops holding.
+#
+# CI on a push runs the tests, the checker, the tarballs, the scaffold and
+# the progression. The rest of the harness chain — every screen judged by
+# the watch, the site, the pages face at phone width, the survey, the audit
+# — ran only when somebody remembered to, and a red verdict sat in
+# docs/*.json for days: the site's kit check broke on main on 2026-09-29 and
+# nobody heard until a walk's review a day later. This is the run nobody has
+# to remember, and the release workflow will not publish while it is red.
+#
+# Chromium every night; WebKit and Firefox once a week, through `pnpm
+# engines`. `shrunk` is left out because it drives the GPU capture path,
+# which needs Chrome Canary and a GPU the runner does not have.
+
+name: Nightly
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+    # Monday's run also takes the other two engines.
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      engines:
+        description: "Also run pnpm engines (WebKit and Firefox)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  harnesses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+
+      - name: Browsers
+        run: npx playwright install --with-deps chromium webkit firefox
+
+      # `site` is the chain's first harness; `pnpm test` already holds the
+      # site to the tree on every push.
+      - name: Every harness, one at a time
+        run: node scripts/verify-all.mjs --except=shrunk
+
+      - name: Every engine (Mondays, or when asked)
+        if: github.event.schedule == '17 9 * * 1' || inputs.engines
+        run: pnpm engines
+
+      - name: The verdicts, for reading
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verdicts
+          path: |
+            docs/*.json
+            docs/watch/
+          if-no-files-found: ignore
