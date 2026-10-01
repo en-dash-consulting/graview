@@ -40,3 +40,4 @@ describe("an embed without a store of its own", () => {
     host.remove();
   });
 });
+

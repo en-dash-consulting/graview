@@ -1,0 +1,39 @@
+// @vitest-environment jsdom
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+import { createSchema, defineApp, defineNode, z } from "@graview/core";
+import { createPageRegistry, PageMain, type PageComponent } from "@graview/pages";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
+import { describe, expect, it } from "vitest";
+import { Embed } from "../../src/index.js";
+
+/**
+ * ONE NAME, SAID ONCE. The embed prefixes every landmark inside it with its
+ * own label; a picture whose panel was named the same as the embed — "The
+ * pipeline" in an embed labelled "The pipeline" — became "The pipeline ·
+ * The pipeline".
+ */
+const car = defineNode("car", { fields: z.object({ label: z.string() }), plural: "Cars" });
+const schema = createSchema([car]);
+const app = defineApp({ name: "Lot", schema, mutations: [] });
+
+describe("an embed's landmarks", () => {
+  it("does not say a landmark's name twice when it is the embed's own", async () => {
+    const Named: PageComponent<typeof schema> = ({ context }) => (
+      <PageMain context={context}>
+        <nav aria-label="Lot">the lot</nav>
+      </PageMain>
+    );
+    const named = createPageRegistry<typeof schema, PageComponent<typeof schema>>(schema).surface("home", Named);
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<Embed app={app} face="pages" pages={named} label="Lot" fonts={false} />));
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
+    const labels = [...host.querySelectorAll("nav")].map((nav) => nav.getAttribute("aria-label"));
+    expect(labels).toContain("Lot");
+    expect(labels).not.toContain("Lot · Lot");
+    await act(async () => root.unmount());
+    host.remove();
+  });
+});

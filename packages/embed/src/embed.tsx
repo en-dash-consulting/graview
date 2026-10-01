@@ -205,7 +205,9 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
     if (!root || !label) return;
     const name = (el: Element) => {
       const own = el.getAttribute("aria-label") ?? "";
-      if (own.startsWith(`${label} · `)) return;
+      // Already named by the embed, or named the same thing: "The pipeline ·
+      // The pipeline" is one name said twice, not a place inside a place.
+      if (own === label || own.startsWith(`${label} · `)) return;
       el.setAttribute("aria-label", own ? `${label} · ${own}` : label);
     };
     // The root is the embed's own region and already wears the label; the

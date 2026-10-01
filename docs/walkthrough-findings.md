@@ -3866,3 +3866,17 @@ vehicles, dozens of customers and deals.
   "names the seat's roles in words, never their ids" (both verified failing
   without the fix). The edit survived the reload; the rail said
   "Remembered in this browser · Start fresh".
+
+### W-150 · A region inside an embed is called "The pipeline · The pipeline"
+- stage: H · face: embed · width: 1280 and 390 · scheme: dark
+- expected: "two embeds have two landmark names" — and each is said once
+- actual: the second embed is labelled "The pipeline" and opens on the
+  pipeline lens, whose panel scroll region is named by its title, "The
+  pipeline". The embed prefixes every landmark inside with its own label,
+  so the region was announced as "The pipeline · The pipeline".
+- where it belongs: `packages/embed/src/embed.tsx` (the landmark sweep)
+- harness that should have caught it: `smoke-create` names embeds after
+  their app, never after the place they open on
+- status: fixed in "walkthrough: H · one name said once" · a landmark
+  already named the embed's label is left alone. Criterion: embed
+  `one-name-said-once.test.tsx` (verified failing without the fix).
