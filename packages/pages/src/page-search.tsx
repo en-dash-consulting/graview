@@ -103,7 +103,9 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
       ) : null}
 
       {kinds.map((kind) => (
-        <section key={kind} style={{ display: "grid", gap: 0 }} data-testid="search-group" data-kind={kind}>
+        // A track the width it was given, and words that break: a hit told apart by its VIN at a
+        // reader's 200% was a word wider than a phone, and the whole page scrolled sideways.
+        <section key={kind} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 0, minWidth: 0 }} data-testid="search-group" data-kind={kind}>
           <h2 style={{ ...h2, fontSize: "1.0625rem", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
             <KindMark kind={kind} brand={brand} schema={store.schema} size={8} />
             {/* The heading is the kind's list, narrowed by the same words. */}
@@ -120,9 +122,9 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
                   key={hit.id}
                   data-testid="search-hit"
                   data-about="node"
-                  style={{ display: "grid", gap: 2, padding: "12px 0", borderTop: "1px solid var(--graview-edge)" }}
+                  style={{ display: "grid", gap: 2, padding: "12px 0", minWidth: 0, borderTop: "1px solid var(--graview-edge)" }}
                 >
-                  <Link to={recordPath(store.schema, kind, hit.id)} style={{ ...plain, fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, lineHeight: 1.3 }}>
+                  <Link to={recordPath(store.schema, kind, hit.id)} style={{ ...plain, fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, lineHeight: 1.3, overflowWrap: "anywhere" }}>
                     {hit.flagged ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
                     {hit.label}
                     {hit.apart ? <span style={quiet}> · {hit.apart}</span> : null}

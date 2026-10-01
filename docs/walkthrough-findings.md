@@ -3880,3 +3880,21 @@ vehicles, dozens of customers and deals.
 - status: fixed in "walkthrough: H · one name said once" · a landmark
   already named the embed's label is left alone. Criterion: embed
   `one-name-said-once.test.tsx` (verified failing without the fix).
+
+### W-151 · Search scrolls sideways at 200% text on a phone
+- stage: I (text zoom to 200% on every route of the design, 390 wide) · face: pages · width: 390 · scheme: light
+- expected: no route scrolls sideways at a reader's 200%
+- actual: every route of the showroom held at 390@32px and at 320, except
+  `/pages/search?q=subaru` (the derived search page, which the design keeps):
+  133 pixels too wide. The two 2025 Subaru Outback Bases are told apart by
+  their VINs (W-141's rule), a 17-character word; the hit's link could not
+  break it, and its group's grid had an implicit `auto` track that grew to
+  503 pixels.
+- where it belongs: `packages/pages/src/page-search.tsx`
+- harness that should have caught it: `verify-pages`' zoom pass covers the
+  search page on fixtures whose names break
+- status: fixed in "walkthrough: I · a search fits a phone at 200%" · the
+  group is a `minmax(0, 1fr)` track and a hit's name breaks anywhere.
+  Criterion: pages `a-search-fits-a-phone-at-200.test.tsx` (verified failing
+  without the fix); every route of walk6's design re-measured clean at
+  390@200% and 320.
