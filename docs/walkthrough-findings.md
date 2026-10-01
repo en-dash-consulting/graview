@@ -8,6 +8,53 @@ Each entry names the commit by its subject line — commits here are
 `walkthrough: <stage> · <finding>`, one per finding, with the criterion in
 the same commit as the fix.
 
+## The classes
+
+Every finding carries a `class:` — exactly one, from the list below — and
+may name others after it as `(also: …)`. The list was read out of the 152
+findings of the first six walks, not written before them, and it says
+something the per-walk counts (31, 19, 19, 16, 32, 29) hid: **every class
+was already in the first walk.** Five walks since have added instances, not
+kinds. Each was fixed with a criterion local to the one component it was
+seen on, so the same kind came back on the next surface — the keyboard left
+nowhere thirteen times, an act offered and refused twenty-one.
+
+A finding of a class on this list is a miss of the class's shared check,
+not news: the fix is to that check first, so it would have caught the
+finding everywhere, and only then to the instance. A finding that fits no
+class here is what a walk is for; it gets a class and a shared check before
+the walk goes on (`docs/walkthrough.md`, "The findings log").
+
+"The watch" is the in-page judge every browser harness runs on every state
+it reaches; "the gauntlet" is `apps/gauntlet`, the example built to be
+awkward and run through every harness. Both are being built under the PRD
+feature "The walk finds kinds of bug, not instances"; until they land, a
+class they own is held only by the criteria its instances added.
+
+Counts are primary / also.
+
+| Class | What it is | The shared check that owns it | Count |
+|-------|------------|-------------------------------|-------|
+| `keyboard-lands-nowhere` | After a key or a press the keyboard is on `<body>`, stranded, or on something nobody pressed — or the key did nothing, or two things | the watch: focus is never on `<body>` after a key or a press; one Escape changes one rung | 13 / 1 |
+| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 11 / 5 |
+| `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 9 / 1 |
+| `wrong-end-of-a-relation` | A relation, an act or a direction is read from the end it was declared at rather than the end it is seen from, or assumed to run one way | the gauntlet (every edge cross-kind with an `inverse`, declared from both sides, one name on two kinds, two relations on one pair) driven through both faces and the chat; `graview check`'s `edge-without-inverse` and `act-without-far-end-reading` hold the declaration only | 7 / 3 |
+| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 21 / 2 |
+| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 3 / 15 |
+| `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's target-size and no-sideways-scroll rules, on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`) | 13 / 4 |
+| `layout-collision-or-overflow` | Something is drawn over something else or out of its box at an ordinary size: chrome over content, two cards or captions on one spot, a line through a chip, a value out of its cell, a member hidden with no name | `audit-ui` (`covered`, collisions, `asking`) and `survey`, on their fixed states only; the watch should measure it on every state — none yet there | 13 / 3 |
+| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 8 / 34 |
+| `round-trip-loses-something` | Something true before a step is lost or stale after it: written as JSON, reloaded, written back by the studio, remounted, or removed from under the stop that named it | the gauntlet through the studio's round trip (`the-round-trip-keeps-the-checkouts-words.test.ts`) and `pnpm verify remember`, and the watch failing on a page error or an address that resolves to nothing — none yet on the gauntlet | 10 / 1 |
+| `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 13 / 10 |
+| `accessibility-tree-wrong` | What assistive technology reads is wrong: a heading skipped or missing, a landmark missing, doubled or named twice, invalid nesting, a group with no name — or emphasis or a problem that is only a colour | the watch's axe pass, with audit-ui's `halfSaid` and "a problem painted but not said" | 13 / 1 |
+| `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 13 / 5 |
+| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 5 / 4 |
+
+Every class first appeared in the first walk (`faces-disagree` and
+`layout-collision-or-overflow` as an `also` there, W-004 and W-029). The
+largest secondary is `data-shape-not-in-fixtures` (34): the fixtures were
+tame, so each new domain was the only adversarial data the framework met.
+
 ## The first walk (2026-09-11)
 
 Thirty-one findings across the nine stages, every one fixed in a framework
@@ -46,6 +93,7 @@ at the end of every stage.
 
 ### W-001 · The first screen of a project offers "Add a item"
 - stage: A · face: both · width: 1280 and 390 · scheme: both
+- class: prose-wrong-for-the-domain (also: data-shape-not-in-fixtures)
 - expected: the empty district offers "Add an item …", and every generated
   sentence about the kind agrees with the word the author chose
 - actual: "Add a item …" in the strip, "A item: something Walk keeps track
@@ -70,6 +118,7 @@ at the end of every stage.
 
 ### W-002 · The empty district says something is waiting for it that is not
 - stage: A · face: scene · width: 1280 · scheme: dark
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
 - expected: the blank app's one district offers its beginning and nothing
   else — a gap is only worth stating when another kind is waiting on it
 - actual: selecting the empty district said "Nothing here yet, though Items
@@ -88,6 +137,7 @@ at the end of every stage.
 
 ### W-003 · A record card is named by its address, not by its name
 - stage: A · face: scene · width: 1280 and 390 · scheme: both
+- class: machine-words-shown
 - expected: the accessibility tree names every card — the card that reads
   "Buy milk" is called "Buy milk"
 - actual: every view host is a `role="group"`, and a record's was labelled
@@ -104,6 +154,7 @@ at the end of every stage.
 
 ### W-004 · The scene asks for a field by its key; the pages face asks in words
 - stage: A · face: scene · width: 1280 · scheme: both
+- class: machine-words-shown (also: faces-disagree)
 - expected: one act reads the same way on both faces
 - actual: the strip's ask labelled its field `label` (aria-label and
   placeholder both the raw identifier), and an editor opened in place was
@@ -121,6 +172,7 @@ at the end of every stage.
 
 ### W-005 · A card in the scene is a tab stop that does nothing
 - stage: A · face: scene · width: 1280 and 390 · scheme: both
+- class: keyboard-lands-nowhere
 - expected: keyboard alone can do everything — select the empty district,
   take its offer, add the first record
 - actual: every view host is `tabIndex={0}`, and its `onKeyDown` returned
@@ -139,6 +191,7 @@ at the end of every stage.
 
 ### W-006 · No line in a scaffolded app can be selected
 - stage: B · face: scene · width: 1280 · scheme: both
+- class: data-shape-not-in-fixtures (also: machine-words-shown)
 - expected: selecting the drawn line opens the relation's inspector — its
   name, its sentence, both ends, and the severing act
 - actual: the strip's title was the raw selection string
@@ -163,6 +216,7 @@ at the end of every stage.
 
 ### W-007 · A record page captions a relation from the wrong end
 - stage: B · face: pages · width: 1280 and 390 · scheme: both
+- class: wrong-end-of-a-relation (also: faces-disagree)
 - expected: the pages record captions both directions correctly
 - actual: the connections section's eyebrow was the edge kind, always: an
   owner's record read "Assigned to" over "What they are seeing to". That is
@@ -182,6 +236,7 @@ at the end of every stage.
 
 ### W-008 · A line offers the act that would make it, and logs a lie when pressed
 - stage: B · face: scene · width: 1280 and 390 · scheme: both
+- class: offered-then-refused
 - expected: selecting the line offers the severing act; an act that cannot
   change anything is not offered
 - actual: the line's inspector offered "Hand it to somebody" — the act that
@@ -204,6 +259,7 @@ at the end of every stage.
 
 ### W-009 · The scene's heading list skips two levels as soon as a relation is drawn
 - stage: B · face: scene · width: 1280 and 390 · scheme: both
+- class: accessibility-tree-wrong
 - expected: axe reports nothing on either face
 - actual: axe `heading-order` (moderate), on every scene state once an item
   was connected to an owner. The connections panel writes a relation's
@@ -223,6 +279,7 @@ at the end of every stage.
 
 ### W-010 · A district says one of its members is broken, then will not say which
 - stage: C · face: scene · width: 1280 and 390 · scheme: both
+- class: accessibility-tree-wrong
 - expected: the flagged record is marked in the scene, in its district, and
   on its pages record
 - actual: the district card said "Items ⚠ 1", and opening it — which is the
@@ -241,6 +298,7 @@ at the end of every stage.
 
 ### W-011 · Every agent seat signs its work "claude"
 - stage: C · face: scene · width: 1280 · scheme: both
+- class: says-something-untrue
 - expected: repairing from the agent's seat leaves one op in the log with
   the right author
 - actual: the op read "claude Close Buy milk" — `AgentSeat` hardcoded
@@ -262,6 +320,7 @@ at the end of every stage.
 
 ### W-012 · A repair with a blank in it is offered as one press, and refuses on press
 - stage: C · face: pages · width: 1280 and 390 · scheme: both
+- class: offered-then-refused (also: faces-disagree, what-a-project-copies-is-wrong)
 - expected: the repair is one press when it needs nothing, an ask when it
   needs one thing, and never a refusal on press
 - actual: on the problems page and on a record page, every repair was a bare
@@ -286,6 +345,7 @@ at the end of every stage.
 
 ### W-013 · A district with a lens over it bursts into chips anyway
 - stage: D · face: scene · width: 1280 and 390 · scheme: both
+- class: says-something-untrue
 - expected: from altitude a group with a lens keeps its scaled card and its
   district stays shut; a group without one opens as its district
 - actual: both opened as districts. A district explodes into a ring of chips
@@ -311,6 +371,7 @@ at the end of every stage.
 
 ### W-014 · Half a lens's emphasis exists only as a colour
 - stage: D · face: scene · width: 1280 and 390 · scheme: both
+- class: accessibility-tree-wrong
 - expected: every mark the lens draws is a pick target; selection lights it
   and dims the rest, and the DOM says so (`data-graview-emphasis`)
 - actual: in the coverage grid the row labels said their emphasis; the column
@@ -335,6 +396,7 @@ at the end of every stage.
 
 ### W-015 · A lens is offered as a place you cannot go while its kind is empty
 - stage: D · face: scene · width: 1280 and 390 · scheme: both
+- class: offered-then-refused (also: data-shape-not-in-fixtures)
 - expected: the title is a place — a pill in the bar, pressed while there —
   and the lens does not fall over on an empty graph
 - actual: on a blank app both lens pills were in the bar from the first
@@ -357,6 +419,7 @@ at the end of every stage.
 
 ### W-016 · Both shipped lenses throw on an empty graph
 - stage: D · face: scene · width: 1280 and 390 · scheme: both
+- class: data-shape-not-in-fixtures
 - expected: neither the board nor the coverage grid throws on an empty graph
 - actual: `buildCoverage` threw `CoverageBindingError: Nothing to lay out: no
   "risk" and no "control" nodes.` and `buildBoard` threw
@@ -380,6 +443,7 @@ at the end of every stage.
 
 ### W-017 · The framework's own copies of its skills are stale
 - stage: E · face: neither — the repository itself
+- class: what-a-project-copies-is-wrong
 - expected: the walkthrough's stage E says "follow `graview-pages`", and an
   agent working in this checkout can load it
 - actual: `.claude/skills` and `.agents/skills` here held nine skills, not
@@ -401,6 +465,7 @@ at the end of every stage.
 
 ### W-018 · A page's form asks a wider question than the act it is for
 - stage: E · face: pages · width: 1280 and 390 · scheme: both
+- class: offered-then-refused (also: faces-disagree, what-a-project-copies-is-wrong)
 - expected: one act reads the same way on both faces
 - actual: an affordance carries the only honest answers for each node
   reference it leaves open — a connecting act offers who is NOT already on, a
@@ -429,6 +494,7 @@ at the end of every stage.
 
 ### W-019 · A withheld act does not say why, and what it does say is wrong
 - stage: F · face: scene · width: 1280 and 390 · scheme: both
+- class: offered-then-refused (also: machine-words-shown)
 - expected: every act the narrower seat may not take is struck through with
   the policy's reason, in the strip as well as on the pages
 - actual: three things at once in the actions strip.
@@ -462,6 +528,7 @@ at the end of every stage.
 
 ### W-020 · A repair the seat may not take is offered live, and refuses on press
 - stage: F · face: pages · width: 1280 and 390 · scheme: both
+- class: offered-then-refused (also: faces-disagree, what-a-project-copies-is-wrong)
 - expected: nothing is hidden and nothing refuses on press
 - actual: a rule names its repairs without knowing who is reading, and both
   repair surfaces rendered them straight from the violation — going round the
@@ -483,6 +550,7 @@ at the end of every stage.
 
 ### W-021 · A project cannot follow the last rung of its own pages skill
 - stage: F/H · face: neither — the scaffold
+- class: what-a-project-copies-is-wrong
 - expected: `graview-pages` ends by telling a project to mount itself into
   somebody else's page with `@graview/embed`; a scaffolded project can do it
 - actual: `@graview/embed` was not a dependency of a new project and had no
@@ -510,6 +578,7 @@ at the end of every stage.
 
 ### W-022 · Changing seats had no criterion for keeping the store
 - stage: F · face: embed · width: 1280
+- class: harness-or-setup-itself
 - expected: changing seats on the embed keeps the store and its history
 - actual: it does — but nothing said so. The embed's seat test asserted what
   narrows and never that the graph and the op log are the ones the reader was
@@ -522,6 +591,7 @@ at the end of every stage.
 
 ### W-023 · A seat that may not sit down gives the wrong reason, quietly
 - stage: F · face: scene · width: 1280 · scheme: both
+- class: offered-then-refused
 - expected: nothing is hidden and nothing refuses on press; a seat the policy
   refuses says so
 - actual: with the narrower seat at the keyboard, the starter seat was
@@ -544,6 +614,7 @@ at the end of every stage.
 
 ### W-024 · "Remove this field" does not survive being written down
 - stage: G · face: both · width: any · scheme: any
+- class: round-trip-loses-something
 - expected: the migration is in the log with its author and intent, and is
   undoable
 - actual: a patch says "remove this key" by carrying the key with the value
@@ -572,6 +643,7 @@ at the end of every stage.
 
 ### W-025 · An undo the declaration refuses throws into the console
 - stage: G · face: scene · width: 1280 · scheme: both
+- class: offered-then-refused
 - expected: the migration is undoable — or, when it is not, the interface
   says so
 - actual: `store.canUndo` answers what the LOG can answer (whether a later op
@@ -592,6 +664,7 @@ at the end of every stage.
 
 ### W-026 · Renaming a record in place stopped committing — a regression from W-005
 - stage: G · face: scene · width: 1280 · scheme: both
+- class: keyboard-lands-nowhere
 - expected: the in-place editor commits on Enter, as stage A verified
 - actual: after the fix for W-005 (making the card answer the keyboard), the
   host called `preventDefault()` on Enter BEFORE asking whose key it was. The
@@ -614,6 +687,7 @@ at the end of every stage.
 
 ### W-027 · The scaffolder can ship a project that does not parse
 - stage: G · face: neither — the scaffold
+- class: what-a-project-copies-is-wrong
 - expected: `pnpm smoke:create` passes
 - actual: every one of its 28 verdicts went false, because the project's own
   `verify` died on `src/embed.tsx(22,16): error TS1005: ',' expected.` — the
@@ -651,6 +725,7 @@ at the end of every stage.
 
 ### W-028 · An embed is not a landmark, so nothing it draws is inside one
 - stage: H · face: embed · width: 1280 and 390 · scheme: both
+- class: accessibility-tree-wrong
 - expected: two embeds have two landmark names; nothing in either escapes its
   box
 - actual: `label` named every landmark INSIDE an embed ("Chapter 13 ·
@@ -678,6 +753,7 @@ at the end of every stage.
 
 ### W-029 · In a narrow Graview the actions strip sits on the thing you are acting on
 - stage: H · face: scene · width: 390 (and any embed narrower than ~620)
+- class: breaks-at-width-zoom-or-engine (also: layout-collision-or-overflow)
 - expected: nothing in either embed escapes its box, and chrome does not sit
   on content
 - actual: the strip is placed as a left rail 236 wide at x=14, sized for the
@@ -706,6 +782,7 @@ at the end of every stage.
 
 ### W-030 · Stage I asked for a renderer a scaffolded app does not have
 - stage: I · face: neither — the playbook
+- class: what-a-project-copies-is-wrong
 - expected: `?renderer=gpu` in Chromium is something the next agent can do
 - actual: there is no such switch anywhere. `Scene`'s `renderer="auto"`
   resolves to the DOM path unless the app passes an `attachRenderer`, which a
@@ -724,6 +801,7 @@ at the end of every stage.
 
 ### W-031 · Every count in audit-ui ran at one width
 - stage: I · face: scene · width: 390
+- class: harness-or-setup-itself (also: breaks-at-width-zoom-or-engine)
 - expected: `pnpm audit-ui` would have caught W-029 — it measures exactly
   that (`covered`: the strip sitting on a plane-0 or plane-1 panel)
 - actual: it opens every screen at 1560×940 and nothing else, so a rail 236
@@ -772,6 +850,7 @@ The shapes that came up again, and the new ones:
 
 ### W-032 · `pnpm test` fails in the checkout the playbook tells you to make
 - stage: Setup · face: neither — the repository
+- class: harness-or-setup-itself
 - expected: `pnpm install && pnpm build && pnpm test`, the playbook's first
   instruction, passes in a checkout with nothing built in it
 - actual: one suite fails to collect — `Failed to resolve entry for package
@@ -800,6 +879,7 @@ The shapes that came up again, and the new ones:
 
 ### W-033 · The strip's tooltip under the first act says "this makes a item"
 - stage: A · face: scene · width: 1280 · scheme: both
+- class: prose-wrong-for-the-domain (also: machine-words-shown)
 - expected: every sentence the framework writes about a kind takes its
   article from `withArticle` and says the kind in words, the way W-001 made
   every SCAFFOLDED sentence do
@@ -828,6 +908,7 @@ The shapes that came up again, and the new ones:
 
 ### W-034 · Escape does nothing at all on the first screen of a scaffolded app
 - stage: A · face: scene · width: 1280 and 390 · scheme: both
+- class: keyboard-lands-nowhere
 - expected: "Press Escape from every state" — the key backs out one rung at a
   time and never drops a selection while rising
 - actual: at altitude it did nothing, in every state, on every press. A
@@ -862,6 +943,7 @@ The shapes that came up again, and the new ones:
 
 ### W-035 · The record page offers the record as the answer to its own edge
 - stage: A · face: pages · width: 1280 and 390 · scheme: both
+- class: offered-then-refused (also: faces-disagree, what-a-project-copies-is-wrong)
 - expected: "Make it depend on something" offers something. The scene gets
   this right — with one item it withholds the connecting act entirely,
   because the derivation drops the subject from its own candidates
@@ -894,6 +976,7 @@ The shapes that came up again, and the new ones:
 
 ### W-036 · "Close it" stays on the strip of something already closed
 - stage: A · face: scene · width: 1280 · scheme: both
+- class: offered-then-refused
 - expected: an act offered as one press, with nothing left to ask, does
   something when pressed
 - actual: a closed item still offered "Close it". Pressed, nothing changed —
@@ -925,6 +1008,7 @@ The shapes that came up again, and the new ones:
 
 ### W-037 · On a phone the command bar runs off the screen, taking undo with it
 - stage: A · face: scene · width: 390 and 320 · scheme: both
+- class: breaks-at-width-zoom-or-engine
 - expected: every control the bar offers is on the screen, or can be scrolled
   to
 - actual: the bar is one unwrapping flex row inside a wrapper with
@@ -954,6 +1038,7 @@ The shapes that came up again, and the new ones:
 
 ### W-038 · Two districts sit on top of each other in a short scene
 - stage: A · face: scene · width: any · scheme: both
+- class: breaks-at-width-zoom-or-engine (also: layout-collision-or-overflow, data-shape-not-in-fixtures)
 - expected: the ring at altitude is a ring — no district drawn over another,
   whatever the scene's height
 - actual: with an EVEN number of kinds two districts sit directly opposite on
@@ -984,6 +1069,7 @@ The shapes that came up again, and the new ones:
 
 ### W-039 · The strip offers answers without ever saying what the question is
 - stage: B · face: scene · width: 1280 and 390 · scheme: both
+- class: accessibility-tree-wrong (also: machine-words-shown)
 - expected: the ask names what it is asking, in the app's own words, the way
   W-004 made the text field do
 - actual: two shapes of ask, one of them mute. Pressing "Hand it to
@@ -1011,6 +1097,7 @@ The shapes that came up again, and the new ones:
 
 ### W-040 · An act offered on the far end of its tie is labelled from the near end
 - stage: B · face: both · width: any · scheme: both
+- class: wrong-end-of-a-relation
 - expected: a control that changes the graph says what pressing it would do,
   read from where it is offered
 - actual: an act declaring `connects` or `severs` is offered from EITHER
@@ -1047,6 +1134,7 @@ The shapes that came up again, and the new ones:
 
 ### W-041 · A record implicated in a broken rule is a shade and nothing else
 - stage: C · face: scene · width: any · scheme: both
+- class: accessibility-tree-wrong
 - expected: the flagged record is marked in the scene, in its district and on
   its pages record — marked, not tinted
 - actual: the district's chips get "⚠" in their own label and the routed
@@ -1079,6 +1167,7 @@ The shapes that came up again, and the new ones:
 
 ### W-042 · A lens built from the framework's own primitives cannot say what it lights
 - stage: D · face: scene · width: any · scheme: both
+- class: accessibility-tree-wrong (also: what-a-project-copies-is-wrong)
 - expected: `graview-lens` step 5 — "Expose what you decide as
   `data-graview-emphasis` so it can be checked" — is something an app's lens
   can actually do with the primitives the skill points it at
@@ -1103,6 +1192,7 @@ The shapes that came up again, and the new ones:
 
 ### W-043 · The coverage lens reports nothing covered when everything is
 - stage: D · face: scene · width: any · scheme: both
+- class: wrong-end-of-a-relation (also: says-something-untrue, data-shape-not-in-fixtures)
 - expected: the lens is told which kinds are rows and which are columns, and
   reads the graph
 - actual: `buildCoverage` assumed `edge.from` was the column and `edge.to` the
@@ -1133,6 +1223,7 @@ The shapes that came up again, and the new ones:
 
 ### W-044 · The survey called the visually-hidden idiom a cut caption, on every screen
 - stage: D · face: both · width: 1560 · scheme: both
+- class: harness-or-setup-itself
 - expected: `pnpm survey`'s "overflowing" count means a caption with a hard
   edge and text behind it — the thing it says it means
 - actual: the 1×1 clip-rect idiom (text present for a screen reader, absent
@@ -1162,6 +1253,7 @@ The shapes that came up again, and the new ones:
 
 ### W-045 · The derived list page offers an act it cannot ask for
 - stage: E · face: pages · width: any · scheme: both
+- class: offered-then-refused (also: faces-disagree)
 - expected: every surface offers what can act, which is what
   `graview-pages` tells an app's own pages to do — "filtering
   `store.allMutations()` by `subject.kinds` yourself looks equivalent and is
@@ -1197,6 +1289,7 @@ The shapes that came up again, and the new ones:
 
 ### W-046 · Every page of the routed face has a control too small to hit
 - stage: E · face: pages · width: 1280 and 390 · scheme: both
+- class: breaks-at-width-zoom-or-engine
 - expected: "every link and button is at least 24px" — the WCAG 2.2 minimum
   `audit-ui` has counted on the scene's screens since it existed
 - actual: two, in the framework's own pages, in every app. "Start fresh" is
@@ -1223,6 +1316,7 @@ The shapes that came up again, and the new ones:
 ### W-047 · The interface asks "may I?" of nobody, and is told yes
 - stage: F · face: pages (and any surface that does not thread a principal) ·
   width: any · scheme: both
+- class: offered-then-refused
 - expected: what a face offers is what the store would accept — the whole
   reason `graview-permissions` says "the narrowing happens once, in
   `deriveAffordances`"
@@ -1253,6 +1347,7 @@ The shapes that came up again, and the new ones:
 
 ### W-048 · The agent-seat skill's own example does not compile
 - stage: F · face: neither — the skills
+- class: what-a-project-copies-is-wrong
 - expected: an agent following a skill verbatim gets working code; the skill
   is the contract the walkthrough is testing
 - actual: `graview-agent-seat` says to prove the two paths are one path with
@@ -1276,6 +1371,7 @@ The shapes that came up again, and the new ones:
 
 ### W-049 · A refused undo shows the validator's JSON to the person who pressed it
 - stage: G · face: scene · width: any · scheme: both
+- class: machine-words-shown
 - expected: an undo the declaration will not have says why, in the app's own
   words — W-025 built the mechanism and put the sentence in the activity rail
 - actual: the sentence it puts there was
@@ -1303,6 +1399,7 @@ The shapes that came up again, and the new ones:
 
 ### W-050 · The reader's own text size never reaches the app
 - stage: I · face: both · width: any · scheme: both
+- class: breaks-at-width-zoom-or-engine (also: harness-or-setup-itself)
 - expected: stage I's "text zoom to 200% — the root font size, not page zoom,
   which is a scale factor and proves nothing about reflow" is a criterion
   that can fail
@@ -1373,6 +1470,7 @@ The shapes, in the order of how much they cost:
 
 ### W-051 · The ask you open is drawn off the side of the pane, or below it
 - stage: A · face: scene · width: 1280 and 390 · scheme: both
+- class: layout-collision-or-overflow (also: breaks-at-width-zoom-or-engine)
 - expected: "the inspector, menu and strip stay inside the scene's box" — and
   what is inside them stays inside them. Pressing an act that still needs
   something shows you the thing it needs.
@@ -1410,6 +1508,7 @@ The shapes, in the order of how much they cost:
 
 ### W-052 · The rail's undo and its way out of a remembered store are too small to hit
 - stage: A · face: scene · width: 1280 and 390 · scheme: both
+- class: breaks-at-width-zoom-or-engine (also: faces-disagree)
 - expected: no control under 24px, which the framework already counts
 - actual: the activity rail holds exactly two controls, and both were under
   it: `undo` at 38x18 (11px text in one pixel of vertical padding) and
@@ -1434,6 +1533,7 @@ The shapes, in the order of how much they cost:
 
 ### W-053 · Every act taken from the keyboard ends at the top of the document
 - stage: A · face: scene · width: any · scheme: both
+- class: keyboard-lands-nowhere (also: faces-disagree)
 - expected: "keyboard alone can do everything above" — and doing it leaves
   you where you were, the way pressing a button on the routed face does
 - actual: focus went to `<body>` after every act. The pane is a live list:
@@ -1464,6 +1564,7 @@ The shapes, in the order of how much they cost:
 
 ### W-054 · Following the next skill silently empties the page the last one wrote
 - stage: B · face: pages · width: any · scheme: both
+- class: faces-disagree (also: what-a-project-copies-is-wrong)
 - expected: `graview-node-kind` says to declare a second kind and an edge to
   it; the record page then says so, the way every derived surface does. The
   scaffolded page's own comment promises it: "everything it shows still comes
@@ -1499,6 +1600,7 @@ The shapes, in the order of how much they cost:
 
 ### W-055 · An act that removes what you are standing in leaves a stop about nothing, and blanks the page
 - stage: B · face: scene · width: any · scheme: both
+- class: round-trip-loses-something
 - expected: severing a relation removes exactly that line, and the interface
   goes on being an interface
 - actual: three faces of one defect, all reached by acts the declaration
@@ -1550,6 +1652,7 @@ The shapes, in the order of how much they cost:
 
 ### W-056 · An act offered from the far end asks for its subject by the word "Id"
 - stage: B · face: scene · width: any · scheme: both
+- class: machine-words-shown (also: faces-disagree)
 - expected: "the connecting act offers only candidates not already
   connected" — and says what it is asking for, which W-039 established
 - actual: standing on Ada Nowak, "Hand one back …" opened its ask under the
@@ -1579,6 +1682,7 @@ The shapes, in the order of how much they cost:
 
 ### W-057 · The seat promises repairs and offers none
 - stage: C · face: scene · width: any · scheme: both
+- class: says-something-untrue
 - expected: the repair is "an ask when it needs one thing, and never a
   refusal on press" — on every surface, the seat included
 - actual: asked "what's wrong?", the seat answered `1 problem: Pay the
@@ -1610,6 +1714,7 @@ The shapes, in the order of how much they cost:
 
 ### W-058 · The rail says what an agent did by the name the mutation is registered under
 - stage: C · face: scene · width: any · scheme: both
+- class: machine-words-shown
 - expected: the record of what the seat just did reads like the rest of the
   interface — an act by its own title
 - actual: `changed · close-item`. The activity rail lists every call a seat
@@ -1634,6 +1739,7 @@ The shapes, in the order of how much they cost:
 
 ### W-059 · Everything done on the second visit is filed under the first turn ever taken
 - stage: C · face: both · width: any · scheme: both
+- class: round-trip-loses-something
 - expected: "repairing from the scene, from the pages and from the agent's
   seat each leave one op in the log with the right author; undo takes it
   back". Reached by the ordinary path: repair, then reload, then act again.
@@ -1672,6 +1778,7 @@ The shapes, in the order of how much they cost:
 
 ### W-060 · Half the board lens's marks say nothing about the selection
 - stage: D · face: scene · width: 1280 and 390 · scheme: both
+- class: accessibility-tree-wrong
 - expected: "every mark the lens draws is a pick target; selection lights it
   and dims the rest, and the DOM says so (`data-graview-emphasis`)" — the
   rule `graview-lens` gives an app, and W-014's own criterion
@@ -1706,6 +1813,7 @@ The shapes, in the order of how much they cost:
 
 ### W-061 · A design's own shell gets a second main under it, on every route it did not replace
 - stage: E · face: pages · width: any · scheme: both
+- class: accessibility-tree-wrong
 - expected: "a custom page … uses `PageMain` so an embedded copy has one
   main", and `graview-pages` on a product design: "Keep landmarks and targets
   honest. One `main` (a `section` when `context.embedded`)."
@@ -1737,6 +1845,7 @@ The shapes, in the order of how much they cost:
 
 ### W-062 · The page the scaffolder writes hides what a seat may not do
 - stage: F · face: pages · width: any · scheme: both
+- class: offered-then-refused (also: faces-disagree, what-a-project-copies-is-wrong)
 - expected: `graview-permissions`' second inviolable — "An action you may not
   take should SAY SO rather than vanish. Hiding it teaches people the
   software is broken: they watched a colleague do this yesterday and now the
@@ -1768,6 +1877,7 @@ The shapes, in the order of how much they cost:
 
 ### W-063 · Nobody can take back their own edit once an app has a policy
 - stage: G · face: scene · width: any · scheme: both
+- class: offered-then-refused
 - expected: "undo takes it back and the problem returns" — stage C's words,
   and `graview-permissions`' own: "Undo is a change and is judged like one:
   what you may undo is what you may have done."
@@ -1799,6 +1909,7 @@ The shapes, in the order of how much they cost:
 
 ### W-064 · From chapter seven on, the framework's own progression shows a reader who may do nothing
 - stage: G · face: scene · width: any · scheme: both
+- class: offered-then-refused (also: harness-or-setup-itself)
 - expected: chapter seven's own claim — "One policy, declared once. The
   store refuses, the actions strip narrows, and an agent's seat narrows with
   it, so a gardener never sees a button that would fail."
@@ -1830,6 +1941,7 @@ The shapes, in the order of how much they cost:
 
 ### W-065 · Two embeds of one design are two regions with the same name
 - stage: H · face: pages · width: any · scheme: both
+- class: accessibility-tree-wrong (also: what-a-project-copies-is-wrong)
 - expected: "two embeds have two landmark names", and `graview-pages`' own
   rule for a design: "Keep landmarks and targets honest. One `main` (a
   `section` when `context.embedded`)"
@@ -1862,6 +1974,7 @@ The shapes, in the order of how much they cost:
 
 ### W-066 · In WebKit the keyboard stops working when the pane it was in goes away
 - stage: I · face: scene · width: any · scheme: both
+- class: keyboard-lands-nowhere (also: breaks-at-width-zoom-or-engine)
 - expected: "a keyboard-only pass of every stage … the app in WebKit and
   Firefox as well as Chromium"
 - actual: in WebKit the walk stops at the first Escape. Put the keyboard on
@@ -1894,6 +2007,7 @@ The shapes, in the order of how much they cost:
 
 ### W-067 · Every picker on the routed face is under the minimum target size in WebKit
 - stage: I · face: pages · width: 390 and 1280 · scheme: both
+- class: breaks-at-width-zoom-or-engine
 - expected: "every link and button is at least 24px" — in the three engines
   the framework ships in
 - actual: 22 pixels in WebKit, 35 in Chromium, from one `controlStyle` that
@@ -1918,6 +2032,7 @@ The shapes, in the order of how much they cost:
 
 ### W-068 · Nothing ever rendered a page at the reader's own text size
 - stage: I · face: pages · width: 390 · scheme: both
+- class: breaks-at-width-zoom-or-engine (also: harness-or-setup-itself)
 - expected: "text zoom to 200% — the root font size, not page zoom, which is
   a scale factor and proves nothing about reflow", and no sideways scroll at
   a phone's width
@@ -1949,6 +2064,7 @@ The shapes, in the order of how much they cost:
 
 ### W-069 · The routed face scrolls two ways at 200% text, in two of the three engines
 - stage: I · face: pages · width: 390 · scheme: both
+- class: breaks-at-width-zoom-or-engine
 - expected: no sideways scroll at a phone's width, at the text size the
   reader asked for — WCAG 1.4.10, and stage I's own "text zoom to 200%"
 - actual: found by W-068's new criterion the moment it ran in every engine:
@@ -2032,6 +2148,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-070 · A rename made in place leaves the keyboard on <body>, or on a pin nobody pressed
 - stage: A · face: scene · width: 1280 and 390 · scheme: both
+- class: keyboard-lands-nowhere
 - expected: "keyboard alone can do everything above" — rename it in place,
   and be where you were afterwards, the way pressing a button on the routed
   face leaves you on the button (W-053's rule, one component over)
@@ -2075,6 +2192,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-071 · The new-app skill still sends a reader to `?renderer=gpu`
 - stage: Setup · face: neither — the skills
+- class: what-a-project-copies-is-wrong
 - expected: a skill's prose can be followed; W-030 established that there is
   no `?renderer=gpu` anywhere — `auto` is the DOM path unless an app passes
   an `attachRenderer` — and took it out of the playbook
@@ -2101,6 +2219,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-072 · One Escape closes the rail and drops the selection under it
 - stage: B · face: scene · width: 1280 and 390 · scheme: both
+- class: keyboard-lands-nowhere
 - expected: "Escape backs out one level at a time in the documented order" —
   with the activity rail open, the press closes the rail; the next press is
   the ladder's
@@ -2135,6 +2254,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-073 · The strip says "double-click opens" on a district that is already open
 - stage: B · face: scene · width: any · scheme: both
+- class: says-something-untrue
 - expected: the onward gesture is said for the state the thing is in — and
   stage B's own claim is that "the district closes on a second double-click"
 - actual: select an opened district and the strip's subtitle reads
@@ -2152,6 +2272,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-074 · The strip logs the button's words; the pages log the act's own
 - stage: C · face: both · width: any · scheme: both
+- class: faces-disagree
 - expected: "one act reads the same way on both faces" (W-004), and "each
   leave one op in the log with the right author" — the same op from either
   face
@@ -2179,6 +2300,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-075 · The chat captions a relation from the wrong end
 - stage: C · face: scene (the chat) · width: any · scheme: both
+- class: wrong-end-of-a-relation (also: faces-disagree)
 - expected: "the caption over a neighbour must be the focus's reading" —
   the chat's account of a node reads each tie from the end that node is at
 - actual: "what is Ada Nowak seeing to?" → `Ada Nowak — a person. who is
@@ -2200,6 +2322,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-076 · A question is answered with an act to run, on the wrong two ends
 - stage: C · face: scene (the chat) · width: any · scheme: both
+- class: says-something-untrue (also: offered-then-refused)
 - expected: something the chat can be asked is answered from the graph or
   not at all — never wrongly
 - actual: "what depends on Pay the deposit?" → `I can do that. Review it
@@ -2224,6 +2347,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 ### W-077 · The studio writes an act back with an argument the checkout never had
 - stage: B (the studio, once there were two kinds) · face: neither — the
   declaration
+- class: round-trip-loses-something
 - expected: `graview-studio` step 4 — "an act the checkout wrote keeps the
   checkout's body under the studio's declaration", and the written files
   are "the files `graview create` writes"; the checkout's own verify passes
@@ -2254,6 +2378,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-078 · The studio disarms every rule the checkout wrote, and says it kept them
 - stage: B (the studio) · face: neither — the declaration
+- class: round-trip-loses-something
 - expected: a rule the checkout judges goes on judging, or the file says
   plainly that it cannot write the judgement
 - actual: `invariants.ts` came back with `evaluate() { return []; }` for
@@ -2288,6 +2413,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-079 · The studio drops the far-end reading, so a clean checkout comes back warning
 - stage: B (the studio) · face: neither — the declaration
+- class: round-trip-loses-something (also: wrong-end-of-a-relation)
 - expected: a declaration read into the studio and written back unchanged
   says what it said; `graview check` on the round trip is what it was
 - actual: Walk's `hand-item` and `take-back` declare `fromTheOtherEnd`
@@ -2315,6 +2441,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-080 · A lens written the way the skill says does not register without a cast
 - stage: D · face: neither — the types
+- class: what-a-project-copies-is-wrong
 - expected: `graview-lens` step 7 — `registry.register("gardener", {
   cardinality: "many", fidelity: "full" }, TendingView, { title: "Who tends
   what" })` — typechecks in a project that wrote `TendingView:
@@ -2342,6 +2469,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-081 · The worked example a design is told to copy picks its acts by name
 - stage: E · face: pages · width: any · scheme: both
+- class: offered-then-refused (also: what-a-project-copies-is-wrong, wrong-end-of-a-relation)
 - expected: `graview-pages`, rung two — "Offer what can act.
   `facts.actions.affordances`, never your own scan of the mutations", and
   "A design that lists acts by NAME will miss the one declared after it was
@@ -2378,6 +2506,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 ### W-082 · The routed face writes as nobody, so under a policy every form refuses on press
 - stage: E (found writing the design; it is stage F's face) · face: pages ·
   width: any · scheme: both
+- class: offered-then-refused (also: faces-disagree)
 - expected: "nothing refuses on press" — an act the derivation offered live
   to this seat applies when this seat presses submit
 - actual: `DerivedForm` applied with no author, and so did `Repairs`' one-
@@ -2410,6 +2539,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-083 · An act taken from the keyboard on the product design ends on <body>
 - stage: E · face: pages · width: any · scheme: both
+- class: keyboard-lands-nowhere (also: what-a-project-copies-is-wrong)
 - expected: pressing an act's form on the design leaves the keyboard where
   it was, the way the derived pages do (their forms stay mounted)
 - actual: the design's act is a button that opens its form in place and
@@ -2430,6 +2560,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-084 · The chat proposes an act the seat may not take, and refuses on press
 - stage: F · face: scene (the chat) · width: 1280 and 390 · scheme: both
+- class: offered-then-refused
 - expected: "nothing is hidden and nothing refuses on press" — the seat's
   own turn under a policy withholds what the seat may not do and says why,
   the way the strip, the pages and the starter seat already do
@@ -2455,6 +2586,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-085 · The rail and the pages call the other seat's work "you"
 - stage: F · face: both · width: any · scheme: both
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
 - expected: with two seats on one store, the history says whose work is
   whose; "you" is the person at the keyboard
 - actual: the keeper seeds the graph, the helper sits down, and the
@@ -2476,6 +2608,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-086 · A rule's neighbourhood is every task, twelve to a row, while its card says nothing is connected
 - stage: B/C · face: scene · width: 1280 · scheme: light · found by Nick in the todo app at `#focus=rule-order&relation=task&zoom=1`
+- class: layout-collision-or-overflow (also: says-something-untrue, data-shape-not-in-fixtures)
 - expected: focusing a rule and raising Tasks shows the tasks the rule finds
   wrong, captioned as such, with the card's connections agreeing; a band of
   many neighbours stays readable
@@ -2503,6 +2636,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-087 · Lines between two chips of a wrapped band cross the other chips and are left as pieces
 - stage: B · face: scene · width: 1280 · scheme: light · found by Nick in the todo app at `#focus=aggregate:task&relation=task`
+- class: layout-collision-or-overflow
 - expected: a relation between two members of the band is one visible line that crosses nothing
 - actual: an arc between two chips ran under whichever chips lay between and, clipped out under each, was left as dashes in the gaps — lines that belonged to nothing
 - where it belongs: `packages/react/src/scene.tsx` (the strands) and a router of its own, `packages/react/src/channels.ts`
@@ -2511,6 +2645,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-088 · Twelve lines from the list columns to the same tasks' chips, over the panel that already shows them
 - stage: B · face: scene · width: 1280 · scheme: light · found by Nick in the todo app at `#focus=aggregate:list&relation=task`
+- class: layout-collision-or-overflow
 - expected: with the lists in focus and every task raised, the picture says which list holds which task once — in the columns — and draws lines only where they add something
 - actual: a `holds` line from each list column inside the Lists panel to the same task's chip in the band, twelve arcs crossing the panel and each other; and a gutter road crossing a row at eight pixels from a chip, square-cornered, read as a box drawn around it
 - where it belongs: `packages/react/src/scene.tsx` (the strands), `packages/react/src/channels.ts`, `packages/react/src/routes.ts`
@@ -2519,6 +2654,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 
 ### W-089 · The week's entries seemed to belong to no list until one was selected; a calendar of times with no names; "Today" on two days
 - stage: D · face: scene · width: 1280 · scheme: light · found by Nick in the todo app at `#focus=aggregate:task&relation=list`
+- class: says-something-untrue (also: layout-collision-or-overflow)
 - expected: every entry on the week has its line to the list that holds it; an entry says what it is; the example's "Today" list holds today's tasks
 - actual: W-088's rule fired for a band card too — a list card at summary draws its tasks as chips, so "the far end is drawn inside the near host" silenced every line but the ones the card hid, and the picture read as one task linked to Today until Today was selected and its lines lit. A moment on the timeline was a dot and a time, so a calendar of moments — which a to-do list mostly is — read as a column of times. The example's Today list held tasks planned on Monday and Tuesday with today a Tuesday. And three someday tasks with no time were one line from their list into the middle of the week, anchored on the panel because the calendar drew none of them.
 - where it belongs: `packages/react/src/scene.tsx` (the strands), `packages/primitives/src/lens/timeline.tsx` (the moment), `apps/todo/src/data/example.json`
@@ -2535,6 +2671,7 @@ two singles and thirty-five songs.
 
 ### W-090 · Escape closes a popover and leaves the keyboard on the body
 - stage: A · face: scene · width: 1280 · scheme: light
+- class: keyboard-lands-nowhere
 - expected: open Activity, press "undo", press Escape — the list closes and
   the keyboard is back on the Activity button, one Tab from where it was
 - actual: the list closed and `document.activeElement` was `<body>`: the
@@ -2559,6 +2696,7 @@ two singles and thirty-five songs.
 
 ### W-091 · The routed face's first screen has no heading
 - stage: A · face: pages · width: 390 and 1280 · scheme: both
+- class: accessibility-tree-wrong (also: data-shape-not-in-fixtures)
 - expected: axe reports nothing on either face
 - actual: on an empty graph `/pages` is the way in alone — `<Begin>` in the
   scaffold's home, framed in `PageMain` — and axe reported
@@ -2580,6 +2718,7 @@ two singles and thirty-five songs.
 
 ### W-092 · Answering the way in from the keyboard ends on <body>
 - stage: A · face: pages · width: 1280 · scheme: light
+- class: keyboard-lands-nowhere
 - expected: add the first song through the pages form and the keyboard is
   still somewhere on the page
 - actual: `activeElement` was `<body>` after Apply. The ask belongs to a
@@ -2598,6 +2737,7 @@ two singles and thirty-five songs.
 
 ### W-093 · A name with an accent mints an id that is nobody's name
 - stage: B · face: both · width: any · scheme: both
+- class: data-shape-not-in-fixtures (also: machine-words-shown)
 - expected: "Add an artist" named "Zoë Lamarré" makes `artist:zoe-lamarre`,
   the address a person would guess and the one search folds to
 - actual: `artist:zo-lamarr`. `freshId`'s slug kept `[a-z0-9]` and dropped
@@ -2616,6 +2756,7 @@ two singles and thirty-five songs.
 
 ### W-094 · At altitude a fifth district stands under the inspector
 - stage: B · face: scene · width: 1280 and 1560 · scheme: both
+- class: layout-collision-or-overflow (also: data-shape-not-in-fixtures)
 - expected: every district is on ground the reader can see — right of the
   left rail, left of the right one
 - actual: with five kinds (songs, albums, artists, themes, eras) the Eras
@@ -2641,6 +2782,7 @@ two singles and thirty-five songs.
 
 ### W-095 · A relation is captioned twice over one artist, and an old stop's captions stay on the next
 - stage: B · face: scene · width: 1280 · scheme: light
+- class: layout-collision-or-overflow (also: data-shape-not-in-fixtures)
 - expected: focus an artist who is featured on two songs and produced five:
   one caption per relation, over the row it starts in; travel to an album
   and its captions are the album's
@@ -2673,6 +2815,7 @@ two singles and thirty-five songs.
 
 ### W-096 · A song's card reads "8 · 4:27 · Yes"
 - stage: B · face: both · width: any · scheme: both
+- class: prose-wrong-for-the-domain (also: data-shape-not-in-fixtures)
 - expected: a card at summary, and the pages' gallery, say which fact is
   which — a track number, a length, whether it is explicit
 - actual: the summary card's chips were the bare values — `8`, `4:27`,
@@ -2696,6 +2839,7 @@ two singles and thirty-five songs.
 
 ### W-097 · One edge name on two kinds lists an artist's songs under "Their releases"
 - stage: B · face: both · width: any · scheme: both
+- class: wrong-end-of-a-relation (also: data-shape-not-in-fixtures)
 - expected: an artist's record says "their songs" of the songs and "their
   releases" of the releases, as each declaration reads from the far end
 - actual: `by` was declared on a song ("the artist whose song it is" /
@@ -2727,6 +2871,7 @@ two singles and thirty-five songs.
 
 ### W-098 · "All artists by Blue Hour →", "All songs tracks Blue Hour →"
 - stage: B · face: pages · width: any · scheme: both
+- class: wrong-end-of-a-relation
 - expected: the link from a record to the far kind's list, narrowed to this
   record, says what it lists in the words the section above already uses
 - actual: it was `All {far plural} {edge kind} {this record}` — the edge's
@@ -2748,6 +2893,7 @@ two singles and thirty-five songs.
 
 ### W-099 · The project's own record page says "Still open." of a released song
 - stage: B · face: pages · width: any · scheme: both
+- class: what-a-project-copies-is-wrong (also: says-something-untrue)
 - expected: the record page `graview create` writes stays true when the
   kind's lifecycle changes, or the typecheck says it no longer is
 - actual: the scaffold's page cast the node to `{ label: string; status:
@@ -2770,6 +2916,7 @@ two singles and thirty-five songs.
 
 ### W-100 · A form headed "Place it in an era" submits with "Put it in the era"
 - stage: B · face: pages · width: any · scheme: both
+- class: wrong-end-of-a-relation (also: faces-disagree)
 - expected: an act offered from the far end of a tie reads from where the
   page stands, heading and button alike
 - actual: on a song's page the act that puts it in an era (subject: the
@@ -2791,6 +2938,7 @@ two singles and thirty-five songs.
 
 ### W-101 · A song by and produced by the same artist draws one line, and only one can be picked
 - stage: B · face: scene · width: 1280 · scheme: light
+- class: layout-collision-or-overflow (also: data-shape-not-in-fixtures)
 - expected: "Selecting the line offers the severing act; severing from
   either end removes exactly that line" — for every relation drawn
 - actual: Gold Tooth is by Mara Vey and produced by Mara Vey. The `by` and
@@ -2813,6 +2961,7 @@ two singles and thirty-five songs.
 
 ### W-102 · The studio writes a checkout back looser than it found it, importing zod
 - stage: B · face: studio (`createStudio(app).files()`) · width: — · scheme: —
+- class: round-trip-loses-something (also: data-shape-not-in-fixtures)
 - expected: "the round trip passes `graview check` with no new warnings, and
   `studio.files()` keeps the checkout's argument names" — and the files
   compile in the product they are written for
@@ -2850,6 +2999,7 @@ two singles and thirty-five songs.
 
 ### W-103 · The studio skill's first example throws
 - stage: B · face: studio · width: — · scheme: —
+- class: what-a-project-copies-is-wrong
 - expected: following `graview-studio` step 2 as written changes the
   declaration
 - actual: `studio.store.apply({ name: "add-field", args: { kind:
@@ -2868,6 +3018,7 @@ two singles and thirty-five songs.
 
 ### W-104 · `status:demo` finds nothing, and tells you to ask for the past you just named
 - stage: B (search) · face: both · width: any · scheme: both
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
 - expected: the arrangement grammar's `key:value` means the same in the
   Find box and on a list; `status:demo` finds the demos
 - actual: demos and scrapped songs are the kind's retired states, so the
@@ -2890,6 +3041,7 @@ two singles and thirty-five songs.
 
 ### W-105 · The coverage of songs by theme counts three retired demos as "3 unanswered"
 - stage: D · face: scene and pages · width: 1280 · scheme: light
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
 - expected: a lens over a group keeps the scene's horizon — the skill says
   so: "every other kind comes from `store.graph`, narrowed back to `nodes`
   for the group's own kind so the scene's horizon still applies"
@@ -2913,6 +3065,7 @@ two singles and thirty-five songs.
 
 ### W-106 · The coverage lens says "unanswered" and "unasked" in every domain
 - stage: D · face: scene and pages · width: 1280 · scheme: light
+- class: prose-wrong-for-the-domain
 - expected: a lens that binds roles speaks the declaration's words
 - actual: "What the songs are about" was headed "3 UNANSWERED"; "Who
   worked with whom" (artists × the artists featured on their songs) "5
@@ -2930,6 +3083,7 @@ two singles and thirty-five songs.
 
 ### W-107 · "Kerosene holds — nothing currently breaks it", above the rule that breaks it
 - stage: C · face: scene · width: 1280 · scheme: light
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
 - expected: the pane says what is wrong with the record in front of you,
   and never the opposite in the line above
 - actual: select the song Kerosene: the pane read "Kerosene holds —
@@ -2949,6 +3103,7 @@ two singles and thirty-five songs.
 
 ### W-108 · Selecting one song lights its theme's whole column
 - stage: D · face: scene · width: 1280 · scheme: light
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
 - expected: "selection lights it and dims the rest" — select Cobalt in the
   coverage of songs by theme and what is lit is Cobalt's
 - actual: ten marks lit, nine of them `theme:night` — the night cell of
@@ -2967,6 +3122,7 @@ two singles and thirty-five songs.
 
 ### W-109 · "Correct when Kerosene came out" asks for its name first, and a date typed there renames the single
 - stage: C · face: pages · width: 1280 · scheme: light
+- class: faces-disagree (also: offered-then-refused, keyboard-lands-nowhere)
 - expected: "the repair is … an ask when it needs one thing" — the rule
   names the derived `edit-album` with `missing: ["released"]`, so the ask
   is the release date
@@ -2993,6 +3149,7 @@ two singles and thirty-five songs.
 
 ### W-110 · The chat offers a repair its own seat may not make, and it refuses on press
 - stage: C · face: scene (the chat) · width: 1280 · scheme: light
+- class: offered-then-refused
 - expected: "repairing … from the agent's seat" leaves one op with the
   seat as author, or the seat says it may not — never a press that refuses
 - actual: "What's wrong?" answered with the rules' repairs as presses —
@@ -3018,6 +3175,7 @@ two singles and thirty-five songs.
 
 ### W-111 · Pressing a chat proposal leaves the keyboard on the body
 - stage: C · face: scene (the chat) · width: 1280 · scheme: light
+- class: keyboard-lands-nowhere
 - expected: repair from the seat, and the keyboard is still in the
   conversation
 - actual: "Hometown (Again) no longer features Mara Vey", pressed, became
@@ -3035,6 +3193,7 @@ two singles and thirty-five songs.
 
 ### W-112 · "Put it on a release: Blue Hour, Blue Hour" — two of one name cannot be chosen between
 - stage: C/D · face: both · width: any · scheme: both
+- class: data-shape-not-in-fixtures
 - expected: where a person picks a record — a form's picker, the strip's
   ask, the Find strip, the search page — two with one name can be told apart
 - actual: the single "Blue Hour" and the album "Blue Hour" (a single and
@@ -3064,6 +3223,7 @@ two singles and thirty-five songs.
 
 ### W-113 · A design's shell does not register without a cast
 - stage: E · face: pages · width: — · scheme: —
+- class: what-a-project-copies-is-wrong
 - expected: following `graview-pages` rung two — "the shell surface
   receives `{ context, children }`" — typechecks as written
 - actual: `.surface("shell", Shell)` was refused: `surface` had one
@@ -3083,6 +3243,7 @@ two singles and thirty-five songs.
 
 ### W-114 · The rail and the profile name a seat by its id: "user-lena", "U user-june"
 - stage: F · face: both · width: 1280 · scheme: light
+- class: machine-words-shown (also: data-shape-not-in-fixtures)
 - expected: with seats offered as "Lena, the label" and "June Arlo,
   producer", the history names the other seat's work by that name, and the
   profile says who you are
@@ -3109,6 +3270,7 @@ two singles and thirty-five songs.
 
 ### W-115 · Under a policy the strip strikes through three withheld acts and drops the rest
 - stage: F · face: scene · width: 1280 · scheme: light
+- class: offered-then-refused (also: data-shape-not-in-fixtures)
 - expected: "every act it may not take is struck through with the
   policy's reason in the strip, the pages and the design; nothing is
   hidden"
@@ -3127,6 +3289,7 @@ two singles and thirty-five songs.
 
 ### W-116 · The kit check says one line fails "against the ground" twice, with two different numbers
 - stage: F · face: `graview check` · width: — · scheme: light
+- class: prose-wrong-for-the-domain
 - expected: `kit-contrast-below-aa` says what the line fails against, so the
   two errors read as two facts
 - actual: a yellow `features` line printed two identical errors, `in light:
@@ -3146,6 +3309,7 @@ two singles and thirty-five songs.
 
 ### W-117 · The studio drops a rule's repair when it names an act the framework derives
 - stage: F (the studio, against a checkout with a policy and lenses) · face: studio · width: — · scheme: —
+- class: round-trip-loses-something
 - expected: the round trip keeps what each rule names as its repairs
 - actual: `studio.files()` over Discography wrote "One song per track
   number" with no `repairs` at all and "A single leads its album" with
@@ -3170,6 +3334,7 @@ two singles and thirty-five songs.
 
 ### W-118 · At altitude a showing's button holds its lens's own buttons
 - stage: G (seen on every reload) · face: scene · width: 1280 · scheme: light
+- class: accessibility-tree-wrong
 - expected: the marquee's pictures are pictures — nothing inside one is a
   control, and the DOM is valid
 - actual: React logged "In HTML, <button> cannot be a descendant of
@@ -3199,6 +3364,7 @@ two singles and thirty-five songs.
 
 ### W-119 · The profile opens off the side of an embed, and the embed cuts it
 - stage: H · face: embed · width: 1280 and 390 · scheme: light and dark
+- class: layout-collision-or-overflow (also: breaks-at-width-zoom-or-engine)
 - expected: "nothing in either embed escapes its box: menus, inspector,
   popovers"
 - actual: the profile pane hangs from its button's right edge and is 280
@@ -3219,6 +3385,7 @@ two singles and thirty-five songs.
 
 ### W-120 · The chat says "explicit No" and starts its sentences in lower case
 - stage: I (search: "where is …") · face: scene (the chat) · width: 1280 · scheme: light
+- class: prose-wrong-for-the-domain
 - expected: "where is Cobalt?" answered in sentences a person would write
 - actual: "Cobalt — a song (track 3, length 4:38, explicit No). the
   releases it is on: Blue Hour. the artist whose song it is: Mara Vey." A
@@ -3237,6 +3404,7 @@ two singles and thirty-five songs.
 
 ### W-121 · In WebKit every arrange bar's select is 22 pixels tall
 - stage: I · face: pages (and the scene's lenses) · width: 390 · scheme: both · engine: WebKit
+- class: breaks-at-width-zoom-or-engine
 - expected: every link and button at least 24px, in every engine the
   stage asks for
 - actual: `pnpm engines` failed WebKit's `verify-pages`: on the list page,
@@ -3258,6 +3426,7 @@ two singles and thirty-five songs.
 
 ### W-122 · A coverage over a real catalogue never finishes drawing
 - stage: D (after the walk, on real data) · face: scene · width: 1440 · scheme: light
+- class: data-shape-not-in-fixtures
 - expected: the Discography opens on Tech N9ne's real catalogue — 1,177 songs,
   568 artists, 479 releases from MusicBrainz — as it did on the fixture
 - actual: the page's main thread never yielded; the "who worked with whom"
@@ -3277,6 +3446,7 @@ two singles and thirty-five songs.
 
 ### W-123 · A scaffolded project never commits its seed
 - stage: G (after the walk, on real data) · face: — · width: — · scheme: —
+- class: what-a-project-copies-is-wrong (also: round-trip-loses-something)
 - expected: `src/data/seed.json`, the graph the app opens on, is in the project's history
 - actual: the scaffold's `.gitignore` said `data/` for the served store, which also
   matches `src/data/`; ../walk5's seed had never been committed, fixture or real
@@ -3298,6 +3468,7 @@ vehicles, dozens of customers and deals.
 
 ### W-124 · A fresh checkout's tests fail for anyone who set the key the docs name
 - stage: setup (`pnpm install && pnpm build && pnpm test`) · face: — · width: — · scheme: —
+- class: harness-or-setup-itself
 - expected: `pnpm test` passes on a fresh checkout
 - actual: 1 failed of 1614 — `the-provider-is-one-call.test.ts` "the key …
   never from nowhere" expected `jevKeyFromEnvironment(undefined)` to be
@@ -3315,6 +3486,7 @@ vehicles, dozens of customers and deals.
 
 ### W-125 · Escape out of a record leaves the keyboard on <body>
 - stage: A · face: scene · width: 1280 · scheme: light · engines: Chromium and WebKit
+- class: keyboard-lands-nowhere
 - expected: "Escape backs out one level at a time" and "keyboard alone can do
   everything above" — after the rung, the keyboard is on the picture
 - actual: add a vehicle, open its district, travel to it, put the keyboard on
@@ -3338,6 +3510,7 @@ vehicles, dozens of customers and deals.
 
 ### W-126 · A label bounded at a hundred is told it has no maximum
 - stage: B (carried from W-122) · face: `graview check` · width: — · scheme: —
+- class: data-shape-not-in-fixtures (also: says-something-untrue)
 - expected: `label-unbounded` — "has no maximum length" — only where there is
   no maximum
 - actual: `bounded()` tried a 61-character name and called any field that
@@ -3356,6 +3529,7 @@ vehicles, dozens of customers and deals.
 
 ### W-127 · The skill says `judgesPast: true`, and the bound declaration refuses it
 - stage: B (C's rule, written while declaring the kinds) · face: typecheck · width: — · scheme: —
+- class: what-a-project-copies-is-wrong
 - expected: "An invariant that genuinely audits history says so with
   `judgesPast: true`" (graview-invariant) — written in the scaffold's
   `bindSchema(...).defineInvariant`, it typechecks
@@ -3377,6 +3551,7 @@ vehicles, dozens of customers and deals.
 
 ### W-128 · "Offer a trade-in" is called an identifier
 - stage: B · face: `graview check` · width: — · scheme: —
+- class: prose-wrong-for-the-domain (also: data-shape-not-in-fixtures)
 - expected: the check is clean for acts titled in the app's own words
 - actual: three warnings, `mutation-title-is-an-identifier`, on "Offer a
   trade-in", "Put a trade-in toward it" and "Take a trade-in off it": "reads
@@ -3397,6 +3572,7 @@ vehicles, dozens of customers and deals.
 
 ### W-129 · What the lines mean is a list of edge names
 - stage: B · face: scene (the key, at altitude and in the rail) · width: 1280 · scheme: light
+- class: machine-words-shown (also: data-shape-not-in-fixtures)
 - expected: "the lines change and the relation key agrees" — and the key
   says, in the app's words, what each line is
 - actual: twelve rows reading `advised-by`, `buyer`, `driver`, `drives`,
@@ -3417,6 +3593,7 @@ vehicles, dozens of customers and deals.
 
 ### W-130 · Three quick-select chips all read "Wei Haddad in the…"
 - stage: B · face: scene (the quick select beside a focus) · width: 1280 · scheme: light
+- class: data-shape-not-in-fixtures (also: accessibility-tree-wrong)
 - expected: a chip says what it is; two chips are two names
 - actual: focus a customer with three test drives (each named "<customer>
   in the <vehicle>") and the quick select shows three chips reading "Wei
@@ -3437,6 +3614,7 @@ vehicles, dozens of customers and deals.
 
 ### W-131 · One of the dealership's staff is "the staff"
 - stage: B · face: both · width: 1280 · scheme: light
+- class: prose-wrong-for-the-domain (also: data-shape-not-in-fixtures)
 - expected: every sentence about one record names it in words; "a title
   that is an identifier" is a bug class
 - actual: the kind is `staff`, plural "Staff" — the dealership's word — and
@@ -3464,6 +3642,7 @@ vehicles, dozens of customers and deals.
 
 ### W-132 · A staff member's email runs under her appointments
 - stage: B · face: scene (a record's card) · width: 1280 · scheme: light
+- class: layout-collision-or-overflow (also: data-shape-not-in-fixtures)
 - expected: "chrome over content" is a bug class; a card's facts stay in
   their column
 - actual: focus Mei Lin Chow: "mei.lin.chow@springfieldmotors.example" is
@@ -3484,6 +3663,7 @@ vehicles, dozens of customers and deals.
 
 ### W-133 · A selected line is headed by its edge's name
 - stage: B · face: scene (the line's own menu) · width: 1280 · scheme: light
+- class: machine-words-shown (also: wrong-end-of-a-relation)
 - expected: "Words read from the wrong end … Cousins: a heading that names
   the edge kind" — a selected line says what it means
 - actual: select the line from Priya Raman to North lot: the menu reads
@@ -3510,6 +3690,7 @@ vehicles, dozens of customers and deals.
 
 ### W-134 · A vehicle's card says its heading twice and never its price
 - stage: B · face: both (summary cards, the pages gallery and lists) · width: 1280 and 390 · scheme: both
+- class: prose-wrong-for-the-domain (also: data-shape-not-in-fixtures)
 - expected: a glance spends its three facts on what the heading does not
   say (the rule `readableFields` already states for a whole heading)
 - actual: every vehicle's card and gallery entry read "2027 Subaru Forester
@@ -3531,6 +3712,7 @@ vehicles, dozens of customers and deals.
 
 ### W-135 · "Sort and filter who is buying" under the one buyer a deal can have
 - stage: B · face: pages (a record) · width: 390 and 1280 · scheme: both
+- class: offered-then-refused (also: data-shape-not-in-fixtures)
 - expected: an offer on a page can do something the page does not already
   show ("an act that cannot act" is the class)
 - actual: a deal's record lists its buyer, its vehicle and its salesperson,
@@ -3549,6 +3731,7 @@ vehicles, dozens of customers and deals.
 
 ### W-136 · Answering an act on a record ends on <body>
 - stage: B (connecting through the pages record) · face: pages · width: 1280 · scheme: light
+- class: keyboard-lands-nowhere (also: faces-disagree)
 - expected: the keyboard is where it was after an act, the way the pages'
   own forms were made to behave (W-053, W-083)
 - actual: on Priya Raman's record, "Assign to a location" → North lot →
@@ -3569,6 +3752,7 @@ vehicles, dozens of customers and deals.
 
 ### W-137 · An opened district reads "VEHICL291ES" over a list that runs off the scene
 - stage: B (the district at altitude opens on double-click) · face: scene · width: 1280 and 1560 · scheme: light
+- class: layout-collision-or-overflow (also: data-shape-not-in-fixtures)
 - expected: the district opens in place, readable, and "nothing in the
   scene escapes its box"
 - actual: double-click Vehicles (291) at altitude. The header's grid gave
@@ -3604,6 +3788,7 @@ vehicles, dozens of customers and deals.
 
 ### W-138 · Two districts hidden under "+3 more", and missing from its list
 - stage: B (raising a second kind on a focus with no edge of it) · face: scene · width: 1280 · scheme: light
+- class: layout-collision-or-overflow (also: says-something-untrue, data-shape-not-in-fixtures)
 - expected: every kind on the shelf is a target, or is named by the card
   that stands for the rest
 - actual: focus North lot and try to raise Deals: the pointer lands on "+3
@@ -3624,6 +3809,7 @@ vehicles, dozens of customers and deals.
 
 ### W-139 · The studio drops a vehicle's name and a VIN's refusal without a word
 - stage: B (the studio's round trip) · face: studio / written files · width: — · scheme: —
+- class: round-trip-loses-something (also: data-shape-not-in-fixtures)
 - expected: "`studio.files()` … says loudly where a body must be supplied";
   the applied app names its records as the checkout does
 - actual: a round trip of the dealership through `createStudio` (one field
@@ -3650,6 +3836,7 @@ vehicles, dozens of customers and deals.
 
 ### W-140 · `<Embed>` without a store forgets everything when the seat changes
 - stage: F (carried from the fifth walk's "noticed and not investigated") · face: embed · width: — · scheme: —
+- class: round-trip-loses-something
 - expected: "Changing seats on the embed keeps the store and its history"
 - actual: `<Embed>` handed no `store` built one with
   `useMemo(() => storeOf(app, seed, principal), [..., principal])`. The
@@ -3669,6 +3856,7 @@ vehicles, dozens of customers and deals.
 
 ### W-141 · The chat says "tesla", and answers for one of three Model Ys
 - stage: C (the seat's chat, before the rule) · face: scene (the chat) · width: — · scheme: —
+- class: data-shape-not-in-fixtures (also: prose-wrong-for-the-domain)
 - expected: the graph answers in sentences a person would write (W-120),
   and about the thing that was asked
 - actual: on the dealership's seed, `graphResponder`:
@@ -3697,6 +3885,7 @@ vehicles, dozens of customers and deals.
 
 ### W-142 · The places row runs seven pixels past its edge on the rotation
 - stage: B (carried from the fifth walk, found by `pnpm survey` at the end of the stage) · face: scene (the bar) · width: 1560 · scheme: light and dark
+- class: layout-collision-or-overflow (also: harness-or-setup-itself)
 - expected: `survey` — every screen clean
 - actual: `seedbed/rotation`, both schemes: the Places `nav` overflowed by
   7px ("What grows where · The year · The season · The ro…", with "The
@@ -3721,6 +3910,7 @@ vehicles, dozens of customers and deals.
 
 ### W-143 · "Not permitted: close-deal on a deal — sales-manager can."
 - stage: C (a repair from the agent's seat) and F (the narrower seat) · face: both · width: — · scheme: —
+- class: machine-words-shown (also: data-shape-not-in-fixtures)
 - expected: "every act it may not take is struck through with the policy's
   reason" — a reason in the app's words, beside a button in the app's words
 - actual: as Priya Raman (salesperson) on a deal, the strip and the pages
@@ -3746,6 +3936,7 @@ vehicles, dozens of customers and deals.
 
 ### W-144 · The diary is bound to service appointments and draws none
 - stage: D · face: scene (a lens) and pages (its place) · width: 1280 · scheme: light
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
 - expected: "The lens reads the whole graph, never only the group's
   members"
 - actual: the dealership's diary is `createCalendarLens({ bindings: {
@@ -3767,6 +3958,7 @@ vehicles, dozens of customers and deals.
 
 ### W-145 · A vehicle's own page has no price, and two appointments are one line of words
 - stage: E (the one record page the scaffold replaces) · face: pages · width: 1280 and 390 · scheme: both
+- class: what-a-project-copies-is-wrong (also: data-shape-not-in-fixtures)
 - expected: "Replace one record page … a custom page still re-renders on
   every op, offers acts by `store.permits`, and uses `PageMain`" — and says
   what the record is
@@ -3793,6 +3985,7 @@ vehicles, dozens of customers and deals.
 
 ### W-146 · A place page scrolls sideways at 390 because a picker is 618 pixels wide
 - stage: E · face: pages (a place: The diary, The pipeline) · width: 390 · scheme: light and dark
+- class: breaks-at-width-zoom-or-engine (also: data-shape-not-in-fixtures)
 - expected: "The full design passes axe at 390 and 1280 in both schemes" —
   and the page does not scroll sideways (smoke-create's `fitsAPhone`)
 - actual: `/pages/places/the-pipeline` and `/pages/places/the-diary` at 390
@@ -3811,6 +4004,7 @@ vehicles, dozens of customers and deals.
 
 ### W-147 · The seat says "The store refuses add-vehicle"
 - stage: F · face: scene (the agent seat in the rail) · width: 1280 · scheme: light
+- class: machine-words-shown
 - expected: the seat under a policy says why it may not act, in the app's
   words (W-143's rule, on the seat)
 - actual: sat as Priya Raman, the starter seat read "starter · refused —
@@ -3828,6 +4022,7 @@ vehicles, dozens of customers and deals.
 
 ### W-148 · Right-angled lines read as joining two chips in a row
 - stage: F (dressing the app: `kit.connectors.all.route: "orthogonal"`; carried from the fifth walk's "noticed and not investigated") · face: scene · width: 1280 · scheme: light
+- class: layout-collision-or-overflow
 - expected: "a line between two chips of the band runs through the gutters";
   a line from the focus to one chip does not look like a line between two
 - actual: focus Priya Raman with right-angled lines: every line to a deal
@@ -3847,6 +4042,7 @@ vehicles, dozens of customers and deals.
 
 ### W-149 · The log says "price → 49900" and the profile says "sales-manager"
 - stage: G (an edit that survives a reload) · face: scene (Activity, the profile) · width: 1280 · scheme: light
+- class: machine-words-shown
 - expected: the log says the act in the app's words (the fourth walk's
   "the log says the button, not the act"), and so does the seat
 - actual: change the Tesla's price in place: the card reads "Price
@@ -3869,6 +4065,7 @@ vehicles, dozens of customers and deals.
 
 ### W-150 · A region inside an embed is called "The pipeline · The pipeline"
 - stage: H · face: embed · width: 1280 and 390 · scheme: dark
+- class: accessibility-tree-wrong
 - expected: "two embeds have two landmark names" — and each is said once
 - actual: the second embed is labelled "The pipeline" and opens on the
   pipeline lens, whose panel scroll region is named by its title, "The
@@ -3888,6 +4085,7 @@ vehicles, dozens of customers and deals.
 
 ### W-151 · Search scrolls sideways at 200% text on a phone
 - stage: I (text zoom to 200% on every route of the design, 390 wide) · face: pages · width: 390 · scheme: light
+- class: breaks-at-width-zoom-or-engine (also: data-shape-not-in-fixtures)
 - expected: no route scrolls sideways at a reader's 200%
 - actual: every route of the showroom held at 390@32px and at 320, except
   `/pages/search?q=subaru` (the derived search page, which the design keeps):
@@ -3906,6 +4104,7 @@ vehicles, dozens of customers and deals.
 
 ### W-152 · Two selects under 24 pixels in WebKit on a phone
 - stage: I (WebKit, 390, reduced motion) · face: scene and pages · width: 390 · scheme: light · engine: WebKit
+- class: breaks-at-width-zoom-or-engine
 - expected: every link and button at least 24px, in every engine the stage
   asks for
 - actual: in WebKit at 390 the bar's compact Places picker measured 175×22

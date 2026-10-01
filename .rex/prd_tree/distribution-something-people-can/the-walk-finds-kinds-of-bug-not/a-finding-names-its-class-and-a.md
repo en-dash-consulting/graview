@@ -2,7 +2,7 @@
 id: "4f82f64f-fd6f-4a54-855f-aa1078723b33"
 level: "task"
 title: "A finding names its class, and a class already known is a miss of the shared check"
-status: "pending"
+status: "in_progress"
 priority: "critical"
 tags:
   - "walkthrough"

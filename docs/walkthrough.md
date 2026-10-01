@@ -12,10 +12,13 @@ Paste this to start a session:
 
 > Read `docs/walkthrough.md` in this repository and follow it. Work the
 > stages in order in a new app created beside the framework. For every
-> finding: record it in the findings log the way the playbook says, fix it
-> in the framework package it belongs to (never only in the app), add or
-> extend the harness criterion that should have caught it, and re-run the
-> stage. Report the real outcome of every check, including failures. The
+> finding: record it in the findings log the way the playbook says, with
+> its class. If the class is already on the list, the shared check that
+> owns it missed — fix that check (the watch, or the gauntlet's data) so it
+> would have caught this everywhere, then fix the instance in the framework
+> package it belongs to (never only in the app). If no class fits, name a
+> new one and give it a shared check before going on. Re-run the stage.
+> Report the real outcome of every check, including failures. The
 > PRD feature "A seamless app-creation flow: the walkthrough" carries one
 > task per stage; mark each in progress and completed as you go.
 
@@ -36,9 +39,16 @@ excuses, and the reviewer keeps the criteria honest. Do it that way:
 - Nothing runs on a port a `pnpm dev` already holds: the harnesses start
   their own servers on 5193 (Things) and 5194 (Seedbed) and exit if they
   cannot. Stop the dev servers first.
-- When a walk adds findings, the walk task is closed by acknowledgment (the
-  work was done) and the next walk task carries the "log gains nothing"
-  criterion. That is what the queue follows.
+- When a walk adds a new class, the walk task is closed by acknowledgment
+  (the work was done) and the next walk task carries the "no new class"
+  criterion. A walk that adds findings only of known classes has still
+  found something — each one is a shared check that missed — but it has
+  not found a new kind of bug, and that is the walk's own question. That
+  is what the queue follows.
+- Each walk takes a new domain, so its findings are never zero: a new
+  domain is new data, and new data finds new instances. The run where
+  "nothing" is the expected answer is a regression re-walk of an earlier
+  domain (see Done).
 
 ## The stance
 
@@ -51,6 +61,13 @@ excuses, and the reviewer keeps the criteria honest. Do it that way:
   walk claims in a real browser (`pnpm smoke:create`, `pnpm progression`,
   `pnpm site`, `pnpm survey`, `pnpm audit-ui`, `node scripts/verify-*.mjs`).
   A fix without a criterion that would have failed before it is half a fix.
+- **A criterion belongs to the class, not the component.** Six walks fixed
+  152 findings each with a criterion local to the one surface it was seen
+  on, and the same kinds came back on the next surface: the keyboard left
+  on `<body>` by the strip, then the editor, then a design, then the door,
+  then the chat, then the ladder, then the record page. A criterion that
+  holds one component is the instance's; the class's is the check every
+  state of every harness passes through. Fix that one first.
 - **Report faithfully.** "Passes" means you ran it and read the output.
 
 ## Setup
@@ -83,6 +100,7 @@ window (390 wide) and one wide (1280). Reduced motion on at least once.
 ```
 ### W-014 · The inspector's menu opens off the bottom of a short scene
 - stage: A · face: scene · width: 1280 · scheme: dark
+- class: layout-collision-or-overflow (also: breaks-at-width-zoom-or-engine)
 - expected: the pointer menu is clamped to the scene's box
 - actual: it opens at the pointer and runs under the shelf
 - where it belongs: packages/primitives/src/workbench (the menu's placement)
@@ -93,11 +111,40 @@ window (390 wide) and one wide (1280). Reduced motion on at least once.
 Severity is not a field. Everything in the log gets fixed; the order is the
 order you found them.
 
+`class` is one of the classes listed at the top of the findings log, each
+with a one-line definition and the shared check that owns it. Exactly one
+is primary — the one whose check should have caught this — and others may
+follow as `(also: …)`; most findings on new data carry
+`data-shape-not-in-fixtures` as an also.
+
+What the class decides:
+
+- **A known class is a miss of the shared check.** The finding says the
+  watch (the in-page judge every harness runs on every state it reaches,
+  in `scripts/lib`) or the gauntlet (`apps/gauntlet`, the example built to
+  be awkward) has a hole. Fix the hole first — a rule the watch did not
+  judge, a state no harness reached, a shape the gauntlet's data did not
+  have — so that the check fails on this finding AND on its cousins on
+  every other surface. Then fix the instance; the check going green is its
+  criterion. A criterion local to one component is not enough for a known
+  class: that is how `keyboard-lands-nowhere` came back thirteen times.
+  Where the class's check says "none yet", building it is part of the fix,
+  and the finding says so in its status.
+- **A new class is what the walk is for.** If no class fits, write one —
+  a slug that is a sentence, one line saying what it is — add it to the
+  list with its count, and give it a shared check before the walk goes on.
+  A new class whose only criterion is the instance's has not been fixed.
+- `harness that should have caught it` names the shared check that missed,
+  then any component test, in that order.
+
 ## The bug classes this session already met
 
-Read these before you start: they are the shapes to expect, and each is
-now a criterion somewhere. If you see a cousin, it belongs to the same
-package.
+The class list at the top of `docs/walkthrough-findings.md` is the one a
+finding is filed under; what follows is the older, longer account of the
+same shapes, kept for its cousins. Read these before you start: they are
+the shapes to expect, and each is now a criterion somewhere. If you see a
+cousin, it belongs to the same class — file it there and ask why that
+class's shared check let it through.
 
 - **A target that is not what is drawn.** A view host is the layout's box;
   only the drawn content may be a hit target (theme rule). Cousins: a
@@ -355,17 +402,30 @@ asked it since.
 
 ## Done
 
-The walk is done when a second agent, starting from the kick-off prompt
-in a fresh checkout, works all nine stages and the findings log gains
-nothing. Until then, every commit is "walkthrough: <stage> · <finding>",
-with the criterion in the same commit as the fix.
+There are two answers to "is it done", and they are asked by two kinds of
+run.
 
-Four walks have been run (31, 19, 19 and 16 findings, every one fixed with
-a criterion); none kept the log still. The fifth is queued behind the demo
-work — the installation in Things, the profile pane, the studio entrypoint,
-the calendar lens, the routed faces, Rota, server-side persistence, the
-launcher, figures — so that it walks what those add rather than what they
-replace. When it runs, press first on the studio's write-back against a
-checkout with a policy and lenses, on any surface that applies without a
-principal, on what the chat proposes under a policy, and on keyboard focus
-after every edit and every popover.
+- **A walk is done when it adds no new class.** A second agent, starting
+  from the kick-off prompt in a fresh checkout and a new domain, works all
+  nine stages; every finding it makes is of a class already on the list,
+  and each has been fixed by closing the hole in that class's shared check.
+  A new domain is new data, so a walk that finds nothing at all is not the
+  bar — six walks in six domains found 31, 19, 19, 16, 32 and 29, and every
+  one of those 152 was of a class the first walk had already met.
+- **A regression re-walk is done when it finds nothing.** It walks an
+  earlier domain again — `../walk6`, the car dealership, or any walk before
+  it — on the current framework. The data is not new, the classes are not
+  new, and every finding that domain produced is held by a shared check,
+  so "the log gains nothing" is the expected answer here, and anything it
+  does find is a regression in a check that should have held it.
+
+Until then, every commit is "walkthrough: <stage> · <finding>", with the
+criterion in the same commit as the fix — and for a known class, the
+criterion is the shared check's.
+
+Six walks have been run (31, 19, 19, 16, 32 and 29 findings, every one
+fixed with a criterion); none kept the log still, and none added a class
+the first had not. The seventh waits on the watch and the gauntlet, so
+that what it finds is measured against the shared checks rather than
+against the components. When it runs, file each finding under its class
+first; press hardest on whatever fits none of them.
