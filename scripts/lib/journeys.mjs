@@ -202,6 +202,19 @@ export async function inStore(page, kinds, fn, arg) {
 /* A person                                                            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * WHETHER IT APPEARS, given the time a page takes. A dead end was decided
+ * with one look (`isVisible` does not wait), so on a slow runner a page of a
+ * thousand songs still drawing its list "offered no Add a song" and the run
+ * called it a regression. A control is given up on only after it has had
+ * time to appear: immediate when it is there, ten seconds when it is not.
+ */
+const appears = (locator, ms = Number(process.env["GRAVIEW_JOURNEYS_PATIENCE"] ?? 10_000)) =>
+  locator
+    .waitFor({ state: "visible", timeout: ms })
+    .then(() => true)
+    .catch(() => false);
+
 export class DeadEnd extends Error {}
 
 const onTarget = (page) =>
@@ -309,7 +322,7 @@ export class Person {
   async press(locator, what) {
     const before = this.presses;
     const target = locator.first();
-    if (!(await target.isVisible().catch(() => false))) throw new DeadEnd(`${what} is not on the screen`);
+    if (!(await appears(target))) throw new DeadEnd(`${what} is not on the screen`);
     if (this.input === "pointer") {
       await target.click({ timeout: 4_000 }).catch((error) => {
         throw new DeadEnd(`${what} cannot be pressed (${String(error.message).split("\n")[0].slice(0, 90)})`);
@@ -586,7 +599,7 @@ async function openFind(person, face) {
     if (await opener.isVisible().catch(() => false)) await person.press(opener, "the way to Find");
     shown = box.filter({ visible: true }).first();
   }
-  if (!(await shown.isVisible().catch(() => false))) throw new DeadEnd("there is no Find box on the screen");
+  if (!(await appears(shown))) throw new DeadEnd("there is no Find box on the screen");
   if (person.input === "pointer") {
     await shown.click();
     person.presses += 1;
@@ -636,7 +649,7 @@ async function findAndOpen(person, face, target, query) {
   await page.waitForLoadState("domcontentloaded");
   await person.settle(450);
   const link = page.locator(`main a[href$="/${encodeURIComponent(target.id)}"], main a[href$="/${target.id}"]`).filter({ visible: true }).first();
-  if (!(await link.isVisible().catch(() => false))) throw new DeadEnd(`the search page does not link "${target.label}" for "${query}"`);
+  if (!(await appears(link))) throw new DeadEnd(`the search page does not link "${target.label}" for "${query}"`);
   await person.press(link, `"${target.label}"`);
   await page.waitForLoadState("domcontentloaded");
   await person.settle(300);
@@ -728,10 +741,10 @@ export const JOBS = {
         const opener = page.getByRole("button", { name: new RegExp(`^${job.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( …)?$`) }).filter({ visible: true }).first();
         const form = page.locator(`form[data-testid="form-${job.act}"]`);
         if (!(await form.isVisible().catch(() => false))) {
-          if (!(await opener.isVisible().catch(() => false))) throw new DeadEnd(`the ${job.plural} page offers no "${job.title}"`);
+          if (!(await appears(opener))) throw new DeadEnd(`the ${job.plural} page offers no "${job.title}"`);
           await person.press(opener, `"${job.title}"`);
         }
-        if (!(await form.isVisible().catch(() => false))) throw new DeadEnd(`"${job.title}" opens no form`);
+        if (!(await appears(form))) throw new DeadEnd(`"${job.title}" opens no form`);
         await fillForm(person, form, { name: prep.name, choose: [prep.subject?.label] });
       }
       await until(page, ctx.kinds, (store, { kind, name, before }) => {
@@ -813,7 +826,7 @@ export const JOBS = {
           await answerAsks(person, { name: prep.value });
         } else {
           const form = page.locator(`form[data-testid="form-${job.act}"]`);
-          if (!(await form.isVisible().catch(() => false))) throw new DeadEnd(`${via}, and "${job.title}" opens no form`);
+          if (!(await appears(form))) throw new DeadEnd(`${via}, and "${job.title}" opens no form`);
           await fillForm(person, form, { name: prep.value });
         }
         via = `${via}; it takes "${job.title}"`;
@@ -871,7 +884,7 @@ export const JOBS = {
       } else {
         await pressAct(person, job.act, job.title);
         const form = page.locator(`form[data-testid="form-${job.act}"]`);
-        if (!(await form.isVisible().catch(() => false))) throw new DeadEnd(`"${job.title}" opens no form`);
+        if (!(await appears(form))) throw new DeadEnd(`"${job.title}" opens no form`);
         await fillForm(person, form, { choose: [prep.other.label] });
       }
       await until(page, ctx.kinds, (store, { act, before }) => {
@@ -917,7 +930,7 @@ export const JOBS = {
         .or(page.getByRole("button", { name: /^(undo|take (it |this )?back)/i }))
         .filter({ visible: true })
         .first();
-      if (!(await undo.isVisible().catch(() => false))) throw new DeadEnd(`nothing on the ${ctx.face === "scene" ? "scene" : "page"} offers to take "${prep.intent}" back`);
+      if (!(await appears(undo))) throw new DeadEnd(`nothing on the ${ctx.face === "scene" ? "scene" : "page"} offers to take "${prep.intent}" back`);
       await person.press(undo, "undo");
       await until(page, ctx.kinds, (store, batch) => {
         const it = store.batches().find((one) => one.id === batch);
@@ -942,7 +955,7 @@ export const JOBS = {
       const before = await inStore(page, ctx.kinds, lastBatch);
       if (ctx.face === "scene") {
         const standing = page.locator('[data-testid="standing"]').filter({ visible: true }).first();
-        if (!(await standing.isVisible().catch(() => false))) throw new DeadEnd("nothing on the scene says something is wrong");
+        if (!(await appears(standing))) throw new DeadEnd("nothing on the scene says something is wrong");
         await person.press(standing, "the problems");
         const problem = page.locator('[data-testid="standing"] ~ ul button, [data-testid="standing"] + * button, [data-testid="standing-card"] button').filter({ visible: true }).first();
         const listed = (await problem.isVisible().catch(() => false)) ? problem : page.getByRole("listitem").getByRole("button", { name: /ways? to fix|to fix/ }).filter({ visible: true }).first();
@@ -962,7 +975,7 @@ export const JOBS = {
         await page.waitForLoadState("domcontentloaded");
         await person.settle(300);
         const repair = page.locator('[data-testid="repairs"] button, [data-affordance^="invariant:"]').filter({ visible: true }).first();
-        if (!(await repair.isVisible().catch(() => false))) throw new DeadEnd("the problems page offers no repair to press");
+        if (!(await appears(repair))) throw new DeadEnd("the problems page offers no repair to press");
         await person.press(repair, "a repair");
         const form = page.locator("form[data-testid^='form-']").filter({ visible: true }).first();
         if (await form.isVisible().catch(() => false)) await fillForm(person, form, { name: "Somebody" });

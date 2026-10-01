@@ -688,7 +688,15 @@ try {
     requestAnimationFrame(tick);
     await new Promise((done) => setTimeout(done, 900));
     const cells = [...new Set(seen.map((one) => one.cell))];
-    const jumps = seen.filter((one, at) => at > 0 && Math.abs(one.cell - seen[at - 1].cell) > 20).length;
+    /*
+     * A LEAP IS MOST OF THE WAY IN ONE STEP, not more than twenty pixels in
+     * one frame. Twenty per frame assumed sixty frames a second; a runner that
+     * drew eight frames in the same 900 ms moved the ground in steps of thirty
+     * and called each a jump. A cut puts the whole move in one step at any
+     * frame rate; easing never puts more than a share of it in one.
+     */
+    const travel = Math.abs((seen[seen.length - 1]?.cell ?? 0) - (seen[0]?.cell ?? 0));
+    const jumps = seen.filter((one, at) => at > 0 && Math.abs(one.cell - seen[at - 1].cell) > Math.max(20, travel * 0.6)).length;
     return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1] };
   });
   report.checks = {
