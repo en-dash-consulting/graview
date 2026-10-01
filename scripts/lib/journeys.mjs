@@ -437,8 +437,8 @@ async function answerAsks(person, { name, choose = [] }) {
     const field = ask.locator("form input").first();
     if (await field.isVisible().catch(() => false)) {
       const type = await field.getAttribute("type");
-      const value = type === "date" ? "2026-09-20" : type === "number" ? "2" : !named && name ? name : "Something";
-      if (type === "date") {
+      const value = type === "date" ? "2026-09-20" : type === "datetime-local" ? "2026-09-20T09:00" : type === "number" ? "2" : !named && name ? name : "Something";
+      if (type === "date" || type === "datetime-local") {
         // A date field takes its value whole; a person types it into the field.
         await (person.input === "pointer" ? field.click().then(() => (person.presses += 1)) : person.reach(field, "the date"));
         await field.fill(value);
@@ -446,7 +446,7 @@ async function answerAsks(person, { name, choose = [] }) {
       } else {
         await person.fill(field, value, "the field it asks for");
       }
-      if (type !== "date" && type !== "number") named = true;
+      if (type !== "date" && type !== "datetime-local" && type !== "number") named = true;
       await person.key("Enter");
       await person.settle(200);
       continue;
@@ -493,8 +493,8 @@ async function fillForm(person, form, { name, choose = [] }) {
       continue;
     }
     if (info.value && !isName) continue;
-    const value = info.type === "date" ? "2026-09-20" : info.type === "number" ? "2" : info.type === "time" ? "09:00" : isName ? name : "Something";
-    if (info.type === "date" || info.type === "time") {
+    const value = info.type === "date" ? "2026-09-20" : info.type === "datetime-local" ? "2026-09-20T09:00" : info.type === "number" ? "2" : info.type === "time" ? "09:00" : isName ? name : "Something";
+    if (info.type === "date" || info.type === "time" || info.type === "datetime-local") {
       await (person.input === "pointer" ? field.click().then(() => (person.presses += 1)) : person.reach(field, `the ${info.label}`));
       await field.fill(value);
       person.presses += 1;
@@ -536,6 +536,15 @@ async function pressDistrict(person, kind, plural) {
       await person.settle(400);
       if (!(await district.isVisible().catch(() => false))) return;
     }
+  }
+  /*
+   * Past the edge of a phone, a district is no place a finger can land; the
+   * sign on that edge names it and brings it in, and a person follows it.
+   */
+  const sign = page.locator(`[data-graview-past-edge="kind:${escapeAttr(kind)}"]`).first();
+  if (person.input === "pointer" && (await sign.isVisible().catch(() => false))) {
+    await person.press(sign, `the sign to the ${plural}`);
+    await person.settle(500);
   }
   const face = district.locator(".graview-kind-face").getByText(plural, { exact: true }).first();
   const aim = person.input === "pointer" && (await face.isVisible().catch(() => false)) ? face : district;
@@ -600,8 +609,11 @@ async function findAndOpen(person, face, target, query) {
     const count = await hits.count();
     if (count === 0) throw new DeadEnd(`Find shows nothing for "${query}"`);
     const texts = await hits.allTextContents();
-    const index = texts.findIndex((text) => text.includes(target.label));
-    if (index < 0) throw new DeadEnd(`Find does not offer "${target.label}" for "${query}" among ${count}`);
+    const reading = texts.flatMap((text, at) => (text.includes(target.label) ? [at] : []));
+    if (reading.length === 0) throw new DeadEnd(`Find does not offer "${target.label}" for "${query}" among ${count}`);
+    // Of several that read the name, a person takes the one that says it is what they want — "· song" — else the first.
+    const saysNoun = target.noun ? new RegExp(`· ${target.noun.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|·|$)`) : null;
+    const index = (saysNoun && reading.find((at) => saysNoun.test(texts[at]))) ?? reading[0];
     // Rows that read the same: a person cannot tell which is which, and takes the first.
     person.twins = texts.filter((text) => text.trim() === texts[index].trim()).length;
     if (person.input === "pointer") {
@@ -611,7 +623,10 @@ async function findAndOpen(person, face, target, query) {
       // Arrowed to, watching the highlight move as a person does, until the row wanted is the one lit.
       const wanted = await hits.nth(index).evaluate((el) => el.id || el.closest("[id]")?.id || "");
       const lit = () => page.locator('[data-testid="find-box"]').getAttribute("aria-activedescendant");
-      for (let i = 0; i < count + 2 && index > 0 && (await lit()) !== wanted; i++) await person.key("ArrowDown");
+      // A highlighted record opens its acts under it, so the rows grow as the keys move: the bound is the rows there are now.
+      const rowsNow = () => page.locator('[data-testid="find-hit"]').count();
+      for (let i = 0; i < (await rowsNow()) + 2 && index > 0 && (await lit()) !== wanted; i++) await person.key("ArrowDown");
+      if ((await lit()) !== wanted) throw new DeadEnd(`the keys do not reach "${target.label}" in the Find strip`);
       await person.key("Enter");
     }
     await person.settle(500);
@@ -735,6 +750,7 @@ export const JOBS = {
         return node ? { id: node.id, label: node.label } : null;
       }, job.kind);
       if (!target) return { skip: `there is no ${job.noun} to find` };
+      target.noun = job.noun;
       return { target, query: partOf(target.label, ctx.labels) };
     },
     start: (ctx) => ctx.home,
