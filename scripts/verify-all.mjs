@@ -50,6 +50,8 @@ const CHAIN = [
   // First: the watch that judges every other harness's screens, made to fire.
   ["watch", "verify-watch.mjs"],
   ["site", "verify-site.mjs"],
+  // The awkward example in every face, width, scheme and seat — long, so it starts early.
+  ["gauntlet", "verify-gauntlet.mjs"],
   ["lines", "verify-lines.mjs"],
   ["shrunk", "verify-shrunk.mjs"],
   ["navigation", "verify-navigation.mjs"],
@@ -70,7 +72,6 @@ const CHAIN = [
   // A real catalogue, built for production: what a person can read, at sixty frames a second.
   ["scale", "verify-scale.mjs"],
   // The example built to be awkward, driven into every face, width, scheme and seat it has.
-  ["gauntlet", "verify-gauntlet.mjs"],
   ["survey", "survey-ui.mjs"],
   ["audit", "audit-ui.mjs"],
   /*

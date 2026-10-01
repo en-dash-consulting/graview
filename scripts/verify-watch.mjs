@@ -17,7 +17,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const engine = engineName();
 const browser = await launchEngine(engine);
 const page = await browser.newPage();
-const settle = () => page.waitForTimeout(900);
+const settle = () => page.waitForTimeout(1300);
 /* Served, not setContent: the watch is an init script, and only a navigation runs one. */
 let served = "";
 await page.route("http://watch.test/**", (route) => route.fulfill({ contentType: "text/html", body: served }));

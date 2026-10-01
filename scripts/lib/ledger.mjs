@@ -24,7 +24,7 @@ export const signatureOf = (violation) =>
     // A count in the words ("Move 1 overdue") is the same control with other data.
     .replace(/\d+/g, "#")
     // Where it was drawn helps a person find it, not tell two problems apart.
-    .replace(/ in \[data-testid="[^"]*"\]| in view "[^"]*"/g, "")}`;
+    .replace(/ in \[data-testid="[^"]*"\]| in view "[^"]*"| \(it (was|is) [a-z ]+\)/g, "")}`;
 
 /**
  * Reads every harness's watch report written since `since`, folds it into

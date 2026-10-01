@@ -32,7 +32,20 @@ const answers = async (port) => {
  */
 export async function serving(app, port, repoRoot) {
   const url = `http://localhost:${port}`;
-  if (await answers(port)) return { url, borrowed: true, stop: () => {} };
+  if (await answers(port)) {
+    /*
+     * BORROW ONLY THIS CHECKOUT'S SERVER. A second checkout — a worktree an
+     * agent works in — can hold the same port, and a harness that borrowed
+     * it judged that checkout's code and reported it as this one's. A vite
+     * server answers `/@fs/` only for files in its own workspace, so asking
+     * it for this app's page by absolute path says whose it is.
+     */
+    const ours = await fetch(`${url}/@fs${resolve(repoRoot, "apps", app, "index.html")}`, { signal: AbortSignal.timeout(2_000) })
+      .then((response) => response.ok)
+      .catch(() => false);
+    if (!ours) throw new Error(`port ${port} is held by a server that is not this checkout's ${app} — stop it, or run from that checkout`);
+    return { url, borrowed: true, stop: () => {} };
+  }
 
   const child = spawn("npx", ["vite"], {
     cwd: resolve(repoRoot, `apps/${app}`),

@@ -164,6 +164,8 @@ function StudioOverlay<S extends AnySchema>({
   useTheKeyboardLandsSomewhere(dialog);
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    // Opened, it takes the keyboard: a dialog the keyboard is not in is one it cannot reach.
+    dialog.current?.focus({ preventScroll: true });
     return () => {
       const active = document.activeElement;
       const onNothing = active === null || active === document.body || dialog.current?.contains(active);
@@ -209,6 +211,7 @@ function StudioOverlay<S extends AnySchema>({
       data-testid="studio"
       // The studio edits the declaration: its ids are what it is about.
       data-graview-speaks-ids=""
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-label={`Studio · ${app.name}`}

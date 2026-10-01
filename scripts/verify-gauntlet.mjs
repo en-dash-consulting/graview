@@ -35,17 +35,24 @@ const PORT = 5191;
 const BASE = `http://localhost:${PORT}`;
 
 /** Every seat the app offers, by the id `?as=` takes — none of them a name. */
-const SEATS = [
+const ALL_SEATS = [
   { id: "u-4f1c9a", who: "chair" },
   { id: "u-9b27e0", who: "reviewer" },
   { id: "u-02d8c4", who: "volunteer" },
   { id: "agent-sched-7", who: "agent" },
   { id: "u-anon-0", who: "visitor" },
 ];
+/*
+ * QUICK, while iterating (GRAVIEW_QUICK, `pnpm verify --quick`): the seat
+ * that may do most and the seat that may do least, in one scheme — the
+ * nine-minute sweep in about two. The nightly walks every seat.
+ */
+const QUICK = process.env["GRAVIEW_QUICK"] === "1";
+const SEATS = QUICK ? ALL_SEATS.filter((seat) => seat.who === "chair" || seat.who === "volunteer") : ALL_SEATS;
 const WIDTHS = [1440, 390];
 /** The seats whose role grants an act on a talk; the volunteer and the visitor have none. */
 const MAY_ACT_ON_A_TALK = ["chair", "reviewer", "agent"];
-const SCHEMES = ["light", "dark"];
+const SCHEMES = QUICK ? ["light"] : ["light", "dark"];
 
 /*
  * Records chosen for their shape, by the ids the seed generator mints
@@ -380,7 +387,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     const seats = await count(page, '[data-testid^="seat-"]');
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);
-    return { reached: seats === SEATS.length, detail: { seats } };
+    return { reached: seats === ALL_SEATS.length, detail: { seats } };
   });
 
   if (who === "chair") {
@@ -480,7 +487,7 @@ try {
     { seat: "agent-sched-7", who: "agent", width: 1440, scheme: "dark" },
     { seat: "u-anon-0", who: "visitor", width: 1440, scheme: "dark" },
   ];
-  for (const walk of WALKS.filter((one) => !only || one.who === only)) {
+  for (const walk of WALKS.filter((one) => (!only || one.who === only) && SEATS.some((seat) => seat.id === one.seat))) {
     await sceneWalk(browser, walk);
     await pagesWalk(browser, walk);
   }

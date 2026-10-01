@@ -1,7 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
 import { useEffect, useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
-import { GraviewProvider } from "@graview/react";
+import { GraviewProvider, useTheKeyboardLandsSomewhere } from "@graview/react";
 import { PageAsk } from "./ask.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
@@ -66,6 +66,17 @@ function KindSwitch<S extends AnySchema>({
  * scrolls when it is inside an embed's frame or a shell's own region — so
  * a host page with three embeds is never yanked to the top of one of them.
  */
+/** The routed face's root for the rule that the keyboard always lands somewhere. */
+function KeyboardRoot({ children }: { readonly children: ReactNode }) {
+  const root = useRef<HTMLDivElement>(null);
+  useTheKeyboardLandsSomewhere(root);
+  return (
+    <div ref={root} style={{ display: "contents" }}>
+      {children}
+    </div>
+  );
+}
+
 function ScrollReset() {
   const { pathname } = useLocation();
   const type = useNavigationType();
@@ -137,6 +148,8 @@ export function PagesRoutes<S extends AnySchema>({
    */
   const inside: PageContext<S> = own ? { ...context, framed: true } : context;
   return (
+    // The routed face holds the keyboard the way the scene does, whichever shell an app draws.
+    <KeyboardRoot>
     <Shell context={context}>
       <ScrollReset />
       <Routes>
@@ -164,6 +177,7 @@ export function PagesRoutes<S extends AnySchema>({
         />
       </Routes>
     </Shell>
+    </KeyboardRoot>
   );
 }
 

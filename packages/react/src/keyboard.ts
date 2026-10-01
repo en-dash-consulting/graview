@@ -85,11 +85,17 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
       for (let el: Element | null = target; el && el !== at.parentElement; el = el.parentElement) line.push(el);
     };
     let queued = false;
-    const land = () => {
+    const land = (afterAnAct: boolean) => {
       queued = false;
       const active = document.activeElement;
       const onNothing = active === null || active === document.body || active === document.documentElement;
-      if (!onNothing || line.length === 0 || standsAndTakesTheKeyboard(line[0]!)) return;
+      if (!onNothing || line.length === 0) return;
+      if (standsAndTakesTheKeyboard(line[0]!)) {
+        // Still there: after a press of its own it gets the keyboard back; a
+        // person who clicked away from it left it on purpose.
+        if (afterAnAct && line[0] instanceof HTMLElement) line[0].focus({ preventScroll: true });
+        return;
+      }
       for (const el of line.slice(1)) {
         if (!el.isConnected) continue;
         const target = landingIn(el, line[0]);
@@ -104,7 +110,20 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
       if (queued || line.length === 0) return;
       queued = true;
       // After the frame a surface that knows better gets to move it first.
-      setTimeout(() => requestAnimationFrame(land), 60);
+      setTimeout(() => requestAnimationFrame(() => land(false)), 60);
+    };
+    /*
+     * AND AFTER AN ACT, ASKED AGAIN. A press can take the keyboard off a
+     * control without removing it or firing anything the root hears — a
+     * button disabled while its answer comes, a form that resets — so after
+     * a press or Enter, Space or Escape inside the root, it is asked twice
+     * more whether the keyboard is anywhere.
+     */
+    const acted = (event: Event) => {
+      if (event instanceof KeyboardEvent && !["Enter", " ", "Escape"].includes(event.key)) return;
+      // A click elsewhere — on the empty picture, say — is a person leaving on purpose.
+      if (!(event instanceof KeyboardEvent) && !(event.target instanceof Node && line[0]?.contains(event.target))) return;
+      for (const wait of [150, 600]) setTimeout(() => requestAnimationFrame(() => land(true)), wait);
     };
     const observer = new MutationObserver(() => {
       if (line.length > 0 && !line[0]!.isConnected) later();
@@ -116,10 +135,14 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
     };
     at.addEventListener("focusin", remember);
     at.addEventListener("focusout", letGo);
+    at.addEventListener("click", acted);
+    at.addEventListener("keydown", acted);
     observer.observe(at, { childList: true, subtree: true });
     return () => {
       at.removeEventListener("focusin", remember);
       at.removeEventListener("focusout", letGo);
+      at.removeEventListener("click", acted);
+      at.removeEventListener("keydown", acted);
       observer.disconnect();
     };
   }, [root]);

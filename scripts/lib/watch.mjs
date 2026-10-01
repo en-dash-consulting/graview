@@ -80,6 +80,15 @@ function watchInPage() {
     const inside = [host ? `in [data-testid="${host}"]` : "", view ? `in view "${view}"` : ""].filter(Boolean).join(" ");
     return `<${tag}${testid ? ` data-testid="${testid}"` : ""}${label ? ` aria-label="${label.slice(0, 50)}"` : ""}>${text ? ` "${text}"` : ""}${inside ? ` ${inside}` : ""}`;
   };
+  /** What became of the control the keyboard was on — which says which fix it needs. */
+  const fate = (el) =>
+    !el.isConnected
+      ? "it was removed"
+      : el.matches(":disabled")
+        ? "it was disabled"
+        : (typeof el.checkVisibility === "function" ? !el.checkVisibility() : el.getClientRects().length === 0)
+          ? "it was hidden"
+          : "it is still there";
   const nowhere = () => {
     const now = document.activeElement;
     return !now || now === document.body || now === document.documentElement;
@@ -155,7 +164,9 @@ function watchInPage() {
     },
   };
 
-  const settle = (then) => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(then)), 300);
+  // Judged once the scene has settled: a transition takes the old card away
+  // at its end (about half a second), and the keyboard lands after it.
+  const settle = (then) => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(then)), 800);
   const TEXT_ENTRY = "input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]),textarea,[contenteditable='true'],[contenteditable='']";
   const KEYS = { Enter: "Enter", " ": "Space", Escape: "Escape", Delete: "Delete", Backspace: "Backspace" };
   document.addEventListener(
@@ -169,7 +180,7 @@ function watchInPage() {
       if (key !== "Enter" && key !== "Escape" && before.matches(TEXT_ENTRY)) return;
       const what = describe(before);
       settle(() => {
-        if (nowhere()) report("keyboard-lands-nowhere", `${key} on ${what} left the keyboard on <body>`, `${key}|${what}`);
+        if (nowhere()) report("keyboard-lands-nowhere", `${key} on ${what} left the keyboard on <body> (${fate(before)})`, `${key}|${what}`);
       });
     },
     true,
@@ -183,7 +194,7 @@ function watchInPage() {
       if (document.activeElement !== target && !target.contains(document.activeElement)) return;
       const what = describe(target);
       settle(() => {
-        if (nowhere()) report("keyboard-lands-nowhere", `a press on ${what} left the keyboard on <body>`, `press|${what}`);
+        if (nowhere()) report("keyboard-lands-nowhere", `a press on ${what} left the keyboard on <body> (${fate(target)})`, `press|${what}`);
       });
     },
     true,
