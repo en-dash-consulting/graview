@@ -58,8 +58,8 @@ export function tellTheWatchItsNames(
         ids.push(value);
         if (!format) continue;
         const said = format(value);
+        // The raw value only: its spoken form ("Mon") is also an ordinary word a calendar prints.
         if (said !== value) unsaid.push(value);
-        if (said !== humaniseField(value)) unsaid.push(humaniseField(value));
       }
     }
     words.push(definition.plural ?? "", definition.noun ?? "", definition.description ?? "");

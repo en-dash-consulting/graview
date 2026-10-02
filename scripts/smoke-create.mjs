@@ -247,7 +247,7 @@ try {
       const input = document.querySelector('[data-testid="inspector-strip"] input');
       return input ? { name: input.getAttribute("aria-label"), placeholder: input.placeholder } : null;
     });
-    await page.fill('input[aria-label="Label"]', "Water the ferns");
+    await page.fill('input[aria-label="Name"]', "Water the ferns");
     await page.click('form button[type="submit"]');
     await page.waitForTimeout(700);
     b.afterForm = (await districtText(page)).trim();
@@ -330,7 +330,7 @@ try {
       throw new Error(`${error.message.split("\n")[0]} — the narrow page showed ${JSON.stringify(seen)}`);
     });
     await narrow.waitForTimeout(300);
-    await narrow.fill('#here input[aria-label="Label"]', "Sweep the path");
+    await narrow.fill('#here input[aria-label="Name"]', "Sweep the path");
     await narrow.click('#here [data-testid="inspector-strip"] button[type="submit"]');
     await narrow.waitForTimeout(700);
     await narrow.click('#here [data-testid^="open-"]');
@@ -587,7 +587,7 @@ try {
     await page.waitForTimeout(500);
     await page.locator('[data-testid="affordances"] button[data-affordance]').filter({ hasText: "Add a work order" }).first().click();
     await page.waitForTimeout(300);
-    await page.fill('input[aria-label="Label"]', "Replace the pump");
+    await page.fill('input[aria-label="Name"]', "Replace the pump");
     await page.click('form button[type="submit"]');
     await page.waitForTimeout(700);
     report.linked.browser = {
@@ -627,7 +627,7 @@ report.verdict = {
         theSeatPlantsStarterDataFromTheDeclaration: b.seatPlantedSomething === true && (b.seatLog ?? []).length > 0,
         freshIsTheWayBackToEmpty: b.freshIsEmptyAgain === true,
         theEmptyDistrictOffersTheFirstNote: (b.offers ?? []).some((text) => text.includes("Add a note")),
-        theAskNamesItsFieldInWords: b.asksInWords?.name === "Label" && b.asksInWords?.placeholder === "Label",
+        theAskNamesItsFieldInWords: b.asksInWords?.name === "Name" && b.asksInWords?.placeholder === "Name",
         theDerivedFormAddsIt: b.theFormAddedIt === true,
         // The top rung of the ladder does not swallow the rest of it.
         escapeDoesSomethingFromTheFirstScreen:

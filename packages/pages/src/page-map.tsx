@@ -36,7 +36,8 @@ function RelationLine<S extends AnySchema>({ context, relation }: { context: Pag
       <RelationMark edgeKind={relation.edgeKind} {...(context.brand?.kit ? { kit: context.brand.kit } : {})} />
       <span style={{ display: "grid", gap: 1 }}>
         <span>
-          {end(from)} <span style={quiet}>{humaniseField(relation.edgeKind)}</span> {end(to)}
+          {/* The map of the declaration names each relation by its name, between its two ends, on purpose: its words follow. */}
+          {end(from)} <span style={quiet} data-graview-speaks-ids="">{humaniseField(relation.edgeKind)}</span> {end(to)}
         </span>
         {relation.description || relation.inverse ? (
           <span style={{ ...quiet, fontSize: "0.9375rem" }}>
