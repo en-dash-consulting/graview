@@ -3,7 +3,7 @@ import { relationWords } from "../relation-key.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout";
 import { useGraview } from "@graview/react";
 import type { Affordance, OpenParameter } from "@graview/tools";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 
 /**
@@ -56,6 +56,21 @@ export function AnswerArgs({
     // Optional: jsdom has no scrolling at all, and a pane that cannot
     // scroll needs none.
     asked.current?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [parameter?.name]);
+
+  /*
+   * THE NEXT QUESTION TAKES THE KEYBOARD. A text field asks with
+   * `autoFocus`; a question of choices had nothing, so a choice pressed
+   * before another question of choices took its button away with it and
+   * left the keyboard on <body> — "Fuel", then "Gearbox", sixteen questions
+   * into "Put a car on sale" (the seventh walk).
+   */
+  useLayoutEffect(() => {
+    const box = asked.current;
+    const now = typeof document === "undefined" ? null : document.activeElement;
+    if (!box || (now && now !== document.body && !box.contains(now))) return;
+    const first = box.querySelector<HTMLElement>("form input, [role=group] button:not([disabled])");
+    if (first && first !== now) first.focus();
   }, [parameter?.name]);
 
   if (!parameter) return null;
