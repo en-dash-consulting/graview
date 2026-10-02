@@ -1,7 +1,0 @@
----
-"@graview/core": patch
----
-
-What a kind can be sorted, filtered and grouped by is derived from its declaration. `arrangeable(schema, kind)` offers the sorts (the label, every scalar field, every edge by its far end's label), the filters (boolean and choice fields by value, date fields by before/after/on, every edge by a node, by anything or by nothing, and `is` for the lifecycle and the standing) and the groups (boolean and choice fields, date fields by day, week or month, every edge by its far end), each in the declaration's own words — `display.labels`, an edge's `description` from the declaring end and its `inverse` from the other — and never a field `display.hide` hides. `fieldRoles.order` names a kind's natural sort. `arrange(nodes, arrangement, context)` filters as a conjunction, sorts stably with the unsaid last, and groups with the empty group last, choices in option order and dates by bucket.
-
-One grammar carries an arrangement wherever it goes: `sort=due:desc`, `filter=done:false,holds:today,is:past`, `group=due:month` — `parseArrangement` and `formatArrangement` round-trip it, and `admitArrangement` keeps what the kind offers and names what a stale link asked for that it does not. A lens carries the three words in the stop's fragment as `in.sort`, `in.filter`, `in.group`; a page carries them in its search; `arrangeAllows` reads a lens's `arrange: false | { sort?, filter?, group? }`. Nothing here is React: the surfaces come next.

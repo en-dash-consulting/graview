@@ -1,5 +1,31 @@
 # create-graview
 
+## 0.1.0
+
+### Minor Changes
+
+- b5e95a1: The first public release, 0.1.0, under the Elastic License 2.0.
+  
+  `graview` is the tool and `@graview/*` is the framework. The command line is
+  its own package now: `npx graview create my-app` from nothing, and inside a
+  project `graview check`, `graview docs`, `graview describe`, `graview lens`,
+  `graview figure`, `graview serve` and `graview skills`. The `graview-serve`
+  and `graview-skills` bins are gone — `serve` and `skills` are subcommands —
+  and `@graview/core` no longer carries a bin of its own. A scaffolded project
+  takes `graview` as its devDependency in place of `@graview/skills`, and
+  `create-graview` (what `npm create graview` runs) depends on `graview`.
+  
+  Every package moves in lockstep from here, so the `^<version>` range
+  `graview create` writes for each `@graview/*` dependency is always one that
+  exists.
+
+### Patch Changes
+
+- Updated dependencies [ff7de41]
+- Updated dependencies [b1fbc32]
+- Updated dependencies [b5e95a1]
+  - graview@0.1.0
+
 ## 0.0.1
 
 ### Patch Changes

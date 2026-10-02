@@ -1,7 +1,0 @@
----
-"@graview/tools": patch
----
-
-A run is a sequence of typed asks over the graph, declared not scripted. `RunDeclaration` is steps: `{ fill: kind }` asks every current node its unset typed fields; `{ ask: act, over: kind }` asks each node the act's remaining arguments as its subject; `{ judge: rule }` asks every violation which of the closed set of repairs to take; `{ pair: act, over: a, against: b }` asks every pair whether the joining act holds — a matrix nobody authored, from `pairQuestion`. Fan-out is the ordinary case: one call per node carries that node's whole set of questions.
-
-`readRun(store, run)` reads a run before it runs — nodes, questions and calls per step, a rough cost — and a run whose `budget` (questions or dollars) it exceeds is refused before anything is asked. `runFrom(store, run, { decide, … })` executes under the run's own agent author (`agent:<name>:run-<time>`), announces every visit through the seat's existing `onCall` path as a read of that node (so the Activity rail shows where the run is with no second reporting path), and returns a typed `StepOutcome` per step — the answers with their confidence, the calls they became, a judged `Plan` — which a `judge` hook can stop the run on with a reason. In review mode the whole run is one plan and `landRun` lands it as one batch with one undo; in each-step mode each step lands under the run's one batch before the next is asked, so a later step sees an earlier one's answers. A run holds the `Decide` it started with, so a rung switched underneath does not move it.
