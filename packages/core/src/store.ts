@@ -416,7 +416,13 @@ export class Store<S extends AnySchema> {
     const subject = definition?.subject;
     if (!subject) return undefined;
     const id = call.args[subject.arg];
-    if (typeof id !== "string") return undefined;
+    /*
+     * NOT CHOSEN YET — offered from the far end, the subject is still to be
+     * asked for. Its kind is the act's to say when it names one: asked as
+     * "no kind", a grant drawn by kind ("a reviewer, on talks") refused the
+     * reviewer on every topic with "a chair or a reviewer can".
+     */
+    if (typeof id !== "string") return subject.kinds !== "*" && subject.kinds.length === 1 ? (subject.kinds[0] as string) : undefined;
     return this.graph.getNode(id)?.kind as string | undefined;
   }
 

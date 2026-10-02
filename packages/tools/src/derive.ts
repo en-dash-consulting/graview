@@ -287,7 +287,12 @@ export function deriveAffordances<S extends AnySchema>(
       asking,
     );
     if (verdict.ok) allowed.push(affordance);
-    else withheld.push({ ...affordance, refusal: verdict.refusal });
+    else {
+      const mine = narrowed(store, affordance, asking);
+      if (mine === "done") continue;
+      if (mine) allowed.push(mine);
+      else withheld.push({ ...affordance, refusal: verdict.refusal });
+    }
   }
 
   /*
@@ -387,4 +392,40 @@ export function previewAffordance<S extends AnySchema>(
     name: affordance.mutation,
     args: { ...affordance.args, ...extraArgs },
   });
+}
+
+/**
+ * AN ACT WHOSE SUBJECT IS STILL TO BE CHOSEN, ASKED AS THE SEAT.
+ *
+ * From its far end — the car, the topic — an act arrives with its subject
+ * open, and the policy was asked about it with no subject at all. A grant
+ * drawn by kind ("a reviewer, on talks") or on the seat's own record ("a
+ * shopper, on their own shortlist") cannot pass a subject nobody named, so
+ * the act was withheld from exactly the people it was for, with a refusal
+ * naming their own role: "Not permitted: “Shortlist a car” — a manager or a
+ * shopper can", said to a shopper on every car in the showroom.
+ *
+ * So the open subject is asked about candidate by candidate. Those the seat
+ * may act on are what is offered; when that is only the seat's own record
+ * the subject is simply them, and the form no longer asks who. When the
+ * seat's own record would be permitted but is no longer a candidate — the
+ * car is already on their shortlist — it is done for them, and neither
+ * offered nor refused.
+ */
+function narrowed<S extends AnySchema>(store: Store<S>, affordance: Affordance, asking: Principal): Affordance | "done" | undefined {
+  const subject = store.allMutations().find((mutation) => mutation.name === affordance.mutation)?.subject;
+  if (!subject || affordance.args[subject.arg] !== undefined) return undefined;
+  const asked = affordance.open.find((parameter) => parameter.name === subject.arg);
+  if (!asked?.candidates) return undefined;
+  const on = (id: string) => store.permits({ name: affordance.mutation, args: { ...affordance.args, ...(affordance.batch?.[0] ?? {}), [subject.arg]: id } }, asking).ok;
+  const permitted = asked.candidates.filter(on);
+  const me = asking.id === undefined ? undefined : store.graph.getNode(asking.id);
+  if (permitted.length === 0) {
+    const mine = me !== undefined && (subject.kinds === "*" || (subject.kinds as readonly string[]).includes(me.kind as string)) && on(me.id);
+    return mine ? "done" : undefined;
+  }
+  if (permitted.length === 1 && permitted[0] === asking.id) {
+    return { ...affordance, args: { ...affordance.args, [subject.arg]: asking.id }, open: affordance.open.filter((parameter) => parameter !== asked) };
+  }
+  return { ...affordance, open: affordance.open.map((parameter) => (parameter === asked ? { ...parameter, candidates: permitted } : parameter)) };
 }
