@@ -26,6 +26,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A stability contract a host can hold the framework to: what a version may change, a changelog that says so, and capabilities() naming the seams it ships](./a-stability-contract-a-host-can-hold.md) | pending |
 | [A store can hold records that no longer fit while still checking new writes](./a-store-can-hold-records-that-no.md) | pending |
 | [A store can prove its own fold: a deterministic snapshot hash and store.verify()](./a-store-can-prove-its-own-fold-a.md) | pending |
+| [Agents name records the way people do: a node argument accepts a label, and ambiguity comes back as candidates](./agents-name-records-the-way-people-do.md) | pending |
 | [An agent acts for someone, through something: delegation and channel on every op, and seat headers trusted only on request](./an-agent-acts-for-someone-through.md) | pending |
 | [An optimistic client can roll back: Store.rebase, a public notify, and batch ids that never collide across clients](./an-optimistic-client-can-roll-back.md) | pending |
 | [Applying primitives is all or nothing: a failure leaves the graph as it was](./applying-primitives-is-all-or-nothing.md) | pending |
@@ -40,6 +41,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Presence speaks one dialect and forgets the gone; seats can be added after mount without offering to sit as someone else](./presence-speaks-one-dialect-and.md) | pending |
 | [Stored data checked against its declaration: validateGraph, and repairs as ordinary ops](./stored-data-checked-against-its.md) | pending |
 | [Stored formats carry their version, and the next major brings the steps to read the last one](./stored-formats-carry-their-version-and.md) | pending |
+| [Structural edits as a vocabulary: add, rename, retype, remove — and a rename rewrites every reference](./structural-edits-as-a-vocabulary-add.md) | pending |
 | [Templates as data: graview create and graview apply take a template made anywhere](./templates-as-data-graview-create-and.md) | pending |
 | [The declaration is a document: one JSON object compiles into the same app defineApp declares](./the-declaration-is-a-document-one-json.md) | pending |
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | pending |
