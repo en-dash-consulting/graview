@@ -83,6 +83,14 @@ await page.evaluate(() => {
 await settle();
 checks.whatOneSeatMaySeeIsNotCaughtBesideAnother = takeViolations().filter((v) => v.rule === "shown-what-is-not-theirs").length === 0;
 
+/* breaks-at-width: a page wider than its window. */
+await page.setViewportSize({ width: 390, height: 800 });
+await show(`<main><p style="white-space:nowrap">ravi.robertson63@mail.example-and-a-long-unbroken-word-past-the-edge-of-a-phone</p></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await settle();
+checks.aPageThatScrollsSidewaysIsCaught = takeViolations().some((v) => v.rule === "breaks-at-width");
+await page.setViewportSize({ width: 1280, height: 800 });
+
 /* offered-then-refused: the store refused a press. */
 await show(`<main><button>Close the deal</button></main>`);
 await page.evaluate(() => window.__graviewWatch.refused({ mutation: "close-deal", kind: "deal", message: "Not permitted", author: "user-priya" }));

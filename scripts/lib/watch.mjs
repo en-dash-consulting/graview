@@ -124,8 +124,25 @@ function watchInPage() {
   const UNSHOWN = "script,style,code,pre,kbd,samp,textarea,template,[hidden],[data-graview-speaks-ids]";
   const visible = (el) => (typeof el.checkVisibility === "function" ? el.checkVisibility() : el.getClientRects().length > 0);
   let queued = false;
+  /*
+   * NO SIDEWAYS SCROLL. A page wider than its window at a phone's width or
+   * a reader's text size: the class's own check, judged on every state
+   * every harness reaches rather than on the routes one harness measured
+   * (W-151 on search, W-175 on a list, one component apart).
+   */
+  const sideways = () => {
+    const root = document.documentElement;
+    if (!root || !document.body) return;
+    const over = root.scrollWidth - root.clientWidth;
+    if (over <= 1) return;
+    const widest = [...document.body.querySelectorAll("*")]
+      .filter((el) => el.getBoundingClientRect().right > root.clientWidth + 1 && !el.closest("[data-graview-scrolls]"))
+      .pop();
+    report("breaks-at-width", `the page scrolls sideways by ${over}px at ${root.clientWidth} wide (text ${getComputedStyle(root).fontSize})${widest ? `, reached by ${describe(widest)}` : ""}`, `${location.pathname}|${root.clientWidth}|${getComputedStyle(root).fontSize}`);
+  };
   const scan = () => {
     queued = false;
+    sideways();
     if ((!pattern && unsaid.size === 0 && !unseen) || !document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const work = (deadline) => {
@@ -254,6 +271,9 @@ function watchInPage() {
   );
   const observe = () => {
     new MutationObserver(schedule).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["aria-label", "title", "placeholder", "hidden"] });
+    // A reader's text size and a window's width change the page without touching the body.
+    new MutationObserver(schedule).observe(document.documentElement, { attributes: true, attributeFilter: ["style", "class", "data-graview-text-size"] });
+    window.addEventListener("resize", schedule);
     schedule();
   };
   if (document.body) observe();
