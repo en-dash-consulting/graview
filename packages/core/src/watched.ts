@@ -58,8 +58,13 @@ export function tellTheWatchItsNames(
         ids.push(value);
         if (!format) continue;
         const said = format(value);
-        // The raw value only: its spoken form ("Mon") is also an ordinary word a calendar prints.
-        if (said !== value) unsaid.push(value);
+        /*
+         * The raw value only where the declaration says the same word another
+         * way ("suv" for "SUV"): a value that is an ordinary word ("open",
+         * "new") is a word the interface also says, and its spoken form
+         * ("Mon") one a calendar prints.
+         */
+        if (said !== value && said.toLowerCase() === value.toLowerCase()) unsaid.push(value);
       }
     }
     words.push(definition.plural ?? "", definition.noun ?? "", definition.description ?? "");
