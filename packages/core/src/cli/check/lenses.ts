@@ -1,3 +1,4 @@
+import { walkKinds } from "../../schema/path.js";
 import type { AnySchema } from "../../schema/schema.js";
 
 /**
@@ -104,6 +105,30 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
               message: `Role "${role}" binds an empty path, which reaches nothing.`,
               fix: `Name the edge kinds from the column end to the row end, e.g. path: ["covers", "applies", "addresses"].`,
             });
+          }
+          /*
+           * AND THE PATH GETS THERE. Column end to row end, as the coverage
+           * walks it: named backwards, or through a kind it never touches, it
+           * reaches nothing and the picture says every row is uncovered.
+           */
+          const ends = { columns: bindings["columns"]?.["kind"], rows: bindings["rows"]?.["kind"] };
+          if (path.length > 0 && path.every((step) => typeof step === "string" && edgeKinds.has(step)) && typeof ends.columns === "string" && typeof ends.rows === "string" && kinds.has(ends.columns) && kinds.has(ends.rows)) {
+            const walked = walkKinds(app.schema, ends.columns, path as readonly string[]);
+            if (!walked.ok || !walked.reached.has(ends.rows)) {
+              const reversed = walkKinds(app.schema, ends.columns, [...(path as readonly string[])].reverse());
+              const backwards = reversed.ok && reversed.reached.has(ends.rows);
+              add({
+                severity: "error",
+                code: "lens-binding-path-misses",
+                where: `lens "${lens.name}" bindings.${role}`,
+                message: backwards
+                  ? `Role "${role}" walks from the rows to the columns: from "${ends.columns}" it reaches nothing, so every row would read as uncovered.`
+                  : `Role "${role}" cannot get from "${ends.columns}" to "${ends.rows}"${walked.ok ? "" : `: "${String(path[walked.at])}" does not touch where the walk has got to`}.`,
+                fix: backwards
+                  ? `Name it column end first: path: [${[...path].reverse().map((step) => JSON.stringify(step)).join(", ")}].`
+                  : `Name the edges from a ${ends.columns} to a ${ends.rows}, in order.`,
+              });
+            }
           }
           for (const step of path) {
             if (typeof step !== "string" || !edgeKinds.has(step)) {

@@ -1,4 +1,4 @@
-import { counted, labelOf, nounOf, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { counted, labelOf, nounOf, walkKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
 import { onTheHorizon } from "./horizon.js";
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
@@ -229,6 +229,19 @@ export function buildCoverage<S extends AnySchema>(
       `No kind is declared for ${undeclared.map((kind) => `"${kind}"`).join(" or ")}.`,
       `Check the lens bindings: { rows: "<kind>", columns: "<kind>", link: "<edge kind>" }`,
     );
+  }
+  /* A path that cannot get from the columns to the rows is a misbinding, not a picture of nothing covered (W-172). */
+  if (schema && typeof options.link !== "string") {
+    const walked = walkKinds(schema, options.columns, options.link.path);
+    if (!walked.ok || !walked.reached.has(options.rows)) {
+      const reversed = walkKinds(schema, options.columns, [...options.link.path].reverse());
+      throw new CoverageBindingError(
+        reversed.ok && reversed.reached.has(options.rows)
+          ? `The path runs from the ${options.rows} to the ${options.columns}; it is walked from the columns.`
+          : `The path [${options.link.path.join(", ")}] cannot get from a ${options.columns} to a ${options.rows}.`,
+        `Name it column end first: link: { path: [${[...options.link.path].reverse().map((step) => JSON.stringify(step)).join(", ")}] }`,
+      );
+    }
   }
   const rowNodes = nodes.filter((node) => node.kind === options.rows);
   const columnNodes = nodes.filter((node) => node.kind === options.columns);

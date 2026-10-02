@@ -236,6 +236,7 @@ export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
 export { sees, sightedKinds } from "./permissions/sight.js";
 export { seenBy } from "./seen.js";
+export { walkKinds } from "./schema/path.js";
 export { tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Store — graph + log + mutations + invariants, one object.

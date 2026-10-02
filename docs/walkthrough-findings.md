@@ -4340,3 +4340,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/core/src/schema/define-node.ts` (new `counted`), `packages/pages/src/page-places.tsx`, `packages/primitives/src/find.tsx`, `packages/primitives/src/lens/coverage.tsx`, `packages/react/src/view-host.tsx`, `packages/react/src/resolved-view.tsx`
 - harness that should have caught it: the watch, for the hyphenated id only
 - status: fixed in "walkthrough: D · a kind is counted by its noun" · criterion: `tests/a-kind-is-counted-by-its-noun.test.ts` — `counted`'s own words, and no package source outside the scaffold speaks a kind's id as a word (failed on all five sites without the fix)
+
+### W-172 · "6 offers with no showroom · 4 showrooms on no offer", of six offers on show everywhere
+- stage: D (a starter lens) · face: scene and pages · width: 1280 · scheme: light
+- impact: costs a job — "which offers are on at which showroom": the coverage answered that none were, with a warning mark on every showroom
+- class: says-something-untrue (also: what-a-project-copies-is-wrong)
+- expected: a lens bound wrongly fails loudly and says what to bind (the lens skill's third rule); a path that cannot reach its far end is a misbinding
+- actual: the walk bound `link: { path: ["applies-to", "on-show-at"] }` — offers to cars to showrooms — where a coverage walks column end first. From a showroom the first step reached nothing, every cell was empty, and the lens drew a complete, tidy, wrong picture; `graview check` checked each step was a declared edge and not that the steps joined up
+- where it belongs: `packages/core/src/schema/path.ts` (new `walkKinds`), `packages/core/src/cli/check/lenses.ts`, `packages/primitives/src/lens/coverage.tsx`
+- harness that should have caught it: none — the class's check is "none yet"; the checker's lens rules held each name, not the walk
+- status: fixed in "walkthrough: D · a lens path gets there" · the checker refuses `lens-binding-path-misses` and says when the path is only backwards; the coverage throws the same. Criteria: `packages/core/tests/unit/a-path-gets-there.test.ts`, `packages/primitives/tests/unit/a-coverage-path-gets-there.test.ts` (both verified failing without the fix); walk7's `graview check` refused its own binding until it was turned round
