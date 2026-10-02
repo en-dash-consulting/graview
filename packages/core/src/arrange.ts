@@ -30,8 +30,9 @@ export interface Sort {
  * One condition; a filter is the conjunction of several.
  *
  * `key` is a field name, an edge kind, or `is`. The value's grammar depends
- * on the key: a boolean or enum field takes one of its values; a date field
- * takes `before:<date>`, `after:<date>` or `on:<date>`; an edge takes a
+ * on the key: a boolean, enum or text field takes one of its values; a date
+ * field takes `before:<date>`, `after:<date>` or `on:<date>`; a number field
+ * takes `at-most:<n>`, `at-least:<n>` or a value; an edge takes a
  * node id, `*` (tied to anything) or `none`; `is` takes `current`, `past`,
  * `any`, `flagged` or `clear`. Anything else is dropped, not thrown.
  */
@@ -196,7 +197,15 @@ export function arrangeable(schema: AnySchema, kind: string): Arrangeable {
     const options = type === "choice" ? describeArgOptions(fieldSchema) : type === "boolean" ? ["true", "false"] : undefined;
     const offer: ArrangeOffer = { key: field, label, about: "field", type, ...(options ? { options } : {}) };
     sorts.push(offer);
-    if (type === "boolean" || type === "choice" || type === "date") filters.push(offer);
+    /*
+     * A NUMBER AND A WORD ARE FILTERS TOO. "SUVs under £25,000 with fewer
+     * than 30,000 miles, a Kia or a Hyundai" is the whole of a car
+     * shopper's first minute, and the list offered none of it: only a
+     * choice, a yes or no and a date could be picked. A number is kept at
+     * most or at least a value; a word field is picked by the values it
+     * holds (which the graph says, so a surface lists them).
+     */
+    filters.push(offer);
     if (type === "boolean" || type === "choice") groups.push(offer);
     if (type === "date") groups.push({ ...offer, buckets: ["day", "week", "month", "year", "decade"] });
   }
@@ -453,6 +462,15 @@ export function conditionHolds(ctx: ArrangeContext, node: ArrangeNode, condition
       return op === "before" ? day < date : op === "after" ? day > date : day === date;
     }
     if (type === "boolean") return String(value) === condition.value;
+    if (type === "number") {
+      const at = condition.value.lastIndexOf(":");
+      const op = at > 0 ? condition.value.slice(0, at) : "";
+      const bound = Number(condition.value.slice(at + 1));
+      if (op === "at-most" || op === "at-least") {
+        if (typeof value !== "number" || !Number.isFinite(bound)) return false;
+        return op === "at-most" ? value <= bound : value >= bound;
+      }
+    }
     return String(value) === condition.value;
   }
   // An edge: tied to this node, to anything, or to nothing.

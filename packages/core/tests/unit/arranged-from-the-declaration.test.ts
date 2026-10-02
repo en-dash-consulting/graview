@@ -67,7 +67,8 @@ describe("what a kind can be arranged by", () => {
     expect(offers.sorts.find((offer) => offer.key === "due")?.label).toBe("Due date");
     // The edge is declared on the LIST; from the task it reads by its inverse.
     expect(offers.sorts.find((offer) => offer.key === "holds")).toMatchObject({ about: "edge", label: "The list it is on", far: ["list"] });
-    expect(offers.filters.map((offer) => offer.key)).toEqual(["done", "due", "size", "holds", "is"]);
+    // A word field is a filter too (its values are the graph's, listed by a surface): the seventh walk.
+    expect(offers.filters.map((offer) => offer.key)).toEqual(["done", "due", "size", "notes", "holds", "is"]);
     expect(offers.filters.find((offer) => offer.key === "is")?.options).toEqual(["current", "past", "any", "flagged", "clear"]);
     expect(offers.groups.map((offer) => offer.key)).toEqual(["done", "due", "size", "holds"]);
     expect(offers.groups.find((offer) => offer.key === "due")?.buckets).toEqual(["day", "week", "month", "year", "decade"]);
@@ -221,6 +222,6 @@ describe("the checker and the readers", () => {
     expect(described).toContain("The calendar lens opens with group=holds and sort=colour.");
     const llms = generateLlmsTxt(app);
     expect(llms).toContain("## Arranging a picture");
-    expect(llms).toMatch(/- arranged by: sort label \| done \| due \| size \| notes \| holds; filter done \| due \| size \| holds \| is; group done \| due \| size \| holds; due unless asked/);
+    expect(llms).toMatch(/- arranged by: sort label \| done \| due \| size \| notes \| holds; filter done \| due \| size \| notes \| holds \| is; group done \| due \| size \| holds; due unless asked/);
   });
 });

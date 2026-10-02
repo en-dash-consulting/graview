@@ -156,6 +156,30 @@ export function planJobs({ app, core }) {
     });
   }
 
+  /*
+   * NARROW A LIST BY A NUMBER: the cars at most a price, the shifts at
+   * least an hour long. The first kind with a creating act and a number
+   * field a person reads. A job nothing derived could be done at all until
+   * the seventh walk asked for SUVs under £25,000 (W-162).
+   */
+  for (const { kind } of creators) {
+    const definition = app.schema.definitions.find((one) => one.kind === kind);
+    const hidden = new Set(definition?.display?.hide ?? []);
+    const field = Object.entries(definition?.fields?.shape ?? {}).find(([key, schema]) => !hidden.has(key) && core.describeArg(schema).type === "number")?.[0];
+    if (!field) continue;
+    jobs.push({
+      id: "narrow",
+      job: "narrow",
+      kind,
+      field,
+      label: core.fieldWords(definition, field),
+      noun: nounOf(definition),
+      plural: definition.plural ?? kind,
+      says: `Narrowing the ${(definition.plural ?? kind).toLowerCase()} by ${core.fieldWords(definition, field).toLowerCase()}`,
+    });
+    break;
+  }
+
   /* Undo needs a change to take back: a rename, which every app with a named kind has. */
   if (renamer && primary) {
     jobs.push({ id: "undo", job: "undo", kind: primary, act: renamer.name, subjectArg: renamer.subject?.arg ?? "id", field: nameField, says: "Taking the last change back" });
@@ -785,6 +809,35 @@ const lastBatch = (store) => {
  * true), `start` (the URL the job begins on), `run` (timed, pressed).
  */
 export const JOBS = {
+  narrow: {
+    async prepare() {
+      return {};
+    },
+    start: (ctx) => ctx.home,
+    async run(person, ctx, job) {
+      const page = person.page;
+      if (ctx.face === "pages") await openKindPage(person, job.plural);
+      else {
+        await pressDistrict(person, job.kind, job.plural);
+        await person.settle(300);
+        // The list arranges where the kind is drawn whole: down into its district.
+        const down = page.locator('[data-testid="overview"][aria-pressed="true"]').filter({ visible: true }).first();
+        if (!(await page.locator('select[data-testid$="-add"]').filter({ visible: true }).first().isVisible().catch(() => false)) && (await down.isVisible().catch(() => false))) {
+          await person.press(down, `Down to ${job.plural}`);
+          await person.settle(600);
+        }
+      }
+      const only = page.locator('select[data-testid$="-add"]').filter({ visible: true }).first();
+      if (!(await appears(only))) throw new DeadEnd(`there is no "Only…" to narrow the ${job.plural.toLowerCase()} with`);
+      const option = await only.evaluate((el, field) => [...el.options].find((one) => one.value.startsWith(`${field}:at-most:`))?.textContent?.trim() ?? null, job.field);
+      if (!option) throw new DeadEnd(`"Only…" offers no ${job.label.toLowerCase()} to narrow the ${job.plural.toLowerCase()} by`);
+      await person.choose(only, option, `"${option}"`);
+      await person.settle(300);
+      const chip = page.locator('[data-testid$="-condition"]').filter({ hasText: job.label }).filter({ visible: true }).first();
+      if (!(await appears(chip, 3_000))) throw new DeadEnd(`choosing "${option}" did not narrow the ${job.plural.toLowerCase()}`);
+    },
+  },
+
   make: {
     async prepare(ctx, job) {
       const name = `Journey ${job.kind} ${ctx.input[0]}${ctx.width}`;

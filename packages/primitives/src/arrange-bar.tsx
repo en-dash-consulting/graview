@@ -117,6 +117,27 @@ const chip: CSSProperties = {
  */
 export const FAR_ENDS = 40;
 
+/** How many distinct values a word field may hold and still be offered as a list to pick from. */
+const WORD_VALUES = 60;
+
+/** Every value one field holds across a kind. */
+function heldValues(graph: ArrangeGraph, kind: string, key: string): readonly unknown[] {
+  return graph.allNodes().filter((node) => node.kind === kind).map((node) => (node as unknown as Record<string, unknown>)[key]);
+}
+
+/** Four round numbers through the spread of what a list holds: £10,000, £15,000, £25,000 — never £23,995. */
+export function roundSteps(values: readonly number[]): readonly number[] {
+  if (values.length < 2) return [];
+  const sorted = [...values].sort((a, b) => a - b);
+  const spread = sorted[sorted.length - 1]! - sorted[0]!;
+  if (spread <= 0) return [];
+  // Rounded to the spread, not the value: prices to the £5,000, years to the year.
+  const unit = Math.max(1, 10 ** Math.floor(Math.log10(spread / 4)));
+  const step = spread / 4 >= unit * 5 ? unit * 5 : unit;
+  const round = (value: number) => Math.round(value / step) * step;
+  return [...new Set([0.2, 0.4, 0.6, 0.8].map((at) => round(sorted[Math.floor(at * (sorted.length - 1))]!)))].filter((value) => value > 0);
+}
+
 function farEndsOf(schema: AnySchema, graph: ArrangeGraph, offer: ArrangeOffer): readonly { id: string; label: string }[] {
   const kinds = offer.far ?? [];
   const seen = new Map<string, string>();
@@ -153,6 +174,14 @@ export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arr
     return `${offer.label} ${op} ${date ?? ""}`.trim();
   }
   if (offer.type === "boolean") return `${offer.label}: ${condition.value === "true" ? "yes" : "no"}`;
+  if (offer.type === "number") {
+    const at = condition.value.lastIndexOf(":");
+    const op = condition.value.slice(0, Math.max(0, at));
+    if (op === "at-most" || op === "at-least") {
+      return `${offer.label}: ${op === "at-most" ? "at most" : "at least"} ${valueWords(schema.tryDefinition(offers.kind), offer.key, Number(condition.value.slice(at + 1)))}`;
+    }
+  }
+  if (offer.type === "text") return `${offer.label}: ${condition.value}`;
   return `${offer.label}: ${valueWords(schema.tryDefinition(offers.kind), offer.key, condition.value)}`;
 }
 
@@ -360,6 +389,21 @@ function AddCondition({
       for (const end of farEndsOf(schema, graph, offer)) entries.push({ value: `${offer.key}:${end.id}`, label: end.label, group: offer.label, condition: { key: offer.key, value: end.id } });
     } else if (offer.type === "date") {
       for (const op of ["before", "after", "on"]) entries.push({ value: `${offer.key}:${op}`, label: `${op}…`, group: offer.label, ask: { key: offer.key, op, label: offer.label } });
+    } else if (offer.type === "number") {
+      // A few round steps through what the list holds: one press, never a number typed blind.
+      const definition = schema.tryDefinition(offers.kind);
+      const steps = roundSteps(heldValues(graph, offers.kind, offer.key).filter((value): value is number => typeof value === "number"));
+      for (const op of ["at-most", "at-least"] as const) {
+        for (const step of op === "at-most" ? steps : [...steps].reverse()) {
+          entries.push({ value: `${offer.key}:${op}:${step}`, label: `${op === "at-most" ? "at most" : "at least"} ${valueWords(definition, offer.key, step)}`, group: offer.label, condition: { key: offer.key, value: `${op}:${step}` } });
+        }
+      }
+    } else if (offer.type === "text") {
+      // A word field by the values it holds — a make, a colour — when they are few enough to be a list rather than a name each.
+      const held = [...new Set(heldValues(graph, offers.kind, offer.key).filter((value): value is string => typeof value === "string" && value.length > 0 && !value.includes(",")))].sort((a, b) => a.localeCompare(b));
+      if (held.length >= 2 && held.length <= WORD_VALUES) {
+        for (const word of held) entries.push({ value: `${offer.key}:${word}`, label: word, group: offer.label, condition: { key: offer.key, value: word } });
+      }
     } else if (offer.type === "boolean") {
       entries.push({ value: `${offer.key}:true`, label: "yes", group: offer.label, condition: { key: offer.key, value: "true" } });
       entries.push({ value: `${offer.key}:false`, label: "no", group: offer.label, condition: { key: offer.key, value: "false" } });

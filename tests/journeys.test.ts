@@ -109,3 +109,20 @@ describe("a record's name, in the page", () => {
     }
   });
 });
+
+describe("narrowing a list", () => {
+  it("is a job wherever a made kind has a number a person reads", () => {
+    const car = core.defineNode("car", { fields: core.z.object({ label: core.z.string(), price: core.z.number() }), plural: "Cars", display: { labels: { price: "Price" } } });
+    const schema = core.createSchema([car]);
+    const { defineMutation } = core.bindSchema(schema);
+    const sell = defineMutation("add-car", {
+      title: "Put a car on sale",
+      creates: ["car"],
+      input: core.z.object({ label: core.z.string(), price: core.z.number() }),
+      apply: (ctx, args) => void ctx.addNode({ id: ctx.freshId(args.label, "car"), kind: "car", ...args }),
+    });
+    const app = core.defineApp({ name: "Showroom", schema, mutations: [sell] });
+    const narrow = planJobs({ app, core }).jobs.find((job: { id: string }) => job.id === "narrow");
+    expect(narrow).toMatchObject({ kind: "car", field: "price", label: "Price", says: "Narrowing the cars by price" });
+  });
+});
