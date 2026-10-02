@@ -248,6 +248,7 @@ export function readableFields(
   node: Record<string, unknown>,
   definition: AnyNodeDefinition | undefined,
   options: {
+    /** How many a GLANCE shows. Unset, every field: a record is read whole (W-156). */
     readonly limit?: number;
     readonly said?: readonly (string | undefined)[];
     /**
@@ -310,7 +311,7 @@ export function readableFields(
     const alone =
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" ? `${label}: ${text.toLowerCase()}` : text;
     fields.push({ key, label, value: text, alone });
-    if (fields.length >= (options.limit ?? 10)) break;
+    if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;
 }

@@ -4178,3 +4178,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/graview/src/index.ts`
 - harness that should have caught it: none — nothing ran the CLI the way the notes say to
 - status: fixed in "walkthrough: setup · the separator a package manager passes on is not a command" · criterion: `packages/graview/tests/unit/a-separator-is-not-a-command.test.ts` (verified failing without the fix)
+
+### W-156 · A car's page ends at its condition, and never says its price
+- stage: B (the shopper's side: reading a car) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: blocks a job — "what does this car cost?" cannot be answered from the car's own page; the price, the mileage, the features, the photos, the history and whether it is still for sale are not on it
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
+- expected: a record's page states every field it holds — W-145 put the vehicle's fields on its page for the sixth walk
+- actual: `readableFields` took a default limit of ten, meant for a glance, and the record page, the scene's full record and the assistant's `nodeState` all called it without one. A car declares sixteen fields; the page stopped at the tenth (Condition) with nothing to say more had been left out. Every example's records hold two to five fields, so nothing ever reached the cap
+- where it belongs: `packages/core/src/schema/define-node.ts` (`readableFields`)
+- harness that should have caught it: none — the class's check is "none yet"; the awkward declaration (`@graview/core/testing`) had one field per kind and the gauntlet's largest kind five
+- status: fixed in "walkthrough: B · a record says every field it holds" · unset, the limit is every field; glances pass theirs. The shape is now the generator's: `awkwardApp({ fields })`. Criterion: `packages/pages/tests/unit/a-record-says-every-field.test.ts` — every record of a sixteen-field awkward graph states all its fields on its page (both cases verified failing without the fix)
