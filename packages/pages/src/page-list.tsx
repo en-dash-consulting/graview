@@ -158,9 +158,12 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         key={node.id}
         style={{
           display: "grid",
+          // One track no wider than the page, and a long unbroken value (an email) breaks inside it (W-175).
+          gridTemplateColumns: "minmax(0, 1fr)",
           gap: 2,
           padding: "14px 0",
           borderTop: "1px solid var(--graview-edge)",
+          overflowWrap: "anywhere",
         }}
       >
         <Link

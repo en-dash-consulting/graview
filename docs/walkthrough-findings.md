@@ -4370,3 +4370,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/studio/src/place.tsx` (`maySeeTheStudio`)
 - harness that should have caught it: none — no example declares a policy without an installation and a seat that may do little; the watch's new rule judges records, not the declaration
 - status: fixed in "walkthrough: H · the studio is not for everyone" · under a policy, the seats with an unrestricted grant of every act. Criterion: `tests/the-studio-is-not-for-everyone.test.ts` — a bare policy, and every seat of the gauntlet and discography (verified failing without the fix)
+
+### W-175 · The list of shoppers scrolls sideways at 200% text on a phone
+- stage: I (text zoom to 200% on every route, 390 wide) · face: pages · width: 390 · scheme: light
+- impact: costs a job — the store reading its customers on a phone at a reader's text size: every row reaches past the edge
+- class: breaks-at-width-zoom-or-engine (also: data-shape-not-in-fixtures)
+- expected: no route scrolls sideways at 200% (W-151 held it for search)
+- actual: a list row was a grid with an implicit `auto` track and nothing to break a long word; a shopper's email is one, and the row grew to 528 pixels on a 390 phone. The same shape W-151 fixed on the search page, one component over
+- where it belongs: `packages/pages/src/page-list.tsx`
+- harness that should have caught it: the watch's no-sideways-scroll rule under `verify-pages`' 200% pass — on fixtures with no long unbroken value on a list. The gauntlet still has none: that hole is open
+- status: fixed in "walkthrough: I · a list fits a phone at 200%" · one `minmax(0, 1fr)` track and `overflow-wrap: anywhere`. Criterion: `packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx` (verified failing without the fix); every route of walk7's design and the derived face re-measured at 390@32px and 320: none scrolls
