@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   GRAVIEW_PACKAGES,
@@ -407,6 +408,27 @@ describe("a project can do what its own skills tell it to", () => {
     )!.contents;
     for (const pkg of GRAVIEW_PACKAGES) {
       expect(vite, pkg).toContain(`"@graview/${pkg}"`);
+    }
+  });
+
+  /*
+   * A string alias is a PREFIX: "@graview/core" also takes
+   * "@graview/core/testing" and resolves it to "core/src/index.ts/testing",
+   * which does not exist — a product's tests that reach for the testing
+   * entry, or ship's cli that reaches for core's, failed to load at all.
+   */
+  it("aliases every subpath a package exports, ahead of its bare name", () => {
+    const vite = scaffoldProject({ name: "Walk", link: "../framework" }).files.find(
+      (one) => one.path === "vite.config.ts",
+    )!.contents;
+    const packages = fileURLToPath(new URL("../../..", import.meta.url));
+    for (const pkg of GRAVIEW_PACKAGES) {
+      const manifest = JSON.parse(readFileSync(join(packages, pkg, "package.json"), "utf8")) as { exports: Record<string, unknown> };
+      for (const sub of Object.keys(manifest.exports).filter((one) => one !== "." && one !== "./package.json")) {
+        const name = `"@graview/${pkg}/${sub.slice(2)}":`;
+        expect(vite, name).toContain(name);
+        expect(vite.indexOf(name), `${name} before "@graview/${pkg}":`).toBeLessThan(vite.indexOf(`"@graview/${pkg}":`));
+      }
     }
   });
 });
