@@ -1,5 +1,47 @@
 # @graview/studio
 
+## 0.1.1
+
+### Patch Changes
+
+- 59d5dd3: The studio keeps a kind's `display.glance` through its round trip — in the declaration it hands back and in the files it writes — where it dropped it, and the checker then noted `glance-unchosen` on a kind that had chosen.
+- b1eae03: The studio keeps a policy's `sees` through its round trip, in the declaration and in the `policy.ts` it writes, kept to the kinds still declared. It has no act for a sight yet, and dropped them: a storefront written back by the studio showed every customer to everybody again.
+- dcffc91: Under a policy with no installation, the studio is offered to the seats that may do everything — a grant of every act on every kind — rather than to whoever is here. A showroom offered its own declaration, roles and rules to somebody browsing who may do nothing but sign up.
+- Updated dependencies [bf36bbe]
+- Updated dependencies [ed02370]
+- Updated dependencies [e0c8cac]
+- Updated dependencies [e1b9f5c]
+- Updated dependencies [cbdd94a]
+- Updated dependencies [097d684]
+- Updated dependencies [e88f729]
+- Updated dependencies [866d437]
+- Updated dependencies [a1859c5]
+- Updated dependencies [1df48c8]
+- Updated dependencies [ccfe1cd]
+- Updated dependencies [c307981]
+- Updated dependencies [fa8bd61]
+- Updated dependencies [32ea5ac]
+- Updated dependencies [d76a957]
+- Updated dependencies [c222b58]
+- Updated dependencies [deb98ca]
+- Updated dependencies [b535cb2]
+- Updated dependencies [6b297f0]
+- Updated dependencies [414ddde]
+- Updated dependencies [a575ca9]
+- Updated dependencies [3c0d822]
+- Updated dependencies [f1cf758]
+- Updated dependencies [b9cdc16]
+- Updated dependencies [313eea3]
+- Updated dependencies [6966a4e]
+- Updated dependencies [0b78acc]
+  - @graview/react@0.1.1
+  - @graview/primitives@0.1.1
+  - @graview/core@0.1.1
+  - @graview/pages@0.1.1
+  - @graview/tools@0.1.1
+  - @graview/layout@0.1.1
+  - @graview/ship@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

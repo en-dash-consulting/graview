@@ -1,5 +1,48 @@
 # @graview/pages
 
+## 0.1.1
+
+### Patch Changes
+
+- e1b9f5c: A form asks in the record's words. An argument that fills a field of the kind its act makes or acts on is labelled as that field ("VIN", "Body style"), its choices are said as the record says them ("SUV", "Plug-in hybrid"), and an argument called `label` is asked for as a "Name" — on the routed face's forms and in the scene's ask alike (`argumentWords`). A refused argument is said field by field in the same words — "Not yet: Email — invalid email address." — rather than as `Invalid arguments for mutation "sign-up" email: …` (`failureWords`, `InvalidArguments`). The watch is told a declaration's choice values, and the key's own words wherever the declaration has others.
+- 097d684: A count of one says the kind's noun: "1 car", "1 test drive", where a place card, Find, a district's name, a band of a district and a coverage's gaps said "1 vehicle" and "1 test-drive". One function says it now (`counted`).
+- 866d437: A list page's rows keep to the page and let a long unbroken value break: the list of shoppers, each with an email, scrolled sideways on a phone at a reader's 200%.
+- a1859c5: A form sends a list nobody added to as an empty list (`formArgs`). "Put a car on sale" with no features listed was refused on press, "Features — expected array, received undefined", for a car the declaration allows.
+- fa8bd61: A list page's "Related:" names each relation in its own words from that end — "The test drives booked in it", linked to the test drives — rather than the edge's name ("Drives Test drives"), and a list of one says the kind's noun ("1 car"). The watch is told an edge's spoken name wherever the edge has words of its own.
+- d76a957: A policy says who may see what, as well as who may do it. `Policy.sees` keeps a kind to the roles a sight names — with `own`, to the principal's own record and what an edge joins to it — and a kind no sight names stays everybody's. `store.seenBy(principal)` is the store as that principal may see it: its graph, log, history and problems hold only what they may see, and every act still goes to the store itself; with no `sees` it is the store, unchanged. The scene's provider and the routed face hand every surface that view, a kind a seat sees none of and may not begin is kept from it like an administered module, and the way in leaves it out. `graview check` refuses a sight naming an undeclared kind (`sight-unknown-kind`). A watching harness is told what the seat may not see (`tellTheWatchWhatIsUnseen`, `useTheWatchKnowsWhatIsUnseen`).
+- f1cf758: The map of the kinds marks each relation's name as said on purpose (`data-graview-speaks-ids`) — it names the declaration's relations, and their words follow — and the watch no longer counts a choice value's spoken form ("Mon") as a key's words, which a calendar prints as an ordinary weekday.
+- 313eea3: Two kinds that name a picture alike each have their own page: "The timetable" over talks and over workshops are no longer one address and one key, so the workshops' timetable is reachable on the routed face and React is not handed two children called the same. A shared name says whose with `?of=<plural>`; `pathOfPlace` gives an app's own page the right link.
+- Updated dependencies [bf36bbe]
+- Updated dependencies [ed02370]
+- Updated dependencies [e0c8cac]
+- Updated dependencies [e1b9f5c]
+- Updated dependencies [cbdd94a]
+- Updated dependencies [097d684]
+- Updated dependencies [e88f729]
+- Updated dependencies [a1859c5]
+- Updated dependencies [1df48c8]
+- Updated dependencies [ccfe1cd]
+- Updated dependencies [c307981]
+- Updated dependencies [fa8bd61]
+- Updated dependencies [32ea5ac]
+- Updated dependencies [d76a957]
+- Updated dependencies [c222b58]
+- Updated dependencies [deb98ca]
+- Updated dependencies [b535cb2]
+- Updated dependencies [6b297f0]
+- Updated dependencies [414ddde]
+- Updated dependencies [a575ca9]
+- Updated dependencies [3c0d822]
+- Updated dependencies [f1cf758]
+- Updated dependencies [b9cdc16]
+- Updated dependencies [6966a4e]
+- Updated dependencies [0b78acc]
+  - @graview/react@0.1.1
+  - @graview/primitives@0.1.1
+  - @graview/core@0.1.1
+  - @graview/tools@0.1.1
+  - @graview/layout@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
