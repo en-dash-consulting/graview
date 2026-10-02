@@ -1,4 +1,4 @@
-import { labelOf } from "@graview/core";
+import { labelOf, nounOf } from "@graview/core";
 import { mixStyles, styleFor, transformFor, hueFor } from "@graview/render";
 import {
   useEffect,
@@ -636,7 +636,8 @@ export function SceneViewHost({
               background: `hsl(${Math.round(hueFor(node.kind, hostBrand?.accents))} 55% var(--graview-tint-lightness) / 0.9)`,
             }}
           />
-          {node.kind}
+          {/* The kind's noun, never its id: "car", not "vehicle"; "test drive", not "test-drive". */}
+          {nounOf(hostStore.schema.tryDefinition(node.kind), node.kind)}
         </span>
       ) : null}
     </div>

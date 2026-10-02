@@ -114,6 +114,13 @@ function watchInPage() {
 
   /* Text a person sees or hears, scanned when the page goes quiet. */
   const SILENT = "script,style,code,pre,kbd,samp,textarea,template,[aria-hidden='true'],[hidden],[data-graview-speaks-ids]";
+  /*
+   * SEEN, THOUGH NOT SPOKEN. Text a screen reader is told to skip is still
+   * text a person reads: the kind tag on a focused card is aria-hidden and
+   * said "vehicle" — and "test-drive" — on every record the seventh walk
+   * opened. Shown text is judged whether or not it is spoken.
+   */
+  const UNSHOWN = "script,style,code,pre,kbd,samp,textarea,template,[hidden],[data-graview-speaks-ids]";
   const visible = (el) => (typeof el.checkVisibility === "function" ? el.checkVisibility() : el.getClientRects().length > 0);
   let queued = false;
   const scan = () => {
@@ -134,7 +141,7 @@ function watchInPage() {
         if (pattern && text && text.length > 2) {
           const hit = pattern.exec(text);
           const el = node.parentElement;
-          if (hit && el && !el.closest(SILENT) && visible(el)) {
+          if (hit && el && !el.closest(UNSHOWN) && visible(el)) {
             report("machine-words-shown", `"${hit[1]}" is shown as text in ${describe(el)}`, `${hit[1]}|${describe(el)}`);
           }
         }
@@ -144,11 +151,11 @@ function watchInPage() {
        * A KEY'S OWN WORDS, WHOLE. A field the kind calls "VIN" asked for as
        * "Vin", a picker offering "suv" where the record says "SUV": single
        * words pass for prose inside a sentence, so they are caught only
-       * where they are all an element says (a label, an option).
+       * where they are all an element says (a label, an option, a tag).
        */
       if (unsaid.size > 0) {
-        for (const el of document.querySelectorAll("label span, label, legend, option, button, th, dt")) {
-          if (el.closest(SILENT)) continue;
+        for (const el of document.body.querySelectorAll("*")) {
+          if (el.closest(UNSHOWN)) continue;
           const own = [...el.childNodes].filter((child) => child.nodeType === 3).map((child) => child.nodeValue).join("").replace(/\s*\*\s*$/, "").trim();
           if (own && unsaid.has(own) && (el.tagName === "OPTION" || visible(el))) {
             report("machine-words-shown", `"${own}" is shown in the key's words in ${describe(el)}, where the declaration says it otherwise`, `${own}|${describe(el)}`);

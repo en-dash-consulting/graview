@@ -45,6 +45,8 @@ export function tellTheWatchItsNames(
   const unsaid: string[] = [];
   for (const definition of schema.definitions) {
     ids.push(definition.kind);
+    // A kind with a noun of its own is never shown by its id: "vehicle" where the declaration says "car".
+    if (definition.noun && humaniseField(definition.kind).toLowerCase() !== definition.noun.toLowerCase()) unsaid.push(definition.kind);
     const fieldsOf = (definition.fields as { shape?: Record<string, { def?: { entries?: Record<string, unknown> } }> }).shape ?? {};
     for (const [key, field] of Object.entries(fieldsOf)) {
       const declared = definition.display?.labels?.[key];

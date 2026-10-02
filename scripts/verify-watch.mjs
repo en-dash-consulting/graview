@@ -60,6 +60,13 @@ const plain = takeViolations().filter((v) => v.rule === "machine-words-shown").m
 checks.aKeysOwnWordsAreCaught = plain.some((d) => d.startsWith('"Vin" is shown')) && plain.some((d) => d.startsWith('"suv" is shown'));
 checks.aWordInASentenceIsNotAKey = plain.length === 2;
 
+/* Shown though not spoken: a kind's id on a card's tag that screen readers skip is still read by eye. */
+await show(`<main><div role="group" aria-label="2024 Kia Sportage"><span aria-hidden="true">vehicle</span><span aria-hidden="true">close-deal</span></div></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: ["vehicle", "close-deal"], words: ["Car"], unsaid: ["vehicle"] }));
+await settle();
+const tagged = takeViolations().filter((v) => v.rule === "machine-words-shown").map((v) => v.detail);
+checks.shownThoughNotSpokenIsCaught = tagged.some((d) => d.startsWith('"vehicle"')) && tagged.some((d) => d.startsWith('"close-deal"'));
+
 /* shown-what-is-not-theirs: a customer the seat may not see, named on the page; a name it may see is not. */
 await show(`<main><h1>Cars</h1><p>Shortlisted by Freya Davies</p><p>Signed in as Bethan Okonkwo</p></main>`);
 await page.evaluate(() => window.__graviewWatch.unseen({ words: ["Freya Davies", "freya.davies1@mail.example"] }));
