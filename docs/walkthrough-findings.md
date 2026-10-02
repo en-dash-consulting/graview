@@ -4208,3 +4208,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/core/src/mutations/words.ts` (new: `argumentWords`, `failureWords`, `InvalidArguments`), `packages/pages/src/form.tsx`, `packages/primitives/src/workbench/answer-args.tsx`, `inspector.tsx`, `packages/pages/src/page-problems.tsx`; the watch: `packages/core/src/watched.ts`, `scripts/lib/watch.mjs`
 - harness that should have caught it: the watch's `machine-words-shown`, which learned kinds, fields, edges, acts and roles but no choice values, and matched only identifiers with a hyphen, colon or capital inside
 - status: fixed in "walkthrough: B · a form asks in the record's words" · the watch now learns every choice value as a name, and the key's own words wherever the declaration says otherwise, caught where they are all a label or an option says. Criteria: `verify-watch` `aKeysOwnWordsAreCaught` and `aWordInASentenceIsNotAKey`; `packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx` (the form's two cases verified failing without the fix). The widened rule then caught a cousin on every list page with a choice — the arrange bar's "Only…" filter offered "suv", "front-desk", "requested" — fixed in "A list's filter says a value as the record does" (`valueWords`; `a-filter-says-a-value-as-the-record-does.test.tsx`, verified failing without it)
+
+### W-159 · A car with no features listed cannot be put on sale
+- stage: B (making a car) · face: pages · width: 1280 and 390 · scheme: light
+- impact: blocks a job — "Making a car" on the pages, all four ways: every field filled correctly, and the press refused
+- class: offered-then-refused (also: data-shape-not-in-fixtures)
+- expected: an argument that takes a list, left with nothing added, is sent as an empty list — which the act allows
+- actual: the routed form sent nothing for "Features" and "Photos", and the act refused "Not yet: Features — invalid input: expected array, received undefined". No example has a list argument, so no form had ever been sent without filling one
+- where it belongs: `packages/core/src/mutations/form.ts` (new `formArgs`), `packages/pages/src/form.tsx`
+- harness that should have caught it: the journeys' "make" job, which reached it once it could type values the act accepts (W-160); the gauntlet has no list argument — that hole is open
+- status: fixed in "walkthrough: B · a list nobody added to is sent empty" · criterion: `packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx` (verified failing without the fix), and the journeys' "Making a car" on the pages

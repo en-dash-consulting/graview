@@ -2,6 +2,7 @@ import {
   formFields,
   argumentWords,
   failureWords,
+  formArgs,
   humaniseField,
   nounOf,
   labelOf,
@@ -435,7 +436,7 @@ export function DerivedForm<S extends AnySchema>({
       onSubmit={(event) => {
         event.preventDefault();
         try {
-          store.apply({ name: mutation.name, args: { ...values, ...prefilled } }, principal ? { author: principal } : {});
+          store.apply({ name: mutation.name, args: { ...formArgs(fields, values), ...prefilled } }, principal ? { author: principal } : {});
           setFailed(null);
           setValues({});
           onDone?.();
