@@ -4168,3 +4168,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `scripts/verify-all.mjs`, `scripts/verify-journeys.mjs`, `scripts/lib/journeys.mjs`, `scripts/lib/serve.mjs`
 - harness that should have caught it: `tests/journeys.test.ts` — it held the harness's reading of a verdict, never which apps a run drives
 - status: fixed in "walkthrough: setup · the journeys drive the app a walk builds beside the checkout" · a path argument is an app (`appsNamed`), `pnpm verify` hands it to the harnesses that take one and refuses a path with no app at it. Criterion: `tests/journeys.test.ts` "the app a walk builds beside the checkout" (both cases verified failing without the fix)
+
+### W-155 · `pnpm graview -- create` is "unknown command"
+- stage: setup · face: — · width: — · scheme: —
+- impact: costs a job — starting the walk's app: the command AGENTS.md gives fails, one detour to `--help`
+- class: harness-or-setup-itself (also: what-a-project-copies-is-wrong)
+- expected: `pnpm graview -- <args>`, as AGENTS.md writes it, runs the command
+- actual: pnpm 10 passes the `--` on to the script, and the dispatcher took it as the command: `graview: unknown command "--"`
+- where it belongs: `packages/graview/src/index.ts`
+- harness that should have caught it: none — nothing ran the CLI the way the notes say to
+- status: fixed in "walkthrough: setup · the separator a package manager passes on is not a command" · criterion: `packages/graview/tests/unit/a-separator-is-not-a-command.test.ts` (verified failing without the fix)
