@@ -1,9 +1,9 @@
-import { humaniseField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
+import { argumentWords, humaniseField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
 import { relationWords } from "../relation-key.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout";
 import { useGraview } from "@graview/react";
 import type { Affordance, OpenParameter } from "@graview/tools";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 
 /**
@@ -22,7 +22,8 @@ export function AnswerArgs({
   onCancel,
 }: {
   readonly affordance: Affordance;
-  onApply: (args: Record<string, unknown>) => void;
+  /** Applies the answers. Returns the arguments a refusal named, when it named any, so the ask goes back to them. */
+  onApply: (args: Record<string, unknown>) => readonly string[] | void;
   onCancel: () => void;
 }) {
   const { store } = useGraview<AnySchema>();
@@ -57,6 +58,21 @@ export function AnswerArgs({
     asked.current?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   }, [parameter?.name]);
 
+  /*
+   * THE NEXT QUESTION TAKES THE KEYBOARD. A text field asks with
+   * `autoFocus`; a question of choices had nothing, so a choice pressed
+   * before another question of choices took its button away with it and
+   * left the keyboard on <body> — "Fuel", then "Gearbox", sixteen questions
+   * into "Put a car on sale" (the seventh walk).
+   */
+  useLayoutEffect(() => {
+    const box = asked.current;
+    const now = typeof document === "undefined" ? null : document.activeElement;
+    if (!box || (now && now !== document.body && !box.contains(now))) return;
+    const first = box.querySelector<HTMLElement>("form input, [role=group] button:not([disabled])");
+    if (first && first !== now) first.focus();
+  }, [parameter?.name]);
+
   if (!parameter) return null;
 
   /*
@@ -70,7 +86,16 @@ export function AnswerArgs({
     const next = { ...answers, [parameter.name]: value };
     const outstanding = affordance.open.filter((other) => !(other.name in next));
     if (outstanding.length === 0) {
-      onApply(Object.fromEntries(Object.entries(next).filter(([, given]) => given !== undefined)));
+      const refused = onApply(Object.fromEntries(Object.entries(next).filter(([, given]) => given !== undefined)));
+      /*
+       * BACK TO THE ANSWER THAT WAS REFUSED. Sixteen questions in, "Photos —
+       * invalid URL" left the ask on its last step, where Apply could only
+       * be refused again: the one wrong answer was three questions back and
+       * the only way to it was to start over.
+       */
+      if (refused && refused.length > 0) {
+        setAnswers(Object.fromEntries(Object.entries(next).filter(([name]) => !refused.includes(name))));
+      }
     } else setAnswers(next);
   };
   const skip = parameter.optional ? (
@@ -81,6 +106,8 @@ export function AnswerArgs({
 
   const shape = parameter.shape ?? { type: "unknown" as const };
   const choices = choicesFor(parameter, shape);
+  /* The record's own words for an argument that fills one of its fields: "Body style", "SUV" (see `argumentWords`). */
+  const words = argumentWords(store.schema, store.allMutations().find((mutation) => mutation.name === affordance.mutation), parameter.name);
   /*
    * A PICKER THAT DROPS CHOICES MAKES THE ACT IMPOSSIBLE, AND SAYS NOTHING.
    *
@@ -102,9 +129,10 @@ export function AnswerArgs({
     return tellApart(nodes, (kind) => store.schema.tryDefinition(kind));
   }, [choices, store]);
   const say = (choice: string) => {
-    const words = said(store, shape, choice);
+    const plain = said(store, shape, choice);
+    const named = (shape.type === "choice" || (shape.type === "several" && shape.of.type === "choice")) ? words.option(choice) : plain;
     const told = apart.get(choice);
-    return told ? `${words} · ${told}` : words;
+    return told ? `${named} · ${told}` : named;
   };
   const matching = useMemo(() => {
     const term = among.trim().toLowerCase();
@@ -123,6 +151,8 @@ export function AnswerArgs({
    * outstanding one is answered.
    */
   const several = shape.type === "several";
+  /* Several of something typed rather than chosen: one field, its entries separated by commas. */
+  const listed = several && choices.length === 0;
 
   /*
    * THE ASK SAYS WHAT IT IS ASKING, IN WORDS.
@@ -151,7 +181,7 @@ export function AnswerArgs({
   const asking =
     parameter.kinds && parameter.kinds.length > 0 && !parameter.kinds.includes("*")
       ? parameter.kinds.map((kind) => humaniseField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
-      : humaniseField(parameter.name);
+      : words.label;
   const step =
     affordance.open.length > 1
       ? `${asking} · ${affordance.open.length - remaining.length + 1} of ${affordance.open.length}`
@@ -278,6 +308,16 @@ export function AnswerArgs({
           style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
           onSubmit={(event) => {
             event.preventDefault();
+            /*
+             * SEVERAL WORDS, typed as one line: "Heated seats, Apple CarPlay"
+             * is two features, and nothing is none. A list of text asked as
+             * one field sent the line as a string, and the car could not be
+             * put on sale from the scene.
+             */
+            if (listed) {
+              answer(draft.split(/[,\n]/).map((one) => one.trim()).filter(Boolean));
+              return;
+            }
             if (draft.trim().length === 0) return;
             answer(shape.type === "number" ? Number(draft) : draft);
           }}
@@ -291,8 +331,9 @@ export function AnswerArgs({
              * them ("Depends on", "Label") and the scene asked with the raw
              * key, so the same act read two ways on the two faces.
              */
-            aria-label={humaniseField(parameter.name)}
-            placeholder={humaniseField(parameter.name)}
+            name={parameter.name}
+            aria-label={words.label}
+            placeholder={listed ? `${words.label}, separated by commas` : words.label}
             value={draft}
             {...(shape.type === "number" && shape.min !== undefined ? { min: shape.min } : {})}
             {...(shape.type === "number" && shape.max !== undefined ? { max: shape.max } : {})}
@@ -312,7 +353,7 @@ export function AnswerArgs({
               color: "var(--graview-ink)",
             }}
           />
-          <button type="submit" disabled={draft.trim().length === 0} style={{ fontSize: "0.8125rem" }}>
+          <button type="submit" disabled={!listed && draft.trim().length === 0} style={{ fontSize: "0.8125rem" }}>
             {remaining.length > 1 ? "Next" : "Apply"}
           </button>
           {skip}

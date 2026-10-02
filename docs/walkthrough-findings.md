@@ -35,25 +35,31 @@ Counts are primary / also.
 
 | Class | What it is | The shared check that owns it | Count |
 |-------|------------|-------------------------------|-------|
-| `keyboard-lands-nowhere` | After a key or a press the keyboard is on `<body>`, stranded, or on something nobody pressed — or the key did nothing, or two things | the watch: focus is never on `<body>` after a key or a press; one Escape changes one rung | 13 / 1 |
-| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 11 / 5 |
-| `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 9 / 1 |
-| `wrong-end-of-a-relation` | A relation, an act or a direction is read from the end it was declared at rather than the end it is seen from, or assumed to run one way | the gauntlet (every edge cross-kind with an `inverse`, declared from both sides, one name on two kinds, two relations on one pair) driven through both faces and the chat; `graview check`'s `edge-without-inverse` and `act-without-far-end-reading` hold the declaration only | 7 / 3 |
-| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 21 / 2 |
-| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 3 / 15 |
-| `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's target-size and no-sideways-scroll rules, on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`) | 13 / 4 |
+| `keyboard-lands-nowhere` | After a key or a press the keyboard is on `<body>`, stranded, or on something nobody pressed — or the key did nothing, or two things | the watch: focus is never on `<body>` after a key or a press; one Escape changes one rung | 13 / 2 |
+| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 16 / 5 |
+| `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 9 / 4 |
+| `wrong-end-of-a-relation` | A relation, an act or a direction is read from the end it was declared at rather than the end it is seen from, or assumed to run one way | the gauntlet (every edge cross-kind with an `inverse`, declared from both sides, one name on two kinds, two relations on one pair) driven through both faces and the chat; `graview check`'s `edge-without-inverse` and `act-without-far-end-reading` hold the declaration only | 7 / 4 |
+| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 24 / 3 |
+| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 3 / 16 |
+| `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's no-sideways-scroll rule (`breaks-at-width`, since the seventh walk — until then the watch had no rule for this class at all), on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`); a target-size rule is still not in the watch — none yet | 14 / 4 |
 | `layout-collision-or-overflow` | Something is drawn over something else or out of its box at an ordinary size: chrome over content, two cards or captions on one spot, a line through a chip, a value out of its cell, a member hidden with no name | `audit-ui` (`covered`, collisions, `asking`) and `survey`, on their fixed states only; the watch should measure it on every state — none yet there | 13 / 3 |
-| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 8 / 34 |
-| `round-trip-loses-something` | Something true before a step is lost or stale after it: written as JSON, reloaded, written back by the studio, remounted, or removed from under the stop that named it | the gauntlet through the studio's round trip (`the-round-trip-keeps-the-checkouts-words.test.ts`) and `pnpm verify remember`, and the watch failing on a page error or an address that resolves to nothing — none yet on the gauntlet | 10 / 1 |
-| `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 13 / 10 |
+| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 9 / 40 |
+| `round-trip-loses-something` | Something true before a step is lost or stale after it: written as JSON, reloaded, written back by the studio, remounted, or removed from under the stop that named it | the gauntlet through the studio's round trip (`the-round-trip-keeps-the-checkouts-words.test.ts`) and `pnpm verify remember`, and the watch failing on a page error or an address that resolves to nothing — none yet on the gauntlet | 12 / 1 |
+| `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 14 / 12 |
 | `accessibility-tree-wrong` | What assistive technology reads is wrong: a heading skipped or missing, a landmark missing, doubled or named twice, invalid nesting, a group with no name — or emphasis or a problem that is only a colour | the watch's axe pass, with audit-ui's `halfSaid` and "a problem painted but not said" | 13 / 1 |
-| `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 13 / 5 |
-| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 5 / 4 |
+| `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 16 / 6 |
+| `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 1 / 0 |
+| `shown-what-is-not-theirs` | A seat is shown a record the declaration does not let it see — another customer's name, email or question — on any surface: a page, a card, a count, a picker, Find, the history, a problem | the watch: no screen shows the name or address of a record the seat at the keyboard may not see (`shown-what-is-not-theirs`); the gauntlet keeps its staff from its visitor | 2 / 1 |
+| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 8 / 4 |
 
-Every class first appeared in the first walk (`faces-disagree` and
+Every class but two first appeared in the first walk (`faces-disagree` and
 `layout-collision-or-overflow` as an `also` there, W-004 and W-029). The
-largest secondary is `data-shape-not-in-fixtures` (34): the fixtures were
+largest secondary is `data-shape-not-in-fixtures` (40): the fixtures were
 tame, so each new domain was the only adversarial data the framework met.
+The seventh walk added the two: `no-way-to-do-a-job` (W-162 — a job the
+declaration implies that nothing derived) and `shown-what-is-not-theirs`
+(W-163 — a policy that said who may act and never who may see), each with
+its shared check built in the same commit.
 
 ## The first walk (2026-09-11)
 
@@ -4146,3 +4152,235 @@ vehicles, dozens of customers and deals.
   rota, todo and seedbed subpaths are aliased to their sources and `pnpm
   build` compiles `apps/rota`. Criterion: `tests/setup.test.ts` now walks
   every app's `src/` as well (verified failing without the aliases).
+
+## The seventh walk — a dealership's showroom (2026-10-02)
+
+The seventh walk took the other side of the sixth's lot: what a member of
+the public uses. Vehicles to browse and filter by make, model, trim, year,
+price, mileage, body style, colour and condition; a car's own page; a
+shortlist; test drives booked at a location and a slot; trade-in valuations;
+finance and lease enquiries; questions to the store; offers and reviews —
+with an anonymous shopper, a signed-in shopper and the store's staff as
+seats. Scaffolded with `graview create ../walk7 --link . --name "Harbourline
+Motors" --kind vehicle --plural vehicles` from a fresh clone that installed,
+built and passed its tests (244 files, 1730 tests).
+
+### W-154 · The journeys cannot be pointed at the walk's own app
+- stage: setup (the kick-off: "run the journeys on it, with the app named") · face: — · width: — · scheme: —
+- impact: blocks a job — the walk's first step: `pnpm verify journeys ../walk7` answered "No harness called ../walk7", and `verify-journeys.mjs` knew only the five apps under `apps/`
+- class: harness-or-setup-itself
+- expected: the journeys derive and drive the jobs of any app named, the walk's own beside the checkout included, as the kick-off prompt says
+- actual: every argument to `pnpm verify` was a harness name, the journeys' app list was hard-coded to `apps/<dir>`, and `lib/serve.mjs` started vite under `apps/` — so the harness the seventh walk is meant to start from could not see the seventh walk's app
+- where it belongs: `scripts/verify-all.mjs`, `scripts/verify-journeys.mjs`, `scripts/lib/journeys.mjs`, `scripts/lib/serve.mjs`
+- harness that should have caught it: `tests/journeys.test.ts` — it held the harness's reading of a verdict, never which apps a run drives
+- status: fixed in "walkthrough: setup · the journeys drive the app a walk builds beside the checkout" · a path argument is an app (`appsNamed`), `pnpm verify` hands it to the harnesses that take one and refuses a path with no app at it. Criterion: `tests/journeys.test.ts` "the app a walk builds beside the checkout" (both cases verified failing without the fix)
+
+### W-155 · `pnpm graview -- create` is "unknown command"
+- stage: setup · face: — · width: — · scheme: —
+- impact: costs a job — starting the walk's app: the command AGENTS.md gives fails, one detour to `--help`
+- class: harness-or-setup-itself (also: what-a-project-copies-is-wrong)
+- expected: `pnpm graview -- <args>`, as AGENTS.md writes it, runs the command
+- actual: pnpm 10 passes the `--` on to the script, and the dispatcher took it as the command: `graview: unknown command "--"`
+- where it belongs: `packages/graview/src/index.ts`
+- harness that should have caught it: none — nothing ran the CLI the way the notes say to
+- status: fixed in "walkthrough: setup · the separator a package manager passes on is not a command" · criterion: `packages/graview/tests/unit/a-separator-is-not-a-command.test.ts` (verified failing without the fix)
+
+### W-156 · A car's page ends at its condition, and never says its price
+- stage: B (the shopper's side: reading a car) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: blocks a job — "what does this car cost?" cannot be answered from the car's own page; the price, the mileage, the features, the photos, the history and whether it is still for sale are not on it
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
+- expected: a record's page states every field it holds — W-145 put the vehicle's fields on its page for the sixth walk
+- actual: `readableFields` took a default limit of ten, meant for a glance, and the record page, the scene's full record and the assistant's `nodeState` all called it without one. A car declares sixteen fields; the page stopped at the tenth (Condition) with nothing to say more had been left out. Every example's records hold two to five fields, so nothing ever reached the cap
+- where it belongs: `packages/core/src/schema/define-node.ts` (`readableFields`)
+- harness that should have caught it: none — the class's check is "none yet"; the awkward declaration (`@graview/core/testing`) had one field per kind and the gauntlet's largest kind five
+- status: fixed in "walkthrough: B · a record says every field it holds" · unset, the limit is every field; glances pass theirs. The shape is now the generator's: `awkwardApp({ fields })`. Criterion: `packages/pages/tests/unit/a-record-says-every-field.test.ts` — every record of a sixteen-field awkward graph states all its fields on its page (both cases verified failing without the fix)
+
+### W-157 · A signed-in shopper is refused every job on a car, "— a manager or a shopper can"
+- stage: B (the shopper's side, with the policy declared) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: blocks a job — every job the storefront is for: shortlist a car, book a test drive in it, ask about finance on it, value a trade-in towards it. Bethan, signed in as a shopper, found each struck through on every car
+- class: offered-then-refused (also: says-something-untrue)
+- expected: a shopper may do these on their own record (`self: true`), so from the car's page each is offered with the shopper already filled in as them
+- actual: from the car (the act's far end) the shopper argument was still open, the derivation asked the policy with no subject, and a self grant cannot pass a subject nobody named. The refusal read "Not permitted: “Shortlist a car” — a manager or a shopper can" to a shopper. The new check found the same shape in two examples nobody had noticed: the gauntlet's reviewer refused "Say what it is about" on every topic (a grant drawn by kind, on talks), discography's producer refused "Credit a producer" on every artist
+- where it belongs: `packages/tools/src/derive.ts` (the permission split), `packages/core/src/store.ts` (`subjectKindOf`)
+- harness that should have caught it: the class's watch rule judges what is offered and refused on press; nothing judged a refusal's own words against the seat it was said to. The gauntlet's policy has kind-drawn grants and the walk was the first with a self grant offered from the far end
+- status: fixed in "walkthrough: B · an act whose subject is still to choose is asked as the seat" · an open subject's candidates are narrowed to what the seat may act on; only themselves, it is filled in; already done for them, neither offered nor refused. Criteria: `tests/a-refusal-never-names-your-own-role.test.ts` — over every seat of the gauntlet, discography and the rota, on records of every kind, nothing withheld says the seat's own role could (failed on the gauntlet and discography before the fix); `packages/tools/tests/unit/yours-from-the-other-end.test.ts` (both cases verified failing without the fix)
+
+### W-158 · "Vin *", "Body *", "suv", "Label *", and `Invalid arguments for mutation "sign-up"`
+- stage: B (making a car, signing up) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: costs a job — "make a car" and "sign up": every field of the form is named by its argument's key and every choice by its raw value, and a mistyped email is answered with the act's id and the field's key; the journeys could not finish "Making a shopper" in any of eight ways
+- class: machine-words-shown (also: faces-disagree)
+- expected: a form asks in the words the record it makes will show: "VIN", "Body style", "SUV", "Plug-in hybrid", a shopper's "Name"; and says what was wrong in those words
+- actual: the routed form and the scene's ask both humanised the argument's key ("Vin", "Body", "Label") and printed a choice's raw value ("suv", "plug-in-hybrid", "approved"), while the car's own page, one press later, said "VIN", "Body style", "SUV", "Approved used" from the kind's `display`. A refused argument showed `Invalid arguments for mutation "sign-up" email: Invalid email address`. The watch caught the last of these; it had no way to catch the rest — a choice value was never one of the names it learned, and a single humanised word ("Vin", "suv") passes for prose
+- where it belongs: `packages/core/src/mutations/words.ts` (new: `argumentWords`, `failureWords`, `InvalidArguments`), `packages/pages/src/form.tsx`, `packages/primitives/src/workbench/answer-args.tsx`, `inspector.tsx`, `packages/pages/src/page-problems.tsx`; the watch: `packages/core/src/watched.ts`, `scripts/lib/watch.mjs`
+- harness that should have caught it: the watch's `machine-words-shown`, which learned kinds, fields, edges, acts and roles but no choice values, and matched only identifiers with a hyphen, colon or capital inside
+- status: fixed in "walkthrough: B · a form asks in the record's words" · the watch now learns every choice value as a name, and the key's own words wherever the declaration says otherwise, caught where they are all a label or an option says. Criteria: `verify-watch` `aKeysOwnWordsAreCaught` and `aWordInASentenceIsNotAKey`; `packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx` (the form's two cases verified failing without the fix). The widened rule then caught a cousin on every list page with a choice — the arrange bar's "Only…" filter offered "suv", "front-desk", "requested" — fixed in "A list's filter says a value as the record does" (`valueWords`; `a-filter-says-a-value-as-the-record-does.test.tsx`, verified failing without it)
+
+### W-159 · A car with no features listed cannot be put on sale
+- stage: B (making a car) · face: pages · width: 1280 and 390 · scheme: light
+- impact: blocks a job — "Making a car" on the pages, all four ways: every field filled correctly, and the press refused
+- class: offered-then-refused (also: data-shape-not-in-fixtures)
+- expected: an argument that takes a list, left with nothing added, is sent as an empty list — which the act allows
+- actual: the routed form sent nothing for "Features" and "Photos", and the act refused "Not yet: Features — invalid input: expected array, received undefined". No example has a list argument, so no form had ever been sent without filling one
+- where it belongs: `packages/core/src/mutations/form.ts` (new `formArgs`), `packages/pages/src/form.tsx`
+- harness that should have caught it: the journeys' "make" job, which reached it once it could type values the act accepts (W-160); the gauntlet has no list argument — that hole is open
+- status: fixed in "walkthrough: B · a list nobody added to is sent empty" · criterion: `packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx` (verified failing without the fix), and the journeys' "Making a car" on the pages. The scene had the same hole the other way: its ask took "Features" in one text field and sent the line as a string, then sat on its last step refusing every Apply — fixed in "walkthrough: B · a list typed in the scene's ask is a list" (`a-typed-list-is-a-list.test.tsx`, both cases verified failing without it)
+
+### W-160 · The journeys cannot find a car, and type "Something" into an email
+- stage: B · face: — · width: — · scheme: —
+- impact: blocks a job's measure — "find" was skipped ("there is no car to find") and "make" failed for a car, a shopper, a trade-in and an enquiry in every way it was tried, for reasons a person would not meet
+- class: harness-or-setup-itself (also: data-shape-not-in-fixtures)
+- expected: the journeys name a record as the declaration does, and fill a form the way a person would — an email in an email field, a VIN copied off a car
+- actual: every job read a record's name from a `label` field, and a car is named from its year, make, model and trim; every field the harness had no name for got "Something" or "2" (an email, a year after 1990, a VIN); the scene's ask was answered for at most eight questions (a car asks sixteen); and the filter of choices kept the subject's name when the question was about something else, so "nothing to answer it with"
+- where it belongs: `scripts/lib/journeys.mjs`, `scripts/verify-journeys.mjs`
+- harness that should have caught it: `tests/journeys.test.ts`, which held the plan and the verdict but never what the harness reads in the page
+- status: fixed in "walkthrough: B · the journeys name a record and fill a form as a person would" · names through the declaration (`__journeyName`), values the act's own input accepts (`validValues`), forty questions, a cleared filter. Criterion: `tests/journeys.test.ts` "a record's name, in the page" (verified failing without the fix); on walk7, with W-159 and W-161, every derived job is done in all eight ways
+
+### W-161 · Refused for its photos, the ask stays on its last question and refuses every Apply
+- stage: B (making a car in the scene) · face: scene · width: 1280 and 390 · scheme: light
+- impact: costs a job — "Making a car" in the scene: one wrong answer three questions back, and the only way to it is to cancel and answer all sixteen again; the journeys pressed Apply until they gave up (100 presses)
+- class: offered-then-refused (also: keyboard-lands-nowhere)
+- expected: a refusal that names an argument takes the ask back to that question, with the reason beside it — the inspector's own comment promised "a rejected answer can be corrected rather than retyped blind"
+- actual: the ask kept every answer and stayed on the last step; its Apply re-sent the same wrong photo address and was refused the same way, each time
+- where it belongs: `packages/primitives/src/workbench/answer-args.tsx`, `inspector.tsx`
+- harness that should have caught it: the journeys' scene "make" job, once it could answer more than eight questions (W-160); nothing judged an ask after a refusal
+- status: fixed in "walkthrough: B · a refused ask goes back to the answer it refused" · the inspector hands the ask the arguments a refusal named (`InvalidArguments`), and the ask forgets those answers so it asks them again. Criterion: `packages/primitives/tests/unit/a-typed-list-is-a-list.test.tsx` "goes back to the answer that was refused" (verified failing without the fix)
+
+### W-162 · There is no way to see the cars under £25,000
+- stage: B (the shopper's side: browsing and filtering the stock) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: blocks a job — "narrow the cars by price" (and by mileage, year or make): a shopper's first minute on any dealer's site, on neither face, in any way
+- class: no-way-to-do-a-job (new) (also: data-shape-not-in-fixtures)
+- expected: a list can be kept to the records at most or at least a number, and to the values a word field holds (a make, a colour), in the declaration's words: "Price: at most £25,000", "Make: Kia"
+- actual: the arrangement offered filters for a choice, a yes or no, a date, an edge and the standing — and nothing for a number or a word. A list of 301 cars could be sorted by price but never kept under one, and "Kia" only typed into the narrowing box, which matched any word. No class on the list fit: nothing was offered and refused, hidden, or untrue; the job had simply never been derived
+- where it belongs: `packages/core/src/arrange.ts` (offers and `conditionHolds`), `packages/primitives/src/arrange-bar.tsx` (round steps through what the list holds, a word field's values)
+- harness that should have caught it: the journeys, which derived seven jobs (make, find, change, relate, undo, repair, refused) and none that narrows a list
+- status: fixed in "walkthrough: B · a list narrows by a number and by a word" · numbers take `at-most:` and `at-least:` from four round steps through the list's spread; a word field with up to sixty values offers them by name. The class's check is the journeys' new `narrow` job, derived wherever a made kind has a number. Criteria: journeys `narrow` on walk7, done in all eight ways (verified "“Only…” offers no year to narrow the cars by" in all eight without the fix); `packages/core/tests/unit/a-number-and-a-word-narrow-a-list.test.ts`, `packages/primitives/tests/unit/a-list-narrows-by-price-and-make.test.tsx` (verified failing without it); `tests/journeys.test.ts` "narrowing a list"
+
+### W-163 · Anybody who opens the showroom is shown every customer's name, email and finance question
+- stage: B (the policy, seen from the kerb) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: blocks a job — the storefront cannot be put in front of the public at all: somebody browsing, signed in as nobody, read the home page's sixty-four shoppers with their email addresses, every car's "The shoppers who shortlisted it", every finance and lease enquiry with its deposit and monthly payment, and every booked test drive; a signed-in shopper read everybody else's
+- class: shown-what-is-not-theirs (new) (also: data-shape-not-in-fixtures)
+- expected: the shop window — cars, showrooms, offers, reviews — is everybody's; a shopper, their test drives, trade-ins and questions are theirs and the store's
+- actual: a policy could say who may DO each act and nothing about who may SEE each record. Every surface reads `store.graph` and none asked who was looking; the only thing ever kept from a seat was a whole administered module. No class on the list fit — nothing was offered and refused, mis-said or untrue; it was true and not theirs
+- where it belongs: `packages/core/src/permissions/` (`Policy.sees`, `sees`), `packages/core/src/seen.ts` (new: the store as one principal may see it — its graph, log, history and problems), `packages/core/src/store.ts` (`seenBy`, `sees`, and `kindsKeptFrom` for a kind a seat sees none of and may not begin), `packages/react/src/context.tsx` and `packages/pages/src/router.tsx` (every surface under them is handed that store), `packages/primitives/src/seeding.tsx` (the way in leaves out what is kept), `packages/core/src/cli/check/policy.ts` (`sight-unknown-kind`)
+- harness that should have caught it: none could: no example declared anything private, and no rule asked who was looking
+- status: fixed in "walkthrough: B · a seat is shown only what it may see" · the class's check is the watch's new `shown-what-is-not-theirs`: the provider tells a watching harness the names and addresses of every record the seat may not see, and every screen is held to them. The gauntlet now keeps its staff from its visitor. Criteria: `verify-watch` `aRecordTheSeatMayNotSeeIsCaught`; on walk7 the watch named "Bethan Okonkwo", her email and four more customers on the stranger's home page without the fix, and nothing with it; `packages/core/tests/unit/a-seat-sees-what-it-may.test.ts` and `packages/pages/tests/unit/a-stranger-is-shown-nobody.test.tsx` (four cases verified failing without the view). Open: `graview mcp` and `graview serve` hand an agent the whole store, and the gauntlet's harness never sits the visitor down in front of a room, so the watch has not yet had a leak to catch there
+
+### W-164 · Every car's card is tagged "VEHICLE", and every test drive's "TEST-DRIVE"
+- stage: B · face: scene · width: 1280 and 390 · scheme: light
+- impact: cosmetic — a new hole in a known class's check, logged for the hole: every focused record says its kind's id where the declaration says "car" and "test drive"
+- class: machine-words-shown
+- expected: the tag astride a focused card names the kind as the declaration does (`noun`)
+- actual: it printed `node.kind`. The watch missed it twice over: the tag is `aria-hidden`, which the watch counted as unseen as well as unspoken, and "vehicle" is one plain word, which no rule could tell from prose
+- where it belongs: `packages/react/src/view-host.tsx`; the watch: `scripts/lib/watch.mjs`, `packages/core/src/watched.ts`
+- harness that should have caught it: the watch's `machine-words-shown`
+- status: fixed in "walkthrough: B · a card says its kind's noun" · the tag reads `nounOf`; the watch now judges shown text whether or not it is spoken, and is told a kind's id wherever the kind has a noun of its own, caught where it is all an element says. Criterion: `verify-watch` `shownThoughNotSpokenIsCaught` (fails without the watch change)
+
+### W-165 · "Waiting for Shoppers and Showrooms and Cars", beside four showrooms and 340 cars
+- stage: B · face: pages · width: 1280 · scheme: light
+- impact: cosmetic — a sentence on the home page that says the store has no cars
+- class: says-something-untrue
+- expected: the way in names what a kind is still waiting for
+- actual: it named every kind its act needs, whether or not there was one already: a graph part of the way through — the state every installation passes — read as empty
+- where it belongs: `packages/primitives/src/seeding.tsx`
+- harness that should have caught it: none — the class's check is "none yet"; `the-way-in.test.tsx` held the empty graph and the full one, never a kind with two needs and one of them met
+- status: fixed in "walkthrough: B · the way in waits for what is missing" · criterion: `packages/primitives/tests/unit/waiting-for-what-is-missing.test.tsx` (verified failing without the fix)
+
+### W-166 · "Related: Drives Test drives · Towards Trade-ins · About Enquiries"
+- stage: B · face: pages · width: 1280 and 390 · scheme: light
+- impact: cosmetic — a hole in a known class's check: over the list of cars, six relations named by their edges' keys
+- class: machine-words-shown (also: wrong-end-of-a-relation)
+- expected: each relation in its own words from this end — "The showroom it is at", "The test drives booked in it" — as the record page and the arrange bar already say them
+- actual: the list page's relation row printed `humaniseField(edgeKind)` beside the far end's plural, and kept the words in a `title`; a list of one said the kind's id ("1 vehicle"). The watch caught neither: an edge name humanised is one or two plain words
+- where it belongs: `packages/pages/src/page-list.tsx`; the watch: `packages/core/src/watched.ts`
+- harness that should have caught it: the watch's `machine-words-shown`
+- status: fixed in "walkthrough: B · a relation says its own words" · the watch is now told an edge's spoken name wherever the edge has words of its own, caught where it is all an element says (with the kinds' nouns and plurals counted as declared words). Criterion: `packages/pages/tests/unit/a-relation-says-its-own-words.test.tsx` (both cases verified failing without the fix)
+
+### W-167 · Every car's page is headed "A VEHICLE IN HARBOURLINE MOTORS · Current."
+- stage: B · face: pages · width: 1280 and 390 · scheme: light
+- impact: cosmetic — the first two lines of every car's page, the page a stranger lands on from a search
+- class: what-a-project-copies-is-wrong (also: prose-wrong-for-the-domain)
+- expected: the record page a project starts with names the record as the declaration does, today
+- actual: `graview create --kind vehicle` wrote "A vehicle in Harbourline Motors" into the page as text; declaring `noun: "car"` the next day changed every other surface and not this one. Under it, "Current." on every car for sale — the lifecycle's word, which a shopper reads as nothing
+- where it belongs: `packages/core/src/scaffold/ui.ts` (`pagesTsx`)
+- harness that should have caught it: `scaffold.test.ts`, which pinned the template's shape against a kind whose noun never changes
+- status: fixed in "walkthrough: B · a scaffolded record says its noun" · the eyebrow reads `withArticle(nounOf(…))` from the declaration, and only a record in the past says where it is on the horizon. Criterion: `scaffold.test.ts` "says what a record is from the declaration" (verified failing without the fix)
+
+### W-168 · Every car in the showroom shows its VIN at a glance, and never its price
+- stage: B (browsing the stock) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: costs a job — comparing cars: every card and every row of 301 reads "DRCD05TU2R88P6N6D · SUV · Atlas Blue", so a price or a mileage is a press into each car and back
+- class: data-shape-not-in-fixtures (also: prose-wrong-for-the-domain)
+- expected: a glance says the facts a person compares one by; W-134 took the heading's own words out of it
+- actual: a glance takes the first three fields the heading does not already say, in declaration order — nobody's choice. A car declared VIN-first, as a dealer's system lists one, glanced as its VIN. The examples' records have so few fields that the first three were always the right three
+- where it belongs: `packages/core/src/schema/types.ts` and `define-node.ts` (`display.glance`), `packages/core/src/cli/check/relations.ts`
+- harness that should have caught it: none — the gauntlet's records have at most five fields
+- status: fixed in "walkthrough: B · a glance says what the declaration chose" · `display.glance` orders what every card, row and hit says; the checker notes `glance-unchosen` wherever a kind has more than five fields and has not chosen (todo's task, the launcher's app, discography's song and the gauntlet's talk now carry the note), and refuses `glance-unknown-field`. Criterion: `packages/core/tests/unit/a-glance-says-what-is-chosen.test.ts` (both cases verified failing without the fix)
+
+### W-169 · Through the studio, the showroom forgets what a car's card says
+- stage: B (the studio's round trip) · face: — · width: — · scheme: —
+- impact: cosmetic — a declaration written back by the studio loses its `display.glance`, and every card goes back to the VIN
+- class: round-trip-loses-something
+- expected: `createStudio(app)` hands back, and writes, everything the checkout declared that the studio does not change
+- actual: the studio carried `display.labels`, `format` and `hide`, and not the `glance` W-168 added; its own check then noted `glance-unchosen` on both kinds that had chosen
+- where it belongs: `packages/studio/src/to-declaration.ts`, `packages/studio/src/source.ts`
+- harness that should have caught it: `what-it-does-not-model.test.ts`, the round trip's shared check, whose fixture had no glance — a field added to `display` is a field the round trip has to be told about
+- status: fixed in "walkthrough: B · a glance survives the studio" · criterion: `packages/studio/tests/unit/what-it-does-not-model.test.ts` now declares a glance and asserts it in the declaration and in the written schema (verified failing without the fix); walk7's own round trip (`tests/studio.test.ts`) says nothing new
+
+### W-170 · Through the studio, the showroom shows its customers to everybody again
+- stage: B (the studio's round trip) · face: — · width: — · scheme: —
+- impact: blocks a job — the same as W-163, after a change made in the studio and written back
+- class: round-trip-loses-something (also: shown-what-is-not-theirs)
+- expected: the studio keeps what the checkout declared and it does not model
+- actual: the studio rebuilt the policy from its role and grant nodes and had no node for a sight, so `declaration()` and the written `policy.ts` both lost `sees`
+- where it belongs: `packages/studio/src/to-declaration.ts`, `packages/studio/src/source.ts`
+- harness that should have caught it: `what-it-does-not-model.test.ts`, whose fixture had no sight — `sees` was new this walk
+- status: fixed in "walkthrough: B · a sight survives the studio" · carried from the checkout and kept to the kinds still declared. Criterion: `what-it-does-not-model.test.ts` "keeps its sights in the declaration and in the policy it writes" (verified failing without the fix); walk7's `tests/studio.test.ts` passes. Open: the studio cannot yet add, change or remove a sight
+
+### W-171 · "1 test-drive", "1 vehicle found", "1 vehicle with no showroom"
+- stage: D (the lenses' places) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: cosmetic — wherever a count came to one, the kind's id: the test-drive diary's place card, Find's spoken count, a district's name, a band of a district, a coverage's gaps
+- class: machine-words-shown (also: prose-wrong-for-the-domain)
+- expected: one of a kind is its noun ("1 car", "1 test drive"), as W-001 made "Add an item" say the article
+- actual: five sentences built a count of one from `kind.replace(/-/g, " ")`, each written on its own, so a kind whose noun is not its id ("vehicle" → "car") or whose id is hyphenated read as the declaration's identifier. The watch caught "1 test-drive" on the places page; "1 vehicle" passes for prose
+- where it belongs: `packages/core/src/schema/define-node.ts` (new `counted`), `packages/pages/src/page-places.tsx`, `packages/primitives/src/find.tsx`, `packages/primitives/src/lens/coverage.tsx`, `packages/react/src/view-host.tsx`, `packages/react/src/resolved-view.tsx`
+- harness that should have caught it: the watch, for the hyphenated id only
+- status: fixed in "walkthrough: D · a kind is counted by its noun" · criterion: `tests/a-kind-is-counted-by-its-noun.test.ts` — `counted`'s own words, and no package source outside the scaffold speaks a kind's id as a word (failed on all five sites without the fix)
+
+### W-172 · "6 offers with no showroom · 4 showrooms on no offer", of six offers on show everywhere
+- stage: D (a starter lens) · face: scene and pages · width: 1280 · scheme: light
+- impact: costs a job — "which offers are on at which showroom": the coverage answered that none were, with a warning mark on every showroom
+- class: says-something-untrue (also: what-a-project-copies-is-wrong)
+- expected: a lens bound wrongly fails loudly and says what to bind (the lens skill's third rule); a path that cannot reach its far end is a misbinding
+- actual: the walk bound `link: { path: ["applies-to", "on-show-at"] }` — offers to cars to showrooms — where a coverage walks column end first. From a showroom the first step reached nothing, every cell was empty, and the lens drew a complete, tidy, wrong picture; `graview check` checked each step was a declared edge and not that the steps joined up
+- where it belongs: `packages/core/src/schema/path.ts` (new `walkKinds`), `packages/core/src/cli/check/lenses.ts`, `packages/primitives/src/lens/coverage.tsx`
+- harness that should have caught it: none — the class's check is "none yet"; the checker's lens rules held each name, not the walk
+- status: fixed in "walkthrough: D · a lens path gets there" · the checker refuses `lens-binding-path-misses` and says when the path is only backwards; the coverage throws the same. Criteria: `packages/core/tests/unit/a-path-gets-there.test.ts`, `packages/primitives/tests/unit/a-coverage-path-gets-there.test.ts` (both verified failing without the fix); walk7's `graview check` refused its own binding until it was turned round
+
+### W-173 · The upgrade to version 2 is signed "ship:migration"
+- stage: G (a migration against a remembered store) · face: scene · width: 1280 · scheme: light
+- impact: cosmetic — the one line that says the store was upgraded is signed with the store's own author id
+- class: machine-words-shown
+- expected: the log says who did what in words; a migration is the upgrade
+- actual: `nameOfAuthor` fell back to the author's id wherever no record or seat named it, and a migration's author is `{ kind: "system", id: "ship:migration" }`. The watch had never been told an author's id, so it could not see one
+- where it belongs: `packages/core/src/who.ts`; the watch: `packages/core/src/watched.ts` (`tellTheWatchItsAuthors`), `packages/react/src/context.tsx`
+- harness that should have caught it: the watch's `machine-words-shown`, and `pnpm verify remember`, which reloads against a migration and read the log's count, not its words
+- status: fixed in "walkthrough: G · an author is never an id" · a migration is "the upgrade", a namespaced id is said by its kind, a plain name a host gave stays; the provider tells a watching harness every author id in the log. Criterion: `packages/core/tests/unit/an-author-is-never-an-id.test.ts` (verified failing without the fix); walk7's activity now reads "the upgrade · migration 1→2: an approved car is said as approved used", run once across two reloads, with its undo
+
+### W-174 · Somebody browsing the showroom is offered its studio
+- stage: H (sitting down as somebody else on an embed) · face: scene and embed · width: 1280 and 390 · scheme: both
+- impact: blocks a job — keeping the storefront the store's: a stranger, a shopper and a salesperson were each one press from the app's own declaration — its kinds, roles, rules and policy — and from changing it
+- class: shown-what-is-not-theirs (also: offered-then-refused)
+- expected: the studio is the business of whoever may already do everything in the app
+- actual: `maySeeTheStudio` gave it to the administrators of an installation, and where there is none, to whoever is here — right for a scaffolded project on its first day, wrong for one that has declared a policy and seats with no installation
+- where it belongs: `packages/studio/src/place.tsx` (`maySeeTheStudio`)
+- harness that should have caught it: none — no example declares a policy without an installation and a seat that may do little; the watch's new rule judges records, not the declaration
+- status: fixed in "walkthrough: H · the studio is not for everyone" · under a policy, the seats with an unrestricted grant of every act. Criterion: `tests/the-studio-is-not-for-everyone.test.ts` — a bare policy, and every seat of the gauntlet and discography (verified failing without the fix)
+
+### W-175 · The list of shoppers scrolls sideways at 200% text on a phone
+- stage: I (text zoom to 200% on every route, 390 wide) · face: pages · width: 390 · scheme: light
+- impact: costs a job — the store reading its customers on a phone at a reader's text size: every row reaches past the edge
+- class: breaks-at-width-zoom-or-engine (also: data-shape-not-in-fixtures)
+- expected: no route scrolls sideways at 200% (W-151 held it for search)
+- actual: a list row was a grid with an implicit `auto` track and nothing to break a long word; a shopper's email is one, and the row grew to 528 pixels on a 390 phone. The same shape W-151 fixed on the search page, one component over
+- where it belongs: `packages/pages/src/page-list.tsx`
+- harness that should have caught it: the class's table named "the watch's target-size and no-sideways-scroll rules" as its check, and the watch had neither; `verify-pages`' 200% pass measured its own routes on fixtures with no long unbroken value on a list. The gauntlet still has none: that hole is open
+- status: fixed in "walkthrough: I · a list fits a phone at 200%" · one `minmax(0, 1fr)` track and `overflow-wrap: anywhere`. Criterion: the watch's new `breaks-at-width` rule — a page wider than its window, judged on every state of every harness, re-judged when the text size or the window changes (`verify-watch` `aPageThatScrollsSidewaysIsCaught`); on walk7 it named the shoppers list at 390@32px without the fix and nothing with it, and the whole chain (`pnpm verify --quick`, 24 of 24) holds under it. Also `packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx` (verified failing without the fix); every route of walk7's design and the derived face re-measured at 390@32px and 320: none scrolls

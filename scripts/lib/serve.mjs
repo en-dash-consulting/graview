@@ -25,7 +25,7 @@ const answers = async (port) => {
 };
 
 /**
- * @param {string} app  directory under `apps/`
+ * @param {string} app  directory under `apps/`, or an absolute path to an app beside the checkout
  * @param {number} port the port that app's vite config claims
  * @param {string} repoRoot
  * @returns {Promise<{ url: string, borrowed: boolean, stop: () => void }>}
@@ -49,7 +49,7 @@ export async function serving(app, port, repoRoot) {
 
   // The port asked for, said to vite: a harness on a moved port base must not land on the config's.
   const child = spawn("npx", ["vite", "--port", String(port), "--strictPort"], {
-    cwd: resolve(repoRoot, `apps/${app}`),
+    cwd: resolve(repoRoot, "apps", app),
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
   });

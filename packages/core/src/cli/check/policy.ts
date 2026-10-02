@@ -112,5 +112,18 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
         });
       }
     }
+    /* Who may see what: a sight naming a kind nobody declared keeps nothing, and says it does. */
+    for (const sight of app.policy.sees ?? []) {
+      for (const kind of sight.kinds) {
+        if (kinds.has(kind)) continue;
+        add({
+          severity: "error",
+          code: "sight-unknown-kind",
+          where: "policy.sees",
+          message: `Says who may see "${kind}", which no defineNode declares — so nothing is kept from anybody.`,
+          fix: `Use one of: ${[...kinds].join(", ")}.`,
+        });
+      }
+    }
   }
 }

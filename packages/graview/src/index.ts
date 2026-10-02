@@ -16,7 +16,9 @@ import { main as core, USAGE as CORE_USAGE } from "@graview/core/cli";
  * check` should not load an HTTP server, and a bundler that ever sees this
  * file should not be asked to follow better-sqlite3.
  */
-export async function main(argv: readonly string[]): Promise<number> {
+export async function main(given: readonly string[]): Promise<number> {
+  // `pnpm graview -- create …` hands the separator on; it is the package manager's, not a command.
+  const argv = given[0] === "--" ? given.slice(1) : given;
   const [command, ...rest] = argv;
   if (command === "serve") {
     const { serve } = await import("@graview/ship/cli");

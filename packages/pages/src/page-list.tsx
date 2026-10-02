@@ -6,6 +6,7 @@ import {
   describeSearched,
   formatArrangement,
   humaniseField,
+  nounOf,
   asksForThePast,
   isCurrent,
   labelOf,
@@ -157,9 +158,12 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         key={node.id}
         style={{
           display: "grid",
+          // One track no wider than the page, and a long unbroken value (an email) breaks inside it (W-175).
+          gridTemplateColumns: "minmax(0, 1fr)",
           gap: 2,
           padding: "14px 0",
           borderTop: "1px solid var(--graview-edge)",
+          overflowWrap: "anywhere",
         }}
       >
         <Link
@@ -182,7 +186,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
           <KindMark kind={kind} brand={brand} schema={store.schema} size={8} />
           {members.length === 0
             ? "None yet"
-            : `${members.length} ${members.length === 1 ? kind : plural.toLowerCase()}`}
+            : `${members.length} ${members.length === 1 ? nounOf(definition, kind) : plural.toLowerCase()}`}
         </p>
         <h1 style={h1}>{plural}</h1>
         {definition?.description ? <p style={lede}>{definition.description}</p> : null}
@@ -194,14 +198,18 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
               const far = relation.from === kind ? relation.to : relation.from;
               const words = relation.from === kind ? relation.description : (relation.inverse ?? relation.description);
               return (
-                <span key={`${relation.edgeKind}|${relation.from}|${relation.to}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }} title={words ? capitalise(words) : undefined}>
+                /*
+                 * THE RELATION IN ITS OWN WORDS, from this end: "The test
+                 * drives booked in it", never the edge's name ("Drives Test
+                 * drives", "About Enquiries", "Towards Trade-ins").
+                 */
+                <span key={`${relation.edgeKind}|${relation.from}|${relation.to}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                   <RelationMark edgeKind={relation.edgeKind} width={22} {...(context.brand?.kit ? { kit: context.brand.kit } : {})} />
-                  <span>{humaniseField(relation.edgeKind)}</span>
                   {far === "*" ? (
-                    <span>anything</span>
+                    <span>{capitalise(words ?? humaniseField(relation.edgeKind))}</span>
                   ) : (
-                    <Link to={`/${pluralSlug(store.schema, far)}`} style={link}>
-                      {pluralOf(store, far)}
+                    <Link to={`/${pluralSlug(store.schema, far)}`} style={link} title={pluralOf(store, far)}>
+                      {capitalise(words ?? pluralOf(store, far))}
                     </Link>
                   )}
                 </span>

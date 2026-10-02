@@ -122,15 +122,28 @@ export function StudioPlace<S extends AnySchema>({
  * it and to nobody else. Where it declares nothing administered — a
  * scaffolded project on its first day, which has no installation yet — it
  * belongs to whoever is here, because there is no one else and a project
- * you cannot open the studio on is a project you cannot grow.
+ * you cannot open the studio on is a project you cannot grow; unless a
+ * policy says who may do everything, and then it is theirs.
  */
 export function maySeeTheStudio<S extends AnySchema>(
   store: Store<S>,
   principal: Parameters<Store<S>["mayAdminister"]>[1],
 ): boolean {
   const administered = [...store.modules.administered.keys()];
-  if (administered.length === 0) return true;
-  return administered.some((name) => store.mayAdminister(name, principal));
+  if (administered.length > 0) return administered.some((name) => store.mayAdminister(name, principal));
+  /*
+   * WITH A POLICY AND NO INSTALLATION, the declaration is the business of
+   * whoever may already do everything in it — a grant of every act, on
+   * every kind, not only their own. A storefront with shoppers and staff
+   * offered its own declaration, roles and rules to somebody browsing who
+   * may do nothing but sign up (the seventh walk).
+   */
+  const policy = store.policy;
+  if (!policy) return true;
+  const roles = principal?.roles ?? [];
+  return policy.grants.some(
+    (grant) => grant.mutations === "*" && !grant.self && (grant.kinds === undefined || grant.kinds === "*") && (grant.roles === "*" || roles.some((role) => (grant.roles as readonly string[]).includes(role))),
+  );
 }
 
 export { INSTALLATION_MODULE };

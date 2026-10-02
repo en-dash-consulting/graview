@@ -1,7 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
 import { useEffect, useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
-import { GraviewProvider, useTheKeyboardLandsSomewhere } from "@graview/react";
+import { GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen } from "@graview/react";
 import { PageAsk } from "./ask.js";
 import { FaceControlsRoot } from "./face-controls.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
@@ -197,11 +197,20 @@ export function PagesRoutes<S extends AnySchema>({
 }
 
 export function PagesApp<S extends AnySchema>({
-  context,
+  context: given,
   registry,
   basename,
   initialPath,
 }: PagesAppProps<S>) {
+  /*
+   * WHAT THE SEAT MAY SEE. Every page reads `context.store`; under a policy
+   * that says who sees what (`sees`), that store holds only what this seat
+   * may see — a stranger is not shown the customers — and acts still go to
+   * the store itself. With no `sees`, it is the store, unchanged.
+   */
+  const viewed = given.store.seenBy(given.principal ?? { kind: "human" });
+  const context = viewed === given.store ? given : { ...given, store: viewed };
+  useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
   const routed = <PagesRoutes context={context} {...(registry ? { registry } : {})} />;
   /*
    * A PROVIDER UNDER THE PAGES when the app handed over its views, so a lens

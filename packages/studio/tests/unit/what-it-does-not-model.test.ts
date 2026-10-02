@@ -29,6 +29,8 @@ const task = defineNode("task", {
     labels: { plannedAt: "Blocked", plannedUntil: "Until" },
     format: { plannedAt: (value: unknown) => `${Math.floor(Number(value) / 60)}:00` },
     hide: ["note"],
+    // What a glance says: the seventh walk's round trip dropped it (W-169).
+    glance: ["plannedUntil", "plannedAt"],
   },
   fixed: { note: "a note is kept as it was written" },
 });
@@ -46,16 +48,40 @@ const rename = defineMutation("rename", {
 
 const app = defineApp({ name: "carrier", schema: createSchema([task]), mutations: [rename] });
 
+/*
+ * WHO SEES WHAT has no act in the studio yet, and a storefront written back
+ * without it showed every customer to everybody (the seventh walk, W-170).
+ */
+const guarded = defineApp({
+  name: "carrier",
+  schema: createSchema([task]),
+  mutations: [rename],
+  policy: { roles: ["owner"], grants: [{ roles: ["owner"], mutations: "*" }], sees: [{ roles: ["owner"], kinds: ["task"], own: true, describe: "Your own tasks." }] },
+});
+
+describe("a policy that says who sees what, through the studio", () => {
+  it("keeps its sights in the declaration and in the policy it writes", () => {
+    const studio = createStudio(guarded);
+    expect(studio.declaration().policy?.sees).toEqual([{ roles: ["owner"], kinds: ["task"], own: true, describe: "Your own tasks." }]);
+    const policy = studio.files().find((file) => file.path.endsWith("policy.ts"))!.contents;
+    expect(policy).toContain('sees: [');
+    expect(policy).toContain('{ roles: ["owner"], kinds: ["task"], own: true, describe: "Your own tasks." },');
+  });
+});
+
 describe("a round trip through the studio", () => {
   it("keeps how a field reads, what is fixed, and which fields answer a lens", () => {
     const next = createStudio(app).declaration();
     const kind = next.schema.tryDefinition("task") as unknown as {
-      display?: { labels?: Record<string, string>; hide?: readonly string[] };
+      display?: { labels?: Record<string, string>; hide?: readonly string[]; glance?: readonly string[] };
       fixed?: Record<string, string>;
       fieldRoles?: Record<string, string>;
     };
     expect(kind.display?.labels).toEqual({ plannedAt: "Blocked", plannedUntil: "Until" });
     expect(kind.display?.hide).toEqual(["note"]);
+    expect(kind.display?.glance).toEqual(["plannedUntil", "plannedAt"]);
+    const schema = createStudio(app).files().find((file) => file.path.endsWith("schema.ts"))!.contents;
+    expect(schema).toContain('glance: ["plannedUntil", "plannedAt"],');
     expect(kind.fixed).toEqual({ note: "a note is kept as it was written" });
     expect(kind.fieldRoles).toEqual({ start: "plannedAt", end: "plannedUntil" });
   });

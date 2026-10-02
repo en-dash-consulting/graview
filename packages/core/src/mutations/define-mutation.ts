@@ -1,3 +1,4 @@
+import { InvalidArguments } from "./words.js";
 import type { z } from "zod";
 import type { Graph } from "../graph/graph.js";
 import { GraphError } from "../graph/graph.js";
@@ -97,12 +98,7 @@ export function compileMutation<S extends AnySchema>(
     requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>),
   );
   if (!parsed.success) {
-    throw new GraphError(
-      `Invalid arguments for mutation "${definition.name}"`,
-      parsed.error.issues
-        .map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`)
-        .join("; "),
-    );
+    throw new InvalidArguments(definition.name, parsed.error.issues);
   }
   const args = parsed.data as Record<string, unknown>;
 

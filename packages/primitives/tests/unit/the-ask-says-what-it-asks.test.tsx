@@ -144,17 +144,18 @@ describe("the strip's ask", () => {
 
   it("counts the steps of a longer ask in words, not in keys", async () => {
     const rendered = await pressing("schema:add:add-owner", ["kind:owner"]);
-    expect(rendered.host.textContent).toContain("Label · 1 of 2");
-    expect(rendered.host.textContent).not.toContain("label · 1 of 2");
+    // A kind's `label` is its name, and is asked for as one.
+    expect(rendered.host.textContent).toContain("Name · 1 of 2");
+    expect(rendered.host.textContent).not.toContain("abel · 1 of 2");
     cleanup(rendered);
   });
 
   it("leaves a single text field to name itself, rather than saying it twice", async () => {
     const rendered = await pressing("schema:add:add-item", ["kind:item"]);
     const input = rendered.host.querySelector("input");
-    expect(input?.getAttribute("aria-label")).toBe("Label");
-    // One "Label", from the field itself — not a heading over it as well.
-    expect((rendered.host.textContent ?? "").match(/Label/g)?.length ?? 0).toBe(0);
+    expect(input?.getAttribute("aria-label")).toBe("Name");
+    // One "Name", from the field itself — not a heading over it as well.
+    expect((rendered.host.textContent ?? "").match(/\bName\b/g)?.length ?? 0).toBe(0);
     cleanup(rendered);
   });
 });

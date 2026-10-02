@@ -1,8 +1,10 @@
 import * as core from "@graview/core";
 import { todoApp } from "@graview/todo";
+import { spawnSync } from "node:child_process";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
-import { frictionOf, planJobs, regressionsOf } from "../scripts/lib/journeys.mjs";
+import { appsNamed, frictionOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
 
 /**
  * THE JOURNEYS HARNESS'S OWN LOGIC, held without a browser: which jobs a
@@ -70,5 +72,57 @@ describe("a regression", () => {
     const after = report({ "scene/1440/pointer": run(true, 6), "pages/390/pointer": run(true, 3), "pages/1440/pointer": run(true, 4) });
     expect(regressionsOf(before, after)).toEqual([]);
     expect(regressionsOf(null, after)).toEqual([]);
+  });
+});
+
+describe("the app a walk builds beside the checkout", () => {
+  const apps = [{ dir: "todo", query: { today: "2026-09-01" } }, { dir: "rota", query: {} }];
+  const root = resolve(__dirname, "..");
+
+  it("is driven when named by its path, alone, under its directory's name", () => {
+    expect(appsNamed(["../walk7"], apps, root)).toEqual([{ dir: resolve(root, "../walk7"), name: "walk7", query: {} }]);
+    expect(appsNamed(["todo", "../walk7"], apps, root).map((one: { name?: string; dir: string }) => one.name ?? one.dir)).toEqual(["todo", "walk7"]);
+    expect(appsNamed([], apps, root).map((one: { dir: string }) => one.dir)).toEqual(["todo", "rota"]);
+  });
+
+  it("can be named to `pnpm verify`, which hands it to the journeys and says when there is nothing there", () => {
+    const said = spawnSync(process.execPath, [resolve(root, "scripts/verify-all.mjs"), "journeys", "../no-such-walk"], { cwd: root, encoding: "utf8" });
+    expect(said.status).toBe(2);
+    expect(said.stdout).toContain("No app at");
+    expect(said.stdout).not.toContain("No harness called");
+  });
+});
+
+describe("a record's name, in the page", () => {
+  it("is the declaration's name for it, for a kind named from its fields and with no label field", () => {
+    const held = (globalThis as { window?: unknown }).window;
+    (globalThis as { window?: unknown }).window = globalThis;
+    try {
+      storeHookInPage();
+      const name = (globalThis as unknown as { __journeyName: (store: unknown, node: unknown) => string | null }).__journeyName;
+      const store = { schema: { tryDefinition: (kind: string) => (kind === "car" ? { label: (node: { year: number; make: string }) => `${node.year} ${node.make}` } : undefined) } };
+      expect(name(store, { id: "car:1", kind: "car", year: 2022, make: "Kia" })).toBe("2022 Kia");
+      expect(name(store, { id: "note:1", kind: "note", label: "Call back" })).toBe("Call back");
+      expect(name(store, { id: "note:2", kind: "note" })).toBeNull();
+    } finally {
+      (globalThis as { window?: unknown }).window = held;
+    }
+  });
+});
+
+describe("narrowing a list", () => {
+  it("is a job wherever a made kind has a number a person reads", () => {
+    const car = core.defineNode("car", { fields: core.z.object({ label: core.z.string(), price: core.z.number() }), plural: "Cars", display: { labels: { price: "Price" } } });
+    const schema = core.createSchema([car]);
+    const { defineMutation } = core.bindSchema(schema);
+    const sell = defineMutation("add-car", {
+      title: "Put a car on sale",
+      creates: ["car"],
+      input: core.z.object({ label: core.z.string(), price: core.z.number() }),
+      apply: (ctx, args) => void ctx.addNode({ id: ctx.freshId(args.label, "car"), kind: "car", ...args }),
+    });
+    const app = core.defineApp({ name: "Showroom", schema, mutations: [sell] });
+    const narrow = planJobs({ app, core }).jobs.find((job: { id: string }) => job.id === "narrow");
+    expect(narrow).toMatchObject({ kind: "car", field: "price", label: "Price", says: "Narrowing the cars by price" });
   });
 });

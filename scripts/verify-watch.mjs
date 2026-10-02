@@ -52,6 +52,52 @@ checks.anActsNameAsTextIsCaught = shown.some((v) => v.detail.includes('"close-de
 checks.aFieldKeyReadOutIsCaught = shown.some((v) => v.detail.includes('"closedAt" is read out in title'));
 checks.codeIsNotPeopleText = shown.length === 2;
 
+/* machine-words-shown, the key's own words: "Vin" over a field the kind calls "VIN", "suv" where the record says "SUV". */
+await show(`<main><form><label><span>Vin *</span><input></label><label><span>Body style</span><select><option>suv</option><option>Saloon</option></select></label></form><p>The vin is on the windscreen.</p></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: ["vin"], words: ["VIN"], unsaid: ["Vin", "suv", "Suv"] }));
+await settle();
+const plain = takeViolations().filter((v) => v.rule === "machine-words-shown").map((v) => v.detail);
+checks.aKeysOwnWordsAreCaught = plain.some((d) => d.startsWith('"Vin" is shown')) && plain.some((d) => d.startsWith('"suv" is shown'));
+checks.aWordInASentenceIsNotAKey = plain.length === 2;
+
+/* Shown though not spoken: a kind's id on a card's tag that screen readers skip is still read by eye. */
+await show(`<main><div role="group" aria-label="2024 Kia Sportage"><span aria-hidden="true">vehicle</span><span aria-hidden="true">close-deal</span></div></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: ["vehicle", "close-deal"], words: ["Car"], unsaid: ["vehicle"] }));
+await settle();
+const tagged = takeViolations().filter((v) => v.rule === "machine-words-shown").map((v) => v.detail);
+checks.shownThoughNotSpokenIsCaught = tagged.some((d) => d.startsWith('"vehicle"')) && tagged.some((d) => d.startsWith('"close-deal"'));
+
+/* shown-what-is-not-theirs: a customer the seat may not see, named on the page; a name it may see is not. */
+await show(`<main><h1>Cars</h1><p>Shortlisted by Freya Davies</p><p>Signed in as Bethan Okonkwo</p></main>`);
+await page.evaluate(() => window.__graviewWatch.unseen({ words: ["Freya Davies", "freya.davies1@mail.example"] }));
+await settle();
+const exposed = takeViolations().filter((v) => v.rule === "shown-what-is-not-theirs").map((v) => v.detail);
+checks.aRecordTheSeatMayNotSeeIsCaught = exposed.length === 1 && exposed[0].startsWith('"Freya Davies"');
+
+/* Two surfaces, two seats: a name one of them may see is not caught on the page they share. */
+await show(`<main><section aria-label="As the store"><p>Shortlisted by Freya Davies</p></section><section aria-label="As Bethan"><p>Signed in as Bethan Okonkwo</p></section></main>`);
+await page.evaluate(() => {
+  window.__graviewWatch.unseen({ words: ["Freya Davies"], from: "bethan" });
+  window.__graviewWatch.unseen({ words: [], from: "store" });
+});
+await settle();
+checks.whatOneSeatMaySeeIsNotCaughtBesideAnother = takeViolations().filter((v) => v.rule === "shown-what-is-not-theirs").length === 0;
+
+/* A seat switcher names the people one may sit as; that is not showing their record. */
+await show(`<main><div role="group" aria-label="Seat"><button type="button">Aiyana Whitehorse, volunteer</button></div><p>Shortlisted by Freya Davies</p></main>`);
+await page.evaluate(() => window.__graviewWatch.unseen({ words: ["Aiyana Whitehorse", "Freya Davies"] }));
+await settle();
+const seated = takeViolations().filter((v) => v.rule === "shown-what-is-not-theirs").map((v) => v.detail);
+checks.aSeatToTakeIsNotARecordShown = seated.length === 1 && seated[0].startsWith('"Freya Davies"');
+
+/* breaks-at-width: a page wider than its window. */
+await page.setViewportSize({ width: 390, height: 800 });
+await show(`<main><p style="white-space:nowrap">ravi.robertson63@mail.example-and-a-long-unbroken-word-past-the-edge-of-a-phone</p></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await settle();
+checks.aPageThatScrollsSidewaysIsCaught = takeViolations().some((v) => v.rule === "breaks-at-width");
+await page.setViewportSize({ width: 1280, height: 800 });
+
 /* offered-then-refused: the store refused a press. */
 await show(`<main><button>Close the deal</button></main>`);
 await page.evaluate(() => window.__graviewWatch.refused({ mutation: "close-deal", kind: "deal", message: "Not permitted", author: "user-priya" }));

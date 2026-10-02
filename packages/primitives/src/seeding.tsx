@@ -1,4 +1,4 @@
-import { beginning, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
+import { beginning, nounOf, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
 import { kindCardId } from "@graview/layout";
 import {
   createViews,
@@ -149,7 +149,12 @@ export function Begin<S extends AnySchema>(props: BeginProps<S> = {}) {
 function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", heading = frame ? 1 : undefined }: BeginProps<S>) {
   const { store, principal } = useGraview<S>();
   const nodes = useGraph();
-  const chain = useMemo(() => chainOf(store), [store]);
+  /* Without the kinds kept from this seat: a stranger is not told the store has no test drives. */
+  const chain = useMemo(() => {
+    const whole = chainOf(store);
+    const kept = store.kindsKeptFrom(principal);
+    return kept.size === 0 ? whole : { ...whole, order: whole.order.filter((entry) => !kept.has(entry.kind)) };
+  }, [store, principal]);
   const counts = useMemo(() => {
     const found: Record<string, number> = {};
     for (const entry of chain.order) found[entry.kind] = store.graph.nodesOfKind(entry.kind).length;
@@ -251,7 +256,8 @@ function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", he
                 <BeginHere kind={entry.kind} derived={ways[entry.kind]!} />
               ) : (
                 <div style={{ fontSize: "0.875rem", ...MUTED_TEXT }}>
-                  Waiting for {entry.needs.map((kind) => store.schema.tryDefinition(kind)?.plural ?? kind).join(" and ")}.
+                  {/* Only what is still missing: "waiting for Showrooms and Cars" was said beside 4 showrooms and 340 cars. */}
+                  Waiting for {entry.needs.filter((kind) => (counts[kind] ?? 0) === 0).map((kind) => store.schema.tryDefinition(kind)?.plural ?? kind).join(" and ")}.
                 </div>
               )}
             </li>
@@ -509,7 +515,7 @@ function PlanReviewInside<S extends AnySchema>({
   const makes = Object.entries(kept.makes)
     .map(
       ([kind, count]) =>
-        `${count} ${count === 1 ? kind : (store.schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase()}`,
+        `${count} ${count === 1 ? nounOf(store.schema.tryDefinition(kind), kind) : (store.schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase()}`,
     )
     .join(", ");
   /*

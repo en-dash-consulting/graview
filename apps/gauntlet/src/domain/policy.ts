@@ -9,13 +9,17 @@ import type { Policy } from "@graview/core";
  *   every other act, which on a talk is a dozen of them (W-115: every
  *   harness's narrower seat used to be refused three or fewer).
  * - the SCHEDULER, an agent, moves talks into slots and sessions into rooms.
- * - a visitor holds no role, and reads.
+ * - a visitor holds no role, and reads — the programme, not the staff
+ *   behind it: who is on staff is the programme's own people's to see
+ *   (`sees`), so the watch's "shown-what-is-not-theirs" has a seat to hold
+ *   in every harness that sits the visitor down (the seventh walk).
  *
  * The acts are named rather than starred below the chair, so an act added
  * tomorrow is refused until somebody decides who may run it.
  */
 export const policy: Policy = {
   roles: ["chair", "reviewer", "volunteer", "scheduler"],
+  sees: [{ roles: ["chair", "reviewer", "volunteer", "scheduler"], kinds: ["staff"], describe: "The programme's own people see who is on staff." }],
   grants: [
     { roles: ["chair"], mutations: "*", describe: "The programme chair runs the programme." },
     {

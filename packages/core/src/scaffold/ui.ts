@@ -232,7 +232,7 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
 }
 
 export function pagesTsx(ids: Ids): string {
-  return `import { isCurrent } from "@graview/core";
+  return `import { isCurrent, nounOf, withArticle } from "@graview/core";
 import { Begin } from "@graview/primitives";
 import {
   createPageRegistry,
@@ -303,7 +303,12 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
   return (
     <PageMain context={context} data-testid="${ids.kind}-page">
       <header style={{ display: "grid", gap: 10 }}>
-        <p style={pageStyles.eyebrow}>${ids.ASpoken} in ${escapeTemplate(ids.name)}</p>
+        {/*
+          * WHAT IT IS, asked of the declaration rather than written here:
+          * give the kind a \`noun\` ("car" for a kind called vehicle) and
+          * this says it, where a word typed at scaffold time would not.
+          */}
+        <p style={pageStyles.eyebrow}>{withArticle(nounOf(store.schema.tryDefinition(node.kind), node.kind)).replace(/^./, (first) => first.toUpperCase())} in ${escapeTemplate(ids.name)}</p>
         <h1 style={pageStyles.h1}>{facts.label}</h1>
         {/*
           * WHERE IT IS ON THE HORIZON, asked of the declaration's own
@@ -311,7 +316,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           * states, or retire by a date, and this still tells the truth.
           */}
         <p style={pageStyles.lede}>
-          {isCurrent(store.schema.tryDefinition(node.kind), node) ? "Current." : "In the past: out of the picture, never out of the record."}{" "}
+          {isCurrent(store.schema.tryDefinition(node.kind), node) ? null : "In the past: out of the picture, never out of the record. "}
           {ties.length === 0 ? "Connected to nothing yet." : null}
         </p>
         <a href={spatialHref(id)} style={{ ...pageStyles.link, ...pageStyles.quiet }} data-testid="spatial-link">

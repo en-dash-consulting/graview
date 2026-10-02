@@ -227,13 +227,17 @@ export {
   isoDate,
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
-export { article, fieldWords, humaniseField, nounOf, readableFields, summarise, withArticle } from "./schema/define-node.js";
+export { article, counted, fieldWords, humaniseField, nounOf, readableFields, summarise, valueWords, withArticle } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export { checkKitContrast, connectorHueColour, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
 export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/kit.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
-export type { Grant, Policy, Principal, Refusal } from "./permissions/types.js";
+export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
+export { sees, sightedKinds } from "./permissions/sight.js";
+export { seenBy } from "./seen.js";
+export { walkKinds } from "./schema/path.js";
+export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Store — graph + log + mutations + invariants, one object.
 export { Store, violationKey } from "./store.js";
@@ -279,7 +283,8 @@ export { bindSchema } from "./bind.js";
 export type { SchemaBinding } from "./bind.js";
 
 // App bundle, checks and generated agent docs.
-export { formField, formFields, formComplete } from "./mutations/form.js";
+export { formArgs, formField, formFields, formComplete } from "./mutations/form.js";
+export { argumentWords, failureWords, InvalidArguments } from "./mutations/words.js";
 export type { FormField, ScalarField } from "./mutations/form.js";
 export { resolveModules } from "./modules.js";
 export { declareInstallation, INSTALLATION_MODULE } from "./installation.js";

@@ -42,7 +42,7 @@ export type {
   CoverageRoles,
   CoverageViewProps,
 } from "./lens/coverage.js";
-export { ArrangeBar, arrangementCaption, arrangementOf, sayCondition, withArrangement } from "./arrange-bar.js";
+export { ArrangeBar, arrangementCaption, arrangementOf, roundSteps, sayCondition, withArrangement } from "./arrange-bar.js";
 export { useArranging } from "./lens/arranging.js";
 export type { Arranging, ArrangingOptions } from "./lens/arranging.js";
 export type { ArrangeBarProps } from "./arrange-bar.js";

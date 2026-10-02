@@ -132,6 +132,7 @@ function kept(
           labels?: Record<string, string>;
           format?: Record<string, unknown>;
           hide?: readonly string[];
+          glance?: readonly string[];
         };
         fixed?: Record<string, string>;
         fieldRoles?: Record<string, string>;
@@ -151,12 +152,15 @@ function kept(
   const labels = narrow(was.display?.labels);
   const format = narrow(was.display?.format);
   const hide = was.display?.hide?.filter(here);
+  // What a glance says, while its fields do (W-169: the round trip dropped it).
+  const glance = was.display?.glance?.filter(here);
   const display =
-    labels || format || (hide && hide.length > 0)
+    labels || format || (hide && hide.length > 0) || (glance && glance.length > 0)
       ? {
           ...(labels ? { labels } : {}),
           ...(format ? { format } : {}),
           ...(hide && hide.length > 0 ? { hide } : {}),
+          ...(glance && glance.length > 0 ? { glance } : {}),
         }
       : undefined;
   const fixed = narrow(was.fixed);
@@ -314,7 +318,17 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(bool(g, "self") ? { self: true } : {}),
     };
   });
-  const policy: Policy | undefined = roles.length > 0 || grants.length > 0 ? { grants, ...(roles.length > 0 ? { roles } : {}) } : undefined;
+  /*
+   * WHO SEES WHAT, carried from the checkout — the studio has no act for a
+   * sight yet — and kept to the kinds still declared. Dropped, a storefront
+   * written back by the studio showed every customer to everybody again.
+   */
+  const declared = new Set(kindName.values());
+  const sees = (base?.policy?.sees ?? [])
+    .map((sight) => ({ ...sight, kinds: sight.kinds.filter((kind) => declared.has(kind)) }))
+    .filter((sight) => sight.kinds.length > 0);
+  const policy: Policy | undefined =
+    roles.length > 0 || grants.length > 0 ? { grants, ...(roles.length > 0 ? { roles } : {}), ...(sees.length > 0 ? { sees } : {}) } : undefined;
 
   /*
    * A LENS'S BINDINGS FOLLOW THE KINDS THEY NAME — and let go of the ones

@@ -173,6 +173,28 @@ export function humaniseField(field: string): string {
  * so `plannedAt` never reaches a person from one surface while another says
  * "Planned at".
  */
+/**
+ * One of a field's values, as the declaration says it: its `display.format`
+ * where it has one ("SUV", "Plug-in hybrid"), else the value spoken. A
+ * filter that offered "suv" and "plug-in-hybrid" beside a record that said
+ * "SUV" and "Plug-in hybrid" read one field two ways.
+ */
+export function valueWords(definition: AnyNodeDefinition | undefined, key: string, value: unknown): string {
+  const format = definition?.display?.format?.[key];
+  return format ? format(value) : typeof value === "string" ? humaniseField(value) : String(value);
+}
+
+/**
+ * HOW MANY OF A KIND, in its words: "1 car", "3 cars", "1 test drive" —
+ * the noun for one, the plural for the rest. Sentences that took the kind's
+ * id for one ("1 vehicle", "1 test-drive") said the declaration's
+ * identifier wherever a count came to one.
+ */
+export function counted(schema: { tryDefinition(kind: string): { readonly noun?: string; readonly plural?: string } | undefined }, kind: string, count: number): string {
+  const definition = schema.tryDefinition(kind);
+  return `${count} ${count === 1 ? nounOf(definition, kind) : (definition?.plural ?? `${kind}s`).toLowerCase()}`;
+}
+
 export function fieldWords(definition: { readonly display?: { readonly labels?: Readonly<Record<string, string>> } } | undefined, key: string): string {
   return definition?.display?.labels?.[key] ?? humaniseField(key);
 }
@@ -248,6 +270,7 @@ export function readableFields(
   node: Record<string, unknown>,
   definition: AnyNodeDefinition | undefined,
   options: {
+    /** How many a GLANCE shows. Unset, every field: a record is read whole (W-156). */
     readonly limit?: number;
     readonly said?: readonly (string | undefined)[];
     /**
@@ -269,7 +292,12 @@ export function readableFields(
     .filter((stem) => stem.length > 12);
 
   const fields: ReadableField[] = [];
-  for (const [key, value] of Object.entries(node)) {
+  // A glance says what the declaration chose for it first, in its order (`display.glance`).
+  const chosen = options.glance ? (display?.glance ?? []) : [];
+  const entries = chosen.length > 0
+    ? [...chosen.filter((key) => key in node).map((key) => [key, node[key]] as const), ...Object.entries(node).filter(([key]) => !chosen.includes(key))]
+    : Object.entries(node);
+  for (const [key, value] of entries) {
     if (skip.has(key) || value === undefined || value === null) continue;
     const format = display?.format?.[key];
     /*
@@ -310,7 +338,7 @@ export function readableFields(
     const alone =
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" ? `${label}: ${text.toLowerCase()}` : text;
     fields.push({ key, label, value: text, alone });
-    if (fields.length >= (options.limit ?? 10)) break;
+    if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;
 }

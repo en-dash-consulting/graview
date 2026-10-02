@@ -10,7 +10,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { search, touchWeights } from "@graview/core";
+import { search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights } from "@graview/core";
 import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools";
 import { honourSetting, loadSetting, rememberSetting } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
@@ -22,6 +22,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -376,8 +377,37 @@ export interface GraviewProviderProps<S extends AnySchema> {
  * affordance surface are looking at the same thing — an action offered for a
  * selection the scene no longer has is the bug this prevents.
  */
+/**
+ * A watching harness is told what this seat may not see, and told again as
+ * the graph changes, so every screen can be held to it (`scripts/lib/watch.mjs`,
+ * "shown-what-is-not-theirs"). Outside a harness this is one property read.
+ */
+export function useTheWatchKnowsWhatIsUnseen<S extends AnySchema>(store: Store<S>, principal: Principal | undefined): void {
+  const from = useId();
+  useEffect(() => {
+    if (!(globalThis as { __graviewWatch?: unknown }).__graviewWatch) return;
+    const seat = principal ?? ANONYMOUS;
+    const tell = () => {
+      tellTheWatchWhatIsUnseen(store as never, seat, from);
+      tellTheWatchItsAuthors(store as never);
+    };
+    tell();
+    let soon: ReturnType<typeof setTimeout> | undefined;
+    const off = store.subscribe(() => {
+      clearTimeout(soon);
+      soon = setTimeout(tell, 250);
+    });
+    return () => {
+      clearTimeout(soon);
+      off();
+      // This surface is gone: what it could not see no longer counts.
+      (globalThis as { __graviewWatch?: { unseen?(said: { words: readonly string[]; from: string; gone: true }): void } }).__graviewWatch?.unseen?.({ words: [], from, gone: true });
+    };
+  }, [store, principal, from]);
+}
+
 export function GraviewProvider<S extends AnySchema>({
-  store,
+  store: given,
   views,
   initialView,
   scheme = "dark",
@@ -393,6 +423,17 @@ export function GraviewProvider<S extends AnySchema>({
   onViewChange,
   children,
 }: GraviewProviderProps<S>) {
+  /* Who is at the keyboard: see "WHO IS AT THE KEYBOARD" below. */
+  const [seated, setSeated] = useState<Principal | null>(null);
+  const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
+  /*
+   * WHAT THEY MAY SEE. Every surface under this provider reads the store it
+   * hands out, and that store holds only what the policy's `sees` lets the
+   * seat see — a stranger at a storefront is not shown the customers. Acts
+   * still go to the store itself. With no `sees` it is the store, unchanged.
+   */
+  const store = useMemo(() => given.seenBy(seatNow), [given, seatNow]);
+  useTheWatchKnowsWhatIsUnseen(given, seatNow);
   /* This tab, for the life of the tab: see `tabSession`. */
   const [session] = useState(() => tabSession());
   const [intelligence, setIntelligence] = useState<IntelligenceConfig>(() => loadIntelligenceConfig());
@@ -494,8 +535,6 @@ export function GraviewProvider<S extends AnySchema>({
    * the withheld sentence, "Show the installation", the pages, the agent's
    * tools) re-derives from one principal rather than each reading its own.
    */
-  const [seated, setSeated] = useState<Principal | null>(null);
-  const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
   // With this tab's session on it, so every op this seat authors names the tab that made it.
   const who = useMemo<Principal>(() => ({ ...seatNow, session }), [seatNow, session]);
   const takeSeat = useCallback(

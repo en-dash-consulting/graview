@@ -1,4 +1,4 @@
-import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
+import { labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react";
 import { Chip } from "./primitives/index.js";
 import { hueFor } from "./default-views.js";
@@ -86,7 +86,7 @@ export function Connections({ id, max = 8, empty }: ConnectionsProps) {
                     key={neighbourId}
                     pickId={neighbourId}
                     hue={hueFor(node.kind)}
-                    title={`Go to ${node.kind}`}
+                    title={`Go to the ${nounOf(store.schema.tryDefinition(node.kind), node.kind)}`}
                     label={labelOf(store.schema.tryDefinition(node.kind), node)}
                   />
                 );

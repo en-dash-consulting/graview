@@ -1,5 +1,8 @@
 import {
   formFields,
+  argumentWords,
+  failureWords,
+  formArgs,
   humaniseField,
   nounOf,
   labelOf,
@@ -100,6 +103,9 @@ function Picker({ children }: { children: React.ReactNode }) {
   );
 }
 
+type Words = (name: string) => { readonly label: string; readonly option: (value: string) => string };
+const plainWords: Words = (name) => ({ label: humaniseField(name), option: (value) => value });
+
 function Control<S extends AnySchema>({
   store,
   spec,
@@ -107,6 +113,7 @@ function Control<S extends AnySchema>({
   onChange,
   prefilled,
   open,
+  words = plainWords,
 }: {
   store: Store<S>;
   spec: FormField;
@@ -114,6 +121,8 @@ function Control<S extends AnySchema>({
   onChange: (next: unknown) => void;
   prefilled: Readonly<Record<string, unknown>>;
   open: readonly OpenParameter[];
+  /** The record's own words for an argument that fills one of its fields (see `argumentWords`). */
+  words?: Words;
 }): ReactNode {
   // An argument the caller already answered — a subject id, a repair's own
   // args — is stated, not asked again.
@@ -128,7 +137,7 @@ function Control<S extends AnySchema>({
   const named =
     spec.control === "node" && !spec.kinds.includes("*")
       ? spec.kinds.map((kind) => humaniseField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
-      : humaniseField(spec.name);
+      : words(spec.name).label;
   const title = named + (spec.optional ? "" : " *");
 
   switch (spec.control) {
@@ -192,7 +201,7 @@ function Control<S extends AnySchema>({
               <option value="">—</option>
               {(spec.options ?? []).map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {words(spec.name).option(option)}
                 </option>
               ))}
             </select>
@@ -273,6 +282,7 @@ function Control<S extends AnySchema>({
               onChange={(next) => onChange({ ...held, [child.name]: next })}
               prefilled={prefilled}
               open={open}
+              words={words}
             />
           ))}
         </fieldset>
@@ -309,6 +319,7 @@ function Control<S extends AnySchema>({
               onChange={(next) => onChange({ ...held, [child.name]: next })}
               prefilled={prefilled}
               open={open}
+              words={words}
             />
           ))}
         </fieldset>
@@ -329,6 +340,7 @@ function Control<S extends AnySchema>({
                   onChange={(next) => onChange(items.map((held, at) => (at === index ? next : held)))}
                   prefilled={prefilled}
                   open={open}
+                  words={words}
                 />
               </div>
               <button type="button" onClick={() => onChange(items.filter((_, at) => at !== index))}>
@@ -416,6 +428,7 @@ export function DerivedForm<S extends AnySchema>({
   const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...initial }));
   const [failed, setFailed] = useState<string | null>(null);
   const fields = formFields(mutation.input).filter((spec) => only === undefined || only.includes(spec.name));
+  const words: Words = (name) => argumentWords(store.schema, mutation, name);
 
   return (
     <form
@@ -423,13 +436,13 @@ export function DerivedForm<S extends AnySchema>({
       onSubmit={(event) => {
         event.preventDefault();
         try {
-          store.apply({ name: mutation.name, args: { ...values, ...prefilled } }, principal ? { author: principal } : {});
+          store.apply({ name: mutation.name, args: { ...formArgs(fields, values), ...prefilled } }, principal ? { author: principal } : {});
           setFailed(null);
           setValues({});
           onDone?.();
         } catch (error) {
           // A refusal is a result, on a page exactly as in the strip.
-          setFailed(error instanceof Error ? error.message : String(error));
+          setFailed(failureWords(store.schema, store.allMutations(), error));
         }
       }}
       // A form is a grid item of the section above it and a grid container
@@ -447,6 +460,7 @@ export function DerivedForm<S extends AnySchema>({
           onChange={(next) => setValues((current) => ({ ...current, [spec.name]: next }))}
           prefilled={prefilled}
           open={open}
+          words={words}
         />
       ))}
       {failed ? (

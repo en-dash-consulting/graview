@@ -1,0 +1,31 @@
+{
+  "id": "dee82671-de94-4505-8792-605b08d271b3",
+  "taskId": "76f13b53-f901-4a1a-8a05-59891b839cb8",
+  "taskTitle": "Walkthrough VII \u00b7 The seventh walk, from a fresh checkout, adds nothing",
+  "startedAt": "2026-10-02T09:14:46.470Z",
+  "finishedAt": "2026-10-02T09:14:46.470Z",
+  "status": "failed",
+  "turns": 107,
+  "summary": "Seventh walk (dealership public face, ../walk7): 22 findings W-154..W-175, two new classes; review fixed the seat-switcher watch false positive and the gauntlet visitor; full chain, site and 1781 tests hold",
+  "tokenUsage": {
+    "input": 214,
+    "output": 56148,
+    "cacheCreationInput": 327001,
+    "cacheReadInput": 9119043
+  },
+  "toolCalls": [],
+  "model": "claude-opus-5-5",
+  "invocationContext": "api",
+  "assisted": true,
+  "actor": "Nick Daniel <nick@endash.us>",
+  "host": "redacted",
+  "ndxVersion": "0.7.2",
+  "cliPath": "n-dx/packages/core/cli.js",
+  "tokens": {
+    "input": 214,
+    "output": 56148,
+    "cached": 9446044,
+    "total": 9502406,
+    "cachedProvenance": "unavailable"
+  }
+}

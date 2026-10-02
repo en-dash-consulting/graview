@@ -43,6 +43,16 @@ describe("what a project starts with passes its own checks", () => {
     expect(pages).toContain("isCurrent(store.schema.tryDefinition(node.kind), node)");
   });
 
+  it("says what a record is from the declaration, so a noun declared later is the word it uses (W-167)", () => {
+    // Scaffolded as "vehicle" and declared `noun: "car"` a day later, the
+    // seventh walk's showroom headed every car "A VEHICLE IN HARBOURLINE
+    // MOTORS" — a word typed into the page when the project was made.
+    const pages = scaffoldProject({ name: "Harbourline Motors", kind: "vehicle", plural: "vehicles" }).files.find((f) => f.path === "src/ui/pages.tsx")!.contents;
+    expect(pages).toContain("withArticle(nounOf(store.schema.tryDefinition(node.kind), node.kind))");
+    expect(pages).not.toMatch(/eyebrow\}>A vehicle/);
+    expect(pages).not.toContain('"Current."');
+  });
+
   it("submits a tie under the words its heading uses, from this end (W-100)", () => {
     expect(file("Field Notes", "src/ui/pages.tsx")).toMatch(/<DerivedForm<S>[^>]*label=\{affordance\.label\}/);
   });

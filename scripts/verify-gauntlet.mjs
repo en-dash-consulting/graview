@@ -53,6 +53,13 @@ const WIDTHS = [1440, 390];
 /** The seats whose role grants an act on a talk; the volunteer and the visitor have none. */
 const MAY_ACT_ON_A_TALK = ["chair", "reviewer", "agent"];
 const SCHEMES = QUICK ? ["light"] : ["light", "dark"];
+/*
+ * Who is on staff is the programme's own people's to see
+ * (apps/gauntlet/src/domain/policy.ts, `sees`): the visitor, with no role,
+ * is shown six districts, and a staff member is kept from it on both faces.
+ */
+const MAY_SEE_STAFF = ["chair", "reviewer", "volunteer", "agent"];
+const seesStaff = (seat) => MAY_SEE_STAFF.includes(ALL_SEATS.find((one) => one.id === seat)?.who);
 
 /*
  * Records chosen for their shape, by the ids the seed generator mints
@@ -170,7 +177,8 @@ async function landings(browser) {
         const scene = { face: "scene", width, scheme, seat };
         await reach(page, scene, "the city from altitude", async () => {
           await open(page, "/", { scheme, seat, hash: "#overview=1" });
-          return { reached: (await count(page, '[data-graview-view^="kind:"]')) === 7, detail: await count(page, '[data-graview-view^="kind:"]') };
+          const districts = await count(page, '[data-graview-view^="kind:"]');
+          return { reached: districts === (seesStaff(seat) ? 7 : 6), detail: districts };
         });
         const pages = { face: "pages", width, scheme, seat };
         await reach(page, pages, "the pages' home", async () => {
@@ -223,12 +231,23 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     ["a speaker named in Han script focused", RECORDS.nonLatin],
     ["a speaker with a seventy-character name focused", RECORDS.longSpeaker],
     ["a room with no label field focused", RECORDS.room],
-    ["one of two staff members of one name focused", RECORDS.staff],
     ["a workshop over its room's seats focused", RECORDS.workshop],
   ]) {
     await reach(page, where, label, async () => {
       await go(page, focusHash(id), 2000);
       return { reached: await has(page, `[data-graview-view="${id}"]`), detail: await page.evaluate(() => location.hash) };
+    });
+  }
+
+  if (seesStaff(seat)) {
+    await reach(page, where, "one of two staff members of one name focused", async () => {
+      await go(page, focusHash(RECORDS.staff), 2000);
+      return { reached: await has(page, `[data-graview-view="${RECORDS.staff}"]`), detail: await page.evaluate(() => location.hash) };
+    });
+  } else {
+    await reach(page, where, "a staff member kept from a seat that may not see them", async () => {
+      await go(page, focusHash(RECORDS.staff), 2000);
+      return { reached: !(await has(page, `[data-graview-view="${RECORDS.staff}"]`)), detail: await page.evaluate(() => location.hash) };
     });
   }
 
@@ -427,7 +446,12 @@ async function pagesWalk(browser, { width, scheme, seat, who }) {
   await visit("the talks, every one of two thousand", "/pages/talks", '[data-testid="records"]');
   await visit("the talks, the past widened", "/pages/talks?filter=is%3Aany", '[data-testid="records"]');
   await visit("the speakers", "/pages/speakers", '[data-testid="records"]');
-  await visit("the staff, a mass noun", "/pages/staff", '[data-testid="records"]');
+  if (seesStaff(seat)) await visit("the staff, a mass noun", "/pages/staff", '[data-testid="records"] [href*="/pages/staff/"]');
+  else
+    await reach(page, where, "the staff kept from a seat that may not see them", async () => {
+      await open(page, "/pages/staff", { scheme, seat });
+      return { reached: !(await has(page, '[href*="/pages/staff/"]')), detail: await page.evaluate(() => document.title) };
+    });
   await visit("a talk with a long, shared-prefix title", pagePath("talks", RECORDS.longTalk), '[data-testid="record-fields"]');
   await visit("one of ten Opening Remarks", pagePath("talks", RECORDS.openingRemarks), '[data-testid="record-fields"]');
   await visit("one of three Wei Zhangs", pagePath("speakers", RECORDS.weiZhang), '[data-testid="record-fields"]');
@@ -547,6 +571,10 @@ report.checks = {
     reached("the timetable over all ten editions") &&
     reached("the workshops' timetable, the calendar's second kind") &&
     reached("the timetable's place"),
+  // What a seat may not see is not reached: the visitor is kept from the staff on both faces.
+  whatASeatMayNotSeeIsKeptFromIt:
+    !SEATS.some((seat) => !seesStaff(seat.id)) ||
+    (reached("a staff member kept from a seat that may not see them") && reached("the staff kept from a seat that may not see them")),
   // Find and search answer a name ten records share, and one in another script.
   findingReachesAwkwardNames:
     reached("the Find box asked for a name ten records share") &&

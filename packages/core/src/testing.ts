@@ -42,6 +42,12 @@ export interface AwkwardOptions {
   readonly unreachable?: boolean;
   /** Plural length. Long ones are what a district row actually has to hold. */
   readonly plurals?: "short" | "long";
+  /**
+   * How many fields each kind carries, its name among them. The examples'
+   * records have two to five; a car for sale has sixteen, and a record page
+   * that stopped at ten dropped its price without a word.
+   */
+  readonly fields?: number;
 }
 
 /* Plurals of the length a real domain has. The district row breaks on these
@@ -98,9 +104,11 @@ export function awkwardApp(options: AwkwardOptions = {}): GraviewApp {
   const installation = declareInstallation({ roles: ["keeper", "helper"], admin: "keeper", required: true });
 
   const names = Array.from({ length: count }, (_, index) => named(index, plurals));
+  // Past the name, each a fact of its own: "detail-1", "detail-2", …
+  const details = Object.fromEntries(Array.from({ length: Math.max(0, (options.fields ?? 1) - 1) }, (_, index) => [`detail${index + 1}`, z.string()]));
   const definitions = names.map(({ kind, plural }, index) =>
     defineNode(kind, {
-      fields: z.object({ label: z.string() }),
+      fields: z.object({ label: z.string(), ...details }),
       plural,
       ...(index === 0 && people
         ? {

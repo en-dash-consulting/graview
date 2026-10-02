@@ -1,4 +1,4 @@
-import { humaniseField, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { failureWords, humaniseField, InvalidArguments, nounOf, withArticle, type AnySchema } from "@graview/core";
 import { useSubject } from "../companion.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout";
 import { useAffordances, useApplyAffordance, useGraview, useSelection } from "@graview/react";
@@ -197,15 +197,19 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    */
   const [failed, setFailed] = useState<string | null>(null);
 
+  /** The arguments the last refusal named, so an ask can go back to them. */
+  const refusedArgs = useRef<readonly string[]>([]);
   const act = (affordance: Affordance, args?: Record<string, unknown>): boolean => {
     try {
       preview(affordance, args);
       apply(affordance, args);
       setFailed(null);
       setMenuAt(null);
+      refusedArgs.current = [];
       return true;
     } catch (error) {
-      setFailed(error instanceof Error ? error.message : String(error));
+      setFailed(failureWords(store.schema, store.allMutations(), error));
+      refusedArgs.current = error instanceof InvalidArguments ? error.issues.map((issue) => String(issue.path[0] ?? "")).filter(Boolean) : [];
       return false;
     }
   };
@@ -1137,6 +1141,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
           // a rejected answer can be corrected rather than retyped blind.
           onApply={(args) => {
             if (act(open, args)) setPending(null);
+            else return refusedArgs.current;
           }}
           onCancel={() => setPending(null)}
         />

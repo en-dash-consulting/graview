@@ -97,6 +97,10 @@ function watchInPage() {
   /* The declaration's names, learned from every store in the page. */
   const ids = new Set();
   const words = [];
+  const unsaid = new Set();
+  /* What the seat at the keyboard may not see: names and addresses of records the policy keeps from it. */
+  let unseen = null;
+  const unseenBy = new Map();
   let pattern = null;
   const rebuild = () => {
     const spoken = ` ${words.join(" | ").toLowerCase()} `;
@@ -111,30 +115,81 @@ function watchInPage() {
 
   /* Text a person sees or hears, scanned when the page goes quiet. */
   const SILENT = "script,style,code,pre,kbd,samp,textarea,template,[aria-hidden='true'],[hidden],[data-graview-speaks-ids]";
+  /*
+   * SEEN, THOUGH NOT SPOKEN. Text a screen reader is told to skip is still
+   * text a person reads: the kind tag on a focused card is aria-hidden and
+   * said "vehicle" — and "test-drive" — on every record the seventh walk
+   * opened. Shown text is judged whether or not it is spoken.
+   */
+  const UNSHOWN = "script,style,code,pre,kbd,samp,textarea,template,[hidden],[data-graview-speaks-ids]";
   const visible = (el) => (typeof el.checkVisibility === "function" ? el.checkVisibility() : el.getClientRects().length > 0);
   let queued = false;
+  /*
+   * NO SIDEWAYS SCROLL. A page wider than its window at a phone's width or
+   * a reader's text size: the class's own check, judged on every state
+   * every harness reaches rather than on the routes one harness measured
+   * (W-151 on search, W-175 on a list, one component apart).
+   */
+  const sideways = () => {
+    const root = document.documentElement;
+    if (!root || !document.body) return;
+    const over = root.scrollWidth - root.clientWidth;
+    if (over <= 1) return;
+    const widest = [...document.body.querySelectorAll("*")]
+      .filter((el) => el.getBoundingClientRect().right > root.clientWidth + 1 && !el.closest("[data-graview-scrolls]"))
+      .pop();
+    report("breaks-at-width", `the page scrolls sideways by ${over}px at ${root.clientWidth} wide (text ${getComputedStyle(root).fontSize})${widest ? `, reached by ${describe(widest)}` : ""}`, `${location.pathname}|${root.clientWidth}|${getComputedStyle(root).fontSize}`);
+  };
   const scan = () => {
     queued = false;
-    if (!pattern || !document.body) return;
+    sideways();
+    if ((!pattern && unsaid.size === 0 && !unseen) || !document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const work = (deadline) => {
       let node;
       while ((node = walker.nextNode())) {
         const text = node.nodeValue;
-        if (text && text.length > 2) {
+        if (unseen && text && text.length > 4) {
+          const hit = unseen.exec(text);
+          const el = node.parentElement;
+          /*
+           * A SEAT IS NOT A RECORD. The seat switcher names the people the
+           * host declared one may sit as — offering "sit down as Aiyana" is
+           * the control's whole job, and reads nothing of hers from the store.
+           */
+          if (hit && el && !el.closest('script,style,template,[hidden],[role="group"][aria-label="Seat"]') && visible(el)) {
+            report("shown-what-is-not-theirs", `"${hit[1]}" — a record this seat may not see — is shown in ${describe(el)}`, `${hit[1]}|${describe(el)}`);
+          }
+        }
+        if (pattern && text && text.length > 2) {
           const hit = pattern.exec(text);
           const el = node.parentElement;
-          if (hit && el && !el.closest(SILENT) && visible(el)) {
+          if (hit && el && !el.closest(UNSHOWN) && visible(el)) {
             report("machine-words-shown", `"${hit[1]}" is shown as text in ${describe(el)}`, `${hit[1]}|${describe(el)}`);
           }
         }
         if (deadline && deadline.timeRemaining() < 2) return requestIdleCallback(work);
       }
+      /*
+       * A KEY'S OWN WORDS, WHOLE. A field the kind calls "VIN" asked for as
+       * "Vin", a picker offering "suv" where the record says "SUV": single
+       * words pass for prose inside a sentence, so they are caught only
+       * where they are all an element says (a label, an option, a tag).
+       */
+      if (unsaid.size > 0) {
+        for (const el of document.body.querySelectorAll("*")) {
+          if (el.closest(UNSHOWN)) continue;
+          const own = [...el.childNodes].filter((child) => child.nodeType === 3).map((child) => child.nodeValue).join("").replace(/\s*\*\s*$/, "").trim();
+          if (own && unsaid.has(own) && (el.tagName === "OPTION" || visible(el))) {
+            report("machine-words-shown", `"${own}" is shown in the key's words in ${describe(el)}, where the declaration says it otherwise`, `${own}|${describe(el)}`);
+          }
+        }
+      }
       for (const el of document.querySelectorAll("[aria-label],[title],[placeholder],img[alt]")) {
         if (el.closest(SILENT)) continue;
         for (const attr of ["aria-label", "title", "placeholder", "alt"]) {
           const value = el.getAttribute(attr);
-          const hit = value && pattern.exec(value);
+          const hit = value && pattern && pattern.exec(value);
           if (hit) report("machine-words-shown", `"${hit[1]}" is read out in ${attr} of ${describe(el)}`, `${hit[1]}|${attr}|${describe(el)}`);
         }
       }
@@ -149,10 +204,24 @@ function watchInPage() {
   };
 
   window.__graviewWatch = {
-    learn({ ids: learned, words: said }) {
+    learn({ ids: learned, words: said, unsaid: plain = [] }) {
       for (const id of learned) ids.add(id);
+      for (const word of plain) unsaid.add(word);
       words.push(...said);
       rebuild();
+      schedule();
+    },
+    unseen({ words: told, from = "page", gone = false }) {
+      /*
+       * Per surface, and only what NO surface on the page may see: two embeds
+       * can sit two seats down, and what one may see the other may show.
+       */
+      if (gone) unseenBy.delete(from);
+      else unseenBy.set(from, new Set(told));
+      const sets = [...unseenBy.values()];
+      const kept = sets.length === 0 ? [] : [...sets[0]].filter((word) => sets.every((set) => set.has(word)));
+      const escaped = kept.filter((word) => word.length >= 5).sort((a, b) => b.length - a.length).map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+      unseen = escaped.length ? new RegExp(`(?<![\\p{L}\\p{N}])(${escaped.join("|")})(?![\\p{L}\\p{N}])`, "u") : null;
       schedule();
     },
     refused(refusal) {
@@ -207,6 +276,9 @@ function watchInPage() {
   );
   const observe = () => {
     new MutationObserver(schedule).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["aria-label", "title", "placeholder", "hidden"] });
+    // A reader's text size and a window's width change the page without touching the body.
+    new MutationObserver(schedule).observe(document.documentElement, { attributes: true, attributeFilter: ["style", "class", "data-graview-text-size"] });
+    window.addEventListener("resize", schedule);
     schedule();
   };
   if (document.body) observe();
