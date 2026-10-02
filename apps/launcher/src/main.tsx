@@ -21,6 +21,7 @@ import {
   useUrlSync,
 } from "@graview/react";
 import { createInAppAdapter, createToolRuntime, type ToolCall } from "@graview/tools";
+import { seedbedBrand } from "@graview/seedbed";
 import { SeedbedApp } from "@graview/seedbed/ui";
 import { TodoApp } from "@graview/todo/ui";
 import { open as openTodo } from "@graview/todo/open";
@@ -54,7 +55,8 @@ const HOME: ViewState = { ...EMPTY_VIEW, focusId: MATRIX };
 
 const MOUNTS: Record<string, (props: Record<string, unknown>) => ReactElement> = {
   todo: TodoApp,
-  seedbed: SeedbedApp,
+  // Seedbed's brand is its main.tsx's to pass (a chapter before the brand exists passes none); in place, it is the whole garden's.
+  seedbed: (props) => <SeedbedApp {...props} brand={seedbedBrand} />,
   rota: RotaApp,
 };
 
@@ -241,6 +243,8 @@ function Desk({
         {/* Both, always: the overview lays the scene down rather than
             replacing it, so you can see where you were. */}
         <Scene renderer="dom" />
+        {/* The altitude control is the picture's, in its corner — not the bar's, where it sat on the seat. */}
+        <OverviewButton />
         {/* What the lines mean, up where the lines are the content. */}
         <RelationKey<S> />
         <Inspector />
@@ -295,7 +299,6 @@ function CommandBar({
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
         <Standing clean="Every capability is earned" />
         <ActivityRail calls={calls} />
-        <OverviewButton />
         <AuditButton onCall={onCall} />
         {APPS.map((entry) => (
           <button
