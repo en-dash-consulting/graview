@@ -1,10 +1,25 @@
 {
-  "at": "2026-10-02T09:13:31.030Z",
+  "at": "2026-10-02T18:06:45.540Z",
   "results": [
+    {
+      "name": "shrunk",
+      "code": 0,
+      "took": 15
+    },
+    {
+      "name": "menu",
+      "code": 0,
+      "took": 12
+    },
+    {
+      "name": "navigation",
+      "code": 0,
+      "took": 57
+    },
     {
       "name": "site",
       "code": 0,
-      "took": 403
+      "took": 406
     }
   ]
 }
