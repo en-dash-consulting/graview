@@ -1,7 +1,9 @@
 import {
   arrange,
   describeNode,
+  humaniseField,
   labelOf,
+  nounOf,
   readableFields,
   type AnySchema,
   type KindOfSchema,
@@ -349,7 +351,7 @@ export function registerDefaultViews<S extends AnySchema>(
             />
             <Connections
               id={node.id}
-              empty={`Nothing is connected to this ${String(kind)} yet.`}
+              empty={`Nothing is connected to this ${nounOf(definition, String(kind))} yet.`}
             />
           </div>
           {touching.length > 0 ? (
@@ -421,7 +423,7 @@ export function registerDefaultViews<S extends AnySchema>(
           label={broken ? `${labelOf(definition, node)} ${flag}` : labelOf(definition, node)}
           hue={hue}
           selected={props.selected}
-          title={broken ? `${String(kind)} — implicated in a problem` : String(kind)}
+          title={broken ? `${humaniseField(nounOf(definition, String(kind)))} — implicated in a problem` : humaniseField(nounOf(definition, String(kind)))}
         />
       );
     };

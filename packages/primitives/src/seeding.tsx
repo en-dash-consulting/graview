@@ -1,4 +1,4 @@
-import { beginning, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
+import { beginning, nounOf, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
 import { kindCardId } from "@graview/layout";
 import {
   createViews,
@@ -509,7 +509,7 @@ function PlanReviewInside<S extends AnySchema>({
   const makes = Object.entries(kept.makes)
     .map(
       ([kind, count]) =>
-        `${count} ${count === 1 ? kind : (store.schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase()}`,
+        `${count} ${count === 1 ? nounOf(store.schema.tryDefinition(kind), kind) : (store.schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase()}`,
     )
     .join(", ");
   /*
