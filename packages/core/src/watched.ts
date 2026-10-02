@@ -14,10 +14,12 @@
  */
 import type { Policy, Refusal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
-import { humaniseField } from "./schema/define-node.js";
+import { humaniseField, labelOf } from "./schema/define-node.js";
+import type { Principal } from "./permissions/types.js";
 
 interface Watch {
   store?(store: unknown): void;
+  unseen?(said: { readonly words: readonly string[] }): void;
   learn?(names: { readonly ids: readonly string[]; readonly words: readonly string[]; readonly unsaid?: readonly string[] }): void;
   refused?(refusal: Refusal & { readonly author?: string }): void;
 }
@@ -82,7 +84,8 @@ export function tellTheWatchItsNames(
       const format = definition.display?.format?.[key];
       const entries = field?.def?.entries;
       if (!format && !definition.display?.labels?.[key]) declared.add(humaniseField(key));
-      if (format && entries && typeof entries === "object") for (const value of Object.values(entries)) declared.add(format(value));
+      // A value is said by its format, or spoken plainly where there is none ("Given", a talk's state).
+      if (entries && typeof entries === "object") for (const value of Object.values(entries)) declared.add(format ? format(value) : humaniseField(String(value)));
     }
   }
   watch.learn({ ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word)) });
@@ -107,4 +110,31 @@ export function tellTheWatchOfAnAuthor(id: string | undefined): void {
 /** A press reached the store and the policy refused it. */
 export function tellTheWatchOfARefusal(refusal: Refusal, author: string | undefined): void {
   theWatch()?.refused?.({ ...refusal, ...(author === undefined ? {} : { author }) });
+}
+
+/**
+ * WHAT THIS SEAT MAY NOT SEE, for a watching harness to hold every screen
+ * to: the names (and email addresses) of the records the policy's `sees`
+ * keeps from it, less any a record it may see shares. A storefront showed
+ * a stranger every customer by name; the watch says so wherever one is.
+ */
+export function tellTheWatchWhatIsUnseen(
+  store: {
+    readonly policy?: { readonly sees?: readonly unknown[] };
+    readonly graph: { allNodes(): readonly ({ id: string; kind: string } & Record<string, unknown>)[] };
+    readonly schema: AnySchema;
+    sees(principal: Principal, id: string): boolean;
+  },
+  principal: Principal,
+): void {
+  const watch = theWatch();
+  if (!watch?.unseen || !store.policy?.sees?.length) return;
+  const unseen = new Set<string>();
+  const seen = new Set<string>();
+  for (const node of store.graph.allNodes()) {
+    const definition = store.schema.tryDefinition(node.kind);
+    const said = [labelOf(definition, node), ...Object.values(node).filter((value): value is string => typeof value === "string" && /^[^\s@]+@[^\s@]+$/.test(value))];
+    for (const word of said) (store.sees(principal, node.id) ? seen : unseen).add(word);
+  }
+  watch.unseen({ words: [...unseen].filter((word) => word.length >= 5 && !seen.has(word)) });
 }

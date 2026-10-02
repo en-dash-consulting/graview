@@ -98,6 +98,8 @@ function watchInPage() {
   const ids = new Set();
   const words = [];
   const unsaid = new Set();
+  /* What the seat at the keyboard may not see: names and addresses of records the policy keeps from it. */
+  let unseen = null;
   let pattern = null;
   const rebuild = () => {
     const spoken = ` ${words.join(" | ").toLowerCase()} `;
@@ -116,12 +118,19 @@ function watchInPage() {
   let queued = false;
   const scan = () => {
     queued = false;
-    if ((!pattern && unsaid.size === 0) || !document.body) return;
+    if ((!pattern && unsaid.size === 0 && !unseen) || !document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const work = (deadline) => {
       let node;
       while ((node = walker.nextNode())) {
         const text = node.nodeValue;
+        if (unseen && text && text.length > 4) {
+          const hit = unseen.exec(text);
+          const el = node.parentElement;
+          if (hit && el && !el.closest("script,style,template,[hidden]") && visible(el)) {
+            report("shown-what-is-not-theirs", `"${hit[1]}" — a record this seat may not see — is shown in ${describe(el)}`, `${hit[1]}|${describe(el)}`);
+          }
+        }
         if (pattern && text && text.length > 2) {
           const hit = pattern.exec(text);
           const el = node.parentElement;
@@ -170,6 +179,11 @@ function watchInPage() {
       for (const word of plain) unsaid.add(word);
       words.push(...said);
       rebuild();
+      schedule();
+    },
+    unseen({ words: kept }) {
+      const escaped = kept.filter((word) => word.length >= 5).sort((a, b) => b.length - a.length).map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+      unseen = escaped.length ? new RegExp(`(?<![\\p{L}\\p{N}])(${escaped.join("|")})(?![\\p{L}\\p{N}])`, "u") : null;
       schedule();
     },
     refused(refusal) {

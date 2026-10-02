@@ -149,7 +149,12 @@ export function Begin<S extends AnySchema>(props: BeginProps<S> = {}) {
 function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", heading = frame ? 1 : undefined }: BeginProps<S>) {
   const { store, principal } = useGraview<S>();
   const nodes = useGraph();
-  const chain = useMemo(() => chainOf(store), [store]);
+  /* Without the kinds kept from this seat: a stranger is not told the store has no test drives. */
+  const chain = useMemo(() => {
+    const whole = chainOf(store);
+    const kept = store.kindsKeptFrom(principal);
+    return kept.size === 0 ? whole : { ...whole, order: whole.order.filter((entry) => !kept.has(entry.kind)) };
+  }, [store, principal]);
   const counts = useMemo(() => {
     const found: Record<string, number> = {};
     for (const entry of chain.order) found[entry.kind] = store.graph.nodesOfKind(entry.kind).length;

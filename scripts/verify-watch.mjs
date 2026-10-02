@@ -60,6 +60,13 @@ const plain = takeViolations().filter((v) => v.rule === "machine-words-shown").m
 checks.aKeysOwnWordsAreCaught = plain.some((d) => d.startsWith('"Vin" is shown')) && plain.some((d) => d.startsWith('"suv" is shown'));
 checks.aWordInASentenceIsNotAKey = plain.length === 2;
 
+/* shown-what-is-not-theirs: a customer the seat may not see, named on the page; a name it may see is not. */
+await show(`<main><h1>Cars</h1><p>Shortlisted by Freya Davies</p><p>Signed in as Bethan Okonkwo</p></main>`);
+await page.evaluate(() => window.__graviewWatch.unseen({ words: ["Freya Davies", "freya.davies1@mail.example"] }));
+await settle();
+const exposed = takeViolations().filter((v) => v.rule === "shown-what-is-not-theirs").map((v) => v.detail);
+checks.aRecordTheSeatMayNotSeeIsCaught = exposed.length === 1 && exposed[0].startsWith('"Freya Davies"');
+
 /* offered-then-refused: the store refused a press. */
 await show(`<main><button>Close the deal</button></main>`);
 await page.evaluate(() => window.__graviewWatch.refused({ mutation: "close-deal", kind: "deal", message: "Not permitted", author: "user-priya" }));

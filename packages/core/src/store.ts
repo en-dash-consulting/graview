@@ -1,3 +1,5 @@
+import { seenBy } from "./seen.js";
+import { sees, sightedKinds } from "./permissions/sight.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
@@ -363,12 +365,41 @@ export class Store<S extends AnySchema> {
     });
   }
 
+  /**
+   * The store as one principal may see it: its graph, log, history and
+   * problems hold only what the policy's `sees` lets them see, and every
+   * act still comes here. With no `sees`, this store itself (see `seen.ts`).
+   */
+  seenBy(principal: Principal): Store<S> {
+    return seenBy(this, principal);
+  }
+
+  /** Whether a principal may see one record (the policy's `sees`). */
+  sees(principal: Principal, id: string): boolean {
+    const node = this.graph.getNode(id);
+    return node !== undefined && sees(this.policy, principal, node as never, this.graph as never);
+  }
+
   /** The kinds of administered modules this principal may not see at all. */
   kindsKeptFrom(principal: Principal = HUMAN): ReadonlySet<string> {
     const kept = new Set<string>();
     for (const [name, module] of this.modules.administered) {
       if (this.mayAdminister(name, principal)) continue;
       for (const kind of module.kinds ?? []) kept.add(kind);
+    }
+    /*
+     * A KIND THE POLICY SAYS THIS SEAT SEES NONE OF, and may not begin: no
+     * district, no tab, no "none yet". Somebody browsing a showroom has no
+     * test drives to see and none to book, and a Test drives page that said
+     * "none yet — waiting for shoppers" was a page about other people.
+     */
+    const sights = this.policy?.sees ?? [];
+    if (sights.length > 0) {
+      const creatable = new Set(this.permittedMutations(principal).flatMap((mutation) => mutation.creates ?? []));
+      for (const kind of sightedKinds(this.policy)) {
+        const seeing = sights.some((sight) => sight.kinds.includes(kind) && (sight.roles === "*" || (principal.roles ?? []).some((role) => (sight.roles as readonly string[]).includes(role))) && (!sight.own || principal.id !== undefined));
+        if (!seeing && !creatable.has(kind)) kept.add(kind);
+      }
     }
     return kept;
   }

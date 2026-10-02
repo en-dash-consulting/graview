@@ -233,7 +233,10 @@ export { TEXT_PAIRS } from "./theme/types.js";
 export { checkKitContrast, connectorHueColour, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
 export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/kit.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
-export type { Grant, Policy, Principal, Refusal } from "./permissions/types.js";
+export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
+export { sees, sightedKinds } from "./permissions/sight.js";
+export { seenBy } from "./seen.js";
+export { tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Store — graph + log + mutations + invariants, one object.
 export { Store, violationKey } from "./store.js";

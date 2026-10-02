@@ -46,8 +46,30 @@ export interface Grant {
  * a store where nothing works, it is a store where permission is not a
  * concern yet. An app opts in by declaring one.
  */
+/**
+ * WHO MAY SEE WHAT. A grant says who may DO an act; a sight says who may
+ * see the records of a kind at all. A kind no sight names is seen by
+ * everyone — the opt-in a policy already is — and once one names it, a
+ * record of it is seen only by the roles a sight lists, and, with `own`,
+ * only when it is theirs: their own record, or one joined to it by an edge
+ * (a shopper's test drive, their enquiry, their trade-in).
+ */
+export interface Sight {
+  readonly roles: readonly string[] | "*";
+  readonly kinds: readonly string[];
+  /** Only the principal's own record, and what an edge joins to it. */
+  readonly own?: boolean;
+  readonly describe?: string;
+}
+
 export interface Policy {
   readonly grants: readonly Grant[];
+  /**
+   * Who may see the records of which kinds. Absent, everybody sees
+   * everything — a storefront that declares none shows every customer's
+   * name, email and finance question to whoever opens it.
+   */
+  readonly sees?: readonly Sight[];
   /**
    * Roles the policy knows about, so `graview check` can report a role that
    * may do nothing. Derived from the grants when absent.
