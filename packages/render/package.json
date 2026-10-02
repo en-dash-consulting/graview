@@ -32,7 +32,17 @@
   "devDependencies": {
     "zod": "^4.4.3"
   },
-  "description": "The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL \u2014 see README.",
+  "description": "The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "renderer",
+    "canvas",
+    "webgpu"
+  ],
   "files": [
     "dist",
     "README.md"
@@ -47,6 +57,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/render.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

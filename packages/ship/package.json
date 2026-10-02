@@ -32,6 +32,17 @@
     "zod": "^4.4.3"
   },
   "description": "What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "persistence",
+    "migrations",
+    "sqlite",
+    "server"
+  ],
   "files": [
     "dist",
     "README.md"
@@ -54,6 +65,10 @@
     }
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/ship.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

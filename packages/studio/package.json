@@ -3,6 +3,15 @@
   "version": "0.0.1",
   "type": "module",
   "description": "The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "schema-editor",
+    "visual-editor"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -42,6 +51,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/studio.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

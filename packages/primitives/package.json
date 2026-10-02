@@ -27,6 +27,17 @@
     "zod": "^4.4.3"
   },
   "description": "The primitive set, the three lenses, the workbench and the visual system.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "react",
+    "ui",
+    "components",
+    "lenses"
+  ],
   "files": [
     "dist",
     "README.md"
@@ -41,6 +52,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/primitives.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

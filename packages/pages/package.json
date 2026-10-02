@@ -28,6 +28,17 @@
     "zod": "^4.4.3"
   },
   "description": "The traditional face: a routed webapp derived from the same declaration that drives the scene.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "react",
+    "routing",
+    "pages",
+    "crud"
+  ],
   "files": [
     "dist",
     "README.md"
@@ -42,6 +53,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/pages.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

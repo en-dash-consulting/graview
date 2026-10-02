@@ -3,7 +3,20 @@
   "version": "0.0.1",
   "type": "module",
   "description": "The Graview command line: start a product, check its declaration, write its agent docs, serve its store, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "cli",
+    "scaffolder"
+  ],
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/graview.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {

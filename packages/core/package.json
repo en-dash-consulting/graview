@@ -41,6 +41,18 @@
     }
   },
   "description": "The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "schema",
+    "invariants",
+    "op-log",
+    "checker",
+    "zod"
+  ],
   "files": [
     "dist",
     "README.md"
@@ -55,6 +67,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/core.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

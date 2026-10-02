@@ -27,6 +27,15 @@
     "zod": "^4.4.3"
   },
   "description": "The React binding: a provider, a scene, and the hooks an app builds on.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "react",
+    "react-component"
+  ],
   "files": [
     "dist",
     "README.md"
@@ -41,6 +50,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/react.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

@@ -25,6 +25,18 @@
     "zod": "^4.4.3"
   },
   "description": "Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "agents",
+    "llm",
+    "tool-calling",
+    "mcp",
+    "affordances"
+  ],
   "files": [
     "dist",
     "README.md"
@@ -39,6 +51,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/tools.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

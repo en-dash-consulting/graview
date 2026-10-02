@@ -3,6 +3,16 @@
   "version": "0.0.1",
   "type": "module",
   "description": "Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "claude-code",
+    "agent-skills",
+    "ai-assistant"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -33,6 +43,10 @@
     "build": "tsc -b"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/skills.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

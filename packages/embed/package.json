@@ -2,7 +2,16 @@
   "name": "@graview/embed",
   "version": "0.0.1",
   "type": "module",
-  "description": "Mount a declared Graview app into any element \u2014 the scene, the Graview, or the routed pages \u2014 without the Shell, sized and themed within the element.",
+  "description": "Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "embed",
+    "widget"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -41,6 +50,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/embed.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

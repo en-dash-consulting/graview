@@ -20,6 +20,16 @@
     "zod": "^4.4.3"
   },
   "description": "Where every node goes: three planes, one pure function of the graph and the view state.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "layout",
+    "graph-layout",
+    "spatial"
+  ],
   "files": [
     "dist",
     "README.md"
@@ -34,6 +44,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/layout.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }

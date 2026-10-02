@@ -3,6 +3,17 @@
   "version": "0.0.1",
   "type": "module",
   "description": "Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "declarative",
+    "create",
+    "scaffold",
+    "starter",
+    "cli"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
@@ -34,6 +45,10 @@
     "access": "public"
   },
   "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/create-graview.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
   "engines": {
     "node": ">=22"
   }
