@@ -126,6 +126,8 @@ export function AnswerArgs({
    * outstanding one is answered.
    */
   const several = shape.type === "several";
+  /* Several of something typed rather than chosen: one field, its entries separated by commas. */
+  const listed = several && choices.length === 0;
 
   /*
    * THE ASK SAYS WHAT IT IS ASKING, IN WORDS.
@@ -281,6 +283,16 @@ export function AnswerArgs({
           style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
           onSubmit={(event) => {
             event.preventDefault();
+            /*
+             * SEVERAL WORDS, typed as one line: "Heated seats, Apple CarPlay"
+             * is two features, and nothing is none. A list of text asked as
+             * one field sent the line as a string, and the car could not be
+             * put on sale from the scene.
+             */
+            if (listed) {
+              answer(draft.split(/[,\n]/).map((one) => one.trim()).filter(Boolean));
+              return;
+            }
             if (draft.trim().length === 0) return;
             answer(shape.type === "number" ? Number(draft) : draft);
           }}
@@ -294,8 +306,9 @@ export function AnswerArgs({
              * them ("Depends on", "Label") and the scene asked with the raw
              * key, so the same act read two ways on the two faces.
              */
+            name={parameter.name}
             aria-label={words.label}
-            placeholder={words.label}
+            placeholder={listed ? `${words.label}, separated by commas` : words.label}
             value={draft}
             {...(shape.type === "number" && shape.min !== undefined ? { min: shape.min } : {})}
             {...(shape.type === "number" && shape.max !== undefined ? { max: shape.max } : {})}
@@ -315,7 +328,7 @@ export function AnswerArgs({
               color: "var(--graview-ink)",
             }}
           />
-          <button type="submit" disabled={draft.trim().length === 0} style={{ fontSize: "0.8125rem" }}>
+          <button type="submit" disabled={!listed && draft.trim().length === 0} style={{ fontSize: "0.8125rem" }}>
             {remaining.length > 1 ? "Next" : "Apply"}
           </button>
           {skip}
