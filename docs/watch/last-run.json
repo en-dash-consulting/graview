@@ -1,25 +1,10 @@
 {
-  "at": "2026-10-02T18:06:45.540Z",
+  "at": "2026-10-02T21:42:07.465Z",
   "results": [
     {
-      "name": "shrunk",
+      "name": "journeys",
       "code": 0,
-      "took": 15
-    },
-    {
-      "name": "menu",
-      "code": 0,
-      "took": 12
-    },
-    {
-      "name": "navigation",
-      "code": 0,
-      "took": 57
-    },
-    {
-      "name": "site",
-      "code": 0,
-      "took": 406
+      "took": 331
     }
   ]
 }
