@@ -1,4 +1,4 @@
-import { labelOf, violationsTouching, type AnySchema, type Principal, type Repair, type Store } from "@graview/core";
+import { failureWords, labelOf, violationsTouching, type AnySchema, type Principal, type Repair, type Store } from "@graview/core";
 import { Link } from "react-router-dom";
 import { useRef, useState, type ReactNode } from "react";
 import { DerivedForm } from "./form.js";
@@ -149,7 +149,7 @@ export function Repairs<S extends AnySchema>({
                   store.apply({ name: repair.mutation, args: { ...repair.args } }, principal ? { author: principal } : {});
                 } catch (error) {
                   // A refusal is a result, said where the press happened.
-                  setFailed(error instanceof Error ? error.message : String(error));
+                  setFailed(failureWords(store.schema, store.allMutations(), error));
                 }
               }}
               style={button}

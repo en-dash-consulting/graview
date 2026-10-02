@@ -1,4 +1,4 @@
-import { humaniseField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
+import { argumentWords, humaniseField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
 import { relationWords } from "../relation-key.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout";
 import { useGraview } from "@graview/react";
@@ -81,6 +81,8 @@ export function AnswerArgs({
 
   const shape = parameter.shape ?? { type: "unknown" as const };
   const choices = choicesFor(parameter, shape);
+  /* The record's own words for an argument that fills one of its fields: "Body style", "SUV" (see `argumentWords`). */
+  const words = argumentWords(store.schema, store.allMutations().find((mutation) => mutation.name === affordance.mutation), parameter.name);
   /*
    * A PICKER THAT DROPS CHOICES MAKES THE ACT IMPOSSIBLE, AND SAYS NOTHING.
    *
@@ -102,9 +104,10 @@ export function AnswerArgs({
     return tellApart(nodes, (kind) => store.schema.tryDefinition(kind));
   }, [choices, store]);
   const say = (choice: string) => {
-    const words = said(store, shape, choice);
+    const plain = said(store, shape, choice);
+    const named = (shape.type === "choice" || (shape.type === "several" && shape.of.type === "choice")) ? words.option(choice) : plain;
     const told = apart.get(choice);
-    return told ? `${words} · ${told}` : words;
+    return told ? `${named} · ${told}` : named;
   };
   const matching = useMemo(() => {
     const term = among.trim().toLowerCase();
@@ -151,7 +154,7 @@ export function AnswerArgs({
   const asking =
     parameter.kinds && parameter.kinds.length > 0 && !parameter.kinds.includes("*")
       ? parameter.kinds.map((kind) => humaniseField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
-      : humaniseField(parameter.name);
+      : words.label;
   const step =
     affordance.open.length > 1
       ? `${asking} · ${affordance.open.length - remaining.length + 1} of ${affordance.open.length}`
@@ -291,8 +294,8 @@ export function AnswerArgs({
              * them ("Depends on", "Label") and the scene asked with the raw
              * key, so the same act read two ways on the two faces.
              */
-            aria-label={humaniseField(parameter.name)}
-            placeholder={humaniseField(parameter.name)}
+            aria-label={words.label}
+            placeholder={words.label}
             value={draft}
             {...(shape.type === "number" && shape.min !== undefined ? { min: shape.min } : {})}
             {...(shape.type === "number" && shape.max !== undefined ? { max: shape.max } : {})}

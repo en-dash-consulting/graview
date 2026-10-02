@@ -280,6 +280,7 @@ export type { SchemaBinding } from "./bind.js";
 
 // App bundle, checks and generated agent docs.
 export { formField, formFields, formComplete } from "./mutations/form.js";
+export { argumentWords, failureWords, InvalidArguments } from "./mutations/words.js";
 export type { FormField, ScalarField } from "./mutations/form.js";
 export { resolveModules } from "./modules.js";
 export { declareInstallation, INSTALLATION_MODULE } from "./installation.js";

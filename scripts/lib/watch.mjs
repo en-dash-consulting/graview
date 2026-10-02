@@ -97,6 +97,7 @@ function watchInPage() {
   /* The declaration's names, learned from every store in the page. */
   const ids = new Set();
   const words = [];
+  const unsaid = new Set();
   let pattern = null;
   const rebuild = () => {
     const spoken = ` ${words.join(" | ").toLowerCase()} `;
@@ -115,13 +116,13 @@ function watchInPage() {
   let queued = false;
   const scan = () => {
     queued = false;
-    if (!pattern || !document.body) return;
+    if ((!pattern && unsaid.size === 0) || !document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const work = (deadline) => {
       let node;
       while ((node = walker.nextNode())) {
         const text = node.nodeValue;
-        if (text && text.length > 2) {
+        if (pattern && text && text.length > 2) {
           const hit = pattern.exec(text);
           const el = node.parentElement;
           if (hit && el && !el.closest(SILENT) && visible(el)) {
@@ -130,11 +131,26 @@ function watchInPage() {
         }
         if (deadline && deadline.timeRemaining() < 2) return requestIdleCallback(work);
       }
+      /*
+       * A KEY'S OWN WORDS, WHOLE. A field the kind calls "VIN" asked for as
+       * "Vin", a picker offering "suv" where the record says "SUV": single
+       * words pass for prose inside a sentence, so they are caught only
+       * where they are all an element says (a label, an option).
+       */
+      if (unsaid.size > 0) {
+        for (const el of document.querySelectorAll("label span, label, legend, option, button, th, dt")) {
+          if (el.closest(SILENT)) continue;
+          const own = [...el.childNodes].filter((child) => child.nodeType === 3).map((child) => child.nodeValue).join("").replace(/\s*\*\s*$/, "").trim();
+          if (own && unsaid.has(own) && (el.tagName === "OPTION" || visible(el))) {
+            report("machine-words-shown", `"${own}" is shown in the key's words in ${describe(el)}, where the declaration says it otherwise`, `${own}|${describe(el)}`);
+          }
+        }
+      }
       for (const el of document.querySelectorAll("[aria-label],[title],[placeholder],img[alt]")) {
         if (el.closest(SILENT)) continue;
         for (const attr of ["aria-label", "title", "placeholder", "alt"]) {
           const value = el.getAttribute(attr);
-          const hit = value && pattern.exec(value);
+          const hit = value && pattern && pattern.exec(value);
           if (hit) report("machine-words-shown", `"${hit[1]}" is read out in ${attr} of ${describe(el)}`, `${hit[1]}|${attr}|${describe(el)}`);
         }
       }
@@ -149,8 +165,9 @@ function watchInPage() {
   };
 
   window.__graviewWatch = {
-    learn({ ids: learned, words: said }) {
+    learn({ ids: learned, words: said, unsaid: plain = [] }) {
       for (const id of learned) ids.add(id);
+      for (const word of plain) unsaid.add(word);
       words.push(...said);
       rebuild();
       schedule();

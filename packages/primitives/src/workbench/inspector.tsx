@@ -1,4 +1,4 @@
-import { humaniseField, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { failureWords, humaniseField, nounOf, withArticle, type AnySchema } from "@graview/core";
 import { useSubject } from "../companion.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout";
 import { useAffordances, useApplyAffordance, useGraview, useSelection } from "@graview/react";
@@ -205,7 +205,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
       setMenuAt(null);
       return true;
     } catch (error) {
-      setFailed(error instanceof Error ? error.message : String(error));
+      setFailed(failureWords(store.schema, store.allMutations(), error));
       return false;
     }
   };

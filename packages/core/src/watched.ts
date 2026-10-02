@@ -14,10 +14,11 @@
  */
 import type { Policy, Refusal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
+import { humaniseField } from "./schema/define-node.js";
 
 interface Watch {
   store?(store: unknown): void;
-  learn?(names: { readonly ids: readonly string[]; readonly words: readonly string[] }): void;
+  learn?(names: { readonly ids: readonly string[]; readonly words: readonly string[]; readonly unsaid?: readonly string[] }): void;
   refused?(refusal: Refusal & { readonly author?: string }): void;
 }
 
@@ -33,8 +34,30 @@ export function tellTheWatchItsNames(
   if (!watch?.learn) return;
   const ids: string[] = [];
   const words: string[] = [];
+  /*
+   * THE KEY'S WORDS WHERE THE DECLARATION HAS ITS OWN. "Vin" over a field
+   * the kind calls "VIN", "suv" in a picker the record says "SUV" in: a
+   * single word passes for prose, so these are caught only where they are
+   * the whole of what is shown.
+   */
+  const unsaid: string[] = [];
   for (const definition of schema.definitions) {
     ids.push(definition.kind);
+    const fieldsOf = (definition.fields as { shape?: Record<string, { def?: { entries?: Record<string, unknown> } }> }).shape ?? {};
+    for (const [key, field] of Object.entries(fieldsOf)) {
+      const declared = definition.display?.labels?.[key];
+      if (declared !== undefined && humaniseField(key) !== declared) unsaid.push(humaniseField(key));
+      const entries = field?.def?.entries;
+      const format = definition.display?.format?.[key];
+      for (const value of entries && typeof entries === "object" ? Object.values(entries) : []) {
+        if (typeof value !== "string") continue;
+        ids.push(value);
+        if (!format) continue;
+        const said = format(value);
+        if (said !== value) unsaid.push(value);
+        if (said !== humaniseField(value)) unsaid.push(humaniseField(value));
+      }
+    }
     words.push(definition.plural ?? "", definition.noun ?? "", definition.description ?? "");
     const shape = (definition.fields as { shape?: Record<string, unknown> }).shape ?? {};
     ids.push(...Object.keys(shape));
@@ -50,7 +73,7 @@ export function tellTheWatchItsNames(
   }
   for (const grant of policy?.grants ?? []) if (grant.roles !== "*") ids.push(...grant.roles);
   ids.push(...(policy?.roles ?? []));
-  watch.learn({ ids, words: words.filter(Boolean) });
+  watch.learn({ ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)] });
 }
 
 /**

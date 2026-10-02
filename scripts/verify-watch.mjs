@@ -52,6 +52,14 @@ checks.anActsNameAsTextIsCaught = shown.some((v) => v.detail.includes('"close-de
 checks.aFieldKeyReadOutIsCaught = shown.some((v) => v.detail.includes('"closedAt" is read out in title'));
 checks.codeIsNotPeopleText = shown.length === 2;
 
+/* machine-words-shown, the key's own words: "Vin" over a field the kind calls "VIN", "suv" where the record says "SUV". */
+await show(`<main><form><label><span>Vin *</span><input></label><label><span>Body style</span><select><option>suv</option><option>Saloon</option></select></label></form><p>The vin is on the windscreen.</p></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: ["vin"], words: ["VIN"], unsaid: ["Vin", "suv", "Suv"] }));
+await settle();
+const plain = takeViolations().filter((v) => v.rule === "machine-words-shown").map((v) => v.detail);
+checks.aKeysOwnWordsAreCaught = plain.some((d) => d.startsWith('"Vin" is shown')) && plain.some((d) => d.startsWith('"suv" is shown'));
+checks.aWordInASentenceIsNotAKey = plain.length === 2;
+
 /* offered-then-refused: the store refused a press. */
 await show(`<main><button>Close the deal</button></main>`);
 await page.evaluate(() => window.__graviewWatch.refused({ mutation: "close-deal", kind: "deal", message: "Not permitted", author: "user-priya" }));
