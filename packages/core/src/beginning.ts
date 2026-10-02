@@ -52,9 +52,12 @@ export interface KindBeginning {
 }
 
 export interface Beginning {
-  /** Every kind, in the order a blank installation can fill them. */
+  /**
+   * Every kind, in the order a blank installation can fill them: by depth,
+   * then by how many other kinds wait on it (most first), then by name.
+   */
   readonly order: readonly KindBeginning[];
-  /** Kinds that can be made with nothing in the graph at all. */
+  /** Kinds that can be made with nothing in the graph at all, the one that opens most first. */
   readonly roots: readonly string[];
   /** The acts that make those kinds: the doors into an empty installation. */
   readonly doors: readonly string[];
@@ -128,6 +131,31 @@ export function beginning<S extends AnySchema>(app: GraviewApp<S>): Beginning {
     return [...new Set(cheapest)].filter((wanted) => wanted !== kind);
   };
 
+  /*
+   * WHAT EACH KIND OPENS: how many other kinds wait on it, through any chain
+   * of needs. Among kinds that can be made at the same depth, the one that
+   * unlocks the most is the one to ask for first — a yard every batch,
+   * piece of equipment and shift stands in comes before the batch, not
+   * after it because "b" sorts before "y".
+   */
+  const waitsOn = new Map<string, Set<string>>();
+  const reach = (kind: string): Set<string> => {
+    const known = waitsOn.get(kind);
+    if (known) return known;
+    const all = new Set<string>();
+    waitsOn.set(kind, all);
+    for (const needed of needsOf(kind)) {
+      all.add(needed);
+      for (const further of reach(needed)) all.add(further);
+    }
+    all.delete(kind);
+    return all;
+  };
+  const opens = new Map<string, number>(kinds.map((kind) => [kind, 0]));
+  for (const kind of kinds) {
+    for (const needed of reach(kind)) opens.set(needed, (opens.get(needed) ?? 0) + 1);
+  }
+
   const order: KindBeginning[] = kinds
     .map((kind) => ({
       kind,
@@ -138,6 +166,7 @@ export function beginning<S extends AnySchema>(app: GraviewApp<S>): Beginning {
     .sort(
       (a, b) =>
         (a.depth ?? Number.MAX_SAFE_INTEGER) - (b.depth ?? Number.MAX_SAFE_INTEGER) ||
+        (opens.get(b.kind) ?? 0) - (opens.get(a.kind) ?? 0) ||
         a.kind.localeCompare(b.kind),
     );
 

@@ -40,6 +40,19 @@ import { MUTED_TEXT, Panel } from "./primitives/index.js";
  */
 
 /** The kinds, in the order a blank installation can fill them. */
+/*
+ * ROOM FOR THE LIST'S OWN NUMBERS.
+ *
+ * A numbered list's markers hang in its left padding, and 1.25rem holds one
+ * digit and its stop. The eleventh kind of an app read "1…9, 0, 1": the "1"
+ * of "10" was clipped off by the panel. The padding grows with the widest
+ * number the list will show — a digit is 1ch, the stop and the gap after it
+ * another one and a half.
+ */
+export function markerRoom(count: number): string {
+  return `${String(Math.max(1, count)).length + 1.5}ch`;
+}
+
 function chainOf<S extends AnySchema>(store: { schema: S; allMutations: () => readonly unknown[] }): Beginning {
   return beginning({
     name: "",
@@ -237,7 +250,7 @@ function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", he
 
   const door = (
     <Panel title={title} subtitle="What has to exist before the rest of it can." fit {...(heading ? { heading } : {})}>
-      <ol data-testid="begin" style={{ margin: 0, paddingLeft: "1.25rem", display: "grid", gap: 10 }}>
+      <ol data-testid="begin" style={{ margin: 0, paddingLeft: markerRoom(chain.order.length), display: "grid", gap: 10 }}>
         {chain.order.map((entry) => {
           const has = counts[entry.kind] ?? 0;
           const plural = store.schema.tryDefinition(entry.kind)?.plural ?? entry.kind;
@@ -564,7 +577,7 @@ function PlanReviewInside<S extends AnySchema>({
           Least sure first.
         </p>
       ) : null}
-      <ol data-testid="plan" style={{ margin: 0, paddingLeft: "1.25rem", display: "grid", gap: 6 }}>
+      <ol data-testid="plan" style={{ margin: 0, paddingLeft: markerRoom(ordered.length), display: "grid", gap: 6 }}>
         {ordered.map((row) => {
           const sure = sureOf(row);
           const first = row.entries[0]!;
