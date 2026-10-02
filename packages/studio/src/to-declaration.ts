@@ -132,6 +132,7 @@ function kept(
           labels?: Record<string, string>;
           format?: Record<string, unknown>;
           hide?: readonly string[];
+          glance?: readonly string[];
         };
         fixed?: Record<string, string>;
         fieldRoles?: Record<string, string>;
@@ -151,12 +152,15 @@ function kept(
   const labels = narrow(was.display?.labels);
   const format = narrow(was.display?.format);
   const hide = was.display?.hide?.filter(here);
+  // What a glance says, while its fields do (W-169: the round trip dropped it).
+  const glance = was.display?.glance?.filter(here);
   const display =
-    labels || format || (hide && hide.length > 0)
+    labels || format || (hide && hide.length > 0) || (glance && glance.length > 0)
       ? {
           ...(labels ? { labels } : {}),
           ...(format ? { format } : {}),
           ...(hide && hide.length > 0 ? { hide } : {}),
+          ...(glance && glance.length > 0 ? { glance } : {}),
         }
       : undefined;
   const fixed = narrow(was.fixed);
