@@ -256,7 +256,8 @@ function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", he
                 <BeginHere kind={entry.kind} derived={ways[entry.kind]!} />
               ) : (
                 <div style={{ fontSize: "0.875rem", ...MUTED_TEXT }}>
-                  Waiting for {entry.needs.map((kind) => store.schema.tryDefinition(kind)?.plural ?? kind).join(" and ")}.
+                  {/* Only what is still missing: "waiting for Showrooms and Cars" was said beside 4 showrooms and 340 cars. */}
+                  Waiting for {entry.needs.filter((kind) => (counts[kind] ?? 0) === 0).map((kind) => store.schema.tryDefinition(kind)?.plural ?? kind).join(" and ")}.
                 </div>
               )}
             </li>

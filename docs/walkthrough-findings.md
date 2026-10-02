@@ -4270,3 +4270,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/react/src/view-host.tsx`; the watch: `scripts/lib/watch.mjs`, `packages/core/src/watched.ts`
 - harness that should have caught it: the watch's `machine-words-shown`
 - status: fixed in "walkthrough: B · a card says its kind's noun" · the tag reads `nounOf`; the watch now judges shown text whether or not it is spoken, and is told a kind's id wherever the kind has a noun of its own, caught where it is all an element says. Criterion: `verify-watch` `shownThoughNotSpokenIsCaught` (fails without the watch change)
+
+### W-165 · "Waiting for Shoppers and Showrooms and Cars", beside four showrooms and 340 cars
+- stage: B · face: pages · width: 1280 · scheme: light
+- impact: cosmetic — a sentence on the home page that says the store has no cars
+- class: says-something-untrue
+- expected: the way in names what a kind is still waiting for
+- actual: it named every kind its act needs, whether or not there was one already: a graph part of the way through — the state every installation passes — read as empty
+- where it belongs: `packages/primitives/src/seeding.tsx`
+- harness that should have caught it: none — the class's check is "none yet"; `the-way-in.test.tsx` held the empty graph and the full one, never a kind with two needs and one of them met
+- status: fixed in "walkthrough: B · the way in waits for what is missing" · criterion: `packages/primitives/tests/unit/waiting-for-what-is-missing.test.tsx` (verified failing without the fix)
