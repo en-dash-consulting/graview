@@ -19,7 +19,7 @@ import type { Principal } from "./permissions/types.js";
 
 interface Watch {
   store?(store: unknown): void;
-  unseen?(said: { readonly words: readonly string[] }): void;
+  unseen?(said: { readonly words: readonly string[]; readonly from?: string }): void;
   learn?(names: { readonly ids: readonly string[]; readonly words: readonly string[]; readonly unsaid?: readonly string[] }): void;
   refused?(refusal: Refusal & { readonly author?: string }): void;
 }
@@ -138,6 +138,8 @@ export function tellTheWatchWhatIsUnseen(
     sees(principal: Principal, id: string): boolean;
   },
   principal: Principal,
+  /** Which surface is telling: two embeds on one page may sit two different seats down. */
+  from?: string,
 ): void {
   const watch = theWatch();
   if (!watch?.unseen || !store.policy?.sees?.length) return;
@@ -148,7 +150,7 @@ export function tellTheWatchWhatIsUnseen(
     const said = [labelOf(definition, node), ...Object.values(node).filter((value): value is string => typeof value === "string" && /^[^\s@]+@[^\s@]+$/.test(value))];
     for (const word of said) (store.sees(principal, node.id) ? seen : unseen).add(word);
   }
-  watch.unseen({ words: [...unseen].filter((word) => word.length >= 5 && !seen.has(word)) });
+  watch.unseen({ words: [...unseen].filter((word) => word.length >= 5 && !seen.has(word)), ...(from ? { from } : {}) });
 }
 
 /**

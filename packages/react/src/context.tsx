@@ -22,6 +22,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -382,11 +383,12 @@ export interface GraviewProviderProps<S extends AnySchema> {
  * "shown-what-is-not-theirs"). Outside a harness this is one property read.
  */
 export function useTheWatchKnowsWhatIsUnseen<S extends AnySchema>(store: Store<S>, principal: Principal | undefined): void {
+  const from = useId();
   useEffect(() => {
     if (!(globalThis as { __graviewWatch?: unknown }).__graviewWatch) return;
     const seat = principal ?? ANONYMOUS;
     const tell = () => {
-      tellTheWatchWhatIsUnseen(store as never, seat);
+      tellTheWatchWhatIsUnseen(store as never, seat, from);
       tellTheWatchItsAuthors(store as never);
     };
     tell();
@@ -398,8 +400,10 @@ export function useTheWatchKnowsWhatIsUnseen<S extends AnySchema>(store: Store<S
     return () => {
       clearTimeout(soon);
       off();
+      // This surface is gone: what it could not see no longer counts.
+      (globalThis as { __graviewWatch?: { unseen?(said: { words: readonly string[]; from: string; gone: true }): void } }).__graviewWatch?.unseen?.({ words: [], from, gone: true });
     };
-  }, [store, principal]);
+  }, [store, principal, from]);
 }
 
 export function GraviewProvider<S extends AnySchema>({

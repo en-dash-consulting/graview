@@ -74,6 +74,15 @@ await settle();
 const exposed = takeViolations().filter((v) => v.rule === "shown-what-is-not-theirs").map((v) => v.detail);
 checks.aRecordTheSeatMayNotSeeIsCaught = exposed.length === 1 && exposed[0].startsWith('"Freya Davies"');
 
+/* Two surfaces, two seats: a name one of them may see is not caught on the page they share. */
+await show(`<main><section aria-label="As the store"><p>Shortlisted by Freya Davies</p></section><section aria-label="As Bethan"><p>Signed in as Bethan Okonkwo</p></section></main>`);
+await page.evaluate(() => {
+  window.__graviewWatch.unseen({ words: ["Freya Davies"], from: "bethan" });
+  window.__graviewWatch.unseen({ words: [], from: "store" });
+});
+await settle();
+checks.whatOneSeatMaySeeIsNotCaughtBesideAnother = takeViolations().filter((v) => v.rule === "shown-what-is-not-theirs").length === 0;
+
 /* offered-then-refused: the store refused a press. */
 await show(`<main><button>Close the deal</button></main>`);
 await page.evaluate(() => window.__graviewWatch.refused({ mutation: "close-deal", kind: "deal", message: "Not permitted", author: "user-priya" }));

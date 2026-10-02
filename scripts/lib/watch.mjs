@@ -100,6 +100,7 @@ function watchInPage() {
   const unsaid = new Set();
   /* What the seat at the keyboard may not see: names and addresses of records the policy keeps from it. */
   let unseen = null;
+  const unseenBy = new Map();
   let pattern = null;
   const rebuild = () => {
     const spoken = ` ${words.join(" | ").toLowerCase()} `;
@@ -188,7 +189,15 @@ function watchInPage() {
       rebuild();
       schedule();
     },
-    unseen({ words: kept }) {
+    unseen({ words: told, from = "page", gone = false }) {
+      /*
+       * Per surface, and only what NO surface on the page may see: two embeds
+       * can sit two seats down, and what one may see the other may show.
+       */
+      if (gone) unseenBy.delete(from);
+      else unseenBy.set(from, new Set(told));
+      const sets = [...unseenBy.values()];
+      const kept = sets.length === 0 ? [] : [...sets[0]].filter((word) => sets.every((set) => set.has(word)));
       const escaped = kept.filter((word) => word.length >= 5).sort((a, b) => b.length - a.length).map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
       unseen = escaped.length ? new RegExp(`(?<![\\p{L}\\p{N}])(${escaped.join("|")})(?![\\p{L}\\p{N}])`, "u") : null;
       schedule();
