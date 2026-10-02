@@ -4218,3 +4218,23 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/core/src/mutations/form.ts` (new `formArgs`), `packages/pages/src/form.tsx`
 - harness that should have caught it: the journeys' "make" job, which reached it once it could type values the act accepts (W-160); the gauntlet has no list argument — that hole is open
 - status: fixed in "walkthrough: B · a list nobody added to is sent empty" · criterion: `packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx` (verified failing without the fix), and the journeys' "Making a car" on the pages. The scene had the same hole the other way: its ask took "Features" in one text field and sent the line as a string, then sat on its last step refusing every Apply — fixed in "walkthrough: B · a list typed in the scene's ask is a list" (`a-typed-list-is-a-list.test.tsx`, both cases verified failing without it)
+
+### W-160 · The journeys cannot find a car, and type "Something" into an email
+- stage: B · face: — · width: — · scheme: —
+- impact: blocks a job's measure — "find" was skipped ("there is no car to find") and "make" failed for a car, a shopper, a trade-in and an enquiry in every way it was tried, for reasons a person would not meet
+- class: harness-or-setup-itself (also: data-shape-not-in-fixtures)
+- expected: the journeys name a record as the declaration does, and fill a form the way a person would — an email in an email field, a VIN copied off a car
+- actual: every job read a record's name from a `label` field, and a car is named from its year, make, model and trim; every field the harness had no name for got "Something" or "2" (an email, a year after 1990, a VIN); the scene's ask was answered for at most eight questions (a car asks sixteen); and the filter of choices kept the subject's name when the question was about something else, so "nothing to answer it with"
+- where it belongs: `scripts/lib/journeys.mjs`, `scripts/verify-journeys.mjs`
+- harness that should have caught it: `tests/journeys.test.ts`, which held the plan and the verdict but never what the harness reads in the page
+- status: fixed in "walkthrough: B · the journeys name a record and fill a form as a person would" · names through the declaration (`__journeyName`), values the act's own input accepts (`validValues`), forty questions, a cleared filter. Criterion: `tests/journeys.test.ts` "a record's name, in the page" (verified failing without the fix); on walk7, every job but one was done in every way after it (the one left is W-161)
+
+### W-161 · Refused for its photos, the ask stays on its last question and refuses every Apply
+- stage: B (making a car in the scene) · face: scene · width: 1280 and 390 · scheme: light
+- impact: costs a job — "Making a car" in the scene: one wrong answer three questions back, and the only way to it is to cancel and answer all sixteen again; the journeys pressed Apply until they gave up (100 presses)
+- class: offered-then-refused (also: keyboard-lands-nowhere)
+- expected: a refusal that names an argument takes the ask back to that question, with the reason beside it — the inspector's own comment promised "a rejected answer can be corrected rather than retyped blind"
+- actual: the ask kept every answer and stayed on the last step; its Apply re-sent the same wrong photo address and was refused the same way, each time
+- where it belongs: `packages/primitives/src/workbench/answer-args.tsx`, `inspector.tsx`
+- harness that should have caught it: the journeys' scene "make" job, once it could answer more than eight questions (W-160); nothing judged an ask after a refusal
+- status: fixed in "walkthrough: B · a refused ask goes back to the answer it refused" · the inspector hands the ask the arguments a refusal named (`InvalidArguments`), and the ask forgets those answers so it asks them again. Criterion: `packages/primitives/tests/unit/a-typed-list-is-a-list.test.tsx` "goes back to the answer that was refused" (verified failing without the fix)

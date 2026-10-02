@@ -16,7 +16,7 @@ import { Inspector, registerDefaultViews } from "../../src/index.js";
  * array, received string", and the ask sat on its last step refusing every
  * Apply (the seventh walk).
  */
-const car = defineNode("car", { fields: z.object({ label: z.string(), features: z.array(z.string()) }), plural: "Cars", label: (node) => node.label });
+const car = defineNode("car", { fields: z.object({ label: z.string(), features: z.array(z.string()), photo: z.string().optional() }), plural: "Cars", label: (node) => node.label });
 const schema = createSchema([car]);
 const { defineMutation } = bindSchema(schema);
 const sell = defineMutation("add-car", {
@@ -26,8 +26,15 @@ const sell = defineMutation("add-car", {
   apply: (ctx, args) => void ctx.addNode({ id: ctx.freshId(args.label, "car"), kind: "car", label: args.label, features: args.features }),
 });
 
-async function answering(lines: readonly string[]) {
-  const store = new Store({ schema, mutations: [sell] });
+const photograph = defineMutation("add-photographed-car", {
+  title: "Put a photographed car on sale",
+  creates: ["car"],
+  input: z.object({ label: z.string().min(1), photo: z.string().url(), features: z.array(z.string().min(1)) }),
+  apply: (ctx, args) => void ctx.addNode({ id: ctx.freshId(args.label, "car"), kind: "car", label: args.label, features: args.features, photo: args.photo }),
+});
+
+async function answering(lines: readonly string[], offered = "schema:add:add-car", asked?: (host: HTMLElement) => void) {
+  const store = new Store({ schema, mutations: [sell, photograph] });
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
@@ -38,7 +45,7 @@ async function answering(lines: readonly string[]) {
       </GraviewProvider>,
     );
   });
-  const offer = host.querySelector<HTMLButtonElement>('button[data-affordance="schema:add:add-car"]')!;
+  const offer = host.querySelector<HTMLButtonElement>(`button[data-affordance="${offered}"]`)!;
   await act(async () => offer.click());
   const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
   for (const line of lines) {
@@ -49,6 +56,7 @@ async function answering(lines: readonly string[]) {
     });
     await act(async () => input.form!.requestSubmit());
   }
+  asked?.(host);
   root.unmount();
   host.remove();
   return store.graph.allNodes().map((node) => (node as { features?: unknown }).features);
@@ -61,5 +69,15 @@ describe("a list of words, asked in the strip", () => {
 
   it("and nothing typed is an empty list, not a refusal", async () => {
     expect(await answering(["2021 Golf Life", ""])).toEqual([[]]);
+  });
+});
+
+describe("an ask whose answers are refused", () => {
+  it("goes back to the answer that was refused, not the last question", async () => {
+    let step = "";
+    await answering(["2021 Golf Life", "not a web address", "Heated seats"], "schema:add:add-photographed-car", (host) => {
+      step = host.querySelector<HTMLInputElement>("[data-graview-asking] form input")?.getAttribute("name") ?? "";
+    });
+    expect(step).toBe("photo");
   });
 });

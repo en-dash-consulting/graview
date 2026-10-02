@@ -22,7 +22,8 @@ export function AnswerArgs({
   onCancel,
 }: {
   readonly affordance: Affordance;
-  onApply: (args: Record<string, unknown>) => void;
+  /** Applies the answers. Returns the arguments a refusal named, when it named any, so the ask goes back to them. */
+  onApply: (args: Record<string, unknown>) => readonly string[] | void;
   onCancel: () => void;
 }) {
   const { store } = useGraview<AnySchema>();
@@ -70,7 +71,16 @@ export function AnswerArgs({
     const next = { ...answers, [parameter.name]: value };
     const outstanding = affordance.open.filter((other) => !(other.name in next));
     if (outstanding.length === 0) {
-      onApply(Object.fromEntries(Object.entries(next).filter(([, given]) => given !== undefined)));
+      const refused = onApply(Object.fromEntries(Object.entries(next).filter(([, given]) => given !== undefined)));
+      /*
+       * BACK TO THE ANSWER THAT WAS REFUSED. Sixteen questions in, "Photos —
+       * invalid URL" left the ask on its last step, where Apply could only
+       * be refused again: the one wrong answer was three questions back and
+       * the only way to it was to start over.
+       */
+      if (refused && refused.length > 0) {
+        setAnswers(Object.fromEntries(Object.entries(next).filter(([name]) => !refused.includes(name))));
+      }
     } else setAnswers(next);
   };
   const skip = parameter.optional ? (
