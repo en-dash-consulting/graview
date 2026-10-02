@@ -437,11 +437,20 @@ export default defineConfig({
      * from a place that does not have it.
      */
     dedupe: ["react", "react-dom", "react-router-dom"],
+    /*
+     * Every subpath before its bare name: an alias is a prefix, so
+     * "@graview/core" alone would take "@graview/core/testing" too and
+     * point it inside core's index file.
+     */
     alias: {
+      "@graview/core/testing": framework("core/src/testing.ts"),
+      "@graview/core/cli": framework("core/src/cli/index.ts"),
+      "@graview/core/scaffold": framework("core/src/scaffold/index.ts"),
+      "@graview/core/sqlite": framework("core/src/persistence/sqlite.ts"),
       "@graview/core": framework("core/src/index.ts"),
       "@graview/layout": framework("layout/src/index.ts"),
+      "@graview/tools/cli": framework("tools/src/cli.ts"),
       "@graview/tools": framework("tools/src/index.ts"),
-      // The subpath first: an alias for the bare name would swallow it.
       "@graview/render/gpu": framework("render/src/gpu.ts"),
       "@graview/render": framework("render/src/index.ts"),
       "@graview/react": framework("react/src/index.ts"),
@@ -449,6 +458,8 @@ export default defineConfig({
       "@graview/pages": framework("pages/src/index.ts"),
       // The browser entry, so the file adapter's node:fs never meets the bundler.
       "@graview/ship/browser": framework("ship/src/browser.ts"),
+      "@graview/ship/dev": framework("ship/src/dev.ts"),
+      "@graview/ship/cli": framework("ship/src/cli.ts"),
       "@graview/ship": framework("ship/src/index.ts"),
       "@graview/embed": framework("embed/src/index.ts"),
       "@graview/studio": framework("studio/src/index.ts"),

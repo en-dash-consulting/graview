@@ -193,6 +193,6 @@ export function placeHref(as: string, sceneHref = "/"): string {
  * under — on this face. Namespaced under `/places/` so it can never collide
  * with a kind's plural, whatever an app calls its pictures.
  */
-export function placePath(as: string): string {
-  return `/places/${encodeURIComponent(as)}`;
+export function placePath(as: string, of?: string): string {
+  return `/places/${encodeURIComponent(as)}${of ? `?of=${encodeURIComponent(of)}` : ""}`;
 }

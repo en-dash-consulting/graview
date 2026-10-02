@@ -16,9 +16,9 @@ import { kindFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { PageMain } from "./page-shell.js";
-import { placesOf } from "./page-places.js";
+import { pathOfPlace, placesOf } from "./page-places.js";
 import { DISPLAY, KindMark, eyebrow, h1, h2, lede, link, plain, pluralOf, quiet, rule } from "./page-typography.js";
-import { placePath, pluralSlug, recordPath } from "./registry.js";
+import { pluralSlug, recordPath } from "./registry.js";
 
 /**
  * `/search?q=` — WHAT THE WORDS FIND, grouped by kind.
@@ -89,7 +89,7 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
                   {hit.count > 0 ? <span style={quiet}> · {hit.count} match</span> : null}
                 </Link>
               ) : hit.about === "place" ? (
-                <Link to={placePath(hit.as)} style={link}>
+                <Link to={pathOfPlace(context, hit)} style={link}>
                   Go to {hit.title}
                 </Link>
               ) : hit.about === "rule" ? (
