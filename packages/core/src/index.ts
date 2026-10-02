@@ -237,7 +237,7 @@ export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/typ
 export { sees, sightedKinds } from "./permissions/sight.js";
 export { seenBy } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
-export { tellTheWatchWhatIsUnseen } from "./watched.js";
+export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Store — graph + log + mutations + invariants, one object.
 export { Store, violationKey } from "./store.js";

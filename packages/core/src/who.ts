@@ -24,5 +24,15 @@ export function nameOfAuthor(
   const node = where.graph.getNode(author.id);
   if (node) return labelOf(where.schema.tryDefinition(node.kind), node);
   const seat = where.seats?.find((one) => one.principal.id === author.id);
-  return seat?.label ?? author.id;
+  if (seat) return seat.label;
+  /*
+   * NEVER THE ID. An author nothing names — the store's own migration
+   * ("ship:migration"), a seat the app did not list, a sync — is said by
+   * what it is; its id is an identifier, and the activity rail printed
+   * "ship:migration" above the upgrade it made (the seventh walk).
+   */
+  if (/(^|:)migration$/.test(author.id)) return "the upgrade";
+  // A plain name ("kai") is how a host without seats names somebody; a namespaced id is not a name.
+  if (/[:_/]/.test(author.id)) return { human: "somebody", agent: "an agent", rule: "a rule", system: "the system" }[author.kind];
+  return author.id;
 }

@@ -150,3 +150,18 @@ export function tellTheWatchWhatIsUnseen(
   }
   watch.unseen({ words: [...unseen].filter((word) => word.length >= 5 && !seen.has(word)) });
 }
+
+/**
+ * WHO HAS AUTHORED, for a watching harness: every author id in the log that
+ * names no record — a migration ("ship:migration"), a seat — is an
+ * identifier, and no screen says one.
+ */
+export function tellTheWatchItsAuthors(store: {
+  readonly graph: { getNode(id: string): unknown };
+  readonly log: { all(): readonly { readonly author: { readonly id?: string } }[] };
+}): void {
+  const watch = theWatch();
+  if (!watch?.learn) return;
+  const ids = [...new Set(store.log.all().map((op) => op.author.id).filter((id): id is string => typeof id === "string" && store.graph.getNode(id) === undefined))];
+  if (ids.length > 0) watch.learn({ ids, words: [] });
+}

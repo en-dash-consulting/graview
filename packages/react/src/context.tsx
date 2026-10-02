@@ -10,7 +10,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { search, tellTheWatchWhatIsUnseen, touchWeights } from "@graview/core";
+import { search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights } from "@graview/core";
 import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools";
 import { honourSetting, loadSetting, rememberSetting } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
@@ -385,7 +385,10 @@ export function useTheWatchKnowsWhatIsUnseen<S extends AnySchema>(store: Store<S
   useEffect(() => {
     if (!(globalThis as { __graviewWatch?: unknown }).__graviewWatch) return;
     const seat = principal ?? ANONYMOUS;
-    const tell = () => tellTheWatchWhatIsUnseen(store as never, seat);
+    const tell = () => {
+      tellTheWatchWhatIsUnseen(store as never, seat);
+      tellTheWatchItsAuthors(store as never);
+    };
     tell();
     let soon: ReturnType<typeof setTimeout> | undefined;
     const off = store.subscribe(() => {

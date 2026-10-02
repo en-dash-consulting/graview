@@ -4350,3 +4350,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/core/src/schema/path.ts` (new `walkKinds`), `packages/core/src/cli/check/lenses.ts`, `packages/primitives/src/lens/coverage.tsx`
 - harness that should have caught it: none — the class's check is "none yet"; the checker's lens rules held each name, not the walk
 - status: fixed in "walkthrough: D · a lens path gets there" · the checker refuses `lens-binding-path-misses` and says when the path is only backwards; the coverage throws the same. Criteria: `packages/core/tests/unit/a-path-gets-there.test.ts`, `packages/primitives/tests/unit/a-coverage-path-gets-there.test.ts` (both verified failing without the fix); walk7's `graview check` refused its own binding until it was turned round
+
+### W-173 · The upgrade to version 2 is signed "ship:migration"
+- stage: G (a migration against a remembered store) · face: scene · width: 1280 · scheme: light
+- impact: cosmetic — the one line that says the store was upgraded is signed with the store's own author id
+- class: machine-words-shown
+- expected: the log says who did what in words; a migration is the upgrade
+- actual: `nameOfAuthor` fell back to the author's id wherever no record or seat named it, and a migration's author is `{ kind: "system", id: "ship:migration" }`. The watch had never been told an author's id, so it could not see one
+- where it belongs: `packages/core/src/who.ts`; the watch: `packages/core/src/watched.ts` (`tellTheWatchItsAuthors`), `packages/react/src/context.tsx`
+- harness that should have caught it: the watch's `machine-words-shown`, and `pnpm verify remember`, which reloads against a migration and read the log's count, not its words
+- status: fixed in "walkthrough: G · an author is never an id" · a migration is "the upgrade", a namespaced id is said by its kind, a plain name a host gave stays; the provider tells a watching harness every author id in the log. Criterion: `packages/core/tests/unit/an-author-is-never-an-id.test.ts` (verified failing without the fix); walk7's activity now reads "the upgrade · migration 1→2: an approved car is said as approved used", run once across two reloads, with its undo
