@@ -1,20 +1,10 @@
 {
-  "at": "2026-10-01T14:28:14.860Z",
+  "at": "2026-10-02T09:13:31.030Z",
   "results": [
     {
-      "name": "rehearsal",
+      "name": "site",
       "code": 0,
-      "took": 12
-    },
-    {
-      "name": "studio",
-      "code": 0,
-      "took": 33
-    },
-    {
-      "name": "rota",
-      "code": 0,
-      "took": 59
+      "took": 403
     }
   ]
 }

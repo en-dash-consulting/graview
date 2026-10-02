@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-01T13:44:20.281Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-Odx4kT",
+  "at": "2026-10-02T08:35:44.972Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-DSV7D2",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-Odx4kT/field-notes",
+    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-DSV7D2/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
@@ -71,7 +71,7 @@
   },
   "linked": {
     "said": [
-      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-Odx4kT/linked-orders",
+      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-DSV7D2/linked-orders",
       "graview create: pnpm install"
     ],
     "consumesByPath": true,
@@ -103,8 +103,8 @@
       "Add a note …"
     ],
     "asksInWords": {
-      "name": "Label",
-      "placeholder": "Label"
+      "name": "Name",
+      "placeholder": "Name"
     },
     "afterForm": "Notes1open ▾",
     "theFormAddedIt": true,

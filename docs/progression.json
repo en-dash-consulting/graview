@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-01T02:42:54.319Z",
+  "at": "2026-10-02T08:58:28.391Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -531,7 +531,7 @@
       "saw": {
         "standing": null,
         "districts": [],
-        "page": "A plot in the gardenPlot 23 beds, looked after by Ravi. Nothing is growing.See it in the scene ↗Sow something hereLabel *Sown *Sow something",
+        "page": "A plot in the gardenPlot 23 beds, looked after by Ravi. Nothing is growing.See it in the scene ↗Sow something hereName *Sown *Sow something",
         "custom": true,
         "design": false,
         "fitsAPhone": true
@@ -738,7 +738,7 @@
         "trail": "SeedbedSeedbed←→ScenePagesWhat grows whereWho tends whatNothing here is called “”.The garden keeps its agreements1 ActivityThe agent's seatThe garden is planted",
         "withheld": null,
         "activity": [
-          "ship:migration migration 1→2: Every garden adopts the agreementundoEvery plot has a caretaker"
+          "the upgrade migration 1→2: Every garden adopts the agreementundoEvery plot has a caretaker"
         ],
         "remembered": "Remembered in this browserStart fresh",
         "problems": null,
@@ -798,7 +798,7 @@
       "errors": [],
       "picture": {
         "width": 1280,
-        "height": 1342
+        "height": 1392
       },
       "saw": {
         "standing": null,
@@ -939,9 +939,11 @@
         "findings": [
           "blank-graph-unreachable",
           "label-unbounded",
+          "glance-unchosen",
           "label-unbounded",
           "label-unbounded",
           "label-unbounded",
+          "glance-unchosen",
           "label-unbounded",
           "label-unbounded",
           "label-unbounded"
@@ -1051,7 +1053,7 @@
         "remembered": null,
         "problems": null,
         "wordmark": "Seedbed",
-        "focused": "The rotationThe rotation · 2026–2029‹Today›dayweekmonthquarteryearThe rotationagenda2026202720282029FindOnlyonly…brassicaslegumesrootsalliumsrestingbefore…after…on…before…after…on…anythingnothingPlot 1Plot 2Plot 3anythingnothingBeansTomatoesflaggedclearJan 26Feb 26Mar 262Brassicas · Plot 1Legumes · Plot 2Apr 262 May 262Brassicas · Plot 1Legumes · Plot 2Jun 262 Jul 262 Aug 262 Sep 262Brassicas · Pl"
+        "focused": "The rotationThe rotation · 2026–2029‹Today›dayweekmonthquarteryearThe rotationagenda2026202720282029FindOnlyonly…BrassicasLegumesRootsAlliumsRestingbefore…after…on…before…after…on…anythingnothingPlot 1Plot 2Plot 3anythingnothingBeansTomatoesflaggedclearJan 26Feb 26Mar 262Brassicas · Plot 1Legumes · Plot 2Apr 262 May 262Brassicas · Plot 1Legumes · Plot 2Jun 262 Jul 262 Aug 262 Sep 262Brassicas · Pl"
       },
       "seatSees": {
         "offered": [

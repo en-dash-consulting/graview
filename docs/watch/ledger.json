@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-01T14:28:14.856Z",
+  "at": "2026-10-02T09:13:31.027Z",
   "open": 0,
   "problems": {
     "keyboard-lands-nowhere|a press on <div> \"#:#Pay the deposit\" left the keyboard on <body>": {
@@ -109,6 +109,318 @@
       "lastSeen": "2026-10-01T05:54:12.348Z",
       "status": "fixed",
       "fixedAt": "2026-10-01T05:58:56.747Z"
+    },
+    "page-error|The requested module '/@fs/Users/nick/development/endash/graview/packages/primitives/src/arrange-bar.tsx?t=#' does not provide an export named 'roundSteps'": {
+      "rule": "page-error",
+      "detail": "The requested module '/@fs/Users/nick/development/endash/graview/packages/primitives/src/arrange-bar.tsx?t=1790921175884' does not provide an export named 'roundSteps'",
+      "at": "",
+      "harnesses": [
+        "verify-journeys"
+      ],
+      "firstSeen": "2026-10-02T06:07:16.627Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:07:16.627Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T06:09:10.380Z"
+    },
+    "machine-words-shown|\"Given\" is shown in the key's words in <option> \"Given\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Given\" is shown in the key's words in <option> \"Given\" in [data-testid=\"arrange-add\"], where the declaration says it otherwise",
+      "at": "pages?theme=light&as=u-4f1c9a",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T06:20:38.338Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:20:38.338Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T06:24:10.056Z"
+    },
+    "machine-words-shown|\"Mon\" is shown in the key's words in <span> \"Mon\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Mon\" is shown in the key's words in <span> \"Mon\" in [data-testid=\"calendar\"] in view \"aggregate:shift\", where the declaration says it otherwise",
+      "at": "/?theme=light&today=2026-09-14#focus=aggregate%3Ashift&in.view=the-fortnight",
+      "harnesses": [
+        "audit-ui"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Tue\" is shown in the key's words in <span> \"Tue\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Tue\" is shown in the key's words in <span> \"Tue\" in [data-testid=\"calendar\"] in view \"aggregate:shift\", where the declaration says it otherwise",
+      "at": "/?theme=light&today=2026-09-14#focus=aggregate%3Ashift&in.view=the-fortnight",
+      "harnesses": [
+        "audit-ui"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Wed\" is shown in the key's words in <span> \"Wed\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Wed\" is shown in the key's words in <span> \"Wed\" in [data-testid=\"calendar\"] in view \"aggregate:shift\", where the declaration says it otherwise",
+      "at": "/?theme=light&today=2026-09-14#focus=aggregate%3Ashift&in.view=the-fortnight",
+      "harnesses": [
+        "audit-ui"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Thu\" is shown in the key's words in <span> \"Thu\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Thu\" is shown in the key's words in <span> \"Thu\" in [data-testid=\"calendar\"] in view \"aggregate:shift\", where the declaration says it otherwise",
+      "at": "/?theme=light&today=2026-09-14#focus=aggregate%3Ashift&in.view=the-fortnight",
+      "harnesses": [
+        "audit-ui"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Fri\" is shown in the key's words in <span> \"Fri\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Fri\" is shown in the key's words in <span> \"Fri\" in [data-testid=\"calendar\"] in view \"aggregate:shift\", where the declaration says it otherwise",
+      "at": "/?theme=light&today=2026-09-14#focus=aggregate%3Ashift&in.view=the-fortnight",
+      "harnesses": [
+        "audit-ui"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Sat\" is shown in the key's words in <span> \"Sat\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Sat\" is shown in the key's words in <span> \"Sat\" in [data-testid=\"calendar\"] in view \"aggregate:shift\", where the declaration says it otherwise",
+      "at": "/?theme=light&today=2026-09-14#focus=aggregate%3Ashift&in.view=the-fortnight",
+      "harnesses": [
+        "audit-ui"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Sun\" is shown in the key's words in <span> \"Sun\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Sun\" is shown in the key's words in <span> \"Sun\" in [data-testid=\"calendar\"] in view \"aggregate:shift\", where the declaration says it otherwise",
+      "at": "/?theme=light&today=2026-09-14#focus=aggregate%3Ashift&in.view=the-fortnight",
+      "harnesses": [
+        "audit-ui"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Presented by\" is shown in the key's words in <span> \"Presented by\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Presented by\" is shown in the key's words in <span> \"Presented by\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?theme=light&as=u-4f1c9a",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Proposed by\" is shown in the key's words in <span> \"Proposed by\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Proposed by\" is shown in the key's words in <span> \"Proposed by\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?theme=light&as=u-4f1c9a",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"In session\" is shown in the key's words in <span> \"In session\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"In session\" is shown in the key's words in <span> \"In session\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?theme=light&as=u-4f1c9a",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"About\" is shown in the key's words in <span> \"About\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"About\" is shown in the key's words in <span> \"About\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?theme=light&as=u-4f1c9a",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Held in\" is shown in the key's words in <span> \"Held in\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Held in\" is shown in the key's words in <span> \"Held in\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?theme=light&as=u-4f1c9a",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Chaired by\" is shown in the key's words in <span> \"Chaired by\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Chaired by\" is shown in the key's words in <span> \"Chaired by\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?theme=light&as=u-4f1c9a",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Led by\" is shown in the key's words in <span> \"Led by\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Led by\" is shown in the key's words in <span> \"Led by\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?theme=light&as=u-4f1c9a",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Looks after\" is shown in the key's words in <span> \"Looks after\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Looks after\" is shown in the key's words in <span> \"Looks after\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?theme=light&as=u-4f1c9a",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Tended by\" is shown in the key's words in <span> \"Tended by\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Tended by\" is shown in the key's words in <span> \"Tended by\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?chapter=9",
+      "harnesses": [
+        "verify-pages"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Grows in\" is shown in the key's words in <span> \"Grows in\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Grows in\" is shown in the key's words in <span> \"Grows in\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map?chapter=9",
+      "harnesses": [
+        "verify-pages"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Holds\" is shown in the key's words in <span> \"Holds\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Holds\" is shown in the key's words in <span> \"Holds\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map",
+      "harnesses": [
+        "verify-pages"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Waits for\" is shown in the key's words in <span> \"Waits for\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Waits for\" is shown in the key's words in <span> \"Waits for\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map",
+      "harnesses": [
+        "verify-pages"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Explains\" is shown in the key's words in <span> \"Explains\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Explains\" is shown in the key's words in <span> \"Explains\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map",
+      "harnesses": [
+        "verify-pages"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "machine-words-shown|\"Became\" is shown in the key's words in <span> \"Became\", where the declaration says it otherwise": {
+      "rule": "machine-words-shown",
+      "detail": "\"Became\" is shown in the key's words in <span> \"Became\" in [data-testid=\"relation\"], where the declaration says it otherwise",
+      "at": "map",
+      "harnesses": [
+        "verify-pages"
+      ],
+      "firstSeen": "2026-10-02T06:56:46.254Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T06:56:46.254Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T07:02:02.373Z"
+    },
+    "shown-what-is-not-theirs|\"Aiyana Whitehorse\" — a record this seat may not see — is shown in <button data-testid=\"seat-u-#d#c#\"> \"Aiyana Whitehorse, volunteer\"": {
+      "rule": "shown-what-is-not-theirs",
+      "detail": "\"Aiyana Whitehorse\" — a record this seat may not see — is shown in <button data-testid=\"seat-u-02d8c4\"> \"Aiyana Whitehorse, volunteer\" in [data-testid=\"seats\"]",
+      "at": "/?theme=dark&as=u-anon-0#focus=talk%3Auber-die-zuverlassigkeit-verteilter-systeme-erfahrungen-aus-a-startup-that-grew-faster-than-its-database",
+      "harnesses": [
+        "verify-gauntlet"
+      ],
+      "firstSeen": "2026-10-02T08:36:54.700Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-02T08:36:54.700Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-02T08:48:39.171Z"
     }
   }
 }
