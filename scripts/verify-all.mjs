@@ -97,7 +97,17 @@ const ALONE = new Set(["lines", "panning", "scale", "who", "journeys", "create"]
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");
 
-const asked = process.argv.slice(2).filter((arg) => !arg.startsWith("-"));
+/*
+ * AN APP OF ONE'S OWN. A walk builds its app beside the framework
+ * (`../walk7`), and the kick-off says to run the journeys "with the app
+ * named" — but every name here was a harness, so the walk's own app could
+ * not be named at all. An argument that is a path is an app, handed to the
+ * harnesses that drive one they are told about (TAKES_AN_APP).
+ */
+const isPath = (arg) => arg.includes("/") || arg.startsWith(".");
+const TAKES_AN_APP = new Set(["journeys"]);
+const appPaths = process.argv.slice(2).filter((arg) => !arg.startsWith("-") && isPath(arg)).map((arg) => resolve(arg));
+const asked = process.argv.slice(2).filter((arg) => !arg.startsWith("-") && !isPath(arg));
 if (process.argv.includes("--list")) {
   say(`${CHAIN.map(([name]) => name).join("\n")}\n`);
   process.exit(0);
@@ -121,6 +131,15 @@ const quick = process.argv.includes("--quick");
 const unknown = [...asked, ...except].filter((name) => !CHAIN.some(([known]) => known === name));
 if (unknown.length > 0) {
   say(`No harness called ${unknown.join(", ")}. Known: ${CHAIN.map(([n]) => n).join(", ")}\n`);
+  process.exit(2);
+}
+const missing = appPaths.filter((path) => !existsSync(resolve(path, "vite.config.ts")));
+if (missing.length > 0) {
+  say(`No app at ${missing.join(", ")} (an app is a directory with a vite.config.ts)\n`);
+  process.exit(2);
+}
+if (appPaths.length > 0 && !chain.some(([name]) => TAKES_AN_APP.has(name))) {
+  say(`An app was named, and only ${[...TAKES_AN_APP].join(", ")} drives one it is told about: pnpm verify journeys ${process.argv.slice(2).filter(isPath).join(" ")}\n`);
   process.exit(2);
 }
 
@@ -192,7 +211,7 @@ const results = [];
 const runOne = async ([name, file]) => {
   const began = Date.now();
   const { code, output } = await new Promise((done) => {
-    const child = spawn("node", [resolve(repoRoot, "scripts", file)], {
+    const child = spawn("node", [resolve(repoRoot, "scripts", file), ...(TAKES_AN_APP.has(name) ? appPaths : [])], {
       cwd: repoRoot,
       env: { ...process.env, ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
     });

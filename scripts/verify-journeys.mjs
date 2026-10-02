@@ -43,7 +43,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
-import { DeadEnd, frictionOf, inStore, JOBS, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey } from "./lib/journeys.mjs";
+import { appsNamed, DeadEnd, frictionOf, inStore, JOBS, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey } from "./lib/journeys.mjs";
 import { serving } from "./lib/serve.mjs";
 import { takeViolations } from "./lib/watch.mjs";
 
@@ -192,7 +192,7 @@ async function setUp(browser, entry, declaration) {
   const served = await serving(entry.dir, port, repoRoot);
   const plan = planJobs(declaration);
   const setup = {
-    app: entry.dir,
+    app: entry.name ?? entry.dir,
     base: served.url,
     query: entry.query,
     plan,
@@ -278,34 +278,36 @@ async function setUp(browser, entry, declaration) {
 
 async function main() {
   const began = Date.now();
-  const asked = process.argv.slice(2).filter((arg) => !arg.startsWith("-"));
+  const entries = appsNamed(process.argv.slice(2), APPS);
   const scratch = mkdtempSync(join(tmpdir(), "journeys-"));
   const browser = await launchEngine(ENGINE, { headless: true });
   const report = { at: new Date().toISOString(), engine: ENGINE, apps: {} };
   const runs = [];
   const servers = [];
   try {
-    for (const entry of APPS.filter((one) => asked.length === 0 || asked.includes(one.dir))) {
+    for (const entry of entries) {
       const declaration = existsSync(resolve(repoRoot, "apps", entry.dir)) ? await readDeclaration(repoRoot, entry.dir) : null;
       if (!declaration) {
-        report.apps[entry.dir] = { skipped: `apps/${entry.dir} is not built here (no dist/domain/app.js)` };
-        process.stdout.write(`skip  ${entry.dir}: not here\n`);
+        report.apps[entry.name ?? entry.dir] = { skipped: `${entry.name ? entry.dir : `apps/${entry.dir}`} is not built here (no dist/domain/app.js — pnpm build:domain)` };
+        process.stdout.write(`skip  ${entry.name ?? entry.dir}: not here\n`);
         continue;
       }
       try {
         const { setup, served } = await setUp(browser, entry, declaration);
         servers.push(served);
-        const setupFile = join(scratch, `${entry.dir}.json`);
+        const key = entry.name ?? entry.dir;
+        const setupFile = join(scratch, `${key}.json`);
         writeFileSync(setupFile, JSON.stringify(setup));
-        report.apps[entry.dir] = {
+        report.apps[key] = {
           port: Number(new URL(setup.base).port),
           jobs: Object.fromEntries(setup.plan.jobs.map((job) => [job.id, { says: job.says, ...(job.act ? { act: job.act } : {}), runs: {} }])),
         };
-        for (const variant of VARIANTS) runs.push({ app: entry.dir, setupFile, variant, out: join(scratch, `${entry.dir}-${variantKey(variant).replace(/\//g, "-")}.json`) });
-        process.stdout.write(`ready ${entry.dir} on ${setup.base}: ${setup.plan.jobs.length} jobs × ${VARIANTS.length} ways\n`);
+        for (const variant of VARIANTS) runs.push({ app: key, setupFile, variant, out: join(scratch, `${key}-${variantKey(variant).replace(/\//g, "-")}.json`) });
+        process.stdout.write(`ready ${key} on ${setup.base}: ${setup.plan.jobs.length} jobs × ${VARIANTS.length} ways\n`);
       } catch (error) {
-        report.apps[entry.dir] = { failed: `could not set up: ${String(error?.message ?? error).split("\n")[0]}` };
-        process.stdout.write(`FAIL  ${entry.dir}: ${report.apps[entry.dir].failed}\n`);
+        const key = entry.name ?? entry.dir;
+        report.apps[key] = { failed: `could not set up: ${String(error?.message ?? error).split("\n")[0]}` };
+        process.stdout.write(`FAIL  ${key}: ${report.apps[key].failed}\n`);
       }
     }
   } finally {

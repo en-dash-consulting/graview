@@ -4146,3 +4146,25 @@ vehicles, dozens of customers and deals.
   rota, todo and seedbed subpaths are aliased to their sources and `pnpm
   build` compiles `apps/rota`. Criterion: `tests/setup.test.ts` now walks
   every app's `src/` as well (verified failing without the aliases).
+
+## The seventh walk — a dealership's showroom (2026-10-02)
+
+The seventh walk took the other side of the sixth's lot: what a member of
+the public uses. Vehicles to browse and filter by make, model, trim, year,
+price, mileage, body style, colour and condition; a car's own page; a
+shortlist; test drives booked at a location and a slot; trade-in valuations;
+finance and lease enquiries; questions to the store; offers and reviews —
+with an anonymous shopper, a signed-in shopper and the store's staff as
+seats. Scaffolded with `graview create ../walk7 --link . --name "Harbourline
+Motors" --kind vehicle --plural vehicles` from a fresh clone that installed,
+built and passed its tests (244 files, 1730 tests).
+
+### W-154 · The journeys cannot be pointed at the walk's own app
+- stage: setup (the kick-off: "run the journeys on it, with the app named") · face: — · width: — · scheme: —
+- impact: blocks a job — the walk's first step: `pnpm verify journeys ../walk7` answered "No harness called ../walk7", and `verify-journeys.mjs` knew only the five apps under `apps/`
+- class: harness-or-setup-itself
+- expected: the journeys derive and drive the jobs of any app named, the walk's own beside the checkout included, as the kick-off prompt says
+- actual: every argument to `pnpm verify` was a harness name, the journeys' app list was hard-coded to `apps/<dir>`, and `lib/serve.mjs` started vite under `apps/` — so the harness the seventh walk is meant to start from could not see the seventh walk's app
+- where it belongs: `scripts/verify-all.mjs`, `scripts/verify-journeys.mjs`, `scripts/lib/journeys.mjs`, `scripts/lib/serve.mjs`
+- harness that should have caught it: `tests/journeys.test.ts` — it held the harness's reading of a verdict, never which apps a run drives
+- status: fixed in "walkthrough: setup · the journeys drive the app a walk builds beside the checkout" · a path argument is an app (`appsNamed`), `pnpm verify` hands it to the harnesses that take one and refuses a path with no app at it. Criterion: `tests/journeys.test.ts` "the app a walk builds beside the checkout" (both cases verified failing without the fix)

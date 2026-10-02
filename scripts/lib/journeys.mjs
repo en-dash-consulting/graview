@@ -23,7 +23,7 @@
  */
 import { createRequire } from "node:module";
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 /* ------------------------------------------------------------------ */
@@ -41,6 +41,21 @@ export async function readDeclaration(repoRoot, dir) {
   const require = createRequire(resolve(repoRoot, "apps", dir, "package.json"));
   const core = await import(pathToFileURL(require.resolve("@graview/core")).href);
   return { app, core };
+}
+
+/**
+ * WHICH APPS A RUN DRIVES, from its arguments: a name is one of the
+ * checkout's (`todo`, `rota`), a path is an app beside the checkout — the
+ * walk's own (`../walk7`), reported under its directory's name and asking
+ * nothing of its address. Nothing named drives every app of the checkout;
+ * naming only a path drives only it.
+ */
+export function appsNamed(args, apps, cwd = process.cwd()) {
+  const named = args.filter((arg) => !arg.startsWith("-"));
+  const isPath = (arg) => arg.includes("/") || arg.startsWith(".");
+  const beside = named.filter(isPath).map((path) => ({ dir: resolve(cwd, path), name: basename(resolve(cwd, path)), query: {} }));
+  const asked = named.filter((arg) => !isPath(arg));
+  return [...apps.filter((one) => asked.includes(one.dir) || (asked.length === 0 && beside.length === 0)), ...beside];
 }
 
 const article = (noun) => (/^[aeiou]/i.test(noun) ? `an ${noun}` : `a ${noun}`);
