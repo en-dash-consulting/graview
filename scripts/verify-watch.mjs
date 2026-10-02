@@ -83,6 +83,13 @@ await page.evaluate(() => {
 await settle();
 checks.whatOneSeatMaySeeIsNotCaughtBesideAnother = takeViolations().filter((v) => v.rule === "shown-what-is-not-theirs").length === 0;
 
+/* A seat switcher names the people one may sit as; that is not showing their record. */
+await show(`<main><div role="group" aria-label="Seat"><button type="button">Aiyana Whitehorse, volunteer</button></div><p>Shortlisted by Freya Davies</p></main>`);
+await page.evaluate(() => window.__graviewWatch.unseen({ words: ["Aiyana Whitehorse", "Freya Davies"] }));
+await settle();
+const seated = takeViolations().filter((v) => v.rule === "shown-what-is-not-theirs").map((v) => v.detail);
+checks.aSeatToTakeIsNotARecordShown = seated.length === 1 && seated[0].startsWith('"Freya Davies"');
+
 /* breaks-at-width: a page wider than its window. */
 await page.setViewportSize({ width: 390, height: 800 });
 await show(`<main><p style="white-space:nowrap">ravi.robertson63@mail.example-and-a-long-unbroken-word-past-the-edge-of-a-phone</p></main>`);

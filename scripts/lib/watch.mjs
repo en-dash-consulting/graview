@@ -152,7 +152,12 @@ function watchInPage() {
         if (unseen && text && text.length > 4) {
           const hit = unseen.exec(text);
           const el = node.parentElement;
-          if (hit && el && !el.closest("script,style,template,[hidden]") && visible(el)) {
+          /*
+           * A SEAT IS NOT A RECORD. The seat switcher names the people the
+           * host declared one may sit as — offering "sit down as Aiyana" is
+           * the control's whole job, and reads nothing of hers from the store.
+           */
+          if (hit && el && !el.closest('script,style,template,[hidden],[role="group"][aria-label="Seat"]') && visible(el)) {
             report("shown-what-is-not-theirs", `"${hit[1]}" — a record this seat may not see — is shown in ${describe(el)}`, `${hit[1]}|${describe(el)}`);
           }
         }

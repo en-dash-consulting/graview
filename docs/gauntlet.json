@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-01T13:19:18.444Z",
+  "at": "2026-10-02T08:49:30.359Z",
   "engine": "chromium",
   "states": [
     {
@@ -77,7 +77,7 @@
       "scheme": "light",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": 7
+      "detail": 6
     },
     {
       "state": "the pages' home",
@@ -162,7 +162,7 @@
       "scheme": "dark",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": 7
+      "detail": 6
     },
     {
       "state": "the pages' home",
@@ -247,7 +247,7 @@
       "scheme": "light",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": 7
+      "detail": 6
     },
     {
       "state": "the pages' home",
@@ -332,7 +332,7 @@
       "scheme": "dark",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": 7
+      "detail": 6
     },
     {
       "state": "the pages' home",
@@ -432,15 +432,6 @@
       "detail": "#focus=room%3Aaula&sel=room%3Aaula"
     },
     {
-      "state": "one of two staff members of one name focused",
-      "face": "scene",
-      "width": 1440,
-      "scheme": "light",
-      "seat": "u-4f1c9a",
-      "reached": true,
-      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
-    },
-    {
       "state": "a workshop over its room's seats focused",
       "face": "scene",
       "width": 1440,
@@ -448,6 +439,15 @@
       "seat": "u-4f1c9a",
       "reached": true,
       "detail": "#focus=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector&sel=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector"
+    },
+    {
+      "state": "one of two staff members of one name focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "light",
+      "seat": "u-4f1c9a",
+      "reached": true,
+      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
     },
     {
       "state": "the strip on a submitted talk, withheld acts shown",
@@ -879,15 +879,6 @@
       "detail": "#focus=room%3Aaula&sel=room%3Aaula"
     },
     {
-      "state": "one of two staff members of one name focused",
-      "face": "scene",
-      "width": 390,
-      "scheme": "light",
-      "seat": "u-9b27e0",
-      "reached": true,
-      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
-    },
-    {
       "state": "a workshop over its room's seats focused",
       "face": "scene",
       "width": 390,
@@ -895,6 +886,15 @@
       "seat": "u-9b27e0",
       "reached": true,
       "detail": "#focus=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector&sel=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector"
+    },
+    {
+      "state": "one of two staff members of one name focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
     },
     {
       "state": "the strip on a submitted talk, withheld acts shown",
@@ -1318,15 +1318,6 @@
       "detail": "#focus=room%3Aaula&sel=room%3Aaula"
     },
     {
-      "state": "one of two staff members of one name focused",
-      "face": "scene",
-      "width": 390,
-      "scheme": "dark",
-      "seat": "u-02d8c4",
-      "reached": true,
-      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
-    },
-    {
       "state": "a workshop over its room's seats focused",
       "face": "scene",
       "width": 390,
@@ -1334,6 +1325,15 @@
       "seat": "u-02d8c4",
       "reached": true,
       "detail": "#focus=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector&sel=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector"
+    },
+    {
+      "state": "one of two staff members of one name focused",
+      "face": "scene",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-02d8c4",
+      "reached": true,
+      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
     },
     {
       "state": "the strip on a submitted talk, withheld acts shown",
@@ -1756,15 +1756,6 @@
       "detail": "#focus=room%3Aaula&sel=room%3Aaula"
     },
     {
-      "state": "one of two staff members of one name focused",
-      "face": "scene",
-      "width": 1440,
-      "scheme": "dark",
-      "seat": "agent-sched-7",
-      "reached": true,
-      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
-    },
-    {
       "state": "a workshop over its room's seats focused",
       "face": "scene",
       "width": 1440,
@@ -1772,6 +1763,15 @@
       "seat": "agent-sched-7",
       "reached": true,
       "detail": "#focus=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector&sel=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector"
+    },
+    {
+      "state": "one of two staff members of one name focused",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
     },
     {
       "state": "the strip on a submitted talk, withheld acts shown",
@@ -2195,15 +2195,6 @@
       "detail": "#focus=room%3Aaula&sel=room%3Aaula"
     },
     {
-      "state": "one of two staff members of one name focused",
-      "face": "scene",
-      "width": 1440,
-      "scheme": "dark",
-      "seat": "u-anon-0",
-      "reached": true,
-      "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
-    },
-    {
       "state": "a workshop over its room's seats focused",
       "face": "scene",
       "width": 1440,
@@ -2211,6 +2202,15 @@
       "seat": "u-anon-0",
       "reached": true,
       "detail": "#focus=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector&sel=workshop%3Ahands-on-fifty-people-twenty-four-chairs-and-one-projector"
+    },
+    {
+      "state": "a staff member kept from a seat that may not see them",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": "#overview=1"
     },
     {
       "state": "the strip on a submitted talk, withheld acts shown",
@@ -2305,7 +2305,7 @@
       "scheme": "dark",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": "DIV"
+      "detail": "BUTTON"
     },
     {
       "state": "the profile opened and the seats listed",
@@ -2352,15 +2352,13 @@
       }
     },
     {
-      "state": "the staff, a mass noun",
+      "state": "the staff kept from a seat that may not see them",
       "face": "pages",
       "width": 1440,
       "scheme": "dark",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": {
-        "wide": 1440
-      }
+      "detail": "Programme"
     },
     {
       "state": "a talk with a long, shared-prefix title",
@@ -2534,6 +2532,7 @@
     "everyDistrictOpensInPlace": true,
     "everyAwkwardRecordIsReached": true,
     "theCalendarOverTwoKindsOpens": true,
+    "whatASeatMayNotSeeIsKeptFromIt": true,
     "findingReachesAwkwardNames": true,
     "asksAndFormsOpenAndClose": true,
     "anActIsPressedAndTakenBackByEverySeatThatMayAct": true,
