@@ -1,5 +1,46 @@
 # @graview/primitives
 
+## 0.1.1
+
+### Patch Changes
+
+- ed02370: A connection's chip on a record is titled "Go to the test drive", by the kind's noun, not "Go to test-drive".
+- e0c8cac: A list's "Only…" filter and the chip it leaves say a value as the record does — "SUV", "Body style: SUV" — through the new `valueWords`, rather than the field's raw "suv". The watch no longer counts a word one kind declares ("Status") as another kind's key.
+- e1b9f5c: A form asks in the record's words. An argument that fills a field of the kind its act makes or acts on is labelled as that field ("VIN", "Body style"), its choices are said as the record says them ("SUV", "Plug-in hybrid"), and an argument called `label` is asked for as a "Name" — on the routed face's forms and in the scene's ask alike (`argumentWords`). A refused argument is said field by field in the same words — "Not yet: Email — invalid email address." — rather than as `Invalid arguments for mutation "sign-up" email: …` (`failureWords`, `InvalidArguments`). The watch is told a declaration's choice values, and the key's own words wherever the declaration has others.
+- 097d684: A count of one says the kind's noun: "1 car", "1 test drive", where a place card, Find, a district's name, a band of a district and a coverage's gaps said "1 vehicle" and "1 test-drive". One function says it now (`counted`).
+- e88f729: A chip's title, an empty record's "Nothing is connected to this …" and the seeding's count of one say the kind's noun, not its id: "Test drive — implicated in a problem", not "test-drive".
+- 1df48c8: A list narrows by a number and by a word. The arrangement offers every number field as a filter — `price:at-most:25000`, `mileage:at-least:10000` — and every word field by the values it holds; the arrange bar's Only… lists four round steps through what the list holds ("at most £25,000") and a word field's values by name ("Make: Kia") when there are up to sixty. `roundSteps` is exported.
+- ccfe1cd: A lens path that cannot get from its columns to its rows is a binding error, not a picture of nothing covered. `graview check` walks it off the declaration (`lens-binding-path-misses`, saying when it is only named backwards and how to name it), and the coverage throws a `CoverageBindingError` with the same sentence rather than reading every row as uncovered. `walkKinds` is exported.
+- d76a957: A policy says who may see what, as well as who may do it. `Policy.sees` keeps a kind to the roles a sight names — with `own`, to the principal's own record and what an edge joins to it — and a kind no sight names stays everybody's. `store.seenBy(principal)` is the store as that principal may see it: its graph, log, history and problems hold only what they may see, and every act still goes to the store itself; with no `sees` it is the store, unchanged. The scene's provider and the routed face hand every surface that view, a kind a seat sees none of and may not begin is kept from it like an administered module, and the way in leaves it out. `graview check` refuses a sight naming an undeclared kind (`sight-unknown-kind`). A watching harness is told what the seat may not see (`tellTheWatchWhatIsUnseen`, `useTheWatchKnowsWhatIsUnseen`).
+- c222b58: The scene's ask takes a list of words as one line, split at commas, and nothing typed as an empty list: "Put a car on sale" sent its features as a string and was refused on its last step, every Apply. The ask's field carries its argument's `name`.
+- deb98ca: When the scene's ask is refused for an answer, it goes back to that question. Sixteen questions into "Put a car on sale", "Photos — invalid URL" left the ask on its last step, where Apply could only be refused again and the only way to the wrong answer was to start over.
+- 3c0d822: The bar wraps wherever one row does not hold, not only below 920 pixels: an app's own `nav`, a long crumb after a drive-in and the places menu can need more, and at 1280 a bid's bar ran the profile — the seat switcher — off the edge with the places a sliver. The row is measured before it is painted and tried again when the window widens or the view moves.
+- b9cdc16: The scene's ask hands the keyboard to its next question when the last answer took its control away: a choice pressed before another question of choices ("Fuel", then "Gearbox") left it on `<body>`.
+- 0b78acc: The way in says a kind is waiting for what is still missing — "Waiting for Shoppers." — not for everything its act needs, beside four showrooms and 340 cars.
+- Updated dependencies [bf36bbe]
+- Updated dependencies [e0c8cac]
+- Updated dependencies [e1b9f5c]
+- Updated dependencies [cbdd94a]
+- Updated dependencies [097d684]
+- Updated dependencies [a1859c5]
+- Updated dependencies [1df48c8]
+- Updated dependencies [ccfe1cd]
+- Updated dependencies [c307981]
+- Updated dependencies [fa8bd61]
+- Updated dependencies [32ea5ac]
+- Updated dependencies [d76a957]
+- Updated dependencies [b535cb2]
+- Updated dependencies [6b297f0]
+- Updated dependencies [414ddde]
+- Updated dependencies [a575ca9]
+- Updated dependencies [f1cf758]
+- Updated dependencies [6966a4e]
+  - @graview/react@0.1.1
+  - @graview/core@0.1.1
+  - @graview/tools@0.1.1
+  - @graview/layout@0.1.1
+  - @graview/render@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

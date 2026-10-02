@@ -1,5 +1,36 @@
 # @graview/react
 
+## 0.1.1
+
+### Patch Changes
+
+- bf36bbe: The tag on a focused card says the kind's noun — "car", "test drive" — not its id ("vehicle", "test-drive").
+- 097d684: A count of one says the kind's noun: "1 car", "1 test drive", where a place card, Find, a district's name, a band of a district and a coverage's gaps said "1 vehicle" and "1 test-drive". One function says it now (`counted`).
+- d76a957: A policy says who may see what, as well as who may do it. `Policy.sees` keeps a kind to the roles a sight names — with `own`, to the principal's own record and what an edge joins to it — and a kind no sight names stays everybody's. `store.seenBy(principal)` is the store as that principal may see it: its graph, log, history and problems hold only what they may see, and every act still goes to the store itself; with no `sees` it is the store, unchanged. The scene's provider and the routed face hand every surface that view, a kind a seat sees none of and may not begin is kept from it like an administered module, and the way in leaves it out. `graview check` refuses a sight naming an undeclared kind (`sight-unknown-kind`). A watching harness is told what the seat may not see (`tellTheWatchWhatIsUnseen`, `useTheWatchKnowsWhatIsUnseen`).
+- b535cb2: An author nothing names is said by what it is — "the upgrade" for a migration, "the system", "an agent" — never by a namespaced id: the activity rail headed an upgrade "ship:migration". A watching harness is told every author id in the log that names no record.
+- 6966a4e: A watching harness is told what each surface's seat may not see separately, and holds a page only to what none of them may see: two embeds on one page can sit two different seats down.
+- Updated dependencies [e0c8cac]
+- Updated dependencies [e1b9f5c]
+- Updated dependencies [cbdd94a]
+- Updated dependencies [097d684]
+- Updated dependencies [a1859c5]
+- Updated dependencies [1df48c8]
+- Updated dependencies [ccfe1cd]
+- Updated dependencies [c307981]
+- Updated dependencies [fa8bd61]
+- Updated dependencies [32ea5ac]
+- Updated dependencies [d76a957]
+- Updated dependencies [b535cb2]
+- Updated dependencies [6b297f0]
+- Updated dependencies [414ddde]
+- Updated dependencies [a575ca9]
+- Updated dependencies [f1cf758]
+- Updated dependencies [6966a4e]
+  - @graview/core@0.1.1
+  - @graview/tools@0.1.1
+  - @graview/layout@0.1.1
+  - @graview/render@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

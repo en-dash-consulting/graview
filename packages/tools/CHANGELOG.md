@@ -1,5 +1,30 @@
 # @graview/tools
 
+## 0.1.1
+
+### Patch Changes
+
+- 6b297f0: An act offered from its far end, with its subject still to choose, is asked about as the seat would choose it. A grant on the seat's own record (`self: true`) or drawn by kind ("a reviewer, on talks") could not pass a subject nobody had named, so a shopper was refused "Shortlist a car" on every car "— a manager or a shopper can", and a reviewer every topic. The open subject's candidates are now narrowed to those the seat may act on; when that is only the seat's own record the subject is filled in and the form stops asking who; when the seat's own record is already done, the act is neither offered nor refused. `store.permits` reads an unchosen subject as the act's one subject kind.
+- Updated dependencies [e0c8cac]
+- Updated dependencies [e1b9f5c]
+- Updated dependencies [cbdd94a]
+- Updated dependencies [097d684]
+- Updated dependencies [a1859c5]
+- Updated dependencies [1df48c8]
+- Updated dependencies [ccfe1cd]
+- Updated dependencies [c307981]
+- Updated dependencies [fa8bd61]
+- Updated dependencies [32ea5ac]
+- Updated dependencies [d76a957]
+- Updated dependencies [b535cb2]
+- Updated dependencies [6b297f0]
+- Updated dependencies [414ddde]
+- Updated dependencies [a575ca9]
+- Updated dependencies [f1cf758]
+- Updated dependencies [6966a4e]
+  - @graview/core@0.1.1
+  - @graview/ship@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
