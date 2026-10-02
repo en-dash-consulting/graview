@@ -4280,3 +4280,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/primitives/src/seeding.tsx`
 - harness that should have caught it: none — the class's check is "none yet"; `the-way-in.test.tsx` held the empty graph and the full one, never a kind with two needs and one of them met
 - status: fixed in "walkthrough: B · the way in waits for what is missing" · criterion: `packages/primitives/tests/unit/waiting-for-what-is-missing.test.tsx` (verified failing without the fix)
+
+### W-166 · "Related: Drives Test drives · Towards Trade-ins · About Enquiries"
+- stage: B · face: pages · width: 1280 and 390 · scheme: light
+- impact: cosmetic — a hole in a known class's check: over the list of cars, six relations named by their edges' keys
+- class: machine-words-shown (also: wrong-end-of-a-relation)
+- expected: each relation in its own words from this end — "The showroom it is at", "The test drives booked in it" — as the record page and the arrange bar already say them
+- actual: the list page's relation row printed `humaniseField(edgeKind)` beside the far end's plural, and kept the words in a `title`; a list of one said the kind's id ("1 vehicle"). The watch caught neither: an edge name humanised is one or two plain words
+- where it belongs: `packages/pages/src/page-list.tsx`; the watch: `packages/core/src/watched.ts`
+- harness that should have caught it: the watch's `machine-words-shown`
+- status: fixed in "walkthrough: B · a relation says its own words" · the watch is now told an edge's spoken name wherever the edge has words of its own, caught where it is all an element says (with the kinds' nouns and plurals counted as declared words). Criterion: `packages/pages/tests/unit/a-relation-says-its-own-words.test.tsx` (both cases verified failing without the fix)

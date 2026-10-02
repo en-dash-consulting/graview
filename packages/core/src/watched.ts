@@ -68,6 +68,8 @@ export function tellTheWatchItsNames(
     for (const label of Object.values(definition.display?.labels ?? {})) words.push(label);
     for (const [name, edge] of Object.entries(definition.edges ?? {})) {
       ids.push(name);
+      // An edge's name spoken ("Drives", "On show at") where it has words of its own ("the test drives booked in it").
+      if (edge.description || edge.inverse) unsaid.push(humaniseField(name));
       words.push(edge.description ?? "", edge.inverse ?? "");
     }
   }
@@ -80,6 +82,9 @@ export function tellTheWatchItsNames(
   // A word one kind declares is never another's key: "Status" is a test drive's own label even where a car says "Availability".
   const declared = new Set<string>();
   for (const definition of schema.definitions) {
+    // A kind's own words: what a picker asks for ("Owner") is a noun, not an edge's name.
+    declared.add(definition.plural ?? "");
+    declared.add(humaniseField(definition.noun ?? definition.kind));
     for (const label of Object.values(definition.display?.labels ?? {})) declared.add(label);
     const fieldsOf = (definition.fields as { shape?: Record<string, { def?: { entries?: Record<string, unknown> } }> }).shape ?? {};
     for (const [key, field] of Object.entries(fieldsOf)) {
