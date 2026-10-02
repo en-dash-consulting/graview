@@ -4360,3 +4360,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/core/src/who.ts`; the watch: `packages/core/src/watched.ts` (`tellTheWatchItsAuthors`), `packages/react/src/context.tsx`
 - harness that should have caught it: the watch's `machine-words-shown`, and `pnpm verify remember`, which reloads against a migration and read the log's count, not its words
 - status: fixed in "walkthrough: G · an author is never an id" · a migration is "the upgrade", a namespaced id is said by its kind, a plain name a host gave stays; the provider tells a watching harness every author id in the log. Criterion: `packages/core/tests/unit/an-author-is-never-an-id.test.ts` (verified failing without the fix); walk7's activity now reads "the upgrade · migration 1→2: an approved car is said as approved used", run once across two reloads, with its undo
+
+### W-174 · Somebody browsing the showroom is offered its studio
+- stage: H (sitting down as somebody else on an embed) · face: scene and embed · width: 1280 and 390 · scheme: both
+- impact: blocks a job — keeping the storefront the store's: a stranger, a shopper and a salesperson were each one press from the app's own declaration — its kinds, roles, rules and policy — and from changing it
+- class: shown-what-is-not-theirs (also: offered-then-refused)
+- expected: the studio is the business of whoever may already do everything in the app
+- actual: `maySeeTheStudio` gave it to the administrators of an installation, and where there is none, to whoever is here — right for a scaffolded project on its first day, wrong for one that has declared a policy and seats with no installation
+- where it belongs: `packages/studio/src/place.tsx` (`maySeeTheStudio`)
+- harness that should have caught it: none — no example declares a policy without an installation and a seat that may do little; the watch's new rule judges records, not the declaration
+- status: fixed in "walkthrough: H · the studio is not for everyone" · under a policy, the seats with an unrestricted grant of every act. Criterion: `tests/the-studio-is-not-for-everyone.test.ts` — a bare policy, and every seat of the gauntlet and discography (verified failing without the fix)
