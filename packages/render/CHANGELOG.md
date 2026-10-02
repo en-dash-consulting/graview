@@ -1,5 +1,151 @@
 # @graview/render
 
+## 0.1.0
+
+### Minor Changes
+
+- b5e95a1: The first public release, 0.1.0, under the Elastic License 2.0.
+  
+  `graview` is the tool and `@graview/*` is the framework. The command line is
+  its own package now: `npx graview create my-app` from nothing, and inside a
+  project `graview check`, `graview docs`, `graview describe`, `graview lens`,
+  `graview figure`, `graview serve` and `graview skills`. The `graview-serve`
+  and `graview-skills` bins are gone — `serve` and `skills` are subcommands —
+  and `@graview/core` no longer carries a bin of its own. A scaffolded project
+  takes `graview` as its devDependency in place of `@graview/skills`, and
+  `create-graview` (what `npm create graview` runs) depends on `graview`.
+  
+  Every package moves in lockstep from here, so the `^<version>` range
+  `graview create` writes for each `@graview/*` dependency is always one that
+  exists.
+
+### Patch Changes
+
+- 475cc83: The districts at the bottom of the stack are readable: the kinds plane stops paying for depth in legibility.
+  
+  A district's name reached the screen at ten pixels and its kind at under eight, so the bottom of the picture was a row of grey marks rather than a map of the domain. Three things were stacked on top of each other to get there.
+  
+  **The plane was drawn at 78% of the room it was given.** The layout allots each district a slot and the renderer drew the card at 0.78 of it — a shrink applied *after* the reader's text size, so it was a shrink no setting could lift. The stylesheet next to it already argued the case: "Depth comes from BLUR AND FALLOFF, not from shrinking. Pushing the scale to 0.6 made the strip illegible — ten cards reading P…, REA…, S…. A map you cannot read is not a map." 0.78 was the same mistake, smaller. The planes keep a shrink — recession is still monotonic, as `frame-plan` requires — but one small enough to read as depth and no longer small enough to cost a word its legibility.
+  
+  **A district's name was thirteen pixels before any of that**, and its kind ten. A name is read, not glanced at.
+  
+  **And three more pixel sizes were hiding from the guard.** The test written last commit looked for a number straight after `fontSize:` and walked past `fontSize: nested ? 10.5 : 13` — which is how the district's own name stayed at thirteen pixels while everything around it doubled. It strips quoted values and looks at the whole expression now, and found two more in the reach lens and the panel.
+  
+  Two knock-ons, each fixed at its cause rather than tuned away. A fan of tucked cards is spaced in layout units and drawn at the plane's scale, so the gap between two tucks is `step − scale` of a card: at 0.86 against 0.78 that was air, and against 0.9 it became six pixels of one card sitting on its neighbour's label. And the fan was allowed the parent's width *plus the gap* — but the gap is not spare room, it is what keeps one district off the next. Both were caught by `audit-ui`, not by eye.
+  
+  Finally, a panel's heading wraps. Both halves of that row are sized in `rem` now, so a reader on Largest doubles them, and on a phone "The rotation · 2026–2029" reached eight pixels past the screen — caught by the calendar harness's own reader-settings check, which is exactly what it is for.
+- e0d5026: A kit for the picture. Everything the scene draws that is not a view — the lines, their captions, the ground's grid and lattice, the kind tags, how far the unlit recedes, the mark a broken rule leaves — is declared on `brand.kit`, any part of it, the rest as shipped. A connector's route is a named strategy (`curve`, `straight`, `orthogonal`) and its stroke a named pattern; each is one case in one file, so the next is one more case and nothing in the scene moves. Colour and visibility are per edge kind under `connectors.byEdge` or for all under `connectors.all`; a kind kept quiet is not drawn and stays selectable from the inspector. `themeCss` emits the kit as `--graview-kit-*` custom properties that the ground and the tags read. `graview check` holds an explicit line colour to 3:1 against both grounds in both schemes (`kit-contrast-below-aa`, `kit-colour-unreadable`). An embed's handle gains `setBrand`, so a page can re-dress a running Graview.
+- c8e9387: `@graview/render` no longer names `vgpu` as a peer. It never imported it: the compositor takes any WebGPU device said structurally (`{ device: { gpu: GPUDevice } }` and a surface with a `context`), so a device from `navigator.gpu`, `vgpu`, `vgpu/node` or `vgpu/mock` all fit. The peer only pinned a library the package does not call to a range (`^0.3.1`) that warned anyone on a newer one. `@webgpu/types` stays an optional peer for the `./gpu` entry's types.
+- Updated dependencies [fb781c2]
+- Updated dependencies [390028c]
+- Updated dependencies [bff0b71]
+- Updated dependencies [400a6df]
+- Updated dependencies [c7a3519]
+- Updated dependencies [2aae30f]
+- Updated dependencies [475cc83]
+- Updated dependencies [09a23a3]
+- Updated dependencies [92a2f73]
+- Updated dependencies [509162f]
+- Updated dependencies [3f86b09]
+- Updated dependencies [9f6593b]
+- Updated dependencies [188bc6e]
+- Updated dependencies [1ebfd44]
+- Updated dependencies [a23e496]
+- Updated dependencies [e0d5026]
+- Updated dependencies [fc024d0]
+- Updated dependencies [41abe03]
+- Updated dependencies [e165c5b]
+- Updated dependencies [6a043bf]
+- Updated dependencies [45c4b9c]
+- Updated dependencies [b7f83cc]
+- Updated dependencies [1373dfb]
+- Updated dependencies [923bbfa]
+- Updated dependencies [e695209]
+- Updated dependencies [190c4a8]
+- Updated dependencies [e59fa1f]
+- Updated dependencies [f801b4d]
+- Updated dependencies [8e872b5]
+- Updated dependencies [c5e4ac7]
+- Updated dependencies [42c2c96]
+- Updated dependencies [2cc27e9]
+- Updated dependencies [b90b6c7]
+- Updated dependencies [8041853]
+- Updated dependencies [b9b0635]
+- Updated dependencies [60efe3b]
+- Updated dependencies [5e6d4e7]
+- Updated dependencies [03b9c5a]
+- Updated dependencies [5297528]
+- Updated dependencies [959955f]
+- Updated dependencies [22e0668]
+- Updated dependencies [9b3a623]
+- Updated dependencies [5a00a1f]
+- Updated dependencies [d59b6c8]
+- Updated dependencies [887d768]
+- Updated dependencies [de75e21]
+- Updated dependencies [2c25067]
+- Updated dependencies [d36e6fa]
+- Updated dependencies [7244498]
+- Updated dependencies [b1fbc32]
+- Updated dependencies [796bf9e]
+- Updated dependencies [d907771]
+- Updated dependencies [0bb6827]
+- Updated dependencies [b5e95a1]
+- Updated dependencies [3f5d3ba]
+- Updated dependencies [7a61e87]
+- Updated dependencies [a5d842b]
+- Updated dependencies [2b2df36]
+- Updated dependencies [a9381af]
+- Updated dependencies [8976510]
+- Updated dependencies [d5227b5]
+- Updated dependencies [0c320d9]
+- Updated dependencies [0c0fa22]
+- Updated dependencies [8a2fdf2]
+- Updated dependencies [fb6eb5d]
+- Updated dependencies [5343a1d]
+- Updated dependencies [45c7a2c]
+- Updated dependencies [ddf1ea9]
+- Updated dependencies [6e0fbb7]
+- Updated dependencies [7188978]
+- Updated dependencies [5aa8776]
+- Updated dependencies [76e50a5]
+- Updated dependencies [481340c]
+- Updated dependencies [3e719c8]
+- Updated dependencies [206670e]
+- Updated dependencies [f80138a]
+- Updated dependencies [2c20c53]
+- Updated dependencies [8d43e33]
+- Updated dependencies [89f4855]
+- Updated dependencies [53ad439]
+- Updated dependencies [e0d5026]
+- Updated dependencies [90a3344]
+- Updated dependencies [6a043bf]
+- Updated dependencies [61d76a0]
+- Updated dependencies [8894627]
+- Updated dependencies [fc7103b]
+- Updated dependencies [9767a5e]
+- Updated dependencies [e9e495f]
+- Updated dependencies [636a00d]
+- Updated dependencies [0d1fd39]
+- Updated dependencies [098c784]
+- Updated dependencies [ae188cc]
+- Updated dependencies [6dd2cfd]
+- Updated dependencies [3506c69]
+- Updated dependencies [daccd55]
+- Updated dependencies [be9fb19]
+- Updated dependencies [e7151d4]
+- Updated dependencies [ce13ec8]
+- Updated dependencies [95196d7]
+- Updated dependencies [55c4151]
+- Updated dependencies [5856676]
+- Updated dependencies [6e8a02c]
+- Updated dependencies [3cb6d60]
+- Updated dependencies [cb196b1]
+- Updated dependencies [5b401bb]
+- Updated dependencies [968e1d1]
+- Updated dependencies [59cef8c]
+  - @graview/core@0.1.0
+  - @graview/layout@0.1.0
+
 ## 0.0.1
 
 ### Patch Changes
