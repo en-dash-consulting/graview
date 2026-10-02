@@ -173,6 +173,17 @@ export function humaniseField(field: string): string {
  * so `plannedAt` never reaches a person from one surface while another says
  * "Planned at".
  */
+/**
+ * One of a field's values, as the declaration says it: its `display.format`
+ * where it has one ("SUV", "Plug-in hybrid"), else the value spoken. A
+ * filter that offered "suv" and "plug-in-hybrid" beside a record that said
+ * "SUV" and "Plug-in hybrid" read one field two ways.
+ */
+export function valueWords(definition: AnyNodeDefinition | undefined, key: string, value: unknown): string {
+  const format = definition?.display?.format?.[key];
+  return format ? format(value) : typeof value === "string" ? humaniseField(value) : String(value);
+}
+
 export function fieldWords(definition: { readonly display?: { readonly labels?: Readonly<Record<string, string>> } } | undefined, key: string): string {
   return definition?.display?.labels?.[key] ?? humaniseField(key);
 }

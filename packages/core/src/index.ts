@@ -227,7 +227,7 @@ export {
   isoDate,
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
-export { article, fieldWords, humaniseField, nounOf, readableFields, summarise, withArticle } from "./schema/define-node.js";
+export { article, fieldWords, humaniseField, nounOf, readableFields, summarise, valueWords, withArticle } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export { checkKitContrast, connectorHueColour, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";

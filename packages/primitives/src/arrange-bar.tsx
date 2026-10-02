@@ -4,6 +4,7 @@ import {
   formatArrangement,
   labelOf,
   parseArrangement,
+  valueWords,
   type AnySchema,
   type Arrangeable,
   type ArrangeOffer,
@@ -152,7 +153,7 @@ export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arr
     return `${offer.label} ${op} ${date ?? ""}`.trim();
   }
   if (offer.type === "boolean") return `${offer.label}: ${condition.value === "true" ? "yes" : "no"}`;
-  return `${offer.label}: ${condition.value}`;
+  return `${offer.label}: ${valueWords(schema.tryDefinition(offers.kind), offer.key, condition.value)}`;
 }
 
 /** What each bar last sent, by its test id and kind (see `ArrangeBar`). */
@@ -363,7 +364,7 @@ function AddCondition({
       entries.push({ value: `${offer.key}:true`, label: "yes", group: offer.label, condition: { key: offer.key, value: "true" } });
       entries.push({ value: `${offer.key}:false`, label: "no", group: offer.label, condition: { key: offer.key, value: "false" } });
     } else {
-      for (const option of offer.options ?? []) entries.push({ value: `${offer.key}:${option}`, label: option, group: offer.label, condition: { key: offer.key, value: option } });
+      for (const option of offer.options ?? []) entries.push({ value: `${offer.key}:${option}`, label: valueWords(schema.tryDefinition(offers.kind), offer.key, option), group: offer.label, condition: { key: offer.key, value: option } });
     }
   }
   const groups = [...new Set(entries.map((entry) => entry.group))];

@@ -73,7 +73,19 @@ export function tellTheWatchItsNames(
   }
   for (const grant of policy?.grants ?? []) if (grant.roles !== "*") ids.push(...grant.roles);
   ids.push(...(policy?.roles ?? []));
-  watch.learn({ ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)] });
+  // A word one kind declares is never another's key: "Status" is a test drive's own label even where a car says "Availability".
+  const declared = new Set<string>();
+  for (const definition of schema.definitions) {
+    for (const label of Object.values(definition.display?.labels ?? {})) declared.add(label);
+    const fieldsOf = (definition.fields as { shape?: Record<string, { def?: { entries?: Record<string, unknown> } }> }).shape ?? {};
+    for (const [key, field] of Object.entries(fieldsOf)) {
+      const format = definition.display?.format?.[key];
+      const entries = field?.def?.entries;
+      if (!format && !definition.display?.labels?.[key]) declared.add(humaniseField(key));
+      if (format && entries && typeof entries === "object") for (const value of Object.values(entries)) declared.add(format(value));
+    }
+  }
+  watch.learn({ ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word)) });
 }
 
 /**
