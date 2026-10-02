@@ -4300,3 +4300,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/core/src/scaffold/ui.ts` (`pagesTsx`)
 - harness that should have caught it: `scaffold.test.ts`, which pinned the template's shape against a kind whose noun never changes
 - status: fixed in "walkthrough: B · a scaffolded record says its noun" · the eyebrow reads `withArticle(nounOf(…))` from the declaration, and only a record in the past says where it is on the horizon. Criterion: `scaffold.test.ts` "says what a record is from the declaration" (verified failing without the fix)
+
+### W-168 · Every car in the showroom shows its VIN at a glance, and never its price
+- stage: B (browsing the stock) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: costs a job — comparing cars: every card and every row of 301 reads "DRCD05TU2R88P6N6D · SUV · Atlas Blue", so a price or a mileage is a press into each car and back
+- class: data-shape-not-in-fixtures (also: prose-wrong-for-the-domain)
+- expected: a glance says the facts a person compares one by; W-134 took the heading's own words out of it
+- actual: a glance takes the first three fields the heading does not already say, in declaration order — nobody's choice. A car declared VIN-first, as a dealer's system lists one, glanced as its VIN. The examples' records have so few fields that the first three were always the right three
+- where it belongs: `packages/core/src/schema/types.ts` and `define-node.ts` (`display.glance`), `packages/core/src/cli/check/relations.ts`
+- harness that should have caught it: none — the gauntlet's records have at most five fields
+- status: fixed in "walkthrough: B · a glance says what the declaration chose" · `display.glance` orders what every card, row and hit says; the checker notes `glance-unchosen` wherever a kind has more than five fields and has not chosen (todo's task, the launcher's app, discography's song and the gauntlet's talk now carry the note), and refuses `glance-unknown-field`. Criterion: `packages/core/tests/unit/a-glance-says-what-is-chosen.test.ts` (both cases verified failing without the fix)

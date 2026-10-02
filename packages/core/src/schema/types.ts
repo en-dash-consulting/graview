@@ -103,6 +103,12 @@ export interface NodeDefinitionSpec<
     readonly labels?: Readonly<Record<string, string>>;
     /** Turns a stored value into the words for it. */
     readonly format?: Readonly<Record<string, (value: unknown) => string>>;
+    /**
+     * What a glance at one says — a card, a row in a list, a hit in Find —
+     * in order. Unsaid, the first fields the heading does not already say,
+     * which for a car declared VIN-first was its VIN and never its price.
+     */
+    readonly glance?: readonly string[];
   };
   /**
    * When a node of this kind stops being CURRENT.

@@ -281,7 +281,12 @@ export function readableFields(
     .filter((stem) => stem.length > 12);
 
   const fields: ReadableField[] = [];
-  for (const [key, value] of Object.entries(node)) {
+  // A glance says what the declaration chose for it first, in its order (`display.glance`).
+  const chosen = options.glance ? (display?.glance ?? []) : [];
+  const entries = chosen.length > 0
+    ? [...chosen.filter((key) => key in node).map((key) => [key, node[key]] as const), ...Object.entries(node).filter(([key]) => !chosen.includes(key))]
+    : Object.entries(node);
+  for (const [key, value] of entries) {
     if (skip.has(key) || value === undefined || value === null) continue;
     const format = display?.format?.[key];
     /*

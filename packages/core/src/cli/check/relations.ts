@@ -178,6 +178,37 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
     }
 
     /*
+     * WHAT A GLANCE SAYS. A card shows three facts, and unsaid they are the
+     * first three the heading does not already say — declaration order,
+     * which is nobody's choice: a car declared VIN-first showed its VIN on
+     * every card in the showroom and never its price (W-168).
+     */
+    {
+      const shape = definition.fields.shape as Record<string, unknown>;
+      const hidden = new Set(definition.display?.hide ?? []);
+      const readable = Object.keys(shape).filter((key) => key !== "label" && !hidden.has(key));
+      for (const key of definition.display?.glance ?? []) {
+        if (key in shape) continue;
+        add({
+          severity: "error",
+          code: "glance-unknown-field",
+          where: `defineNode("${definition.kind}").display.glance`,
+          message: `A glance at ${withArticle(definition.kind)} is to say "${key}", which it does not declare.`,
+          fix: `Use one of: ${readable.join(", ")}.`,
+        });
+      }
+      if (readable.length > 5 && !definition.display?.glance) {
+        add({
+          severity: "note",
+          code: "glance-unchosen",
+          where: `defineNode("${definition.kind}").display`,
+          message: `${withArticle(definition.kind).replace(/^./, (first) => first.toUpperCase())} has ${readable.length} fields and a card shows three — the first three in the order they were declared (${readable.slice(0, 3).join(", ")}).`,
+          fix: `Say which: display: { glance: ["${readable.slice(0, 3).join('", "')}"] } — the facts a person compares one by, at a glance.`,
+        });
+      }
+    }
+
+    /*
      * A lifecycle must name a real field. A currency read off a field that
      * does not exist would silently make every node current for ever —
      * which is exactly the state a kind was in before declaring anything,
