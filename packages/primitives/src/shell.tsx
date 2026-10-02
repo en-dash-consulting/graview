@@ -1,7 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import { Scene, useGraview, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
-import { useCallback, useState, type ReactNode, useRef } from "react";
+import { useCallback, useLayoutEffect, useState, type ReactNode, useRef } from "react";
 import { Companion } from "./companion.js";
 import { VISUALLY_HIDDEN, useWidth } from "./primitives/index.js";
 import { FindBox } from "./find.js";
@@ -107,7 +107,7 @@ export function Shell<S extends AnySchema>({
   profileHref,
   studio,
 }: ShellProps<S>) {
-  const { brand } = useGraview<S>();
+  const { brand, view } = useGraview<S>();
   // Below a laptop's width the standing and the profile keep their marks and
   // give up their words; the words are their titles either way.
   const bar = useRef<HTMLElement>(null);
@@ -130,7 +130,23 @@ export function Shell<S extends AnySchema>({
    * box with room to type in and the profile: at 720 a long record's name
    * pushed the profile — the seat switcher — off the screen, so it is 920.
    */
-  const narrow = barWidth !== null && barWidth < 920;
+  /*
+   * AND WHEREVER ONE ROW DOES NOT HOLD. 920 is where a scaffolded app's row
+   * stops holding; an app's own `nav` (a price against its ceiling), a long
+   * crumb after a drive-in and the places menu can need more, and at 1280 a
+   * bid's bar ran its profile off the edge with the places a sliver. So the
+   * row is measured before it is painted: if it overflows, the bar wraps,
+   * and it tries one row again when the window is wider than that or the
+   * view moves — the crumb is what changes the row's need most.
+   */
+  const [needs, setNeeds] = useState(0);
+  const narrow = barWidth !== null && (barWidth < 920 || barWidth < needs);
+  useLayoutEffect(() => setNeeds(0), [view.focusId]);
+  useLayoutEffect(() => {
+    const row = bar.current;
+    if (!row || narrow || barWidth === null) return;
+    if (row.scrollWidth > row.clientWidth + 1) setNeeds(row.scrollWidth + 1);
+  });
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);
   const onCall = useCallback((call: ToolCall) => {
     setCalls((current) => {
