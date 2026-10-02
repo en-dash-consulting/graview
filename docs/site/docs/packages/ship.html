@@ -2,6 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- Analytics, on graview.dev only: a local preview, a file:// page and the harnesses send nothing and never wait on the network. -->
+<script>
+if (location.hostname === "graview.dev" || location.hostname === "www.graview.dev") {
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag("js", new Date());
+  window.gtag("config", "G-5M3BER325D");
+  var ga = document.createElement("script");
+  ga.async = true;
+  ga.src = "https://www.googletagmanager.com/gtag/js?id=G-5M3BER325D";
+  document.head.appendChild(ga);
+}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@graview/ship — Graview docs</title>
 <meta name="description" content="What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.">
