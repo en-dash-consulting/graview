@@ -48,6 +48,27 @@ const rename = defineMutation("rename", {
 
 const app = defineApp({ name: "carrier", schema: createSchema([task]), mutations: [rename] });
 
+/*
+ * WHO SEES WHAT has no act in the studio yet, and a storefront written back
+ * without it showed every customer to everybody (the seventh walk, W-170).
+ */
+const guarded = defineApp({
+  name: "carrier",
+  schema: createSchema([task]),
+  mutations: [rename],
+  policy: { roles: ["owner"], grants: [{ roles: ["owner"], mutations: "*" }], sees: [{ roles: ["owner"], kinds: ["task"], own: true, describe: "Your own tasks." }] },
+});
+
+describe("a policy that says who sees what, through the studio", () => {
+  it("keeps its sights in the declaration and in the policy it writes", () => {
+    const studio = createStudio(guarded);
+    expect(studio.declaration().policy?.sees).toEqual([{ roles: ["owner"], kinds: ["task"], own: true, describe: "Your own tasks." }]);
+    const policy = studio.files().find((file) => file.path.endsWith("policy.ts"))!.contents;
+    expect(policy).toContain('sees: [');
+    expect(policy).toContain('{ roles: ["owner"], kinds: ["task"], own: true, describe: "Your own tasks." },');
+  });
+});
+
 describe("a round trip through the studio", () => {
   it("keeps how a field reads, what is fixed, and which fields answer a lens", () => {
     const next = createStudio(app).declaration();

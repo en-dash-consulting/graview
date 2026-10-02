@@ -500,10 +500,33 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
         return `    { ${parts.join(", ")} },`;
       }),
       `  ],`,
+      // Who sees what, as the checkout said it: the studio has no act for a sight yet.
+      ...sightLines(options.base, new Set(kinds.map(label))),
       `};`,
       ``,
     ].join("\n");
     files.push({ path: "src/domain/policy.ts", contents: policyTs, kept: [] });
   }
   return files;
+}
+
+/** The checkout's `sees`, kept to the kinds still declared, as policy lines. */
+function sightLines(base: GraviewApp<AnySchema> | undefined, kinds: ReadonlySet<string>): string[] {
+  const sights = (base?.policy?.sees ?? [])
+    .map((sight) => ({ ...sight, kinds: sight.kinds.filter((kind) => kinds.has(kind)) }))
+    .filter((sight) => sight.kinds.length > 0);
+  if (sights.length === 0) return [];
+  return [
+    `  sees: [`,
+    ...sights.map((sight) => {
+      const parts = [
+        `roles: ${sight.roles === "*" ? '"*"' : `[${sight.roles.map(q).join(", ")}]`}`,
+        `kinds: [${sight.kinds.map(q).join(", ")}]`,
+        ...(sight.own ? ["own: true"] : []),
+        ...(sight.describe ? [`describe: ${q(sight.describe)}`] : []),
+      ];
+      return `    { ${parts.join(", ")} },`;
+    }),
+    `  ],`,
+  ];
 }

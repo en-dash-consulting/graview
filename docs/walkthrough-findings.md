@@ -4320,3 +4320,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/studio/src/to-declaration.ts`, `packages/studio/src/source.ts`
 - harness that should have caught it: `what-it-does-not-model.test.ts`, the round trip's shared check, whose fixture had no glance — a field added to `display` is a field the round trip has to be told about
 - status: fixed in "walkthrough: B · a glance survives the studio" · criterion: `packages/studio/tests/unit/what-it-does-not-model.test.ts` now declares a glance and asserts it in the declaration and in the written schema (verified failing without the fix); walk7's own round trip (`tests/studio.test.ts`) says nothing new
+
+### W-170 · Through the studio, the showroom shows its customers to everybody again
+- stage: B (the studio's round trip) · face: — · width: — · scheme: —
+- impact: blocks a job — the same as W-163, after a change made in the studio and written back
+- class: round-trip-loses-something (also: shown-what-is-not-theirs)
+- expected: the studio keeps what the checkout declared and it does not model
+- actual: the studio rebuilt the policy from its role and grant nodes and had no node for a sight, so `declaration()` and the written `policy.ts` both lost `sees`
+- where it belongs: `packages/studio/src/to-declaration.ts`, `packages/studio/src/source.ts`
+- harness that should have caught it: `what-it-does-not-model.test.ts`, whose fixture had no sight — `sees` was new this walk
+- status: fixed in "walkthrough: B · a sight survives the studio" · carried from the checkout and kept to the kinds still declared. Criterion: `what-it-does-not-model.test.ts` "keeps its sights in the declaration and in the policy it writes" (verified failing without the fix); walk7's `tests/studio.test.ts` passes. Open: the studio cannot yet add, change or remove a sight
