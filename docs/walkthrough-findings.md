@@ -4290,3 +4290,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/pages/src/page-list.tsx`; the watch: `packages/core/src/watched.ts`
 - harness that should have caught it: the watch's `machine-words-shown`
 - status: fixed in "walkthrough: B · a relation says its own words" · the watch is now told an edge's spoken name wherever the edge has words of its own, caught where it is all an element says (with the kinds' nouns and plurals counted as declared words). Criterion: `packages/pages/tests/unit/a-relation-says-its-own-words.test.tsx` (both cases verified failing without the fix)
+
+### W-167 · Every car's page is headed "A VEHICLE IN HARBOURLINE MOTORS · Current."
+- stage: B · face: pages · width: 1280 and 390 · scheme: light
+- impact: cosmetic — the first two lines of every car's page, the page a stranger lands on from a search
+- class: what-a-project-copies-is-wrong (also: prose-wrong-for-the-domain)
+- expected: the record page a project starts with names the record as the declaration does, today
+- actual: `graview create --kind vehicle` wrote "A vehicle in Harbourline Motors" into the page as text; declaring `noun: "car"` the next day changed every other surface and not this one. Under it, "Current." on every car for sale — the lifecycle's word, which a shopper reads as nothing
+- where it belongs: `packages/core/src/scaffold/ui.ts` (`pagesTsx`)
+- harness that should have caught it: `scaffold.test.ts`, which pinned the template's shape against a kind whose noun never changes
+- status: fixed in "walkthrough: B · a scaffolded record says its noun" · the eyebrow reads `withArticle(nounOf(…))` from the declaration, and only a record in the past says where it is on the horizon. Criterion: `scaffold.test.ts` "says what a record is from the declaration" (verified failing without the fix)
