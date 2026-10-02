@@ -4330,3 +4330,13 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/studio/src/to-declaration.ts`, `packages/studio/src/source.ts`
 - harness that should have caught it: `what-it-does-not-model.test.ts`, whose fixture had no sight — `sees` was new this walk
 - status: fixed in "walkthrough: B · a sight survives the studio" · carried from the checkout and kept to the kinds still declared. Criterion: `what-it-does-not-model.test.ts` "keeps its sights in the declaration and in the policy it writes" (verified failing without the fix); walk7's `tests/studio.test.ts` passes. Open: the studio cannot yet add, change or remove a sight
+
+### W-171 · "1 test-drive", "1 vehicle found", "1 vehicle with no showroom"
+- stage: D (the lenses' places) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: cosmetic — wherever a count came to one, the kind's id: the test-drive diary's place card, Find's spoken count, a district's name, a band of a district, a coverage's gaps
+- class: machine-words-shown (also: prose-wrong-for-the-domain)
+- expected: one of a kind is its noun ("1 car", "1 test drive"), as W-001 made "Add an item" say the article
+- actual: five sentences built a count of one from `kind.replace(/-/g, " ")`, each written on its own, so a kind whose noun is not its id ("vehicle" → "car") or whose id is hyphenated read as the declaration's identifier. The watch caught "1 test-drive" on the places page; "1 vehicle" passes for prose
+- where it belongs: `packages/core/src/schema/define-node.ts` (new `counted`), `packages/pages/src/page-places.tsx`, `packages/primitives/src/find.tsx`, `packages/primitives/src/lens/coverage.tsx`, `packages/react/src/view-host.tsx`, `packages/react/src/resolved-view.tsx`
+- harness that should have caught it: the watch, for the hyphenated id only
+- status: fixed in "walkthrough: D · a kind is counted by its noun" · criterion: `tests/a-kind-is-counted-by-its-noun.test.ts` — `counted`'s own words, and no package source outside the scaffold speaks a kind's id as a word (failed on all five sites without the fix)

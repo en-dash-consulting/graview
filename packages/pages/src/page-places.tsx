@@ -1,4 +1,4 @@
-import { isCurrent, labelOf, type AnySchema, type Store, type Place } from "@graview/core";
+import { counted, isCurrent, labelOf, type AnySchema, type Store, type Place } from "@graview/core";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { isDefaultView, type ViewProps } from "@graview/react";
@@ -45,7 +45,7 @@ function pictureOf<S extends AnySchema>(store: Store<S>, place: Place): string {
 
 /** "2 plots", "12 plantings across 4 plots" — how much a picture is over, in the schema's plurals. */
 function overOf<S extends AnySchema>(store: Store<S>, kind: string, across?: string): string {
-  const count = (n: number, of: string) => `${n} ${n === 1 ? of : pluralOf(store, of).toLowerCase()}`;
+  const count = (n: number, of: string) => counted(store.schema, of, n);
   const held = count(membersOf(store, kind).length, kind);
   return across ? `${held} across ${count(membersOf(store, across).length, across)}` : held;
 }

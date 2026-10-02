@@ -1,4 +1,4 @@
-import { labelOf, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { counted, labelOf, nounOf, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
 import { onTheHorizon } from "./horizon.js";
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
@@ -485,16 +485,14 @@ const HEADER_OVERHANG = Math.ceil(HEADER_MAX * RUN);
  * columns of one kind, it says which way the gap runs.
  */
 const pluralWords = (schema: AnySchema, kind: string): string => (schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase();
-const kindWords = (kind: string): string => kind.replace(/-/g, " ");
+const kindWords = (schema: AnySchema, kind: string): string => nounOf(schema.tryDefinition(kind), kind);
 export function gapWords(count: number, options: CoverageRoles, schema: AnySchema): string {
   if (options.rows === options.columns) return `${count} with none across`;
-  const rows = count === 1 ? kindWords(options.rows) : pluralWords(schema, options.rows);
-  return `${count} ${rows} with no ${kindWords(options.columns)}`;
+  return `${counted(schema, options.rows, count)} with no ${kindWords(schema, options.columns)}`;
 }
 export function unaskedWords(count: number, options: CoverageRoles, schema: AnySchema): string {
   if (options.rows === options.columns) return `${count} with none down`;
-  const columns = count === 1 ? kindWords(options.columns) : pluralWords(schema, options.columns);
-  return `${count} ${columns} on no ${kindWords(options.rows)}`;
+  return `${counted(schema, options.columns, count)} on no ${kindWords(schema, options.rows)}`;
 }
 
 export function CoverageView<S extends AnySchema>({

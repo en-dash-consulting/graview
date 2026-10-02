@@ -1,4 +1,4 @@
-import { actsOn, type AnySchema, type Hit } from "@graview/core";
+import { actsOn, counted, type AnySchema, type Hit } from "@graview/core";
 import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withQuery, withSelection, withWithin } from "@graview/layout";
 import { useFound, useGraview, useKit, useViolations } from "@graview/react";
 import { hueFor } from "@graview/render";
@@ -307,8 +307,7 @@ function headingOf(key: string, schema: AnySchema): string {
 /** "3 tasks, 1 list" — what a screen reader hears as the count changes. */
 function spoken(byKind: Readonly<Record<string, number>>, hits: readonly Hit[], schema: AnySchema): string {
   const parts = Object.entries(byKind).map(([kind, count]) => {
-    const plural = (schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase();
-    return `${count} ${count === 1 ? kind.replace(/-/g, " ") : plural}`;
+    return counted(schema, kind, count);
   });
   const others = hits.filter((hit) => hit.about === "kind" || hit.about === "place" || hit.about === "rule").length;
   if (others > 0) parts.push(`${others} ${others === 1 ? "place or rule" : "places and rules"}`);

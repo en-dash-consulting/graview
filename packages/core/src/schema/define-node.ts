@@ -184,6 +184,17 @@ export function valueWords(definition: AnyNodeDefinition | undefined, key: strin
   return format ? format(value) : typeof value === "string" ? humaniseField(value) : String(value);
 }
 
+/**
+ * HOW MANY OF A KIND, in its words: "1 car", "3 cars", "1 test drive" —
+ * the noun for one, the plural for the rest. Sentences that took the kind's
+ * id for one ("1 vehicle", "1 test-drive") said the declaration's
+ * identifier wherever a count came to one.
+ */
+export function counted(schema: { tryDefinition(kind: string): { readonly noun?: string; readonly plural?: string } | undefined }, kind: string, count: number): string {
+  const definition = schema.tryDefinition(kind);
+  return `${count} ${count === 1 ? nounOf(definition, kind) : (definition?.plural ?? `${kind}s`).toLowerCase()}`;
+}
+
 export function fieldWords(definition: { readonly display?: { readonly labels?: Readonly<Record<string, string>> } } | undefined, key: string): string {
   return definition?.display?.labels?.[key] ?? humaniseField(key);
 }

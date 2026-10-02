@@ -1,4 +1,4 @@
-import type { AnySchema, Fidelity, NodeOfSchema } from "@graview/core";
+import { counted, type AnySchema, type Fidelity, type NodeOfSchema } from "@graview/core";
 import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout";
 import { PLANE_STYLES } from "@graview/render";
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -434,8 +434,7 @@ export const BandCard = memo(function BandCard({ node }: { readonly node: SceneN
   const aggregate = node.aggregate!;
   const opens = aggregate.opens!;
   const count = aggregate.memberIds.length;
-  const plural = (store.schema.tryDefinition(aggregate.kind)?.plural ?? `${aggregate.kind}s`).toLowerCase();
-  const counted = `${count} ${count === 1 ? aggregate.kind.replace(/-/g, " ") : plural}`;
+  const said = counted(store.schema, aggregate.kind, count);
   const names = aggregate.memberIds.slice(0, 3).map((id) => {
     const member = store.graph.getNode(id);
     const definition = member ? store.schema.tryDefinition(member.kind) : undefined;
@@ -455,7 +454,7 @@ export const BandCard = memo(function BandCard({ node }: { readonly node: SceneN
       data-graview-band={opens.in}
       data-graview-band-count={count}
       data-graview-emphasis={found ? (hits > 0 ? "lit" : "dimmed") : undefined}
-      title={door ? `${aggregate.label} — press twice to see them all, arranged` : `${aggregate.label}: ${counted} — press twice to open`}
+      title={door ? `${aggregate.label} — press twice to see them all, arranged` : `${aggregate.label}: ${said} — press twice to open`}
     >
       <span className="graview-band-group-head">
         <span className="graview-band-group-name">{aggregate.label}</span>
@@ -466,7 +465,7 @@ export const BandCard = memo(function BandCard({ node }: { readonly node: SceneN
       <span className="graview-band-group-names">
         {door ? null : (
           <span className="graview-band-group-count">
-            {counted}
+            {said}
             {hits > 0 ? ` · ${hits} match` : ""}
             {" · "}
           </span>
