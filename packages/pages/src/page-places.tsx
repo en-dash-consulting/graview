@@ -1,5 +1,5 @@
 import { counted, isCurrent, labelOf, type AnySchema, type Store, type Place } from "@graview/core";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { isDefaultView, type ViewProps } from "@graview/react";
 import { useLayoutEffect, useRef, useState, type ComponentType } from "react";
@@ -30,6 +30,21 @@ export function placesOf<S extends AnySchema>(context: PageContext<S>): readonly
   if (!views) return [];
   const live = new Set(liveKinds(context.store, context.principal));
   return views.places().filter((place) => live.has(place.kind));
+}
+
+/*
+ * TWO KINDS, ONE PICTURE'S NAME. "The timetable" over talks and over
+ * workshops are two places the scene tells apart by kind; a page address
+ * by name alone would send both to the first. A name only one kind uses
+ * keeps its plain address; a shared one says whose with `?of=<plural>`.
+ */
+/** The key a place is drawn under: its kind and its name, since a name alone can be shared. */
+export const placeKey = (place: Place): string => `place:${place.kind}:${place.as}`;
+
+/** A place's page address, saying whose it is only when another kind shares the name. */
+export function pathOfPlace<S extends AnySchema>(context: PageContext<S>, place: Place): string {
+  const shared = (context.views?.places() ?? []).some((other) => other.as === place.as && other.kind !== place.kind);
+  return placePath(place.as, shared ? pluralSlug(context.store.schema, place.kind) : undefined);
 }
 
 function membersOf<S extends AnySchema>(store: Store<S>, kind: string) {
@@ -193,7 +208,7 @@ export function galleryOf<S extends AnySchema>(context: PageContext<S>): readonl
   const places = placesOf(context);
   const pictured = new Set(places.map((place) => place.kind));
   return [
-    ...places.map((place) => ({ key: `place:${place.as}`, kind: place.kind, title: place.title, to: placePath(place.as), place })),
+    ...places.map((place) => ({ key: placeKey(place), kind: place.kind, title: place.title, to: pathOfPlace(context, place), place })),
     ...liveKinds(store, context.principal)
       .filter((kind) => !pictured.has(kind))
       .map((kind) => ({ key: `kind:${kind}`, kind, title: pluralOf(store, kind), to: `/${pluralSlug(store.schema, kind)}` })),
@@ -337,7 +352,7 @@ export function GalleryCard<S extends AnySchema>({ context, entry }: { context: 
 
 /** A place as a card — the gallery's card, over one titled picture. */
 export function PlaceCard<S extends AnySchema>({ context, place }: { context: PageContext<S>; place: Place }) {
-  return <GalleryCard context={context} entry={{ key: `place:${place.as}`, kind: place.kind, title: place.title, to: placePath(place.as), place }} />;
+  return <GalleryCard context={context} entry={{ key: placeKey(place), kind: place.kind, title: place.title, to: pathOfPlace(context, place), place }} />;
 }
 
 export const cards: React.CSSProperties = {
@@ -420,9 +435,11 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
   useStoreTick(store);
   const params = useParams();
   const navigate = useNavigate();
+  const [search] = useSearchParams();
   const asked = decodeURIComponent(params["as"] ?? "");
+  const of = search.get("of");
   const places = placesOf(context);
-  const place = places.find((candidate) => candidate.as === asked);
+  const place = places.find((candidate) => candidate.as === asked && (!of || pluralSlug(store.schema, candidate.kind) === of));
   if (!place) {
     return (
       <PageMain context={context}>
@@ -436,7 +453,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
     );
   }
   const plural = pluralOf(store, place.kind);
-  const siblings = places.filter((other) => other.as !== place.as);
+  const siblings = places.filter((other) => placeKey(other) !== placeKey(place));
   const facts = kindFacts(store, place.kind, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
@@ -476,8 +493,8 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           <nav aria-label="Other pictures" data-testid="sibling-pictures" style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingTop: 4 }}>
             {siblings.map((other) => (
               <Link
-                key={other.as}
-                to={placePath(other.as)}
+                key={placeKey(other)}
+                to={pathOfPlace(context, other)}
                 style={{
                   ...plain,
                   fontSize: "0.9375rem",

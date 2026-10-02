@@ -3,9 +3,9 @@ import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
 import { rankedRepairs, recordFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
-import { placeHref, placePath, pluralSlug, recordPath, spatialHref } from "./registry.js";
+import { placeHref, pluralSlug, recordPath, spatialHref } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { placesOf } from "./page-places.js";
+import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { Repairs } from "./page-problems.js";
 import {
   KindMark,
@@ -90,9 +90,9 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             {placesOf(context)
               .filter((place) => place.kind === facts.kind || place.across === facts.kind)
               .map((place, index) => (
-                <span key={place.as}>
+                <span key={placeKey(place)}>
                   {index > 0 ? " · " : null}
-                  <Link to={placePath(place.as)} style={link}>
+                  <Link to={pathOfPlace(context, place)} style={link}>
                     {place.title}
                   </Link>{" "}
                   <a href={placeHref(place.as, context.sceneHref ?? "/")} style={{ ...link, ...quiet }} title={`${place.title}, in the scene`}>

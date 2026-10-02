@@ -21,9 +21,9 @@ import {
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts, kindMap } from "./facts.js";
 import { DerivedForm } from "./form.js";
-import { kindOfSlug, placePath, pluralSlug, recordPath } from "./registry.js";
+import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { placesOf } from "./page-places.js";
+import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { beginningsFrom, WhyLine } from "./page-search.js";
 import {
   DISPLAY,
@@ -224,9 +224,9 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
             {placesOf(context)
               .filter((place) => place.kind === kind)
               .map((place, index) => (
-                <span key={place.as}>
+                <span key={placeKey(place)}>
                   {index > 0 ? " · " : null}
-                  <Link to={placePath(place.as)} style={link}>
+                  <Link to={pathOfPlace(context, place)} style={link}>
                     {place.title}
                   </Link>
                 </span>
