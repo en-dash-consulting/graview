@@ -178,6 +178,20 @@ export function planJobs({ app, core }) {
  * about. Runs after the watch's own init script, which defines the hook.
  */
 export function storeHookInPage() {
+  /*
+   * A RECORD'S NAME AS THE DECLARATION SAYS IT. A car is named by its year,
+   * make, model and trim, with no `label` field at all, and every job read
+   * `node.label` — so the seventh walk's showroom had "no car to find".
+   */
+  window.__journeyName = (store, node) => {
+    try {
+      const definition = store.schema?.tryDefinition?.(node.kind);
+      const name = definition?.label ? definition.label(node) : node.label;
+      return typeof name === "string" && name.length > 0 ? name : null;
+    } catch {
+      return null;
+    }
+  };
   const watch = window.__graviewWatch;
   if (!watch) return;
   window.__journeyStores = [];
@@ -367,7 +381,8 @@ export class Person {
       await this.reach(target, what);
     }
     if (clear) await this.key(process.platform === "darwin" ? "Meta+A" : "Control+A");
-    await this.type(text);
+    if (clear && text === "") await this.key("Backspace");
+    else await this.type(text);
     this.note(what, before);
   }
 
@@ -483,16 +498,18 @@ async function pressAct(person, act, title) {
  * field, or one of the choices offered. `answers` maps a question to a wanted
  * choice's label; a name goes in the first text field.
  */
-async function answerAsks(person, { name, choose = [] }) {
+async function answerAsks(person, { name, choose = [], values = {} }) {
   const page = person.page;
   let named = false;
-  for (let round = 0; round < 8; round++) {
+  // As many questions as an act has: a car for sale asks sixteen.
+  for (let round = 0; round < 40; round++) {
     const ask = page.locator("[data-graview-asking]").last();
     if (!(await ask.isVisible().catch(() => false))) return;
     const field = ask.locator("form input").first();
     if (await field.isVisible().catch(() => false)) {
       const type = await field.getAttribute("type");
-      const value = type === "date" ? "2026-09-20" : type === "datetime-local" ? "2026-09-20T09:00" : type === "number" ? "2" : !named && name ? name : "Something";
+      const known = values[(await field.getAttribute("name")) ?? ""];
+      const value = known !== undefined && (named || known !== name) ? known : type === "date" ? "2026-09-20" : type === "datetime-local" ? "2026-09-20T09:00" : type === "number" ? "2" : !named && name ? name : "Something";
       if (type === "date" || type === "datetime-local") {
         // A date field takes its value whole; a person types it into the field.
         await (person.input === "pointer" ? field.click().then(() => (person.presses += 1)) : person.reach(field, "the date"));
@@ -514,7 +531,14 @@ async function answerAsks(person, { name, choose = [] }) {
     }
     const choices = ask.locator('[role="group"] button:not([disabled])');
     await choices.first().waitFor({ state: "visible", timeout: 1_200 }).catch(() => {});
-    const count = await choices.count();
+    let count = await choices.count();
+    if (count === 0 && wanted && (await filter.isVisible().catch(() => false))) {
+      // The name wanted is not among these (it was another question's): a person clears the filter and picks.
+      await person.fill(filter, "", "the filter of choices", { clear: true });
+      await person.settle(150);
+      await choices.first().waitFor({ state: "visible", timeout: 1_200 }).catch(() => {});
+      count = await choices.count();
+    }
     if (count === 0) throw new DeadEnd("the act asks a question with nothing to answer it with");
     let pick = choices.first();
     if (wanted) {
@@ -526,8 +550,37 @@ async function answerAsks(person, { name, choose = [] }) {
   }
 }
 
+/**
+ * WHAT A PERSON WOULD TYPE, per argument: the record's name where it fits,
+ * else the first of a few ordinary answers the act's own input accepts — an
+ * email, an address, a date, a year — else one copied from a record of the
+ * same kind, as a person copies a VIN off a windscreen. A field given
+ * "Something" was a form a person could not have sent (the seventh walk:
+ * "Sign up" refused every run on its email, "Put a car on sale" on its VIN).
+ */
+async function validValues(ctx, act, kind, name) {
+  return inStore(ctx.page, ctx.kinds, (store, { act, kind, name }) => {
+    const mutation = store.allMutations().find((one) => one.name === act);
+    const shape = mutation?.input?.shape ?? {};
+    const existing = store.graph.allNodes().filter((node) => node.kind === kind);
+    const values = {};
+    for (const [key, field] of Object.entries(shape)) {
+      if (typeof field?.safeParse !== "function") continue;
+      const seen = existing.map((node) => node[key]).filter((value) => typeof value === "string" || typeof value === "number").slice(0, 1);
+      // A list is answered as a person leaves one: empty.
+      for (const candidate of [name, "Something", "someone@example.test", "https://example.test/one.jpg", "2026-09-20", "2026-09-20T09:00", 2, 2020, 12, 0, ...seen, []]) {
+        if (field.safeParse(candidate).success) {
+          values[key] = String(candidate);
+          break;
+        }
+      }
+    }
+    return values;
+  }, { act, kind, name });
+}
+
 /** Fill a routed page's form for one act and send it. */
-async function fillForm(person, form, { name, choose = [] }) {
+async function fillForm(person, form, { name, choose = [], values = {} }) {
   const fields = form.locator("input:not([type=hidden]):not([type=checkbox]):not([type=radio]), select, textarea");
   const count = await fields.count();
   let named = false;
@@ -539,7 +592,7 @@ async function fillForm(person, form, { name, choose = [] }) {
       // The label's own words, not the options of the select it wraps.
       const own = el.labels?.[0] ?? el.closest("label");
       const label = (own ? [...own.childNodes].filter((node) => node !== el && !node.contains?.(el)).map((node) => node.textContent).join(" ") : el.getAttribute("aria-label") ?? "").trim();
-      return { tag: el.tagName.toLowerCase(), type: el.type, label, required: el.required || /\*/.test(label), value: el.value };
+      return { tag: el.tagName.toLowerCase(), type: el.type, name: el.name, label, required: el.required || /\*/.test(label), value: el.value };
     });
     const isName = !named && /label|name|title/i.test(info.label);
     if (!info.required && !isName) continue;
@@ -548,7 +601,9 @@ async function fillForm(person, form, { name, choose = [] }) {
       continue;
     }
     if (info.value && !isName) continue;
-    const value = info.type === "date" ? "2026-09-20" : info.type === "datetime-local" ? "2026-09-20T09:00" : info.type === "number" ? "2" : info.type === "time" ? "09:00" : isName ? name : "Something";
+    // What a person would type there: the name where a name goes, else a value the act accepts (`validValues`).
+    const known = isName ? undefined : values[info.name];
+    const value = known ?? (info.type === "date" ? "2026-09-20" : info.type === "datetime-local" ? "2026-09-20T09:00" : info.type === "number" ? "2" : info.type === "time" ? "09:00" : isName ? name : "Something");
     if (info.type === "date" || info.type === "time" || info.type === "datetime-local") {
       await (person.input === "pointer" ? field.click().then(() => (person.presses += 1)) : person.reach(field, `the ${info.label}`));
       await field.fill(value);
@@ -737,12 +792,12 @@ export const JOBS = {
       if (job.subject) {
         subject = await inStore(ctx.page, ctx.kinds, (store, kinds) => {
           const nodes = store.graph.allNodes().filter((node) => (kinds === "*" ? true : kinds.includes(node.kind)));
-          const node = nodes.find((one) => typeof one.label === "string") ?? nodes[0];
-          return node ? { id: node.id, label: node.label ?? node.id } : null;
+          const node = nodes.find((one) => window.__journeyName(store, one)) ?? nodes[0];
+          return node ? { id: node.id, label: window.__journeyName(store, node) ?? node.id } : null;
         }, job.subject.kinds);
         if (!subject) return { skip: `no ${job.subject.kinds} exists to make ${article(job.noun)} on` };
       }
-      return { name, subject };
+      return { name, subject, values: await validValues(ctx, job.act, job.kind, name) };
     },
     start: (ctx) => ctx.home,
     async run(person, ctx, job, prep) {
@@ -777,7 +832,7 @@ export const JOBS = {
             await pressAct(person, job.act, job.title);
           }
         }
-        await answerAsks(person, { name: prep.name, choose: [prep.subject?.label] });
+        await answerAsks(person, { name: prep.name, choose: [prep.subject?.label], values: prep.values });
       } else {
         await openKindPage(person, job.plural);
         const opener = page.getByRole("button", { name: new RegExp(`^${job.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( …)?$`) }).filter({ visible: true }).first();
@@ -787,7 +842,7 @@ export const JOBS = {
           await person.press(opener, `"${job.title}"`);
         }
         if (!(await appears(form))) throw new DeadEnd(`"${job.title}" opens no form`);
-        await fillForm(person, form, { name: prep.name, choose: [prep.subject?.label] });
+        await fillForm(person, form, { name: prep.name, choose: [prep.subject?.label], values: prep.values });
       }
       await until(page, ctx.kinds, (store, { kind, name, before }) => {
         const made = store.graph.allNodes().filter((node) => node.kind === kind);
@@ -800,9 +855,9 @@ export const JOBS = {
   find: {
     async prepare(ctx, job) {
       const target = await inStore(ctx.page, ctx.kinds, (store, kind) => {
-        const nodes = store.graph.allNodes().filter((node) => node.kind === kind && typeof node.label === "string");
+        const nodes = store.graph.allNodes().filter((node) => node.kind === kind && window.__journeyName(store, node));
         const node = nodes[Math.floor(nodes.length / 2)];
-        return node ? { id: node.id, label: node.label } : null;
+        return node ? { id: node.id, label: window.__journeyName(store, node) } : null;
       }, job.kind);
       if (!target) return { skip: `there is no ${job.noun} to find` };
       target.noun = job.noun;
@@ -827,9 +882,9 @@ export const JOBS = {
   change: {
     async prepare(ctx, job) {
       const target = await inStore(ctx.page, ctx.kinds, (store, kind) => {
-        const nodes = store.graph.allNodes().filter((node) => node.kind === kind && typeof node.label === "string");
+        const nodes = store.graph.allNodes().filter((node) => node.kind === kind && window.__journeyName(store, node));
         const node = nodes[0];
-        return node ? { id: node.id, label: node.label } : null;
+        return node ? { id: node.id, label: window.__journeyName(store, node) } : null;
       }, job.kind);
       if (!target) return { skip: `there is no ${job.noun} to change` };
       return { target, value: `${target.label} again` };
@@ -900,7 +955,7 @@ export const JOBS = {
             } catch {
               continue;
             }
-            return { subject: { id: subject.id, label: subject.label ?? subject.id }, other: { id: other.id, label: other.label ?? other.id } };
+            return { subject: { id: subject.id, label: window.__journeyName(store, subject) ?? subject.id }, other: { id: other.id, label: window.__journeyName(store, other) ?? other.id } };
           }
         }
         return null;

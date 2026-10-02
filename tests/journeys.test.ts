@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
-import { appsNamed, frictionOf, planJobs, regressionsOf } from "../scripts/lib/journeys.mjs";
+import { appsNamed, frictionOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
 
 /**
  * THE JOURNEYS HARNESS'S OWN LOGIC, held without a browser: which jobs a
@@ -90,5 +90,22 @@ describe("the app a walk builds beside the checkout", () => {
     expect(said.status).toBe(2);
     expect(said.stdout).toContain("No app at");
     expect(said.stdout).not.toContain("No harness called");
+  });
+});
+
+describe("a record's name, in the page", () => {
+  it("is the declaration's name for it, for a kind named from its fields and with no label field", () => {
+    const held = (globalThis as { window?: unknown }).window;
+    (globalThis as { window?: unknown }).window = globalThis;
+    try {
+      storeHookInPage();
+      const name = (globalThis as unknown as { __journeyName: (store: unknown, node: unknown) => string | null }).__journeyName;
+      const store = { schema: { tryDefinition: (kind: string) => (kind === "car" ? { label: (node: { year: number; make: string }) => `${node.year} ${node.make}` } : undefined) } };
+      expect(name(store, { id: "car:1", kind: "car", year: 2022, make: "Kia" })).toBe("2022 Kia");
+      expect(name(store, { id: "note:1", kind: "note", label: "Call back" })).toBe("Call back");
+      expect(name(store, { id: "note:2", kind: "note" })).toBeNull();
+    } finally {
+      (globalThis as { window?: unknown }).window = held;
+    }
   });
 });

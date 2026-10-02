@@ -4227,7 +4227,7 @@ built and passed its tests (244 files, 1730 tests).
 - actual: every job read a record's name from a `label` field, and a car is named from its year, make, model and trim; every field the harness had no name for got "Something" or "2" (an email, a year after 1990, a VIN); the scene's ask was answered for at most eight questions (a car asks sixteen); and the filter of choices kept the subject's name when the question was about something else, so "nothing to answer it with"
 - where it belongs: `scripts/lib/journeys.mjs`, `scripts/verify-journeys.mjs`
 - harness that should have caught it: `tests/journeys.test.ts`, which held the plan and the verdict but never what the harness reads in the page
-- status: fixed in "walkthrough: B · the journeys name a record and fill a form as a person would" · names through the declaration (`__journeyName`), values the act's own input accepts (`validValues`), forty questions, a cleared filter. Criterion: `tests/journeys.test.ts` "a record's name, in the page" (verified failing without the fix); on walk7, every job but one was done in every way after it (the one left is W-161)
+- status: fixed in "walkthrough: B · the journeys name a record and fill a form as a person would" · names through the declaration (`__journeyName`), values the act's own input accepts (`validValues`), forty questions, a cleared filter. Criterion: `tests/journeys.test.ts` "a record's name, in the page" (verified failing without the fix); on walk7, with W-159 and W-161, every derived job is done in all eight ways
 
 ### W-161 · Refused for its photos, the ask stays on its last question and refuses every Apply
 - stage: B (making a car in the scene) · face: scene · width: 1280 and 390 · scheme: light

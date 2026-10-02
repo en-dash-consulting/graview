@@ -209,7 +209,7 @@ async function setUp(browser, entry, declaration) {
     if (setup.arrange) await inStore(page, setup.kinds, entry.arrange);
   };
   await open("/");
-  const graph = await inStore(page, setup.kinds, (store) => store.graph.allNodes().map((node) => ({ id: node.id, kind: node.kind, label: typeof node.label === "string" ? node.label : null })));
+  const graph = await inStore(page, setup.kinds, (store) => store.graph.allNodes().map((node) => ({ id: node.id, kind: node.kind, label: window.__journeyName(store, node) })));
   setup.labels = graph.map((node) => node.label).filter(Boolean);
   setup.kindOf = Object.fromEntries(graph.map((node) => [node.id, node.kind]));
 
@@ -241,8 +241,8 @@ async function setUp(browser, entry, declaration) {
         for (const mutation of refused.sort((a, b) => rank(a) - rank(b))) {
           if (mutation.subject) {
             const kinds = mutation.subject.kinds === "*" ? store.schema.kinds : mutation.subject.kinds;
-            const node = store.graph.allNodes().find((one) => kinds.includes(one.kind) && !hidden.has(one.kind) && typeof one.label === "string");
-            if (node) return { seat: sat.id, act: mutation.name, title: mutation.title, subject: { id: node.id, label: node.label }, kind: node.kind, plural: plurals[node.kind] };
+            const node = store.graph.allNodes().find((one) => kinds.includes(one.kind) && !hidden.has(one.kind) && window.__journeyName(store, one));
+            if (node) return { seat: sat.id, act: mutation.name, title: mutation.title, subject: { id: node.id, label: window.__journeyName(store, node) }, kind: node.kind, plural: plurals[node.kind] };
           } else {
             const kind = (mutation.creates ?? []).find((one) => !hidden.has(one));
             if (kind) return { seat: sat.id, act: mutation.name, title: mutation.title, kind, plural: plurals[kind] };
