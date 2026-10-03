@@ -2,6 +2,7 @@ import {
   FieldRevisions,
   foldPresence,
   PRESENCE_TTL_MS,
+  ReceiveError,
   REMOTE_PRESENCE_TTL_MS,
   samePresence,
   Store,
@@ -197,18 +198,21 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
   Object.assign(headers, seatHeaders(options.principal));
   const live = options.live === true;
 
-  const reached = await call(`${options.url}/graview/state`, { headers });
-  if (!reached.ok) throw new Error(((await reached.json().catch(() => ({}))) as { error?: string }).error ?? `The server refused (${reached.status})`);
-  const state = (await reached.json()) as {
-    version: number;
-    snapshot: GraphSnapshot;
-    log: Operation[];
-    migrated: string[];
-    /** Which modules the server has on (FR-12); absent from a server before it. */
-    enabledModules?: string[];
-    /** Where the server's log begins, when it was compacted (FR-23). */
-    horizon?: number;
+  const fetchState = async () => {
+    const reached = await call(`${options.url}/graview/state`, { headers });
+    if (!reached.ok) throw new Error(((await reached.json().catch(() => ({}))) as { error?: string }).error ?? `The server refused (${reached.status})`);
+    return (await reached.json()) as {
+      version: number;
+      snapshot: GraphSnapshot;
+      log: Operation[];
+      migrated: string[];
+      /** Which modules the server has on (FR-12); absent from a server before it. */
+      enabledModules?: string[];
+      /** Where the server's log begins, when it was compacted (FR-23). */
+      horizon?: number;
+    };
   };
+  const state = await fetchState();
   const enabledModules = state.enabledModules ?? options.enabledModules;
 
   const store = new Store<S>({
@@ -248,7 +252,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
 
   let seen = state.log.at(-1)?.seq ?? (state.horizon ?? 0) - 1;
   /** Every field's revision as the server's ops this client has say it (FR-05). */
-  const revisions = FieldRevisions.of(state.log);
+  let revisions = FieldRevisions.of(state.log);
 
   /*
    * PRESENCE, beside the log and never in it. `mine` is the last word this
@@ -290,29 +294,109 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
   };
   /** Socket calls not yet answered, by cid: what was sent, and how to tell the sender. */
   const waiting = new Map<string, { message: LiveClientMessage; mine?: string; resolve(answer: { ops: readonly Operation[]; batch?: string }): void; reject(error: unknown): void }>();
+  /** Tells whoever sent a batch the server has now answered, with the ops it landed as. */
+  const tellAnswered = (batch: string, ops: readonly Operation[]) => {
+    const answered = waiting.get(batch);
+    if (!answered) return;
+    waiting.delete(batch);
+    answered.resolve({ ops: ops.filter((op) => op.batch === batch), batch });
+  };
+  /** Set while the client takes the server's whole state; what arrives meanwhile waits for it, in order. */
+  let resyncing: Promise<void> | undefined;
+  let meanwhile: { readonly ops: readonly Operation[]; readonly drop: readonly string[] }[] = [];
   const land = (ops: readonly Operation[], drop: readonly string[] = []): readonly Operation[] => {
     if (ops.length === 0 && drop.length === 0) return [];
+    if (resyncing) {
+      meanwhile.push({ ops, drop });
+      return [];
+    }
+    /*
+     * NEVER NUMBERED OUT OF THE SERVER'S ORDER (FR-53). `rebase` lands each
+     * op at the end of this log, so ops that begin past the next seq this
+     * client has would be numbered as if the ones between never happened.
+     * They begin there when the server compacted past where this client
+     * left off: `/graview/since` and the welcome begin at the horizon, and
+     * the ops between are in no answer. The client takes the state instead.
+     */
+    const first = Math.min(...ops.filter((op) => op.seq > seen).map((op) => op.seq));
+    if (Number.isFinite(first) && first > seen + 1) {
+      meanwhile.push({ ops, drop });
+      resync();
+      return [];
+    }
     /*
      * A live client names the batch its call lands in, so an op of the
      * server's in one of its pending batches IS that batch's answer —
      * pushed, or caught up on after a reconnect, before its ack arrived.
      */
     const echoed = live ? pending.filter((batch) => ops.some((op) => op.batch === batch)) : [];
-    for (const batch of echoed) settle(batch);
     const dropping = [...new Set([...drop, ...echoed])].filter((batch) => provisional.has(batch));
+    let landed: readonly Operation[];
+    try {
+      landed = store.rebase({ confirmed: ops, pending: pending.filter((batch) => !echoed.includes(batch)), drop: dropping }).confirmed;
+    } catch (error) {
+      // An op of the server's that does not fit here: this copy drifted, and is as it was. The server's state is the truth.
+      if (!(error instanceof ReceiveError)) throw error;
+      meanwhile.push({ ops, drop });
+      resync();
+      return [];
+    }
+    for (const batch of echoed) settle(batch);
     if (ops.length > 0) {
       seen = Math.max(seen, ...ops.map((op) => op.seq));
       revisions.note(ops);
     }
-    const landed = store.rebase({ confirmed: ops, pending: [...pending], drop: dropping }).confirmed;
     for (const batch of dropping) provisional.delete(batch);
-    for (const batch of echoed) {
-      const answered = waiting.get(batch);
-      if (!answered) continue;
-      waiting.delete(batch);
-      answered.resolve({ ops: ops.filter((op) => op.batch === batch), batch });
-    }
+    for (const batch of echoed) tellAnswered(batch, ops);
     return landed;
+  };
+
+  /*
+   * THE SERVER'S WHOLE STATE, ADOPTED (FR-53): fetched, taken as this
+   * store's graph and log by `store.adopt`, and this client's unanswered
+   * batches applied again on top. A batch the state already holds (a live
+   * client's, landed before its ack came) is answered, not applied twice.
+   * What arrived while the state was on its way lands after it; whatever
+   * the state already holds is skipped. A state that cannot be fetched
+   * leaves the client as it was, and the next answer that cannot land asks
+   * again.
+   */
+  const resync = (): void => {
+    if (resyncing) return;
+    resyncing = track(
+      fetchState()
+        .then((next) => {
+          const held = new Set(next.log.map((op) => op.batch));
+          const answered = pending.filter((batch) => held.has(batch));
+          for (const batch of answered) settle(batch);
+          const adopted = store.adopt({
+            snapshot: next.snapshot as never,
+            log: next.log,
+            ...(next.horizon !== undefined ? { horizon: next.horizon } : {}),
+            pending: [...pending],
+            drop: [...provisional].filter((batch) => !pending.includes(batch)),
+          });
+          // The only provisional ops in the log now are the ones applied again.
+          provisional.clear();
+          for (const op of adopted.pending) provisional.add(op.batch);
+          seen = next.log.at(-1)?.seq ?? (next.horizon ?? 0) - 1;
+          revisions = FieldRevisions.of(next.log);
+          for (const batch of answered) tellAnswered(batch, next.log);
+        })
+        .then(
+          () => {
+            resyncing = undefined;
+            const later = meanwhile;
+            meanwhile = [];
+            for (const { ops, drop } of later) land(ops, drop);
+          },
+          () => {
+            // Not reached, or not adopted: as it was. What waited comes again from `seen`.
+            resyncing = undefined;
+            meanwhile = [];
+          },
+        ),
+    );
   };
 
   const since = async (seq: number): Promise<Operation[]> => {
@@ -320,7 +404,13 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     return ((await response.json()) as { ops: Operation[] }).ops ?? [];
   };
 
+  /** Asks for what is new, and waits for a resync the answer started, so the store is the server's when it returns. */
   const pull = async (): Promise<readonly Operation[]> => {
+    const landed = await pulled();
+    if (resyncing) await resyncing;
+    return landed;
+  };
+  const pulled = async (): Promise<readonly Operation[]> => {
     if (mine && !socketReady()) {
       const response = await call(`${options.url}/graview/here`, {
         method: "POST",

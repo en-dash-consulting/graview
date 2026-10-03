@@ -1,0 +1,7 @@
+---
+"@graview/ship": patch
+---
+
+A remote client that falls behind takes the server's state rather than numbering its ops out of order. `openRemote` lands the server's ops under its pending ones by `store.rebase`, which puts each op at the end of the log it holds. When the server had compacted past where the client left off, `/graview/since` and the live welcome began at the horizon, the ops between came in no answer, and the client numbered the ones that did come as if nothing had happened between. It went on with a graph that was not the server's, without a word. A copy that drifted refused the server's next op with a `ReceiveError` that nothing caught. Now, when the ops it is handed begin past the next seq it has, or an op of the server's does not fit its graph, the client fetches `/graview/state` and adopts it with `store.adopt`. Its unanswered calls are applied again on top, and a live client's call the state already holds is answered rather than made twice. What arrives while the state is on its way lands after it, and a live client carries on down its socket. `pull()` returns once a resync it started is done, and `settled()` waits for one (FR-53).
+
+Compatibility: changed for the behaviour of the remote client only. `openRemote` resyncs where it used to misnumber ops or throw, and its result types are unchanged. The wire unchanged: no route, message or field is new, and `WIRE_PROTOCOL` stays 1. Ops and stored formats unchanged.
