@@ -1,9 +1,9 @@
 import type { AnySchema, Brand, Person, Principal, Store } from "@graview/core";
-import { createViews, GraviewProvider, type Scheme } from "@graview/react";
+import { createViews, ErrorReportContext, GraviewProvider, type Scheme } from "@graview/react";
 import { useMemo, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
-import { PagesContent, providerProps, storeOf, Strip, useFrame, useIntrinsicHeight, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { FaceBoundary, PagesContent, providerProps, storeOf, Strip, useErrorReport, useFrame, useIntrinsicHeight, useReady, type EmbedHostContext, type FrameOptions } from "./frame.js";
 
 /**
  * THE PAGES AND NOTHING ELSE (FR-19). `@graview/embed/pages` mounts the
@@ -29,6 +29,8 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
   // The provider asks for a registry; the pages draw none of it.
   const views = useMemo(() => createViews(app.schema), [app.schema]);
   useIntrinsicHeight(rootRef, "pages", props.onIntrinsicHeight);
+  const report = useErrorReport(props.onError, "pages");
+  useReady(props.onReady, "pages");
   return (
     <section
       ref={rootRef}
@@ -39,10 +41,20 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
       style={{ position: "relative", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
     >
       <style>{css}</style>
-      <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)}>
-        {toggle ? <Strip standing={standing} seats={props.seats} principal={props.principal} onSeat={props.onSeat} /> : null}
-        <PagesContent<S> store={store} auto={auto} brand={brand} props={props} />
-      </GraviewProvider>
+      <ErrorReportContext.Provider value={report}>
+        <FaceBoundary module="@graview/react" report={report} content>
+          <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)}>
+            {toggle ? (
+              <FaceBoundary module="@graview/embed" report={report}>
+                <Strip standing={standing} seats={props.seats} principal={props.principal} onSeat={props.onSeat} />
+              </FaceBoundary>
+            ) : null}
+            <FaceBoundary module="@graview/pages" report={report} content>
+              <PagesContent<S> store={store} auto={auto} brand={brand} props={props} />
+            </FaceBoundary>
+          </GraviewProvider>
+        </FaceBoundary>
+      </ErrorReportContext.Provider>
     </section>
   );
 }
@@ -114,4 +126,4 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
 }
 
 export { hostScheme } from "./frame.js";
-export type { EmbedHostContext, EmbedRemote } from "./frame.js";
+export type { EmbedError, EmbedErrorWhere, EmbedHostContext, EmbedReady, EmbedRemote } from "./frame.js";

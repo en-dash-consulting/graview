@@ -12,8 +12,8 @@ export { applySettings, honourSetting, loadSetting, rememberSetting } from "./se
 export type { ReaderMemory } from "./settings.js";
 
 export { createViews, DEFAULT_VIEW, isDefaultView, markDefaultView } from "./view-registry.js";
-export { ViewBoundary } from "./view-boundary.js";
-export type { ViewBoundaryProps } from "./view-boundary.js";
+export { ErrorReportContext, ViewBoundary } from "./view-boundary.js";
+export type { ErrorReport, ViewBoundaryProps } from "./view-boundary.js";
 export type {
   Cardinality,
   Fidelity,

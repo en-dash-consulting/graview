@@ -31,6 +31,23 @@ touched; the brand's fonts are fetched by the embed rather than assumed. The
 store is in memory and starts from the seed on every mount, unless the host
 hands it one.
 
+## What went wrong, and how long it took
+
+```ts
+mount(root, {
+  app,
+  onError: ({ name }, { module, face }) => beacon("embed-error", { name, module, face }),
+  onReady: ({ ms, face }) => beacon("embed-ready", { ms, face }),
+});
+```
+
+A view, a page, the strip or the studio that throws is contained where it
+threw: it says it could not draw and offers to try again, and the rest of
+the embed keeps working. The host is told the error's class (a TypeError,
+a `GraphError`) and the framework module that caught it, never the message,
+which may quote a record. The ready callback is told once, after the first render,
+how many milliseconds it took.
+
 ## What the host can keep
 
 The Studio is on the strip for the seat that keeps the app, and writes

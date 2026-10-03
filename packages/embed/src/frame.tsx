@@ -1,8 +1,8 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import { PagesApp, type PageComponent, type PageRegistry } from "@graview/pages";
 import { Profile, Standing, themeCss, useWidth } from "@graview/primitives";
-import { useGraview, useTheKeyboardLandsSomewhere, type ReaderMemory, type Scheme } from "@graview/react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReaderMemory, type Scheme } from "@graview/react";
+import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
 
 /*
@@ -12,6 +12,35 @@ import { fontsLink } from "./fonts.js";
  * are this module and `./pages.tsx`, so a host that only ever shows the
  * pages does not bundle a map it never draws (FR-19).
  */
+
+/**
+ * The faces. `picture` is ONE NAMED LENS AND NOTHING ELSE — the place the
+ * stop names (`#view=the-week`), drawn at full size over the kind's current
+ * members, with no bar, no rail, no standing: a page that is about a lens
+ * shows the lens, not an app with the lens somewhere inside it.
+ */
+export type EmbedFace = "scene" | "graview" | "pages" | "picture";
+
+/**
+ * WHAT WENT WRONG, AS A HOST MAY KEEP IT (FR-24): the error's class
+ * (`TypeError`, `GraphError`), never its message, which may quote a
+ * record's words.
+ */
+export interface EmbedError {
+  readonly name: string;
+}
+
+/** Where it went wrong: the framework module that caught it, and the face it was in. */
+export interface EmbedErrorWhere {
+  readonly module: string;
+  readonly face: EmbedFace;
+}
+
+/** How long the embed took to first render, in milliseconds, and the face it rendered. */
+export interface EmbedReady {
+  readonly ms: number;
+  readonly face: EmbedFace;
+}
 
 /**
  * WHAT A HOST SAYS ABOUT ITS FRAME (FR-13). A chat's widget is told its
@@ -109,6 +138,15 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   readonly onIntrinsicHeight?: (height: number) => void;
   /** What Standing says when nothing is wrong. */
   readonly standing?: string;
+  /**
+   * TOLD WHAT WENT WRONG (FR-24). A view, a page or the strip that throws
+   * is contained where it threw, the rest of the embed keeps working, and
+   * the host is told the error's class and the framework module that
+   * caught it, never what was on screen.
+   */
+  readonly onError?: (error: EmbedError, where: EmbedErrorWhere) => void;
+  /** Told once, after the first render, how long it took (FR-24). */
+  readonly onReady?: (ready: EmbedReady) => void;
   /**
    * What this embed is called, for assistive technology. Several Graviews
    * on one page each carry the same landmarks — the relation key, the
@@ -459,4 +497,83 @@ export function Strip({
       </div>
     </div>
   );
+}
+
+/** An error as a host may keep it: its class, and nothing it says. */
+export function errorClass(error: unknown): EmbedError {
+  const name = typeof error === "object" && error !== null ? (error as { name?: unknown }).name : undefined;
+  return { name: typeof name === "string" && name.length > 0 ? name : typeof error === "object" ? "Error" : typeof error };
+}
+
+const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+
+/** The report every boundary under the embed tells, as the host's `onError` with the face it was in. */
+export function useErrorReport(onError: FrameOptions["onError"], face: EmbedFace): ErrorReport {
+  const latest = useRef({ onError, face });
+  latest.current = { onError, face };
+  return useCallback<ErrorReport>((error, where) => latest.current.onError?.(errorClass(error), { module: where.module, face: latest.current.face }), []);
+}
+
+/** `onReady`, once: from the first render to the first commit. */
+export function useReady(onReady: FrameOptions["onReady"], face: EmbedFace): void {
+  const start = useRef<number | null>(null);
+  if (start.current === null) start.current = now();
+  const latest = useRef({ onReady, face });
+  latest.current = { onReady, face };
+  const fired = useRef(false);
+  useEffect(() => {
+    if (fired.current) return;
+    fired.current = true;
+    latest.current.onReady?.({ ms: Math.max(0, now() - (start.current ?? now())), face: latest.current.face });
+  }, []);
+}
+
+interface FaceBoundaryProps {
+  /** The framework module this part of the embed is drawn by. */
+  readonly module: string;
+  readonly report: ErrorReport;
+  /** Whether the fallback stands in for the face's content (measured for height) or for a part of the strip. */
+  readonly content?: boolean;
+  readonly children: ReactNode;
+}
+
+/**
+ * A PART THAT THROWS STAYS A PART (FR-24). Each face, the strip and the
+ * studio's place on it draw behind one of these: what threw says it could
+ * not draw, in the framework's words rather than the error's, and offers
+ * to try again; everything around it keeps working.
+ */
+export class FaceBoundary extends Component<FaceBoundaryProps, { readonly failed: boolean }> {
+  override state = { failed: false };
+
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+
+  override componentDidCatch(error: Error, info: ErrorInfo): void {
+    // The console, for whoever fixes it; the host, told only the class.
+    console.error(`[graview] ${this.props.module} threw while rendering`, error, info.componentStack);
+    this.props.report(error, { module: this.props.module });
+  }
+
+  override render(): ReactNode {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div
+        role="alert"
+        data-graview-face-error={this.props.module}
+        {...(this.props.content ? { "data-embed-content": "" } : {})}
+        style={
+          this.props.content
+            ? { flex: "1 1 auto", display: "grid", alignContent: "center", justifyItems: "center", gap: 8, padding: 24, background: "var(--graview-ground)", color: "var(--graview-ink)", fontSize: "0.9375rem" }
+            : { display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }
+        }
+      >
+        <span>{this.props.content ? "This part of the app could not draw." : "Could not draw."}</span>
+        <button type="button" onClick={() => this.setState({ failed: false })} style={{ padding: "3px 11px", fontSize: "0.8125rem" }}>
+          Try again
+        </button>
+      </div>
+    );
+  }
 }

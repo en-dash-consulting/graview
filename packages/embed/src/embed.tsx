@@ -3,11 +3,24 @@ import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewSta
 import { PlacePicture } from "@graview/pages";
 import { Companion, Inspector, OverviewButton, Places, ShowInstallation, descentTarget, registerDefaultViews, useWidth } from "@graview/primitives";
 import { StudioPlace, type StudioApplied } from "@graview/studio";
-import { createViews, GraviewProvider, Scene, useNavigation, type Scheme, type ReactViewRegistry } from "@graview/react";
+import { createViews, ErrorReportContext, GraviewProvider, Scene, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
-import { PagesContent, providerProps, storeOf, Strip, useFrame, useIntrinsicHeight, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import {
+  FaceBoundary,
+  PagesContent,
+  providerProps,
+  storeOf,
+  Strip,
+  useErrorReport,
+  useFrame,
+  useIntrinsicHeight,
+  useReady,
+  type EmbedFace,
+  type EmbedHostContext,
+  type FrameOptions,
+} from "./frame.js";
 
 /**
  * A GRAVIEW IN SOMEBODY ELSE'S PAGE.
@@ -20,13 +33,6 @@ import { PagesContent, providerProps, storeOf, Strip, useFrame, useIntrinsicHeig
  * a prop rather than a URL. Everything else — the scene, the rails, the
  * inspector, the pages — is the framework's own, unchanged.
  */
-/**
- * The faces. `picture` is ONE NAMED LENS AND NOTHING ELSE — the place the
- * stop names (`#view=the-week`), drawn at full size over the kind's current
- * members, with no bar, no rail, no standing: a page that is about a lens
- * shows the lens, not an app with the lens somewhere inside it.
- */
-export type EmbedFace = "scene" | "graview" | "pages" | "picture";
 
 /** The scene and the Graview's height when the embed sizes itself to its content (`height: "auto"`). */
 export const AUTO_SCENE_HEIGHT = 480;
@@ -113,6 +119,8 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const narrow = props.pagesBelow !== undefined && width !== null && width < props.pagesBelow && (face === "scene" || face === "graview");
   const shown: EmbedFace = narrow ? "pages" : face;
   useIntrinsicHeight(rootRef, shown, props.onIntrinsicHeight);
+  const report = useErrorReport(props.onError, shown);
+  useReady(props.onReady, shown);
 
   /*
    * THE EMBED IS ITSELF A LANDMARK.
@@ -139,11 +147,16 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       style={{ position: "relative", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
     >
       <style>{css}</style>
+      <ErrorReportContext.Provider value={report}>
+      <FaceBoundary module="@graview/react" report={report} content>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)}>
         <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
         {toggle && shown !== "picture" ? (
-          <EmbedStrip app={app as unknown as GraviewApp<AnySchema>} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} />
+          <FaceBoundary module="@graview/embed" report={report}>
+            <EmbedStrip app={app as unknown as GraviewApp<AnySchema>} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} report={report} />
+          </FaceBoundary>
         ) : null}
+        <FaceBoundary key={shown} module={shown === "pages" || shown === "picture" ? "@graview/pages" : "@graview/react"} report={report} content>
         {shown === "picture" ? (
           /*
            * The lens fills the frame: a one-row grid stretches it to the
@@ -182,7 +195,10 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
             <Inspector placement="menu" />
           </div>
         )}
+        </FaceBoundary>
       </GraviewProvider>
+      </FaceBoundary>
+      </ErrorReportContext.Provider>
     </section>
   );
 }
@@ -227,9 +243,12 @@ function EmbedStrip({
   seats,
   principal,
   onSeat,
+  report,
 }: {
   /** The declaration this embed is running, for the way into the studio. */
   app: GraviewApp<AnySchema>;
+  /** Where the studio's own boundary reports. */
+  report: ErrorReport;
   studio?: EmbedOptions["studio"] | undefined;
   face: EmbedFace;
   /** Narrower than `pagesBelow`: the pages are the only face there is room for, so there is nothing to switch. */
@@ -287,7 +306,11 @@ function EmbedStrip({
                 {/* And the app's own declaration, for the seat that keeps it — inside
                     the embed's box, because a studio that escaped onto somebody
                     else's page would be the rudest thing this package could do. */}
-                {studio !== false ? <StudioPlace app={app} within="box" {...(studio ? { onApply: studio.onApply } : {})} /> : null}
+                {studio !== false ? (
+                  <FaceBoundary module="@graview/studio" report={report}>
+                    <StudioPlace app={app} within="box" {...(studio ? { onApply: studio.onApply } : {})} />
+                  </FaceBoundary>
+                ) : null}
               </>
             )
       }
