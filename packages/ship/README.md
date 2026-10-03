@@ -6,6 +6,10 @@ declaration plus one persistence adapter is a running deployment.
 - **`openStore({ app, adapter })`** — load what was stored, migrate it forward, fold it into
   a live `Store`, and keep the adapter current (every diff appends its operations and
   rewrites the snapshot).
+- **`createSqlAdapter({ sql })`** (from `@graview/core`) — persistence over one synchronous
+  `exec(sql, ...params)`: a Durable Object's `ctx.storage.sql` as it is, or better-sqlite3
+  through `sqlFromDatabase(db)`. The core's sqlite adapter is this adapter over better-sqlite3,
+  so the same tests hold for both.
 - **`createFileAdapter(root)`** — persistence a person can read: `snapshot.json`,
   append-only `log.jsonl`, `meta.json` with the stored schema version. The core's sqlite
   adapter is the scale answer; this is the "where is my data" answer.
@@ -29,6 +33,11 @@ declaration plus one persistence adapter is a running deployment.
   client sends CALLS, never primitives; the server applies them through an ordinary `Store`
   under the seat the request carries, so the policy refuses on the server exactly what it
   refuses in a browser. `graview serve <entry>` is the command.
+- **`createStoreHandler`** — the same routes as one function from a `Request` to a
+  `Response`, for any runtime: a Cloudflare Worker or Durable Object, Deno, Bun. `serveStore`
+  is a thin `node:http` wrapper around it. Import it from `@graview/ship/runtime`, the entry
+  that reaches no `node:` builtin: the store, migrations, the handler and `openRemote`, without
+  the file adapter or the page's localStorage.
 - **Content moves as steps.** The step DSL (`stepsMigration`) has five content steps beside
   the schema ones — `put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge` — each
   judged against the stored graph when it runs, so a default that is already there is not
@@ -62,9 +71,10 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | POST | `/graview/here` | say where you are; answers with who else is, and the ops since `seq` |
 | GET | `/graview/who` | who is here right now |
 | POST | `/graview/leave` | say you have gone |
+| GET | `/graview/live` | the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict, ops and presence; 426 to a plain request |
 
-Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential and
-returns the principal every call is judged under. The framework's clients also send the seat
+Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential from
+the `Request` and returns the principal every call is judged under, or a promise of it. The framework's clients also send the seat
 as headers (`SEAT_HEADERS`: who, as what, by what name, and for whom), and a store believes
 them only when told to — `serveStore({ trustSeatHeaders: true })`, which `graview serve`
 sets for a server on 127.0.0.1 and says so. A store with neither answers 401 on every route
@@ -73,6 +83,35 @@ every request, and the framework never reads them. A call says what it came thro
 (`via`: `web` from `openRemote`, `mcp` and `cli` from the commands), recorded on the op. `openRemote(...).settled()` resolves once every call sent
 so far has been answered — a browser never waits for it; a host that must report the
 server's verdict before it exits does.
+
+## The live wire
+
+`openRemote({ live: true })` holds a WebSocket to `/graview/live`, and every op is pushed down
+it as it lands. Calls go down it too; while it is down the client polls and posts, reconnects,
+and catches up from the last op it has. Polling stays: it is the wire `curl` can drive.
+
+| From | Message | Carries |
+|---|---|---|
+| client | `hello` | `seq`, the last op it has (none: the welcome carries the whole state); `protocol` |
+| client | `call` | `cid`, `calls`, `intent`, `batch`, `via`, and `base`: the revision of each field it changes |
+| client | `undo` | `cid`, `batches` to take back |
+| client | `here` / `bye` | a presence, as `/graview/here` takes it; gone |
+| server | `welcome` | `protocol`, `seq` (the server's last), and the `ops` after the client's seq |
+| server | `ack` | `cid`, `batch`, `seq` and the `ops` the call made |
+| server | `refused` / `conflict` | `cid` and the sentence; a conflict names each field, theirs, yours and who wrote theirs |
+| server | `ops` / `presence` | everybody's ops as they land, in seq order; who is here |
+
+Seqs mean what `/graview/since?seq=N` means, and `hello` and `welcome` carry `WIRE_PROTOCOL`.
+A host on any runtime attaches a socket with `createStoreHandler(...).connect(request, { send,
+close })`, which reads the seat from the upgrade and answers with the connection to hand each
+message to; `serveStore` does this for Node's upgrade. What a seat may not see holds on the
+socket as on the routes.
+
+**A stale write is a conflict, not a loss.** A field's revision is the seq of the op that last
+wrote it (`FieldRevisions`, derived from the log). A call that carries a `base` older than the
+field is refused, before anything is written, naming the field, theirs and yours.
+`openRemote` sends one with every call and hands the refusal to `remote.onConflict(…)`,
+with `conflict.keepTheirs()` and `conflict.useMine()`.
 
 ## The hosted-store contract
 
@@ -83,7 +122,7 @@ host of the same API, and it consumes this package the way any customer would.
 | Concern | In the framework | In a host (Graview Cloud, or yours) |
 |---|---|---|
 | Op log + snapshot + migrate on open | `openStore` | runs it on the server, per deployment |
-| The wire | `serveStore`, `openRemote`, `WIRE` | production TLS, a gateway URL |
+| The wire | `serveStore`, `createStoreHandler`, `openRemote`, `WIRE` | production TLS, a gateway URL, the runtime it runs in |
 | Who is asking | `Principal` on every `apply`; `seatOf` reads the request | maps users, keys and agents to principals; tenancy; quotas |
 | Seed | read once, on an empty store | the same |
 | Default content moving | `seedSteps`, `applySteps`, `graview sync-seed` | when to run it, and for whom |

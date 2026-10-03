@@ -29,16 +29,24 @@ export { deriveWithLlm } from "./providers/llm.js";
 export type { LlmProposal, LlmProvider } from "./providers/llm.js";
 
 // One tool surface, two transports.
-export { createToolRuntime } from "./agent/tools.js";
+export { BY_NAME, createToolRuntime, surfaceHash, toolDefinitions } from "./agent/tools.js";
 export type {
+  Resolved,
+  ToolAnnotations,
   ToolDefinition,
+  ToolDefinitionsOptions,
   ToolResult,
   ToolRuntime,
   ToolRuntimeOptions,
   ToolCall,
 } from "./agent/tools.js";
+export type { UntrustedText } from "./agent/untrusted.js";
 export { createInAppAdapter, createMcpAdapter } from "./agent/adapters.js";
 export type { InAppAgent, McpContent, McpTool, McpToolResult } from "./agent/adapters.js";
+// MCP for remote hosts: Streamable HTTP, stateless, behind the host's auth hook (FR-10).
+export { createMcpHttpHandler } from "./mcp-http.js";
+export type { McpHttpOptions } from "./mcp-http.js";
+export { MCP_PROTOCOL_VERSION } from "./mcp-protocol.js";
 export { insightProvider } from "./providers/insight.js";
 export { usageBoost, usageWeights } from "./usage.js";
 export { loadPins, savePins, togglePin, NO_PINS } from "./pins.js";

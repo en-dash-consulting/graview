@@ -50,8 +50,20 @@ export interface Operation {
   /** One user gesture, or one agent turn. */
   readonly batch: string;
   readonly author: Author;
-  /** Human-readable statement of what was meant, not what changed. */
+  /**
+   * Human-readable statement of what was meant, not what changed: the act's
+   * own `describe()` sentence ("Add “Book the van”"), or "Undo: …".
+   */
   readonly intent: string;
+  /**
+   * What the whole gesture was for, when its caller said ("Plan the move"),
+   * on every op of the batch. Beside `intent`, never instead of it (FR-18):
+   * an op keeps its own sentence, so a blocked undo, the record's history
+   * and an audit still say what each op did, and the batch reads as what
+   * was meant. Absent when no intent was given, and the batch reads as its
+   * ops, as it always did.
+   */
+  readonly batchIntent?: string;
   readonly mutation: MutationCall | null;
   readonly primitives: readonly Primitive[];
   readonly inverse: readonly Primitive[];
@@ -62,6 +74,15 @@ export interface Operation {
   readonly undoes?: string;
   /** What the change came through, when the caller said (FR-06). */
   readonly via?: Via;
+  /**
+   * SOMETHING YOU CANNOT SEE HAPPENED HERE (FR-16). Set on an op a store
+   * served to a seat that may not see what it touched: it keeps its id,
+   * seq, batch and time, so the log has no hole, and nothing else of its
+   * own — its author, intent, call and inverse are withheld, and its
+   * primitives, reads and writes keep only what the seat may see. Absent
+   * on every op a store makes; an op without it reads as before.
+   */
+  readonly withheld?: true;
 }
 
 export interface Batch {

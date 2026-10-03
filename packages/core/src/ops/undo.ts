@@ -1,5 +1,7 @@
-import type { OperationLog } from "./log.js";
+import { GraphError } from "../graph/graph.js";
+import type { LogReading } from "./log.js";
 import type { Operation } from "./types.js";
+import { isWithheld } from "./withheld.js";
 
 export interface UndoBlock {
   /** The op that read something the undo target wrote. */
@@ -19,6 +21,30 @@ export type UndoCheck =
       readonly message: string;
     };
 
+/** An undo check that said no. */
+export type UndoRefused = Extract<UndoCheck, { readonly ok: false }>;
+
+/**
+ * AN UNDO THAT CANNOT RUN, AND WHY (FR-18): a later op read what it wrote
+ * (`blockedBy` names each, with what it read), it would reach back across a
+ * declaration change, or there was nothing live to undo. `check` is the
+ * `canUndo` answer it was refused on, so a host can offer to bring the
+ * blocking batches along (`check.includeBatches`) without asking again.
+ *
+ * Still a `GraphError`: a caller that caught those before catches this.
+ */
+export class UndoBlockedError extends GraphError {
+  constructor(readonly check: UndoRefused) {
+    super(check.message);
+    this.name = "UndoBlockedError";
+  }
+
+  /** The ops in the way, with what each read that the undo would take back. */
+  get blockedBy(): readonly UndoBlock[] {
+    return this.check.blockedBy;
+  }
+}
+
 /**
  * Undoing an op out of order is legal exactly when no later live op read
  * something it wrote. That is a checkable condition rather than a policy —
@@ -26,7 +52,7 @@ export type UndoCheck =
  * it along, instead of refusing or corrupting state.
  */
 export function checkUndo(
-  log: OperationLog,
+  log: LogReading,
   batchIds: readonly string[],
 ): UndoCheck {
   const targets = new Set(batchIds);
@@ -45,6 +71,23 @@ export function checkUndo(
         batchIds.length === 0
           ? "No batch given to undo"
           : `Nothing live to undo in ${batchIds.join(", ")} — already undone, or never applied`,
+    };
+  }
+
+  /*
+   * NOT A CHANGE YOU CANNOT SEE (FR-16). A withheld op carries no inverse
+   * to put back, and taking it back is for somebody who can see it; the
+   * sentence says so without saying what it was.
+   */
+  if (ops.some(isWithheld)) {
+    return {
+      ok: false,
+      ops,
+      blockedBy: [],
+      includeBatches: [],
+      message: ops.every(isWithheld)
+        ? "Cannot undo a change you cannot see: only somebody who can see it can take it back."
+        : "Cannot undo this here: part of it is a change you cannot see, and only somebody who can see it can take it back.",
     };
   }
 
@@ -81,10 +124,25 @@ export function checkUndo(
 
   if (blockedBy.length === 0) return { ok: true, ops };
 
-  const includeBatches = [...new Set(blockedBy.map((b) => b.op.batch))];
+  /*
+   * A LATER CHANGE YOU CANNOT SEE is said to be one, and nothing more: not
+   * its sentence, its id or what it read (FR-16). It cannot come along
+   * either, so no batch is offered while one stands in the way.
+   */
   const named = blockedBy
+    .filter((b) => !isWithheld(b.op))
     .map((b) => `"${b.op.intent}" (op ${b.op.id}, read ${b.overlap.join(", ")})`)
     .join("; ");
+  if (blockedBy.some((b) => isWithheld(b.op))) {
+    return {
+      ok: false,
+      ops,
+      blockedBy,
+      includeBatches: [],
+      message: `Cannot undo on its own — ${named ? `a later operation depends on it: ${named}; and ` : ""}a later change you cannot see depends on it, which only somebody who can see it can take back.`,
+    };
+  }
+  const includeBatches = [...new Set(blockedBy.map((b) => b.op.batch))];
   return {
     ok: false,
     ops,

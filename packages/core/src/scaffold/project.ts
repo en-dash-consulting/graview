@@ -460,6 +460,7 @@ export default defineConfig({
       "@graview/pages": framework("pages/src/index.ts"),
       // The browser entry, so the file adapter's node:fs never meets the bundler.
       "@graview/ship/browser": framework("ship/src/browser.ts"),
+      "@graview/ship/runtime": framework("ship/src/runtime.ts"),
       "@graview/ship/dev": framework("ship/src/dev.ts"),
       "@graview/ship/cli": framework("ship/src/cli.ts"),
       "@graview/ship": framework("ship/src/index.ts"),

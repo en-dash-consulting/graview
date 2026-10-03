@@ -50,16 +50,18 @@ export interface Grant {
  */
 /**
  * WHO MAY SEE WHAT. A grant says who may DO an act; a sight says who may
- * see the records of a kind at all. A kind no sight names is seen by
- * everyone — the opt-in a policy already is — and once one names it, a
- * record of it is seen only by the roles a sight lists, and, with `own`,
- * only when it is theirs: their own record, or one joined to it by an edge
- * (a shopper's test drive, their enquiry, their trade-in).
+ * see the records of a kind at all. Like grants, sights are deny by
+ * default once there are any (FR-02): a kind no sight names is seen by
+ * nobody but the system, so a kind added tomorrow is kept from everybody
+ * until somebody says who sees it, rather than shown to everybody. A kind
+ * a sight names is seen by the roles it lists (`"*"`: everybody), and with
+ * `own` only when it is theirs: their own record, one joined to it by an
+ * edge (a shopper's test drive, their enquiry), or one they made.
  */
 export interface Sight {
   readonly roles: readonly string[] | "*";
   readonly kinds: readonly string[];
-  /** Only the principal's own record, and what an edge joins to it. */
+  /** Only the principal's own records: their own record, what an edge joins to it, and what they made. */
   readonly own?: boolean;
   readonly describe?: string;
 }
@@ -69,7 +71,8 @@ export interface Policy {
   /**
    * Who may see the records of which kinds. Absent, everybody sees
    * everything — a storefront that declares none shows every customer's
-   * name, email and finance question to whoever opens it.
+   * name, email and finance question to whoever opens it. Present, every
+   * kind is kept from everybody but the system until a sight names it.
    */
   readonly sees?: readonly Sight[];
   /**

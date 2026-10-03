@@ -34,6 +34,7 @@ export default defineConfig({
       "@graview/primitives": src("primitives"),
       "@graview/pages": src("pages"),
       "@graview/ship/browser": fileURLToPath(new URL("./packages/ship/src/browser.ts", import.meta.url)),
+      "@graview/ship/runtime": fileURLToPath(new URL("./packages/ship/src/runtime.ts", import.meta.url)),
       "@graview/ship/cli": fileURLToPath(new URL("./packages/ship/src/cli.ts", import.meta.url)),
       "@graview/ship": src("ship"),
       "@graview/embed": src("embed"),

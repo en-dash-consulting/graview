@@ -13,6 +13,10 @@
       "types": "./dist/browser.d.ts",
       "default": "./dist/browser.js"
     },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "default": "./dist/runtime.js"
+    },
     "./dev": {
       "types": "./dist/dev.d.ts",
       "default": "./dist/dev.js"

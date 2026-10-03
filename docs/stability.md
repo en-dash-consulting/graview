@@ -26,10 +26,12 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 
 ### 3. The wire and live protocols: additive within a major
 
-`WIRE` (in `@graview/ship`) lists every route `serveStore` answers. `WIRE_PROTOCOL` numbers the protocol.
+`WIRE` (in `@graview/ship`) lists every route `serveStore` answers, and `createStoreHandler` answers the same routes in any runtime (FR-09). `WIRE_PROTOCOL` numbers the protocol.
 
 - Within a major, a route or a response field may be added. None is removed, renamed or changed in meaning.
 - A request field the server does not know is ignored, never refused.
+- The live socket at `/graview/live` (FR-05) holds to the same rules: a message type or a field may be added, and a message the server does not know is ignored. `hello` and `welcome` carry `WIRE_PROTOCOL`, so either side can tell what the other speaks. Its seqs mean what `/graview/since?seq=N` means.
+- A field's revision, which a stale write is refused against, is the seq of the op that last wrote it. It is derived from the log and never stored, so it never changes a stored format.
 - `WIRE_PROTOCOL` moves only when a client of the previous protocol can no longer be served, and that is a major.
 
 ### 4. The declaration, the document format and check finding codes

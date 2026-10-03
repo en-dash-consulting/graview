@@ -20,6 +20,7 @@ const schema = createSchema([car, shopper]);
 const policy: Policy = {
   grants: [{ roles: ["staff"], mutations: "*" }],
   sees: [
+    { roles: "*", kinds: ["car"] },
     { roles: ["staff"], kinds: ["shopper"] },
     { roles: ["shopper"], kinds: ["shopper"], own: true },
   ],

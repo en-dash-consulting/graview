@@ -93,6 +93,25 @@ export class OperationLog {
     this.marks.push(epoch);
   }
 
+  /**
+   * ROLLS THE LOG BACK TO `length`, for ops that were only ever
+   * provisional: an optimistic client's pending tail, cut back before the
+   * server's ops land under it (`Store.rebase`). This is the one way an
+   * entry leaves the log, and it is not for history: ops another store has
+   * seen are undone by appending, never cut. Refuses to cut behind an epoch.
+   * Returns what was cut, oldest first.
+   */
+  truncate(length: number): Operation[] {
+    if (!Number.isInteger(length) || length < 0 || length > this.ops.length) {
+      throw new Error(`Cannot cut a log ${this.ops.length} long back to ${length}`);
+    }
+    const last = this.lastEpoch();
+    if (last && last.seq > length) {
+      throw new Error(`Cannot cut the log back to ${length}: an epoch begins at seq ${last.seq}`);
+    }
+    return this.ops.splice(length);
+  }
+
   get(id: string): Operation | undefined {
     return this.ops.find((op) => op.id === id);
   }
@@ -110,24 +129,7 @@ export class OperationLog {
    * from the end of the log backwards terminates in one pass.
    */
   undoneIds(): Set<string> {
-    const undoers = new Map<string, string[]>();
-    for (const op of this.ops) {
-      if (!op.undoes) continue;
-      const list = undoers.get(op.undoes);
-      if (list) list.push(op.id);
-      else undoers.set(op.undoes, [op.id]);
-    }
-
-    const live = new Map<string, boolean>();
-    for (let i = this.ops.length - 1; i >= 0; i--) {
-      const op = this.ops[i]!;
-      const mine = undoers.get(op.id) ?? [];
-      live.set(op.id, !mine.some((id) => live.get(id) === true));
-    }
-
-    return new Set(
-      this.ops.filter((op) => live.get(op.id) === false).map((op) => op.id),
-    );
+    return undoneIn(this.ops);
   }
 
   opsInBatch(batchId: string): Operation[] {
@@ -135,29 +137,7 @@ export class OperationLog {
   }
 
   batches(): Batch[] {
-    const undone = this.undoneIds();
-    const order: string[] = [];
-    const grouped = new Map<string, Operation[]>();
-    for (const op of this.ops) {
-      const list = grouped.get(op.batch);
-      if (list) list.push(op);
-      else {
-        grouped.set(op.batch, [op]);
-        order.push(op.batch);
-      }
-    }
-    return order.map((id) => {
-      const ops = grouped.get(id) ?? [];
-      const first = ops[0]!;
-      return {
-        id,
-        author: first.author,
-        intent: first.intent,
-        at: first.at,
-        ops,
-        undone: ops.every((op) => undone.has(op.id)),
-      };
-    });
+    return batchesOf(this.ops, this.undoneIds());
   }
 
   /**
@@ -194,3 +174,60 @@ export class OperationLog {
   }
 }
 
+
+/**
+ * What `checkUndo` reads of a log: its ops, which of them are undone, and
+ * its epochs. An `OperationLog` is one; so is a log as one seat may see it.
+ */
+export interface LogReading {
+  all(): readonly Operation[];
+  undoneIds(): Set<string>;
+  epochs(): readonly Epoch[];
+}
+
+/** The ops of a list that a live op undoes (`OperationLog.undoneIds`). */
+export function undoneIn(ops: readonly Operation[]): Set<string> {
+  const undoers = new Map<string, string[]>();
+  for (const op of ops) {
+    if (!op.undoes) continue;
+    const list = undoers.get(op.undoes);
+    if (list) list.push(op.id);
+    else undoers.set(op.undoes, [op.id]);
+  }
+
+  const live = new Map<string, boolean>();
+  for (let i = ops.length - 1; i >= 0; i--) {
+    const op = ops[i]!;
+    const mine = undoers.get(op.id) ?? [];
+    live.set(op.id, !mine.some((id) => live.get(id) === true));
+  }
+
+  return new Set(ops.filter((op) => live.get(op.id) === false).map((op) => op.id));
+}
+
+/** Ops grouped into the gestures they were made in, in the order each began. */
+export function batchesOf(ops: readonly Operation[], undone: ReadonlySet<string>): Batch[] {
+  const order: string[] = [];
+  const grouped = new Map<string, Operation[]>();
+  for (const op of ops) {
+    const list = grouped.get(op.batch);
+    if (list) list.push(op);
+    else {
+      grouped.set(op.batch, [op]);
+      order.push(op.batch);
+    }
+  }
+  return order.map((id) => {
+    const ops = grouped.get(id) ?? [];
+    const first = ops[0]!;
+    return {
+      id,
+      author: first.author,
+      // What the gesture was for, when its caller said; else its first op's own sentence.
+      intent: first.batchIntent ?? first.intent,
+      at: first.at,
+      ops,
+      undone: ops.every((op) => undone.has(op.id)),
+    };
+  });
+}

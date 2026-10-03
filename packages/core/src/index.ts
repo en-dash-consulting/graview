@@ -169,7 +169,10 @@ export {
   nodeRefArgs,
   nodeRefKinds,
 } from "./mutations/node-ref.js";
-export type { ArgShape } from "./mutations/node-ref.js";
+export type { ArgShape, NodeRefArg } from "./mutations/node-ref.js";
+// Records named the way people name them: a node argument takes a label (FR-33).
+export { nameKey } from "./labels.js";
+export type { RefCandidate, RefResolution } from "./labels.js";
 export type {
   AnyMutationDefinition,
   MutationCall,
@@ -180,9 +183,12 @@ export type {
 
 // Operation log — attribution, causality, selective undo.
 export { OperationLog } from "./ops/log.js";
-export type { Epoch } from "./ops/log.js";
-export { checkUndo, undoPrimitives } from "./ops/undo.js";
-export type { UndoBlock, UndoCheck } from "./ops/undo.js";
+export type { Epoch, LogReading } from "./ops/log.js";
+export { isWithheld, redact, touchedBy, touchesUnseen, withhold, WITHHELD_AUTHOR, WITHHELD_INTENT } from "./ops/withheld.js";
+export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/revisions.js";
+export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
+export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
+export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
 export type { Author, Batch, Operation, Via } from "./ops/types.js";
 export {
   actingAs,
@@ -243,13 +249,14 @@ export { checkKitContrast, connectorHueColour, connectorKitFor, DEFAULT_KIT, kit
 export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/kit.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
-export { sees, sightedKinds } from "./permissions/sight.js";
-export { seenBy } from "./seen.js";
+export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
+export type { Records } from "./permissions/sight.js";
+export { logSeenBy, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Integrity — a fold has a fingerprint, and a store can prove its own (FR-20).
-export { snapshotHash } from "./integrity.js";
+export { sha256Hex, snapshotHash } from "./integrity.js";
 export type { VerifyResult } from "./integrity.js";
 // Stored data checked against its declaration (FR-21).
 export { GRAPH_FINDING_CODES, repairPlan, validateGraph } from "./validate-graph.js";
@@ -265,9 +272,12 @@ export type {
 // Store — graph + log + mutations + invariants, one object.
 export { ReceiveError, Store, violationKey } from "./store.js";
 export type {
+  AppendOp,
   ApplyOptions,
   ApplyResult,
   Preview,
+  Rebase,
+  RebaseResult,
   StoreOptions,
   UndoPreview,
 } from "./store.js";
@@ -292,9 +302,13 @@ export { createMemoryAdapter } from "./persistence/memory.js";
  * The sqlite adapter, exported so `graview serve --sqlite` can reach it.
  * It takes a database OBJECT rather than opening one, so `better-sqlite3`
  * is the caller's dependency and never this package's — nothing here is a
- * native module and nothing here needs building.
+ * native module and nothing here needs building. Under it is the SQL
+ * adapter, which asks only for a synchronous `exec` — a Durable Object's
+ * `ctx.storage.sql` as it is, or better-sqlite3 through `sqlFromDatabase`
+ * (FR-09).
  */
-export { createSqliteAdapter, SQLITE_TABLE_SHAPE } from "./persistence/sqlite.js";
+export { createSqlAdapter, createSqliteAdapter, sqlFromDatabase, SQLITE_TABLE_SHAPE } from "./persistence/sqlite.js";
+export type { SqlAdapterOptions, SqlExec } from "./persistence/sql.js";
 export type { SqliteAdapterOptions, SqliteDatabase, SqliteStatement } from "./persistence/sqlite.js";
 export type { PersistenceAdapter } from "./persistence/types.js";
 

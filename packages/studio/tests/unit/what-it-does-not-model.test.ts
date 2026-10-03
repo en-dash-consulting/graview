@@ -49,8 +49,9 @@ const rename = defineMutation("rename", {
 const app = defineApp({ name: "carrier", schema: createSchema([task]), mutations: [rename] });
 
 /*
- * WHO SEES WHAT has no act in the studio yet, and a storefront written back
+ * WHO SEES WHAT had no act in the studio, and a storefront written back
  * without it showed every customer to everybody (the seventh walk, W-170).
+ * It is modelled now (FR-02), and still comes back as it went in.
  */
 const guarded = defineApp({
   name: "carrier",
