@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-03T03:28:27.156Z",
+  "at": "2026-10-03T04:50:48.225Z",
   "engine": "chromium",
   "checks": {
     "theDoorBelongsToWhoeverKeepsTheApp": {
@@ -17,7 +17,8 @@
         "kind:kind",
         "kind:lens",
         "kind:role",
-        "kind:rule"
+        "kind:rule",
+        "kind:sight"
       ],
       "places": [
         "What the checker says"
@@ -35,11 +36,11 @@
         "Draw the kind …",
         "Change the kind …",
         "lets …",
+        "Let a role see a kind …",
         "Add an act …",
         "Add an edge …",
         "Add a rule …",
-        "Add a field …",
-        "Remove the kind"
+        "Add a field …"
       ],
       "verdict": {
         "text": "The checker finds nothing wrong",
