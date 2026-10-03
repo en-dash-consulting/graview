@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
 import type { GraviewApp, PersistenceAdapter } from "@graview/core";
 import { createFileAdapter } from "./file-adapter.js";
+import { LIVE_PATH } from "./live.js";
 import { openStore } from "./open-store.js";
 import { serveStore } from "./serve.js";
 import type { GraphSnapshot } from "./snapshot.js";
@@ -22,10 +23,11 @@ import type { StoredMeta } from "./meta.js";
  */
 export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <file>]
                        [--host <address>] [--trust-seat-headers]
-      Serves the app's store over HTTP. The op log is the wire: a client
-      sends calls, the store judges them under the caller's own seat, and
-      the ops come back. Data lives in <dir> (default ./data) as readable
-      JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and
+      Serves the app's store over HTTP, and live over a WebSocket at
+      /graview/live. The op log is the wire: a client sends calls, the
+      store judges them under the caller's own seat, and the ops come back,
+      pushed to every socket as they land. Data lives in <dir> (default
+      ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and
       believes the seat a request names in its headers, because only this
       machine can reach it; on any other --host it will not start unless
       --trust-seat-headers says the network in front of it can be trusted.
@@ -138,6 +140,7 @@ export async function serve(argv: readonly string[]): Promise<number> {
 
   process.stdout.write(
     `graview serve: ${app.name} on ${served.url}\n` +
+      `  live: ${served.url.replace(/^http/, "ws")}${LIVE_PATH}\n` +
       `  data: ${backend.where}  (${backend.adapter.name})\n` +
       `  ${trust.says}\n` +
       `  ${served.store.graph.allNodes().length} nodes, ${served.opened.store.log.all().length} operations` +

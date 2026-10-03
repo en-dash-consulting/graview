@@ -1,7 +1,7 @@
 import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, isWithheld, nodeRef, type Operation, type Policy, type Presence, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createStoreHandler, openRemote, SEAT_HEADERS, seatHeaders } from "../../src/index.js";
+import { createStoreHandler, LIVE_PATH, openRemote, SEAT_HEADERS, seatHeaders, type LiveServerMessage } from "../../src/index.js";
 
 /**
  * WHAT A SEAT MAY NOT SEE NEVER LEAVES THE STORE (FR-02).
@@ -139,5 +139,53 @@ describe("the wire sends a seat only what it may see", () => {
     expect(remote.store.log.all().map(isWithheld)).toEqual([true, false, true]);
     expect(remote.store.graph.getNode("shopper:freya")).toBeUndefined();
     remote.close();
+  });
+
+  it("holds on the live wire exactly as on the routes: the welcome, every push and every answer as the seat sees them, and who is here kept back (FR-05)", async () => {
+    const handler = await showroom();
+    const heard: LiveServerMessage[] = [];
+    const connection = await handler.connect(at(LIVE_PATH, bethan), { send: (text) => heard.push(JSON.parse(text) as LiveServerMessage) });
+    if (connection instanceof Response) throw new Error(`Refused: ${connection.status}`);
+    const next = async (t: LiveServerMessage["t"], from = 0) => {
+      for (let tries = 0; tries < 200 && !heard.slice(from).some((message) => message.t === t); tries++) await new Promise((tick) => setTimeout(tick, 1));
+      const found = heard.slice(from).find((message) => message.t === t);
+      if (!found) throw new Error(`Never heard ${t}`);
+      return found;
+    };
+
+    // The welcome without a seq is the state, as GET /graview/state answers it to this seat.
+    connection.receive(JSON.stringify({ t: "hello" }));
+    const welcome = (await next("welcome")) as Extract<LiveServerMessage, { t: "welcome" }>;
+    expect(welcome.state?.log.map(isWithheld)).toEqual([true, false]);
+    expect((welcome.state?.snapshot as { nodes: { id: string }[] }).nodes.map((node) => node.id).sort()).toEqual(["car:golf", "enquiry:is-it-still-there", "shopper:bethan"]);
+
+    // Somebody else's change to what she may not see is pushed in its place, withheld.
+    let from = heard.length;
+    handler.store.apply({ name: "answer", args: { id: "enquiry:finance-on-the-golf" } }, { author: staff });
+    const pushed = (await next("ops", from)) as Extract<LiveServerMessage, { t: "ops" }>;
+    expect(pushed.ops.map((op) => [op.seq, isWithheld(op)])).toEqual([[2, true]]);
+
+    // Freya, here on her enquiry, is not somebody Bethan is told about.
+    await handler.handle(at("/graview/here", freya, { method: "POST", body: JSON.stringify({ presence: { participant: "human:shopper:freya:f1", hue: 1, stop: "/enquiry/enquiry:finance-on-the-golf", at: new Date().toISOString() } }) }));
+    const told = heard.filter((message) => message.t === "presence") as Extract<LiveServerMessage, { t: "presence" }>[];
+    expect(told.length).toBeGreaterThan(0);
+    for (const message of told) expect(message.who).toEqual([]);
+
+    // A call naming what she may not see is refused in the policy's words, and a base naming it says nothing of it.
+    from = heard.length;
+    connection.receive(
+      JSON.stringify({ t: "call", cid: "c1", calls: [{ name: "answer", args: { id: "enquiry:finance-on-the-golf" } }], base: [{ node: "enquiry:finance-on-the-golf", field: "answered", rev: -1 }] }),
+    );
+    const refused = (await next("refused", from)) as Extract<LiveServerMessage, { t: "refused" }>;
+    expect(refused).toEqual({ t: "refused", cid: "c1", sentence: "Not permitted: “Answer the enquiry” names a record you may not see." });
+
+    // Her own act is answered with its ops.
+    from = heard.length;
+    connection.receive(JSON.stringify({ t: "call", cid: "c2", calls: [{ name: "answer", args: { id: "enquiry:is-it-still-there" } }] }));
+    const ack = (await next("ack", from)) as Extract<LiveServerMessage, { t: "ack" }>;
+    expect(ack.ops.map((op) => [op.mutation?.name, isWithheld(op)])).toEqual([["answer", false]]);
+
+    for (const secret of SECRETS) expect(JSON.stringify(heard)).not.toContain(secret);
+    connection.close();
   });
 });

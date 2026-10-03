@@ -71,6 +71,7 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | POST | `/graview/here` | say where you are; answers with who else is, and the ops since `seq` |
 | GET | `/graview/who` | who is here right now |
 | POST | `/graview/leave` | say you have gone |
+| GET | `/graview/live` | the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict, ops and presence; 426 to a plain request |
 
 Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential from
 the `Request` and returns the principal every call is judged under, or a promise of it. The framework's clients also send the seat
@@ -82,6 +83,35 @@ every request, and the framework never reads them. A call says what it came thro
 (`via`: `web` from `openRemote`, `mcp` and `cli` from the commands), recorded on the op. `openRemote(...).settled()` resolves once every call sent
 so far has been answered — a browser never waits for it; a host that must report the
 server's verdict before it exits does.
+
+## The live wire
+
+`openRemote({ live: true })` holds a WebSocket to `/graview/live`, and every op is pushed down
+it as it lands. Calls go down it too; while it is down the client polls and posts, reconnects,
+and catches up from the last op it has. Polling stays: it is the wire `curl` can drive.
+
+| From | Message | Carries |
+|---|---|---|
+| client | `hello` | `seq`, the last op it has (none: the welcome carries the whole state); `protocol` |
+| client | `call` | `cid`, `calls`, `intent`, `batch`, `via`, and `base`: the revision of each field it changes |
+| client | `undo` | `cid`, `batches` to take back |
+| client | `here` / `bye` | a presence, as `/graview/here` takes it; gone |
+| server | `welcome` | `protocol`, `seq` (the server's last), and the `ops` after the client's seq |
+| server | `ack` | `cid`, `batch`, `seq` and the `ops` the call made |
+| server | `refused` / `conflict` | `cid` and the sentence; a conflict names each field, theirs, yours and who wrote theirs |
+| server | `ops` / `presence` | everybody's ops as they land, in seq order; who is here |
+
+Seqs mean what `/graview/since?seq=N` means, and `hello` and `welcome` carry `WIRE_PROTOCOL`.
+A host on any runtime attaches a socket with `createStoreHandler(...).connect(request, { send,
+close })`, which reads the seat from the upgrade and answers with the connection to hand each
+message to; `serveStore` does this for Node's upgrade. What a seat may not see holds on the
+socket as on the routes.
+
+**A stale write is a conflict, not a loss.** A field's revision is the seq of the op that last
+wrote it (`FieldRevisions`, derived from the log). A call that carries a `base` older than the
+field is refused, before anything is written, naming the field, theirs and yours.
+`openRemote` sends one with every call and hands the refusal to `onConflict`, with
+`keepTheirs()` and `useMine()`.
 
 ## The hosted-store contract
 

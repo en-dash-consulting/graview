@@ -26,4 +26,6 @@ export type { StoredMeta } from "./meta.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
 export { openRemote, seatHeaders } from "./remote.js";
-export type { RemoteOptions, RemoteStore } from "./remote.js";
+export type { LiveSocketLike, RemoteConflict, RemoteOptions, RemoteStore } from "./remote.js";
+export { conflictSentence, LIVE_PATH } from "./live.js";
+export type { LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket } from "./live.js";

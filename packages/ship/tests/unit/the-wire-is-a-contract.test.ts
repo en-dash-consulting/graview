@@ -49,6 +49,7 @@ describe("the wire", () => {
       "/graview/here",
       "/graview/who",
       "/graview/leave",
+      "/graview/live",
     ]);
     for (const route of WIRE) {
       const response = await fetch(`${served.url}${route.path}${route.path.endsWith("since") ? "?seq=-1" : ""}`, {

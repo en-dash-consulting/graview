@@ -3,10 +3,12 @@ import { FRAMEWORK_VERSION } from "./version.js";
 
 /**
  * THE WIRE PROTOCOL this build speaks (`WIRE` in @graview/ship, and the
- * live protocol beside it once there is one). Additive within a major: a
- * route or a field may be added, none removed or changed in meaning
+ * live socket beside it at `/graview/live`, whose `hello` and `welcome`
+ * carry this number). Additive within a major: a route, a message or a
+ * field may be added, none removed or changed in meaning
  * (docs/stability.md). It moves only when a client of the previous one
- * could no longer be served.
+ * could no longer be served — the live socket (FR-05) was an addition,
+ * so it stayed 1.
  */
 export const WIRE_PROTOCOL = 1;
 
@@ -17,7 +19,7 @@ export const WIRE_PROTOCOL = 1;
  * id is named in the changeset that shipped it; `capabilities.test.ts`
  * holds the two lists to each other.
  */
-const SHIPPED = ["FR-01", "FR-02", "FR-06", "FR-07", "FR-09", "FR-10", "FR-11", "FR-15", "FR-16", "FR-17", "FR-18", "FR-20", "FR-21", "FR-22", "FR-26", "FR-27", "FR-28", "FR-29", "FR-30", "FR-31", "FR-32", "FR-33", "FR-34"] as const;
+const SHIPPED = ["FR-01", "FR-02", "FR-05", "FR-06", "FR-07", "FR-09", "FR-10", "FR-11", "FR-15", "FR-16", "FR-17", "FR-18", "FR-20", "FR-21", "FR-22", "FR-26", "FR-27", "FR-28", "FR-29", "FR-30", "FR-31", "FR-32", "FR-33", "FR-34"] as const;
 
 /**
  * The declaration-document formats `@graview/core/document` parses, as

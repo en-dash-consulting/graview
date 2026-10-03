@@ -185,6 +185,8 @@ export type {
 export { OperationLog } from "./ops/log.js";
 export type { Epoch, LogReading } from "./ops/log.js";
 export { isWithheld, redact, touchedBy, touchesUnseen, withhold, WITHHELD_AUTHOR, WITHHELD_INTENT } from "./ops/withheld.js";
+export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/revisions.js";
+export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
 export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
 export type { Author, Batch, Operation, Via } from "./ops/types.js";

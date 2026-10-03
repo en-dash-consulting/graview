@@ -1,11 +1,16 @@
 import {
+  FieldRevisions,
   foldPresence,
   isSystem,
+  isUnset,
+  WIRE_PROTOCOL,
   PRESENCE_TTL_MS,
   redact,
   seenBy,
   seesId,
   type AnySchema,
+  type FieldConflict,
+  type FieldRevision,
   type GraviewApp,
   type MutationCall,
   type Operation,
@@ -16,6 +21,7 @@ import {
 } from "@graview/core";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
+import { conflictSentence, LIVE_PATH, type LiveClientMessage, type LiveConnection, type LiveServerMessage, type LiveSocket } from "./live.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
@@ -54,8 +60,10 @@ import type { GraphSnapshot } from "./snapshot.js";
  * the store, not in the adapter, not in the log. A tab that dies without a
  * word is gone after three missed heartbeats.
  *
- * Polling rather than a socket, on purpose: a poll is a thing a person can
- * reproduce with `curl`, and a thing every runtime can answer.
+ * Polling is the floor, on purpose: a poll is a thing a person can
+ * reproduce with `curl`, and a thing every runtime can answer. Beside it,
+ * `connect` serves the live wire (FR-05, `./live.ts`) to whatever socket a
+ * host hands it, and `GET /graview/live` names it on the wire.
  */
 
 /**
@@ -75,6 +83,7 @@ export const WIRE = [
   { method: "POST", path: "/graview/here", says: "say where you are; answers with who else is, and the ops since `seq`" },
   { method: "GET", path: "/graview/who", says: "who is here right now" },
   { method: "POST", path: "/graview/leave", says: "say you have gone" },
+  { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict, ops and presence; 426 to a plain request" },
 ] as const;
 
 export { SEAT_HEADERS };
@@ -114,6 +123,16 @@ export interface StoreHandler<S extends AnySchema> {
   readonly opened: OpenedStore<S>;
   /** Every WIRE route: a `Request` in, a `Response` out. Bound, so it can be handed on as it is. */
   readonly handle: (request: Request) => Promise<Response>;
+  /**
+   * THE LIVE WIRE, ON ANY SOCKET (FR-05). Hand it the upgrade `Request`
+   * (the seat is read from it, as on every route) and a way to send text
+   * down the socket; it answers with the connection to hand each message
+   * the client sends and the close, or with the `Response` refusing it (a
+   * 401 when it cannot say who is asking). A Worker or Durable Object
+   * attaches a `WebSocketPair`'s server end here; `serveStore` attaches
+   * Node's upgrade.
+   */
+  readonly connect: (request: Request, socket: LiveSocket) => Promise<LiveConnection | Response>;
   /** Writes what is pending and lets the adapter go. */
   close(): Promise<void>;
 }
@@ -224,8 +243,63 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
    * ones that touched what it may not see withheld (FR-16).
    */
   const seenFor = (principal: Principal) => seenBy(store, principal);
-  const since = (principal: Principal, seq: number): Operation[] => seenFor(principal).log.all().filter((op) => op.seq > seq);
   const sighted = (principal: Principal): boolean => (store.policy?.sees?.length ?? 0) > 0 && !isSystem(principal);
+  /*
+   * The ops after `seq`, as the seat sees them: the same ops `seenBy`'s log
+   * holds after it (each op is withheld or not on its own), without
+   * redacting the whole log for every push down every socket.
+   */
+  const since = (principal: Principal, seq: number): Operation[] => {
+    const after = store.log.all().slice(Math.max(0, Math.floor(seq) + 1));
+    return sighted(principal) ? redact(after, seesId(store, principal)) : [...after];
+  };
+  const lastSeq = (): number => store.log.length - 1;
+
+  /*
+   * EVERY FIELD'S REVISION (FR-05): the seq of the op that last wrote it,
+   * read off the log once and kept current as ops land. A call that says
+   * it saw an older one is a stale write, refused by name.
+   */
+  const revisions = FieldRevisions.of(store.log.all());
+  const conflictsOf = (author: Principal, calls: readonly MutationCall[], base: unknown): FieldConflict[] => {
+    if (!Array.isArray(base) || base.length === 0) return [];
+    const sees = sighted(author) ? seesId(store, author) : () => true;
+    // A record the seat may not see is not there to have moved: the call itself is refused for naming it.
+    const claimed = (base as FieldRevision[]).filter(
+      (entry) => entry && typeof entry.node === "string" && typeof entry.field === "string" && typeof entry.rev === "number" && sees(entry.node),
+    );
+    const stale = revisions.stale(claimed);
+    if (stale.length === 0) return [];
+    /*
+     * A conflict is a choice — keep theirs, or put yours over it — and only
+     * a call that could still land offers one. A call the policy refuses,
+     * or one that no longer runs on the graph as it is (somebody finished
+     * it first), is refused for that, in its own sentence.
+     */
+    if (store.policy && calls.some((call) => !store.permits(call, author).ok)) return [];
+    const yours = new Map<string, unknown>();
+    try {
+      for (const primitive of store.previewAll(calls).primitives) {
+        if (primitive.op === "patch-node") for (const [field, value] of Object.entries(primitive.after)) yours.set(`${primitive.id}\u0000${field}`, isUnset(value) ? undefined : value);
+      }
+    } catch {
+      return [];
+    }
+    return stale.map((entry) => {
+      const rev = revisions.of(entry.node, entry.field);
+      const wrote = rev >= 0 ? store.log.all()[rev] : undefined;
+      const shown = wrote && sighted(author) ? redact([wrote], sees)[0] : wrote;
+      return {
+        node: entry.node,
+        field: entry.field,
+        theirs: (store.graph.getNode(entry.node) as Record<string, unknown> | undefined)?.[entry.field],
+        yours: yours.get(`${entry.node}\u0000${entry.field}`),
+        by: shown?.author.name ?? shown?.author.id ?? "Someone",
+        rev,
+        saw: entry.rev,
+      };
+    });
+  };
   const whoFor = (principal: Principal, who: readonly Presence[]): Presence[] => (sighted(principal) ? presenceSeenBy(who, seesId(store, principal)) : [...who]);
 
   async function route(request: Request): Promise<Response> {
@@ -242,6 +316,10 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       });
     }
     const seat = async (): Promise<Principal> => (seatOf as NonNullable<typeof seatOf>)(request);
+
+    if (url.pathname === LIVE_PATH) {
+      return send(426, { error: `${LIVE_PATH} is a WebSocket: open one, say hello, and the store's ops come to you. A plain request polls /graview/since instead.` });
+    }
 
     if (url.pathname === "/graview/state") {
       const seen = seenFor(await seat());
@@ -267,6 +345,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       }
       const asking = await seat();
       const mine = arrive(body.presence, asking);
+      tellWhoIsHere();
       // Folded into the poll: the heartbeat carries back everybody else AND
       // the ops since, so being here costs no round trip of its own.
       return send(200, {
@@ -280,6 +359,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       if (typeof body.participant === "string") {
         here = new Map(here);
         here.delete(body.participant);
+        tellWhoIsHere();
       }
       return send(200, { who: whoFor(await seat(), alive()) });
     }
@@ -305,10 +385,19 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
         batch?: string;
         /** What the calls came through; `api` unless the caller says (FR-06). */
         via?: string;
+        /** The revision of each field the calls change, as the caller last saw it (FR-05). */
+        base?: readonly FieldRevision[];
       };
       const calls = body.calls ?? [];
       const author = await seat();
       const via = typeof body.via === "string" && body.via.length > 0 ? body.via : "api";
+      /*
+       * A STALE WRITE IS A CONFLICT, NOT A LOSS (FR-05). A field that moved
+       * since the caller read it is refused by name — theirs and yours —
+       * and nothing is written: what to do about it is the person's call.
+       */
+      const conflicts = body.undo ? [] : conflictsOf(author, calls, body.base);
+      if (conflicts.length > 0) return send(409, { error: conflictSentence(conflicts), refused: true, conflict: true, conflicts });
       try {
         /*
          * Through the STORE, under the requester's own seat. The policy
@@ -317,7 +406,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
          * bare 403, because that sentence is the product.
          */
         const result = body.undo
-          ? store.undo(body.undo, { author, via, ...(body.intent ? { intent: body.intent } : {}) })
+          ? store.undo(body.undo, { author, via, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) })
           : store.applyAll(calls, {
               author,
               via,
@@ -336,9 +425,223 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     return send(404, { error: `Nothing at ${url.pathname}` });
   }
 
+  /*
+   * THE LIVE WIRE (FR-05). One entry per open socket: who it is, the last
+   * seq it has been sent, and where it says it is. Every op that lands is
+   * pushed down every socket in seq order, none skipped — each as its seat
+   * may see it — and a socket's own call is answered by its `ack`, which
+   * carries that call's ops, so they reach it once.
+   */
+  interface Live {
+    readonly seat: Principal;
+    readonly socket: LiveSocket;
+    cursor: number;
+    participant?: string;
+    /** Set while this socket's own call lands, so its ops go in the ack rather than a push. */
+    answering: boolean;
+    open: boolean;
+  }
+  const sockets = new Set<Live>();
+  const say = (live: Live, message: LiveServerMessage) => {
+    if (!live.open) return;
+    try {
+      live.socket.send(JSON.stringify(message));
+    } catch {
+      // A socket that cannot be written to is closing; its close is what forgets it.
+    }
+  };
+  const push = (live: Live) => {
+    if (live.cursor >= lastSeq()) return;
+    const ops = since(live.seat, live.cursor);
+    live.cursor = lastSeq();
+    if (ops.length > 0) say(live, { t: "ops", seq: live.cursor, ops });
+  };
+  store.subscribe((_diff, ops) => {
+    revisions.note(ops);
+    for (const live of sockets) if (!live.answering) push(live);
+  });
+  /*
+   * A socket's presence stands while the socket does; the TTL is for a
+   * poller that went quiet, and a socket that went quiet is closed.
+   */
+  const standing = (): Presence[] => {
+    const now = new Date().toISOString();
+    const held: Presence[] = [];
+    for (const live of sockets) {
+      const presence = live.participant ? here.get(live.participant) : undefined;
+      if (presence) held.push({ ...presence, at: now });
+    }
+    if (held.length > 0) here = foldPresence(here, held, Date.now(), ttl);
+    return alive();
+  };
+  function tellWhoIsHere(): void {
+    if (sockets.size === 0) return;
+    const who = standing();
+    for (const live of sockets) say(live, { t: "presence", who: whoFor(live.seat, who.filter((presence) => presence.participant !== live.participant)) });
+  }
+
+  /** A call or an undo from a socket: judged as its seat, exactly as `POST /graview/ops` judges it. */
+  const answer = async (live: Live, message: Extract<LiveClientMessage, { t: "call" | "undo" }>): Promise<void> => {
+    const cid = typeof message.cid === "string" ? message.cid : "";
+    const author = live.seat;
+    const via = typeof message.via === "string" && message.via.length > 0 ? message.via : "web";
+    const intent = typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined;
+    const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : undefined;
+    const shown = (ops: readonly Operation[]) => (sighted(author) ? redact(ops, seesId(store, author)) : [...ops]);
+    push(live);
+    /*
+     * SENT TWICE, ANSWERED ONCE. A client that lost its socket before the
+     * ack sends the call again under the same batch; one already in the
+     * log is answered with the ops it made.
+     */
+    const already = batch ? store.log.all().filter((op) => op.batch === batch) : [];
+    if (already.length > 0) {
+      say(live, { t: "ack", cid, seq: already.at(-1)!.seq, batch: batch!, ops: shown(already) });
+      return;
+    }
+    const calls = message.t === "call" && Array.isArray(message.calls) ? message.calls : [];
+    if (message.t === "call") {
+      const conflicts = conflictsOf(author, calls, message.base);
+      if (conflicts.length > 0) {
+        say(live, { t: "conflict", cid, sentence: conflictSentence(conflicts), conflicts });
+        return;
+      }
+    }
+    let result: { readonly ops: readonly Operation[]; readonly batch: string };
+    live.answering = true;
+    try {
+      const applying = { author, via, ...(intent ? { intent } : {}), ...(batch ? { batch } : {}) };
+      result = message.t === "undo" ? store.undo(Array.isArray(message.batches) ? message.batches : [], applying) : store.applyAll(calls, applying);
+    } catch (error) {
+      say(live, { t: "refused", cid, sentence: error instanceof Error ? error.message : String(error) });
+      return;
+    } finally {
+      live.answering = false;
+    }
+    // Every op before this call's went down this socket before it landed; its own go in the ack.
+    live.cursor = lastSeq();
+    const ops = shown(result.ops);
+    await opened.flush();
+    say(live, { t: "ack", cid, seq: ops.at(-1)?.seq ?? live.cursor, batch: result.batch, ops });
+  };
+
+  /*
+   * A page cannot set headers on a WebSocket. A store that trusts the seat
+   * headers — loopback only — reads them from the upgrade's query instead,
+   * under the same names; one that asks its own `seatOf` is handed the
+   * request as it came.
+   */
+  const seatRequest = (request: Request): Request => {
+    if (options.seatOf || !options.trustSeatHeaders || request.headers.has(SEAT_HEADERS.seat)) return request;
+    const query = new URL(request.url, "http://localhost").searchParams;
+    const headers = new Headers(request.headers);
+    let found = false;
+    for (const name of Object.values(SEAT_HEADERS)) {
+      const value = query.get(name);
+      if (value !== null) {
+        headers.set(name, value);
+        found = true;
+      }
+    }
+    return found ? new Request(request.url, { headers }) : request;
+  };
+
+  async function connect(request: Request, socket: LiveSocket): Promise<LiveConnection | Response> {
+    if (!seatOf) {
+      return send(401, {
+        error: "This store cannot tell who is asking: the host gives serveStore a seatOf, or trusts the seat headers (trustSeatHeaders) on a server only it can reach.",
+      });
+    }
+    let seat: Principal;
+    try {
+      seat = await seatOf(seatRequest(request));
+    } catch (error) {
+      return send(401, { error: error instanceof Error ? error.message : String(error) });
+    }
+    const live: Live = { seat, socket, cursor: Number.POSITIVE_INFINITY, answering: false, open: true };
+    const leave = () => {
+      if (!live.participant) return;
+      here = new Map(here);
+      here.delete(live.participant);
+      delete live.participant;
+      tellWhoIsHere();
+    };
+    const hear = async (text: string): Promise<void> => {
+      let message: LiveClientMessage;
+      try {
+        message = JSON.parse(text) as LiveClientMessage;
+      } catch {
+        say(live, { t: "error", sentence: "A message on the live wire is one JSON object." });
+        return;
+      }
+      if (!message || typeof message !== "object") return;
+      switch (message.t) {
+        case "hello": {
+          const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
+          sockets.add(live);
+          live.cursor = lastSeq();
+          if (seq === undefined) {
+            const seen = seenFor(seat);
+            say(live, {
+              t: "welcome",
+              protocol: WIRE_PROTOCOL,
+              seq: live.cursor,
+              ops: [],
+              state: { version: options.app.version ?? 1, snapshot: seen.snapshot(), log: seen.log.all(), migrated: opened.migrated.map((op) => op.intent) },
+            });
+          } else {
+            say(live, { t: "welcome", protocol: WIRE_PROTOCOL, seq: live.cursor, ops: since(seat, seq) });
+          }
+          const who = standing().filter((presence) => presence.participant !== live.participant);
+          if (who.length > 0) say(live, { t: "presence", who: whoFor(seat, who) });
+          return;
+        }
+        case "call":
+        case "undo":
+          if (!sockets.has(live)) {
+            say(live, { t: "refused", cid: String(message.cid ?? ""), sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
+            return;
+          }
+          return answer(live, message);
+        case "here": {
+          const told = message.presence;
+          if (!told || typeof told.participant !== "string" || typeof told.stop !== "string") {
+            say(live, { t: "error", sentence: "A presence is a participant and a stop." });
+            return;
+          }
+          live.participant = arrive(told, seat).participant;
+          tellWhoIsHere();
+          return;
+        }
+        case "bye":
+          leave();
+          return;
+        default:
+          // A message this server does not know is ignored, never refused (docs/stability.md).
+          return;
+      }
+    };
+    /*
+     * One message at a time, in the order they came: a call waits for the
+     * one before it, so an ack never overtakes the push or ack before it.
+     */
+    let queue: Promise<void> = Promise.resolve();
+    return {
+      receive(text) {
+        queue = queue.then(() => hear(text)).catch(() => {});
+      },
+      close() {
+        live.open = false;
+        sockets.delete(live);
+        leave();
+      },
+    };
+  }
+
   return {
     store,
     opened,
+    connect,
     handle: async (request) => {
       try {
         return await route(request);
@@ -347,6 +650,15 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       }
     },
     async close() {
+      for (const live of sockets) {
+        live.open = false;
+        try {
+          live.socket.close?.(1001, "The store is closing.");
+        } catch {
+          // Already gone.
+        }
+      }
+      sockets.clear();
       await opened.flush();
       opened.close();
     },

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE } from "../../src/runtime.js";
+import { createStoreHandler, LIVE_PATH, SEAT_HEADERS, seatFromHeaders, WIRE } from "../../src/runtime.js";
 
 /**
  * THE WIRE WITHOUT A SERVER (FR-09).
@@ -53,7 +53,8 @@ describe("the WIRE routes answer through a fetch handler", () => {
             : {}),
         }),
       );
-      expect(response.status, `${route.method} ${route.path} — ${route.says}`).toBe(200);
+      // The live wire is a socket: a plain request is told so, with 426 (FR-05).
+      expect(response.status, `${route.method} ${route.path} — ${route.says}`).toBe(route.path === LIVE_PATH ? 426 : 200);
       expect(response.headers.get("content-type")).toContain("application/json");
     }
     expect((await handler.handle(at("/graview/nothing", { headers: keeper }))).status).toBe(404);
