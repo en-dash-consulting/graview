@@ -1,12 +1,12 @@
 {
-  "at": "2026-10-03T06:43:00.338Z",
+  "at": "2026-10-03T19:32:16.143Z",
   "engine": "chromium",
   "stops": {
     "altitude, still": {
       "frames": 15,
       "first": 20,
       "p50": 19,
-      "p95": 19.4,
+      "p95": 19.2,
       "worst": 19,
       "slow": [],
       "longTasks": 0,
@@ -17,17 +17,12 @@
       "waiting": 0
     },
     "altitude, drag": {
-      "frames": 128,
-      "first": 39,
-      "p50": 18.7,
+      "frames": 132,
+      "first": 36,
+      "p50": 18.6,
       "p95": 19.5,
-      "worst": 38,
-      "slow": [
-        [
-          1305,
-          38
-        ]
-      ],
+      "worst": 20,
+      "slow": [],
       "longTasks": 0,
       "dom": 2194,
       "hosts": 5,
@@ -36,10 +31,10 @@
       "waiting": 0
     },
     "altitude, wheel": {
-      "frames": 650,
-      "first": 16,
+      "frames": 656,
+      "first": 18,
       "p50": 0.3,
-      "p95": 19,
+      "p95": 19.1,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
@@ -50,9 +45,9 @@
       "waiting": 0
     },
     "descend": {
-      "frames": 208,
+      "frames": 216,
       "first": 19,
-      "p50": 5.9,
+      "p50": 5.8,
       "p95": 19.2,
       "worst": 20,
       "slow": [],
@@ -64,13 +59,13 @@
       "waiting": 0
     },
     "focus the hub": {
-      "frames": 1053,
+      "frames": 1018,
       "first": 58,
       "p50": 0.6,
       "p95": 18.8,
       "worst": 20,
       "slow": [],
-      "longTasks": 0,
+      "longTasks": 1,
       "dom": 540,
       "hosts": 21,
       "strands": 26,
@@ -79,22 +74,8 @@
     },
     "hub, drag": {
       "frames": 126,
-      "first": 19,
-      "p50": 18.4,
-      "p95": 19.5,
-      "worst": 20,
-      "slow": [],
-      "longTasks": 0,
-      "dom": 544,
-      "hosts": 21,
-      "strands": 26,
-      "thumbnails": 0,
-      "waiting": 0
-    },
-    "hub, move a card": {
-      "frames": 137,
-      "first": 19,
-      "p50": 18.9,
+      "first": 20,
+      "p50": 18.5,
       "p95": 19.6,
       "worst": 20,
       "slow": [],
@@ -105,9 +86,23 @@
       "thumbnails": 0,
       "waiting": 0
     },
-    "hub, wheel": {
-      "frames": 170,
+    "hub, move a card": {
+      "frames": 144,
       "first": 20,
+      "p50": 18.9,
+      "p95": 19.5,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
+      "dom": 544,
+      "hosts": 21,
+      "strands": 26,
+      "thumbnails": 0,
+      "waiting": 0
+    },
+    "hub, wheel": {
+      "frames": 166,
+      "first": 19,
       "p50": 17.3,
       "p95": 19.4,
       "worst": 20,
@@ -121,9 +116,9 @@
     },
     "hub, select": {
       "frames": 67,
-      "first": 55,
+      "first": 54,
       "p50": 19.1,
-      "p95": 19.4,
+      "p95": 19.5,
       "worst": 20,
       "slow": [],
       "longTasks": 1,
@@ -134,19 +129,19 @@
       "waiting": 0
     },
     "hub, type in Find": {
-      "frames": 889,
+      "frames": 805,
       "first": 57,
       "p50": 0.7,
-      "p95": 18.6,
-      "worst": 38,
+      "p95": 18.8,
+      "worst": 39,
       "slow": [
         [
-          196,
-          36
+          198,
+          37
         ],
         [
-          326,
-          38
+          325,
+          39
         ]
       ],
       "longTasks": 1,
@@ -157,15 +152,15 @@
       "waiting": 0
     },
     "rise": {
-      "frames": 3138,
+      "frames": 3234,
       "first": 19,
       "p50": 0.1,
-      "p95": 1.4,
-      "worst": 37,
+      "p95": 1.3,
+      "worst": 34,
       "slow": [
         [
-          860,
-          37
+          855,
+          34
         ]
       ],
       "longTasks": 0,
