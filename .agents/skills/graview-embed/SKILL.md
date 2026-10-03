@@ -61,6 +61,9 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    scene for the pages on a phone; `remote` takes an `openRemote` store. A
    hosted reader sits only as who signed in: name members through `people`
    (and `setPeople`), never as `seats`, which offer "sit as somebody else".
+   Where readers cannot save a declaration, `studio: false` (or `studio:
+   { onApply }` to keep what it applies); where only the pages are shown,
+   import `mount` from `@graview/embed/pages` and bundle nothing else.
 
 ## Worked examples
 

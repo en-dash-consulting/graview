@@ -464,6 +464,7 @@ export default defineConfig({
       "@graview/ship/dev": framework("ship/src/dev.ts"),
       "@graview/ship/cli": framework("ship/src/cli.ts"),
       "@graview/ship": framework("ship/src/index.ts"),
+      "@graview/embed/pages": framework("embed/src/pages.tsx"),
       "@graview/embed": framework("embed/src/index.ts"),
       "@graview/studio": framework("studio/src/index.ts"),
     },

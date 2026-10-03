@@ -31,6 +31,34 @@ touched; the brand's fonts are fetched by the embed rather than assumed. The
 store is in memory and starts from the seed on every mount, unless the host
 hands it one.
 
+## What the host can keep
+
+The Studio is on the strip for the seat that keeps the app, and writes
+through a dev server's door or hands over files. A host whose readers
+cannot save a declaration leaves it off, or keeps what it applies:
+
+```ts
+mount(root, { app, studio: false });                      // no Studio place at all
+mount(root, { app, studio: { onApply: ({ app, migration, files }) => propose(app) } });
+```
+
+Handed an onApply, the studio asks after no door and writes nothing; what the
+checker passed is the host's.
+
+`@graview/embed/pages` is the routed face alone, with the same options less
+the face, the stop, the views and the studio, and the same handle less the
+faces. A page that only ever shows the pages imports that and does not
+bundle the scene, the lenses or the studio:
+
+```ts
+import { mount } from "@graview/embed/pages";
+```
+
+Bundled for the browser without React, the pages face alone is about 730 KB
+minified (195 KB gzipped) and every face about 1.05 MB (300 KB);
+`node scripts/inspect-pack.mjs` fails CI when either passes its budget
+(`scripts/lib/bundle-budget.mjs`).
+
 ## In a chat's widget
 
 An MCP Apps frame (a ChatGPT or Claude widget) may refuse storage, is sized
