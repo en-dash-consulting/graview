@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-03T03:53:17.098Z",
+  "at": "2026-10-03T03:53:58.868Z",
   "packages": {
     "@graview/core": {
       "files": 451,
-      "tarballBytes": 474358,
+      "tarballBytes": 476160,
       "ok": true
     },
     "create-graview": {
@@ -18,7 +18,7 @@
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4890,
+      "tarballBytes": 4891,
       "ok": true
     },
     "@graview/layout": {
@@ -33,12 +33,12 @@
     },
     "@graview/primitives": {
       "files": 207,
-      "tarballBytes": 340183,
+      "tarballBytes": 340181,
       "ok": true
     },
     "@graview/react": {
       "files": 147,
-      "tarballBytes": 210452,
+      "tarballBytes": 210451,
       "ok": true
     },
     "@graview/render": {
@@ -63,7 +63,7 @@
     },
     "@graview/tools": {
       "files": 123,
-      "tarballBytes": 165942,
+      "tarballBytes": 167686,
       "ok": true
     }
   },

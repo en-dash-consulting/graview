@@ -80,3 +80,14 @@ Reads go through `seenBy`, and prose written by somebody other than the
 caller — or the person an agent acts for — comes back as
 `{ untrusted: true, authoredBy, text }` in `get_node`, `get_graph` and
 `search_graph`, so a model reads another collaborator's words as data.
+
+## Records by name
+
+A person says "book the florist", not `vendor:bloom-co`. Every argument that
+names a record takes its id or its name: a label, case and accents aside, or
+the one label it starts, among the records the seat may see of the kinds the
+argument accepts. The result's `resolved` says which id a name was taken to
+mean; two matches are refused with every candidate (`candidates`), and none
+says so. `get_node` takes a name the same way. `store.resolveRef(arg, given,
+principal)` is the same resolution for a host, through a label index that
+follows the graph's diffs.

@@ -29,8 +29,9 @@ export { deriveWithLlm } from "./providers/llm.js";
 export type { LlmProposal, LlmProvider } from "./providers/llm.js";
 
 // One tool surface, two transports.
-export { createToolRuntime, surfaceHash, toolDefinitions } from "./agent/tools.js";
+export { BY_NAME, createToolRuntime, surfaceHash, toolDefinitions } from "./agent/tools.js";
 export type {
+  Resolved,
   ToolAnnotations,
   ToolDefinition,
   ToolDefinitionsOptions,

@@ -2,6 +2,7 @@ import {
   deriveMutations,
   derivedVia,
   mutationToolSchema,
+  nodeRefArgs,
   permits,
   permittedMutations,
   resolveModules,
@@ -15,6 +16,7 @@ import {
   type NodeOfSchema,
   type Place,
   type Principal,
+  type RefCandidate,
   type Store,
 } from "@graview/core";
 import { authorship, markGraph, markHits, markNode } from "./untrusted.js";
@@ -57,6 +59,16 @@ export interface ToolDefinition {
   readonly act?: string;
 }
 
+/** What a name given for a node argument was taken to mean (FR-33). */
+export interface Resolved {
+  /** The argument it was given for. */
+  readonly argument: string;
+  /** What the caller said. */
+  readonly given: string;
+  /** The record it was taken to mean, and what it is called. */
+  readonly id: string;
+  readonly label: string;
+}
 
 export type ToolResult<S extends AnySchema> =
   | {
@@ -74,7 +86,14 @@ export type ToolResult<S extends AnySchema> =
        */
       readonly reads?: readonly string[];
     }
-  | { readonly ok: false; readonly error: string };
+  | {
+      readonly ok: false;
+      readonly error: string;
+      /** The argument a name could not be resolved for, when that is why. */
+      readonly argument?: string;
+      /** The records a name could mean, when it could mean several. */
+      readonly candidates?: readonly RefCandidate[];
+    };
 
 export interface ToolRuntimeOptions<S extends AnySchema> {
   /**
@@ -142,7 +161,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
       "Read one node, its edges, and the violations that implicate it. Use this to check a thing before you change it.",
     inputSchema: {
       type: "object",
-      properties: { id: { type: "string", description: "Node id." } },
+      properties: { id: { type: "string", description: "A node's id, or its name." } },
       required: ["id"],
       additionalProperties: false,
     },
@@ -273,6 +292,9 @@ export interface ToolRuntime<S extends AnySchema> {
   onCall(listener: (call: ToolCall) => void): () => void;
 }
 
+/** Said on every act whose arguments name records: a name is resolved as well as an id (FR-33). */
+export const BY_NAME = "An argument that names a record takes its id or its name.";
+
 const READ_NAMES: readonly string[] = READ_TOOLS.map((tool) => tool.name);
 const MAX_NAME = 64;
 
@@ -322,10 +344,11 @@ const humanised = (name: string): string => {
 function actTool(mutation: AnyMutationDefinition, name: string): ToolDefinition {
   const tool = mutationToolSchema(mutation);
   const title = tool.title ?? humanised(mutation.name);
+  const description = tool.nodeRefs.length > 0 ? `${tool.description}${/[.!?]$/.test(tool.description) ? "" : "."} ${BY_NAME}` : tool.description;
   return {
     name,
     title,
-    description: tool.description,
+    description,
     inputSchema: tool.inputSchema,
     mutating: true,
     annotations: {
@@ -441,6 +464,35 @@ export function createToolRuntime<S extends AnySchema>(
     return names.has(name) ? name : undefined;
   };
 
+  /*
+   * A NAME FOR A RECORD IS RESOLVED BEFORE THE ACT RUNS (FR-33): every
+   * argument that names a record, given as a label or the start of one,
+   * among the records this seat may see. One match is the record, and the
+   * result says so; several are refused with every candidate; none says so.
+   */
+  const resolve = (
+    act: string,
+    given: Record<string, unknown>,
+  ): { readonly args: Record<string, unknown>; readonly resolved: readonly Resolved[] } | Extract<ToolResult<S>, { ok: false }> => {
+    const mutation = acts.find((one) => one.name === act);
+    if (!mutation) return { args: given, resolved: [] };
+    const args = { ...given };
+    const resolved: Resolved[] = [];
+    for (const ref of nodeRefArgs(mutation.input)) {
+      const value = args[ref.name];
+      if (typeof value !== "string" || value.trim() === "") continue;
+      const found = store.resolveRef(ref, value, principal);
+      if (!found.ok) {
+        const hint = found.reason === "none" ? ` Nothing was changed. Use search_graph to look it up, then pass its id as ${ref.name}.` : " Nothing was changed.";
+        return { ok: false, error: `${found.message}${hint}`, argument: ref.name, candidates: found.candidates };
+      }
+      if (found.by === "id") continue;
+      args[ref.name] = found.id;
+      resolved.push({ argument: ref.name, given: value, id: found.id, label: found.label });
+    }
+    return { args, resolved };
+  };
+
   /**
    * The call itself, separated from the announcing so that every exit —
    * including an early return for an unknown tool — is reported exactly once.
@@ -478,8 +530,10 @@ export function createToolRuntime<S extends AnySchema>(
       }
 
       if (definition.act !== undefined) {
+        const named = resolve(definition.act, args);
+        if ("ok" in named) return named;
         const result = store.apply(
-          { name: definition.act, args },
+          { name: definition.act, args: named.args },
           { ...(options.author ? { author: options.author } : {}) },
         );
         return {
@@ -489,6 +543,7 @@ export function createToolRuntime<S extends AnySchema>(
             intent: result.intent,
             introduces: result.introduces,
             resolves: result.resolves,
+            ...(named.resolved.length > 0 ? { resolved: named.resolved } : {}),
           },
           diff: result.diff,
         };
@@ -524,8 +579,18 @@ export function createToolRuntime<S extends AnySchema>(
         }
 
         case "get_node": {
-          const id = String(args["id"] ?? "");
-          if (!seen.graph.getNode(id)) return { ok: false, error: `No node "${id}".` };
+          const asked = String(args["id"] ?? "");
+          let id = asked;
+          let resolved: Resolved | undefined;
+          if (!seen.graph.getNode(asked)) {
+            // Not an id this seat sees: a name, as an act's argument takes one.
+            const found = asked.trim() === "" ? undefined : store.resolveRef({ name: "id", kinds: ["*"] }, asked, principal);
+            if (found?.ok) {
+              id = found.id;
+              resolved = { argument: "id", given: asked, id, label: found.label };
+            } else if (found?.reason === "ambiguous") return { ok: false, error: found.message, argument: "id", candidates: found.candidates };
+            else return { ok: false, error: `No node "${asked}".` };
+          }
           const node = seen.graph.getNode(id)!;
           const out = seen.graph.outEdges(id);
           const inbound = seen.graph.inEdges(id);
@@ -538,6 +603,7 @@ export function createToolRuntime<S extends AnySchema>(
               violations: seen
                 .violations()
                 .filter((violation) => violation.nodeIds.includes(id)),
+              ...(resolved ? { resolved: [resolved] } : {}),
             },
             // Asking about a node is asking about its neighbourhood: the
             // answer names them, so looking at it looked at them.
@@ -574,8 +640,10 @@ export function createToolRuntime<S extends AnySchema>(
         case "preview_mutation": {
           const asked = String(args["mutation"]);
           const act = actNamed(asked) ?? asked;
-          const preview = store.preview({ name: act, args: (args["args"] as Record<string, unknown>) ?? {} });
-          return { ok: true, data: preview };
+          const named = resolve(act, (args["args"] as Record<string, unknown>) ?? {});
+          if ("ok" in named) return named;
+          const preview = store.preview({ name: act, args: named.args });
+          return { ok: true, data: named.resolved.length > 0 ? { ...preview, resolved: named.resolved } : preview };
         }
 
         case "undo_batch": {

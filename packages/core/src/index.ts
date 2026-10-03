@@ -169,7 +169,10 @@ export {
   nodeRefArgs,
   nodeRefKinds,
 } from "./mutations/node-ref.js";
-export type { ArgShape } from "./mutations/node-ref.js";
+export type { ArgShape, NodeRefArg } from "./mutations/node-ref.js";
+// Records named the way people name them: a node argument takes a label (FR-33).
+export { nameKey } from "./labels.js";
+export type { RefCandidate, RefResolution } from "./labels.js";
 export type {
   AnyMutationDefinition,
   MutationCall,

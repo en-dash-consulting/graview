@@ -5,6 +5,8 @@ import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
 import { invert, normalise, writesOf, type Primitive } from "./graph/primitives.js";
+import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
+import type { NodeRefArg } from "./mutations/node-ref.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { verifyFold, type VerifyResult } from "./integrity.js";
 import { evaluate } from "./invariants/engine.js";
@@ -422,6 +424,34 @@ export class Store<S extends AnySchema> {
   sees(principal: Principal, id: string): boolean {
     const node = this.graph.getNode(id);
     return node !== undefined && sees(this.policy, principal, node as never, this.graph as never);
+  }
+
+  private labels: LabelIndex<S> | undefined;
+
+  /**
+   * WHAT A NAME GIVEN FOR A NODE ARGUMENT MEANS, to this principal (FR-33).
+   *
+   * An id of a record the principal may see is that record, whatever it is
+   * called. Otherwise a label, case and accents aside, among the records of
+   * the kinds the argument accepts; failing that, the one label the name
+   * starts. Only records the principal may see are ever candidates — a
+   * name never tells a seat that something it may not see exists. Several
+   * matches are refused with every candidate; none says so.
+   */
+  resolveRef(arg: Pick<NodeRefArg, "name" | "kinds">, given: string, principal: Principal = HUMAN): RefResolution {
+    const sighted = (this.policy?.sees?.length ?? 0) > 0;
+    const visible = (id: string): boolean => !sighted || this.sees(principal, id);
+    const named = this.graph.getNode(given);
+    this.labels ??= new LabelIndex(this.graph);
+    if (named && visible(given)) return { ok: true, id: given, label: this.labels.labelOf(given) ?? given, by: "id" };
+    const found = this.labels.lookup(arg.kinds, given);
+    const exact = found.exact.filter(visible);
+    const exactly = exact.length > 0;
+    const candidates: RefCandidate[] = (exactly ? exact : found.prefix.filter(visible))
+      .map((id) => ({ id, kind: this.graph.getNode(id)!.kind, label: this.labels!.labelOf(id) ?? id }))
+      .sort((a, b) => (a.label < b.label ? -1 : a.label > b.label ? 1 : a.id < b.id ? -1 : 1));
+    if (candidates.length === 1) return { ok: true, id: candidates[0]!.id, label: candidates[0]!.label, by: exactly ? "label" : "prefix" };
+    return refusalFor(this.schema, arg, given, candidates);
   }
 
   /** The kinds of administered modules this principal may not see at all. */
