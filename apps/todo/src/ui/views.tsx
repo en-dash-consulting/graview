@@ -256,7 +256,8 @@ const ListsView = ((props: ViewProps<S>) => {
                 </span>
               ) : null}
 
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 5 }}>
+              {/* One track no wider than the column: a row's unbroken label would otherwise set the column's floor, and three columns at a phone's width overlapped. */}
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 5 }}>
                 {[...open, ...tasks.filter((task) => task.done)].map((task) => (
                   <li key={task.id}>
                     <div

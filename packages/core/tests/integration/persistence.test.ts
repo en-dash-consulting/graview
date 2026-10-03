@@ -55,6 +55,12 @@ const adapters: [string, () => PersistenceAdapter<string>][] = [
 
 describe.each(adapters)("%s adapter", (_name, make) => {
   for (const contract of adapterCases(make)) it(contract.name, () => contract.run());
+
+  // FR-23: the contract's compaction case runs only where an adapter keeps an archive; each of these does.
+  it("keeps epochs and an archive, so a long-lived log can compact", () => {
+    const adapter = make();
+    for (const method of ["loadEpochs", "saveEpochs", "compact", "loadArchive"] as const) expect(typeof adapter[method]).toBe("function");
+  });
 });
 
 describe("sql adapter over better-sqlite3", () => {

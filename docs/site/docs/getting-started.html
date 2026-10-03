@@ -1094,6 +1094,13 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       --merge            write only the files that do not exist yet, and
                          name every collision without touching it
       --force            write into a directory that is not empty
+      --template &lt;file|url&gt;
+                         start from a template made anywhere (Graview
+                         Cloud's graview-template shape): the project keeps
+                         its document as src/domain/app.json and the
+                         template as template.json, for `graview apply
+                         --template` to set a store up from. Named after
+                         the template unless --name says otherwise.
 </code></pre></div>
     </section>
     <section id="writes" aria-labelledby="h-writes">

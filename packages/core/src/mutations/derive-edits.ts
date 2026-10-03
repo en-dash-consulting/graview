@@ -153,7 +153,7 @@ export function deriveEditMutations<S extends AnySchema>(
       writes: fields,
       input: z.object({
         id: nodeRef([kind]),
-        ...Object.fromEntries(fields.map((field) => [field, shape[field]!.optional()])),
+        ...Object.fromEntries(fields.map((field) => [field, withoutDefault(shape[field]!).optional()])),
       }),
       describe: (args, graph) => {
         const node = graph.getNode((args as { id: string }).id);
@@ -195,6 +195,22 @@ export function deriveEditMutations<S extends AnySchema>(
     } as AnyMutationDefinition<S>);
   }
   return derived;
+}
+
+/**
+ * A FIELD AS AN EDIT ASKS FOR IT: without its default. A default is what a
+ * record is MADE with; an edit that leaves a field out leaves it as it is.
+ * Under zod 4 `optional()` over a `default()` still fills the default, so
+ * renaming a person set their role back to "member".
+ */
+function withoutDefault(schema: z.ZodType): z.ZodType {
+  let current = schema as z.ZodType & { _zod?: { def?: { type?: string; innerType?: z.ZodType } } };
+  for (let depth = 0; depth < 4; depth++) {
+    const def = current._zod?.def;
+    if ((def?.type === "default" || def?.type === "prefault") && def.innerType) current = def.innerType as typeof current;
+    else break;
+  }
+  return current;
 }
 
 /** The name the derived remove act for a kind carries. */

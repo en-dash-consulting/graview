@@ -2,7 +2,7 @@ import { readingOf, seenBy, seesId } from "./seen.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
-import { diffSnapshots, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
+import { diffSnapshots, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { invert, normalise, writesOf, type Primitive } from "./graph/primitives.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
 import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
@@ -18,9 +18,9 @@ import type {
 import { compileMutation } from "./mutations/define-mutation.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
-import { OperationLog, type Epoch } from "./ops/log.js";
+import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
-import { isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
 import { redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
@@ -63,6 +63,13 @@ export interface StoreOptions<S extends AnySchema> {
    * its first epoch.
    */
   readonly epochs?: readonly Epoch[];
+  /**
+   * The seq `log` begins at, when it was compacted behind an undo horizon
+   * and its checkpoint is not among `epochs` (FR-23): a client hydrating on
+   * a snapshot is handed the tail and the horizon, not the base. Absent,
+   * the log begins at its checkpoint's seq, or at 0.
+   */
+  readonly horizon?: number;
   /** Defaults to a monotonic counter so tests stay deterministic. */
   readonly ids?: () => string;
   /**
@@ -92,9 +99,9 @@ export interface StoreOptions<S extends AnySchema> {
    * The app's declared modules, and which are on for THIS installation.
    *
    * `enabledModules` absent means everything — a store that never heard of
-   * modules behaves exactly as before. The projection is fixed at
-   * construction: a workspace toggle is an entitlement change, and the
-   * honest response to one is building the store the new workspace gets.
+   * modules behaves exactly as before. It is the set the store starts
+   * from: a log that says otherwise (an op `setEnabledModules` wrote) has
+   * the last word, because turning a module off or on is history (FR-12).
    */
   readonly modules?: ModuleMap;
   readonly enabledModules?: readonly string[];
@@ -186,6 +193,9 @@ export interface AppendOp {
 }
 
 const HUMAN: Author = { kind: "human" };
+
+/** Who turns a module off or on: the workspace itself, `system · modules` (FR-12). */
+export const MODULES_AUTHOR: Author = { kind: "system", id: "modules", name: "Modules" };
 
 /**
  * WHETHER UNDOING AN OP PUTS BACK EXACTLY WHAT IT TOOK (FR-28).
@@ -283,8 +293,10 @@ export class Store<S extends AnySchema> {
   readonly intelligence: readonly IntelligenceProviderDeclaration[];
   /** What each declared agent may do, by provider name. */
   private readonly may = new Map<string, ReadonlySet<string>>();
-  /** What the enabled modules work out to; every surface reads this one answer. */
-  readonly modules: ModuleProjection;
+  private readonly declaredModules: ModuleMap | undefined;
+  private readonly startingModules: readonly string[] | undefined;
+  /** The projection, and the log it was read from: its length and its last op. */
+  private projected: { readonly projection: ModuleProjection; readonly length: number; readonly last: string | undefined; readonly said: readonly string[] | undefined } | undefined;
   private readonly nextId: () => string;
   private readonly now: () => string;
   private readonly validate: boolean;
@@ -303,7 +315,8 @@ export class Store<S extends AnySchema> {
     for (const provider of options.intelligence ?? []) {
       if (provider.may) this.may.set(provider.name, new Set(provider.may));
     }
-    this.modules = resolveModules(options.modules, options.enabledModules);
+    this.declaredModules = options.modules;
+    this.startingModules = options.enabledModules;
     let n = 0;
     this.nextId = options.ids ?? (() => `op${++n}`);
     this.now = options.now ?? (() => new Date().toISOString());
@@ -330,18 +343,23 @@ export class Store<S extends AnySchema> {
     }
     tellTheWatchItsNames(options.schema, this.mutations.values(), options.policy);
 
+    const horizon = options.horizon !== undefined ? { horizon: options.horizon } : {};
     if (options.log && options.snapshot) {
       // Hydrate: the graph as stored, the history as recorded.
-      this.log = OperationLog.from(options.log, options.epochs);
+      this.log = OperationLog.from(options.log, options.epochs, horizon);
       this.graph = Graph.from(options.schema, options.snapshot, {
         validate: options.validate ?? true,
       });
     } else if (options.log) {
-      this.log = OperationLog.from(options.log, options.epochs);
+      this.log = OperationLog.from(options.log, options.epochs, horizon);
       const last = this.log.lastEpoch();
       this.graph = this.log.fold(options.schema, { validate: options.validate ?? true, ...(last ? { from: last } : {}) });
     } else {
-      this.log = OperationLog.from([], options.epochs ?? (options.snapshot ? [{ seq: 0, base: options.snapshot }] : []));
+      this.log = OperationLog.from(
+        [],
+        options.epochs ?? (options.snapshot ? [{ seq: options.horizon ?? 0, base: options.snapshot }] : []),
+        horizon,
+      );
       this.graph = Graph.from(options.schema, options.snapshot ?? { nodes: [], edges: [] }, {
         validate: options.validate ?? true,
       });
@@ -370,7 +388,87 @@ export class Store<S extends AnySchema> {
       this.counter = Math.max(this.counter, trailing(op.batch));
       n = Math.max(n, trailing(op.id));
     }
+    // Behind an undo horizon (FR-23) are ids the log no longer holds: count on past them all.
+    if (this.log.horizon > 0) n = Math.max(n, this.log.length);
     tellTheWatchOfAStore(this);
+  }
+
+  /**
+   * What the enabled modules work out to; every surface reads this one answer.
+   *
+   * READ FROM THE LOG (FR-12): the set the last `system · modules` op says,
+   * or the one the store was opened with when no op has said one. Kept
+   * between reads and re-read only past what it has read — a log only ever
+   * grows at its end, and a rebase that cut it is read again from the start.
+   */
+  get modules(): ModuleProjection {
+    const all = this.log.all();
+    const last = all.at(-1)?.id;
+    const held = this.projected;
+    if (held && held.length === all.length && held.last === last) return held.projection;
+    let said: readonly string[] | undefined;
+    let from = 0;
+    if (held && held.length <= all.length && (held.length === 0 || all[held.length - 1]?.id === held.last)) {
+      said = held.said;
+      from = held.length;
+    }
+    for (let at = all.length - 1; at >= from; at--) {
+      const stated = all[at]!.enabledModules;
+      if (stated !== undefined) {
+        said = stated;
+        break;
+      }
+    }
+    const projection =
+      held && said === held.said ? held.projection : resolveModules(this.declaredModules, said ?? this.startingModules);
+    this.projected = { projection, length: all.length, last, said };
+    return projection;
+  }
+
+  /**
+   * TURN MODULES OFF OR ON, AS AN OP (FR-12).
+   *
+   * The enabled set is a fact about the workspace — usually what it pays
+   * for — and changing it is history: one op, authored `system · modules`,
+   * saying the set it leaves (`enabledModules`) in a sentence a person can
+   * read. It touches no record, so it folds to nothing and takes nothing
+   * away: a module off is a horizon, and turning it on again brings every
+   * record back as it was. Not undone: the set changes by turning a module
+   * the other way. `undefined` is every declared module. Nothing is written
+   * when the set is the one the store already has.
+   */
+  setEnabledModules(enabled: readonly string[] | undefined, options: { readonly via?: Via; readonly batch?: string } = {}): Operation | undefined {
+    const before = this.modules.enabled;
+    const after = resolveModules(this.declaredModules, enabled).enabled;
+    const off = [...before].filter((name) => !after.has(name));
+    const on = [...after].filter((name) => !before.has(name));
+    if (off.length === 0 && on.length === 0) return undefined;
+    const named = (names: readonly string[]): string =>
+      names
+        .map((name) => {
+          const kinds = this.declaredModules?.[name]?.kinds ?? [];
+          return kinds.length > 0 ? kinds.map((kind) => this.schema.tryDefinition(kind)?.plural ?? kind).join(", ") : name;
+        })
+        .join(", ");
+    const said = [off.length > 0 ? `Turn off ${named(off)}` : "", on.length > 0 ? `turn on ${named(on)}` : ""].filter(Boolean).join("; ");
+    const op: Operation = {
+      id: this.nextId(),
+      seq: this.log.length,
+      batch: options.batch ?? this.mintBatch("batch"),
+      author: MODULES_AUTHOR,
+      intent: said.charAt(0).toUpperCase() + said.slice(1),
+      mutation: null,
+      primitives: [],
+      inverse: [],
+      reads: [],
+      writes: [],
+      at: this.now(),
+      ...(options.via !== undefined ? { via: options.via } : {}),
+      enabledModules: [...after].sort(),
+    };
+    this.log.append(op);
+    this.notify(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, [op]);
+    return op;
   }
 
   mutation(name: string): AnyMutationDefinition<S> {
@@ -444,7 +542,7 @@ export class Store<S extends AnySchema> {
      * repair as the starter seat, which may only add, and the press met
      * "starter may not take-off here" (W-110).
      */
-    const narrowed = this.refusesAgent(call, principal) ?? this.namesUnseen(call, principal);
+    const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call) ?? this.namesUnseen(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     return permits(
       this.policy,
@@ -483,6 +581,29 @@ export class Store<S extends AnySchema> {
       message: `${author.id} may not ${titled(call.name)} here: it was declared able to ${
         named.length === 0 ? "do nothing else" : named.join(", ")
       }.`,
+      wouldNeed: [],
+    };
+  }
+
+  /**
+   * A CALL THAT NAMES A RECORD OF A MODULE THAT IS OFF IS REFUSED (FR-12),
+   * whoever makes it: the module's own acts are already off, and an act
+   * the core owns — a rename that takes any kind — must not reach into a
+   * district the workspace does not have. The sentence names the act.
+   */
+  private namesTurnedOff(call: MutationCall): Refusal | undefined {
+    const off = this.modules.disabledKinds;
+    if (off.size === 0) return undefined;
+    const mutation = this.mutations.get(call.name);
+    if (!mutation) return undefined;
+    const named: unknown[] = [];
+    if (mutation.subject) named.push(call.args[mutation.subject.arg]);
+    for (const ref of nodeRefArgs(mutation.input)) named.push(call.args[ref.name]);
+    const ids = named.flatMap((value) => (typeof value === "string" ? [value] : Array.isArray(value) ? value.filter((inner): inner is string => typeof inner === "string") : []));
+    if (!ids.some((id) => off.has(this.graph.getNode(id)?.kind as string))) return undefined;
+    return {
+      mutation: call.name,
+      message: `“${mutation.title ?? call.name}” names a record of a module this workspace has turned off.`,
       wouldNeed: [],
     };
   }
@@ -627,7 +748,7 @@ export class Store<S extends AnySchema> {
     const derived = all.filter(
       (mutation) =>
         mutation.derived !== undefined &&
-        permits(this.policy, principal, mutation.name, mutation.derived.kind, this.viaOf(mutation)).ok,
+        permits(this.policy, principal, mutation.name, mutation.derived.kind, this.viaOf(mutation), actingAs(principal).id).ok,
     );
     return [...declared, ...derived];
   }
@@ -834,7 +955,7 @@ export class Store<S extends AnySchema> {
      * was brought in for, and the narrower of the two wins.
      */
     for (const call of calls) {
-      const refusal = this.refusesAgent(call, author);
+      const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call);
       if (refusal) {
         tellTheWatchOfARefusal(refusal, author.id);
         throw new PermissionDeniedError(refusal);
@@ -976,7 +1097,7 @@ export class Store<S extends AnySchema> {
         }
       }
     }
-    const seq = this.log.all().length;
+    const seq = this.log.length;
     for (const [index, op] of fresh.entries()) {
       const here = { ...op, seq: seq + index };
       this.log.append(here);
@@ -1319,8 +1440,9 @@ export class Store<S extends AnySchema> {
     const settling = new Set([...change.pending, ...(change.drop ?? [])]);
     const all = this.log.all();
     const first = all.findIndex((op) => settling.has(op.batch));
-    const cut = first < 0 ? all.length : first;
-    const tail = all.slice(cut);
+    const tail = all.slice(first < 0 ? all.length : first);
+    // The seq the log is cut back to: indexes into `all()` count from the horizon (FR-23).
+    const cut = this.log.horizon + (first < 0 ? all.length : first);
     const stray = tail.find((op) => !settling.has(op.batch));
     if (stray) {
       throw new GraphError(
@@ -1417,10 +1539,67 @@ export class Store<S extends AnySchema> {
    */
   verify(): VerifyResult {
     const from = this.log.lastEpoch();
-    return verifyFold(this.schema, this.log.all().slice(from?.seq ?? 0), this.graph.snapshot(), {
+    return verifyFold(this.schema, this.log.opsFrom(from?.seq ?? 0), this.graph.snapshot(), {
       validate: this.validate,
       ...(from ? { base: from.base } : {}),
     });
   }
+
+  /**
+   * THE CHECKPOINT A COMPACTION WOULD MAKE (FR-23), or `undefined` when
+   * nothing is old enough to archive. The horizon is `seq` when given, or
+   * else whichever of two keeps more: the ops made in the last `keepDays`
+   * days before `now` (default 90), or the last `keepOps` ops (default
+   * 1000). It is moved back to the start of the gesture it would split, so
+   * a batch is never half behind it.
+   *
+   * Nothing moves until `compact` is handed the checkpoint, so a host can
+   * archive what is behind it first. A store whose graph does not verify
+   * against its log is not compacted: the checkpoint would vouch for a
+   * history that does not lead to the graph held.
+   */
+  checkpoint(options: CompactOptions = {}): Epoch | undefined {
+    const ops = this.log.all();
+    let seq: number;
+    if (options.seq !== undefined) seq = options.seq;
+    else {
+      const byOps = this.log.length - (options.keepOps ?? 1000);
+      const now = Date.parse(options.now ?? this.now());
+      const cutoff = now - (options.keepDays ?? 90) * 86_400_000;
+      const kept = ops.find((op) => Date.parse(op.at) > cutoff);
+      const byDays = kept ? kept.seq : this.log.length;
+      seq = Math.min(byOps, byDays);
+    }
+    seq = Math.min(Math.max(seq, this.log.horizon), this.log.length);
+    // Never inside a gesture: back to where the batch it would split began.
+    while (seq > this.log.horizon && seq < this.log.length && ops[seq - this.log.horizon]!.batch === ops[seq - 1 - this.log.horizon]!.batch) seq--;
+    if (seq <= this.log.horizon) return undefined;
+    const verified = this.verify();
+    if (!verified.ok) throw new GraphError(`Cannot compact a store that does not verify: ${verified.reason}`);
+    return this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+  }
+
+  /**
+   * MOVES THE UNDO HORIZON TO `checkpoint` (FR-23): the ops and epochs
+   * before it leave the log, which begins at its seq from now on, and are
+   * returned for an adapter to archive. The graph is unchanged and still
+   * verifies; undo of anything behind the horizon is refused, naming it.
+   * Ship's `opened.compact()` archives first and calls this after.
+   */
+  compact(checkpoint: Epoch): LogArchive {
+    return this.log.compact(checkpoint);
+  }
+}
+
+/** Where `store.checkpoint` puts the undo horizon (FR-23). */
+export interface CompactOptions {
+  /** The seq to put it at. Absent, it follows from `keepDays` and `keepOps`. */
+  readonly seq?: number;
+  /** Keep every op made in the last this-many days before `now`; one exactly that old is archived. Default 90. */
+  readonly keepDays?: number;
+  /** Keep at least this many of the latest ops. Default 1000. */
+  readonly keepOps?: number;
+  /** The time the days count back from, as an ISO string. Defaults to the store's clock. */
+  readonly now?: string;
 }
 

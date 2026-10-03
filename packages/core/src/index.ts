@@ -184,7 +184,7 @@ export type {
 
 // Operation log — attribution, causality, selective undo.
 export { OperationLog } from "./ops/log.js";
-export type { Epoch, LogReading } from "./ops/log.js";
+export type { Epoch, LogArchive, LogReading } from "./ops/log.js";
 export { isWithheld, redact, touchedBy, touchesUnseen, withhold, WITHHELD_AUTHOR, WITHHELD_INTENT } from "./ops/withheld.js";
 export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/revisions.js";
 export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
@@ -252,7 +252,7 @@ export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
 export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export type { Records } from "./permissions/sight.js";
-export { logSeenBy, seenBy, seesId } from "./seen.js";
+export { hidesFrom, logSeenBy, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
@@ -271,11 +271,12 @@ export type {
 } from "./validate-graph.js";
 
 // Store — graph + log + mutations + invariants, one object.
-export { ReceiveError, Store, violationKey } from "./store.js";
+export { MODULES_AUTHOR, ReceiveError, Store, violationKey } from "./store.js";
 export type {
   AppendOp,
   ApplyOptions,
   ApplyResult,
+  CompactOptions,
   Preview,
   Rebase,
   RebaseResult,

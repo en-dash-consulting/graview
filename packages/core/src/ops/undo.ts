@@ -27,9 +27,10 @@ export type UndoRefused = Extract<UndoCheck, { readonly ok: false }>;
 /**
  * AN UNDO THAT CANNOT RUN, AND WHY (FR-18): a later op read what it wrote
  * (`blockedBy` names each, with what it read), it would reach back across a
- * declaration change, or there was nothing live to undo. `check` is the
- * `canUndo` answer it was refused on, so a host can offer to bring the
- * blocking batches along (`check.includeBatches`) without asking again.
+ * declaration change or behind the undo horizon (FR-23), or there was
+ * nothing live to undo. `check` is the `canUndo` answer it was refused on,
+ * so a host can offer to bring the blocking batches along
+ * (`check.includeBatches`) without asking again.
  *
  * Still a `GraphError`: a caller that caught those before catches this.
  */
@@ -61,6 +62,27 @@ export function checkUndo(
     .all()
     .filter((op) => targets.has(op.batch) && !undone.has(op.id));
 
+  /*
+   * NOT BEHIND THE UNDO HORIZON (FR-23). A compacted log holds nothing
+   * before its checkpoint, so a batch it holds no op of is behind the
+   * horizon, or was never made: either way there is nothing here to put
+   * back, and the sentence names where history stops.
+   */
+  const horizon = [...log.epochs()].reverse().find((epoch) => epoch.horizon);
+  if (horizon) {
+    const held = new Set(log.all().map((op) => op.batch));
+    const behind = batchIds.filter((id) => !held.has(id));
+    if (behind.length > 0) {
+      return {
+        ok: false,
+        ops,
+        blockedBy: [],
+        includeBatches: [],
+        message: `Cannot undo ${behind.map((id) => `batch ${id}`).join(", ")}: it is not after the undo horizon at op ${horizon.seq}${horizon.at ? ` (${horizon.at})` : ""}. What was done before the horizon is archived, and undo does not reach behind it.`,
+      };
+    }
+  }
+
   if (ops.length === 0) {
     return {
       ok: false,
@@ -88,6 +110,21 @@ export function checkUndo(
       message: ops.every(isWithheld)
         ? "Cannot undo a change you cannot see: only somebody who can see it can take it back."
         : "Cannot undo this here: part of it is a change you cannot see, and only somebody who can see it can take it back.",
+    };
+  }
+
+  /*
+   * NOT A MODULE TURNED OFF OR ON (FR-12). It touches no record, so there
+   * is nothing to put back, and the workspace's set is changed by turning
+   * the module the other way — which is the host's to do.
+   */
+  if (ops.some((op) => op.enabledModules !== undefined)) {
+    return {
+      ok: false,
+      ops,
+      blockedBy: [],
+      includeBatches: [],
+      message: "Cannot undo turning a module off or on: it is changed by turning the module the other way.",
     };
   }
 

@@ -1,16 +1,14 @@
 {
-  "at": "2026-10-03T05:39:06.378Z",
+  "at": "2026-10-03T06:36:06.496Z",
   "engine": "chromium",
   "checks": {
     "everyLineIsDrawable": true,
     "everyLineStaysInThePicture": true,
-    "everyLineLandsOnSomething": false,
+    "everyLineLandsOnSomething": true,
     "nothingThrew": true,
     "thereWereLinesToCheck": true
   },
-  "faults": [
-    "todo focused, with a relation shown, reshaped: a waits-for line has neither end on anything"
-  ],
+  "faults": [],
   "seen": [
     {
       "where": "todo at rest",
@@ -55,5 +53,5 @@
   ],
   "scrolled": 3,
   "lines": 1,
-  "passed": false
+  "passed": true
 }

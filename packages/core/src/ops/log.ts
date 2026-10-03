@@ -31,37 +31,98 @@ export interface Epoch {
   readonly change?: string;
   /** When it began. */
   readonly at?: string;
+  /**
+   * THE UNDO HORIZON (FR-23): this epoch is a checkpoint, and the ops
+   * before its seq were archived. A log restored with it begins at its seq,
+   * a normal open loads it and the ops after it and nothing older, and undo
+   * does not reach behind it. Absent on every other epoch.
+   */
+  readonly horizon?: true;
 }
+
+/**
+ * WHAT A COMPACTION MOVED OUT OF THE LOG (FR-23): the ops before the
+ * horizon, and the epochs before it, oldest first. An adapter keeps them
+ * where a normal open does not load them (`loadArchive`), and a full export
+ * puts them back in front of the tail.
+ */
+export interface LogArchive {
+  readonly ops: readonly Operation[];
+  readonly epochs: readonly Epoch[];
+}
+
+const beginsPastZero = (op: Operation): string =>
+  `Op "${op.id}" has seq ${op.seq}, so the log begins at seq ${op.seq}: a log that begins past 0 begins at its undo horizon, and none was given (a checkpoint epoch, or { horizon })`;
 
 /**
  * The append-only log. Nothing here mutates or removes an entry: an undo is
  * a new op carrying the inverse, so history is never destroyed and the log
  * doubles as an audit trail of what an agent did on your behalf.
+ *
+ * A LOG BEGINS AT ITS HORIZON (FR-23). Its seqs are contiguous from there:
+ * from 0 for a whole log, from the checkpoint's seq for one compacted
+ * behind an undo horizon, whose older ops an adapter archived.
  */
 export class OperationLog {
-  private readonly ops: Operation[] = [];
-  private readonly marks: Epoch[] = [];
+  private ops: Operation[] = [];
+  private marks: Epoch[] = [];
+  private start = 0;
 
+  /**
+   * The seq the next op takes, which is how long the log is counting what
+   * a compaction archived (FR-23). The log holds `length - horizon` ops.
+   */
   get length(): number {
-    return this.ops.length;
+    return this.start + this.ops.length;
   }
 
+  /**
+   * THE SEQ THE LOG BEGINS AT (FR-23): 0 for a whole log, the checkpoint's
+   * seq for one compacted behind an undo horizon. The ops before it are
+   * archived, not here.
+   */
+  get horizon(): number {
+    return this.start;
+  }
+
+  /** The ops this log holds, oldest first: from its horizon on. */
   all(): readonly Operation[] {
     return this.ops;
   }
 
+  /** The ops from `seq` on; from the horizon when `seq` is behind it. */
+  opsFrom(seq: number): readonly Operation[] {
+    return this.ops.slice(Math.max(0, seq - this.start));
+  }
+
   append(op: Operation): void {
-    if (op.seq !== this.ops.length) {
-      throw new Error(
-        `Op "${op.id}" has seq ${op.seq} but the log is ${this.ops.length} long`,
-      );
+    if (op.seq !== this.length) {
+      throw new Error(this.length === 0 && op.seq > 0 ? beginsPastZero(op) : `Op "${op.id}" has seq ${op.seq} but the log is ${this.length} long`);
     }
     this.ops.push(op);
   }
 
-  /** Restores a log and its epochs from storage, checking the sequence is intact. */
-  static from(ops: readonly Operation[], epochs: readonly Epoch[] = []): OperationLog {
+  /**
+   * Restores a log and its epochs from storage, checking the sequence is
+   * intact. A COMPACTED LOG (FR-23) begins at its horizon: the seq of the
+   * checkpoint among `epochs` (the last one marked `horizon`), or
+   * `options.horizon` for a log handed over without its base, as a client
+   * hydrating on a snapshot is. Its first op must carry that seq, and no
+   * epoch may be older than it. Without either, a log begins at 0.
+   */
+  static from(ops: readonly Operation[], epochs: readonly Epoch[] = [], options: { readonly horizon?: number } = {}): OperationLog {
     const log = new OperationLog();
+    const checkpoint = [...epochs].reverse().find((epoch) => epoch.horizon);
+    const horizon = options.horizon ?? checkpoint?.seq ?? 0;
+    if (!Number.isInteger(horizon) || horizon < 0) throw new Error(`A log cannot begin at seq ${horizon}`);
+    if (checkpoint && options.horizon !== undefined && checkpoint.seq !== options.horizon) {
+      throw new Error(`A log said to begin at seq ${options.horizon} has its checkpoint at seq ${checkpoint.seq}`);
+    }
+    const first = ops[0];
+    if (first && horizon > 0 && first.seq !== horizon) {
+      throw new Error(`A log compacted at seq ${horizon} begins with op "${first.id}" at seq ${first.seq}`);
+    }
+    log.start = horizon;
     for (const op of ops) log.append(op);
     for (const epoch of epochs) log.markEpoch(epoch);
     return log;
@@ -83,8 +144,11 @@ export class OperationLog {
    * past the end of the log.
    */
   markEpoch(epoch: Epoch): void {
-    if (!Number.isInteger(epoch.seq) || epoch.seq < 0 || epoch.seq > this.ops.length) {
-      throw new Error(`An epoch at seq ${epoch.seq} starts past the end of a log ${this.ops.length} long`);
+    if (!Number.isInteger(epoch.seq) || epoch.seq < 0 || epoch.seq > this.length) {
+      throw new Error(`An epoch at seq ${epoch.seq} starts past the end of a log ${this.length} long`);
+    }
+    if (epoch.seq < this.start) {
+      throw new Error(`An epoch at seq ${epoch.seq} is behind the horizon at seq ${this.start}: it went to the archive with the ops before it`);
     }
     const last = this.lastEpoch();
     if (last && epoch.seq < last.seq) {
@@ -102,14 +166,58 @@ export class OperationLog {
    * Returns what was cut, oldest first.
    */
   truncate(length: number): Operation[] {
-    if (!Number.isInteger(length) || length < 0 || length > this.ops.length) {
-      throw new Error(`Cannot cut a log ${this.ops.length} long back to ${length}`);
+    if (!Number.isInteger(length) || length < this.start || length > this.length) {
+      throw new Error(`Cannot cut a log ${this.length} long back to ${length}`);
     }
     const last = this.lastEpoch();
     if (last && last.seq > length) {
       throw new Error(`Cannot cut the log back to ${length}: an epoch begins at seq ${last.seq}`);
     }
-    return this.ops.splice(length);
+    return this.ops.splice(length - this.start);
+  }
+
+  /**
+   * THE GRAPH AS IT STOOD AT `seq`, AS AN EPOCH TO FOLD FROM (FR-23): the
+   * base of the last epoch at or before it, with the ops up to it folded
+   * on. An epoch already at `seq` is that graph and is kept as it is,
+   * declaration change and all. Marked `horizon`, so `compact` can make it
+   * the undo horizon. `at` is when the last op before it was made.
+   */
+  checkpointAt<S extends AnySchema>(schema: S, seq: number, options: { validate?: boolean } = {}): Epoch {
+    if (!Number.isInteger(seq) || seq < this.start || seq > this.length) {
+      throw new Error(`No checkpoint at seq ${seq}: this log holds seqs ${this.start} to ${this.length}`);
+    }
+    const from = [...this.marks].reverse().find((epoch) => epoch.seq <= seq);
+    if (from?.seq === seq) return { ...from, horizon: true };
+    const base = this.fold(schema, { ...options, ...(from ? { from } : {}), to: seq }).snapshot();
+    const at = this.ops[seq - 1 - this.start]?.at ?? from?.at;
+    return {
+      seq,
+      base,
+      ...(from?.version !== undefined ? { version: from.version } : {}),
+      ...(at !== undefined ? { at } : {}),
+      horizon: true,
+    };
+  }
+
+  /**
+   * MOVES THE UNDO HORIZON TO `checkpoint` (FR-23). The ops before its seq
+   * leave the log, with the epochs before it; the checkpoint becomes the
+   * first epoch, and the log begins at its seq. What left is returned,
+   * oldest first, for an adapter to archive: nothing here forgets history,
+   * it only stops carrying it. The graph is untouched, and still folds
+   * from the checkpoint with the ops after it.
+   */
+  compact(checkpoint: Epoch): LogArchive {
+    if (!Number.isInteger(checkpoint.seq) || checkpoint.seq < this.start || checkpoint.seq > this.length) {
+      throw new Error(`Cannot compact at seq ${checkpoint.seq}: this log holds seqs ${this.start} to ${this.length}`);
+    }
+    const ops = this.ops.slice(0, checkpoint.seq - this.start);
+    const epochs = this.marks.filter((epoch) => epoch.seq < checkpoint.seq);
+    this.ops = this.ops.slice(checkpoint.seq - this.start);
+    this.marks = [{ ...checkpoint, horizon: true }, ...this.marks.filter((epoch) => epoch.seq > checkpoint.seq)];
+    this.start = checkpoint.seq;
+    return { ops, epochs };
   }
 
   get(id: string): Operation | undefined {
@@ -142,7 +250,9 @@ export class OperationLog {
 
   /**
    * Rebuilds the graph by folding every op forward: from empty, or, given
-   * `from`, from that epoch's base with the ops from its seq on (FR-27).
+   * `from`, from that epoch's base with the ops from its seq on (FR-27),
+   * up to the op before seq `to` when that is given. A compacted log folds
+   * only from its checkpoint or an epoch after it (FR-23).
    *
    * Each op lands as it landed when it was made: a write is judged as a
    * write (a default filled in on the way in is filled in again), an undo
@@ -151,10 +261,19 @@ export class OperationLog {
    * (FR-28) — `validateGraph` says what no longer fits. Only an op that
    * cannot apply at all (a patch to a record that is not there) fails.
    */
-  fold<S extends AnySchema>(schema: S, options: { validate?: boolean; from?: Epoch } = {}): Graph<S> {
+  fold<S extends AnySchema>(schema: S, options: { validate?: boolean; from?: Epoch; to?: number } = {}): Graph<S> {
+    const from = options.from?.seq ?? 0;
+    if (from < this.start) {
+      throw new Error(
+        options.from
+          ? `An epoch at seq ${from} is behind the horizon at seq ${this.start}: fold from the checkpoint`
+          : `A log compacted at seq ${this.start} does not fold from empty: fold from its checkpoint`,
+      );
+    }
     const base = (options.from?.base ?? { nodes: [], edges: [] }) as GraphSnapshot<NodeOfSchema<S>>;
     const graph = Graph.from(schema, base, options.validate !== undefined ? { validate: options.validate } : {});
-    for (const op of this.ops.slice(options.from?.seq ?? 0)) {
+    const to = options.to ?? this.length;
+    for (const op of this.ops.slice(from - this.start, Math.max(0, to - this.start))) {
       if (op.undoes !== undefined) {
         graph.applyPrimitives(op.primitives, { restoring: true });
         continue;
@@ -180,6 +299,7 @@ export class OperationLog {
  * its epochs. An `OperationLog` is one; so is a log as one seat may see it.
  */
 export interface LogReading {
+  /** The ops it holds: from the undo horizon on, when the log was compacted (FR-23). */
   all(): readonly Operation[];
   undoneIds(): Set<string>;
   epochs(): readonly Epoch[];

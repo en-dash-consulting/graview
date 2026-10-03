@@ -28,6 +28,11 @@ declaration plus one persistence adapter is a running deployment.
   `graview check` refuses a chain with gaps or multi-version jumps before deploy time.
 - **`exportBundle` / `assertBundle`** — the anti-lock-in shape: graph + attributed history +
   version in one JSON bundle, re-importable into any deployment of the same declaration.
+- **A long-lived log compacts.** `opened.compact({ keepDays, keepOps })` makes the graph at
+  an undo horizon a checkpoint and has the adapter archive the ops before it (the file
+  adapter writes them to `archive/`). The next open loads the checkpoint and the tail, undo
+  stops at the horizon and says so, and `exportBundle(app, store, { full: true })` still
+  carries every op. The browser adapter keeps no epochs, so it keeps no checkpoint either.
 - **`health(store)`** — coherence, not liveness: dangling edges, standing, sizes.
 - **`serveStore` / `openRemote`** — the store behind HTTP, and the other end of the wire. A
   client sends CALLS, never primitives; the server applies them through an ordinary `Store`
@@ -63,7 +68,7 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 
 | Method | Path | Says |
 |---|---|---|
-| GET | `/graview/state` | the graph, the log and the stored version |
+| GET | `/graview/state` | the graph, the log, the stored version and the modules on |
 | POST | `/graview/ops` | calls in, the ops they produced out — or `undo`, batches to take back; 409 with the policy's sentence when refused |
 | GET | `/graview/since?seq=N` | the ops appended after N — everyone else's |
 | GET | `/graview/health` | ship's own report, plus where the data is |

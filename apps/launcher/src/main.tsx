@@ -9,6 +9,7 @@ import {
   Standing,
   themeCss,
   Trail,
+  type Brand,
   type Scheme,
 } from "@graview/primitives";
 import {
@@ -81,6 +82,8 @@ interface OpenedDemo {
   readonly store?: unknown;
   readonly opened?: { readonly store: unknown };
   readonly principal?: unknown;
+  /** The app's own brand: while it is on screen, the page is painted in it, not in the desk's. */
+  readonly brand?: Brand;
   readonly remembers: boolean;
 }
 
@@ -124,8 +127,8 @@ function initialScheme(): Scheme {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function applyScheme(scheme: Scheme): void {
-  sheet.replaceSync(themeCss(scheme));
+function applyScheme(scheme: Scheme, brand?: Brand): void {
+  sheet.replaceSync(themeCss(scheme, brand));
   document.documentElement.dataset["graviewScheme"] = scheme;
   try {
     localStorage.setItem(STORED, scheme);
@@ -174,6 +177,9 @@ function Desk({
   const showing = useShowing();
   const demo = useOpened(showing);
   const desk = useDesk();
+  /* The page's colours are whoever is on screen: a mounted app in its own brand, the desk in the framework's. */
+  const brand = showing ? demo?.brand : undefined;
+  useEffect(() => applyScheme(scheme, brand), [scheme, brand]);
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);
   const onCall = useCallback((call: ToolCall) => {
     setCalls((current) => {
@@ -416,16 +422,22 @@ function Switcher({
   onClose: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  /*
+   * Out of the app's way. Bottom left is the seat's composer and footer once
+   * the companion docks there, so the switcher sat on its label; the bottom
+   * right corner is the scene's zoom, and on a phone the seat's whole width.
+   * Above both, on the right, is clear in every app the desk mounts.
+   */
   return (
     <div
       style={{
         position: "fixed",
-        left: 20,
-        bottom: 20,
+        right: 20,
+        bottom: 72,
         zIndex: 60,
         display: "flex",
         flexDirection: "column-reverse",
-        alignItems: "flex-start",
+        alignItems: "flex-end",
         gap: 6,
       }}
     >
