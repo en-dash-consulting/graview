@@ -19,7 +19,8 @@ import {
   type Principal,
   type Via,
 } from "@graview/core";
-import { LIVE_PATH, type LiveClientMessage, type LiveServerMessage } from "./live.js";
+import type { StorageLike } from "./browser-adapter.js";
+import { LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
@@ -102,7 +103,43 @@ export interface RemoteOptions<S extends AnySchema> {
    * and its seat rides in the query, which only a store trusting seat
    * headers reads).
    */
-  readonly socket?: (url: string, headers: Readonly<Record<string, string>>) => LiveSocketLike;
+  readonly socket?: (url: string, headers: Readonly<Record<string, string>>, protocols: readonly string[]) => LiveSocketLike;
+  /**
+   * ASK FOR SHIP'S CODEC BY NAME (FR-44): the platform socket sends
+   * `LIVE_SUBPROTOCOL` as its WebSocket subprotocol. Off by default,
+   * because a browser fails the handshake with a server that does not
+   * answer it; `serveStore` answers it, and a Worker answers it with
+   * `liveSubprotocol(request)`. A `socket` factory is handed the same
+   * list and decides itself. `hello.wire` names the codec either way.
+   */
+  readonly subprotocol?: boolean;
+  /**
+   * THE DECLARATION A VERSION NAMES (FR-43). Told `{ t: "declaration" }`,
+   * or welcomed on a version other than the one it opened on, the client
+   * asks this for the app at the server's version and opens again on it:
+   * `onDeclaration` hands over the new remote store, and the calls still
+   * on the way are offered again under it, or refused in words. The host
+   * says how: a TS app imports its next declaration, a document-declared
+   * app fetches and compiles its document. Absent, the client reloads the
+   * page as `reload` does, carrying what it had not sent.
+   */
+  readonly resolveApp?: (version: number) => GraviewApp<AnySchema> | Promise<GraviewApp<AnySchema>>;
+  /**
+   * THE HOST'S BUILD THIS PAGE RUNS (FR-44), an opaque string said in
+   * `hello`. A server on another build keeps serving it; `onBuild` is told
+   * once, so the page can offer a reload when it suits the person.
+   */
+  readonly build?: string;
+  /**
+   * WHERE UNSENT CALLS WAIT ACROSS A RELOAD (FR-44). When the server
+   * answers `reload`, every call not yet answered is written to `storage`
+   * under `key`, and the next `openRemote` with the same key offers them
+   * again once it is open. `sessionStorage` in a page, a `Map` in a test.
+   * Without it they are refused in words before the page reloads.
+   */
+  readonly carry?: { readonly storage: StorageLike; readonly key: string };
+  /** How to reload the page when the server asks: `location.reload()` in a page by default. */
+  readonly reloadPage?: () => void;
   /** How long `openRemote({ live: true })` waits for the socket's welcome before it opens polling. 3000 by default. */
   readonly openTimeoutMs?: number;
   /**
@@ -167,7 +204,56 @@ export interface RemoteStore<S extends AnySchema> {
    * the log.
    */
   readonly presence: PresenceChannel;
+  /**
+   * THE DECLARATION CHANGED ON THE SERVER (FR-43): handed a new remote
+   * store, opened on the server's migrated state under the app
+   * `resolveApp` gave for `version`, with this one's unanswered calls
+   * offered again on it. This one is closed: mount the new one. A call
+   * that no longer fits is told on the new store's `onRefusal` (or this
+   * one's, when nobody listens there), in words.
+   */
+  onDeclaration(listener: (next: RemoteStore<AnySchema>, version: number) => void): () => void;
+  /**
+   * THE SERVER RUNS ANOTHER BUILD (FR-44): told once, with its build, when
+   * its welcome names one other than `build`. A listener added after it
+   * was noticed is told at once. The client keeps working.
+   */
+  onBuild(listener: (build: string) => void): () => void;
   close(): void;
+}
+
+/** A call on its way, as it is carried to a store on a new declaration or across a reload (FR-43, FR-44). */
+interface Carried {
+  readonly calls: readonly MutationCall[];
+  readonly intent?: string;
+  /** The batch it was sent in: a server that already has it answers with its ops rather than making it again. */
+  readonly batch?: string;
+}
+
+/** A call this client let go of for a new declaration or a reload: not refused, so nothing is taken back or said. */
+class Superseded extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "Superseded";
+  }
+}
+
+/** "rename (Version 2 has no …)": a call that no longer fits, named in a sentence. */
+const named = (carried: Carried, error: unknown): string =>
+  `${carried.calls.map((call) => call.name.replace(/-/g, " ")).join(", ")} (${error instanceof Error ? (error.message.split("\n")[0] ?? "") : String(error)})`;
+
+/** Calls kept across a reload, as the next page reads them: read once, then forgotten. */
+function takeCarried(carry: RemoteOptions<AnySchema>["carry"]): Carried[] {
+  if (!carry) return [];
+  try {
+    const raw = carry.storage.getItem(carry.key);
+    if (raw === null) return [];
+    carry.storage.removeItem(carry.key);
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((one): one is Carried => !!one && Array.isArray((one as Carried).calls)) : [];
+  } catch {
+    return [];
+  }
 }
 
 /** A refusal that is a stale write: the server's sentence, and the fields that moved. */
@@ -198,6 +284,19 @@ function localIds(): () => string {
 const OPEN = 1;
 
 export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>): Promise<RemoteStore<S>> {
+  return (await opening(options, takeCarried(options.carry), "This app was updated while your changes were on the way.")).remote;
+}
+
+/**
+ * The remote store, and what the store it replaces needs from it: the
+ * sentences about carried calls nobody has heard yet, for it to tell
+ * when the new store's own listeners are not there (FR-43).
+ */
+async function opening<S extends AnySchema>(
+  options: RemoteOptions<S>,
+  offered: readonly Carried[],
+  lostSaid: string,
+): Promise<{ remote: RemoteStore<S>; unheard(): string[] }> {
   const call = options.fetch ?? fetch;
   const headers: Record<string, string> = { "content-type": "application/json", ...(options.headers ?? {}) };
   // Who, and through what: a claim only a server that trusts the seat headers believes (FR-06, FR-52).
@@ -537,6 +636,12 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
   const hear = (message: LiveServerMessage) => {
     switch (message.t) {
       case "welcome": {
+        noticeBuild(message.build);
+        // Back on a server whose declaration moved while this socket was away (FR-43): its ops are not this store's to fold.
+        if (typeof message.version === "number" && message.version !== state.version) {
+          void declarationChanged(message.version);
+          return;
+        }
         welcomed = true;
         attempts = 0;
         land(message.ops ?? []);
@@ -575,10 +680,123 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       case "presence":
         heard(message.who ?? []);
         return;
+      case "declaration":
+        if (typeof message.version === "number" && message.version !== state.version) void declarationChanged(message.version);
+        return;
+      case "reload":
+        reloadOntoNewer(typeof message.reason === "string" ? message.reason : "This app was updated.");
+        return;
       default:
         return;
     }
   };
+
+  /* ── SKEW AND CHANGE (FR-43, FR-44) ─────────────────────────────────── */
+
+  /** Set once this store has been let go of, for a new declaration or a reload: it acts on nothing more. */
+  let retiring = false;
+  const declarationListeners = new Set<(next: RemoteStore<AnySchema>, version: number) => void>();
+  const buildListeners = new Set<(build: string) => void>();
+  let otherBuild: string | undefined;
+  const noticeBuild = (build: string | undefined) => {
+    if (otherBuild !== undefined || !options.build || typeof build !== "string" || build.length === 0 || build === options.build) return;
+    otherBuild = build;
+    for (const listener of buildListeners) listener(build);
+  };
+
+  /** Every call this client applied that the server has not answered, oldest first; and how many undos are. */
+  const unanswered = (): { carried: Carried[]; undos: number } => {
+    const carried: Carried[] = [];
+    let undos = 0;
+    for (const batch of pending) {
+      const made = asked.get(batch);
+      if (made) carried.push({ calls: made.calls, ...(made.intent ? { intent: made.intent } : {}), batch });
+      else undos++;
+    }
+    return { carried, undos };
+  };
+  const undosSaid = (undos: number, why: string) =>
+    `${why} while ${undos === 1 ? "an undo of yours was" : "undos of yours were"} on the way; ${undos === 1 ? "it was" : "they were"} not made.`;
+
+  /** Lets this store go: what it waits for is let go too, never said to be refused, and its socket closes without a goodbye. */
+  const retire = (why: string) => {
+    retiring = true;
+    // Where this page stands is the next store's to say now: closing this one later must not say it left.
+    mine = null;
+    const superseded = new Superseded(why);
+    for (const waiter of waiting.values()) waiter.reject(superseded);
+    waiting.clear();
+    if (timer) clearInterval(timer);
+    closed = true;
+    if (retry) clearTimeout(retry);
+    const was = socket;
+    socket = undefined;
+    welcomed = false;
+    try {
+      was?.close(1000, why);
+    } catch {
+      // Already gone.
+    }
+    opened();
+  };
+
+  /*
+   * THE DECLARATION CHANGED (FR-43). The host's `resolveApp` names the app
+   * at the server's version; a remote store is opened on it — the
+   * server's migrated state — and handed to `onDeclaration`, with every
+   * call this one had on the way offered again there under the batch it
+   * was sent in, so one the server already made is not made twice.
+   */
+  async function declarationChanged(version: number): Promise<void> {
+    if (retiring) return;
+    if (!options.resolveApp) {
+      reloadOntoNewer(`This app was changed on its server (version ${version}); reload the page to carry on.`);
+      return;
+    }
+    const { carried, undos } = unanswered();
+    const resolveApp = options.resolveApp;
+    const standing = mine;
+    retire("The app was changed.");
+    try {
+      const app = await resolveApp(version);
+      const next = await opening({ ...(options as unknown as RemoteOptions<AnySchema>), app }, carried, "The app was changed while your changes were on the way.");
+      if (standing) next.remote.presence.here(standing);
+      for (const listener of declarationListeners) listener(next.remote, version);
+      const said = [...(undos > 0 ? [undosSaid(undos, "The app was changed")] : []), ...next.unheard()];
+      for (const sentence of said) for (const told of refusals) told(sentence);
+    } catch (error) {
+      const sentence = `The app was changed, but the new version could not be opened: ${error instanceof Error ? error.message : String(error)}`;
+      for (const told of refusals) told(sentence);
+    }
+  }
+
+  /*
+   * THE SERVER NO LONGER SERVES THIS PAGE'S PROTOCOL (FR-44). Every call
+   * not yet answered is kept in `carry`, the page reloads, and the next
+   * `openRemote` with the same key offers them again. Without `carry`
+   * they are refused in words first, so nobody believes they were made.
+   */
+  function reloadOntoNewer(reason: string): void {
+    if (retiring) return;
+    const { carried, undos } = unanswered();
+    retire(reason);
+    let kept = false;
+    if (options.carry && carried.length > 0) {
+      try {
+        options.carry.storage.setItem(options.carry.key, JSON.stringify(carried));
+        kept = true;
+      } catch {
+        // Storage full or refused: the reload still happens, and the calls are said lost below.
+      }
+    }
+    const said: string[] = [];
+    if (!kept && carried.length > 0) {
+      said.push(`${reason} ${carried.length === 1 ? "A change of yours was" : `${carried.length} changes of yours were`} not sent; make ${carried.length === 1 ? "it" : "them"} again after the page reloads.`);
+    }
+    if (undos > 0) said.push(undosSaid(undos, "This app was updated"));
+    for (const sentence of said) for (const told of refusals) told(sentence);
+    (options.reloadPage ?? pageReload)();
+  }
 
   const connect = () => {
     if (closed || !live) return;
@@ -586,7 +804,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     const { "content-type": _json, ...carried } = headers;
     let made: LiveSocketLike;
     try {
-      made = (options.socket ?? platformSocket)(url, carried);
+      made = options.socket ? options.socket(url, carried, [LIVE_SUBPROTOCOL]) : platformSocket(url, carried);
     } catch {
       return reconnect();
     }
@@ -595,7 +813,8 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     made.onopen = () => {
       if (socket !== made) return;
       // From the last op this client has: the welcome brings exactly the ones after it.
-      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL } satisfies LiveClientMessage));
+      // Which codec, which protocol and which build this page speaks (FR-44).
+      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, ...(options.build ? { build: options.build.slice(0, 64) } : {}) } satisfies LiveClientMessage));
     };
     made.onmessage = (event) => {
       if (socket !== made) return;
@@ -642,6 +861,8 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
   const appliedAll = store.applyAll.bind(store);
   const undone = store.undo.bind(store);
   const refusals = new Set<(reason: string) => void>();
+  /** What became of carried calls before anybody listened: told to the first listener (FR-43, FR-44). */
+  let unheard: string[] = [];
   const conflictListeners = new Set<(conflict: RemoteConflict) => void>();
   /** Set while `useMine` sends a change again: it goes without the revisions it was refused for. */
   let overriding = false;
@@ -653,6 +874,8 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
    * as it never happened there.
    */
   const takeBack = async (batch: string, error: unknown): Promise<void> => {
+    // Let go of for a new declaration or a reload: carried, not refused (FR-43, FR-44).
+    if (error instanceof Superseded) return;
     const reason = error instanceof Error ? error.message : String(error);
     settle(batch);
     try {
@@ -834,7 +1057,29 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     clearTimeout(waited);
   }
 
-  return {
+  /*
+   * CALLS CARRIED HERE — from the store this one replaces, or across a
+   * reload — offered again now it is open, each under the batch it was
+   * sent in. One the server's log already holds landed before the change
+   * and is not made twice; one that no longer fits is named, in words.
+   */
+  if (offered.length > 0 && !retiring) {
+    const lost: string[] = [];
+    const landed = new Set(store.log.all().map((op) => op.batch));
+    for (const one of offered) {
+      if (one.batch !== undefined && landed.has(one.batch)) continue;
+      try {
+        store.applyAll(one.calls, { ...(one.intent ? { intent: one.intent } : {}), ...(one.batch ? { batch: one.batch } : {}) });
+      } catch (error) {
+        lost.push(named(one, error));
+      }
+    }
+    if (lost.length > 0) {
+      unheard.push(`${lostSaid} ${lost.length === 1 ? "One no longer fits and was not made" : `${lost.length} no longer fit and were not made`}: ${lost.join("; ")}.`);
+    }
+  }
+
+  const remote: RemoteStore<S> = {
     store,
     version: state.version,
     migrated: state.migrated ?? [],
@@ -842,7 +1087,19 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     pull,
     onRefusal(listener) {
       refusals.add(listener);
+      const told = unheard;
+      unheard = [];
+      for (const sentence of told) listener(sentence);
       return () => refusals.delete(listener);
+    },
+    onDeclaration(listener) {
+      declarationListeners.add(listener);
+      return () => declarationListeners.delete(listener);
+    },
+    onBuild(listener) {
+      buildListeners.add(listener);
+      if (otherBuild !== undefined) listener(otherBuild);
+      return () => buildListeners.delete(listener);
     },
     onConflict(listener) {
       conflictListeners.add(listener);
@@ -871,23 +1128,37 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       }
     },
   };
+  return {
+    remote,
+    unheard() {
+      const told = unheard;
+      unheard = [];
+      return told;
+    },
+  };
 
   /** The platform's WebSocket, with the headers where the runtime can send them. */
   function platformSocket(url: string, carried: Readonly<Record<string, string>>): LiveSocketLike {
     const Socket = (globalThis as { WebSocket?: new (url: string, init?: unknown) => LiveSocketLike }).WebSocket;
     if (!Socket) throw new Error("This runtime has no WebSocket; the client polls instead.");
     const page = typeof (globalThis as { document?: unknown }).document !== "undefined";
+    const protocols = options.subprotocol ? [LIVE_SUBPROTOCOL] : [];
     if (!page) {
       try {
-        return new Socket(url, { headers: carried });
+        return new Socket(url, { headers: carried, ...(protocols.length > 0 ? { protocols } : {}) });
       } catch {
         // A runtime whose WebSocket takes protocols only: the seat rides in the query, as a page's does.
       }
     }
     const withSeat = new URL(url);
     for (const [name, value] of Object.entries(seat)) withSeat.searchParams.set(name, value);
-    return new Socket(withSeat.toString());
+    return protocols.length > 0 ? new Socket(withSeat.toString(), protocols) : new Socket(withSeat.toString());
   }
+}
+
+/** The page's own reload, where there is a page. */
+function pageReload(): void {
+  (globalThis as { location?: { reload?: () => void } }).location?.reload?.();
 }
 
 /**

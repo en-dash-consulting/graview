@@ -26,6 +26,13 @@ export const NOT_EXPORTS = new Map([
   ["useMine", "a method of a RemoteConflict, not an export"],
   ["serializeAttachment", "a Cloudflare Durable Object WebSocket method, not an export"],
   ["deserializeAttachment", "a Cloudflare Durable Object WebSocket method, not an export"],
+  ["declarationChanged", "a method of a store handler, not an export"],
+  ["resolveApp", "an option of openRemote, not an export"],
+  ["onDeclaration", "a method of openRemote's store, not an export"],
+  ["onRefusal", "a method of openRemote's store, not an export"],
+  ["onBuild", "a method of openRemote's store, not an export"],
+  ["minProtocol", "an option of createStoreHandler, not an export"],
+  ["reloadPage", "an option of openRemote, not an export"],
 ]);
 
 /** The API-shaped names a README puts in backticks: `name`, `name()`, `Name`. */

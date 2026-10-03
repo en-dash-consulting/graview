@@ -34,6 +34,8 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 - The live socket at `/graview/live` (FR-05) holds to the same rules: a message type or a field may be added, and a message the server does not know is ignored. `hello` and `welcome` carry `WIRE_PROTOCOL`, so either side can tell what the other speaks. Its seqs mean what `/graview/since?seq=N` means.
 - A field's revision, which a stale write is refused against, is the seq of the op that last wrote it. It is derived from the log and never stored, so it never changes a stored format.
 - `WIRE_PROTOCOL` moves only when a client of the previous protocol can no longer be served, and that is a major.
+- A host that stops serving an older protocol says so with `reload` (FR-44): `minProtocol` names the lowest it serves, and a client carries its unsent calls across the reload. `hello.wire` and the subprotocol `graview.ship.1` name ship's codec, so a host can serve another beside it on one path. `build` in `hello` and `welcome` is the host's opaque string and is never judged.
+- A declaration change is pushed as `declaration` (FR-43), and every welcome says the declaration `version` it serves. Neither moves `WIRE_PROTOCOL`.
 
 ### 4. The declaration, the document format and check finding codes
 

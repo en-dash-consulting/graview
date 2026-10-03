@@ -1,4 +1,4 @@
-import type { FieldConflict, FieldRevision, MutationCall, Operation, Presence } from "@graview/core";
+import { WIRE_PROTOCOL, type FieldConflict, type FieldRevision, type MutationCall, type Operation, type Presence } from "@graview/core";
 
 /**
  * THE LIVE WIRE (FR-05): the same store, pushed down a WebSocket.
@@ -12,7 +12,11 @@ import type { FieldConflict, FieldRevision, MutationCall, Operation, Presence } 
  * The protocol is numbered by `WIRE_PROTOCOL` (`@graview/core`), which
  * `hello` and `welcome` both say. The socket is an addition to protocol 1,
  * not a new protocol: every client of protocol 1 is still served, so the
- * number stays where it is (docs/stability.md, "The wire").
+ * number stays where it is (docs/stability.md, "The wire"). So did the
+ * `declaration` push (FR-43) and the skew messages and fields — `reload`,
+ * `wire`, `build` (FR-44): a protocol-1 client that does not know them
+ * ignores them, and raising the number would make every server with a
+ * `minProtocol` send every open tab a `reload` for nothing.
  *
  * Seqs mean what they mean on `GET /graview/since?seq=N`: the position of
  * an op in the store's log, and a client's seq is the last one it has. -1
@@ -25,6 +29,29 @@ import type { FieldConflict, FieldRevision, MutationCall, Operation, Presence } 
  */
 export const LIVE_PATH = "/graview/live";
 
+/**
+ * THE CODEC'S NAME (FR-44). A host that serves two codecs on one path —
+ * its own older one and ship's, through a deploy — tells them apart before
+ * reading a word: `hello.wire` says it, and so does the WebSocket
+ * subprotocol `LIVE_SUBPROTOCOL` the client asks for. A hello that names
+ * another wire is answered `error` and not welcomed; one that names none is
+ * ship's, as every hello before this was.
+ */
+export const LIVE_WIRE = "graview.ship";
+
+/**
+ * The WebSocket subprotocol ship's client asks for, `graview.ship.<WIRE_PROTOCOL>`:
+ * `openRemote` hands it to the socket factory, `serveStore` answers it,
+ * and a Worker answers it with what `liveSubprotocol(request)` says.
+ */
+export const LIVE_SUBPROTOCOL = `${LIVE_WIRE}.${WIRE_PROTOCOL}`;
+
+/** The subprotocol to answer an upgrade with: `LIVE_SUBPROTOCOL` when the client offered it, else none. */
+export function liveSubprotocol(request: Request): string | undefined {
+  const offered = (request.headers.get("sec-websocket-protocol") ?? "").split(",").map((one) => one.trim());
+  return offered.includes(LIVE_SUBPROTOCOL) ? LIVE_SUBPROTOCOL : undefined;
+}
+
 /** What a client says. A field the server does not know is ignored, never refused. */
 export type LiveClientMessage =
   /**
@@ -32,7 +59,16 @@ export type LiveClientMessage =
    * welcome carries exactly the ops after it. Without one, the welcome
    * carries the whole state, as `GET /graview/state` would.
    */
-  | { readonly t: "hello"; readonly seq?: number; readonly protocol?: number }
+  | {
+      readonly t: "hello";
+      readonly seq?: number;
+      /** The protocol this client speaks; absent is 1. A server whose `minProtocol` is past it answers `reload` (FR-44). */
+      readonly protocol?: number;
+      /** The codec, `LIVE_WIRE`; absent is ship's (FR-44). */
+      readonly wire?: string;
+      /** The host's build this client runs, an opaque string: said for the host to count, never judged (FR-44). */
+      readonly build?: string;
+    }
   /**
    * Calls, as `POST /graview/ops` takes them. `cid` names the answer.
    * `batch` is the batch the ops land in — the client's own provisional
@@ -67,6 +103,12 @@ export type LiveServerMessage =
   | {
       readonly t: "welcome";
       readonly protocol: number;
+      /** The codec, `LIVE_WIRE` (FR-44). Absent from a server before it. */
+      readonly wire?: string;
+      /** The declaration version the server serves (FR-43). Absent from a server before it. */
+      readonly version?: number;
+      /** The host's build, an opaque string: a client on another build keeps working, and is told once (FR-44). */
+      readonly build?: string;
       readonly seq: number;
       readonly ops: readonly Operation[];
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */
@@ -82,6 +124,20 @@ export type LiveServerMessage =
   | { readonly t: "ops"; readonly seq: number; readonly ops: readonly Operation[] }
   /** Who else is here now. */
   | { readonly t: "presence"; readonly who: readonly Presence[] }
+  /**
+   * THE DECLARATION CHANGED (FR-43): the server serves `version` now, on a
+   * store migrated to it. The socket is no longer served under the old
+   * one — a call is refused until it says hello again — and the client
+   * opens on the new declaration, offering its unanswered calls again.
+   */
+  | { readonly t: "declaration"; readonly version: number }
+  /**
+   * THIS SERVER NO LONGER SERVES THE CLIENT'S PROTOCOL (FR-44). `protocol`
+   * is the lowest it serves. Said in answer to `hello`, and nothing
+   * follows: the client keeps what it had not sent, reloads onto a build
+   * that speaks it, and offers them again there.
+   */
+  | { readonly t: "reload"; readonly reason: string; readonly protocol: number }
   /** A message the server could not read. */
   | { readonly t: "error"; readonly sentence: string };
 

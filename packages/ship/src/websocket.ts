@@ -34,9 +34,17 @@ export function acceptKey(key: string): string {
 }
 
 /** Answers the upgrade with 101 and speaks frames on the socket from then on. */
-export function acceptSocket(stream: Duplex, key: string, head: Buffer, events: SocketEvents): ServerSocket {
+export function acceptSocket(stream: Duplex, key: string, head: Buffer, events: SocketEvents, subprotocol?: string): ServerSocket {
   stream.write(
-    ["HTTP/1.1 101 Switching Protocols", "Upgrade: websocket", "Connection: Upgrade", `Sec-WebSocket-Accept: ${acceptKey(key)}`, "", ""].join("\r\n"),
+    [
+      "HTTP/1.1 101 Switching Protocols",
+      "Upgrade: websocket",
+      "Connection: Upgrade",
+      `Sec-WebSocket-Accept: ${acceptKey(key)}`,
+      ...(subprotocol ? [`Sec-WebSocket-Protocol: ${subprotocol}`] : []),
+      "",
+      "",
+    ].join("\r\n"),
   );
   (stream as { setNoDelay?: (noDelay: boolean) => void }).setNoDelay?.(true);
   let open = true;

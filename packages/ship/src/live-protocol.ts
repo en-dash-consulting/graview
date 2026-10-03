@@ -16,7 +16,7 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
-import { conflictSentence, type LiveClientMessage, type LiveServerMessage } from "./live.js";
+import { conflictSentence, LIVE_WIRE, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**
  * THE LIVE WIRE AS FUNCTIONS OVER STATE THE HOST HOLDS (FR-41, FR-42).
@@ -53,6 +53,8 @@ export interface LiveSocketState {
   cursor?: number;
   /** Its presence key, once it has said where it is; built from the seat, never taken from the client. */
   participant?: string;
+  /** The build its hello said it runs (FR-44): the client's word, kept for the host to count, never judged. */
+  build?: string;
 }
 
 /** A socket as the protocol is handed it: its state, and a way to send it text. */
@@ -83,6 +85,14 @@ export interface LiveProtocolOptions<S extends AnySchema> {
   readonly migrated?: readonly string[];
   /** Resolves once what landed is durable: an ack waits for it. */
   readonly flush?: () => Promise<void>;
+  /** The host's build, an opaque string said in every welcome (FR-44): a client on another one is told once and keeps working. */
+  readonly build?: string;
+  /**
+   * THE LOWEST PROTOCOL SERVED (FR-44). A hello on an older one is answered
+   * `reload` and nothing else: its calls are refused until it says hello
+   * on one served. Absent, every protocol is served.
+   */
+  readonly minProtocol?: number;
 }
 
 export interface LiveProtocol<S extends AnySchema> {
@@ -110,6 +120,15 @@ export interface LiveProtocol<S extends AnySchema> {
   publish(ops: readonly Operation[], peers: Iterable<LivePeer>): void;
   /** Who is here, told to every socket that has said hello: as its seat may be told it, and without itself. */
   tell(who: readonly Presence[], peers: Iterable<LivePeer>): void;
+  /**
+   * THE DECLARATION CHANGED (FR-43), and this protocol is the one over the
+   * store migrated to it. Every socket that has said hello is told
+   * `{ t: "declaration", version }` and its cursor is forgotten: a seq of
+   * the old store means nothing on the new one, so nothing is pushed and
+   * no call is served until it says hello again. The host keeps the
+   * cursors as it keeps them after `receive`.
+   */
+  declared(peers: Iterable<LivePeer>): void;
 }
 
 /**
@@ -329,13 +348,34 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       if (!message || typeof message !== "object") return unchanged();
       switch (message.t) {
         case "hello": {
+          /*
+           * ANOTHER CODEC, OR A PROTOCOL NO LONGER SERVED (FR-44). Neither is
+           * welcomed, and neither has its cursor set, so its calls are
+           * refused rather than read as something they are not.
+           */
+          if (typeof message.wire === "string" && message.wire !== LIVE_WIRE) {
+            say(peer, { t: "error", sentence: `This socket speaks ${LIVE_WIRE}, not ${message.wire}: say hello in ${LIVE_WIRE}, or open the socket the ${message.wire} host serves.` });
+            return unchanged();
+          }
+          const speaks = typeof message.protocol === "number" && Number.isFinite(message.protocol) ? message.protocol : 1;
+          if (options.minProtocol !== undefined && speaks < options.minProtocol) {
+            delete peer.cursor;
+            say(peer, {
+              t: "reload",
+              reason: `This app was updated: its server no longer speaks protocol ${speaks} of the live wire, only ${options.minProtocol} and later. Reload the page; changes not yet sent are offered again after it.`,
+              protocol: options.minProtocol,
+            });
+            return {};
+          }
+          if (typeof message.build === "string" && message.build.length > 0) peer.build = message.build.slice(0, 64);
           const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
           peer.cursor = wire.lastSeq();
+          const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, ...(options.build ? { build: options.build } : {}) };
           if (seq === undefined) {
             const seen = wire.seenFor(peer.seat);
             say(peer, {
               t: "welcome",
-              protocol: WIRE_PROTOCOL,
+              ...said,
               seq: peer.cursor,
               ops: [],
               state: {
@@ -348,7 +388,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
               },
             });
           } else {
-            say(peer, { t: "welcome", protocol: WIRE_PROTOCOL, seq: peer.cursor, ops: wire.since(peer.seat, seq) });
+            say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(peer.seat, seq) });
           }
           const others = who.filter((presence) => presence.participant !== peer.participant);
           if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(peer.seat, others) });
@@ -387,6 +427,13 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       for (const peer of peers) {
         if (peer.cursor === undefined) continue;
         say(peer, { t: "presence", who: wire.whoFor(peer.seat, who.filter((presence) => presence.participant !== peer.participant)) });
+      }
+    },
+    declared(peers) {
+      for (const peer of peers) {
+        if (peer.cursor === undefined) continue;
+        delete peer.cursor;
+        say(peer, { t: "declaration", version: options.version ?? 1 });
       }
     },
   };

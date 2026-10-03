@@ -3,7 +3,7 @@ import type { Duplex } from "node:stream";
 import type { AnySchema, Operation } from "@graview/core";
 import { createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE, type AdapterStoreHandlerOptions, type StoreHandler } from "./handler.js";
 import type { OpenedStore } from "./open-store.js";
-import { LIVE_PATH } from "./live.js";
+import { LIVE_PATH, LIVE_SUBPROTOCOL } from "./live.js";
 import { acceptSocket, type ServerSocket } from "./websocket.js";
 
 /**
@@ -71,19 +71,29 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
           stream.end(`HTTP/1.1 ${answered.status} Refused\r\nContent-Type: application/json\r\nContent-Length: ${body.length}\r\nConnection: close\r\n\r\n${body.toString("utf8")}`);
           return;
         }
-        socket = acceptSocket(stream, key, head, { message: (text) => answered.receive(text), close: () => answered.close() });
+        // Ship's codec by name, when the client asked for it by name (FR-44).
+        const subprotocol = String(incoming.headers["sec-websocket-protocol"] ?? "").split(",").map((one) => one.trim()).includes(LIVE_SUBPROTOCOL) ? LIVE_SUBPROTOCOL : undefined;
+        socket = acceptSocket(stream, key, head, { message: (text) => answered.receive(text), close: () => answered.close() }, subprotocol);
       })
       .catch(() => stream.destroy());
   });
 
   const port = await listen(server, wanted ?? 0, host);
   return {
-    store: handler.store,
-    opened: handler.opened,
+    // Read through: the declaration changing replaces them (FR-43).
+    get store() {
+      return handler.store;
+    },
+    get opened() {
+      return handler.opened;
+    },
+    get protocol() {
+      return handler.protocol;
+    },
     handle: handler.handle,
     connect: handler.connect,
     seatFor: handler.seatFor,
-    protocol: handler.protocol,
+    declarationChanged: handler.declarationChanged,
     server,
     port,
     url: `http://localhost:${port}`,
