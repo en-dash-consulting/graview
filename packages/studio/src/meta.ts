@@ -208,6 +208,31 @@ export const grantNode = defineNode("grant", {
   display: { labels: { self: "on their own record only", allActs: "every act", allKinds: "every kind" } },
 });
 
+export const sightNode = defineNode("sight", {
+  /*
+   * WHO SEES WHAT, as a node like a grant is (FR-02). The studio carried a
+   * checkout's `sees` through untouched and had no act for one, so a sight
+   * could be kept but never added, changed or taken away where everything
+   * else about the policy is.
+   */
+  description: "Who may see the records of some kinds at all — and, with own, only their own.",
+  plural: "sights",
+  fields: z.object({
+    label,
+    describe: z.string().optional(),
+    /** Only the seat's own records: theirs, joined to theirs, or made by them. */
+    own: z.boolean(),
+    /** Every seat, whatever its roles. */
+    everyone: z.boolean(),
+  }),
+  edges: {
+    "seen-by": { to: ["role"], description: "the roles it lets see", inverse: "what they see" },
+    shows: { to: ["kind"], description: "the kinds it shows", inverse: "who sees it" },
+  },
+  label: (node) => node.label,
+  display: { labels: { own: "their own records only", everyone: "everybody" } },
+});
+
 export const lensNode = defineNode("lens", {
   description: "A named way of looking at the graph, and the slots it asks an app to fill.",
   plural: "lenses",
@@ -236,7 +261,7 @@ export const brandNode = defineNode("brand", {
   display: { labels: { label: "name", body: "body typeface", display: "display typeface" } },
 });
 
-export const STUDIO_SCHEMA = createSchema([kindNode, fieldNode, edgeNode, actNode, ruleNode, roleNode, grantNode, lensNode, brandNode]);
+export const STUDIO_SCHEMA = createSchema([kindNode, fieldNode, edgeNode, actNode, ruleNode, roleNode, grantNode, sightNode, lensNode, brandNode]);
 export type StudioSchema = typeof STUDIO_SCHEMA;
 
 /*
@@ -654,6 +679,55 @@ export const revokeGrant = act("revoke-grant", {
   },
 });
 
+const labelOf = (graph: Reader, id: string): string => (graph.getNode(id) as { label?: string } | undefined)?.label ?? id;
+
+export const addSight = act("add-sight", {
+  title: "Let a role see a kind",
+  description:
+    "Say who may see the records of a kind: one role, or everybody when none is named; with own, only their own records. Once any sight is declared, a kind no sight names is seen by nobody but the system.",
+  subject: { kinds: ["kind"], arg: "kind" },
+  creates: ["sight"],
+  connects: ["seen-by", "shows"],
+  fromTheOtherEnd: "shows",
+  input: z.object({ kind: nodeRef(["kind"]), role: nodeRef(["role"]).optional(), own: z.boolean().optional(), describe: z.string().optional() }),
+  describe: (args, graph) =>
+    `${args.role ? labelOf(graph, args.role) : "Everybody"} may see ${args.own ? "their own " : ""}${labelOf(graph, args.kind)}`,
+  apply(ctx, args) {
+    const who = args.role ? nameOf(ctx, args.role) : "everybody";
+    const what = nameOf(ctx, args.kind);
+    const said = `${who} may see ${args.own ? "their own " : ""}${what}`;
+    const id = ctx.freshId(said, "sight");
+    ctx.addNode({ id, kind: "sight", label: said, own: args.own ?? false, everyone: !args.role, ...(args.describe ? { describe: args.describe } : {}) });
+    if (args.role) ctx.addEdge({ kind: "seen-by", from: id, to: args.role });
+    ctx.addEdge({ kind: "shows", from: id, to: args.kind });
+  },
+});
+
+export const changeSight = act("change-sight", {
+  title: "Change the sight",
+  description: "Keep a sight to a seat's own records, or not, and say why in a sentence.",
+  subject: { kinds: ["sight"], arg: "id" },
+  writes: ["own", "describe"],
+  input: z.object({ id: nodeRef(["sight"]), own: z.boolean().optional(), describe: z.string().optional() }),
+  describe: (args, graph) => `Change ${labelOf(graph, args.id)}`,
+  apply(ctx, args) {
+    ctx.patchNode(args.id, { ...(args.own !== undefined ? { own: args.own } : {}), ...(args.describe !== undefined ? { describe: args.describe } : {}) });
+  },
+});
+
+export const removeSight = act("remove-sight", {
+  title: "Take the sight away",
+  description: "Stop letting these roles see these kinds. A kind no sight names is then seen by nobody but the system.",
+  subject: { kinds: ["sight"], arg: "id" },
+  destructive: true,
+  severs: ["seen-by", "shows"],
+  input: z.object({ id: nodeRef(["sight"]) }),
+  describe: (args, graph) => `Take away ${labelOf(graph, args.id)}`,
+  apply(ctx, args) {
+    ctx.removeNode(args.id);
+  },
+});
+
 export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = [
   addKind,
   renameKind,
@@ -673,6 +747,9 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   addRole,
   grant,
   revokeGrant,
+  addSight,
+  changeSight,
+  removeSight,
 ];
 
 /** The studio as an app: the meta-schema, its acts, and an agent seat that may propose any of them. */

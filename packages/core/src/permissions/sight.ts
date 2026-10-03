@@ -57,27 +57,39 @@ export function recordsOf(log: { all(): readonly Operation[] }): Records {
 /**
  * Whether a principal may see one record.
  *
- * A kind no sight names is everybody's to see. One a sight names is seen by
- * the roles it lists — and with `own`, only the principal's own record and
- * what an edge joins to it, which is how "a shopper sees their own test
- * drives" is said without a field naming the owner.
+ * ONE MEANING, the document's and the framework's alike (FR-02). With no
+ * `sees`, everybody sees everything. Once a policy says who sees what, it
+ * says it for every kind: a kind no sight names is seen by nobody but the
+ * system — the host's own seat — which is how a store fails closed when a
+ * kind is added and nobody said who sees it. A kind a sight names is seen
+ * by the roles it lists, and with `own` only the principal's own records:
+ * their record itself, what an edge joins to it ("a shopper sees their own
+ * test drives" without a field naming the owner), and what they made.
  */
 export function sees(
   policy: Policy | undefined,
   principal: Principal,
   node: { readonly id: string; readonly kind: string },
   graph: Joined,
+  /** Who made a record, from the log; without it, `own` reads the graph alone. */
+  records?: Pick<Records, "creatorOf">,
 ): boolean {
-  const sights = (policy?.sees ?? []).filter((sight) => sight.kinds.includes(node.kind));
-  if (sights.length === 0) return true;
+  if (!policy?.sees?.length) return true;
   // The system sees what it keeps; an agent sees what it AND its person may (FR-06, FR-17).
   if (isSystem(principal)) return true;
+  const sights = policy.sees.filter((sight) => sight.kinds.includes(node.kind));
+  if (sights.length === 0) return false;
   principal = actingAs(principal);
   return sights.some((sight) => {
     if (!sightGrantsTo(sight, principal)) return false;
     if (!sight.own) return true;
     const me = principal.id;
     if (me === undefined) return false;
-    return node.id === me || graph.out(node.id).some((other) => other.id === me) || graph.in(node.id).some((other) => other.id === me);
+    return (
+      node.id === me ||
+      graph.out(node.id).some((other) => other.id === me) ||
+      graph.in(node.id).some((other) => other.id === me) ||
+      records?.creatorOf(node.id) === me
+    );
   });
 }

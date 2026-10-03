@@ -1,6 +1,10 @@
 import {
   foldPresence,
+  isSystem,
   PRESENCE_TTL_MS,
+  redact,
+  seenBy,
+  seesId,
   type AnySchema,
   type GraviewApp,
   type MutationCall,
@@ -137,6 +141,28 @@ export function seatFromHeaders(request: Request): Principal {
   };
 }
 
+/**
+ * WHO IS HERE, AS ONE SEAT MAY BE TOLD (FR-02). Somebody whose own record
+ * the seat may not see is not shown to it at all; anybody else is, without
+ * where they stand or what they hover when that names a record the seat
+ * may not see. A participant whose id is no record is shown as they are.
+ */
+export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => boolean): Presence[] {
+  const names = (value: string): boolean => value.split(/[/?#=&,;]/).every((part) => part === "" || sees(decodeURIComponent(part)));
+  return who
+    .filter((presence) => {
+      // `kind:id:session`, and an id may hold a colon of its own: every reading of it must be one the seat sees.
+      const parts = presence.participant.split(":");
+      return parts.slice(2).every((_, at) => sees(parts.slice(1, at + 2).join(":")));
+    })
+    .map((presence) => ({
+      ...presence,
+      stop: names(presence.stop) ? presence.stop : "",
+      ...(typeof presence.over === "string" && !sees(presence.over) ? { over: null } : {}),
+      ...(presence.robot?.at && !sees(presence.robot.at) ? { robot: { ...presence.robot, at: null } } : {}),
+    }));
+}
+
 /** A browser on another origin is the ordinary case for an embed. */
 const CORS: Readonly<Record<string, string>> = {
   "access-control-allow-origin": "*",
@@ -183,13 +209,24 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     return [...here.values()];
   };
   const arrive = (told: Presence, seat: Principal): Presence => {
-    const session = told.participant.split(":").slice(2).join(":");
+    // The session is what follows the seat's own `kind:id:` — an id may hold a colon (`shopper:bethan`).
+    const own = `${seat.kind}:${seat.id ?? ""}:`;
+    const session = told.participant.startsWith(own) ? told.participant.slice(own.length) : (told.participant.split(":").at(-1) ?? "");
     const participant = seat.id ? `${seat.kind}:${seat.id}:${session}` : told.participant;
     const presence: Presence = { ...told, participant, at: new Date().toISOString() };
     here = foldPresence(here, [presence], Date.now(), ttl);
     return presence;
   };
-  const since = (seq: number): Operation[] => store.log.all().filter((op) => op.seq > seq);
+  /*
+   * WHAT A SEAT MAY SEE NEVER LEAVES THE STORE (FR-02). Every read below is
+   * of the store as the asking seat sees it: its graph without what the
+   * policy keeps from it, and its log with every op in its place and the
+   * ones that touched what it may not see withheld (FR-16).
+   */
+  const seenFor = (principal: Principal) => seenBy(store, principal);
+  const since = (principal: Principal, seq: number): Operation[] => seenFor(principal).log.all().filter((op) => op.seq > seq);
+  const sighted = (principal: Principal): boolean => (store.policy?.sees?.length ?? 0) > 0 && !isSystem(principal);
+  const whoFor = (principal: Principal, who: readonly Presence[]): Presence[] => (sighted(principal) ? presenceSeenBy(who, seesId(store, principal)) : [...who]);
 
   async function route(request: Request): Promise<Response> {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -207,32 +244,34 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     const seat = async (): Promise<Principal> => (seatOf as NonNullable<typeof seatOf>)(request);
 
     if (url.pathname === "/graview/state") {
+      const seen = seenFor(await seat());
       return send(200, {
         version: options.app.version ?? 1,
-        snapshot: store.snapshot(),
-        log: store.log.all(),
+        snapshot: seen.snapshot(),
+        log: seen.log.all(),
         migrated: opened.migrated.map((op) => op.intent),
       });
     }
 
     if (url.pathname === "/graview/since") {
       const seq = Number(url.searchParams.get("seq") ?? "-1");
-      return send(200, { ops: since(seq) });
+      return send(200, { ops: since(await seat(), seq) });
     }
 
-    if (url.pathname === "/graview/who") return send(200, { who: alive() });
+    if (url.pathname === "/graview/who") return send(200, { who: whoFor(await seat(), alive()) });
 
     if (url.pathname === "/graview/here" && request.method === "POST") {
       const body = (await read(request)) as { presence?: Presence; seq?: number };
       if (!body.presence || typeof body.presence.participant !== "string" || typeof body.presence.stop !== "string") {
         return send(400, { error: "A presence is a participant and a stop." });
       }
-      const mine = arrive(body.presence, await seat());
+      const asking = await seat();
+      const mine = arrive(body.presence, asking);
       // Folded into the poll: the heartbeat carries back everybody else AND
       // the ops since, so being here costs no round trip of its own.
       return send(200, {
-        who: alive().filter((presence) => presence.participant !== mine.participant),
-        ...(typeof body.seq === "number" ? { ops: since(body.seq) } : {}),
+        who: whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
+        ...(typeof body.seq === "number" ? { ops: since(asking, body.seq) } : {}),
       });
     }
 
@@ -242,7 +281,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
         here = new Map(here);
         here.delete(body.participant);
       }
-      return send(200, { who: alive() });
+      return send(200, { who: whoFor(await seat(), alive()) });
     }
 
     if (url.pathname === "/graview/health") {
@@ -255,7 +294,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       });
     }
 
-    if (url.pathname === "/graview/export") return send(200, exportBundle(options.app, store));
+    if (url.pathname === "/graview/export") return send(200, exportBundle(options.app, seenFor(await seat())));
 
     if (url.pathname === "/graview/ops" && request.method === "POST") {
       const body = (await read(request)) as {
@@ -286,7 +325,9 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
               ...(body.batch ? { batch: body.batch } : {}),
             });
         await opened.flush();
-        return send(200, { ops: result.ops, batch: result.batch });
+        // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
+        const ops = sighted(author) ? redact(result.ops, seesId(store, author)) : result.ops;
+        return send(200, { ops, batch: result.batch });
       } catch (error) {
         return send(409, { error: error instanceof Error ? error.message : String(error), refused: true });
       }

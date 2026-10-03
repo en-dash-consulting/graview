@@ -19,7 +19,10 @@ import type { Policy } from "@graview/core";
  */
 export const policy: Policy = {
   roles: ["chair", "reviewer", "volunteer", "scheduler"],
-  sees: [{ roles: ["chair", "reviewer", "volunteer", "scheduler"], kinds: ["staff"], describe: "The programme's own people see who is on staff." }],
+  sees: [
+    { roles: "*", kinds: ["talk", "speaker", "session", "workshop", "room", "topic"], describe: "The programme is everybody's to see." },
+    { roles: ["chair", "reviewer", "volunteer", "scheduler"], kinds: ["staff"], describe: "The programme's own people see who is on staff." },
+  ],
   grants: [
     { roles: ["chair"], mutations: "*", describe: "The programme chair runs the programme." },
     {

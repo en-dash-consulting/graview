@@ -162,7 +162,7 @@ export function sourceChanges(before: Reading, after: Reading, base?: GraviewApp
   }
 
   // Policy and presentation are declared elsewhere, in ways the studio cannot yet edit in place: said, not written.
-  for (const kind of ["role", "grant", "lens", "brand"] as const) {
+  for (const kind of ["role", "grant", "sight", "lens", "brand"] as const) {
     const then = new Map(was.ofKind(kind).map((node) => [label(node), signature(was, node)]));
     const later = new Map(now.ofKind(kind).map((node) => [label(node), signature(now, node)]));
     for (const [name, sig] of later) {

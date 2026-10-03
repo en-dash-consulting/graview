@@ -1,12 +1,11 @@
 import { readingOf, seenBy, seesId } from "./seen.js";
-import { sees, sightedKinds } from "./permissions/sight.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { invert, normalise, writesOf, type Primitive } from "./graph/primitives.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
-import type { NodeRefArg } from "./mutations/node-ref.js";
+import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { verifyFold, type VerifyResult } from "./integrity.js";
 import { evaluate } from "./invariants/engine.js";
@@ -445,7 +444,7 @@ export class Store<S extends AnySchema> {
      * repair as the starter seat, which may only add, and the press met
      * "starter may not take-off here" (W-110).
      */
-    const narrowed = this.refusesAgent(call, principal);
+    const narrowed = this.refusesAgent(call, principal) ?? this.namesUnseen(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     return permits(
       this.policy,
@@ -489,6 +488,34 @@ export class Store<S extends AnySchema> {
   }
 
   /**
+   * A CALL THAT NAMES A RECORD THE CALLER MAY NOT SEE IS REFUSED (FR-02),
+   * before any grant is read: an act on a record is a way of reading it —
+   * its preview, its refusal, what its rules say after — and a seat that
+   * could act on what it may not see could learn it that way. Only a
+   * record that is there is judged; an id that names nothing is the act's
+   * own to refuse. The sentence names the act, never the record or its kind.
+   */
+  private namesUnseen(call: MutationCall, principal: Principal): Refusal | undefined {
+    if (!this.policy?.sees?.length || isSystem(principal)) return undefined;
+    const mutation = this.mutations.get(call.name);
+    if (!mutation) return undefined;
+    const named = new Set<string>();
+    const add = (value: unknown) => {
+      if (typeof value === "string") named.add(value);
+      else if (Array.isArray(value)) for (const inner of value) if (typeof inner === "string") named.add(inner);
+    };
+    if (mutation.subject) add(call.args[mutation.subject.arg]);
+    for (const ref of nodeRefArgs(mutation.input)) add(call.args[ref.name]);
+    const visible = seesId(this, principal);
+    if (![...named].some((id) => this.graph.has(id) && !visible(id))) return undefined;
+    return {
+      mutation: call.name,
+      message: `Not permitted: “${mutation.title ?? call.name}” names a record you may not see.`,
+      wouldNeed: [],
+    };
+  }
+
+  /**
    * Whether a principal may run ANY act of a module drawn only for those
    * who administer it. This is the one question the interface asks before
    * offering to show the installation's own districts; the answer comes
@@ -519,8 +546,7 @@ export class Store<S extends AnySchema> {
 
   /** Whether a principal may see one record (the policy's `sees`). */
   sees(principal: Principal, id: string): boolean {
-    const node = this.graph.getNode(id);
-    return node !== undefined && sees(this.policy, principal, node as never, this.graph as never);
+    return this.graph.has(id) && seesId(this, principal)(id);
   }
 
   private labels: LabelIndex<S> | undefined;
@@ -565,9 +591,10 @@ export class Store<S extends AnySchema> {
      * "none yet — waiting for shoppers" was a page about other people.
      */
     const sights = this.policy?.sees ?? [];
-    if (sights.length > 0) {
+    if (sights.length > 0 && !isSystem(principal)) {
       const creatable = new Set(this.permittedMutations(principal).flatMap((mutation) => mutation.creates ?? []));
-      for (const kind of sightedKinds(this.policy)) {
+      // Every kind: once a policy says who sees what, a kind no sight names is seen by nobody.
+      for (const kind of this.schema.kinds as readonly string[]) {
         const seeing = sights.some((sight) => sight.kinds.includes(kind) && (sight.roles === "*" || (principal.roles ?? []).some((role) => (sight.roles as readonly string[]).includes(role))) && (!sight.own || principal.id !== undefined));
         if (!seeing && !creatable.has(kind)) kept.add(kind);
       }
@@ -1139,9 +1166,9 @@ export class Store<S extends AnySchema> {
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
     const author = options.author ?? HUMAN;
     /*
-     * JUDGED FIRST AS THIS SEAT SEES THE LOG (FR-16). A change it may not
-     * see is not its to take back, and when one stands in the way the
-     * refusal says a change you cannot see does — the full check's
+     * JUDGED FIRST AS THIS SEAT SEES THE LOG (FR-16, FR-02). A change it
+     * may not see is not its to take back, and when one stands in the way
+     * the refusal says a change you cannot see does — the full check's
      * sentence would quote it. The two agree on what blocks: a withheld op
      * keeps the ids this seat sees, and those are all it can overlap.
      */

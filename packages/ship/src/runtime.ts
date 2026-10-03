@@ -8,7 +8,7 @@
  * migrations, the wire as a fetch handler, and the other end of the wire —
  * and a test holds it to reaching no `node:` builtin.
  */
-export { createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE } from "./handler.js";
+export { createStoreHandler, presenceSeenBy, SEAT_HEADERS, seatFromHeaders, WIRE } from "./handler.js";
 export type { StoreHandler, StoreHandlerOptions } from "./handler.js";
 export { openStore } from "./open-store.js";
 export type { OpenStoreOptions, OpenedStore } from "./open-store.js";

@@ -33,6 +33,7 @@ const ask = defineMutation("ask", {
 const policy: Policy = {
   grants: [{ roles: ["shopper"], mutations: ["ask"], self: true }, { roles: ["staff"], mutations: "*" }],
   sees: [
+    { roles: "*", kinds: ["car"] },
     { roles: ["staff"], kinds: ["shopper", "enquiry"] },
     { roles: ["shopper"], kinds: ["shopper", "enquiry"], own: true },
   ],
@@ -87,5 +88,15 @@ describe("a sight the checker reads", () => {
   it("names a kind somebody declared", () => {
     const app = defineApp({ name: "Showroom", schema, mutations: [ask], policy: { ...policy, sees: [{ roles: ["staff"], kinds: ["customer"] }] } });
     expect(checkApp(app).findings.map((finding) => finding.code)).toContain("sight-unknown-kind");
+  });
+
+  it("names a kind no sight names, which nobody but the system sees once any sight is declared (FR-02)", () => {
+    const app = defineApp({ name: "Showroom", schema, mutations: [ask], policy: { ...policy, sees: policy.sees!.filter((sight) => !sight.kinds.includes("car")) } });
+    const findings = checkApp(app).findings.filter((finding) => finding.code === "sight-unnamed-kind");
+    expect(findings.map((finding) => [finding.severity, finding.message])).toEqual([["warning", expect.stringContaining('"car"')]]);
+    expect(make().seenBy(browsing).graph.getNode("car:golf")).toBeDefined();
+    const unnamed = new Store({ schema, mutations: [ask], policy: app.policy!, snapshot: make().snapshot() as never });
+    expect(unnamed.seenBy(staff).graph.getNode("car:golf")).toBeUndefined();
+    expect(unnamed.seenBy({ kind: "system" }).graph.getNode("car:golf")).toBeDefined();
   });
 });

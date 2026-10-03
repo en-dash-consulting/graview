@@ -624,7 +624,8 @@ export function createToolRuntime<S extends AnySchema>(
 
         case "get_affordances": {
           const selection = (args["selection"] as string[]) ?? [];
-          const derived = deriveAffordances(store, selection, {
+          // Derived from what this seat sees: a record it may not see has no acts to offer, nor a name (FR-02).
+          const derived = deriveAffordances(seen, selection, {
             ...(typeof options.derive === "function" ? options.derive() : options.derive),
             // The seat asks as ITSELF, so what it is offered is what it may
             // do — and what it may not is stated rather than hidden, which
@@ -634,7 +635,7 @@ export function createToolRuntime<S extends AnySchema>(
               ? { context: args["context"] as Record<string, unknown> }
               : {}),
           });
-          return { ok: true, data: derived, reads: selection };
+          return { ok: true, data: derived, reads: selection.filter((id) => seen.graph.has(id)) };
         }
 
         case "preview_mutation": {
@@ -649,7 +650,8 @@ export function createToolRuntime<S extends AnySchema>(
         case "undo_batch": {
           const batch = String(args["batch"]);
           const include = (args["include"] as string[]) ?? [];
-          const check = store.canUndo([batch, ...include]);
+          // Judged over the log as this seat sees it, so a refusal never quotes a change it may not see (FR-16).
+          const check = seen.canUndo([batch, ...include]);
           if (!check.ok) return { ok: false, error: check.message };
           const result = store.undo([batch, ...include], {
             ...(options.author ? { author: options.author } : {}),

@@ -499,7 +499,8 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     { path: "src/domain/mutations.ts", contents: mutationsTs, kept: keptActs.map((act) => `${act}: apply`) },
     { path: "src/domain/invariants.ts", contents: invariantsTs, kept: keptRules.map((rule) => `${rule}: evaluate`) },
   ];
-  if (roles.length > 0 || grants.length > 0) {
+  const sights = sightLines(read);
+  if (roles.length > 0 || grants.length > 0 || sights.length > 0) {
     const policyTs = [
       `import type { Policy } from "@graview/core";`,
       ``,
@@ -521,8 +522,8 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
         return `    { ${parts.join(", ")} },`;
       }),
       `  ],`,
-      // Who sees what, as the checkout said it: the studio has no act for a sight yet.
-      ...sightLines(options.base, new Set(kinds.map(label))),
+      // Who sees what, as the sights in the studio say it (FR-02).
+      ...sights,
       `};`,
       ``,
     ].join("\n");
@@ -531,20 +532,21 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   return files;
 }
 
-/** The checkout's `sees`, kept to the kinds still declared, as policy lines. */
-function sightLines(base: GraviewApp<AnySchema> | undefined, kinds: ReadonlySet<string>): string[] {
-  const sights = (base?.policy?.sees ?? [])
-    .map((sight) => ({ ...sight, kinds: sight.kinds.filter((kind) => kinds.has(kind)) }))
-    .filter((sight) => sight.kinds.length > 0);
+/** The sights in the studio as policy lines; one whose every kind is gone keeps nothing and is left out. */
+function sightLines(read: Read): string[] {
+  const sights = read
+    .ofKind("sight")
+    .map((sight) => ({ sight, roles: read.out(sight.id, "seen-by").map(label), kinds: read.out(sight.id, "shows").map(label) }))
+    .filter(({ kinds }) => kinds.length > 0);
   if (sights.length === 0) return [];
   return [
     `  sees: [`,
-    ...sights.map((sight) => {
+    ...sights.map(({ sight, roles, kinds }) => {
       const parts = [
-        `roles: ${sight.roles === "*" ? '"*"' : `[${sight.roles.map(q).join(", ")}]`}`,
-        `kinds: [${sight.kinds.map(q).join(", ")}]`,
-        ...(sight.own ? ["own: true"] : []),
-        ...(sight.describe ? [`describe: ${q(sight.describe)}`] : []),
+        `roles: ${bool(sight, "everyone") ? '"*"' : `[${roles.map(q).join(", ")}]`}`,
+        `kinds: [${kinds.map(q).join(", ")}]`,
+        ...(bool(sight, "own") ? ["own: true"] : []),
+        ...(str(sight, "describe") ? [`describe: ${q(str(sight, "describe")!)}`] : []),
       ];
       return `    { ${parts.join(", ")} },`;
     }),

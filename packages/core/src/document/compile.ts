@@ -693,8 +693,17 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   }
 
   // ── policy, brand, the rest ──────────────────────────────────────────────
+  /*
+   * WHO SEES WHAT is the app's, in the framework's one meaning (FR-02):
+   * absent, everybody sees everything; present, a kind no sight names is
+   * seen by nobody but the system, and `own` is the principal's own records.
+   */
   const policy: Policy | undefined = document.policy
-    ? { grants: document.policy.grants as Policy["grants"], ...(document.roles ? { roles: document.roles } : {}) }
+    ? {
+        grants: document.policy.grants as Policy["grants"],
+        ...(document.policy.sees ? { sees: document.policy.sees as Policy["sees"] } : {}),
+        ...(document.roles ? { roles: document.roles } : {}),
+      }
     : undefined;
 
   let brand: Brand | undefined;

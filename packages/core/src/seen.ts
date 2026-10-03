@@ -31,10 +31,10 @@ export function seesId(store: Judged, principal: Principal): (id: string) => boo
   const records = recordsOf(store.log);
   return (id) => {
     const node = store.graph.getNode(id);
-    if (node) return sees(store.policy, principal, node, store.graph);
+    if (node) return sees(store.policy, principal, node, store.graph, records);
     const kind = records.kindOf(id);
     if (kind === undefined) return true;
-    return sees(store.policy, principal, { id, kind }, { out: () => [], in: () => [] });
+    return sees(store.policy, principal, { id, kind }, { out: () => [], in: () => [] }, records);
   };
 }
 
@@ -80,7 +80,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
 
   const full = store.graph;
   const seenNode = (node: { id: string; kind: string } | undefined): boolean =>
-    node !== undefined && sees(store.policy, principal, node as never, full as never);
+    node !== undefined && sees(store.policy, principal, node as never, full as never, recordsOf(store.log));
   const seenId = (id: string): boolean => seenNode(full.getNode(id) as never);
   const seenEdge = (edge: GraphEdge): boolean => seenId(edge.from) && seenId(edge.to);
   /*

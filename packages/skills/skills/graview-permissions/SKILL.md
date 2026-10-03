@@ -97,6 +97,14 @@ yesterday and now the button is gone.
    installation without people is a household of one, not a disabled module.
    Say it once and the checker stops asking.
 
+8. **Say who sees what, for every kind.** `sees` keeps records from seats
+   the way grants keep acts: once there is one sight, a kind no sight names
+   is seen by nobody but the system (`sight-unnamed-kind` says which).
+   `{ roles: "*", kinds: ["car"] }` is the shop window; `own: true` keeps a
+   kind to a seat's own records — theirs, joined to theirs, or made by
+   them. A served store sends a seat only what it sees, withholds the rest
+   of the log in place, and refuses an act that names a record it may not.
+
 ## Worked examples
 
 - `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation

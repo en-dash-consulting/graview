@@ -14,6 +14,7 @@ import {
   type InvariantDefinition,
   type LensDeclaration,
   type Policy,
+  type Sight,
 } from "@graview/core";
 import { expressionRule } from "@graview/core/document";
 import { z } from "zod";
@@ -340,16 +341,20 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     };
   });
   /*
-   * WHO SEES WHAT, carried from the checkout — the studio has no act for a
-   * sight yet — and kept to the kinds still declared. Dropped, a storefront
-   * written back by the studio showed every customer to everybody again.
+   * WHO SEES WHAT, read from the sights in the graph (FR-02), kept to the
+   * kinds still declared — a sight whose every kind is gone keeps nothing.
    */
-  const declared = new Set(kindName.values());
-  const sees = (base?.policy?.sees ?? [])
-    .map((sight) => ({ ...sight, kinds: sight.kinds.filter((kind) => declared.has(kind)) }))
+  const sees: Sight[] = read
+    .ofKind("sight")
+    .map((sight) => ({
+      roles: bool(sight, "everyone") ? ("*" as const) : read.out(sight.id, "seen-by").map(name),
+      kinds: read.out(sight.id, "shows").map((kind) => kindName.get(kind.id) ?? name(kind)),
+      ...(bool(sight, "own") ? { own: true } : {}),
+      ...(str(sight, "describe") ? { describe: str(sight, "describe")! } : {}),
+    }))
     .filter((sight) => sight.kinds.length > 0);
   const policy: Policy | undefined =
-    roles.length > 0 || grants.length > 0 ? { grants, ...(roles.length > 0 ? { roles } : {}), ...(sees.length > 0 ? { sees } : {}) } : undefined;
+    roles.length > 0 || grants.length > 0 || sees.length > 0 ? { grants, ...(roles.length > 0 ? { roles } : {}), ...(sees.length > 0 ? { sees } : {}) } : undefined;
 
   /*
    * A LENS'S BINDINGS FOLLOW THE KINDS THEY NAME — and let go of the ones

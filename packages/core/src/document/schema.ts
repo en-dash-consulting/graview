@@ -159,12 +159,17 @@ export const GrantSpec = z
   })
   .strict();
 
-/** Who sees which kinds. Absent: everyone sees everything. Present: a kind no sight names is seen by nobody but owners. */
+/**
+ * Who sees which kinds — the framework's `Sight`, one meaning (FR-02).
+ * Absent: everyone sees everything. Present: a kind no sight names is seen
+ * by nobody but the system (a host that gives its owners everything serves
+ * them as the system, or names them in a sight).
+ */
 export const SightSpec = z
   .object({
     roles: z.union([z.array(name("role")).min(1), z.literal("*")]),
     kinds: z.array(name("kind")).min(1),
-    /** Only the records this principal created. */
+    /** Only the principal's own records: the ones they made, their own record, and what an edge joins to it. */
     own: z.boolean().optional(),
   })
   .strict();

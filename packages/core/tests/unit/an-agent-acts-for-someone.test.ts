@@ -46,7 +46,7 @@ const policy: Policy = {
     { roles: ["planner"], mutations: ["add-task"], describe: "Planners add the work." },
     { roles: ["doer"], mutations: ["finish-task"], describe: "Doers finish it." },
   ],
-  sees: [{ roles: ["planner"], kinds: ["person"], describe: "Planners see who is on the team." }],
+  sees: [{ roles: ["planner"], kinds: ["person"], describe: "Planners see who is on the team." }, { roles: "*", kinds: ["task"], describe: "Everybody sees the work." }],
 };
 const seed = { nodes: [{ id: "nick", kind: "person", label: "Nick" }, { id: "t1", kind: "task", label: "Pay the deposit", done: false }] as never, edges: [] };
 const store = () => new Store({ schema, mutations: [addTask, finish], policy, snapshot: seed });
