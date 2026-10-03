@@ -1,4 +1,4 @@
-import type { Epoch, Operation, PersistenceAdapter } from "@graview/core";
+import type { Operation, PersistenceAdapter } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 import type { StoredMeta } from "./meta.js";
 
@@ -17,7 +17,7 @@ export interface BrowserAdapter extends PersistenceAdapter<string> {
   loadMeta(scope: string): StoredMeta | null;
   saveMeta(scope: string, meta: StoredMeta): void;
   /** The storage keys this scope occupies — for a person or a test to look. */
-  keysFor(scope: string): { snapshot: string; log: string; meta: string; epochs: string };
+  keysFor(scope: string): { snapshot: string; log: string; meta: string };
 }
 
 export interface BrowserAdapterOptions {
@@ -29,9 +29,11 @@ export interface BrowserAdapterOptions {
 
 /**
  * Persistence in the browser itself: the SAME things the file adapter
- * writes — the snapshot, the append-only log, the stored schema version,
- * the epochs the log folds from — as four `localStorage` entries per
- * scope. It slots into `openStore` unchanged, migrations included, so a
+ * writes — the snapshot, the append-only log, the stored schema version —
+ * as three `localStorage` entries per scope. Not the epochs (FR-27): each
+ * keeps a whole copy of the graph as its base, and a second copy in a few
+ * megabytes ran a two-thousand-talk programme out of room; a page's store
+ * is verified by the host it is served from, not in the page. It slots into `openStore` unchanged, migrations included, so a
  * sample app that remembers is the
  * same lifecycle as a deployment that does, minus the server.
  *
@@ -52,7 +54,6 @@ export function createBrowserAdapter(options: BrowserAdapterOptions = {}): Brows
     snapshot: `${prefix}:${scope}:snapshot`,
     log: `${prefix}:${scope}:log`,
     meta: `${prefix}:${scope}:meta`,
-    epochs: `${prefix}:${scope}:epochs`,
   });
   const read = <T>(key: string): T | null => {
     const raw = storage.getItem(key);
@@ -74,7 +75,6 @@ export function createBrowserAdapter(options: BrowserAdapterOptions = {}): Brows
       storage.removeItem(keys.snapshot);
       storage.removeItem(keys.log);
       storage.removeItem(keys.meta);
-      storage.removeItem(keys.epochs);
     },
     async loadLog(scope) {
       return read<Operation[]>(keysFor(scope).log) ?? [];
@@ -83,12 +83,6 @@ export function createBrowserAdapter(options: BrowserAdapterOptions = {}): Brows
       if (ops.length === 0) return;
       const key = keysFor(scope).log;
       write(key, [...(read<Operation[]>(key) ?? []), ...ops]);
-    },
-    async loadEpochs(scope) {
-      return read<Epoch[]>(keysFor(scope).epochs) ?? [];
-    },
-    async saveEpochs(scope, epochs) {
-      write(keysFor(scope).epochs, epochs);
     },
     loadMeta(scope) {
       return read<StoredMeta>(keysFor(scope).meta);
