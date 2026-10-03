@@ -23,6 +23,13 @@ export interface ApplyPrimitivesOptions {
    * repaired. A node still has to be there to be patched or removed.
    */
   readonly restoring?: boolean;
+  /**
+   * What is put back goes back WHERE IT STOOD, not at the end: a rollback
+   * (`Store.rebase`) undoing ops this graph applied is exact, order and all.
+   * An undo is not a rollback — it adds at the end, as a client that loaded
+   * after the removal would, so every copy of the graph agrees.
+   */
+  readonly inPlace?: boolean;
 }
 
 export type GraphListener<S extends AnySchema> = (
@@ -62,6 +69,11 @@ export class GraphError extends Error {
   }
 }
 
+
+/** The rank keys: nodes and edges share one ranking, under their own prefixes. */
+const NODE = "n\u0000";
+const EDGE = "e\u0000";
+
 /**
  * The framework owns the reactive in-memory graph. Owning it — rather than
  * reading someone else's store — is what makes invariants enforceable and
@@ -72,6 +84,16 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   private readonly edges = new Map<string, GraphEdge>();
   private readonly outIndex = new Map<string, Set<string>>();
   private readonly inIndex = new Map<string, Set<string>>();
+  /*
+   * WHERE EACH THING STANDS. The maps keep insertion order, and that order
+   * is the graph's ("as they come"). Each node and edge takes a rank as it
+   * goes in; one taken out keeps its rank here a while, so a rollback that
+   * puts it back (`inPlace`) puts it back where it stood.
+   */
+  private rank = 0;
+  private readonly ranks = new Map<string, number>();
+  private readonly lapsed = new Map<string, number>();
+  private reordered = false;
   private readonly listeners = new Set<GraphListener<S>>();
   private readonly validate: boolean;
 
@@ -99,6 +121,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     this.edges.clear();
     this.outIndex.clear();
     this.inIndex.clear();
+    this.forgetRanks();
     /*
      * HELD AS STORED (FR-28). Loading never parses a node into something
      * else — no default filled, no field stripped or coerced — and never
@@ -190,7 +213,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
      * told anything changed, and the error goes on up.
      */
     try {
-      for (const primitive of primitives) this.applyOne(primitive, options.restoring === true);
+      for (const primitive of primitives) this.applyOne(primitive, options.restoring === true, options.inPlace === true);
+      this.settleOrder();
     } catch (error) {
       this.restore(before);
       throw error;
@@ -219,8 +243,49 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     this.edges.clear();
     this.outIndex.clear();
     this.inIndex.clear();
-    for (const node of snapshot.nodes) this.nodes.set(node.id, node);
+    this.forgetRanks();
+    for (const node of snapshot.nodes) this.insertNode(node, true);
     for (const edge of snapshot.edges) this.insertEdge(edge, true);
+  }
+
+  private forgetRanks(): void {
+    this.ranks.clear();
+    this.lapsed.clear();
+    this.reordered = false;
+  }
+
+  /** A rank for what just went in: the one it had, when it is being put back in place; the next one otherwise. */
+  private place(key: string, inPlace: boolean): void {
+    const was = inPlace ? this.lapsed.get(key) : undefined;
+    if (was === undefined) {
+      this.ranks.set(key, ++this.rank);
+      return;
+    }
+    this.ranks.set(key, was);
+    this.lapsed.delete(key);
+    this.reordered = true;
+  }
+
+  /** What was taken out keeps its rank, for a while: a rollback only ever reaches the recent past. */
+  private lapse(key: string): void {
+    const rank = this.ranks.get(key);
+    if (rank === undefined) return;
+    this.ranks.delete(key);
+    this.lapsed.set(key, rank);
+    if (this.lapsed.size > 4096) this.lapsed.delete(this.lapsed.keys().next().value!);
+  }
+
+  /** After an in-place put-back, the maps in rank order again. */
+  private settleOrder(): void {
+    if (!this.reordered) return;
+    this.reordered = false;
+    const byRank = (prefix: string) => (a: [string, unknown], b: [string, unknown]) => this.ranks.get(prefix + a[0])! - this.ranks.get(prefix + b[0])!;
+    const nodes = [...this.nodes.entries()].sort(byRank(NODE));
+    this.nodes.clear();
+    for (const [id, node] of nodes) this.nodes.set(id, node);
+    const edges = [...this.edges.entries()].sort(byRank(EDGE));
+    this.edges.clear();
+    for (const [id, edge] of edges) this.edges.set(id, edge);
   }
 
   private emit(diff: GraphDiff<NodeOfSchema<S>>): void {
@@ -236,10 +301,10 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     for (const listener of this.listeners) listener(diff);
   }
 
-  private applyOne(primitive: Primitive, restoring: boolean): void {
+  private applyOne(primitive: Primitive, restoring: boolean, inPlace: boolean): void {
     switch (primitive.op) {
       case "add-node":
-        this.insertNode(primitive.node as NodeOfSchema<S>, restoring);
+        this.insertNode(primitive.node as NodeOfSchema<S>, restoring, inPlace);
         return;
       case "remove-node": {
         const id = primitive.node.id;
@@ -250,6 +315,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
           this.deleteEdge(edge);
         }
         this.nodes.delete(id);
+        this.lapse(NODE + id);
         this.outIndex.delete(id);
         this.inIndex.delete(id);
         return;
@@ -270,7 +336,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         return;
       }
       case "add-edge":
-        this.insertEdge(primitive.edge, restoring);
+        this.insertEdge(primitive.edge, restoring, inPlace);
         return;
       case "remove-edge": {
         if (!this.edges.has(edgeId(primitive.edge))) {
@@ -372,14 +438,15 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   }
 
   /** `held`: put in as it is (a load, a restore), not judged as a write. */
-  private insertNode(node: NodeOfSchema<S>, held: boolean): void {
+  private insertNode(node: NodeOfSchema<S>, held: boolean, inPlace = false): void {
     if (this.nodes.has(node.id)) {
       throw new GraphError(`Duplicate node id "${node.id}"`);
     }
     this.nodes.set(node.id, held ? node : this.check(node));
+    this.place(NODE + node.id, inPlace);
   }
 
-  private insertEdge(edge: GraphEdge, held: boolean): void {
+  private insertEdge(edge: GraphEdge, held: boolean, inPlace = false): void {
     const from = this.nodes.get(edge.from);
     const to = this.nodes.get(edge.to);
     if (!from || !to) {
@@ -401,6 +468,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     const id = edgeId(edge);
     if (this.edges.has(id)) return;
     this.edges.set(id, edge);
+    this.place(EDGE + id, inPlace);
     this.index(this.outIndex, edge.from, id);
     this.index(this.inIndex, edge.to, id);
   }
@@ -408,6 +476,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   private deleteEdge(edge: GraphEdge): void {
     const id = edgeId(edge);
     this.edges.delete(id);
+    this.lapse(EDGE + id);
     this.outIndex.get(edge.from)?.delete(id);
     this.inIndex.get(edge.to)?.delete(id);
   }

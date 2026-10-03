@@ -1460,7 +1460,8 @@ export class Store<S extends AnySchema> {
     this.quiet++;
     try {
       // 1. Back to the confirmed prefix, putting back exactly what each op took.
-      for (const op of [...tail].reverse()) this.graph.applyPrimitives(op.inverse, { restoring: true });
+      // In place: what a pending op took out goes back where it stood, or this copy and the server's disagree on order.
+      for (const op of [...tail].reverse()) this.graph.applyPrimitives(op.inverse, { restoring: true, inPlace: true });
       this.log.truncate(cut);
 
       // 2. What the server says, in its order.
