@@ -55,6 +55,12 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
 7. **Presence is opt-in.** An embed broadcasts nothing and draws nobody
    unless it is handed a `presence` channel: putting a graph on a page does
    not tell its readers about each other.
+8. **In a chat's widget, let the frame be sized from the embed.** `height:
+   "auto"` with `onIntrinsicHeight` tells the host the height to give it;
+   `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the
+   scene for the pages on a phone; `remote` takes an `openRemote` store. A
+   hosted reader sits only as who signed in: name members through `people`
+   (and `setPeople`), never as `seats`, which offer "sit as somebody else".
 
 ## Worked examples
 

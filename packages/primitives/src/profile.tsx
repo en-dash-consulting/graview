@@ -71,7 +71,7 @@ export function Profile<S extends AnySchema>({
   readonly profileHref?: (userId: string) => string;
   readonly keeping?: ReactNode;
 }) {
-  const { store, principal, seats, settings, settingValues, chooseSetting, sharing, hostAnswers } = useGraview<S>();
+  const { store, principal, seats, people, settings, settingValues, chooseSetting, sharing, hostAnswers } = useGraview<S>();
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
 
@@ -123,7 +123,7 @@ export function Profile<S extends AnySchema>({
     me === undefined
       ? principal.id === undefined
         ? "Nobody in particular"
-        : nameOfAuthor(principal, { graph: store.graph as never, schema: store.schema, seats })
+        : nameOfAuthor(principal, { graph: store.graph as never, schema: store.schema, seats, people })
       : labelOf(store.schema.tryDefinition(me.kind as string), me);
   const roles = principal.roles ?? [];
 

@@ -1095,6 +1095,7 @@ handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();</cod
 <li><strong>Make the policy felt, if the page is about it.</strong> <code>seats</code> lists the principals a reader may take — each a label and a <code>Principal</code> — on the strip; the acts, the pages and the strip narrow the moment one sits down, and <code>setSeat</code> does it from the host. See <code>graview-permissions</code>.</li>
 <li><strong>Many on one page: mount when near.</strong> `mountWhenNear(elements, mountOne)` mounts each as the reader scrolls toward it, so a page of sixteen chapters costs one at a time. Share a <code>store</code> between embeds only when they are meant to be one app seen twice.</li>
 <li><strong>Presence is opt-in.</strong> An embed broadcasts nothing and draws nobody unless it is handed a <code>presence</code> channel: putting a graph on a page does not tell its readers about each other.</li>
+<li><strong>In a chat's widget, let the frame be sized from the embed.</strong> `height: "auto"<code> with </code>onIntrinsicHeight` tells the host the height to give it; <code>hostContext: { theme }</code> takes the chat's theme; <code>pagesBelow</code> swaps the scene for the pages on a phone; <code>remote</code> takes an <code>openRemote</code> store. A hosted reader sits only as who signed in: name members through <code>people</code> (and <code>setPeople</code>), never as <code>seats</code>, which offer "sit as somebody else".</li>
 </ol>
 <h3>Worked examples</h3>
 <ul>

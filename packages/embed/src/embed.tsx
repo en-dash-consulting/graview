@@ -1,4 +1,4 @@
-import { Store, type AnySchema, type Brand, type GraviewApp, type Place, type PresenceChannel, type Principal } from "@graview/core";
+import { Store, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type PresenceChannel, type Principal } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PagesApp, PlacePicture, type PageComponent, type PageRegistry } from "@graview/pages";
 import { Companion, Inspector, OverviewButton, Places, Profile, ShowInstallation, Standing, descentTarget, registerDefaultViews, themeCss, useWidth } from "@graview/primitives";
@@ -9,6 +9,7 @@ import {
   Scene,
   useGraview,
   useNavigation,
+  type ReaderMemory,
   type Scheme,
   type ReactViewRegistry,
   useTheKeyboardLandsSomewhere,
@@ -37,6 +38,29 @@ import { fontsLink } from "./fonts.js";
  */
 export type EmbedFace = "scene" | "graview" | "pages" | "picture";
 
+/**
+ * WHAT A HOST SAYS ABOUT ITS FRAME (FR-13). A chat's widget is told its
+ * theme by the chat, over `postMessage` (MCP Apps' `hostContext.theme`,
+ * ChatGPT's `openai.theme`), not by a `data-theme` on a document it owns.
+ * The embed takes the theme from here before it looks at the page.
+ */
+export interface EmbedHostContext {
+  readonly theme?: Scheme;
+}
+
+/**
+ * A STORE THAT LIVES SOMEWHERE ELSE: what `openRemote` from
+ * `@graview/ship` returns, or any host's own with the same two parts. The
+ * embed acts through its store and draws who is here from its channel.
+ */
+export interface EmbedRemote<S extends AnySchema = AnySchema> {
+  readonly store: Store<S>;
+  readonly presence?: PresenceChannel;
+}
+
+/** The scene and the Graview's height when the embed sizes itself to its content (`height: "auto"`). */
+export const AUTO_SCENE_HEIGHT = 480;
+
 export interface EmbedOptions<S extends AnySchema = AnySchema> {
   readonly app: GraviewApp<S>;
   /** The graph to open with. Nothing means the empty city. */
@@ -64,12 +88,37 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
    * the moment a gardener sits down.
    */
   readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
-  /** "auto" reads the host page: its `data-theme` stamp, else the system's preference. */
+  /**
+   * WHO THE APP MAY NAME, apart from the seats (FR-13). A hosted app knows
+   * its members and the agents that act in it; listing them as seats
+   * offered every reader the chance to sit as each of them. A directory
+   * names authors in the rail, the pages and presence, and offers no seat.
+   * `setPeople` changes it after mount, for an agent who first acts later.
+   */
+  readonly people?: readonly Person[];
+  /** "auto" follows the host: the host context's theme, else the page's `data-theme` stamp, else the system's preference, as each changes. */
   readonly scheme?: Scheme | "auto";
+  /** What the host says about its frame: a chat widget's theme. `setHostContext` follows it as it changes. */
+  readonly hostContext?: EmbedHostContext;
   /** Defaults to the app's own brand. */
   readonly brand?: Brand;
   /** A store to share; otherwise one is made from the app and the seed. */
   readonly store?: Store<S>;
+  /**
+   * A store that lives on a server (`await openRemote(...)`): its store is
+   * the embed's store, and its presence the embed's channel unless
+   * `presence` names another. The host opened it and closes it.
+   */
+  readonly remote?: EmbedRemote<S>;
+  /**
+   * WHERE THE READER'S OWN CHOICES ARE KEPT: text size, motion, what they
+   * share, this tab's session. The page's storage by default, and nothing
+   * is lost but the remembering where a sandboxed frame refuses it; a host
+   * that keeps them itself passes any `getItem`/`setItem` object.
+   */
+  readonly memory?: ReaderMemory;
+  /** How long somebody a presence channel told of stands without a fresh word. Default `REMOTE_PRESENCE_TTL_MS`. */
+  readonly presenceTtlMs?: number;
   /** Views beyond the derived defaults. */
   /*
    * The app's OWN registry, in the app's own schema.
@@ -86,8 +135,25 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
   readonly toggle?: boolean;
   /** Fetch the brand's fonts. Default on; off when the host already has them. */
   readonly fonts?: boolean;
-  /** The embed's height; the element's own by default. */
+  /**
+   * The embed's height; the element's own by default. `"auto"` sizes it to
+   * its content: the pages face grows with its page, and the scene and the
+   * Graview take `AUTO_SCENE_HEIGHT`. A frame that is sized from its content
+   * (a chat's widget) wants `"auto"` and `onIntrinsicHeight`.
+   */
   readonly height?: number | string;
+  /**
+   * THE HEIGHT THE EMBED ASKS FOR, as it changes (FR-13): the strip and the
+   * whole page under it on the pages face, the strip and the picture's box
+   * on the others. A widget forwards it to its host (MCP Apps'
+   * `ui/notifications/size-changed`, ChatGPT's `notifyIntrinsicHeight`).
+   */
+  readonly onIntrinsicHeight?: (height: number) => void;
+  /**
+   * Below this width the scene and the Graview give way to the pages face,
+   * and come back above it. A phone's chat is no place for a map. Off by default.
+   */
+  readonly pagesBelow?: number;
   /** What Standing says when nothing is wrong. */
   readonly standing?: string;
   /**
@@ -153,6 +219,85 @@ export function hostScheme(): Scheme {
   return typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+/**
+ * THE HOST PAGE'S SCHEME, AS IT CHANGES. Read once, an embed kept the
+ * scheme the page had when it mounted: a host that stamps `data-theme` when
+ * its own toggle is pressed (or a widget's glue, when the chat says the
+ * theme changed) left the embed in the other one.
+ */
+function useHostScheme(follow: boolean): Scheme {
+  const [scheme, setScheme] = useState<Scheme>(() => hostScheme());
+  useEffect(() => {
+    if (!follow || typeof document === "undefined") return;
+    const read = () => setScheme(hostScheme());
+    read();
+    const stamped = new MutationObserver(read);
+    stamped.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const media = typeof matchMedia === "function" ? matchMedia("(prefers-color-scheme: dark)") : null;
+    media?.addEventListener?.("change", read);
+    return () => {
+      stamped.disconnect();
+      media?.removeEventListener?.("change", read);
+    };
+  }, [follow]);
+  return scheme;
+}
+
+/** Element heights, read the one way a ResizeObserver also reads them. */
+const heightOf = (element: Element | null | undefined): number => (element ? element.getBoundingClientRect().height : 0);
+
+/**
+ * THE HEIGHT THE EMBED ASKS FOR, told as it changes (FR-13). A chat's
+ * widget frame is sized from its content, and an embed that filled
+ * whatever box it was given had no height of its own to say: the frame
+ * stayed at its first guess. The pages face asks for the strip and the
+ * whole page; the other faces for the strip and the picture's box.
+ */
+function useIntrinsicHeight(rootRef: { readonly current: HTMLElement | null }, face: EmbedFace, onHeight: ((height: number) => void) | undefined): void {
+  const told = useRef(onHeight);
+  told.current = onHeight;
+  const wanted = onHeight !== undefined;
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root || !wanted) return;
+    const parts = () => {
+      const children = [...root.children];
+      const strip = children.find((child) => child.hasAttribute("data-embed-strip"));
+      const content = children.find((child) => child.hasAttribute("data-embed-content"));
+      const measure = content?.querySelector("[data-embed-measure]") ?? null;
+      return { strip, content, measure };
+    };
+    let last = -1;
+    const report = () => {
+      const { strip, content, measure } = parts();
+      const height = Math.ceil(heightOf(strip) + (measure ? heightOf(measure) : heightOf(content)));
+      if (height === last) return;
+      last = height;
+      told.current?.(height);
+    };
+    report();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(report);
+    const watch = () => {
+      observer.disconnect();
+      const { strip, content, measure } = parts();
+      for (const element of [root, strip, content, measure]) if (element) observer.observe(element);
+    };
+    watch();
+    // The strip comes and goes with the face's own children; a page that
+    // routes changes size inside the measured box, which the observer sees.
+    const swapped = new MutationObserver(() => {
+      watch();
+      report();
+    });
+    swapped.observe(root, { childList: true });
+    return () => {
+      observer.disconnect();
+      swapped.disconnect();
+    };
+  }, [rootRef, face, wanted]);
+}
+
 export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const {
     app,
@@ -179,7 +324,8 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
    * seat change made a fresh store from the seed, and a React host that sat
    * somebody else down lost every edit and the history with them.
    */
-  const store = useMemo(() => props.store ?? storeOf(app, seed), [props.store, app, seed]);
+  const store = useMemo(() => props.store ?? props.remote?.store ?? storeOf(app, seed), [props.store, props.remote, app, seed]);
+  const presence = props.presence ?? props.remote?.presence;
   const views = useMemo(
     () => (props.views ? props.views(app.schema) : registerDefaultViews(app.schema, createViews(app.schema))) as never,
     [props.views, app.schema],
@@ -187,7 +333,19 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const kinds = app.schema.kinds as readonly string[];
   // The first view only: after it, where the reader goes is theirs.
   const initialView = useMemo(() => viewFor(face, stop, kinds, (views as ReactViewRegistry<S>).places()), []);
-  const scheme: Scheme = askedScheme === "auto" ? hostScheme() : askedScheme;
+  const told = props.hostContext?.theme;
+  const followed = useHostScheme(askedScheme === "auto" && told === undefined);
+  const scheme: Scheme = askedScheme === "auto" ? (told ?? followed) : askedScheme;
+  /*
+   * NARROW, THE PAGES (FR-13). Below `pagesBelow` the scene and the Graview
+   * give way to the routed face, and come back when there is room: the
+   * face the host asked for is kept, only what is drawn changes.
+   */
+  const width = useWidth(rootRef);
+  const narrow = props.pagesBelow !== undefined && width !== null && width < props.pagesBelow && (face === "scene" || face === "graview");
+  const shown: EmbedFace = narrow ? "pages" : face;
+  const auto = height === "auto";
+  useIntrinsicHeight(rootRef, shown, props.onIntrinsicHeight);
   const css = useMemo(() => themeCss(scheme, brand, { scope: `.${scope}` }), [scheme, brand, scope]);
 
   // The brand's fonts, fetched once per family set, without the host's help.
@@ -246,8 +404,10 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       ref={rootRef}
       className={scope}
       aria-label={label ?? app.name}
-      data-graview-embed={face}
-      style={{ position: "relative", height, minHeight: 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
+      data-graview-embed={shown}
+      data-graview-scheme={scheme}
+      {...(narrow ? { "data-graview-embed-narrow": "" } : {})}
+      style={{ position: "relative", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
     >
       <style>{css}</style>
       <GraviewProvider
@@ -259,20 +419,24 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         {...(principal ? { principal } : {})}
         /* The seats, so every surface under the provider names a seat as it was offered (W-114). */
         {...(props.seats ? { seats: props.seats } : {})}
-        {...(props.presence ? { presence: props.presence } : {})}
+        {...(presence ? { presence } : {})}
+        {...(props.people ? { people: props.people } : {})}
+        {...(props.memory ? { memory: props.memory } : {})}
+        {...(props.presenceTtlMs !== undefined ? { presenceTtlMs: props.presenceTtlMs } : {})}
         /* The reader's own text size and motion, on somebody else's page
            too: the answer lives on the browser, not on the installation. */
         settings={app.settings ?? []}
       >
-        <Faces face={face} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
-        {toggle && face !== "picture" ? <Strip app={app as unknown as GraviewApp<AnySchema>} face={face} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} /> : null}
-        {face === "picture" ? (
+        <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
+        {toggle && shown !== "picture" ? <Strip app={app as unknown as GraviewApp<AnySchema>} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} /> : null}
+        {shown === "picture" ? (
           /*
            * The lens fills the frame: a one-row grid stretches it to the
            * height it was given, and it scrolls inside itself past that.
            */
           <div
             data-testid="embed-picture"
+            data-embed-content=""
             // A region that may scroll has to be reachable by keyboard, and a
             // reachable region has to say what it is: the picture's own name.
             tabIndex={0}
@@ -292,16 +456,30 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
           >
             <PlacePicture<S> store={store} views={views as ReactViewRegistry<S>} as={(stop ? fromUrl(stop).within?.["view"] : undefined) ?? ""} />
           </div>
-        ) : face === "pages" ? (
-          <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "auto" }}>
-            <PagesApp<S>
-              context={{ store, embedded: true, ...(brand ? { brand } : {}), ...(principal ? { principal } : {}), ...(props.seats ? { seats: props.seats } : {}) }}
-              {...(pages ? { registry: pages } : {})}
-              initialPath={path}
-            />
+        ) : shown === "pages" ? (
+          /*
+           * The page scrolls inside the embed's box, unless the embed is
+           * sized from its content: then the page is as tall as it is, and
+           * the height the host is told is the whole of it.
+           */
+          <div data-embed-content="" style={auto ? { flex: "0 0 auto", background: "var(--graview-ground)" } : { flex: "1 1 auto", minHeight: 0, overflow: "auto", background: "var(--graview-ground)" }}>
+            <div data-embed-measure="" style={{ display: "flow-root" }}>
+              <PagesApp<S>
+                context={{
+                  store,
+                  embedded: true,
+                  ...(brand ? { brand } : {}),
+                  ...(principal ? { principal } : {}),
+                  ...(props.seats ? { seats: props.seats } : {}),
+                  ...(props.people ? { people: props.people } : {}),
+                }}
+                {...(pages ? { registry: pages } : {})}
+                initialPath={path}
+              />
+            </div>
           </div>
         ) : (
-          <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size" }}>
+          <div data-embed-content="" style={{ position: "relative", flex: auto ? `0 0 ${AUTO_SCENE_HEIGHT}px` : "1 1 auto", minHeight: 0, containerType: "size" }}>
             <Scene renderer="dom" />
             <OverviewButton />
             {/* One panel on the frame — the acts, the relations, the seat, the key. */}
@@ -346,6 +524,7 @@ function Faces({ face, stop, kinds, places }: { face: EmbedFace; stop: string | 
 function Strip({
   app,
   face,
+  narrow = false,
   onFace,
   standing,
   seats,
@@ -355,6 +534,8 @@ function Strip({
   /** The declaration this embed is running, for the way into the studio. */
   app: GraviewApp<AnySchema>;
   face: EmbedFace;
+  /** Narrower than `pagesBelow`: the pages are the only face there is room for, so there is nothing to switch. */
+  narrow?: boolean;
   onFace?: ((face: EmbedFace) => void) | undefined;
   standing: string;
   seats?: EmbedOptions["seats"] | undefined;
@@ -401,7 +582,7 @@ function Strip({
       <span style={{ fontFamily: "var(--graview-font-display)", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: "0.75rem", marginRight: 6 }}>
         {brand?.name ?? "Graview"}
       </span>
-      {faces.map((candidate) => (
+      {(narrow ? [] : faces).map((candidate) => (
         <button
           key={candidate.id}
           type="button"
@@ -505,10 +686,27 @@ export interface EmbedHandle {
   setScheme(scheme: Scheme): void;
   /** Put another principal at the keyboard; the store and its history stay. */
   setSeat(principal: Principal): void;
+  /** Offer other seats, or none: a seat switcher is drawn only for two or more. */
+  setSeats(seats: EmbedOptions["seats"]): void;
+  /** Name other people: an agent who first acts after the page opened is named from the next render. */
+  setPeople(people: readonly Person[]): void;
+  /** What the host now says about its frame: the chat's theme changed, say. */
+  setHostContext(context: EmbedHostContext): void;
   /** Re-dress the embed: another brand, or the same brand with a different kit. */
   setBrand(brand: Brand | undefined): void;
   readonly store: Store<AnySchema>;
   unmount(): void;
+}
+
+interface Setters {
+  face(face: EmbedFace): void;
+  stop(stop: string): void;
+  scheme(scheme: Scheme): void;
+  seat(principal: Principal): void;
+  seats(seats: EmbedOptions["seats"]): void;
+  people(people: readonly Person[]): void;
+  hostContext(context: EmbedHostContext): void;
+  brand(brand: Brand | undefined): void;
 }
 
 /**
@@ -516,15 +714,18 @@ export interface EmbedHandle {
  * render is synchronous, so what comes back is already on the page.
  */
 export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
-  const store = options.store ?? storeOf(options.app, options.seed);
-  let setters: { face: (f: EmbedFace) => void; stop: (s: string) => void; scheme: (s: Scheme) => void; seat: (p: Principal) => void; brand: (b: Brand | undefined) => void } | null = null;
+  const store = options.store ?? options.remote?.store ?? storeOf(options.app, options.seed);
+  let setters: Setters | null = null;
   function Host() {
     const [face, setFace] = useState<EmbedFace>(options.face ?? faceOf(options.stop));
     const [stop, setStop] = useState<string | undefined>(options.stop);
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
     const [principal, setSeat] = useState<Principal | undefined>(options.principal);
+    const [seats, setSeats] = useState<EmbedOptions["seats"]>(options.seats);
+    const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
+    const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
-    setters = { face: setFace, stop: setStop, scheme: setScheme, seat: setSeat, brand: setBrand };
+    setters = { face: setFace, stop: setStop, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand };
     return (
       <Embed<S>
         {...options}
@@ -532,6 +733,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         face={face}
         {...(stop !== undefined ? { stop } : {})}
         {...(principal ? { principal } : {})}
+        {...(seats ? { seats } : {})}
+        {...(people ? { people } : {})}
+        {...(hostContext ? { hostContext } : {})}
         {...(brand ? { brand } : {})}
         scheme={scheme}
         onFace={setFace}
@@ -547,6 +751,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
     setScheme: (scheme) => flushSync(() => setters?.scheme(scheme)),
     setSeat: (principal) => flushSync(() => setters?.seat(principal)),
+    setSeats: (seats) => flushSync(() => setters?.seats(seats)),
+    setPeople: (people) => flushSync(() => setters?.people(people)),
+    setHostContext: (context) => flushSync(() => setters?.hostContext(context)),
     setBrand: (brand) => flushSync(() => setters?.brand(brand)),
     unmount: () => root.unmount(),
   };

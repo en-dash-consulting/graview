@@ -1,9 +1,10 @@
-import { hueFor, type AnySchema, type Presence, type PresenceChannel, type Principal, type SettingDeclaration, type Store } from "@graview/core";
+import { foldPresence, hueFor, nameOfAuthor, REMOTE_PRESENCE_TTL_MS, type AnySchema, type Person, type Presence, type PresenceChannel, type Principal, type SettingDeclaration, type Store } from "@graview/core";
 import { fromUrl, kindsOfAggregate, sameView, toUrl, type ViewState } from "@graview/layout";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DrawnBox } from "./context.js";
 import { pickedFrom } from "./picking.js";
 import { participantOf as keyOf, type RobotState } from "./robot.js";
+import type { ReaderMemory } from "./settings.js";
 
 /*
  * WHO IS WHERE — the others, on your own map.
@@ -27,14 +28,15 @@ const SESSION_KEY = "graview:session";
  * (Before this, every seat's session was "ui", and two tabs of one seat
  * were one participant.)
  */
-export function tabSession(): string {
+export function tabSession(memory?: ReaderMemory): string {
   const fresh = () =>
     typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10);
   try {
-    const held = sessionStorage.getItem(SESSION_KEY);
+    const kept = memory ?? sessionStorage;
+    const held = kept.getItem(SESSION_KEY);
     if (held) return held;
     const made = fresh();
-    sessionStorage.setItem(SESSION_KEY, made);
+    kept.setItem(SESSION_KEY, made);
     return made;
   } catch {
     // A private window or a test: this visit still has a session, it is just not remembered.
@@ -189,6 +191,11 @@ export interface PresenceInputs<S extends AnySchema> {
   readonly seatWho: string | null;
   readonly settingValues: Readonly<Record<string, string>>;
   setView(next: ViewState | ((current: ViewState) => ViewState)): void;
+  /** How long a participant the channel told of stands without a fresh word. Default `REMOTE_PRESENCE_TTL_MS`. */
+  readonly ttlMs?: number;
+  /** The host's directory and the seats, so this tab is called what everybody else calls it. */
+  readonly people?: readonly Person[];
+  readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
 }
 
 export interface PresenceState {
@@ -208,7 +215,7 @@ export interface PresenceState {
  * press Escape. Nothing ever writes presence to the store.
  */
 export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>): PresenceState {
-  const { channel, store, view, principal, session, robots, seatWho, settingValues, setView } = inputs;
+  const { channel, store, view, principal, session, robots, seatWho, settingValues, setView, ttlMs = REMOTE_PRESENCE_TTL_MS, people, seats } = inputs;
   const [who, setWho] = useState<ReadonlyMap<string, Presence>>(() => new Map());
   const [over, setOver] = useState<string | null>(null);
   const [followingId, setFollowingId] = useState<string | null>(null);
@@ -217,7 +224,7 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
   const shareWhere = named && (settingValues[SHARE_WHERE.name] ?? SHARE_WHERE.initial) === "shared";
   const shareOver = shareWhere && (settingValues[SHARE_OVER.name] ?? SHARE_OVER.initial) === "shared";
   const participant = keyOf({ kind: principal.kind, ...(principal.id ? { id: principal.id } : {}), session });
-  const name = named ? String((store.graph.getNode(principal.id!) as { label?: string } | undefined)?.label ?? principal.id) : "";
+  const name = named ? nameOfAuthor(principal, { graph: store.graph as never, schema: store.schema, ...(seats ? { seats } : {}), ...(people ? { people } : {}) }) : "";
 
   /* What this tab says about itself — recomputed when anything in it moves. */
   const robot = seatWho ? robots.get(`agent:${seatWho}:${session}`) : undefined;
@@ -243,12 +250,29 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
     return () => clearInterval(beat);
   }, [channel, mine]);
 
-  /* Hear it. */
+  /*
+   * HEAR IT, AND FORGET THE GONE (FR-13). What a channel says is folded
+   * through the TTL as it arrives, so a stale word is never drawn, and
+   * swept again while anybody stands, so somebody the channel never drops
+   * leaves the map when their last word is older than the TTL. A host's own
+   * channel need not keep time for the framework.
+   */
   useEffect(() => {
     if (!channel) return;
-    const stop = channel.onWho((others) => setWho(new Map(others.map((presence) => [presence.participant, presence]))));
+    const stop = channel.onWho((others) => setWho(foldPresence(new Map(), others, Date.now(), ttlMs)));
     return stop;
-  }, [channel]);
+  }, [channel, ttlMs]);
+  const anybody = who.size > 0;
+  useEffect(() => {
+    if (!anybody) return;
+    const sweep = setInterval(() => {
+      setWho((current) => {
+        const kept = foldPresence(current, [], Date.now(), ttlMs);
+        return kept.size === current.size ? current : kept;
+      });
+    }, Math.max(250, Math.min(1000, ttlMs / 4)));
+    return () => clearInterval(sweep);
+  }, [anybody, ttlMs]);
 
   /* Leave when the page goes, not only when React unmounts. */
   useEffect(() => {

@@ -231,7 +231,7 @@ export function ActivityRail({
   readonly seat?: ReactNode;
 }) {
   const changes = useRecentChanges();
-  const { store, principal, seats } = useGraview<AnySchema>();
+  const { store, principal, seats, people } = useGraview<AnySchema>();
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
   const running = calls.some((call) => call.phase === "running");
@@ -459,7 +459,7 @@ export function ActivityRail({
                             work as their own. */}
                         {change.author === "human" && change.by?.onBehalfOf === undefined && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
                           ? "you"
-                          : nameOfAuthor(change.by ?? { kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats })}
+                          : nameOfAuthor(change.by ?? { kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats, people })}
                         {viaSaid(change.via) ? <span style={{ fontWeight: 400, color: "var(--graview-ink-muted)" }}>, {viaSaid(change.via)}</span> : null}
                       </strong>{" "}
                       <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>

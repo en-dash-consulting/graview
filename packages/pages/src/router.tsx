@@ -232,6 +232,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.brand ? { brand: context.brand } : {})}
       {...(context.settings ? { settings: context.settings } : {})}
       {...(context.presence ? { presence: context.presence } : {})}
+      {...(context.people ? { people: context.people } : {})}
     >
       {routed}
       <PageAsk context={context} />

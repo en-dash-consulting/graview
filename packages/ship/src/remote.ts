@@ -1,6 +1,6 @@
 import {
   foldPresence,
-  PRESENCE_TTL_MS,
+  REMOTE_PRESENCE_TTL_MS,
   samePresence,
   Store,
   type AnySchema,
@@ -159,7 +159,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
   let known = new Map<string, Presence>();
   const whoListeners = new Set<(who: readonly Presence[]) => void>();
   const heard = (who: readonly Presence[]) => {
-    const next = foldPresence(new Map(), who, Date.now(), PRESENCE_TTL_MS * 4, mine?.participant);
+    const next = foldPresence(new Map(), who, Date.now(), REMOTE_PRESENCE_TTL_MS, mine?.participant);
     let changed = next.size !== known.size;
     if (!changed) for (const [participant, presence] of next) if (!samePresence(presence, known.get(participant))) changed = true;
     known = next;

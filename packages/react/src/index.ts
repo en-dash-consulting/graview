@@ -9,6 +9,7 @@ export type { ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, Gravi
 export { createPointerStore } from "./pointer.js";
 export type { PointerStore, ScenePoint } from "./pointer.js";
 export { applySettings, honourSetting, loadSetting, rememberSetting } from "./settings.js";
+export type { ReaderMemory } from "./settings.js";
 
 export { createViews, DEFAULT_VIEW, isDefaultView, markDefaultView } from "./view-registry.js";
 export { ViewBoundary } from "./view-boundary.js";
