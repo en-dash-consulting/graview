@@ -141,13 +141,13 @@ describe("the store behind HTTP", () => {
     await two.pull();
     expect(done(two.store, "t1")).toBe(true);
     /*
-     * The server's op is in both. This browser's log also holds the
-     * provisional one and the take-back — which is honest: they happened
-     * here, and the activity rail showing both is the truth about what a
-     * person saw.
+     * The server's op is in both, and this browser's log is the server's:
+     * the refused press was provisional, so the rebase that took it back
+     * dropped it rather than appending a take-back. The refusal is said
+     * (above), in the policy's own words; the history holds what happened.
      */
-    expect(two.store.log.all().map((op) => op.id)).toContain(one.store.log.all()[0]!.id);
-    expect(two.store.log.all().map((op) => op.seq)).toEqual([0, 1, 2]);
+    expect(two.store.log.all().map((op) => op.id)).toEqual(served.store.log.all().map((op) => op.id));
+    expect(two.store.log.all().map((op) => op.seq)).toEqual([0]);
     one.close();
     two.close();
   });
@@ -196,6 +196,9 @@ describe("the store behind HTTP", () => {
     expect(done(two.store, "t1")).toBe(false);
     expect(done(two.store, "t2")).toBe(false);
     expect(served.store.log.all().at(-1)?.intent).toMatch(/^Undo/);
+    // Answered, the provisional ops are gone: the browser's log is the server's, not both.
+    await one.settled();
+    expect(one.store.log.all().map((op) => op.id)).toEqual(served.store.log.all().map((op) => op.id));
     one.close();
     two.close();
   });

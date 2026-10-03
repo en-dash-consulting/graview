@@ -269,6 +269,8 @@ export type {
   ApplyOptions,
   ApplyResult,
   Preview,
+  Rebase,
+  RebaseResult,
   StoreOptions,
   UndoPreview,
 } from "./store.js";

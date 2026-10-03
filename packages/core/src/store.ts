@@ -3,7 +3,7 @@ import { sees, sightedKinds } from "./permissions/sight.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
-import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
+import { diffSnapshots, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { invert, normalise, writesOf, type Primitive } from "./graph/primitives.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { verifyFold, type VerifyResult } from "./integrity.js";
@@ -63,6 +63,14 @@ export interface StoreOptions<S extends AnySchema> {
   readonly epochs?: readonly Epoch[];
   /** Defaults to a monotonic counter so tests stay deterministic. */
   readonly ids?: () => string;
+  /**
+   * Mints a batch id: `kind` is `batch` for a change and `undo` for a
+   * take-back. Defaults to `<kind>:<this store's tag>:<n>`, the tag drawn
+   * fresh for each store, so two stores opened from the same log, two
+   * browsers on one roster, never mint the same batch id. A server that
+   * mints them its own way says so here.
+   */
+  readonly batchIds?: (kind: "batch" | "undo") => string;
   /**
    * The clock each op is stamped by, as an ISO string. Defaults to the
    * current time (FR-18); a test or a replay that needs a fixed one says so.
@@ -219,6 +227,41 @@ export class ReceiveError extends Error {
   }
 }
 
+/** What `Store.rebase` is handed. */
+export interface Rebase {
+  /** The server's ops, in its order, to land under whatever is pending. Ops the log already holds are skipped. */
+  readonly confirmed: readonly Operation[];
+  /** This store's batches still awaiting a verdict, oldest first: rolled back, then applied again on top. */
+  readonly pending: readonly string[];
+  /** This store's batches the server has answered or refused: rolled back and not applied again. */
+  readonly drop?: readonly string[];
+}
+
+/** What a rebase did. */
+export interface RebaseResult<S extends AnySchema> {
+  /** The net change, as subscribers heard it. */
+  readonly diff: GraphDiff<NodeOfSchema<S>>;
+  /** The server's ops that landed, as this log numbers them. */
+  readonly confirmed: readonly Operation[];
+  /** The pending batches' ops, applied again. */
+  readonly pending: readonly Operation[];
+  /** Pending batches that no longer apply on top, and why; they are no longer in the log. */
+  readonly refused: readonly { readonly batch: string; readonly error: unknown }[];
+}
+
+/**
+ * A tag nobody else's store is using, for this store's batch ids. Drawn
+ * from the platform's random source where there is one, which every page
+ * and Node 22 has.
+ */
+function storeTag(): string {
+  const random = (globalThis as { crypto?: { getRandomValues?: (array: Uint8Array) => Uint8Array } }).crypto;
+  const bytes = new Uint8Array(6);
+  if (random?.getRandomValues) random.getRandomValues(bytes);
+  else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  return [...bytes].map((byte) => byte.toString(36).padStart(2, "0")).join("");
+}
+
 export class Store<S extends AnySchema> {
   readonly schema: S;
   readonly graph: Graph<S>;
@@ -243,7 +286,10 @@ export class Store<S extends AnySchema> {
   private readonly nextId: () => string;
   private readonly now: () => string;
   private readonly validate: boolean;
+  private readonly mintBatch: (kind: "batch" | "undo") => string;
   private counter = 0;
+  /** Above zero while a rebase applies its pending calls again: they are told as one change at the end. */
+  private quiet = 0;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
@@ -260,6 +306,8 @@ export class Store<S extends AnySchema> {
     this.nextId = options.ids ?? (() => `op${++n}`);
     this.now = options.now ?? (() => new Date().toISOString());
     this.validate = options.validate ?? true;
+    const tag = storeTag();
+    this.mintBatch = options.batchIds ?? ((kind) => `${kind}:${tag}:${++this.counter}`);
 
     for (const mutation of options.mutations ?? []) {
       if (this.mutations.has(mutation.name)) {
@@ -679,7 +727,16 @@ export class Store<S extends AnySchema> {
 
   /** Applies several mutations as one gesture — one batch, one undo unit. */
   applyAll(calls: readonly MutationCall[], options: ApplyOptions = {}): ApplyResult<S> {
-    const batch = options.batch ?? `batch:${++this.counter}`;
+    return this.applying(calls, options);
+  }
+
+  /**
+   * `applyAll` itself. Kept apart so a rebase applies pending calls again
+   * through the store's own path, whatever a host has wrapped `applyAll` in
+   * (`openRemote` sends each one down the wire).
+   */
+  private applying(calls: readonly MutationCall[], options: ApplyOptions): ApplyResult<S> {
+    const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? HUMAN;
     const ops: Operation[] = [];
     const allPrimitives: Primitive[] = [];
@@ -898,7 +955,7 @@ export class Store<S extends AnySchema> {
       const op: Operation = {
         id: made.id ?? this.nextId(),
         seq: this.log.length + index,
-        batch: made.batch ?? options.batch ?? (batch ??= `batch:${++this.counter}`),
+        batch: made.batch ?? options.batch ?? (batch ??= this.mintBatch("batch")),
         author: made.author,
         intent: made.intent,
         ...(made.batchIntent !== undefined ? { batchIntent: made.batchIntent } : {}),
@@ -941,7 +998,7 @@ export class Store<S extends AnySchema> {
    * primitive that does not fit leaves the store as it was and throws.
    */
   applyPrimitives(primitives: readonly Primitive[], options: ApplyOptions = {}): ApplyResult<S> {
-    const batch = options.batch ?? `batch:${++this.counter}`;
+    const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? HUMAN;
     const before = this.violations();
     const rollback = this.graph.snapshot();
@@ -1043,11 +1100,16 @@ export class Store<S extends AnySchema> {
     batchIds: string | readonly string[],
     options: ApplyOptions = {},
   ): ApplyResult<S> {
+    return this.undoing(batchIds, options);
+  }
+
+  /** `undo` itself, kept apart for the same reason as `applying`. */
+  private undoing(batchIds: string | readonly string[], options: ApplyOptions): ApplyResult<S> {
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
     const check = this.canUndo(ids);
     if (!check.ok) throw new UndoBlockedError(check);
 
-    const batch = options.batch ?? `undo:${++this.counter}`;
+    const batch = options.batch ?? this.mintBatch("undo");
     const author = options.author ?? HUMAN;
 
     /*
@@ -1140,9 +1202,129 @@ export class Store<S extends AnySchema> {
     return () => this.listeners.delete(listener);
   }
 
-  private notify(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]): void {
-    if (ops.length === 0) return;
+  /**
+   * TELLS EVERY SUBSCRIBER OF A CHANGE: the diff, and the ops that made it.
+   * The store calls this for each change it makes; it is public for a host
+   * that changes the graph some other way and owes its subscribers the same
+   * news (the rebase item of FR-05). A change with no ops and an empty diff
+   * is nothing to tell.
+   */
+  notify(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]): void {
+    if (this.quiet > 0) return;
+    if (ops.length === 0 && isEmptyDiff(diff as GraphDiff<never>)) return;
     for (const listener of this.listeners) listener(diff, ops);
+  }
+
+  /**
+   * AN OPTIMISTIC CLIENT'S ROLLBACK (the rebase item of FR-05).
+   *
+   * A client applies a press at once and sends it; the server's op is the
+   * one that stays. When anything arrives from the server — somebody else's
+   * ops, or the verdict on one of this client's — the client's log must
+   * read `[confirmed…, pending…]` again. So, in one step:
+   *
+   * 1. every op of the `pending` and `drop` batches is rolled back, newest
+   *    first, and cut from the log (they must be its tail: an op after
+   *    them that is neither is refused, before anything moves);
+   * 2. the `confirmed` ops land in the server's order, skipped by id when
+   *    the log already holds them, all or nothing (`ReceiveError`);
+   * 3. the `pending` batches are applied again on top, in the order given,
+   *    under the same batch ids, author, intent and channel: each call
+   *    judged and compiled afresh against the graph the server's ops left.
+   *    One that no longer applies there is left off and said in `refused`;
+   *    the server's verdict on it will say the rest.
+   *
+   * `drop` is the batches the server has answered (its own op for them is
+   * among `confirmed`) or refused. Subscribers hear ONE change, the net
+   * diff, with the confirmed ops and the re-applied ones, so an interface
+   * never flickers through the states in between.
+   */
+  rebase(change: Rebase): RebaseResult<S> {
+    const settling = new Set([...change.pending, ...(change.drop ?? [])]);
+    const all = this.log.all();
+    const first = all.findIndex((op) => settling.has(op.batch));
+    const cut = first < 0 ? all.length : first;
+    const tail = all.slice(cut);
+    const stray = tail.find((op) => !settling.has(op.batch));
+    if (stray) {
+      throw new GraphError(
+        `Cannot rebase: op "${stray.id}" (${stray.intent}) comes after a pending batch and is neither pending nor dropped`,
+        "While anything is pending, land the server's ops through rebase, so the log stays confirmed ops then pending ones.",
+      );
+    }
+    const epoch = this.log.lastEpoch();
+    if (epoch && epoch.seq > cut) throw new GraphError(`Cannot rebase across an epoch: one begins at seq ${epoch.seq}, after pending op "${tail[0]!.id}"`);
+
+    const before = this.graph.snapshot();
+    const landed: Operation[] = [];
+    const replayed: Operation[] = [];
+    const refused: { batch: string; error: unknown }[] = [];
+    this.quiet++;
+    try {
+      // 1. Back to the confirmed prefix, putting back exactly what each op took.
+      for (const op of [...tail].reverse()) this.graph.applyPrimitives(op.inverse, { restoring: true });
+      this.log.truncate(cut);
+
+      // 2. What the server says, in its order.
+      const known = new Set(this.log.all().map((op) => op.id));
+      for (const op of change.confirmed) {
+        if (known.has(op.id)) continue;
+        try {
+          this.graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
+        } catch (error) {
+          throw new ReceiveError(op, error);
+        }
+        const here = { ...op, seq: this.log.length };
+        this.log.append(here);
+        known.add(op.id);
+        landed.push(here);
+      }
+
+      // 3. What is still pending, again, on top.
+      for (const batch of change.pending) {
+        const ops = tail.filter((op) => op.batch === batch);
+        if (ops.length === 0) continue;
+        try {
+          replayed.push(...this.replay(batch, ops));
+        } catch (error) {
+          refused.push({ batch, error });
+        }
+      }
+    } catch (error) {
+      // A store handed a bad op is the store it was.
+      this.log.truncate(cut);
+      for (const op of tail) this.log.append(op);
+      this.graph.load(before);
+      throw error;
+    } finally {
+      this.quiet--;
+    }
+
+    const diff = diffSnapshots(before, this.graph.snapshot());
+    const ops = [...landed, ...replayed];
+    this.notify(diff, ops);
+    return { diff, confirmed: landed, pending: replayed, refused };
+  }
+
+  /** One pending batch, applied again as it was made: its calls, its undo, or its primitives. */
+  private replay(batch: string, ops: readonly Operation[]): readonly Operation[] {
+    const head = ops[0]!;
+    const options: ApplyOptions = {
+      author: head.author,
+      batch,
+      ...(head.batchIntent !== undefined ? { intent: head.batchIntent } : {}),
+      ...(head.via !== undefined ? { via: head.via } : {}),
+    };
+    if (head.undoes !== undefined) {
+      const targets = ops.map((op) => this.log.get(op.undoes ?? ""));
+      const missing = ops.find((_op, index) => targets[index] === undefined);
+      if (missing) throw new GraphError(`What "${missing.intent}" took back is no longer in the log`);
+      return this.undoing([...new Set(targets.map((op) => op!.batch))], options).ops;
+    }
+    if (ops.every((op) => op.mutation !== null)) {
+      return this.applying(ops.map((op) => op.mutation!), options).ops;
+    }
+    return this.append(ops.map(({ seq: _seq, ...op }) => op));
   }
 
   snapshot(): GraphSnapshot<NodeOfSchema<S>> {
