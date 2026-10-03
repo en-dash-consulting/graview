@@ -8,10 +8,10 @@ export {
 } from "./browser-adapter.js";
 export type { BrowserAdapter, BrowserAdapterOptions, StorageLike } from "./browser-adapter.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
-export { primitivesFor, primitivesForSteps, sayStep, stepsMigration } from "./steps.js";
+export { countSteps, primitivesFor, primitivesForSteps, sayStep, stepsMigration } from "./steps.js";
 export { applySteps, contentOperation, SEED_SYNC_AUTHOR, seedSteps } from "./sync-seed.js";
 export type { SeedSyncOptions } from "./sync-seed.js";
-export type { MigrationStep } from "./steps.js";
+export type { MigrationStep, StepCount } from "./steps.js";
 export type { MigrationRun } from "./migrations.js";
 export { openStore } from "./open-store.js";
 export type { OpenStoreOptions, OpenedStore } from "./open-store.js";

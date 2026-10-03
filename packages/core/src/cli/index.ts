@@ -5,7 +5,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { GraviewApp } from "../app.js";
 import { checkApp, formatFindings } from "./check.js";
-import { compileDocument } from "../document/compile.js";
+import { compileDocument, readDocument } from "../document/compile.js";
 import { sayFindings } from "../document/findings.js";
 import { create, CREATE_USAGE } from "./create.js";
 import { describeApp } from "./describe.js";
@@ -24,7 +24,8 @@ ${CREATE_USAGE}
   --document <file>
       Any command that takes an <entry> takes a declaration document instead
       (a .json file in the Graview document format): compiled, never run as
-      code, and checked with the JSON path of every finding.
+      code, and checked with the JSON path of every finding. With
+      --previous <file>, check holds every renamedFrom to the version before.
 
   graview docs <entry> [--out <dir>] [--views <module>]
       Writes llms.txt and agents.md next to the entry, or into <dir>.
@@ -69,9 +70,10 @@ export function entryArg(argv: readonly string[], at: number): string | undefine
 export const isDocument = (entry: string): boolean => entry.endsWith(".json");
 
 /** A declaration document compiled, with the findings it came with — or every finding that refused it. */
-export function loadDocument(entry: string): ReturnType<typeof compileDocument> {
+export function loadDocument(entry: string, previous?: string): ReturnType<typeof compileDocument> {
   const path = resolve(process.cwd(), entry);
-  return compileDocument(readFileSync(path, "utf8"));
+  const before = previous ? readDocument(readFileSync(resolve(process.cwd(), previous), "utf8")).document : undefined;
+  return compileDocument(readFileSync(path, "utf8"), before ? { previous: before } : {});
 }
 
 export async function loadApp(entry: string): Promise<GraviewApp> {
@@ -210,7 +212,7 @@ export async function main(argv: string[]): Promise<number> {
        * person or an agent fixes it at.
        */
       if (isDocument(entry)) {
-        const compiled = loadDocument(entry);
+        const compiled = loadDocument(entry, flag(argv, "--previous"));
         if (argv.includes("--json")) process.stdout.write(`${JSON.stringify({ ok: compiled.ok, findings: compiled.findings }, null, 2)}\n`);
         else process.stdout.write(`${compiled.findings.length > 0 ? sayFindings(compiled.findings) : "✓ the document compiles and checks clean"}\n`);
         return compiled.ok ? 0 : 1;

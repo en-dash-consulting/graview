@@ -71,4 +71,23 @@ describe("a document runs without code", () => {
       server.kill();
     }
   }, 30_000);
+
+  // FR-22: a rename from nothing would move nothing, and the values it meant to keep would be dropped.
+  it("graview check --previous refuses a renamedFrom naming nothing in the previous version", () => {
+    const dir = mkdtempSync(join(tmpdir(), "graview-doc-"));
+    const doc = (fields: Record<string, unknown>) => ({ format: "graview-document", formatVersion: 1, name: "Chores", kinds: { chore: { fields } } });
+    const previous = join(dir, "v1.json");
+    writeFileSync(previous, JSON.stringify(doc({ title: { type: "string", required: true }, hours: { type: "number" } })));
+    const right = join(dir, "v2.json");
+    writeFileSync(right, JSON.stringify(doc({ title: { type: "string", required: true }, effort: { type: "number", renamedFrom: "hours" } })));
+    const wrong = join(dir, "v2-wrong.json");
+    writeFileSync(wrong, JSON.stringify(doc({ title: { type: "string", required: true }, effort: { type: "number", renamedFrom: "minutes" } })));
+    expect(run(["check", "--document", right, "--previous", previous, "--json"]).code).toBe(0);
+    const refused = run(["check", "--document", wrong, "--previous", previous, "--json"]);
+    expect(refused.code).toBe(1);
+    const finding = (JSON.parse(refused.out) as { findings: { code: string; path: string; message: string }[] }).findings.find((one) => one.code === "renamed-from-nothing");
+    expect(finding?.path).toBe("kinds.chore.fields.effort.renamedFrom");
+    expect(finding?.message).toMatch(/no field called minutes/);
+  });
 });
+

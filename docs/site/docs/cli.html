@@ -1079,7 +1079,8 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 --document &lt;file&gt;
     Any command that takes an &lt;entry&gt; takes a declaration document instead
     (a .json file in the Graview document format): compiled, never run as
-    code, and checked with the JSON path of every finding.
+    code, and checked with the JSON path of every finding. With
+    --previous &lt;file&gt;, check holds every renamedFrom to the version before.
 </code></pre></div>
       <p>Loads &lt;entry&gt; (a module whose default export, or <code>app</code> export, is a GraviewApp) and reports schema problems. Exits 1 on any error.</p>
     </section>

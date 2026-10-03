@@ -37,8 +37,31 @@ export function migrationSteps(before: Reading, after: Reading): MigrationStep[]
     const kindId = targetsOf(reading, field.id, "of")[0];
     return kindId ? `${kindId}::${label(field)}` : null;
   };
-  const beforeFields = new Map(ofKind(before, "field").map((node) => [fieldKey(before, node), node]));
-  const afterFields = new Map(ofKind(after, "field").map((node) => [fieldKey(after, node), node]));
+  /*
+   * THE SAME FIELD, BY ITS NODE (FR-22). A field the studio renamed or
+   * retyped kept its node's id, so it is the same field: its values move to
+   * the new name, and a new type keeps what converts. Matched by name alone,
+   * a rename read as one field dropped and another arrived — every value lost.
+   */
+  const afterById = new Map(ofKind(after, "field").map((node) => [node.id, node]));
+  const continued = new Set<string>();
+  for (const node of ofKind(before, "field")) {
+    const later = afterById.get(node.id);
+    const kindId = targetsOf(before, node.id, "of")[0];
+    const kindNode = kindId ? afterKinds.get(kindId) : undefined;
+    if (!later || !kindNode || targetsOf(after, later.id, "of")[0] !== kindId) continue;
+    continued.add(node.id);
+    if (label(later) !== label(node)) steps.push({ what: "rename-field", kind: label(kindNode), field: label(node), to: label(later) });
+    const was = (node["type"] as FieldType) ?? "string";
+    const now = (later["type"] as FieldType) ?? "string";
+    const options = Array.isArray(later["options"]) ? (later["options"] as unknown[]).map(String) : undefined;
+    const optionsChanged = JSON.stringify(node["options"] ?? null) !== JSON.stringify(later["options"] ?? null);
+    if (was !== now || (now === "enum" && optionsChanged)) {
+      steps.push({ what: "coerce-field", kind: label(kindNode), field: label(later), from: was, to: { type: now, ...(options ? { options } : {}) } });
+    }
+  }
+  const beforeFields = new Map(ofKind(before, "field").filter((node) => !continued.has(node.id)).map((node) => [fieldKey(before, node), node]));
+  const afterFields = new Map(ofKind(after, "field").filter((node) => !continued.has(node.id)).map((node) => [fieldKey(after, node), node]));
   for (const [key, node] of beforeFields) {
     if (!key || afterFields.has(key)) continue;
     const kindId = key.split("::")[0]!;
@@ -59,8 +82,17 @@ export function migrationSteps(before: Reading, after: Reading): MigrationStep[]
     const kindId = targetsOf(reading, edge.id, "from-kind")[0];
     return kindId ? `${kindId}::${label(edge)}` : null;
   };
-  const beforeEdges = new Map(ofKind(before, "edge").map((node) => [edgeKey(before, node), node]));
-  const afterEdges = new Map(ofKind(after, "edge").map((node) => [edgeKey(after, node), node]));
+  // The same relation by its node, called something else: its links move, on every kind (a relation's name is app-wide).
+  const afterEdgesById = new Map(ofKind(after, "edge").map((node) => [node.id, node]));
+  const renamedEdges = new Set<string>();
+  for (const node of ofKind(before, "edge")) {
+    const later = afterEdgesById.get(node.id);
+    if (!later || label(later) === label(node)) continue;
+    renamedEdges.add(node.id);
+    if (!steps.some((step) => step.what === "rename-edge" && step.edge === label(node))) steps.push({ what: "rename-edge", edge: label(node), to: label(later) });
+  }
+  const beforeEdges = new Map(ofKind(before, "edge").filter((node) => !renamedEdges.has(node.id)).map((node) => [edgeKey(before, node), node]));
+  const afterEdges = new Map(ofKind(after, "edge").filter((node) => !renamedEdges.has(node.id)).map((node) => [edgeKey(after, node), node]));
   // By name as well, so the same relation declared on another kind is seen as MOVED.
   const afterByName = new Map([...afterEdges].flatMap(([key, node]) => (key ? [[label(node), key.split("::")[0]!]] : [])));
   for (const [key, node] of beforeEdges) {

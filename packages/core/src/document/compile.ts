@@ -74,6 +74,12 @@ export interface CompileOptions {
   readonly today?: () => string;
   /** Skip the framework's own checkApp (it is the slow half). Default false. */
   readonly skipFrameworkCheck?: boolean;
+  /**
+   * The version this one follows. Given, every `renamedFrom` must name a
+   * kind, field or relation that version has — a rename from nothing moves
+   * nothing, and the values it was meant to keep would be dropped (FR-22).
+   */
+  readonly previous?: GraviewDocument;
 }
 
 const BUILTIN_REFS = new Set(["subject", "now", "today"]);
@@ -441,6 +447,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   if (!read.document || hasErrors(read.findings)) return { ok: false, findings: read.findings };
   const document = read.document;
   const findings: Finding[] = [...read.findings];
+  if (options.previous) findings.push(...renamesFromNothing(document, options.previous));
   const today = options.today ?? (() => new Date().toISOString().slice(0, 10));
   const shapes = kindShapes(document);
   const edges = edgeIndex(document);
@@ -728,3 +735,23 @@ function frameworkPath(where: string, document: GraviewDocument): string {
 }
 
 export { Refused as ActRefusal };
+
+/** Every `renamedFrom` that names nothing in the version before: the values it was meant to carry would be lost. */
+function renamesFromNothing(document: GraviewDocument, previous: GraviewDocument): Finding[] {
+  const out: Finding[] = [];
+  const previousEdges = new Set(Object.values(previous.kinds).flatMap((kind) => Object.keys(kind.edges ?? {})));
+  for (const [kind, spec] of Object.entries(document.kinds)) {
+    const from = (spec as { renamedFrom?: string }).renamedFrom;
+    if (from && !previous.kinds[from]) out.push(error("renamed-from-nothing", `kinds.${kind}.renamedFrom`, `${kind} says it was ${from}, and the previous version has no kind called ${from}`, "name the kind it was, or drop renamedFrom"));
+    const before = previous.kinds[from ?? kind];
+    for (const [field, fieldSpec] of Object.entries(spec.fields)) {
+      const was = (fieldSpec as { renamedFrom?: string }).renamedFrom;
+      if (was && !before?.fields[was]) out.push(error("renamed-from-nothing", `kinds.${kind}.fields.${field}.renamedFrom`, `${field} says it was ${was}, and the previous ${from ?? kind} has no field called ${was}`, "name the field it was, or drop renamedFrom"));
+    }
+    for (const [edge, edgeSpec] of Object.entries(spec.edges ?? {})) {
+      const was = (edgeSpec as { renamedFrom?: string }).renamedFrom;
+      if (was && !previousEdges.has(was)) out.push(error("renamed-from-nothing", `kinds.${kind}.edges.${edge}.renamedFrom`, `${edge} says it was ${was}, and the previous version has no relation called ${was}`, "name the relation it was, or drop renamedFrom"));
+    }
+  }
+  return out;
+}

@@ -76,3 +76,15 @@ describe("the studio and editDocument agree", () => {
     expect(said(throughTheStudio([{ name: "add-kind", args: { label: "venue" } }]))).toEqual(said(throughEditDocument([{ op: "add-kind", kind: "venue", fields: { label: { type: "string", required: true } } }])));
   });
 });
+
+describe("the studio's migration keeps what it renames (FR-22)", () => {
+  it("a renamed field is a rename, not a field dropped and another added", async () => {
+    const { migrationSteps } = await import("../../src/migration.js");
+    const compiled = compileDocument(base);
+    if (!compiled.ok) throw new Error("the base did not compile");
+    const studio = createStudio(compiled.app as never);
+    const before = studio.store.snapshot();
+    studio.store.apply({ name: "rename-field", args: { id: "field:vendor.quote", to: "price" } } as never);
+    expect(migrationSteps(before as never, studio.store.snapshot() as never)).toEqual([{ what: "rename-field", kind: "vendor", field: "quote", to: "price" }]);
+  });
+});
