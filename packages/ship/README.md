@@ -70,7 +70,7 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | Method | Path | Says |
 |---|---|---|
 | GET | `/graview/state` | the graph, the log, the stored version and the modules on |
-| POST | `/graview/ops` | calls in, the ops they produced out — or `undo`, batches to take back; 409 with the policy's sentence when refused |
+| POST | `/graview/ops` | calls in, the ops they produced out — or `undo`, batches to take back; a `batch` already in the log is answered with the ops it made; 409 with the policy's sentence when refused |
 | GET | `/graview/since?seq=N` | the ops appended after N — everyone else's |
 | GET | `/graview/health` | ship's own report, plus where the data is |
 | GET | `/graview/export` | the whole store as one bundle, the way out |

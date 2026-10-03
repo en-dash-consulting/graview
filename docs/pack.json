@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-03T18:22:53.532Z",
+  "at": "2026-10-03T18:26:33.850Z",
   "packages": {
     "@graview/core": {
       "files": 475,
@@ -33,12 +33,12 @@
     },
     "@graview/pages": {
       "files": 79,
-      "tarballBytes": 89932,
+      "tarballBytes": 89933,
       "ok": true
     },
     "@graview/primitives": {
       "files": 219,
-      "tarballBytes": 356100,
+      "tarballBytes": 356102,
       "ok": true
     },
     "@graview/react": {
@@ -53,7 +53,7 @@
     },
     "@graview/ship": {
       "files": 115,
-      "tarballBytes": 132600,
+      "tarballBytes": 132937,
       "ok": true
     },
     "@graview/skills": {

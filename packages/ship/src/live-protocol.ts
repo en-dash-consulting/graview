@@ -168,6 +168,13 @@ export interface Wire<S extends AnySchema> {
   whoFor(principal: Principal, who: readonly Presence[]): Presence[];
   /** The fields a call would write that moved since the caller's base: a stale write (FR-05). */
   conflictsOf(author: Principal, calls: readonly MutationCall[], base: unknown): FieldConflict[];
+  /**
+   * SENT TWICE, ANSWERED ONCE: the ops already in the log under the batch a
+   * call or an undo names, or none. A client that never heard the answer
+   * sends again under the same batch — down the socket or over HTTP — and
+   * is answered with what it made the first time (FR-49).
+   */
+  answered(batch: unknown): Operation[];
   /** `{ horizon }` when the log was compacted (FR-23); nothing otherwise. */
   horizonOf(): { horizon?: number };
   enabledModules(): string[];
@@ -199,6 +206,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
     since: (principal, seq) => shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1))),
     seenFor: (principal) => seenBy(store, principal),
     whoFor: (principal, who) => (sighted(principal) ? presenceSeenBy(who, seesId(store, principal)) : [...who]),
+    answered: (batch) => (typeof batch === "string" && batch.length > 0 ? store.log.all().filter((op) => op.batch === batch) : []),
     horizonOf: () => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {}),
     enabledModules: () => [...store.modules.enabled].sort(),
     conflictsOf(author, calls, base) {
@@ -279,12 +287,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     const intent = typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined;
     const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : undefined;
     catchUp(peer);
-    /*
-     * SENT TWICE, ANSWERED ONCE. A client that lost its socket before the
-     * ack sends the call again under the same batch; one already in the
-     * log is answered with the ops it made.
-     */
-    const already = batch ? store.log.all().filter((op) => op.batch === batch) : [];
+    // A client that lost its socket before the ack sends the call again under the same batch: `answered` says what it made.
+    const already = wire.answered(batch);
     if (already.length > 0) {
       say(peer, { t: "ack", cid, seq: already.at(-1)!.seq, batch: batch!, ops: wire.shown(author, already) });
       return { cursor: peer.cursor! };

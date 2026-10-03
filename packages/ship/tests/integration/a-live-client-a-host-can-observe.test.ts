@@ -224,6 +224,77 @@ describe("a live client a host can observe", () => {
     expect(remote.counters().reconnects).toBe(1);
   });
 
+  it("lands a call once when the server took it but its answer was lost, and the client sends it again", async () => {
+    const handler = await aHandler();
+    let lose = 1;
+    const fetchVia = (async (url: string, init?: RequestInit) => {
+      const answered = await handler.handle(new Request(url, init));
+      // The server took it; the answer never came back.
+      if (url.endsWith("/graview/ops") && lose > 0) {
+        lose--;
+        throw new TypeError("fetch failed");
+      }
+      return answered;
+    }) as typeof fetch;
+    const remote = await openRemote({ app, url: "http://store.example", principal: sam, fetch: fetchVia, pollMs: 0 });
+    opened.push(remote);
+    const told: string[] = [];
+    remote.onRefusal((reason) => told.push(reason));
+    remote.onConflict((conflict) => told.push(conflict.sentence));
+
+    remote.store.apply({ name: "rename", args: { id: "t1", label: "Book the big hall" } });
+    await until(() => remote.status() === "offline");
+    expect(remote.pending()).toBe(1);
+    expect(handler.store.log.all().filter((op) => op.intent === "Rename to “Book the big hall”")).toHaveLength(1);
+
+    await remote.pull();
+    await remote.settled();
+    expect(remote.status()).toBe("online");
+    expect(remote.pending()).toBe(0);
+    expect(handler.store.log.all().filter((op) => op.intent === "Rename to “Book the big hall”")).toHaveLength(1);
+    expect(remote.store.log.all().map((op) => op.id)).toEqual(handler.store.log.all().map((op) => op.id));
+    expect(remote.store.snapshot()).toEqual(handler.store.snapshot());
+    // Answered as the call it was, not as a conflict with itself.
+    expect(told).toEqual([]);
+    expect(remote.counters().conflicts).toBe(0);
+
+    // An undo sent twice is taken back once, too.
+    const [mine] = handler.store.log.all().filter((op) => op.intent === "Rename to “Book the big hall”");
+    lose = 1;
+    remote.store.undo(mine!.batch);
+    await until(() => remote.status() === "offline");
+    await remote.pull();
+    await remote.settled();
+    expect(handler.store.graph.getNode("t1")).toMatchObject({ label: "Book the hall" });
+    expect(handler.store.log.length).toBe(2);
+    expect(told).toEqual([]);
+    expect(remote.store.log.all().map((op) => op.id)).toEqual(handler.store.log.all().map((op) => op.id));
+    expect(remote.store.snapshot()).toEqual(handler.store.snapshot());
+  });
+
+  it("answers a batch the HTTP route already has with the ops it made, for a call and for an undo", async () => {
+    const handler = await aHandler();
+    const post = async (body: unknown) =>
+      (await (await handler.handle(new Request("http://store.example/graview/ops", { method: "POST", headers: { "content-type": "application/json", ...seatHeaders(sam) }, body: JSON.stringify(body) }))).json()) as {
+        ops: { id: string; batch: string }[];
+        batch: string;
+        error?: string;
+      };
+    const call = { calls: [{ name: "rename", args: { id: "t1", label: "Book the big hall" } }], batch: "local-x-1", base: [{ node: "t1", field: "label", rev: -1 }] };
+    const first = await post(call);
+    const again = await post(call);
+    expect(again.error).toBeUndefined();
+    expect(again).toEqual(first);
+    expect(first.batch).toBe("local-x-1");
+    expect(handler.store.log.length).toBe(1);
+
+    const undo = { undo: ["local-x-1"], batch: "local-x-2" };
+    const undone = await post(undo);
+    expect(await post(undo)).toEqual(undone);
+    expect(handler.store.log.length).toBe(2);
+    expect(handler.store.graph.getNode("t1")).toMatchObject({ label: "Book the hall" });
+  });
+
   it("counts a conflict, and an answered refusal is the server reached, not offline", async () => {
     const handler = await aHandler();
     const host = aHost(handler);

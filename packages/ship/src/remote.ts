@@ -398,7 +398,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
    * never sits in the log beside the server's op for the same press.
    *
    * `provisional` is every batch whose provisional ops may still be in the
-   * log: a batch is dropped once, and only while it is, because a live
+   * log: a batch is dropped once, and only while it is, because a
    * client's batch id is the one the server's op lands in too, and
    * dropping it again would cut the server's op.
    */
@@ -441,11 +441,11 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       return [];
     }
     /*
-     * A live client names the batch its call lands in, so an op of the
+     * A client names the batch its call lands in (FR-49), so an op of the
      * server's in one of its pending batches IS that batch's answer —
-     * pushed, or caught up on after a reconnect, before its ack arrived.
+     * pushed, polled, or caught up on after a reconnect, before its answer arrived.
      */
-    const echoed = live ? pending.filter((batch) => ops.some((op) => op.batch === batch)) : [];
+    const echoed = pending.filter((batch) => ops.some((op) => op.batch === batch));
     const dropping = [...new Set([...drop, ...echoed])].filter((batch) => provisional.has(batch));
     let landed: readonly Operation[];
     const under = pending.filter((batch) => !echoed.includes(batch));
@@ -866,7 +866,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
           {
             calls,
             ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}),
-            ...(live ? { batch: result.batch } : {}),
+            batch: result.batch,
             ...(base.length > 0 ? { base } : {}),
           },
           result.batch,
@@ -907,7 +907,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
               {
                 undo: ids.map((id) => batches.get(id) ?? id),
                 ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}),
-                ...(live ? { batch: result.batch } : {}),
+                batch: result.batch,
               },
               result.batch,
             ),
