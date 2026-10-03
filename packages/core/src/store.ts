@@ -20,7 +20,7 @@ import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog, type Epoch } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
-import { isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
 import { redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
@@ -734,7 +734,7 @@ export class Store<S extends AnySchema> {
     const derived = all.filter(
       (mutation) =>
         mutation.derived !== undefined &&
-        permits(this.policy, principal, mutation.name, mutation.derived.kind, this.viaOf(mutation)).ok,
+        permits(this.policy, principal, mutation.name, mutation.derived.kind, this.viaOf(mutation), actingAs(principal).id).ok,
     );
     return [...declared, ...derived];
   }

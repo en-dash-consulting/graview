@@ -243,6 +243,8 @@ export function permittedMutations<S extends AnySchema>(
       subject && subject.kinds !== "*" ? (subject.kinds as readonly string[]) : [undefined];
     // Permitted for ANY of its subject kinds is enough to offer the tool; the
     // store still refuses the individual call that is not allowed.
-    return kinds.some((kind) => permits(policy, principal, mutation.name, kind).ok);
+    // A `self` grant is offered with the principal as its subject: "ask, on
+    // yours" is an act the principal has, though only ever on themselves.
+    return kinds.some((kind) => permits(policy, principal, mutation.name, kind, undefined, actingAs(principal).id).ok);
   });
 }
