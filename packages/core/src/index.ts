@@ -242,7 +242,7 @@ export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Store — graph + log + mutations + invariants, one object.
-export { Store, violationKey } from "./store.js";
+export { ReceiveError, Store, violationKey } from "./store.js";
 export type {
   ApplyOptions,
   ApplyResult,

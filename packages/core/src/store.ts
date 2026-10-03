@@ -130,6 +130,22 @@ export function violationKey(v: Violation): string {
  * agent's work needs no bespoke observability layer — it produces the same
  * diff a human edit does, carrying the same attribution.
  */
+/**
+ * An op a store could not take: its primitives do not fit the graph (a node
+ * it patches is not there, an edge to nowhere, a field the schema refuses).
+ * Nothing it was handed has landed — the store is as it was — and `op` says
+ * which one, with the graph's own error as `cause`.
+ */
+export class ReceiveError extends Error {
+  constructor(
+    readonly op: Operation,
+    cause: unknown,
+  ) {
+    super(`Op "${op.id}" (${op.intent}) could not be applied: ${cause instanceof Error ? cause.message : String(cause)}`, { cause });
+    this.name = "ReceiveError";
+  }
+}
+
 export class Store<S extends AnySchema> {
   readonly schema: S;
   readonly graph: Graph<S>;
@@ -690,16 +706,32 @@ export class Store<S extends AnySchema> {
     if (fresh.length === 0) return [];
     const before = this.graph.snapshot();
     const landed: Operation[] = [];
-    for (const op of fresh) {
-      const here = { ...op, seq: this.log.all().length };
-      /*
-       * ALREADY IN EFFECT HERE. A client that applied a call provisionally
-       * and is now handed the server's op for it has the graph the op
-       * describes; applying the primitives again would add the node twice.
-       * The op still joins the log — it is the one everybody else has — so
-       * undo names it and the activity shows it, and the graph stays put.
-       */
-      if (!options.applied) this.graph.applyPrimitives(here.primitives);
+    /*
+     * ALL OR NOTHING, ACROSS THE OPS TOO (FR-26). Every op's primitives go
+     * on first; one that fails puts the graph back as it was — `load`, so a
+     * listener that heard the ops before it hears them reversed — and
+     * throws a ReceiveError naming that op, before any of them joins the
+     * log. A store handed a bad op is the store it was.
+     *
+     * ALREADY IN EFFECT HERE (`applied`). A client that applied a call
+     * provisionally and is now handed the server's op for it has the graph
+     * the op describes; applying the primitives again would add the node
+     * twice. The op still joins the log — it is the one everybody else has
+     * — so undo names it and the activity shows it, and the graph stays put.
+     */
+    if (!options.applied) {
+      for (const op of fresh) {
+        try {
+          this.graph.applyPrimitives(op.primitives);
+        } catch (error) {
+          this.graph.load(before);
+          throw new ReceiveError(op, error);
+        }
+      }
+    }
+    const seq = this.log.all().length;
+    for (const [index, op] of fresh.entries()) {
+      const here = { ...op, seq: seq + index };
       this.log.append(here);
       landed.push(here);
     }
