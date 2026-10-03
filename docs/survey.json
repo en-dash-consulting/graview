@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-03T06:33:06.315Z",
+  "at": "2026-10-03T19:22:08.439Z",
   "engine": "chromium",
   "shots": [
     {
@@ -516,10 +516,10 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1193,
-      "contentRight": 1879,
-      "verticalFill": 127,
-      "horizontalFill": 120,
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
       "repeatedText": []
@@ -588,10 +588,10 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1193,
-      "contentRight": 1879,
-      "verticalFill": 127,
-      "horizontalFill": 120,
+      "contentBottom": 940,
+      "contentRight": 1560,
+      "verticalFill": 100,
+      "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
       "repeatedText": []

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-03T06:36:39.269Z",
+  "at": "2026-10-03T19:25:44.118Z",
   "engine": "chromium",
   "checks": {
     "bSeesAAtTheTasksPlot": {
@@ -58,6 +58,8 @@
     },
     "aClosesAndIsGoneWithinTheTtl": {
       "gone": null,
+      "tookMs": 2473,
+      "promisedMs": 4500,
       "ok": true
     }
   },
