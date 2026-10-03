@@ -84,6 +84,8 @@ export const KindSpec = z
     describe: template.optional(),
     lifecycle: z.object({ field: fieldName, retired: z.array(z.union([z.string(), z.number(), z.boolean()])).min(1) }).strict().optional(),
     figure: z.string().max(20_000).optional(),
+    /** What a glance at one says — a card, a row, a hit in Find — first, in this order: the definition's `display.glance` (FR-39). */
+    glance: z.array(fieldName).min(1).max(20).optional(),
     edges: z.record(edgeName, EdgeSpec).optional(),
     /** The name this kind had in the previous version: its records move. */
     renamedFrom: z.string().regex(NAME).optional(),

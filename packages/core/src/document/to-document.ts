@@ -111,6 +111,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       label?: unknown;
       describe?: unknown;
       lifecycle?: { field: string; retired: readonly (string | number | boolean)[] };
+      display?: { glance?: readonly string[] };
     };
     const at = `kinds.${kind}`;
     const fields: Record<string, FieldSpec> = {};
@@ -134,12 +135,15 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
         },
       ]),
     );
+    // What a glance says, of the fields the document could carry (FR-39); one it could not is named above.
+    const glance = (definition?.display?.glance ?? []).filter((name) => fields[name]);
     kinds[kind] = {
       fields: Object.keys(fields).length > 0 ? fields : { label: { type: "string", required: true } },
       ...(definition?.noun ? { noun: definition.noun } : {}),
       ...(definition?.plural ? { plural: definition.plural } : {}),
       ...(definition?.description ? { description: definition.description } : {}),
       ...(definition?.lifecycle ? { lifecycle: { field: definition.lifecycle.field, retired: [...definition.lifecycle.retired] as [string | number | boolean, ...(string | number | boolean)[]] } } : {}),
+      ...(glance.length > 0 ? { glance } : {}),
       ...(Object.keys(edges).length > 0 ? { edges: edges as KindSpec["edges"] } : {}),
     } as KindSpec;
   }
