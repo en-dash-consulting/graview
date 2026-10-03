@@ -110,8 +110,8 @@ socket as on the routes.
 **A stale write is a conflict, not a loss.** A field's revision is the seq of the op that last
 wrote it (`FieldRevisions`, derived from the log). A call that carries a `base` older than the
 field is refused, before anything is written, naming the field, theirs and yours.
-`openRemote` sends one with every call and hands the refusal to `onConflict`, with
-`keepTheirs()` and `useMine()`.
+`openRemote` sends one with every call and hands the refusal to `remote.onConflict(…)`,
+with `conflict.keepTheirs()` and `conflict.useMine()`.
 
 ## The hosted-store contract
 
