@@ -1,3 +1,8 @@
 {
-  "version": 3
+  "version": 3,
+  "framework": "0.1.1",
+  "formats": {
+    "snapshot": 1,
+    "op": 1
+  }
 }

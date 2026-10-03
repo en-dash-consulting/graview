@@ -6,7 +6,12 @@ import {
   checkApp,
   createSchema,
   defineApp,
+  defineInvariant,
   defineNode,
+  FORMATS,
+  FRAMEWORK_VERSION,
+  NewerFormatError,
+  RuleBudgetError,
   Store,
 } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
@@ -169,7 +174,7 @@ describe("one declaration plus one adapter is a deployment", () => {
     const opened = await openStore({ app, adapter });
     expect(opened.migrated).toHaveLength(1);
     expect((opened.store.graph.getNode("p1") as { beds?: number })?.beds).toBe(2);
-    expect(adapter.loadMeta("garden")).toEqual({ version: 2 });
+    expect(adapter.loadMeta("garden")).toMatchObject({ version: 2 });
     const log = await adapter.loadLog!("garden");
     expect(log[0]?.author.kind).toBe("system");
     opened.close();
@@ -242,9 +247,70 @@ describe("health is coherence, not liveness", () => {
       nodes: 1,
       edges: 0,
       violations: 0,
+      couldNotJudge: 0,
+      overBudget: 0,
       danglingEdges: [],
       at: "2026-09-01T00:00:00Z",
     });
+    opened.close();
+  });
+
+  // FR-29: a rule that could not answer is counted by its status, not found by its words.
+  it("counts the rules that could not judge and the rules over budget apart", async () => {
+    const unjudged = defineInvariant<typeof schema, "plot">("reads-a-missing-field", {
+      scope: { kind: "plot" },
+      evaluate: () => {
+        throw new TypeError("no such field");
+      },
+    });
+    const greedy = defineInvariant<typeof schema>("reads-everything", {
+      scope: "graph",
+      evaluate: () => {
+        throw new RuleBudgetError("this rule looks at too much of the graph");
+      },
+    });
+    const opened = await openStore({ app: defineApp({ ...app, invariants: [unjudged, greedy] }), adapter: createFileAdapter(scratch()) });
+    opened.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
+    const report = health(opened.store);
+    expect(report.violations).toBe(2);
+    expect(report.couldNotJudge).toBe(1);
+    expect(report.overBudget).toBe(1);
+    opened.close();
+  });
+});
+
+// FR-31: what a version writes says what wrote it, and the version before it says "newer format" rather than folding it.
+describe("stored formats carry their version", () => {
+  it("a store records the framework and the formats that wrote it", async () => {
+    const root = scratch();
+    const adapter = createFileAdapter(root);
+    const opened = await openStore({ app, adapter });
+    opened.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
+    await opened.flush();
+    opened.close();
+    expect(adapter.loadMeta("garden")).toEqual({ version: 2, framework: FRAMEWORK_VERSION, formats: { ...FORMATS } });
+  });
+
+  it("a snapshot written in a newer format is reported, not folded", async () => {
+    const root = scratch();
+    const adapter = createFileAdapter(root);
+    const opened = await openStore({ app, adapter });
+    opened.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
+    await opened.flush();
+    opened.close();
+    // What the next version would have written.
+    adapter.saveMeta("garden", { version: 2, framework: "9.0.0", formats: { snapshot: FORMATS.snapshot + 1, op: FORMATS.op } });
+    await expect(openStore({ app, adapter })).rejects.toThrow(NewerFormatError);
+    await expect(openStore({ app, adapter })).rejects.toThrow(/newer format.*written by @graview 9\.0\.0.*Refold it from the log/);
+  });
+
+  it("a bundle carries its stamp, and one in a newer format is refused on import", async () => {
+    const opened = await openStore({ app, adapter: createFileAdapter(scratch()) });
+    const bundle = exportBundle(app, opened.store);
+    expect(bundle.framework).toBe(FRAMEWORK_VERSION);
+    expect(bundle.formats).toEqual({ ...FORMATS });
+    expect(() => assertBundle(app, bundle)).not.toThrow();
+    expect(() => assertBundle(app, { ...bundle, formats: { ...FORMATS, op: FORMATS.op + 1 } })).toThrow(NewerFormatError);
     opened.close();
   });
 });

@@ -1,3 +1,4 @@
+import { actingAs, isSystem } from "./policy.js";
 import type { Policy, Principal, Sight } from "./types.js";
 
 /** The edges a graph can be asked about, to say what is joined to whom. */
@@ -30,6 +31,9 @@ export function sees(
 ): boolean {
   const sights = (policy?.sees ?? []).filter((sight) => sight.kinds.includes(node.kind));
   if (sights.length === 0) return true;
+  // The system sees what it keeps; an agent sees what it AND its person may (FR-06, FR-17).
+  if (isSystem(principal)) return true;
+  principal = actingAs(principal);
   return sights.some((sight) => {
     if (!sightGrantsTo(sight, principal)) return false;
     if (!sight.own) return true;

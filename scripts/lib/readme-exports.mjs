@@ -1,0 +1,54 @@
+/**
+ * WHAT A README NAMES, A TARBALL HAS (FR-15).
+ *
+ * A README is where a stranger learns a package's API, and it drifts
+ * silently: the render package's promised `routePointer` was renamed to
+ * `PointerRouter` and `hitTest` and nothing said so, and published 0.1.0
+ * lacked the sights its README and the walks described. Every name a README
+ * puts in backticks that reads as an API name (camelCase or PascalCase) has
+ * to be exported by one of the packed `@graview/*` packages — their `.d.ts`
+ * entries, read with the TypeScript checker so re-exports count.
+ */
+import { readFileSync } from "node:fs";
+import ts from "typescript";
+
+/** Names written in backticks that are not exports, and why. */
+export const NOT_EXPORTS = new Map([
+  ["localStorage", "a browser global"],
+  ["CanvasDrawElement", "a Chromium feature flag"],
+  ["seatOf", "an option of serveStore, not an export"],
+  ["attachRenderer", "a prop of the Scene, not an export"],
+]);
+
+/** The API-shaped names a README puts in backticks: `name`, `name()`, `Name`. */
+export function namedIn(text) {
+  const names = new Set();
+  for (const [, name] of text.matchAll(/`([A-Za-z_$][A-Za-z0-9_$]*)(?:\(\))?`/g)) {
+    if (/[A-Z]/.test(name) && !NOT_EXPORTS.has(name)) names.add(name);
+  }
+  return names;
+}
+
+/** Every name the given declaration entry points export, following re-exports. */
+export function exportsOf(entries) {
+  const names = new Set();
+  if (entries.length === 0) return names;
+  const program = ts.createProgram(entries, {
+    noEmit: true,
+    skipLibCheck: true,
+    module: ts.ModuleKind.NodeNext,
+    moduleResolution: ts.ModuleResolutionKind.NodeNext,
+  });
+  const checker = program.getTypeChecker();
+  for (const entry of entries) {
+    const source = program.getSourceFile(entry);
+    const symbol = source && checker.getSymbolAtLocation(source);
+    for (const exported of symbol ? checker.getExportsOfModule(symbol) : []) names.add(exported.name);
+  }
+  return names;
+}
+
+/** The names a README promises that no packed package exports. */
+export function unexported(readmePath, exported) {
+  return [...namedIn(readFileSync(readmePath, "utf8"))].filter((name) => !exported.has(name)).sort();
+}

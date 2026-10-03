@@ -1,4 +1,4 @@
-import type { AnySchema, GraviewApp, Operation, Store } from "@graview/core";
+import { assertReadable, formatStamp, type AnySchema, type FormatStamp, type GraviewApp, type Operation, type Store } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -14,6 +14,9 @@ export interface AppBundle {
   readonly app: string;
   readonly version: number;
   readonly exportedAt: string;
+  /** The framework that wrote it, and the formats of its snapshot and ops (FR-31). Absent: 0.1.0, format 1. */
+  readonly framework?: string;
+  readonly formats?: FormatStamp["formats"];
   readonly snapshot: GraphSnapshot;
   readonly log: readonly Operation[];
 }
@@ -29,6 +32,7 @@ export function exportBundle<S extends AnySchema>(
     app: app.name,
     version: app.version ?? 1,
     exportedAt: (options.now ?? (() => new Date().toISOString()))(),
+    ...formatStamp(),
     snapshot: store.snapshot() as GraphSnapshot,
     // The persisted log when the caller has one (it holds migration runs and
     // prior sessions); the in-memory log otherwise.
@@ -46,6 +50,8 @@ export function assertBundle<S extends AnySchema>(app: GraviewApp<S>, bundle: Ap
       `Bundle format ${bundle.bundleVersion} is newer than this ship understands (1). Upgrade @graview/ship, then import.`,
     );
   }
+  // A snapshot or ops in a newer format than this framework reads: said, never misread (FR-31).
+  assertReadable(bundle);
   if (bundle.app !== app.name) {
     throw new Error(`This bundle is for "${bundle.app}", not "${app.name}"`);
   }

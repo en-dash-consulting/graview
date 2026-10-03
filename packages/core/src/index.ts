@@ -18,7 +18,7 @@ export { z } from "zod";
 
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf, describeNode, tellApart } from "./schema/define-node.js";
-export { nameOfAuthor } from "./who.js";
+export { nameOfAuthor, viaSaid } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
   AnySchema,
@@ -68,7 +68,12 @@ export type {
 } from "./graph/types.js";
 
 // Invariants — pure evaluation, with repairs as the seam to affordances.
-export { defineInvariant, evaluate, UnregisteredInvariantError, violationsTouching } from "./invariants/engine.js";
+export { defineInvariant, evaluate, RuleBudgetError, UnregisteredInvariantError, violationsTouching } from "./invariants/engine.js";
+export { FRAMEWORK_VERSION } from "./version.js";
+export { capabilities, WIRE_PROTOCOL } from "./capabilities.js";
+export type { Capabilities } from "./capabilities.js";
+export { assertReadable, FORMATS, formatStamp, NewerFormatError, upgradeOp, upgradeSnapshot } from "./formats.js";
+export type { FormatName, FormatStamp } from "./formats.js";
 export type {
   EvaluateOptions,
   InvariantContext,
@@ -77,6 +82,7 @@ export type {
   InvariantScope,
   Repair,
   Violation,
+  ViolationStatus,
 } from "./invariants/types.js";
 
 // Arrangement — what a kind can be sorted, filtered and grouped by, and the grammar that carries it.
@@ -176,8 +182,10 @@ export type {
 export { OperationLog } from "./ops/log.js";
 export { checkUndo, undoPrimitives } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck } from "./ops/undo.js";
-export type { Author, Batch, Operation } from "./ops/types.js";
+export type { Author, Batch, Operation, Via } from "./ops/types.js";
 export {
+  actingAs,
+  isSystem,
   permits,
   permittedMutations,
   rolesOf,
@@ -240,7 +248,7 @@ export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Store — graph + log + mutations + invariants, one object.
-export { Store, violationKey } from "./store.js";
+export { ReceiveError, Store, violationKey } from "./store.js";
 export type {
   ApplyOptions,
   ApplyResult,

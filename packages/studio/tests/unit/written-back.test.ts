@@ -116,11 +116,13 @@ export const app = defineApp({ name: "Field Notes", schema: fieldNotesSchema, mu
     {
       const disarmed = new Store({ schema: checkout.app.schema, mutations: checkout.app.mutations ?? [], invariants: checkout.app.invariants ?? [] } as never);
       expect(() => disarmed.apply({ name: "add-thing", args: { label: "x" } })).toThrow(/add-thing: the checkout's apply belongs here/);
-      // With the acts back, the store judges every change, so the first act meets the rule's stub.
+      // With the acts back, the store judges every change, so the first act meets the rule's stub:
+      // never a rule that quietly holds — one that could not be judged, saying what belongs there (FR-29).
       const halfway = new Store({ schema: checkout.app.schema, mutations: [addThing, link, unlink, ...(checkout.app.mutations ?? []).filter((m) => m.name === "close-thing")], invariants: checkout.app.invariants ?? [] } as never);
-      expect(() => halfway.apply({ name: "add-thing", args: { label: "x" } })).toThrow(
-        /labelled-things: the checkout's evaluate belongs here/,
-      );
+      halfway.apply({ name: "add-thing", args: { label: "x" } });
+      const stub = halfway.violations().find((violation) => violation.invariant === "labelled-things");
+      expect(stub?.status).toBe("could-not-judge");
+      expect(stub?.message).toMatch(/labelled-things: the checkout's evaluate belongs here/);
     }
     // With the checkout's bodies put back where the files say, the checkout runs.
     const store = new Store({

@@ -161,7 +161,19 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    */
   applyPrimitives(primitives: readonly Primitive[]): GraphDiff<NodeOfSchema<S>> {
     const before = this.snapshot();
-    for (const primitive of primitives) this.applyOne(primitive);
+    /*
+     * ALL OR NOTHING. A primitive that fails used to leave the ones before
+     * it applied, so a host rehearsed every repair and migration on a copy
+     * before trusting it (FR-26). The snapshot taken for the diff is the
+     * way back: on any failure the graph is put back as it was, nobody is
+     * told anything changed, and the error goes on up.
+     */
+    try {
+      for (const primitive of primitives) this.applyOne(primitive);
+    } catch (error) {
+      this.restore(before);
+      throw error;
+    }
     const diff = diffSnapshots(before, this.snapshot());
     this.emit(diff);
     return diff;
@@ -179,6 +191,16 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   }
 
   // ------------------------------------------------------------ internals
+
+  /** Puts the graph back to a snapshot it held, silently: nothing a listener saw ever changed. */
+  private restore(snapshot: GraphSnapshot<NodeOfSchema<S>>): void {
+    this.nodes.clear();
+    this.edges.clear();
+    this.outIndex.clear();
+    this.inIndex.clear();
+    for (const node of snapshot.nodes) this.nodes.set(node.id, node);
+    for (const edge of snapshot.edges) this.insertEdge(edge);
+  }
 
   private emit(diff: GraphDiff<NodeOfSchema<S>>): void {
     if (

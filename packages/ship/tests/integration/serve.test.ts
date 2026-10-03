@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { createSchema, defineApp, defineMutation, defineNode, nodeRef } from "@graview/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
+import { assertBundle } from "../../src/export.js";
 import { createFileAdapter } from "../../src/file-adapter.js";
 import { openRemote } from "../../src/remote.js";
 import { serveStore, type ServedStore } from "../../src/serve.js";
@@ -68,7 +69,7 @@ let served: ServedStore<typeof schema>;
 
 beforeEach(async () => {
   root = mkdtempSync(join(tmpdir(), "graview-serve-"));
-  served = await serveStore({ app, adapter: createFileAdapter(root), seed: seed as never });
+  served = await serveStore({ app, adapter: createFileAdapter(root), seed: seed as never, trustSeatHeaders: true });
 });
 afterEach(async () => {
   await served.close();
@@ -215,11 +216,21 @@ describe("the store behind HTTP", () => {
     remote.close();
     await served.close();
 
-    served = await serveStore({ app, adapter: createFileAdapter(root) });
+    served = await serveStore({ app, adapter: createFileAdapter(root), trustSeatHeaders: true });
     const again = await (await fetch(`${served.url}/graview/state`)).json();
     expect(again.snapshot.nodes.find((node: { id: string }) => node.id === "t1").done).toBe(true);
     expect(again.log).toHaveLength(1);
     expect(again.version).toBe(1);
+  });
+
+  // FR-11: the route called exportBundle(store, app) against exportBundle(app, store) and answered 500.
+  it("exports a bundle the app's own assertBundle accepts", async () => {
+    const response = await fetch(`${served.url}/graview/export`);
+    expect(response.status).toBe(200);
+    const bundle = await response.json();
+    expect(() => assertBundle(app, bundle)).not.toThrow();
+    expect(bundle.app).toBe(app.name);
+    expect(bundle.snapshot.nodes.length).toBeGreaterThan(0);
   });
 
   it("reports where the data is, and which adapter is keeping it", async () => {
@@ -266,7 +277,7 @@ describe("who is here, beside the log and never in it", () => {
 
   it("forgets a tab that went quiet, and one that said goodbye at once", async () => {
     await served.close();
-    served = await serveStore({ app, adapter: createFileAdapter(root), seed: seed as never, presenceTtlMs: 60 });
+    served = await serveStore({ app, adapter: createFileAdapter(root), seed: seed as never, presenceTtlMs: 60, trustSeatHeaders: true });
     const one = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });
     const two = await openRemote({ app, url: served.url, principal: READER, pollMs: 0 });
     const three = await openRemote({ app, url: served.url, principal: { kind: "human", id: "u-third", roles: ["reader"] }, pollMs: 0 });
@@ -310,14 +321,38 @@ describe("a migration runs on the server, once", () => {
       ],
     });
     await served.close();
-    served = await serveStore({ app: grown, adapter: createFileAdapter(root) });
+    served = await serveStore({ app: grown, adapter: createFileAdapter(root), trustSeatHeaders: true });
     expect(served.opened.migrated).toHaveLength(1);
     expect(served.store.graph.getNode("t3")).toBeDefined();
 
     // And not again: a migration is once, whatever restarts.
     await served.close();
-    served = await serveStore({ app: grown, adapter: createFileAdapter(root) });
+    served = await serveStore({ app: grown, adapter: createFileAdapter(root), trustSeatHeaders: true });
     expect(served.opened.migrated).toEqual([]);
     expect(JSON.parse(readFileSync(join(root, "served", "meta.json"), "utf8")).version).toBe(2);
+  });
+});
+
+describe("a served store believes a seat header only when told to (FR-06)", () => {
+  it("without trustSeatHeaders it ignores x-graview-seat and answers 401 when no seatOf is supplied; health still answers", async () => {
+    await served.close();
+    served = await serveStore({ app, adapter: createFileAdapter(root), seed: seed as never });
+    const claim = { "content-type": "application/json", "x-graview-seat": "u-keeper", "x-graview-roles": "keeper" };
+    expect((await fetch(`${served.url}/graview/state`, { headers: claim })).status).toBe(401);
+    const press = await fetch(`${served.url}/graview/ops`, { method: "POST", headers: claim, body: JSON.stringify({ calls: [{ name: "finish", args: { id: "t1" } }] }) });
+    expect(press.status).toBe(401);
+    expect((served.store.graph.getNode("t1") as { done: boolean }).done).toBe(false);
+    expect((await fetch(`${served.url}/graview/health`)).status).toBe(200);
+  });
+
+  it("trusted, it records an agent acting for a person as both, and the channel it came through", async () => {
+    const agent = { kind: "agent" as const, id: "claude", name: "Claude", roles: ["keeper"], onBehalfOf: { ...KEEPER, name: "Kai" } };
+    const remote = await openRemote({ app, url: served.url, principal: agent, via: "mcp:Claude", pollMs: 0 });
+    remote.store.apply({ name: "finish", args: { id: "t1" } }, { author: agent });
+    await remote.settled();
+    const op = served.store.log.all().at(-1)!;
+    expect(op.author).toMatchObject({ kind: "agent", id: "claude", name: "Claude", onBehalfOf: { id: "u-keeper", name: "Kai" } });
+    expect(op.via).toBe("mcp:Claude");
+    remote.close();
   });
 });

@@ -10,7 +10,9 @@ import {
   type Presence,
   type PresenceChannel,
   type Principal,
+  type Via,
 } from "@graview/core";
+import { SEAT_HEADERS } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -50,6 +52,8 @@ export interface RemoteOptions<S extends AnySchema> {
    * where a hosted store's own auth goes without the framework knowing it.
    */
   readonly headers?: Readonly<Record<string, string>>;
+  /** What the calls come through, recorded on each op the server makes: `web` unless said (FR-06). */
+  readonly via?: Via;
 }
 
 export interface RemoteStore<S extends AnySchema> {
@@ -100,10 +104,11 @@ function localIds(): () => string {
 export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>): Promise<RemoteStore<S>> {
   const call = options.fetch ?? fetch;
   const headers: Record<string, string> = { "content-type": "application/json", ...(options.headers ?? {}) };
-  if (options.principal?.id) headers["x-graview-seat"] = options.principal.id;
-  if (options.principal?.roles?.length) headers["x-graview-roles"] = options.principal.roles.join(",");
+  Object.assign(headers, seatHeaders(options.principal));
 
-  const state = (await (await call(`${options.url}/graview/state`)).json()) as {
+  const reached = await call(`${options.url}/graview/state`, { headers });
+  if (!reached.ok) throw new Error(((await reached.json().catch(() => ({}))) as { error?: string }).error ?? `The server refused (${reached.status})`);
+  const state = (await reached.json()) as {
     version: number;
     snapshot: GraphSnapshot;
     log: Operation[];
@@ -227,7 +232,8 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     const response = await call(`${options.url}/graview/ops`, {
       method: "POST",
       headers,
-      body: JSON.stringify(body),
+      // A person at an interface, unless the caller said otherwise (FR-06).
+      body: JSON.stringify({ via: options.via ?? "web", ...body }),
     });
     const answer = (await response.json()) as { ops?: Operation[]; batch?: string; error?: string };
     if (!response.ok) {
@@ -363,4 +369,23 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       presence.leave();
     },
   };
+}
+
+/**
+ * A principal as the headers a TRUSTED server reads (`trustSeatHeaders`):
+ * who, as what, by what name, and for whom. A server that does not trust
+ * headers ignores every one of them and asks its own `seatOf`.
+ */
+export function seatHeaders(principal: Principal | undefined): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (!principal) return headers;
+  if (principal.id) headers[SEAT_HEADERS.seat] = principal.id;
+  if (principal.roles?.length) headers[SEAT_HEADERS.roles] = principal.roles.join(",");
+  if (principal.kind !== "human") headers[SEAT_HEADERS.kind] = principal.kind;
+  if (principal.name) headers[SEAT_HEADERS.name] = encodeURIComponent(principal.name);
+  const person = principal.onBehalfOf;
+  if (person?.id) headers[SEAT_HEADERS.for] = person.id;
+  if (person?.roles?.length) headers[SEAT_HEADERS.forRoles] = person.roles.join(",");
+  if (person?.name) headers[SEAT_HEADERS.forName] = encodeURIComponent(person.name);
+  return headers;
 }

@@ -11,6 +11,8 @@ import type { Author } from "../ops/types.js";
  */
 export interface Principal extends Author {
   readonly roles?: readonly string[];
+  /** The person an agent acts for: its roles bound the agent's, and a `self` grant reads their id. */
+  readonly onBehalfOf?: Principal;
 }
 
 /**

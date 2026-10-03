@@ -1,4 +1,4 @@
-import { humaniseField, nameOfAuthor, type AnySchema } from "@graview/core";
+import { humaniseField, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -12,6 +12,10 @@ export interface Change {
   readonly author: string;
   /** The author's own id, for seats that are not the person at the keyboard. */
   readonly authorId?: string;
+  /** The whole author — their own name, and who they acted for (FR-06, FR-17). */
+  readonly by?: Author;
+  /** What the change came through, when it said ("via Claude"). */
+  readonly via?: string;
   readonly touched: readonly string[];
   readonly batch: string;
 }
@@ -42,6 +46,8 @@ export function useRecentChanges(limit = 4): readonly Change[] {
           intent: batch.intent,
           author: batch.author.kind,
           ...(batch.author.id ? { authorId: batch.author.id } : {}),
+          by: batch.author,
+          ...(batch.ops[0]?.via ? { via: batch.ops[0].via } : {}),
           touched: [...new Set(batch.ops.flatMap((op) => op.writes))],
           batch: batch.id,
         })),
@@ -436,9 +442,10 @@ export function ActivityRail({
                         {/* "you" is the person at the keyboard, not any
                             human: two seats on one store read each other's
                             work as their own. */}
-                        {change.author === "human" && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
+                        {change.author === "human" && change.by?.onBehalfOf === undefined && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
                           ? "you"
-                          : nameOfAuthor({ kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats })}
+                          : nameOfAuthor(change.by ?? { kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats })}
+                        {viaSaid(change.via) ? <span style={{ fontWeight: 400, color: "var(--graview-ink-muted)" }}>, {viaSaid(change.via)}</span> : null}
                       </strong>{" "}
                       <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
                     </span>

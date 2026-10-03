@@ -82,6 +82,17 @@ describe("the chat under a policy", () => {
 });
 
 describe("the rail with two seats", () => {
+  // FR-06 and FR-17: an agent acting for a person is both of them, by their own names, with the channel it came through.
+  it("reads \"Claude, for kai\" for an agent acting for a person, and says what it came through", async () => {
+    const store = guarded();
+    store.apply({ name: "add-item", args: { label: "Pay the deposit" } }, { author: { kind: "agent", id: "agent:claude:acct_7", name: "Claude", onBehalfOf: keeper }, via: "mcp:Claude" });
+    const asHelper = await mounted(provider(store, helper, <ActivityRail calls={[]} seat={null} />));
+    await act(async () => asHelper.host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
+    expect(asHelper.host.querySelector('[data-testid="diff-log"] li strong')?.textContent).toBe("Claude, for kai, via Claude");
+    await asHelper.unmount();
+  });
+
+
   it("says \"you\" only for the person at the keyboard, and names the other seat", async () => {
     const store = guarded();
     store.apply({ name: "add-item", args: { label: "Pay the deposit" } }, { author: keeper });

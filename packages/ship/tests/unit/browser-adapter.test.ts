@@ -68,7 +68,7 @@ describe("the browser adapter", () => {
       "test:garden:meta",
       "test:garden:snapshot",
     ]);
-    expect(adapter.loadMeta("garden")).toEqual({ version: 1 });
+    expect(adapter.loadMeta("garden")).toMatchObject({ version: 1 });
     expect(await adapter.loadLog!("garden")).toHaveLength(1);
   });
 
@@ -170,7 +170,7 @@ describe("the browser adapter", () => {
     const upgraded = await openStore({ app: v2, adapter, seed });
     expect(upgraded.migrated).toHaveLength(1);
     expect((upgraded.store.graph.getNode("p1") as { beds: number }).beds).toBe(4);
-    expect(adapter.loadMeta("garden")).toEqual({ version: 2 });
+    expect(adapter.loadMeta("garden")).toMatchObject({ version: 2 });
     // The run is in the persisted log AND in the reopened store's history.
     expect(upgraded.store.batches()[0]?.author).toEqual({ kind: "system", id: "ship:migration" });
     upgraded.close();

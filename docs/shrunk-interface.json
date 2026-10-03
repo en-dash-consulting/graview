@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-02T17:59:59.650Z",
+  "at": "2026-10-03T02:06:02.015Z",
   "engine": "canary-gpu",
   "flags": [
     "--enable-unsafe-webgpu",
@@ -14,110 +14,110 @@
       "present": true,
       "natural": {
         "width": 1072,
-        "height": 333
+        "height": 886
       },
       "drawn": {
-        "width": 311,
-        "height": 97
+        "width": 734,
+        "height": 607
       },
       "slot": {
-        "width": 311,
-        "height": 97
+        "width": 734,
+        "height": 634
       },
-      "scaleX": 0.290359155455632,
-      "scaleY": 0.29035917631498687,
+      "scaleX": 0.6851130243557603,
+      "scaleY": 0.6851130156161823,
       "overflowRight": 0,
       "overflowBottom": 0,
       "clipped": null,
       "picks": [
         {
           "id": "today",
-          "x": 813,
-          "y": 396,
+          "x": 430,
+          "y": 141,
           "inside": true
         },
         {
           "id": "t-deposit",
-          "x": 813,
-          "y": 407,
+          "x": 430,
+          "y": 166,
           "inside": true
         },
         {
           "id": "t-book",
-          "x": 813,
-          "y": 417,
+          "x": 430,
+          "y": 191,
           "inside": true
         },
         {
           "id": "t-quote",
-          "x": 813,
-          "y": 428,
+          "x": 430,
+          "y": 216,
           "inside": true
         },
         {
           "id": "week",
-          "x": 916,
-          "y": 396,
+          "x": 672,
+          "y": 141,
           "inside": true
         },
         {
           "id": "t-notice",
-          "x": 916,
-          "y": 407,
+          "x": 672,
+          "y": 166,
           "inside": true
         },
         {
           "id": "t-meter",
-          "x": 916,
-          "y": 417,
+          "x": 672,
+          "y": 191,
           "inside": true
         },
         {
           "id": "t-post",
-          "x": 916,
-          "y": 428,
+          "x": 672,
+          "y": 216,
           "inside": true
         },
         {
           "id": "t-broadband",
-          "x": 916,
-          "y": 439,
+          "x": 672,
+          "y": 241,
           "inside": true
         },
         {
           "id": "t-keys",
-          "x": 916,
-          "y": 449,
+          "x": 672,
+          "y": 266,
           "inside": true
         },
         {
           "id": "t-boxes",
-          "x": 916,
-          "y": 460,
+          "x": 672,
+          "y": 291,
           "inside": true
         },
         {
           "id": "someday",
-          "x": 1018,
-          "y": 396,
+          "x": 913,
+          "y": 141,
           "inside": true
         },
         {
           "id": "t-shelves",
-          "x": 1018,
-          "y": 407,
+          "x": 913,
+          "y": 166,
           "inside": true
         },
         {
           "id": "t-paint",
-          "x": 1018,
-          "y": 417,
+          "x": 913,
+          "y": 191,
           "inside": true
         },
         {
           "id": "t-piano",
-          "x": 1018,
-          "y": 428,
+          "x": 913,
+          "y": 216,
           "inside": true
         }
       ],

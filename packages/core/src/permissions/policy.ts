@@ -6,6 +6,29 @@ import type { Grant, Policy, Principal, Refusal } from "./types.js";
 const matches = (allowed: readonly string[] | "*", value: string): boolean =>
   allowed === "*" || allowed.includes(value);
 
+/**
+ * THE SEAT A POLICY JUDGES, delegation read through (FR-06). An agent acting
+ * for a person may do what BOTH may: its roles are the intersection of its
+ * own and theirs (an agent that declared none takes the person's), and a
+ * `self` grant — "you, on yours" — is about the person, not the agent. A
+ * principal acting for nobody is judged as itself.
+ */
+export function actingAs(principal: Principal): Principal {
+  const person = principal.onBehalfOf;
+  if (!person) return principal;
+  const theirs = person.roles ?? [];
+  const roles = principal.roles === undefined ? theirs : principal.roles.filter((role) => theirs.includes(role));
+  return { ...principal, ...(person.id !== undefined ? { id: person.id } : {}), roles };
+}
+
+/**
+ * THE HOST'S OWN WORK HAS A SEAT (FR-17). A template's setup, a seed, a
+ * migration applied by the system is not a person a policy was written
+ * about, and `roles: ["*"]` matched no grant — so a host gave its system
+ * every role the policy named. `system` is a kind, not a role: it passes.
+ */
+export const isSystem = (principal: Principal): boolean => principal.kind === "system" && principal.onBehalfOf === undefined;
+
 /** Whether a grant covers a principal at all, before looking at the call. */
 function grantsTo(grant: Grant, principal: Principal): boolean {
   if (grant.roles === "*") return true;
@@ -59,6 +82,8 @@ export function permits(
 ): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
   // No policy means permission is not a concern in this installation.
   if (!policy) return { ok: true };
+  if (isSystem(principal)) return { ok: true };
+  principal = actingAs(principal);
 
   /*
    * A derived act is permitted when the policy names it (or says `*`) —

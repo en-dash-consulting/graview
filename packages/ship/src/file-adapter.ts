@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync, appendFileSync, existsS
 import { dirname, join } from "node:path";
 import type { Operation, PersistenceAdapter } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
+import type { StoredMeta } from "./meta.js";
 
 /**
  * Persistence a self-hoster can READ: a directory per scope holding
@@ -13,8 +14,8 @@ import type { GraphSnapshot } from "./snapshot.js";
  * exists so "where is my data" has an answer anyone can open.
  */
 export interface FileAdapter extends PersistenceAdapter<string> {
-  loadMeta(scope: string): { version: number } | null;
-  saveMeta(scope: string, meta: { version: number }): void;
+  loadMeta(scope: string): StoredMeta | null;
+  saveMeta(scope: string, meta: StoredMeta): void;
   /**
    * The directory it writes into.
    *
@@ -63,7 +64,7 @@ export function createFileAdapter(root: string): FileAdapter {
       appendFileSync(path, ops.map((op) => JSON.stringify(op)).join("\n") + "\n");
     },
     loadMeta(scope) {
-      return read<{ version: number }>(place(scope, "meta.json"));
+      return read<StoredMeta>(place(scope, "meta.json"));
     },
     saveMeta(scope, meta) {
       write(place(scope, "meta.json"), meta);
