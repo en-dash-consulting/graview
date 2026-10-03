@@ -22,6 +22,8 @@ export const NOT_EXPORTS = new Map([
   ["seatOf", "an option of serveStore, not an export"],
   ["attachRenderer", "a prop of the Scene, not an export"],
   ["onConflict", "a method of openRemote's store, not an export"],
+  ["onStatus", "a method of openRemote's store, not an export"],
+  ["presenceEveryMs", "an option of openRemote, not an export"],
   ["keepTheirs", "a method of a RemoteConflict, not an export"],
   ["useMine", "a method of a RemoteConflict, not an export"],
   ["serializeAttachment", "a Cloudflare Durable Object WebSocket method, not an export"],

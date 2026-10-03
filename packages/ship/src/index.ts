@@ -25,7 +25,7 @@ export type { HealthReport } from "./health.js";
 export { openRemote, seatHeaders } from "./remote.js";
 export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
-export type { LiveSocketLike, RemoteConflict, RemoteOptions, RemoteStore } from "./remote.js";
+export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteStatus, RemoteStore } from "./remote.js";
 export { conflictSentence, LIVE_PATH } from "./live.js";
 export type { LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket } from "./live.js";
 export { createStoreHandler, presenceSeenBy } from "./handler.js";

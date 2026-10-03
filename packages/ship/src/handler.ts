@@ -70,7 +70,7 @@ import type { GraphSnapshot } from "./snapshot.js";
  */
 export const WIRE = [
   { method: "GET", path: "/graview/state", says: "the graph, the log, the stored version and the modules on" },
-  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; 409 with the policy's sentence when refused" },
+  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` already in the log is answered with the ops it made; 409 with the policy's sentence when refused" },
   { method: "GET", path: "/graview/since", says: "the ops appended after ?seq=N — everyone else's" },
   { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
   { method: "GET", path: "/graview/export", says: "the whole store as one bundle, the way out" },
@@ -399,6 +399,9 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const author = await seat();
       // What the calls came through is the host's to say, never the body's (FR-52).
       const via = await viaFor(request, author, "api");
+      // A batch already in the log is a call sent again after its answer was lost: answered with what it made, as on the socket (FR-49).
+      const already = wire.answered(body.batch);
+      if (already.length > 0) return send(200, { ops: wire.shown(author, already), batch: body.batch });
       /*
        * A STALE WRITE IS A CONFLICT, NOT A LOSS (FR-05). A field that moved
        * since the caller read it is refused by name — theirs and yours —
