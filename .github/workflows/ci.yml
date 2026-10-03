@@ -35,6 +35,16 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # A host that is not Node imports the framework too. The published
+      # entries of core, tools and ship's runtime, bundled as a Worker and run
+      # in workerd with no Node compatibility: a call applied, the wire served
+      # from a Durable Object, the adapter contract over its SQLite. `pnpm
+      # test` skips this where workerd cannot start; here it must run (FR-09).
+      - name: Run core, tools and ship in workerd
+        run: pnpm vitest run tests/the-framework-runs-in-workerd.test.ts
+        env:
+          GRAVIEW_REQUIRE_WORKERD: "1"
+
       # The declaration is the contract. An app that typechecks can still
       # declare an edge to a kind nobody wrote, a rule with no invariant, or a
       # palette nobody can read.
