@@ -21,6 +21,9 @@ export const NOT_EXPORTS = new Map([
   ["CanvasDrawElement", "a Chromium feature flag"],
   ["seatOf", "an option of serveStore, not an export"],
   ["attachRenderer", "a prop of the Scene, not an export"],
+  ["onConflict", "a method of openRemote's store, not an export"],
+  ["keepTheirs", "a method of a RemoteConflict, not an export"],
+  ["useMine", "a method of a RemoteConflict, not an export"],
 ]);
 
 /** The API-shaped names a README puts in backticks: `name`, `name()`, `Name`. */
