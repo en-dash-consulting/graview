@@ -99,6 +99,14 @@ describe.skipIf(!mf)("core, tools and ship's runtime entry, in workerd", () => {
     expect(answer.shipped).toContain("FR-09");
   });
 
+  it("runs the live protocol from the runtime entry over state that is only JSON between messages (FR-41)", async () => {
+    const answer = await json<{ heard: { t: string }[]; state: { cursor: number; via: string }; via: string }>(mf!.dispatchFetch("http://worker/live"));
+    expect(answer.heard.map((message) => message.t)).toEqual(["welcome", "ack"]);
+    expect(answer.state).toMatchObject({ cursor: 0, via: "mcp:Claude" });
+    // The host's channel, not the client's (FR-52).
+    expect(answer.via).toBe("mcp:Claude");
+  });
+
   it("serves the WIRE from a Durable Object whose store is its own SQLite, and keeps what was applied", async () => {
     const seat = { "content-type": "application/json", "x-graview-seat": "u1", "x-graview-roles": "keeper" };
     const before = await json<{ snapshot: { nodes: { id: string; done: boolean }[] } }>(mf!.dispatchFetch("http://worker/graview/state", { headers: seat }));
@@ -106,8 +114,9 @@ describe.skipIf(!mf)("core, tools and ship's runtime entry, in workerd", () => {
 
     const applied = await mf!.dispatchFetch("http://worker/graview/ops", {
       method: "POST",
-      headers: seat,
-      body: JSON.stringify({ calls: [{ name: "finish", args: { id: "t1" } }], via: "web" }),
+      // The channel rides with the seat, in a header this host trusts as it trusts the seat (FR-52).
+      headers: { ...seat, "x-graview-via": "web" },
+      body: JSON.stringify({ calls: [{ name: "finish", args: { id: "t1" } }] }),
     });
     expect(applied.status).toBe(200);
     expect(await applied.json()).toMatchObject({ ops: [{ author: { id: "u1" }, via: "web" }] });

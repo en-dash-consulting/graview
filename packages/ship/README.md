@@ -42,7 +42,8 @@ declaration plus one persistence adapter is a running deployment.
   `Response`, for any runtime: a Cloudflare Worker or Durable Object, Deno, Bun. `serveStore`
   is a thin `node:http` wrapper around it. Import it from `@graview/ship/runtime`, the entry
   that reaches no `node:` builtin: the store, migrations, the handler and `openRemote`, without
-  the file adapter or the page's localStorage.
+  the file adapter or the page's localStorage. A host that opens, migrates and heals its own
+  `Store` hands it over instead of an adapter: `createStoreHandler({ app, store, seatOf, flush })`.
 - **Content moves as steps.** The step DSL (`stepsMigration`) has five content steps beside
   the schema ones — `put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge` — each
   judged against the stored graph when it runs, so a default that is already there is not
@@ -84,8 +85,11 @@ as headers (`SEAT_HEADERS`: who, as what, by what name, and for whom), and a sto
 them only when told to — `serveStore({ trustSeatHeaders: true })`, which `graview serve`
 sets for a server on 127.0.0.1 and says so. A store with neither answers 401 on every route
 but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with
-every request, and the framework never reads them. A call says what it came through
-(`via`: `web` from `openRemote`, `mcp` and `cli` from the commands), recorded on the op. `openRemote(...).settled()` resolves once every call sent
+every request, and the framework never reads them. What a call came through (`via`: `web`,
+`api`, `mcp:Claude`), recorded on the op, is the host's word too: `viaOf(request, seat)` says
+it, or `SEAT_HEADERS.via` where the seat headers are trusted (`openRemote({ via })` sends it,
+`mcp` and `cli` from the commands). A `via` in a call's body or message is never read; without
+either, a socket's calls are `web` and an HTTP call's `api`. `openRemote(...).settled()` resolves once every call sent
 so far has been answered — a browser never waits for it; a host that must report the
 server's verdict before it exits does.
 
@@ -98,7 +102,7 @@ and catches up from the last op it has. Polling stays: it is the wire `curl` can
 | From | Message | Carries |
 |---|---|---|
 | client | `hello` | `seq`, the last op it has (none: the welcome carries the whole state); `protocol` |
-| client | `call` | `cid`, `calls`, `intent`, `batch`, `via`, and `base`: the revision of each field it changes |
+| client | `call` | `cid`, `calls`, `intent`, `batch`, and `base`: the revision of each field it changes |
 | client | `undo` | `cid`, `batches` to take back |
 | client | `here` / `bye` | a presence, as `/graview/here` takes it; gone |
 | server | `welcome` | `protocol`, `seq` (the server's last), and the `ops` after the client's seq |
@@ -111,6 +115,25 @@ A host on any runtime attaches a socket with `createStoreHandler(...).connect(re
 close })`, which reads the seat from the upgrade and answers with the connection to hand each
 message to; `serveStore` does this for Node's upgrade. What a seat may not see holds on the
 socket as on the routes.
+
+A host that hibernates — a Durable Object wakes on a message with no closure left — holds
+each socket's state itself. `liveProtocol({ store })` (from `@graview/ship/runtime`) is the
+same protocol as functions over the store and one plain-JSON `LiveSocketState` per socket,
+`{ seat, via, cursor?, participant? }`, the thing `serializeAttachment` keeps:
+
+```ts
+const live = liveProtocol({ store, version: app.version, flush });
+// On the upgrade: the seat and channel, read once (handler.seatFor(request) does this with seatOf and viaOf).
+ws.serializeAttachment(live.open(seat, "web"));
+// On each message, after any wake:
+const peer = { ...ws.deserializeAttachment(), send: (text) => ws.send(text) };
+const { landed, presence } = await live.receive(peer, text, whoIsHere);
+const { send, ...state } = peer;
+ws.serializeAttachment(state);
+if (landed) live.publish(landed, otherPeers); // each as its own seat sees them, from its own cursor
+```
+
+`connect()` is this protocol with the state in memory, so there is one implementation.
 
 **A stale write is a conflict, not a loss.** A field's revision is the seq of the op that last
 wrote it (`FieldRevisions`, derived from the log). A call that carries a `base` older than the

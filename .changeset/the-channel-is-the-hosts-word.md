@@ -1,0 +1,7 @@
+---
+"@graview/ship": patch
+---
+
+The channel an op came through is the host's word. Every op records its `via` — `web`, `api`, `mcp:Claude` — and the audit and the "via Claude" line read it, but the live wire took it from the client's `call.via` and `undo.via`, and `POST /graview/ops` from the body's `via`. A browser could record its edit as Claude's. The handler now takes the channel from a new `viaOf(request, seat)` option, or, where it trusts the seat headers, from the new `SEAT_HEADERS.via` (`x-graview-via`), which is believed exactly where the seat is. Failing both, a socket's calls are `web` and an HTTP call's `api`. A socket's channel is read once, from its upgrade, and kept in its state. `openRemote({ via })` sends the header, and the query parameter a page's socket carries, instead of the field, so `graview mcp --remote-url` against `graview serve` is still recorded as `mcp`. The MCP HTTP handler takes no `via` from a caller, so nothing changes there (FR-52).
+
+Compatibility: breaking for a client that named its own channel: `via` in a `call`, an `undo` or the body of `POST /graview/ops` is now ignored, and `LiveClientMessage` no longer has the field. Such a client sends `x-graview-via` to a server that trusts seat headers; a host that asks its own `seatOf` says the channel with `viaOf`. A browser posting over HTTP to a host with a `seatOf` and no `viaOf` is now recorded as `api` where it said `web`. Stored formats and op shapes are unchanged. `SEAT_HEADERS.via` and `viaOf` are additive, and CORS allows the new header.
