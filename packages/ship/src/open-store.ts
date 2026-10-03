@@ -1,8 +1,11 @@
 import {
   assertReadable,
   formatStamp,
+  OperationLog,
+  snapshotHash,
   Store,
   type AnySchema,
+  type Epoch,
   type GraviewApp,
   type Operation,
   type PersistenceAdapter,
@@ -72,6 +75,12 @@ export interface OpenedStore<S extends AnySchema> {
   readonly store: Store<S>;
   /** Operations the opening appended: the migration run, when one happened. */
   readonly migrated: readonly Operation[];
+  /**
+   * The epoch this opening began (FR-27), when it began one: the seed a new
+   * scope starts from, the graph a migration run left (with the change in
+   * a sentence), or what a store from before epochs held.
+   */
+  readonly epoch?: Epoch;
   /** What verifying on open found, when `verify` was asked for. */
   readonly verified?: VerifyResult;
   /**
@@ -95,6 +104,7 @@ export async function openStore<S extends AnySchema>(
   if (options.fresh) await adapter.delete(scope);
   const stored = (await adapter.load(scope)) as GraphSnapshot | null;
   const persisted = (await adapter.loadLog?.(scope)) ?? [];
+  const epochs: Epoch[] = (await adapter.loadEpochs?.(scope)) ?? [];
   let seq = persisted.length;
 
   const meta = adapter.loadMeta?.(scope) ?? null;
@@ -129,6 +139,33 @@ export async function openStore<S extends AnySchema>(
     snapshot = run.snapshot;
     migrated = run.ops.map((op) => ({ ...op, seq: seq++ }));
     await adapter.appendOps?.(scope, migrated);
+  }
+
+  /*
+   * EACH DECLARATION VERSION BEGINS AN EPOCH (FR-27): a base graph and the
+   * seq the log folds onto it from. A new scope begins one at its seed,
+   * which was never an operation. A migration run begins one at the graph
+   * it left, naming the change, so the log verifies from there and undo
+   * does not reach back across it. A store from before epochs begins one
+   * at what it holds — from empty, when its whole log folds to it, since
+   * then the whole history is proof — and is verifiable from then on.
+   * Recorded straight after the migration's ops, before the snapshot: a
+   * crash between the two leaves a stale snapshot that verifying finds.
+   */
+  const at = new Date().toISOString();
+  let epoch: Epoch | undefined;
+  if (migrated.length > 0) {
+    epoch = { seq, base: snapshot, version: target, change: migrated.map((op) => op.intent).join("; "), at };
+  } else if (stored === null) {
+    epoch = { seq, base: snapshot, version: target, at };
+  } else if (epochs.length === 0) {
+    epoch = foldsFromEmpty(app.schema, persisted, stored)
+      ? { seq: 0, base: { nodes: [], edges: [] }, version: storedVersion, at }
+      : { seq, base: stored, version: storedVersion, at };
+  }
+  if (epoch) {
+    epochs.push(epoch);
+    await adapter.saveEpochs?.(scope, epochs);
   }
 
   /*
@@ -167,6 +204,7 @@ export async function openStore<S extends AnySchema>(
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),
     snapshot,
     log: history,
+    epochs,
     ids,
     // A stored history is read back later, so its timestamps are real ones.
     now: () => new Date().toISOString(),
@@ -185,7 +223,8 @@ export async function openStore<S extends AnySchema>(
   if (verified && !verified.ok) {
     let folded: GraphSnapshot;
     try {
-      folded = store.log.fold(app.schema, { validate: options.storeOptions?.validate ?? true }).snapshot();
+      const from = store.log.lastEpoch();
+      folded = store.log.fold(app.schema, { validate: options.storeOptions?.validate ?? true, ...(from ? { from } : {}) }).snapshot();
     } catch {
       throw new Error(`graview ship: "${scope}" does not verify, and its log cannot be rebuilt from. ${verified.reason} Nothing was rebuilt.`);
     }
@@ -228,9 +267,19 @@ export async function openStore<S extends AnySchema>(
   return {
     store,
     migrated,
+    ...(epoch ? { epoch } : {}),
     ...(verified ? { verified } : {}),
     ...(rebuilt ? { rebuilt } : {}),
     flush: () => writing,
     close: unsubscribe,
   };
+}
+
+/** Whether a log with no epochs folds from empty to exactly what is stored. */
+function foldsFromEmpty(schema: AnySchema, ops: readonly Operation[], stored: GraphSnapshot): boolean {
+  try {
+    return snapshotHash(OperationLog.from(ops).fold(schema).snapshot()) === snapshotHash(stored);
+  } catch {
+    return false;
+  }
 }

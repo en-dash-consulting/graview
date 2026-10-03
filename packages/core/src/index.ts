@@ -180,6 +180,7 @@ export type {
 
 // Operation log — attribution, causality, selective undo.
 export { OperationLog } from "./ops/log.js";
+export type { Epoch } from "./ops/log.js";
 export { checkUndo, undoPrimitives } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck } from "./ops/undo.js";
 export type { Author, Batch, Operation, Via } from "./ops/types.js";

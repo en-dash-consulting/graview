@@ -1,4 +1,5 @@
 import type { GraphSnapshot } from "../graph/types.js";
+import type { Epoch } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
 
 /**
@@ -19,4 +20,11 @@ export interface PersistenceAdapter<Scope = string> {
   /** Optional: adapters that keep history append the log too. */
   loadLog?(scope: Scope): Promise<Operation[]>;
   appendOps?(scope: Scope, ops: readonly Operation[]): Promise<void>;
+  /**
+   * Optional: the epochs the log folds from (FR-27), kept beside it. An
+   * adapter without them reopens a store with none recorded, and ship has
+   * it adopt what it holds as its first epoch on each open.
+   */
+  loadEpochs?(scope: Scope): Promise<Epoch[]>;
+  saveEpochs?(scope: Scope, epochs: readonly Epoch[]): Promise<void>;
 }

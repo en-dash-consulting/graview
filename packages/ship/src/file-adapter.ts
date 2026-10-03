@@ -1,14 +1,15 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync, appendFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { Operation, PersistenceAdapter } from "@graview/core";
+import type { Epoch, Operation, PersistenceAdapter } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 import type { StoredMeta } from "./meta.js";
 
 /**
  * Persistence a self-hoster can READ: a directory per scope holding
  * `snapshot.json` (the current graph), `log.jsonl` (one operation per line,
- * append-only — history as plain lines a person can grep), and `meta.json`
- * (the stored schema version the migration engine compares against).
+ * append-only — history as plain lines a person can grep), `meta.json`
+ * (the stored schema version the migration engine compares against), and
+ * `epochs.json` (the base graphs the log folds from, FR-27).
  *
  * Deliberately boring. The core's sqlite adapter exists for scale; this one
  * exists so "where is my data" has an answer anyone can open.
@@ -62,6 +63,12 @@ export function createFileAdapter(root: string): FileAdapter {
       const path = place(scope, "log.jsonl");
       mkdirSync(dirname(path), { recursive: true });
       appendFileSync(path, ops.map((op) => JSON.stringify(op)).join("\n") + "\n");
+    },
+    async loadEpochs(scope) {
+      return read<Epoch[]>(place(scope, "epochs.json")) ?? [];
+    },
+    async saveEpochs(scope, epochs) {
+      write(place(scope, "epochs.json"), epochs);
     },
     loadMeta(scope) {
       return read<StoredMeta>(place(scope, "meta.json"));
