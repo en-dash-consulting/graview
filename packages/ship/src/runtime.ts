@@ -11,7 +11,7 @@
 export { createStoreHandler, presenceSeenBy, SEAT_HEADERS, seatFromHeaders, WIRE } from "./handler.js";
 export type { StoreHandler, StoreHandlerOptions } from "./handler.js";
 export { openStore } from "./open-store.js";
-export type { OpenStoreOptions, OpenedStore } from "./open-store.js";
+export type { Compaction, OpenStoreOptions, OpenedStore } from "./open-store.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
 export type { MigrationRun } from "./migrations.js";
 export { countSteps, primitivesFor, primitivesForSteps, sayStep, stepsMigration } from "./steps.js";
@@ -21,7 +21,7 @@ export type { SeedSyncOptions } from "./sync-seed.js";
 export { applyToSnapshot } from "./snapshot.js";
 export type { GraphSnapshot } from "./snapshot.js";
 export { assertBundle, exportBundle } from "./export.js";
-export type { AppBundle } from "./export.js";
+export type { AppBundle, ExportOptions } from "./export.js";
 export type { StoredMeta } from "./meta.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";

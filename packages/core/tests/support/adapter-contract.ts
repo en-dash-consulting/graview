@@ -151,6 +151,47 @@ export function adapterCases(make: () => PersistenceAdapter<string>): AdapterCas
         same(await adapter.loadLog("other"), [], "another scope's log");
       },
     },
+    {
+      // FR-23: a normal open loads the checkpoint and the tail; the archive holds the rest.
+      name: "moves the ops and epochs behind a checkpoint into its archive when it compacts",
+      async run() {
+        const adapter = make();
+        if (!adapter.compact || !adapter.loadArchive || !adapter.appendOps || !adapter.loadLog || !adapter.saveEpochs || !adapter.loadEpochs) return;
+        const ops = [0, 1, 2, 3, 4].map((seq) => ({
+          id: `op${seq + 1}`,
+          seq,
+          batch: `b${seq + 1}`,
+          author: { kind: "human" as const },
+          intent: `Retime ${seq}`,
+          mutation: null,
+          primitives: [{ op: "patch-node" as const, id: "d1", before: { at: 480 + seq }, after: { at: 481 + seq } }],
+          inverse: [{ op: "patch-node" as const, id: "d1", before: { at: 481 + seq }, after: { at: 480 + seq } }],
+          reads: ["d1"],
+          writes: ["d1"],
+          at: "1970-01-01T00:00:00.000Z",
+        }));
+        const seed = { seq: 0, base: snapshot };
+        const later = { seq: 4, base: snapshot, version: 2, change: "a change" };
+        await adapter.appendOps("h", ops.slice(0, 2));
+        await adapter.appendOps("h", ops.slice(2));
+        await adapter.saveEpochs("h", [seed, later]);
+        const checkpoint = { seq: 3, base: snapshot, horizon: true as const };
+        await adapter.compact("h", checkpoint);
+        same((await adapter.loadLog("h")).map((op) => op.seq), [3, 4], "the tail");
+        same(await adapter.loadEpochs("h"), [checkpoint, later], "the checkpoint and the epochs after it");
+        const archive = await adapter.loadArchive("h");
+        same(archive.ops, ops.slice(0, 3), "the archived ops");
+        same(archive.epochs, [seed], "the archived epochs");
+        // Again, behind a later horizon: the archive grows, in order.
+        const next = { seq: 4, base: snapshot, version: 2, change: "a change", horizon: true as const };
+        await adapter.compact("h", next);
+        same((await adapter.loadLog("h")).map((op) => op.seq), [4], "the second tail");
+        same(await adapter.loadEpochs("h"), [next], "the second checkpoint");
+        same((await adapter.loadArchive("h")).ops.map((op) => op.seq), [0, 1, 2, 3], "the archive after two");
+        same((await adapter.loadArchive("h")).epochs, [seed, checkpoint], "the archived epochs after two");
+        same(await adapter.loadArchive("other"), { ops: [], epochs: [] }, "another scope's archive");
+      },
+    },
   ];
 }
 

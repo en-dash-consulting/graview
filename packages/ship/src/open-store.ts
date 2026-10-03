@@ -5,6 +5,7 @@ import {
   snapshotHash,
   Store,
   type AnySchema,
+  type CompactOptions,
   type Epoch,
   type GraviewApp,
   type Operation,
@@ -12,6 +13,7 @@ import {
   type StoreOptions,
   type VerifyResult,
 } from "@graview/core";
+import { rememberArchive } from "./export.js";
 import { migrateSnapshot } from "./migrations.js";
 import type { StoredMeta } from "./meta.js";
 import type { GraphSnapshot } from "./snapshot.js";
@@ -102,6 +104,25 @@ export interface OpenedStore<S extends AnySchema> {
   flush(): Promise<void>;
   /** Stops persisting. The store keeps working; nothing further is written. */
   close(): void;
+  /**
+   * COMPACTS THE LOG BEHIND AN UNDO HORIZON (FR-23). The checkpoint
+   * `store.checkpoint(options)` makes (by default: keep the last 90 days
+   * and the last 1000 ops, whichever keeps more) becomes the horizon; the
+   * adapter archives the ops and epochs before it, then the store lets go
+   * of them. The next open loads the checkpoint and the tail, undo stops at
+   * the horizon and says so, and `exportBundle(app, store, { full: true })`
+   * still carries everything. Settles after every write accepted before
+   * it. Refused by an adapter that keeps no archive.
+   */
+  compact(options?: CompactOptions): Promise<Compaction>;
+}
+
+/** What `compact` did: where the log now begins, and how many ops it archived (0 when nothing was old enough). */
+export interface Compaction {
+  readonly horizon: number;
+  readonly archived: number;
+  /** The checkpoint that became the horizon, when one did. */
+  readonly checkpoint?: Epoch;
 }
 
 export async function openStore<S extends AnySchema>(
@@ -114,7 +135,13 @@ export async function openStore<S extends AnySchema>(
   const stored = (await adapter.load(scope)) as GraphSnapshot | null;
   const persisted = (await adapter.loadLog?.(scope)) ?? [];
   const epochs: Epoch[] = (await adapter.loadEpochs?.(scope)) ?? [];
-  let seq = persisted.length;
+  /*
+   * A COMPACTED LOG BEGINS AT ITS HORIZON (FR-23): the adapter hands over
+   * the checkpoint and the ops from its seq on, and nothing older is read.
+   */
+  const checkpoint = [...epochs].reverse().find((epoch) => epoch.horizon);
+  const horizon = checkpoint?.seq ?? 0;
+  let seq = horizon + persisted.length;
 
   const meta = adapter.loadMeta?.(scope) ?? null;
   /*
@@ -139,7 +166,8 @@ export async function openStore<S extends AnySchema>(
   const storedVersion =
     stored === null
       ? target
-      : Math.max(meta?.version ?? options.assumeVersion ?? target, migratedTo);
+      : // A migration run behind the horizon is archived; the checkpoint still says the version it stood at.
+        Math.max(meta?.version ?? options.assumeVersion ?? target, migratedTo, checkpoint?.version ?? 0);
 
   let snapshot: GraphSnapshot = stored ?? options.seed ?? { nodes: [], edges: [] };
   let migrated: readonly Operation[] = [];
@@ -200,7 +228,8 @@ export async function openStore<S extends AnySchema>(
    * A supplied `ids` still wins.
    */
   const taken = new Set(history.map((op) => op.id));
-  let n = history.length;
+  // Counting the archived ops too (FR-23): their ids are not here to collide with, but they are taken.
+  let n = horizon + history.length;
   const ids = () => {
     let id = `op${++n}`;
     while (taken.has(id)) id = `op${++n}`;
@@ -286,6 +315,9 @@ export async function openStore<S extends AnySchema>(
   /* The host's word on modules, recorded where it changes the log's (FR-12). */
   const enabledModules = options.enabledModules ?? options.storeOptions?.enabledModules;
   if (enabledModules !== undefined) store.setEnabledModules(enabledModules);
+  // A full export of this store reads what a normal open did not load (FR-23).
+  const loadArchive = adapter.loadArchive?.bind(adapter);
+  if (loadArchive) rememberArchive(store, () => loadArchive(scope));
 
   return {
     store,
@@ -295,6 +327,32 @@ export async function openStore<S extends AnySchema>(
     ...(rebuilt ? { rebuilt } : {}),
     flush: () => writing,
     close: unsubscribe,
+    compact: (compactOptions) => {
+      /*
+       * On the write chain, after every write accepted so far, and ARCHIVE
+       * FIRST: the adapter moves what is behind the checkpoint before the
+       * store lets go of it, so a failed write leaves a whole log on disk
+       * and a whole log in memory, never an archive that is missing ops.
+       */
+      const done = writing.then(async (): Promise<Compaction> => {
+        if (!adapter.compact || !adapter.loadArchive) {
+          throw new Error(
+            `The ${adapter.name} adapter keeps no archive, so its log cannot be compacted behind an undo horizon. ` +
+              "It keeps no epochs either, and a checkpoint is one: compaction is for an adapter that keeps both, as the memory, file and SQL adapters do.",
+          );
+        }
+        const made = store.checkpoint(compactOptions);
+        if (!made) return { horizon: store.log.horizon, archived: 0 };
+        await adapter.compact(scope, made);
+        const archived = store.compact(made);
+        return { horizon: store.log.horizon, archived: archived.ops.length, checkpoint: made };
+      });
+      writing = done.then(
+        () => undefined,
+        () => undefined,
+      );
+      return done;
+    },
   };
 }
 

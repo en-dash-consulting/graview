@@ -18,7 +18,7 @@ import type {
 import { compileMutation } from "./mutations/define-mutation.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
-import { OperationLog, type Epoch } from "./ops/log.js";
+import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { actingAs, isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
 import { redact } from "./ops/withheld.js";
@@ -63,6 +63,13 @@ export interface StoreOptions<S extends AnySchema> {
    * its first epoch.
    */
   readonly epochs?: readonly Epoch[];
+  /**
+   * The seq `log` begins at, when it was compacted behind an undo horizon
+   * and its checkpoint is not among `epochs` (FR-23): a client hydrating on
+   * a snapshot is handed the tail and the horizon, not the base. Absent,
+   * the log begins at its checkpoint's seq, or at 0.
+   */
+  readonly horizon?: number;
   /** Defaults to a monotonic counter so tests stay deterministic. */
   readonly ids?: () => string;
   /**
@@ -336,18 +343,23 @@ export class Store<S extends AnySchema> {
     }
     tellTheWatchItsNames(options.schema, this.mutations.values(), options.policy);
 
+    const horizon = options.horizon !== undefined ? { horizon: options.horizon } : {};
     if (options.log && options.snapshot) {
       // Hydrate: the graph as stored, the history as recorded.
-      this.log = OperationLog.from(options.log, options.epochs);
+      this.log = OperationLog.from(options.log, options.epochs, horizon);
       this.graph = Graph.from(options.schema, options.snapshot, {
         validate: options.validate ?? true,
       });
     } else if (options.log) {
-      this.log = OperationLog.from(options.log, options.epochs);
+      this.log = OperationLog.from(options.log, options.epochs, horizon);
       const last = this.log.lastEpoch();
       this.graph = this.log.fold(options.schema, { validate: options.validate ?? true, ...(last ? { from: last } : {}) });
     } else {
-      this.log = OperationLog.from([], options.epochs ?? (options.snapshot ? [{ seq: 0, base: options.snapshot }] : []));
+      this.log = OperationLog.from(
+        [],
+        options.epochs ?? (options.snapshot ? [{ seq: options.horizon ?? 0, base: options.snapshot }] : []),
+        horizon,
+      );
       this.graph = Graph.from(options.schema, options.snapshot ?? { nodes: [], edges: [] }, {
         validate: options.validate ?? true,
       });
@@ -376,6 +388,8 @@ export class Store<S extends AnySchema> {
       this.counter = Math.max(this.counter, trailing(op.batch));
       n = Math.max(n, trailing(op.id));
     }
+    // Behind an undo horizon (FR-23) are ids the log no longer holds: count on past them all.
+    if (this.log.horizon > 0) n = Math.max(n, this.log.length);
     tellTheWatchOfAStore(this);
   }
 
@@ -1083,7 +1097,7 @@ export class Store<S extends AnySchema> {
         }
       }
     }
-    const seq = this.log.all().length;
+    const seq = this.log.length;
     for (const [index, op] of fresh.entries()) {
       const here = { ...op, seq: seq + index };
       this.log.append(here);
@@ -1426,8 +1440,9 @@ export class Store<S extends AnySchema> {
     const settling = new Set([...change.pending, ...(change.drop ?? [])]);
     const all = this.log.all();
     const first = all.findIndex((op) => settling.has(op.batch));
-    const cut = first < 0 ? all.length : first;
-    const tail = all.slice(cut);
+    const tail = all.slice(first < 0 ? all.length : first);
+    // The seq the log is cut back to: indexes into `all()` count from the horizon (FR-23).
+    const cut = this.log.horizon + (first < 0 ? all.length : first);
     const stray = tail.find((op) => !settling.has(op.batch));
     if (stray) {
       throw new GraphError(
@@ -1524,10 +1539,67 @@ export class Store<S extends AnySchema> {
    */
   verify(): VerifyResult {
     const from = this.log.lastEpoch();
-    return verifyFold(this.schema, this.log.all().slice(from?.seq ?? 0), this.graph.snapshot(), {
+    return verifyFold(this.schema, this.log.opsFrom(from?.seq ?? 0), this.graph.snapshot(), {
       validate: this.validate,
       ...(from ? { base: from.base } : {}),
     });
   }
+
+  /**
+   * THE CHECKPOINT A COMPACTION WOULD MAKE (FR-23), or `undefined` when
+   * nothing is old enough to archive. The horizon is `seq` when given, or
+   * else whichever of two keeps more: the ops made in the last `keepDays`
+   * days before `now` (default 90), or the last `keepOps` ops (default
+   * 1000). It is moved back to the start of the gesture it would split, so
+   * a batch is never half behind it.
+   *
+   * Nothing moves until `compact` is handed the checkpoint, so a host can
+   * archive what is behind it first. A store whose graph does not verify
+   * against its log is not compacted: the checkpoint would vouch for a
+   * history that does not lead to the graph held.
+   */
+  checkpoint(options: CompactOptions = {}): Epoch | undefined {
+    const ops = this.log.all();
+    let seq: number;
+    if (options.seq !== undefined) seq = options.seq;
+    else {
+      const byOps = this.log.length - (options.keepOps ?? 1000);
+      const now = Date.parse(options.now ?? this.now());
+      const cutoff = now - (options.keepDays ?? 90) * 86_400_000;
+      const kept = ops.find((op) => Date.parse(op.at) > cutoff);
+      const byDays = kept ? kept.seq : this.log.length;
+      seq = Math.min(byOps, byDays);
+    }
+    seq = Math.min(Math.max(seq, this.log.horizon), this.log.length);
+    // Never inside a gesture: back to where the batch it would split began.
+    while (seq > this.log.horizon && seq < this.log.length && ops[seq - this.log.horizon]!.batch === ops[seq - 1 - this.log.horizon]!.batch) seq--;
+    if (seq <= this.log.horizon) return undefined;
+    const verified = this.verify();
+    if (!verified.ok) throw new GraphError(`Cannot compact a store that does not verify: ${verified.reason}`);
+    return this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+  }
+
+  /**
+   * MOVES THE UNDO HORIZON TO `checkpoint` (FR-23): the ops and epochs
+   * before it leave the log, which begins at its seq from now on, and are
+   * returned for an adapter to archive. The graph is unchanged and still
+   * verifies; undo of anything behind the horizon is refused, naming it.
+   * Ship's `opened.compact()` archives first and calls this after.
+   */
+  compact(checkpoint: Epoch): LogArchive {
+    return this.log.compact(checkpoint);
+  }
+}
+
+/** Where `store.checkpoint` puts the undo horizon (FR-23). */
+export interface CompactOptions {
+  /** The seq to put it at. Absent, it follows from `keepDays` and `keepOps`. */
+  readonly seq?: number;
+  /** Keep every op made in the last this-many days before `now`; one exactly that old is archived. Default 90. */
+  readonly keepDays?: number;
+  /** Keep at least this many of the latest ops. Default 1000. */
+  readonly keepOps?: number;
+  /** The time the days count back from, as an ISO string. Defaults to the store's clock. */
+  readonly now?: string;
 }
 
