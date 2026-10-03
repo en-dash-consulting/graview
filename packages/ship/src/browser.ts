@@ -28,7 +28,7 @@ export { SEAT_HEADERS } from "./seat-headers.js";
 export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
 export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteRefusal, RemoteStatus, RemoteStore } from "./remote.js";
-export { conflictSentence, LIVE_PATH, REFUSAL_REASONS } from "./live.js";
+export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, REFUSAL_REASONS } from "./live.js";
 export type { LiveClientMessage, LiveServerMessage, RefusalReason, WireRefusal } from "./live.js";
 export {
   assertPhotoFits,

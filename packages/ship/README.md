@@ -77,7 +77,7 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | POST | `/graview/here` | say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under |
 | GET | `/graview/who` | who is here right now |
 | POST | `/graview/leave` | say you have gone — only ever yourself |
-| GET | `/graview/live` | the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence; 426 to a plain request |
+| GET | `/graview/live` | the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence, declaration and reload; 426 to a plain request |
 
 Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential from
 the `Request` and returns the principal every call is judged under, or a promise of it. The framework's clients also send the seat
@@ -115,15 +115,17 @@ of the attempt in milliseconds or `{ min, max, factor }` for the jittered defaul
 
 | From | Message | Carries |
 |---|---|---|
-| client | `hello` | `seq`, the last op it has (none: the welcome carries the whole state); `protocol` |
+| client | `hello` | `seq`, the last op it has (none: the welcome carries the whole state); `protocol`; `wire` (`LIVE_WIRE`); `build`, the host's build the page runs |
 | client | `call` | `cid`, `calls`, `intent`, `batch`, and `base`: the revision of each field it changes |
 | client | `undo` | `cid`, `batches` to take back |
 | client | `here` / `bye` | a presence, as `/graview/here` takes it; gone |
-| server | `welcome` | `protocol`, `participant` (this socket's own key, built from its seat), `seq` (the server's last), and the `ops` after the client's seq |
+| server | `welcome` | `protocol`, `wire`, `version` (the declaration it serves), `build`, `participant` (this socket's own key, built from its seat), `seq` (the server's last), and the `ops` after the client's seq |
 | server | `ack` | `cid`, `batch`, `seq` and the `ops` the call made |
 | server | `refused` / `conflict` | `cid` and the sentence; a refusal's `reason` and, when the policy knows who could, `wouldNeed`; a conflict names each field, theirs, yours and who wrote theirs |
 | server | `busy` | `cid` and `retryAfter` in milliseconds: not now, and not refused — the client sends the call again after the wait |
 | server | `ops` / `presence` | everybody's ops as they land, in seq order; who is here |
+| server | `declaration` | `version`: the declaration changed, and the socket is served again after a new hello |
+| server | `reload` | `reason` and `protocol`, the lowest served: the hello's protocol is no longer served |
 
 Seqs mean what `/graview/since?seq=N` means, and `hello` and `welcome` carry `WIRE_PROTOCOL`.
 A host on any runtime attaches a socket with `createStoreHandler(...).connect(request, { send,
@@ -165,6 +167,30 @@ visitorPresence(seat), ttlMs)`, and hands it to `receive` and `tell`; a visitor 
 `until` is never told. Each seat is told as it may see: an agent acting for a person the
 seat may not see is shown without `onBehalfOf` or the name. The Shell draws it as "Claude,
 for Ada" (`presenceName`).
+
+**The declaration changes under open tabs.** A host that adds a field calls
+`handler.declarationChanged({ app })` — over an adapter the handler opens the store again
+with `openStore`, which migrates it; over a store the host holds it is handed
+`{ app, store, flush?, migrated? }`. Every socket is told `declaration`; a sleeping host
+makes a `liveProtocol` over the new store and calls `declared(peers)`. `openRemote` asks its
+`resolveApp(version)` for the app at that version (a TS app imports it; a document-declared
+app fetches and compiles its document), opens a new remote store on the server's migrated
+state and hands it to `remote.onDeclaration((next, version) => …)`. The calls still on the
+way are offered again there under the batch they were sent in, so one the server already
+made is not made twice, and one that no longer fits is refused in words on
+`next.onRefusal`. No page reloads. A polling client learns it the same way: every answer a
+poll reads (`/graview/state`, `/graview/since`, `/graview/here`, the `/graview/ops` answer)
+says the declaration `version` and the host's `build`, and `openRemote` compares it on each.
+
+**Version skew.** A host says its `build` (an opaque string) in every welcome; a page that
+said another in its hello keeps working and `remote.onBuild(…)` is told once. A host with
+`minProtocol` answers an older protocol's hello with `reload`: `openRemote` writes every
+call not yet answered to its `carry` (`{ storage, key }`, `sessionStorage` in a page),
+calls `reloadPage`, and the next `openRemote` with the same `carry` offers them again.
+Two codecs on one path are told apart by `hello.wire`, and by the WebSocket subprotocol
+`LIVE_SUBPROTOCOL` (`graview.ship.1`): `serveStore` answers it, a Worker answers its upgrade
+with `liveSubprotocol(request)`, and `openRemote` sends it with `subprotocol: true` or hands
+it to its `socket` factory. `WIRE_PROTOCOL` stays 1: every message and field is additive.
 
 **A stale write is a conflict, not a loss.** A field's revision is the seq of the op that last
 wrote it (`FieldRevisions`, derived from the log). A call that carries a `base` older than the

@@ -31,6 +31,12 @@ export const NOT_EXPORTS = new Map([
   ["retryAfter", "a field of a busy answer on the wire, not an export"],
   ["serializeAttachment", "a Cloudflare Durable Object WebSocket method, not an export"],
   ["deserializeAttachment", "a Cloudflare Durable Object WebSocket method, not an export"],
+  ["declarationChanged", "a method of a store handler, not an export"],
+  ["resolveApp", "an option of openRemote, not an export"],
+  ["onDeclaration", "a method of openRemote's store, not an export"],
+  ["onBuild", "a method of openRemote's store, not an export"],
+  ["minProtocol", "an option of createStoreHandler, not an export"],
+  ["reloadPage", "an option of openRemote, not an export"],
   ["onBehalfOf", "a field of a Presence and a Principal, not an export"],
   ["onBehalfOfName", "a field of a Presence, not an export"],
 ]);

@@ -26,6 +26,7 @@ import {
   type LivePeer,
   type LiveProtocol,
   type LiveSocketState,
+  type Wire,
 } from "./live-protocol.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
@@ -90,7 +91,7 @@ export const WIRE = [
   { method: "POST", path: "/graview/here", says: "say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under" },
   { method: "GET", path: "/graview/who", says: "who is here right now" },
   { method: "POST", path: "/graview/leave", says: "say you have gone — only ever yourself" },
-  { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence; 426 to a plain request" },
+  { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence, declaration and reload; 426 to a plain request" },
 ] as const;
 
 export { presenceSeenBy, SEAT_HEADERS };
@@ -148,6 +149,33 @@ interface HandlerOptions<S extends AnySchema> {
    * HTTP), and the client takes the change back.
    */
   readonly limit?: Limit;
+  /**
+   * THE HOST'S BUILD (FR-44), an opaque string said in every welcome. A
+   * client on another build keeps working and is told once, so a person
+   * can reload when it suits them.
+   */
+  readonly build?: string;
+  /**
+   * THE LOWEST LIVE PROTOCOL SERVED (FR-44). A socket whose hello says an
+   * older one is answered `reload`: its client keeps what it had not sent,
+   * reloads onto a build that speaks this one, and offers it again there.
+   * Absent, every protocol is served.
+   */
+  readonly minProtocol?: number;
+}
+
+/**
+ * THE DECLARATION THE HOST NOW SERVES (FR-43), handed to
+ * `declarationChanged`. Over a store the host holds, `store` is the one it
+ * migrated to `app` (with `flush` and `migrated` as at the start); over an
+ * adapter, the handler opens it again itself with `openStore`, which
+ * migrates what is stored.
+ */
+export interface DeclarationChange {
+  readonly app: GraviewApp<AnySchema>;
+  readonly store?: Store<AnySchema>;
+  readonly flush?: () => Promise<void>;
+  readonly migrated?: readonly string[];
 }
 
 /** The handler opens its own store from an adapter: one declaration plus one adapter is a running deployment. */
@@ -210,8 +238,19 @@ export interface StoreHandler<S extends AnySchema> {
    * attachment and hands it, with each message, to `protocol.receive`.
    */
   readonly seatFor: (request: Request) => Promise<LiveSocketState | Response>;
-  /** The live protocol over this handler's store, for a host that holds its sockets' state itself (FR-41). */
+  /** The live protocol over this handler's store, for a host that holds its sockets' state itself (FR-41). Made again when the declaration changes. */
   readonly protocol: LiveProtocol<S>;
+  /**
+   * THE DECLARATION CHANGED (FR-43). The handler serves `change.app` from
+   * now on, over the store migrated to it — the host's, or the one it opens
+   * again from its adapter — and every open socket is told
+   * `{ t: "declaration", version }`. A client of `openRemote` then opens on
+   * the new declaration without reloading the page. While the change is
+   * made, every request and message waits for it, so nothing lands on the
+   * store being let go. `store`, `opened` and `protocol` are the new ones
+   * afterwards.
+   */
+  declarationChanged(change: DeclarationChange): Promise<void>;
   /**
    * SOMEBODY HERE WITHOUT A SOCKET (FR-47): an agent acting over MCP or an
    * RPC, a polling tab. Told to every socket and every poll at once, as
@@ -281,44 +320,112 @@ export async function createStoreHandler<S extends AnySchema>(options: AdapterSt
 export async function createStoreHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>): Promise<StoreHandler<S>>;
 export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>>;
 export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>> {
-  if (options.store) return storeHandler(options);
+  if (options.store) {
+    const { handler, swap } = storeHandler(options);
+    return {
+      ...handler,
+      get store() {
+        return handler.store;
+      },
+      get protocol() {
+        return handler.protocol;
+      },
+      async declarationChanged(change) {
+        const { store } = change;
+        if (!store) throw new Error("A handler over a store the host holds is handed the store migrated to the new declaration: declarationChanged({ app, store }).");
+        await swap(change.app, async () => ({ store, ...(change.flush ? { flush: change.flush } : {}), migrated: change.migrated ?? [] }));
+      },
+    };
+  }
   const scope = options.scope ?? options.app.name;
-  const opened = await openStore({
-    app: options.app,
-    adapter: options.adapter,
-    scope,
-    ...(options.seed ? { seed: options.seed } : {}),
-    ...(options.enabledModules ? { enabledModules: options.enabledModules } : {}),
-  });
+  const opening = (app: GraviewApp<AnySchema>) =>
+    openStore({
+      app,
+      adapter: options.adapter,
+      scope,
+      ...(options.seed ? { seed: options.seed } : {}),
+      ...(options.enabledModules ? { enabledModules: options.enabledModules } : {}),
+    });
+  let opened = (await opening(options.app as unknown as GraviewApp<AnySchema>)) as OpenedStore<AnySchema>;
   const { adapter, seed: _seed, scope: _scope, enabledModules: _modules, ...rest } = options;
-  const held = storeHandler({
+  const { handler, swap } = storeHandler({
     ...rest,
-    store: opened.store,
-    flush: opened.flush,
+    store: opened.store as unknown as Store<S>,
+    flush: () => opened.flush(),
     migrated: opened.migrated.map((op) => op.intent),
     // Said by the adapter where it knows, because it is the only thing
     // that does; `where` is for a caller with a better name for it.
     where: options.where ?? (adapter as { root?: string }).root ?? scope,
   }, adapter.name);
   return {
-    ...held,
-    opened,
+    ...handler,
+    get store() {
+      return handler.store;
+    },
+    get protocol() {
+      return handler.protocol;
+    },
+    get opened() {
+      return opened as unknown as OpenedStore<S>;
+    },
+    /*
+     * OPENED AGAIN, ON THE NEW DECLARATION. What is pending is written
+     * first, then the adapter is read again by `openStore`, which runs the
+     * migrations between the stored version and the new one — here, once,
+     * as it did at the start — while every request and message waits.
+     */
+    async declarationChanged(change) {
+      await swap(change.app, async () => {
+        if (change.store) return { store: change.store, ...(change.flush ? { flush: change.flush } : {}), migrated: change.migrated ?? [] };
+        await opened.flush();
+        opened.close();
+        opened = await opening(change.app);
+        return { store: opened.store, flush: () => opened.flush(), migrated: opened.migrated.map((op) => op.intent) };
+      });
+    },
     async close() {
-      await held.close();
+      await handler.close();
       opened.close();
     },
   };
 }
 
-function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, adapterName = "held by the host"): StoreHandler<S> {
-  const { store } = options;
+/** What the handler serves now: replaced, all together, when the declaration changes (FR-43). */
+interface Serving {
+  readonly app: GraviewApp<AnySchema>;
+  readonly store: Store<AnySchema>;
+  readonly flush: (() => Promise<void>) | undefined;
+  readonly migrated: string[];
+  readonly wire: Wire<AnySchema>;
+  readonly protocol: LiveProtocol<AnySchema>;
+}
+
+type Swap = (app: GraviewApp<AnySchema>, open: () => Promise<{ store: Store<AnySchema>; flush?: () => Promise<void>; migrated: readonly string[] }>) => Promise<void>;
+
+function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, adapterName = "held by the host"): { handler: Omit<StoreHandler<S>, "declarationChanged">; swap: Swap } {
   const seatOf = options.seatOf ?? (options.trustSeatHeaders ? seatFromHeaders : undefined);
   const flush = async (): Promise<void> => {
-    await options.flush?.();
+    await serving.flush?.();
   };
-  const migrated = [...(options.migrated ?? [])];
-  const wire = wireOf(store);
-  const protocol = liveProtocol({ store, version: options.app.version ?? 1, migrated, flush, ...(options.limit ? { limit: options.limit } : {}) });
+  const serve = (app: GraviewApp<AnySchema>, store: Store<AnySchema>, flushing: (() => Promise<void>) | undefined, migrated: readonly string[]): Serving => ({
+    app,
+    store,
+    flush: flushing,
+    migrated: [...migrated],
+    wire: wireOf(store),
+    protocol: liveProtocol({
+      store,
+      version: app.version ?? 1,
+      migrated,
+      flush,
+      ...(options.build ? { build: options.build } : {}),
+      ...(options.minProtocol !== undefined ? { minProtocol: options.minProtocol } : {}),
+      ...(options.limit ? { limit: options.limit } : {}),
+    }),
+  });
+  let serving = serve(options.app as unknown as GraviewApp<AnySchema>, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
+  /** Set while the declaration is being changed: every request and message waits for it. */
+  let changing: Promise<void> | undefined;
 
   /*
    * THE CHANNEL IS THE HOST'S WORD (FR-52). `viaOf` when the host gave
@@ -360,6 +467,15 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
   async function route(request: Request): Promise<Response> {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     const url = new URL(request.url, "http://localhost");
+    // Answered from the declaration served once any change under way is made (FR-43).
+    while (changing) await changing;
+    const { store, wire, app, migrated } = serving;
+    /*
+     * WHICH DECLARATION, AND WHICH BUILD, ANSWERED (FR-43, FR-44): on every
+     * answer a poll reads, so a client without a socket learns the
+     * declaration changed — or that it runs another build — on its next one.
+     */
+    const answering = { version: app.version ?? 1, ...(options.build ? { build: options.build } : {}) };
 
     /*
      * WHO IS ASKING, OR NOTHING. Health is the only route a stranger gets:
@@ -381,7 +497,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     if (url.pathname === "/graview/state") {
       const seen = wire.seenFor(await seat());
       return send(200, {
-        version: options.app.version ?? 1,
+        ...answering,
         snapshot: seen.snapshot(),
         log: seen.log.all(),
         migrated,
@@ -392,7 +508,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
 
     if (url.pathname === "/graview/since") {
       const seq = Number(url.searchParams.get("seq") ?? "-1");
-      return send(200, { ops: wire.since(await seat(), seq) });
+      return send(200, { ops: wire.since(await seat(), seq), ...answering });
     }
 
     if (url.pathname === "/graview/who") return send(200, { who: wire.whoFor(await seat(), alive()) });
@@ -413,6 +529,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         participant: mine.participant,
         who: wire.whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
         ...(typeof body.seq === "number" ? { ops: wire.since(asking, body.seq) } : {}),
+        ...answering,
       });
     }
 
@@ -430,13 +547,13 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
 
     if (url.pathname === "/graview/health") {
       return send(200, {
-        ...health(store as never, options.app as never),
-        where: options.where ?? options.app.name,
+        ...health(store as never, app as never),
+        where: options.where ?? app.name,
         adapter: adapterName,
       });
     }
 
-    if (url.pathname === "/graview/export") return send(200, exportBundle(options.app, wire.seenFor(await seat())));
+    if (url.pathname === "/graview/export") return send(200, exportBundle(app, wire.seenFor(await seat())));
 
     if (url.pathname === "/graview/ops" && request.method === "POST") {
       const text = await request.text();
@@ -453,9 +570,9 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const author = await seat();
       // What the calls came through is the host's to say, never the body's (FR-52).
       const via = await viaFor(request, author, "api");
-      // A batch already in the log is a call sent again after its answer was lost: answered with what it made, as on the socket (FR-49).
+      // A batch already in the log is a call sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44): answered with what it made, as on the socket (FR-49).
       const already = wire.answered(body.batch);
-      if (already.length > 0) return send(200, { ops: wire.shown(author, already), batch: body.batch });
+      if (already.length > 0) return send(200, { ops: wire.shown(author, already), batch: body.batch, ...answering });
       /*
        * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
        * change is kept to send again (FR-45); a hard cap is refused, `limit`,
@@ -464,7 +581,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const limited = options.limit
         ? await options.limit({ seat: author, via, t: body.undo ? "undo" : "call", bytes: bytesOf(text), calls: body.undo ? [] : calls })
         : undefined;
-      if (limited && "refuse" in limited) return send(413, { error: limited.refuse, refused: true, reason: "limit" });
+      if (limited && "refuse" in limited) return send(413, { error: limited.refuse, refused: true, reason: "limit", ...answering });
       if (limited) {
         const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
         return send(
@@ -479,7 +596,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
        * and nothing is written: what to do about it is the person's call.
        */
       const conflicts = body.undo ? [] : wire.conflictsOf(author, calls, body.base);
-      if (conflicts.length > 0) return send(409, { error: conflictSentence(conflicts), refused: true, conflict: true, conflicts });
+      if (conflicts.length > 0) return send(409, { error: conflictSentence(conflicts), refused: true, conflict: true, conflicts, ...answering });
       try {
         /*
          * Through the STORE, under the requester's own seat. The policy
@@ -491,10 +608,10 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         const result = body.undo ? store.undo(body.undo, applying) : store.applyAll(calls, applying);
         await flush();
         // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
-        return send(200, { ops: wire.shown(author, result.ops), batch: result.batch });
+        return send(200, { ops: wire.shown(author, result.ops), batch: result.batch, ...answering });
       } catch (error) {
         const { sentence, ...why } = refusalOf(error);
-        return send(409, { error: sentence, refused: true, ...why });
+        return send(409, { error: sentence, refused: true, ...why, ...answering });
       }
     }
 
@@ -516,13 +633,15 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
   }
   const sockets = new Set<Live>();
   const agentsFor = options.announceAgents === false ? 0 : typeof options.announceAgents === "number" ? options.announceAgents : VISITOR_PRESENCE_TTL_MS;
-  const unsubscribe = store.subscribe((_diff, ops) => {
-    protocol.publish(
-      ops,
-      [...sockets].filter((live) => !live.answering),
-    );
-    if (agentsFor > 0) agentsWereHere(ops);
-  });
+  const watch = (store: Store<AnySchema>) =>
+    store.subscribe((_diff, ops) => {
+      serving.protocol.publish(
+        ops,
+        [...sockets].filter((live) => !live.answering),
+      );
+      if (agentsFor > 0) agentsWereHere(ops);
+    });
+  let unsubscribe = watch(serving.store);
   /*
    * AN AGENT THAT ACTED IS IN THE ROOM (FR-47), standing over the last
    * thing it wrote: once per agent per change, and not at all for one that
@@ -557,7 +676,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
   };
   function tellWhoIsHere(): void {
     if (sockets.size === 0) return;
-    protocol.tell(standing(), sockets);
+    serving.protocol.tell(standing(), sockets);
   }
 
   /*
@@ -586,7 +705,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     const asked = seatRequest(request);
     try {
       const seat = await seatOf(asked);
-      return protocol.open(seat, await viaFor(asked, seat, "web"));
+      return serving.protocol.open(seat, await viaFor(asked, seat, "web"));
     } catch (error) {
       return unknownSeat(error instanceof Error ? error.message : String(error));
     }
@@ -609,14 +728,16 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       live.answering = true;
       let received;
       try {
-        received = await protocol.receive(live, text, standing());
+        // A message that came while the declaration was changing is answered under the new one (FR-43).
+        while (changing) await changing;
+        received = await serving.protocol.receive(live, text, standing());
       } finally {
         live.answering = false;
       }
       if (live.cursor !== undefined) {
         sockets.add(live);
         // What landed while this socket's own answer waited for its flush, after its ack.
-        protocol.publish([], [live]);
+        serving.protocol.publish([], [live]);
       }
       if (received.presence) {
         arrive(received.presence);
@@ -647,11 +768,39 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     };
   }
 
-  return {
-    store,
+  /*
+   * THE DECLARATION CHANGED (FR-43). What is pending on the old store is
+   * written, the new store is opened (or handed over), and every socket is
+   * told by the protocol over the new one, which forgets their cursors: a
+   * seq of the old store means nothing on the new one. Meanwhile every
+   * request and message waits, so nothing lands on the store let go.
+   */
+  const swap: Swap = async (app, open) => {
+    while (changing) await changing;
+    let done: () => void = () => {};
+    changing = new Promise<void>((resolve) => (done = resolve));
+    try {
+      await flush();
+      const next = await open();
+      unsubscribe();
+      serving = serve(app, next.store, next.flush ?? serving.flush, next.migrated);
+      unsubscribe = watch(serving.store);
+      serving.protocol.declared(sockets);
+    } finally {
+      changing = undefined;
+      done();
+    }
+  };
+
+  const handler: Omit<StoreHandler<S>, "declarationChanged"> = {
+    get store() {
+      return serving.store as unknown as Store<S>;
+    },
+    get protocol() {
+      return serving.protocol as unknown as LiveProtocol<S>;
+    },
     connect,
     seatFor,
-    protocol,
     announce,
     handle: async (request) => {
       try {
@@ -674,5 +823,6 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       await flush();
     },
   };
+  return { handler, swap };
 }
 
