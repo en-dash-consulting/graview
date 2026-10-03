@@ -17,6 +17,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, wr
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { exportsOf, unexported } from "./lib/readme-exports.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -38,6 +39,8 @@ const REQUIRED = [/(^|\/)dist\/index\.js$/, /(^|\/)dist\/index\.d\.ts$/, /(^|\/)
 const packDir = mkdtempSync(join(tmpdir(), "graview-pack-"));
 const report = { at: new Date().toISOString(), packages: {} };
 let failures = 0;
+/** Each package as a stranger installs it: its tarball unpacked, for the README check after the loop. */
+const unpacked = [];
 
 for (const name of readdirSync(packagesDir).sort()) {
   const dir = resolve(packagesDir, name);
@@ -64,6 +67,17 @@ for (const name of readdirSync(packagesDir).sort()) {
     .filter((entry) => !entry.endsWith("/"))
     .map((entry) => entry.replace(/^package\//, ""));
   const packed = { files, unpackedSize: 0 };
+  const into = join(packDir, "unpacked", manifest.name.replace("/", "__"));
+  mkdirSync(into, { recursive: true });
+  execFileSync("tar", ["-xzf", tarball, "-C", into]);
+  const declarations = [];
+  const types = (value) => {
+    if (typeof value === "string") {
+      if (value.endsWith(".d.ts")) declarations.push(join(into, "package", value.replace(/^\.\//, "")));
+    } else if (value && typeof value === "object") Object.values(value).forEach(types);
+  };
+  types(manifest.exports ?? {});
+  unpacked.push({ name: manifest.name, root: join(into, "package"), declarations });
 
   const forbidden = [];
   for (const rule of FORBIDDEN) {
@@ -109,6 +123,20 @@ for (const name of readdirSync(packagesDir).sort()) {
   for (const entry of forbidden) process.stdout.write(`       ships ${entry.file} — ${entry.why}\n`);
   for (const entry of missing) process.stdout.write(`       missing ${entry}\n`);
   for (const entry of unfulfilled) process.stdout.write(`       exports promises ${entry}, not packed\n`);
+}
+
+/*
+ * WHAT EACH README NAMES, SOME TARBALL EXPORTS (FR-15). Across packages,
+ * because a README rightly names its neighbours' API (ship's names
+ * `defineApp`); judged against what was packed, not what is in src.
+ */
+const exported = exportsOf(unpacked.flatMap((one) => one.declarations));
+for (const one of unpacked) {
+  const promised = unexported(join(one.root, "README.md"), exported);
+  if (promised.length === 0) continue;
+  failures += 1;
+  report.packages[one.name] = { ...report.packages[one.name], ok: false, readmeNamesUnexported: promised };
+  process.stdout.write(`FAIL ${one.name.padEnd(22)} README names ${promised.map((name) => `\`${name}\``).join(", ")}, which no packed package exports\n`);
 }
 
 rmSync(packDir, { recursive: true, force: true });

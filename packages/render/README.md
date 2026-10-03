@@ -38,7 +38,7 @@ both paths share. Opting into the capture path is an explicit
 
 - `PLANE_STYLES`, `styleFor`, `mixStyles`, `transformFor` — the plane model.
 - `planFrame` — what to capture, what to draw, where each view lands.
-- `routePointer` — hit-testing a click against drawn geometry.
+- `PointerRouter`, `hitTest` — hit-testing a click against drawn geometry.
 
 The compositor, the WGSL and the `html-in-canvas` platform bindings move with
 the browser feature they are built on.
