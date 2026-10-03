@@ -1,20 +1,10 @@
 import {
-  FieldRevisions,
   foldPresence,
-  hidesFrom,
-  isUnset,
-  participantKey,
-  WIRE_PROTOCOL,
   PRESENCE_TTL_MS,
-  redact,
-  seenBy,
-  seesId,
   type AnySchema,
-  type FieldConflict,
   type FieldRevision,
   type GraviewApp,
   type MutationCall,
-  type Operation,
   type PersistenceAdapter,
   type Presence,
   type Principal,
@@ -22,7 +12,8 @@ import {
 } from "@graview/core";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
-import { conflictSentence, LIVE_PATH, type LiveClientMessage, type LiveConnection, type LiveServerMessage, type LiveSocket } from "./live.js";
+import { conflictSentence, LIVE_PATH, type LiveConnection, type LiveSocket } from "./live.js";
+import { liveProtocol, presenceFrom, presenceSeenBy, wireOf, type LivePeer, type LiveProtocol, type LiveSocketState } from "./live-protocol.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
@@ -64,7 +55,9 @@ import type { GraphSnapshot } from "./snapshot.js";
  * Polling is the floor, on purpose: a poll is a thing a person can
  * reproduce with `curl`, and a thing every runtime can answer. Beside it,
  * `connect` serves the live wire (FR-05, `./live.ts`) to whatever socket a
- * host hands it, and `GET /graview/live` names it on the wire.
+ * host hands it, and `GET /graview/live` names it on the wire. The live
+ * protocol itself is `liveProtocol` (`./live-protocol.ts`), over state a
+ * host may hold instead of this closure (FR-41).
  */
 
 /**
@@ -87,15 +80,11 @@ export const WIRE = [
   { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict, ops and presence; 426 to a plain request" },
 ] as const;
 
-export { SEAT_HEADERS };
+export { presenceSeenBy, SEAT_HEADERS };
 
-export interface StoreHandlerOptions<S extends AnySchema> {
+/** What every handler takes, whoever holds the store. */
+interface HandlerOptions<S extends AnySchema> {
   readonly app: GraviewApp<S>;
-  /** Where the graph lives: any `PersistenceAdapter` — a file, SQLite, Durable Object storage. */
-  readonly adapter: PersistenceAdapter<string>;
-  /** What to put in an empty store on first start. */
-  readonly seed?: GraphSnapshot;
-  readonly scope?: string;
   /**
    * Who a request is. The host's to say — from a session, a bearer token,
    * whatever it authenticates with — and the store judges every call under
@@ -103,6 +92,16 @@ export interface StoreHandlerOptions<S extends AnySchema> {
    * verifies a token with `crypto.subtle`.
    */
   readonly seatOf?: (request: Request) => Principal | Promise<Principal>;
+  /**
+   * WHAT THE CALLS CAME THROUGH (FR-52): the host's word, recorded as `via`
+   * on every op a request or a socket makes — `web`, `api`, `mcp:Claude`.
+   * Handed the request (the upgrade, for a socket) and the seat `seatOf`
+   * said. A client's own `via` is never read: a browser could otherwise
+   * record its edit as Claude's. Absent, or answering nothing, a socket's
+   * calls are `web` and an HTTP request's `api` — unless the host trusts
+   * the seat headers, when `SEAT_HEADERS.via` says it as they say the seat.
+   */
+  readonly viaOf?: (request: Request, seat: Principal) => string | undefined | Promise<string | undefined>;
   /**
    * BELIEVE THE SEAT HEADERS (`SEAT_HEADERS`) — off by default (FR-06).
    *
@@ -117,6 +116,16 @@ export interface StoreHandlerOptions<S extends AnySchema> {
   readonly where?: string;
   /** How long a presence stands after its last word. Three heartbeats by default. */
   readonly presenceTtlMs?: number;
+}
+
+/** The handler opens its own store from an adapter: one declaration plus one adapter is a running deployment. */
+export interface AdapterStoreHandlerOptions<S extends AnySchema> extends HandlerOptions<S> {
+  /** Where the graph lives: any `PersistenceAdapter` — a file, SQLite, Durable Object storage. */
+  readonly adapter: PersistenceAdapter<string>;
+  readonly store?: never;
+  /** What to put in an empty store on first start. */
+  readonly seed?: GraphSnapshot;
+  readonly scope?: string;
   /**
    * THE MODULES THIS WORKSPACE HAS ON (FR-12) — usually what it pays for.
    * Handed to `openStore`, which records a change from what the store's
@@ -127,9 +136,28 @@ export interface StoreHandlerOptions<S extends AnySchema> {
   readonly enabledModules?: readonly string[];
 }
 
+/**
+ * THE HANDLER OVER A STORE THE HOST ALREADY HOLDS (FR-42). A host with its
+ * own durability — a ledger of snapshots in parts, epochs, quarantine and
+ * restore, its own meter — opens, migrates and heals its `Store` itself,
+ * and the wire is served from that instance. Closing the handler does not
+ * close the store: it is the host's.
+ */
+export interface HeldStoreHandlerOptions<S extends AnySchema> extends HandlerOptions<S> {
+  readonly store: Store<S>;
+  readonly adapter?: never;
+  /** Resolves once what landed is durable: a call's answer waits for it. Absent, the answer goes at once. */
+  readonly flush?: () => Promise<void>;
+  /** What opening the store migrated, in the migrations' own words: said in the state, as `openStore`'s would be. */
+  readonly migrated?: readonly string[];
+}
+
+export type StoreHandlerOptions<S extends AnySchema> = AdapterStoreHandlerOptions<S> | HeldStoreHandlerOptions<S>;
+
 export interface StoreHandler<S extends AnySchema> {
   readonly store: Store<S>;
-  readonly opened: OpenedStore<S>;
+  /** The open `openStore` made, when the handler opened the store from an adapter; absent over a store the host holds. */
+  readonly opened?: OpenedStore<S>;
   /** Every WIRE route: a `Request` in, a `Response` out. Bound, so it can be handed on as it is. */
   readonly handle: (request: Request) => Promise<Response>;
   /**
@@ -137,12 +165,22 @@ export interface StoreHandler<S extends AnySchema> {
    * (the seat is read from it, as on every route) and a way to send text
    * down the socket; it answers with the connection to hand each message
    * the client sends and the close, or with the `Response` refusing it (a
-   * 401 when it cannot say who is asking). A Worker or Durable Object
-   * attaches a `WebSocketPair`'s server end here; `serveStore` attaches
-   * Node's upgrade.
+   * 401 when it cannot say who is asking). A Worker attaches a
+   * `WebSocketPair`'s server end here; `serveStore` attaches Node's
+   * upgrade. A host that hibernates holds each socket's state itself
+   * instead: `seatFor` and `protocol`.
    */
   readonly connect: (request: Request, socket: LiveSocket) => Promise<LiveConnection | Response>;
-  /** Writes what is pending and lets the adapter go. */
+  /**
+   * THE STATE A SOCKET STARTS WITH (FR-41): its seat, read by `seatOf`
+   * from the upgrade, and its channel, said by `viaOf` (FR-52) — or the
+   * `Response` refusing it. A hibernating host keeps it in the socket's
+   * attachment and hands it, with each message, to `protocol.receive`.
+   */
+  readonly seatFor: (request: Request) => Promise<LiveSocketState | Response>;
+  /** The live protocol over this handler's store, for a host that holds its sockets' state itself (FR-41). */
+  readonly protocol: LiveProtocol<S>;
+  /** Writes what is pending and lets the adapter go — or, over a store the host holds, writes what is pending and leaves the store open. */
   close(): Promise<void>;
 }
 
@@ -169,28 +207,6 @@ export function seatFromHeaders(request: Request): Principal {
   };
 }
 
-/**
- * WHO IS HERE, AS ONE SEAT MAY BE TOLD (FR-02). Somebody whose own record
- * the seat may not see is not shown to it at all; anybody else is, without
- * where they stand or what they hover when that names a record the seat
- * may not see. A participant whose id is no record is shown as they are.
- */
-export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => boolean): Presence[] {
-  const names = (value: string): boolean => value.split(/[/?#=&,;]/).every((part) => part === "" || sees(decodeURIComponent(part)));
-  return who
-    .filter((presence) => {
-      // `kind:id:session`, and an id may hold a colon of its own: every reading of it must be one the seat sees.
-      const parts = presence.participant.split(":");
-      return parts.slice(2).every((_, at) => sees(parts.slice(1, at + 2).join(":")));
-    })
-    .map((presence) => ({
-      ...presence,
-      stop: names(presence.stop) ? presence.stop : "",
-      ...(typeof presence.over === "string" && !sees(presence.over) ? { over: null } : {}),
-      ...(presence.robot?.at && !sees(presence.robot.at) ? { robot: { ...presence.robot, at: null } } : {}),
-    }));
-}
-
 /** A browser on another origin is the ordinary case for an embed. */
 const CORS: Readonly<Record<string, string>> = {
   "access-control-allow-origin": "*",
@@ -207,15 +223,23 @@ async function read(request: Request): Promise<unknown> {
   return text.length === 0 ? {} : JSON.parse(text);
 }
 
+const CANNOT_TELL = "This store cannot tell who is asking: the host gives serveStore a seatOf, or trusts the seat headers (trustSeatHeaders) on a server only it can reach.";
+
 /**
  * Open the store and answer the wire for it. The migration runs HERE, once,
  * against the stored graph — which is the whole reason a server is the
  * honest place for it. A browser that migrates its own copy migrates it once
  * per browser; a server that migrates the roster migrates the roster.
+ *
+ * Or answer the wire for a store the host opened itself (FR-42): the
+ * adapter form is that, over the store `openStore` hands back.
  */
+export async function createStoreHandler<S extends AnySchema>(options: AdapterStoreHandlerOptions<S>): Promise<StoreHandler<S> & { readonly opened: OpenedStore<S> }>;
+export async function createStoreHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>): Promise<StoreHandler<S>>;
+export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>>;
 export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>> {
+  if (options.store) return storeHandler(options);
   const scope = options.scope ?? options.app.name;
-  const seatOf = options.seatOf ?? (options.trustSeatHeaders ? seatFromHeaders : undefined);
   const opened = await openStore({
     app: options.app,
     adapter: options.adapter,
@@ -223,9 +247,47 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     ...(options.seed ? { seed: options.seed } : {}),
     ...(options.enabledModules ? { enabledModules: options.enabledModules } : {}),
   });
-  const store = opened.store;
-  /** Which modules are on, as the state says it (FR-12). */
-  const enabledModules = (): string[] => [...store.modules.enabled].sort();
+  const { adapter, seed: _seed, scope: _scope, enabledModules: _modules, ...rest } = options;
+  const held = storeHandler({
+    ...rest,
+    store: opened.store,
+    flush: opened.flush,
+    migrated: opened.migrated.map((op) => op.intent),
+    // Said by the adapter where it knows, because it is the only thing
+    // that does; `where` is for a caller with a better name for it.
+    where: options.where ?? (adapter as { root?: string }).root ?? scope,
+  }, adapter.name);
+  return {
+    ...held,
+    opened,
+    async close() {
+      await held.close();
+      opened.close();
+    },
+  };
+}
+
+function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, adapterName = "held by the host"): StoreHandler<S> {
+  const { store } = options;
+  const seatOf = options.seatOf ?? (options.trustSeatHeaders ? seatFromHeaders : undefined);
+  const flush = async (): Promise<void> => {
+    await options.flush?.();
+  };
+  const migrated = [...(options.migrated ?? [])];
+  const wire = wireOf(store);
+  const protocol = liveProtocol({ store, version: options.app.version ?? 1, migrated, flush });
+
+  /*
+   * THE CHANNEL IS THE HOST'S WORD (FR-52). `viaOf` when the host gave
+   * one; the via header when it trusts the seat headers; else what the
+   * route is. Never the client's body or message.
+   */
+  const viaFor = async (request: Request, seat: Principal, otherwise: string): Promise<string> => {
+    const said = options.viaOf ? await options.viaOf(request, seat) : undefined;
+    if (typeof said === "string" && said.length > 0) return said;
+    const header = options.trustSeatHeaders ? request.headers.get(SEAT_HEADERS.via) : null;
+    return header && header.length > 0 ? header : otherwise;
+  };
 
   /*
    * WHO IS HERE. Keyed by participant, named by the seat the request
@@ -239,88 +301,13 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     here = foldPresence(here, [], Date.now(), ttl);
     return [...here.values()];
   };
-  const arrive = (told: Presence, seat: Principal): Presence => {
-    // The session is what follows the seat's own `kind:id:` — an id may hold a colon (`shopper:bethan`).
-    const own = `${seat.kind}:${seat.id ?? ""}:`;
-    const session = told.participant.startsWith(own) ? told.participant.slice(own.length) : (told.participant.split(":").at(-1) ?? "");
-    const participant = seat.id ? participantKey({ kind: seat.kind, id: seat.id, session }) : told.participant;
-    const presence: Presence = { ...told, participant, at: new Date().toISOString() };
+  const arrive = (presence: Presence): void => {
     here = foldPresence(here, [presence], Date.now(), ttl);
-    return presence;
   };
-  /*
-   * WHAT A SEAT MAY SEE NEVER LEAVES THE STORE (FR-02). Every read below is
-   * of the store as the asking seat sees it: its graph without what the
-   * policy keeps from it, and its log with every op in its place and the
-   * ones that touched what it may not see withheld (FR-16).
-   */
-  const seenFor = (principal: Principal) => seenBy(store, principal);
-  // Kept from a seat: what its sight does not reach (FR-02), and the kinds of a module that is off (FR-12).
-  const sighted = (principal: Principal): boolean => hidesFrom(store, principal);
-  /*
-   * The ops after `seq`, as the seat sees them: the same ops `seenBy`'s log
-   * holds after it (each op is withheld or not on its own), without
-   * redacting the whole log for every push down every socket.
-   */
-  const since = (principal: Principal, seq: number): Operation[] => {
-    const after = store.log.opsFrom(Math.max(0, Math.floor(seq) + 1));
-    return sighted(principal) ? redact(after, seesId(store, principal)) : [...after];
+  const forget = (participant: string): void => {
+    here = new Map(here);
+    here.delete(participant);
   };
-  const lastSeq = (): number => store.log.length - 1;
-  /*
-   * WHERE THE LOG BEGINS, when it was compacted behind an undo horizon
-   * (FR-23): a client hydrating on the state is handed the tail, and its
-   * log begins where the server's does. Said only when it is past 0, so a
-   * store that was never compacted answers exactly as before.
-   */
-  const horizonOf = (): { horizon?: number } => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {});
-
-  /*
-   * EVERY FIELD'S REVISION (FR-05): the seq of the op that last wrote it,
-   * read off the log once and kept current as ops land. A call that says
-   * it saw an older one is a stale write, refused by name.
-   */
-  const revisions = FieldRevisions.of(store.log.all());
-  const conflictsOf = (author: Principal, calls: readonly MutationCall[], base: unknown): FieldConflict[] => {
-    if (!Array.isArray(base) || base.length === 0) return [];
-    const sees = sighted(author) ? seesId(store, author) : () => true;
-    // A record the seat may not see is not there to have moved: the call itself is refused for naming it.
-    const claimed = (base as FieldRevision[]).filter(
-      (entry) => entry && typeof entry.node === "string" && typeof entry.field === "string" && typeof entry.rev === "number" && sees(entry.node),
-    );
-    const stale = revisions.stale(claimed);
-    if (stale.length === 0) return [];
-    /*
-     * A conflict is a choice — keep theirs, or put yours over it — and only
-     * a call that could still land offers one. A call the policy refuses,
-     * or one that no longer runs on the graph as it is (somebody finished
-     * it first), is refused for that, in its own sentence.
-     */
-    if (store.policy && calls.some((call) => !store.permits(call, author).ok)) return [];
-    const yours = new Map<string, unknown>();
-    try {
-      for (const primitive of store.previewAll(calls).primitives) {
-        if (primitive.op === "patch-node") for (const [field, value] of Object.entries(primitive.after)) yours.set(`${primitive.id}\u0000${field}`, isUnset(value) ? undefined : value);
-      }
-    } catch {
-      return [];
-    }
-    return stale.map((entry) => {
-      const rev = revisions.of(entry.node, entry.field);
-      const wrote = rev >= store.log.horizon ? store.log.opsFrom(rev)[0] : undefined;
-      const shown = wrote && sighted(author) ? redact([wrote], sees)[0] : wrote;
-      return {
-        node: entry.node,
-        field: entry.field,
-        theirs: (store.graph.getNode(entry.node) as Record<string, unknown> | undefined)?.[entry.field],
-        yours: yours.get(`${entry.node}\u0000${entry.field}`),
-        by: shown?.author.name ?? shown?.author.id ?? "Someone",
-        rev,
-        saw: entry.rev,
-      };
-    });
-  };
-  const whoFor = (principal: Principal, who: readonly Presence[]): Presence[] => (sighted(principal) ? presenceSeenBy(who, seesId(store, principal)) : [...who]);
 
   async function route(request: Request): Promise<Response> {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -330,35 +317,37 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
      * WHO IS ASKING, OR NOTHING. Health is the only route a stranger gets:
      * it says whether the store is well, not what is in it.
      */
-    if (!seatOf && url.pathname !== "/graview/health") {
-      return send(401, {
-        error: "This store cannot tell who is asking: the host gives serveStore a seatOf, or trusts the seat headers (trustSeatHeaders) on a server only it can reach.",
-      });
-    }
+    if (!seatOf && url.pathname !== "/graview/health") return send(401, { error: CANNOT_TELL });
     const seat = async (): Promise<Principal> => (seatOf as NonNullable<typeof seatOf>)(request);
 
     if (url.pathname === LIVE_PATH) {
       return send(426, { error: `${LIVE_PATH} is a WebSocket: open one, say hello, and the store's ops come to you. A plain request polls /graview/since instead.` });
     }
 
+    /*
+     * WHAT A SEAT MAY SEE NEVER LEAVES THE STORE (FR-02). Every read below is
+     * of the store as the asking seat sees it: its graph without what the
+     * policy keeps from it, and its log with every op in its place and the
+     * ones that touched what it may not see withheld (FR-16).
+     */
     if (url.pathname === "/graview/state") {
-      const seen = seenFor(await seat());
+      const seen = wire.seenFor(await seat());
       return send(200, {
         version: options.app.version ?? 1,
         snapshot: seen.snapshot(),
         log: seen.log.all(),
-        migrated: opened.migrated.map((op) => op.intent),
-        enabledModules: enabledModules(),
-        ...horizonOf(),
+        migrated,
+        enabledModules: wire.enabledModules(),
+        ...wire.horizonOf(),
       });
     }
 
     if (url.pathname === "/graview/since") {
       const seq = Number(url.searchParams.get("seq") ?? "-1");
-      return send(200, { ops: since(await seat(), seq) });
+      return send(200, { ops: wire.since(await seat(), seq) });
     }
 
-    if (url.pathname === "/graview/who") return send(200, { who: whoFor(await seat(), alive()) });
+    if (url.pathname === "/graview/who") return send(200, { who: wire.whoFor(await seat(), alive()) });
 
     if (url.pathname === "/graview/here" && request.method === "POST") {
       const body = (await read(request)) as { presence?: Presence; seq?: number };
@@ -366,37 +355,35 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
         return send(400, { error: "A presence is a participant and a stop." });
       }
       const asking = await seat();
-      const mine = arrive(body.presence, asking);
+      const mine = presenceFrom(body.presence, asking);
+      arrive(mine);
       tellWhoIsHere();
       // Folded into the poll: the heartbeat carries back everybody else AND
       // the ops since, so being here costs no round trip of its own.
       return send(200, {
-        who: whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
-        ...(typeof body.seq === "number" ? { ops: since(asking, body.seq) } : {}),
+        who: wire.whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
+        ...(typeof body.seq === "number" ? { ops: wire.since(asking, body.seq) } : {}),
       });
     }
 
     if (url.pathname === "/graview/leave" && request.method === "POST") {
       const body = (await read(request)) as { participant?: string };
       if (typeof body.participant === "string") {
-        here = new Map(here);
-        here.delete(body.participant);
+        forget(body.participant);
         tellWhoIsHere();
       }
-      return send(200, { who: whoFor(await seat(), alive()) });
+      return send(200, { who: wire.whoFor(await seat(), alive()) });
     }
 
     if (url.pathname === "/graview/health") {
       return send(200, {
         ...health(store as never, options.app as never),
-        // Said by the adapter where it knows, because it is the only thing
-        // that does; `where` is for a caller with a better name for it.
-        where: options.where ?? (options.adapter as { root?: string }).root ?? scope,
-        adapter: options.adapter.name,
+        where: options.where ?? options.app.name,
+        adapter: adapterName,
       });
     }
 
-    if (url.pathname === "/graview/export") return send(200, exportBundle(options.app, seenFor(await seat())));
+    if (url.pathname === "/graview/export") return send(200, exportBundle(options.app, wire.seenFor(await seat())));
 
     if (url.pathname === "/graview/ops" && request.method === "POST") {
       const body = (await read(request)) as {
@@ -405,20 +392,19 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
         undo?: readonly string[];
         intent?: string;
         batch?: string;
-        /** What the calls came through; `api` unless the caller says (FR-06). */
-        via?: string;
         /** The revision of each field the calls change, as the caller last saw it (FR-05). */
         base?: readonly FieldRevision[];
       };
       const calls = body.calls ?? [];
       const author = await seat();
-      const via = typeof body.via === "string" && body.via.length > 0 ? body.via : "api";
+      // What the calls came through is the host's to say, never the body's (FR-52).
+      const via = await viaFor(request, author, "api");
       /*
        * A STALE WRITE IS A CONFLICT, NOT A LOSS (FR-05). A field that moved
        * since the caller read it is refused by name — theirs and yours —
        * and nothing is written: what to do about it is the person's call.
        */
-      const conflicts = body.undo ? [] : conflictsOf(author, calls, body.base);
+      const conflicts = body.undo ? [] : wire.conflictsOf(author, calls, body.base);
       if (conflicts.length > 0) return send(409, { error: conflictSentence(conflicts), refused: true, conflict: true, conflicts });
       try {
         /*
@@ -427,18 +413,11 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
          * refusal comes back with the policy's own sentence rather than a
          * bare 403, because that sentence is the product.
          */
-        const result = body.undo
-          ? store.undo(body.undo, { author, via, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) })
-          : store.applyAll(calls, {
-              author,
-              via,
-              ...(body.intent ? { intent: body.intent } : {}),
-              ...(body.batch ? { batch: body.batch } : {}),
-            });
-        await opened.flush();
+        const applying = { author, via, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) };
+        const result = body.undo ? store.undo(body.undo, applying) : store.applyAll(calls, applying);
+        await flush();
         // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
-        const ops = sighted(author) ? redact(result.ops, seesId(store, author)) : result.ops;
-        return send(200, { ops, batch: result.batch });
+        return send(200, { ops: wire.shown(author, result.ops), batch: result.batch });
       } catch (error) {
         return send(409, { error: error instanceof Error ? error.message : String(error), refused: true });
       }
@@ -448,39 +427,24 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
   }
 
   /*
-   * THE LIVE WIRE (FR-05). One entry per open socket: who it is, the last
-   * seq it has been sent, and where it says it is. Every op that lands is
-   * pushed down every socket in seq order, none skipped — each as its seat
-   * may see it — and a socket's own call is answered by its `ack`, which
-   * carries that call's ops, so they reach it once.
+   * THE LIVE WIRE (FR-05), with each socket's state held here, in memory:
+   * the host that holds it elsewhere uses `protocol` the same way. Every op
+   * that lands is pushed down every socket in seq order, none skipped —
+   * each as its seat may see it — and a socket's own call is answered by
+   * its `ack`, which carries that call's ops, so they reach it once.
    */
-  interface Live {
-    readonly seat: Principal;
-    readonly socket: LiveSocket;
-    cursor: number;
-    participant?: string;
-    /** Set while this socket's own call lands, so its ops go in the ack rather than a push. */
+  interface Live extends LivePeer {
+    /** Set while this socket's own message is being answered, so its ops go in the ack rather than a push. */
     answering: boolean;
     open: boolean;
+    readonly socket: LiveSocket;
   }
   const sockets = new Set<Live>();
-  const say = (live: Live, message: LiveServerMessage) => {
-    if (!live.open) return;
-    try {
-      live.socket.send(JSON.stringify(message));
-    } catch {
-      // A socket that cannot be written to is closing; its close is what forgets it.
-    }
-  };
-  const push = (live: Live) => {
-    if (live.cursor >= lastSeq()) return;
-    const ops = since(live.seat, live.cursor);
-    live.cursor = lastSeq();
-    if (ops.length > 0) say(live, { t: "ops", seq: live.cursor, ops });
-  };
-  store.subscribe((_diff, ops) => {
-    revisions.note(ops);
-    for (const live of sockets) if (!live.answering) push(live);
+  const unsubscribe = store.subscribe((_diff, ops) => {
+    protocol.publish(
+      ops,
+      [...sockets].filter((live) => !live.answering),
+    );
   });
   /*
    * A socket's presence stands while the socket does; the TTL is for a
@@ -498,54 +462,8 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
   };
   function tellWhoIsHere(): void {
     if (sockets.size === 0) return;
-    const who = standing();
-    for (const live of sockets) say(live, { t: "presence", who: whoFor(live.seat, who.filter((presence) => presence.participant !== live.participant)) });
+    protocol.tell(standing(), sockets);
   }
-
-  /** A call or an undo from a socket: judged as its seat, exactly as `POST /graview/ops` judges it. */
-  const answer = async (live: Live, message: Extract<LiveClientMessage, { t: "call" | "undo" }>): Promise<void> => {
-    const cid = typeof message.cid === "string" ? message.cid : "";
-    const author = live.seat;
-    const via = typeof message.via === "string" && message.via.length > 0 ? message.via : "web";
-    const intent = typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined;
-    const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : undefined;
-    const shown = (ops: readonly Operation[]) => (sighted(author) ? redact(ops, seesId(store, author)) : [...ops]);
-    push(live);
-    /*
-     * SENT TWICE, ANSWERED ONCE. A client that lost its socket before the
-     * ack sends the call again under the same batch; one already in the
-     * log is answered with the ops it made.
-     */
-    const already = batch ? store.log.all().filter((op) => op.batch === batch) : [];
-    if (already.length > 0) {
-      say(live, { t: "ack", cid, seq: already.at(-1)!.seq, batch: batch!, ops: shown(already) });
-      return;
-    }
-    const calls = message.t === "call" && Array.isArray(message.calls) ? message.calls : [];
-    if (message.t === "call") {
-      const conflicts = conflictsOf(author, calls, message.base);
-      if (conflicts.length > 0) {
-        say(live, { t: "conflict", cid, sentence: conflictSentence(conflicts), conflicts });
-        return;
-      }
-    }
-    let result: { readonly ops: readonly Operation[]; readonly batch: string };
-    live.answering = true;
-    try {
-      const applying = { author, via, ...(intent ? { intent } : {}), ...(batch ? { batch } : {}) };
-      result = message.t === "undo" ? store.undo(Array.isArray(message.batches) ? message.batches : [], applying) : store.applyAll(calls, applying);
-    } catch (error) {
-      say(live, { t: "refused", cid, sentence: error instanceof Error ? error.message : String(error) });
-      return;
-    } finally {
-      live.answering = false;
-    }
-    // Every op before this call's went down this socket before it landed; its own go in the ack.
-    live.cursor = lastSeq();
-    const ops = shown(result.ops);
-    await opened.flush();
-    say(live, { t: "ack", cid, seq: ops.at(-1)?.seq ?? live.cursor, batch: result.batch, ops });
-  };
 
   /*
    * A page cannot set headers on a WebSocket. A store that trusts the seat
@@ -568,79 +486,49 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     return found ? new Request(request.url, { headers }) : request;
   };
 
-  async function connect(request: Request, socket: LiveSocket): Promise<LiveConnection | Response> {
-    if (!seatOf) {
-      return send(401, {
-        error: "This store cannot tell who is asking: the host gives serveStore a seatOf, or trusts the seat headers (trustSeatHeaders) on a server only it can reach.",
-      });
-    }
-    let seat: Principal;
+  async function seatFor(request: Request): Promise<LiveSocketState | Response> {
+    if (!seatOf) return send(401, { error: CANNOT_TELL });
+    const asked = seatRequest(request);
     try {
-      seat = await seatOf(seatRequest(request));
+      const seat = await seatOf(asked);
+      return protocol.open(seat, await viaFor(asked, seat, "web"));
     } catch (error) {
       return send(401, { error: error instanceof Error ? error.message : String(error) });
     }
-    const live: Live = { seat, socket, cursor: Number.POSITIVE_INFINITY, answering: false, open: true };
-    const leave = () => {
-      if (!live.participant) return;
-      here = new Map(here);
-      here.delete(live.participant);
-      delete live.participant;
-      tellWhoIsHere();
+  }
+
+  async function connect(request: Request, socket: LiveSocket): Promise<LiveConnection | Response> {
+    const state = await seatFor(request);
+    if (state instanceof Response) return state;
+    const live: Live = {
+      ...state,
+      socket,
+      answering: false,
+      open: true,
+      send: (text) => {
+        if (live.open) socket.send(text);
+      },
     };
     const hear = async (text: string): Promise<void> => {
-      let message: LiveClientMessage;
+      const was = live.participant;
+      live.answering = true;
+      let received;
       try {
-        message = JSON.parse(text) as LiveClientMessage;
-      } catch {
-        say(live, { t: "error", sentence: "A message on the live wire is one JSON object." });
-        return;
+        received = await protocol.receive(live, text, standing());
+      } finally {
+        live.answering = false;
       }
-      if (!message || typeof message !== "object") return;
-      switch (message.t) {
-        case "hello": {
-          const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
-          sockets.add(live);
-          live.cursor = lastSeq();
-          if (seq === undefined) {
-            const seen = seenFor(seat);
-            say(live, {
-              t: "welcome",
-              protocol: WIRE_PROTOCOL,
-              seq: live.cursor,
-              ops: [],
-              state: { version: options.app.version ?? 1, snapshot: seen.snapshot(), log: seen.log.all(), migrated: opened.migrated.map((op) => op.intent), enabledModules: enabledModules(), ...horizonOf() },
-            });
-          } else {
-            say(live, { t: "welcome", protocol: WIRE_PROTOCOL, seq: live.cursor, ops: since(seat, seq) });
-          }
-          const who = standing().filter((presence) => presence.participant !== live.participant);
-          if (who.length > 0) say(live, { t: "presence", who: whoFor(seat, who) });
-          return;
-        }
-        case "call":
-        case "undo":
-          if (!sockets.has(live)) {
-            say(live, { t: "refused", cid: String(message.cid ?? ""), sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
-            return;
-          }
-          return answer(live, message);
-        case "here": {
-          const told = message.presence;
-          if (!told || typeof told.participant !== "string" || typeof told.stop !== "string") {
-            say(live, { t: "error", sentence: "A presence is a participant and a stop." });
-            return;
-          }
-          live.participant = arrive(told, seat).participant;
-          tellWhoIsHere();
-          return;
-        }
-        case "bye":
-          leave();
-          return;
-        default:
-          // A message this server does not know is ignored, never refused (docs/stability.md).
-          return;
+      if (live.cursor !== undefined) {
+        sockets.add(live);
+        // What landed while this socket's own answer waited for its flush, after its ack.
+        protocol.publish([], [live]);
+      }
+      if (received.presence) {
+        arrive(received.presence);
+        tellWhoIsHere();
+      } else if (received.presence === null && was) {
+        forget(was);
+        tellWhoIsHere();
       }
     };
     /*
@@ -655,15 +543,20 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       close() {
         live.open = false;
         sockets.delete(live);
-        leave();
+        if (live.participant) {
+          forget(live.participant);
+          delete live.participant;
+          tellWhoIsHere();
+        }
       },
     };
   }
 
   return {
     store,
-    opened,
     connect,
+    seatFor,
+    protocol,
     handle: async (request) => {
       try {
         return await route(request);
@@ -681,8 +574,9 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
         }
       }
       sockets.clear();
-      await opened.flush();
-      opened.close();
+      unsubscribe();
+      await flush();
     },
   };
 }
+

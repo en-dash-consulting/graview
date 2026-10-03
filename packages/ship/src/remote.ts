@@ -82,7 +82,12 @@ export interface RemoteOptions<S extends AnySchema> {
    * where a hosted store's own auth goes without the framework knowing it.
    */
   readonly headers?: Readonly<Record<string, string>>;
-  /** What the calls come through, recorded on each op the server makes: `web` unless said (FR-06). */
+  /**
+   * What the calls come through: `web` unless said (FR-06). Sent as
+   * `SEAT_HEADERS.via`, which a server believes exactly where it believes
+   * the seat headers; a server that asks its own `seatOf` says the channel
+   * itself (FR-52).
+   */
   readonly via?: Via;
   /**
    * THE LIVE WIRE (FR-05): hold a WebSocket to the server's `LIVE_PATH`,
@@ -195,7 +200,9 @@ const OPEN = 1;
 export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>): Promise<RemoteStore<S>> {
   const call = options.fetch ?? fetch;
   const headers: Record<string, string> = { "content-type": "application/json", ...(options.headers ?? {}) };
-  Object.assign(headers, seatHeaders(options.principal));
+  // Who, and through what: a claim only a server that trusts the seat headers believes (FR-06, FR-52).
+  const seat = { ...seatHeaders(options.principal), [SEAT_HEADERS.via]: options.via ?? "web" };
+  Object.assign(headers, seat);
   const live = options.live === true;
 
   const fetchState = async () => {
@@ -450,8 +457,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     const response = await call(`${options.url}/graview/ops`, {
       method: "POST",
       headers,
-      // A person at an interface, unless the caller said otherwise (FR-06).
-      body: JSON.stringify({ via: options.via ?? "web", ...body }),
+      body: JSON.stringify(body),
     });
     const answer = (await response.json()) as { ops?: Operation[]; batch?: string; error?: string; conflict?: boolean; conflicts?: FieldConflict[] };
     if (!response.ok) {
@@ -517,10 +523,9 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
   const viaSocket = (body: Body, mine?: string): Promise<{ ops: readonly Operation[]; batch?: string }> =>
     new Promise((resolve, reject) => {
       const cid = mine ?? `send-${++counter}`;
-      const via = options.via ?? "web";
       const message: LiveClientMessage = body.undo
-        ? { t: "undo", cid, batches: body.undo, via, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) }
-        : { t: "call", cid, calls: body.calls ?? [], via, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}), ...(body.base?.length ? { base: body.base } : {}) };
+        ? { t: "undo", cid, batches: body.undo, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) }
+        : { t: "call", cid, calls: body.calls ?? [], ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}), ...(body.base?.length ? { base: body.base } : {}) };
       waiting.set(cid, { message, ...(mine !== undefined ? { mine } : {}), resolve, reject });
       // Not open: it goes when the socket is back, after the welcome has caught this client up.
       say(message);
@@ -880,7 +885,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       }
     }
     const withSeat = new URL(url);
-    for (const [name, value] of Object.entries(seatHeaders(options.principal))) withSeat.searchParams.set(name, value);
+    for (const [name, value] of Object.entries(seat)) withSeat.searchParams.set(name, value);
     return new Socket(withSeat.toString());
   }
 }

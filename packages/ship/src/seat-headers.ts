@@ -16,4 +16,10 @@ export const SEAT_HEADERS = {
   for: "x-graview-for",
   forRoles: "x-graview-for-roles",
   forName: "x-graview-for-name",
+  /**
+   * What the calls come through — `web`, `mcp:Claude` — believed exactly
+   * when the seat is, and otherwise ignored: the channel is the host's
+   * word, never the client's (FR-52).
+   */
+  via: "x-graview-via",
 } as const;

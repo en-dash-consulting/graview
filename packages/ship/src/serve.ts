@@ -1,7 +1,8 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { Duplex } from "node:stream";
 import type { AnySchema, Operation } from "@graview/core";
-import { createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE, type StoreHandler, type StoreHandlerOptions } from "./handler.js";
+import { createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE, type AdapterStoreHandlerOptions, type StoreHandler } from "./handler.js";
+import type { OpenedStore } from "./open-store.js";
 import { LIVE_PATH } from "./live.js";
 import { acceptSocket, type ServerSocket } from "./websocket.js";
 
@@ -19,13 +20,14 @@ import { acceptSocket, type ServerSocket } from "./websocket.js";
 
 export { SEAT_HEADERS, seatFromHeaders, WIRE };
 
-export interface ServeOptions<S extends AnySchema> extends StoreHandlerOptions<S> {
+export interface ServeOptions<S extends AnySchema> extends AdapterStoreHandlerOptions<S> {
   readonly port?: number;
   /** The address to listen on. Every interface when absent. */
   readonly host?: string;
 }
 
-export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, "close"> {
+export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, "close" | "opened"> {
+  readonly opened: OpenedStore<S>;
   readonly server: Server;
   readonly port: number;
   readonly url: string;
@@ -80,6 +82,8 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     opened: handler.opened,
     handle: handler.handle,
     connect: handler.connect,
+    seatFor: handler.seatFor,
+    protocol: handler.protocol,
     server,
     port,
     url: `http://localhost:${port}`,
