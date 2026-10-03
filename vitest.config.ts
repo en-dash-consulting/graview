@@ -38,6 +38,10 @@ export default defineConfig({
       "@graview/ship/cli": fileURLToPath(new URL("./packages/ship/src/cli.ts", import.meta.url)),
       "@graview/ship": src("ship"),
       "@graview/embed": src("embed"),
+      // The subpaths first, or the bare-name alias swallows them.
+      "@graview/guest/host": fileURLToPath(new URL("./packages/guest/src/host/index.ts", import.meta.url)),
+      "@graview/guest/react": fileURLToPath(new URL("./packages/guest/src/react.ts", import.meta.url)),
+      "@graview/guest": src("guest"),
       "@graview/studio": src("studio"),
       // The subpaths first, or the bare-name alias swallows them.
       "@graview/todo/ui": fileURLToPath(new URL("./apps/todo/src/ui/app.tsx", import.meta.url)),

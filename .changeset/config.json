@@ -16,6 +16,7 @@
       "@graview/ship",
       "@graview/studio",
       "@graview/embed",
+      "@graview/guest",
       "@graview/skills"
     ]
   ],
