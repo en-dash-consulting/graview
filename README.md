@@ -22,6 +22,7 @@ packages/
   ship/        @graview/ship        persistence wiring, op-log-native migrations, export, health
   studio/      @graview/studio      the declaration itself as a graph, edited in Graview's own interface
   embed/       @graview/embed       mount an app into any element: scene, Graview or pages, no Shell
+  guest/       @graview/guest       somebody else's view in a sandboxed frame that can only ask
   skills/      @graview/skills      the authoring moves, each ending in a check
 apps/
   todo/        THE EXAMPLE — a todo list, because nobody has to be taught one
@@ -410,7 +411,7 @@ widths in both schemes with axe-core and a keyboard.
 
 The packages are the deliverable: an SDK someone builds a product on, in
 their own repository. Every change to `packages/` carries a changeset
-(`pnpm changeset`; CI refuses a pull request without one), and the thirteen
+(`pnpm changeset`; CI refuses a pull request without one), and the fourteen
 packages are one fixed group, so they share a version and `graview create`
 can pin `^<version>` for each of them and name one that exists. On every
 push, `pnpm pack:inspect` says what goes in each tarball and `pnpm smoke`

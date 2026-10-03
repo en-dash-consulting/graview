@@ -1,0 +1,15 @@
+export { connectGuest } from "./guest.js";
+export type { ConnectGuestOptions, Guest } from "./guest.js";
+export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, isHostHello } from "./protocol.js";
+export type {
+  GuestAct,
+  GuestAnswer,
+  GuestEdge,
+  GuestNode,
+  GuestProps,
+  GuestReady,
+  GuestRefusal,
+  GuestRequest,
+  HostHello,
+  HostMessage,
+} from "./protocol.js";
