@@ -10,7 +10,7 @@
  */
 export { createStoreHandler, presenceSeenBy, SEAT_HEADERS, seatFromHeaders, WIRE } from "./handler.js";
 export type { AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
-export { liveProtocol, presenceFrom } from "./live-protocol.js";
+export { announcePresence, liveProtocol, presenceFrom, visitorPresence } from "./live-protocol.js";
 export type { LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState } from "./live-protocol.js";
 export { openStore } from "./open-store.js";
 export type { Compaction, OpenStoreOptions, OpenedStore } from "./open-store.js";
@@ -27,7 +27,7 @@ export type { AppBundle, ExportOptions } from "./export.js";
 export type { StoredMeta } from "./meta.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
-export { openRemote, seatHeaders } from "./remote.js";
-export type { LiveSocketLike, RemoteConflict, RemoteOptions, RemoteStore } from "./remote.js";
-export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, liveSubprotocol } from "./live.js";
-export type { LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket } from "./live.js";
+export { openRemote, RemoteRefusedError, seatHeaders } from "./remote.js";
+export type { LiveSocketLike, RemoteConflict, RemoteOptions, RemoteRefusal, RemoteStore } from "./remote.js";
+export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, liveSubprotocol, REFUSAL_REASONS } from "./live.js";
+export type { Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket, RefusalReason, WireRefusal } from "./live.js";

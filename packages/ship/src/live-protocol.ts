@@ -1,13 +1,17 @@
 import {
   FieldRevisions,
   hidesFrom,
+  hueFor,
   isUnset,
   participantKey,
   redact,
   seenBy,
   seesId,
+  refusalOf,
+  VISITOR_PRESENCE_TTL_MS,
   WIRE_PROTOCOL,
   type AnySchema,
+  type Author,
   type FieldConflict,
   type FieldRevision,
   type MutationCall,
@@ -16,7 +20,7 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
-import { conflictSentence, LIVE_WIRE, type LiveClientMessage, type LiveServerMessage } from "./live.js";
+import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**
  * THE LIVE WIRE AS FUNCTIONS OVER STATE THE HOST HOLDS (FR-41, FR-42).
@@ -51,10 +55,20 @@ export interface LiveSocketState {
   readonly via: string;
   /** The last seq this socket has been sent. Absent until it says hello: a call before that is refused. */
   cursor?: number;
-  /** Its presence key, once it has said where it is; built from the seat, never taken from the client. */
+  /**
+   * Its presence key: built from the seat at hello (or at its first `here`),
+   * said back in the welcome, and the key every later `here` on this
+   * socket is held under — never taken from the client (FR-47).
+   */
   participant?: string;
   /** The build its hello said it runs (FR-44): the client's word, kept for the host to count, never judged. */
   build?: string;
+  /**
+   * The call this socket was told is busy (FR-45), and when (epoch ms) it
+   * may come again. Every other call is busy too until it does, so nothing
+   * made after it overtakes it.
+   */
+  held?: { readonly cid: string; readonly until: number };
 }
 
 /** A socket as the protocol is handed it: its state, and a way to send it text. */
@@ -93,6 +107,12 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    * on one served. Absent, every protocol is served.
    */
   readonly minProtocol?: number;
+  /**
+   * THE HOST'S LIMITS (FR-45, FR-46), asked of every call and undo before
+   * it is judged: busy (`{ retryAfter }`, try again), refused at a hard cap
+   * (`{ refuse }`, reason `limit`), or nothing.
+   */
+  readonly limit?: Limit;
 }
 
 export interface LiveProtocol<S extends AnySchema> {
@@ -131,18 +151,67 @@ export interface LiveProtocol<S extends AnySchema> {
   declared(peers: Iterable<LivePeer>): void;
 }
 
+/** For whom an author acts, as a presence says it: the person's id and name, or nothing. */
+const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"> =>
+  author.onBehalfOf?.id ? { onBehalfOf: author.onBehalfOf.id, ...(author.onBehalfOf.name ? { onBehalfOfName: author.onBehalfOf.name } : {}) } : {};
+
 /**
  * A PRESENCE AS THE SERVER BUILDS IT. Keyed by the seat — a client cannot
  * claim to be somebody else — with only the session taken from what it
- * said, and stamped with the server's clock.
+ * said, and stamped with the server's clock. What it is, and for whom it
+ * acts, are the seat's (FR-47): a claimed `kind`, `onBehalfOf` or `until`
+ * is dropped, and the seat's name stands over a claimed one. `participant`
+ * is the key the server already gave this socket (its welcome said it):
+ * given, the claimed key is not read at all.
  */
-export function presenceFrom(told: Presence, seat: Principal, now: Date = new Date()): Presence {
+export function presenceFrom(told: Presence, seat: Principal, now: Date = new Date(), participant?: string): Presence {
+  const { participant: claimed, kind: _kind, name: claimedName, onBehalfOf: _for, onBehalfOfName: _forName, until: _until, at: _at, ...said } = told;
   // The session is what follows the seat's own `kind:id:` — an id may hold a colon (`shopper:bethan`).
   const own = `${seat.kind}:${seat.id ?? ""}:`;
-  const session = told.participant.startsWith(own) ? told.participant.slice(own.length) : (told.participant.split(":").at(-1) ?? "");
-  const participant = seat.id ? participantKey({ kind: seat.kind, id: seat.id, session }) : told.participant;
-  return { ...told, participant, at: now.toISOString() };
+  const session = claimed.startsWith(own) ? claimed.slice(own.length) : (claimed.split(":").at(-1) ?? "");
+  const key = participant ?? (seat.id ? participantKey({ kind: seat.kind, id: seat.id, session }) : claimed);
+  const name = seat.name ?? claimedName;
+  return { ...said, participant: key, kind: seat.kind, ...(name ? { name } : {}), ...forWhom(seat), at: now.toISOString() };
 }
+
+/**
+ * A VISITOR WITHOUT A SOCKET, as a host announces it (FR-47): an agent
+ * acting over MCP or an RPC, a polling tab. Built from the author the host
+ * already trusts — what it is, what it is called, for whom — keyed
+ * `kind:id:visit` unless a session is given, so every call by one agent
+ * refreshes one figure rather than adding another.
+ */
+export function visitorPresence(
+  author: Author,
+  options: { readonly session?: string; readonly stop?: string; readonly over?: string | null; readonly hue?: number; readonly now?: Date } = {},
+): Presence {
+  const name = author.name ?? author.id;
+  return {
+    participant: participantKey({ kind: author.kind, ...(author.id ? { id: author.id } : {}), session: options.session ?? author.session ?? "visit" }),
+    kind: author.kind,
+    ...(name ? { name } : {}),
+    ...forWhom(author),
+    hue: options.hue ?? hueFor(author.id ?? author.kind),
+    stop: options.stop ?? "",
+    ...(options.over !== undefined ? { over: options.over } : {}),
+    at: (options.now ?? new Date()).toISOString(),
+  };
+}
+
+/**
+ * WHO IS HERE, WITH ONE MORE (FR-47) — for a host that holds `who` itself,
+ * as a hibernating one does. The visitor is stamped now and stands until
+ * `ttlMs` from now; the same participant announced again replaces it, and
+ * anybody whose announced time has passed is dropped. Pure: keep what it
+ * answers, and hand it to `receive` and `tell`.
+ */
+export function announcePresence(who: readonly Presence[], presence: Presence, ttlMs: number = VISITOR_PRESENCE_TTL_MS, now: number = Date.now()): Presence[] {
+  const stamped: Presence = { ...presence, at: new Date(now).toISOString(), until: new Date(now + ttlMs).toISOString() };
+  return [...who.filter((one) => one.participant !== presence.participant && (one.until === undefined || now < Date.parse(one.until))), stamped];
+}
+
+/** A key for a socket that has not said one, minted by the server: the welcome tells the client what it is. */
+const mintSession = (): string => globalThis.crypto.randomUUID().slice(0, 8);
 
 /**
  * WHO IS HERE, AS ONE SEAT MAY BE TOLD (FR-02). Somebody whose own record
@@ -158,12 +227,18 @@ export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => b
       const parts = presence.participant.split(":");
       return parts.slice(2).every((_, at) => sees(parts.slice(1, at + 2).join(":")));
     })
-    .map((presence) => ({
-      ...presence,
-      stop: names(presence.stop) ? presence.stop : "",
-      ...(typeof presence.over === "string" && !sees(presence.over) ? { over: null } : {}),
-      ...(presence.robot?.at && !sees(presence.robot.at) ? { robot: { ...presence.robot, at: null } } : {}),
-    }));
+    .map((presence) => {
+      // An agent is shown; for whom it acts is not, to a seat that may not see that person (FR-47).
+      const { onBehalfOf, onBehalfOfName, ...rest } = presence;
+      const forWhom = onBehalfOf !== undefined && sees(onBehalfOf) ? { onBehalfOf, ...(onBehalfOfName !== undefined ? { onBehalfOfName } : {}) } : {};
+      return {
+        ...rest,
+        ...forWhom,
+        stop: names(presence.stop) ? presence.stop : "",
+        ...(typeof presence.over === "string" && !sees(presence.over) ? { over: null } : {}),
+        ...(presence.robot?.at && !sees(presence.robot.at) ? { robot: { ...presence.robot, at: null } } : {}),
+      };
+    });
 }
 
 /**
@@ -187,6 +262,13 @@ export interface Wire<S extends AnySchema> {
   whoFor(principal: Principal, who: readonly Presence[]): Presence[];
   /** The fields a call would write that moved since the caller's base: a stale write (FR-05). */
   conflictsOf(author: Principal, calls: readonly MutationCall[], base: unknown): FieldConflict[];
+  /**
+   * SENT TWICE, ANSWERED ONCE: the ops already in the log under the batch a
+   * call or an undo names, or none. A client that never heard the answer
+   * sends again under the same batch — down the socket or over HTTP — and
+   * is answered with what it made the first time (FR-49).
+   */
+  answered(batch: unknown): Operation[];
   /** `{ horizon }` when the log was compacted (FR-23); nothing otherwise. */
   horizonOf(): { horizon?: number };
   enabledModules(): string[];
@@ -217,7 +299,13 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
     shown,
     since: (principal, seq) => shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1))),
     seenFor: (principal) => seenBy(store, principal),
-    whoFor: (principal, who) => (sighted(principal) ? presenceSeenBy(who, seesId(store, principal)) : [...who]),
+    whoFor: (principal, who) => {
+      // A visitor whose announced time has passed is never told of, though a host may still hold it.
+      const now = Date.now();
+      const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
+      return sighted(principal) ? presenceSeenBy(standing, seesId(store, principal)) : standing;
+    },
+    answered: (batch) => (typeof batch === "string" && batch.length > 0 ? store.log.all().filter((op) => op.batch === batch) : []),
     horizonOf: () => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {}),
     enabledModules: () => [...store.modules.enabled].sort(),
     conflictsOf(author, calls, base) {
@@ -298,12 +386,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     const intent = typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined;
     const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : undefined;
     catchUp(peer);
-    /*
-     * SENT TWICE, ANSWERED ONCE. A client that lost its socket before the
-     * ack sends the call again under the same batch; one already in the
-     * log is answered with the ops it made.
-     */
-    const already = batch ? store.log.all().filter((op) => op.batch === batch) : [];
+    // A client that lost its socket before the ack sends the call again under the same batch: `answered` says what it made.
+    const already = wire.answered(batch);
     if (already.length > 0) {
       say(peer, { t: "ack", cid, seq: already.at(-1)!.seq, batch: batch!, ops: wire.shown(author, already) });
       return { cursor: peer.cursor! };
@@ -322,7 +406,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       const applying = { author, via: peer.via, ...(intent ? { intent } : {}), ...(batch ? { batch } : {}) };
       result = message.t === "undo" ? store.undo(Array.isArray(message.batches) ? message.batches : [], applying) : store.applyAll(calls, applying);
     } catch (error) {
-      say(peer, { t: "refused", cid, sentence: error instanceof Error ? error.message : String(error) });
+      say(peer, { t: "refused", cid, ...refusalOf(error) });
       return { cursor: peer.cursor! };
     }
     // Every op before this call's went down this socket before it landed; its own go in the ack.
@@ -370,7 +454,10 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           if (typeof message.build === "string" && message.build.length > 0) peer.build = message.build.slice(0, 64);
           const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
           peer.cursor = wire.lastSeq();
-          const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, ...(options.build ? { build: options.build } : {}) };
+          // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
+          peer.participant ??= participantKey({ kind: peer.seat.kind, ...(peer.seat.id ? { id: peer.seat.id } : {}), session: mintSession() });
+          const participant = peer.participant;
+          const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, participant, ...(options.build ? { build: options.build } : {}) };
           if (seq === undefined) {
             const seen = wire.seenFor(peer.seat);
             say(peer, {
@@ -395,19 +482,52 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           return { cursor: peer.cursor };
         }
         case "call":
-        case "undo":
+        case "undo": {
+          const cid = String(message.cid ?? "");
           if (peer.cursor === undefined) {
-            say(peer, { t: "refused", cid: String(message.cid ?? ""), sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
+            say(peer, { t: "refused", cid, reason: "invalid", sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
             return {};
           }
+          /*
+           * BUSY IS NOT REFUSED (FR-45). A call made after one that was told
+           * to wait waits too, whatever the rate says now: the client sends
+           * them again in the order it made them, the held one first.
+           */
+          const now = Date.now();
+          if (peer.held && peer.held.cid !== cid) {
+            say(peer, { t: "busy", cid, retryAfter: Math.max(0, peer.held.until - now) });
+            return { cursor: peer.cursor };
+          }
+          const limited = options.limit
+            ? await options.limit({
+                seat: peer.seat,
+                via: peer.via,
+                t: message.t,
+                bytes: bytesOf(text),
+                calls: message.t === "call" && Array.isArray(message.calls) ? message.calls : [],
+              })
+            : undefined;
+          if (limited && "refuse" in limited) {
+            delete peer.held;
+            say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
+            return { cursor: peer.cursor };
+          }
+          if (limited) {
+            const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
+            peer.held = { cid, until: now + retryAfter };
+            say(peer, { t: "busy", cid, retryAfter, ...(limited.sentence ? { sentence: limited.sentence } : {}) });
+            return { cursor: peer.cursor };
+          }
+          delete peer.held;
           return answer(peer, message);
+        }
         case "here": {
           const told = message.presence;
           if (!told || typeof told.participant !== "string" || typeof told.stop !== "string") {
             say(peer, { t: "error", sentence: "A presence is a participant and a stop." });
             return unchanged();
           }
-          const presence = presenceFrom(told, peer.seat);
+          const presence = presenceFrom(told, peer.seat, new Date(), peer.participant);
           peer.participant = presence.participant;
           return { ...unchanged(), presence };
         }

@@ -20,8 +20,14 @@ export interface PresenceRobot {
 export interface Presence {
   /** `kind:id:session` — the op log's own reading of an author, so a figure and its edits agree. */
   readonly participant: string;
+  /** What they are: a person, an agent, a rule, a system. A server says it from the seat (FR-47); absent from an older word, read the key. */
+  readonly kind?: Participant["kind"];
   /** What to call them. Absent for an anonymous viewer, who is counted rather than drawn. */
   readonly name?: string;
+  /** The id of the person an agent acts for (FR-47), from its seat — never from what a client claims. */
+  readonly onBehalfOf?: string;
+  /** What to call that person: "Claude, for Ada". Withheld with `onBehalfOf` from a seat that may not see them. */
+  readonly onBehalfOfName?: string;
   readonly hue: number;
   /** Where they are: `toUrl(view)`, the complete answer. */
   readonly stop: string;
@@ -31,6 +37,12 @@ export interface Presence {
   readonly robot?: PresenceRobot;
   /** When they last said so, ISO. */
   readonly at: string;
+  /**
+   * When an ANNOUNCED visitor goes, ISO (FR-47): an agent acting over MCP or
+   * an RPC, a polling tab — somebody without a socket, stamped by a host.
+   * Until then they stand without a heartbeat; after it, they are gone.
+   */
+  readonly until?: string;
 }
 
 export interface PresenceChannel {
@@ -54,6 +66,28 @@ export const PRESENCE_TTL_MS = 2500;
  * somebody does not keep them on the map.
  */
 export const REMOTE_PRESENCE_TTL_MS = PRESENCE_TTL_MS * 4;
+
+/**
+ * HOW LONG AN ANNOUNCED VISITOR STANDS (FR-47) when a host does not say:
+ * an agent between two calls is thinking, not gone.
+ */
+export const VISITOR_PRESENCE_TTL_MS = 30_000;
+
+/**
+ * WHAT TO CALL THEM, in a room: "Claude, for Ada" for an agent whose
+ * person may be named, the name alone otherwise, and "" for an anonymous
+ * viewer, who is counted rather than drawn.
+ */
+export function presenceName(presence: Presence): string {
+  const name = presence.name ?? "";
+  return name && presence.onBehalfOfName ? `${name}, for ${presence.onBehalfOfName}` : name;
+}
+
+/** Whether a presence still stands at `now`: until its announced time, or within the TTL of its last word. */
+export function presenceStands(presence: Presence, now: number, ttlMs: number = PRESENCE_TTL_MS): boolean {
+  if (presence.until !== undefined) return now < Date.parse(presence.until);
+  return now - Date.parse(presence.at) < ttlMs;
+}
 
 /** The parts of a participant key: who, and which tab of theirs. */
 export interface Participant {
@@ -103,10 +137,10 @@ export function foldPresence(
 ): Map<string, Presence> {
   const next = new Map<string, Presence>();
   for (const [participant, presence] of known) {
-    if (now - Date.parse(presence.at) < ttlMs) next.set(participant, presence);
+    if (presenceStands(presence, now, ttlMs)) next.set(participant, presence);
   }
   for (const presence of arrived) {
-    if (now - Date.parse(presence.at) >= ttlMs) {
+    if (!presenceStands(presence, now, ttlMs)) {
       next.delete(presence.participant);
       continue;
     }
@@ -122,7 +156,11 @@ export function samePresence(a: Presence | undefined, b: Presence | undefined): 
   if (!a || !b) return a === b;
   return (
     a.participant === b.participant &&
+    a.kind === b.kind &&
     a.name === b.name &&
+    a.onBehalfOf === b.onBehalfOf &&
+    a.onBehalfOfName === b.onBehalfOfName &&
+    a.until === b.until &&
     a.hue === b.hue &&
     a.stop === b.stop &&
     (a.over ?? null) === (b.over ?? null) &&

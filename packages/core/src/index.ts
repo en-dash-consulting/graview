@@ -52,7 +52,7 @@ export {
 export type { JsonSchema, MutationToolSchema } from "./schema/json-schema.js";
 
 // Graph — the reactive in-memory model the framework owns.
-export { Graph, GraphError } from "./graph/graph.js";
+export { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
@@ -73,6 +73,8 @@ export { defineInvariant, evaluate, RuleBudgetError, UnregisteredInvariantError,
 export { FRAMEWORK_VERSION } from "./version.js";
 export { capabilities, WIRE_PROTOCOL } from "./capabilities.js";
 export type { Capabilities } from "./capabilities.js";
+export { REFUSAL_REASONS, refusalOf } from "./refusal.js";
+export type { RefusalReason, WireRefusal } from "./refusal.js";
 export { assertReadable, FORMATS, formatStamp, NewerFormatError, upgradeOp, upgradeSnapshot } from "./formats.js";
 export type { FormatName, FormatStamp } from "./formats.js";
 export type {
@@ -374,5 +376,5 @@ export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
 // The city: a map drawn from the declaration, in lattice cells.
 export { BLOCK, cityExtent, cityMap, MAX_SIDE, plotsOverlap, roadsOf, sharedEdges, sideFor, toIso } from "./city.js";
 export type { CityHints, CityMap, Plot, Road } from "./city.js";
-export { foldPresence, parseParticipant, participantKey, PRESENCE_TTL_MS, REMOTE_PRESENCE_TTL_MS, samePresence } from "./presence.js";
+export { foldPresence, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceChannel, PresenceRobot } from "./presence.js";

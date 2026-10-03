@@ -177,7 +177,8 @@ describe("the wire sends a seat only what it may see", () => {
       JSON.stringify({ t: "call", cid: "c1", calls: [{ name: "answer", args: { id: "enquiry:finance-on-the-golf" } }], base: [{ node: "enquiry:finance-on-the-golf", field: "answered", rev: -1 }] }),
     );
     const refused = (await next("refused", from)) as Extract<LiveServerMessage, { t: "refused" }>;
-    expect(refused).toEqual({ t: "refused", cid: "c1", sentence: "Not permitted: “Answer the enquiry” names a record you may not see." });
+    // Forbidden, and no role named: the reason says no more than the sentence does (FR-46).
+    expect(refused).toEqual({ t: "refused", cid: "c1", reason: "forbidden", sentence: "Not permitted: “Answer the enquiry” names a record you may not see." });
 
     // Her own act is answered with its ops.
     from = heard.length;

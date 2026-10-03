@@ -1,4 +1,6 @@
-import { WIRE_PROTOCOL, type FieldConflict, type FieldRevision, type MutationCall, type Operation, type Presence } from "@graview/core";
+import { WIRE_PROTOCOL, type FieldConflict, type FieldRevision, type MutationCall, type Operation, type Presence, type Principal, type RefusalReason } from "@graview/core";
+export { REFUSAL_REASONS } from "@graview/core";
+export type { RefusalReason, WireRefusal } from "@graview/core";
 
 /**
  * THE LIVE WIRE (FR-05): the same store, pushed down a WebSocket.
@@ -88,7 +90,11 @@ export type LiveClientMessage =
     }
   /** Batches to take back, judged as the seat that asks. */
   | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string }
-  /** Where this client is, as `POST /graview/here` takes it. */
+  /**
+   * Where this client is, as `POST /graview/here` takes it. Who it is —
+   * the key, the kind, for whom — is the server's to say from the seat;
+   * a claim of any of them is not read (FR-47).
+   */
   | { readonly t: "here"; readonly presence: Presence }
   /** Gone, as `POST /graview/leave`. */
   | { readonly t: "bye" };
@@ -109,6 +115,8 @@ export type LiveServerMessage =
       readonly version?: number;
       /** The host's build, an opaque string: a client on another build keeps working, and is told once (FR-44). */
       readonly build?: string;
+      /** This socket's own key in `presence`, built from its seat, so a client can leave itself out of who is here (FR-47). */
+      readonly participant?: string;
       readonly seq: number;
       readonly ops: readonly Operation[];
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */
@@ -116,8 +124,22 @@ export type LiveServerMessage =
     }
   /** A call or undo landed: the ops it made, in the batch they landed in. Every op before them has already been sent. */
   | { readonly t: "ack"; readonly cid: string; readonly seq: number; readonly batch: string; readonly ops: readonly Operation[] }
-  /** Refused, in the policy's own sentence. Nothing landed. */
-  | { readonly t: "refused"; readonly cid: string; readonly sentence: string }
+  /**
+   * Refused, in the policy's own sentence, and why as a code a program can
+   * branch on (FR-46): `forbidden`, `missing`, `invalid` or `limit`
+   * (`REFUSAL_REASONS`), with `wouldNeed` — the roles that could — when
+   * the policy knows them. Final: nothing landed, and the client takes the
+   * change back.
+   */
+  | { readonly t: "refused"; readonly cid: string; readonly sentence: string; readonly reason: RefusalReason; readonly wouldNeed?: readonly string[] }
+  /**
+   * NOT NOW (FR-45): the host is busy — a rate, a queue — and the call was
+   * not judged. Nothing landed, and nothing is refused: the client keeps
+   * the change shown and sends it again after `retryAfter` milliseconds.
+   * Every later call on the socket is busy too until this `cid` comes
+   * again, so a burst lands in the order it was made.
+   */
+  | { readonly t: "busy"; readonly cid?: string; readonly retryAfter: number; readonly sentence?: string }
   /** A stale write: each field that moved since the call's base, theirs and yours. Nothing landed. */
   | { readonly t: "conflict"; readonly cid: string; readonly sentence: string; readonly conflicts: readonly FieldConflict[] }
   /** Ops that landed, everybody's, in seq order and none skipped; `seq` is the last of them. */
@@ -140,6 +162,42 @@ export type LiveServerMessage =
   | { readonly t: "reload"; readonly reason: string; readonly protocol: number }
   /** A message the server could not read. */
   | { readonly t: "error"; readonly sentence: string };
+
+/**
+ * WHAT A HOST'S `limit` IS ASKED (FR-45, FR-46): one change, from one seat,
+ * before it is judged — on the socket a `call` or an `undo`, over HTTP the
+ * body of `POST /graview/ops`.
+ */
+export interface LimitAsked {
+  readonly seat: Principal;
+  /** What the change came through, as the host said it (FR-52). */
+  readonly via: string;
+  readonly t: "call" | "undo";
+  /** Its size on the wire, in UTF-8 bytes: the socket message, or the request body. */
+  readonly bytes: number;
+  /** The calls it carries; none for an undo. */
+  readonly calls: readonly MutationCall[];
+}
+
+/**
+ * WHAT A HOST'S `limit` ANSWERS. Nothing: the change goes on to be judged.
+ *
+ * - `{ retryAfter, sentence? }` — BUSY: not now (a rate, a queue). The
+ *   socket says `busy` and HTTP answers 429 with `Retry-After`; the client
+ *   keeps the change and sends it again after `retryAfter` milliseconds.
+ * - `{ refuse }` — REFUSED, reason `limit`: never as asked (over a hard
+ *   size cap, more calls in one batch than the host takes). The socket says
+ *   `refused` and HTTP answers 413; the client takes the change back.
+ */
+export type LimitAnswer = { readonly retryAfter: number; readonly sentence?: string } | { readonly refuse: string };
+
+/** A host's word on whether a change may be judged now: busy, refused at its limit, or nothing. */
+export type Limit = (asked: LimitAsked) => LimitAnswer | undefined | Promise<LimitAnswer | undefined>;
+
+/** A message's size in UTF-8 bytes, as a host's cap counts it. */
+export function bytesOf(text: string): number {
+  return new TextEncoder().encode(text).length;
+}
 
 /**
  * WHAT A HOST HANDS THE PROTOCOL: a way to send one text message down the

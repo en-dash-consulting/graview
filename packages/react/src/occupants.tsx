@@ -1,3 +1,4 @@
+import { presenceName } from "@graview/core";
 import type { ReactElement } from "react";
 import { useGraview, type DrawnBox } from "./context.js";
 import { placeOthers } from "./presence.js";
@@ -135,7 +136,8 @@ export function Occupants({ width, whereIs }: OccupantsProps): ReactElement | nu
           );
         }
         const hue = one.presence.hue;
-        const name = one.presence.name ?? "somebody";
+        // "Claude, for Ada": an agent is said as itself and for whom it acts (FR-47).
+        const name = presenceName(one.presence) || "somebody";
         if (one.kind === "edge") {
           return (
             <button

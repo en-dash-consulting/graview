@@ -232,14 +232,17 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
     if (!channel || !shareWhere) return null;
     return {
       participant,
+      kind: principal.kind,
       name,
+      // For whom this seat acts, said as a server would say it (FR-47); a server builds its own from the seat regardless.
+      ...(principal.onBehalfOf?.id ? { onBehalfOf: principal.onBehalfOf.id, ...(principal.onBehalfOf.name ? { onBehalfOfName: principal.onBehalfOf.name } : {}) } : {}),
       hue: hueFor(principal.id ?? "nobody"),
       stop: toUrl(view),
       ...(shareOver ? { over } : {}),
       ...(robot ? { robot: { at: robot.at, mode: robot.mode } } : {}),
       at: new Date().toISOString(),
     };
-  }, [channel, shareWhere, shareOver, participant, name, principal.id, view, over, robot?.at, robot?.mode]);
+  }, [channel, shareWhere, shareOver, participant, name, principal.id, principal.kind, principal.onBehalfOf?.id, principal.onBehalfOf?.name, view, over, robot?.at, robot?.mode]);
 
   /* Say it: on change, and on the heartbeat while it stands. */
   useEffect(() => {

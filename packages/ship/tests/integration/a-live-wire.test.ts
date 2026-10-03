@@ -341,3 +341,33 @@ describe("a live wire", () => {
     expect(tally.ops).toBeGreaterThan(100);
   }, 30_000);
 });
+
+/**
+ * WHO IS HERE, AND FOR WHOM (FR-47). A live client is told its own key in
+ * the welcome, so it leaves itself out of who is here even when the key
+ * the server built is not the one it would have made; and an agent that
+ * acts over HTTP, with no socket at all, is in the room for a while, as
+ * itself and for the person it acts for.
+ */
+describe("presence on the live wire", () => {
+  it("tells a live client its own key, and shows it an agent's call over HTTP as the agent, for whom", async () => {
+    served = await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true, presenceTtlMs: 60_000 });
+    const one = await open(sam);
+    const two = await open(ana);
+    const seen: (readonly { participant: string; name?: string; onBehalfOfName?: string }[])[] = [];
+    one.presence.onWho((who) => seen.push(who));
+    const at = new Date().toISOString();
+    one.presence.here({ participant: "human:sam:what-sam-thinks", name: "Sam", hue: 1, stop: "#", at });
+    two.presence.here({ participant: "human:ana:what-ana-thinks", name: "Ana", hue: 2, stop: "#", at });
+    await until(() => one.participant() !== undefined && two.participant() !== undefined);
+    expect(one.participant()).toMatch(/^human:sam:/);
+    expect(two.participant()).toMatch(/^human:ana:/);
+    await until(() => (seen.at(-1) ?? []).some((presence) => presence.participant === two.participant()));
+    expect(seen.flat().some((presence) => presence.participant === one.participant())).toBe(false);
+
+    const claude = await open({ kind: "agent", id: "claude", name: "Claude", roles: ["keeper"], onBehalfOf: sam }, { live: false, pollMs: 0 });
+    await claude.send([{ name: "rename", args: { id: "t1", label: "Book the church hall" } }]);
+    await until(() => (seen.at(-1) ?? []).some((presence) => presence.name === "Claude"));
+    expect(seen.at(-1)!.find((presence) => presence.name === "Claude")).toMatchObject({ participant: "agent:claude:visit", onBehalfOfName: "Sam" });
+  });
+});

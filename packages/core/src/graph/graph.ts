@@ -69,6 +69,21 @@ export class GraphError extends Error {
   }
 }
 
+/**
+ * WHAT A CHANGE NAMES IS NOT THERE: a record, or an edge, that it would
+ * patch, remove or link to (FR-46). Still a `GraphError`, so a caller that
+ * caught those before catches this; `refusalOf` reads it as `missing`.
+ */
+export class MissingRecordError extends GraphError {
+  constructor(
+    readonly id: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "MissingRecordError";
+  }
+}
+
 
 /** The rank keys: nodes and edges share one ranking, under their own prefixes. */
 const NODE = "n\u0000";
@@ -309,7 +324,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       case "remove-node": {
         const id = primitive.node.id;
         if (!this.nodes.has(id)) {
-          throw new GraphError(`Cannot remove missing node "${id}"`);
+          throw new MissingRecordError(id, `Cannot remove missing node "${id}"`);
         }
         for (const edge of [...this.outEdges(id), ...this.inEdges(id)]) {
           this.deleteEdge(edge);
@@ -323,7 +338,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       case "patch-node": {
         const current = this.nodes.get(primitive.id);
         if (!current) {
-          throw new GraphError(`Cannot patch missing node "${primitive.id}"`);
+          throw new MissingRecordError(primitive.id, `Cannot patch missing node "${primitive.id}"`);
         }
         const next = { ...current } as Record<string, unknown>;
         for (const [key, value] of Object.entries(primitive.after)) {
@@ -340,9 +355,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         return;
       case "remove-edge": {
         if (!this.edges.has(edgeId(primitive.edge))) {
-          throw new GraphError(
-            `Cannot remove missing edge ${edgeId(primitive.edge)}`,
-          );
+          throw new MissingRecordError(edgeId(primitive.edge), `Cannot remove missing edge ${edgeId(primitive.edge)}`);
         }
         this.deleteEdge(primitive.edge);
         return;
@@ -450,9 +463,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     const from = this.nodes.get(edge.from);
     const to = this.nodes.get(edge.to);
     if (!from || !to) {
-      throw new GraphError(
-        `Edge "${edge.kind}" references missing node "${from ? edge.to : edge.from}"`,
-      );
+      const missing = from ? edge.to : edge.from;
+      throw new MissingRecordError(missing, `Edge "${edge.kind}" references missing node "${missing}"`);
     }
     if (this.validate && !held && !this.schema.edgeAllowed(edge.kind, from.kind, to.kind)) {
       const declared = this.schema.edge(edge.kind);

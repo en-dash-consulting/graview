@@ -23,13 +23,13 @@ export type { AppBundle, ExportOptions } from "./export.js";
 export type { StoredMeta } from "./meta.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
-export { openRemote, seatHeaders } from "./remote.js";
+export { openRemote, RemoteRefusedError, seatHeaders } from "./remote.js";
 export { SEAT_HEADERS } from "./seat-headers.js";
 export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
-export type { LiveSocketLike, RemoteConflict, RemoteOptions, RemoteStore } from "./remote.js";
-export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE } from "./live.js";
-export type { LiveClientMessage, LiveServerMessage } from "./live.js";
+export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteRefusal, RemoteStatus, RemoteStore } from "./remote.js";
+export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, REFUSAL_REASONS } from "./live.js";
+export type { LiveClientMessage, LiveServerMessage, RefusalReason, WireRefusal } from "./live.js";
 export {
   assertPhotoFits,
   photosUsed,

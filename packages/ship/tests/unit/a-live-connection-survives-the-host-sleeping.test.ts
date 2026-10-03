@@ -143,7 +143,10 @@ describe("a live connection a hibernating host can resume", () => {
     // Every in-memory object but the store is gone; the attachments are strings.
     for (const [id, text] of room.attachments) expect(JSON.parse(text)).toEqual(JSON.parse(JSON.stringify(JSON.parse(text))), id);
     const before = room.attachments.get("bethan")!;
-    expect(JSON.parse(before)).toEqual({ seat: bethan, via: "web", cursor: -1 });
+    // Her key was built from her seat at hello, and said back in the welcome (FR-47).
+    const welcome = said(room, "bethan", "welcome")[0] as Extract<LiveServerMessage, { t: "welcome" }>;
+    expect(JSON.parse(before)).toEqual({ seat: bethan, via: "web", cursor: -1, participant: welcome.participant });
+    expect(welcome.participant).toMatch(/^human:shopper:bethan:./);
 
     const received = await room.message("bethan", JSON.stringify({ t: "call", cid: "c1", calls: [{ name: "ask", args: { shopperId: "shopper:bethan", label: "Is it still there" } }] }));
     const bethans = said(room, "bethan", "ops") as Extract<LiveServerMessage, { t: "ops" }>[];
@@ -223,9 +226,11 @@ describe("a live connection a hibernating host can resume", () => {
     await room.message("bethan", JSON.stringify({ t: "hello" }));
     room.evict();
     const here = await room.message("bethan", JSON.stringify({ t: "here", presence: { participant: "human:staff:rhian:tab1", stop: "/", over: null, at: "" } }));
-    // A client never names itself: the key is built from the seat the socket was opened as.
-    expect(here.presence?.participant).toBe("human:shopper:bethan:tab1");
-    expect(JSON.parse(room.attachments.get("bethan")!).participant).toBe("human:shopper:bethan:tab1");
+    // A client never names itself: the key is the one built from the seat at hello, whatever it claims (FR-47).
+    const welcome = said(room, "bethan", "welcome")[0] as Extract<LiveServerMessage, { t: "welcome" }>;
+    expect(welcome.participant).toMatch(/^human:shopper:bethan:./);
+    expect(here.presence?.participant).toBe(welcome.participant);
+    expect(JSON.parse(room.attachments.get("bethan")!).participant).toBe(welcome.participant);
     const gone = await room.message("bethan", JSON.stringify({ t: "bye" }));
     expect(gone.presence).toBeNull();
     expect(JSON.parse(room.attachments.get("bethan")!).participant).toBeUndefined();

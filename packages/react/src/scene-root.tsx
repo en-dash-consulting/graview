@@ -912,7 +912,8 @@ export function Scene<S extends AnySchema>({
       onClick={(event) => {
         if (swallow.current) return;
         const target = event.target as HTMLElement;
-        if (target.closest("[data-graview-view], button, aside, a, input, select")) return;
+        // The panes are labelled sections now, not asides (FR-40); chrome is chrome either way.
+        if (target.closest("[data-graview-view], button, aside, section[aria-label], [data-graview-offstage], a, input, select")) return;
         setSelection([]);
         setMenuAt(null);
       }}

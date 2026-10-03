@@ -222,7 +222,8 @@ describe("the declaration changes under open tabs", () => {
     one.remote.close();
     two.remote.close();
     await new Promise((tick) => setTimeout(tick, 10));
-    expect(await who()).toContain("human:sam:tab");
+    // The server builds the key from the seat (FR-47): Sam's, whatever session it minted.
+    expect((await who()).some((participant) => participant.startsWith("human:sam:"))).toBe(true);
     one.next.remote!.close();
     two.next.remote!.close();
     await handler.close();
@@ -276,7 +277,8 @@ describe("the declaration changes under open tabs", () => {
     two.hold.mode = "before";
     two.remote.store.apply({ name: "rename", args: { id: "t2", label: "Pay it today" } });
     two.remote.store.apply({ name: "annotate", args: { id: "t1", note: "Ask about chairs" } });
-    await until(() => two.hold.held.length === 2);
+    // One post at a time (FR-45): the first is held, the second waits behind it in the lane.
+    await until(() => two.hold.held.length === 1);
 
     await handler.declarationChanged({ app: v2 });
     // The next answer each tab reads says the declaration moved.
