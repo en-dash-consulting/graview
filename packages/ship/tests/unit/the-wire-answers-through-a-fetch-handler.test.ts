@@ -64,7 +64,8 @@ describe("the WIRE routes answer through a fetch handler", () => {
   it("applies a call under the seat the request carries, and the op comes back", async () => {
     const handler = await createStoreHandler({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true });
     const response = await handler.handle(
-      at("/graview/ops", { method: "POST", headers: keeper, body: JSON.stringify({ calls: [{ name: "finish", args: { id: "t1" } }], via: "web" }) }),
+      // The channel rides with the seat, in a header the host trusts as it trusts the seat (FR-52).
+      at("/graview/ops", { method: "POST", headers: { ...keeper, [SEAT_HEADERS.via]: "web" }, body: JSON.stringify({ calls: [{ name: "finish", args: { id: "t1" } }] }) }),
     );
     expect(response.status).toBe(200);
     const body = (await response.json()) as { ops: { author: Principal; via: string }[] };

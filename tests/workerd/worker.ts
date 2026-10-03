@@ -25,7 +25,7 @@ import {
   z,
 } from "@graview/core";
 import { createToolRuntime } from "@graview/tools";
-import { createStoreHandler, openStore, type StoreHandler } from "@graview/ship/runtime";
+import { createStoreHandler, liveProtocol, openStore, type LiveSocketState, type StoreHandler } from "@graview/ship/runtime";
 import { adapterCases, householdTables, sqlCases, type SqlHandle } from "../../packages/core/tests/support/adapter-contract.js";
 
 interface Storage {
@@ -139,6 +139,23 @@ export default {
         tools: runtime.definitions.map((tool) => tool.name),
         shipped: capabilities().shipped,
       });
+    }
+    if (pathname === "/live") {
+      /*
+       * The live protocol a hibernating Durable Object runs (FR-41): each
+       * message is answered by a protocol made afresh from the store, and
+       * the socket's state between them is only a JSON string.
+       */
+      const opened = await openStore({ app, adapter: createMemoryAdapter(), scope: "live", seed: seed as never });
+      const heard: unknown[] = [];
+      let kept = JSON.stringify(liveProtocol({ store: opened.store }).open(keeper, "mcp:Claude"));
+      for (const text of [JSON.stringify({ t: "hello", seq: -1 }), JSON.stringify({ t: "call", cid: "c1", via: "web", calls: [{ name: "finish", args: { id: "t1" } }] })]) {
+        const peer = { ...(JSON.parse(kept) as LiveSocketState), send: (message: string) => heard.push(JSON.parse(message)) };
+        await liveProtocol({ store: opened.store, flush: opened.flush }).receive(peer, text);
+        const { send: _send, ...state } = peer;
+        kept = JSON.stringify(state);
+      }
+      return Response.json({ heard, state: JSON.parse(kept), via: opened.store.log.all().at(-1)?.via });
     }
     if (pathname.startsWith("/graview/")) return env.SERVED.get(env.SERVED.idFromName("one")).fetch(request);
     return new Response("Nothing here", { status: 404 });

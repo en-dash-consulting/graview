@@ -39,7 +39,8 @@ export type LiveClientMessage =
    * one, so a call it sent twice across a reconnect is answered with the
    * ops it already made rather than made again. `base` is the revision of
    * each field the calls change as the client last saw it; one that moved
-   * since is a `conflict`.
+   * since is a `conflict`. What the calls came through is not the
+   * client's to say: the host records its own `via` (FR-52).
    */
   | {
       readonly t: "call";
@@ -47,11 +48,10 @@ export type LiveClientMessage =
       readonly calls: readonly MutationCall[];
       readonly intent?: string;
       readonly batch?: string;
-      readonly via?: string;
       readonly base?: readonly FieldRevision[];
     }
   /** Batches to take back, judged as the seat that asks. */
-  | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string; readonly via?: string }
+  | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string }
   /** Where this client is, as `POST /graview/here` takes it. */
   | { readonly t: "here"; readonly presence: Presence }
   /** Gone, as `POST /graview/leave`. */
