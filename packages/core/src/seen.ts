@@ -18,6 +18,29 @@ interface Judged {
     in(id: string): readonly { readonly id: string }[];
   };
   readonly log: LogReading;
+  /** The kinds of the modules this workspace has off (FR-12), kept from every seat as a sight keeps a record. */
+  readonly modules?: { readonly disabledKinds: ReadonlySet<string> };
+}
+
+const NOTHING: ReadonlySet<string> = new Set();
+
+/**
+ * The kinds kept from a seat because their module is off (FR-12): from
+ * every seat but the system itself, which keeps the records and is the
+ * one that turns the module on again.
+ */
+function turnedOff(store: Judged, principal: Principal): ReadonlySet<string> {
+  return isSystem(principal) ? NOTHING : (store.modules?.disabledKinds ?? NOTHING);
+}
+
+/**
+ * WHETHER ANYTHING IS KEPT FROM THIS SEAT: a sight the policy declares
+ * (FR-02), or a module the workspace has off (FR-12). When neither, every
+ * read is the store's own and nothing needs redacting.
+ */
+export function hidesFrom(store: Judged, principal: Principal): boolean {
+  if (isSystem(principal)) return false;
+  return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0;
 }
 
 /**
@@ -27,20 +50,21 @@ interface Judged {
  * label in a call's arguments) is nothing to keep from anybody.
  */
 export function seesId(store: Judged, principal: Principal): (id: string) => boolean {
-  if (!store.policy?.sees?.length) return () => true;
+  const off = turnedOff(store, principal);
+  if (!store.policy?.sees?.length && off.size === 0) return () => true;
   const records = recordsOf(store.log);
   return (id) => {
     const node = store.graph.getNode(id);
-    if (node) return sees(store.policy, principal, node, store.graph, records);
+    if (node) return !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records);
     const kind = records.kindOf(id);
     if (kind === undefined) return true;
-    return sees(store.policy, principal, { id, kind }, { out: () => [], in: () => [] }, records);
+    return !off.has(kind) && sees(store.policy, principal, { id, kind }, { out: () => [], in: () => [] }, records);
   };
 }
 
 /** The store's log as one seat may read it: every op in its place, the ones it may not see withheld (FR-16). */
 export function logSeenBy(store: Judged, principal: Principal): readonly Operation[] {
-  if (!store.policy?.sees?.length || isSystem(principal)) return store.log.all();
+  if (!hidesFrom(store, principal)) return store.log.all();
   return redact(store.log.all(), seesId(store, principal));
 }
 
@@ -69,7 +93,8 @@ const bound = (target: object, prop: PropertyKey): unknown => {
  * With no `sees`, it is the store, unchanged.
  */
 export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principal): Store<S> {
-  if (!store.policy?.sees?.length) return store;
+  // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes.
+  if (!store.policy?.sees?.length && store.modules.disabledKinds.size === 0) return store;
   // Keyed by the seat the policy judges: an agent for Nick is not the same agent alone.
   const judged = isSystem(principal) ? principal : actingAs(principal);
   const key = `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
@@ -80,7 +105,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
 
   const full = store.graph;
   const seenNode = (node: { id: string; kind: string } | undefined): boolean =>
-    node !== undefined && sees(store.policy, principal, node as never, full as never, recordsOf(store.log));
+    node !== undefined && !turnedOff(store, principal).has(node.kind) && sees(store.policy, principal, node as never, full as never, recordsOf(store.log));
   const seenId = (id: string): boolean => seenNode(full.getNode(id) as never);
   const seenEdge = (edge: GraphEdge): boolean => seenId(edge.from) && seenId(edge.to);
   /*

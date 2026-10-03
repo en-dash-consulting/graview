@@ -2,7 +2,7 @@ import { readingOf, seenBy, seesId } from "./seen.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
-import { diffSnapshots, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
+import { diffSnapshots, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { invert, normalise, writesOf, type Primitive } from "./graph/primitives.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
 import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
@@ -92,9 +92,9 @@ export interface StoreOptions<S extends AnySchema> {
    * The app's declared modules, and which are on for THIS installation.
    *
    * `enabledModules` absent means everything — a store that never heard of
-   * modules behaves exactly as before. The projection is fixed at
-   * construction: a workspace toggle is an entitlement change, and the
-   * honest response to one is building the store the new workspace gets.
+   * modules behaves exactly as before. It is the set the store starts
+   * from: a log that says otherwise (an op `setEnabledModules` wrote) has
+   * the last word, because turning a module off or on is history (FR-12).
    */
   readonly modules?: ModuleMap;
   readonly enabledModules?: readonly string[];
@@ -186,6 +186,9 @@ export interface AppendOp {
 }
 
 const HUMAN: Author = { kind: "human" };
+
+/** Who turns a module off or on: the workspace itself, `system · modules` (FR-12). */
+export const MODULES_AUTHOR: Author = { kind: "system", id: "modules", name: "Modules" };
 
 /**
  * WHETHER UNDOING AN OP PUTS BACK EXACTLY WHAT IT TOOK (FR-28).
@@ -283,8 +286,10 @@ export class Store<S extends AnySchema> {
   readonly intelligence: readonly IntelligenceProviderDeclaration[];
   /** What each declared agent may do, by provider name. */
   private readonly may = new Map<string, ReadonlySet<string>>();
-  /** What the enabled modules work out to; every surface reads this one answer. */
-  readonly modules: ModuleProjection;
+  private readonly declaredModules: ModuleMap | undefined;
+  private readonly startingModules: readonly string[] | undefined;
+  /** The projection, and the log it was read from: its length and its last op. */
+  private projected: { readonly projection: ModuleProjection; readonly length: number; readonly last: string | undefined; readonly said: readonly string[] | undefined } | undefined;
   private readonly nextId: () => string;
   private readonly now: () => string;
   private readonly validate: boolean;
@@ -303,7 +308,8 @@ export class Store<S extends AnySchema> {
     for (const provider of options.intelligence ?? []) {
       if (provider.may) this.may.set(provider.name, new Set(provider.may));
     }
-    this.modules = resolveModules(options.modules, options.enabledModules);
+    this.declaredModules = options.modules;
+    this.startingModules = options.enabledModules;
     let n = 0;
     this.nextId = options.ids ?? (() => `op${++n}`);
     this.now = options.now ?? (() => new Date().toISOString());
@@ -371,6 +377,84 @@ export class Store<S extends AnySchema> {
       n = Math.max(n, trailing(op.id));
     }
     tellTheWatchOfAStore(this);
+  }
+
+  /**
+   * What the enabled modules work out to; every surface reads this one answer.
+   *
+   * READ FROM THE LOG (FR-12): the set the last `system · modules` op says,
+   * or the one the store was opened with when no op has said one. Kept
+   * between reads and re-read only past what it has read — a log only ever
+   * grows at its end, and a rebase that cut it is read again from the start.
+   */
+  get modules(): ModuleProjection {
+    const all = this.log.all();
+    const last = all.at(-1)?.id;
+    const held = this.projected;
+    if (held && held.length === all.length && held.last === last) return held.projection;
+    let said: readonly string[] | undefined;
+    let from = 0;
+    if (held && held.length <= all.length && (held.length === 0 || all[held.length - 1]?.id === held.last)) {
+      said = held.said;
+      from = held.length;
+    }
+    for (let at = all.length - 1; at >= from; at--) {
+      const stated = all[at]!.enabledModules;
+      if (stated !== undefined) {
+        said = stated;
+        break;
+      }
+    }
+    const projection =
+      held && said === held.said ? held.projection : resolveModules(this.declaredModules, said ?? this.startingModules);
+    this.projected = { projection, length: all.length, last, said };
+    return projection;
+  }
+
+  /**
+   * TURN MODULES OFF OR ON, AS AN OP (FR-12).
+   *
+   * The enabled set is a fact about the workspace — usually what it pays
+   * for — and changing it is history: one op, authored `system · modules`,
+   * saying the set it leaves (`enabledModules`) in a sentence a person can
+   * read. It touches no record, so it folds to nothing and takes nothing
+   * away: a module off is a horizon, and turning it on again brings every
+   * record back as it was. Not undone: the set changes by turning a module
+   * the other way. `undefined` is every declared module. Nothing is written
+   * when the set is the one the store already has.
+   */
+  setEnabledModules(enabled: readonly string[] | undefined, options: { readonly via?: Via; readonly batch?: string } = {}): Operation | undefined {
+    const before = this.modules.enabled;
+    const after = resolveModules(this.declaredModules, enabled).enabled;
+    const off = [...before].filter((name) => !after.has(name));
+    const on = [...after].filter((name) => !before.has(name));
+    if (off.length === 0 && on.length === 0) return undefined;
+    const named = (names: readonly string[]): string =>
+      names
+        .map((name) => {
+          const kinds = this.declaredModules?.[name]?.kinds ?? [];
+          return kinds.length > 0 ? kinds.map((kind) => this.schema.tryDefinition(kind)?.plural ?? kind).join(", ") : name;
+        })
+        .join(", ");
+    const said = [off.length > 0 ? `Turn off ${named(off)}` : "", on.length > 0 ? `turn on ${named(on)}` : ""].filter(Boolean).join("; ");
+    const op: Operation = {
+      id: this.nextId(),
+      seq: this.log.length,
+      batch: options.batch ?? this.mintBatch("batch"),
+      author: MODULES_AUTHOR,
+      intent: said.charAt(0).toUpperCase() + said.slice(1),
+      mutation: null,
+      primitives: [],
+      inverse: [],
+      reads: [],
+      writes: [],
+      at: this.now(),
+      ...(options.via !== undefined ? { via: options.via } : {}),
+      enabledModules: [...after].sort(),
+    };
+    this.log.append(op);
+    this.notify(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, [op]);
+    return op;
   }
 
   mutation(name: string): AnyMutationDefinition<S> {
@@ -444,7 +528,7 @@ export class Store<S extends AnySchema> {
      * repair as the starter seat, which may only add, and the press met
      * "starter may not take-off here" (W-110).
      */
-    const narrowed = this.refusesAgent(call, principal) ?? this.namesUnseen(call, principal);
+    const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call) ?? this.namesUnseen(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     return permits(
       this.policy,
@@ -483,6 +567,29 @@ export class Store<S extends AnySchema> {
       message: `${author.id} may not ${titled(call.name)} here: it was declared able to ${
         named.length === 0 ? "do nothing else" : named.join(", ")
       }.`,
+      wouldNeed: [],
+    };
+  }
+
+  /**
+   * A CALL THAT NAMES A RECORD OF A MODULE THAT IS OFF IS REFUSED (FR-12),
+   * whoever makes it: the module's own acts are already off, and an act
+   * the core owns — a rename that takes any kind — must not reach into a
+   * district the workspace does not have. The sentence names the act.
+   */
+  private namesTurnedOff(call: MutationCall): Refusal | undefined {
+    const off = this.modules.disabledKinds;
+    if (off.size === 0) return undefined;
+    const mutation = this.mutations.get(call.name);
+    if (!mutation) return undefined;
+    const named: unknown[] = [];
+    if (mutation.subject) named.push(call.args[mutation.subject.arg]);
+    for (const ref of nodeRefArgs(mutation.input)) named.push(call.args[ref.name]);
+    const ids = named.flatMap((value) => (typeof value === "string" ? [value] : Array.isArray(value) ? value.filter((inner): inner is string => typeof inner === "string") : []));
+    if (!ids.some((id) => off.has(this.graph.getNode(id)?.kind as string))) return undefined;
+    return {
+      mutation: call.name,
+      message: `“${mutation.title ?? call.name}” names a record of a module this workspace has turned off.`,
       wouldNeed: [],
     };
   }
@@ -834,7 +941,7 @@ export class Store<S extends AnySchema> {
      * was brought in for, and the narrower of the two wins.
      */
     for (const call of calls) {
-      const refusal = this.refusesAgent(call, author);
+      const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call);
       if (refusal) {
         tellTheWatchOfARefusal(refusal, author.id);
         throw new PermissionDeniedError(refusal);

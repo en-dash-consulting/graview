@@ -91,6 +91,21 @@ export function checkUndo(
     };
   }
 
+  /*
+   * NOT A MODULE TURNED OFF OR ON (FR-12). It touches no record, so there
+   * is nothing to put back, and the workspace's set is changed by turning
+   * the module the other way — which is the host's to do.
+   */
+  if (ops.some((op) => op.enabledModules !== undefined)) {
+    return {
+      ok: false,
+      ops,
+      blockedBy: [],
+      includeBatches: [],
+      message: "Cannot undo turning a module off or on: it is changed by turning the module the other way.",
+    };
+  }
+
   const writes = new Set<string>();
   for (const op of ops) for (const id of op.writes) writes.add(id);
   const earliest = Math.min(...ops.map((op) => op.seq));

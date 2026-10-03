@@ -99,6 +99,12 @@ export interface RemoteOptions<S extends AnySchema> {
   readonly socket?: (url: string, headers: Readonly<Record<string, string>>) => LiveSocketLike;
   /** How long `openRemote({ live: true })` waits for the socket's welcome before it opens polling. 3000 by default. */
   readonly openTimeoutMs?: number;
+  /**
+   * The modules on, for a server that does not say (FR-12). The server's
+   * word wins: its state names the set it serves, and an op of its that
+   * turns one off or on reaches this client like any other.
+   */
+  readonly enabledModules?: readonly string[];
 }
 
 /** A stale write, as this client is told of it: the fields that moved, and the person's two answers. */
@@ -198,7 +204,10 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     snapshot: GraphSnapshot;
     log: Operation[];
     migrated: string[];
+    /** Which modules the server has on (FR-12); absent from a server before it. */
+    enabledModules?: string[];
   };
+  const enabledModules = state.enabledModules ?? options.enabledModules;
 
   const store = new Store<S>({
     schema: options.app.schema,
@@ -206,6 +215,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     invariants: options.app.invariants ?? [],
     ...(options.app.policy ? { policy: options.app.policy } : {}),
     ...(options.app.modules ? { modules: options.app.modules } : {}),
+    ...(enabledModules ? { enabledModules } : {}),
     ...(options.app.intelligence ? { intelligence: options.app.intelligence } : {}),
     /*
      * The snapshot AND the log: the snapshot is the graph, the log is the
