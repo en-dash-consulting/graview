@@ -1,10 +1,11 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Place, type PresenceChannel, type Principal } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PagesApp, PlacePicture, type PageComponent, type PageRegistry } from "@graview/pages";
-import { Companion, Inspector, OverviewButton, Places, Profile, ShowInstallation, Standing, VISUALLY_HIDDEN, descentTarget, registerDefaultViews, themeCss, useWidth } from "@graview/primitives";
+import { Companion, Inspector, OverviewButton, Places, Profile, ShowInstallation, Standing, VISUALLY_HIDDEN, descentTarget, registerDefaultViews, registerViewSpecs, themeCss, useWidth } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
 import {
   createViews,
+  layerViews,
   GraviewProvider,
   Scene,
   useGraview,
@@ -79,7 +80,15 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
    * declaration, which is the only thing this option is for, was a type
    * error with eleven lines of variance in it.
    */
-  readonly views?: (schema: S) => ReactViewRegistry<S>;
+  /*
+   * OVER THE DEFAULTS, NOT INSTEAD OF THEM (FR-36). The function is handed
+   * a registry that already holds the framework's own view for every cell
+   * and the declaration's view specs; register onto it what you want
+   * different. A function that builds a registry of its own is laid over
+   * the same defaults, so one card is one card and not the loss of every
+   * other view.
+   */
+  readonly views?: (schema: S, registry: ReactViewRegistry<S>) => ReactViewRegistry<S>;
   /** The pages face's own pages, over the derived defaults. */
   readonly pages?: PageRegistry<S, PageComponent<S>>;
   /** The face switcher and Standing, above the picture. Default on. */
@@ -188,10 +197,16 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
    * somebody else down lost every edit and the history with them.
    */
   const store = useMemo(() => props.store ?? storeOf(app, seed), [props.store, app, seed]);
-  const views = useMemo(
-    () => (props.views ? props.views(app.schema) : registerDefaultViews(app.schema, createViews(app.schema))) as never,
-    [props.views, app.schema],
-  );
+  /*
+   * THE DEFAULTS, THE DECLARATION'S SPECS, THEN THE HOST'S OWN — one
+   * registry, each layer over the one before, so what the host leaves
+   * alone stays drawn (FR-36) and what the declaration says as data is
+   * drawn with no views at all (FR-03).
+   */
+  const views = useMemo(() => {
+    const base = registerViewSpecs(registerDefaultViews(app.schema, createViews(app.schema)), app.schema, app.viewSpecs);
+    return (props.views ? layerViews(base, props.views(app.schema, base)) : base) as never;
+  }, [props.views, app.schema, app.viewSpecs]);
   const kinds = app.schema.kinds as readonly string[];
   // The first view only: after it, where the reader goes is theirs.
   const initialView = useMemo(() => viewFor(face, stop, kinds, (views as ReactViewRegistry<S>).places()), []);
@@ -309,7 +324,21 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         ) : face === "pages" ? (
           <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "auto" }}>
             <PagesApp<S>
-              context={{ store, embedded: true, ...(brand ? { brand } : {}), ...(principal ? { principal } : {}), ...(props.seats ? { seats: props.seats } : {}) }}
+              /*
+               * THE SAME PICTURES ON THE ROUTED FACE (FR-35): the registry the
+               * scene draws from, so a view registered here is the gallery's
+               * card, the list's row and the record's page too.
+               */
+              context={{
+                store,
+                embedded: true,
+                views: views as ReactViewRegistry<S>,
+                settings: app.settings ?? [],
+                ...(props.presence ? { presence: props.presence } : {}),
+                ...(brand ? { brand } : {}),
+                ...(principal ? { principal } : {}),
+                ...(props.seats ? { seats: props.seats } : {}),
+              }}
               {...(pages ? { registry: pages } : {})}
               initialPath={path}
             />

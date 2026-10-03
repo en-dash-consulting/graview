@@ -21,7 +21,9 @@ import {
   useSceneStill,
   useSelection,
   useViolations,
+  isDefaultView,
   type ReactViewRegistry,
+  type ViewComponent,
   type ViewProps,
  markDefaultView } from "@graview/react";
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -247,6 +249,45 @@ const Picture = memo(
   readonly total?: number;
 }) => ReactNode;
 
+/** How many members a pile draws as rows before it says how many more. */
+const ROWS_SHOWN = 8;
+
+/**
+ * Members drawn as their kind's own row (FR-37): one line each, a target
+ * for its record, at most `ROWS_SHOWN` and then "+n more".
+ */
+function MemberRows<S extends AnySchema>({
+  View,
+  members,
+  mode,
+  flagged,
+}: {
+  readonly View: ViewComponent<S>;
+  readonly members: readonly NodeOfSchema<S>[];
+  readonly mode: ViewProps<S>["mode"];
+  readonly flagged?: readonly string[];
+}) {
+  const { isSelected } = useSelection();
+  const shown = members.slice(0, ROWS_SHOWN);
+  return (
+    <div data-graview-rows="" style={{ display: "grid", gap: 4, minWidth: 0 }}>
+      {shown.map((member) => (
+        <div key={member.id} data-graview-pick={member.id} style={{ minWidth: 0, cursor: "pointer" }}>
+          <View
+            node={member as never}
+            cardinality="one"
+            fidelity="glyph"
+            mode={mode}
+            selected={isSelected(member.id)}
+            {...(flagged?.includes(member.id) ? { flagged: [member.id] } : {})}
+          />
+        </div>
+      ))}
+      {members.length > shown.length ? <Chip label={`+${members.length - shown.length} more`} /> : null}
+    </div>
+  );
+}
+
 export function registerDefaultViews<S extends AnySchema>(
   schema: S,
   registry: ReactViewRegistry<S> = createViews(schema),
@@ -429,9 +470,18 @@ export function registerDefaultViews<S extends AnySchema>(
     };
 
     const Group = (props: ViewProps<S>) => {
-      const { brand, store } = useGraview<S>();
+      const { brand, store, views } = useGraview<S>();
       const { view, go } = useNavigation();
       const members = props.nodes ?? [];
+      /*
+       * A MEMBER DRAWN AS A ROW IS A CELL A VIEW CAN CLAIM (FR-37). One ×
+       * glyph is the one line a record is drawn as among many; when the app
+       * gave the kind one of its own — a component or a spec's `row` — the
+       * focused group draws each member as that line, a target for its
+       * record, instead of a chip with the label alone.
+       */
+      const RowView = views.lookup(String(kind), { cardinality: "one", fidelity: "glyph" });
+      const rows = RowView !== undefined && !isDefaultView(RowView) ? RowView : undefined;
       /*
        * THE DEFAULT PICTURE ARRANGES TOO. What a kind can be sorted, filtered
        * and grouped by is in its declaration, and the choice travels in the
@@ -462,20 +512,26 @@ export function registerDefaultViews<S extends AnySchema>(
       // A receded group still has to report trouble inside it, or the only
       // way to find a problem is to open every group in turn.
       const flagged = (nodes: readonly { id: string }[]) => nodes.some((member) => props.flagged?.includes(member.id));
+      const pile = (label: string, nodes: typeof members, key?: string) =>
+        rows ? (
+          <Panel key={key} title={label} meta={flagged(nodes) ? `⚠ ${nodes.length}` : nodes.length} tone={flagged(nodes) ? "warning" : "muted"}>
+            <MemberRows<S> View={rows} members={nodes} mode={props.mode} {...(props.flagged ? { flagged: props.flagged } : {})} />
+          </Panel>
+        ) : (
+          <Aggregate key={key} label={label} count={nodes.length} flagged={flagged(nodes)} items={nodes.map(item)} />
+        );
       if (!arranged.grouped) {
         return (
           <div style={{ display: "grid", gap: 4 }}>
             {bar}
-            <Aggregate label={props.label ?? plural} count={arranged.nodes.length} flagged={flagged(arranged.nodes)} items={arranged.nodes.map(item)} />
+            {pile(props.label ?? plural, arranged.nodes)}
           </div>
         );
       }
       return (
         <div style={{ display: "grid", gap: 8 }} data-graview-grouped={arrangement.group?.by}>
           {bar}
-          {arranged.groups.map((group) => (
-            <Aggregate key={group.key || "-"} label={`${props.label ?? plural} · ${group.label}`} count={group.nodes.length} flagged={flagged(group.nodes)} items={group.nodes.map(item)} />
-          ))}
+          {arranged.groups.map((group) => pile(`${props.label ?? plural} · ${group.label}`, group.nodes, group.key || "-"))}
         </div>
       );
     };
@@ -1072,9 +1128,9 @@ export function registerDefaultViews<S extends AnySchema>(
     (GroupGlyph as { generic?: boolean }).generic = true;
 
     registry
-      .register(kind, { cardinality: "one", fidelity: "full" }, Full)
-      .register(kind, { cardinality: "one", fidelity: "summary" }, Summary)
-      .register(kind, { cardinality: "one", fidelity: "glyph" }, Glyph)
+      .register(kind, { cardinality: "one", fidelity: "full" }, markDefaultView(Full))
+      .register(kind, { cardinality: "one", fidelity: "summary" }, markDefaultView(Summary))
+      .register(kind, { cardinality: "one", fidelity: "glyph" }, markDefaultView(Glyph))
       .register(kind, { cardinality: "many", fidelity: "full" }, markDefaultView(Group))
       .register(kind, { cardinality: "many", fidelity: "summary" }, markDefaultView(Group))
       .register(kind, { cardinality: "many", fidelity: "glyph" }, markDefaultView(GroupGlyph));

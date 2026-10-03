@@ -18,6 +18,8 @@ import {
   type Arrangement,
   type Condition,
 } from "@graview/core";
+import { isDefaultView, type ViewProps } from "@graview/react";
+import type { ComponentType } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts, kindMap } from "./facts.js";
 import { DerivedForm } from "./form.js";
@@ -148,8 +150,24 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
       ? Object.fromEntries(beginningsFrom(store, kind, facts.actions.affordances).map((beginning) => [beginning.mutation.name, beginning.arg]))
       : {};
   const plural = pluralOf(store, kind);
+  /*
+   * A MEMBER DRAWN AS A ROW (FR-37): when the app gave the kind a line of
+   * its own at one × glyph — a component or a spec's `row` — each record
+   * on its list is that line, and the whole line is the way to the record.
+   */
+  const ownRow = context.views?.lookup(kind, { cardinality: "one", fidelity: "glyph" });
+  const RowView = ownRow !== undefined && !isDefaultView(ownRow) ? (ownRow as ComponentType<ViewProps<S>>) : undefined;
   const row = (node: (typeof members)[number]) => {
     const label = labelOf(definition, node);
+    if (RowView) {
+      return (
+        <li key={node.id} data-testid="record-row" style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 4, padding: "10px 0", borderTop: "1px solid var(--graview-edge)" }}>
+          <RowView node={node as never} cardinality="one" fidelity="glyph" mode="fullscreen" selected={false} {...(flagged.has(node.id) ? { flagged: [node.id] } : {})} />
+          {/* The line is the link: stretched over the row, named by the record, under any link the row itself draws. */}
+          <Link to={recordPath(store.schema, kind, node.id)} aria-label={flagged.has(node.id) ? `${label} — implicated in a problem` : label} style={{ position: "absolute", inset: 0, borderRadius: 6 }} />
+        </li>
+      );
+    }
     const said = glance(node as Record<string, unknown>, definition, label);
     // Found by the words in a field rather than the name: say which, as the Find box does.
     const why = typed.words ? matchNode(definition, node, typed.words) : undefined;
