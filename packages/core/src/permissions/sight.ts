@@ -1,3 +1,4 @@
+import type { Operation } from "../ops/types.js";
 import { actingAs, isSystem } from "./policy.js";
 import type { Policy, Principal, Sight } from "./types.js";
 
@@ -13,6 +14,44 @@ const sightGrantsTo = (sight: Sight, principal: Principal): boolean =>
 /** The kinds a policy keeps to those its sights name. */
 export function sightedKinds(policy: Policy | undefined): ReadonlySet<string> {
   return new Set((policy?.sees ?? []).flatMap((sight) => sight.kinds));
+}
+
+/**
+ * WHAT THE LOG KNOWS ABOUT A RECORD that the graph may no longer: its kind
+ * (a record since removed is still judged as what it was) and who made it.
+ */
+export interface Records {
+  kindOf(id: string): string | undefined;
+  /** The id of the seat that first added it — the person, for an agent acting for one. */
+  creatorOf(id: string): string | undefined;
+}
+
+const RECORDS = new WeakMap<object, { readonly length: number; readonly last: string | undefined; readonly records: Records }>();
+
+/**
+ * The records a log names, read from its add- and remove-node primitives.
+ * The first op that added a record made it: putting one back by an undo is
+ * not a new author. Kept per log until it grows or is cut.
+ */
+export function recordsOf(log: { all(): readonly Operation[] }): Records {
+  const ops = log.all();
+  const held = RECORDS.get(log);
+  if (held && held.length === ops.length && held.last === ops.at(-1)?.id) return held.records;
+  const kinds = new Map<string, string>();
+  const creators = new Map<string, string>();
+  for (const op of ops) {
+    for (const primitive of op.primitives) {
+      if (primitive.op !== "add-node" && primitive.op !== "remove-node") continue;
+      const { id, kind } = primitive.node;
+      if (!kinds.has(id)) kinds.set(id, kind);
+      if (primitive.op !== "add-node" || creators.has(id) || op.undoes !== undefined) continue;
+      const by = actingAs(op.author as Principal).id;
+      if (by !== undefined) creators.set(id, by);
+    }
+  }
+  const records: Records = { kindOf: (id) => kinds.get(id), creatorOf: (id) => creators.get(id) };
+  RECORDS.set(log, { length: ops.length, last: ops.at(-1)?.id, records });
+  return records;
 }
 
 /**

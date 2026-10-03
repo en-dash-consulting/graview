@@ -1,4 +1,4 @@
-import { seenBy } from "./seen.js";
+import { readingOf, seenBy, seesId } from "./seen.js";
 import { sees, sightedKinds } from "./permissions/sight.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
@@ -21,7 +21,8 @@ import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog, type Epoch } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
-import { permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
+import { isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
+import { redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
@@ -1136,11 +1137,29 @@ export class Store<S extends AnySchema> {
   /** `undo` itself, kept apart for the same reason as `applying`. */
   private undoing(batchIds: string | readonly string[], options: ApplyOptions): ApplyResult<S> {
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
+    const author = options.author ?? HUMAN;
+    /*
+     * JUDGED FIRST AS THIS SEAT SEES THE LOG (FR-16). A change it may not
+     * see is not its to take back, and when one stands in the way the
+     * refusal says a change you cannot see does — the full check's
+     * sentence would quote it. The two agree on what blocks: a withheld op
+     * keeps the ids this seat sees, and those are all it can overlap.
+     */
+    const sighted = (this.policy?.sees?.length ?? 0) > 0 && !isSystem(author as Principal);
+    if (sighted) {
+      const seen = checkUndo(readingOf(redact(this.log.all(), seesId(this, author as Principal)), () => this.log.epochs()), ids);
+      if (!seen.ok) throw new UndoBlockedError(seen);
+    }
     const check = this.canUndo(ids);
-    if (!check.ok) throw new UndoBlockedError(check);
+    if (!check.ok) {
+      throw new UndoBlockedError(
+        sighted
+          ? { ok: false, ops: [], blockedBy: [], includeBatches: [], message: "Cannot undo on its own — a later change you cannot see depends on it, which only somebody who can see it can take back." }
+          : check,
+      );
+    }
 
     const batch = options.batch ?? this.mintBatch("undo");
-    const author = options.author ?? HUMAN;
 
     /*
      * Undo is a CHANGE, and it is judged like one.

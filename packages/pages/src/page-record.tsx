@@ -1,4 +1,4 @@
-import { describeNode, humaniseField, type AnySchema } from "@graview/core";
+import { describeNode, humaniseField, isWithheld, type AnySchema } from "@graview/core";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
 import { rankedRepairs, recordFacts } from "./facts.js";
@@ -58,7 +58,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   // says more than the name.
   const described = definition?.describe && node ? describeNode(definition, node) : null;
   const history = [...store.log.all()]
-    .filter((op) => op.writes.includes(id) || op.reads.includes(id))
+    // A change this seat may not see is not part of a record's history as told to it (FR-16).
+    .filter((op) => !isWithheld(op) && (op.writes.includes(id) || op.reads.includes(id)))
     .slice(-8)
     .reverse();
   /*

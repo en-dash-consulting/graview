@@ -1,4 +1,4 @@
-import { humaniseField, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
+import { humaniseField, isWithheld, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -18,6 +18,11 @@ export interface Change {
   readonly via?: string;
   readonly touched: readonly string[];
   readonly batch: string;
+  /**
+   * A CHANGE YOU CANNOT SEE (FR-16): every op of it was withheld from this
+   * seat. Shown as having happened, with nothing it touched and no undo.
+   */
+  readonly withheld?: true;
 }
 
 /**
@@ -48,8 +53,10 @@ export function useRecentChanges(limit = 4): readonly Change[] {
           ...(batch.author.id ? { authorId: batch.author.id } : {}),
           by: batch.author,
           ...(batch.ops[0]?.via ? { via: batch.ops[0].via } : {}),
-          touched: [...new Set(batch.ops.flatMap((op) => op.writes))],
+          // What a withheld op touched is not said, even the part this seat may see.
+          touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
           batch: batch.id,
+          ...(batch.ops.every(isWithheld) ? { withheld: true as const } : {}),
         })),
     [store, nodes, limit],
   );
@@ -428,7 +435,15 @@ export function ActivityRail({
                 fontSize: "0.8125rem",
               }}
             >
-              {changes.map((change, index) => (
+              {changes.map((change, index) =>
+                change.withheld ? (
+                  /* SOMETHING YOU CANNOT SEE HAPPENED: said, and nothing more — not who, not what, no undo (FR-16). */
+                  <li key={`change:${index}`} data-testid="withheld-change" style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
+                    <span data-touched="" style={{ color: "var(--graview-ink-muted)", fontStyle: "italic" }}>
+                      {change.intent}
+                    </span>
+                  </li>
+                ) : (
                 <li key={`change:${index}`} style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                     <span style={{ minWidth: 0 }}>
@@ -460,7 +475,8 @@ export function ActivityRail({
                     ))}
                   </div>
                 </li>
-              ))}
+                ),
+              )}
             </ol>
           ) : null}
           {remembers ? (

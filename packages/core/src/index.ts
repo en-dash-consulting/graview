@@ -183,7 +183,8 @@ export type {
 
 // Operation log — attribution, causality, selective undo.
 export { OperationLog } from "./ops/log.js";
-export type { Epoch } from "./ops/log.js";
+export type { Epoch, LogReading } from "./ops/log.js";
+export { isWithheld, redact, touchedBy, touchesUnseen, withhold, WITHHELD_AUTHOR, WITHHELD_INTENT } from "./ops/withheld.js";
 export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
 export type { Author, Batch, Operation, Via } from "./ops/types.js";
@@ -246,8 +247,9 @@ export { checkKitContrast, connectorHueColour, connectorKitFor, DEFAULT_KIT, kit
 export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/kit.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
-export { sees, sightedKinds } from "./permissions/sight.js";
-export { seenBy } from "./seen.js";
+export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
+export type { Records } from "./permissions/sight.js";
+export { logSeenBy, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 

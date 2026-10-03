@@ -74,6 +74,15 @@ export interface Operation {
   readonly undoes?: string;
   /** What the change came through, when the caller said (FR-06). */
   readonly via?: Via;
+  /**
+   * SOMETHING YOU CANNOT SEE HAPPENED HERE (FR-16). Set on an op a store
+   * served to a seat that may not see what it touched: it keeps its id,
+   * seq, batch and time, so the log has no hole, and nothing else of its
+   * own — its author, intent, call and inverse are withheld, and its
+   * primitives, reads and writes keep only what the seat may see. Absent
+   * on every op a store makes; an op without it reads as before.
+   */
+  readonly withheld?: true;
 }
 
 export interface Batch {

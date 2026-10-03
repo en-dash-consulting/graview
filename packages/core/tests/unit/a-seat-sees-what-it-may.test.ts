@@ -71,7 +71,8 @@ describe("the store as one seat may see it", () => {
     store.seenBy(bethan).apply({ name: "ask", args: { shopperId: "shopper:bethan", label: "Is it still there?" } }, { author: bethan });
     expect(ids(store.seenBy(bethan) as never)).toEqual(["car:golf", "enquiry:is-it-still-there", "shopper:bethan"]);
     expect(store.seenBy(bethan).batches().map((batch) => batch.intent)).toHaveLength(1);
-    expect(store.seenBy(browsing).batches()).toEqual([]);
+    // Somebody else's enquiry is a change the stranger cannot see: in its place, and saying nothing of it (FR-16).
+    expect(store.seenBy(browsing).batches().map((batch) => batch.intent)).toEqual(["A change you cannot see"]);
   });
 
   it("shows the store everything, and is the store itself where no sight is declared", () => {
