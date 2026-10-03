@@ -76,6 +76,8 @@ const VARIABLE: Record<keyof ThemeTokens, string> = {
   accentDim: "--graview-accent-dim",
   accentInk: "--graview-accent-ink",
   warn: "--graview-warn",
+  good: "--graview-good",
+  bad: "--graview-bad",
   glow: "--graview-glow",
   bar: "--graview-bar",
   float: "--graview-float",
