@@ -3,6 +3,7 @@ import {
   foldPresence,
   PRESENCE_TTL_MS,
   ReceiveError,
+  refusalOf,
   REMOTE_PRESENCE_TTL_MS,
   samePresence,
   Store,
@@ -18,6 +19,7 @@ import {
   type PresenceChannel,
   type Principal,
   type Via,
+  type WireRefusal,
 } from "@graview/core";
 import { LIVE_PATH, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
@@ -178,8 +180,13 @@ export interface RemoteStore<S extends AnySchema> {
    * The change is taken back before the listener runs; what is left is
    * saying so, in the policy's own words. A conflict nobody listens for
    * with `onConflict` is told here too, in its sentence.
+   *
+   * The second argument says why as a code a program can branch on
+   * (FR-46): `forbidden`, `missing`, `invalid` or `limit`, with `wouldNeed`
+   * when the policy knows who could. Busy is never told here: a change the
+   * host asked to wait is kept, and sent again (FR-45).
    */
-  onRefusal(listener: (reason: string) => void): () => void;
+  onRefusal(listener: (sentence: string, refusal: RemoteRefusal) => void): () => void;
   /**
    * Told when a change this browser had already shown was refused as a
    * stale write (FR-05): somebody changed a field it changes since this
@@ -228,6 +235,24 @@ export interface RemoteStore<S extends AnySchema> {
   readonly presence: PresenceChannel;
   close(): void;
 }
+
+/** A refusal as the client is told it: the reason, the sentence and who could (FR-46). */
+export type RemoteRefusal = WireRefusal;
+
+/**
+ * WHAT `send` THROWS, AND WHAT A TAKEN-BACK CHANGE WAS REFUSED WITH: the
+ * server's sentence as the message, and `refusal` for a program to branch
+ * on (FR-46).
+ */
+export class RemoteRefusedError extends Error {
+  constructor(readonly refusal: RemoteRefusal) {
+    super(refusal.sentence);
+    this.name = "RemoteRefusedError";
+  }
+}
+
+/** A server before FR-46 says no reason: read one from the status it answered with. */
+const REASON_BY_STATUS: Readonly<Record<number, RemoteRefusal["reason"]>> = { 401: "forbidden", 403: "forbidden", 404: "missing", 413: "limit" };
 
 /** A refusal that is a stale write: the server's sentence, and the fields that moved. */
 class StaleWrite extends Error {
@@ -566,32 +591,66 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
    * dropped, in one rebase. `send` never applies first, so its answer
    * lands under whatever is pending.
    */
-  const post = async (body: Body, mine?: string): Promise<{ ops: readonly Operation[]; batch?: string }> => {
+  /*
+   * ONE POST AT A TIME, IN THE ORDER THE CHANGES WERE MADE. The server
+   * judges them in the order they reach it, and a post that has to wait —
+   * the host is busy (FR-45), or the server cannot be reached (FR-49) —
+   * must not be overtaken by one made after it. So a post waits in its
+   * turn and goes again from there, and the posts behind it wait for it.
+   */
+  let lane: Promise<unknown> = Promise.resolve();
+  const post = (body: Body, mine?: string): Promise<{ ops: readonly Operation[]; batch?: string }> => {
+    const turn = lane.then(() => posted(body, mine));
+    lane = turn.catch(() => {});
+    return turn;
+  };
+  /** Resolves once the server is reached again (FR-49); rejects if the client closes first. */
+  const backOnline = (): Promise<void> => new Promise((again, give) => held.push({ again, give }));
+  const posted = async (body: Body, mine?: string): Promise<{ ops: readonly Operation[]; batch?: string }> => {
+    type Answer = { ops?: Operation[]; batch?: string; error?: string; conflict?: boolean; conflicts?: FieldConflict[]; reason?: RemoteRefusal["reason"]; wouldNeed?: string[]; retryAfter?: number };
     let response: Response;
-    try {
-      response = await reach(`${options.url}/graview/ops`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-      });
-    } catch (error) {
+    let answer: Answer;
+    for (;;) {
+      try {
+        response = await reach(`${options.url}/graview/ops`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+        });
+      } catch (error) {
+        /*
+         * NOT REFUSED, NOT REACHED (FR-49). A call the server never heard is
+         * not taken back as if it had been refused: it stays shown, counts as
+         * pending, and goes again — down the socket or over HTTP, whichever is
+         * up — the moment the server is reached again. Posts batch-named, so
+         * one the server did hear is answered with the ops it made.
+         */
+        if (!(error instanceof Unreached) || closed) throw error;
+        await backOnline();
+        if (socketReady()) return viaSocket(body, mine);
+        continue;
+      }
+      answer = (await response.json().catch(() => ({}))) as Answer;
+      if (response.status !== 429 || closed) break;
       /*
-       * NOT REFUSED, NOT REACHED (FR-49). A call the server never heard is
-       * not taken back as if it had been refused: it stays shown, counts as
-       * pending, and goes again — down the socket or over HTTP, whichever is
-       * up — the moment the server is reached again.
+       * BUSY, NOT REFUSED (FR-45): the host asked for it again later. The
+       * change stays shown and pending, and goes again after the wait.
        */
-      if (!(error instanceof Unreached) || closed) throw error;
-      return new Promise((resolve, reject) => {
-        held.push({ again: () => void transmit(body, mine).then(resolve, reject), give: reject });
-      });
+      const header = Number(response.headers.get("retry-after"));
+      const wait = typeof answer.retryAfter === "number" ? answer.retryAfter : Number.isFinite(header) && header > 0 ? header * 1000 : 1000;
+      await new Promise((later) => setTimeout(later, Math.max(0, wait)));
+      if (socketReady()) return viaSocket(body, mine);
     }
-    const answer = (await response.json()) as { ops?: Operation[]; batch?: string; error?: string; conflict?: boolean; conflicts?: FieldConflict[] };
     if (!response.ok) {
       // The policy's own sentence, carried across the wire unchanged: a
       // refusal a person can read is the whole point of having one.
       const sentence = answer.error ?? `The server refused (${response.status})`;
-      throw answer.conflict ? new StaleWrite(sentence, answer.conflicts ?? []) : new Error(sentence);
+      if (answer.conflict) throw new StaleWrite(sentence, answer.conflicts ?? []);
+      throw new RemoteRefusedError({
+        reason: answer.reason ?? REASON_BY_STATUS[response.status] ?? "invalid",
+        sentence,
+        ...(answer.wouldNeed?.length ? { wouldNeed: answer.wouldNeed } : {}),
+      });
     }
     let ops: readonly Operation[] = answer.ops ?? [];
     /*
@@ -646,6 +705,27 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     }
   };
 
+  /*
+   * CALLS THE HOST ASKED TO WAIT (FR-45), by cid. They stay shown and
+   * pending, and go again together once the wait is over, in the order
+   * they were made; a call made meanwhile joins them rather than going
+   * ahead of them.
+   */
+  const busy = new Set<string>();
+  let busyTimer: ReturnType<typeof setTimeout> | undefined;
+  const sendBusy = () => {
+    busyTimer = undefined;
+    const again = [...waiting.entries()].filter(([cid]) => busy.has(cid));
+    busy.clear();
+    for (const [, waiter] of again) say(waiter.message);
+  };
+  const hold = (cid: string, retryAfter: number) => {
+    if (!waiting.has(cid)) return;
+    busy.add(cid);
+    if (busyTimer) clearTimeout(busyTimer);
+    busyTimer = setTimeout(sendBusy, Math.max(0, retryAfter));
+  };
+
   /** A call down the socket; its answer lands when it comes, in the order the server said it. */
   const viaSocket = (body: Body, mine?: string): Promise<{ ops: readonly Operation[]; batch?: string }> =>
     new Promise((resolve, reject) => {
@@ -654,6 +734,11 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
         ? { t: "undo", cid, batches: body.undo, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) }
         : { t: "call", cid, calls: body.calls ?? [], ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}), ...(body.base?.length ? { base: body.base } : {}) };
       waiting.set(cid, { message, ...(mine !== undefined ? { mine } : {}), resolve, reject });
+      // Behind calls the host asked to wait: it goes with them.
+      if (busy.size > 0) {
+        busy.add(cid);
+        return;
+      }
       // Not open: it goes when the socket is back, after the welcome has caught this client up.
       say(message);
     });
@@ -668,6 +753,9 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
         attempts = 0;
         land(message.ops ?? []);
         // Whatever was sent and never answered goes again: the server answers a batch it already has with its ops.
+        busy.clear();
+        if (busyTimer) clearTimeout(busyTimer);
+        busyTimer = undefined;
         for (const waiter of waiting.values()) say(waiter.message);
         sayWhere(true);
         // And what could not reach the server at all goes after it.
@@ -698,9 +786,22 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
         const waiter = waiting.get(message.cid);
         if (!waiter) return;
         waiting.delete(message.cid);
-        waiter.reject(message.t === "conflict" ? new StaleWrite(message.sentence, message.conflicts ?? []) : new Error(message.sentence));
+        waiter.reject(
+          message.t === "conflict"
+            ? new StaleWrite(message.sentence, message.conflicts ?? [])
+            : new RemoteRefusedError({
+                // A server before FR-46 says no reason.
+                reason: message.reason ?? "invalid",
+                sentence: message.sentence,
+                ...(message.wouldNeed?.length ? { wouldNeed: [...message.wouldNeed] } : {}),
+              }),
+        );
         return;
       }
+      case "busy":
+        // Not now, and not refused (FR-45): kept, and sent again after the wait.
+        if (typeof message.cid === "string") hold(message.cid, typeof message.retryAfter === "number" ? message.retryAfter : 1000);
+        return;
       case "presence":
         heard(message.who ?? []);
         return;
@@ -773,7 +874,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
    */
   const appliedAll = store.applyAll.bind(store);
   const undone = store.undo.bind(store);
-  const refusals = new Set<(reason: string) => void>();
+  const refusals = new Set<(sentence: string, refusal: RemoteRefusal) => void>();
   const conflictListeners = new Set<(conflict: RemoteConflict) => void>();
   /** Set while `useMine` sends a change again: it goes without the revisions it was refused for. */
   let overriding = false;
@@ -785,7 +886,8 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
    * as it never happened there.
    */
   const takeBack = async (batch: string, error: unknown): Promise<void> => {
-    const reason = error instanceof Error ? error.message : String(error);
+    const refusal = error instanceof RemoteRefusedError ? error.refusal : refusalOf(error);
+    const reason = refusal.sentence;
     settle(batch);
     try {
       land([], [batch]);
@@ -824,7 +926,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       for (const told of conflictListeners) told(conflict);
       return;
     }
-    for (const told of refusals) told(reason);
+    for (const told of refusals) told(reason, refusal);
   };
   /*
    * EVERY WAY THE GRAPH CHANGES GOES DOWN THE WIRE. `apply` is one call;
@@ -1010,6 +1112,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       presence.leave();
       closed = true;
       if (retry) clearTimeout(retry);
+      if (busyTimer) clearTimeout(busyTimer);
       for (const waiting of held.splice(0)) waiting.give(new Error("The client closed before the server could be reached."));
       const was = socket;
       socket = undefined;

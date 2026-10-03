@@ -1,6 +1,7 @@
 import {
   foldPresence,
   PRESENCE_TTL_MS,
+  refusalOf,
   type AnySchema,
   type FieldRevision,
   type GraviewApp,
@@ -12,7 +13,7 @@ import {
 } from "@graview/core";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
-import { conflictSentence, LIVE_PATH, type LiveConnection, type LiveSocket } from "./live.js";
+import { bytesOf, conflictSentence, LIVE_PATH, type Limit, type LiveConnection, type LiveSocket } from "./live.js";
 import { liveProtocol, presenceFrom, presenceSeenBy, wireOf, type LivePeer, type LiveProtocol, type LiveSocketState } from "./live-protocol.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
@@ -70,14 +71,14 @@ import type { GraphSnapshot } from "./snapshot.js";
  */
 export const WIRE = [
   { method: "GET", path: "/graview/state", says: "the graph, the log, the stored version and the modules on" },
-  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` already in the log is answered with the ops it made; 409 with the policy's sentence when refused" },
+  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` already in the log is answered with the ops it made; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy" },
   { method: "GET", path: "/graview/since", says: "the ops appended after ?seq=N — everyone else's" },
   { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
   { method: "GET", path: "/graview/export", says: "the whole store as one bundle, the way out" },
   { method: "POST", path: "/graview/here", says: "say where you are; answers with who else is, and the ops since `seq`" },
   { method: "GET", path: "/graview/who", says: "who is here right now" },
   { method: "POST", path: "/graview/leave", says: "say you have gone" },
-  { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict, ops and presence; 426 to a plain request" },
+  { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence; 426 to a plain request" },
 ] as const;
 
 export { presenceSeenBy, SEAT_HEADERS };
@@ -116,6 +117,15 @@ interface HandlerOptions<S extends AnySchema> {
   readonly where?: string;
   /** How long a presence stands after its last word. Three heartbeats by default. */
   readonly presenceTtlMs?: number;
+  /**
+   * THE HOST'S LIMITS (FR-45, FR-46): asked of every change — a socket's
+   * `call` or `undo`, a `POST /graview/ops` — before it is judged.
+   * `{ retryAfter }` is BUSY: the socket says `busy`, HTTP answers 429 with
+   * `Retry-After`, and the client sends the change again after the wait.
+   * `{ refuse }` is a hard cap: refused with reason `limit` (413 over
+   * HTTP), and the client takes the change back.
+   */
+  readonly limit?: Limit;
 }
 
 /** The handler opens its own store from an adapter: one declaration plus one adapter is a running deployment. */
@@ -214,14 +224,17 @@ const CORS: Readonly<Record<string, string>> = {
   "access-control-allow-methods": "GET, POST, OPTIONS",
 };
 
-function send(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), { status, headers: { ...CORS, "content-type": "application/json" } });
+function send(status: number, body: unknown, headers: Readonly<Record<string, string>> = {}): Response {
+  return new Response(JSON.stringify(body), { status, headers: { ...CORS, "content-type": "application/json", ...headers } });
 }
 
 async function read(request: Request): Promise<unknown> {
   const text = await request.text();
   return text.length === 0 ? {} : JSON.parse(text);
 }
+
+/** "Who is asking" refused: the reason a program reads beside the sentence (FR-46). */
+const unknownSeat = (error: string): Response => send(401, { error, reason: "forbidden" });
 
 const CANNOT_TELL = "This store cannot tell who is asking: the host gives serveStore a seatOf, or trusts the seat headers (trustSeatHeaders) on a server only it can reach.";
 
@@ -275,7 +288,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
   };
   const migrated = [...(options.migrated ?? [])];
   const wire = wireOf(store);
-  const protocol = liveProtocol({ store, version: options.app.version ?? 1, migrated, flush });
+  const protocol = liveProtocol({ store, version: options.app.version ?? 1, migrated, flush, ...(options.limit ? { limit: options.limit } : {}) });
 
   /*
    * THE CHANNEL IS THE HOST'S WORD (FR-52). `viaOf` when the host gave
@@ -317,7 +330,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
      * WHO IS ASKING, OR NOTHING. Health is the only route a stranger gets:
      * it says whether the store is well, not what is in it.
      */
-    if (!seatOf && url.pathname !== "/graview/health") return send(401, { error: CANNOT_TELL });
+    if (!seatOf && url.pathname !== "/graview/health") return unknownSeat(CANNOT_TELL);
     const seat = async (): Promise<Principal> => (seatOf as NonNullable<typeof seatOf>)(request);
 
     if (url.pathname === LIVE_PATH) {
@@ -352,7 +365,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     if (url.pathname === "/graview/here" && request.method === "POST") {
       const body = (await read(request)) as { presence?: Presence; seq?: number };
       if (!body.presence || typeof body.presence.participant !== "string" || typeof body.presence.stop !== "string") {
-        return send(400, { error: "A presence is a participant and a stop." });
+        return send(400, { error: "A presence is a participant and a stop.", reason: "invalid" });
       }
       const asking = await seat();
       const mine = presenceFrom(body.presence, asking);
@@ -386,7 +399,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     if (url.pathname === "/graview/export") return send(200, exportBundle(options.app, wire.seenFor(await seat())));
 
     if (url.pathname === "/graview/ops" && request.method === "POST") {
-      const body = (await read(request)) as {
+      const text = await request.text();
+      const body = (text.length === 0 ? {} : JSON.parse(text)) as {
         calls?: readonly MutationCall[];
         /** Batches to take back instead — judged like any change, as the seat that asks. */
         undo?: readonly string[];
@@ -402,6 +416,23 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       // A batch already in the log is a call sent again after its answer was lost: answered with what it made, as on the socket (FR-49).
       const already = wire.answered(body.batch);
       if (already.length > 0) return send(200, { ops: wire.shown(author, already), batch: body.batch });
+      /*
+       * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
+       * change is kept to send again (FR-45); a hard cap is refused, `limit`,
+       * and the change is taken back (FR-46).
+       */
+      const limited = options.limit
+        ? await options.limit({ seat: author, via, t: body.undo ? "undo" : "call", bytes: bytesOf(text), calls: body.undo ? [] : calls })
+        : undefined;
+      if (limited && "refuse" in limited) return send(413, { error: limited.refuse, refused: true, reason: "limit" });
+      if (limited) {
+        const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
+        return send(
+          429,
+          { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter },
+          { "retry-after": String(Math.ceil(retryAfter / 1000)) },
+        );
+      }
       /*
        * A STALE WRITE IS A CONFLICT, NOT A LOSS (FR-05). A field that moved
        * since the caller read it is refused by name — theirs and yours —
@@ -422,11 +453,12 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
         return send(200, { ops: wire.shown(author, result.ops), batch: result.batch });
       } catch (error) {
-        return send(409, { error: error instanceof Error ? error.message : String(error), refused: true });
+        const { sentence, ...why } = refusalOf(error);
+        return send(409, { error: sentence, refused: true, ...why });
       }
     }
 
-    return send(404, { error: `Nothing at ${url.pathname}` });
+    return send(404, { error: `Nothing at ${url.pathname}`, reason: "missing" });
   }
 
   /*
@@ -490,13 +522,13 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
   };
 
   async function seatFor(request: Request): Promise<LiveSocketState | Response> {
-    if (!seatOf) return send(401, { error: CANNOT_TELL });
+    if (!seatOf) return unknownSeat(CANNOT_TELL);
     const asked = seatRequest(request);
     try {
       const seat = await seatOf(asked);
       return protocol.open(seat, await viaFor(asked, seat, "web"));
     } catch (error) {
-      return send(401, { error: error instanceof Error ? error.message : String(error) });
+      return unknownSeat(error instanceof Error ? error.message : String(error));
     }
   }
 

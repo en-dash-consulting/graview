@@ -6,6 +6,7 @@ import {
   redact,
   seenBy,
   seesId,
+  refusalOf,
   WIRE_PROTOCOL,
   type AnySchema,
   type FieldConflict,
@@ -16,7 +17,7 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
-import { conflictSentence, type LiveClientMessage, type LiveServerMessage } from "./live.js";
+import { bytesOf, conflictSentence, type Limit, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**
  * THE LIVE WIRE AS FUNCTIONS OVER STATE THE HOST HOLDS (FR-41, FR-42).
@@ -53,6 +54,12 @@ export interface LiveSocketState {
   cursor?: number;
   /** Its presence key, once it has said where it is; built from the seat, never taken from the client. */
   participant?: string;
+  /**
+   * The call this socket was told is busy (FR-45), and when (epoch ms) it
+   * may come again. Every other call is busy too until it does, so nothing
+   * made after it overtakes it.
+   */
+  held?: { readonly cid: string; readonly until: number };
 }
 
 /** A socket as the protocol is handed it: its state, and a way to send it text. */
@@ -83,6 +90,12 @@ export interface LiveProtocolOptions<S extends AnySchema> {
   readonly migrated?: readonly string[];
   /** Resolves once what landed is durable: an ack waits for it. */
   readonly flush?: () => Promise<void>;
+  /**
+   * THE HOST'S LIMITS (FR-45, FR-46), asked of every call and undo before
+   * it is judged: busy (`{ retryAfter }`, try again), refused at a hard cap
+   * (`{ refuse }`, reason `limit`), or nothing.
+   */
+  readonly limit?: Limit;
 }
 
 export interface LiveProtocol<S extends AnySchema> {
@@ -307,7 +320,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       const applying = { author, via: peer.via, ...(intent ? { intent } : {}), ...(batch ? { batch } : {}) };
       result = message.t === "undo" ? store.undo(Array.isArray(message.batches) ? message.batches : [], applying) : store.applyAll(calls, applying);
     } catch (error) {
-      say(peer, { t: "refused", cid, sentence: error instanceof Error ? error.message : String(error) });
+      say(peer, { t: "refused", cid, ...refusalOf(error) });
       return { cursor: peer.cursor! };
     }
     // Every op before this call's went down this socket before it landed; its own go in the ack.
@@ -359,12 +372,45 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           return { cursor: peer.cursor };
         }
         case "call":
-        case "undo":
+        case "undo": {
+          const cid = String(message.cid ?? "");
           if (peer.cursor === undefined) {
-            say(peer, { t: "refused", cid: String(message.cid ?? ""), sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
+            say(peer, { t: "refused", cid, reason: "invalid", sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
             return {};
           }
+          /*
+           * BUSY IS NOT REFUSED (FR-45). A call made after one that was told
+           * to wait waits too, whatever the rate says now: the client sends
+           * them again in the order it made them, the held one first.
+           */
+          const now = Date.now();
+          if (peer.held && peer.held.cid !== cid) {
+            say(peer, { t: "busy", cid, retryAfter: Math.max(0, peer.held.until - now) });
+            return { cursor: peer.cursor };
+          }
+          const limited = options.limit
+            ? await options.limit({
+                seat: peer.seat,
+                via: peer.via,
+                t: message.t,
+                bytes: bytesOf(text),
+                calls: message.t === "call" && Array.isArray(message.calls) ? message.calls : [],
+              })
+            : undefined;
+          if (limited && "refuse" in limited) {
+            delete peer.held;
+            say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
+            return { cursor: peer.cursor };
+          }
+          if (limited) {
+            const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
+            peer.held = { cid, until: now + retryAfter };
+            say(peer, { t: "busy", cid, retryAfter, ...(limited.sentence ? { sentence: limited.sentence } : {}) });
+            return { cursor: peer.cursor };
+          }
+          delete peer.held;
           return answer(peer, message);
+        }
         case "here": {
           const told = message.presence;
           if (!told || typeof told.participant !== "string" || typeof told.stop !== "string") {

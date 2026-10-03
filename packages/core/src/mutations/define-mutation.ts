@@ -1,7 +1,7 @@
 import { InvalidArguments } from "./words.js";
 import type { z } from "zod";
 import type { Graph } from "../graph/graph.js";
-import { GraphError } from "../graph/graph.js";
+import { GraphError, MissingRecordError } from "../graph/graph.js";
 import type { Primitive } from "../graph/primitives.js";
 import { TrackedReader } from "../graph/tracked.js";
 import { edgeId, type GraphEdge } from "../graph/types.js";
@@ -117,7 +117,7 @@ export function compileMutation<S extends AnySchema>(
     },
     removeNode(id) {
       const node = reader.getNode(id);
-      if (!node) throw new GraphError(`Cannot remove missing node "${id}"`);
+      if (!node) throw new MissingRecordError(id, `Cannot remove missing node "${id}"`);
       const touching = new Map<string, GraphEdge>();
       for (const edge of graph.outEdges(id)) touching.set(edgeId(edge), edge);
       for (const edge of graph.inEdges(id)) touching.set(edgeId(edge), edge);
@@ -130,7 +130,7 @@ export function compileMutation<S extends AnySchema>(
     },
     patchNode(id, fields) {
       const node = reader.getNode(id);
-      if (!node) throw new GraphError(`Cannot patch missing node "${id}"`);
+      if (!node) throw new MissingRecordError(id, `Cannot patch missing node "${id}"`);
       const before: Record<string, unknown> = {};
       const after: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(fields)) {
