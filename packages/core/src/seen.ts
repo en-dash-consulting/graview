@@ -48,12 +48,18 @@ export function hidesFrom(store: Judged, principal: Principal): boolean {
  * now; one since removed by the kind the log says it was, and so never by
  * an edge it no longer has; and a string that names no record at all (a
  * label in a call's arguments) is nothing to keep from anybody.
+ *
+ * THE JUDGEMENT FOLLOWS THE STORE (FR-51). It reads the policy, the
+ * modules that are off and who made each record as it is asked, not as it
+ * was taken: one taken before a commit and asked after it knows the record
+ * just made is its maker's own. Asking costs nothing more for that — who
+ * made what is an index the log keeps as it goes (`recordsOf`).
  */
 export function seesId(store: Judged, principal: Principal): (id: string) => boolean {
-  const off = turnedOff(store, principal);
-  if (!store.policy?.sees?.length && off.size === 0) return () => true;
-  const records = recordsOf(store.log);
   return (id) => {
+    const off = turnedOff(store, principal);
+    if (!store.policy?.sees?.length && off.size === 0) return true;
+    const records = recordsOf(store.log);
     const node = store.graph.getNode(id);
     if (node) return !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records);
     const kind = records.kindOf(id);
