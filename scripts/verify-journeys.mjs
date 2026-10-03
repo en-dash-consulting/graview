@@ -284,12 +284,20 @@ async function main() {
   const report = { at: new Date().toISOString(), engine: ENGINE, apps: {} };
   const runs = [];
   const servers = [];
+  const unbuilt = [];
   try {
     for (const entry of entries) {
       const declaration = existsSync(resolve(repoRoot, "apps", entry.dir)) ? await readDeclaration(repoRoot, entry.dir) : null;
       if (!declaration) {
         report.apps[entry.name ?? entry.dir] = { skipped: `${entry.name ? entry.dir : `apps/${entry.dir}`} is not built here (no dist/domain/app.js — pnpm build:domain)` };
         process.stdout.write(`skip  ${entry.name ?? entry.dir}: not here\n`);
+        /*
+         * ASKED FOR BY NAME IS NOT OPTIONAL. Run bare, an app missing from
+         * this checkout is skipped; named, it is the run — and a nightly
+         * shard whose apps were never built skipped four of five and said
+         * "no regressions".
+         */
+        if (process.argv.slice(2).some((arg) => !arg.startsWith("-") && arg !== "--run")) unbuilt.push(entry.name ?? entry.dir);
         continue;
       }
       try {
@@ -387,8 +395,9 @@ async function main() {
     process.stdout.write(`\n${report.regressions.length} regression${report.regressions.length === 1 ? "" : "s"}:\n`);
     for (const line of report.regressions) process.stdout.write(`  ✗ ${line}\n`);
   }
+  if (unbuilt.length > 0) process.stdout.write(`\nnamed and not built here, so not walked: ${unbuilt.join(", ")} (pnpm typecheck builds every app)\n`);
   process.stdout.write(`\n${report.regressions.length === 0 ? "no regressions" : "regressed"} — docs/journeys.json (${report.took}s)\n`);
-  process.exit(report.regressions.length > 0 ? 1 : 0);
+  process.exit(report.regressions.length > 0 || unbuilt.length > 0 ? 1 : 0);
 }
 
 const runAt = process.argv.indexOf("--run");
