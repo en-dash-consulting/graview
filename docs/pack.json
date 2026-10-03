@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-03T06:05:08.222Z",
+  "at": "2026-10-03T06:15:26.661Z",
   "packages": {
     "@graview/core": {
-      "files": 467,
-      "tarballBytes": 508941,
+      "files": 475,
+      "tarballBytes": 535302,
       "ok": true
     },
     "create-graview": {
@@ -18,7 +18,7 @@
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4891,
+      "tarballBytes": 4890,
       "ok": true
     },
     "@graview/guest": {
@@ -33,17 +33,17 @@
     },
     "@graview/pages": {
       "files": 79,
-      "tarballBytes": 89931,
+      "tarballBytes": 89929,
       "ok": true
     },
     "@graview/primitives": {
-      "files": 219,
-      "tarballBytes": 354898,
+      "files": 223,
+      "tarballBytes": 362095,
       "ok": true
     },
     "@graview/react": {
-      "files": 147,
-      "tarballBytes": 213124,
+      "files": 151,
+      "tarballBytes": 219950,
       "ok": true
     },
     "@graview/render": {
@@ -53,7 +53,7 @@
     },
     "@graview/ship": {
       "files": 111,
-      "tarballBytes": 115686,
+      "tarballBytes": 119979,
       "ok": true
     },
     "@graview/skills": {
@@ -63,20 +63,20 @@
     },
     "@graview/studio": {
       "files": 67,
-      "tarballBytes": 106462,
+      "tarballBytes": 106460,
       "ok": true
     },
     "@graview/tools": {
       "files": 123,
-      "tarballBytes": 167809,
+      "tarballBytes": 169947,
       "ok": true
     }
   },
   "budgets": [
     {
       "name": "the pages face alone",
-      "minified": 786961,
-      "gzipped": 212251,
+      "minified": 790364,
+      "gzipped": 213413,
       "budget": {
         "minified": 815000,
         "gzipped": 220000
@@ -85,8 +85,8 @@
     },
     {
       "name": "every face",
-      "minified": 1076165,
-      "gzipped": 307979,
+      "minified": 1079568,
+      "gzipped": 309036,
       "budget": {
         "minified": 1100000,
         "gzipped": 315000
