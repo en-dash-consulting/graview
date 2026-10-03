@@ -249,7 +249,9 @@ export function ChatPanel<S extends AnySchema>({
      * had the chat saying "Done" over a change the store had refused, which
      * is the one lie a seat must never tell.
      */
-    const result = await runtime.call(proposal.mutation, { ...proposal.args });
+    // By the tool the act is listed as: an act named like a read tool is still the act.
+    const tool = runtime.definitions.find((definition) => definition.act === proposal.mutation)?.name ?? proposal.mutation;
+    const result = await runtime.call(tool, { ...proposal.args });
     if (!result.ok) {
       settle(key, { state: "refused", error: result.error });
       noteSeat({ type: "refused", author, where: gateOf(proposal.mutation), say: result.error });

@@ -249,7 +249,7 @@ export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Integrity — a fold has a fingerprint, and a store can prove its own (FR-20).
-export { snapshotHash } from "./integrity.js";
+export { sha256Hex, snapshotHash } from "./integrity.js";
 export type { VerifyResult } from "./integrity.js";
 // Stored data checked against its declaration (FR-21).
 export { GRAPH_FINDING_CODES, repairPlan, validateGraph } from "./validate-graph.js";
