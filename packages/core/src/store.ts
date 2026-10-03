@@ -262,6 +262,38 @@ export interface RebaseResult<S extends AnySchema> {
 }
 
 /**
+ * What `Store.adopt` is handed (FR-53): the server's whole state, as
+ * `GET /graview/state` answers it, and this store's own batches as `rebase`
+ * names them.
+ */
+export interface Adopt<S extends AnySchema> {
+  /** The server's graph: it becomes this store's graph, in the server's order. */
+  readonly snapshot: GraphSnapshot<NodeOfSchema<S>>;
+  /** The server's log, whole or from its undo horizon on: it becomes this store's log. */
+  readonly log: readonly Operation[];
+  /** The epochs the log folds from (FR-27), the checkpoint among them when it was compacted. */
+  readonly epochs?: readonly Epoch[];
+  /** The seq `log` begins at when it was compacted and its checkpoint is not among `epochs` (FR-23). */
+  readonly horizon?: number;
+  /** This store's batches still awaiting a verdict, oldest first: applied again on top. */
+  readonly pending?: readonly string[];
+  /** This store's batches the server has answered or refused: not applied again. */
+  readonly drop?: readonly string[];
+}
+
+/** What an adoption did. */
+export interface AdoptResult<S extends AnySchema> {
+  /** The net change, as subscribers heard it. */
+  readonly diff: GraphDiff<NodeOfSchema<S>>;
+  /** The server's ops this store did not hold before, as its log numbers them. */
+  readonly adopted: readonly Operation[];
+  /** The pending batches' ops, applied again. */
+  readonly pending: readonly Operation[];
+  /** Pending batches that no longer apply on the server's graph, and why; they are not in the log. */
+  readonly refused: readonly { readonly batch: string; readonly error: unknown }[];
+}
+
+/**
  * A tag nobody else's store is using, for this store's batch ids. Drawn
  * from the platform's random source where there is one, which every page
  * and Node 22 has.
@@ -302,6 +334,8 @@ export class Store<S extends AnySchema> {
   private readonly validate: boolean;
   private readonly mintBatch: (kind: "batch" | "undo") => string;
   private counter = 0;
+  /** The default op id generator's count. */
+  private opCount = 0;
   /** Above zero while a rebase applies its pending calls again: they are told as one change at the end. */
   private quiet = 0;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
@@ -317,8 +351,7 @@ export class Store<S extends AnySchema> {
     }
     this.declaredModules = options.modules;
     this.startingModules = options.enabledModules;
-    let n = 0;
-    this.nextId = options.ids ?? (() => `op${++n}`);
+    this.nextId = options.ids ?? (() => `op${++this.opCount}`);
     this.now = options.now ?? (() => new Date().toISOString());
     this.validate = options.validate ?? true;
     const tag = storeTag();
@@ -380,17 +413,22 @@ export class Store<S extends AnySchema> {
      * Only the DEFAULT generators are wound forward; an app that supplies
      * its own `ids` owns their uniqueness.
      */
+    this.countPastTheLog();
+    tellTheWatchOfAStore(this);
+  }
+
+  /** Winds the default op and batch counters past every id the log holds, and past the horizon (FR-23). */
+  private countPastTheLog(): void {
     const trailing = (value: string): number => {
       const digits = /(\d+)$/.exec(value);
       return digits ? Number(digits[1]) : 0;
     };
     for (const op of this.log.all()) {
       this.counter = Math.max(this.counter, trailing(op.batch));
-      n = Math.max(n, trailing(op.id));
+      this.opCount = Math.max(this.opCount, trailing(op.id));
     }
     // Behind an undo horizon (FR-23) are ids the log no longer holds: count on past them all.
-    if (this.log.horizon > 0) n = Math.max(n, this.log.length);
-    tellTheWatchOfAStore(this);
+    if (this.log.horizon > 0) this.opCount = Math.max(this.opCount, this.log.length);
   }
 
   /**
@@ -1503,6 +1541,77 @@ export class Store<S extends AnySchema> {
     const ops = [...landed, ...replayed];
     this.notify(diff, ops);
     return { diff, confirmed: landed, pending: replayed, refused };
+  }
+
+  /**
+   * A CLIENT THAT RESYNCED TAKES THE SERVER'S WHOLE STATE (FR-53).
+   *
+   * `rebase` lands the server's ops on the confirmed prefix this store
+   * holds. When that prefix cannot be trusted — this copy drifted, and an
+   * op of the server's no longer fits it, or the server compacted past
+   * where this client left off, so `/graview/since` cannot bring the ops in
+   * between — the client takes the server's graph and log as they are:
+   *
+   * 1. the ops of the `pending` batches are read off the log as it stands;
+   * 2. the log becomes `log` (with its `epochs` and `horizon`, checked as
+   *    `OperationLog.from` checks them; one that is not intact is refused
+   *    before anything moves) and the graph becomes `snapshot`, in the
+   *    server's order — not put back op by op, as `rebase` puts it;
+   * 3. the `pending` batches are applied again on top, in the order given,
+   *    exactly as `rebase` applies them: under the same batch ids, judged
+   *    and compiled afresh. One that no longer applies is said in `refused`.
+   *
+   * `drop` names the batches the server has answered or refused: they are
+   * not applied again (nor is any batch left unnamed: the log is the
+   * server's). Subscribers hear ONE change, the net diff, with the ops this
+   * store did not hold before and the re-applied ones.
+   */
+  adopt(state: Adopt<S>): AdoptResult<S> {
+    const dropped = new Set(state.drop ?? []);
+    const pending = (state.pending ?? []).filter((batch) => !dropped.has(batch));
+    const held = this.log.all();
+    const before = this.graph.snapshot();
+    const was = { ops: [...held], epochs: [...this.log.epochs()], horizon: this.log.horizon };
+    const known = new Set(held.map((op) => op.id));
+    const tails = new Map(pending.map((batch) => [batch, held.filter((op) => op.batch === batch)]));
+
+    // A log that is not intact is refused here, before the graph moves.
+    if (state.log.length > 0) this.log.replace(state.log, state.epochs, state.horizon !== undefined ? { horizon: state.horizon } : {});
+    else {
+      const at = state.horizon ?? 0;
+      this.log.replace([], state.epochs ?? [{ seq: at, base: state.snapshot }], { horizon: at });
+    }
+
+    const replayed: Operation[] = [];
+    const refused: { batch: string; error: unknown }[] = [];
+    this.quiet++;
+    try {
+      this.graph.load(state.snapshot);
+      this.projected = undefined;
+      this.countPastTheLog();
+      for (const batch of pending) {
+        const ops = tails.get(batch) ?? [];
+        if (ops.length === 0) continue;
+        try {
+          replayed.push(...this.replay(batch, ops));
+        } catch (error) {
+          refused.push({ batch, error });
+        }
+      }
+    } catch (error) {
+      // A store that could not adopt is the store it was.
+      this.log.replace(was.ops, was.epochs, { horizon: was.horizon });
+      this.graph.load(before);
+      this.projected = undefined;
+      throw error;
+    } finally {
+      this.quiet--;
+    }
+
+    const adopted = this.log.all().filter((op) => !known.has(op.id) && !replayed.includes(op));
+    const diff = diffSnapshots(before, this.graph.snapshot());
+    this.notify(diff, [...adopted, ...replayed]);
+    return { diff, adopted, pending: replayed, refused };
   }
 
   /** One pending batch, applied again as it was made: its calls, its undo, or its primitives. */
