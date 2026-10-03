@@ -63,6 +63,8 @@ describe("a record named the way people name it", () => {
     expect(two.candidates.map((candidate) => candidate.id).sort()).toEqual(["vendor:bloom-co", "vendor:bloom-room"]);
     expect(two.message).toContain("Bloom & Co (vendor:bloom-co)");
     expect(two.message).toContain("Bloom Room (vendor:bloom-room)");
+    // It says what it could mean in the argument's own words, as the refusal for none does (FR-51).
+    expect(two.message).toBe('"bloom" names more than one vendor: Bloom & Co (vendor:bloom-co), Bloom Room (vendor:bloom-room). Pass the id of the one you mean as id.');
     // An exact label wins over the prefixes it shares.
     expect(store.resolveRef(ref, "bloom room", agent)).toMatchObject({ ok: true, id: "vendor:bloom-room" });
     const none = store.resolveRef(ref, "zinnia", agent);
