@@ -23,6 +23,7 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 - A reader meeting a newer format says so with `NewerFormatError` and does not fold it. The host refolds from the log or rolls forward. Rollback is therefore always safe: the previous version never misreads what the next one wrote.
 - An older format is brought up by `upgradeSnapshot(snapshot, from)` and `upgradeOp(op, from)`, one step per format change. Each step ships with a test over a fixture of the format before it (`packages/core/tests/fixtures/formats/`).
 - Anything written before stamps existed (0.1.0) is format 1.
+- A log compacted behind an undo horizon (FR-23) is not a new format. Its ops are ops, its checkpoint is an epoch marked `horizon`, and the archive sits beside it. A build before compaction refuses such a store on open, because its log no longer begins at seq 0. It never misreads one.
 
 ### 3. The wire and live protocols: additive within a major
 

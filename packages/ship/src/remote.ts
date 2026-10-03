@@ -198,6 +198,8 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     snapshot: GraphSnapshot;
     log: Operation[];
     migrated: string[];
+    /** Where the server's log begins, when it was compacted (FR-23). */
+    horizon?: number;
   };
 
   const store = new Store<S>({
@@ -214,6 +216,8 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
      */
     snapshot: state.snapshot,
     log: state.log,
+    // A compacted server hands over its tail: this log begins where that one does (FR-23).
+    ...(state.horizon !== undefined ? { horizon: state.horizon } : {}),
     /*
      * IDS THIS CLIENT CANNOT SHARE WITH ANYBODY.
      *
@@ -232,7 +236,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     ...(options.storeOptions ?? {}),
   });
 
-  let seen = state.log.at(-1)?.seq ?? -1;
+  let seen = state.log.at(-1)?.seq ?? (state.horizon ?? 0) - 1;
   /** Every field's revision as the server's ops this client has say it (FR-05). */
   const revisions = FieldRevisions.of(state.log);
 

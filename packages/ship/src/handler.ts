@@ -251,10 +251,17 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
    * redacting the whole log for every push down every socket.
    */
   const since = (principal: Principal, seq: number): Operation[] => {
-    const after = store.log.all().slice(Math.max(0, Math.floor(seq) + 1));
+    const after = store.log.opsFrom(Math.max(0, Math.floor(seq) + 1));
     return sighted(principal) ? redact(after, seesId(store, principal)) : [...after];
   };
   const lastSeq = (): number => store.log.length - 1;
+  /*
+   * WHERE THE LOG BEGINS, when it was compacted behind an undo horizon
+   * (FR-23): a client hydrating on the state is handed the tail, and its
+   * log begins where the server's does. Said only when it is past 0, so a
+   * store that was never compacted answers exactly as before.
+   */
+  const horizonOf = (): { horizon?: number } => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {});
 
   /*
    * EVERY FIELD'S REVISION (FR-05): the seq of the op that last wrote it,
@@ -288,7 +295,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     }
     return stale.map((entry) => {
       const rev = revisions.of(entry.node, entry.field);
-      const wrote = rev >= 0 ? store.log.all()[rev] : undefined;
+      const wrote = rev >= store.log.horizon ? store.log.opsFrom(rev)[0] : undefined;
       const shown = wrote && sighted(author) ? redact([wrote], sees)[0] : wrote;
       return {
         node: entry.node,
@@ -329,6 +336,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
         snapshot: seen.snapshot(),
         log: seen.log.all(),
         migrated: opened.migrated.map((op) => op.intent),
+        ...horizonOf(),
       });
     }
 
@@ -588,7 +596,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
               protocol: WIRE_PROTOCOL,
               seq: live.cursor,
               ops: [],
-              state: { version: options.app.version ?? 1, snapshot: seen.snapshot(), log: seen.log.all(), migrated: opened.migrated.map((op) => op.intent) },
+              state: { version: options.app.version ?? 1, snapshot: seen.snapshot(), log: seen.log.all(), migrated: opened.migrated.map((op) => op.intent), ...horizonOf() },
             });
           } else {
             say(live, { t: "welcome", protocol: WIRE_PROTOCOL, seq: live.cursor, ops: since(seat, seq) });

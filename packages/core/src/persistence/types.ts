@@ -1,5 +1,5 @@
 import type { GraphSnapshot } from "../graph/types.js";
-import type { Epoch } from "../ops/log.js";
+import type { Epoch, LogArchive } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
 
 /**
@@ -27,4 +27,15 @@ export interface PersistenceAdapter<Scope = string> {
    */
   loadEpochs?(scope: Scope): Promise<Epoch[]>;
   saveEpochs?(scope: Scope, epochs: readonly Epoch[]): Promise<void>;
+  /**
+   * Optional (FR-23): compaction behind an undo horizon. Moves the ops
+   * before `checkpoint.seq`, and the epochs before it, into the archive,
+   * and makes `checkpoint` the first epoch. From then on `loadLog` returns
+   * the ops from its seq on and `loadEpochs` the checkpoint and what came
+   * after it, so a normal open loads nothing older; `loadArchive` returns
+   * what was moved, oldest first, for a full export. Nothing is deleted.
+   * An adapter that keeps no epochs keeps no checkpoint, and has neither.
+   */
+  compact?(scope: Scope, checkpoint: Epoch): Promise<void>;
+  loadArchive?(scope: Scope): Promise<LogArchive>;
 }
