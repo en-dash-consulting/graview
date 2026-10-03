@@ -86,6 +86,59 @@ describe("the chain a declaration states", () => {
     expect(chain.roots).toEqual(["feature", "zone"]);
   });
 
+  it("asks first for the root that the most other kinds wait on", () => {
+    /*
+     * Batch, equipment and site all begin on an empty graph, and the site is
+     * the one nearly everything else stands in. By name it came last.
+     */
+    const kind = (id: string) => defineNode(id, { fields: z.object({ label: z.string() }) });
+    const yard = createSchema([kind("batch"), kind("equipment"), kind("site"), kind("shift"), kind("pour"), kind("crew")]);
+    const make = bindSchema(yard).defineMutation;
+    const act = (kindId: string, needs: Record<string, string> = {}) =>
+      make(`make-${kindId}`, {
+        creates: [kindId],
+        input: z.object({
+          label: z.string(),
+          ...Object.fromEntries(Object.entries(needs).map(([arg, of]) => [arg, nodeRef([of])])),
+        }),
+        apply: () => {},
+      });
+    const chain = beginning(
+      defineApp({
+        name: "yard",
+        schema: yard,
+        mutations: [
+          act("batch"),
+          act("equipment"),
+          act("site"),
+          act("crew", { siteId: "site" }),
+          act("shift", { siteId: "site", equipmentId: "equipment" }),
+          act("pour", { shiftId: "shift", batchId: "batch" }),
+        ],
+      }),
+    );
+    /* site opens crew, shift and pour; equipment opens shift and pour; batch opens pour. */
+    expect(chain.roots).toEqual(["site", "equipment", "batch"]);
+    expect(chain.order.map((entry) => `${entry.kind}@${entry.depth}`)).toEqual([
+      "site@0",
+      "equipment@0",
+      "batch@0",
+      "shift@1",
+      "crew@1",
+      "pour@2",
+    ]);
+  });
+
+  it("keeps to the name among kinds that open as much as each other", () => {
+    const quick = defineMutation("plant-anywhere", {
+      creates: ["feature"],
+      input: z.object({ label: z.string() }),
+      apply: () => {},
+    });
+    const chain = beginning(defineApp({ name: "g", schema, mutations: [stakeOut, quick] }));
+    expect(chain.roots).toEqual(["feature", "zone"]);
+  });
+
   it("calls a cycle unreachable rather than looping in it", () => {
     const eggFirst = defineMutation("egg-first", {
       creates: ["feature"],
