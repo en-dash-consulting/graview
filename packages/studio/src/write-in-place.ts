@@ -18,11 +18,15 @@ import { useEffect, useState } from "react";
  * still there afterwards.
  */
 
-/** Whether this app's dev server has the studio door open. `null` until it has answered, and for no door at all. */
-export function useStudioDoor(path: string = STUDIO_DOOR_PATH): Extract<StudioDoorStatus, { available: true }> | null {
+/**
+ * Whether this app's dev server has the studio door open. `null` until it
+ * has answered, and for no door at all. A `null` path asks nobody: the host
+ * keeps the declaration, and there is no door to look for.
+ */
+export function useStudioDoor(path: string | null = STUDIO_DOOR_PATH): Extract<StudioDoorStatus, { available: true }> | null {
   const [door, setDoor] = useState<Extract<StudioDoorStatus, { available: true }> | null>(null);
   useEffect(() => {
-    if (typeof fetch !== "function") return;
+    if (path === null || typeof fetch !== "function") return;
     let live = true;
     fetch(path)
       .then(async (response) => (response.ok ? ((await response.json()) as StudioDoorStatus) : null))

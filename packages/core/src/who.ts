@@ -4,6 +4,22 @@ import { labelOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 
 /**
+ * SOMEBODY THE APP MAY NAME, and nothing more (FR-13). A host knows the
+ * people of a hosted app, every member and every agent that has acted, and
+ * the app has no record of most of them. They are named through a
+ * directory, which is not a list of seats: a seat is somewhere a reader may
+ * sit, and a hosted reader sits only as who they signed in as.
+ */
+export interface Person {
+  /** The principal id the person acts under. */
+  readonly id: string;
+  /** What to call them. */
+  readonly name: string;
+  /** Said when one id could be a person and an agent; absent, any kind. */
+  readonly kind?: Principal["kind"];
+}
+
+/**
  * AN AUTHOR BY NAME. A principal's id is its user node's id where the app
  * has an installation; where it has seats and no installation, the seat
  * carries the name the person was offered it under. The rail said
@@ -18,6 +34,8 @@ export function nameOfAuthor(
     readonly graph: { getNode(id: string): ({ id: string; kind: string } & Record<string, unknown>) | undefined };
     readonly schema: AnySchema;
     readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
+    /** The host's directory of people, for authors nothing else here knows. */
+    readonly people?: readonly Person[];
   },
 ): string {
   /*
@@ -33,6 +51,8 @@ export function nameOfAuthor(
   if (node) return labelOf(where.schema.tryDefinition(node.kind), node);
   const seat = where.seats?.find((one) => one.principal.id === author.id);
   if (seat) return seat.label;
+  const person = where.people?.find((one) => one.id === author.id && (one.kind === undefined || one.kind === author.kind));
+  if (person) return person.name;
   // The author's own name, where nothing here knows them: another person in a hosted app, an agent from a chat (FR-17).
   if (author.name) return author.name;
   /*

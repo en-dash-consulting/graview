@@ -18,6 +18,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { exportsOf, unexported } from "./lib/readme-exports.mjs";
+import { measureBudgets } from "./lib/bundle-budget.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -137,6 +138,18 @@ for (const one of unpacked) {
   failures += 1;
   report.packages[one.name] = { ...report.packages[one.name], ok: false, readmeNamesUnexported: promised };
   process.stdout.write(`FAIL ${one.name.padEnd(22)} README names ${promised.map((name) => `\`${name}\``).join(", ")}, which no packed package exports\n`);
+}
+
+/*
+ * WHAT A FACE COSTS A HOST'S PAGE (FR-19). Each embed entry, bundled as a
+ * product would bundle it, against its budget.
+ */
+report.budgets = await measureBudgets(repoRoot);
+for (const one of report.budgets) {
+  if (one.over) failures += 1;
+  process.stdout.write(
+    `${one.over ? "FAIL" : "ok  "} ${`@graview/embed: ${one.name}`.padEnd(36)} ${(one.minified / 1024).toFixed(0)}K minified (budget ${(one.budget.minified / 1024).toFixed(0)}K), ${(one.gzipped / 1024).toFixed(0)}K gzipped (budget ${(one.budget.gzipped / 1024).toFixed(0)}K)\n`,
+  );
 }
 
 rmSync(packDir, { recursive: true, force: true });

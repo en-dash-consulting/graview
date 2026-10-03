@@ -12,9 +12,25 @@ import type { SettingDeclaration } from "@graview/core";
  */
 const KEY = (name: string) => `graview:setting:${name}`;
 
-export function loadSetting(setting: SettingDeclaration): string {
+/**
+ * WHERE A READER'S CHOICES ARE KEPT, when the page is not the place (FR-13).
+ * A chat's widget runs in a sandboxed frame whose `localStorage` throws on
+ * being touched, and a host may keep a reader's choices itself — in memory
+ * for the visit, or in its own account. Any object with these two methods.
+ */
+export interface ReaderMemory {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+/** The page's own storage, or a throw the caller catches: a sandboxed frame refuses even the reading of it. */
+function pageMemory(): ReaderMemory {
+  return localStorage;
+}
+
+export function loadSetting(setting: SettingDeclaration, memory?: ReaderMemory): string {
   try {
-    const stored = localStorage.getItem(KEY(setting.name));
+    const stored = (memory ?? pageMemory()).getItem(KEY(setting.name));
     if (stored !== null && setting.options.some((option) => option.value === stored)) return stored;
   } catch {
     // Not being able to remember is not a reason to fail.
@@ -22,9 +38,9 @@ export function loadSetting(setting: SettingDeclaration): string {
   return setting.initial;
 }
 
-export function rememberSetting(setting: SettingDeclaration, value: string): void {
+export function rememberSetting(setting: SettingDeclaration, value: string, memory?: ReaderMemory): void {
   try {
-    localStorage.setItem(KEY(setting.name), value);
+    (memory ?? pageMemory()).setItem(KEY(setting.name), value);
   } catch {
     // The choice still applies for this visit.
   }

@@ -6,6 +6,7 @@ import { createViews, type ViewProps } from "@graview/react";
 import { act } from "react";
 import { describe, expect, it } from "vitest";
 import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
+import { mount as mountPages } from "../../src/pages.js";
 
 /**
  * What a host registers through `mount({ views })` draws on every face
@@ -104,5 +105,21 @@ describe("views reach every face", () => {
     await mounted({ app: specified, face: "pages" }, (host) => {
       expect(host.querySelector('[data-graview-spec="card"] [data-graview-tone="good"]')?.textContent).toBe("booked");
     });
+  });
+
+  it("draws a view registered through views on the pages-only embed too", async () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    let handle: { unmount(): void } | undefined;
+    await act(async () => {
+      handle = mountPages<S>(host, { app, seed, fonts: false, views: hostViews });
+    });
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
+    try {
+      expect(host.querySelector('[data-testid="kind-sheet"] [data-testid="host-card"]')?.textContent).toBe("Bloom & Co");
+    } finally {
+      await act(async () => handle!.unmount());
+      host.remove();
+    }
   });
 });

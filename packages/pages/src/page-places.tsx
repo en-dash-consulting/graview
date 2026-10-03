@@ -1,7 +1,7 @@
 import { counted, isCurrent, labelOf, type AnySchema, type Store, type Place } from "@graview/core";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
-import { isDefaultView, type ViewProps } from "@graview/react";
+import { isDefaultView, ViewBoundary, type ViewProps } from "@graview/react";
 import { useLayoutEffect, useRef, useState, type ComponentType } from "react";
 import { DerivedForm } from "./form.js";
 import { placeHref, placePath, pluralSlug, recordPath } from "./registry.js";
@@ -79,16 +79,23 @@ function LensOnPage<S extends AnySchema>({ context, place }: { context: PageCont
   if (!View) return null;
   const members = membersOf(store, place.kind);
   const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
+  /*
+   * A LENS THAT THROWS SAYS SO IN ITS OWN PLACE, here as in the scene: the
+   * host's views reach the pages (FR-35), so a view that cannot draw would
+   * otherwise take the whole face down with it (FR-24).
+   */
   return (
-    <View
-      nodes={members}
-      label={place.title}
-      fidelity="full"
-      cardinality="many"
-      mode="fullscreen"
-      selected={false}
-      {...(flagged.length > 0 ? { flagged } : {})}
-    />
+    <ViewBoundary kind={place.kind} view={place.title}>
+      <View
+        nodes={members}
+        label={place.title}
+        fidelity="full"
+        cardinality="many"
+        mode="fullscreen"
+        selected={false}
+        {...(flagged.length > 0 ? { flagged } : {})}
+      />
+    </ViewBoundary>
   );
 }
 
@@ -138,7 +145,9 @@ function KindOnPage<S extends AnySchema>({ context, kind }: { context: PageConte
   const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
   if (Group && !isDefaultView(Group)) {
     return (
-      <Group nodes={members} label={plural} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+      <ViewBoundary kind={kind}>
+        <Group nodes={members} label={plural} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+      </ViewBoundary>
     );
   }
   const Summary = views?.resolve(kind, { cardinality: "one", fidelity: "summary" })?.view as ComponentType<ViewProps<S>> | undefined;

@@ -1,4 +1,4 @@
-import type { Author } from "@graview/core";
+import { participantKey, type Author } from "@graview/core";
 
 /**
  * THE SEAT IS A ROBOT IN THE CITY, and where it stands is DERIVED.
@@ -60,7 +60,7 @@ export type SeatNote = RobotEvent extends infer E ? (E extends RobotEvent ? Omit
 
 /** One participant's identity across a window — the op log's own reading of an author. */
 export function participantOf(author: Author): string {
-  return `${author.kind}:${author.id ?? ""}:${author.session ?? ""}`;
+  return participantKey(author);
 }
 
 const TRAIL = 12;

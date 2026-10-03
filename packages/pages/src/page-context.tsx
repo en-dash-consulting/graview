@@ -1,4 +1,4 @@
-import type { AnySchema, Brand, Principal, Store, PresenceChannel, SettingDeclaration } from "@graview/core";
+import type { AnySchema, Brand, Person, Principal, Store, PresenceChannel, SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore } from "react";
 import type { ReactViewRegistry } from "@graview/react";
 
@@ -26,6 +26,8 @@ export interface PageContext<S extends AnySchema> {
    * the principal's id, where the app has no installation to look it up in.
    */
   readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
+  /** Who else the history may name: a host's directory, which offers nobody a seat (FR-13). */
+  readonly people?: readonly Person[];
   readonly brand?: Brand;
   /** Where the spatial face lives, for the cross-links. Default "/". */
   readonly sceneHref?: string;

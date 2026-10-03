@@ -15,6 +15,7 @@ import ts from "typescript";
 /** Names written in backticks that are not exports, and why. */
 export const NOT_EXPORTS = new Map([
   ["localStorage", "a browser global"],
+  ["sessionStorage", "a browser global"],
   ["Request", "a web platform global, every runtime's"],
   ["Response", "a web platform global, every runtime's"],
   ["CanvasDrawElement", "a Chromium feature flag"],
