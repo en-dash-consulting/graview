@@ -1,29 +1,29 @@
 {
-  "at": "2026-10-03T06:24:31.378Z",
+  "at": "2026-10-03T18:22:53.532Z",
   "packages": {
     "@graview/core": {
       "files": 475,
-      "tarballBytes": 535302,
+      "tarballBytes": 543518,
       "ok": true
     },
     "create-graview": {
       "files": 11,
-      "tarballBytes": 3660,
+      "tarballBytes": 3659,
       "ok": true
     },
     "@graview/embed": {
       "files": 23,
-      "tarballBytes": 31050,
+      "tarballBytes": 31049,
       "ok": true
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4890,
+      "tarballBytes": 4889,
       "ok": true
     },
     "@graview/guest": {
       "files": 35,
-      "tarballBytes": 21063,
+      "tarballBytes": 21062,
       "ok": true
     },
     "@graview/layout": {
@@ -33,17 +33,17 @@
     },
     "@graview/pages": {
       "files": 79,
-      "tarballBytes": 89930,
+      "tarballBytes": 89932,
       "ok": true
     },
     "@graview/primitives": {
-      "files": 223,
-      "tarballBytes": 362374,
+      "files": 219,
+      "tarballBytes": 356100,
       "ok": true
     },
     "@graview/react": {
-      "files": 151,
-      "tarballBytes": 219950,
+      "files": 147,
+      "tarballBytes": 213123,
       "ok": true
     },
     "@graview/render": {
@@ -52,8 +52,8 @@
       "ok": true
     },
     "@graview/ship": {
-      "files": 111,
-      "tarballBytes": 119979,
+      "files": 115,
+      "tarballBytes": 132600,
       "ok": true
     },
     "@graview/skills": {
@@ -63,20 +63,20 @@
     },
     "@graview/studio": {
       "files": 67,
-      "tarballBytes": 106461,
+      "tarballBytes": 106462,
       "ok": true
     },
     "@graview/tools": {
       "files": 123,
-      "tarballBytes": 170154,
+      "tarballBytes": 170153,
       "ok": true
     }
   },
   "budgets": [
     {
       "name": "the pages face alone",
-      "minified": 790665,
-      "gzipped": 213541,
+      "minified": 793463,
+      "gzipped": 214510,
       "budget": {
         "minified": 815000,
         "gzipped": 220000
@@ -85,8 +85,8 @@
     },
     {
       "name": "every face",
-      "minified": 1079869,
-      "gzipped": 309184,
+      "minified": 1082987,
+      "gzipped": 310254,
       "budget": {
         "minified": 1100000,
         "gzipped": 315000
