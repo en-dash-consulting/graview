@@ -213,7 +213,7 @@ export function Shell<S extends AnySchema>({
         <h1 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>
           {brand?.name ?? "Graview"}
         </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, ...(narrow ? { flexWrap: "wrap" as const, flex: "1 1 auto", rowGap: 6 } : { flex: "0 0 auto" }) }}>
+        <div style={{ display: "flex", alignItems: "center", minWidth: 0, ...(narrow ? { flexWrap: "wrap" as const, flex: "1 1 auto", gap: "6px 10px" } : { flex: "0 0 auto", gap: 10 }) }}>
           <Wordmark<S> />
           {/* Every stop is a URL, so back and forward are the browser's. This
               only makes them visible, because nobody should have to know that. */}
