@@ -1,5 +1,161 @@
 # @graview/ship
 
+## 0.1.2
+
+### Patch Changes
+
+- b910210: A live wire. `openRemote({ live: true })` holds a WebSocket to the store's `/graview/live` and every op is pushed down it as it lands, so two browsers on one store see each other at once rather than on the next poll. Calls and undos go down the same socket. While it is down, the client polls and posts as before, reconnects, and catches up from the last op it has; a call sent again across a reconnect is answered with the ops it already made, not made twice. Polling stays the floor: every HTTP route is unchanged, and a polling client on the same store converges with the live ones.
+  
+  The protocol is JSON messages told apart by `t`. A client says `hello` (with the last seq it has), `call`, `undo`, `here` and `bye`; the server says `welcome` (the ops after that seq, or the whole state when no seq was given), `ack`, `refused`, `conflict`, `ops` and `presence`. `hello` and `welcome` carry `WIRE_PROTOCOL`, which stays 1: the socket is an addition, and every client of protocol 1 is still served. `LIVE_PATH`, `LiveClientMessage` and `LiveServerMessage` name it. The protocol logic is transport-agnostic: `createStoreHandler(...).connect(request, { send, close })` reads the seat from the upgrade request and answers with the connection to hand each message to, so a Worker or Durable Object attaches a `WebSocketPair` to it. `serveStore`, and so `graview serve`, answers the upgrade over a small RFC 6455 server in the package, with no new dependency. What a seat may not see holds on the socket exactly as on the routes: the welcome, every push and every answer are the store as that seat sees it, with ops withheld in place, and presence keeps unseen people back. A page cannot set headers on a WebSocket, so a store that trusts seat headers also reads them from the upgrade's query.
+  
+  A stale write is a conflict, not a loss. Every field's revision is the seq of the op that last wrote it, read off the log by `FieldRevisions`, so no stored format changes. A call may carry `base`, the revision of each field it changes as its sender last saw it. One that has moved since is refused before anything is written, on `POST /graview/ops` (409 with `conflict: true`) and on the socket (`conflict`), naming the field, theirs, yours and who wrote theirs. `openRemote` sends `base` with every optimistic call and hands a refused one to `onConflict` with `keepTheirs()` and `useMine()`; with nobody listening there, `onRefusal` hears the sentence. A call the policy refuses, or one that no longer runs, is refused in its own words as before. `openRemote` also gains `revision(node, field)`, `seq()` and `transport()`, and an answer whose ops start past the next seq it has now fetches the ops between first, so a client never numbers the server's ops out of order (FR-05).
+  
+  Compatibility: additive for the wire — `GET /graview/live` is a new `WIRE` route (426 to a plain request), `base` is a new optional request field on `POST /graview/ops`, the 409 for a stale write adds `conflict` and `conflicts`, and `WIRE_PROTOCOL` stays 1. Unchanged for ops and stored formats: field revisions are derived from the log, and no fixture differs. Changed for `openRemote` callers, `graview mcp --remote-url` and `graview apply --remote-url` among them: a change to a field somebody else changed since the client last looked is now refused as a conflict rather than written over theirs. `StoreHandler` and `ServedStore` gain `connect`; `RemoteOptions` gains `live`, `socket` and `openTimeoutMs`; `RemoteStore` gains `onConflict`, `revision`, `seq` and `transport`.
+- 74c9388: A log can be folded from a base. An `Epoch` is a base graph and the seq where the log starts folding onto it. The log carries its epochs: `OperationLog.from(ops, epochs)`, `log.epochs()`, `log.lastEpoch()` and `log.markEpoch(epoch)`. `log.fold(schema, { from: epoch })` folds that epoch's base with the ops from its seq on. A store takes `epochs` beside `log`, and `store.verify()` folds from the last epoch, so a log that spans two declaration versions verifies. A store opened on a snapshot alone takes the snapshot as its first epoch. Undo does not reach back across an epoch that changed the declaration, and the refusal names the change.
+  
+  `openStore` records an epoch whenever the graph it opens on did not come from the log. A new scope gets one at its seed, and a migration run gets one at the graph it left, naming the change. A store from before epochs gets one at what it holds, or from empty when its whole log folds to it. The opened store says which in `epoch`. Adapters keep epochs through the new optional `loadEpochs` and `saveEpochs`. The memory and file (`epochs.json`) adapters have them. The browser adapter does not: each epoch keeps a whole copy of the graph, and a page has no room for a second one. A store from before epochs is adopted only where its epoch can be kept, so a page never folds its whole log on open. The sqlite adapter does not keep them yet (FR-27).
+  
+  Compatibility: stored format — additive. Epochs are stored beside the snapshot, log and meta, and no format number moves: a store without them reads as before and is given one on open. Ops and primitives are unchanged; `OperationLog.from` and `fold` take new optional arguments. Undo of an op made before a migration, which used to write the old shape back, is now refused.
+- a7fc818: A long-lived log compacts behind an undo horizon. A checkpoint is an epoch whose base is the graph at seq N, marked `horizon: true`. `store.checkpoint({ keepDays, keepOps, seq, now })` makes one, by default keeping the last 90 days and the last 1000 ops, whichever keeps more, and never splitting a gesture; a store that does not verify is not compacted. `store.compact(checkpoint)` moves the ops and epochs before it out of the log and returns them. A log now begins at its horizon: `log.horizon` is the seq of its first op, `log.length` is still the seq the next op takes, `log.opsFrom(seq)` reads by seq, `OperationLog.from(ops, epochs, { horizon })` restores a log that begins past 0, and one that begins past 0 with no checkpoint or horizon is refused, naming the seq. `log.checkpointAt(schema, seq)` and `log.fold(schema, { to })` give the graph at a seq. Undo of a batch behind the horizon is refused with a sentence naming it ("not after the undo horizon at op N").
+  
+  Adapters archive through the new optional `compact(scope, checkpoint)` and `loadArchive(scope)`. The memory adapter keeps the archive beside the log. The file adapter writes `archive/log.jsonl` and `archive/epochs.json`. The SQL adapter now keeps epochs (`graview_epochs`) and archives ops to `graview_ops_archive`, both created on demand like its op table, and `delete` now clears a scope's ops, epochs and archive with its graph. The browser adapter keeps no epochs, so it keeps no checkpoint: compaction there is refused, and a page's log stays whole. `opened.compact(options)` archives first and then lets the store go of the ops, on the write chain. The next `openStore` loads the checkpoint and the tail and never reads the archive. `exportBundle(app, store, { full: true })` resolves to a bundle with every op from seq 0, read from the archive of the adapter the store was opened on. Without `full`, a compacted store's bundle carries the tail and says where it begins in `horizon`. `/graview/state` and the live socket's welcome say `horizon` for a compacted store, and `openRemote` hands it to the client's store (FR-23).
+  
+  Compatibility: stored formats — additive, and no format number moves. Snapshots and ops are written as before; an epoch gains the optional `horizon` field, and the archive is new files and tables beside the ones a store already has. A store that was never compacted reads and writes exactly as before. A build before this one refuses to open a compacted store rather than misreading it: its log no longer begins at seq 0, and that build's `OperationLog.from` throws on the first op. Ops and primitives are unchanged; `OperationLog.from` and `fold` take new optional arguments, and a log that begins past 0 without a horizon, which used to fail on its first op, now fails naming the seq. The wire — additive: `/graview/state` and the live welcome's `state` carry `horizon` only for a compacted store, and `/graview/since?seq=N` answers by seq as before.
+- 230d9b4: A rule can say what must hold in words the framework judges: `quote != null`, `count(in('fills') where status == 'booked') <= 1`. `@graview/core/document` is a new entry, and its rule language has these properties:
+  - Fields and one-edge hops, `out`/`in`/`all` sets with `where`, and a closed set of functions.
+  - `null` that propagates.
+  - No regular expressions, loops or user functions.
+  - A step budget on every evaluation.
+  
+  `expressionRule(name, { over, require, when?, says?, repairs? })` makes the invariant the engine runs. A judgement that runs out of budget is `over-budget` (FR-29), and any other mistake is `could-not-judge`; neither is a hang.
+  
+  A rule in the studio now takes its judgement as a field. The studio judges it after apply, writes it into the checkout as `expressionRule(…)` with its import instead of a stub to fill in, and reads it back from a declaration whose invariant carries `judgement`. The seedbed rehearsal proves this end to end (FR-07).
+  
+  Compatibility: the declaration — additive: `InvariantDefinition.judgement` and a studio rule's `require`/`when`/`says` are optional; a rule without one is judged as before. `@graview/core/document` is a new entry point.
+- 4a5dadd: A store holds records that no longer fit while still checking new writes. Loading a graph holds every record as it was stored: nothing is parsed into something else, no default is filled in, no field is stripped, and a record an older declaration wrote no longer stops the store from opening. `store.findings()` says what does not fit. Writes are still held to the declaration: a node added must fit, an edge must be declared, and a patch must fit in what it writes and may not leave the record fitting less than before. A misfit the patch does not touch stays as stored, so renaming a record is not refused over an old field. Folding a log holds an op the current declaration refuses as it was written. Undoing a change that was not an act, such as a repair or a migration, puts back exactly what it took, misfits included, while the undo of an act is still refused when the declaration will not have it. `Graph.applyPrimitives` and `Graph.preview` take `{ restoring }` for primitives that put back what was there (FR-28).
+  
+  Compatibility: stored format — snapshot 1 and op 1, unchanged; a snapshot that used to be refused at open now opens, and nothing at open rewrites a record. Ops and primitives: a fold no longer throws on an op the declaration refuses, and holds it as written instead. `GraphOptions.validate` now checks writes only, not loads; `ApplyPrimitivesOptions` is new.
+- 7afb9ae: A store can prove its own fold. `snapshotHash(snapshot)` is the graph's fingerprint, `sha256:<hex>` over a canonical form: nodes by id, edges by identity, keys sorted. Node, edge and key order do not change it, and it runs in a page or a worker as well as in Node. `store.verify()` refolds the log and compares. It returns `{ ok: true, hash }`, or the two hashes, the op after which they part (`divergedAfter`) and the finding in a sentence.
+  
+  `openStore({ verify: true })` verifies on open. When the stored graph disagrees with its log, the graph is rebuilt from the log and saved, and the opened store reports `rebuilt: { from, to, divergedAfter }`. If the log does not fold, there is nothing to rebuild from, so the open refuses (FR-20).
+  
+  Compatibility: additive — `snapshotHash`, `VerifyResult`, `Store.verify()` and the `verify` option are new; `OpenedStore` gains optional `verified` and `rebuilt`. Stored formats and the wire are unchanged.
+- 539d0eb: An adapter over plain SQL. `createSqlAdapter({ sql, transaction? })` keeps a store in SQLite through one synchronous `exec(sql, ...params)`, the shape a Durable Object's `ctx.storage.sql` already has, so a Worker host passes it as it is. `sqlFromDatabase(db)` gives better-sqlite3 the same shape, and `createSqliteAdapter` is now that adapter over better-sqlite3, so one implementation holds for both. The adapter tests are one contract that runs against memory, better-sqlite3 and Durable Object storage in workerd (FR-09).
+  
+  Compatibility: unchanged — the tables, their columns and what is stored in them are as before. `createSqliteAdapter` now prepares its statements on first use rather than when it is made, so a missing table is reported by the first load or save.
+- 33c3cbb: An agent acts for someone, through something, and the log says so. An `Author` carries its own `name` and `onBehalfOf`, the person it acts for. An op carries `via`, what it came through: `web`, `mcp:<client>`, `view:<name>`, `api` or `cli`. The activity rail reads "Claude, for Nick, via Claude", and `nameOfAuthor` says an author's own name before any id.
+  
+  An agent acting for a person may do what both may: its roles are the intersection of its own and theirs, a `self` grant is about the person, and `actingAs` gives the seat a policy judges. A `system` principal acting for nobody passes the policy and sees every record (`isSystem`), so a host's setup, seed and migrations are not refused by the app's own grants (FR-06, FR-17).
+  
+  A served store believes a seat header only when told to. `serveStore({ trustSeatHeaders: true })` reads `SEAT_HEADERS`, now with kind, name and delegation, so a remote `graview mcp` is recorded as an agent. Without it and without a `seatOf`, every route but health answers 401. `graview serve` listens on 127.0.0.1 and trusts the headers there, saying so; on any other `--host` it will not start without `--trust-seat-headers`. `openRemote` sends its seat on every request, the first read included, and its calls say `via: "web"`.
+  
+  Compatibility: breaking for a host that served a store without `seatOf` and relied on the seat headers: it now answers 401 until it passes `trustSeatHeaders: true`. `graview serve` binds 127.0.0.1 by default where it used to bind every interface. Additive elsewhere: `Author.name`, `Author.onBehalfOf`, `Principal.onBehalfOf`, `Operation.via` and `ApplyOptions.via` are optional fields, and ops without them read as before.
+- 55f8b27: An embed holds inside a chat's widget. `mount` takes `height: "auto"` and `onIntrinsicHeight`, and tells the host the height it asks for as it changes: the strip and the whole page on the pages face, the strip and the picture's box on the others. It takes `hostContext: { theme }` over the page's own scheme, and `scheme: "auto"` now follows the host page's `data-theme` and the system's preference as they change rather than reading them once. `pagesBelow` gives the scene and the Graview way to the pages face below a width. `remote` takes a store from `openRemote` and its presence. `memory` keeps the reader's settings and the tab's session where the host says, and a frame whose `localStorage` and `sessionStorage` throw still mounts. The routed face no longer asks for a window's height when embedded, which grew a frame sized from its content without end.
+  
+  Presence speaks one dialect and forgets the gone. `participantKey` and `parseParticipant` name the `kind:id:session` format the op log, the figures and the wire share. What a presence channel reports is dropped once its last word is older than `REMOTE_PRESENCE_TTL_MS`, whether or not the channel says the person left. A people directory (`people` on `mount`, `GraviewProvider` and the pages' context, `Person` in core) names authors in the rail, the pages, the profile and presence without offering anybody a seat, so a hosted reader sees no seat switcher and no "Sit as somebody else"; `nameOfAuthor` reads it after the seats. The handle gains `setPeople`, `setSeats` and `setHostContext` (FR-13).
+  
+  Compatibility: additive for the wire — `participantKey` writes the key the served store already wrote, and `openRemote` keeps the TTL it had, now named `REMOTE_PRESENCE_TTL_MS`. `EmbedOptions` gains optional `people`, `hostContext`, `remote`, `memory`, `presenceTtlMs`, `onIntrinsicHeight` and `pagesBelow`, and `EmbedHandle` gains `setPeople`, `setSeats` and `setHostContext`, which a host implementing the handle itself must now provide. Changed in meaning: an embed with `scheme: "auto"` follows the host's scheme after mount, and a figure's own name in presence is the one `nameOfAuthor` gives (a seat's label, a directory's name, `Principal.name`) where it was the principal's id. Ops, stored formats, the declaration and derived tools are unchanged.
+- 3b36d19: An optimistic client can roll back through public API. `store.rebase({ confirmed, pending, drop })` rolls back this store's pending batches, lands the server's ops in its order, and applies the pending calls again on top under the same batch ids, author and intent; a call that no longer applies there is left off and named in `refused`. Subscribers hear one change, the net diff. `store.notify(diff, ops)` is public, for a host that changes the graph some other way and owes its subscribers the same news. A store's default batch ids carry a tag drawn fresh for each store (`batch:<tag>:<n>`), so two stores opened from the same log never mint the same one, and `batchIds` lets a server mint its own. `openRemote` lands everything the server sends through `rebase`, so an answered press's provisional op is replaced by the server's, not kept beside it, and a refused one is dropped rather than undone. This is the store's half of the optimistic live client; the live wire follows.
+  
+  Compatibility: additive for ops and stored formats — `Store.rebase`, `Rebase`, `RebaseResult`, `StoreOptions.batchIds` and `OperationLog.truncate` are new, and `Store.notify` is now public. Changed for callers of `Store`: default batch ids read `batch:<tag>:<n>` and `undo:<tag>:<n>` rather than `batch:<n>`; nothing should parse them. Changed for `openRemote`: a browser's log holds the server's ops for its presses, not the provisional ones and a take-back beside them. The wire is unchanged.
+- c6bd456: Migrations keep what they can. Ship's steps gain three:
+  - `rename-field` moves every value to the new name.
+  - `rename-edge` moves every link, on every kind that declares the relation.
+  - `coerce-field` keeps a value wherever its meaning survives and clears, and counts, what does not:
+    - text to a number when it parses;
+    - a datetime to a date;
+    - a word to the option it names;
+    - a value to a list of one.
+  
+  `countSteps` says per step how many values moved, were converted or were cleared, and how many records and links went. Whether a change breaks anything is judged by these counts, not by the kind of edit.
+  
+  The studio's migration sees a field or relation it renamed or retyped as the same one, by its node, so its values move instead of being dropped and re-added. A document's `planMigration` does the same through `renamedFrom`. `graview check --document <file> --previous <file>` refuses a `renamedFrom` that names nothing in the version before (FR-22).
+  
+  Compatibility: stored format — unchanged; migration steps — additive (three new steps). The declaration — `renamed-from-nothing` is a new check finding code, given only with a previous version.
+- 6c54eb1: Modules reach the host. `enabledModules` was a store option nothing passed, so a host binding a workspace's modules to what it pays for had nowhere to say so, and a served store sent every record of a module the workspace did not have. `openStore`, `createStoreHandler` and `serveStore` now take `enabledModules`, and `openRemote` takes it for a server that does not say. `GET /graview/state` and the live wire's `welcome` say which modules are on in `enabledModules`.
+  
+  Turning a module off or on is an op. `store.setEnabledModules(enabled)` appends one op authored `system · modules` (`MODULES_AUTHOR`), with a sentence ("Turn off Vehicles") and the set it leaves in `Operation.enabledModules`. It touches no record, so it folds to nothing, and turning the module on again brings every record back as it was. `store.modules` is now read from the log: the set the last such op says, or the one the store was opened with. `openStore` writes the op when the host's set differs from the log's, and only then. `checkUndo` refuses to take one back, because the set changes by turning the module the other way.
+  
+  A module off is off on every route and tool. Its acts were already refused. A call that names one of its records is now refused too, whoever makes it. Its kinds are kept from every seat but the system, the way a sight keeps a record: `seenBy` leaves them out of the graph, its ops are withheld in place on `/graview/state`, `/graview/since`, `/graview/export` and the live wire, and the agent tools read through the same view. `hidesFrom(store, principal)` says whether anything is kept from a seat (FR-12).
+  
+  Compatibility: additive for ops: `Operation.enabledModules` is a new optional field, an op without it reads and folds as before, and no fixture differs. Additive for the wire: `enabledModules` is a new response field on `GET /graview/state` and the `welcome` state, and the options are new. Changed for `seenBy(store, principal)` on a store with a module off: it is now a view without that module's kinds, where it used to be the store itself. `Store.modules` is a getter rather than a field fixed at construction. Stored formats and derived tool schemas are unchanged.
+- 67a7d42: Stored data is checked against its declaration. `validateGraph(app, snapshot)` reads a graph as it is stored and says what no longer fits, each finding with a code, an id and its smallest repair: `node-shape`, `kind-unknown`, `edge-dangling`, `edge-disallowed`, `rule-error` and `rule-budget`, the last two read off a violation's `status` rather than its words. A clean graph has none. `repairPlan(findings)` turns the findings into one batch that clears an optional field, coerces a required one to its default, or drops a record with its links, and says the plan in counted sentences. `store.applyPrimitives(primitives, { author, intent })` applies a batch of primitives as one ordinary op, logged, attributed and undoable, and `store.findings()` validates the store's own graph. `health()` counts the findings (FR-21).
+  
+  Compatibility: additive — `validateGraph`, `repairPlan`, `GRAPH_FINDING_CODES`, `Store.applyPrimitives`, `Store.findings` and `HealthReport.findings` are new. The six finding codes are a stability surface from now on: a code never changes meaning (docs/stability.md §4).
+- 6c62ca6: Stored formats carry their version. Core declares `FORMATS` (snapshot 1, op 1) and stamps what it writes with `formatStamp()`: the framework version and each format. `upgradeSnapshot` and `upgradeOp` bring an older format up one step at a time, and `assertReadable` throws `NewerFormatError` for a format this build does not know.
+  
+  A store's meta and every exported bundle now record `{ framework, formats }`. `openStore` refuses a snapshot whose meta says a newer format, so a rolled-back framework does not fold what its successor wrote and write its misreading back; the host refolds from the log or rolls forward. `assertBundle` checks the same. Everything written before the stamp reads as format 1, and a fixture of it is held by a test (FR-31).
+  
+  Compatibility: stored format — snapshot 1 and op 1, unchanged. Store meta and bundles gain `framework` and `formats` (additive; an unstamped one reads as format 1). A meta or bundle stamped with a newer format is now refused with `NewerFormatError` where it used to be read as if it were current.
+- 984c96f: The declaration is a document. One JSON object, the Graview declaration document, compiles into the same app `defineApp` declares, through `compileDocument` in `@graview/core/document`.
+  - **Kinds** have typed fields, label templates, lifecycles and relations.
+  - **Acts** are a closed set of effects with `allowedWhen` refusals.
+  - **Rules** are written in the rule language.
+  - **Policy, modules, lenses and settings** are the data they already are.
+  
+  Nothing in the document path runs a string as code, and a test reads the module to hold that. `canonicalize` gives two documents equal in meaning the same bytes.
+  
+  `toDocument(app)` gives a document-made app back exactly. For a TypeScript app it writes what is data and names, at its JSON path, each surface that is code.
+  
+  `graview check`, `serve`, `mcp` and `describe` take `--document <file>` with no TypeScript entry, and check reports a document's findings with the path to fix each at. `capabilities().documentFormats` says `graview-document@1` (FR-01).
+  
+  Compatibility: the declaration — additive: a new entry point, a new format (graview-document 1), and `--document` on the commands; a TypeScript declaration is read as before.
+- ca11fe8: `GET /graview/export` returns the bundle instead of a 500: the route called `exportBundle(store, app)` against `exportBundle(app, store)`, behind two casts that hid it from the compiler. The casts are gone and a serve test holds the route (FR-11).
+  
+  Compatibility: the wire — `GET /graview/export` now answers as `WIRE` always said it did; nothing else on the wire changes.
+- b71e7c5: Core says its own version, and a rule that cannot answer says so in a field. `FRAMEWORK_VERSION` is the version every `@graview/*` package shares, written by `pnpm version-packages` after `changeset version`. A violation carries `status`: `violated` when a rule judged, `could-not-judge` when it threw, `over-budget` when it threw the new `RuleBudgetError`. A rule that throws is now one finding about its subject instead of an exception that took every other rule's standing down with it. `health()` counts `couldNotJudge` and `overBudget` apart (FR-29).
+  
+  Compatibility: additive — `Violation.status`, `HealthReport.couldNotJudge` and `.overBudget` are new fields; a rule that throws no longer makes `evaluate` or `Store.apply` throw, it yields a violation instead.
+- b334c25: The wire answers through a fetch handler. `createStoreHandler(options)` opens the store and returns `handle(request: Request) → Promise<Response>` for every `WIRE` route, so a Cloudflare Worker, a Durable Object, Deno or Bun serves the same store without a fork. `serveStore` is now a thin `node:http` wrapper around it and answers exactly as before: the 401 rule, CORS, presence, export and health.
+  
+  `@graview/ship/runtime` is a new entry that reaches no `node:` builtin: the store, migrations, content steps, the handler, export, health and `openRemote`. The browser entry stays what a page runs; the root entry keeps the file adapter and the server (FR-09).
+  
+  Compatibility: breaking for a host with its own `seatOf` — it now receives a web `Request` instead of Node's `IncomingMessage` (read `request.headers.get("authorization")`, not `request.headers["authorization"]`), and may return a promise. `seatFromHeaders` takes a `Request` too. The routes, their bodies and `WIRE_PROTOCOL` are unchanged; `ServedStore` gains `handle`.
+- 6460336: What a seat may not see never leaves the store. The store handler, and so `graview serve`, answers each route with the store as the asking seat sees it. `/graview/state`, `/graview/since`, `/graview/export` and the ops on `/graview/here` come from `seenBy(store, principal)`, and ops that touched what the seat may not see come back withheld in place, so an unmodified `openRemote` still loads them (FR-16). `/graview/here`, `/graview/who` and `/graview/leave` leave out anybody whose own record the seat may not see. For everybody else they clear a stop, hover or robot position that names such a record (`presenceSeenBy`). The ops `/graview/ops` sends back are redacted the same way. A participant whose id holds a colon (`shopper:bethan`) now keeps its session as sent.
+  
+  A write that names a record the seat may not see is refused before any grant is read, with the sentence "Not permitted: “Answer the enquiry” names a record you may not see." This holds in `store.apply` and `store.permits`, over the wire and through the agent tools. A seat with sights may not undo what it may not see. Over `graview mcp`, `get_affordances` is derived from what the seat sees, and `undo_batch` judges over the log as the seat sees it.
+  
+  Sights have one meaning, the document's and the framework's, and `compileDocument` puts a document's `policy.sees` into the compiled app's policy. With no `sees`, everybody sees everything. With any sight, every kind is deny by default, like grants: a kind no sight names is seen by nobody but the system, and the new check warning `sight-unnamed-kind` names each one. `own` means the principal's own records: their record, what an edge joins to it, and what they made. `recordsOf(log)` reads who made each record and its kind, so a removed record is still judged by the kind it was. The studio models a sight as a node with three acts, `add-sight`, `change-sight` and `remove-sight`, and writes sights back into the declaration and `policy.ts`. Changing them in place is still said rather than written, as it is for grants (FR-02).
+  
+  Compatibility: breaking for a policy that declares `sees`: a kind no sight names used to be seen by everybody and is now seen only by the system. Add `{ roles: "*", kinds: [...] }` for the kinds everybody may see; `graview check` names each one with `sight-unnamed-kind`, a new warning. Additive for `own`, which now also covers the records a principal made. Breaking for a host that relied on the wire sending the whole store: every read route now answers with what the asking seat sees, and only the system seat sees everything. A host that serves its owners everything serves them as the system or names them in a sight. Additive for the wire otherwise: no route or field was added or removed, and `WIRE_PROTOCOL` stays 1. Changed for derived tools: the names and input schemas are unchanged, the studio gains `add-sight`, `change-sight` and `remove-sight`, and the read and undo tools answer as the seat sees. For the declaration document, `policy.sees` now takes effect in the compiled app, and the conformance fixtures declare no sights, so none of them changes.
+- Updated dependencies [3afdd09]
+- Updated dependencies [b910210]
+- Updated dependencies [7f354e0]
+- Updated dependencies [74c9388]
+- Updated dependencies [a7fc818]
+- Updated dependencies [2820fd3]
+- Updated dependencies [230d9b4]
+- Updated dependencies [a163197]
+- Updated dependencies [4a5dadd]
+- Updated dependencies [7afb9ae]
+- Updated dependencies [9b2c61b]
+- Updated dependencies [8990aa9]
+- Updated dependencies [539d0eb]
+- Updated dependencies [33c3cbb]
+- Updated dependencies [95444f1]
+- Updated dependencies [55f8b27]
+- Updated dependencies [6ea13f7]
+- Updated dependencies [3b36d19]
+- Updated dependencies [85888f1]
+- Updated dependencies [d2683c5]
+- Updated dependencies [5a6f262]
+- Updated dependencies [c6bd456]
+- Updated dependencies [6c54eb1]
+- Updated dependencies [67a7d42]
+- Updated dependencies [6c62ca6]
+- Updated dependencies [5e85a39]
+- Updated dependencies [b2f8c22]
+- Updated dependencies [984c96f]
+- Updated dependencies [b71e7c5]
+- Updated dependencies [2493564]
+- Updated dependencies [c5c1c91]
+- Updated dependencies [346fbe3]
+- Updated dependencies [b334c25]
+- Updated dependencies [9680187]
+- Updated dependencies [570f9e2]
+- Updated dependencies [6460336]
+  - @graview/core@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes
