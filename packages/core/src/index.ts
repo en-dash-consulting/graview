@@ -70,6 +70,8 @@ export type {
 // Invariants — pure evaluation, with repairs as the seam to affordances.
 export { defineInvariant, evaluate, RuleBudgetError, UnregisteredInvariantError, violationsTouching } from "./invariants/engine.js";
 export { FRAMEWORK_VERSION } from "./version.js";
+export { assertReadable, FORMATS, formatStamp, NewerFormatError, upgradeOp, upgradeSnapshot } from "./formats.js";
+export type { FormatName, FormatStamp } from "./formats.js";
 export type {
   EvaluateOptions,
   InvariantContext,

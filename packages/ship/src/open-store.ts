@@ -1,4 +1,6 @@
 import {
+  assertReadable,
+  formatStamp,
   Store,
   type AnySchema,
   type GraviewApp,
@@ -7,6 +9,7 @@ import {
   type StoreOptions,
 } from "@graview/core";
 import { migrateSnapshot } from "./migrations.js";
+import type { StoredMeta } from "./meta.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -22,8 +25,8 @@ import type { GraphSnapshot } from "./snapshot.js";
 export interface OpenStoreOptions<S extends AnySchema> {
   readonly app: GraviewApp<S>;
   readonly adapter: PersistenceAdapter<string> & {
-    loadMeta?(scope: string): { version: number } | null;
-    saveMeta?(scope: string, meta: { version: number }): void;
+    loadMeta?(scope: string): StoredMeta | null;
+    saveMeta?(scope: string, meta: StoredMeta): void;
   };
   readonly scope?: string;
   /** First-run data when nothing is stored yet. */
@@ -79,6 +82,13 @@ export async function openStore<S extends AnySchema>(
   let seq = persisted.length;
 
   const meta = adapter.loadMeta?.(scope) ?? null;
+  /*
+   * A SNAPSHOT IN A NEWER FORMAT IS NOT FOLDED (FR-31). A rolled-back
+   * framework meeting what its successor wrote says so — the host refolds
+   * from the log or rolls forward — rather than reading a shape it does not
+   * know and writing its misreading back.
+   */
+  if (stored !== null) assertReadable(meta);
   const target = app.version ?? 1;
   /*
    * THE LOG OUTRANKS THE META. A crash between writing the migrated
@@ -156,7 +166,7 @@ export async function openStore<S extends AnySchema>(
   if (stored === null || migrated.length > 0) {
     await adapter.save(scope, store.snapshot());
   }
-  adapter.saveMeta?.(scope, { version: target });
+  adapter.saveMeta?.(scope, { version: target, ...formatStamp() });
 
   /*
    * Writes are SERIALISED: a second diff's ops never land before the

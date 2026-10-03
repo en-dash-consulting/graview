@@ -8,6 +8,9 @@ import {
   defineApp,
   defineInvariant,
   defineNode,
+  FORMATS,
+  FRAMEWORK_VERSION,
+  NewerFormatError,
   RuleBudgetError,
   Store,
 } from "@graview/core";
@@ -171,7 +174,7 @@ describe("one declaration plus one adapter is a deployment", () => {
     const opened = await openStore({ app, adapter });
     expect(opened.migrated).toHaveLength(1);
     expect((opened.store.graph.getNode("p1") as { beds?: number })?.beds).toBe(2);
-    expect(adapter.loadMeta("garden")).toEqual({ version: 2 });
+    expect(adapter.loadMeta("garden")).toMatchObject({ version: 2 });
     const log = await adapter.loadLog!("garden");
     expect(log[0]?.author.kind).toBe("system");
     opened.close();
@@ -272,6 +275,42 @@ describe("health is coherence, not liveness", () => {
     expect(report.violations).toBe(2);
     expect(report.couldNotJudge).toBe(1);
     expect(report.overBudget).toBe(1);
+    opened.close();
+  });
+});
+
+// FR-31: what a version writes says what wrote it, and the version before it says "newer format" rather than folding it.
+describe("stored formats carry their version", () => {
+  it("a store records the framework and the formats that wrote it", async () => {
+    const root = scratch();
+    const adapter = createFileAdapter(root);
+    const opened = await openStore({ app, adapter });
+    opened.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
+    await opened.flush();
+    opened.close();
+    expect(adapter.loadMeta("garden")).toEqual({ version: 2, framework: FRAMEWORK_VERSION, formats: { ...FORMATS } });
+  });
+
+  it("a snapshot written in a newer format is reported, not folded", async () => {
+    const root = scratch();
+    const adapter = createFileAdapter(root);
+    const opened = await openStore({ app, adapter });
+    opened.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
+    await opened.flush();
+    opened.close();
+    // What the next version would have written.
+    adapter.saveMeta("garden", { version: 2, framework: "9.0.0", formats: { snapshot: FORMATS.snapshot + 1, op: FORMATS.op } });
+    await expect(openStore({ app, adapter })).rejects.toThrow(NewerFormatError);
+    await expect(openStore({ app, adapter })).rejects.toThrow(/newer format.*written by @graview 9\.0\.0.*Refold it from the log/);
+  });
+
+  it("a bundle carries its stamp, and one in a newer format is refused on import", async () => {
+    const opened = await openStore({ app, adapter: createFileAdapter(scratch()) });
+    const bundle = exportBundle(app, opened.store);
+    expect(bundle.framework).toBe(FRAMEWORK_VERSION);
+    expect(bundle.formats).toEqual({ ...FORMATS });
+    expect(() => assertBundle(app, bundle)).not.toThrow();
+    expect(() => assertBundle(app, { ...bundle, formats: { ...FORMATS, op: FORMATS.op + 1 } })).toThrow(NewerFormatError);
     opened.close();
   });
 });

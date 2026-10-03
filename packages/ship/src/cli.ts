@@ -8,6 +8,7 @@ import { serveStore } from "./serve.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
 import { applySteps, seedSteps } from "./sync-seed.js";
+import type { StoredMeta } from "./meta.js";
 
 /**
  * `graview serve` — the store behind HTTP, and the data in a folder you can
@@ -51,8 +52,8 @@ export function flag(argv: readonly string[], name: string): string | undefined 
 
 export interface StoreBackend {
   readonly adapter: PersistenceAdapter<string> & {
-    loadMeta?(scope: string): { version: number } | null;
-    saveMeta?(scope: string, meta: { version: number }): void;
+    loadMeta?(scope: string): StoredMeta | null;
+    saveMeta?(scope: string, meta: StoredMeta): void;
   };
   /** Where the data is, in words a person can open. */
   readonly where: string;

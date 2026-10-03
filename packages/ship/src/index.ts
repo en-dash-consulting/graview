@@ -19,6 +19,7 @@ export { applyToSnapshot } from "./snapshot.js";
 export type { GraphSnapshot } from "./snapshot.js";
 export { assertBundle, exportBundle } from "./export.js";
 export type { AppBundle } from "./export.js";
+export type { StoredMeta } from "./meta.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
 export { openRemote, seatHeaders } from "./remote.js";

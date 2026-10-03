@@ -1,5 +1,6 @@
 import type { Operation, PersistenceAdapter } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
+import type { StoredMeta } from "./meta.js";
 
 /**
  * The slice of `Storage` this adapter needs — `localStorage` in a browser,
@@ -13,8 +14,8 @@ export interface StorageLike {
 }
 
 export interface BrowserAdapter extends PersistenceAdapter<string> {
-  loadMeta(scope: string): { version: number } | null;
-  saveMeta(scope: string, meta: { version: number }): void;
+  loadMeta(scope: string): StoredMeta | null;
+  saveMeta(scope: string, meta: StoredMeta): void;
   /** The storage keys this scope occupies — for a person or a test to look. */
   keysFor(scope: string): { snapshot: string; log: string; meta: string };
 }
@@ -81,7 +82,7 @@ export function createBrowserAdapter(options: BrowserAdapterOptions = {}): Brows
       write(key, [...(read<Operation[]>(key) ?? []), ...ops]);
     },
     loadMeta(scope) {
-      return read<{ version: number }>(keysFor(scope).meta);
+      return read<StoredMeta>(keysFor(scope).meta);
     },
     saveMeta(scope, meta) {
       write(keysFor(scope).meta, meta);
