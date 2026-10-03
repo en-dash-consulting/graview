@@ -4,18 +4,23 @@
 # 2. It opens or updates the "Version packages" pull request: the bumps and
 #    the changelog entries, reviewable before anything is released.
 # 3. Merging that pull request runs this again with nothing pending, and the
-#    packages are published, tagged, and given a GitHub release each.
+#    packages are STAGED on npm (`scripts/release-stage.mjs`) — not published.
+# 4. A person approves them with their second factor, from main:
+#    `pnpm release:approve` approves each, waits for npm to serve them, then
+#    pushes a tag and writes a GitHub release for each.
 #
 # The thirteen packages are one changesets `fixed` group, so they share a
 # version and `graview create` can write `^<version>` for every one of them
 # and name a version that exists.
 #
-# Publishing is by npm Trusted Publishing (OIDC): no long-lived token in this
+# Staging is by npm Trusted Publishing (OIDC): no long-lived token in this
 # repository. Each package carries its own trusted-publisher configuration at
 # npmjs.com pointing at this repository, this file, and the "npm" environment
-# — it is per package, not per scope, and it can only be set on a package
-# that already exists on the registry, which is why 0.1.0 was published by
-# hand from a laptop and every version after it by this workflow.
+# — per package, not per scope, set only on a package that already exists —
+# and it allows `npm stage publish` and nothing else: merging to main is not
+# by itself a release, a person with the second factor is. (0.1.0 and 0.1.2
+# were published by hand; a direct `npm publish` from here is refused with
+# "OIDC permission denied for this action", which is what 0.1.1 met.)
 #
 # changesets/action@v2, not v1: v1 learned what was published by scraping
 # `New tag:` lines that @changesets/cli v3 no longer prints, and so pushed no
@@ -100,19 +105,21 @@ jobs:
         uses: changesets/action@v2
         with:
           version-script: pnpm version-packages
-          publish-script: pnpm exec changeset publish
+          # Stages; `pnpm release:approve` is what makes them live.
+          publish-script: node scripts/release-stage.mjs
           pr-title: "Version packages"
           commit-message: "Version packages"
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
           # No NPM_TOKEN: the runner's OIDC token is exchanged for a
-          # short-lived publish credential, and the tarballs carry provenance.
+          # short-lived staging credential, and the tarballs carry provenance.
           NPM_CONFIG_PROVENANCE: true
 
       - name: The tags and releases match what npm has
         # Only on a publish run. Fails when npm has this version but origin
-        # lacks a tag or GitHub lacks a release for any package — the exact
-        # symptom v1 of the action let through.
+        # lacks a tag or GitHub lacks a release for any package. A staged
+        # version is not on npm yet, so a run that only staged passes here;
+        # the next run after `pnpm release:approve` is the one that checks.
         if: steps.changesets.outputs.has-changesets == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
