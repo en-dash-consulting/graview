@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { createSchema, defineApp, defineMutation, defineNode, nodeRef } from "@graview/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
+import { assertBundle } from "../../src/export.js";
 import { createFileAdapter } from "../../src/file-adapter.js";
 import { openRemote } from "../../src/remote.js";
 import { serveStore, type ServedStore } from "../../src/serve.js";
@@ -220,6 +221,16 @@ describe("the store behind HTTP", () => {
     expect(again.snapshot.nodes.find((node: { id: string }) => node.id === "t1").done).toBe(true);
     expect(again.log).toHaveLength(1);
     expect(again.version).toBe(1);
+  });
+
+  // FR-11: the route called exportBundle(store, app) against exportBundle(app, store) and answered 500.
+  it("exports a bundle the app's own assertBundle accepts", async () => {
+    const response = await fetch(`${served.url}/graview/export`);
+    expect(response.status).toBe(200);
+    const bundle = await response.json();
+    expect(() => assertBundle(app, bundle)).not.toThrow();
+    expect(bundle.app).toBe(app.name);
+    expect(bundle.snapshot.nodes.length).toBeGreaterThan(0);
   });
 
   it("reports where the data is, and which adapter is keeping it", async () => {

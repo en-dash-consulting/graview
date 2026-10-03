@@ -238,7 +238,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     }
 
     if (url.pathname === "/graview/export") {
-      send(response, 200, exportBundle(store as never, options.app as never));
+      send(response, 200, exportBundle(options.app, store));
       return;
     }
 
