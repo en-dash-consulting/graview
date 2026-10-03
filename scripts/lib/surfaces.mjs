@@ -23,7 +23,7 @@ export const SURFACES = [
   },
   {
     name: "the wire",
-    paths: [/^packages\/ship\/src\/(serve|handler|runtime|remote|seat-headers)\.ts$/, /^packages\/core\/src\/presence\.ts$/, /^packages\/core\/src\/capabilities\.ts$/, /^packages\/guest\/src\/protocol\.ts$/],
+    paths: [/^packages\/ship\/src\/(serve|handler|runtime|remote|seat-headers|live|live-protocol)\.ts$/, /^packages\/core\/src\/(presence|capabilities|refusal)\.ts$/, /^packages\/guest\/src\/protocol\.ts$/],
   },
   {
     name: "the declaration and check finding codes",

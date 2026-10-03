@@ -70,14 +70,14 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | Method | Path | Says |
 |---|---|---|
 | GET | `/graview/state` | the graph, the log, the stored version and the modules on |
-| POST | `/graview/ops` | calls in, the ops they produced out — or `undo`, batches to take back; 409 with the policy's sentence when refused |
+| POST | `/graview/ops` | calls in, the ops they produced out — or `undo`, batches to take back; a `batch` already in the log is answered with the ops it made; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy |
 | GET | `/graview/since?seq=N` | the ops appended after N — everyone else's |
 | GET | `/graview/health` | ship's own report, plus where the data is |
 | GET | `/graview/export` | the whole store as one bundle, the way out |
 | POST | `/graview/here` | say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under |
 | GET | `/graview/who` | who is here right now |
 | POST | `/graview/leave` | say you have gone — only ever yourself |
-| GET | `/graview/live` | the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict, ops and presence; 426 to a plain request |
+| GET | `/graview/live` | the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence; 426 to a plain request |
 
 Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential from
 the `Request` and returns the principal every call is judged under, or a promise of it. The framework's clients also send the seat
@@ -99,6 +99,20 @@ server's verdict before it exits does.
 it as it lands. Calls go down it too; while it is down the client polls and posts, reconnects,
 and catches up from the last op it has. Polling stays: it is the wire `curl` can drive.
 
+**A host can watch it.** `remote.status()` is `connecting`, `online` or `offline`
+(`RemoteStatus`), and `remote.onStatus(listener)` is told each time it changes — an offline
+banner's switch. It is offline while a socket that was welcomed is down and nothing has been
+heard since, or when a poll or a call does not reach the server (a network failure, or a 502,
+503 or 504 from a gateway); online once a welcome or any answer lands, a refusal included. A
+call made while the server is away is not taken back: it stays shown, `remote.pending()`
+counts it, and it goes again the moment the server is reached. `remote.counters()`
+(`RemoteCounters`) counts `reconnects`, `rebases` (the server's ops landing under pending
+calls), `conflicts` and `resyncs`, for a beacon. Three options shape it: `backoff`, a function
+of the attempt in milliseconds or `{ min, max, factor }` for the jittered default (250, 10000,
+2); `presenceEveryMs`, how often an unchanged presence is said again down the socket; and
+`visible`, a predicate — while it answers false no presence is said, and in a page it reads
+`document.visibilityState` unless given.
+
 | From | Message | Carries |
 |---|---|---|
 | client | `hello` | `seq`, the last op it has (none: the welcome carries the whole state); `protocol` |
@@ -107,7 +121,8 @@ and catches up from the last op it has. Polling stays: it is the wire `curl` can
 | client | `here` / `bye` | a presence, as `/graview/here` takes it; gone |
 | server | `welcome` | `protocol`, `participant` (this socket's own key, built from its seat), `seq` (the server's last), and the `ops` after the client's seq |
 | server | `ack` | `cid`, `batch`, `seq` and the `ops` the call made |
-| server | `refused` / `conflict` | `cid` and the sentence; a conflict names each field, theirs, yours and who wrote theirs |
+| server | `refused` / `conflict` | `cid` and the sentence; a refusal's `reason` and, when the policy knows who could, `wouldNeed`; a conflict names each field, theirs, yours and who wrote theirs |
+| server | `busy` | `cid` and `retryAfter` in milliseconds: not now, and not refused — the client sends the call again after the wait |
 | server | `ops` / `presence` | everybody's ops as they land, in seq order; who is here |
 
 Seqs mean what `/graview/since?seq=N` means, and `hello` and `welcome` carry `WIRE_PROTOCOL`.
@@ -119,7 +134,7 @@ socket as on the routes.
 A host that hibernates — a Durable Object wakes on a message with no closure left — holds
 each socket's state itself. `liveProtocol({ store })` (from `@graview/ship/runtime`) is the
 same protocol as functions over the store and one plain-JSON `LiveSocketState` per socket,
-`{ seat, via, cursor?, participant? }`, the thing `serializeAttachment` keeps:
+`{ seat, via, cursor?, participant?, held? }`, the thing `serializeAttachment` keeps:
 
 ```ts
 const live = liveProtocol({ store, version: app.version, flush });
@@ -156,6 +171,34 @@ wrote it (`FieldRevisions`, derived from the log). A call that carries a `base` 
 field is refused, before anything is written, naming the field, theirs and yours.
 `openRemote` sends one with every call and hands the refusal to `remote.onConflict(…)`,
 with `conflict.keepTheirs()` and `conflict.useMine()`.
+
+**A refusal says why** (FR-46). Every `refused` on the socket, and every refusing answer of
+`POST /graview/ops` (409, or 413 at a host's cap), carries a `reason` from a closed set,
+`REFUSAL_REASONS`, which never changes meaning:
+
+| `reason` | What it means |
+|---|---|
+| `forbidden` | the seat may not: the policy, a sight, an agent's declared acts, a module turned off; `wouldNeed` names the roles that could, when the policy knows them |
+| `missing` | what the call names is not there: a record, or a batch to take back |
+| `invalid` | the call as asked does not fit: its arguments, the kind, a rule, a call before `hello` |
+| `limit` | the host's hard cap: the call can never succeed as asked, however long the caller waits |
+
+`openRemote`'s `remote.onRefusal((sentence, refusal) => …)` is handed the reason beside the
+sentence, and `remote.send` throws a `RemoteRefusedError` carrying it. The routes' other
+refusing answers say one too: 401 `forbidden`, 404 `missing`, 400 `invalid`.
+
+**Busy is not refused** (FR-45). A host's `limit` option — on `createStoreHandler`, `serveStore`
+and `liveProtocol` — is asked of every change before it is judged, with the seat, the channel,
+the size in bytes and the calls. It answers nothing, `{ retryAfter }` or `{ refuse }`:
+
+- **busy** — `{ retryAfter }` in milliseconds, for a rate or a queue: "not now". The socket says
+  `busy` and HTTP answers 429 with `Retry-After`. Nothing is judged and nothing is refused:
+  `openRemote` keeps the change shown and pending and sends it again after the wait. Every later
+  call on that socket is busy too until the held one comes again, and HTTP posts go one at a
+  time, so a burst lands in the order it was made.
+- **refused, `limit`** — `{ refuse }`, a sentence, for a hard cap such as a message over the
+  size a host takes: it would be refused however long the client waited, so it is refused now
+  and taken back.
 
 ## The hosted-store contract
 

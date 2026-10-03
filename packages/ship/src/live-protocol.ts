@@ -7,6 +7,7 @@ import {
   redact,
   seenBy,
   seesId,
+  refusalOf,
   VISITOR_PRESENCE_TTL_MS,
   WIRE_PROTOCOL,
   type AnySchema,
@@ -19,7 +20,7 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
-import { conflictSentence, type LiveClientMessage, type LiveServerMessage } from "./live.js";
+import { bytesOf, conflictSentence, type Limit, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**
  * THE LIVE WIRE AS FUNCTIONS OVER STATE THE HOST HOLDS (FR-41, FR-42).
@@ -60,6 +61,12 @@ export interface LiveSocketState {
    * socket is held under — never taken from the client (FR-47).
    */
   participant?: string;
+  /**
+   * The call this socket was told is busy (FR-45), and when (epoch ms) it
+   * may come again. Every other call is busy too until it does, so nothing
+   * made after it overtakes it.
+   */
+  held?: { readonly cid: string; readonly until: number };
 }
 
 /** A socket as the protocol is handed it: its state, and a way to send it text. */
@@ -90,6 +97,12 @@ export interface LiveProtocolOptions<S extends AnySchema> {
   readonly migrated?: readonly string[];
   /** Resolves once what landed is durable: an ack waits for it. */
   readonly flush?: () => Promise<void>;
+  /**
+   * THE HOST'S LIMITS (FR-45, FR-46), asked of every call and undo before
+   * it is judged: busy (`{ retryAfter }`, try again), refused at a hard cap
+   * (`{ refuse }`, reason `limit`), or nothing.
+   */
+  readonly limit?: Limit;
 }
 
 export interface LiveProtocol<S extends AnySchema> {
@@ -230,6 +243,13 @@ export interface Wire<S extends AnySchema> {
   whoFor(principal: Principal, who: readonly Presence[]): Presence[];
   /** The fields a call would write that moved since the caller's base: a stale write (FR-05). */
   conflictsOf(author: Principal, calls: readonly MutationCall[], base: unknown): FieldConflict[];
+  /**
+   * SENT TWICE, ANSWERED ONCE: the ops already in the log under the batch a
+   * call or an undo names, or none. A client that never heard the answer
+   * sends again under the same batch — down the socket or over HTTP — and
+   * is answered with what it made the first time (FR-49).
+   */
+  answered(batch: unknown): Operation[];
   /** `{ horizon }` when the log was compacted (FR-23); nothing otherwise. */
   horizonOf(): { horizon?: number };
   enabledModules(): string[];
@@ -266,6 +286,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
       const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
       return sighted(principal) ? presenceSeenBy(standing, seesId(store, principal)) : standing;
     },
+    answered: (batch) => (typeof batch === "string" && batch.length > 0 ? store.log.all().filter((op) => op.batch === batch) : []),
     horizonOf: () => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {}),
     enabledModules: () => [...store.modules.enabled].sort(),
     conflictsOf(author, calls, base) {
@@ -346,12 +367,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     const intent = typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined;
     const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : undefined;
     catchUp(peer);
-    /*
-     * SENT TWICE, ANSWERED ONCE. A client that lost its socket before the
-     * ack sends the call again under the same batch; one already in the
-     * log is answered with the ops it made.
-     */
-    const already = batch ? store.log.all().filter((op) => op.batch === batch) : [];
+    // A client that lost its socket before the ack sends the call again under the same batch: `answered` says what it made.
+    const already = wire.answered(batch);
     if (already.length > 0) {
       say(peer, { t: "ack", cid, seq: already.at(-1)!.seq, batch: batch!, ops: wire.shown(author, already) });
       return { cursor: peer.cursor! };
@@ -370,7 +387,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       const applying = { author, via: peer.via, ...(intent ? { intent } : {}), ...(batch ? { batch } : {}) };
       result = message.t === "undo" ? store.undo(Array.isArray(message.batches) ? message.batches : [], applying) : store.applyAll(calls, applying);
     } catch (error) {
-      say(peer, { t: "refused", cid, sentence: error instanceof Error ? error.message : String(error) });
+      say(peer, { t: "refused", cid, ...refusalOf(error) });
       return { cursor: peer.cursor! };
     }
     // Every op before this call's went down this socket before it landed; its own go in the ack.
@@ -426,12 +443,45 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           return { cursor: peer.cursor };
         }
         case "call":
-        case "undo":
+        case "undo": {
+          const cid = String(message.cid ?? "");
           if (peer.cursor === undefined) {
-            say(peer, { t: "refused", cid: String(message.cid ?? ""), sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
+            say(peer, { t: "refused", cid, reason: "invalid", sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
             return {};
           }
+          /*
+           * BUSY IS NOT REFUSED (FR-45). A call made after one that was told
+           * to wait waits too, whatever the rate says now: the client sends
+           * them again in the order it made them, the held one first.
+           */
+          const now = Date.now();
+          if (peer.held && peer.held.cid !== cid) {
+            say(peer, { t: "busy", cid, retryAfter: Math.max(0, peer.held.until - now) });
+            return { cursor: peer.cursor };
+          }
+          const limited = options.limit
+            ? await options.limit({
+                seat: peer.seat,
+                via: peer.via,
+                t: message.t,
+                bytes: bytesOf(text),
+                calls: message.t === "call" && Array.isArray(message.calls) ? message.calls : [],
+              })
+            : undefined;
+          if (limited && "refuse" in limited) {
+            delete peer.held;
+            say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
+            return { cursor: peer.cursor };
+          }
+          if (limited) {
+            const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
+            peer.held = { cid, until: now + retryAfter };
+            say(peer, { t: "busy", cid, retryAfter, ...(limited.sentence ? { sentence: limited.sentence } : {}) });
+            return { cursor: peer.cursor };
+          }
+          delete peer.held;
           return answer(peer, message);
+        }
         case "here": {
           const told = message.presence;
           if (!told || typeof told.participant !== "string" || typeof told.stop !== "string") {

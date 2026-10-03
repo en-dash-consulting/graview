@@ -489,9 +489,11 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
 
   if (standDown) return null;
   return (
-    <aside
+    <section
       ref={asideRef}
       aria-label="Inspector"
+      // In the seat's rail it is a part of the seat, not a landmark inside one (FR-40).
+      role={railed ? "group" : undefined}
       // Chrome, not scene: the ties layer must never anchor a line to the
       // node names this pane repeats.
       data-graview-offstage=""
@@ -1149,6 +1151,6 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
           onCancel={() => setPending(null)}
         />
       ) : null}
-    </aside>
+    </section>
   );
 }
